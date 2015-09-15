@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Calculate and send initial and max heap size values
+@JAVABIN@ -Xms1024m -Xmx1024m -jar maxent.jar

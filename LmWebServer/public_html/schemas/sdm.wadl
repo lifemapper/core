@@ -1,0 +1,2065 @@
+<?xml version="1.0"?>
+<application
+    xmlns="http://wadl.dev.java.net/2009/02" 
+    xmlns:lm="http://lifemapper.org"
+    xmlns:xhtml="http://www.w3.org/1999/xhtml" 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://wadl.dev.java.net/2009/02 wadl.xsd">
+    
+    <!-- Parameters -->
+   <!-- ................................................................... -->
+   <param name="algorithmCode" 
+          required="false" 
+          style="query"
+          type="xsd:string"
+          id="algorithmCode">
+      <doc xml:lang="en" title="Algorithm Code">
+         The "algorithmCode" query parameter specifies that only items whose 
+         algorithm matches this code will be returned.
+      </doc>
+      <option value="ANN">
+         <doc xml:lang="en" 
+              title="ANN - Artificial Neural Networks">
+            Setting algorithmCode equal to ANN will return items for the 
+            Artificial Neural Networks Algorithm.
+         </doc>
+      </option>
+      <option value="AQUAMAPS">
+         <doc xml:lang="en" title="AQUAMAPS - Aquamaps">
+            Setting algorithmCode equal to AQUAMAPS will return items for the 
+            Aquamaps Algorithm.
+         </doc>
+      </option>
+      <option value="BIOCLIM">
+         <doc xml:lang="en" title="BIOCLIM - Bioclimatic Envelope">
+            Setting algorithmCode equal to BIOCLIM will return items for the 
+            Bioclimatic Envelope Algorithm.
+         </doc>
+      </option>
+      <option value="CSMBS">
+         <doc xml:lang="en"
+              title="CSMBS - Climate Space Model: Broken Stick Implementation">
+            Setting algorithmCode equal to CSMBS will return items for the 
+            Climate Space Model (Broken Stick Implementation) Algorithm.
+         </doc>
+      </option>
+      <option value="DG_GARP">
+         <doc xml:lang="en" title="DG_GARP - Desktop GARP">
+            Setting algorithmCode equal to DG_GARP will return items for the 
+            Genetic Algorithm for Rule-set Production Algorithm 
+            (GARP - DesktopGARP implementation).
+         </doc>
+      </option>
+      <option value="DG_GARP_BS">
+         <doc xml:lang="en" 
+              title="DG_GARP_BS - Desktop GARP Best Subsets">
+            Setting algorithmCode equal to DG_GARP_BS will return items for the 
+            GARP Best Subsets Algorithm (DesktopGARP implementation).
+         </doc>
+      </option>
+      <option value="ENVDIST">
+         <doc xml:lang="en" 
+              title="ENVDIST - Environmental Distance">
+            Setting algorithmCode equal to ENVDIST will return items for the 
+            Environmental Distance Algorithm.
+         </doc>
+      </option>
+      <option value="GARP">
+         <doc xml:lang="en" title="GARP - openModeller GARP">
+            Setting algorithmCode equal to GARP will return items for the 
+            Genetic Algorithm for Rule-set Production Algorithm 
+            (GARP - openModeller implementation).
+         </doc>
+      </option>
+      <option value="GARP_BS">
+         <doc xml:lang="en"
+              title="GARP_BS - openModeller GARP Best Subsets">
+            Setting algorithmCode equal to GARP_BS will return items for the 
+            GARP Best Subsets Algorithm (openModeller implementation).
+         </doc>
+      </option>
+      <option value="SVM">
+         <doc xml:lang="en" title="SVM - Support Vector Machines">
+            Setting algorithmCode equal to SVM will return items for the 
+            Support Vector Machines Algorithm.
+         </doc>
+      </option>
+   </param>
+    
+   <param name="displayName" 
+          required="false" 
+          style="query"
+          type="xsd:string"
+          id="displayName">
+      <doc xml:lang="en" title="Display Name">
+         The "displayName" query parameter specifies the display name of the 
+         new object or that only items with this display name (usually species
+         name) should be returned.
+      </doc>
+   </param>
+
+   <param name="hasProjections"
+          required="false"
+          style="query"
+          type="xsd:integer"
+          id="hasProjections">
+      <doc xml:lang="en" title="Has Projections">
+         The "hasProjections" query parameter will limit the objects returned
+         to only those that have projections associated with them.
+      </doc>
+   </param>
+
+   <param name="matchingScenario" 
+          required="false" 
+          style="query"
+          type="xsd:integer"
+          id="matchingScenario">
+      <doc xml:lang="en" title="Matching Scenario">
+         The "matchingScenario" query parameter will limit the scenarios 
+         returned to only those that are compatible with this scenario.  This 
+         is especially useful when determining what are valid projection 
+         scenarios for a model scenario.  For example, if you wished to use 
+         Scenario 32 as the model scenario, the url <xhtml:a
+            href="/services/sdm/scenarios/?matchingScenario=32">
+            http://lifemapper.org/services/sdm/scenarios/?matchingScenario=32
+         </xhtml:a> would return scenarios that could be used for 
+         projections.
+      </doc>
+   </param>
+
+   <param name="minimumNumberOfPoints" 
+          required="false" 
+          style="query"
+          type="xsd:integer"
+          id="minimumNumberOfPoints">
+      <doc xml:lang="en" title="Minimum Number Of Points">
+         The "minimumNumberOfPoints" query parameter specifies that only 
+         occurrence sets with at least this many points should be returned.
+      </doc>
+   </param>
+
+   <param name="experimentId" 
+          required="false" 
+          style="query" 
+          type="xsd:integer"
+          id="experimentId">
+      <doc xml:lang="en" title="Experiment Id">
+         The "experimentId" query parameter specifies that only objects  
+         generated from that experiment should be returned.  This number 
+         should be the id number of the model you would like to use.
+      </doc>
+   </param>
+
+   <param name="occurrenceSetId" 
+          required="false" 
+          style="query"
+          type="xsd:integer"
+          id="occurrenceSetId">
+      <doc xml:lang="en" title="Occurrence Set Id">
+         The "occurrenceSetId" query parameter specifies that only experiments 
+         generated using the points from that occurrence set will be returned.
+         This number should be the id number of the occurrence set that you 
+         would like to use.
+      </doc>
+   </param>
+    
+   <param name="pointsType"
+          required="true" 
+          style="query"
+          type="xsd:string"
+          id="pointsType">
+      <doc xml:lang="en" title="Points Type">
+         The "pointsType" query parameter specifies the type of the points 
+         being uploaded. 
+      </doc>
+   </param>
+
+   <param name="scenarioId" 
+          required="false" 
+          style="query"
+          type="xsd:integer"
+          id="scenarioId">
+      <doc xml:lang="en" title="Scenario Id">
+         The "scenarioId" query parameter specifies the scenario that all 
+         returned layers should belong to.  The value of this parameter should 
+         be the id of the scenario to return layers for.
+      </doc>
+   </param>
+   
+   <param name="typeCode"
+          required="false"
+          style="query"
+          type="xsd:string"
+          id="typeCode">
+      <doc xml:lang="en" title="Type Code">
+         The "typeCode" query parameter is used to categorize layers by a 
+         string so that layers can be matched with other layers that have the 
+         same type code.
+      </doc>
+   </param>
+
+   <!-- Representations -->
+   <!-- ................................................................... -->
+   
+   <!-- Resource Types -->
+   <!-- ................................................................... -->
+   <!-- Experiments -->
+   <resource_type id="listSDMExperiments">
+      <doc xml:lang="en" title="Experiments Resource">
+         The "experiments" service (without a specific experiment id) allows 
+         you to post a new experiment or list available experiments.  The
+         response of this service will match the "interface" parameter and may
+         be an ATOM feed, a JSON object, or XML.
+      </doc>
+      <param href="common.wadl#listInterface" /> 
+      <method name="GET" id="listExperiments">
+         <doc xml:lang="en" title="List Experiments">
+            Calling this service with a GET request will return a list of
+            experiments that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Experiments Request">
+               A request to the experiment listing service takes multiple
+               optional query parameters.  You can use these query parameters 
+               to narrow your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="#algorithmCode" />
+            <param href="common.wadl#beforeTime" />
+            <param href="#displayName" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="#occurrenceSetId" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#status" />
+            <param href="common.wadl#public" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Experiments Response">
+               The experiments list service response can return an ATOM feed, 
+               JSON object, or XML document based on the value of the interface
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+         
+      <method name="POST" id="postExperimentFromUrl">
+         <doc xml:lang="en" title="Post An Experiment From Url Parameters">
+            Calling this service with a POST request will attempt to post an
+            experiment from url query parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post Experiment From Url Request">
+               A request to post an experiment from url parameters must include 
+               multiple query parameters.
+            </doc>
+            <param name="occurrenceSetId" 
+                   required="true" 
+                   style="query"
+                   type="xsd:integer">
+               <doc xml:lang="en" title="Occurrence Set Id">
+                  The "occurrenceSetId" query parameter determines the 
+                  occurrence set to be used to provide points for the model.
+                  This parameter is required if a species is not specified.
+               </doc>
+            </param>
+            <param name="modelScenario" 
+                   required="true" 
+                   style="query"
+                   type="xsd:integer">
+               <doc xml:lang="en" title="Model Scenario">
+                  The "modelScenario" query parameter specifies what 
+                  environmental scenario to use when generating the model. 
+                  The value of this parameter should be the id number of the 
+                  scenario to use.
+               </doc>
+            </param>
+            <param name="projectionScenario" 
+                   repeating="true" 
+                   required="true"
+                   style="query" 
+                   type="xsd:integer">
+               <doc xml:lang="en" title="Projection Scenario">
+                  The "projectionScenario" query parameter specifies the 
+                  scenario to use when generating a projection.  The value of 
+                  the "projectionScenario" parameter should be the id number of 
+                  the scenario to be used for a projection.  Please note that 
+                  this scenario must be compatible with the scenario specified 
+                  by the "modelScenario" parameter.  To determine what 
+                  scenarios are compatible with the specified model scenario, 
+                  use the scenarios list service and set the "matchingScenario" 
+                  query parameter equal to the value used for modelScenario.  
+                  For example, if Scenario 32 is used for the model scenario, 
+                  you would find the compatible scenarios at: <xhtml:a 
+                  href="/services/sdm/scenarios/?matchingScenario=32">
+                  http://lifemapper.org/services/sdm/scenarios/?matchingScenario=32.
+                  </xhtml:a>
+                  <xhtml:br /><xhtml:br />
+                  The "projectionScenario" query parameter is repeatable, 
+                  meaning you can specify multiple projection scenarios by
+                  repeating the parameter.  For example, you can specify that a 
+                  projection should be created for scenario 1 and scenario 2 by 
+                  using "&amp;projectionScenario=1&amp;projectionScenario=2".
+               </doc>
+            </param>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Experiment From Url Response">
+               The experiment post service response can be an ATOM feed, JSON 
+               object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+         
+      <method name="POST" id="postExperimentFromBody">
+         <doc xml:lang="en" title="Post An Experiment From Message Body">
+            Calling this service with a POST request will attempt to post an 
+            experiment from the body of a POST request.  The POST body should 
+            be an XML document.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Experiment Post Request">
+               The body of the request should be XML containing all necessary 
+               parameters for posting an experiment.
+            </doc>
+            <representation mediaType="application/xml">
+               <doc xml:lang="en" title="XML Request">
+                  The XML body of the request should be a requestType element  
+                  defined at: <xhtml:a 
+                     href="http://lifemapper.org/schemas/serviceRequest.xsd">
+                     http://lifemapper.org/schemas/serviceRequest.xsd
+                  </xhtml:a>.  You can view a sample experiment post request 
+                  at: <xhtml:a href="/samples/sampleExperimentRequest.xml">
+                  http://lifemapper.org/samples/sampleExperimentRequest.xml
+                  </xhtml:a>.  The parameters element should contain all 
+                  of the parameters required for the experiment.
+               </doc>
+            </representation>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Experiment Post Response">
+               The experiment post service response can return an ATOM feed,
+               JSON object, or XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getSDMExperiment">
+      <doc xml:lang="en" title="Individual Experiment Resource">
+         The "experiments" service with the experiment id (itemId) specified
+         will return a specific experiment.  The interface parameter
+         specifies how the experiment will be returned.  Available options
+         are an ATOM feed, a JSON object, a KML document, or XML.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+         required="true" 
+         style="template" 
+         type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the experiment 
+            should be returned in.
+         </doc>
+         <option value="atom" mediaType="application/atom+xml">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml" mediaType="application/xml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json" mediaType="application/json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response 
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="kml" mediaType="application/vnd.google-earth.kml+xml">
+            <doc xml:lang="en" title="Kml Interface">
+               Setting the interface parameter to "kml" will set the response 
+               to return a KML document.
+            </doc>
+         </option>
+         <option value="status" mediaType="applicationXml">
+            <doc xml:lang="en" title="Status Interface">
+               Setting the interface parameter to "status" will set the 
+               response to return an XML document with status information.
+            </doc>
+         </option>
+         <option value="xml" mediaType="application/xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response 
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getExperiment">
+         <doc xml:lang="en" title="Get An Experiment">
+            Calling this service with a GET request will return a specific
+            experiment whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Experiment Request">
+               A request to the get individual experiment service does not
+               take any additional parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Experiment Response">
+               The get individual experiment service response can return an
+               ATOM feed, JSON object, KML document, or XML document based
+               on the value of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#kmlRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <!-- Layers -->
+   <resource_type id="listSDMLayers">
+      <doc xml:lang="en" title="Layers Resource">
+         The "layers" service (without a specific layer id) allows you to list 
+         available layers.  The response of this service will match the
+         "interface" parameter and may be an ATOM feed, a JSON object, or xml.
+      </doc>
+      <param href="common.wadl#listInterface" />
+
+      <method name="GET" id="listLayers">
+         <doc xml:lang="en" title="List Layers">
+            Calling this service with a GET request will return a list of 
+            layers that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Layers Request">
+               A request to the layers listing service takes multiple optional 
+               query parameters.  You can use these query parameters to narrow 
+               your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#isCategorical" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#public" />
+            <param href="#scenarioId" />
+            <param href="#typeCode" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Layers Response">
+               The layers list service response can return an ATOM feed, JSON 
+               object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postLayerFromBody">
+         <doc xml:lang="en" title="Post Layer from Request Body">
+            Calling this service with a POST request will attempt to post an
+            environmental layer from encoded url parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post layer request">
+               A request to post an environment layer must include multiple
+               query parameters.
+            </doc>
+            <param href="common.wadl#layerName" />
+            <param href="common.wadl#title" />
+            <param href="common.wadl#valUnits" />
+            <param href="common.wadl#startDate" />
+            <param href="common.wadl#endDate" />
+            <param href="common.wadl#cellUnits" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#keyword" />
+            <param href="common.wadl#layerType" />
+            <param href="common.wadl#description" />
+            <param href="common.wadl#resolution" />
+            <param href="common.wadl#isCategorical" />
+            <param href="common.wadl#dataFormat" />
+            <representation href="common.wadl#tiffRepresentation" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Environment Layer Response">
+               The layer post service response can return an ATOM feed, a JSON 
+               object, or an XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postLayerFromRemoteUrl">
+         <doc xml:lang="en" title="Post Layer from Remote URL">
+            Calling this service with a POST request will attempt to post an
+            environmental layer from encoded url parameters and retrieve the 
+            layer content from a remote server.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post layer request">
+               A request to post an environment layer must include multiple
+               query parameters.
+            </doc>
+            <param href="common.wadl#layerName" />
+            <param href="common.wadl#title" />
+            <param href="common.wadl#valUnits" />
+            <param href="common.wadl#startDate" />
+            <param href="common.wadl#endDate" />
+            <param href="common.wadl#cellUnits" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#keyword" />
+            <param href="common.wadl#layerType" />
+            <param href="common.wadl#description" />
+            <param href="common.wadl#resolution" />
+            <param href="common.wadl#layerUrl" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Environment Layer Response">
+               The layer post service response can return an ATOM feed, a JSON 
+               object, or an XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+
+   <resource_type id="listSDMScenarioLayers">
+      <doc xml:lang="en" title="Layers Resource">
+         The "scenario layers" service (without a specific layer id) allows you 
+         to list available layers in a scenario.  The response of this service
+         will match the "interface" parameter and may be an ATOM feed, a JSON 
+         object, or xml.
+      </doc>
+      <param href="common.wadl#listInterface" />
+      <param href="common.wadl#parentId" />
+      
+      <method name="GET" id="listScenarioLayers">
+         <doc xml:lang="en" title="List Layers">
+            Calling this service with a GET request will return a list of 
+            layers in a scenario that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Scenario Layers Request">
+               A request to the layers listing service takes multiple optional 
+               query parameters.  You can use these query parameters to narrow 
+               your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#isCategorical" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#public" />
+            <param href="#typeCode" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Scenario Layers Response">
+               The layers list service response can return an ATOM feed, JSON 
+               object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getSDMLayer">
+      <doc xml:lang="en" title="Get Layer Resource">
+         The "layers" service with the layer id (itemId) specified will return
+         a specific layer.  The interface parameter specifies how the layer 
+         will be returned.  Available options are an ATOM feed, a JSON object, 
+         a KML document, an image, or an XML document.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+                required="true" 
+                style="template" 
+                type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the layer should 
+            be returned in.
+         </doc>
+         <option value="ascii" mediaType="text/plain">
+            <doc xml:lang="en" title="ASCII Grid Interface">
+               Setting the interface parameter to "ascii" will set the response
+               to return an ASCII grid.
+            </doc>
+         </option>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="kml">
+            <doc xml:lang="en" title="Kml Interface">
+               Setting the interface parameter to "kml" will set the response 
+               to return a KML document.
+            </doc>
+         </option>
+         <option value="raw">
+            <doc xml:lang="en" title="Raw Interface">
+               Setting the interface parameter to "raw" will set the response
+               to return the layer in its raw, native format.
+            </doc>
+         </option>
+         <option value="tiff">
+            <doc xml:lang="en" title="Tiff Interface">
+               Setting the interface parameter to "tiff" will set the response
+               to return the file as a GeoTiff.
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getLayer">
+         <doc xml:lang="en" title="Get An Environmental Layer">
+            Calling this service with a GET request will return a specific
+            layer whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Layer Request">
+               A request to the get individual layer service does not take any
+               additional query parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Layer Response">
+               The get individual layer service response can return an ATOM 
+               feed, JSON object, KML document, image, or XML document based on
+               the value of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#asciiRepresentation" />
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#kmlRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+            <representation href="common.wadl#tiffRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+
+   <resource_type id="getSDMScenarioLayer">
+      <doc xml:lang="en" title="Get Scenario Layer Resource">
+         The "layers" service with the layer id (itemId) specified will return
+         a specific layer.  The interface parameter specifies how the layer 
+         will be returned.  Available options are an ATOM feed, a JSON object, 
+         a KML document, an image, or an XML document.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+         required="true" 
+         style="template" 
+         type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the layer should 
+            be returned in.
+         </doc>
+         <option value="ascii" mediaType="text/plain">
+            <doc xml:lang="en" title="ASCII Grid Interface">
+               Setting the interface parameter to "ascii" will set the response
+               to return an ASCII grid.
+            </doc>
+         </option>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="kml">
+            <doc xml:lang="en" title="Kml Interface">
+               Setting the interface parameter to "kml" will set the response 
+               to return a KML document.
+            </doc>
+         </option>
+         <option value="raw">
+            <doc xml:lang="en" title="Raw Interface">
+               Setting the interface parameter to "raw" will set the response
+               to return the layer in its raw, native format.
+            </doc>
+         </option>
+         <option value="tiff">
+            <doc xml:lang="en" title="Tiff Interface">
+               Setting the interface parameter to "tiff" will set the response
+               to return the file as a GeoTiff.
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getScenarioLayer">
+         <doc xml:lang="en" title="Get An Environmental Layer">
+            Calling this service with a GET request will return a specific
+            layer whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Layer Request">
+               A request to the get individual layer service does not take any
+               additional query parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Layer Response">
+               The get individual layer service response can return an ATOM 
+               feed, JSON object, KML document, image, or XML document based on
+               the value of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#asciiRepresentation" />
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#kmlRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+            <representation href="common.wadl#tiffRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <!-- Occurrence Sets -->
+   <resource_type id="listSDMOccurrenceSets">
+      <doc xml:lang="en" title="Occurrences Resource">
+         The "occurrences" service (without a specific occurrence set id) 
+         allows you to list available occurrence sets.  The response of this
+         service will match the "interface" template parameter and may be an
+         ATOM feed, a JSON object, or an XML document.
+      </doc>
+      <param href="common.wadl#listInterface" />
+      <method name="GET" id="listOccurrences">
+         <doc xml:lang="en" title="List Occurrence Sets">
+            Calling this service with a GET request will return a list of
+            occurrence sets that match the specified query parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Occurrences Request">
+               A request to the occurrences listing service takes multiple 
+               optional query parameters.  You can use these query parameters
+               to narrow your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="#hasProjections" />
+            <param href="#displayName" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#public" />
+            <param href="#minimumNumberOfPoints" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Occurrences Response">
+               The occurrences list service response can return an ATOM feed, a 
+               JSON object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postOccurrenceSetCSV">
+         <doc xml:lang="en" 
+              title="Post Occurrences From Message Body (CSV)">
+            Calling this service with a POST request will attempt to post an
+            occurrence set from the body of a POST request.  The POST body
+            should be in CSV format.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post occurrences From CSV request">
+               The body of the request should be CSV containing all of the
+               information for each occurrence point in the set. 
+            </doc>
+            <param href="#displayName" />
+            <param href="#pointsType" fixed="csv" />
+            <param href="common.wadl#layerName" />
+            <representation mediaType="text/csv">
+               <doc xml:lang="en" title="CSV Request">
+                  Each row in the CSV body of the request represents a point.  
+                  The order of columns should be: Id, Longitude, Latitude.  A 
+                  sample request can be found at: <xhtml:a 
+                  href="http://lifemapper.org/samples/samplePoints.csv">
+                     http://lifemapper.org/samples/samplePoints.csv
+                  </xhtml:a>.  It is <xhtml:b>strongly</xhtml:b> recommended 
+                  that you include a header row with your CSV request.  If it 
+                  is omitted, then a very basic request is assumed (localId, 
+                  longitude, latitude).  A sample of the minimum required
+                  request can be found at: <xhtml:a 
+                     href="/samples/samplePointsMin.csv">
+                     http://lifemapper.org/samples/samplePointsMin.csv
+                  </xhtml:a>.
+               </doc>
+            </representation>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Occurrences From CSV Response">
+               The occurrence set post service response can return an ATOM
+               feed, JSON object, or XML document based on the value of the
+               interface parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postOccurrenceSetShapefile">
+         <doc xml:lang="en" 
+              title="Post Occurrences From Message Body (Shapefile)">
+            Calling this service with a POST request will attempt to post an
+            occurrence set from the body of a POST request.  The POST body
+            should be a zip file containing shapefiles.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post occurrences From Shapefile request">
+               The body of the request should be a zipped shapefile containing
+               all of the information for each occurrence point in the set. 
+            </doc>
+            <param href="#displayName" />
+            <param href="#pointsType" fixed="shapefile" />
+            <param href="common.wadl#layerName" />
+            <representation mediaType="application/x-gzip">
+               <doc xml:lang="en" title="Shapefile Request">
+                  Each of the files composing the shapefile should be contained 
+                  in a zip file.  Each point should have the following 
+                  attributes: <xhtml:br />
+                  <xhtml:ul>
+                     <xhtml:li>
+                        <xhtml:b>canonical</xhtml:b> - The canonical name of 
+                        this occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>catnum</xhtml:b> - The catalog number of this 
+                        occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>collcode</xhtml:b> - The collection code
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>colldate</xhtml:b> - The date this occurrence 
+                        was collected (modified julian day)
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>coll</xhtml:b> - The collector for this 
+                        occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>guid</xhtml:b> - Guid for this occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>instcode</xhtml:b> - This institution code 
+                        providing this occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>latitude</xhtml:b> - The latitude of this 
+                        occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>localid</xhtml:b> - The local id of this 
+                        occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>longitude</xhtml:b> - The longitude of this 
+                        occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>modtime</xhtml:b> - The last time this 
+                        occurrence was modified (modified julian day)
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>provider</xhtml:b> - The name of the provider 
+                        for this occurrence
+                     </xhtml:li>
+                     <xhtml:li>
+                        <xhtml:b>resource</xhtml:b> - The name of the resource 
+                        for this occurrence
+                     </xhtml:li>
+                  </xhtml:ul>
+               </doc>
+            </representation>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Occurrences From Shapefile Response">
+               The occurrence set post service response can return an ATOM
+               feed, JSON object, or XML document based on the value of the
+               interface parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+      
+   <resource_type id="getSDMOccurrenceSet">
+      <doc xml:lang="en" title="Get An Occurrence Set Resource">
+         The "occurrences" service with the occurrence set id (itemId)  
+         specified will return a specific occurrence set.  The interface
+         parameter specifies how the occurrence set will be returned.   
+         Available options are an ATOM feed, comma-separated values, a JSON
+         object, a KML document, or an XML document.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+             required="true" 
+             style="template" 
+             type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the occurrence set
+            should be returned in.
+         </doc>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="csv">
+            <doc xml:lang="en" title="CSV Interface">
+               Setting the interface parameter to "csv" will set the response 
+               to return comma-separated values.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response 
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="kml">
+            <doc xml:lang="en" title="Kml Interface">
+               Setting the interface parameter to "kml" will set the response 
+               to return a KML document.
+            </doc>
+         </option>
+         <option value="shapefile">
+            <doc xml:lang="en" title="Shapefile Interface">
+               Setting the interface parameter to "shapefile" will set the 
+               response to return a zipped shapefile
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response 
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getOccurrenceSet">
+         <doc xml:lang="en" title="Get An Occurrence Set">
+            Calling this service with a GET request will return a specific
+            occurrence set whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Occurrence Set Request">
+               Getting an occurrence set for any interface does not require 
+               additional query parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Occurrence Set Response">
+               The get individual occurrence set service response can return an
+               ATOM feed, comma-separated values, a JSON object, a KML
+               document, an image, or XML document based on the value of the
+               interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#csvRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#kmlRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+            <representation href="common.wadl#shapefileRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+
+   <!-- Projections -->
+   <resource_type id="listSDMExperimentProjections">
+      <doc xml:lang="en" title="Experiment Projections Resource">
+         The "projections" service (without a specific projection id) allows
+         you to list available projections.  The response of this service will
+         match the "interface" template parameter and may be an ATOM feed, a 
+         JSON object, or an XML document.
+      </doc>
+      <param href="common.wadl#parentId" />
+      <param href="common.wadl#listInterface" />
+      <method name="GET" id="listExperimentProjections">
+         <doc xml:lang="en" title="List Experiment Projections">
+            Calling this service with a GET request will return a list of
+            projections for an experiment that match the specified query 
+            parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Experiment Projections Request">
+               A request to the projections listing service takes multiple
+               query parameters.  You can use these query parameters to narrow
+               your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="#algorithmCode" />
+            <param href="common.wadl#beforeTime" />
+            <param href="#displayName" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="#occurrenceSetId" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#public" />
+            <param href="common.wadl#status" />
+            <param href="#scenarioId" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Projections Response">
+               The projections list service response can return an ATOM feed, a 
+               JSON object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="listSDMProjections">
+      <doc xml:lang="en" title="Projections Resource">
+         The "projections" service (without a specific projection id) allows
+         you to list available projections.  The response of this service will
+         match the "interface" template parameter and may be an ATOM feed, a 
+         JSON object, or an XML document.
+      </doc>
+      <param href="common.wadl#listInterface" />
+      <method name="GET" id="listProjections">
+         <doc xml:lang="en" title="List Projections">
+            Calling this service with a GET request will return a list of
+            projections that match the specified query parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Projections Request">
+               A request to the projections listing service takes multiple
+               query parameters.  You can use these query parameters to narrow
+               your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#public" />
+            <param href="#algorithmCode" />
+            <param href="#displayName" />
+            <param href="common.wadl#epsgCode" />
+            <param href="#experimentId" />
+            <param href="common.wadl#fullObjects" />
+            <param href="#occurrenceSetId" />
+            <param href="common.wadl#status" />
+            <param href="#scenarioId" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Projections Response">
+               The projections list service response can return an ATOM feed, a 
+               JSON object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+
+   <resource_type id="getSDMExperimentProjection">
+      <doc xml:lang="en" title="Get An Experiment's Projection Resource">
+         The "projections" service with the projection id (itemId) specified
+         will return a specific projection.  The interface parameter specifies 
+         how the projection will be returned.  Available options are an ATOM 
+         feed, a JSON object, a KML document, or an XML document.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param href="common.wadl#parentId" />
+      <param name="interface" 
+             required="true" 
+             style="template" 
+             type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the projection 
+            should be returned in.
+         </doc>
+         <option value="ascii" mediaType="text/plain">
+            <doc xml:lang="en" title="ASCII Grid Interface">
+               Setting the interface parameter to "ascii" will set the response
+               to return an ASCII grid.
+            </doc>
+         </option>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response 
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="kml">
+            <doc xml:lang="en" title="Kml Interface">
+               Setting the interface parameter to "kml" will set the response 
+               to return a KML document.
+            </doc>
+         </option>
+         <option value="raw">
+            <doc xml:lang="en" title="Raw Interface">
+               Setting the interface parameter to "raw" will set the response
+               to return the layer in its raw, native format.
+            </doc>
+         </option>
+         <option value="status" mediaType="applicationXml">
+            <doc xml:lang="en" title="Status Interface">
+               Setting the interface parameter to "status" will set the 
+               response to return an XML document with status information.
+            </doc>
+         </option>
+         <option value="tiff" mediaType="iamge/tiff">
+            <doc xml:lang="en" title="Tiff Interface">
+               Setting the interface parameter to "tiff" will set the response
+               to return the file as a GeoTiff.
+            </doc>
+         </option>
+         <option value="xml" mediaType="application/xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response 
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getExperimentProjection">
+         <doc xml:lang="en" title="Get A Projection">
+            Calling this service with a GET request will return a specific
+            projection whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Projection Request">
+               The get an individual projection service does not take any query 
+               parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Projection Response">
+               The get individual projection service response can return an 
+               ATOM, JSON object, KML document, image, or XML document based on 
+               the value of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#asciiRepresentation" />
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#kmlRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+            <representation href="common.wadl#tiffRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getSDMProjection">
+      <doc xml:lang="en" title="Get A Projection Resource">
+         The "projections" service with the projection id (itemId) specified
+         will return a specific projection.  The interface parameter specifies 
+         how the projection will be returned.  Available options are an ATOM 
+         feed, a JSON object, a KML document, or an XML document.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+         required="true" 
+         style="template" 
+         type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the projection 
+            should be returned in.
+         </doc>
+         <option value="ascii" mediaType="text/plain">
+            <doc xml:lang="en" title="ASCII Grid Interface">
+               Setting the interface parameter to "ascii" will set the response
+               to return an ASCII grid.
+            </doc>
+         </option>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response 
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="kml">
+            <doc xml:lang="en" title="Kml Interface">
+               Setting the interface parameter to "kml" will set the response 
+               to return a KML document.
+            </doc>
+         </option>
+         <option value="raw">
+            <doc xml:lang="en" title="Raw Interface">
+               Setting the interface parameter to "raw" will set the response
+               to return the layer in its raw, native format.
+            </doc>
+         </option>
+         <option value="status" mediaType="applicationXml">
+            <doc xml:lang="en" title="Status Interface">
+               Setting the interface parameter to "status" will set the 
+               response to return an XML document with status information.
+            </doc>
+         </option>
+         <option value="tiff" mediaType="iamge/tiff">
+            <doc xml:lang="en" title="Tiff Interface">
+               Setting the interface parameter to "tiff" will set the response
+               to return the file as a GeoTiff.
+            </doc>
+         </option>
+         <option value="xml" mediaType="application/xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response 
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getProjection">
+         <doc xml:lang="en" title="Get A Projection">
+            Calling this service with a GET request will return a specific
+            projection whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Projection Request">
+               The get an individual projection service does not take any query 
+               parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Projection Response">
+               The get individual projection service response can return an 
+               ATOM, JSON object, KML document, image, or XML document based on 
+               the value of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#asciiRepresentation" />
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#kmlRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+            <representation href="common.wadl#tiffRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <!-- Scenarios -->
+   <resource_type id="listSDMScenarios">
+      <doc xml:lang="en" title="Scenarios Resource">
+         The "scenarios" service (without a specific scenario id) allows you to
+         list available scenarios.  The response of this service will match the 
+         "interface" template parameter and may be an ATOM feed, a JSON object, 
+         or an XML document.
+      </doc>
+      <param href="common.wadl#listInterface" />
+      <method name="GET" id="listScenarios">
+         <doc xml:lang="en" title="List Scenarios">
+            Calling this service with a GET request will return a list of
+            scenarios that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Scenarios Request">
+               A request to the scenarios listing service takes multiple
+               optional query parameters.  You can use these query parameters 
+               to narrow your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#public" />
+            <param href="common.wadl#keyword" />
+            <param href="#matchingScenario" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Scenarios Response">
+               The scenarios list service response can return an ATOM feed, 
+               JSON object, or XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postScenarioFromBody">
+         <doc xml:lang="EN" title="Post a Scenario from Message Body">
+           Calling this service with a POST request will attempt to post a
+           climate scenario from the XML contained in the body of the request.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post scenario request">
+               The body of the POST request should include all of the 
+               parameters necessary to post a scenario in XML.
+            </doc>
+            <representation href="lmXmlRequestRepresentation" />
+         </request>
+      </method>
+
+      <method name="POST" id="postScenarioFromUrlParameters">
+         <doc xml:lang="en" title="Post a Scenario from Url Parameters">
+            Calling this service with a POST request will attempt to post a
+            climate scenario from encoded url parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post scenario request">
+               A request to post a climate scenario must include multiple query
+               parameters.
+            </doc>
+            <param name="code"
+                   required="true"
+                   style="query"
+                   type="xsd:string">
+               <doc xml:lang="en" title="Scenario Code">
+                  The "code" query parameter sets the code to be used for the 
+                  climate scenario.
+               </doc>
+            </param>
+            <param href="common.wadl#title" />
+            <param name="author"
+                   required="false"
+                   style="query"
+                   type="xsd:string">
+               <doc xml:lang="en" title="Scenario Author">
+                  The "author" query parameter indicates the author of this 
+                  climate scenario.
+               </doc>
+            </param>
+            <param href="common.wadl#startDate" />
+            <param href="common.wadl#endDate" />
+            <param href="common.wadl#cellUnits" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#keyword" />
+            <param href="common.wadl#description" />
+            <param href="common.wadl#resolution" />
+            <param name="layer"
+                   repeating="true"
+                   required="true"
+                   style="query"
+                   type="xsd:string">
+               <doc xml:lang="en" title="Scenario Layer Id">
+                  The "layer" query parameter specifies the id number of a
+                  layer to be included in the climate scenario.  This 
+                  parameter is repeatable, so many environment layers can be
+                  specified.
+               </doc>
+            </param>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Climate Scenario Response">
+               The scenario post service response can return an ATOM feed, a
+               JSON object, or an XML document based on the value of the 
+               interface parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getSDMScenario">
+      <doc xml:lang="en" title="Get An Individual Scenario">
+         The "scenarios" service with the scenario id (itemId) specified will 
+         return a specific scenario.  The interface parameter specifies how the 
+         scenario will be returned.  Available options are an ATOM feed, a JSON 
+         object, or XML.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+             required="true" 
+             style="template" 
+             type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the scenario 
+            should be returned in.
+         </doc>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response 
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response 
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getScenario">
+         <doc xml:lang="en" title="Get A Scenario">
+            Calling this service with a a GET request will return a specific 
+            scenario whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Scenario Request">
+               A request to get the individual scenario service does not take
+               any additional query parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Scenario Response">
+               The get individual scenario service response can return an ATOM 
+               feed, JSON object, or XML document based on the value of the 
+               interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+
+   <!-- Type Codes -->
+   <resource_type id="listSDMTypeCodes">
+      <doc xml:lang="en" title="Type Codes Resource">
+         the "typecodes" service (without a specific type code id) allows you 
+         to list available type codes.  The response of this service will match 
+         the "interface" template parameter and may be an ATOM feed, a JSON 
+         object, or an XML document.
+      </doc>
+      <param href="common.wadl#listInterface" />
+      <method name="GET" id="listTypeCodes">
+         <doc xml:lang="en" title="List Type Codes">
+            Calling this service with a GET request will return a list of type
+            codes that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Type Codes Request">
+               A request to the type codes listing service takes multiple
+               optional query parameters.  You can use these query parameters 
+               to narrow your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#public" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Type Codes Response">
+               The type codes list service response can return an ATOM feed, 
+               JSON object, or XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+
+      <method name="POST" id="postTypeCodeFromUrlParameters">
+         <doc xml:lang="en" title="Post a Type Code from Url Parameters">
+            Calling this service with a POST request will attempt to post a
+            type code from encoded url parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post type code request">
+               A request to post a type code must include multiple query
+               parameters.
+            </doc>
+            <param name="code"
+                   required="true"
+                   style="query"
+                   type="xsd:string">
+               <doc xml:lang="en" title="Type Code Code">
+                  The "code" query parameter sets the code to be used for the 
+                  type code.  This is the name it will be referenced by.
+               </doc>
+            </param>
+            <param href="common.wadl#title" />
+            <param href="common.wadl#description" />
+            <param href="common.wadl#keyword" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Type Code Response">
+               The type code post service response can return an ATOM feed, a
+               JSON object, or an XML document based on the value of the 
+               interface parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getSDMTypeCode">
+      <doc xml:lang="en" title="Get A Type Code">
+         The "typecodes" service with the type code id (itemId) specified will 
+         return a specific type code.  The interface parameter specifies how 
+         the type code will be returned.  Available options are an ATOM feed, 
+         a JSON object, or XML.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+             required="true" 
+             style="template" 
+             type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the type code 
+            should be returned in.
+         </doc>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response 
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response 
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getTypeCode">
+         <doc xml:lang="en" title="Get A Type Code">
+            Calling this service with a a GET request will return a specific 
+            type code whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Type Code Request">
+               A request to get the individual type code service does not take
+               any additional query parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Type Code Response">
+               The get individual type code service response can return an ATOM 
+               feed, JSON object, or XML document based on the value of the 
+               interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+
+</application>

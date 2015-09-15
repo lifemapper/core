@@ -1,0 +1,38 @@
+[
+   {
+      "code":"ANN",
+      "name":"Artificial Neural Networks"
+   },
+   {
+      "code":"BIOCLIM",
+      "name":"Bioclim"
+   },
+   {
+      "code":"CSMBS",
+      "name":"Climate Space Model - Broken Stick"
+   },
+   {
+      "code":"ENVDIST",
+      "name":"Environmental Distance"
+   },
+   {
+      "code":"GARP",
+      "name":"openModeller GARP - Single Run"
+   },
+   {
+      "code":"GARP_BS",
+      "name":"openModeller GARP - Best Subsets"
+   },
+   {
+      "code":"DG_GARP",
+      "name":"DesktopGARP - Single Run"
+   },
+   {
+      "code":"DG_GARP_BS",
+      "name":"DesktopGARP - Best Subsets"
+   },
+   {
+      "code":"SVM",
+      "name":"Support Vector Machines"
+   }
+]

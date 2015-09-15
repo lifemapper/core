@@ -1,0 +1,28 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>RAD Randomize (Grady) with large CSV Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This is a test to make sure that CJ's randomization algorithm can operate
+      with large datasets.
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>True</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<Job>
+   <jobId>randomizeCJlarge</jobId>
+   <processType>333</processType>
+   <parentUrl>None</parentUrl>
+   <url>http://sporks.nhm.ku.edu/services/rad/experiments/529/buckets/651/pamsums/1303</url>
+   <userId>HuwPrice</userId>
+   <matrix>
+      <url>http://LmComputeTest/largePAM/csv</url>
+   </matrix>
+</Job>
+      ]]>
+   </jobXml>
+</testJob>

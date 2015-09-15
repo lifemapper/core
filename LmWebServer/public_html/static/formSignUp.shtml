@@ -1,0 +1,132 @@
+<div align="center" class="signup">
+   <form name="signup" action="/signup" method="post" 
+         onsubmit="return validateNewUser(this);">
+      <div align="center">
+	      <table>
+	         <tr>
+	            <td class="signupLabel">
+	               User Id:
+	            </td>
+	            <td class="signupInput">
+	               <input name="userId" id="userIdField" type="text" 
+	                                          onchange="checkUserName(this);" />
+	            </td>
+	            <td class="signupRequired">
+	               (Required)
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Email Address:
+	            </td>
+	            <td class="signupInput">
+	               <input name="email" id="emailField" type="text" 
+	                                             onchange="checkEmail(this);" />
+	            </td>
+	            <td class="signupRequired">
+	               (Required)
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               First Name:
+	            </td>
+	            <td class="signupInput">
+	               <input name="firstName" type="text" />
+	            </td>
+	            <td class="signupRequired">
+	               (Required)
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Last Name:
+	            </td>
+	            <td class="signupInput">
+	               <input name="lastName" type="text" />
+	            </td>
+	            <td class="signupRequired">
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Institution:
+	            </td>
+	            <td class="signupInput">
+	               <input name="institution" type="text" />
+	            </td>
+	            <td class="signupRequired">
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Address 1:
+	            </td>
+	            <td class="signupInput">
+	               <input name="address1" type="text" />
+	            </td>
+	            <td class="signupRequired">
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Address 2:
+	            </td>
+	            <td class="signupInput">
+	               <input name="address2" type="text" />
+	            </td>
+	            <td class="signupRequired">
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Address 3:
+	            </td>
+	            <td class="signupInput">
+	               <input name="address3" type="text" />
+	            </td>
+	            <td class="signupRequired">
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Phone Number:
+	            </td>
+	            <td class="signupInput">
+	               <input name="phone" type="text" />
+	            </td>
+	            <td class="signupRequired">
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Password:
+	            </td>
+	            <td class="signupInput">
+	               <input name="pword1" type="password" />
+	            </td>
+	            <td class="signupRequired">
+	               (Required)
+	            </td>
+	         </tr>
+	         <tr>
+	            <td class="signupLabel">
+	               Confirm Password:
+	            </td>
+	            <td class="signupInput">
+	               <input name="pword2" type="password" />
+	            </td>
+               <td class="signupRequired">
+                  (Required)
+               </td>
+            </tr>
+         </table>
+      </div>
+      <br />
+      <input name="tos" type="checkbox" /> 
+      I have read and agree to the 
+      <a href="/tos.shtml" target="_blank">terms of service</a>.<br />
+      <br />
+      <input type="submit" id="signUpButton" value="Sign Up!" /><br />
+   </form>
+</div>

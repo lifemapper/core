@@ -1,0 +1,214 @@
+#!/bin/bash
+#
+# This script is creates configuration files for postgres and pgbouncer. 
+# The script can be run at any time to remove all the previous configuration
+# and create a new one. 
+
+usage () 
+{
+    echo "Usage: $0"
+    echo "This script is run after lifemapper-server installation. It will:"
+    echo "     - download and install data named in config/site.ini"
+    echo "   "
+    echo "The script can be run at any time to add data and override configuration."
+}
+
+if [ $# -ne 0 ]; then
+    usage
+    exit 0
+fi 
+
+set_defaults() {
+    # db user
+    DBUSER=admin
+    # file to get password from
+    USERSFILE=@PKGROOT@/rocks/etc/users
+    LMURL="http://lifemapper.org/dl"
+    SITE_CONFIG_FILE=@LMHOME@/config/site.ini
+    GETINPUTPY=@LMHOME@/LmDbServer/populate/getInputData.py
+    POPULATEPY=@LMHOME@/LmDbServer/populate/initCatalog.py
+    CLIMATE_CMD=scenario
+    TAXONOMY_CMD=taxonomy
+    USER_CMD=user
+    CONFIG=@LMHOME@/config/config.ini
+
+    PG=`basename /etc/init.d/postgresql-*`
+    PROFILE=/var/lib/pgsql/.bash_profile
+    LOG=/tmp/`/bin/basename $0`.log
+    touch $LOG
+    BIN=@PKGROOT@/rocks/bin
+}
+
+### sets the password for db "admin" user to execute sql commands
+set_pass () {
+
+    # check if users file exists
+    if [ ! -f $USERSFILE ] ; then
+        echo "Error: missing file $USERSFILE" | tee -a $LOG
+        exit 1
+    fi
+
+    # check who is running the scipt
+    cat $USERSFILE > /dev/null
+    RETVAL=$?
+    if [ $RETVAL -ne 0 ]; then
+        echo "Error: You must be root to run this script"  | tee -a $LOG
+        exit 1
+    fi
+
+    # get the password from 'users' file
+    PASS=`grep $DBUSER $USERSFILE | awk '{print $2}'`
+    export PGPASSWORD=$PASS
+}
+
+### Add new taxonomy source, read and populate taxonomy table
+add_taxonomy () {
+    if [ -f $POPULATEPY ] ; then
+        echo "Running $POPULATEPY ..." | tee -a $LOG
+        /opt/python/bin/@PYTHONVER@ $POPULATEPY $ TAXONOMY_CMD 2>&1 | tee -a $LOG
+    else
+        "Error: Missing file $POPULATEPY" | tee -a $LOG
+        exit 1
+    fi
+    
+    if [ -f $TAXONOMYPY ] ; then
+        echo "Running $TAXONOMYPY ..." | tee -a $LOG
+        /opt/python/bin/@PYTHONVER@ $TAXONOMYPY 2>&1 | tee -a $LOG
+    else
+        echo "Notice: $TAXONOMYPY does not exist (this may be expected)" | tee -a $LOG
+        exit 1
+    fi
+}
+
+### Add new user
+add_user () {
+    if [ -f $POPULATEPY ] ; then
+        echo "Running $POPULATEPY ..." | tee -a $LOG
+        /opt/python/bin/@PYTHONVER@ $POPULATEPY $ USER_CMD 2>&1 | tee -a $LOG
+        
+    else
+        echo "Error: Missing file $POPULATEPY" | tee -a $LOG
+        exit 1
+    fi
+}
+
+### Add new scenarios based on metadata in 
+### @LMHOME@/LmDbServer/populate/metadata/bioclimMeta for SCENARIO_PACKAGE
+add_scenarios () {
+    if [ -f $POPULATEPY ] ; then        
+        echo "Add metadata for $SCEN_PKG ..." | tee -a $LOG
+        /opt/python/bin/@PYTHONVER@ $POPULATEPY $ CLIMATE_CMD 2>&1 | tee -a $LOG
+        
+    else
+        echo "Error: Missing file $POPULATEPY" | tee -a $LOG
+        exit 1
+    fi
+}
+
+### Retrieve taxonomy data named in TAXONOMY_FILENAME, catalog if successful
+get_taxonomy_data () {  
+  # get the TAXONOMY_FILENAME from 'site' configuration file (with .txt extension)
+  TAX_FILE=`grep TAXONOMY_FILENAME $SITE_CONFIG_FILE | grep -v ';' | awk '{print $2}'`
+  
+  LEN=`expr length $TAX_FILE`
+  # check if variable exists and file is not already present
+  if [ "$LEN" -gt 4 ] ; then
+
+    if [ ls $TAX_FILE.* >/dev/null 2>&1 ]; then
+      echo "Climate data $TAX_FILE already present" | tee -a $LOG
+    else
+      # remove .txt extension
+      let "NEWLEN=$LEN-4"
+      TAX_BASE=${TAX_FILE:0:NEWLEN}
+
+      echo "Fetch taxonomic data" | tee -a $LOG
+      curl -L "$LMURL/$TAX_BASE.@TARBALL_POSTFIX@ " -o @DATADIR@/species/$TAX_BASE.@TARBALL_POSTFIX@
+  
+      # uncompress and add to database
+      if [ -f @DATADIR@/species/$TAX_BASE.@TARBALL_POSTFIX@ ] ; then
+        tar xzf @DATADIR@/climate/$TAX_BASE.@TARBALL_POSTFIX@
+        add_taxonomy
+      else
+        echo "Failed to retrieve $TAX_BASE ..." | tee -a $LOG
+      fi 
+    fi
+  else
+    echo "TAXONOMY_FILENAME not set in @LMHOME@/config/site.ini" | tee -a $LOG
+  fi
+}
+
+### Retrieve species data named in OCCURRENCE_FILENAME
+get_species_data () {
+  # get the OCCURRENCE_FILENAME from 'site' configuration file
+  OCC_FILE=`grep OCCURRENCE_FILENAME $SITE_CONFIG_FILE | grep -v ';' | awk '{print $2}'`
+  echo "Looking for species data $OCC_FILE"   | tee -a $LOG
+
+  # remove .txt extension
+  LEN=`expr length $OCC_FILE`
+  let "NEWLEN=$LEN-4"
+  OCC_BASE=${OCC_FILE:0:NEWLEN}
+  
+  # check if variable exists and file is not already present
+  if [ "$LEN" -gt 4 ] ; then  
+    if [ ls $OCC_BASE.* >/dev/null 2>&1 ]; then
+      echo "Species data $OCC_BASE already present" | tee -a $LOG
+    else
+      echo "Fetch species data" | tee -a $LOG
+      curl -L "$LMURL/$OCC_BASE.@TARBALL_POSTFIX@ " -o @DATADIR@/species/$OCC_BASE.@TARBALL_POSTFIX@ 
+  
+      # uncompress 
+      if [ -f @DATADIR@/species/$OCC_BASE.@TARBALL_POSTFIX@ ] ; then
+        tar xzf @DATADIR@/climate/$OCC_BASE.@TARBALL_POSTFIX@
+      else
+        echo "Failed to retrieve $OCC_BASE ..." | tee -a $LOG
+      fi
+    fi
+  else
+    echo "OCCURRENCE_FILENAME not set in @LMHOME@/config/site.ini" | tee -a $LOG
+  fi
+}
+
+### Retrieve climate data named in SCENARIO_PACKAGE, catalog if successful
+get_climate_data () {
+  # get the SCENARIO_PACKAGE from 'site' configuration file
+  SCEN_PKG=`grep SCENARIO_PACKAGE $SITE_CONFIG_FILE | grep -v ';' | awk '{print $2}'`
+  echo "Looking for climate data $SCEN_PKG"   | tee -a $LOG
+  LEN=`expr length $SCEN_PKG`
+  
+  if [ "$LEN" -gt 0 ] ; then  
+    # find another way to determine presence (tar file is not present)
+    # todo: recreate scenario packages with topDir = packagename
+    if [ ls $SCEN_PKG.* >/dev/null 2>&1 ]; then
+      echo "Climate data $SCEN_PKG already present" | tee -a $LOG
+    else  
+      echo "Fetch climate data $SCEN_PKG" | tee -a $LOG
+      curl -L "$LMURL/$SCEN_PKG.@TARBALL_POSTFIX@" -o @DATADIR@/climate/$SCEN_PKG.@TARBALL_POSTFIX@ 
+  
+      # uncompress and add to database
+      if [ -f @DATADIR@/climate/$SCEN_PKG.@TARBALL_POSTFIX@ ] ; then
+        tar xzf @DATADIR@/climate/$SCEN_PKG.@TARBALL_POSTFIX@ 
+        add_scenarios
+      else
+        echo "Failed to retrieve $SCEN_PKG ..." | tee -a $LOG
+      fi
+   fi
+  else
+    echo "SCENARIO_PACKAGE not set in @LMHOME@/config/site.ini" | tee -a $LOG
+  fi
+}
+
+TimeStamp () {
+    echo $1 `/bin/date` >> $LOG
+}
+
+####### Main #######
+set_defaults
+set_pass
+TimeStamp "# Start"
+
+add_user
+get_climate_data
+get_species_data
+get_taxonomy_data
+
+TimeStamp "# End"

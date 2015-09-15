@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lm:request xmlns:lm="http://lifemapper.org"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://lifemapper.org 
+                                /schemas/serviceRequest.xsd">
+   <lm:algoParamsSet>
+      <lm:algorithmCode>Bioclim</lm:algorithmCode>
+      <lm:parameters>
+         <lm:standarddeviationcutoff>0.310</lm:standarddeviationcutoff>
+      </lm:parameters>   
+   </lm:algoParamsSet>
+</lm:request>

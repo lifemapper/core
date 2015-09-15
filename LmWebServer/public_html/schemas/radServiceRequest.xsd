@@ -1,0 +1,390 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://lifemapper.org"
+   xmlns:lmRad="http://lifemapper.org" elementFormDefault="qualified">
+   <xsd:annotation>
+      <xsd:documentation>
+         Schema definition for Lifemapper Range and Diversity service POST requests.
+         Version: 1.0
+         Author: CJ Grady
+         Contact: lifemapper@ku.edu
+      </xsd:documentation>
+   </xsd:annotation>
+   <xsd:element name="request" type="lmRad:requestType"/>
+   <xsd:complexType name="requestType">
+      <xsd:choice>
+         <xsd:element name="experiment" type="lmRad:experimentType"/>
+         <xsd:sequence>
+            <xsd:element name="experimentId" type="xsd:integer"/>
+            <xsd:element name="bucket" type="lmRad:bucketType"/>
+         </xsd:sequence>
+         <xsd:element name="shapegrid" type="lmRad:shapegridType" />
+      </xsd:choice>
+   </xsd:complexType>
+   <xsd:complexType name="experimentType">
+      <xsd:sequence>
+         <xsd:element name="name" type="xsd:string"/>
+         <xsd:element name="epsgCode" type="xsd:integer">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Integer representing the EPSG code for this experiment
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element minOccurs="0" maxOccurs="1" name="buckets" type="lmRad:bucketsType"/>
+         <xsd:element minOccurs="0" name="ancLayerSet" type="lmRad:ancLayerSetType"/>
+         <xsd:element minOccurs="0" name="paLayerSet" type="lmRad:paLayerSetType"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="bboxType">
+      <xsd:sequence>
+         <xsd:element name="minX" type="xsd:double"/>
+         <xsd:element name="minY" type="xsd:double"/>
+         <xsd:element name="maxX" type="xsd:double"/>
+         <xsd:element name="maxY" type="xsd:double"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="bucketsType">
+      <xsd:sequence>
+         <xsd:element maxOccurs="unbounded" minOccurs="0" name="bucket" type="lmRad:bucketType"/>
+      </xsd:sequence>
+   </xsd:complexType>
+
+   <xsd:complexType name="bucketType">
+      <xsd:sequence>
+         <xsd:choice>
+            <xsd:element name="shapeGridId" type="xsd:integer"/>
+            <xsd:element name="shapeGrid" type="lmRad:shapegridType"/>
+         </xsd:choice>
+         <xsd:element name="keywords">
+            <xsd:simpleType>
+               <xsd:list itemType="xsd:string"/>
+            </xsd:simpleType>
+         </xsd:element>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="ancLayerSetType">
+      <xsd:sequence minOccurs="0">
+         <xsd:element name="ancLayer" type="lmRad:ancLayerType" maxOccurs="unbounded" minOccurs="0" />
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="paLayerSetType">
+      <xsd:sequence minOccurs="0">
+         <xsd:element maxOccurs="unbounded" minOccurs="0" name="paLayer" type="lmRad:paLayerType"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="layerType" abstract="true">
+      <xsd:sequence>
+         <xsd:element name="name" type="xsd:string"/>
+         <xsd:element name="title" type="xsd:string"/>
+         <xsd:choice>
+            <xsd:element name="bounds" type="xsd:string"/>
+            <xsd:element name="bbox" type="lmRad:bboxType"/>
+         </xsd:choice>
+         <xsd:element name="startDate" type="xsd:dateTime"/>
+         <xsd:element name="endDate" type="xsd:dateTime"/>
+         <xsd:element name="mapUnits" type="xsd:string"/>
+         <xsd:element name="resolution" type="xsd:double"/>
+         <xsd:element name="keywords">
+            <xsd:simpleType>
+               <xsd:list itemType="xsd:string"/>
+            </xsd:simpleType>
+         </xsd:element>
+         <xsd:element name="epsgCode" type="xsd:integer">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Integer representing the native EPSG code of this layer
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="description" type="xsd:string"/>
+         <xsd:element name="layerUrl" type="xsd:string"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="paLayerType">
+      <xsd:sequence>
+         <xsd:choice>
+            <xsd:element name="layerId" type="xsd:integer"/>
+            <xsd:element name="layer" type="lmRad:layerType"/>
+         </xsd:choice>
+         <xsd:element name="parameters" type="lmRad:paLayerParamsType"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="ancLayerType">
+      <xsd:sequence>
+         <xsd:choice>
+            <xsd:element name="layerId" type="xsd:integer"/>
+            <xsd:element name="raster" type="lmRad:rasterType"/>
+            <xsd:element name="vector" type="lmRad:vectorType"/>
+         </xsd:choice>
+         <xsd:element name="parameters" type="lmRad:ancLayerParamsType"/>
+      </xsd:sequence>
+   </xsd:complexType>
+
+   <xsd:complexType name="ancLayerParamsType">
+      <xsd:annotation>
+         <xsd:documentation>
+            Parameters used to determine the value of the cells in an 
+            ancillary layer.
+         </xsd:documentation>
+      </xsd:annotation>
+      <xsd:sequence>
+         <xsd:element name="attrValue" type="xsd:string">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Field name of the attribute with the value of interest
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="calculateMethod">
+            <xsd:annotation>
+               <xsd:documentation>
+                  The method to be used when calculating the value of each cell
+               </xsd:documentation>
+            </xsd:annotation>
+            <xsd:simpleType>
+               <xsd:restriction base="xsd:string">
+                  <xsd:enumeration value="weightedMean">
+                     <xsd:annotation>
+                        <xsd:documentation>
+                           Use the weighted mean to calculate the cell value.
+                        </xsd:documentation>
+                     </xsd:annotation>
+                  </xsd:enumeration>
+                  <xsd:enumeration value="largestClass">
+                     <xsd:annotation>
+                        <xsd:documentation>
+                           Use the largest class in a cell to identify a cell's
+                           value.
+                        </xsd:documentation>
+                     </xsd:annotation>
+                  </xsd:enumeration>
+               </xsd:restriction>
+            </xsd:simpleType>
+         </xsd:element>
+         <xsd:element name="minPercent" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Minimum area of a cell which must be covered by a class for 
+                  it to qualify as the largest class.  If no class has the 
+                  minimum percent, the cell is classified as NO DATA.  Only 
+                  applicable of using largestClass.
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+      </xsd:sequence>
+   </xsd:complexType>
+
+   <xsd:complexType name="paLayerParamsType">
+      <xsd:annotation>
+         <xsd:documentation>
+            Parameters used to determine presence and / or absence for a layer
+         </xsd:documentation>
+      </xsd:annotation>
+      <xsd:sequence>
+         <xsd:element name="attrPresence" type="xsd:string">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Field name of attribute denoting presence
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="minPresence" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Minimum data value identifying presence.
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="maxPresence" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Maximum data value identifying presence.
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="percentPresence" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Percent of presence within a cell for it to be considered
+                  present.
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="attrAbsence" type="xsd:string">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Field name of the attribute denoting absence
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="minAbsence" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Minimum data value identifying absence.
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="maxAbsence" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Maximum data value identifying absent.
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="percentAbsence" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Percent of absence within a cell for it to be considered
+                  absent.
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+      </xsd:sequence>
+   </xsd:complexType>
+
+   <xsd:complexType name="vectorType">
+      <xsd:complexContent>
+         <xsd:extension base="lmRad:layerType">
+            <xsd:sequence>
+               <xsd:element name="ogrType">
+                  <xsd:annotation>
+                     <xsd:documentation>
+                        OGR type codes can be found at:
+                        http://www.gdal.org/ogr/ogr__core_8h.html
+                        
+                        We support:
+                        wkbPoint = 1, wkbLineString = 2, wkbPolygon = 3,
+                        wkbMultiPoint = 4, wkbMultiLineString = 5, 
+                        wkbMultiPolygon = 6,
+                     </xsd:documentation>
+                  </xsd:annotation>
+               </xsd:element>
+               <xsd:element name="dataFormat" type="xsd:string">
+                  <xsd:annotation>
+                     <xsd:documentation>
+                        OGR Vector format codes can be found at: 
+                        http://www.gdal.org/ogr/ogr_formats.html
+                     </xsd:documentation>
+                  </xsd:annotation>
+               </xsd:element>
+               <xsd:element minOccurs="0" name="valueAttribute" type="xsd:string"/>
+            </xsd:sequence>
+         </xsd:extension>
+      </xsd:complexContent>
+   </xsd:complexType>
+
+   <xsd:complexType name="rasterType">
+      <xsd:complexContent>
+         <xsd:extension base="lmRad:layerType">
+            <xsd:sequence>
+               <xsd:element name="gdalType">
+                  <xsd:annotation>
+                     <xsd:documentation>
+                        GDAL type codes can be found at: 
+                        http://www.gdal.org/gdal_8h.html
+                        
+                        We support:
+                        GDT_Unknown = 0, GDT_Byte = 1, GDT_UInt16 = 2, GDT_Int16 = 3,
+                        GDT_UInt32 = 4, GDT_Int32 = 5, GDT_Float32 = 6, GDT_Float64 = 7,
+                        GDT_CInt16 = 8, GDT_CInt32 = 9, GDT_CFloat32 = 10, GDT_CFloat64 = 11
+                     </xsd:documentation>
+                  </xsd:annotation>
+               </xsd:element>
+               <xsd:element name="dataFormat" type="xsd:string">
+                  <xsd:annotation>
+                     <xsd:documentation>
+                        GDAL Raster format codes can be found at: 
+                        http://www.gdal.org/formats_list.html
+                     </xsd:documentation>
+                  </xsd:annotation>
+               </xsd:element>
+            </xsd:sequence>
+         </xsd:extension>
+      </xsd:complexContent>
+   </xsd:complexType>
+
+   <xsd:complexType name="shapegridType">
+      <xsd:annotation>
+         <xsd:documentation>
+            Type definition for a new shape grid.
+         </xsd:documentation>
+      </xsd:annotation>
+      <xsd:sequence>
+         <xsd:element name="name" type="xsd:string">
+            <xsd:annotation>
+               <xsd:documentation>
+                  The name of this shape grid
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="cellShape">
+            <xsd:annotation>
+               <xsd:documentation>
+                  The desired shape of the cells for the new shape grid.  Can
+                  either be 'square' or 'hexagon'.
+               </xsd:documentation>
+            </xsd:annotation>
+            <xsd:simpleType>
+               <xsd:restriction base="xsd:string">
+                  <xsd:enumeration value="square"/>
+                  <xsd:enumeration value="hexagon"/>
+               </xsd:restriction>
+            </xsd:simpleType>
+         </xsd:element>
+         <xsd:element name="cellSize" type="xsd:double">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Cell size in map units.  For hexagonal cells, this is the 
+                  distance between two verticies. 
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:element name="mapUnits">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Units of map coordinates. These are keywords as used in 
+                  mapserver, choice of 
+                  [feet|inches|kilometers|meters|miles|nauticalmiles|dd],
+               </xsd:documentation>
+            </xsd:annotation>
+            <xsd:simpleType>
+               <xsd:restriction base="xsd:string">
+                  <xsd:enumeration value="feet"/>
+                  <xsd:enumeration value="inches"/>
+                  <xsd:enumeration value="kilometers"/>
+                  <xsd:enumeration value="meters"/>
+                  <xsd:enumeration value="miles"/>
+                  <xsd:enumeration value="nauticalmiles"/>
+                  <xsd:enumeration value="dd"/>
+               </xsd:restriction>
+            </xsd:simpleType>
+         </xsd:element>
+         <xsd:element name="epsgCode" type="xsd:integer">
+            <xsd:annotation>
+               <xsd:documentation>
+                  Integer representing the native EPSG code of this layer
+               </xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
+         <xsd:choice>
+            <xsd:element name="bounds">
+               <xsd:annotation>
+                  <xsd:documentation>
+                     Comma-separated values in the form:
+                     minX, minY, maxX, maxY
+                  </xsd:documentation>
+               </xsd:annotation>
+               <xsd:simpleType>
+                  <xsd:restriction base="xsd:string">
+                     <xsd:pattern
+                        value="([0-9])*(\.([0-9])*)?,([0-9])*(\.([0-9])*)?,([0-9])*(\.([0-9])*)?,([0-9])*(\.([0-9])*)?"
+                     />
+                  </xsd:restriction>
+               </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="bbox" type="lmRad:bboxType"/>
+         </xsd:choice>
+      </xsd:sequence>
+   </xsd:complexType>
+
+</xsd:schema>

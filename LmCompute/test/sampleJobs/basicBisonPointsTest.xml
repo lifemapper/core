@@ -1,0 +1,30 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>Basic BISON Occurrences Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This is a simple test to make sure that BISON occurrence sets are created 
+      successfully
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>True</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<job>
+   <jobType>410</jobType>
+   <processType>410</processType>
+   <jobId>sampleBISONpoints</jobId>
+   <parentUrl>None</parentUrl>
+   <url>None</url>
+   <userId>lm2</userId>
+   <maxPoints>1000</maxPoints>
+   <!-- Aimee, fill this in with a sample url -->
+   <!-- http://bisonapi.usgs.ornl.gov/solr/occurrences/select/?q=decimalLongitude:[-125+TO+-66]+AND+decimalLatitude:[24+TO+50]+NOT+basisOfRecord:living+NOT+basisOfRecord:fossil+AND+hierarchy_homonym_string:*-100637-*&rows=5000000&json.nl=arrarr&wt=json    &rows=5000000&json.nl=arrarr&wt=json-->
+   <pointsUrl>http://bisonapi.usgs.ornl.gov/solr/occurrences/select/?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil+AND+hierarchy_homonym_string%3A%2A-100267-%2A</pointsUrl>
+</job>
+      ]]>
+   </jobXml>
+</testJob>

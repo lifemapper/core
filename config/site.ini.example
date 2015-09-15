@@ -1,0 +1,80 @@
+; .............................................................................
+; Lifemapper configuration file for site-specific parameters 
+; This file must be renamed config.site.ini and placed in the same directory as 
+;   LIFEMAPPER_CONFIG_FILE
+; NOTE: For list variables, separate with commas, one line
+; NOTE: This particular version is for badenov
+; .............................................................................
+
+[LmCommon - common]
+ARCHIVE_USER:  lm2
+
+[LmServer - environment]
+DATASOURCE: GBIF
+
+[LmServer - registeredcompute]
+COMPUTE_NAME: 
+COMPUTE_IP: 
+COMPUTE_CONTACT_USERID:
+COMPUTE_CONTACT_EMAIL:
+COMPUTE_CONTACT_FIRSTNAME:
+COMPUTE_CONTACT_LASTNAME:
+COMPUTE_INSTITUTION:
+COMPUTE_ADDR1:
+COMPUTE_ADDR2: 
+COMPUTE_ADDR3: 
+
+; ...............................................
+; LmBackend-gt
+; ...............................................
+[LmBackend - SMTP]
+SMTP_SERVER: smtp.ku.edu
+SMTP_SENDER: lifemapper@ku.edu
+
+; ...............................................
+[LmServer - pipeline]
+; KU values
+DEFAULT_ALGORITHMS: BIOCLIM,ATT_MAXENT
+DEFAULT_MODEL_SCENARIO:  WC-10min
+DEFAULT_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
+SCENARIO_PACKAGE: 10min-past-present-future
+TAXONOMY_FILENAME: gbif_taxonomy.txt
+OCCURRENCE_FILENAME: gbif_merged.txt
+
+; iDigBio values
+;; DEFAULT_ALGORITHMS: BIOCLIM,ATT_MAXENT
+;; DEFAULT_MODEL_SCENARIO:  WC-10min
+;; DEFAULT_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
+;; SCENARIO_PACKAGE: 10min-past-present-future
+
+; BISON values
+;; DEFAULT_ALGORITHMS: ATT_MAXENT
+;; DEFAULT_MODEL_SCENARIO: WC-30sec-CONUS
+;; DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-CONUS,CCSM4-RCP4.5-2050-30sec-CONUS,CCSM4-RCP4.5-2070-30sec-CONUS,CCSM4-RCP8.5-2050-30sec-CONUS
+;; SCENARIO_PACKAGE: 30sec-present-future-CONUS
+
+; ...............................................
+; LmCompute
+; ...............................................
+[LmCompute - contact]
+INSTITUTION_NAME: University of Kansas Biodiversity Institute
+ADMIN_NAME: Aimee Stewart
+ADMIN_EMAIL: aimeestewart@ku.edu 
+LOCAL_MACHINE_ID: 
+
+; ...............................................
+[LmCompute - Job Retrievers]
+JOB_RETRIEVER_KEYS: lifemapperJobServer,dir1
+
+; ...............lifemapperJobServer.................
+[LmCompute - Job Retrievers - lifemapperJobServer]
+RETRIEVER_TYPE: server
+JOB_SERVER: http://svc.lifemapper.org/jobs
+PULL_THRESHOLD: 50
+NUM_TO_PULL: 50
+
+; ...............dir1.................
+[LmCompute - Job Retrievers - dir1]
+RETRIEVER_TYPE: directory
+JOB_DIR: /home/lmwriter/holdJobs/
+

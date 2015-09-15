@@ -1,0 +1,34 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>RAD Build ShapeGrid Square (Large) Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This is a test to make sure that the RAD build shapegrid process works 
+      correctly with a large number of square cells.  This test attempts to 
+      create a shapegrid with approximately 1 million cells, which is larger
+      than our current usage.
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>True</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<Job>
+   <jobId>basicShapegridSquareLargeTest</jobId>
+   <processType>305</processType>
+   <parentUrl>None</parentUrl>
+   <url>http://sporks.nhm.ku.edu/services/rad/layers/1234</url>
+   <userId>HuwPrice</userId>
+   <minX>-180.0</minX>
+   <minY>-90.0</minY>
+   <maxX>180.0</maxX>
+   <maxY>90.0</maxY>
+   <cellSize>.25</cellSize>
+   <epsgCode>4326</epsgCode>
+   <cellSides>4</cellSides>
+</Job>
+      ]]>
+   </jobXml>
+</testJob>

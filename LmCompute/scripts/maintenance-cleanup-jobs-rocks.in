@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Remove jobs from nodes where directories are older than some amount of time
+
+rocks run host "find @LMDISK@/jobs/* -type d -mtime +7 -exec rm -rf {} \;"
+ 

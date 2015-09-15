@@ -1,0 +1,70 @@
+This help file explains each of the configuration parameters in your 
+configuration .ini file.  It is broken up into sections that match the headers
+in the configuration file.
+
+=====================================
+= 1. The [LmCompute - contact] section          =
+= 2. The [LmCompute - environment] section      =
+= 3. The [LmCompute - commands] section         =
+= 4. The plugins sections:          =
+=   4.1. The [LmCompute - plugins - openModeller] section =
+=   4.2. The [LmCompute - plugins - maxent] section       =
+= 5. The [LmCompute - options] section          =
+= 6. The [LmCompute - metrics] section          =
+=====================================
+
+1. The [LmCompute - contact] section
+========================
+   INSTITUTION_NAME - The name of the institution running this installation.  
+                         eg. University of Kansas - Biodiversity Institute 
+   ADMIN_NAME - The name of the administrator of this machine
+   ADMIN_EMAIL - The email address of the administrator
+   LOCAL_MACHINE_ID - The name of this machine
+
+2. The [LmCompute - environment] section
+============================
+   PLUGINS_DIR - The location of the plugins folder [/var/lm/LmCompute/plugins] 
+   APP_PATH - The location of your application executables [/var/lm/apps/]
+   JOB_DATA_PATH - Where to store input data [/var/lm/data/] 
+   JOB_OUTPUT_PATH - Where to store job files [/var/lm/jobs/] 
+   LM_USER_JOB - The Lifemapper user to run jobs for.  This can be a comma 
+                    separated list [lm2]
+   PYTHON_CMD - The path to the Python executable to use [python]
+   TEMPORARY_FILE_PATH - A location to store temporary files [/var/lm/temp/]
+
+3. The [LmCompute - commands] section
+=========================
+   GDALINFO_CMD - The path to the 'gdalinfo' command [gdalinfo]
+
+4. The plugins sections
+=======================
+
+  4.1. The [LmCompute - plugins - openModeller] section
+  ===============================
+     DEFAULT_LOG_LEVEL - The default log level for openModeller [debug]
+     OM_MODEL_CMD - The name of the openModeller modeling binary [om_model]
+     OM_PROJECT_CMD - The name of the openModeller projection binary [om_project]
+     OM_VERSION - The version of openModeller installed [1.3.0]
+
+  4.2. The [LmCompute - plugins - maxent] section
+  =========================
+     JAVA_CMD - The command to run the java executable [java -cp]
+     ME_CMD - The name of the Maxent jar file (in your applications directory) 
+                 [maxent.jar]
+     MDL_TOOL - The Maxent modeling tool [density.MaxEnt]
+     PRJ_TOOL - The Maxent projection tool [density.Project]
+     ME_VERSION - The version of Maxent installed [3.3.3k]
+  
+5. The [LmCompute - options] section
+========================
+     STORE_LOG_FILES - A boolean value indicating if log files should be 
+                          collected [False]
+     LOG_STORAGE_LOCATION - If log files are to be stored, they should be 
+                               stored at this location []
+                               
+6. The [LmCompute - metrics] section
+========================
+     STORE_METRICS - A boolean value indicating if metrics should be collected 
+                        [True]
+     METRICS_STORAGE_DIRECTORY - The location to store metrics files 
+                                    [/var/lm/metrics]

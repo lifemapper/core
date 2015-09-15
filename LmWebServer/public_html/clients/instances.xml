@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<instances>
+   <instance name="Lifemapper">
+      <baseUrl>http://lifemapper.org</baseUrl>
+      <version>4.0</version>
+      <minimumClientVersion>3.1.0</minimumClientVersion>
+      <maximumClientVersion>3.1.0</maximumClientVersion>
+   </instance>
+   <instance name="iDigBio">
+      <baseUrl>http://rosie.lifemapper.org</baseUrl>
+      <version>4.0</version>
+      <minimumClientVersion>3.1.0</minimumClientVersion>
+      <maximumClientVersion>3.1.0</maximumClientVersion>
+   </instance>
+   <instance name="BISON">
+      <baseUrl>http://mercury.lifemapper.org</baseUrl>
+      <version>4.0</version>
+      <minimumClientVersion>3.1.0</minimumClientVersion>
+      <maximumClientVersion>3.1.0</maximumClientVersion>
+   </instance>
+</instances>

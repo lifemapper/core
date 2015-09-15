@@ -1,0 +1,86 @@
+MAP
+##_MAPNAME_## 
+  STATUS ON
+  DEBUG ON
+  SIZE 600 300
+##_EXTENT_##
+  UNITS dd
+  IMAGECOLOR 0 0 0
+##_SYMBOLSET_##
+
+##_PROJECTION_##
+  
+  # Make sure to create this directory with proper permissionson the webserver
+  WEB
+    IMAGEPATH "/var/www/tmp/"
+    IMAGEURL "/tmp/"
+    LOG "/var/www/tmp/mslogfile.txt"
+
+##_MAP_METADATA_##
+
+  END 
+  
+##_LAYERS_##
+
+  #-------------------------------------------------------------------------
+  QUERYMAP
+    STATUS ON
+    STYLE HILITE
+  END
+  
+  #-------------------------------------------------------------------------
+  # GIF, PNG, and TIFF support transparency
+OUTPUTFORMAT
+  NAME gif
+  DRIVER "GD/GIF"
+  MIMETYPE "image/gif"
+  IMAGEMODE PC256
+  EXTENSION "gif"
+  FORMATOPTION "GDAL/*"
+  # FORMATOPTION "FILENAME=result.gif"
+END
+
+OUTPUTFORMAT
+  NAME png
+  DRIVER "AGG/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  EXTENSION "png"
+  FORMATOPTION "INTERLACE=OFF"
+  # FORMATOPTION "FILENAME=result.png"
+END
+
+OUTPUTFORMAT
+  NAME jpeg
+  # Could use "AAG/JPEG"
+  DRIVER "GDAL/JPEG"
+  MIMETYPE "image/jpeg"
+  IMAGEMODE RGB
+  EXTENSION "jpg"
+  FORMATOPTION "GDAL/*"
+  # FORMATOPTION "FILENAME=result.jpg"
+END
+
+# GD/WBMP is not supported in Mapserver 6+
+# Old maps must be rewritten without it!
+
+OUTPUTFORMAT
+  NAME GTiff
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE FLOAT32
+  EXTENSION "tif"
+  FORMATOPTION "GDAL/*"
+  # FORMATOPTION "FILENAME=result.tif"
+END
+
+OUTPUTFORMAT
+  NAME AAIGRID
+  DRIVER "GDAL/AAIGRID"
+  MIMETYPE "image/x-aaigrid"
+  IMAGEMODE INT16
+  EXTENSION "asc"
+  # FORMATOPTION "FILENAME=result.asc"
+END
+END #of map file
+

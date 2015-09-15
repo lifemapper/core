@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# @author: CJ Grady
+# @lastModified: 2013/08/07 12:10
+# @summary: This script will check Lifemapper urls for errors
+#           Update 2013-06-27, now checks Specify assumptions as well
+#           Update 2013-07-15, now performs a time test for SDM jobs too
+# @license: gpl2
+# @copyright: Copyright (C) 2013, University of Kansas Center for Research
+#  
+#            Lifemapper Project, lifemapper [at] ku [dot] edu, 
+#            Biodiversity Institute,
+#            1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
+#     
+#            This program is free software; you can redistribute it and/or modify 
+#            it under the terms of the GNU General Public License as published by 
+#            the Free Software Foundation; either version 2 of the License, or (at 
+#            your option) any later version.
+#    
+#            This program is distributed in the hope that it will be useful, but 
+#            WITHOUT ANY WARRANTY; without even the implied warranty of 
+#            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+#            General Public License for more details.
+#    
+#            You should have received a copy of the GNU General Public License 
+#            along with this program; if not, write to the Free Software 
+#            Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
+#            02110-1301, USA.
+
+# Set environment in case it is not already set
+. /etc/profile.d/lifemapper.sh
+
+# Have to export PYTHONPATH or the modules will not be found
+export PYTHONPATH=@LMHOME@:@LMHOME@/LmClient/LmPython/lifemapper
+
+@PYBIN@  @LMHOME@/LmWebServer/scripts/checkLmWeb.py
+

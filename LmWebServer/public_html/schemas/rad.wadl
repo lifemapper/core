@@ -1,0 +1,1177 @@
+<?xml version="1.0"?>
+<application
+    xmlns="http://wadl.dev.java.net/2009/02" 
+    xmlns:lm="http://lifemapper.org"
+    xmlns:xhtml="http://www.w3.org/1999/xhtml" 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://wadl.dev.java.net/2009/02 wadl.xsd">
+   
+   <!-- Parameters -->
+   <!-- ................................................................... -->
+   <param name="addHeaders"
+          required="false"
+          style="query"
+          type="xsd:integer"
+          id="addHeaders">
+      <doc xml:lang="en" title="Add Headers">
+         If this parameter is set to 1, column headers and cell centroids will
+         be added to the Pam(sum) csv response.
+      </doc>
+   </param>
+   
+   <param name="cellShape"
+          required="true"
+          style="query"
+          type="xsd:string"
+          id="cellShape">
+      <doc xml:lang="en" title="Cell Shape">
+         Specifies the shape of the cells in the new grid.  Valid options are
+         "hexagon" and "square".
+      </doc>
+   </param>
+   
+   <param name="cellSides"
+          required="false"
+          style="query"
+          type="xsd:integer"
+          id="cellSides">
+      <doc xml:lang="en" title="Cell Sides">
+         This query parameter indicates that only results with this number of
+         cell sides should be returned.  6 for hexagonal grid cells, 4 for 
+         square grid cells.
+      </doc>
+   </param>
+   
+   <param name="cellSize"
+          required="true"
+          style="query"
+          type="xsd:double"
+          id="cellSize">
+      <doc xml:lang="en" title="Cell Size">
+         This query parameter specifies the size of the cells for the new grid
+         in "mapUnits".
+      </doc>
+   </param>
+
+   <param name="cutout"
+          required="false"
+          style="query"
+          type="xsd:string"
+          id="cutout">
+      <doc xml:lang="en" title="Shapegrid Cutout">
+         This should be set to well-known text representing the polygon(s) that 
+         should be used to mask the new shapegrid.
+      </doc>
+   </param>
+   
+   <param name="randomized"
+          required="false"
+          style="query"
+          type="xsd:integer"
+          id="randomized">
+      <doc xml:lang="en" title="Randomized">
+         Setting the "randomized" query parameter to 1 will limit the objects
+         returned to those that are randomized.
+      </doc>
+   </param>
+   
+   <param name="randomMethod"
+          required="false"
+          style="query"
+          type="xsd:integer"
+          id="randomMethod">
+      <doc xml:lang="en" title="Randomization Method">
+         Setting the "randomMethod query parameter to 0 will limit to pamsums 
+         that are not randomized, 1 for randomized by swap, 2 for randomized by
+         splotch.
+      </doc>
+   </param>
+   
+   <param name="shapegridId"
+          required="false"
+          style="query"
+          type="xsd:integer"
+          id="shapegridId">
+      <doc xml:lang="en" title="Shapegrid Id">
+         Using the "shapegridId" query parameter will limit the objects 
+         returned to those that use this shapegrid
+      </doc>
+   </param>
+   
+   <param name="shapegridName"
+      required="false"
+      style="query"
+      type="xsd:integer"
+      id="shapegridName">
+      <doc xml:lang="en" title="Shapegrid Name">
+         Using the "shapegridName" query parameter will limit the objects 
+         returned to those that use this shapegrid
+      </doc>
+   </param>
+   
+   <!-- Representations -->
+   <!-- ................................................................... -->
+   <representation id="lmXmlRadRequestRepresentation"
+                   element="lm:RequestType"
+                   mediaType="application/xml">
+      <doc xml:lang="en" title="XML Request">
+         The XML body of the request should be a requestType element defined 
+         at: 
+         <xhtml:a href="http://lifemapper.org/schemas/radServiceRequest.xsd">
+            http://lifemapper.org/schemas/serviceRequest.xsd
+         </xhtml:a>.  The parameters element should contain all of the 
+         parameters required for the request.
+      </doc>
+   </representation>
+
+   <!-- Resource Types -->
+   <!-- ................................................................... -->
+   <!-- Experiments -->
+   <resource_type id="listRADExperiments">
+      <doc xml:lang="en" title="Experiments Resource">
+         The "experiments" service (without a specific experiment id) allows 
+         you to post a new experiment or list available experiments.  The
+         response of this service will match the "interface" parameter and may
+         be an ATOM feed, a JSON object, or XML.
+      </doc>
+      <param href="common.wadl#listInterface" /> 
+      <method name="GET" id="listExperiments">
+         <doc xml:lang="en" title="List Experiments">
+            Calling this service with a GET request will return a list of
+            experiments that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Experiments Request">
+               A request to the experiment listing service takes multiple
+               optional query parameters.  You can use these query parameters 
+               to narrow your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#page" />
+            <param href="common.wadl#perPage" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Experiments Response">
+               The experiments list service response can return an ATOM feed, 
+               JSON object, or XML document based on the value of the interface
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+         
+      <method name="POST" id="postExperimentFromUrl">
+         <doc xml:lang="en" title="Post An Experiment From Url Parameters">
+            Calling this service with a POST request will attempt to post an
+            experiment from url query parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post Experiment From Url Request">
+               A request to post an experiment from url parameters must include 
+               multiple query parameters.
+            </doc>
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#name" />
+            <param href="common.wadl#email" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Experiment From Url Response">
+               The experiment post service response can be an ATOM feed, JSON 
+               object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+         
+      <method name="POST" id="postExperimentFromBody">
+         <doc xml:lang="en" title="Post An Experiment From Message Body">
+            Calling this service with a POST request will attempt to post an 
+            experiment from the body of a POST request.  The POST body should 
+            be an XML document.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Experiment Post Request">
+               The body of the request should be XML containing all necessary 
+               parameters for posting an experiment.
+            </doc>
+            <representation mediaType="application/xml">
+               <doc xml:lang="en" title="XML Request">
+                  The XML body of the request should be a requestType element  
+                  defined at: <xhtml:a 
+                     href="http://lifemapper.org/schemas/radServiceRequest.xsd">
+                     http://lifemapper.org/schemas/radServiceRequest.xsd
+                  </xhtml:a>.  The parameters element should contain all 
+                  of the parameters required for the experiment.
+               </doc>
+            </representation>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Experiment Post Response">
+               The experiment post service response can return an ATOM feed,
+               JSON object, or XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getRADExperiment">
+      <doc xml:lang="en" title="Individual Experiment Resource">
+         The "experiments" service with the experiment id (itemId) specified
+         will return a specific experiment.  The interface parameter
+         specifies how the experiment will be returned.  Available options
+         are an ATOM feed, a JSON object, a KML document, or XML.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+         required="true" 
+         style="template" 
+         type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the experiment 
+            should be returned in.
+         </doc>
+         <option value="atom" mediaType="application/atom+xml">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml" mediaType="application/xml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json" mediaType="application/json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response 
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="xml" mediaType="application/xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response 
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getExperiment">
+         <doc xml:lang="en" title="Get An Experiment">
+            Calling this service with a GET request will return a specific
+            experiment whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Experiment Request">
+               A request to the get individual experiment service does not
+               take any additional parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Experiment Response">
+               The get individual experiment service response can return an
+               ATOM feed, JSON object, KML document, or XML document based
+               on the value of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <!-- Buckets -->
+   <resource_type id="listRADBuckets">
+      <doc xml:lang="en" title="Buckets Resource">
+         The "buckets" service (without a specific bucket id) allows you to 
+         list available buckets.  The response of this service will match the
+         "interface" parameter and may be an ATOM feed, a JSON object, or xml.
+      </doc>
+      <param href="common.wadl#parentId" />
+      <param href="common.wadl#listInterface" />
+      
+      <method name="GET" id="listBuckets">
+         <doc xml:lang="en" title="List Buckets">
+            Calling this service with a GET request will return a list of 
+            buckets for the specified experiment that match the query 
+            parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Buckets Request">
+               A request to the buckets listing service takes multiple optional 
+               query parameters.  You can use these query parameters to narrow 
+               your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#fullObjects" />
+            <param href="#shapegridId" />
+            <param href="#shapegridName" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Buckets Response">
+               The buckets list service response can return an ATOM feed, JSON 
+               object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postBucketFromBody">
+         <doc xml:lang="en" title="Post Bucket from Request Body">
+            Calling this service with a POST request will attempt to post a
+            bucket from XML in the body of the request.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post bucket request">
+               A request to post a bucket must include multiple parameters in 
+               the XML document.
+            </doc>
+            <representation mediaType="application/xml" element="request" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Bucket Response">
+               The bucket post service response can return an ATOM feed, a JSON 
+               object, or an XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getRADBucket">
+      <doc xml:lang="en" title="Get Bucket Resource">
+         The "buckets" service with the bucket id (itemId) specified will 
+         return a specific bucket.  The interface parameter specifies how the 
+         bucket will be returned.  Available options are an ATOM feed, a JSON 
+         object, a KML document, an image, or an XML document.
+      </doc>
+      <param href="common.wadl#parentId" />
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+         required="true" 
+         style="template" 
+         type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the bucket should 
+            be returned in.
+         </doc>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="csv">
+            <doc xml:lang="en" title="CSV Interface">
+               Setting the interface parameter to "csv" will set the response
+               to return a CSV document.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="shapefile">
+            <doc xml:lang="en" title="Shapefile Interface">
+               Setting the interface parameter to "shapefile" will set the 
+               response to return a zipped shapefile
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getBucket">
+         <doc xml:lang="en" title="Get A Bucket">
+            Calling this service with a GET request will return a specific
+            bucket whose id matches the itemId specified in the url and whose
+            experiment id matches the parentId specified.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Bucket Request">
+               A request to the get individual bucket service does not take any
+               additional query parameters.
+            </doc>
+            <param href="#addHeaders" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Bucket Response">
+               The get individual bucket service response can return an ATOM 
+               feed, JSON object, shapefile, or XML document based on the value 
+               of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#csvRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#shapefileRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+
+   <!-- Layers -->
+   <resource_type id="listRADLayers">
+      <doc xml:lang="en" title="Layers Resource">
+         The "layers" service (without a specific layer id) allows you to list 
+         available layers.  The response of this service will match the
+         "interface" parameter and may be an ATOM feed, a JSON object, or xml.
+      </doc>
+      <param href="common.wadl#listInterface" />
+      
+      <method name="GET" id="listLayers">
+         <doc xml:lang="en" title="List Layers">
+            Calling this service with a GET request will return a list of 
+            layers that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Layers Request">
+               A request to the layers listing service takes multiple optional 
+               query parameters.  You can use these query parameters to narrow 
+               your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#queryLayerId" />
+            <param href="common.wadl#queryLayerName" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Layers Response">
+               The layers list service response can return an ATOM feed, JSON 
+               object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postLayerFromBody">
+         <doc xml:lang="en" title="Post Layer from Request Body">
+            Calling this service with a POST request will attempt to post an
+            environmental layer from encoded url parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post layer request">
+               A request to post a layer must include multiple query parameters.
+            </doc>
+            <param href="common.wadl#bbox" />
+            <param href="common.wadl#layerName" />
+            <param href="common.wadl#layerUrl" />
+            <param href="common.wadl#title" />
+            <param href="common.wadl#startDate" />
+            <param href="common.wadl#endDate" />
+            <param href="common.wadl#mapUnits" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#keyword" />
+            <param href="common.wadl#description" />
+            <param href="common.wadl#resolution" />
+            <param href="common.wadl#dataFormat" />
+            <param href="common.wadl#valueAttribute" />
+            <param href="common.wadl#isRaster" />
+            <param href="common.wadl#isVector" />
+            <representation href="common.wadl#tiffRepresentation" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Environment Layer Response">
+               The layer post service response can return an ATOM feed, a JSON 
+               object, or an XML document based on the value of the interface 
+               parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getRADLayer">
+      <doc xml:lang="en" title="Get Layer Resource">
+         The "layers" service with the layer id (itemId) specified will return
+         a specific layer.  The interface parameter specifies how the layer 
+         will be returned.  Available options are an ATOM feed, a JSON object, 
+         a KML document, an image, or an XML document.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+         required="true" 
+         style="template" 
+         type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the layer should 
+            be returned in.
+         </doc>
+         <option value="ascii" mediaType="text/plain">
+            <doc xml:lang="en" title="ASCII Grid Interface">
+               Setting the interface parameter to "ascii" will set the response
+               to return an ASCII grid.  Only if the layer is a raster.
+            </doc>
+         </option>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="csv">
+            <doc xml:lang="en" title="CSV Interface">
+               Setting the interface parameter to "csv" will set the response
+               to return the layer as a csv.  Only if this is a vector layer.
+            </doc>
+         </option>
+         <option value="eml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="kml">
+            <doc xml:lang="en" title="Kml Interface">
+               Setting the interface parameter to "kml" will set the response 
+               to return a KML document.
+            </doc>
+         </option>
+         <option value="raw">
+            <doc xml:lang="en" title="Raw Interface">
+               Setting the interface parameter to "raw" will set the response
+               to return the layer in its raw, native format.  Only if the 
+               layer is a raster.
+            </doc>
+         </option>
+         <option value="shapefile">
+            <doc xml:lang="en" title="Shapefile Interface">
+               Setting the interface parameter to "shapefile" will set the
+               response to return the layer as a zipped shapefile.  Only if the
+               layer is a vector layer.
+            </doc>
+         </option>
+         <option value="tiff" mediaType="image/tiff">
+            <doc xml:lang="en" title="Tiff Interface">
+               Setting the interface parameter to "tiff" will set the response
+               to return the file as a GeoTiff.  Only if the image is a raster
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getLayer">
+         <doc xml:lang="en" title="Get An Environmental Layer">
+            Calling this service with a GET request will return a specific
+            layer whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Layer Request">
+               A request to the get individual layer service does not take any
+               additional query parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Layer Response">
+               The get individual layer service response can return an ATOM 
+               feed, JSON object, KML document, image, or XML document based on
+               the value of the interface template parameter.
+            </doc>
+            <representation href="common.wadl#asciiRepresentation" />
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#csvRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#kmlRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+            <representation href="common.wadl#shapefileRepresentation" />
+            <representation href="common.wadl#tiffRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <!-- Pamsums -->
+   <resource_type id="listRADPamsums">
+      <doc xml:lang="en" title="Pamsums Resource">
+         The "pamsums" service (without a specific pamsum id) allows you to 
+         list available pamsums.  The response of this service will match the
+         "interface" parameter and may be an ATOM feed, a JSON object, or xml.
+      </doc>
+      <param href="common.wadl#grandparentId" />
+      <param href="common.wadl#parentId" />
+      <param href="common.wadl#listInterface" />
+      
+      <method name="GET" id="listPamsums">
+         <doc xml:lang="en" title="List Pamsums">
+            Calling this service with a GET request will return a list of 
+            pamsums for the specified bucket in the specified experiment that 
+            match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Pamsums Request">
+               A request to the pamsums listing service takes multiple optional 
+               query parameters.  You can use these query parameters to narrow 
+               your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="common.wadl#fullObjects" />
+            <param href="#randomized" />
+            <param href="#randomMethod" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Pamsums Response">
+               The pamsums list service response can return an ATOM feed, JSON 
+               object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getRADPamsum">
+      <doc xml:lang="en" title="Get Pamsum Resource">
+         The "pamsums" service with the pamsum id (itemId) specified will 
+         return a specific pamsum.  The interface parameter specifies how the 
+         pamsum will be returned.  Available options are an ATOM feed, a JSON 
+         object, or an XML document.
+      </doc>
+      <param href="common.wadl#grandparentId" />
+      <param href="common.wadl#parentId" />
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+         required="true" 
+         style="template" 
+         type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the pamsum should 
+            be returned in.
+         </doc>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="csv">
+            <doc xml:lang="en" title="CSV Interface">
+               Setting the interface parameter to "csv" will set the response 
+               to return a CSV file.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getPamsum">
+         <doc xml:lang="en" title="Get A Pamsum">
+            Calling this service with a GET request will return a specific
+            pamsum whose id matches the itemId specified in the url and whose
+            bucket id matches the parentId specified and experiment id matches
+            the grandparentId specified.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Pamsum Request">
+               A request to the get individual pamsum service does not take any
+               additional query parameters.
+            </doc>
+            <param href="#addHeaders" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Pamsum Response">
+               The get individual pamsum service response can return an ATOM 
+               feed, JSON object, or XML document based on the value of the 
+               interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#csvRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <!-- Shapegrids -->
+   <resource_type id="listRADShapegrids">
+      <doc xml:lang="en" title="Shapegrids Resource">
+         The "shapegrids" service (without a specific shapegrid id) allows you 
+         to list available shapegrid layers.  The response of this service will 
+         match the "interface" parameter and may be an ATOM feed, a JSON 
+         object, or xml.
+      </doc>
+      <param href="common.wadl#listInterface" />
+      
+      <method name="GET" id="listShapegrids">
+         <doc xml:lang="en" title="List Shapegrids">
+            Calling this service with a GET request will return a list of 
+            shapegrids that match the query parameters you specify.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="List Shapegrids Request">
+               A request to the shapegrids listing service takes multiple 
+               optional query parameters.  You can use these query parameters 
+               to narrow your results to what you are interested in.
+            </doc>
+            <param href="common.wadl#afterTime" />
+            <param href="common.wadl#beforeTime" />
+            <param href="#cellSides" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#fullObjects" />
+            <param href="common.wadl#queryLayerId" />
+            <param href="common.wadl#queryLayerName" />
+            <param href="common.wadl#perPage" />
+            <param href="common.wadl#page" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="List Shapegrids Response">
+               The shapegrids list service response can return an ATOM feed, 
+               JSON object, or XML document based on the value of the interface 
+               template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postShapegridFromUrl">
+         <doc xml:lang="en" title="Post Shapegrid from Url Parameters">
+            Calling this service with a POST request will attempt to post a
+            shapegrid layer from encoded url parameters.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post shapegrid request">
+               A request to post a shapegrid must include multiple query 
+               parameters.
+            </doc>
+            <param href="common.wadl#name" />
+            <param href="#cellShape" />
+            <param href="#cellSize" />
+            <param href="common.wadl#mapUnits" />
+            <param href="common.wadl#epsgCode" />
+            <param href="common.wadl#bbox" />
+            <param href="#cutout" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Shapegrid Layer Response">
+               The shapegrid post service response can return an ATOM feed, a 
+               JSON object, or an XML document based on the value of the 
+               interface parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+      <method name="POST" id="postShapegridFromXml">
+         <doc xml:lang="en" title="Post Shapegrid from Request Body Xml">
+            Calling this service with a POST request will attempt to post a
+            shapegrid layer from xml.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Post shapegrid request">
+               A request to post a shapegrid must include multiple parameters 
+               in the xml body.
+            </doc>
+            <representation href="#lmXmlRadRequestRepresentation" />
+         </request>
+         <response>
+            <doc xml:lang="en" title="Post Shapegrid Layer Response">
+               The shapegrid post service response can return an ATOM feed, a 
+               JSON object, or an XML document based on the value of the 
+               interface parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="400">
+            <doc xml:lang="en" title="Bad Request">
+               If the post request does not include all of the required 
+               parameters, or if any of the parameters are out of range, an 
+               HTTP 400 error (Bad Request) will be returned.  The error 
+               document will be returned as an HTML page.
+            </doc>
+            <representation href="common.wadl#http400Representation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+      </method>
+   </resource_type>
+   
+   <resource_type id="getRADShapegrid">
+      <doc xml:lang="en" title="Get Shapegrid Resource">
+         The "shapegrid" service with the shapegrid id (itemId) specified will 
+         return a specific shapegrid.  The interface parameter specifies how 
+         the shapegrid will be returned.  Available options are an ATOM feed, a 
+         JSON object, or an XML document.
+      </doc>
+      <param href="common.wadl#itemId" />
+      <param name="interface" 
+             required="true" 
+             style="template" 
+             type="xsd:string">
+         <doc xml:lang="en" title="Interface Parameter">
+            The interface parameter specifies what interface the layer should 
+            be returned in.
+         </doc>
+         <option value="atom">
+            <doc xml:lang="en" title="Atom Interface">
+               Setting the interface parameter to "atom" will set the response 
+               to return an ATOM feed.
+            </doc>
+         </option>
+         <option value="eml" mediaType="application/xml">
+            <doc xml:lang="en" title="EML Interface">
+               Setting the interface parameter to "eml" will set the response 
+               to return an EML document.
+            </doc>
+         </option>
+         <option value="html" mediaType="text/html">
+            <doc xml:lang="en" title="HTML interface">
+               Setting the interface parameter to "html" will set the response 
+               to return an XML document that may be transformed to HTML 
+               depending on your client.
+            </doc>
+         </option>
+         <option value="json">
+            <doc xml:lang="en" title="Json Interface">
+               Setting the interface parameter to "json" will set the response
+               to return a JSON document.
+            </doc>
+         </option>
+         <option value="xml">
+            <doc xml:lang="en" title="Xml Interface">
+               Setting the interface parameter to "xml" will set the response
+               to return an XML document.
+            </doc>
+         </option>
+      </param>
+      <method name="GET" id="getShapegrid">
+         <doc xml:lang="en" title="Get A Shapegrid Layer">
+            Calling this service with a GET request will return a specific
+            shapegrid whose id matches the itemId specified in the url.
+         </doc>
+         <request>
+            <doc xml:lang="en" title="Get Shapegrid Request">
+               A request to the get individual shapegrid layer service does not 
+               take any additional query parameters.
+            </doc>
+         </request>
+         <response>
+            <doc xml:lang="en" title="Get Shapegrid Response">
+               The get individual layer service response can return an ATOM 
+               feed, JSON object, or XML document based on the value of the 
+               interface template parameter.
+            </doc>
+            <representation href="common.wadl#atomRepresentation" />
+            <representation href="common.wadl#emlRepresentation" />
+            <representation href="common.wadl#htmlRepresentation" />
+            <representation href="common.wadl#jsonRepresentation" />
+            <representation href="common.wadl#lmXmlRepresentation" />
+         </response>
+         <response status="403">
+            <doc xml:lang="en" title="Not Authenticated Response">
+               If a HTTP 403 error (Not Authenticated) is returned, the 
+               currently logged in user (or anonymous) does not have permission 
+               to access the requested resource.
+            </doc>
+            <representation href="common.wadl#http403Representation" />
+         </response>
+         <response status="404">
+            <doc xml:lang="en" title="Not Found Response">
+               If a HTTP 404 error (Not Found) is returned, the resource 
+               requested does not exist. 
+            </doc>
+            <representation href="common.wadl#http404Representation" />
+         </response>
+      </method>
+   </resource_type>
+</application>

@@ -1,0 +1,27 @@
+<div class="loginDiv" align="center">
+   <form action="/login" method="post">
+      <div align="center">
+         <table>
+            <tr>
+               <td style="text-align: right;">
+                  User Name: 
+               </td>
+               <td style="text-align: left;">
+                  <input type="text" name="username" />
+               </td>
+            </tr>
+            <tr>
+               <td style="text-align: right;">
+                  Password:
+               </td>
+               <td style="text-align: left;">
+                  <input type="password" name="pword" />
+               </td>
+            </tr>
+         </table>
+      </div>
+      <input type="submit" value="Log In" /><br /><br />
+      New user? <a href="/signup">Sign up</a> here!<br /><br />
+      Forgot your password? Contact us at lifemapper at ku dot edu.<br />
+   </form>
+</div>

@@ -1,0 +1,45 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>One Raster Layer RAD Intersect Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This test makes sure that RAD intersects work with only one raster layer
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>True</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<job>
+   <processType>310</processType>
+   <jobId>oneLayerIntersectRaster</jobId>
+   <parentUrl>None</parentUrl>
+   <url>None</url>
+   <userId>lm2</userId>
+   <shapegrid>
+      <url>http://LmComputeTest/test/shapegrid/shapefile</url>
+      <localIdIndex>0</localIdIndex>
+   </shapegrid>
+   <layerSet>
+      <layer>
+         <index>0</index>
+         <url>http://LmComputeTest/services/rad/layers/raster1/GTiff</url>
+         <isRaster>True</isRaster>
+         <resolution>0.25</resolution>
+         <isOrganism>True</isOrganism>
+         <attrPresence>pixel</attrPresence>
+         <minPresence>12.0</minPresence>
+         <maxPresence>254.0</maxPresence>
+         <percentPresence>4</percentPresence>
+         <attrAbsence />
+         <minAbsence />
+         <maxAbsence />
+         <percentAbsence />
+       </layer>
+   </layerSet>
+</job>
+      ]]>
+   </jobXml>
+</testJob>

@@ -1,0 +1,75 @@
+SYMBOLSET
+
+SYMBOL
+  NAME "cross"
+  TYPE vector
+  POINTS
+    2 0
+    2 4
+    -99 -99
+    0 2
+    4 2
+  END 
+END
+
+SYMBOL
+  NAME "line-horizontal"
+  TYPE vector
+  POINTS
+    1 0.5
+    1 0.5
+  END
+END
+
+#2
+SYMBOL
+  NAME "line-vertical"
+  TYPE vector
+  POINTS
+    0.5 0
+    0.5 1
+  END
+END
+
+SYMBOL
+  NAME "triangle"
+  TYPE vector
+  POINTS
+    0 4
+    2 0
+    4 4
+    0 4
+  END
+END
+
+SYMBOL
+  NAME "circle"
+  TYPE ellipse
+  FILLED false
+  POINTS
+    1 1
+  END
+END
+
+SYMBOL
+  NAME "filledcircle"
+  TYPE ellipse
+  FILLED true
+  POINTS
+    1 1
+  END
+END
+
+SYMBOL
+  NAME 'line'
+  TYPE VECTOR
+  POINTS 1 1 END
+  FILLED true
+END
+
+SYMBOL
+  NAME 'hatch'
+  TYPE HATCH
+END
+
+END

@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://lifemapper.org"
+            xmlns:lm="http://lifemapper.org" 
+            elementFormDefault="qualified">
+   
+   <xsd:annotation>
+      <xsd:documentation>
+         Schema definitions for Lifemapper Type Code Objects.
+         Version: 2.0.1
+         Author: CJ Grady
+         Contact: lifemapper@ku.edu
+      </xsd:documentation>
+   </xsd:annotation>
+
+   <xsd:complexType name="sdmTypeCodeType">
+ 	   <xsd:all>
+         <xsd:element name="LMModuleType"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+             
+         <xsd:element name="RESTServiceType"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+         
+         <xsd:element name="createTime" 
+                      type="xsd:string" 
+                      maxOccurs="1" 
+                      minOccurs="1" />
+
+         <xsd:element name="id" 
+                      type="xsd:string" 
+                      maxOccurs="1" 
+                      minOccurs="1" />
+
+         <xsd:element name="metadataUrl" 
+                      type="xsd:string" 
+                      maxOccurs="1" 
+                      minOccurs="1" />
+
+         <xsd:element name="modTime" 
+                      type="xsd:string" 
+                      maxOccurs="1" 
+                      minOccurs="1" />
+
+         <xsd:element name="parametersModTime"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                         
+         <xsd:element name="user" 
+                      type="xsd:string" 
+                      maxOccurs="1" 
+                      minOccurs="1" />
+
+         <xsd:element name="typeCode"
+                        type="xsd:string"
+                        maxOccurs="1"
+                        minOccurs="1" />
+        
+         <xsd:element name="typeDescription" 
+                      type="xsd:string" 
+                      maxOccurs="1" 
+                      minOccurs="1" />
+
+         <xsd:element name="typeKeywords" 
+                      type="lm:typeKeywordsType"
+                      maxOccurs="1" 
+                      minOccurs="1" />
+          
+         <xsd:element name="typeTitle" 
+                      type="xsd:string" 
+                      maxOccurs="1" 
+                      minOccurs="1" />
+
+      </xsd:all>
+   </xsd:complexType>
+   
+   <xsd:complexType name="typeKeywordsType">
+      <xsd:sequence>
+         <xsd:element name="typeKeyword" 
+                      type="xsd:string" 
+                      maxOccurs="unbounded" 
+                      minOccurs="0"/>
+      </xsd:sequence>
+   </xsd:complexType>
+
+</xsd:schema>

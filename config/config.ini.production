@@ -1,0 +1,155 @@
+; .............................................................................
+; Lifemapper configuration file for installation-specific parameters
+; LIFEMAPPER_CONFIG_FILE will be set upon installation and saved as an 
+;    environment variable
+; NOTE: For list variables, separate with commas, one line
+; .............................................................................
+
+; .............................................................................
+; PRE-INSTALL
+; .............................................................................
+; Use the following in a version.mk file to fill in local variables with 'make'
+; (below are SDSC rocks-204 values)
+;PKGROOT       : /opt/lifemapper
+;LMHOME        : /opt/lifemapper/lmserver
+;MAPSERVER_TMP : /var/www/tmp
+;LMWEB         : /var/lib/lm2
+;DATADIR       : /share/lmserver/data
+;TEMPDIR       : /tmp
+;PYTHONVER     : python2.7
+;PGSQLVER      : 9.1
+;LMDISK        : /share/lm
+
+; .............................................................................
+; LmCommon 
+; .............................................................................
+[LmCommon - common]
+ENCODING:  utf-8
+OGC_SERVICE_URL: http://svc.lifemapper.org/ogc
+WEBSERVICES_ROOT: http://svc.lifemapper.org
+
+; .............................................................................
+; LmServer
+; .............................................................................
+[LmServer - environment]
+APP_PATH: /share/apps/lm2/
+DATA_PATH: /share/data/ 
+TEMP_PATH: /tmp
+MAPSERVER_ROOT: http://svc.lifemapper.org
+
+; ...............................................
+[LmServer - pipeline]
+POINT_COUNT_MIN: 30
+POINT_COUNT_MAX: 1000
+WORKER_JOB_LIMIT: 50
+TAXONOMY_FILENAME: gbif_taxonomy.txt
+OCCURRENCE_FILENAME: gbif_merged.txt
+PROVIDER_FILENAME: gbif_orgs.csv
+MARINE_FILENAME: marinelist.txt
+TSN_FILENAME: bison_species_tsns.txt
+BINOMIAL_FILENAME: iDigBio_20150513.txt
+
+; ...............................................
+[LmServer - dbserver]
+CONNECTION_PORT: 6432
+DB_HOSTNAME: hera.nhm.ku.edu
+
+; ...............................................
+[LmServer - webserver]
+LM_LIB_PATH: /var/lib/lm2
+WEB_HOSTNAME:  hermes.nhm.ku.edu
+
+; .............................................................................
+; LmCompute
+; .............................................................................
+[LmCompute - commands]
+GDALINFO_CMD: @PKGROOT@/bin/gdalinfo
+PYTHON_CMD: @PYBIN@
+
+; ...............................................
+[LmCompute - environment]
+APP_PATH: @LMHOME@/bin/
+JOB_DATA_PATH: @LMDISK@/data/
+JOB_OUTPUT_PATH: @LMDISK@/jobs/
+JOB_REQUEST_DIR: @LMDISK@/jobRequests/
+PLUGINS_DIR: @LMHOME@/LmCompute/plugins
+SAMPLE_JOBS_PATH: @LMDISK@/test/sampleJobs
+SAMPLE_LAYERS_PATH: @LMDISK@/test/data/layers/testLayers.txt
+SAMPLE_DATA_PATH: @LMDISK@/test/jobData
+TEMPORARY_FILE_PATH: @LMDISK@/temp/
+
+; ...............................................
+[LmCompute - metrics]
+METRICS_STORAGE_DIRECTORY: @LMDISK@/metrics
+STORE_METRICS: True
+
+; ...............................................
+[LmCompute - options]
+;;;; The "STORE_LOG_FILES" parameter indicates if logs should be shipped to a long
+;;;;    term storage location instead of kept with the rest of the job output
+STORE_LOG_FILES: False
+LOG_STORAGE_LOCATION: @LMDISK@/logs
+
+; ...............................................
+[LmCompute - plugins - maxent]
+;;;; JAVA_CMD should point to Java in your path, or it should be the full path to the binary
+JAVA_CMD: @JAVABIN@ -Xms2g -Xmx2g -cp
+ME_CMD: @LMHOME@/LmCompute/apps/maxent.jar
+MDL_TOOL: density.MaxEnt
+PRJ_TOOL: density.Project
+ME_VERSION: 3.3.3k
+
+; ...............................................
+[LmCompute - plugins - openModeller]
+DEFAULT_FILE_TYPE: GreyTiff100
+DEFAULT_LOG_LEVEL: debug
+OM_MODEL_CMD: om_model
+OM_PROJECT_CMD: om_project
+OM_VERSION: 1.5.0
+
+; ...............................................
+[LmCompute - Job Mediator]
+SLEEP_TIME: 30
+HOLD_JOB_DIR: @LMDISK@/holdJobs/
+INACTIVE_TIME: 600
+PID_FILE: /@LMDISK@/temp/lm-job-submitter.pid
+
+; ...............................................
+[LmCompute - Job Submitter]
+;;;; Options are local | cluster, 
+;;;; configured by roll in lifemapper-compute/src/version.mk
+JOB_SUBMITTER_TYPE: @JOB_SUBMITTER_TYPE@
+CAPACITY: @JOB_CAPACITY@
+JOB_SCRIPT : @LMHOME@/bin/lmJobScript
+LOG_PATH : @LMDISK@/logs
+
+LOCAL_SUBMIT_COMMAND: @PYBIN@ @LMHOME@/LmCompute/jobs/runners/factory.py  #JOB_FILE#
+QSTAT: /opt/gridengine/bin/linux-x64/qstat 
+QSUB: /opt/gridengine/bin/linux-x64/qsub
+SGE_SUBMIT_COMMAND: %(QSUB)s -S /bin/bash -l s_rt=#WALLTIME# -N #JOB_NAME# -o %(LOG_PATH)s -j y -v jobXml='#JOB_FILE#' %(JOB_SCRIPT)s
+NUM_JOBS_COMMAND: %(QSTAT)s -u lmwriter | wc -l
+
+; ...............................................
+[LmCompute - Job Pusher]
+PUSH_JOBS_DIR: @LMDISK@/pushJobs/
+LOCKFILE_NAME: lockfile
+METAFILE_NAME: meta
+
+; .............................................................................
+; LmClient
+; .............................................................................
+[LmClient - Open Tree of Life]
+OTL_HINT_URL: http://api.opentreeoflife.org/v2/tnrs/autocomplete_name
+OTL_TREE_WEB_URL: http://api.opentreeoflife.org/v2/tree_of_life/subtree
+
+; ...............................................
+[LmClient - contact]
+INSTITUTION_NAME: University of Kansas Biodiversity Institute
+ADMIN_NAME: Jeff Cavner
+ADMIN_EMAIL: jcavner@ku.edu 
+
+; .............................................................................
+; SiteConfig 
+; .............................................................................
+[SiteConfig]
+SITE_CONFIG: site.ini

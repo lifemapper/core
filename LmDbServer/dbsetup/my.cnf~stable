@@ -1,0 +1,135 @@
+# This version of my.cnf is for day-to-day queries by the lifemapper system and
+# stored in the subversion repository at:
+#          https://lm2.ecoforge.net/browser/trunk/src/sdl/config/my.cnf%7Estable
+#
+# Example MySQL config file for very large systems.
+#
+# This is for a large system with memory of 1G-2G where the system runs mainly
+# MySQL.
+#
+# You can copy this file to
+# /etc/my.cnf to set global options,
+# mysql-data-dir/my.cnf to set server-specific options (in this
+# installation this directory is /usr/local/mysql/data) or
+# ~/.my.cnf to set user-specific options.
+#
+# In this file, you can use all long options that a program supports.
+# If you want to know which options a program supports, run the program
+# with the "--help" option.
+
+# The following options will be passed to all MySQL clients
+[client]
+#password	= your_password
+port		= 3399
+socket		= /share/apps/mysql5/mysql.sock
+
+# Here follows entries for some specific programs
+[mysql_install_db]
+basedir = /share/apps/mysql5
+datadir = /share/data/mysql5/data
+user = mysql
+
+# The MySQL server
+[mysqld]
+port		= 3399
+socket		= /share/apps/mysql5/mysql.sock
+basedir         = /share/apps/mysql5
+datadir         = /share/data/mysql5/data
+log-error       = /var/log/mysqld5.log
+pid-file        = /var/run/mysqld/mysqld5.pid
+user            = mysql 
+
+character-set-server = utf8
+
+skip-locking
+key_buffer = 384M
+max_allowed_packet = 1M
+table_cache = 512
+sort_buffer_size = 2M
+read_buffer_size = 2M
+read_rnd_buffer_size = 8M
+myisam_sort_buffer_size = 64M
+thread_cache_size = 8
+query_cache_size = 32M
+# Try number of CPU's*2 for thread_concurrency
+thread_concurrency = 8
+
+#max-connections=100
+
+# Print a symbolic trace if MySQL fails
+enable-pstack
+
+# If there are several complex queries, consider using query-prealloc-size.
+# It is not freed between queries so it can be a performance boost.
+#query-prealloc-size=10G
+
+# Don't listen on a TCP/IP port at all. This can be a security enhancement,
+# if all processes that need to connect to mysqld run on the same host.
+# All interaction with mysqld must be made via Unix sockets or named pipes.
+# Note that using this option without enabling named pipes on Windows
+# (via the "enable-named-pipe" option) will render mysqld useless!
+# 
+#skip-networking
+bind-address = 129.237.201.90
+
+# Replication Master Server (default)
+# binary logging is required for replication
+# AMS 16 Oct 2007: Experiment with this logging 
+log-bin=/share/data/mysql5/log/mysql-bin
+expire_logs_days=30
+max_binlog_size = 100M
+
+# required unique id between 1 and 2^32 - 1
+# defaults to 1 if master-host is not set
+# but will not function as a master if omitted
+server-id	= 1
+
+
+# Point the following paths to different dedicated disks
+#tmpdir		= /tmp/		
+#log-update 	= /path-to-dedicated-directory/hostname
+
+
+#Added by CJG 10/29/07
+# Skip bdb and innodb types to improve performance
+skip-bdb
+skip-innodb
+# MyISAM parameters
+myisam_max_sort_file_size = 100G
+myisam_max_extra_sort_file_size = 100G
+# Slow query logs
+log-queries-not-using-indexes
+log-slow-queries
+
+[mysqld_safe]
+verbose
+
+[mysql.server]
+basedir=/share/apps/mysql5
+datadir= /share/data/mysql5/data
+
+[mysqldump]
+quick
+max_allowed_packet = 16M
+
+[mysql]
+no-auto-rehash
+
+# Remove the next comment character if you are not familiar with SQL
+#safe-updates
+
+[isamchk]
+key_buffer = 256M
+sort_buffer_size = 256M
+read_buffer = 2M
+write_buffer = 2M
+
+[myisamchk]
+key_buffer = 256M
+sort_buffer_size = 256M
+read_buffer = 2M
+write_buffer = 2M
+
+[mysqlhotcopy]
+interactive-timeout
+

@@ -1,0 +1,28 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>Basic RAD Randomize (Grady) Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This is a simple test to make sure that RAD randomize (CJ's method) jobs  
+      work correctly
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>True</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<Job>
+   <jobId>basicRandomizeCJ</jobId>
+   <processType>333</processType>
+   <parentUrl>None</parentUrl>
+   <url>http://sporks.nhm.ku.edu/services/rad/experiments/529/buckets/651/pamsums/1303</url>
+   <userId>HuwPrice</userId>
+   <matrix>
+      <url>http://LmComputeTest/simpleRandomizePAM/csv</url>
+   </matrix>
+</Job>
+      ]]>
+   </jobXml>
+</testJob>

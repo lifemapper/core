@@ -1,0 +1,319 @@
+#Base WMS map file for NASA Blue Marble images
+#  Land Surface, Ocean Color, and Sea Ice, 2048 x 1024
+#  Land Surface, Ocean Color, and Sea Ice, 8192 x 10800
+#  Land Surface, Shallow Water, and Shaded Topography, 2048 x 1024
+#  Land Surface, Shallow Water, and Shaded Topography, 8192 x 10800
+
+MAP
+  NAME specify 
+  STATUS ON
+  DEBUG ON
+  SIZE 600 300
+  EXTENT -180 -90 180 90
+  UNITS dd
+  IMAGECOLOR 0 0 0
+  SYMBOLSET "symbols.txt"
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  WEB
+    IMAGEPATH "/var/www/tmp/"
+    IMAGEURL "/tmp/"
+    LOG "/var/www/tmp/mslogfile.txt"
+    METADATA
+      "wms_title" 				"Specify Map"
+      "ogc_onlineresource" 	    "http://localhost/cgi-bin/ogc.cgi/specify?"
+      "wms_srs" 				"epsg:4326 AUTO:42003"
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME "specifyusers"
+    CONNECTIONTYPE postgis
+    CONNECTION "user=mapuser password=m49s84vEr dbname=specifyusers host=127.0.0.1"
+    TYPE POINT
+    STATUS ON
+    DUMP TRUE
+    TEMPLATE "query.html" 
+    TOLERANCE 3 
+    TOLERANCEUNITS PIXELS
+    EXTENT -180 -90 180 90
+    DATA "geom from institution"
+    METADATA
+      "ows_title" "Specify Users"
+      "gml_include_items" "all"
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END
+    CLASS
+      SYMBOL "filledcircle"
+      COLOR 255 0 0
+      SIZE 5
+    END
+  END
+  
+  #-------------------------------------------------------------------------  
+    # Blue Marble Next Generation, Global MODIS derived image, scaled to 8 bit
+  LAYER
+    NAME "bmng"
+    DATA "/share/data/image/BMNG.geotiff"
+    TYPE RASTER 
+    DUMP TRUE
+    STATUS ON
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      "ogc_name"  "bmng"
+      "wms_title" "bmng"
+      "ows_title" "blueMarble"
+      "ogc_srs"  "EPSG:4326"  #optional since inherit map's srs
+      "author" "NASA"
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+#  LAYER
+#    NAME global_mosaic
+#    TYPE RASTER
+#    STATUS OFF
+#    CONNECTIONTYPE WMS
+#    CONNECTION "http://wms.jpl.nasa.gov/wms.cgi?"
+#    #MAXSCALE 10000000
+#    MINSCALE 20000
+#    METADATA
+#      "wms_name" "global_mosaic"
+#      "wms_srs" "EPSG:4326"
+#      "wms_style" "visual"
+#      "wms_server_version" "1.1.1"
+#      "wms_layers" "global_mosaic"
+#      "wms_request" "GetMap"
+#      "wms_format" "image/jpeg"
+#      "wms_connectiontimeout" "20"
+#      "wms_title" "global_mosaic_from_NASA_WMS"
+#    END
+#  END
+  
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME modis
+    TYPE RASTER
+    STATUS OFF
+    CONNECTIONTYPE WMS
+    CONNECTION "http://wms.jpl.nasa.gov/wms.cgi?"
+    #MAXSCALE 10000000
+    MINSCALE 20000
+    METADATA
+      "wms_name" "modis"
+      "wms_srs" "EPSG:4326"
+      "wms_style" "visual"
+      "wms_server_version" "1.1.1"
+      "wms_layers" "modis"
+      "wms_request" "GetMap"
+      "wms_format" "image/jpeg"
+      "wms_connectiontimeout" "20"
+      "wms_title" "global_mosaic_from_NASA_WMS"
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME us_ned
+    TYPE RASTER
+    STATUS OFF
+    CONNECTIONTYPE WMS
+    CONNECTION "http://wms.jpl.nasa.gov/wms.cgi?"
+    #MAXSCALE 10000000
+    MINSCALE 20000
+    METADATA
+      "wms_name" "us_ned"
+      "wms_srs" "EPSG:4326"
+      "wms_style" "visual"
+      "wms_server_version" "1.1.1"
+      "wms_layers" "us_ned"
+      "wms_request" "GetMap"
+      "wms_format" "image/jpeg"
+      "wms_connectiontimeout" "20"
+      "wms_title" "continental_us_elevation_from_NASA_WMS"
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME "worldwind_dem"
+    TYPE RASTER
+    STATUS OFF
+    CONNECTIONTYPE WMS
+    CONNECTION "http://wms.jpl.nasa.gov/wms.cgi?"
+    #MAXSCALE 10000000
+    MINSCALE 20000
+    METADATA
+      "wms_name" "worldwind_dem"
+      "wms_srs" "EPSG:4326"
+      "wms_style" "visual"
+      "wms_server_version" "1.1.1"
+      "wms_layers" "worldwind_dem"
+      "wms_request" "GetMap"
+      "wms_format" "image/jpeg"
+      "wms_connectiontimeout" "20"
+      "wms_title" "global_elevation_from_NASA_WMS"
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME "states"
+    TYPE LINE
+    STATUS ON
+    DUMP TRUE
+    EXTENT -180 -90 180 90
+    DATA "/share/data/ESRIDATA/USA/states"
+    METADATA
+      "wfs_title" "US States"
+      "wms_title" "US States"
+      gml_include_items "all"
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END
+    CLASS
+      SYMBOL "line"
+      STYLE
+        OUTLINECOLOR 100 0 0
+      END
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME "counties"
+    TYPE POLYGON
+    STATUS ON
+    DUMP TRUE
+    EXTENT -180 -90 180 90
+    DATA "/share/data/ESRIDATA/USA/counties"
+    METADATA
+      "wfs_title" "US Counties"
+      "wms_title" "US Counties"
+      gml_include_items "all"
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END
+    CLASS
+      SYMBOL "line"
+      STYLE
+        OUTLINECOLOR 100 0 0
+      END
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME "rivers"
+    TYPE LINE
+    STATUS ON
+    DUMP TRUE
+    EXTENT -180 -90 180 90
+    DATA "/share/data/ESRIDATA/USA/rivers"
+    METADATA
+      "wfs_title" "US Rivers"
+      "wms_title" "US Rivers"
+      gml_include_items "all"
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END
+    CLASS
+      SYMBOL "line"
+      STYLE
+        COLOR 0 0 100
+      END
+    END
+  END
+
+  #-------------------------------------------------------------------------
+  LAYER
+    NAME "lakes"
+    TYPE POLYGON
+    STATUS ON
+    DUMP TRUE
+    EXTENT -180 -90 180 90
+    DATA "/share/data/ESRIDATA/USA/lakes"
+    METADATA
+      "wfs_title" "US Rivers"
+      "wms_title" "US Rivers"
+      gml_include_items "all"
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END
+    CLASS
+      SYMBOL "line"
+      STYLE
+        OUTLINECOLOR 0 0 100
+      END
+    END
+  END
+  
+  #-------------------------------------------------------------------------
+# All WCS Layers support the following:
+OUTPUTFORMAT
+  NAME gif
+  DRIVER "GD/GIF"
+  MIMETYPE "image/gif"
+  IMAGEMODE PC256
+  EXTENSION "gif"
+  FORMATOPTION "GDAL/*"
+END
+
+OUTPUTFORMAT
+  NAME png
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGB
+  EXTENSION "png"
+  FORMATOPTION "INTERLACE=OFF"
+END
+
+OUTPUTFORMAT
+  NAME jpeg
+  DRIVER "GD/JPEG"
+  MIMETYPE "image/jpeg"
+  IMAGEMODE RGB
+  EXTENSION "jpg"
+  FORMATOPTION "GDAL/*"
+END
+
+OUTPUTFORMAT
+  NAME wbmp
+  DRIVER "GD/WBMP"
+  MIMETYPE "image/wbmp"
+  IMAGEMODE PC256
+  EXTENSION "wbmp"
+END
+
+OUTPUTFORMAT
+  NAME GTiff
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE RGB
+  EXTENSION "tif"
+  FORMATOPTION "GDAL/*"
+END
+
+OUTPUTFORMAT
+  NAME AAIGRID
+  DRIVER "GDAL/AAIGRID"
+  MIMETYPE "image/x-aaigrid"
+  IMAGEMODE INT16
+  EXTENSION "asc"
+  FORMATOPTION "FILENAME=result.asc"
+END
+
+END #of map file
+

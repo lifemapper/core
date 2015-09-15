@@ -1,0 +1,147 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>Maxent Model New Parameters Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This is a test of Maxent using the newly enabled algorithm parameters
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>True</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<job>
+   <processType>110</processType>
+   <jobId>meModelNewParameters</jobId>
+   <parentUrl>http://lifemapper.org/services/sdm/experiments/687061</parentUrl>
+   <url>http://lifemapper.org/services/sdm/experiments/687061</url>
+   <userId>lm2</userId>
+   <algorithm code="ATT_MAXENT">
+      <parameter id="responsecurves" value="0" />
+      <parameter id="verbose" value="None" />
+      <parameter id="appendtoresultsfile" value="0" />
+      <parameter id="jackknife" value="0" />
+      <parameter id="outputformat" value="1" />
+      <parameter id="replicates" value="1" />
+      <parameter id="writebackgroundpredictions" value="0" />
+      <parameter id="threshold" value="1" />
+      <parameter id="beta_hinge" value="-1.0" />
+      <parameter id="writeplotdata" value="0" />
+      <parameter id="fadebyclamping" value="0" />
+      <parameter id="applythresholdrule" value="None" />
+      <parameter id="lq2lqptthreshold" value="80" />
+      <parameter id="beta_threshold" value="-1.0" />
+      <parameter id="pictures" value="1" />
+      <parameter id="responsecurvesexponent" value="0" />
+      <parameter id="l2lqthreshold" value="10" />
+      <parameter id="extrapolate" value="1" />
+      <parameter id="quadratic" value="1" />
+      <parameter id="maximumiterations" value="500" />
+      <parameter id="hingethreshold" value="15" />
+      <parameter id="logscale" value="1" />
+      <parameter id="product" value="1" />
+      <parameter id="writemess" value="1" />
+      <parameter id="linear" value="1" />
+      <parameter id="replicatetype" value="0" />
+      <parameter id="doclamp" value="1" />
+      <parameter id="convergencethreshold" value="1e-05" />
+      <parameter id="maximumbackground" value="10000" />
+      <parameter id="plots" value="1" />
+      <parameter id="adjustsampleradius" value="0" />
+      <parameter id="hinge" value="1" />
+      <parameter id="outputgrids" value="1" />
+      <parameter id="autofeature" value="1" />
+      <parameter id="randomseed" value="0" />
+      <parameter id="beta_categorical" value="-1.0" />
+      <parameter id="randomtestpoints" value="0" />
+      <parameter id="betamultiplier" value="1.0" />
+      <parameter id="perspeciesresults" value="0" />
+      <parameter id="allowpartialdata" value="None" />
+      <parameter id="addsamplestobackground" value="None" />
+      <parameter id="writeclampgrid" value="1" />
+      <parameter id="addallsamplestobackground" value="None" />
+      <parameter id="beta_lqp" value="-1.0" />
+      <parameter id="removeduplicates" value="1" />
+      <parameter id="defaultprevalence" value="0.5" />
+   </algorithm>
+   <points displayName="Turnerella mertensiana">
+      <point id="617105152" x="-152.895" y="58.2867" />
+      <point id="768240513" x="-134.934" y="58.6067" />
+      <point id="617105154" x="-154.748" y="57.295" />
+      <point id="617105155" x="-154.748" y="57.295" />
+      <point id="617168516" x="-152.833" y="58.4" />
+      <point id="617105157" x="-163.053" y="54.6933" />
+      <point id="617105159" x="-163.053" y="54.6933" />
+      <point id="617119880" x="179.305" y="51.4133" />
+      <point id="617105161" x="-165.867" y="54.175" />
+      <point id="617105163" x="-162.595" y="54.4433" />
+      <point id="617105164" x="-161.515" y="55.3783" />
+      <point id="617105166" x="-161.515" y="55.3783" />
+      <point id="617172367" x="-151.5" y="59.6322" />
+      <point id="617105168" x="-161.515" y="55.3783" />
+      <point id="617105172" x="-160.462" y="55.3533" />
+      <point id="617105170" x="-160.462" y="55.3533" />
+      <point id="617123476" x="-134.934" y="56.6075" />
+      <point id="617164181" x="-179.7" y="51.4" />
+      <point id="617105174" x="-159.92" y="55.21" />
+      <point id="617164183" x="-179.7" y="51.4" />
+      <point id="617105176" x="-159.92" y="55.21" />
+      <point id="617119897" x="179.167" y="51.3767" />
+      <point id="617105178" x="-126.967" y="53.98" />
+      <point id="617119899" x="179.167" y="51.3767" />
+      <point id="617119901" x="179.167" y="51.3767" />
+      <point id="617105182" x="-134.934" y="58.6075" />
+      <point id="617119903" x="179.167" y="51.3767" />
+      <point id="617105186" x="173.15" y="52.8" />
+      <point id="617105188" x="-124.447" y="48.525" />
+      <point id="617105190" x="-127.95" y="50.9" />
+      <point id="617108017" x="179.283" y="51.4" />
+      <point id="617105193" x="-127.422" y="50.7583" />
+      <point id="617108013" x="179.245" y="51.3667" />
+      <point id="617164078" x="179.167" y="51.3667" />
+      <point id="617108015" x="179.283" y="51.4" />
+      <point id="617164080" x="179.167" y="51.3667" />
+      <point id="617101489" x="179.167" y="51.3667" />
+      <point id="617167155" x="-153.969" y="56.9559" />
+      <point id="617108020" x="-179.16" y="51.41" />
+      <point id="617108022" x="179.167" y="51.395" />
+      <point id="617108024" x="179.167" y="51.395" />
+      <point id="617169695" x="-152.665" y="58.5541" />
+      <point id="617173663" x="-134.935" y="58.6075" />
+      <point id="617169269" x="-153.969" y="56.9559" />
+      <point id="617166390" x="-151.7" y="59.4667" />
+      <point id="617164106" x="179.305" y="51.4133" />
+      <point id="617171063" x="173.269" y="52.9331" />
+      <point id="617108429" x="-134.65" y="56.25" />
+      <point id="617163983" x="179.305" y="51.4133" />
+      <point id="617124381" x="-134.934" y="56.6103" />
+      <point id="617163985" x="179.305" y="51.4133" />
+      <point id="617164111" x="179.305" y="51.4133" />
+      <point id="617169889" x="-151.721" y="59.4508" />
+      <point id="617169890" x="-151.721" y="59.4508" />
+      <point id="617169253" x="-153.969" y="56.9559" />
+      <point id="617164296" x="179.167" y="51.3667" />
+      <point id="617164113" x="179.305" y="51.4133" />
+      <point id="617164145" x="-179.163" y="51.4167" />
+      <point id="617164147" x="179.163" y="51.4167" />
+      <point id="617163902" x="179.305" y="51.4133" />
+      <point id="617164149" x="179.163" y="51.4167" />
+      <point id="617164109" x="179.305" y="51.4133" />
+      <point id="617164151" x="179.163" y="51.4167" />
+      <point id="617164153" x="179.163" y="51.4167" />
+      <point id="617164156" x="179.163" y="51.4167" />
+      <point id="617164158" x="179.163" y="51.4167" />
+      <point id="617164309" x="179.533" y="51.4742" />
+   </points>
+   <layers>
+      <layer>http://LmComputeTest/services/sdm/layers/266/AAIGrid</layer>
+      <layer>http://LmComputeTest/services/sdm/layers/276/AAIGrid</layer>
+      <layer>http://LmComputeTest/services/sdm/layers/283/AAIGrid</layer>
+      <layer>http://LmComputeTest/services/sdm/layers/284/AAIGrid</layer>
+   </layers>
+</job>
+      ]]>
+   </jobXml>
+</testJob>

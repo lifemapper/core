@@ -1,0 +1,221 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>Basic openModeller Model Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This is a simple test to make sure that openModeller models are generated 
+      successfully
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>True</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<job>
+   <processType>210</processType>
+   <jobId>omSampleModel</jobId>
+   <parentUrl>http://lifemapper.org/services/sdm/experiments/687081</parentUrl>
+   <url>http://lifemapper.org/services/sdm/experiments/687081</url>
+   <userId>lm2</userId>
+   <algorithm code="GARP_BS">
+      <parameter id="TotalRuns" value="20" />
+      <parameter id="MaxThreads" value="1" />
+      <parameter id="ConvergenceLimit" value="0.1" />
+      <parameter id="ModelsUnderOmissionThreshold" value="20" />
+      <parameter id="CommissionSampleSize" value="10000" />
+      <parameter id="HardOmissionThreshold" value="100" />
+      <parameter id="CommissionThreshold" value="50" />
+      <parameter id="Resamples" value="2500" />
+      <parameter id="TrainingProportion" value="50" />
+      <parameter id="PopulationSize" value="50" />
+      <parameter id="MaxGenerations" value="400" />
+   </algorithm>
+   <points displayName="Sericostoma pedemontanum">
+      <wkt>GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]</wkt>
+      <point id="28950016" x="13.0167" y="43.35" />
+      <point id="28950018" x="13.0167" y="43.35" />
+      <point id="28950020" x="13.0167" y="43.35" />
+      <point id="28950021" x="13.0167" y="43.35" />
+      <point id="28950023" x="13.0167" y="43.35" />
+      <point id="28950025" x="13.0167" y="43.35" />
+      <point id="28950026" x="12.5" y="43.0" />
+      <point id="28950028" x="12.5" y="43.0" />
+      <point id="28950030" x="12.5" y="43.0" />
+      <point id="28950031" x="12.5" y="43.0" />
+      <point id="28950033" x="12.5" y="43.0" />
+      <point id="28950035" x="12.5" y="43.0" />
+      <point id="28950037" x="12.9833" y="43.4" />
+      <point id="28950038" x="12.7333" y="42.7333" />
+      <point id="28950040" x="12.7333" y="42.9833" />
+      <point id="28950042" x="12.25" y="43.35" />
+      <point id="28950043" x="12.7833" y="42.8167" />
+      <point id="28950045" x="12.7833" y="42.8167" />
+      <point id="28950047" x="12.7833" y="42.8167" />
+      <point id="28950049" x="12.7833" y="42.8167" />
+      <point id="28950050" x="12.7333" y="42.7333" />
+      <point id="28950052" x="12.7333" y="42.7333" />
+      <point id="28950054" x="12.7333" y="42.7333" />
+      <point id="28950056" x="12.7333" y="42.7333" />
+      <point id="28950057" x="12.7333" y="42.7333" />
+      <point id="28950059" x="12.7333" y="42.7333" />
+      <point id="28950061" x="12.7333" y="42.7333" />
+      <point id="28950063" x="12.7333" y="42.7333" />
+      <point id="28950064" x="12.7333" y="42.7333" />
+      <point id="28950066" x="12.7333" y="42.7333" />
+      <point id="28950068" x="12.7333" y="42.7333" />
+      <point id="28950069" x="12.7333" y="42.7333" />
+      <point id="28950071" x="12.7333" y="42.7333" />
+      <point id="28950073" x="12.7333" y="42.7333" />
+      <point id="28950075" x="12.7333" y="42.7333" />
+      <point id="28950076" x="12.7333" y="42.7333" />
+      <point id="28950078" x="12.7333" y="42.7333" />
+      <point id="28950080" x="12.7333" y="42.7333" />
+      <point id="28950081" x="12.7333" y="42.7333" />
+      <point id="28950083" x="12.7333" y="42.7333" />
+      <point id="28950085" x="12.7333" y="42.7333" />
+      <point id="28950086" x="12.7333" y="42.7333" />
+      <point id="28950088" x="12.7333" y="42.7333" />
+      <point id="28949950" x="12.05" y="43.5833" />
+      <point id="28952511" x="12.7333" y="42.7333" />
+      <point id="28952513" x="12.7333" y="42.7333" />
+      <point id="28949954" x="12.2333" y="41.7333" />
+      <point id="28952516" x="12.7333" y="42.7333" />
+      <point id="28949997" x="13.0667" y="43.1333" />
+      <point id="28949958" x="12.0333" y="43.6667" />
+      <point id="28952519" x="12.7333" y="42.7333" />
+      <point id="28952521" x="12.7333" y="42.9833" />
+      <point id="28949962" x="10.2833" y="42.7667" />
+      <point id="28949964" x="10.2833" y="42.7667" />
+      <point id="28949966" x="10.2833" y="42.7667" />
+      <point id="28952527" x="13.4333" y="43.5" />
+      <point id="28952529" x="12.4" y="42.4333" />
+      <point id="28952531" x="12.75" y="42.5333" />
+      <point id="28949972" x="10.2833" y="42.7667" />
+      <point id="28949974" x="10.2833" y="42.7667" />
+      <point id="28952535" x="12.75" y="42.5333" />
+      <point id="28949976" x="13.2167" y="42.9" />
+      <point id="28952537" x="12.5" y="43.0" />
+      <point id="28952539" x="12.5" y="43.0" />
+      <point id="28949980" x="13.75" y="43.3" />
+      <point id="28949982" x="13.1667" y="43.75" />
+      <point id="28952558" x="15.7667" y="40.1167" />
+      <point id="28949984" x="13.1667" y="43.75" />
+      <point id="28952545" x="12.9833" y="43.4" />
+      <point id="28949987" x="13.1667" y="43.75" />
+      <point id="28949989" x="13.2333" y="43.7167" />
+      <point id="28952550" x="12.5" y="43.0" />
+      <point id="28949992" x="13.1667" y="42.8833" />
+      <point id="28949994" x="13.6667" y="43.4167" />
+      <point id="28949891" x="13.4769" y="46.2003" />
+      <point id="28949893" x="9.83333" y="45.8" />
+      <point id="28949895" x="9.83333" y="45.8" />
+      <point id="28949896" x="9.83333" y="45.8" />
+      <point id="28949996" x="13.6667" y="43.4167" />
+      <point id="28949898" x="8.0" y="45.0" />
+      <point id="28949900" x="11.0" y="44.75" />
+      <point id="28949901" x="11.0" y="44.75" />
+      <point id="28949903" x="11.0" y="44.75" />
+      <point id="28949905" x="11.0" y="44.75" />
+      <point id="28949906" x="10.7667" y="44.2333" />
+      <point id="28949908" x="12.2333" y="41.7333" />
+      <point id="28949909" x="12.2333" y="41.7333" />
+      <point id="28949911" x="12.2333" y="41.7333" />
+      <point id="28949912" x="12.0833" y="43.7667" />
+      <point id="28949914" x="8.83333" y="44.5" />
+      <point id="28949915" x="7.76667" y="43.9833" />
+      <point id="28949917" x="7.86667" y="44.0333" />
+      <point id="28949918" x="7.86667" y="44.0333" />
+      <point id="28949920" x="7.76667" y="43.9833" />
+      <point id="28949921" x="10.6667" y="44.1333" />
+      <point id="28949923" x="10.2833" y="44.0667" />
+      <point id="28949924" x="10.2833" y="44.0667" />
+      <point id="28949926" x="10.25" y="44.15" />
+      <point id="28949927" x="10.15" y="44.1333" />
+      <point id="28949929" x="10.8333" y="43.9667" />
+      <point id="28949931" x="10.9333" y="44.0333" />
+      <point id="28949932" x="11.8667" y="42.9333" />
+      <point id="28949933" x="11.8167" y="43.7" />
+      <point id="28949935" x="12.0167" y="43.7333" />
+      <point id="28949936" x="11.0" y="43.4167" />
+      <point id="28949938" x="11.9833" y="43.2667" />
+      <point id="28949939" x="11.9833" y="43.2667" />
+      <point id="28949941" x="11.9" y="43.2667" />
+      <point id="28949942" x="12.0333" y="43.7333" />
+      <point id="28949944" x="11.7833" y="45.0667" />
+      <point id="28949945" x="11.9833" y="43.2667" />
+      <point id="28949947" x="11.9833" y="43.2667" />
+      <point id="28949948" x="11.9833" y="43.2667" />
+      <point id="28952509" x="12.7333" y="42.7333" />
+      <point id="28952510" x="12.7333" y="42.7333" />
+      <point id="28949951" x="11.9" y="43.2667" />
+      <point id="28952512" x="12.7333" y="42.7333" />
+      <point id="28949953" x="12.2333" y="41.7333" />
+      <point id="28952514" x="12.7333" y="42.7333" />
+      <point id="28952515" x="12.7333" y="42.7333" />
+      <point id="28949956" x="12.2333" y="41.7333" />
+      <point id="28952517" x="12.7333" y="42.7333" />
+      <point id="28952518" x="12.7333" y="42.7333" />
+      <point id="28949959" x="10.2833" y="42.7667" />
+      <point id="28952520" x="12.7333" y="42.9833" />
+      <point id="28949961" x="10.2833" y="42.7667" />
+      <point id="28952522" x="12.7333" y="42.9833" />
+      <point id="28952523" x="12.7333" y="42.9833" />
+      <point id="28952524" x="12.7333" y="42.9833" />
+      <point id="28952525" x="12.7333" y="42.9833" />
+      <point id="28952526" x="12.8667" y="42.9667" />
+      <point id="28949967" x="10.2833" y="42.7667" />
+      <point id="28952528" x="12.5" y="43.0" />
+      <point id="28949969" x="10.2833" y="42.7667" />
+      <point id="28952530" x="12.4" y="42.4333" />
+      <point id="28949971" x="10.2833" y="42.7667" />
+      <point id="28952532" x="12.75" y="42.5333" />
+      <point id="28952533" x="12.75" y="42.5333" />
+      <point id="28952534" x="12.75" y="42.5333" />
+      <point id="28949975" x="10.2833" y="42.7667" />
+      <point id="28952536" x="12.75" y="42.5333" />
+      <point id="28949977" x="13.2167" y="42.9" />
+      <point id="28952538" x="12.5" y="43.0" />
+      <point id="28949979" x="13.2333" y="42.9833" />
+      <point id="28952540" x="12.5" y="43.0" />
+      <point id="28952541" x="12.5" y="43.0" />
+      <point id="28952542" x="12.6667" y="43.3833" />
+      <point id="28952543" x="12.9833" y="43.4" />
+      <point id="28952544" x="12.9833" y="43.4" />
+      <point id="28949985" x="13.1667" y="43.75" />
+      <point id="28952546" x="12.9833" y="43.4" />
+      <point id="28952547" x="12.9833" y="43.4" />
+      <point id="28952548" x="12.2333" y="41.7333" />
+      <point id="28952549" x="12.5" y="43.0" />
+      <point id="28949990" x="12.4" y="42.4333" />
+      <point id="28952551" x="12.75" y="43.3167" />
+      <point id="28952552" x="12.75" y="43.3167" />
+      <point id="28952553" x="12.75" y="43.3167" />
+      <point id="28952554" x="12.75" y="43.3167" />
+      <point id="28952555" x="15.6833" y="41.6" />
+      <point id="28952556" x="15.7667" y="40.1167" />
+      <point id="28952557" x="15.7667" y="40.1167" />
+      <point id="28949998" x="12.4" y="42.4333" />
+      <point id="28952559" x="15.7667" y="40.1167" />
+      <point id="28950000" x="12.4" y="42.4333" />
+      <point id="28950002" x="13.15" y="42.8833" />
+      <point id="28950003" x="12.4" y="42.4333" />
+      <point id="28950005" x="13.0833" y="42.9167" />
+      <point id="28950007" x="13.3333" y="43.2833" />
+      <point id="28950008" x="13.2167" y="42.9" />
+      <point id="28950010" x="12.8833" y="43.1833" />
+      <point id="28950011" x="12.8833" y="43.1833" />
+      <point id="28950013" x="12.8833" y="43.1833" />
+      <point id="28950015" x="12.8833" y="43.1833" />
+   </points>
+   <layers>
+      <layer>http://LmComputeTest/services/sdm/layers/266/GTiff</layer>
+      <layer>http://LmComputeTest/services/sdm/layers/276/GTiff</layer>
+      <layer>http://LmComputeTest/services/sdm/layers/283/GTiff</layer>
+      <layer>http://LmComputeTest/services/sdm/layers/284/GTiff</layer>
+   </layers>
+</job>
+      ]]>
+   </jobXml>
+</testJob>

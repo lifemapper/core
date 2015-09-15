@@ -1,0 +1,99 @@
+<!DOCTYPE html SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<style>
+	h2 a
+	{
+	    font-family:sans-serif; 
+	    font-size:100%; 
+	    font-weight:bold; 
+	    font-style:normal; 
+	    text-decoration:none; 
+	    text-transform:none; 
+	    margin:0px; 
+	    padding:0px;
+	    color:#2C6598;
+	}
+	
+	p   {
+	    font-size: 13pt;
+	    margin-left: .1in;
+       margin-right: .1in;
+	    
+	    }
+	    
+   ul  {
+       font-size: 13pt;
+       }
+   
+   ol  {
+       font-size: 13pt;
+       }
+        
+	</style>
+
+
+</head>
+   <body>
+   <h2>Lifemapper Macroecology Plugin Tutorial</h2>
+   <p>
+   The macroecology plugin comes with a sample data folder with three species shapefiles from <a href="http://www.natureserve.org/">
+   NatureServe</a>. 
+   <p>
+   1.) Start a new experiment, sign in to the Lifemapper system by using the sign in dialog from the "Sign In" menu item
+   in the "Macroecology" plugin. After providing your credentials click "New Experiment". The New Experiment dialog will
+   appear.
+   </p>
+   <p>
+   2.) Give the experiment the name "Tutorial", Define the EPSG projection field by typing 4326 (this is the same projection
+   as the sample data. Or use the Projection Selector dialog to choose WGS 84. The email field for job notification is optional.
+   </p>
+   <p>
+   3.) Choose the "Define Input Grid" radio button and click "OK".  This will open the Construct Grid dialog
+   </p>
+   <p>
+   4.) Fill out the required fields in the Construct Grid Dialog. For "Cell Shape" choose square. For "Cell Size in map units" enter 2. This means 2 degrees.
+   Browse your file system for a filename and location. Give the grid a name.  Double check that all fields are filled. 
+   Use the "?" button to get help with this dialog or any dialog. Click "OK". After a short wait a grid should be downloaded and added to your map canvas.
+   </p>
+   <p>
+   5.) Choose "Add Local Species Layers" radio button in the new experiment dialog and click "OK". This opens the Add Layers dialog. Add the three
+   species layers from the lifemapperTools/sampledata folder that came with the plugin. Fill out the appropriate fields
+   for your data.  To set the Presence Attribute field, double click on a cell in that column, a drop down list will appear
+   with the field names in the shapefile.  Choose "PRESENCE".  Set the other fields for all three layers by entering a 
+   value in a cell. You can use a column mode to set all of the fields by right clicking on a cell with a value. Click the 
+   "Add to Experiment" button, a progress bar will appear indicating the progress of the upload.  You should get a message
+   tell you that 3 out of 3 layers were uploaded and added to your experiment.
+   </p>
+   <p>
+   6.) Choose "List Grids" radio button in the new experiment dialog and click "OK".  This opens up the Grid Listing Dialog.  
+   You will see a record for your grid in the table.  Select that row.  Click the "Intersect" button.  A progress bar will appear
+   and may cycle through a couple of times.  When it stops, you will prompted to give a file location and name. There will be 
+   an "Add to Map", click it and the intersected grid with the PAM information will be added to your map canvas and table of 
+   contents.
+   </p>
+   <p>
+   7.) The status of the grid in the grid listing dialog should be "complete" with the status "compressed".  Now click on the calculate
+   button.  Wait for the calculate process to complete.
+   </p>
+   <p>
+   8.) Now click the "Get Stats" button, this will open the Statistics dialog.  Choose "All from the radio buttons on the left side and 
+   then choose the original pam from the drop down box.  Choose the "Site based" radio button from the statistics controls on the right
+   hand side and then choose "All Site-based Stats" from the drop down list.  Click view in table.  A table with your stats for 
+   every site in the grid will be populated.  You can now select two columns by clicking on the data, and holding down the Ctrl.key
+   to select two columns.  Click the "Scatter Plot" button, a scatter plot of the two vectors of data from the data will be plotted in a 
+   plot window that appears.
+   </p>
+   <p>
+   You have completed the basic steps for a basic range and diversity experiment using a presence absence matrix generated
+   from the Lifemapper system.  There is plenty of other functionality, use the help system for each dialog by clicking the "?"
+   button for each dialog to find other features.  Have fun!
+   </p> 
+   
+   
+   
+   
+   
+   
+   </body>
+   

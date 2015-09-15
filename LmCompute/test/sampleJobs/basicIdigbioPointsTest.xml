@@ -1,0 +1,33 @@
+<testJob>
+   <!-- The name of the test -->
+   <name>Basic iDigBio Occurrences Test</name>
+   <!-- A description of what this test does -->
+   <description>
+      This is a simple test to make sure that iDigBio occurrence sets are 
+      created successfully
+   </description>
+   <!-- Is this test enabled -->
+   <enabled>False</enabled>
+   <!-- What is the expected job status result -->
+   <expectedStatus>300</expectedStatus>
+   <jobXml>
+      <!-- The job XML goes in this section, inside of a CDATA tag -->
+      <![CDATA[
+<Job>
+   <postProcessing>
+      <post>
+         <jobServer>http://mercury.lifemapper.org/jobs</jobServer>
+      </post>
+   </postProcessing>
+   <jobType>410</jobType>
+   <jobId>728507</jobId>
+   <processType>410</processType>
+   <parentUrl>None</parentUrl>
+   <url>http://mercury.lifemapper.org/services/sdm/occurrences/41090</url>
+   <userId>bison</userId>
+   <pointsUrl>http://bisonapi.usgs.ornl.gov/solr/occurrences/select?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil+AND+hierarchy_homonym_string%3A%2A-821235-%2A</pointsUrl>
+   <maxPoints>1000</maxPoints>
+</Job>
+      ]]>
+   </jobXml>
+</testJob>

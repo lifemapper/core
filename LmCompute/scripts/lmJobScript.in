@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export LIFEMAPPER_CONFIG_FILE=@LMHOME@/config/config.ini
+
+$NODE_PYTHON @LMHOME@/LmCompute/jobs/runners/factory.py ${jobXml}

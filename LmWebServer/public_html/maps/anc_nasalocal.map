@@ -1,0 +1,193 @@
+#Base WMS map file for NASA Blue Marble images
+#  Land Surface, Ocean Color, and Sea Ice, 2048 x 1024
+#  Land Surface, Ocean Color, and Sea Ice, 8192 x 10800
+#  Land Surface, Shallow Water, and Shaded Topography, 2048 x 1024
+#  Land Surface, Shallow Water, and Shaded Topography, 8192 x 10800
+
+MAP
+  NAME bluemarble 
+  STATUS ON
+  SIZE 600 300
+  EXTENT -180 -90 180 90
+  UNITS dd
+  IMAGECOLOR 0 0 0
+  SYMBOLSET "symbols.txt"
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  WEB
+    IMAGEPATH "/var/www/tmp/"
+    IMAGEURL "/tmp/"
+    METADATA
+      "wms_title" 			"Blue Marble Map"
+      "ogc_onlineresource" 	"http://localhost/cgi-bin/ogc.cgi/bluemarble?"
+      "wms_srs" 			"epsg:4326 AUTO:42003"
+      ows_enable_request  "*"
+    END
+  END
+ 
+ 
+  #-------------------------------------------------------------------------
+  #  EMPTY Shapefile used for adding single point features to this map.
+  #  ex: map.layer[pt]=FEATURE+POINTS+50+100+END+TEXT+'A+test+point'+END&
+  #-------------------------------------------------------------------------
+  LAYER
+      NAME  "emptypt"
+      TYPE  POINT
+      STATUS  ON
+      OPACITY 100
+      DUMP  TRUE
+      EXTENT  -180 -90 180 90
+      CLASS
+         STYLE
+            SYMBOL   "filledcircle"
+            SIZE   50
+            COLOR   255  127  0
+         END
+      END
+   END
+  
+  #-------------------------------------------------------------------------
+  #  LOCAL COPIES OF NASA RASTER LAYERS
+  #-------------------------------------------------------------------------
+
+  # Blue Marble Next Generation, Global MODIS derived image, scaled to 8 bit
+  LAYER
+    NAME "BMNG"
+    DATA "/share/data/image/BMNG.geotiff"
+    TYPE RASTER 
+    DUMP TRUE
+    STATUS OFF
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      "ogc_name"  "bmng"
+      "wms_title" "bmng"
+      "ows_title" "blueMarble"
+      "ogc_srs"  "EPSG:4326"  #optional since inherit map's srs
+      "author" "NASA"
+    END
+  END
+
+
+  # Blue Marble Next Generation, Global MODIS derived image, scaled to 8 bit
+  LAYER
+    NAME "bmnglowres"
+    DATA "/share/data/image/BMNG.8bit.geotiff"
+    TYPE RASTER 
+    DUMP TRUE
+    STATUS ON
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      "ogc_name"  "bmng"
+      "wms_title" "bmng"
+      "ows_title" "blueMarble"
+      "ogc_srs"  "EPSG:4326"  #optional since inherit map's srs
+      "author" "NASA"
+    END
+  END
+
+  # Land Surface, Ocean Color, and Sea Ice, 2048 x 1024
+  LAYER
+    NAME "loi2048"
+    DATA "/share/data/image/land_ocean_ice_2048.8bit.tif"
+    TYPE RASTER
+    DUMP TRUE
+    STATUS OFF
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      ogc_name "loi2048"
+      wms_title "land_ocean_ice"
+    END
+  END
+
+  # Land Surface, Ocean Color, and Sea Ice, 8192 x 10800
+  LAYER
+    NAME "land_ocean_ice_hires"
+    DATA "/share/data/image/land_ocean_ice_8192.tif"
+    TYPE RASTER
+    DUMP TRUE
+    STATUS OFF
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      wms_title "land_ocean_ice"
+    END
+  END
+
+  # Land Surface, Shallow Water, and Shaded Topography, 2048 x 1024
+  LAYER
+    NAME "land_shallow_topo_lowres"
+    DATA "/share/data/image/land_shallow_topo_2048.tif"
+    TYPE RASTER
+    DUMP TRUE
+    STATUS OFF
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      wms_title "land_shallow_topo"
+    END
+  END
+
+  # Land Surface, Shallow Water, and Shaded Topography, 8192 x 10800
+  LAYER
+    NAME "land_shallow_topo_lowres"
+    DATA "/share/data/image/land_shallow_topo_8192.tif"
+    TYPE RASTER
+    DUMP TRUE
+    STATUS OFF
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      wms_title "land_shallow_topo"
+    END
+  END
+
+# All WCS Layers on the brc000.cc.ku.edu support the following:
+OUTPUTFORMAT
+  NAME gif
+  DRIVER "GD/GIF"
+  MIMETYPE "image/gif"
+  IMAGEMODE PC256
+  EXTENSION "gif"
+  FORMATOPTION "GDAL/*"
+END
+
+OUTPUTFORMAT
+  NAME png 
+  DRIVER "AGG/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE PC256
+  EXTENSION "png"
+  FORMATOPTION "GDAL/*"
+END
+
+OUTPUTFORMAT
+  NAME jpeg
+  DRIVER "GDAL/JPEG"
+  MIMETYPE "image/jpeg"
+  IMAGEMODE RGB
+  EXTENSION "jpg"
+  FORMATOPTION "GDAL/*"
+END
+
+OUTPUTFORMAT
+  NAME GTiff
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE RGB
+  EXTENSION "tif"
+  FORMATOPTION "GDAL/*"
+END
+END #of map file
+

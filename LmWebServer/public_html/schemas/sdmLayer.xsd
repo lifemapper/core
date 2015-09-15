@@ -1,0 +1,228 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://lifemapper.org"
+            xmlns:lm="http://lifemapper.org" 
+            elementFormDefault="qualified">
+   <xsd:include schemaLocation="commonTypes.xsd" />
+   <xsd:include schemaLocation="sdmTypeCode.xsd" />
+
+   <xsd:annotation>
+      <xsd:documentation>
+         Schema definitions for Lifemapper SDM Layers 
+         Version: 2.0
+         Author: CJ Grady
+         Contact: lifemapper@ku.edu
+      </xsd:documentation>
+   </xsd:annotation>
+
+   <xsd:complexType name="sdmLayerType">
+      <xsd:all>
+         <xsd:element name="LMModuleType"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+         <xsd:element name="RESTServiceType"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+         <xsd:element name="SRS"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+         <xsd:element name="author"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="bbox"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+
+         <xsd:element name="dataFormat"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+         <xsd:element name="description"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="endDate"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="epsgcode"
+                      type="xsd:integer"
+                      maxOccurs="1"
+                      minOccurs="1" />
+
+         <xsd:element name="gdalType"
+                      type="xsd:integer"
+                      maxOccurs="1"
+                      minOccurs="1" />
+
+         <xsd:element name="id"
+                      type="xsd:integer"
+                      maxOccurs="1"
+                      minOccurs="1" />
+         
+         <xsd:element name="isCategorical"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="keywords"
+                      type="lm:keywordsType"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+         <xsd:element name="mapFilename"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="mapName"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="mapPrefix"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+         <xsd:element name="mapUnits"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+	      <xsd:element name="maxVal"
+	                   type="xsd:double"
+	                   maxOccurs="1"
+	                   minOccurs="0" />
+	                   
+         <xsd:element name="maxX"
+                      type="xsd:double"
+                      maxOccurs="1"
+                      minOccurs="1" />
+
+         <xsd:element name="maxY"
+                      type="xsd:double"
+                      maxOccurs="1"
+                      minOccurs="1" />
+
+         <xsd:element name="metadataUrl"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+         
+			<xsd:element name="minVal"
+			             type="xsd:double"
+			             maxOccurs="1"
+			             minOccurs="0" />
+			             
+         <xsd:element name="minX"
+                      type="xsd:double"
+                      maxOccurs="1"
+                      minOccurs="1" />
+
+         <xsd:element name="minY"
+                      type="xsd:double"
+                      maxOccurs="1"
+                      minOccurs="1" />
+
+         <xsd:element name="modTime"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="name"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+			<xsd:element name="nodataVal"
+			             type="xsd:double"
+			             maxOccurs="1"
+			             minOccurs="0" />
+			             
+         <xsd:element name="parametersModTime"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="resolution"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+			<xsd:element name="size"
+			             type="lm:sizeType"
+			             maxOccurs="1"
+			             minOccurs="0" />
+			             
+			<xsd:element name="srs"
+			             type="xsd:string"
+			             maxOccurs="1"
+			             minOccurs="0" />
+
+         <xsd:element name="startDate"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+			<xsd:element name="title"
+			             type="xsd:string"
+			             maxOccurs="1"
+			             minOccurs="0" />
+			             
+         <xsd:element name="typeCode"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+         <xsd:element name="typeDescription"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="typeKeywords"
+                      type="lm:typeKeywordsType"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="typeTitle"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="0" />
+                      
+         <xsd:element name="user"
+                      type="xsd:string"
+                      maxOccurs="1"
+                      minOccurs="1" />
+                      
+			<xsd:element name="valUnits"
+			             type="xsd:string"
+			             maxOccurs="1"
+			             minOccurs="0" />
+			             
+      </xsd:all>
+   </xsd:complexType>
+
+   <xsd:complexType name="sdmLayersType">
+      <xsd:sequence>
+         <xsd:element name="layer" 
+                      type="lm:sdmLayerType" 
+                      maxOccurs="unbounded" 
+                      minOccurs="0" />
+                      
+      </xsd:sequence>
+   </xsd:complexType>
+
+</xsd:schema>
