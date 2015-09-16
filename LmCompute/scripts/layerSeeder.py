@@ -45,7 +45,7 @@ def processFile(fn):
 # .............................................................................
 if __name__ == "__main__":
    if len(sys.argv) < 2:
-      print("Usage: python layerSeeder.py file")
+      print("Usage: python layerSeeder.py <scenPkgCsvFilename>")
       print("   File should be pairs of url, local file path separated by line feeds")
    else:
       lyrFile = sys.argv[1]
