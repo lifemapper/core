@@ -70,7 +70,7 @@ def getEnabledTestsInDirectory():
    """
    @summary: Gets the tests out of the specified directory
    """
-   searchString = os.path.join(SAMPLE_JOBS_PATH, "*andom*")
+   searchString = os.path.join(SAMPLE_JOBS_PATH, "*")
    jobTests = []
    
    for fn in glob.iglob(searchString):
