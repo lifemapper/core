@@ -784,18 +784,18 @@ GRANT SELECT ON TABLE
 lm3.lm_pamsum, lm3.lm_fullradbucket, 
 lm3.lm_palayer, lm3.lm_anclayer, lm3.lm_shapegrid,
 lm3.lm_bktanclayer, lm_bktpalayer,
-lm3.lm_intJob, lm3.lm_mtxJob, lm3.lm_msgJob
+lm3.lm_intJob, lm3.lm_mtxJob, lm3.lm_msgJob, lm3.lm_grdjob
 TO GROUP reader;
 
 GRANT SELECT ON TABLE 
 lm3.lm_pamsum, lm3.lm_fullradbucket, 
 lm3.lm_palayer, lm3.lm_anclayer, lm3.lm_shapegrid,
 lm3.lm_bktanclayer, lm_bktpalayer,
-lm3.lm_intJob, lm3.lm_mtxJob, lm3.lm_msgJob
+lm3.lm_intJob, lm3.lm_mtxJob, lm3.lm_msgJob, lm3.lm_grdjob
 TO GROUP writer;
 
 GRANT UPDATE ON TABLE 
-lm3.lm_intJob, lm3.lm_mtxJob, lm3.lm_msgJob
+lm3.lm_intJob, lm3.lm_mtxJob, lm3.lm_msgJob, lm3.lm_grdjob
 TO GROUP writer;
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
