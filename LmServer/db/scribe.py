@@ -1354,7 +1354,8 @@ class Scribe(Peruser):
       @param usr: LMComputeResource object to insert
       @return: True on success, False on failure (i.e. IPAddress is not unique)
       """
-      existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress)
+      existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress,
+                                                    ipMask=compResource.ipMask)
       if existingCR is None:
          usr = self._mal.getUser(crContact.getUserId())
          if usr is None:

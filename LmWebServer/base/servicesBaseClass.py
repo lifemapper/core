@@ -344,8 +344,15 @@ class WebObject(WebServiceBaseClass):
       @note: In the future, we could check to see if the machine has permission
                 to access private data or not.
       """
-      cr = self.conn.getComputeResourceByIP(ipAddress)
-      if cr is not None:
+      # Get all compute resources
+      matchCR = None
+      crs = self.conn.getAllComputeResources()
+      for cr in crs:
+         if cr.matchIP(ipAddress) and matchCR is None or \
+             (matchCR.ipMask is not None and matchCR.ipMask < cr.ipMask):
+            matchCR = cr 
+      
+      if matchCR is not None:
          return True
       else:
          return False

@@ -26,7 +26,7 @@ from LmServer.base.lmobj import LMObject
 # .............................................................................
 class LMComputeResource(LMObject):
    
-   def __init__(self, name, ipaddress, userId, FQDN=None, 
+   def __init__(self, name, ipaddress, userId, ipMask=None, FQDN=None, 
                 dbId=None, createTime=None, modTime=None, hbTime=None):
       """
       @summary ComputeResource constructor
@@ -37,6 +37,7 @@ class LMComputeResource(LMObject):
       self._userId = userId
       self.name = name
       self.ipAddress = ipaddress
+      self.ipMask = ipMask
       self.FQDN = FQDN
       self.createTime = createTime
       self.modTime = modTime
