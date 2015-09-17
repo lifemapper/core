@@ -51,8 +51,7 @@ def getOptionalVal(dict, key):
 # ...............................................
 def registerConfiguredCompute(scribe):
    try:
-      if (COMPUTE_NAME is not None and COMPUTE_IP is not None and  
-          COMPUTE_CONTACT_USERID is not None):
+      if (COMPUTE_NAME != '' and COMPUTE_IP != '' and COMPUTE_CONTACT_USERID != ''):
          crContact = LMUser(COMPUTE_CONTACT_USERID, COMPUTE_CONTACT_EMAIL, '', 
                             firstName=COMPUTE_CONTACT_FIRSTNAME, 
                             lastName=COMPUTE_CONTACT_FIRSTNAME, 
