@@ -348,8 +348,8 @@ class WebObject(WebServiceBaseClass):
       matchCR = None
       crs = self.conn.getAllComputeResources()
       for cr in crs:
-         if cr.matchIP(ipAddress) and matchCR is None or \
-             (matchCR.ipMask is not None and matchCR.ipMask < cr.ipMask):
+         if cr.matchIP(ipAddress) and (matchCR is None or \
+             (matchCR.ipMask is not None and matchCR.ipMask < cr.ipMask)):
             matchCR = cr 
       
       if matchCR is not None:
