@@ -108,7 +108,7 @@ DECLARE
    rec lm3.computeresource%ROWTYPE;
 BEGIN
    FOR rec IN 
-      SELECT * FROM lm3.lm3.computeresource
+      SELECT * FROM lm3.computeresource
    LOOP
       RETURN NEXT rec;
    END LOOP;   

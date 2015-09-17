@@ -26,7 +26,7 @@
           02110-1301, USA.
 """
 from LmServer.common.localconstants import (COMPUTE_NAME, COMPUTE_IP, 
-            COMPUTE_CONTACT_USERID, COMPUTE_CONTACT_EMAIL, 
+            COMPUTE_IP_MASK, COMPUTE_CONTACT_USERID, COMPUTE_CONTACT_EMAIL, 
             COMPUTE_CONTACT_FIRSTNAME, COMPUTE_CONTACT_LASTNAME, 
             COMPUTE_INSTITUTION, COMPUTE_ADDR1, COMPUTE_ADDR2, COMPUTE_ADDR3)
 from LmDbServer.populate.computeMeta import LM_COMPUTE_INSTANCES
@@ -51,8 +51,8 @@ def getOptionalVal(dict, key):
 # ...............................................
 def registerConfiguredCompute(scribe):
    try:
-      if (COMPUTE_NAME is not null and COMPUTE_IP is not null and  
-          COMPUTE_CONTACT_USERID is not null):
+      if (COMPUTE_NAME is not None and COMPUTE_IP is not None and  
+          COMPUTE_CONTACT_USERID is not None):
          crContact = LMUser(COMPUTE_CONTACT_USERID, COMPUTE_CONTACT_EMAIL, '', 
                             firstName=COMPUTE_CONTACT_FIRSTNAME, 
                             lastName=COMPUTE_CONTACT_FIRSTNAME, 
@@ -65,13 +65,16 @@ def registerConfiguredCompute(scribe):
          compResource = scribe.registerComputeResource(crMachine, crContact)
          
    except Exception, e:
-      raise LMError(currargs='Failed to insert LmCompute %s' % COMPUTE_NAME)
+      raise LMError(currargs='Failed to insert LmCompute %s (%s)' % 
+                    (COMPUTE_NAME, str(e)))
          
 # ...............................................
 def registerStandardComputes(scribe):
    try:
       for name, lmc in LM_COMPUTE_INSTANCES.iteritems():      
-         crContact = LMUser(lmc['contactid'], lmc['email'], lmc['password'], 
+         crContact = LMUser(lmc['contactid'], 
+                            getOptionalVal(lmc,'email'), 
+                            getOptionalVal(lmc,'password'), 
                             isEncrypted=getOptionalVal(lmc,'encrypted'), 
                             firstName=getOptionalVal(lmc,'first'), 
                             lastName=getOptionalVal(lmc,'last'), 
@@ -81,12 +84,13 @@ def registerStandardComputes(scribe):
                             addr3=getOptionalVal(lmc,'addr3'), 
                             modTime=currtime)
          crMachine = LMComputeResource(name, lmc['ip'], lmc['contactid'], 
-                                       ipMask=lmc['ipmask'], createTime=currtime, 
+                                       ipMask=getOptionalVal(lmc,'ipmask'), 
+                                       createTime=currtime, 
                                        modTime=currtime, hbTime=currtime)
          compResource = scribe.registerComputeResource(crMachine, crContact)
          
    except Exception, e:
-      raise LMError(currargs='Failed to insert LmCompute %s' % name)
+      raise LMError(currargs='Failed to insert LmCompute %s (%s)' % (name, str(e)))
          
    
 # ...............................................
@@ -103,7 +107,7 @@ if __name__ == '__main__':
          # Register anything in configuration file (probably site.ini)
          registerConfiguredCompute(scribe)
       except Exception, e:
-         raise LMError(currargs='Failed to insert LmCompute %s' % name)
+         raise 
       finally:
          scribe.closeConnections()
        
