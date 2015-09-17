@@ -1814,7 +1814,7 @@ class MAL(DbPostgresql):
    def getAllComputeResources(self):
       """
       """
-      comps = None
+      comps = []
       rows, idxs = self.executeSelectManyFunction('lm_getAllComputes')
       for r in rows:
          cr = self._createComputeResource(r, idxs)

@@ -1949,3 +1949,14 @@ class Scribe(Peruser):
       else:
          raise LMError('Must provide an experimentId or bucketId to initialize Intersect')
    
+
+# .............................................................................
+if __name__ == "__main__":
+   from LmServer.common.log import ScriptLogger
+   
+   scribe = Scribe(ScriptLogger('scribeTest'))
+   scribe.openConnections()
+   comps = scribe.getAllComputeResources()
+   print 'Output:'
+   for c in comps:
+      print '  ', c.name, c.ipAddress+'/'+c.ipMask
