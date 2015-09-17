@@ -28,32 +28,9 @@
 # Required values are: Key: LmCompute name  
 #                      Values: ip, contactid, email, password 
 #                        encrypted defaults to False if not supplied
-LM_COMPUTE_INSTANCES = {'BIRC': {
-                           'ip': '129.237.201.247',
-                           'contactid': 'aimee.stewart@ku.edu',
-                           'email': 'aimee.stewart@ku.edu', 
-                           'password': 'whatever',
-                           'encrypted': False, 
-                           'first': 'Aimee', 
-                           'last':  'Stewart', 
-                           'institution': 'KUBI',
-                           'addr1': '1345 Jayhawk Blvd',
-                           'addr2': 'Lawrence, KS  66045',
-                           'addr3': 'USA'},
-                        'JUNO': {
-                           'ip': '129.237.201.230',
-                           'contactid': 'aimee.stewart@ku.edu',
-                           'email': 'aimee.stewart@ku.edu', 
-                           'password': 'whatever',
-                           'encrypted': False, 
-                           'first': 'Aimee', 
-                           'last':  'Stewart', 
-                           'institution': 'KUBI',
-                           'addr1': '1345 Jayhawk Blvd',
-                           'addr2': 'Lawrence, KS  66045',
-                           'addr3': 'USA'},
-                        'FELIX': {
-                           'ip': '129.237.201.230',
+LM_COMPUTE_INSTANCES = {'YETI': {
+                           'ip': '129.237.201.119',
+                           'ipmask': '32',
                            'contactid': 'aimee.stewart@ku.edu',
                            'email': 'aimee.stewart@ku.edu', 
                            'password': 'whatever',
@@ -65,7 +42,8 @@ LM_COMPUTE_INSTANCES = {'BIRC': {
                            'addr2': 'Lawrence, KS  66045',
                            'addr3': 'USA'},
                         'BADENOV': {
-                           'ip': '129.237.201.119',
+                           'ip': '129.237.183.10',
+                           'ipmask': '32',
                            'contactid': 'aimee.stewart@ku.edu',
                            'email': 'aimee.stewart@ku.edu', 
                            'password': 'whatever',
@@ -77,7 +55,8 @@ LM_COMPUTE_INSTANCES = {'BIRC': {
                            'addr2': 'Lawrence, KS  66045',
                            'addr3': 'USA'},
                         'SPORKS': {
-                           'ip': '129.237.201.67',
+                           'ip': '129.237.183.5',
+                           'ipmask': '32',
                            'contactid': 'cjgrady@ku.edu',
                            'email': 'cjgrady@ku.edu', 
                            'password': 'whatever',

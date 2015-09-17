@@ -55,6 +55,20 @@ PROVIDER_FILENAME: gbif_orgs.txt
 ;; SCENARIO_PACKAGE: 30sec-present-future-CONUS
 
 ; ...............................................
+[LmServer - registeredcompute]
+COMPUTE_NAME: 
+COMPUTE_IP: 
+COMPUTE_IP_MASK: 
+COMPUTE_CONTACT_USERID:
+COMPUTE_CONTACT_EMAIL:
+COMPUTE_CONTACT_FIRSTNAME:
+COMPUTE_CONTACT_LASTNAME:
+COMPUTE_INSTITUTION:
+COMPUTE_ADDR1:
+COMPUTE_ADDR2: 
+COMPUTE_ADDR3: 
+
+; ...............................................
 ; LmCompute
 ; ...............................................
 [LmCompute - contact]

@@ -60,8 +60,8 @@ def registerConfiguredCompute(scribe):
                             addr1=COMPUTE_ADDR1, addr2=COMPUTE_ADDR2, 
                             addr3=COMPUTE_ADDR3, modTime=currtime)
          crMachine = LMComputeResource(COMPUTE_NAME, COMPUTE_IP, 
-                           COMPUTE_CONTACT_USERID, createTime=currtime, 
-                           modTime=currtime, hbTime=currtime)
+                           COMPUTE_CONTACT_USERID, ipMask=COMPUTE_IP_MASK,
+                           createTime=currtime, modTime=currtime, hbTime=currtime)
          compResource = scribe.registerComputeResource(crMachine, crContact)
          
    except Exception, e:
@@ -81,8 +81,8 @@ def registerStandardComputes(scribe):
                             addr3=getOptionalVal(lmc,'addr3'), 
                             modTime=currtime)
          crMachine = LMComputeResource(name, lmc['ip'], lmc['contactid'], 
-                                       createTime=currtime, modTime=currtime, 
-                                       hbTime=currtime)
+                                       ipMask=lmc['ipmask'], createTime=currtime, 
+                                       modTime=currtime, hbTime=currtime)
          compResource = scribe.registerComputeResource(crMachine, crContact)
          
    except Exception, e:
