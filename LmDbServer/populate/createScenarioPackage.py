@@ -35,10 +35,12 @@ import sys
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, ZIP_DEFLATED
 
+from LmServer.common.lmconstants import ENV_DATA_PATH
+from LmServer.common.localconstants import DATA_PATH
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.scribe import Scribe
 
-LYR_BASE_PATH = '/share/data/ClimateData' # TODO: Get this from constants
+LYR_BASE_PATH = os.path.join(DATA_PATH, ENV_DATA_PATH)
 
 # .............................................................................
 if __name__ == "__main__":
@@ -48,8 +50,8 @@ if __name__ == "__main__":
              description="Build a package of layers from a group of scenarios")
    parser.add_argument("pkgName", metavar='PackageName', type=str, nargs=1,
                        help="The name of this package")
-   parser.add_argument("scnIds", metavar='ScenarioId', type=int, nargs='+',
-                       help="The id of a scenario to add to the package")
+   parser.add_argument("scnCodes", metavar='ScenarioCodes', type=str, nargs='+',
+                       help="The codes of scenarios to add to the package")
    parser.add_argument('-f', '--fileTypes', type=str, choices=['a', 't', 'b'], 
                        help="Specify which file types to use: a - ascii grids, t - geotiffs, b - both (default both)")
    

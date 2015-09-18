@@ -145,8 +145,12 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                              pkgMeta['res'], suffix=pkgMeta['suffix'],
                              isTitle=True)
       dloc = os.path.join(scenpth, fname)
+      metaurl = None
       if lyrMeta['remoteurl'] is not None:
-         remoteLocs[dloc] = os.path.join(relativePath, fname)
+         metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
+         remoteLocs[metaurl] = os.path.join(relativePath, fname)
+      elif not os.path.exists(dloc):
+         raise LMError('Missing local data %s' % dloc)
       envlyr = EnvironmentalLayer(lyrname, 
                 title=lyrtitle, 
                 valUnits=ltvals['valunits'], 
@@ -161,6 +165,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                 keywords=ltvals['keywords'], 
                 description='%s, %s' % (ltvals['description'], 
                                         baseMeta['description']), 
+                metadataUrl=metaurl,
                 layerType=ltype, 
                 layerTypeTitle=ltvals['title'], 
                 layerTypeDescription=ltvals['description'], 
@@ -177,8 +182,8 @@ def writeRemoteDataPairs(remoteData, scenPkgName):
       if os.path.exists(fname):
          os.remove(fname)
       f = open(fname, 'w')
-      for key, val in remoteData.iteritems():
-         f.write('%s, %s\n' % (key + '/GTiff', val))
+      for remoteurl, relfilepath in remoteData.iteritems():
+         f.write('%s, %s\n' % (remoteurl + '/GTiff', relfilepath))
       f.close()
    
 # ...............................................
@@ -204,12 +209,14 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
          lyrtitle = _getbioName('%s, IPCC %s %s, %s' % 
                                 (ltvals['title'], rpt, sfam, tm), 
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], isTitle=True)
-         rstType = None
          dloc = os.path.join(scenpth, fname)
+         metaurl = None
          if lyrMeta['remoteurl'] is not None:
-            remoteLocs[dloc] = os.path.join(relativePath, fname)
-         elif not os.path.exists(fname):
-            raise LMError('Missing local data %s' % fname)
+            metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
+            remoteLocs[metaurl] = os.path.join(relativePath, fname)
+         elif not os.path.exists(dloc):
+            raise LMError('Missing local data %s' % dloc)
+         
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
                   valUnits=ltvals['valunits'],
@@ -225,6 +232,7 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
                   epsgcode=lyrMeta['epsg'], 
                   keywords=ltvals['keywords'], 
                   description='%s, %s' % (ltvals['description'], scendesc), 
+                  metadataUrl=metaurl,
                   layerType=ltype, layerTypeTitle=ltvals['title'], 
                   layerTypeDescription=ltvals['description'], 
                   userId=usr, createTime=currtime, modTime=currtime)
@@ -252,12 +260,14 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
          lyrtitle = _getbioName('%s, %s' % (ltvals['title'], tmvals['name']),
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], 
                                 isTitle=True)
-         dloc = os.path.join(scenpth, fname)
          
+         dloc = os.path.join(scenpth, fname)
+         metaurl = None
          if lyrMeta['remoteurl'] is not None:
-            remoteLocs[dloc] = os.path.join(relativePath, fname)
-         elif not os.path.exists(fname):
-            raise LMError('Missing local data %s' % fname)
+            metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
+            remoteLocs[metaurl] = os.path.join(relativePath, fname)
+         elif not os.path.exists(dloc):
+            raise LMError('Missing local data %s' % dloc)
 
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
@@ -272,6 +282,7 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
                   epsgcode=lyrMeta['epsg'], 
                   keywords=ltvals['keywords'], 
                   description='%s, %s' % (ltvals['description'], scendesc), 
+                  metadataUrl=metaurl,
                   layerType=ltype, 
                   layerTypeTitle=ltvals['title'], 
                   layerTypeDescription=ltvals['description'], 

@@ -338,7 +338,6 @@ LOG_PATH = 'log'
 USER_LOG_PATH = 'users'
 ERROR_LOG_PATH = 'errors'
 POINT_PATH = 'points'
-# TODO: change these to 'archive', 'climate' and 'user'
 # These and 'species' are all subdirectories of DATA_PATH, in config.ini
 MODEL_PATH = 'archive'
 ENV_DATA_PATH = 'climate'
