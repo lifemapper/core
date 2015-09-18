@@ -49,6 +49,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- Find or insert ComputeResource and return id.  Return -1 on failure.
 CREATE OR REPLACE FUNCTION lm3.lm_insertCompute(cmpname varchar,
                                                 ip varchar,
+                                                mask varchar,
                                                 domname text,
                                                 usr varchar,
                                                 createtime double precision)
@@ -63,9 +64,9 @@ BEGIN
    IF NOT FOUND THEN
       BEGIN
          INSERT INTO lm3.ComputeResource 
-            (name, ipaddress, fqdn, userId, datecreated, datelastmodified)
+            (name, ipaddress, ipmask, fqdn, userId, datecreated, datelastmodified)
          VALUES 
-            (cmpname, ip, domname, usr, createtime, createtime);
+            (cmpname, ip, mask, domname, usr, createtime, createtime);
 
          IF FOUND THEN
             SELECT INTO id last_value FROM lm3.computeresource_computeresourceid_seq;
@@ -78,7 +79,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- lm_getCompute
-CREATE OR REPLACE FUNCTION lm3.lm_getCompute(ip varchar)
+CREATE OR REPLACE FUNCTION lm3.lm_getCompute(ip varchar, mask varchar)
    RETURNS lm3.computeresource AS
 $$
 DECLARE
@@ -86,11 +87,11 @@ DECLARE
 BEGIN
    BEGIN
       SELECT * INTO STRICT rec FROM lm3.computeresource 
-         WHERE ipaddress = ip;
+         WHERE ipaddress = ip AND ipmask = mask;
 
       EXCEPTION
          WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'IP Address % not found', ip;
+            RAISE NOTICE 'IP Address % (mask %) not found', ip, mask;
          WHEN TOO_MANY_ROWS THEN
             RAISE EXCEPTION 'IP Address % not unique', ip;
    END;
@@ -107,7 +108,7 @@ DECLARE
    rec lm3.computeresource%ROWTYPE;
 BEGIN
    FOR rec IN 
-      SELECT * FROM lm3.lm3.computeresource
+      SELECT * FROM lm3.computeresource
    LOOP
       RETURN NEXT rec;
    END LOOP;   

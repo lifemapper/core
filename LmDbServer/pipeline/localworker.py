@@ -1044,28 +1044,29 @@ class GBIFChainer(_LMWorker):
 # ...............................................
    def _readProviderKeys(self, providerKeyFile, providerKeyColname):
       providers = {}
-      provKeyCol = None
-      import os
+      
+      try:
+         provKeyCol = self._fieldnames.index(providerKeyColname)
+      except Exception, e:
+         self.log.error('Unable to find %s in fieldnames' % providerKeyColname)
+         provKeyCol = None
+         
       if providerKeyFile is not None and providerKeyColname is not None: 
+         import os
          if not os.path.exists(providerKeyFile):
             self.log.error('Missing provider file %s' % providerKeyFile)
          else:
-            try:
-               provKeyCol = self._fieldnames.index(providerKeyColname)
-            except Exception, e:
-               self.log.error('Unable to find %s in fieldnames' % providerKeyColname)
-            else:
-               dumpfile = open(providerKeyFile, 'r')
-               csv.field_size_limit(sys.maxsize)
-               csvreader = csv.reader(dumpfile, delimiter=';')
-               for line in csvreader:
-                  try:
-                     key, name = line
-                     if key != 'key':
-                        providers[key] = name
-                  except:
-                     pass
-               dumpfile.close()
+            dumpfile = open(providerKeyFile, 'r')
+            csv.field_size_limit(sys.maxsize)
+            csvreader = csv.reader(dumpfile, delimiter=';')
+            for line in csvreader:
+               try:
+                  key, name = line
+                  if key != 'key':
+                     providers[key] = name
+               except:
+                  pass
+            dumpfile.close()
       return providers, provKeyCol
          
 # ...............................................

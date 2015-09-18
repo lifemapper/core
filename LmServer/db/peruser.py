@@ -961,6 +961,13 @@ class Peruser(LMObject):
       return cr
 
 # ...............................................
+   def getAllComputeResources(self):
+      """
+      """
+      comps = self._mal.getAllComputeResources()
+      return comps
+
+# ...............................................
 # Miscellaneous
 # ...............................................
    def findUserForObject(self, scencode=None, occsetId=None, 

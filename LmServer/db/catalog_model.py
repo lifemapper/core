@@ -1801,14 +1801,25 @@ class MAL(DbPostgresql):
       return usr
 
 # ...............................................
-   def getComputeResourceByIP(self, ipAddr):
+   def getComputeResourceByIP(self, ipAddr, ipMask=None):
       """
       """
       cr = None
-      row, idxs = self.executeSelectOneFunction('lm_getCompute', ipAddr)
+      row, idxs = self.executeSelectOneFunction('lm_getCompute', ipAddr, ipMask)
       if row is not None:
          cr = self._createComputeResource(row, idxs)
       return cr
+
+# ...............................................
+   def getAllComputeResources(self):
+      """
+      """
+      comps = []
+      rows, idxs = self.executeSelectManyFunction('lm_getAllComputes')
+      for r in rows:
+         cr = self._createComputeResource(r, idxs)
+         comps.append(cr)
+      return comps
 
 # ...............................................
    def insertComputeResource(self, compResource):
@@ -1819,7 +1830,7 @@ class MAL(DbPostgresql):
       """
       currtime = mx.DateTime.utc().mjd
       crid = self.executeInsertFunction('lm_insertCompute', compResource.name, 
-                        compResource.ipAddress, compResource.FQDN, 
+                        compResource.ipAddress, compResource.ipMask, compResource.FQDN, 
                         compResource.getUserId(), currtime)
       
       compResource.setId(crid)
@@ -2591,7 +2602,8 @@ class MAL(DbPostgresql):
          cr = LMComputeResource(self._getColumnValue(row, idxs, ['name']), 
                                 self._getColumnValue(row, idxs, ['ipaddress']), 
                                 self._getColumnValue(row, idxs, ['userid']), 
-                                self._getColumnValue(row, idxs, ['requestprefix']), 
+                                ipMask=self._getColumnValue(row, idxs, ['ipmask']), 
+                                FQDN=self._getColumnValue(row, idxs, ['fqdn']), 
                                 dbId=self._getColumnValue(row, idxs, ['computeresourceid']), 
                                 createTime=self._getColumnValue(row, idxs, ['datecreated']), 
                                 modTime=self._getColumnValue(row, idxs, ['datelastmodified']), 

@@ -1354,7 +1354,8 @@ class Scribe(Peruser):
       @param usr: LMComputeResource object to insert
       @return: True on success, False on failure (i.e. IPAddress is not unique)
       """
-      existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress)
+      existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress,
+                                                    ipMask=compResource.ipMask)
       if existingCR is None:
          usr = self._mal.getUser(crContact.getUserId())
          if usr is None:
@@ -1948,3 +1949,14 @@ class Scribe(Peruser):
       else:
          raise LMError('Must provide an experimentId or bucketId to initialize Intersect')
    
+
+# .............................................................................
+if __name__ == "__main__":
+   from LmServer.common.log import ScriptLogger
+   
+   scribe = Scribe(ScriptLogger('scribeTest'))
+   scribe.openConnections()
+   comps = scribe.getAllComputeResources()
+   print 'Output:'
+   for c in comps:
+      print '  ', c.name, c.ipAddress+'/'+c.ipMask

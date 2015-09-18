@@ -26,7 +26,7 @@ from LmServer.base.lmobj import LMObject
 # .............................................................................
 class LMComputeResource(LMObject):
    
-   def __init__(self, name, ipaddress, userId, FQDN=None, 
+   def __init__(self, name, ipaddress, userId, ipMask=None, FQDN=None, 
                 dbId=None, createTime=None, modTime=None, hbTime=None):
       """
       @summary ComputeResource constructor
@@ -37,6 +37,7 @@ class LMComputeResource(LMObject):
       self._userId = userId
       self.name = name
       self.ipAddress = ipaddress
+      self.ipMask = ipMask
       self.FQDN = FQDN
       self.createTime = createTime
       self.modTime = modTime
@@ -78,6 +79,42 @@ class LMComputeResource(LMObject):
                 self.ipAddress == other.ipAddress)
       return result
       
+   # ...............................................
+   def matchIP(self, ipAddress):
+      """
+      @summary: Checks to see if the provided IP address matches the network
+                   specified by the compute resource
+      @note: I used inner functions because they are not used anywhere else in
+                the module or another module and it will be easier to split
+                this out later if we want to
+      """
+      # ...................................
+      def convertIPtoBinary(ip):
+         """
+         @summary: Converts an IP address (in octect form) to binary
+         @note: Assumes IPV4
+         """
+         return ''.join(["{0:08b}".format(int(octet)) for octet in ip.split('.')])
+
+      # ...................................
+      def maskBinIp(binIP, mask):
+         """
+         @summary: Returns the number of binary digits from the IP address 
+                      specified by the mask
+         """
+         if mask is None or mask == '' or mask == 0:
+            mask = 32
+         else:
+            mask = int(mask)
+         return binIP[:mask]
+
+      binIpAddress = convertIPtoBinary(ipAddress)
+      myMaskedIp = maskBinIp(convertIPtoBinary(self.ipAddress), 
+                             self.ipMask)
+      # Check that the provided IP address matches the masked IP address of the
+      #    compute resource
+      return binIpAddress.startswith(myMaskedIp)
+
 # .............................................................................
 # Read-Only Properties
 # .............................................................................

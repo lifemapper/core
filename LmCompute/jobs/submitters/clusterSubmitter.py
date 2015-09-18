@@ -31,7 +31,7 @@
 """
 import os
 
-from LmCommon.common.lmXml import deserialize, fromstring
+from LmCommon.common.lmXml import deserialize, parse
 
 from LmCompute.common.localconstants import JOB_REQUEST_DIR
 from LmCompute.common.log import SubmitterLogger
@@ -84,7 +84,8 @@ class ClusterSubmitter(JobSubmitter):
       for xmlFn in jobXmlFns:
 
          try:
-            j = deserialize(parse(xmlFn))
+            el = parse(xmlFn).getroot()
+            j = deserialize(el)
             
             fn = os.path.join(JOB_REQUEST_DIR, "%s-%s.xml" % (j.processType, j.jobId))
             

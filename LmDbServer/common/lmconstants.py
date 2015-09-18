@@ -26,13 +26,11 @@ import os.path
 from LmServer.common.lmconstants import SPECIES_DATA_PATH
 from LmServer.common.localconstants import DATA_PATH
 from LmDbServer.common.localconstants import TAXONOMY_FILENAME, \
-     OCCURRENCE_FILENAME, MARINE_FILENAME, PROVIDER_FILENAME, TSN_FILENAME , \
+     OCCURRENCE_FILENAME, PROVIDER_FILENAME, TSN_FILENAME , \
      BINOMIAL_FILENAME                      
 
 # ............................................................................
 
-MARINE_EXCLUDE_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                   MARINE_FILENAME)
 OCC_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
                              OCCURRENCE_FILENAME)
 TAXONOMY_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 

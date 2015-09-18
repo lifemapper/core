@@ -44,6 +44,7 @@ create table lm3.ComputeResource
    computeResourceId serial UNIQUE PRIMARY KEY,
    name varchar(32) NOT NULL,
    ipaddress varchar(16) UNIQUE NOT NULL,
+   ipmask varchar(2),
    fqdn varchar(100),
    
    -- Contact info will be in LMUser table
@@ -52,7 +53,8 @@ create table lm3.ComputeResource
    datecreated double precision,
    datelastmodified double precision,
    lastheartbeat double precision,
-   UNIQUE (name, userId)
+   UNIQUE (name, userId),
+   UNIQUE (ipaddress, ipmask)
 );
 
 -- -------------------------------
