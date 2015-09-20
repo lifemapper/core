@@ -22,13 +22,12 @@
           02110-1301, USA.
 """
 import csv
-import getopt
 import mx.DateTime
 import os
 import sys
 
-from LmCommon.common.lmconstants import GBIF_EXPORT_FIELDS, \
-                                     GBIF_TAXONKEY_FIELD, GBIF_TAXONNAME_FIELD 
+from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, 
+                                     GBIF_TAXONKEY_FIELD, GBIF_TAXONNAME_FIELD) 
 
 from LmServer.common.localconstants import APP_PATH
 from LmServer.common.log import ThreadLogger

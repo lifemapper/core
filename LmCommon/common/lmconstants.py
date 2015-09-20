@@ -30,6 +30,7 @@ from osgeo.ogr import OFTInteger, OFTReal, OFTString
 # .............................................................................
 # DATA FORMATS
 MASK_TYPECODE = 'MASK'
+   
 
 class OutputFormat:
 # ............................................................................
