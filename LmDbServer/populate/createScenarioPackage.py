@@ -50,8 +50,8 @@ if __name__ == "__main__":
              description="Build a package of layers from a group of scenarios")
    parser.add_argument("pkgName", metavar='PackageName', type=str, nargs=1,
                        help="The name of this package")
-   parser.add_argument("scnCodes", metavar='ScenarioCodes', type=str, nargs='+',
-                       help="The codes of scenarios to add to the package")
+   parser.add_argument("scnIds", metavar='ScenarioId', type=int, nargs='+',
+                       help="The id of a scenario to add to the package")
    parser.add_argument('-f', '--fileTypes', type=str, choices=['a', 't', 'b'], 
                        help="Specify which file types to use: a - ascii grids, t - geotiffs, b - both (default both)")
    

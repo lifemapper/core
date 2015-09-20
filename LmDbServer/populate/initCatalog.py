@@ -477,7 +477,7 @@ def _getClimateMeta(scenPkg):
 def usage():
    output = """
    Usage:
-      initCatalog [algorithms | scenario | taxonomy | user) 
+      initCatalog [algorithms | scenario | taxonomy | user | all) 
    """
    print output
 
@@ -496,10 +496,12 @@ if __name__ == '__main__':
       REMOTE_DATA_URL = None
       taxSource = None
    
-   if len(sys.argv) > 3:
+   if len(sys.argv) != 2:
       usage()
-   
    else:
+      action = sys.argv[1].lower()
+   
+   if action in ('algorithms', 'scenario', 'taxonomy', 'user', 'all'):
       try:
          logger = ScriptLogger('initCatalog')
          scribe = Scribe(logger)
@@ -507,9 +509,10 @@ if __name__ == '__main__':
          if not success: 
             logger.critical('Failed to open database')
             exit(0)
-            
-         if len(sys.argv) == 1:
-            uId = addDefaultUser(scribe)
+         
+         uId = addDefaultUser(scribe)
+         
+         if action == 'all':
             aIds = addAlgorithms(scribe)
             pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
@@ -518,23 +521,18 @@ if __name__ == '__main__':
                taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
                                                          taxSource['url'])
          
-         elif sys.argv[1].lower() == 'algorithms':   
+         elif action == 'algorithms':   
             aIds = addAlgorithms(scribe)
             
-         elif sys.argv[1].lower() == 'scenario':
+         elif action == 'scenario':
             pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                        LAYERTYPE_DATA, SCENARIO_PACKAGE)
             
-         elif sys.argv[1].lower() == 'taxonomy':
+         elif action == 'taxonomy':
             if taxSource is not None:
                taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
                                                          taxSource['url']) 
-         elif sys.argv[1].lower() == 'user':
-            uId = addDefaultUser(scribe)
-         
-         else:
-            usage()   
       finally:
          scribe.closeConnections()
        
