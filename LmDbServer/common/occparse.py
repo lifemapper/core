@@ -46,7 +46,7 @@ class OccDataParser(LMObject):
       self.dataFname = dataFname
       self.fieldNames = None 
       self.fieldCount = 0
-      self._fieldTypes = None
+      self.fieldTypes = None
       self._idIdx = None
       self._xIdx = None
       self._yIdx = None
@@ -69,6 +69,7 @@ class OccDataParser(LMObject):
          self._file = open(self.dataFname, 'r')
       except Exception, e:
          raise LMError('Failed to open %s' % self.dataFname)
+      csv.field_size_limit(sys.maxsize)
       self._csvreader = csv.reader(self._file, delimiter='\t')
       
       self.header = self._csvreader.next()
@@ -80,12 +81,47 @@ class OccDataParser(LMObject):
             
       # populates key, currLine and currRecnum
       self.sortFail = 0
-      self.getNextSortVal()
+      self.pullNextValidRec()
 
    # .............................................................................
    @property
    def sortIdx(self):
       return self._sortIdx
+
+   @property
+   def idValue(self):
+      idVal = None
+      if self.currLine is not None:
+         idVal = self.currLine[self._idIdx]
+      return idVal
+   
+   @property
+   def xValue(self):
+      xVal = None
+      if self.currLine is not None:
+         xVal = self.currLine[self._xIdx]
+      return xVal
+   
+   @property
+   def yValue(self):
+      yVal = None
+      if self.currLine is not None:
+         yVal = self.currLine[self._yIdx]
+      return yVal   
+      
+   @property
+   def sortValue(self):
+      sortVal = None
+      if self.currLine is not None:
+         sortVal = self.currLine[self._sortIdx]
+      return sortVal
+   
+   @property
+   def nameValue(self):
+      nameVal = None
+      if self.currLine is not None:
+         nameVal = self.currLine[self._nameIdx]
+      return nameVal
    
    # .............................................................................
    def _readMetadata(self):
@@ -226,7 +262,7 @@ class OccDataParser(LMObject):
          self._getLine()
 
    # ...............................................
-   def getNextSortVal(self):
+   def pullNextValidRec(self):
       """
       Fills in self.key and self.currLine
       """
@@ -246,7 +282,7 @@ class OccDataParser(LMObject):
                   self.key = None
                   
       except Exception, e:
-         self.log.error('Failed in getNextSortVal, currRecnum=%s, e=%s' 
+         self.log.error('Failed in pullNextValidRec, currRecnum=%s, e=%s' 
                    % (str(self.currRecnum), str(e)))
          self.currLine = self.key = None
 
@@ -339,9 +375,8 @@ class OccDataParser(LMObject):
                    % (str(self.currRecnum), str(e)))
          self.currLine = self.key = None
          
-         
    # ...............................................
-   def getThisChunk(self):
+   def pullCurrentChunk(self):
       """
       Returns chunk for self.key, updates with next key and currline 
       """
@@ -354,7 +389,7 @@ class OccDataParser(LMObject):
       try:
          while self._csvreader is not None and not complete:
             chunk.append(self.currLine)
-            self.getNextSortVal()
+            self.pullNextValidRec()
             if self.key == currkey:
                currCount += 1
                chunk.append(self.currLine)

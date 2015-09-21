@@ -33,11 +33,11 @@ from LmCommon.common.lmconstants import BISON_BINOMIAL_REGEX, BISON_NAME_KEY, \
           ProcessType
 
 from LmDbServer.common.lmconstants import (OCC_DUMP_FILE, 
-               BISON_TSN_FILE, IDIGBIO_BINOMIAL_FILE, PROVIDER_DUMP_FILE)
+               BISON_TSN_FILE, IDIGBIO_BINOMIAL_FILE, PROVIDER_DUMP_FILE,
+               USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, \
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
-         SPECIES_EXP_MONTH, SPECIES_EXP_DAY, DEFAULT_GRID_NAME, 
-         USER_DUMP_FILE, USER_META_FILE)
+         SPECIES_EXP_MONTH, SPECIES_EXP_DAY, DEFAULT_GRID_NAME)
 from LmDbServer.pipeline.pipeline import _Pipeline
 from LmDbServer.pipeline.localworker import (Infiller, Troubleshooter, 
                   ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer)
@@ -138,52 +138,17 @@ class UserPipeline(LMArchivePipeline):
       LMArchivePipeline.__init__(self, pipelineName, algCodes, 
                                  mdlScenarioCode, projScenarioCodes, 
                                  mdlMaskId=mdlMaskId, prjMaskId=prjMaskId)
-#       excludeList = self._readExcludeFile(MARINE_EXCLUDE_FILE)
       self._initWorkers(expDate)
-
-# # ...............................................
-#    def _getOccDataMetadata(self):
-#       """
-#       Exclude file contains a list of marine names, one per line, each string 
-#       prefixed by 
-#       """
-#       occfile = USER_DUMP_FILE
-#       try:
-#          f = open(USER_META_FILE, 'r')
-#       except Exception, e:
-#          raise LMError('Failed to open User Metadata file %s' % USER_META_FILE)
-# 
-#       try: 
-#          
-#       
-#       fldNames = []
-#       idxs = GBIF_EXPORT_FIELDS.keys()
-#       idxs.sort()
-#       for idx in idxs:
-#          gbifFldNames.append(GBIF_EXPORT_FIELDS[idx][0])
-
 
 # ...............................................
    def _initWorkers(self, expDate):
-      taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
       self.workers = []
       updateInterval = ONE_MONTH
-      gbifFldNames = []
-      idxs = GBIF_EXPORT_FIELDS.keys()
-      idxs.sort()
-      for idx in idxs:
-         gbifFldNames.append(GBIF_EXPORT_FIELDS[idx][0])
 
       try:
-         self.workers.append(ProcessRunner(self.lock, self.name, updateInterval, 
-                             processTypes=[ProcessType.SMTP],
-                             threadSuffix='_email'))
-         self.workers.append(GBIFChainer(self.lock, self.name, updateInterval, 
+         self.workers.append(UserChainer(self.lock, self.name, updateInterval, 
                              self.algs, self.modelScenario, self.projScenarios, 
-                             OCC_DUMP_FILE, expDate, gbifFldNames, 
-                             GBIF_TAXONKEY_FIELD, taxname,
-                             providerKeyFile=PROVIDER_DUMP_FILE, 
-                             providerKeyColname=GBIF_PROVIDER_FIELD,
+                             USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expDate, 
                              mdlMask=self.modelMask, prjMask=self.projMask,
                              intersectGrid=self.intersectGrid))
          self.workers.append(Infiller(self.lock, self.name, updateInterval, 
@@ -417,6 +382,7 @@ if __name__ == '__main__':
          % (str(DEFAULT_ALGORITHMS), DEFAULT_MODEL_SCENARIO, 
             str(DEFAULT_PROJECTION_SCENARIOS)))
    
+   # TODO: Change to factory instantiating correct pipeline
    if DATASOURCE == Instances.BISON:
       p = BisonPipeline(DATASOURCE.lower(), 
                         DEFAULT_ALGORITHMS, DEFAULT_MODEL_SCENARIO, 
@@ -429,7 +395,11 @@ if __name__ == '__main__':
       p = iDigBioPipeline(DATASOURCE.lower(), 
                        DEFAULT_ALGORITHMS, DEFAULT_MODEL_SCENARIO, 
                        DEFAULT_PROJECTION_SCENARIOS, expDate=expdate.mjd)
-   
+   else:
+      p = UserPipeline(DATASOURCE.lower(), 
+                       DEFAULT_ALGORITHMS, DEFAULT_MODEL_SCENARIO, 
+                       DEFAULT_PROJECTION_SCENARIOS, expDate=expdate.mjd)
+      
    killfile = p.getKillfilename(DATASOURCE.lower())
    waitsec = 10
    print('           **************************') 
