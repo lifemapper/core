@@ -22,13 +22,14 @@
           02110-1301, USA.
 """
 import csv
+import os
+import sys
 
-from LmDbServer.pipeline.occparse import OccDataParser
+from LmDbServer.common.localconstants import (USER_OCCURRENCE_META, 
+                                              USER_OCCURRENCE_CSV)
+from LmDbServer.common.occparse import OccDataParser
 from LmServer.base.lmobj import LMObject, LMError
 from LmServer.common.log import ScriptLogger
-from LmCommon.common.localconstants import METAFILE_NAME
-
-      
 
 # ...............................................
 def _getOPFilename(datapath, prefix, base, run=None):
@@ -212,6 +213,8 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
       srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
       
    try:
+      # Write header from the first file
+      csvwriter.writerow(sortedFiles[0].header)
       # find file with record containing smallest key
       smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
       while pos is not None and not complete:
@@ -245,16 +248,14 @@ def usage():
    print output
 
 # .............................................................................
-if __name__ == "__main__":
-   from LmServer.common.log import ScriptLogger
-   
+if __name__ == "__main__":   
    WORKPATH = '/tank/data/input/species/'
-   METAFILE_NAME = 'gbif_borneo_simple.py'
-   DATAFILE_NAME = 'gbif_borneo_simple.csv'
+   USER_OCCURRENCE_META = 'gbif_borneo_simple.meta'
+   USER_OCCURRENCE_CSV = 'gbif_borneo_simple.csv'
    unsortedPrefix = 'chunk'
-   sortedPrefix = 'sorted'
-   mergedPrefix = 'merged'
-   basename = os.path.splitext(DATAFILE_NAME)[0]
+   sortedPrefix = 'smallsort'
+   mergedPrefix = 'sorted'
+   basename = os.path.splitext(USER_OCCURRENCE_CSV)[0]
     
    if len(sys.argv) == 2:
       log = ScriptLogger('occparse_%s' % sys.argv[1])
@@ -262,8 +263,8 @@ if __name__ == "__main__":
    else:
       usage()
     
-   datafname = os.path.join(WORKPATH, DATAFILE_NAME)
-   metafname = os.path.join(WORKPATH, METAFILE_NAME)
+   datafname = os.path.join(WORKPATH, USER_OCCURRENCE_CSV)
+   metafname = os.path.join(WORKPATH, USER_OCCURRENCE_META)
    mergefname = os.path.join(WORKPATH, '%s_%s.csv' % (mergedPrefix, basename))
 
    if sys.argv[1] == 'sort':   
@@ -273,7 +274,7 @@ if __name__ == "__main__":
       splitIntoFiles(occparser, WORKPATH, unsortedPrefix, basename, 200000)
       occparser.close()
       print 'sortvalIdx = ', sortvalIdx
-          
+           
       # Sort smaller files
       sortFiles(sortvalIdx, WORKPATH, unsortedPrefix, sortedPrefix, basename)
 

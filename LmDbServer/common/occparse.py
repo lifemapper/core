@@ -30,9 +30,6 @@ import sys
 from types import DictionaryType, DictType
 
 from LmServer.base.lmobj import LMObject, LMError
-# from LmServer.common.localconstants import APP_PATH, TROUBLESHOOTERS
-# from LmServer.common.lmconstants import LOG_PATH
-# from LmServer.common.log import ScriptLogger
 # .............................................................................
 class OccDataParser(LMObject):
    """
@@ -49,27 +46,38 @@ class OccDataParser(LMObject):
       self.dataFname = dataFname
       self.fieldNames = None 
       self.fieldCount = 0
-      # Requires ID, GroupBy, Longitude, Latitude
-      self.requiredCount = 4
       self._fieldTypes = None
       self._idIdx = None
+      self._xIdx = None
+      self._yIdx = None
       self._sortIdx = None
       self._nameIdx = None
+      self.currLine = None
+      self.currRecnum = 0
+      # Requires ID, GroupBy, Longitude, Latitude
+      self.requiredCount = 4
+      self.currIsGoodEnough = True
+      self.currIsBadId  = False 
+      self.currIsBadGeo = False
+      self.currIsBadGroup = False
+      self.currIsBadName = False
+      
+      self.chunk = []
+      self.key = None
       
       try:
          self._file = open(self.dataFname, 'r')
       except Exception, e:
          raise LMError('Failed to open %s' % self.dataFname)
       self._csvreader = csv.reader(self._file, delimiter='\t')
+      
       self.header = self._csvreader.next()
+      self.currLine = None
+      self.currRecnum = 0
 
       # Read metadata file and close
       self._getMetadata(self.header)
-      
-      self.currLine = None
-      self.currRecnum = 0
-      self.chunk = []
-      self.key = None
+            
       # populates key, currLine and currRecnum
       self.sortFail = 0
       self.getNextSortVal()
@@ -118,6 +126,10 @@ class OccDataParser(LMObject):
             role = fldmeta[oname][2].lower()
             if role == 'id':
                self._idIdx = i
+            elif role == 'longitude':
+               self._xIdx = i
+            elif role == 'latitude':
+               self._yIdx = i
             elif role == 'groupby':
                self._sortIdx = i
             elif role == 'dataname':
@@ -126,6 +138,10 @@ class OccDataParser(LMObject):
       
       if self._idIdx == None:
          raise LMError('Missing \'id\' unique identifier field')
+      if self._xIdx == None:
+         raise LMError('Missing \'longitude\' georeference field')
+      if self._yIdx == None:
+         raise LMError('Missing \'latitude\' georeference field')
       if self._sortIdx == None:
          raise LMError('Missing \'groupby\' sorting field')
       if self._nameIdx == None:
@@ -147,27 +163,62 @@ class OccDataParser(LMObject):
                          % typeString)
    
    # ...............................................
+   def _testLine(self):
+      self.currIsGoodEnough = True
+      self.currIsBadId = self.currIsBadGeo = self.currIsBadGroup = self.currIsBadName = False
+      
+      try:
+         int(self.currLine[self._idIdx])
+      except Exception, e:
+         if self.currLine[self._idIdx] == '':
+            self.currIsBadId = True
+         
+      try:
+         float(self.currLine[self._xIdx])
+         float(self.currLine[self._yIdx])
+      except Exception, e:
+         self.currIsBadGeo = True
+      else:
+         if self.currLine[self._xIdx] == 0 and self.currLine[self._yIdx] == 0:
+            self.currIsBadGeo = True
+               
+      try:
+         sortkey = int(self.currLine[self._sortIdx])
+      except Exception, e:
+         self.currIsBadGroup = True
+         
+      if self.currLine[self._nameIdx] == '':
+         self.currIsBadName = True
+            
+      if (self.currIsBadId or self.currIsBadGeo or self.currIsBadGroup):
+         self.currIsGoodEnough = False 
+         
+   # ...............................................
    def _getLine(self):
       """
-      Fills in self.currLine, self.currRecnum
+      Fills in:
+         self.currLine, self.currRecnum
+         self.currIsGoodEnough, self.currIsBadId, self.currIsBadGeo,
+         self.currIsBadGroup, self.currIsBadName
       """
       success = False
-      line = None
       while not success:
          try:
             self.currLine = self._csvreader.next()
+            self._testLine()
             success = True
             self.currRecnum += 1
          except OverflowError, e:
             self.currRecnum += 1
             self.log.debug( 'Overflow on %d (%s)' % (self.currRecnum, str(e)))
-         except Exception, e:
-            self.log.debug('Exception reading line %d, probably EOF (%s)' 
-                      % (self.currRecnum, str(e)))
+         except StopIteration:
+            self.log.debug('EOF on rec %d' % (self.currRecnum))
             self.close()
             self.currRecnum = self.currLine = None
             success = True
-   
+         except Exception, e:
+            raise LMError('Bad record {}'.format(e))
+
    # ...............................................
    def skipToRecord(self, targetnum):
       complete = False
@@ -184,17 +235,9 @@ class OccDataParser(LMObject):
       self._getLine()
       try:
          while self._csvreader is not None and not complete:
-            if len(self.currLine) >= self.requiredCount:
-               val = self.currLine[self._sortIdx]
-               try:
-                  sortval = int(val)
-               except Exception, e:
-                  self.log.debug('Failed to retrieve sort field on line %d (%s)' 
-                            % (self.currRecnum, str(val)))
-                  self.sortFail += 1
-               else:
-                  self.key = sortval
-                  complete = True
+            if self.currIsGoodEnough:
+               self.key = int(self.currLine[self._sortIdx])
+               complete = True
                      
             if not complete:
                self._getLine()
@@ -208,6 +251,65 @@ class OccDataParser(LMObject):
          self.currLine = self.key = None
 
    # ...............................................
+   def checkInput(self, maxSize=None):
+      """
+      Finds number of records with correctly populated required fields 
+      """
+      total = totalGood = totalMostlyGood = 0
+      badId = badGeo = badGroup = badName = 0
+      groups = set()
+      complete = False
+      self.key = None
+      if self._csvreader.line_num > 2:
+         self.log.error('File is on line {}; checkInput must be run immediately following initialization' 
+                        % self._csvreader.line_num)
+      
+      self._getLine()
+      try:
+         while self._csvreader is not None and not complete:
+            total += 1
+                  
+            if self.currIsGoodEnough:
+               totalGood += 1
+            elif self.currIsGoodEnough:
+               totalMostlyGood += 1
+            if self.currIsBadId:
+               badId += 1
+            if self.currIsBadGeo:
+               badGeo += 1
+            if self.currIsBadGroup:
+               badGroup += 1
+               groups.add(self.currLine[self._sortIdx])
+               
+            if not complete:
+               self._getLine()
+               if self.currLine is None:
+                  complete = True
+                  self.key = None
+         
+      except Exception, e:
+         self.log.error('Failed in getNextKey, currRecnum=%s, e=%s' 
+                   % (str(self.currRecnum), str(e)))
+         self.currLine = self.key = None
+      finally:
+         report = """
+         Totals for {}
+         -------------------------------------------------------------
+         Total records read: {}
+         Total groupings: {}
+         Total good records: {}
+         Total mostly good records (missing only Dataname): {}
+         Breakdown
+         ----------
+         Records with missing or invalid ID value: {}
+         Records with missing or invalid Longitude/Latitude values: {}
+         Records with missing or invalid GroupBy value: {}
+         Records with missing or invalid Dataname value: {}
+         """.format(self.dataFname, total, len(groups), totalGood, 
+                    totalMostlyGood, badId, badGeo, badGroup, badName)
+         self.log.info(report)
+
+   # ...............................................
    def getNextKey(self):
       """
       Fills in self.key and self.currLine
@@ -217,15 +319,14 @@ class OccDataParser(LMObject):
       self._getLine()
       try:
          while self._csvreader is not None and not complete:
-            if len(self.currLine) >= 16:
-               try:
-                  txkey = int(self.currLine[self._sortIdx])
-               except Exception, e:
-                  self.log.debug('Failed on line %d (%s)' 
-                            % (self.currRecnum, str(self.currLine)))
-               else:
-                  self.key = txkey
-                  complete = True
+            try:
+               txkey = int(self.currLine[self._sortIdx])
+            except Exception, e:
+               self.log.debug('Failed on line %d (%s)' 
+                         % (self.currRecnum, str(self.currLine)))
+            else:
+               self.key = txkey
+               complete = True
                      
             if not complete:
                self._getLine()
@@ -307,3 +408,14 @@ class OccDataParser(LMObject):
          pass
       self._csvreader = None
 
+
+if __name__ == '__main__':
+   from LmServer.common.log import ScriptLogger
+   metafname = '/share/lmserver/data/species/gbif_borneo_simple.meta'
+   datafname = '/share/lmserver/data/species/sorted_gbif_borneo_simple.csv'
+#    datafname = '/tank/data/input/species/gbif_borneo_simple.csv'
+   
+   log = ScriptLogger('occparse_checkInput')
+   op = OccDataParser(log, datafname, metafname)
+   op.checkInput(maxSize=None)
+   op.close()
