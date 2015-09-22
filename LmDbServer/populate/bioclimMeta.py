@@ -80,6 +80,7 @@ REPORTS = {
                                  'likely sea level increase 0.45-0.82 m'] } } } }
 CLIMATE_PACKAGES = {
    '30sec-present-future-CONUS':
+   # Continental United States, for BISON
    # current: WC-30sec-CONUS
    # future: CCSM4-RCP4.5-2050-30sec-CONUS,CCSM4-RCP4.5-2070-30sec-CONUS,CCSM4-RCP8.5-2050-30sec-CONUS,CCSM4-RCP8.5-2070-30sec-CONUS
       {'res': '30sec',
@@ -95,6 +96,23 @@ CLIMATE_PACKAGES = {
                           ('RCP8.5', '2050'), ('RCP8.5', '2070')]},
        # Append to all scenario codes
        'suffix': 'CONUS'},
+   '30sec-present-future-SEA':
+   # Southeast Asia, for PRAGMA
+   # current: WC-30sec-SEA
+   # future: CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA,CCSM4-RCP8.5-2070-30sec-SEA
+      {'res': '30sec',
+       'bbox': [95, -11, 153, 21],
+       'helpme': None,
+       'topdir': '30sec-SEA',
+       # {REPORT: [Time,Time, ...]} 
+       'past': {},
+       # Name only
+       'present': 'WC',
+       # {REPORT: [(Scenario,Time), (Scenario,Time) ...]} 
+       'future': {'AR5': [('RCP4.5', '2050'), ('RCP4.5', '2070'),
+                          ('RCP8.5', '2050'), ('RCP8.5', '2070')]},
+       # Append to all scenario codes
+       'suffix': 'SEA'},
    '10min-past-present-future':
    # past: CCSM4-lgm-10min,CCSM4-mid-10min
    # current: WC-10min

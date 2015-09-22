@@ -30,6 +30,7 @@ from osgeo.ogr import OFTInteger, OFTReal, OFTString
 # .............................................................................
 # DATA FORMATS
 MASK_TYPECODE = 'MASK'
+   
 
 class OutputFormat:
 # ............................................................................
@@ -522,10 +523,12 @@ class ProcessType:
    RAD_SPLOTCH = 332
    RAD_GRADY = 333
    RAD_CALCULATE = 340
-   # .......... GBIF Query ..........
+   # .......... Occurrences ..........
    GBIF_TAXA_OCCURRENCE = 405
    BISON_TAXA_OCCURRENCE = 410
    IDIGBIO_TAXA_OCCURRENCE = 415
+   # .......... User-defined ..........
+   USER_TAXA_OCCURRENCE = 420
    # .......... Notify ..........
    SMTP = 510
    

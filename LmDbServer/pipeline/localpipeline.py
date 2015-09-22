@@ -32,16 +32,15 @@ from LmCommon.common.lmconstants import BISON_BINOMIAL_REGEX, BISON_NAME_KEY, \
           GBIF_PROVIDER_FIELD, GBIF_TAXONKEY_FIELD, Instances, ONE_MONTH, \
           ProcessType
 
-from LmDbServer.common.lmconstants import OCC_DUMP_FILE, \
-               BISON_TSN_FILE, IDIGBIO_BINOMIAL_FILE, PROVIDER_DUMP_FILE
-from LmDbServer.common.localconstants import DEFAULT_ALGORITHMS, \
-                                      DEFAULT_MODEL_SCENARIO, \
-                                      DEFAULT_PROJECTION_SCENARIOS, \
-                                      SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, \
-                                      SPECIES_EXP_DAY, DEFAULT_GRID_NAME
+from LmDbServer.common.lmconstants import (OCC_DUMP_FILE, 
+               BISON_TSN_FILE, IDIGBIO_BINOMIAL_FILE, PROVIDER_DUMP_FILE,
+               USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
+from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, \
+         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
+         SPECIES_EXP_MONTH, SPECIES_EXP_DAY, DEFAULT_GRID_NAME)
 from LmDbServer.pipeline.pipeline import _Pipeline
-from LmDbServer.pipeline.localworker import Infiller, Troubleshooter, \
-                  ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer
+from LmDbServer.pipeline.localworker import (Infiller, Troubleshooter, 
+                  ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer)
 from LmDbServer.populate.bioclimMeta import TAXONOMIC_SOURCE
 
 from LmServer.base.lmobj import LMError
@@ -118,6 +117,53 @@ class LMArchivePipeline(_Pipeline):
 # ...............................................
    def _initWorkers(self):
       raise LMError('Must be implemented in data-specific subclass')
+
+# .............................................................................
+class UserPipeline(LMArchivePipeline):
+   """
+   The pipeline asks for jobs and then runs them.
+   @precondition: Must setAlgorithm and setModelScenario before running 
+             start.  May addProjectionScenario one or more times to project
+             model onto alternate scenarios (besides the original 
+             model scenario).
+   """
+   def __init__(self, pipelineName, 
+                algCodes, mdlScenarioCode, projScenarioCodes, 
+                mdlMaskId=None, prjMaskId=None, expDate=None):
+      """
+      @summary Constructor for the pipeline class
+      @param logger: Logger to use for the main thread
+      @param processid: process id for this application
+      """
+      LMArchivePipeline.__init__(self, pipelineName, algCodes, 
+                                 mdlScenarioCode, projScenarioCodes, 
+                                 mdlMaskId=mdlMaskId, prjMaskId=prjMaskId)
+      self._initWorkers(expDate)
+
+# ...............................................
+   def _initWorkers(self, expDate):
+      self.workers = []
+      updateInterval = ONE_MONTH
+
+      try:
+         self.workers.append(UserChainer(self.lock, self.name, updateInterval, 
+                             self.algs, self.modelScenario, self.projScenarios, 
+                             USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expDate, 
+                             mdlMask=self.modelMask, prjMask=self.projMask,
+                             intersectGrid=self.intersectGrid))
+         self.workers.append(Infiller(self.lock, self.name, updateInterval, 
+                             self.algs, self.modelScenario, self.projScenarios, 
+                             mdlMask=self.modelMask, prjMask=self.projMask,
+                             intersectGrid=self.intersectGrid))
+         self.workers.append(Troubleshooter(self.lock, self.name, updateInterval, 
+                             archiveDataDeleteTime=None))
+      except LMError, e:
+         raise 
+      except Exception, e:
+         raise LMError('Failed to initialize Workers %s' % str(e))
+      else:
+         self.ready = True
+      
 
 # .............................................................................
 class GBIFPipeline(LMArchivePipeline):
@@ -336,6 +382,7 @@ if __name__ == '__main__':
          % (str(DEFAULT_ALGORITHMS), DEFAULT_MODEL_SCENARIO, 
             str(DEFAULT_PROJECTION_SCENARIOS)))
    
+   # TODO: Change to factory instantiating correct pipeline
    if DATASOURCE == Instances.BISON:
       p = BisonPipeline(DATASOURCE.lower(), 
                         DEFAULT_ALGORITHMS, DEFAULT_MODEL_SCENARIO, 
@@ -348,7 +395,11 @@ if __name__ == '__main__':
       p = iDigBioPipeline(DATASOURCE.lower(), 
                        DEFAULT_ALGORITHMS, DEFAULT_MODEL_SCENARIO, 
                        DEFAULT_PROJECTION_SCENARIOS, expDate=expdate.mjd)
-   
+   else:
+      p = UserPipeline(DATASOURCE.lower(), 
+                       DEFAULT_ALGORITHMS, DEFAULT_MODEL_SCENARIO, 
+                       DEFAULT_PROJECTION_SCENARIOS, expDate=expdate.mjd)
+      
    killfile = p.getKillfilename(DATASOURCE.lower())
    waitsec = 10
    print('           **************************') 

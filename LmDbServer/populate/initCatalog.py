@@ -145,8 +145,12 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                              pkgMeta['res'], suffix=pkgMeta['suffix'],
                              isTitle=True)
       dloc = os.path.join(scenpth, fname)
+      metaurl = None
       if lyrMeta['remoteurl'] is not None:
-         remoteLocs[dloc] = os.path.join(relativePath, fname)
+         metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
+         remoteLocs[metaurl] = os.path.join(relativePath, fname)
+      elif not os.path.exists(dloc):
+         raise LMError('Missing local data %s' % dloc)
       envlyr = EnvironmentalLayer(lyrname, 
                 title=lyrtitle, 
                 valUnits=ltvals['valunits'], 
@@ -161,6 +165,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                 keywords=ltvals['keywords'], 
                 description='%s, %s' % (ltvals['description'], 
                                         baseMeta['description']), 
+                metadataUrl=metaurl,
                 layerType=ltype, 
                 layerTypeTitle=ltvals['title'], 
                 layerTypeDescription=ltvals['description'], 
@@ -177,8 +182,8 @@ def writeRemoteDataPairs(remoteData, scenPkgName):
       if os.path.exists(fname):
          os.remove(fname)
       f = open(fname, 'w')
-      for key, val in remoteData.iteritems():
-         f.write('%s, %s\n' % (key + '/GTiff', val))
+      for remoteurl, relfilepath in remoteData.iteritems():
+         f.write('%s, %s\n' % (remoteurl + '/GTiff', relfilepath))
       f.close()
    
 # ...............................................
@@ -204,12 +209,14 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
          lyrtitle = _getbioName('%s, IPCC %s %s, %s' % 
                                 (ltvals['title'], rpt, sfam, tm), 
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], isTitle=True)
-         rstType = None
          dloc = os.path.join(scenpth, fname)
+         metaurl = None
          if lyrMeta['remoteurl'] is not None:
-            remoteLocs[dloc] = os.path.join(relativePath, fname)
-         elif not os.path.exists(fname):
-            raise LMError('Missing local data %s' % fname)
+            metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
+            remoteLocs[metaurl] = os.path.join(relativePath, fname)
+         elif not os.path.exists(dloc):
+            raise LMError('Missing local data %s' % dloc)
+         
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
                   valUnits=ltvals['valunits'],
@@ -225,6 +232,7 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
                   epsgcode=lyrMeta['epsg'], 
                   keywords=ltvals['keywords'], 
                   description='%s, %s' % (ltvals['description'], scendesc), 
+                  metadataUrl=metaurl,
                   layerType=ltype, layerTypeTitle=ltvals['title'], 
                   layerTypeDescription=ltvals['description'], 
                   userId=usr, createTime=currtime, modTime=currtime)
@@ -252,12 +260,14 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
          lyrtitle = _getbioName('%s, %s' % (ltvals['title'], tmvals['name']),
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], 
                                 isTitle=True)
-         dloc = os.path.join(scenpth, fname)
          
+         dloc = os.path.join(scenpth, fname)
+         metaurl = None
          if lyrMeta['remoteurl'] is not None:
-            remoteLocs[dloc] = os.path.join(relativePath, fname)
-         elif not os.path.exists(fname):
-            raise LMError('Missing local data %s' % fname)
+            metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
+            remoteLocs[metaurl] = os.path.join(relativePath, fname)
+         elif not os.path.exists(dloc):
+            raise LMError('Missing local data %s' % dloc)
 
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
@@ -272,6 +282,7 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
                   epsgcode=lyrMeta['epsg'], 
                   keywords=ltvals['keywords'], 
                   description='%s, %s' % (ltvals['description'], scendesc), 
+                  metadataUrl=metaurl,
                   layerType=ltype, 
                   layerTypeTitle=ltvals['title'], 
                   layerTypeDescription=ltvals['description'], 
@@ -466,7 +477,7 @@ def _getClimateMeta(scenPkg):
 def usage():
    output = """
    Usage:
-      initCatalog [algorithms | scenario | taxonomy | user) 
+      initCatalog [algorithms | scenario | taxonomy | user | all) 
    """
    print output
 
@@ -485,10 +496,12 @@ if __name__ == '__main__':
       REMOTE_DATA_URL = None
       taxSource = None
    
-   if len(sys.argv) > 3:
+   if len(sys.argv) != 2:
       usage()
-   
    else:
+      action = sys.argv[1].lower()
+   
+   if action in ('algorithms', 'scenario', 'taxonomy', 'user', 'all'):
       try:
          logger = ScriptLogger('initCatalog')
          scribe = Scribe(logger)
@@ -496,9 +509,10 @@ if __name__ == '__main__':
          if not success: 
             logger.critical('Failed to open database')
             exit(0)
-            
-         if len(sys.argv) == 1:
-            uId = addDefaultUser(scribe)
+         
+         uId = addDefaultUser(scribe)
+         
+         if action == 'all':
             aIds = addAlgorithms(scribe)
             pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
@@ -507,23 +521,18 @@ if __name__ == '__main__':
                taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
                                                          taxSource['url'])
          
-         elif sys.argv[1].lower() == 'algorithms':   
+         elif action == 'algorithms':   
             aIds = addAlgorithms(scribe)
             
-         elif sys.argv[1].lower() == 'scenario':
+         elif action == 'scenario':
             pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                        LAYERTYPE_DATA, SCENARIO_PACKAGE)
             
-         elif sys.argv[1].lower() == 'taxonomy':
+         elif action == 'taxonomy':
             if taxSource is not None:
                taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
                                                          taxSource['url']) 
-         elif sys.argv[1].lower() == 'user':
-            uId = addDefaultUser(scribe)
-         
-         else:
-            usage()   
       finally:
          scribe.closeConnections()
        

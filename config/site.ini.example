@@ -7,10 +7,10 @@
 ; .............................................................................
 
 [LmCommon - common]
-ARCHIVE_USER:  lm2
+ARCHIVE_USER:  pragma
 
 [LmServer - environment]
-DATASOURCE: GBIF
+DATASOURCE: USER
 
 [LmServer - registeredcompute]
 COMPUTE_NAME: 
@@ -38,9 +38,6 @@ DEFAULT_ALGORITHMS: BIOCLIM,ATT_MAXENT
 DEFAULT_MODEL_SCENARIO:  WC-10min
 DEFAULT_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
 SCENARIO_PACKAGE: 10min-past-present-future
-TAXONOMY_FILENAME: gbif_taxonomy.txt
-OCCURRENCE_FILENAME: gbif_merged.txt
-PROVIDER_FILENAME: gbif_orgs.txt
 
 ; iDigBio values
 ;; DEFAULT_ALGORITHMS: BIOCLIM,ATT_MAXENT
@@ -53,6 +50,14 @@ PROVIDER_FILENAME: gbif_orgs.txt
 ;; DEFAULT_MODEL_SCENARIO: WC-30sec-CONUS
 ;; DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-CONUS,CCSM4-RCP4.5-2050-30sec-CONUS,CCSM4-RCP4.5-2070-30sec-CONUS,CCSM4-RCP8.5-2050-30sec-CONUS
 ;; SCENARIO_PACKAGE: 30sec-present-future-CONUS
+
+; PRAGMA values
+DEFAULT_ALGORITHMS: BIOCLIM
+DEFAULT_MODEL_SCENARIO: WC-30sec-SEA
+DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-SEA,CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA
+SCENARIO_PACKAGE: 30sec-present-future-SEA
+USER_OCCURRENCE_CSV: merged_gbif_borneo_simple.csv
+USER_OCCURRENCE_META: gbif_borneo_simple.meta
 
 ; ...............................................
 [LmServer - registeredcompute]

@@ -1,0 +1,52 @@
+# Key = field heading; Value = (Shortname, type)
+# Shortname must be 10 characters or fewer
+# Type may be 'integer', 'string', or 'real'
+# Five fields must be identified with the keywords: 
+#   ID, Longitude, Latitude, GroupBy, Dataname (all case-insensitive)
+#   ID is the string or integer field containing a unique ID for each record.
+#   Longitude and Latitude are real fields with the x and y coordinates 
+#   GroupBy is an integer field identifying which value to group records by
+#   Dataname is the string field containing the display name for the recordset
+
+{'gbifid': ('gbifid', 'integer', 'id'),
+  'datasetkey': ('datasetkey', 'string'), 
+  'occurrenceid': ('occurid', 'string'),
+  'kingdom': ('kingdom', 'string'),
+  'phylum': ('phylum', 'string'),
+  'class': ('class', 'string'),
+  'order': ('order', 'string'),
+  'family': ('family', 'string'),
+  'genus': ('genus', 'string'),
+  'species': ('species', 'string', 'dataname'),
+  'infraspecificepithet': ('isepithet', 'string'), 
+  'taxonrank': ('taxonrank', 'string'),
+  'scientificname': ('sciname', 'string'),
+  'countrycode': ('cntrycode', 'string'),
+  'locality': ('locality', 'string'),
+  'publishingorgkey': ('puborgkey', 'string'),
+  'decimallatitude': ('dec_lat', 'real', 'latitude'),
+  'decimallongitude': ('dec_long', 'real', 'longitude'),
+  'elevation': ('elevation', 'real'),
+  'elevationaccuracy': ('elev_acc', 'real'),
+  'depth': ('depth', 'real'),
+  'depthaccuracy': ('depth_acc', 'real'),
+  'eventdate': ('eventdate', 'string'),
+  'day': ('day', 'integer'),
+  'month': ('month', 'integer'),
+  'year': ('year', 'integer'),
+  'taxonkey': ('taxonkey', 'integer', 'groupby'),
+  'specieskey': ('specieskey', 'integer'),
+  'basisofrecord': ('basisofrec', 'string'),
+  'institutioncode': ('inst_code', 'string'),
+  'collectioncode': ('coll_code', 'string'),
+  'catalognumber': ('catnum', 'string'),
+  'recordnumber': ('recnum', 'string'),
+  'identifiedby': ('idby', 'string'),
+  'rights': ('rights', 'string'),
+  'rightsholder': ('rightshold', 'string'),
+  'recordedby': ('rec_by', 'string'),
+  'typestatus': ('typestatus', 'string'),
+  'establishmentmeans': ('estabmeans', 'string'),
+  'lastinterpreted': ('lastinterp', 'string'),
+  'mediatype': ('mediatype', 'string'),
+  'issue': ('issue', 'string') }

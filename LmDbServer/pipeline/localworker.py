@@ -36,6 +36,7 @@ from LmCommon.common.lmconstants import BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,\
 from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmDbServer.common.localconstants import WORKER_JOB_LIMIT
+from LmDbServer.common.occparse import OccDataParser
 from LmDbServer.pipeline.pipeline import _Worker
 
 from LmServer.base.lmobj import LMError, LmHTTPError
@@ -51,6 +52,7 @@ from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.omJob import OmProjectionJob, OmModelJob
 from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
 from LmServer.sdm.sdmJob import SDMOccurrenceJob
+from LmDbServer.common import occparse
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 GBIF_SERVICE_INTERVAL = 3 * ONE_MIN            
@@ -269,6 +271,37 @@ class _LMWorker(_Worker):
                         % (str(occSet.getId()), occSet.displayName))
       return deleted
       
+# ...............................................
+   def _processGbifTaxaKey(self, taxKey):
+      # This gets the record for the accepted species key, so the record 
+      # scientific name = accepted name (i.e. full, not canonical, species name)
+      speciesName = None
+      try:
+         self._getLock()           
+         # Use API to get and insert species name 
+         (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
+          speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(taxKey)
+         if retSpecieskey == speciesKey:
+            currtime = dt.gmt().mjd
+            speciesName = ScientificName(speciesStr, 
+                            kingdom=kingdomStr, phylum=phylumStr, 
+                            txClass=None, txOrder=orderStr, 
+                            family=familyStr, genus=genusStr, 
+                            createTime=currtime, modTime=currtime, 
+                            taxonomySourceId=self._taxonSourceId, 
+                            taxonomySourceKey=speciesKey, 
+                            taxonomySourceGenusKey=genuskey, 
+                            taxonomySourceSpeciesKey=speciesKey)
+            self._scribe.insertTaxon(speciesName)
+            return speciesName
+      except LMError, e:
+         raise e
+      except Exception, e:
+         raise LMError(currargs=e.args, lineno=self.getLineno())
+      finally:
+         self._freeLock()
+         
+
 # .............................................................................
 class Troubleshooter(_LMWorker):
    def __init__(self, lock, pipelineName, updateInterval,
@@ -994,6 +1027,152 @@ class BisonChainer(_LMWorker):
                                      taxonomySourceKeyHierarchy=tsnHier)
                self._scribe.insertTaxon(sciname)
       return sciname
+
+# ..............................................................................
+class UserChainer(_LMWorker):
+   """
+   @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
+             text chunk to a file, then creates an OccurrenceJob for it and 
+             updates the Occurrence record and inserts a job.
+   """
+   def __init__(self, lock, pipelineName, updateInterval, 
+                algLst, mdlScen, prjScenLst, occDataFname, occMetaFname, expDate,
+                mdlMask=None, prjMask=None, intersectGrid=None):
+      threadspeed = WORKER_JOB_LIMIT
+      _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
+      self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
+      
+      try:
+         self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
+      except Exception, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         self._failGracefully(e)
+
+      self.algs = algLst
+      self.modelScenario = mdlScen
+      self.projScenarios = prjScenLst
+      self.modelMask = mdlMask
+      self.projMask = prjMask
+      self.intersectGrid = intersectGrid
+      self._obsoleteTime = expDate
+      # Start mid-file? Assumes first line is header
+      if self._findStart() > 2:
+         self.occParser.skipToRecord(linenum)
+      
+      # Assumes first line is header
+      if self._findStart() > 2:
+         self.occParser.skipToRecord(linenum)
+      
+# ...............................................
+   def run(self):
+      allFail = True
+      nextStart = None
+      # Gets and frees lock for each name checked
+      while (not(self._existKillFile())):
+         try:
+            while not(self.occParser.eof()):
+               occ = None
+               chunk = self.occParser.pullCurrentChunk()
+               
+               self._processInputSpecies(chunk)
+                           
+               if self._existKillFile():
+                  break
+                        
+            self._dumpfile.close()
+            if self._currRec is None:
+               nextStart = -9999
+               allFail = False
+               self.signalKill(all=allFail)
+               self.log.info('Chainer complete, last first rec = %d' 
+                             % self._currKeyFirstRecnum)
+               break
+         
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            self._failGracefully(e)
+            break
+
+      if self._existKillFile():
+         self.log.info('LAST CHECKED line %d (stopped with killfile)' 
+                       % (self._currKeyFirstRecnum))
+         self._failGracefully(None, linenum=nextStart, allFail=allFail)
+
+# ...............................................
+   def _simplifyName(self, longname):
+      front = longname.split('(')[0]
+      newfront = front.split(',')
+      finalfront = front.strip()
+      return finalfront
+   
+# ...............................................
+   def _processInputSpecies(self, dataChunk):
+      currtime = dt.gmt().mjd
+      occ = None
+      spname = self._simplifyName(self.occParser.nameValue())
+      try:
+         self._getLock()           
+         occs = self._scribe.getOccurrenceSetsForName(spname, userid=ARCHIVE_USER)
+         if not occs:
+            # Populate metadataUrl with metadata filename for computation
+            occ = OccurrenceLayer(spname, name=spname, 
+                  queryCount=len(dataChunk), epsgcode=DEFAULT_EPSG, 
+                  ogrType=wkbPoint, ogrFormat='CSV', 
+                  primaryEnv=PrimaryEnvironment.TERRESTRIAL,
+                  userId=ARCHIVE_USER, createTime=currtime, 
+                  status=JobStatus.INITIALIZE, statusModTime=currtime,
+                  metadataUrl=self.occParser.metadataFname)
+            occid = self._scribe.insertOccurrenceSet(occ)
+         elif len(occs) == 1:
+            if (occs[0].status != JobStatus.COMPLETE or 
+                occs[0].statusModTime < self._obsoleteTime):
+               occ = occs[0]
+            else:
+               self.log.debug('OccurrenceSet %d is up to date (%.2f)' 
+                              % (occs[0].getId(), occs[0].statusModTime))
+         else:
+            raise LMError('Too many (%d) occurrenceLayers for %s'
+                          % (len(occs), spname))
+            
+         if occ is not None:
+            # Write new raw data
+            processtype = ProcessType.USER_TAXA_OCCURRENCE
+            rdloc = occ.createLocalDLocation(raw=True)
+            success = occ.writeCSV(dataChunk, dlocation=rdloc, overwrite=True)
+            if not success:
+               self.log.debug('Unable to write CSV file %s' % rdloc)
+            else:
+               occ.setRawDLocation(rdloc, currtime)
+               # Create jobs for Archive Chain: occurrence population, 
+               # model, projection, and (later) intersect computation
+               jobs = self._scribe.initSDMChain(ARCHIVE_USER, occ, self.algs, 
+                                         self.modelScenario, 
+                                         self.projScenarios, 
+                                         occJobProcessType=processtype,
+                                         priority=Priority.NORMAL, 
+                                         intersectGrid=None,
+                                         minPointCount=POINT_COUNT_MIN)
+               self.log.debug('Initialized %d jobs for occ %d' % (len(jobs), occ.getId()))
+      except LMError, e:
+         raise e
+      except Exception, e:
+         raise LMError(currargs=e.args, lineno=self.getLineno())
+      finally:
+         self._freeLock()
+
+
+# ...............................................
+   def _failGracefully(self, lmerr, linenum=None, allFail=True):
+      if linenum is None: 
+         try:
+            linenum = self._currKeyFirstRecnum
+         except:
+            pass
+      if linenum:
+         self._writeNextStart(linenum)
+      _LMWorker._failGracefully(self, lmerr, allFail=allFail)
 
 # ..............................................................................
 class GBIFChainer(_LMWorker):

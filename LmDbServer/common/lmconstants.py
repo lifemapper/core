@@ -42,3 +42,7 @@ BISON_TSN_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH,
 IDIGBIO_BINOMIAL_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
                                      BINOMIAL_FILENAME)
 
+USER_OCCURRENCE_CSV = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
+                                   USER_OCCURRENCE_CSV)
+USER_OCCURRENCE_META = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
+                                    USER_OCCURRENCE_META)

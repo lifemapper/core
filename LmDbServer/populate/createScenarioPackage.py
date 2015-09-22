@@ -35,10 +35,12 @@ import sys
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, ZIP_DEFLATED
 
+from LmServer.common.lmconstants import ENV_DATA_PATH
+from LmServer.common.localconstants import DATA_PATH
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.scribe import Scribe
 
-LYR_BASE_PATH = '/share/data/ClimateData' # TODO: Get this from constants
+LYR_BASE_PATH = os.path.join(DATA_PATH, ENV_DATA_PATH)
 
 # .............................................................................
 if __name__ == "__main__":
