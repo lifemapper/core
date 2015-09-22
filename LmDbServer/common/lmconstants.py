@@ -27,7 +27,7 @@ from LmServer.common.lmconstants import SPECIES_DATA_PATH
 from LmServer.common.localconstants import DATA_PATH
 from LmDbServer.common.localconstants import TAXONOMY_FILENAME, \
      OCCURRENCE_FILENAME, PROVIDER_FILENAME, TSN_FILENAME , \
-     BINOMIAL_FILENAME                      
+     BINOMIAL_FILENAME, USER_OCCURRENCE_CSV_FILENAME, USER_OCCURRENCE_META_FILENAME                 
 
 # ............................................................................
 
@@ -43,6 +43,6 @@ IDIGBIO_BINOMIAL_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH,
                                      BINOMIAL_FILENAME)
 
 USER_OCCURRENCE_CSV = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                   USER_OCCURRENCE_CSV)
+                                   USER_OCCURRENCE_CSV_FILENAME)
 USER_OCCURRENCE_META = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                    USER_OCCURRENCE_META)
+                                    USER_OCCURRENCE_META_FILENAME)

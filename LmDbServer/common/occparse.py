@@ -27,7 +27,7 @@ import csv
 import os
 from osgeo.ogr import OFTInteger, OFTReal, OFTString
 import sys
-from types import DictionaryType, DictType
+from types import DictionaryType, DictType, ListType, TupleType
 
 from LmServer.base.lmobj import LMObject, LMError
 # .............................................................................
@@ -38,22 +38,26 @@ class OccDataParser(LMObject):
    """
    def __init__(self, logger, dataFname, metadataFname):
       """
-      @summary Reader for arbitrary user CSV data with metadata description
+      @summary Reader for arbitrary user CSV data file with header record and 
+               metadata file
       @param logger: Logger to use for the main thread
       """
       self.log = logger
       self.metadataFname = metadataFname
       self.dataFname = dataFname
-      self.fieldNames = None 
+      self.fieldNames = [] 
       self.fieldCount = 0
-      self.fieldTypes = None
+      self.fieldTypes = []
+      self.filters = {}
       self._idIdx = None
       self._xIdx = None
       self._yIdx = None
       self._sortIdx = None
       self._nameIdx = None
       self.currLine = None
+      # currRecnum is 0 based, starting after header
       self.currRecnum = 0
+      self.keyFirstRec = self.currRecnum
       # Requires ID, GroupBy, Longitude, Latitude
       self.requiredCount = 4
       self.currIsGoodEnough = True
@@ -61,6 +65,7 @@ class OccDataParser(LMObject):
       self.currIsBadGeo = False
       self.currIsBadGroup = False
       self.currIsBadName = False
+      self.currIsBadFilters = False
       
       self.chunk = []
       self.key = None
@@ -146,12 +151,9 @@ class OccDataParser(LMObject):
          
    # .............................................................................
    def _getMetadata(self, origfldnames):
-      self.fieldNames = []
-      self.fieldTypes = []
       fldmeta = self._readMetadata()
       
-      for i in range(len(origfldnames)):
-         
+      for i in range(len(origfldnames)):         
          oname = origfldnames[i]
          shortname = fldmeta[oname][0]
          ogrtype = self.getOgrFieldType(fldmeta[oname][1])
@@ -159,17 +161,23 @@ class OccDataParser(LMObject):
          self.fieldTypes.append(ogrtype)
          
          if len(fldmeta[oname]) == 3:
-            role = fldmeta[oname][2].lower()
-            if role == 'id':
-               self._idIdx = i
-            elif role == 'longitude':
-               self._xIdx = i
-            elif role == 'latitude':
-               self._yIdx = i
-            elif role == 'groupby':
-               self._sortIdx = i
-            elif role == 'dataname':
-               self._nameIdx = i
+            if type(fldmeta[oname][2]) in (ListType, TupleType):
+               acceptedVals = fldmeta[oname][2]
+               if ogrtype == OFTString:
+                  acceptedVals = [val.lower() for val in fldmeta[oname][2]]
+               self.filters[i] = acceptedVals 
+            else:
+               role = fldmeta[oname][2].lower()
+               if role == 'id':
+                  self._idIdx = i
+               elif role == 'longitude':
+                  self._xIdx = i
+               elif role == 'latitude':
+                  self._yIdx = i
+               elif role == 'groupby':
+                  self._sortIdx = i
+               elif role == 'dataname':
+                  self._nameIdx = i
       self.fieldCount = len(self.fieldNames)
       
       if self._idIdx == None:
@@ -201,8 +209,19 @@ class OccDataParser(LMObject):
    # ...............................................
    def _testLine(self):
       self.currIsGoodEnough = True
-      self.currIsBadId = self.currIsBadGeo = self.currIsBadGroup = self.currIsBadName = False
+      self.currIsBadId = self.currIsBadGeo = self.currIsBadGroup = False
+      self.currIsBadName = self.currIsBadFilters = False
       
+      for filterIdx, acceptedVals in self.filters.iteritems():
+         val = self.currLine[filterIdx]
+         try:
+            val = val.lower()
+         except:
+            pass
+         if val not in acceptedVals:
+            self.currIsBadFilters = True
+            break
+
       try:
          int(self.currLine[self._idIdx])
       except Exception, e:
@@ -226,7 +245,8 @@ class OccDataParser(LMObject):
       if self.currLine[self._nameIdx] == '':
          self.currIsBadName = True
             
-      if (self.currIsBadId or self.currIsBadGeo or self.currIsBadGroup):
+      if (self.currIsBadId or self.currIsBadGeo 
+          or self.currIsBadGroup or self.currIsBadFilters):
          self.currIsGoodEnough = False 
          
    # ...............................................
@@ -382,7 +402,6 @@ class OccDataParser(LMObject):
       """
       complete = False
       currCount = 0
-      firstLineno = self.currRecnum
       currkey = self.key
       chunk = []
 
@@ -395,11 +414,12 @@ class OccDataParser(LMObject):
                chunk.append(self.currLine)
             else:
                complete = True
-                     
+               self.keyFirstRec = self.currRecnum
+               
             if self.currLine is None:
                complete = True
                
-            return chunk
+         return chunk
                   
       except Exception, e:
          self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 

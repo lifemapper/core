@@ -19,7 +19,7 @@
   'genus': ('genus', 'string'),
   'species': ('species', 'string', 'dataname'),
   'infraspecificepithet': ('isepithet', 'string'), 
-  'taxonrank': ('taxonrank', 'string'),
+  'taxonrank': ('taxonrank', 'string', ['SUBSPECIES', 'SPECIES']),
   'scientificname': ('sciname', 'string'),
   'countrycode': ('cntrycode', 'string'),
   'locality': ('locality', 'string'),

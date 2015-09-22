@@ -855,6 +855,11 @@ class BisonChainer(_LMWorker):
       self._skipAhead()
       
 # ...............................................
+   @property
+   def nextStart(self):
+      return self._recnum
+
+# ...............................................
    def _getItisTsn(self):
       if self._currRec is not None:
          return self._currRec[0]
@@ -890,7 +895,6 @@ class BisonChainer(_LMWorker):
 # ...............................................
    def run(self):
       allFail = True
-      nextStart = None
       # Gets and frees lock for each name checked
       while (not(self._existKillFile())):
          try:
@@ -921,10 +925,10 @@ class BisonChainer(_LMWorker):
             # Check for end of data
             if self._currRec is None:
                allFail = False
-               nextStart = -9999
                self.signalKill(all=allFail)
-               self.log.info('Chainer complete, last rec num = %d' 
+               self.log.info('Chainer complete, last rec num = %d (next -9999)' 
                              % self._recnum)
+               self._recnum = -9999
                break
 
          except Exception, e:
@@ -935,12 +939,12 @@ class BisonChainer(_LMWorker):
             break
 
       if self._existKillFile():
-         self._failGracefully(None, linenum=nextStart, allFail=allFail)
+         self._failGracefully(None, allFail=allFail)
 
 # ...............................................
    def _failGracefully(self, lmerr, linenum=None, allFail=True):
       if linenum is None:
-         linenum = self._recnum
+         linenum = self.nextStart
       self._writeNextStart(linenum)
       _LMWorker._failGracefully(self, lmerr, allFail=allFail)
       
@@ -1057,36 +1061,36 @@ class UserChainer(_LMWorker):
       self.intersectGrid = intersectGrid
       self._obsoleteTime = expDate
       # Start mid-file? Assumes first line is header
-      if self._findStart() > 2:
-         self.occParser.skipToRecord(linenum)
-      
-      # Assumes first line is header
-      if self._findStart() > 2:
+      linenum = self._findStart()
+      if linenum > 2:
          self.occParser.skipToRecord(linenum)
       
 # ...............................................
+   @property
+   def nextStart(self):
+      return self.occParser.keyFirstRec
+
+# ...............................................
    def run(self):
       allFail = True
-      nextStart = None
       # Gets and frees lock for each name checked
       while (not(self._existKillFile())):
          try:
             while not(self.occParser.eof()):
                occ = None
                chunk = self.occParser.pullCurrentChunk()
-               
                self._processInputSpecies(chunk)
                            
                if self._existKillFile():
                   break
                         
-            self._dumpfile.close()
+            self.occParser.close()
             if self._currRec is None:
-               nextStart = -9999
+               self.occParser.keyFirstRec = -9999
                allFail = False
                self.signalKill(all=allFail)
                self.log.info('Chainer complete, last first rec = %d' 
-                             % self._currKeyFirstRecnum)
+                             % self.nextStart)
                break
          
          except Exception, e:
@@ -1097,8 +1101,8 @@ class UserChainer(_LMWorker):
 
       if self._existKillFile():
          self.log.info('LAST CHECKED line %d (stopped with killfile)' 
-                       % (self._currKeyFirstRecnum))
-         self._failGracefully(None, linenum=nextStart, allFail=allFail)
+                       % (self.occParser.currRecnum))
+         self._failGracefully(None, allFail=allFail)
 
 # ...............................................
    def _simplifyName(self, longname):
@@ -1111,7 +1115,7 @@ class UserChainer(_LMWorker):
    def _processInputSpecies(self, dataChunk):
       currtime = dt.gmt().mjd
       occ = None
-      spname = self._simplifyName(self.occParser.nameValue())
+      spname = self._simplifyName(self.occParser.nameValue)
       try:
          self._getLock()           
          occs = self._scribe.getOccurrenceSetsForName(spname, userid=ARCHIVE_USER)
@@ -1122,11 +1126,10 @@ class UserChainer(_LMWorker):
                   ogrType=wkbPoint, ogrFormat='CSV', 
                   primaryEnv=PrimaryEnvironment.TERRESTRIAL,
                   userId=ARCHIVE_USER, createTime=currtime, 
-                  status=JobStatus.INITIALIZE, statusModTime=currtime,
-                  metadataUrl=self.occParser.metadataFname)
+                  status=JobStatus.INITIALIZE, statusModTime=currtime)
             occid = self._scribe.insertOccurrenceSet(occ)
          elif len(occs) == 1:
-            if (occs[0].status != JobStatus.COMPLETE or 
+            if (occs[0].status > JobStatus.COMPLETE or 
                 occs[0].statusModTime < self._obsoleteTime):
                occ = occs[0]
             else:
@@ -1167,7 +1170,7 @@ class UserChainer(_LMWorker):
    def _failGracefully(self, lmerr, linenum=None, allFail=True):
       if linenum is None: 
          try:
-            linenum = self._currKeyFirstRecnum
+            linenum = self.nextStart
          except:
             pass
       if linenum:
@@ -1221,6 +1224,11 @@ class GBIFChainer(_LMWorker):
       self._skipAhead()
       
 # ...............................................
+   @property
+   def nextStart(self):
+      return self._currKeyFirstRecnum
+   
+# ...............................................
    def _readProviderKeys(self, providerKeyFile, providerKeyColname):
       providers = {}
       
@@ -1251,7 +1259,6 @@ class GBIFChainer(_LMWorker):
 # ...............................................
    def run(self):
       allFail = True
-      nextStart = None
       # Gets and frees lock for each name checked
       while (not(self._existKillFile())):
          try:
@@ -1267,13 +1274,13 @@ class GBIFChainer(_LMWorker):
                                 % speciesKey)
                else:
                   self._processInputSpecies(speciesName, dataCount, dataChunk)
-                           
+                  
                if self._existKillFile():
                   break
                         
             self._dumpfile.close()
             if self._currRec is None:
-               nextStart = -9999
+               self._currKeyFirstRecnum = -9999
                allFail = False
                self.signalKill(all=allFail)
                self.log.info('Chainer complete, last first rec = %d' 
@@ -1289,13 +1296,13 @@ class GBIFChainer(_LMWorker):
       if self._existKillFile():
          self.log.info('LAST CHECKED line %d (stopped with killfile)' 
                        % (self._currKeyFirstRecnum))
-         self._failGracefully(None, linenum=nextStart, allFail=allFail)
+         self._failGracefully(None, allFail=allFail)
 
 # ...............................................
    def _failGracefully(self, lmerr, linenum=None, allFail=True):
       if linenum is None: 
          try:
-            linenum = self._currKeyFirstRecnum
+            linenum = self.nextStart
          except:
             pass
       if linenum:

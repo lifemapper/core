@@ -25,7 +25,7 @@ import csv
 import os
 import sys
 
-from LmDbServer.common.localconstants import (USER_OCCURRENCE_META, 
+from LmDbServer.common.lmconstants import (USER_OCCURRENCE_META, 
                                               USER_OCCURRENCE_CSV)
 from LmDbServer.common.occparse import OccDataParser
 from LmServer.base.lmobj import LMObject, LMError
@@ -163,17 +163,17 @@ def _switchFiles(openFile, csvwriter, datapath, prefix, run=None):
    return newFile, csvwriter
 
 # ...............................................
-def _popChunkAndWrite(csvwriter, filedata):
+def _popChunkAndWrite(csvwriter, occPrsr):
    # first get chunk
-   thiskey = filedata.key
-   chunk = filedata.getThisChunk()
+   thiskey = occPrsr.key
+   chunk = occPrsr.pullCurrentChunk()
    for rec in chunk:
       csvwriter.writerow(rec)
 
-   if filedata.eof():
-      filedata.close()
+   if occPrsr.eof():
+      occPrsr.close()
    else:
-      filedata.getNextKey()
+      occPrsr.getNextKey()
    return thiskey
 
 # ...............................................
@@ -274,7 +274,7 @@ if __name__ == "__main__":
       splitIntoFiles(occparser, WORKPATH, unsortedPrefix, basename, 200000)
       occparser.close()
       print 'sortvalIdx = ', sortvalIdx
-           
+            
       # Sort smaller files
       sortFiles(sortvalIdx, WORKPATH, unsortedPrefix, sortedPrefix, basename)
 

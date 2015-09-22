@@ -40,7 +40,7 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, \
          SPECIES_EXP_MONTH, SPECIES_EXP_DAY, DEFAULT_GRID_NAME)
 from LmDbServer.pipeline.pipeline import _Pipeline
 from LmDbServer.pipeline.localworker import (Infiller, Troubleshooter, 
-                  ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer)
+               ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer, UserChainer)
 from LmDbServer.populate.bioclimMeta import TAXONOMIC_SOURCE
 
 from LmServer.base.lmobj import LMError
@@ -378,10 +378,6 @@ def _usage(startline):
 if __name__ == '__main__':
    expdate = mx.DateTime.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                   SPECIES_EXP_DAY)
-   print('Begin Pipeline with algorithms %s, modelScenario %s, projectionScenarios %s' 
-         % (str(DEFAULT_ALGORITHMS), DEFAULT_MODEL_SCENARIO, 
-            str(DEFAULT_PROJECTION_SCENARIOS)))
-   
    # TODO: Change to factory instantiating correct pipeline
    if DATASOURCE == Instances.BISON:
       p = BisonPipeline(DATASOURCE.lower(), 
@@ -401,13 +397,23 @@ if __name__ == '__main__':
                        DEFAULT_PROJECTION_SCENARIOS, expDate=expdate.mjd)
       
    killfile = p.getKillfilename(DATASOURCE.lower())
-   waitsec = 10
-   print('           **************************') 
-   print('IMPORTANT: Update expiration date (currently %s) and remove start.%s.txt for new data' 
-         % (expdate.strftime(), DATASOURCE.lower()))
-   print('           `touch %s` to kill and restart (waiting %d seconds)' 
-         % (killfile, waitsec))
-   print('           **************************') 
+   waitsec = 5
+   msg="""
+   
+   Begin Pipeline with: 
+     algorithms {}
+     modelScenario {}
+     projectionScenarios {}
+     
+            **************************
+      IMPORTANT: Update expiration date (currently {}) and remove start.{}.txt for new data' 
+                `touch {}` to kill and restart (waiting {} seconds)
+            **************************
+            
+   """.format(DEFAULT_ALGORITHMS, DEFAULT_MODEL_SCENARIO, 
+              DEFAULT_PROJECTION_SCENARIOS, expdate.strftime(), 
+              DATASOURCE.lower(), killfile, waitsec)
+   print msg
    sleep(waitsec)
 
    p.run()
