@@ -142,7 +142,7 @@ class SDMScenariosRestService(RestService):
            fullObjs = getQueryParameters(self.queryParameters, self.parameters)
       if kws is None:
          kws = []
-      if isinstance(kws, StringType):
+      if isinstance(kws, (StringType, UnicodeType)):
          kws = [kws]
       if public:
          user = ARCHIVE_USER

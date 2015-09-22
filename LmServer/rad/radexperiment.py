@@ -24,7 +24,7 @@
           02110-1301, USA.
 """
 import mx.DateTime
-from types import StringType
+from types import StringType, UnicodeType
 
 from LmServer.base.experiment import _Experiment
 from LmServer.base.lmobj import LMError
@@ -93,7 +93,7 @@ class RADExperiment(_Experiment):
       self._email = email
 
       if keywords is not None:
-         if isinstance(keywords, StringType):
+         if isinstance(keywords, (StringType, UnicodeType)):
             keywords = keywords.split(',')
          else:
             keywords = list(keywords)
@@ -634,7 +634,7 @@ class RADExperiment(_Experiment):
       @param keywords: List or comma-delimited string of keywords that will be 
                        associated with the RADBucket
       """
-      if isinstance(keywords, StringType):
+      if isinstance(keywords, (StringType, UnicodeType)):
          keywords = keywords.split(',')   
       if keywords is not None:
          self._keywords = set(keywords)

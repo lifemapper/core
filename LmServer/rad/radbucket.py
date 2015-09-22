@@ -31,7 +31,7 @@ import mx.DateTime
 import os
 from osgeo import ogr
 import subprocess
-from types import StringType
+from types import StringType, UnicodeType
 
 from LmCommon.common.lmconstants import JobStage, JobStatus, RandomizeMethods
 from LmServer.base.lmobj import LMError
@@ -1024,7 +1024,7 @@ class RADBucket(ServiceObject, ProcessObject):
       @param keywords: List or comma-delimited string of keywords that will be 
                        associated with the RADBucket
       """
-      if isinstance(keywords, StringType):
+      if isinstance(keywords, (StringType, UnicodeType)):
          keywords = keywords.split(',')   
       if keywords is not None:
          self._keywords = set(keywords)

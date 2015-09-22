@@ -27,7 +27,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import NoneType, StringType
+from types import NoneType, StringType, UnicodeType
 
 from LmCommon.common.lmXml import Element, register_namespace, \
                                   setDefaultNamespace, SubElement, tostring, \
@@ -68,7 +68,7 @@ class XmlFormatter(Formatter):
                   operation
       @rtype: FormatterResponse
       """
-      if isinstance(self.obj, StringType):
+      if isinstance(self.obj, (StringType, UnicodeType)):
          f = UnmodifiedXmlFormatter(self.obj, self.parameters)
          return f.format()
       else:

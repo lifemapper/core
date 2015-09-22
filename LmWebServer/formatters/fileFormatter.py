@@ -29,7 +29,7 @@
 """
 import pickle
 import os.path
-from types import FileType, StringType
+from types import FileType, StringType, UnicodeType
 
 from LmCommon.common.lmconstants import HTTPStatus, OutputFormat
 from LmCommon.common.unicode import fromUnicode, toUnicode
@@ -127,7 +127,7 @@ class FileFormatter(Formatter):
                  'Content-Encoding' : 'zip',
                  'Vary' : "*"
             }
-      elif isinstance(self.obj, StringType):
+      elif isinstance(self.obj, (StringType, UnicodeType)):
          content = open(self.obj)
          basename = os.path.split(self.obj)[1]
          contentType = self._guessContentType(basename)

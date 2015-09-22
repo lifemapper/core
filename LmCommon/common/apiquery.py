@@ -26,8 +26,8 @@
 """
 import json
 import re
-from types import BooleanType, FloatType, IntType, ListType, TupleType, \
-               StringType, DictionaryType
+from types import BooleanType, DictionaryType, FloatType, IntType, ListType, \
+                  StringType, TupleType, UnicodeType
 import urllib, urllib2
 import xml.etree.ElementTree as ET
 
@@ -145,9 +145,7 @@ class APIQuery(object):
 # ...............................................
    def _interpretQClause(self, key, val):
       cls = None
-      if (isinstance(val, StringType) or 
-          isinstance(val, IntType) or 
-          isinstance(val, FloatType)):
+      if isinstance(val, (FloatType, IntType, StringType, UnicodeType)):
          cls = '%s:%s' % (key, str(val))
       # Tuple for negated or range value
       elif isinstance(val, TupleType):            

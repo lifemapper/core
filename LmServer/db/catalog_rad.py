@@ -22,7 +22,7 @@
           02110-1301, USA.
 """
 import mx.DateTime
-from types import IntType, StringType
+from types import IntType, StringType, UnicodeType
 
 from LmCommon.common.lmconstants import InputDataType, JobStatus, JobStage, \
                                  ProcessType, RandomizeMethods
@@ -945,7 +945,7 @@ class RAD(DbPostgresql):
       else:
          if isinstance(lyrnameorid, IntType):
             functionname = 'lm_getAncLayersForUserAndLayerid'
-         elif isinstance(lyrnameorid, StringType):
+         elif isinstance(lyrnameorid, (StringType, UnicodeType)):
             functionname = 'lm_getAncLayersForUserAndLayername'
          rows, idxs = self.executeSelectManyFunction(functionname, 
                                                   usrid, lyrnameorid)
@@ -1182,7 +1182,7 @@ class RAD(DbPostgresql):
       else:
          if isinstance(lyrnameorid, IntType):
             functionname = 'lm_getPALayersForUserAndLayerid'
-         elif isinstance(lyrnameorid, StringType):
+         elif isinstance(lyrnameorid, (StringType, UnicodeType)):
             functionname = 'getPALayersForUserAndLayername'
          
          rows, idxs = self.executeSelectManyFunction(functionname, 
