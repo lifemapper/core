@@ -157,6 +157,8 @@ def _displayValue(obj, delim, depth):
       return _displayArray(obj, delim, depth+1)
    elif isinstance(obj, StringType):
       return ''.join(("\"", escapeString(obj, "json"), "\""))
+   elif isinstance(obj, UnicodeType):
+      return u''.join((u"\"", escapeString(obj, "json"), u"\""))
    else:
       return str(obj)
       

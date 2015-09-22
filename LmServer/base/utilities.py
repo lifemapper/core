@@ -29,7 +29,7 @@ import numpy
 import smtplib
 from types import BuiltinFunctionType, BuiltinMethodType, CodeType, \
                   FloatType, FunctionType, IntType, LambdaType, ListType, \
-                  MethodType, NoneType, StringType, TypeType
+                  MethodType, NoneType, StringType, TypeType, UnicodeType
 
 from LmCommon.common.lmconstants import ISO_8601_TIME_FORMAT_FULL, \
                                   ISO_8601_TIME_FORMAT_TRUNCATED, JobStatus, \
@@ -134,7 +134,7 @@ class ObjectAttributeIterator(LMObject):
       try:
          if key == "bbox":
             pass
-         elif isinstance(item, (IntType, FloatType, StringType)):
+         elif isinstance(item, (IntType, FloatType, StringType, UnicodeType)):
             try:
                if key.lower().find("time") > 0 or key.lower().find("date") > 0:
                   item = self.formatTime(item)
@@ -365,6 +365,8 @@ def escapeString(value, format):
    try:
       if isinstance(value, StringType):
          value = unicode(value, ENCODING)
+      elif isinstance(value, UnicodeType):
+         value = value
       else:
          value = str(value)
       replaceStrings = []

@@ -26,7 +26,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import ListType, StringType
+from types import ListType, StringType, UnicodeType
 
 from LmCommon.common.localconstants import ARCHIVE_USER
 
@@ -142,7 +142,7 @@ class SDMScenariosRestService(RestService):
            fullObjs = getQueryParameters(self.queryParameters, self.parameters)
       if kws is None:
          kws = []
-      if isinstance(kws, StringType):
+      if isinstance(kws, (StringType, UnicodeType)):
          kws = [kws]
       if public:
          user = ARCHIVE_USER
@@ -175,7 +175,7 @@ class SDMScenariosRestService(RestService):
       startRec = page * perPage
       if kws is None:
          kws = []
-      if isinstance(kws, StringType):
+      if isinstance(kws, (StringType, UnicodeType)):
          kws = [kws]
       
       if fullObjs is None:

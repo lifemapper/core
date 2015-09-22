@@ -27,7 +27,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import StringType
+from types import StringType, UnicodeType
 
 from LmCommon.common.lmXml import iselement, tostring
 
@@ -48,7 +48,7 @@ class UnmodifiedXmlFormatter(Formatter):
                   operation
       @rtype: FormatterResponse
       """
-      if isinstance(self.obj, StringType):
+      if isinstance(self.obj, (StringType, UnicodeType)):
          resp = self.obj
       elif iselement(self.obj):
          resp = tostring(self.obj)

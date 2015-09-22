@@ -260,7 +260,7 @@ class LMSpatialObject(LMObject):
          
       else:
          try:
-            if (isinstance(bbox, StringType)):
+            if (isinstance(bbox, (StringType, UnicodeType))):
                bbox = tuple([float(b) for b in bbox.split(',')])
             elif isinstance(bbox, ListType):
                bbox = tuple(bbox)

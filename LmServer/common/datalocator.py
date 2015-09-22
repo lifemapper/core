@@ -21,7 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import StringType, IntType
+from types import StringType, IntType, UnicodeType
 import os
 
 from LmCommon.common.lmconstants import DEFAULT_EPSG, OutputFormat
@@ -343,7 +343,7 @@ class EarlJr(LMObject):
        
       pairs = []
       for key, val in paramTpls:
-         if isinstance(val, StringType):
+         if isinstance(val, (StringType, UnicodeType)):
             val = val.replace(' ', '%20')
          pairs.append('%s=%s' % (key, val))
        
