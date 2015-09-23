@@ -98,7 +98,6 @@ def sortRecs(array, idx):
             greater.append(rec)
       # Don't forget to return something!
       return sortRecs(less, idx) + equals + sortRecs(greater, idx)  
-   # Note that you want equals ^^^^^ not pivot
    else:  
       # At the end of the recursion - when only one element, return the array.
       return array
@@ -172,8 +171,6 @@ def _popChunkAndWrite(csvwriter, occPrsr):
 
    if occPrsr.eof():
       occPrsr.close()
-   else:
-      occPrsr.getNextKey()
    return thiskey
 
 # ...............................................
@@ -201,14 +198,13 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
    # Open output sorted file
    mergeFile = open(mergefname, 'wb')
    csvwriter = csv.writer(mergeFile, delimiter='\t')
-   complete = False
 
    # Open all input split files
    sortedFiles = []
    srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
    while os.path.exists(srtFname):
-      fd = OccDataParser(log, srtFname, metafname)
-      sortedFiles.append(fd)
+      op = OccDataParser(log, srtFname, metafname)
+      sortedFiles.append(op)
       inIdx += 1
       srtFname = _getOPFilename(datapath, inputPrefix, basename, run=inIdx)
       
@@ -217,16 +213,15 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
       csvwriter.writerow(sortedFiles[0].header)
       # find file with record containing smallest key
       smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
-      while pos is not None and not complete:
+      while pos is not None:
          # Output records in this file with smallKey 
          _popChunkAndWrite(csvwriter, sortedFiles[pos])
-         lastKey = smallKey
          
-         # If size limit is reached, switch to new file
-         if (maxFileSize and os.fstat(mergeFile.fileno()).st_size >= maxFileSize):
-            outIdx += 1
-            mergeFile, csvwriter = _switchFiles(mergeFile, csvwriter, datapath, 
-                                                mergePrefix, run=outIdx)
+#          # If size limit is reached, switch to new file
+#          if (maxFileSize and os.fstat(mergeFile.fileno()).st_size >= maxFileSize):
+#             outIdx += 1
+#             mergeFile, csvwriter = _switchFiles(mergeFile, csvwriter, datapath, 
+#                                                 mergePrefix, run=outIdx)
          # Find smallest again
          smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
          
@@ -235,9 +230,9 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
    finally:
       mergeFile.close()
       csvwriter = None
-      for fd in sortedFiles:
-         print 'File %s failed on %d records' % (fd.dataFname, fd.sortFail)
-         fd.close()
+      for op in sortedFiles:
+         print 'Closing file %s' % (op.dataFname)
+         op.close()
    
 # ...............................................
 def usage():
@@ -271,10 +266,11 @@ if __name__ == "__main__":
       # Split into smaller unsorted files
       occparser = OccDataParser(log, datafname, metafname)
       sortvalIdx = occparser.sortIdx
+      
       splitIntoFiles(occparser, WORKPATH, unsortedPrefix, basename, 200000)
       occparser.close()
       print 'sortvalIdx = ', sortvalIdx
-            
+             
       # Sort smaller files
       sortFiles(sortvalIdx, WORKPATH, unsortedPrefix, sortedPrefix, basename)
 

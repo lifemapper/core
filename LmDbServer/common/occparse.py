@@ -48,25 +48,31 @@ class OccDataParser(LMObject):
       self.fieldNames = [] 
       self.fieldCount = 0
       self.fieldTypes = []
+      
+      # Record values to check
       self.filters = {}
       self._idIdx = None
       self._xIdx = None
       self._yIdx = None
       self._sortIdx = None
       self._nameIdx = None
-      self.currLine = None
-      # currRecnum is 0 based, starting after header
-      self.currRecnum = 0
-      self.keyFirstRec = self.currRecnum
-      # Requires ID, GroupBy, Longitude, Latitude
-      self.requiredCount = 4
-      self.currIsGoodEnough = True
-      self.currIsBadId  = False 
-      self.currIsBadGeo = False
-      self.currIsBadGroup = False
-      self.currIsBadName = False
-      self.currIsBadFilters = False
       
+      self.currLine = None      
+      self.keyFirstRec = 0      
+      self.currIsGoodEnough = True
+      
+      # Overall stats
+      self.recTotal = 0
+      self.recTotalGood = 0
+      self.groupTotal = 0
+      self.groupVals = set()
+      self.badIds = 0
+      self.badGeos = 0
+      self.badGroups = 0
+      self.badNames = 0
+      self.badFilters = 0
+      self.badFilterVals = set()
+
       self.chunk = []
       self.key = None
       
@@ -79,16 +85,23 @@ class OccDataParser(LMObject):
       
       self.header = self._csvreader.next()
       self.currLine = None
-      self.currRecnum = 0
 
       # Read metadata file and close
       self._getMetadata(self.header)
             
       # populates key, currLine and currRecnum
-      self.sortFail = 0
       self.pullNextValidRec()
 
    # .............................................................................
+   @property
+   def currRecnum(self):
+      if self._csvreader:
+         return self._csvreader.line_num
+      elif self.eof():
+         return -9999
+      else:
+         return None
+   
    @property
    def sortIdx(self):
       return self._sortIdx
@@ -207,79 +220,101 @@ class OccDataParser(LMObject):
                          % typeString)
    
    # ...............................................
-   def _testLine(self):
-      self.currIsGoodEnough = True
-      self.currIsBadId = self.currIsBadGeo = self.currIsBadGroup = False
-      self.currIsBadName = self.currIsBadFilters = False
+   def _testLine(self, line):
+      goodEnough = True
+      self.recTotal += 1
       
+      # Field filters
       for filterIdx, acceptedVals in self.filters.iteritems():
-         val = self.currLine[filterIdx]
+         val = line[filterIdx]
          try:
             val = val.lower()
          except:
             pass
          if val not in acceptedVals:
-            self.currIsBadFilters = True
-            break
+            self.badFilterVals.add(val)
+            self.badFilters += 1
+            goodEnough = False
 
+      # Sort/Group value
       try:
-         int(self.currLine[self._idIdx])
+         gval = int(line[self._sortIdx])
       except Exception, e:
-         if self.currLine[self._idIdx] == '':
-            self.currIsBadId = True
-         
-      try:
-         float(self.currLine[self._xIdx])
-         float(self.currLine[self._yIdx])
-      except Exception, e:
-         self.currIsBadGeo = True
+         self.badGroups += 1
+         goodEnough = False
       else:
-         if self.currLine[self._xIdx] == 0 and self.currLine[self._yIdx] == 0:
-            self.currIsBadGeo = True
-               
+         self.groupVals.add(gval)
+         
+      # Unique ID value
       try:
-         sortkey = int(self.currLine[self._sortIdx])
+         int(line[self._idIdx])
       except Exception, e:
-         self.currIsBadGroup = True
+         if line[self._idIdx] == '':
+            self.badIds += 1
+            goodEnough = False
          
-      if self.currLine[self._nameIdx] == '':
-         self.currIsBadName = True
+      # Lat/long values
+      try:
+         float(line[self._xIdx])
+         float(line[self._yIdx])
+      except Exception, e:
+         self.badGeos += 1
+         goodEnough = False
+      else:
+         if line[self._xIdx] == 0 and line[self._yIdx] == 0:
+            self.badGeos += 1
+            goodEnough = False
+               
+      # Dataset name value
+      if line[self._nameIdx] == '':
+         self.badNames += 1
+         goodEnough = False
+         
+      if goodEnough:
+         self.recTotalGood += 1
+         
+      return goodEnough
             
-      if (self.currIsBadId or self.currIsBadGeo 
-          or self.currIsBadGroup or self.currIsBadFilters):
-         self.currIsGoodEnough = False 
-         
    # ...............................................
    def _getLine(self):
       """
-      Fills in:
-         self.currLine, self.currRecnum
-         self.currIsGoodEnough, self.currIsBadId, self.currIsBadGeo,
-         self.currIsBadGroup, self.currIsBadName
       """
-      success = False
+      success = goodEnough = False
+      line = None
       while not success:
          try:
-            self.currLine = self._csvreader.next()
-            self._testLine()
+            line = self._csvreader.next()
+            goodEnough = self._testLine(line)
             success = True
-            self.currRecnum += 1
          except OverflowError, e:
-            self.currRecnum += 1
             self.log.debug( 'Overflow on %d (%s)' % (self.currRecnum, str(e)))
          except StopIteration:
             self.log.debug('EOF on rec %d' % (self.currRecnum))
             self.close()
-            self.currRecnum = self.currLine = None
+            self.currLine = None
             success = True
          except Exception, e:
             raise LMError('Bad record {}'.format(e))
+         
+      return line, goodEnough
 
    # ...............................................
    def skipToRecord(self, targetnum):
+      """
+      @note: Does not check for goodEnough line
+      """
       complete = False
       while self.currLine is not None and self.currRecnum < targetnum:
-         self._getLine()
+         line, goodEnough = self._getLine()
+
+   # ...............................................
+   def readAllRecs(self):
+      """
+      @note: Does not check for goodEnough line
+      """
+      complete = False
+      while self.currLine is not None:
+         line, goodEnough = self._getLine()
 
    # ...............................................
    def pullNextValidRec(self):
@@ -288,17 +323,19 @@ class OccDataParser(LMObject):
       """
       complete = False
       self.key = None
-      self._getLine()
+      line, goodEnough = self._getLine()
       try:
          while self._csvreader is not None and not complete:
-            if self.currIsGoodEnough:
-               self.key = int(self.currLine[self._sortIdx])
+            if line and goodEnough:
+               self.currLine = line
+               self.key = int(line[self._sortIdx])
                complete = True
                      
             if not complete:
-               self._getLine()
-               if self.currLine is None:
+               line, goodEnough = self._getLine()
+               if line is None:
                   complete = True
+                  self.currLine = None
                   self.key = None
                   
       except Exception, e:
@@ -307,93 +344,67 @@ class OccDataParser(LMObject):
          self.currLine = self.key = None
 
    # ...............................................
-   def checkInput(self, maxSize=None):
-      """
-      Finds number of records with correctly populated required fields 
-      """
-      total = totalGood = totalMostlyGood = 0
-      badId = badGeo = badGroup = badName = 0
-      groups = set()
-      complete = False
-      self.key = None
-      if self._csvreader.line_num > 2:
-         self.log.error('File is on line {}; checkInput must be run immediately following initialization' 
-                        % self._csvreader.line_num)
-      
-      self._getLine()
-      try:
-         while self._csvreader is not None and not complete:
-            total += 1
-                  
-            if self.currIsGoodEnough:
-               totalGood += 1
-            elif self.currIsGoodEnough:
-               totalMostlyGood += 1
-            if self.currIsBadId:
-               badId += 1
-            if self.currIsBadGeo:
-               badGeo += 1
-            if self.currIsBadGroup:
-               badGroup += 1
-               groups.add(self.currLine[self._sortIdx])
-               
-            if not complete:
-               self._getLine()
-               if self.currLine is None:
-                  complete = True
-                  self.key = None
-         
-      except Exception, e:
-         self.log.error('Failed in getNextKey, currRecnum=%s, e=%s' 
-                   % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
-      finally:
+   def printStats(self):
+      if not self.eof():
+         self.log.error('File is on line {}; printStats must be run after reading complete file' 
+                        % self._csvreader.line_num)      
+      else:
          report = """
          Totals for {}
          -------------------------------------------------------------
          Total records read: {}
-         Total groupings: {}
          Total good records: {}
-         Total mostly good records (missing only Dataname): {}
+         Total groupings: {}
          Breakdown
          ----------
          Records with missing or invalid ID value: {}
          Records with missing or invalid Longitude/Latitude values: {}
          Records with missing or invalid GroupBy value: {}
          Records with missing or invalid Dataname value: {}
-         """.format(self.dataFname, total, len(groups), totalGood, 
-                    totalMostlyGood, badId, badGeo, badGroup, badName)
+         Records with unacceptable value for filter fields: {}
+            Indexes: {} 
+            Accepted vals: {}
+            Bad filter values: {}
+         """.format(self.dataFname, self.recTotal, self.recTotalGood, 
+                    len(self.groupVals), self.badIds, self.badGeos, 
+                    self.badGroups, self.badNames, self.badFilters,  
+                    str(self.filters.keys()), str(self.filters.values()), 
+                    str(self.badFilterVals))
          self.log.info(report)
 
-   # ...............................................
-   def getNextKey(self):
-      """
-      Fills in self.key and self.currLine
-      """
-      complete = False
-      self.key = None
-      self._getLine()
-      try:
-         while self._csvreader is not None and not complete:
-            try:
-               txkey = int(self.currLine[self._sortIdx])
-            except Exception, e:
-               self.log.debug('Failed on line %d (%s)' 
-                         % (self.currRecnum, str(self.currLine)))
-            else:
-               self.key = txkey
-               complete = True
-                     
-            if not complete:
-               self._getLine()
-               if self.currLine is None:
-                  complete = True
-                  self.key = None
-                  
-      except Exception, e:
-         self.log.error('Failed in getNextKey, currRecnum=%s, e=%s' 
-                   % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
+#    # ...............................................
+#    def getNextKey(self):
+#       """
+#       Fills in self.key and self.currLine
+#       """
+#       complete = False
+#       self.key = None
+#       self.pullNextValidRec()
+#       try:
+#          while self._csvreader is not None and not complete:
+#             if line and goodEnough:
+#                self.currLine = line
+#                self.key = int(line[self._sortIdx])
+#                complete = True
+# #             try:
+# #                txkey = int(line[self._sortIdx])
+# #             except Exception, e:
+# #                self.log.debug('Failed on line %d (%s)' 
+# #                          % (self.currRecnum, str(self.currLine)))
+# #             else:
+# #                self.key = txkey
+# #                complete = True
+#                      
+#             if not complete:
+#                line, goodEnough = self._getLine()
+#                if line is None:
+#                   complete = True
+#                   self.key = None
+#                   
+#       except Exception, e:
+#          self.log.error('Failed in getNextKey, currRecnum=%s, e=%s' 
+#                    % (str(self.currRecnum), str(e)))
+#          line = self.key = None
          
    # ...............................................
    def pullCurrentChunk(self):
@@ -405,10 +416,19 @@ class OccDataParser(LMObject):
       currkey = self.key
       chunk = []
 
+      # first line of chunk is currLine
+      goodEnough = self._testLine(self.currLine)
+      if goodEnough:
+         chunk.append(self.currLine)
+      else:
+         print ('Tried to append bad rec')
+         
       try:
          while self._csvreader is not None and not complete:
-            chunk.append(self.currLine)
+            # get next line
             self.pullNextValidRec()
+            
+            # Add to or complete chunk
             if self.key == currkey:
                currCount += 1
                chunk.append(self.currLine)
@@ -442,7 +462,7 @@ class OccDataParser(LMObject):
             if self.currLine is None or sys.getsizeof(chunk) >= maxsize:
                complete = True
             else:
-               self._getLine()
+               self.pullNextValidRec()
                
          return chunk
                   
@@ -466,11 +486,12 @@ class OccDataParser(LMObject):
 
 if __name__ == '__main__':
    from LmServer.common.log import ScriptLogger
-   metafname = '/share/lmserver/data/species/gbif_borneo_simple.meta'
-   datafname = '/share/lmserver/data/species/sorted_gbif_borneo_simple.csv'
-#    datafname = '/tank/data/input/species/gbif_borneo_simple.csv'
+   metafname = '/tank/data/input/species/gbif_borneo_simple.meta'
+   datafname = '/tank/data/input/species/sorted_gbif_borneo_simple.csv'
+   datafname = '/tank/data/input/species/gbif_borneo_simple.csv'
    
    log = ScriptLogger('occparse_checkInput')
    op = OccDataParser(log, datafname, metafname)
-   op.checkInput(maxSize=None)
+   op.readAllRecs()
+   op.printStats()
    op.close()
