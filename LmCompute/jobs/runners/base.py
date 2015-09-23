@@ -54,6 +54,8 @@ class JobRunner(object):
       self.job = job
       self.env = env
       self.metrics = {}
+      self.log = None # This will be initialized after the job is initialized 
+                      #    and the log directory is created.
       signal.signal(signal.SIGTERM, self._receiveStopSignal) # Stop signal
       
    # ..................................
