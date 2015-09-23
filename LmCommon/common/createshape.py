@@ -33,6 +33,7 @@ from osgeo import ogr, osr
 import StringIO
 from types import UnicodeType, FloatType
 
+from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.localconstants import ENCODING
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (BISON_RESPONSE_FIELDS,
@@ -50,7 +51,8 @@ class ShapeShifter(object):
 # ............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, processType, rawdata, count):
+   def __init__(self, processType, rawdata, count, logger=None, metadata=None, 
+                delimiter=','):
       """
       @param data: Either csv blob of GBIF data or list of dictionary records
                    of BISON data
@@ -64,10 +66,23 @@ class ShapeShifter(object):
       self._recCount = count
       self.processType = processType
       self.rawdata = rawdata
+      self.linkField = None
+      self.linkUrl = None
+      self.op = None
       
       # All raw Occdata must contain ShortDWCNames.DECIMAL_LATITUDE and 
       #                              ShortDWCNames.DECIMAL_LONGITUDE
-      if processType == ProcessType.GBIF_TAXA_OCCURRENCE:
+      if processType == ProcessType.USER_TAXA_OCCURRENCE:
+         if not logger:
+            raise Exception('Failed to get a logger')
+         if not metadata:
+            raise Exception('Failed to get metadata')
+         self.op = OccDataParser(logger, rawdata, metadata, delimiter=',')
+         self.idField = self.op.idFieldName
+         self.xField = self.op.xFieldName
+         self.yField = self.op.yFieldName
+
+      elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          self.dataFields = GBIF_EXPORT_FIELDS
          self.idField = GBIF_ID_FIELD
          self.linkField = GBIF_LINK_FIELD
@@ -90,8 +105,6 @@ class ShapeShifter(object):
          self.dataFields = BISON_RESPONSE_FIELDS
          self.lookupFields = self._mapBisonNames()
          self.idField = LM_ID_FIELD
-         self.linkField = None
-         self.linkUrl = None
          self.xField = self._lookupReverse(ShortDWCNames.DECIMAL_LONGITUDE)
          self.yField = self._lookupReverse(ShortDWCNames.DECIMAL_LATITUDE)
          
@@ -113,9 +126,134 @@ class ShapeShifter(object):
          lyr.CreateFeature(feat)
          feat.Destroy()
 
+   # .............................................................................
+   def _getMetadata(self, origfldnames):
+      fldmeta = self._readMetadata()
+      
+      for i in range(len(origfldnames)):         
+         oname = origfldnames[i]
+         shortname = fldmeta[oname][0]
+         ogrtype = self.getOgrFieldType(fldmeta[oname][1])
+         self.fieldNames.append(shortname)
+         self.fieldTypes.append(ogrtype)
+         
+         if len(fldmeta[oname]) == 3:
+            if type(fldmeta[oname][2]) in (ListType, TupleType):
+               acceptedVals = fldmeta[oname][2]
+               if ogrtype == OFTString:
+                  acceptedVals = [val.lower() for val in fldmeta[oname][2]]
+               self.filters[i] = acceptedVals 
+            else:
+               role = fldmeta[oname][2].lower()
+               if role == 'id':
+                  self._idIdx = i
+               elif role == 'longitude':
+                  self._xIdx = i
+               elif role == 'latitude':
+                  self._yIdx = i
+               elif role == 'groupby':
+                  self._sortIdx = i
+               elif role == 'dataname':
+                  self._nameIdx = i
+      self.fieldCount = len(self.fieldNames)
+      
+      if self._idIdx == None:
+         raise LMError('Missing \'id\' unique identifier field')
+      if self._xIdx == None:
+         raise LMError('Missing \'longitude\' georeference field')
+      if self._yIdx == None:
+         raise LMError('Missing \'latitude\' georeference field')
+      if self._sortIdx == None:
+         raise LMError('Missing \'groupby\' sorting field')
+      if self._nameIdx == None:
+         raise LMError('Missing \'dataname\' dataset name field')
+
+
+   # .............................................................................
+   @staticmethod
+   def getOgrFieldType(typeString):
+      typestr = typeString.lower()
+      if typestr == 'integer':
+         return OFTInteger
+      elif typestr == 'string':
+         return OFTString
+      elif typestr == 'real':
+         return OFTReal
+      else:
+         raise Exception('Unsupported field type %s (use integer, string, or real)' 
+                         % typeString)
+
 # .............................................................................
 # Public functions
 # .............................................................................
+   def writeUserOccurrences(self, outfname, maxPoints=None, subsetfname=None):
+      ogrFormat = 'ESRI Shapefile'
+      
+      recIdx = -1
+      if subsetfname is not None:
+         if maxPoints is not None and self._recCount > maxPoints: 
+            from random import shuffle
+            subsetIndices = range(self._recCount)
+            shuffle(subsetIndices)
+            subsetIndices = subsetIndices[:maxPoints]
+
+      subsetDs = None
+      try:
+         drv = ogr.GetDriverByName(ogrFormat)
+         newDs = drv.CreateDataSource(outfname)
+         if newDs is None:
+            raise Exception('Dataset creation failed for %s' % outfname)
+         if subsetfname is not None and subsetIndices:
+            subsetDs = drv.CreateDataSource(subsetfname)
+            subsetMetaDict = {'ogrFormat': ogrFormat}
+            if subsetDs is None:
+               raise Exception('Dataset creation failed for %s' % subsetfname)
+         
+         newLyr = self._addUserFieldDef(newDs)
+         if subsetDs is not None:
+            subsetLyr = self._addUserFieldDef(subsetDs)
+         # same lyrDef for both datasets
+         lyrDef = newLyr.GetLayerDefn()
+         
+         # Loop through records
+         recDict = self._getRecord()
+         while recDict:
+            self._createFillFeat(lyrDef, recDict, newLyr)
+            if subsetDs is not None and self._currRecum in subsetIndices:
+               self._createFillFeat(lyrDef, recDict, subsetLyr)
+            recDict = self._getRecord()
+                              
+         # Return metadata
+         (minX, maxX, minY, maxY) = newLyr.GetExtent()
+         geomtype = lyrDef.GetGeomType()
+         fcount = newLyr.GetFeatureCount()
+         # Close dataset and flush to disk
+         newDs.Destroy()
+         print('Closed/wrote dataset %s' % outfname)
+         basename, ext = os.path.splitext(outfname)
+         self._writeMetadata(basename, ogrFormat, geomtype, 
+                             fcount, minX, minY, maxX, maxY)
+         
+         if subsetDs is not None:
+            sfcount = subsetLyr.GetFeatureCount()
+            subsetDs.Destroy()
+            print("Closed/wrote dataset %s" % subsetfname)
+            basename, ext = os.path.splitext(subsetfname)
+            self._writeMetadata(basename, ogrFormat, geomtype, 
+                                sfcount, minX, minY, maxX, maxY)
+      except Exception, e:
+         print('Unable to read or write data (%s)' % fromUnicode(toUnicode(e)))
+         raise e
+   #    try:
+   #       shpTreeCmd = os.path.join(appPath, "shptree")
+   #       retcode = subprocess.call([shpTreeCmd, "%s" % outfname])
+   #       if retcode != 0: 
+   #          print 'Unable to create shapetree index on %s' % outfname
+   #    except Exception, e:
+   #       print 'Unable to create shapetree index on %s: %s' % (outfname, str(e))
+
+
+   # .............................................................................
    def writeOccurrences(self, outfname, maxPoints=None, subsetfname=None):
       ogrFormat = 'ESRI Shapefile'
       
@@ -223,12 +361,15 @@ class ShapeShifter(object):
          return name
 
    # ...............................................
-   def _getCSVReader(self):
-      fldnames = []
-      idxs = self.dataFields.keys()
-      idxs.sort()
-      for idx in idxs:
-         fldnames.append(self.dataFields[idx][0])
+   def _getCSVReader(self, header=False):
+      if header:
+         fldnames = None
+      else:
+         fldnames = []
+         idxs = self.dataFields.keys()
+         idxs.sort()
+         for idx in idxs:
+            fldnames.append(self.dataFields[idx][0])
       csvData = StringIO.StringIO()
       csvData.write(self.rawdata.encode(ENCODING))
       csvData.seek(0)
@@ -237,7 +378,9 @@ class ShapeShifter(object):
    
    # ...............................................
    def _getRecord(self):
-      if self.processType in (ProcessType.GBIF_TAXA_OCCURRENCE,
+      if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
+         recDict = self._getUserCSVRec() 
+      elif self.processType in (ProcessType.GBIF_TAXA_OCCURRENCE,
                               ProcessType.IDIGBIO_TAXA_OCCURRENCE):
          recDict = self._getCSVRec()
       else:
@@ -259,6 +402,35 @@ class ShapeShifter(object):
       return recDict
    
    # ...............................................
+   def _getUserCSVRec(self):
+      success = False
+      recDict = {}
+      # skip bad lines
+      while not success and not self.op.eof():
+         try:
+            self.op.pullNextValidRec()
+            if not self.op.eof():
+               # ignore records without valid lat/long; all occ jobs contain these fields
+               recDict[self.op.xFieldName] = float(self.op.xValue)
+               recDict[self.op.yFieldName] = float(self.op.yValue)
+               success = True
+         except OverflowError, e:
+            print('OverflowError on %d (%s), moving on' % (self._currRecum, fromUnicode(toUnicode(e))))
+         except ValueError, e:
+            print('Ignoring invalid lat {}, long {} data'.format(self.op.xValue, 
+                                                                 self.op.yValue))
+         except Exception, e:
+            print('Exception reading line {} ({})'.format(self.op.currRecnum, 
+                                                     fromUnicode(toUnicode(e))))
+         except StopIteration, e:
+            pass
+         
+         if success:
+            for i in range(len(self.op.fieldNames)):
+               recDict[self.op.fieldNames[i]] = self.op.currLine[i]
+      return recDict
+
+   # ...............................................
    def _getCSVRec(self):
       success = False
       recDict = None
@@ -268,7 +440,7 @@ class ShapeShifter(object):
             recDict = self._reader.next()
             # ignore records without valid lat/long; all occ jobs contain these fields
             recDict[ShortDWCNames.DECIMAL_LATITUDE] = float(recDict[ShortDWCNames.DECIMAL_LATITUDE])
-            recDict[ShortDWCNames.DECIMAL_LATITUDE] = float(recDict[ShortDWCNames.DECIMAL_LATITUDE])
+            recDict[ShortDWCNames.DECIMAL_LONGITUDE] = float(recDict[ShortDWCNames.DECIMAL_LONGITUDE])
             success = True
          except OverflowError, e:
             print('OverflowError on %d (%s), moving on' % (self._currRecum, fromUnicode(toUnicode(e))))
@@ -283,7 +455,6 @@ class ShapeShifter(object):
                   % (self._currRecum, fromUnicode(toUnicode(e))))
             success = True
       return recDict
-
 #    # ...............................................
 #    def _addField(self, newLyr, fldname, fldtype):
 #       # TODO: Try to use this function, may not work to pass layer
@@ -292,6 +463,35 @@ class ShapeShifter(object):
 #       if returnVal != 0:
 #          raise Exception('Failed to create field %s' % fldname)
 
+   # ...............................................
+   def _addUserFieldDef(self, newDataset):
+      spRef = osr.SpatialReference()
+      spRef.ImportFromEPSG(4326)
+    
+      newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
+      if newLyr is None:
+         raise Exception('Layer creation failed')
+       
+      idIdx = None
+      for pos in range(len(self.op.fieldNames)):
+         fldname = self.op.fieldNames[pos]
+         fldtype = self.op.fieldTypes[pos]
+         fldDef = ogr.FieldDefn(fldname, fldtype)
+         if fldtype == ogr.OFTString:
+            fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+         returnVal = newLyr.CreateField(fldDef)
+         if returnVal != 0:
+            raise Exception('Failed to create field %s' % fldname)
+            
+      # Add wkt field
+      fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
+      fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+      returnVal = newLyr.CreateField(fldDef)
+      if returnVal != 0:
+         raise Exception('Failed to create field %s' % fldname)
+      
+      return newLyr
+         
    # ...............................................
    def _addFieldDef(self, newDataset):
       spRef = osr.SpatialReference()
@@ -364,6 +564,8 @@ class ShapeShifter(object):
                      
          # Add values out of the line of data
          for name in recDict.keys():
+            # Handles reverse lookup for BISON metadata
+            # TODO: make this consistent!!!
             fldname = self._lookup(name)
             if fldname is not None:
                val = recDict[name]

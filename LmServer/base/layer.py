@@ -1721,7 +1721,7 @@ class Vector(_Layer):
       return successfulWrites
 
 # ...............................................
-   def writeCSV(self, dataRecords, dlocation=None, overwrite=False):
+   def writeCSV(self, dataRecords, dlocation=None, overwrite=False, header=None):
       """
       @summary: Writes vector data to a CSV file.
       @param iterableData: a sequence of vector data records, each record is
@@ -1743,6 +1743,8 @@ class Vector(_Layer):
       if success:      
          with open(dlocation, 'wb') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',')
+            if header:
+               spamwriter.writerow(header)
             for rec in dataRecords:
                try:
                   spamwriter.writerow(rec)

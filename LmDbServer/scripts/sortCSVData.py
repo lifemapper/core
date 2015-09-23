@@ -27,7 +27,7 @@ import sys
 
 from LmDbServer.common.lmconstants import (USER_OCCURRENCE_META, 
                                               USER_OCCURRENCE_CSV)
-from LmDbServer.common.occparse import OccDataParser
+from LmBackend.common.occparse import OccDataParser
 from LmServer.base.lmobj import LMObject, LMError
 from LmServer.common.log import ScriptLogger
 

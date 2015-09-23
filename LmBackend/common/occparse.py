@@ -27,8 +27,10 @@ import csv
 import os
 from osgeo.ogr import OFTInteger, OFTReal, OFTString
 import sys
+import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
+from LmCommon.common.localconstants import ENCODING
 from LmServer.base.lmobj import LMObject, LMError
 # .............................................................................
 class OccDataParser(LMObject):
@@ -36,15 +38,19 @@ class OccDataParser(LMObject):
    @summary: Object with metadata and open file.  OccDataParser maintains 
              file position and most recently read data chunk
    """
-   def __init__(self, logger, dataFname, metadataFname):
+   def __init__(self, logger, data, metadata, delimiter='\t'):
       """
       @summary Reader for arbitrary user CSV data file with header record and 
                metadata file
       @param logger: Logger to use for the main thread
+      @param data: raw data or filename for CSV data
+      @param metadata: dictionary or filename containing dictionary of metadata
       """
+      self.metadataFname = None
+      self.dataFname = None
+      self.delimiter = delimiter
+      
       self.log = logger
-      self.metadataFname = metadataFname
-      self.dataFname = dataFname
       self.fieldNames = [] 
       self.fieldCount = 0
       self.fieldTypes = []
@@ -75,19 +81,25 @@ class OccDataParser(LMObject):
 
       self.chunk = []
       self.key = None
-      
-      try:
-         self._file = open(self.dataFname, 'r')
-      except Exception, e:
-         raise LMError('Failed to open %s' % self.dataFname)
-      csv.field_size_limit(sys.maxsize)
-      self._csvreader = csv.reader(self._file, delimiter='\t')
-      
-      self.header = self._csvreader.next()
       self.currLine = None
-
+      
+      csv.field_size_limit(sys.maxsize)
+      try:
+         self._file = open(data, 'r')
+         self._csvreader = csv.reader(self._file, delimiter=self.delimiter)
+         self.dataFname = data
+      except Exception, e:
+         try:
+            csvData = StringIO.StringIO()
+            csvData.write(data.encode(ENCODING))
+            csvData.seek(0)
+            self._csvreader = csv.reader(csvData, delimiter=self.delimiter)
+         except Exception, e:
+            raise LMError('Failed to read raw or file data {}'.format(data))
+      # Assume header in first row of data
+      self.header = self._csvreader.next()
       # Read metadata file and close
-      self._getMetadata(self.header)
+      self._getMetadata(metadata, self.header)
             
       # populates key, currLine and currRecnum
       self.pullNextValidRec()
@@ -141,30 +153,42 @@ class OccDataParser(LMObject):
          nameVal = self.currLine[self._nameIdx]
       return nameVal
    
-   # .............................................................................
-   def _readMetadata(self):
-      try:
-         f = open(self.metadataFname, 'r')
-      except Exception, e:
-         raise LMError('Failed to open %s' % self.metadataFname)
+   @property
+   def idFieldName(self):
+      return self.fieldNames[self._idIdx]
+   
+   @property
+   def xFieldName(self):
+      return self.fieldNames[self._xIdx]
+   
+   @property
+   def yFieldName(self):
+      return self.fieldNames[self._yIdx]
       
+   # .............................................................................
+   def _readMetadata(self, metadata):
+      fldmeta = None
       try:
-         metaStr = f.read()
-         fldmeta = ast.literal_eval(metaStr)
+         f = open(metadata, 'r')
       except Exception, e:
-         raise LMError('Failed to evaluate contents of metadata file %s' 
-                       % self.metadataFname)
-      finally:
-         f.close()
-         
+         fldmeta = metadata            
+      else:
+         try:
+            metaStr = f.read()
+            fldmeta = ast.literal_eval(metaStr)
+         except Exception, e:
+            raise LMError('Failed to evaluate contents of metadata file %s' 
+                          % self.metadataFname)
+         finally:
+            f.close()
+            
       if type(fldmeta) not in (DictionaryType, DictType):
-         raise LMError('Contents of metadata file %s is not a Python dictionary' 
-                       % self.metadataFname)
+         raise LMError('Failed to read or open {}'.format(metadata))
       return fldmeta
          
    # .............................................................................
-   def _getMetadata(self, origfldnames):
-      fldmeta = self._readMetadata()
+   def _getMetadata(self, metadata, origfldnames):
+      fldmeta = self._readMetadata(metadata)
       
       for i in range(len(origfldnames)):         
          oname = origfldnames[i]
@@ -281,7 +305,7 @@ class OccDataParser(LMObject):
       """
       success = goodEnough = False
       line = None
-      while not success:
+      while not success and self._csvreader is not None:
          try:
             line = self._csvreader.next()
             goodEnough = self._testLine(line)
@@ -294,7 +318,7 @@ class OccDataParser(LMObject):
             self.currLine = None
             success = True
          except Exception, e:
-            raise LMError('Bad record {}'.format(e))
+            self.log.warning('Bad record {}'.format(e))
          
       return line, goodEnough
 

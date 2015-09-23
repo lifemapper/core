@@ -719,6 +719,9 @@ class Infiller(_LMWorker):
             if occ.status == JobStatus.COMPLETE:
                processtype = None
             elif occ.status == JobStatus.INITIALIZE:
+               # default is arbitrary CSV data with metadata
+               processtype = ProcessType.USER_TAXA_OCCURRENCE
+               
                if DATASOURCE == Instances.BISON:
                   processtype = ProcessType.BISON_TAXA_OCCURRENCE
                elif DATASOURCE == Instances.IDIGBIO:
@@ -1143,7 +1146,8 @@ class UserChainer(_LMWorker):
             # Write new raw data
             processtype = ProcessType.USER_TAXA_OCCURRENCE
             rdloc = occ.createLocalDLocation(raw=True)
-            success = occ.writeCSV(dataChunk, dlocation=rdloc, overwrite=True)
+            success = occ.writeCSV(dataChunk, dlocation=rdloc, overwrite=True,
+                                   header=self.occParser.header)
             if not success:
                self.log.debug('Unable to write CSV file %s' % rdloc)
             else:
