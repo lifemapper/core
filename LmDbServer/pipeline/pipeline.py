@@ -105,7 +105,7 @@ class _Worker(LMObject, threading.Thread):
          return False
       
 # ...............................................
-   def signalKill(self, all=False, msg=None):
+   def signalKill(self, allFail=False, msg=None):
       if all:
          killfile = self._pipelineKillFile
       else:
@@ -144,7 +144,7 @@ class _Worker(LMObject, threading.Thread):
          self._notifyPeople('LM Pipeline error', logmsg)
 
       if not self._existKillFile():
-         self.signalKill(all=allFail, msg=logmsg)
+         self.signalKill(allFail=allFail, msg=logmsg)
       
       if self._scribe.isOpen:
          try:

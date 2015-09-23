@@ -925,7 +925,7 @@ class BisonChainer(_LMWorker):
             # Check for end of data
             if self._currRec is None:
                allFail = False
-               self.signalKill(all=allFail)
+               self.signalKill(allFail=allFail)
                self.log.info('Chainer complete, last rec num = %d (next -9999)' 
                              % self._recnum)
                self._recnum = -9999
@@ -1073,6 +1073,7 @@ class UserChainer(_LMWorker):
 # ...............................................
    def run(self):
       allFail = True
+      killMeNow = False
       # Gets and frees lock for each name checked
       while (not(self._existKillFile())):
          try:
@@ -1083,16 +1084,16 @@ class UserChainer(_LMWorker):
                            
                if self._existKillFile():
                   break
-                        
+                           
+            if self.occParser.eof():
+               killMeNow = True
             self.occParser.close()
-            if self._currRec is None:
-               self.occParser.keyFirstRec = -9999
-               allFail = False
-               self.signalKill(all=allFail)
-               self.log.info('Chainer complete, last first rec = %d' 
-                             % self.nextStart)
+               
+            if killMeNow:
+               self.signalKill(allFail=False)
+               self.log.info('Chainer complete')
                break
-         
+
          except Exception, e:
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -1100,8 +1101,7 @@ class UserChainer(_LMWorker):
             break
 
       if self._existKillFile():
-         self.log.info('LAST CHECKED line %d (stopped with killfile)' 
-                       % (self.occParser.currRecnum))
+         self.log.info('LAST CHECKED line {} (killfile)'.format(self.nextStart))
          self._failGracefully(None, allFail=allFail)
 
 # ...............................................
@@ -1157,7 +1157,8 @@ class UserChainer(_LMWorker):
                                          priority=Priority.NORMAL, 
                                          intersectGrid=None,
                                          minPointCount=POINT_COUNT_MIN)
-               self.log.debug('Initialized %d jobs for occ %d' % (len(jobs), occ.getId()))
+               self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
+                              len(jobs), spname, len(dataChunk), occ.getId()))
       except LMError, e:
          raise e
       except Exception, e:
@@ -1282,7 +1283,7 @@ class GBIFChainer(_LMWorker):
             if self._currRec is None:
                self._currKeyFirstRecnum = -9999
                allFail = False
-               self.signalKill(all=allFail)
+               self.signalKill(allFail=allFail)
                self.log.info('Chainer complete, last first rec = %d' 
                              % self._currKeyFirstRecnum)
                break
@@ -1570,7 +1571,7 @@ class iDigBioChainer(_LMWorker):
             if self._currBinomial is None:
                nextStart = -9999
                allFail = False
-               self.signalKill(all=allFail)
+               self.signalKill(allFail=allFail)
                self.log.info('Chainer complete, last line num = %d' 
                              % self._linenum)
                break
