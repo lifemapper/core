@@ -663,7 +663,10 @@ class MAL(DbPostgresql):
                                                               usr, inputType, 
                                                               currtime,
                                                               computeIP)
-      elif processType in [ProcessType.BISON_TAXA_OCCURRENCE, ProcessType.GBIF_TAXA_OCCURRENCE, ProcessType.IDIGBIO_TAXA_OCCURRENCE]:
+      elif processType in [ProcessType.BISON_TAXA_OCCURRENCE, 
+                           ProcessType.GBIF_TAXA_OCCURRENCE, 
+                           ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                           ProcessType.USER_TAXA_OCCURRENCE]:
          rows, idxs = self.executeSelectAndModifyManyFunction('lm_pullOccurrenceJobs',
                                                               count,
                                                               processType,
@@ -2163,7 +2166,8 @@ class MAL(DbPostgresql):
       """
       if proctype in (ProcessType.GBIF_TAXA_OCCURRENCE, 
                 ProcessType.BISON_TAXA_OCCURRENCE, 
-                ProcessType.IDIGBIO_TAXA_OCCURRENCE):
+                ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                ProcessType.USER_TAXA_OCCURRENCE):
          fnname = 'lm_countOccJobs'
       elif proctype in (ProcessType.ATT_MODEL, ProcessType.OM_MODEL):
          fnname = 'lm_countMdlJobs'
