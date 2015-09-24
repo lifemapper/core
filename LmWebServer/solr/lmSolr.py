@@ -41,6 +41,7 @@ def formatHit(hit):
               "occurrenceSetBBox" : hit['occurrenceSetBBox'],
               "occurrenceSetModTime" : hit['occurrenceSetModTime'],
               "occurrenceSetDownloadUrl" : hit['occurrenceSetDownloadUrl'],
+              "numPoints" : hit['numberOfOccurrencePoints'],
               "models" : {
                mdlKey : {
                 "modelId" : hit['modelId'],
