@@ -70,6 +70,8 @@ try:
    from LmWebServer.services.ogc.sdmMapper import MapConstructor
 except:
    pass
+
+from LmWebServer.solr.lmSolr import searchArchive
           
 baseDir = os.path.join(APP_PATH, WEB_PATH)
    
@@ -211,28 +213,33 @@ class svc(object):
          query = query.replace("\"", "").replace("'", "")
          query = query.replace("?", "").replace("*", "")
 
-         #if queryType == "species":
-         frmt = getUrlParameter("format", parameters)
-         numCols = getUrlParameter("columns", parameters)
-         maxReturned = getUrlParameter("maxreturned", parameters)
-         seeAll = getUrlParameter("seeall", parameters)
+         if queryType == "species":
+            frmt = getUrlParameter("format", parameters)
+            numCols = getUrlParameter("columns", parameters)
+            maxReturned = getUrlParameter("maxreturned", parameters)
+            seeAll = getUrlParameter("seeall", parameters)
+            
+            if maxReturned is None:
+               maxReturned = 100
+              
+            if seeAll is not None:
+               if seeAll:
+                  maxReturned = 0
          
-         if maxReturned is None:
-            maxReturned = 100
-           
-         if seeAll is not None:
-            if seeAll:
-               maxReturned = 0
-      
-         if frmt is None:
-            frmt = "autocomplete"
-          
-         if numCols is None:
-            numCols = "3"
+            if frmt is None:
+               frmt = "autocomplete"
+             
+            if numCols is None:
+               numCols = "3"
+   
+            cli = LmLuceneClient()
+            response = cli.querySpecies(query, maxReturned, frmt, numCols)
+            return response
+         elif queryType == "archive":
+            content_type = "application/xml"
+            cherrypy.response.headers["Content-Type"] = content_type
+            return searchArchive(query)
 
-         cli = LmLuceneClient()
-         response = cli.querySpecies(query, maxReturned, frmt, numCols)
-         return response
       except Exception, e:
          err = LMError(e, doTrace=True)
          return errorResponse(LmPublicLogger(), HTTPStatus.INTERNAL_SERVER_ERROR, err=err)
