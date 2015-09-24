@@ -205,7 +205,7 @@ class svc(object):
          if query == "":
             query = getUrlParameter("query", parameters)
       
-         if query is None:
+         if query is None or len(query) == 0:
             return errorResponse(LmPublicLogger(), 
                      code=HTTPStatus.BAD_REQUEST, 
                      err="Query string cannot be empty")
