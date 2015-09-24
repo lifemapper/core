@@ -3,7 +3,8 @@
 @author: CJ Grady
 """
 from mx.DateTime.DateTime import DateTimeFromMJD
-from subprocess import Popen
+#from subprocess import Popen
+import subprocess
 from time import sleep
 
 from LmCommon.common.lmconstants import JobStatus
@@ -28,7 +29,7 @@ def getModTimeStringFromMJD(mjd):
                 that Solr can index
    @param mjd: The time in MJD format
    """
-   return DateTimeFromMJD(mjd).strftime('%Y-%m-%dT%H:%M:SZ')
+   return DateTimeFromMJD(mjd).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 # .............................................................................
 def makeProjectionDoc(prj):
@@ -132,9 +133,10 @@ def postDocument(doc, collection, mimeType='application/xml'):
    cmd = "{cmd} -c {collection} -type {mimeType} -out no -d $'{data}'".format(
             cmd=SOLR_POST_COMMAND, collection=collection, mimeType=mimeType,
             data=doc)
-   p = Popen(cmd)
-   while p.poll() is None:
-      sleep(.2)
+   #p = Popen(cmd)
+   #while p.poll() is None:
+   #   sleep(.2)
+   subprocess.call(cmd, shell=True)
       
 
 # .............................................................................

@@ -126,7 +126,9 @@ def createHitObjects(hitsDict):
 # .............................................................................
 def searchArchive(name):
    """
-   @summary: Search 
+   @summary: Search the archive
+   @todo: This is pretty brittle.  These constants should be read from config 
+             and this function could use quite a bit of bullet-proofing
    """
    url = "http://{server}{collection}/select?q=displayName%3A{name}*&wt=python&indent=true".format(
                                server=SERVER, collection=COLLECTION, name=name)
@@ -155,6 +157,9 @@ def searchArchive(name):
 def _addObjectToTree(el, obj):
    """
    @summary: Adds an object to the ElementTree element
+   @todo: Merge this with the XML formatter code.  I just copied it out of that
+             module and made some small modificaitons so that it would not add
+             extra fluff
    """
    for name, value in obj:
       if isinstance(value, ObjectAttributeIterator):
@@ -171,6 +176,11 @@ def _addObjectToTree(el, obj):
 
 # .............................................................................
 def formatXml(obj):
+   """
+   @todo: Merge this with the XML formatter code.  I just copied it out of that
+             module and made some small modificaitons so that it would not add
+             extra fluff
+   """
    register_namespace(LM_NS_PREFIX, LM_NAMESPACE)
    setDefaultNamespace(LM_NAMESPACE)
    
