@@ -87,6 +87,8 @@ class JobSubmitter(object):
          processName = "GBIF"
       elif pType == ProcessType.BISON_TAXA_OCCURRENCE:
          processName = "BISON"
+      elif pType == ProcessType.USER_TAXA_OCCURRENCE:
+         processName = "USRPTS"
 
       # Replace job file and name with job information
       jobName = "%s-%s" % (processName, job.jobId)

@@ -538,7 +538,8 @@ class ProcessType:
                    ProcessType.ATT_PROJECT, ProcessType.OM_MODEL, 
                    ProcessType.OM_PROJECT, ProcessType.GBIF_TAXA_OCCURRENCE, 
                    ProcessType.BISON_TAXA_OCCURRENCE, 
-                   ProcessType.IDIGBIO_TAXA_OCCURRENCE):
+                   ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                   ProcessType.USER_TAXA_OCCURRENCE):
          return True
       return False
       

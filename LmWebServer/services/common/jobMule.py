@@ -83,6 +83,10 @@ PROCESSES = {
                 "job family" : JobFamily.SDM,
                 "weight" : 1
              },
+             ProcessType.USER_TAXA_OCCURRENCE : {
+                "job family" : JobFamily.SDM,
+                "weight" : 1
+             },
              ProcessType.RAD_BUILDGRID : {
                 "job family" : JobFamily.RAD,
                 "weight" : 1
@@ -155,7 +159,8 @@ class JobMule(object):
                    processTypes=[ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT,
                                  ProcessType.OM_MODEL, ProcessType.OM_PROJECT,
                                  ProcessType.GBIF_TAXA_OCCURRENCE, 
-                                 ProcessType.BISON_TAXA_OCCURRENCE], 
+                                 ProcessType.BISON_TAXA_OCCURRENCE,
+                                 ProcessType.USER_TAXA_OCCURRENCE], 
                    userIds=[], inputTypes=[]):
       """
       @summary: Requests a job packet to work on

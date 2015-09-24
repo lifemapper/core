@@ -157,6 +157,7 @@ JOB_TYPE_TRANS = {
                   ProcessType.GBIF_TAXA_OCCURRENCE : ProcessType.GBIF_TAXA_OCCURRENCE,
                   ProcessType.BISON_TAXA_OCCURRENCE : ProcessType.BISON_TAXA_OCCURRENCE,
                   ProcessType.IDIGBIO_TAXA_OCCURRENCE : ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                  ProcessType.USER_TAXA_OCCURRENCE : ProcessType.USER_TAXA_OCCURRENCE,
                   ProcessType.RAD_BUILDGRID: ProcessType.RAD_BUILDGRID,
                   ProcessType.RAD_INTERSECT: ProcessType.RAD_INTERSECT,
                   ProcessType.RAD_COMPRESS: ProcessType.RAD_COMPRESS,
