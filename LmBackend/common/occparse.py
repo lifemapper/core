@@ -396,40 +396,6 @@ class OccDataParser(LMObject):
                     str(self.badFilterVals))
          self.log.info(report)
 
-#    # ...............................................
-#    def getNextKey(self):
-#       """
-#       Fills in self.key and self.currLine
-#       """
-#       complete = False
-#       self.key = None
-#       self.pullNextValidRec()
-#       try:
-#          while self._csvreader is not None and not complete:
-#             if line and goodEnough:
-#                self.currLine = line
-#                self.key = int(line[self._sortIdx])
-#                complete = True
-# #             try:
-# #                txkey = int(line[self._sortIdx])
-# #             except Exception, e:
-# #                self.log.debug('Failed on line %d (%s)' 
-# #                          % (self.currRecnum, str(self.currLine)))
-# #             else:
-# #                self.key = txkey
-# #                complete = True
-#                      
-#             if not complete:
-#                line, goodEnough = self._getLine()
-#                if line is None:
-#                   complete = True
-#                   self.key = None
-#                   
-#       except Exception, e:
-#          self.log.error('Failed in getNextKey, currRecnum=%s, e=%s' 
-#                    % (str(self.currRecnum), str(e)))
-#          line = self.key = None
-         
    # ...............................................
    def pullCurrentChunk(self):
       """
@@ -512,7 +478,7 @@ if __name__ == '__main__':
    from LmServer.common.log import ScriptLogger
    metafname = '/tank/data/input/species/gbif_borneo_simple.meta'
    datafname = '/tank/data/input/species/sorted_gbif_borneo_simple.csv'
-   datafname = '/tank/data/input/species/gbif_borneo_simple.csv'
+#    datafname = '/tank/data/input/species/gbif_borneo_simple.csv'
    
    log = ScriptLogger('occparse_checkInput')
    op = OccDataParser(log, datafname, metafname)

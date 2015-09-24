@@ -38,51 +38,8 @@ from LmCompute.common.lmObj import LmException
 # PUBLIC
 # .............................................................................
 
-pragmaMeta = {'gbifid': ('gbifid', 'integer', 'id'),
-              'datasetkey': ('datasetkey', 'string'), 
-              'occurrenceid': ('occurid', 'string'),
-              'kingdom': ('kingdom', 'string'),
-              'phylum': ('phylum', 'string'),
-              'class': ('class', 'string'),
-              'order': ('order', 'string'),
-              'family': ('family', 'string'),
-              'genus': ('genus', 'string'),
-              'species': ('species', 'string', 'dataname'),
-              'infraspecificepithet': ('isepithet', 'string'), 
-              'taxonrank': ('taxonrank', 'string', ['SUBSPECIES', 'SPECIES']),
-              'scientificname': ('sciname', 'string'),
-              'countrycode': ('cntrycode', 'string'),
-              'locality': ('locality', 'string'),
-              'publishingorgkey': ('puborgkey', 'string'),
-              'decimallatitude': ('dec_lat', 'real', 'latitude'),
-              'decimallongitude': ('dec_long', 'real', 'longitude'),
-              'elevation': ('elevation', 'real'),
-              'elevationaccuracy': ('elev_acc', 'real'),
-              'depth': ('depth', 'real'),
-              'depthaccuracy': ('depth_acc', 'real'),
-              'eventdate': ('eventdate', 'string'),
-              'day': ('day', 'integer'),
-              'month': ('month', 'integer'),
-              'year': ('year', 'integer'),
-              'taxonkey': ('taxonkey', 'integer', 'groupby'),
-              'specieskey': ('specieskey', 'integer'),
-              'basisofrecord': ('basisofrec', 'string'),
-              'institutioncode': ('inst_code', 'string'),
-              'collectioncode': ('coll_code', 'string'),
-              'catalognumber': ('catnum', 'string'),
-              'recordnumber': ('recnum', 'string'),
-              'identifiedby': ('idby', 'string'),
-              'rights': ('rights', 'string'),
-              'rightsholder': ('rightshold', 'string'),
-              'recordedby': ('rec_by', 'string'),
-              'typestatus': ('typestatus', 'string'),
-              'establishmentmeans': ('estabmeans', 'string'),
-              'lastinterpreted': ('lastinterp', 'string'),
-              'mediatype': ('mediatype', 'string'),
-              'issue': ('issue', 'string') }
-
 # .............................................................................
-def parseCSVData(log, count, csvInputBlob, basePath, env, maxPoints):
+def parseCSVData(log, count, csvInputBlob, metadata, basePath, env, maxPoints):
    """
    @summary: Parses a CSV-format data set and saves it to a shapefile in the 
                 specified location
@@ -92,7 +49,8 @@ def parseCSVData(log, count, csvInputBlob, basePath, env, maxPoints):
    @return: The name of the file where the data is stored (.shp extension)
    @rtype: String
    """
-   if csvInputBlob is None or len(csvInputBlob.strip()) == 0:
+   # First line is column names
+   if csvInputBlob is None or len(csvInputBlob.strip()) <= 1:
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The CSV provided was empty")
    if env is not None:
@@ -110,7 +68,7 @@ def parseCSVData(log, count, csvInputBlob, basePath, env, maxPoints):
          subsetOutfilename = os.path.join(basePath, 'subset_testocc.shp')
          
    shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, count, 
-                         logger=log, metadata=pragmaMeta)
+                         logger=log, metadata=metadata)
    shaper.writeUserOccurrences(outfilename, maxPoints=maxPoints, 
                                subsetfname=subsetOutfilename)
 
@@ -118,12 +76,55 @@ def parseCSVData(log, count, csvInputBlob, basePath, env, maxPoints):
 
 # ...............................................
 if __name__ == '__main__':
+   from LmServer.common.log import ScriptLogger
+   PRAGMA_META = {'gbifid': ('gbifid', 'integer', 'id'),
+                 'datasetkey': ('datasetkey', 'string'), 
+                 'occurrenceid': ('occurid', 'string'),
+                 'kingdom': ('kingdom', 'string'),
+                 'phylum': ('phylum', 'string'),
+                 'class': ('class', 'string'),
+                 'order': ('order', 'string'),
+                 'family': ('family', 'string'),
+                 'genus': ('genus', 'string'),
+                 'species': ('species', 'string', 'dataname'),
+                 'infraspecificepithet': ('isepithet', 'string'), 
+                 'taxonrank': ('taxonrank', 'string', ['SUBSPECIES', 'SPECIES']),
+                 'scientificname': ('sciname', 'string'),
+                 'countrycode': ('cntrycode', 'string'),
+                 'locality': ('locality', 'string'),
+                 'publishingorgkey': ('puborgkey', 'string'),
+                 'decimallatitude': ('dec_lat', 'real', 'latitude'),
+                 'decimallongitude': ('dec_long', 'real', 'longitude'),
+                 'elevation': ('elevation', 'real'),
+                 'elevationaccuracy': ('elev_acc', 'real'),
+                 'depth': ('depth', 'real'),
+                 'depthaccuracy': ('depth_acc', 'real'),
+                 'eventdate': ('eventdate', 'string'),
+                 'day': ('day', 'integer'),
+                 'month': ('month', 'integer'),
+                 'year': ('year', 'integer'),
+                 'taxonkey': ('taxonkey', 'integer', 'groupby'),
+                 'specieskey': ('specieskey', 'integer'),
+                 'basisofrecord': ('basisofrec', 'string'),
+                 'institutioncode': ('inst_code', 'string'),
+                 'collectioncode': ('coll_code', 'string'),
+                 'catalognumber': ('catnum', 'string'),
+                 'recordnumber': ('recnum', 'string'),
+                 'identifiedby': ('idby', 'string'),
+                 'rights': ('rights', 'string'),
+                 'rightsholder': ('rightshold', 'string'),
+                 'recordedby': ('rec_by', 'string'),
+                 'typestatus': ('typestatus', 'string'),
+                 'establishmentmeans': ('estabmeans', 'string'),
+                 'lastinterpreted': ('lastinterp', 'string'),
+                 'mediatype': ('mediatype', 'string'),
+                 'issue': ('issue', 'string') }
+
 
    fname = '/share/lmserver/data/archive/pragma/000/000/002/291/pt_2291.csv'
    basepth = '/tmp/'
    env = None
    maxPoints = 1000000
-   from LmServer.common.log import ScriptLogger
    
    f = open(fname)
    csvblob = f.read()
@@ -133,5 +134,6 @@ if __name__ == '__main__':
    count = len(csvblob) - 1
    
    log = ScriptLogger('csvocc')
-   fname, tmp = parseCSVData(log, count, csvblob, basepth, env, maxPoints)
+   fname, tmp = parseCSVData(log, count, csvblob, PRAGMA_META, basepth, env, 
+                             maxPoints)
    print fname, tmp

@@ -41,6 +41,50 @@ from LmCompute.plugins.sdm.csvocc.csvocc import parseCSVData
 
 SLEEP_TIME = 600 # Ten minutes
 
+# TODO: Send this with job object
+PRAGMA_META = {'gbifid': ('gbifid', 'integer', 'id'),
+              'datasetkey': ('datasetkey', 'string'), 
+              'occurrenceid': ('occurid', 'string'),
+              'kingdom': ('kingdom', 'string'),
+              'phylum': ('phylum', 'string'),
+              'class': ('class', 'string'),
+              'order': ('order', 'string'),
+              'family': ('family', 'string'),
+              'genus': ('genus', 'string'),
+              'species': ('species', 'string', 'dataname'),
+              'infraspecificepithet': ('isepithet', 'string'), 
+              'taxonrank': ('taxonrank', 'string', ['SUBSPECIES', 'SPECIES']),
+              'scientificname': ('sciname', 'string'),
+              'countrycode': ('cntrycode', 'string'),
+              'locality': ('locality', 'string'),
+              'publishingorgkey': ('puborgkey', 'string'),
+              'decimallatitude': ('dec_lat', 'real', 'latitude'),
+              'decimallongitude': ('dec_long', 'real', 'longitude'),
+              'elevation': ('elevation', 'real'),
+              'elevationaccuracy': ('elev_acc', 'real'),
+              'depth': ('depth', 'real'),
+              'depthaccuracy': ('depth_acc', 'real'),
+              'eventdate': ('eventdate', 'string'),
+              'day': ('day', 'integer'),
+              'month': ('month', 'integer'),
+              'year': ('year', 'integer'),
+              'taxonkey': ('taxonkey', 'integer', 'groupby'),
+              'specieskey': ('specieskey', 'integer'),
+              'basisofrecord': ('basisofrec', 'string'),
+              'institutioncode': ('inst_code', 'string'),
+              'collectioncode': ('coll_code', 'string'),
+              'catalognumber': ('catnum', 'string'),
+              'recordnumber': ('recnum', 'string'),
+              'identifiedby': ('idby', 'string'),
+              'rights': ('rights', 'string'),
+              'rightsholder': ('rightshold', 'string'),
+              'recordedby': ('rec_by', 'string'),
+              'typestatus': ('typestatus', 'string'),
+              'establishmentmeans': ('estabmeans', 'string'),
+              'lastinterpreted': ('lastinterp', 'string'),
+              'mediatype': ('mediatype', 'string'),
+              'issue': ('issue', 'string') }
+
 # .............................................................................
 class GBIFRetrieverRunner(PythonRunner):
    """
@@ -54,6 +98,8 @@ class GBIFRetrieverRunner(PythonRunner):
       # Get the job inputs
       self.maxPoints = int(self.job.maxPoints)
       self.csvInputBlob = self.job.points
+      # TODO: replace this with job data
+      self.metadata = PRAGMA_META
       self.count = int(self.job.count)
       if self.count < 0:
          self.count = len(self.csvInputBlob.split('\n'))
@@ -65,7 +111,8 @@ class GBIFRetrieverRunner(PythonRunner):
    def _doWork(self):
       # Write and optionally subset points
       self.shapefileLocation, self.subsetLocation = parseCSVData(self.log,
-         self.count, self.csvInputBlob, self.outputPath, self.env, self.maxPoints)
+         self.count, self.csvInputBlob, self.metadata, self.outputPath, 
+         self.env, self.maxPoints)
       
    # ...................................
    def _getFiles(self, shapefileName):
