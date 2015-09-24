@@ -57,29 +57,41 @@ def _getSmallestKeyAndPosition(sortedFiles):
    
 # ...............................................
 def checkMergedFile(log, mergefname, metafname):
-   uniqueCount = failCount = 0
+   chunkCount = recCount = failSortCount = failChunkCount = 0
    bigSortedData = OccDataParser(log, mergefname, metafname)
    prevKey = bigSortedData.key
-   tmp = bigSortedData.getThisChunk()
    
+   chunk = bigSortedData.pullCurrentChunk()
    try:
-      while bigSortedData.currLine is not None and not(os.path.exists(killfile)) :
+      while not bigSortedData.eof() and len(chunk) > 0:
          if bigSortedData.key > prevKey: 
-            uniqueCount += 1
+            chunkCount += 1
+            recCount += len(chunk)
          elif bigSortedData.key < prevKey:
-            log.debug('Failure to sort prevKey %d, bigSortedData.key %d' 
-                      % (prevKey, bigSortedData.key))
-            failCount += 1
+            log.debug('Failure to sort prevKey {},  currKey {}'.format( 
+                      prevKey, bigSortedData.key))
+            failSortCount += 1
          else:
-            log.debug('Failure to chunk key %d' % (prevKey))            
+            log.debug('Current chunk key = prev key %d' % (prevKey))
+            failChunkCount += 1
+            
+         prevKey = bigSortedData.key
+         chunk = bigSortedData.pullCurrentChunk()
 
    except Exception, e:
       log.error(str(e))
    finally:
       bigSortedData.close()
-      
-   log.debug('%d uniqueCount; %d failCount; currRecnum %d' 
-             % (uniqueCount, failCount, bigSortedData.currRecnum))
+   
+   msg = """ Test {} file: 
+                 recCount {}
+                 chunkCount {} 
+                 failSortCount {} 
+                 failChunkCount{}  
+                 currRecnum {}""".format(mergefname, recCount, chunkCount, 
+                                         failSortCount, failChunkCount, 
+                                         bigSortedData.currRecnum)
+   log.debug(msg)
 
 # .............................................................................
 def sortRecs(array, idx):
@@ -213,6 +225,9 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
       csvwriter.writerow(sortedFiles[0].header)
       # find file with record containing smallest key
       smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
+#       # Debug 2 badly sorted keys
+#       if smallKey in (5666, 9117):
+#          pass
       while pos is not None:
          # Output records in this file with smallKey 
          _popChunkAndWrite(csvwriter, sortedFiles[pos])
@@ -245,7 +260,8 @@ def usage():
 # .............................................................................
 if __name__ == "__main__":   
    WORKPATH = '/tank/data/input/species/'
-   USER_OCCURRENCE_META = 'gbif_borneo_simple.meta'
+   USER_OCCURRENCE_META = 'seasia_gbif.meta'
+   USER_OCCURRENCE_CSV = 'seasia_gbif.csv'
    USER_OCCURRENCE_CSV = 'gbif_borneo_simple.csv'
    unsortedPrefix = 'chunk'
    sortedPrefix = 'smallsort'
@@ -266,11 +282,11 @@ if __name__ == "__main__":
       # Split into smaller unsorted files
       occparser = OccDataParser(log, datafname, metafname)
       sortvalIdx = occparser.sortIdx
-      
-      splitIntoFiles(occparser, WORKPATH, unsortedPrefix, basename, 200000)
+       
+      splitIntoFiles(occparser, WORKPATH, unsortedPrefix, basename, 500000)
       occparser.close()
       print 'sortvalIdx = ', sortvalIdx
-             
+              
       # Sort smaller files
       sortFiles(sortvalIdx, WORKPATH, unsortedPrefix, sortedPrefix, basename)
 
