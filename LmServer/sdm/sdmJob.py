@@ -435,12 +435,12 @@ class SDMOccurrenceJobData(_JobData):
             import string
             self.delimitedOccurrenceValues = ''.join(
                                     filter(
-                                       lambda x: x in string.printable, tmpStr)
-                                                     )
-#       elif processtype == ProcessType.BISON_TAXA_OCCURRENCE:
-#          pass
-#       else:
-#          raise LMError('Unsupported OccurrenceJob ProcessType %d' % processtype)
+                                       lambda x: x in string.printable, tmpStr))
+      # For Bison we just send URL
+      elif processtype == ProcessType.BISON_TAXA_OCCURRENCE:
+         pass
+      else:
+         raise LMError('Unsupported OccurrenceJob ProcessType %d' % processtype)
       
       obj = {'dlocation': occSet.getRawDLocation(),
              'count': occSet.queryCount}
