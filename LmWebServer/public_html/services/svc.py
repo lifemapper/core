@@ -31,7 +31,7 @@
 @todo: Pull out constants
 """
 import cherrypy
-from inspect import isgenerator
+#from inspect import isgenerator
 from logging import handlers, DEBUG, FileHandler
 import os
 from StringIO import StringIO
@@ -535,7 +535,8 @@ class svc(object):
          for h in fResp.headers.keys():
             cherrypy.response.headers[h] = fResp.headers[h]
          cherrypy.response.status = getHttpStatus(ret, method)
-         if isgenerator(fResp.resp):
+         #if isgenerator(fResp.resp):
+         if isinstance(fResp.resp, cherrypy.lib.file_generator):
             cherrypy.response.stream = True
             return fResp.resp
          if isinstance(fResp.resp, (FileType, StringIO)):
