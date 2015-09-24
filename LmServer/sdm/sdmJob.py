@@ -424,7 +424,9 @@ class SDMOccurrenceJobData(_JobData):
                      for the occurrenceSet to be populated.
       @copydoc LmServer.base.job._Job::__init__()
       """
-      if processtype in [ProcessType.GBIF_TAXA_OCCURRENCE, ProcessType.IDIGBIO_TAXA_OCCURRENCE]:
+      if processtype in [ProcessType.USER_TAXA_OCCURRENCE, 
+                         ProcessType.GBIF_TAXA_OCCURRENCE, 
+                         ProcessType.IDIGBIO_TAXA_OCCURRENCE]:
          # Add the delimited values so they can be sent to cluster
          with open(occSet.getRawDLocation()) as dFile:
             tmpStr = dFile.read()
@@ -433,12 +435,12 @@ class SDMOccurrenceJobData(_JobData):
             import string
             self.delimitedOccurrenceValues = ''.join(
                                     filter(
-                                       lambda x: x in string.printable, tmpStr)
-                                                     )
-#       elif processtype == ProcessType.BISON_TAXA_OCCURRENCE:
-#          pass
-#       else:
-#          raise LMError('Unsupported OccurrenceJob ProcessType %d' % processtype)
+                                       lambda x: x in string.printable, tmpStr))
+      # For Bison we just send URL
+      elif processtype == ProcessType.BISON_TAXA_OCCURRENCE:
+         pass
+      else:
+         raise LMError('Unsupported OccurrenceJob ProcessType %d' % processtype)
       
       obj = {'dlocation': occSet.getRawDLocation(),
              'count': occSet.queryCount}
