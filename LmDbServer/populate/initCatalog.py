@@ -498,9 +498,9 @@ if __name__ == '__main__':
    
    if len(sys.argv) != 2:
       usage()
-   else:
-      action = sys.argv[1].lower()
+      exit(0)
    
+   action = sys.argv[1].lower()
    if action in ('algorithms', 'scenario', 'taxonomy', 'user', 'all'):
       try:
          logger = ScriptLogger('initCatalog')
