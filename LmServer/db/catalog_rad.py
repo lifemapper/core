@@ -2036,8 +2036,8 @@ class RAD(DbPostgresql):
          fnname = 'lm_countGrdJobs'
       elif proctype == ProcessType.RAD_INTERSECT:
          fnname = 'lm_countIntJobs'
-      elif proctype in (ProcessType.RAD_SPLOTCH, ProcessType.RAD_COMPRESS, 
-                        ProcessType.RAD_SWAP, ProcessType.RAD_CALCULATE):
+      elif (ProcessType.isRandom(proctype) or 
+            proctype in (ProcessType.RAD_COMPRESS, ProcessType.RAD_CALCULATE)):
          fnname = 'lm_countMtxJobs'
       elif proctype == ProcessType.SMTP:
          fnname = 'lm_countMsgJobs'
