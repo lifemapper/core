@@ -84,18 +84,18 @@ ADMIN_EMAIL: aimeestewart@ku.edu
 LOCAL_MACHINE_ID: 
 
 ; ...............................................
-[LmCompute - Job Retrievers]
-JOB_RETRIEVER_KEYS: lifemapperJobServer,dir1
+;; [LmCompute - Job Retrievers]
+;; JOB_RETRIEVER_KEYS: lifemapperJobServer,dir1
 
 ; ...............lifemapperJobServer.................
-[LmCompute - Job Retrievers - lifemapperJobServer]
-RETRIEVER_TYPE: server
-JOB_SERVER: http://svc.lifemapper.org/jobs
-PULL_THRESHOLD: 50
-NUM_TO_PULL: 50
+;; [LmCompute - Job Retrievers - lifemapperJobServer]
+;; RETRIEVER_TYPE: server
+;; JOB_SERVER: http://svc.lifemapper.org/jobs
+;; PULL_THRESHOLD: 50
+;; NUM_TO_PULL: 50
 
 ; ...............dir1.................
-[LmCompute - Job Retrievers - dir1]
-RETRIEVER_TYPE: directory
-JOB_DIR: /home/lmwriter/holdJobs/
+;; [LmCompute - Job Retrievers - dir1]
+;; RETRIEVER_TYPE: directory
+;; JOB_DIR: /home/lmwriter/holdJobs/
 
