@@ -10,7 +10,7 @@
 ARCHIVE_USER:  pragma
 
 [LmServer - environment]
-DATASOURCE: USER
+DATASOURCE: PRAGMA
 
 [LmServer - registeredcompute]
 COMPUTE_NAME: 
@@ -57,7 +57,8 @@ DEFAULT_MODEL_SCENARIO: WC-30sec-SEA
 DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-SEA,CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA
 SCENARIO_PACKAGE: 30sec-present-future-SEA
 USER_OCCURRENCE_CSV: sorted_seasia_gbif.csv
-USER_OCCURRENCE_META: sorted_seasia_gbif.meta
+USER_OCCURRENCE_META: seasia_gbif.meta
+POINT_COUNT_MIN: 20
 
 ; ...............................................
 [LmServer - registeredcompute]
