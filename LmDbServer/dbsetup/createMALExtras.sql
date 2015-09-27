@@ -111,25 +111,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- Inserts scenario, returns new scenarioid whether new or existing.
 -- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm3.lm_insertScenario(code varchar, 
-                                             ttl text, 
-                                             authr text,
-                                             dsc text,
-                                             metadataUrlprefix text,
-                                             dloc text,
-                                             startdt double precision,
-                                             enddt double precision,
-                                             unts varchar,
-                                             res double precision,
-                                             epsg int,
-                                             bndsstring varchar, 
-                                             bboxwkt varchar,
-                                             modTime double precision,
-                                             usr varchar);
-
--- ----------------------------------------------------------------------------
--- TODO: Delete this when dlocation is incorporated above
--- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_insertScenario(code varchar, 
                                              ttl text, 
                                              authr text,

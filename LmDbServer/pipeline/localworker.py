@@ -1069,7 +1069,11 @@ class UserChainer(_LMWorker):
 # ...............................................
    @property
    def nextStart(self):
-      return self.occParser.keyFirstRec
+      try:
+         num = self.occParser.keyFirstRec
+      except:
+         num = 0
+      return num
 
 # ...............................................
    def run(self):
