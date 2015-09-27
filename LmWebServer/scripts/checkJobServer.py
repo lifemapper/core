@@ -91,8 +91,11 @@ def _getJob(jobType, user):
          # Fail out
          pass
    #job = deserialize(fromstring(getJobResponse))
-   job = deserialize(fromstring(jobs[0]))
-   jobId = int(job.jobId)
+   if len(jobs) > 0:
+      job = deserialize(fromstring(jobs[0]))
+      jobId = int(job.jobId)
+   else:
+      raise Exception('Failed to retrieve any jobs')
    return jobId
 
 # .............................................................................
