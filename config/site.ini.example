@@ -12,18 +12,6 @@ ARCHIVE_USER:  pragma
 [LmServer - environment]
 DATASOURCE: PRAGMA
 
-[LmServer - registeredcompute]
-COMPUTE_NAME: 
-COMPUTE_IP: 
-COMPUTE_CONTACT_USERID:
-COMPUTE_CONTACT_EMAIL:
-COMPUTE_CONTACT_FIRSTNAME:
-COMPUTE_CONTACT_LASTNAME:
-COMPUTE_INSTITUTION:
-COMPUTE_ADDR1:
-COMPUTE_ADDR2: 
-COMPUTE_ADDR3: 
-
 ; ...............................................
 ; LmBackend-gt
 ; ...............................................
@@ -33,6 +21,10 @@ SMTP_SENDER: lifemapper@ku.edu
 
 ; ...............................................
 [LmServer - pipeline]
+SPECIES_EXP_YEAR: 2015
+SPECIES_EXP_MONTH: 9
+SPECIES_EXP_DAY: 27
+
 ; KU values
 DEFAULT_ALGORITHMS: BIOCLIM,ATT_MAXENT
 DEFAULT_MODEL_SCENARIO:  WC-10min
