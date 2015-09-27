@@ -21,7 +21,7 @@
 ;LMHOME        : /opt/lifemapper/lmserver
 ;MAPSERVER_TMP : /var/www/tmp
 ;LMWEB         : /var/lib/lm2
-;DATADIR       : /share/lmserver/data
+;DATADIR_SERVER       : /share/lmserver/data
 ;TEMPDIR       : /tmp
 ;PYTHONVER     : python2.7
 ;PGSQLVER      : 9.1
@@ -49,7 +49,7 @@ SMTP_SENDER: no-reply-lifemapper@@PUBLIC_FQDN@
 [LmServer - environment]
 DATASOURCE: @DATASOURCE@
 APP_PATH: @LMHOME@
-DATA_PATH: @DATADIR@
+DATA_PATH: @DATADIR_SERVER@
 TEMP_PATH: @TEMPDIR@
 MAPSERVER_ROOT: http://@PUBLIC_FQDN@
 

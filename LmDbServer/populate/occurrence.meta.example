@@ -1,3 +1,4 @@
+# Note: This file must have the same basename as the CSV file it describes
 # Key = field heading; Value = (Shortname, type)
 # Shortname must be 10 characters or fewer
 # Type may be 'integer', 'string', or 'real'
