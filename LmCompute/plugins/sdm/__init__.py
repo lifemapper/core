@@ -39,4 +39,5 @@ jobTypes = [
             (ProcessType.GBIF_TAXA_OCCURRENCE, 'sdm.gbif.gbifRunners', 'GBIFRetrieverRunner'), # GBIF processor job runner
             (ProcessType.BISON_TAXA_OCCURRENCE, 'sdm.bison.bisonRunners', 'BisonRetrieverRunner'), # BISON processor job runner
             (ProcessType.IDIGBIO_TAXA_OCCURRENCE, 'sdm.idigbio.idigbioRunners', 'IDIGBIORetrieverRunner') # iDigBio retriever runner
+            (ProcessType.USER_TAXA_OCCURRENCE, 'sdm.csvocc.csvoccRunners', 'CSVRetrieverRunner') # CSV retriever runner
            ]

@@ -107,6 +107,10 @@ PROCESSES = {
                 "job family" : JobFamily.RAD,
                 "weight" : 10
              },
+             ProcessType.RAD_GRADY : {
+                "job family" : JobFamily.RAD,
+                "weight" : 10
+             },
              ProcessType.RAD_CALCULATE : {
                 "job family" : JobFamily.RAD,
                 "weight" : 10
