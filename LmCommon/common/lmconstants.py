@@ -533,29 +533,41 @@ class ProcessType:
    SMTP = 510
    
    @staticmethod
+   def sdmTypes():
+      return [ProcessType.SMTP, ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
+              ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 
+              ProcessType.GBIF_TAXA_OCCURRENCE, 
+              ProcessType.BISON_TAXA_OCCURRENCE, 
+              ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+              ProcessType.USER_TAXA_OCCURRENCE]
+      
+   @staticmethod
    def isSDM(ptype):
-      if ptype in (ProcessType.SMTP, ProcessType.ATT_MODEL, 
-                   ProcessType.ATT_PROJECT, ProcessType.OM_MODEL, 
-                   ProcessType.OM_PROJECT, ProcessType.GBIF_TAXA_OCCURRENCE, 
-                   ProcessType.BISON_TAXA_OCCURRENCE, 
-                   ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                   ProcessType.USER_TAXA_OCCURRENCE):
+      if ptype in ProcessType.sdmTypes():
          return True
       return False
       
    @staticmethod
+   def radTypes():
+      return [ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
+              ProcessType.RAD_INTERSECT, ProcessType.RAD_COMPRESS, 
+              ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
+              ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY]
+
+   @staticmethod
    def isRAD(ptype):
-      if ptype in (ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
-                   ProcessType.RAD_INTERSECT, ProcessType.RAD_COMPRESS, 
-                   ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                   ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY):
+      if ptype in ProcessType.radTypes():
          return True
       return False
 
    @staticmethod
+   def randomTypes():
+      return [ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
+              ProcessType.RAD_GRADY]
+   
+   @staticmethod
    def isRandom(ptype):
-      if ptype in (ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                   ProcessType.RAD_GRADY):
+      if ptype in ProcessType.randomTypes():
          return True
       return False
    
