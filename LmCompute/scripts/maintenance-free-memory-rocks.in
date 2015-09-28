@@ -3,8 +3,4 @@
 # This script tells the machines to free up cached memory that is not being 
 #    used.  Note that you need to run it as root
 
-# For the front end
-sudo su - -c "echo 3 > /proc/sys/vm/drop_caches"
-
-# For the nodes
-sudo /opt/rocks/bin/rocks run host "sync ; echo 3 > /proc/sys/vm/drop_caches"
+sync && echo 3 > /proc/sys/vm/drop_caches
