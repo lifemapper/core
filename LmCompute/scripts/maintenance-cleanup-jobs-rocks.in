@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Remove jobs from nodes where directories are older than some amount of time
+# Run only on frontend since we work in NFS-shared directories
 
-rocks run host "find @LMDISK@/jobs/* -type d -mtime +7 -exec rm -rf {} \;"
+find @LMDISK@/jobs/* -type d -mtime +7 -exec rm -rf {} \;
  
