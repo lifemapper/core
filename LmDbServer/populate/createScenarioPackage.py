@@ -70,7 +70,7 @@ if __name__ == "__main__":
       elif args.fileTypes == 't': # Only GeoTiffs
          addAsciis = False
       
-   layers = []
+   layers = set()
    scribe = Scribe(ConsoleLogger())
    scribe.openConnections()
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
             if addTiffs:
                tiffLyrFn = lyr.getDLocation()
                tiffSeededFn = os.path.relpath(tiffLyrFn, LYR_BASE_PATH)
-               layers.append(["%s/GTiff" % lyr.metadataUrl, tiffSeededFn])
+               layers.add(["%s/GTiff" % lyr.metadataUrl, tiffSeededFn])
                myZip.write(tiffLyrFn, tiffSeededFn)
             
             if addAsciis:
@@ -100,7 +100,7 @@ if __name__ == "__main__":
                asciiBase = os.path.splitext(tmp)[0]
                ascSeededFn = '%s.asc' % asciiBase
                ascLyrFn = NamedTemporaryFile(suffix='.asc', delete=False).name
-               layers.append(["%s/AAIGrid" % lyr.metadataUrl, ascSeededFn])
+               layers.add(["%s/AAIGrid" % lyr.metadataUrl, ascSeededFn])
                lyr.copyData(tiffLyrFn, targetDataLocation=ascLyrFn, format='AAIGrid')
                myZip.write(ascLyrFn, ascSeededFn)
                # Remove temporary files
