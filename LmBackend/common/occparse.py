@@ -31,9 +31,8 @@ import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
 from LmCommon.common.localconstants import ENCODING
-from LmServer.base.lmobj import LMObject, LMError
 # .............................................................................
-class OccDataParser(LMObject):
+class OccDataParser(object):
    """
    @summary: Object with metadata and open file.  OccDataParser maintains 
              file position and most recently read data chunk
@@ -95,7 +94,7 @@ class OccDataParser(LMObject):
             csvData.seek(0)
             self._csvreader = csv.reader(csvData, delimiter=self.delimiter)
          except Exception, e:
-            raise LMError('Failed to read raw or file data {}'.format(data))
+            raise Exception('Failed to read raw or file data {}'.format(data))
       # Assume header in first row of data
       self.header = self._csvreader.next()
       # Read metadata file and close
@@ -177,13 +176,13 @@ class OccDataParser(LMObject):
             metaStr = f.read()
             fldmeta = ast.literal_eval(metaStr)
          except Exception, e:
-            raise LMError('Failed to evaluate contents of metadata file %s' 
+            raise Exception('Failed to evaluate contents of metadata file %s' 
                           % self.metadataFname)
          finally:
             f.close()
             
       if type(fldmeta) not in (DictionaryType, DictType):
-         raise LMError('Failed to read or open {}'.format(metadata))
+         raise Exception('Failed to read or open {}'.format(metadata))
       return fldmeta
          
    # .............................................................................
@@ -218,15 +217,15 @@ class OccDataParser(LMObject):
       self.fieldCount = len(self.fieldNames)
       
       if self._idIdx == None:
-         raise LMError('Missing \'id\' unique identifier field')
+         raise Exception('Missing \'id\' unique identifier field')
       if self._xIdx == None:
-         raise LMError('Missing \'longitude\' georeference field')
+         raise Exception('Missing \'longitude\' georeference field')
       if self._yIdx == None:
-         raise LMError('Missing \'latitude\' georeference field')
+         raise Exception('Missing \'latitude\' georeference field')
       if self._sortIdx == None:
-         raise LMError('Missing \'groupby\' sorting field')
+         raise Exception('Missing \'groupby\' sorting field')
       if self._nameIdx == None:
-         raise LMError('Missing \'dataname\' dataset name field')
+         raise Exception('Missing \'dataname\' dataset name field')
 
 
    # .............................................................................
