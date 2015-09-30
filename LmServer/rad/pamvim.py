@@ -116,7 +116,8 @@ class PamSum(ServiceObject, ProcessObject):
                              metadataUrl=metadataUrl, 
                              parentMetadataUrl=parentMetadataUrl)
       ProcessObject.__init__(self, objId=pamSumId, parentId=bucketId, 
-                status=status, statusModTime=statusModTime) 
+                status=status, statusModTime=statusModTime, stage=stage, 
+                stageModTime=stageModTime) 
       self._pam = presenceAbsenceMatrix
       self._sum = summary
       self._pamFname = None

@@ -114,8 +114,11 @@ class CsvFormatter(Formatter):
          from LmServer.db.peruser import Peruser
          peruser = Peruser(LmPublicLogger())
          peruser.openConnections()
+         
+         bucketId = self.obj.parentId
+         
          exp = peruser.getRADExperimentWithOneBucket(self.obj.user, 
-                        self.obj._bucketId, fillIndices=True, fillLayers=False, 
+                        bucketId, fillIndices=True, fillLayers=False, 
                         fillRandoms=False)
          bucket = exp.bucketList[0]
          

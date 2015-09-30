@@ -87,7 +87,7 @@ class ShapefileFormatter(Formatter):
          from LmServer.db.peruser import Peruser
          peruser = Peruser(LmPublicLogger())
          peruser.openConnections()
-         bucket = peruser.getRADBucket(self.obj.user, bucketId=self.obj._bucketId)
+         bucket = peruser.getRADBucket(self.obj.user, bucketId=self.obj.parentId)
          peruser.closeConnections()
          fn = "/tmp/%s" % uuid.uuid4()
          success = self.obj.createLayerShapefileFromSum(bucket, "%s.shp" % fn)
