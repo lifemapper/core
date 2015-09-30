@@ -216,7 +216,7 @@ class AncillaryRaster(_AncillaryValue, Raster, ProcessObject):
                svcObjId=ancLyrId, lyrId=lyrId, lyrUserId=lyrUserId, 
                createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                serviceType=LMServiceType.ANCILLARY_LAYERS, 
-               serviceModule=LMServiceModule.RAD)
+               moduleType=LMServiceModule.RAD)
       ProcessObject.__init__(self, objId=ancLyrId, parentId=bucketId, 
                status=status, statusModTime=statusModTime)
          
