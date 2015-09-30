@@ -124,6 +124,15 @@ class ServiceObject(LMObject):
       self._parentMetadataUrl = url
       
 # ...............................................   
+   def resetMetadataUrl(self):
+      """
+      @summary Gets the REST service URL for this object
+      @return URL string representing a webservice request for metadata of this object
+      """        
+      self._metadataUrl = self.constructMetadataUrl()
+      return murl
+   
+# ...............................................   
    def constructMetadataUrl(self):
       """
       @summary Gets the REST service URL for this object
