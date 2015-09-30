@@ -146,10 +146,10 @@ class PresenceAbsenceVector(_PresenceAbsence, Vector, ProcessObject):
                         considered present.
       @param userId: Id for the owner of the AncillaryValues defined for this 
                     layer data
-      @param ancId: The ancillaryId for the database.  Used to get the 
-                    AncillaryValues for intersecting with ShapeGrid.
+      @param paId: The presenceAbsenceId for the database.  Used to get the 
+                    PresenceAbsenceValues for intersecting with ShapeGrid.
       @param lyrId: The LayerId for the database (used to get the ServiceObject)
-      @param lyrUserId: Id for the owner of the Layer with AncillaryValues 
+      @param lyrUserId: Id for the owner of the Layer with PresenceAbsenceValues 
                     defined on it.
       @param paLyrId: Unique (join) ID for the presenceAbsenceLayer in the experiment
       """

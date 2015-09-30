@@ -1209,9 +1209,9 @@ class RAD(DbPostgresql):
       if indicesOnly:
          layers = {}
          for r in rows:
-            matrixidx = r[idxs['matrixidx']]
-            metaurl = r[idxs['metadataurl']]
-            paramid =  r[idxs[paramfieldname]]
+            matrixidx = self._getColumnValue(r,idxs,['matrixidx'])
+            metaurl = self._getColumnValue(r,idxs,['lyrmetadataurl', 'metadataurl'])
+            paramid =  self._getColumnValue(r,idxs,[paramfieldname])
             layers[matrixidx] = (metaurl, paramid)
             
       elif isPresenceAbsence:
@@ -1318,7 +1318,9 @@ class RAD(DbPostgresql):
                                       palyr.maxAbsence,
                                       palyr.percentAbsence,
                                       palyr.metadataUrl)
-      if not(row[idxs['layerid']] != -1 or row[idxs['presenceabsenceid']] != -1):
+      if not(row[idxs['layerid']] == -1 
+             or row[idxs['presenceabsenceid']] == -1
+             or row[idxs['experimentpalayerid']] == -1):
          updatedlyr = self._createPALayer(row, idxs)
       else:
          raise LMError(currargs='Error on adding Layer object (Command: %s)' % 
