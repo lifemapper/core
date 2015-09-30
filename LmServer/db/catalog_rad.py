@@ -773,6 +773,7 @@ class RAD(DbPostgresql):
                                           lyr.metadataUrl)
       if lyrid != -1:
          lyr.setLayerId(lyrid)
+         lyr.setId(lyrid)
          updatedLyr = lyr
       else:
          raise LMError(currargs='Error on adding Layer object (Command: %s)' % 
