@@ -1434,15 +1434,6 @@ class RAD(DbPostgresql):
          hbtime = self._getColumnValue(row,idxs,['lastheartbeat'])
          retries = self._getColumnValue(row,idxs,['retrycount'])
          
-         
-      
-         bkt = RADBucket(shpgrid, epsgcode=exp.epsgcode, 
-                         stage=bktstage, status=bktstat,  
-                         userId=exp.getUserId(), expId=exp.getId(), pamFname=pamFname,
-                         bucketId=bktid, metadataUrl=bkturl, 
-                         parentMetadataUrl=exp.metadataUrl)         
-         exp.addBucket(bkt)
-         
          if processtype == ProcessType.SMTP:
             job = NotifyJob(obj=bkt, objType=ReferenceType.Bucket,
                             parentUrl=exp.metadataUrl, 
@@ -1602,7 +1593,9 @@ class RAD(DbPostgresql):
       lyr = None
       if row is not None:
          mloc = self._getColumnValue(row, idxs, ['metalocation'])
-         name = self._getColumnValue(row, idxs, ['exppalayername', 'expanclayername', 'layername'])
+         #TODO: implement layernames from join table in objects, inserts, then change order here
+         #name = self._getColumnValue(row, idxs, ['exppalayername', 'expanclayername', 'layername'])
+         name = self._getColumnValue(row, idxs, ['layername', 'exppalayername', 'expanclayername'])
          title = self._getColumnValue(row, idxs, ['title'])
          bbox = self._getColumnValue(row, idxs, ['bbox'])
          sDate = self._getColumnValue(row, idxs, ['startdate'])
@@ -1678,7 +1671,7 @@ class RAD(DbPostgresql):
                    stageModTime=self._getColumnValue(row,idxs,['bktstagemodtime']), 
                    status=self._getColumnValue(row,idxs,['bktstatus']),
                    statusModTime=self._getColumnValue(row,idxs,['bktstatusmodtime']),
-                   userId=self._getColumnValue(row,idxs,['expuserid']),
+                   userId=self._getColumnValue(row,idxs,['expuserid', 'userid']),
                    expId=self._getColumnValue(row,idxs,['experimentid']),
                    bucketId=self._getColumnValue(row,idxs,['bucketid']),
                    metadataUrl=self._getColumnValue(row,idxs,['bktmetadataurl']),
