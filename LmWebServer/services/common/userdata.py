@@ -737,7 +737,7 @@ class DataPoster(object):
          dataFormat = getUrlParameter("dataFormat", parameters)
          valueAttribute = getUrlParameter("valueAttribute", parameters)
          
-         if body is not None:
+         if body is not None and len(body.strip()) > 1:
             layerContent = body
       
       if layerContent is None:
