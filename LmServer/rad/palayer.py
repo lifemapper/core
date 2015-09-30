@@ -170,7 +170,7 @@ class PresenceAbsenceVector(_PresenceAbsence, Vector, ProcessObject):
                       svcObjId=paLyrId, lyrId=lyrId, lyrUserId=lyrUserId,
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=LMServiceType.PRESENCEABSENCE_LAYERS, 
-                      serviceModule=LMServiceModule.RAD)
+                      moduleType=LMServiceModule.RAD)
       ProcessObject.__init__(self, objId=paLyrId, parentId=bucketId, 
                 status=status, statusModTime=statusModTime)
       
@@ -332,7 +332,7 @@ class PresenceAbsenceRaster(_PresenceAbsence, Raster, ProcessObject):
                       svcObjId=paLyrId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=LMServiceType.PRESENCEABSENCE_LAYERS, 
-                      serviceModule=LMServiceModule.RAD)
+                      moduleType=LMServiceModule.RAD)
       ProcessObject.__init__(self, objId=paLyrId, parentId=bucketId, 
                 status=status, statusModTime=statusModTime)
 
