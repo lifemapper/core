@@ -98,7 +98,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          ogrFormat=ogrFormat, fidAttribute=siteId, 
          svcObjId=shapegridId, lyrId=layerId, lyrUserId=userId, 
          createTime=createTime, modTime=modTime, metadataUrl=metadataUrl, 
-         serviceType=LMServiceType.SHAPEGRIDS, moduleType=LMServiceModule.RAD)
+         serviceType=LMServiceType.LAYERS, moduleType=LMServiceModule.RAD)
       ProcessObject.__init__(self, objId=shapegridId, parentId=bucketId, 
                 status=status, statusModTime=statusModTime)
       # Don't necessarily need centroids (requires reading shapegrid), can 
