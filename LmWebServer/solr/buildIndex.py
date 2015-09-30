@@ -152,7 +152,7 @@ if __name__ == "__main__":
    prjs = peruser.listProjections(startRecord, maxReturned, 
                               beforeTime=beforeTime, status=JobStatus.COMPLETE, 
                               atom=False)
-   while len(prjs) == 0:
+   while len(prjs) > 0:
       # Make documents and post
       for prj in prjs:
          doc = makeProjectionDoc(prj)
