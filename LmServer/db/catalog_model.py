@@ -1310,7 +1310,8 @@ class MAL(DbPostgresql):
       
       # TODO: this assumes all layers are owned by the same user.  True?
       mapSvc = MapLayerSet(occ.mapName, title='OccurrenceLayer %d Data' % occsetid, 
-                           layers=allLyrs, userId=userid, dbId=occsetid)
+                           layers=allLyrs, userId=userid, dbId=occsetid, 
+                           moduleType=LMServiceModule.SDM)
       mapSvc.setLocalMapFilename(mapfname=occ.mapFilename)
       mapSvc.setMapPrefix(mapprefix=occ.mapPrefix)
       return mapSvc
