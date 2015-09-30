@@ -710,7 +710,7 @@ class RADBucket(ServiceObject, ProcessObject):
       """
       mapfname = None
       if self.getId() is not None:
-         mapfname = self._earlJr.createFilename(LMFileType,
+         mapfname = self._earlJr.createFilename(LMFileType.OTHER_MAP,
                         radexpId=self.parentId, bucketId=self.getId(), 
                         pth=self._bucketPath, usr=self._userId, 
                         epsg=self._epsg)
