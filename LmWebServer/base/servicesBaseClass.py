@@ -434,7 +434,7 @@ class WebObject(WebServiceBaseClass):
 #      if (len(self.vpath) == 0 and self.parameters.has_key("request")) \
 #            or (len(self.vpath) > 0 and self.vpath[0] in OGC_INTERFACES):
 #         return self.ogc()
-      if self.method.lower() == 'get':
+      if self.method.lower() in ('get', 'post'):
          if len(self.vpath) == 0 or self.vpath[0] in self.interfaces:
             return self.get()
          else:
