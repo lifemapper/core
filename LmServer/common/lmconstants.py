@@ -390,8 +390,8 @@ class JobFamily:
 class LMServiceType:
    BUCKETS = 'buckets'
    EXPERIMENTS = 'experiments'
-   RAD_EXPERIMENTS = 'radexperiments'
-   SDM_EXPERIMENTS = 'sdmexperiments'
+   RAD_EXPERIMENTS = 'experiments'
+   SDM_EXPERIMENTS = 'experiments'
    LAYERTYPES = 'typecodes'
    MODELS = 'models'
    OCCURRENCES = 'occurrences'
