@@ -262,7 +262,7 @@ class AddBucketProcess(WPSService):
                                         epsgCode, bounds, userId=self.user,
                                         size=numCells)
                   neworexistingSG = scribe.insertShapeGrid(shapegrid, cutout=cutout)
-                  #neworexistingSG.buildShape(cutout=cutout)
+                  neworexistingSG.buildShape(cutout=cutout)
                   bucket = RADBucket(neworexistingSG, keywords=kws, 
                                      status=JobStatus.GENERAL, 
                                      stage=JobStage.GENERAL, userId=self.user,

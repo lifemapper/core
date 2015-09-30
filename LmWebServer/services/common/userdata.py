@@ -737,7 +737,7 @@ class DataPoster(object):
          dataFormat = getUrlParameter("dataFormat", parameters)
          valueAttribute = getUrlParameter("valueAttribute", parameters)
          
-         if body is not None:
+         if body is not None and len(body.strip()) > 1:
             layerContent = body
       
       if layerContent is None:
@@ -955,8 +955,9 @@ class DataPoster(object):
       
       shapegrid = ShapeGrid(name, cellSides, cellSize, mapUnits, epsgCode, 
                            bounds, userId=self.userId)
-#       neworexistingSG = self.scribe.insertShapeGrid(shapegrid, cutout=cutout)
-      sgJob = self.scribe.initRADBuildGrid(self.userId, shapegrid)
+      neworexistingSG = self.scribe.insertShapeGrid(shapegrid, cutout=cutout)
+      #TODO: Enable job
+      #sgJob = self.scribe.initRADBuildGrid(self.userId, shapegrid)
       return neworexistingSG
 
    # ............................................
