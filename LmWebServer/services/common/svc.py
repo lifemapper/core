@@ -31,14 +31,12 @@
 @todo: Pull out constants
 """
 import cherrypy
-#from inspect import isgenerator
-from logging import handlers, DEBUG, FileHandler
+from logging import handlers, DEBUG
 import os
 from StringIO import StringIO
 from types import FileType
 
-from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, \
-                                        ProcessType
+from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus
 from LmCommon.common.localconstants import ARCHIVE_USER, ENCODING, WEBSERVICES_ROOT
 
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
@@ -76,13 +74,7 @@ from LmWebServer.solr.lmSolr import searchArchive
 baseDir = os.path.join(APP_PATH, WEB_PATH)
    
 conf = {
-          '/Florida':
-          {
-             'tools.staticfile.on': True,
-             'tools.staticfile.filename': os.path.join(baseDir, 'dl/Florida.tar.gz')
-
-          },
-          '/css': 
+          '/css':
           {
              'tools.staticdir.on': True,
              'tools.staticdir.dir': os.path.join(baseDir, CSS_PATH),
@@ -143,39 +135,6 @@ conf = {
 SESSION_KEY = '_cp_username'
 REFERER_KEY = 'lm_referer'
 SESSION_DIR = os.path.join(LM_LIB_PATH, SESSION_PATH)
-
-JOB_TYPE_TRANS = {
-                  1: ProcessType.OM_MODEL,
-                  ProcessType.OM_MODEL : ProcessType.OM_MODEL,
-                  2: ProcessType.OM_PROJECT,
-                  ProcessType.OM_PROJECT : ProcessType.OM_PROJECT,
-                  3: ProcessType.ATT_MODEL,
-                  ProcessType.ATT_MODEL : ProcessType.ATT_MODEL,
-                  4: ProcessType.ATT_PROJECT,
-                  ProcessType.ATT_PROJECT : ProcessType.ATT_PROJECT,
-                  310: ProcessType.RAD_INTERSECT,
-                  ProcessType.GBIF_TAXA_OCCURRENCE : ProcessType.GBIF_TAXA_OCCURRENCE,
-                  ProcessType.BISON_TAXA_OCCURRENCE : ProcessType.BISON_TAXA_OCCURRENCE,
-                  ProcessType.IDIGBIO_TAXA_OCCURRENCE : ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                  ProcessType.USER_TAXA_OCCURRENCE : ProcessType.USER_TAXA_OCCURRENCE,
-                  ProcessType.RAD_BUILDGRID: ProcessType.RAD_BUILDGRID,
-                  ProcessType.RAD_INTERSECT: ProcessType.RAD_INTERSECT,
-                  ProcessType.RAD_COMPRESS: ProcessType.RAD_COMPRESS,
-                  ProcessType.RAD_CALCULATE: ProcessType.RAD_CALCULATE,
-                  ProcessType.RAD_SPLOTCH: ProcessType.RAD_SPLOTCH,
-                  ProcessType.RAD_SWAP: ProcessType.RAD_SWAP,
-                  ProcessType.RAD_GRADY: ProcessType.RAD_GRADY
-                 }
-
-# .............................................................................
-def jobTypeTranslate(oldJt):
-   """
-   @summary: Temporary function to ease transition from job type to process type
-   """
-   try:
-      return JOB_TYPE_TRANS[oldJt]
-   except:
-      return None
 
 # .............................................................................
 class svc(object):
@@ -268,7 +227,6 @@ class svc(object):
          try:
             if request == 'existjobs':
                jobTypes = [int(jt.strip()) for jt in parameters['jobtypes'].split(',')]
-               jobTypes = map(jobTypeTranslate, jobTypes)
                # Remove Nones
                jobTypes = [i for i in jobTypes if i is not None]
                try:
@@ -285,7 +243,6 @@ class svc(object):
                ret = str(jm.areJobsAvailable(jobTypes, userIds=users, threshold=threshold))
             elif request == 'getjob':
                jobTypes = [int(jt.strip()) for jt in parameters['jobtypes'].split(',')]
-               jobTypes = map(jobTypeTranslate, jobTypes)
                # Remove Nones
                jobTypes = [i for i in jobTypes if i is not None]
                try:
@@ -305,7 +262,7 @@ class svc(object):
                ret = jm.requestJobs(ipAddress, processTypes=jobTypes, 
                                     count=numToPull, userIds=users)
             elif request == 'postjob':
-               jobType = jobTypeTranslate(int(parameters['jobtype']))
+               jobType = int(parameters['jobtype'])
                jobId = int(parameters['jobid'])
                component = parameters['component'].lower()
                bodyRaw = cherrypy.request.body
@@ -322,12 +279,12 @@ class svc(object):
                   contentType = None
                ret = str(jm.postJob(jobType, jobId, content, component, contentType=contentType))
             elif request == 'requestpost':
-               jobType = jobTypeTranslate(int(parameters['jobtype']))
+               jobType = int(parameters['jobtype'])
                jobId = int(parameters['jobid'])
                component = parameters['component']
                ret = jm.requestPost(jobType, jobId, component)
             elif request == 'updatejob':
-               jobType = jobTypeTranslate(int(parameters['jobtype']))
+               jobType = int(parameters['jobtype'])
                jobId = int(parameters['jobid'])
                status = int(parameters['status']) if parameters.has_key('status') else None
                progress = int(parameters['progress']) if parameters.has_key('progress') else None
@@ -863,57 +820,6 @@ def customLogs(app):
    log.access_log.addHandler(h)
    
 
-# =============================================================================
-# =                            Cherrypy Functions                             =
-# =============================================================================
-# def start():
-#    """
-#    @summary: Starts up cherrypy
-#    """
-#    cherrypy.config.update(
-#      {
-#         'response.timeout': 1000000,
-#         'tools.encode.encoding': ENCODING,
-#         'tools.encode.on': True,
-#         'tools.etags.autotags': True,
-#         'tools.sessions.on': True,
-#         'tools.sessions.storage_type': "file",
-#         'tools.sessions.storage_path': SESSION_DIR,
-#         'tools.sessions.timeout': 20160,
-#         'tools.sessions.locking': 'implicit',
-#         'environment': 'production'
-#      })
-#    
-#    app = cherrypy.tree.mount(svc(), '/', config=conf)
-#    # Set up the custom loggers
-#    customLogs(app)
-#    cherrypy.engine.start()
-# 
-# # ..............................................................................
-# def serverless():
-#    """
-#    @summary: Starts up a serverless version of cherrypy
-#    
-#    You can also use this mode interactively:
-#       >>> import svc
-#       >>> svc.serverless()
-#    """
-#    cherrypy.server.unsubscribe()
-#    start()
-#    
-# # ..............................................................................
-# def serve():
-#    """
-#    Starts up cherrypy in stand-alone mode
-#    """
-#    cherrypy.config.update({'log.screen': True})
-#    start()
-# 
-# # ==============================================================================
-# # =                                    Main                                    =
-# # ==============================================================================
-# if __name__ == '__main__':
-#    serve()
 
 # .............................................................................
 def CORS():
