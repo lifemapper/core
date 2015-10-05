@@ -714,13 +714,6 @@ KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 KML_NS_PREFIX = None
 
 # Service path constants (some of these are still in LmServer.common.lmconstants
-CSS_PATH = 'css'
-IMAGES_PATH = 'images'
-JAVASCRIPT_PATH = 'javascript'
-DL_PATH = 'dl' # Temporary files for Dianna are stored here
-HELP_PATH = 'help'
-SAMPLES_PATH = 'samples'
-SCHEMAS_PATH = 'schemas'
 STATIC_PATH = 'static'
 LUCENE_PATH = 'lucene'
 
@@ -730,3 +723,4 @@ LUCENE_PATH = 'lucene'
 SCALE_PROJECTION_MINIMUM = 0
 SCALE_PROJECTION_MAXIMUM = 100
 SCALE_DATA_TYPE = "int"
+
