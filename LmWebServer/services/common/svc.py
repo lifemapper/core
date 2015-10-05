@@ -367,11 +367,9 @@ class svc(object):
             return errorResponse(log, HTTPStatus.INTERNAL_SERVER_ERROR, err=err)
       elif checkUserLogin(username, pword):
          #log.debug("User: %s" % str(username))
-         #cherrypy.session.acquire_lock()
          cherrypy.session.regenerate()
          cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
          cookie = cherrypy.response.cookie
-         #cherrypy.session.release_lock()
          cookie[REFERER_KEY] = refererPage
          cookie[REFERER_KEY]['expires'] = 0
          raise cherrypy.HTTPRedirect(refererPage or "/")
@@ -568,9 +566,7 @@ class svc(object):
                   
                scribe.closeConnections()
                
-               #cherrypy.session.acquire_lock()
                cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
-               #cherrypy.session.release_lock()
                
                welcomeMsg = """
                   <span class="signupWelcome">
@@ -691,9 +687,7 @@ def getUserName():
    
    try:
       if os.path.isfile(os.path.join(SESSION_DIR, 'session-%s' % cherrypy.session.id)):
-         #cherrypy.session.acquire_lock()
          temp = cherrypy.session.get(SESSION_KEY)
-         #cherrypy.session.release_lock()
    except Exception, e:
       log.debug(' '.join(("Exception in getUserName:", str(e))))
    
