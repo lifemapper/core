@@ -86,7 +86,7 @@ PRAGMA_META = {'gbifid': ('gbifid', 'integer', 'id'),
               'issue': ('issue', 'string') }
 
 # .............................................................................
-class GBIFRetrieverRunner(PythonRunner):
+class CSVRetrieverRunner(PythonRunner):
    """
    @summary: Process runner to retrieve occurrence data from GBIF from a 
                 download key

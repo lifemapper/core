@@ -32,12 +32,15 @@ from LmCommon.common.lmconstants import ProcessType
 __version__ = "3.0.0"
 
 jobTypes = [
-            (ProcessType.ATT_MODEL, 'sdm.maxent.meRunners', 'MEModelRunner'), # MaxEnt model job runner
-            (ProcessType.ATT_PROJECT, 'sdm.maxent.meRunners', 'MEProjectionRunner'), # MaxEnt projection job runner
-            (ProcessType.OM_MODEL, 'sdm.openModeller.omRunners', 'OMModelRunner'), # openModeller model job runner
-            (ProcessType.OM_PROJECT, 'sdm.openModeller.omRunners', 'OMProjectionRunner'), # openModeller projection job runner
-            (ProcessType.GBIF_TAXA_OCCURRENCE, 'sdm.gbif.gbifRunners', 'GBIFRetrieverRunner'), # GBIF processor job runner
-            (ProcessType.BISON_TAXA_OCCURRENCE, 'sdm.bison.bisonRunners', 'BisonRetrieverRunner'), # BISON processor job runner
-            (ProcessType.IDIGBIO_TAXA_OCCURRENCE, 'sdm.idigbio.idigbioRunners', 'IDIGBIORetrieverRunner') # iDigBio retriever runner
-            (ProcessType.USER_TAXA_OCCURRENCE, 'sdm.csvocc.csvoccRunners', 'CSVRetrieverRunner') # CSV retriever runner
-           ]
+   (ProcessType.ATT_MODEL, 'sdm.maxent.meRunners', 'MEModelRunner'), 
+   (ProcessType.ATT_PROJECT, 'sdm.maxent.meRunners', 'MEProjectionRunner'),
+   (ProcessType.OM_MODEL, 'sdm.openModeller.omRunners', 'OMModelRunner'), 
+   (ProcessType.OM_PROJECT, 'sdm.openModeller.omRunners', 'OMProjectionRunner'),
+   (ProcessType.GBIF_TAXA_OCCURRENCE, 'sdm.gbif.gbifRunners', 
+    'GBIFRetrieverRunner'),
+   (ProcessType.BISON_TAXA_OCCURRENCE, 'sdm.bison.bisonRunners', 
+    'BisonRetrieverRunner'),
+   (ProcessType.IDIGBIO_TAXA_OCCURRENCE, 'sdm.idigbio.idigbioRunners', 
+    'IDIGBIORetrieverRunner'),
+   (ProcessType.USER_TAXA_OCCURRENCE, 'sdm.csvocc.csvoccRunners', 
+    'CSVRetrieverRunner') ]
