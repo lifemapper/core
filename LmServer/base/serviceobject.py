@@ -130,7 +130,9 @@ class ServiceObject(LMObject):
       @return URL string representing a webservice request for metadata of this object
       """        
       self._metadataUrl = self.constructMetadataUrl()
-      return murl
+      #TODO: Aimee - This was returning 'murl' which does not exist here.  
+      #         Do you want this to return the metadata url or just set it?
+      return self._metadataUrl
    
 # ...............................................   
    def constructMetadataUrl(self):
