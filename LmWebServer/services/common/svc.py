@@ -27,155 +27,47 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-          
-@todo: Pull out constants
 """
 import cherrypy
-#from inspect import isgenerator
-from logging import handlers, DEBUG, FileHandler
+from logging import handlers, DEBUG
 import os
 from StringIO import StringIO
 from types import FileType
 
-from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, \
-                                        ProcessType
-from LmCommon.common.localconstants import ARCHIVE_USER, ENCODING, WEBSERVICES_ROOT
-
+from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus
+from LmCommon.common.localconstants import (ARCHIVE_USER, ENCODING, 
+                                            WEBSERVICES_ROOT)
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
-
 from LmServer.common.lmconstants import DbUser, LOG_PATH, SESSION_PATH, WEB_PATH
 from LmServer.common.localconstants import APP_PATH 
-
 from LmServer.common.lmuser import LMUser
-from LmServer.common.log import LmPublicLogger, MapLogger, JobMuleLogger, UserLogger
+from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
+                                 UserLogger)
 from LmServer.db.scribe import Scribe
 from LmServer.base.utilities import escapeString, getFileContents, \
                                             getUrlParameter
 
-from LmWebServer.common.lmconstants import DEFAULT_INTERFACE, HTTP_ERRORS, \
-                                           CSS_PATH, IMAGES_PATH, JAVASCRIPT_PATH, DL_PATH, SCHEMAS_PATH, STATIC_PATH, SAMPLES_PATH
-from LmWebServer.common.localconstants import LM_LIB_PATH
-
+from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, 
+                                            HTTP_ERRORS,  
+                                            STATIC_PATH)
+from LmWebServer.common.localconstants import CP_CONFIG_FILE, LM_LIB_PATH
 from LmWebServer.formatters.formatterFactory import FormatterFactory
 from LmWebServer.lucene.lmLucene import LmLuceneClient
-#from LmWebServer.services.changeThinking.changeThinking import ChangeThinkingPage
 from LmWebServer.services.common.authentication import checkUserLogin
 from LmWebServer.services.common.group import LMServiceGroup
 from LmWebServer.services.common.jobMule import JobMule
-
-try:
-   from LmWebServer.services.ogc.sdmMapper import MapConstructor
-except:
-   pass
-
+from LmWebServer.services.ogc.sdmMapper import MapConstructor
 from LmWebServer.solr.lmSolr import searchArchive
           
-baseDir = os.path.join(APP_PATH, WEB_PATH)
-   
-conf = {
-          '/Florida':
-          {
-             'tools.staticfile.on': True,
-             'tools.staticfile.filename': os.path.join(baseDir, 'dl/Florida.tar.gz')
-
-          },
-          '/css': 
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, CSS_PATH),
-          },
-          '/favicon.ico':
-          {
-             'tools.staticfile.on': True,
-             'tools.staticfile.filename': os.path.join(baseDir, STATIC_PATH, "favicon.ico"),
-          },
-          '/robots.txt':
-          {
-             'tools.staticfile.on': True,
-             'tools.staticfile.filename': os.path.join(baseDir, STATIC_PATH, "robots.txt"),
-          },
-          '/help':
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, "help"),
-          },
-          '/images':
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, IMAGES_PATH),
-          },
-          '/javascript':
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, JAVASCRIPT_PATH),
-          },
-          '/dl':
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, DL_PATH),
-             'tools.staticdir.content_types': {'gz': "application/x-gzip"},
-          },
-          '/samples':
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, SAMPLES_PATH),
-          },
-          '/schemas':
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, SCHEMAS_PATH),
-             'tools.staticdir.content_types': {
-                                                 "xsd": "application/xml",
-                                                 #"wadl": "application/vnd.sun.wadl+xml"
-                                                 "wadl": "application/xml"
-                                              }
-          },
-          '/clients':
-          {
-             'tools.staticdir.on': True,
-             'tools.staticdir.dir': os.path.join(baseDir, "clients"),
-          },
-       }
-
+# .............................................................................
+# Constants for CherryPy application
 SESSION_KEY = '_cp_username'
 REFERER_KEY = 'lm_referer'
 SESSION_DIR = os.path.join(LM_LIB_PATH, SESSION_PATH)
-
-JOB_TYPE_TRANS = {
-                  1: ProcessType.OM_MODEL,
-                  ProcessType.OM_MODEL : ProcessType.OM_MODEL,
-                  2: ProcessType.OM_PROJECT,
-                  ProcessType.OM_PROJECT : ProcessType.OM_PROJECT,
-                  3: ProcessType.ATT_MODEL,
-                  ProcessType.ATT_MODEL : ProcessType.ATT_MODEL,
-                  4: ProcessType.ATT_PROJECT,
-                  ProcessType.ATT_PROJECT : ProcessType.ATT_PROJECT,
-                  310: ProcessType.RAD_INTERSECT,
-                  ProcessType.GBIF_TAXA_OCCURRENCE : ProcessType.GBIF_TAXA_OCCURRENCE,
-                  ProcessType.BISON_TAXA_OCCURRENCE : ProcessType.BISON_TAXA_OCCURRENCE,
-                  ProcessType.IDIGBIO_TAXA_OCCURRENCE : ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                  ProcessType.USER_TAXA_OCCURRENCE : ProcessType.USER_TAXA_OCCURRENCE,
-                  ProcessType.RAD_BUILDGRID: ProcessType.RAD_BUILDGRID,
-                  ProcessType.RAD_INTERSECT: ProcessType.RAD_INTERSECT,
-                  ProcessType.RAD_COMPRESS: ProcessType.RAD_COMPRESS,
-                  ProcessType.RAD_CALCULATE: ProcessType.RAD_CALCULATE,
-                  ProcessType.RAD_SPLOTCH: ProcessType.RAD_SPLOTCH,
-                  ProcessType.RAD_SWAP: ProcessType.RAD_SWAP,
-                  ProcessType.RAD_GRADY: ProcessType.RAD_GRADY
-                 }
-
-# .............................................................................
-def jobTypeTranslate(oldJt):
-   """
-   @summary: Temporary function to ease transition from job type to process type
-   """
-   try:
-      return JOB_TYPE_TRANS[oldJt]
-   except:
-      return None
+STATIC_DIR = os.path.join(APP_PATH, WEB_PATH, STATIC_PATH)
 
 # .............................................................................
 class svc(object):
@@ -268,7 +160,6 @@ class svc(object):
          try:
             if request == 'existjobs':
                jobTypes = [int(jt.strip()) for jt in parameters['jobtypes'].split(',')]
-               jobTypes = map(jobTypeTranslate, jobTypes)
                # Remove Nones
                jobTypes = [i for i in jobTypes if i is not None]
                try:
@@ -285,7 +176,6 @@ class svc(object):
                ret = str(jm.areJobsAvailable(jobTypes, userIds=users, threshold=threshold))
             elif request == 'getjob':
                jobTypes = [int(jt.strip()) for jt in parameters['jobtypes'].split(',')]
-               jobTypes = map(jobTypeTranslate, jobTypes)
                # Remove Nones
                jobTypes = [i for i in jobTypes if i is not None]
                try:
@@ -305,7 +195,7 @@ class svc(object):
                ret = jm.requestJobs(ipAddress, processTypes=jobTypes, 
                                     count=numToPull, userIds=users)
             elif request == 'postjob':
-               jobType = jobTypeTranslate(int(parameters['jobtype']))
+               jobType = int(parameters['jobtype'])
                jobId = int(parameters['jobid'])
                component = parameters['component'].lower()
                bodyRaw = cherrypy.request.body
@@ -322,12 +212,12 @@ class svc(object):
                   contentType = None
                ret = str(jm.postJob(jobType, jobId, content, component, contentType=contentType))
             elif request == 'requestpost':
-               jobType = jobTypeTranslate(int(parameters['jobtype']))
+               jobType = int(parameters['jobtype'])
                jobId = int(parameters['jobid'])
                component = parameters['component']
                ret = jm.requestPost(jobType, jobId, component)
             elif request == 'updatejob':
-               jobType = jobTypeTranslate(int(parameters['jobtype']))
+               jobType = int(parameters['jobtype'])
                jobId = int(parameters['jobid'])
                status = int(parameters['status']) if parameters.has_key('status') else None
                progress = int(parameters['progress']) if parameters.has_key('progress') else None
@@ -396,9 +286,8 @@ class svc(object):
             if len(virpath) == 0:
                virpath.append("formLogin.shtml")
       
-            basePath = '/'.join((APP_PATH, WEB_PATH, STATIC_PATH))
             try:
-               retFile = getFileContents('/'.join((basePath, '/'.join(virpath))))
+               retFile = getFileContents(os.path.join(STATIC_DIR, *virpath))
             except Exception, e:
                err = LMError(e, doTrace=True)
                return errorResponse(log, HTTPStatus.NOT_FOUND, url='/'.join((virpath)), err=err)
@@ -410,11 +299,9 @@ class svc(object):
             return errorResponse(log, HTTPStatus.INTERNAL_SERVER_ERROR, err=err)
       elif checkUserLogin(username, pword):
          #log.debug("User: %s" % str(username))
-         #cherrypy.session.acquire_lock()
          cherrypy.session.regenerate()
          cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
          cookie = cherrypy.response.cookie
-         #cherrypy.session.release_lock()
          cookie[REFERER_KEY] = refererPage
          cookie[REFERER_KEY]['expires'] = 0
          raise cherrypy.HTTPRedirect(refererPage or "/")
@@ -423,8 +310,7 @@ class svc(object):
          log = LmPublicLogger()
          log.debug("Failed login for user: %s" % (str(username)))
          try:
-            basePath = os.path.join(APP_PATH, WEB_PATH, STATIC_PATH)
-            retFile = getFileContents(os.path.join(basePath, "failedLogin.shtml"))
+            retFile = getFileContents(os.path.join(STATIC_DIR, "failedLogin.shtml"))
       
             return errorResponse(log, HTTPStatus.UNAUTHORIZED)
          except Exception, e:
@@ -580,10 +466,8 @@ class svc(object):
          if userId is None or email is None or fName is None or pword is None:
             try:
                virpath.append("formSignUp.shtml")
-               basePath = '/'.join((APP_PATH, WEB_PATH, STATIC_PATH))
                try:
-                  retFile = getFileContents('/'.join((basePath, 
-                                                           '/'.join(virpath))))
+                  retFile = getFileContents(os.path.join(STATIC_DIR, virpath))
                except Exception, e:
                   err = LMError(e, doTrace=True)
                   return errorResponse(log, HTTPStatus.NOT_FOUND, url='/'.join(virpath), err=err)
@@ -611,9 +495,7 @@ class svc(object):
                   
                scribe.closeConnections()
                
-               #cherrypy.session.acquire_lock()
                cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
-               #cherrypy.session.release_lock()
                
                welcomeMsg = """
                   <span class="signupWelcome">
@@ -734,9 +616,7 @@ def getUserName():
    
    try:
       if os.path.isfile(os.path.join(SESSION_DIR, 'session-%s' % cherrypy.session.id)):
-         #cherrypy.session.acquire_lock()
          temp = cherrypy.session.get(SESSION_KEY)
-         #cherrypy.session.release_lock()
    except Exception, e:
       log.debug(' '.join(("Exception in getUserName:", str(e))))
    
@@ -863,57 +743,6 @@ def customLogs(app):
    log.access_log.addHandler(h)
    
 
-# =============================================================================
-# =                            Cherrypy Functions                             =
-# =============================================================================
-# def start():
-#    """
-#    @summary: Starts up cherrypy
-#    """
-#    cherrypy.config.update(
-#      {
-#         'response.timeout': 1000000,
-#         'tools.encode.encoding': ENCODING,
-#         'tools.encode.on': True,
-#         'tools.etags.autotags': True,
-#         'tools.sessions.on': True,
-#         'tools.sessions.storage_type': "file",
-#         'tools.sessions.storage_path': SESSION_DIR,
-#         'tools.sessions.timeout': 20160,
-#         'tools.sessions.locking': 'implicit',
-#         'environment': 'production'
-#      })
-#    
-#    app = cherrypy.tree.mount(svc(), '/', config=conf)
-#    # Set up the custom loggers
-#    customLogs(app)
-#    cherrypy.engine.start()
-# 
-# # ..............................................................................
-# def serverless():
-#    """
-#    @summary: Starts up a serverless version of cherrypy
-#    
-#    You can also use this mode interactively:
-#       >>> import svc
-#       >>> svc.serverless()
-#    """
-#    cherrypy.server.unsubscribe()
-#    start()
-#    
-# # ..............................................................................
-# def serve():
-#    """
-#    Starts up cherrypy in stand-alone mode
-#    """
-#    cherrypy.config.update({'log.screen': True})
-#    start()
-# 
-# # ==============================================================================
-# # =                                    Main                                    =
-# # ==============================================================================
-# if __name__ == '__main__':
-#    serve()
 
 # .............................................................................
 def CORS():
@@ -934,27 +763,6 @@ def CORS():
 # Tell CherryPy to add headers needed for CORS
 cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
-# Use this for mod_wsgi
-cherrypy.config.update(
-   {
-      'log.error_file': os.path.join(APP_PATH, LOG_PATH, "cherrypyErrors.log"),
-      'log.access_file': os.path.join(APP_PATH, LOG_PATH, "cherrypyAccess.log"),
-      'response.timeout': 1000000,
-      'tools.CORS.on' : True,
-      'tools.encode.encoding': ENCODING,
-      'tools.encode.on': True,
-      'tools.etags.autotags': True,
-      'tools.sessions.on': True,
-      'tools.sessions.storage_type': "file",
-      'tools.sessions.storage_path': SESSION_DIR,
-      'tools.sessions.timeout': 20160,
-      'tools.sessions.locking': 'implicit',
-      'environment': 'embedded'
-   }
-)
-
-
-
-application = cherrypy.Application(svc(), script_name=None, config=conf)
+application = cherrypy.Application(svc(), script_name=None, config=CP_CONFIG_FILE)
 
 

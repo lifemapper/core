@@ -101,6 +101,7 @@ DB_HOSTNAME: @DB_FQDN@
 [LmServer - webserver]
 LM_LIB_PATH: @LMWEB@
 WEB_HOSTNAME:  @WEB_FQDN@
+CHERRYPY_CONFIG_FILE: @CP_CONFIG_FILE@
 
 ; .............................................................................
 ; LmCompute
