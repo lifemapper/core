@@ -2766,7 +2766,7 @@ class MAL(DbPostgresql):
                          epsgcode=epsg, dlocation=dlocation, 
                          metalocation=mlocation, minVal=minval, maxVal=maxval, 
                          nodataVal=nodata, valUnits=vunits, isCategorical=iscat,
-                         gdalType=vtype, gdalFormat=fformat, author=author, 
+                         gdalType=rtype, gdalFormat=fformat, author=author, 
                          description=desc, svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
                          createTime=dtcreate, modTime=dtmod, metadataUrl=murl,
                          moduleType=LMServiceModule.SDM)

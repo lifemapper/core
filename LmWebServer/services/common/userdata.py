@@ -1248,16 +1248,7 @@ class DataPoster(object):
          if len(existLyrs) == 0:
             try:
                lyr.writeLayer(srcData=rstCont)
-               lyrId = self.scribe.insertLayer(lyr)
-
-               tmpDLoc = lyr.getDLocation()
-               try:
-                  base, ext = os.path.splitext(tmpDLoc)
-                  for fn in glob.iglob('%s*' % base):
-                     os.remove(fn)
-               except Exception, e:
-                  self.log.debug("Failed to delete temporary files. %s - %s" % (
-                                                                       tmpDLoc, str(e)))
+               lyr = self.scribe.insertLayer(lyr)
             except LMError, e:
                try:
                   self.scribe.deleteEnvLayer(lyr)
