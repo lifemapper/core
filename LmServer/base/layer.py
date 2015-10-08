@@ -2346,6 +2346,7 @@ class Vector(_Layer):
       xCol = None
       yCol = None
       minX = minY = maxX = maxY = None
+      localid = None
       
       self.clearFeatures()
       infile = open(self._dlocation, 'rU')
@@ -2390,8 +2391,8 @@ class Vector(_Layer):
             else:
                localid += 1
                thisid = localid
-            x = row[xCol]
-            y = row[yCol]
+            x = float(row[xCol])
+            y = float(row[yCol])
             Xs.append(x)
             Ys.append(y)
             feats[thisid] = self.getUserPointFeature(thisid, x, y)
