@@ -434,9 +434,12 @@ class WebObject(WebServiceBaseClass):
 #      if (len(self.vpath) == 0 and self.parameters.has_key("request")) \
 #            or (len(self.vpath) > 0 and self.vpath[0] in OGC_INTERFACES):
 #         return self.ogc()
-      if self.method.lower() in ('get', 'post'):
+      if self.method.lower() in ('get', 'post', 'delete'):
          if len(self.vpath) == 0 or self.vpath[0] in self.interfaces:
-            return self.get()
+            if self.method.lower() == 'delete':
+               return self.delete()
+            else:
+               return self.get()
          else:
             for subObj in self.subObjects:
                if self.vpath[0] in subObj["names"]:
@@ -454,8 +457,8 @@ class WebObject(WebServiceBaseClass):
                   return serv.doAction()
             # If not found
             return self.get()
-      elif self.method.lower() == 'delete':
-         return self.delete()
+      #elif self.method.lower() == 'delete':
+      #   return self.delete()
       elif self.method.lower() == 'put':
          return self.put()
       raise Exception, "Unknown request"
