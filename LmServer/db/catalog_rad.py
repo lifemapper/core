@@ -1343,7 +1343,8 @@ class RAD(DbPostgresql):
    def deletePresenceAbsenceLayer(self, palyr, expid):
       success = self.executeModifyFunction('lm_deletePALayerFromExperiment',
                                            palyr.getUserId(), expid, 
-                                           palyr.getId(), 
+                                           #palyr.getId(), 
+                                           palyr.getLayerId(),
                                            palyr.getParametersId())
       return success
    
