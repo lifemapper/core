@@ -44,14 +44,14 @@ class RADPALayerWebObject(WebObject):
                  ]
    interfaces = ['atom', 'html', 'json', 'xml']
    
-#    # ............................................
-#    def _deleteItem(self, item):
-#       """
-#       @summary: Deletes a RAD presence absence layer from an experiment
-#       """
-#       experimentId = int(self.parameters["experimentid"])
-#       success = self.conn.deletePresenceAbsenceLayer(item, experimentId)
-#       return success
+   # ............................................
+   def _deleteItem(self, item):
+      """
+      @summary: Deletes a RAD presence absence layer from an experiment
+      """
+      experimentId = int(self.parameters["experimentid"])
+      success = self.conn.deletePresenceAbsenceLayer(item, experimentId)
+      return success
    
    # ............................................
    def _getItem(self):
