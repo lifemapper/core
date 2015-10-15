@@ -262,7 +262,10 @@ class LayerManager(object):
             os.makedirs(fDir)
             
          if layerUrl.lower().find('aaigrid') >= 0:
-            processASCIILayer(layerUrl, filename)
+            try:
+               processASCIILayer(layerUrl, filename)
+            except: # Try again
+               processASCIILayer(layerUrl, filename)
          else:
             content = urllib2.urlopen(layerUrl).readlines()
             f = open(filename, 'w')
@@ -490,6 +493,9 @@ def processASCIILayer(layerUrl, filename):
          ncolsLine = content[i] # Should be integer and thus fine
       elif content[i].startswith('nrows'):
          nrowsLine = content[i]
+         numberOfRows = int(nrowsLine.split('nrows')[1].strip())
+         if len(content) < numberOfRows: # Only an approximate check
+            raise Exception, "There are not enough rows in this layer"
       elif content[i].startswith('xllcorner'):
          # Need to truncate floats
          xllLine = _processFloatHeader(content[i])
