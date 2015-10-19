@@ -38,7 +38,7 @@ SetDefaults () {
    TO="aimee.stewart@ku.edu"
    idx=`expr index $HOSTNAME .`
    BASEHOSTNAME=${HOSTNAME:0:idx-1}
-   # insert $HOSTNAME for roll name
+   # insert $HOSTNAME 
    SUBJECT="Security updates from $BASEHOSTNAME"
    VERSION=$(date +%F | tr - _)
    echo Version  is $VERSION
@@ -66,7 +66,7 @@ PrepareRoll() {
    rocks add roll os-6.2-security-updates-$VERSION-0.x86_64.disk1.iso
    rocks enable roll os-security-updates   
    (cd /export/rocks/install; rocks create distro)
-   yum clean all  
+   yum clean all
 }
 
 # ....................................
@@ -74,7 +74,7 @@ PrepareRoll() {
 # ....................................
 SendEmailAndReturn () {
    TimeStamp "# End"
-   /usr/sbin/sendmail -i  "$TO"  < $LOG
+   /usr/sbin/sendmail -i -F $BASEHOSTNAME  "$TO"  < $LOG
    cd $PREVDIR
 }
 
