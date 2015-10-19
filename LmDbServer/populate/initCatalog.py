@@ -27,7 +27,7 @@ from osgeo import ogr
 import sys
 
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
-         DEFAULT_MAPUNITS, Instances)
+         DEFAULT_MAPUNITS)
 from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
@@ -38,7 +38,7 @@ from LmDbServer.populate.bioclimMeta import (BASELINE_DATA,
 
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import DATA_PATH, DATASOURCE
+from LmServer.common.localconstants import DATA_PATH
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe

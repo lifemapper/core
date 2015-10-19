@@ -26,7 +26,6 @@ import mx.DateTime as dt
 import os
 from osgeo.ogr import wkbPoint
 import sys
-from time import sleep
 
 from LmBackend.common.occparse import OccDataParser
 
@@ -39,14 +38,12 @@ from LmCommon.common.localconstants import ARCHIVE_USER
 from LmDbServer.common.localconstants import WORKER_JOB_LIMIT
 from LmDbServer.pipeline.pipeline import _Worker
 
-from LmServer.base.lmobj import LMError, LmHTTPError
+from LmServer.base.lmobj import LMError
 from LmServer.base.taxon import ScientificName
-from LmServer.common.gbifquery import GBIFData
-from LmServer.common.lmconstants import (JobFamily, LM_MODULE, Priority, 
+from LmServer.common.lmconstants import (JobFamily, Priority, 
                                          PrimaryEnvironment, LOG_PATH)
 from LmServer.common.localconstants import POINT_COUNT_MIN, APP_PATH, DATASOURCE
 from LmServer.db.scribe import Scribe
-from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.omJob import OmProjectionJob, OmModelJob
 from LmServer.sdm.meJob import MeProjectionJob, MeModelJob

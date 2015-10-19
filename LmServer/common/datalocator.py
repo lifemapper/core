@@ -21,21 +21,20 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import StringType, IntType, UnicodeType
+from types import StringType, UnicodeType
 import os
 
-from LmCommon.common.lmconstants import DEFAULT_EPSG, OutputFormat
-from LmCommon.common.localconstants import ARCHIVE_USER, OGC_SERVICE_URL, \
-                               WEBSERVICES_ROOT 
+from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.localconstants import (ARCHIVE_USER, OGC_SERVICE_URL, 
+                                            WEBSERVICES_ROOT)
 
-from LmServer.common.localconstants import APP_PATH, DATA_PATH, \
-                                    POINT_COUNT_MAX
-from LmServer.common.lmconstants import DEFAULT_SRS, WEB_PATH, \
-   LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX, \
-   OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, \
-   DEFAULT_WMS_FORMAT, DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_PATH, \
-   MODEL_PATH, USER_LAYER_PATH, MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, \
-   WMS_LAYER_KEY, WCS_LAYER_KEY, RAD_EXPERIMENT_DIR_PREFIX
+from LmServer.common.localconstants import APP_PATH, DATA_PATH
+from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_PATH,
+   LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX,
+   OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, 
+   DEFAULT_WMS_FORMAT, DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_PATH,   
+   MODEL_PATH, USER_LAYER_PATH, MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, 
+   WMS_LAYER_KEY, WCS_LAYER_KEY, RAD_EXPERIMENT_DIR_PREFIX)
 from LmServer.base.lmobj import LMError, LMObject
          
 # .............................................................................
