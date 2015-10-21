@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # @author: CJ Grady
-# @lastModified: 2014/05/15 15:11
-# @summary: This script will gather and report monthly Lifemapper usage metrics
+# @lastModified: 2015/10/21 12:31
+# @summary: This script will gather and report daily Lifemapper usage metrics
 # @license: gpl2
-# @copyright: Copyright (C) 2014, University of Kansas Center for Research
+# @copyright: Copyright (C) 2015, University of Kansas Center for Research
 #  
 #            Lifemapper Project, lifemapper [at] ku [dot] edu, 
 #            Biodiversity Institute,
@@ -26,8 +26,6 @@
 #            02110-1301, USA.
 
 # Set environment in case it is not already set
-SHELL=/usr/local/bin/bash
-PATH=/bin:/usr/bin:/usr/local/bin
+. /etc/profile.d/lifemapper.sh
 
-python /share/apps/lm2/LmWebServer/scripts/metrics/collectMetrics.py month 1
-
+@PYBIN@  @LMHOME@/LmWebServer/scripts/metrics/collectMetrics.py day 1
