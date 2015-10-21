@@ -34,7 +34,8 @@ import os
 import sys
 import time
 
-from reportMetrics import getDailyMessage, getWeeklyMessage, getMonthlyMessage, reportIPaddresses
+from LmWebServer.scripts.metrics.reportMetrics import getDailyMessage, \
+                         getWeeklyMessage, getMonthlyMessage, reportIPaddresses
 
 NUM_DAYS = {
             1 : 31,
