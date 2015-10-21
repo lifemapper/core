@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # @author: CJ Grady
-# @lastModified: 2014/03/6 16:19
+# @lastModified: 2015/10/21 12:37
 # @summary: This script will rebuild the Lifemapper species lucene index
 
 # Set environment in case it is not already set
 . /etc/profile.d/lifemapper.sh
 
 # Have to export PYTHONPATH or the modules will not be found
+#   CJG (10/21/2015): I don't think that this is true now, test this
 export PYTHONPATH=@LMHOME@
 
 # Build the index
