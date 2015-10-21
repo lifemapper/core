@@ -1,6 +1,10 @@
 """
 @summary: This script builds the projections index for Solr
 @author: CJ Grady
+@todo: Get constants from local constants
+@todo: Add spatial components
+@todo: Change calling mechanism from a loop through projections to posting 
+          projections individually as they are completed.
 """
 from mx.DateTime.DateTime import DateTimeFromMJD
 #from subprocess import Popen
