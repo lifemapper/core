@@ -61,8 +61,15 @@ class JsonFormatter(Formatter):
       title = self.title if self.title is not None else ""
       name = self.name if self.name is not None else name
 
+      if self.parameters.has_key('format') and \
+           self.parameters['format'].lower() == 'specify':
+         doSpecify = True
+      else:
+         doSpecify = False
+
       jsonObj.addValue("title", title)
-      _addJsonValues(jsonObj, ObjectAttributeIterator(name, self.obj))
+      _addJsonValues(jsonObj, ObjectAttributeIterator(name, self.obj), 
+                       doSpecify=doSpecify)
       ret = tostring(jsonObj)
       
       
@@ -75,7 +82,7 @@ class JsonFormatter(Formatter):
       return FormatterResponse(ret, contentType=ct, filename=fn)
 
 # .............................................................................
-def _addJsonValues(jsonObj, obj):
+def _addJsonValues(jsonObj, obj, doSpecify=False):
    matchNames = []
    if isinstance(obj.obj, ListType):
       ary = jsonObj.addArray(obj.name)
@@ -84,21 +91,26 @@ def _addJsonValues(jsonObj, obj):
          matchNames.append(obj.name[:-1])
    for k in obj.attributes.keys():
       jsonObj.addValue(k, escapeString(str(obj.attributes[k]), "json"))
+      if doSpecify:
+         if k.lower() == 'dec_lat':
+            jsonObj.addValue('lat', escapeString(str(obj.attributes[k]), "json"))
+         if k.lower() == 'dec_long':
+            jsonObj.addValue('lon', escapeString(str(obj.attributes[k]), "json"))
    for name, value in obj:
       if value is not None:
          if name in matchNames:
             if isinstance(value, ObjectAttributeIterator):
                o = ary.addObject(name)
-               _addJsonValues(o, value)
+               _addJsonValues(o, value, doSpecify=doSpecify)
             else:
                ary.addValue(escapeString(str(value), "json"))
          else:
             if name == "feature":
-               _addJsonValues(jsonObj, value)
+               _addJsonValues(jsonObj, value, doSpecify=doSpecify)
             else:
                if isinstance(value, ObjectAttributeIterator):
                   o = jsonObj.addObject(name)
-                  _addJsonValues(o, value)
+                  _addJsonValues(o, value, doSpecify=doSpecify)
                else:
                   jsonObj.addValue(name, escapeString(str(value), "json"))
 
