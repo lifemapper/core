@@ -5,7 +5,7 @@
 @author: CJ Grady
 
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2015, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -32,7 +32,7 @@ import urllib2
 from LmCommon.common.lmconstants import JobStatus
 from LmCommon.common.localconstants import WEBSERVICES_ROOT
 
-from LmServer.common.localconstants import APP_PATH, TROUBLESHOOTERS
+from LmServer.common.localconstants import TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 
 from LmServer.db.scribe import Scribe
