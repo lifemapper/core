@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # @author: CJ Grady
-# @lastModified: 2014/08/27 12:04
-# @summary: This script will run Lifemapper end to end tests
+# @lastModified: 2015/10/21 12:22
+# @summary: This script will check Lifemapper urls for errors
 # @license: gpl2
 # @copyright: Copyright (C) 2013, University of Kansas Center for Research
 #  
@@ -28,11 +28,8 @@
 # Set environment in case it is not already set
 . /etc/profile.d/lifemapper.sh
 
-# Nadya: this should read the configured APP_DIR
 # Have to export PYTHONPATH or the modules will not be found
-export PYTHONPATH=@LMHOME@
+export PYTHONPATH=@LMHOME@:@LMHOME@/LmClient/LmPython/lifemapper
 
-@PYBIN@ @LMHOME@/test/end2end/rad/experiment.py
-
-@PYBIN@ @LMHOME@/test/end2end/sdm/experiment.py
+@PYBIN@  @LMHOME@/LmWebServer/scripts/tests/checkLmWeb.py
 

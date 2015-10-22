@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# @author: CJ Grady
+# @lastModified: 2015/10/21 12:43
+# @summary: This script will rebuild the Lifemapper Archive Solr index
+
+# Set environment in case it is not already set
+. /etc/profile.d/lifemapper.sh
+
+# Build the index
+# Note that the output of this could be piped to a file to check for success
+#   or you can check the last modified time of the files in: 
+#   /var/solr/data/cores/lmArchive
+@PYBIN@ @LMHOME@/LmWebServer/solr/buildIndex.py

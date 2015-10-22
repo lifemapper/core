@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # @author: CJ Grady
-# @lastModified: 2014/05/15 15:11
-# @summary: This script will gather and report weekly Lifemapper usage metrics
+# @lastModified: 2014/08/27 12:04
+# @summary: This script will run Lifemapper end to end tests
 # @license: gpl2
-# @copyright: Copyright (C) 2014, University of Kansas Center for Research
+# @copyright: Copyright (C) 2013, University of Kansas Center for Research
 #  
 #            Lifemapper Project, lifemapper [at] ku [dot] edu, 
 #            Biodiversity Institute,
@@ -26,8 +26,9 @@
 #            02110-1301, USA.
 
 # Set environment in case it is not already set
-SHELL=/usr/local/bin/bash
-PATH=/bin:/usr/bin:/usr/local/bin
+. /etc/profile.d/lifemapper.sh
 
-python /share/apps/lm2/LmWebServer/scripts/metrics/collectMetrics.py week
+@PYBIN@ @LMHOME@/LmDebug/test/end2end/rad/experiment.py
+
+@PYBIN@ @LMHOME@/LmDebug/test/end2end/sdm/experiment.py
 

@@ -1372,7 +1372,9 @@ class DataPoster(object):
       layerIds = reqParams.getParameter("layer", 
                                         parents=["scenario", "layers"], 
                                         returnList=True)
-
+      if code is None:
+         raise LmHTTPError(HTTPStatus.BAD_REQUEST,
+                           msg="Must provide a code for the new scenario")
       if layerIds is None:
          raise LmHTTPError(HTTPStatus.BAD_REQUEST, 
                         msg="Must specify at least one layer for the scenario")

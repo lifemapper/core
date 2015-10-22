@@ -1,12 +1,10 @@
 #!/bin/bash
 
 # @author: CJ Grady
-# @lastModified: 2013/08/07 12:10
-# @summary: This script will check Lifemapper urls for errors
-#           Update 2013-06-27, now checks Specify assumptions as well
-#           Update 2013-07-15, now performs a time test for SDM jobs too
+# @lastModified: 2015/10/21 12:31
+# @summary: This script will gather and report daily Lifemapper usage metrics
 # @license: gpl2
-# @copyright: Copyright (C) 2013, University of Kansas Center for Research
+# @copyright: Copyright (C) 2015, University of Kansas Center for Research
 #  
 #            Lifemapper Project, lifemapper [at] ku [dot] edu, 
 #            Biodiversity Institute,
@@ -30,8 +28,4 @@
 # Set environment in case it is not already set
 . /etc/profile.d/lifemapper.sh
 
-# Have to export PYTHONPATH or the modules will not be found
-export PYTHONPATH=@LMHOME@:@LMHOME@/LmClient/LmPython/lifemapper
-
-@PYBIN@  @LMHOME@/LmWebServer/scripts/checkLmWeb.py
-
+@PYBIN@  @LMHOME@/LmWebServer/scripts/metrics/collectMetrics.py day 1
