@@ -276,7 +276,7 @@ class _LMWorker(_Worker):
          # Use API to get and insert species name 
          (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
           speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(taxKey)
-         if retSpecieskey == speciesKey:
+         if retSpecieskey == taxKey:
             currtime = dt.gmt().mjd
             speciesName = ScientificName(speciesStr, 
                             kingdom=kingdomStr, phylum=phylumStr, 
@@ -284,9 +284,9 @@ class _LMWorker(_Worker):
                             family=familyStr, genus=genusStr, 
                             createTime=currtime, modTime=currtime, 
                             taxonomySourceId=self._taxonSourceId, 
-                            taxonomySourceKey=speciesKey, 
+                            taxonomySourceKey=taxKey, 
                             taxonomySourceGenusKey=genuskey, 
-                            taxonomySourceSpeciesKey=speciesKey)
+                            taxonomySourceSpeciesKey=taxKey)
             self._scribe.insertTaxon(speciesName)
             return speciesName
       except LMError, e:
