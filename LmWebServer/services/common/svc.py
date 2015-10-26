@@ -765,4 +765,4 @@ cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
 application = cherrypy.Application(svc(), script_name=None, config=CP_CONFIG_FILE)
 
-
+customLogs(application)
