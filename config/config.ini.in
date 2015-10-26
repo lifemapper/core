@@ -18,7 +18,7 @@
 ; Use the following in a version.mk file to fill in local variables with 'make'
 ; (below are SDSC rocks-204 values)
 ;PKGROOT       : /opt/lifemapper
-;LMHOME        : /opt/lifemapper/lmserver
+;LMHOME        : /opt/lifemapper
 ;MAPSERVER_TMP : /var/www/tmp
 ;LMWEB         : /var/lib/lm2
 ;DATADIR_SERVER       : /share/lmserver/data
@@ -101,7 +101,7 @@ DB_HOSTNAME: @DB_FQDN@
 [LmServer - webserver]
 LM_LIB_PATH: @LMWEB@
 WEB_HOSTNAME:  @WEB_FQDN@
-CHERRYPY_CONFIG_FILE: @CP_CONFIG_FILE@
+CHERRYPY_CONFIG_FILE: @LMHOME@/config/cherrypy.conf
 
 ; .............................................................................
 ; LmCompute
