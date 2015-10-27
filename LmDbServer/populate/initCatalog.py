@@ -434,9 +434,8 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
 # ...............................................
 def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenPkgName):
    """
-   @summary Assemble user, climate, taxonomy metadata and add to database  
-            lyrMeta = {'user': ARCHIVE_USER,
-                       'epsg': DEFAULT_EPSG, 
+   @summary Assemble climate, taxonomy metadata and add to database  
+            lyrMeta = {'epsg': DEFAULT_EPSG, 
                        'mapunits': DEFAULT_MAPUNITS, 
                        'resolution': RESOLUTIONS[pkgMeta['res']], 
                        'gdaltype': ENVLYR_GDALTYPE, 
@@ -486,15 +485,15 @@ if __name__ == '__main__':
    if ARCHIVE_USER == 'bison':
       REMOTE_DATA_URL = 'http://notyeti'
       taxSource = TAXONOMIC_SOURCE['ITIS'] 
-   elif ARCHIVE_USER == 'lm2':
-      REMOTE_DATA_URL = 'http://yeti'
+   elif ARCHIVE_USER == 'kubi':
+      REMOTE_DATA_URL = None
       taxSource = TAXONOMIC_SOURCE['GBIF'] 
    elif ARCHIVE_USER == 'idigbio':
       REMOTE_DATA_URL = 'http://felix'
       taxSource = TAXONOMIC_SOURCE['GBIF'] 
    else:
-      REMOTE_DATA_URL = None
       taxSource = None
+      REMOTE_DATA_URL = None
    
    if len(sys.argv) != 2:
       usage()
