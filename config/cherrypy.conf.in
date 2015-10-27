@@ -3,7 +3,7 @@
 
 [global]
 log.error_file: '@LMHOME@/log/cherrypyErrors.log'
-log.access_file: '@LMHOME@/log.cherrypyAccess.log'
+log.access_file: '@LMHOME@/log/cherrypyAccess.log'
 response.timeout: 1000000
 tools.CORS.on : True
 tools.encode.encoding: 'utf-8'
