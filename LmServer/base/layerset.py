@@ -32,14 +32,13 @@ from LmServer.base.layer import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMError, LMSpatialObject
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.common.colorpalette import colorPalette
-from LmServer.common.lmconstants import MAP_TEMPLATE, QUERY_TEMPLATE, \
-         MapPrefix, LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL, \
-         POINT_SIZE, LINE_SYMBOL, LINE_SIZE, POLYGON_SYMBOL, POLYGON_SIZE, \
-         QUERY_TOLERANCE, SYMBOL_FILENAME, DEFAULT_POINT_COLOR, \
-         DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, \
-         DEFAULT_ENVIRONMENTAL_PALETTE, \
-         CT_SPECIES_LAYER_STYLES, CT_SPECIES_KEYWORD, \
-         LMServiceType, LMServiceModule
+from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE, 
+         MapPrefix, LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL, 
+         POINT_SIZE, LINE_SYMBOL, LINE_SIZE, POLYGON_SYMBOL, POLYGON_SIZE, 
+         QUERY_TOLERANCE, SYMBOL_FILENAME, DEFAULT_POINT_COLOR, 
+         DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, LMServiceType,
+         DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
+         CT_SPECIES_KEYWORD, PROJ_LIB)
 from LmServer.common.localconstants import DATA_PATH, POINT_COUNT_MAX
 from LmServer.common.lmconstants import CT_USER
 from LmServer.sdm.occlayer import OccurrenceLayer
@@ -446,21 +445,22 @@ class MapLayerSet(_LayerSet, ServiceObject):
          label = 'Lifemapper Data Service'
 
       # changed this from self.name (which left 'scen_' prefix off scenarios)
-      mapstr = mapstr.replace('##_MAPNAME_##', '   NAME  \"%s\"' % self.mapName)      
+      mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)      
                               
       if self.epsgcode == DEFAULT_EPSG:
-         boundstr = '   EXTENT  -180  -90  180  90'
+         boundstr = '  -180  -90  180  90'
       else:
          mbbox = self.unionBounds
-         boundstr = '   EXTENT  %.2f  %.2f  %.2f  %.2f' % (mbbox[0], mbbox[1],
+         boundstr = '  %.2f  %.2f  %.2f  %.2f' % (mbbox[0], mbbox[1],
                                                            mbbox[2], mbbox[3])
       mapstr = mapstr.replace('##_EXTENT_##', boundstr)
       mapunits = DEFAULT_MAPUNITS
       if self.layers and len(self.layers) > 0:
          mapunits = self.layers[0].mapUnits
-      mapstr = mapstr.replace('##_UNITS_##',  '   UNITS  %s' % mapunits)
+      mapstr = mapstr.replace('##_UNITS_##',  mapunits)
 
-      mapstr = mapstr.replace('##_SYMBOLSET_##',  '   SYMBOLSET  \"%s\"' % SYMBOL_FILENAME)
+      mapstr = mapstr.replace('##_SYMBOLSET_##',  SYMBOL_FILENAME)
+      mapstr = mapstr.replace('##_PROJLIB_##',  PROJ_LIB)
       
       mapprj = self._createProjectionInfo(self.epsgcode)
       mapstr = mapstr.replace('##_PROJECTION_##',  mapprj)
