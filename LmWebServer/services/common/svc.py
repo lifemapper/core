@@ -763,6 +763,7 @@ def CORS():
 # Tell CherryPy to add headers needed for CORS
 cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
+cherrypy.config.update(CP_CONFIG_FILE)
 application = cherrypy.Application(svc(), script_name=None, config=CP_CONFIG_FILE)
 
 customLogs(application)
