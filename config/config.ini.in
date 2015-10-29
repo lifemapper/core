@@ -145,7 +145,7 @@ LOG_STORAGE_LOCATION: @LMDISK@/logs
 [LmCompute - plugins - maxent]
 JAVA_MAX_MEM_OPTION = 2g
 JAVA_INIT_MEM_OPTION = 2g
-JAVA_SYSTEM_ROOT = @LMDISK@/jvm/.java
+JAVA_SYSTEM_ROOT = @LMHOME@/.java
 JAVA_USER_ROOT = %(JAVA_SYSTEM_ROOT)/.userPrefs
 JAVA_EXE: @JAVABIN@
 JAVA_CMD: %(JAVA_EXE) -Xms%(JAVA_INIT_MEM_OPTION) -Xmx%(JAVA_MAX_MEM_OPTION) -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT) -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT) -cp
