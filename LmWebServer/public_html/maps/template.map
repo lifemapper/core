@@ -1,16 +1,17 @@
 MAP
-##_MAPNAME_## 
+  NAME  ##_MAPNAME_## 
   STATUS ON
   DEBUG ON
   SIZE 600 300
-##_EXTENT_##
-  UNITS dd
+  EXTENT  ##_EXTENT_##
+  UNITS  ##_UNITS_##
   IMAGECOLOR 0 0 0
-##_SYMBOLSET_##
+  SYMBOLSET "##_SYMBOLSET_##"
+  CONFIG "PROJ_LIB" "##_PROJLIB_##"
 
 ##_PROJECTION_##
   
-  # Make sure to create this directory with proper permissionson the webserver
+  # Make sure to create this directory with proper permissions on the webserver
   WEB
     IMAGEPATH "/var/www/tmp/"
     IMAGEURL "/tmp/"

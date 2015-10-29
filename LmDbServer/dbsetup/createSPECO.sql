@@ -6,7 +6,6 @@
 \c template1 admin
 
 -- ----------------------------------------------------------------------------
-DROP DATABASE IF EXISTS speco;
 CREATE DATABASE speco ENCODING='UTF8'
                     LC_COLLATE='en_US.UTF-8'
                     LC_CTYPE='en_US.UTF-8'

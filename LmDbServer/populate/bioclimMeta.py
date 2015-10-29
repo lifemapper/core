@@ -7,8 +7,6 @@ ENVLYR_GDALFORMAT = 'GTiff'
 RESOLUTIONS = {'10min': 0.16667, '5min': 0.083333, '30sec': 0.0083333}
 CLIMATE_KEYWORDS = ['bioclimatic variables', 'climate', 'elevation']
 
-REMOTE_DATA_URL = 'http://birc' 
-
 TAXONOMIC_SOURCE = {
    'GBIF': {'name': 'GBIF Backbone Taxonomy',
             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},

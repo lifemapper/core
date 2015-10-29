@@ -33,9 +33,9 @@ from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.base.lmobj import LmHTTPError, LMError, LMObject
 from LmServer.common.colorpalette import colorPalette
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import MapPrefix, DbUser, \
-         LINE_SIZE, LINE_SYMBOL, MAP_TEMPLATE, OCC_NAME_PREFIX, POINT_SIZE, \
-         POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX
+from LmServer.common.lmconstants import (MapPrefix, DbUser, LINE_SIZE, 
+         LINE_SYMBOL, MAP_TEMPLATE, OCC_NAME_PREFIX, POINT_SIZE, POINT_SYMBOL, 
+         POLYGON_SIZE, PRJ_PREFIX)
 from LmServer.db.peruser import Peruser
 
 PALETTES = ('gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia', 'aqua',

@@ -21,6 +21,8 @@ SMTP_SENDER: lifemapper@ku.edu
 
 ; ...............................................
 [LmServer - pipeline]
+; ...............................................
+TROUBLESHOOTERS: a.real.address@somewhere.com
 SPECIES_EXP_YEAR: 2015
 SPECIES_EXP_MONTH: 9
 SPECIES_EXP_DAY: 27
