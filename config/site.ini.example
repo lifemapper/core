@@ -98,4 +98,4 @@ LOCAL_MACHINE_ID:
 ;; JAVA_MAX_MEM_OPTION = 4g
 ;; JAVA_INIT_MEM_OPTION = 4g
 ;;;; Reassemble this command if changing any component options
-JAVA_CMD: %(JAVA_EXE) -Xms%(JAVA_INIT_MEM_OPTION) -Xmx%(JAVA_MAX_MEM_OPTION) -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT) -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT) -cp
+JAVA_CMD: %(JAVA_EXE)s -Xms%(JAVA_INIT_MEM_OPTION)s -Xmx%(JAVA_MAX_MEM_OPTION)s -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT)s -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT)s -cp
