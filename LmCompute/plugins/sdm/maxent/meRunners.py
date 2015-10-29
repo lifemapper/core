@@ -48,7 +48,6 @@ from LmCompute.plugins.sdm.maxent.constants import PARAMETERS
 from LmCompute.plugins.sdm.maxent.localconstants import JAVA_CMD, MDL_TOOL, \
                                                         ME_CMD, ME_VERSION, \
                                                         PRJ_TOOL
-import cmd
 
 # .............................................................................
 class MEModelRunner(ApplicationRunner):
@@ -70,7 +69,7 @@ class MEModelRunner(ApplicationRunner):
       envParams = "-e {0}".format(self.jobLayerDir)
       outputParams = "-o {0}".format(self.outputPath)
       algoOptions = getAlgorithmOptions(self.job.algorithm)
-      options = "nowarnings autorun -z"
+      options = "nowarnings nocache autorun -z"
       # Application path, me command, model tool
       cmd = "{0} {1} {2} {3} {4} {5}".format(baseCmd, samples, envParams, 
                                             outputParams, algoOptions, options)
@@ -79,6 +78,7 @@ class MEModelRunner(ApplicationRunner):
          self._update()
 
       print cmd
+      self.log.debug(cmd)
       
       return cmd
    
@@ -88,16 +88,22 @@ class MEModelRunner(ApplicationRunner):
       @summary: Checks the MaxEnt output files to get the progress and 
                    status of the running model.
       """
+      self.stderr = self.subprocess.stderr.read()
+
+   # ...................................
+   def _checkStdErr(self):
       try:
-         stderr = self.subprocess.stderr.read()
-         print stderr
-         if stderr.find("Couldn't get file lock.") >= 0:
+         self.log.debug("Something went wrong, check stderr")
+         print self.stderr
+         self.log.debug(self.stderr)
+
+         if self.stderr.find("Couldn't get file lock.") >= 0:
             self.status = JobStatus.ME_FILE_LOCK_ERROR
-         elif stderr.find("Could not reserve enough space for object heap") >= 0:
+         elif self.stderr.find("Could not reserve enough space for object heap") >= 0:
             self.status = JobStatus.ME_HEAP_SPACE_ERROR
-         elif stderr.find("Too small initial heap for new size specified") >= 0:
+         elif self.stderr.find("Too small initial heap for new size specified") >= 0:
             self.status = JobStatus.ME_HEAP_SPACE_ERROR
-         elif stderr.find("because it has 0 training samples") >= 0:
+         elif self.stderr.find("because it has 0 training samples") >= 0:
             self.status = JobStatus.ME_POINTS_ERROR
       except Exception, e: # Might happen if there is no stderr 
          pass
@@ -108,6 +114,7 @@ class MEModelRunner(ApplicationRunner):
       """
       @summary: Checks the output of MaxEnt to see if any errors occurred
       """
+      self.log.debug("Checking output")
       # If an output raster does not exist, an error occurred
       if not os.path.exists(self.lambdasFile):
          # If the main lambdas file is not present, look for one of the 
@@ -116,9 +123,19 @@ class MEModelRunner(ApplicationRunner):
          multiLambdasFile = ''.join([fnParts[0], '_0', fnParts[1]])
          if not os.path.exists(multiLambdasFile):
             errfname = os.path.join(self.outputPath, 'maxent.log')
+            # Initialize error status
+            self.status = JobStatus.ME_GENERAL_ERROR
+            # Check stderr for error first, we may end up updating with 
+            #    error from maxent (can happen with lock errors that are really 
+            #    just warnings)
+            self._checkStdErr()
+            # Look at Maxent error (might be more specific)
             if os.path.exists(errfname):
                with open(errfname, 'r') as f:
                   logContent = f.read()
+                  self.log.debug("---------------------------------------")
+                  self.log.debug(logContent)
+                  self.log.debug("---------------------------------------")
                if logContent.find('have different geographic dimensions') >= 0:
                   self.status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
                elif logContent.find('NumberFormatException') >= 0:
@@ -133,15 +150,13 @@ class MEModelRunner(ApplicationRunner):
                   self.status = JobStatus.ME_NO_FEATURES_CLASSES_AVAILABLE
                else:
                   self.status = JobStatus.ME_GENERAL_ERROR
-            else:
-               self.log.debug("Missing %s file" % errfname)
-               self.status = JobStatus.ME_GENERAL_ERROR
             
    # ...................................
    def _processJobInput(self):
       """
       @summary: Initializes a model to be ran by MaxEnt
       """
+      self.log.debug("Processing job input")
       self.metrics['jobId'] = self.job.jobId
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
@@ -190,6 +205,7 @@ class MEModelRunner(ApplicationRunner):
       """
       @summary: Pushes the results of the job to the job server
       """
+      self.log.debug("Ready to push results")
       if self.status < JobStatus.GENERAL_ERROR:
          
          # CJG - 06/22/2015
@@ -260,6 +276,7 @@ class MEModelRunner(ApplicationRunner):
       """
       @summary: Writes out the points of the job in a format MaxEnt can read
       """
+      self.log.debug("Writing points")
       f = open(self.samplesFile, 'w')
       f.write("Species, X, Y\n")
       
@@ -295,13 +312,14 @@ optional args can contain any flags understood by Maxent -- for example, a
       outFile = os.path.join(self.outputPath, 'output.asc')
 
       algoOptions = getAlgorithmOptions(self.job.algorithm)
-      args = "nowarnings autorun -z"
+      args = "nowarnings nocache autorun -z"
       #cmd = "{baseCmd} {lambdaFile} {gridDir} {outFile} {args}".format(
       #            baseCmd=baseCmd, gridDir=gridDir, outFile=outFile, args=args)
       cmd = "{0} {1} {2} {3} {4} {5}".format(baseCmd, self.lambdasFile, 
                                                self.jobLayerDir, outFile, 
                                                algoOptions, args)
       print cmd
+      self.log.debug(cmd)
       
       if not os.path.exists(ME_CMD):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
@@ -321,12 +339,16 @@ optional args can contain any flags understood by Maxent -- for example, a
       """
       @summary: Checks the output of openModeller to see if any errors occurred
       """
+      self.log.debug("Checking output")
       # If an output raster does not exist, an error occurred
       if not os.path.exists(self.outputFile):
          errfname = os.path.join(self.outputPath, 'maxent.log')
          if os.path.exists(errfname):
             with open(errfname) as f:
                logContent = f.read()
+               self.log.debug("---------------------------------------")
+               self.log.debug(logContent)
+               self.log.debug("---------------------------------------")
             if logContent.find('have different geographic dimensions') >= 0:
                self.status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
             elif logContent.find('NumberFormatException') >= 0:
@@ -346,6 +368,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       """
       @summary: Initializes a projection for generation
       """
+      self.log.debug("Processing job input")
       self.metrics['jobId'] = self.job.jobId
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
@@ -432,12 +455,15 @@ optional args can contain any flags understood by Maxent -- for example, a
                self.status = JobStatus.IO_LAYER_READ_ERROR
                self._update()
       
+      self.log.debug("Ready to compute")
 
    # .......................................
    def _push(self):
       """
       @summary: Pushes the results of the job to the job server
       """
+      self.log.debug("Ready to push results")
+      
       component = "projection"
       contentType = "image/x-aaigrid"
       outFn = os.path.join(os.path.split(self.outputFile)[0], 'out.tif')
