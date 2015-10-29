@@ -114,6 +114,7 @@ class MEModelRunner(ApplicationRunner):
       """
       @summary: Checks the output of MaxEnt to see if any errors occurred
       """
+      self.log.debug("Checking output")
       # If an output raster does not exist, an error occurred
       if not os.path.exists(self.lambdasFile):
          # If the main lambdas file is not present, look for one of the 
@@ -155,6 +156,7 @@ class MEModelRunner(ApplicationRunner):
       """
       @summary: Initializes a model to be ran by MaxEnt
       """
+      self.log.debug("Processing job input")
       self.metrics['jobId'] = self.job.jobId
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
@@ -203,6 +205,7 @@ class MEModelRunner(ApplicationRunner):
       """
       @summary: Pushes the results of the job to the job server
       """
+      self.log.debug("Ready to push results")
       if self.status < JobStatus.GENERAL_ERROR:
          
          # CJG - 06/22/2015
@@ -273,6 +276,7 @@ class MEModelRunner(ApplicationRunner):
       """
       @summary: Writes out the points of the job in a format MaxEnt can read
       """
+      self.log.debug("Writing points")
       f = open(self.samplesFile, 'w')
       f.write("Species, X, Y\n")
       
@@ -315,6 +319,7 @@ optional args can contain any flags understood by Maxent -- for example, a
                                                self.jobLayerDir, outFile, 
                                                algoOptions, args)
       print cmd
+      self.log.debug(cmd)
       
       if not os.path.exists(ME_CMD):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
@@ -334,6 +339,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       """
       @summary: Checks the output of openModeller to see if any errors occurred
       """
+      self.log.debug("Checking output")
       # If an output raster does not exist, an error occurred
       if not os.path.exists(self.outputFile):
          errfname = os.path.join(self.outputPath, 'maxent.log')
@@ -362,6 +368,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       """
       @summary: Initializes a projection for generation
       """
+      self.log.debug("Processing job input")
       self.metrics['jobId'] = self.job.jobId
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
@@ -448,12 +455,15 @@ optional args can contain any flags understood by Maxent -- for example, a
                self.status = JobStatus.IO_LAYER_READ_ERROR
                self._update()
       
+      self.log.debug("Ready to compute")
 
    # .......................................
    def _push(self):
       """
       @summary: Pushes the results of the job to the job server
       """
+      self.log.debug("Ready to push results")
+      
       component = "projection"
       contentType = "image/x-aaigrid"
       outFn = os.path.join(os.path.split(self.outputFile)[0], 'out.tif')
