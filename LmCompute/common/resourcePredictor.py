@@ -43,7 +43,7 @@ def predictResourcesNeeded(job):
    nodes = 1
    coresPerNode = 1
    memoryPerNode = "1024MB"
-   walltime = "01:00:00"
+   walltime = "01:30:00"
    jobQueue = ""
    
    if int(job.processType) == ProcessType.ATT_MODEL:
@@ -72,10 +72,10 @@ def predictResourcesNeeded(job):
             jobQueue = BIG_JOB_QUEUE
          else:
             memoryPerNode = "1024MB"
-            walltime = "00:15:00"
+            walltime = "01:30:00"
       except: # If large is not indicated, assume small
          memoryPerNode = "1024MB"
-         walltime = "00:15:00"
+         walltime = "01:30:00"
    elif int(job.processType) == ProcessType.ATT_PROJECT:
       nodes = 1
       coresPerNode = 1
@@ -87,10 +87,10 @@ def predictResourcesNeeded(job):
             jobQueue = BIG_JOB_QUEUE
          else:
             memoryPerNode = "1024MB"
-            walltime = "00:30:00"
+            walltime = "01:30:00"
       except: # If large is not indicated, assume small
          memoryPerNode = "1024MB"
-         walltime = "00:30:00"
+         walltime = "01:30:00"
    elif int(job.processType) == ProcessType.OM_PROJECT:
       nodes = 1
       coresPerNode = 1
