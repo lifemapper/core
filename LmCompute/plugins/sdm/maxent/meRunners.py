@@ -340,6 +340,9 @@ optional args can contain any flags understood by Maxent -- for example, a
          if os.path.exists(errfname):
             with open(errfname) as f:
                logContent = f.read()
+               self.log.debug("---------------------------------------")
+               self.log.debug(logContent)
+               self.log.debug("---------------------------------------")
             if logContent.find('have different geographic dimensions') >= 0:
                self.status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
             elif logContent.find('NumberFormatException') >= 0:
