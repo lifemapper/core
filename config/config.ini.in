@@ -143,8 +143,12 @@ LOG_STORAGE_LOCATION: @LMDISK@/logs
 
 ; ...............................................
 [LmCompute - plugins - maxent]
-;;;; JAVA_CMD should point to Java in your path, or it should be the full path to the binary
-JAVA_CMD: @JAVABIN@ -Xms2g -Xmx2g -cp
+JAVA_MAX_MEM_OPTION = 2g
+JAVA_INIT_MEM_OPTION = 2g
+JAVA_SYSTEM_ROOT = @LMDISK@/jvm/.java
+JAVA_USER_ROOT = %(JAVA_SYSTEM_ROOT)/.userPrefs
+JAVA_EXE: @JAVABIN@
+JAVA_CMD: %(JAVA_EXE) -Xms%(JAVA_INIT_MEM_OPTION) -Xmx%(JAVA_MAX_MEM_OPTION) -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT) -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT) -cp
 ME_CMD: @LMHOME@/LmCompute/apps/maxent.jar
 MDL_TOOL: density.MaxEnt
 PRJ_TOOL: density.Project

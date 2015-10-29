@@ -93,3 +93,9 @@ LOCAL_MACHINE_ID:
 ;; RETRIEVER_TYPE: directory
 ;; JOB_DIR: /home/lmwriter/holdJobs/
 
+; ...............................................
+[LmCompute - plugins - maxent]
+;; JAVA_MAX_MEM_OPTION = 4g
+;; JAVA_INIT_MEM_OPTION = 4g
+;;;; Reassemble this command if changing any component options
+JAVA_CMD: %(JAVA_EXE) -Xms%(JAVA_INIT_MEM_OPTION) -Xmx%(JAVA_MAX_MEM_OPTION) -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT) -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT) -cp
