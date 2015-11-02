@@ -94,7 +94,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 
       _LayerParameters.__init__(self, -1, modTime, userId, shapegridId)
       Vector.__init__(self, name=layername, bbox=bounds, dlocation=dlocation, 
-         mapunits=mapunits, epsgcode=epsgcode, ogrType=ogrType, 
+         mapunits=mapunits, resolution=cellsize, epsgcode=epsgcode, ogrType=ogrType, 
          ogrFormat=ogrFormat, fidAttribute=siteId, 
          svcObjId=shapegridId, lyrId=layerId, lyrUserId=userId, 
          createTime=createTime, modTime=modTime, metadataUrl=metadataUrl, 
