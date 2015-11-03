@@ -22,12 +22,11 @@
           02110-1301, USA.
 """
 import csv
-import mx.DateTime
 import os
+import subprocess
 import sys
 
-from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, 
-                                     GBIF_TAXONKEY_FIELD, GBIF_TAXONNAME_FIELD) 
+from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD) 
 
 from LmServer.common.localconstants import APP_PATH
 from LmServer.common.log import ThreadLogger
@@ -158,7 +157,6 @@ class FileData(object):
     
 # ...............................................
 def _getSortedName(datapath, outprefix, run=None):
-   today = mx.DateTime.gmt()
    if run is not None:
       outprefix = '%s_%d' % (outprefix, run)
 #    datestr = '%d-%d-%d' % (today.year, today.month, today.day)
@@ -185,6 +183,8 @@ def _getSmallestKeyAndPosition(splitFiles):
 # ...............................................
 def splitIntoSortedFiles(log, datapath, dumpFilename, sortedSubsetPrefix, keyCol):
    fulldumpfilename = os.path.join(datapath, dumpFilename)
+   if not os.path.exists(fulldumpfilename):
+      raise Exception('{} file does not exist'.format(fulldumpfilename))
     
    # Indexes begin with 1
    sortedRuns = 1
@@ -266,8 +266,11 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
       splitFiles.append(fd)
       inIdx += 1
       splitFname = _getSortedName(datapath, inputPrefix, run=inIdx)
-      
+            
    try:
+      if len(splitFiles) < 2:
+         raise Exception('Only {} files to merge (expecting \'{}\')'.format(
+                           len(splitFiles), splitFname))
       # find file with record containing smallest key
       smallKey, pos = _getSmallestKeyAndPosition(splitFiles)
       while pos is not None and not complete:
@@ -375,18 +378,17 @@ def checkMergedFile(log, datapath, filePrefix, keyCol):
 def usage():
    output = """
    Usage:
-      sortGbifExport [split | merge | check]
+      sortGbifExport [split | merge | check] <datapath>
    """
    print output
    
 # ..............................................................................
 # MAIN
 # ..............................................................................
-DATA_MOD_DATE = (2015, 7, 30)
 pname = 'sortGbifExport'
 killfile = os.path.join(APP_PATH, pname + '.die')
-datapath = '/tank/data/input/gbif/%d_%02d_%02d/' % (DATA_MOD_DATE[0], DATA_MOD_DATE[1], 
-                                        DATA_MOD_DATE[2])
+# datestr = subprocess.check_output(['date', '+%F']).strip().replace('-', '_')
+# datapath = '/tank/data/input/gbif/{}/'.format(datestr)
 dumpFilename = 'aimee_export.txt'
 splitPrefix = 'gbif_split'
 mergedPrefix = 'gbif_merged'
@@ -406,18 +408,21 @@ if __name__ == '__main__':
       
    csv.field_size_limit(sys.maxsize)
    
-   if len(sys.argv) != 2:
+   if len(sys.argv) != 3:
       usage()
-   elif sys.argv[1] == 'split':   
-      # Split big, semi-sorted file, to multiple smaller sorted files
-      sortedRuns = splitIntoSortedFiles(log, datapath, dumpFilename, 
-                                        splitPrefix, keyCol)
-   elif sys.argv[1] == 'merge':
-      # Merge all data for production system into multiple subset files
-      mergeSortedFiles(log, datapath, splitPrefix, mergedPrefix, keyCol, 
-                       maxFileSize=None)
-   elif sys.argv[1] == 'check':
-      # Check final output (only for single file now)
-      checkMergedFile(log, datapath, mergedPrefix, keyCol)
    else:
-      usage()
+      cmd = sys.argv[1]
+      datapath = sys.argv[2]
+      if cmd == 'split':   
+         # Split big, semi-sorted file, to multiple smaller sorted files
+         sortedRuns = splitIntoSortedFiles(log, datapath, dumpFilename, 
+                                           splitPrefix, keyCol)
+      elif cmd == 'merge':
+         # Merge all data for production system into multiple subset files
+         mergeSortedFiles(log, datapath, splitPrefix, mergedPrefix, keyCol, 
+                          maxFileSize=None)
+      elif cmd == 'check':
+         # Check final output (only for single file now)
+         checkMergedFile(log, datapath, mergedPrefix, keyCol)
+      else:
+         usage()
