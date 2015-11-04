@@ -39,7 +39,8 @@ class FileData(object):
              recently read data chunk
    """
    # ...............................................
-   def __init__(self, filename, keyCol):
+   def __init__(self, filename, keyCol, log):
+      self.log = log
       self._file = open(filename, 'r')
       self._keyCol = keyCol
       self.currLine = None
@@ -64,10 +65,10 @@ class FileData(object):
             self.currRecnum += 1
          except OverflowError, e:
             self.currRecnum += 1
-            log.debug( 'Overflow on %d (%s)' % (self.currRecnum, str(e)))
+            self.log.debug( 'Overflow on {} ({})'.format(self.currRecnum, str(e)))
          except Exception, e:
-            log.debug('Exception reading line %d, probably EOF (%s)' 
-                      % (self.currRecnum, str(e)))
+            self.log.debug('Exception reading line {}, probably EOF ({})'.format(
+                                                      self.currRecnum, str(e)))
             self.close()
             self.currRecnum = self.currLine = None
             success = True
@@ -92,8 +93,8 @@ class FileData(object):
                try:
                   txkey = int(self.currLine[self._keyCol])
                except Exception, e:
-                  log.debug('Failed on line %d (%s)' 
-                            % (self.currRecnum, str(self.currLine)))
+                  self.log.debug('Failed on line {} ({})'.format(self.currRecnum, 
+                                                            self.currLine))
                else:
                   self.key = txkey
                   complete = True
@@ -105,8 +106,8 @@ class FileData(object):
                   self.key = None
                   
       except Exception, e:
-         log.error('Failed in getNextKey, currRecnum=%s, e=%s' 
-                   % (str(self.currRecnum), str(e)))
+         self.log.error('Failed in getNextKey, currRecnum={}, e={}'.format(
+                                                self.currRecnum, str(e)))
          self.currLine = self.key = None
          
    # ...............................................
@@ -136,8 +137,8 @@ class FileData(object):
             return chunk
                   
       except Exception, e:
-         log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
-                   % (str(self.currRecnum), str(e)))
+         self.log.error('Failed in getNextChunkForCurrKey, currRecnum={}, e={}'.format(
+                   self.currRecnum, str(e)))
          self.currLine = self.key = None
 
    # ...............................................
@@ -195,36 +196,37 @@ def splitIntoSortedFiles(log, datapath, dumpFilename, sortedSubsetPrefix, keyCol
    csvwriter = csv.writer(currSortedFile, delimiter='\t')
    dumpData = FileData(fulldumpfilename, keyCol)
    try:
-      prevkey = _popChunkAndWrite(csvwriter, dumpData)
-      while dumpData.currLine is not None and not(os.path.exists(killfile)) :
+      prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
+      while dumpData.currLine is not None:
          # Start new file when encountering a key out of order
          if dumpData.key < prevkey:
-            log.debug('Wrote %d species to %s, next line = %d' 
-                      % (spCount, currSortedFile.name, dumpData.currRecnum))
+            log.debug('Wrote {} species to {}, next line = {}'.format(spCount, 
+                                    currSortedFile.name, dumpData.currRecnum))
             sortedRuns += 1
             spCount = 0
             currSortedFile, csvwriter = _switchFiles(currSortedFile, csvwriter, 
                                                      datapath, sortedSubsetPrefix, 
                                                      run=sortedRuns)
-            prevkey = _popChunkAndWrite(csvwriter, dumpData)
+            prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
              
          elif dumpData.key >= prevkey:
             spCount += 1
-            prevkey = _popChunkAndWrite(csvwriter, dumpData)
+            prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
              
    except Exception, e:
       log.error(str(e))
    finally:
       csvwriter = None
-      log.debug('Wrote final species to %s, next line = %d' 
-                % (currfname, str(dumpData.currRecnum)))
+      log.debug('Wrote final species to {}, next line = {}'.format(currfname, 
+                                                         dumpData.currRecnum))
       dumpData.close()
       try:
          currSortedFile.close()
       except:
          pass
        
-   log.debug('%d sorted runs; final line %d' % (sortedRuns, dumpData.currRecnum))
+   log.debug('{} sorted runs; final line {}'.format(sortedRuns, 
+                                                    dumpData.currRecnum))
    return sortedRuns
     
 
@@ -262,7 +264,7 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
    splitFiles = []
    splitFname = _getSortedName(datapath, inputPrefix, run=inIdx)
    while os.path.exists(splitFname):
-      fd = FileData(splitFname, keyCol)
+      fd = FileData(splitFname, keyCol, log)
       splitFiles.append(fd)
       inIdx += 1
       splitFname = _getSortedName(datapath, inputPrefix, run=inIdx)
@@ -273,10 +275,12 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
                            len(splitFiles), splitFname))
       # find file with record containing smallest key
       smallKey, pos = _getSmallestKeyAndPosition(splitFiles)
+      smallKeyCount = 0
       while pos is not None and not complete:
          # Output records in this file with smallKey 
-         _popChunkAndWrite(csvwriter, splitFiles[pos])
-         lastKey = smallKey
+         lastKey, lastCount = _popChunkAndWrite(csvwriter, splitFiles[pos])
+         smallKeyCount += lastCount
+#          lastKey = smallKey
          
          # If size limit is reached, switch to new file
          if (maxFileSize is not None and 
@@ -287,7 +291,9 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
             
          # Find smallest again
          smallKey, pos = _getSmallestKeyAndPosition(splitFiles)
-         _logProgress(log, pos, smallKey, lastKey)
+         _logProgress(log, pos, smallKey, lastKey, lastCount, smallKeyCount)
+         if smallKey != lastKey:
+            smallKeyCount = 0
          
    except Exception, e:
       raise
@@ -324,34 +330,37 @@ def _popChunkAndWriteOld(csvwriter, filedata):
 def _popChunkAndWrite(csvwriter, filedata):
    # first get chunk
    thiskey = filedata.key
-   chunk = filedata.getThisChunk()
-   for rec in chunk:
+   thischunk = filedata.getThisChunk()
+   thiscount = len(thischunk)
+   
+   for rec in thischunk:
       csvwriter.writerow(rec)
 
    if filedata.eof():
       filedata.close()
    else:
       filedata.getNextKey()
-   return thiskey
+   return thiskey, thiscount
             
   
 # ...............................................
-def _logProgress(log, idx, smallKey, lastKey):
+def _logProgress(log, idx, smallKey, lastKey, lastCount, currentCount):
    if idx is None:
-      log.debug('Completed, final key %s' % str(lastKey))
-   elif smallKey > lastKey:
-      log.debug('New key     = %d (file %d)' % (smallKey, idx))
-#    elif smallKey == lastKey:
-#       log.debug('Same              (file %d)' % (idx))
-#    else:
-#       log.debug('Problem = %s (file %d)' % (str(smallKey), idx))
+      log.debug('Completed, final key {}'.format(lastKey))
+   else:
+      log.debug('         count = {} (file {})'.format(lastCount, idx))
+      if smallKey > lastKey:
+         log.debug('         Total = {}'.format(currentCount))
+         log.debug('New key     = {} (file {})'.format(smallKey, idx))
+      elif smallKey < lastKey:
+         log.debug('Problem = {} (file {})' % (smallKey, idx))
 
       
 # ...............................................
 def checkMergedFile(log, datapath, filePrefix, keyCol):
    uniqueCount = failCount = 0
    filename = _getSortedName(datapath, filePrefix)
-   bigSortedData = FileData(filename, keyCol)
+   bigSortedData = FileData(filename, keyCol, log)
    prevKey = bigSortedData.key
    tmp = bigSortedData.getThisChunk()
    

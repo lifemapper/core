@@ -1944,6 +1944,7 @@ BEGIN
         AND scenarioid = scenid
         AND algorithmCode = algcode
         AND algorithmParams = algparams
+        AND maskId = mskid
         AND userid = usrid;
    IF NOT FOUND THEN 
       BEGIN
