@@ -309,7 +309,7 @@ def convertLayer(srcFn, dstFn, outputFormat="GTiff"):
 
 # .............................................................................
 def multiplyAndConvertLayer(srcFn, dstFn, outputFormat='GTiff', 
-                            multiplier=100000, noDataVal=127, dataType="int"):
+                            multiplier=10000, noDataVal=127, dataType="int"):
    """
    @summary: Multiplies a layer and converts it to the specified format
    @note: This can be used to reduce the file size of maxent outputs from float64
@@ -323,8 +323,8 @@ def multiplyAndConvertLayer(srcFn, dstFn, outputFormat='GTiff',
                                be division by zero
    """
    if dataType.lower() == "int":
-      npType = numpy.uint32
-      gdalType = gdal.GDT_UInt32
+      npType = numpy.uint16
+      gdalType = gdal.GDT_UInt16
    else:
       raise Exception, "Unknown data type"
    
