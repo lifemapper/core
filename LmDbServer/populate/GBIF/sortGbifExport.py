@@ -39,7 +39,8 @@ class FileData(object):
              recently read data chunk
    """
    # ...............................................
-   def __init__(self, filename, keyCol):
+   def __init__(self, filename, keyCol, log):
+      self.log = log
       self._file = open(filename, 'r')
       self._keyCol = keyCol
       self.currLine = None
@@ -64,9 +65,9 @@ class FileData(object):
             self.currRecnum += 1
          except OverflowError, e:
             self.currRecnum += 1
-            log.debug( 'Overflow on {} ({})'.format(self.currRecnum, str(e)))
+            self.log.debug( 'Overflow on {} ({})'.format(self.currRecnum, str(e)))
          except Exception, e:
-            log.debug('Exception reading line {}, probably EOF ({})'.format(
+            self.log.debug('Exception reading line {}, probably EOF ({})'.format(
                                                       self.currRecnum, str(e)))
             self.close()
             self.currRecnum = self.currLine = None
@@ -92,7 +93,7 @@ class FileData(object):
                try:
                   txkey = int(self.currLine[self._keyCol])
                except Exception, e:
-                  log.debug('Failed on line {} ({})'.format(self.currRecnum, 
+                  self.log.debug('Failed on line {} ({})'.format(self.currRecnum, 
                                                             self.currLine))
                else:
                   self.key = txkey
@@ -105,8 +106,8 @@ class FileData(object):
                   self.key = None
                   
       except Exception, e:
-         log.error('Failed in getNextKey, currRecnum={}, e={}'.format(
-                                                self.currRecnum, str(e))
+         self.log.error('Failed in getNextKey, currRecnum={}, e={}'.format(
+                                                self.currRecnum, str(e)))
          self.currLine = self.key = None
          
    # ...............................................
@@ -136,7 +137,7 @@ class FileData(object):
             return chunk
                   
       except Exception, e:
-         log.error('Failed in getNextChunkForCurrKey, currRecnum={}, e={}'.format(
+         self.log.error('Failed in getNextChunkForCurrKey, currRecnum={}, e={}'.format(
                    self.currRecnum, str(e)))
          self.currLine = self.key = None
 
@@ -196,7 +197,7 @@ def splitIntoSortedFiles(log, datapath, dumpFilename, sortedSubsetPrefix, keyCol
    dumpData = FileData(fulldumpfilename, keyCol)
    try:
       prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
-      while dumpData.currLine is not None and not(os.path.exists(killfile)) :
+      while dumpData.currLine is not None:
          # Start new file when encountering a key out of order
          if dumpData.key < prevkey:
             log.debug('Wrote {} species to {}, next line = {}'.format(spCount, 
@@ -263,7 +264,7 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
    splitFiles = []
    splitFname = _getSortedName(datapath, inputPrefix, run=inIdx)
    while os.path.exists(splitFname):
-      fd = FileData(splitFname, keyCol)
+      fd = FileData(splitFname, keyCol, log)
       splitFiles.append(fd)
       inIdx += 1
       splitFname = _getSortedName(datapath, inputPrefix, run=inIdx)
@@ -330,7 +331,7 @@ def _popChunkAndWrite(csvwriter, filedata):
    # first get chunk
    thiskey = filedata.key
    thischunk = filedata.getThisChunk()
-   thiscount = len(chunk)
+   thiscount = len(thischunk)
    
    for rec in thischunk:
       csvwriter.writerow(rec)
@@ -349,7 +350,7 @@ def _logProgress(log, idx, smallKey, lastKey, lastCount, currentCount):
    else:
       log.debug('         count = {} (file {})'.format(lastCount, idx))
       if smallKey > lastKey:
-         log.debug('         Total = {}'.format(currentCount)
+         log.debug('         Total = {}'.format(currentCount))
          log.debug('New key     = {} (file {})'.format(smallKey, idx))
       elif smallKey < lastKey:
          log.debug('Problem = {} (file {})' % (smallKey, idx))
@@ -359,7 +360,7 @@ def _logProgress(log, idx, smallKey, lastKey, lastCount, currentCount):
 def checkMergedFile(log, datapath, filePrefix, keyCol):
    uniqueCount = failCount = 0
    filename = _getSortedName(datapath, filePrefix)
-   bigSortedData = FileData(filename, keyCol)
+   bigSortedData = FileData(filename, keyCol, log)
    prevKey = bigSortedData.key
    tmp = bigSortedData.getThisChunk()
    
