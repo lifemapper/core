@@ -365,7 +365,7 @@ def checkMergedFile(log, datapath, filePrefix, keyCol):
    tmp = bigSortedData.getThisChunk()
    
    try:
-      while bigSortedData.currLine is not None and not(os.path.exists(killfile)) :
+      while bigSortedData.currLine is not None:
          if bigSortedData.key > prevKey: 
             uniqueCount += 1
          elif bigSortedData.key < prevKey:
@@ -394,8 +394,7 @@ def usage():
 # ..............................................................................
 # MAIN
 # ..............................................................................
-pname = 'sortGbifExport'
-killfile = os.path.join(APP_PATH, pname + '.die')
+basename = os.path.splitext(os.path.basename(__file__))[0]
 # datestr = subprocess.check_output(['date', '+%F']).strip().replace('-', '_')
 # datapath = '/tank/data/input/gbif/{}/'.format(datestr)
 dumpFilename = 'aimee_export.txt'
@@ -405,9 +404,7 @@ oneGb = 1000000000
 
 # ...............................................
 if __name__ == '__main__':
-   log = ThreadLogger(pname)
-   if os.path.exists(killfile):
-      os.remove(killfile)
+   log = ThreadLogger(basename)
    
    keyCol = None
    for idx, vals in GBIF_EXPORT_FIELDS.iteritems():
