@@ -485,7 +485,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       except:
          try: # See if the output should be multiplied instead
             multiplyDataType = self.job.postProcessing.multiply.dataType
-            multiplier = self.job.postProcessing.multiply.multiplier
+            multiplier = int(self.job.postProcessing.multiply.multiplier)
             multiplyAndConvertLayer(self.outputFile, outFn, 
                               multiplier=multiplier, dataType=multiplyDataType)
          except:

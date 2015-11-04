@@ -191,7 +191,7 @@ class JobFormatter(Formatter):
             #          for and what to multiply by
             elif dObj.user == 'cgwillis':
                multEl = SubElement(postPEl, "multiply", 
-                                   attrib={"multiplier" : 100000,
+                                   attrib={"multiplier" : 10000,
                                            "dataType" : "int"})
                
             # Attach maxent algorithm parameters
