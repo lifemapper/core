@@ -50,14 +50,6 @@ class OutputFormat:
    SHAPE = '.shp'
    LOG = '.log'
    
-# TODO: Replace with OutputFormat
-# CSV_EXTENSION = '.csv'
-# JSON_EXTENSION = '.json'
-# NUMPY_EXTENSION = '.npy'
-# PICKLE_EXTENSION = '.pkl'
-RASTER_EXTENSION = '.tif'
-SHAPE_EXTENSION = '.shp'
-
 SHAPEFILE_EXTENSIONS = [".shp", ".shx", ".dbf", ".prj", ".sbn", ".sbx", ".fbn", 
                         ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", 
                         ".shp.xml", ".cpg", ".qix"]
