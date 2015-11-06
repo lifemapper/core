@@ -88,6 +88,10 @@ class EarlJr(LMObject):
       return parts
    
 # ...............................................
+   def createArchiveDataPath(self):
+      return os.path.join(DATA_PATH, MODEL_PATH) 
+
+# ...............................................
    def createDataPath(self, usr, occsetId=None, epsg=None, 
                       isLayers=False, isMaps=False, 
                       radexpId=None, bucketId=None):
@@ -107,7 +111,8 @@ class EarlJr(LMObject):
           (not isMaps and (epsg is None and occsetId is None))):
          raise LMError('createDataPath requires userId and (maps xor occurrenceSetId xor EPSG)')
 
-      basepath = os.path.join(DATA_PATH, MODEL_PATH, usr)
+      archivePath = self.createArchiveDataPath()
+      basepath = os.path.join(archivePath, usr)
       
       # OccurrenceSet overrides basic maps
       if occsetId is not None:

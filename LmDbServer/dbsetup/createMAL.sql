@@ -333,6 +333,7 @@ create table lm3.Model
    occurrenceSetId int REFERENCES lm3.OccurrenceSet ON DELETE CASCADE,
    scenarioCode varchar(30),
    scenarioId int REFERENCES lm3.Scenario ON DELETE CASCADE,
+   -- TODO:  add foreign key reference to lm3.Layer
    maskId int,
    createTime double precision,
    status int,
@@ -350,9 +351,6 @@ create table lm3.Model
 CREATE INDEX idx_mdlLastModified ON lm3.Model(statusModTime);
 CREATE INDEX idx_modelUser ON lm3.Model(userId);
 CREATE INDEX idx_mdlStatus ON lm3.Model(status);
-
--- -------------------------------
--- Tables lm3.ComputeResource, lm3.LMJob, lm3.LMUser in createCommon.sql
 
 -- -------------------------------
 -- Holds projection of a ruleset on to a set of environmental layers
