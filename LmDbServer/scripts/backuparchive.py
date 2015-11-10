@@ -24,6 +24,7 @@
           02110-1301, USA.
 """
 import argparse
+import mx.DateTime
 import os
 import subprocess
 import sys
@@ -37,6 +38,7 @@ from LmDbServer.populate.GBIF.sortGbifExport import datapath
  
 DEBUG = False
 USER_REPLACE_STR = '#USERS#'
+# list of (table, columns, selectStatement)
 USER_DEPENDENCIES = [
    ('{}.lmuser'.format(LM_SCHEMA), 
     'SELECT * FROM {}.lmuser WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
@@ -104,13 +106,14 @@ def getTimestamp(dateonly=False):
    return timestamp
    
 # ...............................................
-def getFilename(outpath, basefname, dumptype, table=None):
+def getFilename(outpath, basefname, dumptype, table=None, user=None):
    '''
    @param outpath: base path for filenames
    @param basefname: common base filename for all dumptypes 
    @param dumptype: options are db_schema, db_data, file_data, readme, log
    @param table: 2-tuple, first is the tablename, 2nd is an integer indicating 
           the order in which to process this file
+   @param user: username string
    '''
    outfname = None
    choices = ('db_schema', 'db_data', 'file_data', 'readme', 'table', 'log')
@@ -118,7 +121,9 @@ def getFilename(outpath, basefname, dumptype, table=None):
       raise Exception('Unknown dumptype {}; choices are {}'.format(dumptype, choices))
    
    if dumptype == 'table' and table is not None:
-      basefname = '{}-{}-{:02d}'.format(basefname, table[0], table[1])
+      basefname = '{}-{:02d}-{}'.format(basefname, table[1], table[0])
+   elif dumptype == 'file_data' and user is not None:
+      basefname = '{}-{}'.format(basefname, user)
       
    if dumptype == 'db_schema':
       outfname = os.path.join(outpath, '{}.schema.dump'.format(basefname))
@@ -164,7 +169,22 @@ def dumpDatabase(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    return readmeLines
 
 # ...............................................
-def copyDatabaseUsers(outpath, basefname, lmusers, dbschema, dbname, dbuser):
+def getColumns(dbuser, dbname, fulltablename):
+   dbschema, dbtable = fulltablename.split('.')
+   colQuery = ('SELECT column_name FROM information_schema.columns '+
+               'WHERE table_schema = \'{}\' AND table_name   = \'{}\''.format(dbschema, dbtable))
+   getColumnsStmt = 'psql --username={} --dbname={} --command=\"{}\"'.format(dbuser, dbname, colQuery)
+   columnStr = subprocess.check_output(getColumnsStmt, shell=True).strip()
+   tmp = columnStr.split('\n')
+   cols = []
+   for c in tmp:
+      c = c.strip()
+      if (c not in ('column_name', '') and not c.startswith('----') and not c.startswith('(')):
+         cols.append('\'{}\''.format(c)) 
+   return cols
+
+# ...............................................
+def copyDatabaseUsersOut(outpath, basefname, lmusers, dbname, dbuser):
    readmeLines = ['', '',
             'The following files contain the user-specific metadata contained ',
             'in the Lifemapper SDM.  Files are numbered according to the order ',
@@ -173,10 +193,11 @@ def copyDatabaseUsers(outpath, basefname, lmusers, dbschema, dbname, dbuser):
    userSetStr = ', '.join(escapedUsers)
    for i in range(len(USER_DEPENDENCIES)):
       (tablename, selstr) = USER_DEPENDENCIES[i]
+      cols = getColumns(dbuser, dbname, tablename)
       outfname = getFilename(outpath, basefname, 'table', table=(tablename, i))
       queryStmt = selstr.replace(USER_REPLACE_STR, userSetStr)
       copyToStmt = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)
-      copyFromStmt = 'COPY {} FROM {} '.format(tablename, outfname)
+      copyFromStmt = '\"COPY {} ({}) FROM STDIN \"'.format(tablename, ', '.join(cols))
       dumptableStmt = 'psql --username={} --dbname={} --command={}'.format(dbuser, dbname, copyToStmt)
       print 'Dumping table: ', tablename
       with open(outfname, 'w') as outf:
@@ -195,14 +216,6 @@ def copyDatabaseUsers(outpath, basefname, lmusers, dbschema, dbname, dbuser):
 # ...............................................
 def dumpDbSchema(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    outfname = getFilename(outpath, basefname, 'db_schema')
-#    dumpschemargs = ['pg_dump', 
-#                     '--username={}'.format(dbuser), 
-#                     '--format={}'.format(dumpformat),
-#                     '--schema-only',
-#                     '--schema={}'.format(dbschema),
-#                     '--verbose',
-#                     '--file={}'.format(outfname),
-#                     dbname]
    dumpschemStmt = 'pg_dump --username={} --format={} --schema-only --schema={} --verbose --file={} {}'.format(
                            dbuser, dumpformat, dbschema, outfname, dbname)
    if not DEBUG:
@@ -249,7 +262,21 @@ def dumpDbData(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    return readmeLines
 
 # ...............................................
-def getUsersToBackup(backupChoice, defaultUser, anonUser):
+def getActiveUsers(dbuser, dbname, defaultUser, anonUser, days=365):
+      yearago = mx.DateTime.gmt().mjd - 365
+      queryStmt = 'select distinct(userid) from occurrenceset where datelastmodified > {}'.format(yearago)
+      cmd = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)
+      fullStmt = 'psql --username={} --dbname={} --command={}'.format(dbuser, dbname, cmd)
+      backupuserStr = subprocess.check_output(fullStmt, preexec_fn=SetPass, shell=True)
+      backupusers = backupuserStr.split('\n')
+      activeUsers = []
+      for usr in backupusers:
+         if usr not in ('', defaultUser, anonUser):
+            activeUsers.append(usr)
+      return activeUsers
+
+# ...............................................
+def getUsersToBackup(backupChoice, dbuser, dbname, defaultUser, anonUser):
    hostname = subprocess.check_output('hostname').strip()
    if hostname == 'hera':
       datapath = '/share/data/archive'
@@ -258,40 +285,46 @@ def getUsersToBackup(backupChoice, defaultUser, anonUser):
       datapath = earl.createArchiveDataPath()
    if backupChoice not in ('users', 'all'):
       backupusers = [backupChoice]
-   else:
+   elif backupChoice == 'users':
+      backupusers = getActiveUsers(dbuser, dbname, defaultUser, anonUser)
+   elif backupChoice == 'all':
       backupusers = []
       for entry in os.listdir(datapath):
          if (not entry.startswith('.') and 
              not entry == anonUser and
              os.path.isdir(os.path.join(datapath, entry))):
             backupusers.append(entry)
-      if backupChoice == 'users':
-         backupusers.remove(defaultUser)
-   print 'Users to backup = ', str(backupusers)
    return datapath, backupusers
 
 # ...............................................
 def dumpFileData(outpath, basefname, datapath, backupusers):
-   outfname = getFilename(outpath, basefname, 'file_data')
-   # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories 
-   with tarfile.open(outfname, mode='w:gz') as archive:
-      for entry in os.listdir(datapath):
-         if entry in backupusers:
+   readmeLines = []
+   pwd = os.curdir
+   # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories
+   os.chdir(datapath)
+   for entry in os.listdir(datapath):
+      if entry in backupusers:
+         if len(readmeLines) == 0:
+            readmeLines.extend(['', '', 
+            '   The following files contain the file data for Lifemapper data for users: ',
+            str(backupusers),
+            '   In the target Lifemapper installation, file data should be moved into the ',
+            '   DATA_PATH/MODEL_PATH directory; these data came from the',
+            '   {} directory in the origin Lifemapper installation on {}'.format(datapath, getTimestamp(dateonly=True)),
+            '',
+            '   If the existing data archive contains a matching username, data could',
+            '   be overwritten.  If this is the case, uncompress to a different',
+            '   location, and merge with \"rsync -av source destination\".',
+            '   To uncompress data, execute the following commands: '])
+
+         outfname = getFilename(outpath, basefname, 'file_data', user=entry)
+         with tarfile.open(outfname, mode='w:gz') as archive:
             archive.add(os.path.join(datapath, entry), recursive=True)
+         
+         restoreCmd = 'tar -xvzf {}'.format(outfname)
+         readmeLines.append('      {}'.format(restoreCmd)) 
+   os.chdir(pwd)     
             
-   restoreCmd = 'tar -xvzf {}'.format(outfname)
-   readmeLines = ['', '', '{}:'.format(outfname),
-      '   contains the file data pointed to by this database',
-      '   In the target Lifemapper installation, file data should be moved into the ',
-      '   DATA_PATH/MODEL_PATH directory; these data came from the',
-      '   {} directory in the origin Lifemapper installation'.format(datapath),
-      '',
-      '   If the existing data archive contains the same usernames, data for those',
-      '   usernames will be overwritten.  If this is the case, uncompress to a ',
-      '   different location, and merge. Usernames contained in this data archive file are:',
-       str(backupusers),
-      '   To uncompress data, execute: ',
-      '      {}'.format(restoreCmd)]
    return readmeLines
 
 # ...............................................
@@ -354,26 +387,21 @@ if __name__ == '__main__':
    tarballHelp = ['']
     
    # Identify users for file backup
-   datapath, backupusers = getUsersToBackup(backupChoice, ARCHIVE_USER, 
-                                            DEFAULT_POST_USER)
+   datapath, backupusers = getUsersToBackup(backupChoice, dbuser, MAL_STORE, 
+                                            ARCHIVE_USER, DEFAULT_POST_USER)
    # Dump Schema and Database
    dbschemaHelp = dumpDbSchema(outpath, basefname, dbuser, dumpformat, 
                                LM_SCHEMA, MAL_STORE)
    # Dump tables of user data 
-   tableHelp = copyDatabaseUsers(outpath, basefname, backupusers, LM_SCHEMA, MAL_STORE, dbuser)
-#    # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories 
-#    tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
+   tableHelp = copyDatabaseUsers(outpath, basefname, backupusers, MAL_STORE, dbuser)
+   
+   # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories 
+   tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
+   
    # Explain outputs
    readmeFname = writeReadme(outpath, basefname, 
                              [dbschemaHelp, tableHelp, tarballHelp])
+   
    print 'Instructions for using output from this script are in {}'.format(readmeFname)
    
    
-#    # Dump Database
-#    dbdataFname, dbdataHelp = dumpDbData(outpath, basefname, dbuser, 
-#                                       dumpformat, LM_SCHEMA, MAL_STORE) 
-#    # Dump entire database 
-#    dumpformat = 'plain'
-#    dbFname, restoreCmd = dumpDatabase(outpath, basefname, dbuser, 
-#                                       dumpformat, LM_SCHEMA, MAL_STORE)
- 
