@@ -35,11 +35,12 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import MAL_STORE, LM_SCHEMA
 from LmDbServer.populate.GBIF.sortGbifExport import datapath
  
-DEBUG = True
+DEBUG = False
 USER_REPLACE_STR = '#USERS#'
 USER_DEPENDENCIES = [
    ('{}.lmuser'.format(LM_SCHEMA), 
     'SELECT * FROM {}.lmuser WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+                     
    ('{}.lmjob'.format(LM_SCHEMA), 
     'SELECT j.* FROM {}.lmjob j, '.format(LM_SCHEMA)+
     ' {0}.lm_occJob oj, {0}.lm_mdlJob mj, {0}.lm_prjJob pj '.format(LM_SCHEMA)+
@@ -49,38 +50,47 @@ USER_DEPENDENCIES = [
     '        AND mj.mdluserId IN ({}))'.format(USER_REPLACE_STR)+
     '    OR (j.lmjobid = pj.lmjobid  '+
     '        AND pj.mdluserId IN ({}))'.format(USER_REPLACE_STR)),
+                     
    ('{}.experiment'.format(LM_SCHEMA), 
-    'SELECT * FROM experiment WHERE userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
    ('{}.occurrenceset'.format(LM_SCHEMA), 
-    'SELECT * FROM occurrenceset WHERE userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT * FROM {}.occurrenceset WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
    ('{}.scenario'.format(LM_SCHEMA), 
-    'SELECT * FROM scenario WHERE userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT * FROM {}.scenario WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
    ('{}.layertype'.format(LM_SCHEMA), 
-    'SELECT * FROM layertype WHERE userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT * FROM {}.layertype WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
    ('{}.layer'.format(LM_SCHEMA), 
-    'SELECT * FROM layer WHERE userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT * FROM {}.layer WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+                     
    ('{}.scenariolayers'.format(LM_SCHEMA), 
-    'SELECT sl.* FROM scenariolayers sl, scenario s'+ 
+    'SELECT sl.* FROM {0}.scenariolayers sl, {0}.scenario s'.format(LM_SCHEMA)+ 
     ' WHERE sl.scenarioid = s.scenarioid AND s.userid IN ({})'.format(USER_REPLACE_STR)),
+   
    ('{}.keyword'.format(LM_SCHEMA), 
-    'SELECT * FROM keyword WHERE userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT k.* FROM {0}.keyword k, {0}.layertypekeyword ltk, {0}.layertype lt, {0}.scenariokeywords sk, {0}.scenario s '.format(LM_SCHEMA)+
+    ' WHERE (k.keywordid = ltk.keywordid AND ltk.layertypeid = lt.layertypeid AND lt.userid IN ({}))'.format(USER_REPLACE_STR)+
+    ' OR (k.keywordid = sk.keywordid AND sk.scenarioid = s.scenarioid AND s.userid IN ({}))'.format(USER_REPLACE_STR)),
    ('{}.layertypekeyword'.format(LM_SCHEMA), 
-    'SELECT * FROM layertypekeyword ltk, layertype lt'+ 
+    'SELECT * FROM {0}.layertypekeyword ltk, {0}.layertype lt'.format(LM_SCHEMA)+ 
     ' WHERE ltk.layertypeid = lt.layertypeid '+
     ' AND lt.userid IN ({})'.format(USER_REPLACE_STR)),
    ('{}.scenariokeywords'.format(LM_SCHEMA), 
-    'SELECT * FROM scenariokeywords sk, scenarios'+
-    ' WHERE ltk.layertypeid = lt.layertypeid '+
-    ' AND lt.userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT * FROM {0}.scenariokeywords sk, {0}.scenario s'.format(LM_SCHEMA)+
+    ' WHERE sk.scenarioid = s.scenarioid '+
+    ' AND s.userid IN ({})'.format(USER_REPLACE_STR)),
+
    ('{}.model'.format(LM_SCHEMA), 
-    'SELECT * FROM model WHERE userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT * FROM {}.model WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
    ('{}.projection'.format(LM_SCHEMA), 
-    'SELECT * FROM projection p, model m'+
-    ' WHERE p.modelid = m.modelid and m.userid IN ({})'.format(USER_REPLACE_STR)),
-                     ]
+    'SELECT * FROM {0}.projection p, {0}.model m'.format(LM_SCHEMA)+
+    ' WHERE p.modelid = m.modelid and m.userid IN ({})'.format(USER_REPLACE_STR)) ]
 
 # MAXSIZE = '1T'
 # MULTI_VOLUME_SCRIPT='new-volume.sh'
+# ...............................................
+class SetPass:
+   def __call__(self):
+      os.environ['PGPASSWORD'] = 'jetsons'
 
 # ...............................................
 def getTimestamp(dateonly=False):
@@ -119,7 +129,7 @@ def getFilename(outpath, basefname, dumptype, table=None):
    elif dumptype == 'readme':
       outfname = os.path.join(outpath, '{}.README'.format(basefname))
    elif dumptype == 'table':
-      outfname = os.path.join(outpath, '{}{}'.format(basefname, OutputFormat.CSV))
+      outfname = os.path.join(outpath, '{}{}'.format(basefname, OutputFormat.TXT))
    elif dumptype == 'log':
       outfname = os.path.join(outpath, '{}{}'.format(basefname, OutputFormat.LOG))
 
@@ -129,12 +139,12 @@ def getFilename(outpath, basefname, dumptype, table=None):
 def dumpDatabase(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    outfname = getFilename(outpath, basefname, 'db_schema')
    # Backup entire database, Lifemapper schema only
+   # pg_dump --username=admin --format=custom --schema-only --schema=lm3 --verbose --file=/tmp/test.dump mal
    dumpargs = ['pg_dump', 
                '--username={}'.format(dbuser), 
                '--file={}'.format(outfname),
                '--format={}'.format(dumpformat),
                '--schema={}'.format(dbschema),
-               '--oids',
                '--verbose',
                dbname]
    print str(dumpargs)
@@ -165,39 +175,38 @@ def copyDatabaseUsers(outpath, basefname, lmusers, dbschema, dbname, dbuser):
       (tablename, selstr) = USER_DEPENDENCIES[i]
       outfname = getFilename(outpath, basefname, 'table', table=(tablename, i))
       queryStmt = selstr.replace(USER_REPLACE_STR, userSetStr)
-      copyToStmt = 'COPY {} ({}) TO STDIN WITH FORMAT text HEADER TRUE'.format(tablename, queryStmt)
-      copyFromStmt = 'COPY {} FROM {} WITH FORMAT text HEADER TRUE'.format(tablename, outfname)
-      dumptableargs = ['psql', 
-                       '--username={}'.format(dbuser), 
-                       '--dbname={}'.format(dbname),
-                       '--command={}'.format(copyToStmt)]
+      copyToStmt = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)
+      copyFromStmt = 'COPY {} FROM {} '.format(tablename, outfname)
+      dumptableStmt = 'psql --username={} --dbname={} --command={}'.format(dbuser, dbname, copyToStmt)
       print 'Dumping table: ', tablename
       with open(outfname, 'w') as outf:
-         print str(dumptableargs)
          if not DEBUG:
-            dProc = subprocess.Popen(dumptableargs, stdout=outf, shell=True)
-         readmeLines.extend(['', 
-            '{}:'.format(outfname),
-            '    contains the metadata contained in the Lifemapper SDM',
-            '    database {}, table {}.  To append data existing database table, '.format(dbname, tablename),
-            '    execute: ',
-            '       {}'.format(copyFromStmt)])
-      return readmeLines
+            dProc = subprocess.Popen(dumptableStmt, stdout=outf, preexec_fn=SetPass, shell=True)
+      outf.close()
+      readmeLines.extend(['', 
+         '{}:'.format(outfname),
+         '    contains the metadata contained in the Lifemapper SDM',
+         '    database {}, table {}.  To append data existing database table, '.format(dbname, tablename),
+         '    execute: ',
+         '       {}'.format(copyFromStmt)])
+         
+   return readmeLines
       
 # ...............................................
 def dumpDbSchema(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    outfname = getFilename(outpath, basefname, 'db_schema')
-   dumpschemargs = ['pg_dump', 
-                    '--username={}'.format(dbuser), 
-                    '--format={}'.format(dumpformat),
-                    '--schema-only',
-                    '--schema={}'.format(dbschema),
-                    '--verbose',
-                    '--file={}'.format(outfname),
-                    dbname]
-   print str(dumpschemargs)
+#    dumpschemargs = ['pg_dump', 
+#                     '--username={}'.format(dbuser), 
+#                     '--format={}'.format(dumpformat),
+#                     '--schema-only',
+#                     '--schema={}'.format(dbschema),
+#                     '--verbose',
+#                     '--file={}'.format(outfname),
+#                     dbname]
+   dumpschemStmt = 'pg_dump --username={} --format={} --schema-only --schema={} --verbose --file={} {}'.format(
+                           dbuser, dumpformat, dbschema, outfname, dbname)
    if not DEBUG:
-      dProc = subprocess.Popen(dumpschemargs, shell=True)
+      dProc = subprocess.Popen(dumpschemStmt, preexec_fn=SetPass, shell=True)
    restoreSchemaArgs = ['pg_restore', '--verbose',
                         '--username={}'.format(dbuser), 
                         '--dbname={}'.format(dbname), 
@@ -288,11 +297,12 @@ def dumpFileData(outpath, basefname, datapath, backupusers):
 # ...............................................
 def writeReadme(outpath, basefname, readmeLineLists):
    readmeFname = getFilename(outpath, basefname, 'readme')
-   rmf = open(readmeFname, 'r')
+   rmf = open(readmeFname, 'w')
    rmf.write('*********************************************************************')
    rmf.write('This README was generated to accompany data dumped into files: ')
    for helpLines in readmeLineLists:
-      rmf.writelines(helpLines)
+      for line in helpLines:
+         rmf.write(line+'\n')
    rmf.close()
    return readmeFname
 
@@ -333,10 +343,15 @@ if __name__ == '__main__':
    scriptname = os.path.splitext(os.path.basename(__file__))[0]
    datestr = getTimestamp(dateonly=True).replace('-', '_')
    basefname = '{}.{}.{}'.format(scriptname, backupChoice, datestr)
+   
+   logfname = getFilename(outpath, basefname, 'log')
     
    # PostgreSQL dump/restore options
    dbuser = 'admin'
    dumpformat = 'custom'
+   dbschemaHelp = [''] 
+   tableHelp = [''] 
+   tarballHelp = ['']
     
    # Identify users for file backup
    datapath, backupusers = getUsersToBackup(backupChoice, ARCHIVE_USER, 
@@ -346,8 +361,8 @@ if __name__ == '__main__':
                                LM_SCHEMA, MAL_STORE)
    # Dump tables of user data 
    tableHelp = copyDatabaseUsers(outpath, basefname, backupusers, LM_SCHEMA, MAL_STORE, dbuser)
-   # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories 
-   tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
+#    # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories 
+#    tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
    # Explain outputs
    readmeFname = writeReadme(outpath, basefname, 
                              [dbschemaHelp, tableHelp, tarballHelp])
