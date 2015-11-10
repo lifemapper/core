@@ -359,7 +359,10 @@ class SDMProjectionJob(_Job):
       @param contentType: The mime-type of the content
       """
       if component.lower() == 'projection':
-         self.writeRaster(content, None)
+         if self.jobData._dataObj.getUserId() == 'cgwillis':
+            self.writeZippedRaster(content)
+         else:
+            self.writeRaster(content, None)
       elif component.lower() == 'package':
          self.writePackage(content)
       else:
@@ -411,7 +414,31 @@ class SDMProjectionJob(_Job):
                        lineno=self.getLineno())
       self.update(status=JobStatus.COMPLETE)
       del pkgdata
+   
+   # ...................................
+   def writeZippedRaster(self, compressedRaster):
+      projection = self.jobData._dataObj
+      # Converting ASCII grids to Tiffs on ComputeResource, prior to return
+      ext = OutputFormat.TAR_GZ
+      print "Writing compressed projection for: %s" % self.jobData.jid
+      try:
+         # Get file location
+         fname = projection.createLocalDLocation()+".gz"
+         projection.setDLocation(dlocation=fname)
+         # Write data
+         with open(fname, 'wb') as outF:
+            outF.write(compressedRaster)
+         
+      except LMError, e:
+         self.update(status=JobStatus.IO_PROJECTION_OUTPUT_WRITE_ERROR)
+         raise 
+      except Exception, e:
+         self.update(status=JobStatus.IO_PROJECTION_OUTPUT_WRITE_ERROR)
+         raise LMError(currargs='Error writing raster', prevargs=e.args, 
+                       lineno=self.getLineno())
       
+      del compressedRaster
+   
 # .............................................................................
 class SDMOccurrenceJobData(_JobData):
    """
