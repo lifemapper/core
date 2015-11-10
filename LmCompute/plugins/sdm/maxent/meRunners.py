@@ -488,8 +488,18 @@ optional args can contain any flags understood by Maxent -- for example, a
             multiplier = int(self.job.postProcessing.multiply.multiplier)
             multiplyAndConvertLayer(self.outputFile, outFn, 
                               multiplier=multiplier, dataType=multiplyDataType)
+            
+            # Since this is only done for Charlie right now, add stuff for him
+            zipFn = outFn + '.gz'
+            import gzip
+            import shutil
+            with open(outFn, 'rb') as f_in, gzip.open(zipFn, 'wb') as f_out:
+               shutil.copyfileobj(f_in, f_out)            
+            outFn = zipFn
+            contentType = 'application/zip'
          except:
             convertLayer(self.outputFile, outFn)
+      
       
       #scaleAndConvertLayer(self.outputFile, outFn, lyrMin=0.0, lyrMax=1.0)
       #content = open(self.outputFile).read()
