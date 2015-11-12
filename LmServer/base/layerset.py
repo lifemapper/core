@@ -501,12 +501,12 @@ class MapLayerSet(_LayerSet, ServiceObject):
             if isinstance(lyr, SDMProjection):
                rOnlineUrl = lyr.metadataUrl + '/ogc'
                palette = DEFAULT_PROJECTION_PALETTE
-               lyrstr = self._createRasterLayer(lyr, self.mapPrefix, palette)
+               lyrstr = self._createRasterLayer(lyr, palette)
                midLyrStr = '\n'.join([midLyrStr, lyrstr])
             else:
                eOnlineUrl = lyr.metadataUrl + '/ogc'
                palette = DEFAULT_ENVIRONMENTAL_PALETTE
-               lyrstr = self._createRasterLayer(lyr, self.mapPrefix, palette)
+               lyrstr = self._createRasterLayer(lyr, palette)
                baseLyrStr = '\n'.join([baseLyrStr, lyrstr])
               
       maplayers = '\n'.join([topLyrStr, midLyrStr, baseLyrStr])
