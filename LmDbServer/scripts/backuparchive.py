@@ -141,50 +141,21 @@ def getFilename(outpath, basefname, dumptype, table=None, user=None):
    return outfname
       
 # ...............................................
-def dumpDatabase(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
-   outfname = getFilename(outpath, basefname, 'db_schema')
-   # Backup entire database, Lifemapper schema only
-   # pg_dump --username=admin --format=custom --schema-only --schema=lm3 --verbose --file=/tmp/test.dump mal
-   dumpargs = ['pg_dump', 
-               '--username={}'.format(dbuser), 
-               '--file={}'.format(outfname),
-               '--format={}'.format(dumpformat),
-               '--schema={}'.format(dbschema),
-               '--verbose',
-               dbname]
-   print str(dumpargs)
-   if not DEBUG:
-      dProc = subprocess.Popen(dumpargs, shell=True)
-   restoreArgs = ['pg_restore', '--verbose',
-                        '--username={}'.format(dbuser), 
-                        '--dbname={}'.format(dbname), 
-                        '--format={}'.format(dumpformat), 
-                        outfname]
-   restoreCmd = ' '.join(restoreArgs)
-   readmeLines = ['', '',
-            '{}:'.format(outfname),
-            '   contains the data records for the {} schema of the Lifemapper SDM database'.format(outfname, dbschema),
-            '   To add these records into the \'{}\' database, execute: '.format(dbname),
-            '      {}'.format(restoreCmd)]
-   return readmeLines
-
-# ...............................................
-def getColumns(dbuser, dbname, fulltablename):
-   dbschema, dbtable = fulltablename.split('.')
-   colQuery = ('SELECT column_name FROM information_schema.columns '+
-               'WHERE table_schema = \'{}\' AND table_name   = \'{}\''.format(dbschema, dbtable))
-   getColumnsStmt = 'psql --username={} --dbname={} --command=\"{}\"'.format(dbuser, dbname, colQuery)
-   columnStr = subprocess.check_output(getColumnsStmt, shell=True).strip()
-   tmp = columnStr.split('\n')
-   cols = []
-   for c in tmp:
-      c = c.strip()
-      if (c not in ('column_name', '') and not c.startswith('----') and not c.startswith('(')):
-         cols.append('\'{}\''.format(c)) 
+def getColumns(dbcmd, fulltablename):
+   getColumnsStmt = ' {} --command=\"\d {}\" | grep \'|\' | awk \'\!print $1?\''.format(dbcmd, fulltablename)
+   getColumnsStmt = getColumnsStmt.replace('!', '{')
+   getColumnsStmt = getColumnsStmt.replace('?', '}')
+   print 
+   print getColumnsStmt
+   print 
+   columnStr = subprocess.check_output(getColumnsStmt, preexec_fn=SetPass, shell=True)
+   cols = columnStr.split('\n')
+   cols.remove('Column')
+   cols.remove('') 
    return cols
 
 # ...............................................
-def copyDatabaseUsersOut(outpath, basefname, lmusers, dbname, dbuser):
+def copyDatabaseUsers(outpath, basefname, lmusers, dbcmd):
    readmeLines = ['', '',
             'The following files contain the user-specific metadata contained ',
             'in the Lifemapper SDM.  Files are numbered according to the order ',
@@ -193,12 +164,12 @@ def copyDatabaseUsersOut(outpath, basefname, lmusers, dbname, dbuser):
    userSetStr = ', '.join(escapedUsers)
    for i in range(len(USER_DEPENDENCIES)):
       (tablename, selstr) = USER_DEPENDENCIES[i]
-      cols = getColumns(dbuser, dbname, tablename)
+      cols = getColumns(dbcmd, tablename)
       outfname = getFilename(outpath, basefname, 'table', table=(tablename, i))
       queryStmt = selstr.replace(USER_REPLACE_STR, userSetStr)
       copyToStmt = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)
       copyFromStmt = '\"COPY {} ({}) FROM STDIN \"'.format(tablename, ', '.join(cols))
-      dumptableStmt = 'psql --username={} --dbname={} --command={}'.format(dbuser, dbname, copyToStmt)
+      dumptableStmt = '{} --command={}'.format(dbcmd, copyToStmt)
       print 'Dumping table: ', tablename
       with open(outfname, 'w') as outf:
          if not DEBUG:
@@ -207,7 +178,7 @@ def copyDatabaseUsersOut(outpath, basefname, lmusers, dbname, dbuser):
       readmeLines.extend(['', 
          '{}:'.format(outfname),
          '    contains the metadata contained in the Lifemapper SDM',
-         '    database {}, table {}.  To append data existing database table, '.format(dbname, tablename),
+         '    database, table {}.  To append data existing database table, '.format(tablename),
          '    execute: ',
          '       {}'.format(copyFromStmt)])
          
@@ -236,24 +207,14 @@ def dumpDbSchema(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    return readmeLines
 
 # ...............................................
-def dumpDbData(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
+def dumpAllDbData(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    outfname = getFilename(outpath, basefname, 'db_data')
-   dumpdataargs = ['pg_dump', 
-                    '--username={}'.format(dbuser), 
-                    '--data-only',
-                    '--format={}'.format(dumpformat),
-                    '--verbose',
-                    '--file={}'.format(outfname),
-                    MAL_STORE]
-   print str(dumpdataargs)
+   dumpdataStmt = 'pg_dump --username={} --data-only --format={} --verbose  --file={}  {}'.format(
+                                       dbuser, dumpformat, outfname, MAL_STORE)
    if not DEBUG:
-      dProc = subprocess.Popen(dumpdataargs, shell=True)
-   restoreDataArgs = ['pg_restore', '--verbose',
-                        '--username={}'.format(dbuser), 
-                        '--dbname={}'.format(dbname), 
-                        '--format={}'.format(dumpformat), 
-                        outfname]
-   restoreCmd = ' '.join(restoreDataArgs)
+      dProc = subprocess.Popen(dumpdataStmt, shell=True)
+   restoreCmd = 'pg_restore --verbose --username={} --dbname={} --format={} []'.format(
+                                          dbuser, dbname, dumpformat, outfname)
    readmeLines = ['', '',
             '{}:'.format(outfname),
             '    contains the metadata contained in the Lifemapper SDM database'
@@ -262,21 +223,34 @@ def dumpDbData(outpath, basefname, dbuser, dumpformat, dbschema, dbname):
    return readmeLines
 
 # ...............................................
-def getActiveUsers(dbuser, dbname, defaultUser, anonUser, days=365):
+def ignoreUser(usr, ignoreUsers, ignoreUserPrefixes):
+   ignoreMe = False
+   ignoreUserPrefixes.append('(')
+   ignoreUsers.append('')
+   if usr in ignoreUsers:
+      ignoreMe = True
+   else:
+      for pre in ignoreUserPrefixes:
+         if usr.startswith(pre):
+            ignoreMe = True
+   return ignoreMe
+         
+# ...............................................
+def getActiveUsers(dbcmd, ignoreUsers, ignoreUserPrefixes, days=365):
       yearago = mx.DateTime.gmt().mjd - 365
       queryStmt = 'select distinct(userid) from occurrenceset where datelastmodified > {}'.format(yearago)
       cmd = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)
-      fullStmt = 'psql --username={} --dbname={} --command={}'.format(dbuser, dbname, cmd)
+      fullStmt = ' {} --command={}'.format(dbcmd, cmd)
       backupuserStr = subprocess.check_output(fullStmt, preexec_fn=SetPass, shell=True)
       backupusers = backupuserStr.split('\n')
       activeUsers = []
       for usr in backupusers:
-         if usr not in ('', defaultUser, anonUser):
+         if not ignoreUser(usr, ignoreUsers, ignoreUserPrefixes):
             activeUsers.append(usr)
       return activeUsers
 
 # ...............................................
-def getUsersToBackup(backupChoice, dbuser, dbname, defaultUser, anonUser):
+def getUsersToBackup(backupChoice, dbcmd, defaultUser, ignoreUsers=[], ignoreUserPrefixes=[]):
    hostname = subprocess.check_output('hostname').strip()
    if hostname == 'hera':
       datapath = '/share/data/archive'
@@ -286,12 +260,14 @@ def getUsersToBackup(backupChoice, dbuser, dbname, defaultUser, anonUser):
    if backupChoice not in ('users', 'all'):
       backupusers = [backupChoice]
    elif backupChoice == 'users':
-      backupusers = getActiveUsers(dbuser, dbname, defaultUser, anonUser)
+      ignoreUsers.append(defaultUser)
+      backupusers = getActiveUsers(dbcmd, ignoreUsers=ignoreUsers, 
+                                   ignoreUserPrefixes=ignoreUserPrefixes)
    elif backupChoice == 'all':
       backupusers = []
       for entry in os.listdir(datapath):
          if (not entry.startswith('.') and 
-             not entry == anonUser and
+             not entry in ignoreUsers and
              os.path.isdir(os.path.join(datapath, entry))):
             backupusers.append(entry)
    return datapath, backupusers
@@ -382,18 +358,27 @@ if __name__ == '__main__':
    # PostgreSQL dump/restore options
    dbuser = 'admin'
    dumpformat = 'custom'
+   dbcmd = 'psql --username={} --dbname={} '.format(dbuser, MAL_STORE)
+   
    dbschemaHelp = [''] 
    tableHelp = [''] 
    tarballHelp = ['']
-    
+   
+   ignoreUsers = [DEFAULT_POST_USER, 'aimee', 'changeThinking', 'cgwillis', 
+                  'unitTest', 'zeppo'] 
+   ignoreUserPrefixes = ['CT', 'elseweb']
+   onlyUsers = [DEFAULT_POST_USER, 'aimee', 'changeThinking', 'cgwillis', 
+                  'unitTest', 'zeppo'] 
+   onlyUserPrefixes = ['CT', 'elseweb']
    # Identify users for file backup
-   datapath, backupusers = getUsersToBackup(backupChoice, dbuser, MAL_STORE, 
-                                            ARCHIVE_USER, DEFAULT_POST_USER)
+   datapath, backupusers = getUsersToBackup(backupChoice, dbcmd, ARCHIVE_USER, 
+                                            ignoreUsers=ignoreUsers, 
+                                            ignoreUserPrefixes=ignoreUserPrefixes)
    # Dump Schema and Database
    dbschemaHelp = dumpDbSchema(outpath, basefname, dbuser, dumpformat, 
                                LM_SCHEMA, MAL_STORE)
    # Dump tables of user data 
-   tableHelp = copyDatabaseUsers(outpath, basefname, backupusers, MAL_STORE, dbuser)
+   tableHelp = copyDatabaseUsers(outpath, basefname, backupusers, dbcmd)
    
    # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories 
    tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
