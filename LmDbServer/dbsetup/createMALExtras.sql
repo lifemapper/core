@@ -2323,7 +2323,8 @@ DECLARE
 BEGIN
    SELECT INTO id projectionid FROM lm3.projection 
       WHERE modelid = mdlid
-        AND scenarioid = scenid;
+        AND scenarioid = scenid
+        AND maskId = mskid;
         
    IF NOT FOUND THEN
       BEGIN
