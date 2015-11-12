@@ -383,10 +383,10 @@ class MapLayerSet(_LayerSet, ServiceObject):
       # if mapfile does not exist, create service from database, then write file
       if not(os.path.exists(self._mapFilename)):            
          try:
+            layers, onlineUrl = self._createLayers()
             mapTemplate, tmp = self._earlJr.getMapFilenameAndUserFromMapname(template)
             mapstr = self._getBaseMap(mapTemplate)
-            mapstr = self._addMapBaseAttributes(mapstr)
-            layers = self._createLayers()
+            mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
             mapstr = mapstr.replace('##_LAYERS_##', layers)
          except Exception, e:
             raise
@@ -422,7 +422,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       return map
          
 # ...............................................
-   def _addMapBaseAttributes(self, mapstr):
+   def _addMapBaseAttributes(self, mapstr, onlineUrl):
       """
       @summary Set map attributes on the map from the LayerSet
       @param mapstr: string for a mapserver mapfile to modify
@@ -472,8 +472,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       meta = '\n'.join([meta, '         ows_enable_request   \"*\"'])
       meta = '\n'.join([meta, '         ows_label   \"%s\"' % label])
       meta = '\n'.join([meta, '         ows_title   \"%s\"' % self.title])
-      meta = '\n'.join([meta, '         ows_onlineresource   \"%s\"' 
-                        % self._earlJr.constructMapPrefix(self.mapName)])
+      meta = '\n'.join([meta, '         ows_onlineresource   \"%s\"' % onlineUrl])
       meta = '\n'.join([meta, '      END'])
 
       mapstr = mapstr.replace('##_MAP_METADATA_##', meta)
@@ -484,6 +483,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       topLyrStr = ''
       midLyrStr = ''
       baseLyrStr = ''
+      vOnlineUrl = rOnlineUrl = eOnlineUrl = onlineUrl = None
             
       # Vector layers are described first, so drawn on top
       for lyr in self.layers:
@@ -492,31 +492,41 @@ class MapLayerSet(_LayerSet, ServiceObject):
          #       types of vector layers.  
          #       Maybe use ServiceObject._serviceType for display options
          if isinstance(lyr, Vector):
-            lyrstr = self._createVectorLayer(lyr, self.mapPrefix)
+            vOnlineUrl = lyr.metadataUrl + '/ogc'
+            lyrstr = self._createVectorLayer(lyr)
             topLyrStr = '\n'.join([topLyrStr, lyrstr])
             
          elif isinstance(lyr, Raster):
             # projections are below vector layers and above the base layer
             if isinstance(lyr, SDMProjection):
+               rOnlineUrl = lyr.metadataUrl + '/ogc'
                palette = DEFAULT_PROJECTION_PALETTE
                lyrstr = self._createRasterLayer(lyr, self.mapPrefix, palette)
                midLyrStr = '\n'.join([midLyrStr, lyrstr])
             else:
+               eOnlineUrl = lyr.metadataUrl + '/ogc'
                palette = DEFAULT_ENVIRONMENTAL_PALETTE
                lyrstr = self._createRasterLayer(lyr, self.mapPrefix, palette)
                baseLyrStr = '\n'.join([baseLyrStr, lyrstr])
               
       maplayers = '\n'.join([topLyrStr, midLyrStr, baseLyrStr])
+      
+      if vOnlineUrl:
+         onlineUrl = vOnlineUrl
+      elif rOnlineUrl:
+         onlineUrl = rOnlineUrl
+      elif eOnlineUrl:
+         onlineUrl = eOnlineUrl
             
       # Add bluemarble image to Data/Occurrence Map Services
       if self.epsgcode == DEFAULT_EPSG:
          backlyr = self._createBlueMarbleLayer()
          maplayers = '\n'.join([maplayers, backlyr])
          
-      return maplayers
+      return maplayers, onlineUrl
     
 # ...............................................
-   def _createVectorLayer(self, sdlLyr, svcUrl):
+   def _createVectorLayer(self, sdlLyr):
       attMeta = []
       proj = None
       meta = None
@@ -535,7 +545,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
             # TODO: Remove this after certain that valAttribute is always populated
             attMeta = ['wfs_featureid  \"%s\"' % OccurrenceLayer.getURLFieldName()]
                       
-         meta = self._getLayerMetadata(sdlLyr, svcUrl, metalines=attMeta, 
+         meta = self._getLayerMetadata(sdlLyr, metalines=attMeta, 
                                        isVector=True)
          
          if (sdlLyr.getUserId() == CT_USER
@@ -561,7 +571,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       return lyr
 
 # ...............................................
-   def _createRasterLayer(self, sdlLyr, svcUrl, paletteName):
+   def _createRasterLayer(self, sdlLyr, paletteName):
       dataspecs = self._getRasterDataSpecs(sdlLyr, paletteName)
       proj = self._createProjectionInfo(sdlLyr.epsgcode)
       rasterMetadata = [# following 3 required in MS 6.0+
@@ -573,7 +583,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
 #          rasterMetadata.append('rangeset_nullvalue  %s' 
 #                                % str(sdlLyr.nodataVal))
          
-      meta = self._getLayerMetadata(sdlLyr, svcUrl, metalines=rasterMetadata)
+      meta = self._getLayerMetadata(sdlLyr, metalines=rasterMetadata)
       
       lyr = self._createLayer(sdlLyr, dataspecs, proj, meta)
       return lyr
@@ -680,7 +690,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       return prj
       
 # ...............................................
-   def _getLayerMetadata(self, sdlLyr, svcurl, metalines=[], isVector=False):
+   def _getLayerMetadata(self, sdlLyr, metalines=[], isVector=False):
       meta = ''
       meta = '\n'.join([meta, '      METADATA'])
       # DUMP True deprecated in Mapserver 6.0, replaced by
