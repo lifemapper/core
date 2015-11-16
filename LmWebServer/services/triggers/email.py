@@ -48,7 +48,7 @@ Processing the projection maps included in your experiment can take several minu
 
 Check it out!
 
-Scientists are using species distribution modeling to answer real world problems. Find out more on our webpage: http://nansjazz.com/wordpress2/?page_id=63""" % exp.metadataUrl
+Scientists are using species distribution modeling to answer real world problems. Find out more on our webpage: http://lifemapper.org/?page_id=63""" % exp.metadataUrl
       self.cl.sendMessage(toAddrs, subject, msg)
       
    
