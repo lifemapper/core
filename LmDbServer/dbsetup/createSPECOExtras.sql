@@ -2606,3 +2606,50 @@ BEGIN
    RETURN total;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_updatePaths(olddir varchar, newdir varchar)
+   RETURNS void AS
+$$
+DECLARE
+   start int = 0;
+BEGIN
+   start = char_length(olddir) + 1;
+   UPDATE lm3.Experiment SET attrmatrixdlocation = newdir || substr(attrmatrixdlocation, start);
+	UPDATE lm3.Experiment SET attrtreedlocation = newdir || substr(attrtreedlocation, start);
+   
+   UPDATE lm3.Bucket SET slindicesdlocation = newdir || substr(slindicesdlocation, start);
+   UPDATE lm3.Bucket SET pamdlocation = newdir || substr(pamdlocation, start);
+
+   UPDATE lm3.Pamsum SET splotchpamdlocation = newdir || substr(splotchpamdlocation, start);
+   UPDATE lm3.Pamsum SET splotchsitesdlocation = newdir || substr(splotchsitesdlocation, start);
+   UPDATE lm3.Pamsum SET pamdlocation = newdir || substr(pamdlocation, start);
+   UPDATE lm3.Pamsum SET sumdlocation = newdir || substr(sumdlocation, start);
+	
+   UPDATE lm3.Layer SET dlocation = newdir || substr(dlocation, start);
+   
+	UPDATE lm3.Experiment SET attrtreedlocation = newdir || substr(attrtreedlocation, start);
+	
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 
+
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- SELECT * from lm3.lm_updateUrls('http://lifemapper.org', 'http://yeti.lifemapper.org');
+
+CREATE OR REPLACE FUNCTION lm3.lm_updateUrls(oldbase varchar, newbase varchar)
+   RETURNS void AS
+$$
+DECLARE
+   start int = 0;
+BEGIN
+   start = char_length(oldbase) + 1;
+   UPDATE lm3.Layer SET metadataUrl = newbase || substr(metadataUrl, start);
+   UPDATE lm3.Layer SET layerurl = metadataurl;
+   
+	UPDATE lm3.Experiment SET metadataUrl = newbase || substr(metadataUrl, start);
+   UPDATE lm3.Bucket SET metadataUrl = newbase || substr(metadataUrl, start);
+   UPDATE lm3.Pamsum SET metadataUrl = newbase || substr(metadataUrl, start);
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 

@@ -6126,6 +6126,20 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_updatePaths(olddir varchar, newdir varchar)
+   RETURNS void AS
+$$
+DECLARE
+   start int = 0;
+BEGIN
+   start = char_length(olddir) + 1;
+   UPDATE lm3.OccurrenceSet SET dlocation = newdir || substr(dlocation, start);
+	UPDATE lm3.Layer SET dlocation = newdir || substr(dlocation, start);
+	UPDATE lm3.Model SET dlocation = newdir || substr(dlocation, start);
+	UPDATE lm3.Projection SET dlocation = newdir || substr(dlocation, start);
+	
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 
 
 -- ----------------------------------------------------------------------------
 -- lm_fixUrls

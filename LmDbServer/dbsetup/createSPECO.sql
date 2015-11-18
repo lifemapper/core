@@ -88,6 +88,7 @@ create table lm3.Layer
    description varchar(256),
    dlocation varchar(256),
    metadataUrl varchar(256),
+   --TODO: Remove this!!
    layerurl varchar(512),
    ogrType int,
    gdalType int,

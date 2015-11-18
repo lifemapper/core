@@ -34,27 +34,32 @@ import tarfile
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, OutputFormat
 from LmCommon.common.localconstants import ARCHIVE_USER
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import MAL_STORE, LM_SCHEMA
+from LmServer.common.lmconstants import MAL_STORE, RAD_STORE, LM_SCHEMA
 from LmServer.common.localconstants import APP_PATH
 from LmDbServer.populate.GBIF.sortGbifExport import datapath
  
 DEBUG = False
 USER_REPLACE_STR = '#USERS#'
 # list of (table, columns, selectStatement)
-USER_DEPENDENCIES = [
+SDM_USER_DEPENDENCIES = [
    ('{}.lmuser'.format(LM_SCHEMA), 
     'SELECT * FROM {}.lmuser WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
                      
-   ('{}.lmjob'.format(LM_SCHEMA), 
-    'SELECT j.* FROM {}.lmjob j, '.format(LM_SCHEMA)+
-    ' {0}.lm_occJob oj, {0}.lm_mdlJob mj, {0}.lm_prjJob pj '.format(LM_SCHEMA)+
-    ' WHERE (j.lmjobid = oj.lmjobid  '+
-    '        AND oj.occuserId IN ({}))'.format(USER_REPLACE_STR)+
-    '    OR (j.lmjobid = mj.lmjobid  '+
-    '        AND mj.mdluserId IN ({}))'.format(USER_REPLACE_STR)+
-    '    OR (j.lmjobid = pj.lmjobid  '+
-    '        AND pj.mdluserId IN ({}))'.format(USER_REPLACE_STR)),
-                     
+#    ('{}.lmjob'.format(LM_SCHEMA), 
+#     'SELECT j.* FROM {}.lmjob j, {}.occurrenceset o'.format(LM_SCHEMA)+
+#     ' WHERE (j.referencetype = 104 AND j.referenceid = o.occurrencesetid  '+
+#     '        AND o.userId IN ({}))'.format(USER_REPLACE_STR)),
+#     
+#    ('{}.lmjob'.format(LM_SCHEMA), 
+#     'SELECT j.* FROM {}.lmjob j, {}.model m '.format(LM_SCHEMA)+
+#     ' WHERE (j.referencetype = 101 AND j.referenceid = m.modelid  '+
+#     '        AND m.userId IN ({}))'.format(USER_REPLACE_STR)),
+#                      
+#    ('{}.lmjob'.format(LM_SCHEMA), 
+#     'SELECT j.* FROM {}.lmjob j, {}.lm_fullprojection p '.format(LM_SCHEMA)+
+#     ' WHERE (j.referencetype = 102 AND j.referenceid = p.projectionid  '+
+#     '        AND p.mdluserId IN ({}))'.format(USER_REPLACE_STR)),
+                                                               
    ('{}.experiment'.format(LM_SCHEMA), 
     'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
    ('{}.occurrenceset'.format(LM_SCHEMA), 
@@ -71,23 +76,69 @@ USER_DEPENDENCIES = [
     ' WHERE sl.scenarioid = s.scenarioid AND s.userid IN ({})'.format(USER_REPLACE_STR)),
    
    ('{}.keyword'.format(LM_SCHEMA), 
-    'SELECT k.* FROM {0}.keyword k, {0}.layertypekeyword ltk, {0}.layertype lt, {0}.scenariokeywords sk, {0}.scenario s '.format(LM_SCHEMA)+
-    ' WHERE (k.keywordid = ltk.keywordid AND ltk.layertypeid = lt.layertypeid AND lt.userid IN ({}))'.format(USER_REPLACE_STR)+
-    ' OR (k.keywordid = sk.keywordid AND sk.scenarioid = s.scenarioid AND s.userid IN ({}))'.format(USER_REPLACE_STR)),
-   ('{}.layertypekeyword'.format(LM_SCHEMA), 
-    'SELECT * FROM {0}.layertypekeyword ltk, {0}.layertype lt'.format(LM_SCHEMA)+ 
-    ' WHERE ltk.layertypeid = lt.layertypeid '+
-    ' AND lt.userid IN ({})'.format(USER_REPLACE_STR)),
-   ('{}.scenariokeywords'.format(LM_SCHEMA), 
-    'SELECT * FROM {0}.scenariokeywords sk, {0}.scenario s'.format(LM_SCHEMA)+
-    ' WHERE sk.scenarioid = s.scenarioid '+
-    ' AND s.userid IN ({})'.format(USER_REPLACE_STR)),
+    'SELECT k.* FROM {0}.keyword k, {0}.layertypekeyword ltk, {0}.layertype lt  '.format(LM_SCHEMA)+
+    ' WHERE k.keywordid = ltk.keywordid AND ltk.layertypeid = lt.layertypeid AND lt.userid = \'changeThinking\''),
+   ('{}.keyword'.format(LM_SCHEMA), 
+    'SELECT k.* FROM {0}.keyword k, {0}.scenariokeywords sk, {0}.scenario s '.format(LM_SCHEMA)+
+    ' WHERE k.keywordid = sk.keywordid AND sk.scenarioid = s.scenarioid AND s.userid = \'changeThinking\''),
+
+#    ('{}.layertypekeyword'.format(LM_SCHEMA), 
+#     'SELECT * FROM {0}.layertypekeyword ltk, {0}.layertype lt'.format(LM_SCHEMA)+ 
+#     ' WHERE ltk.layertypeid = lt.layertypeid '+
+#     ' AND lt.userid IN ({})'.format(USER_REPLACE_STR)),
+#    ('{}.scenariokeywords'.format(LM_SCHEMA), 
+#     'SELECT * FROM {0}.scenariokeywords sk, {0}.scenario s'.format(LM_SCHEMA)+
+#     ' WHERE sk.scenarioid = s.scenarioid '+
+#     ' AND s.userid IN ({})'.format(USER_REPLACE_STR)),
 
    ('{}.model'.format(LM_SCHEMA), 
-    'SELECT * FROM {}.model WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+    'SELECT m.* FROM {0}.model m, {0}.scenario s '.format(LM_SCHEMA)+
+    '  WHERE m.scenarioid = s.scenarioid AND m.userid = s.userid AND m.userid IN ({})'.format(USER_REPLACE_STR)),
    ('{}.projection'.format(LM_SCHEMA), 
-    'SELECT * FROM {0}.projection p, {0}.model m'.format(LM_SCHEMA)+
-    ' WHERE p.modelid = m.modelid and m.userid IN ({})'.format(USER_REPLACE_STR)) ]
+    'SELECT p.* FROM {0}.projection p, {0}.model m, {0}.scenario s'.format(LM_SCHEMA)+
+    ' WHERE p.modelid = m.modelid AND p.scenarioid = s.scenarioid AND m.userid = s.userid AND m.userid IN ({})'.format(USER_REPLACE_STR)) ]
+
+RAD_USER_DEPENDENCIES = [
+   ('{}.layer'.format(LM_SCHEMA), 
+    'SELECT * FROM {}.layer WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+
+   ('{}.shapegrid'.format(LM_SCHEMA), 
+    'SELECT s.* FROM {0}.shapegrid s, {0}.layer l '.format(LM_SCHEMA)+
+    'WHERE s.layerid = l.layerid AND l.userid IN ({})'.format(USER_REPLACE_STR)),
+   
+   ('{}.ancillaryvalue'.format(LM_SCHEMA), 
+    'SELECT * FROM {}.ancillaryvalue WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+   ('{}.presenceabsence'.format(LM_SCHEMA), 
+    'SELECT * FROM {}.presenceabsence WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+   ('{}.experiment'.format(LM_SCHEMA), 
+    'SELECT * FROM {}.experiment WHERE userid IN ({})'.format(LM_SCHEMA, USER_REPLACE_STR)),
+                     
+   ('{}.bucket'.format(LM_SCHEMA), 
+    'SELECT b.* FROM {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA)+ 
+    ' WHERE b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+   
+   ('{}.pamsum'.format(LM_SCHEMA), 
+    'SELECT ps.* FROM {0}.pamsum ps, {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA)+ 
+    ' WHERE ps.bucketid = b.bucketid AND b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+
+   ('{}.ExperimentPALayer'.format(LM_SCHEMA), 
+    'SELECT xl.* FROM {0}.ExperimentPALayer xl, {0}.experiment e '.format(LM_SCHEMA)+ 
+    ' WHERE xl.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+
+   ('{}.ExperimentAncLayer'.format(LM_SCHEMA), 
+    'SELECT xl.* FROM {0}.ExperimentAncLayer xl, {0}.experiment e '.format(LM_SCHEMA)+ 
+    ' WHERE xl.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+
+#    ('{}.BucketPALayer'.format(LM_SCHEMA), 
+#     'SELECT xl.* FROM {0}.BucketPALayer xl, {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA)+ 
+#     ' WHERE xl.bucketid = b.bucketid AND b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+# 
+#    ('{}.BucketAncLayer'.format(LM_SCHEMA), 
+#     'SELECT xl.* FROM {0}.BucketAncLayer xl, {0}.bucket b, {0}.experiment e '.format(LM_SCHEMA)+ 
+#     ' WHERE xl.bucketid = b.bucketid AND b.experimentid = e.experimentid AND e.userid IN ({})'.format(USER_REPLACE_STR)),
+                         ]
+
+
 
 # MAXSIZE = '1T'
 # MULTI_VOLUME_SCRIPT='new-volume.sh'
@@ -164,12 +215,16 @@ def getColumns(dbcmd, fulltablename):
    print 
    columnStr = subprocess.check_output(getColumnsStmt, preexec_fn=SetPass, shell=True)
    cols = columnStr.split('\n')
-   cols.remove('Column')
-   cols.remove('') 
+   for str in ('Column', ''):
+      try:
+         cols.remove(str)
+      except:
+         print str
+         pass
    return cols
 
 # ...............................................
-def copyOutDatabaseUsers(outpath, basefname, lmusers, dbcmd, restrictToTables=None):
+def copyOutDatabaseUsers(outpath, basefname, lmusers, dbcmd, tableInfo, restrictToTables=None):
    ingestfname = getFilename(outpath, basefname, 'table_restore')
    readmeLines = ['', '',
             'The following files contain the user-specific metadata contained ',
@@ -180,8 +235,8 @@ def copyOutDatabaseUsers(outpath, basefname, lmusers, dbcmd, restrictToTables=No
    userSetStr = ', '.join(escapedUsers)
    csvfile = open(ingestfname, 'wb')
    csvwriter = csv.writer(csvfile, delimiter=CSV_DELIMITER)
-   for i in range(len(USER_DEPENDENCIES)):
-      (tablename, selstr) = USER_DEPENDENCIES[i]
+   for i in range(len(tableInfo)):
+      (tablename, selstr) = tableInfo[i]
       if restrictToTables is None or tablename in restrictToTables:
          cols = getColumns(dbcmd, tablename)
          outfname = getFilename(outpath, basefname, 'table', table=(tablename, i))
@@ -204,15 +259,21 @@ def copyOutDatabaseUsers(outpath, basefname, lmusers, dbcmd, restrictToTables=No
    return readmeLines
       
 # ...............................................
-def ingestRecordData(inpath, inbasename, tablename, columnStr):
+def ingestRecordData(inpath, inbasename, tablename, columnStr, dbuser, dbname):
    infname = os.path.join(inpath, inbasename)
+   dbcmd = 'psql --username={} --dbname={} '.format(dbuser, dbname)
    copyFromStmt = '\"COPY {} ({}) FROM STDIN \"'.format(tablename, columnStr)
    ingesttableStmt = '{} --command={}'.format(dbcmd, copyFromStmt)
-   print('Copying records from {} into {} ...'.format(ingestfname, tablename))
-   with open(infname, 'r') as inf:
-      if not DEBUG:
-         dProc = subprocess.Popen(ingesttableStmt, stdin=inf, preexec_fn=SetPass, shell=True)
-   inf.close()
+   print
+   print('# Copying records from {} into {} ...'.format(ingestfname, tablename))
+   print('infname = \'{}\''.format(infname))
+   print('ingesttableStmt = \'{}\''.format(ingesttableStmt))
+   print('with open(infname, \'r\') as inf:')
+   print('   retcode = subprocess.call(ingesttableStmt, stdin=inf, shell=True)')
+#    with open(infname, 'r') as inf:
+#       if not DEBUG:
+#          retcode = subprocess.call(ingesttableStmt, stdin=inf, preexec_fn=SetPass, shell=True)
+#    inf.close()
       
 # ...............................................
 def untarFileData(inpath, scriptname):
@@ -274,45 +335,56 @@ def ignoreUser(usr, ignoreUsers, ignoreUserPrefixes):
    return ignoreMe
          
 # ...............................................
-def getActiveUsers(dbcmd, dbschema, defaultUser, ignoreUsers, ignoreUserPrefixes, days=180):
-      pastdate = mx.DateTime.gmt().mjd - days
+def getActiveUsers(dbuser, dbname, dbschema, ignoreUsers, ignoreUserPrefixes, 
+                   days=None):
+   dbcmd = 'psql --username={} --dbname={} '.format(dbuser, dbname)
+   pastdate = mx.DateTime.gmt().mjd - days
+   if dbname == MAL_STORE:
       queryStmt = ('select distinct(m.userid) from {0}.model m, {0}.scenario s '.format(dbschema)+
-                   'WHERE statusmodtime > {} '.format(pastdate)+
-                   'AND m.scenarioid = s.scenarioid '+
-                   'AND s.userid != \'{}\' '.format(defaultUser))
-      cmd = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)
-      fullStmt = ' {} --command={}'.format(dbcmd, cmd)
-      backupuserStr = subprocess.check_output(fullStmt, preexec_fn=SetPass, shell=True)
-      backupusers = backupuserStr.split('\n')
-      activeUsers = []
-      for usr in backupusers:
-         if not ignoreUser(usr, ignoreUsers, ignoreUserPrefixes):
-            activeUsers.append(usr)
-      print 'Active Users: ', str(activeUsers)
-      return activeUsers
+                   'WHERE m.scenarioid = s.scenarioid ')
+      if days != None:
+         queryStmt += ' AND statusmodtime > {} '.format(pastdate)
+   else:
+      queryStmt = ('select distinct(userid) from {0}.bucket '.format(dbschema))
+      if days != None:
+         queryStmt += ' WHERE statusmodtime > {} '.format(pastdate)
+         
+   cmd = '\"COPY ({}) TO STDOUT \"'.format(queryStmt)
+   fullStmt = ' {} --command={}'.format(dbcmd, cmd)
+   backupuserStr = subprocess.check_output(fullStmt, preexec_fn=SetPass, shell=True)
+   
+   backupusers = backupuserStr.split('\n')
+   activeUsers = []
+   for usr in backupusers:
+      if not ignoreUser(usr, ignoreUsers, ignoreUserPrefixes):
+         activeUsers.append(usr)
+   print 'Active Users: ', str(activeUsers)
+   return activeUsers
 
 # ...............................................
-def getUsersToBackup(backupChoice, dbcmd, dbschema, defaultUser, 
-                     ignoreUsers=[], ignoreUserPrefixes=[]):
+def getUsersToBackup(backupChoice, dbuser, dbname, dbschema, 
+                     ignoreUsers=[], ignoreUserPrefixes=[],
+                     onlyUsers=[], days=None):
    hostname = subprocess.check_output('hostname').strip()
    if hostname == 'hera':
       datapath = '/share/data/archive'
    else:
       earl = EarlJr()
       datapath = earl.createArchiveDataPath()
+      
    if backupChoice not in ('users', 'all'):
       backupusers = [backupChoice]
    elif backupChoice == 'users':
-      ignoreUsers.append(defaultUser)
-      backupusers = getActiveUsers(dbcmd, dbschema, defaultUser, ignoreUsers=ignoreUsers, 
-                                   ignoreUserPrefixes=ignoreUserPrefixes)
+      ignoreUsers.extend([ARCHIVE_USER, DEFAULT_POST_USER])
+      if len(onlyUsers) > 0:
+         backupusers = onlyUsers
+      else: 
+         backupusers = getActiveUsers(dbuser, dbname, dbschema, ignoreUsers, 
+                                      ignoreUserPrefixes, days=180)
    elif backupChoice == 'all':
-      backupusers = []
-      for entry in os.listdir(datapath):
-         if (not entry.startswith('.') and 
-             not entry in ignoreUsers and
-             os.path.isdir(os.path.join(datapath, entry))):
-            backupusers.append(entry)
+      backupusers = getActiveUsers(dbuser, dbname, dbschema, ignoreUsers, 
+                                   ignoreUserPrefixes, days=None)
+
    return datapath, backupusers
 
 # ...............................................
@@ -348,38 +420,73 @@ def dumpFileData(outpath, basefname, datapath, backupusers):
    return readmeLines
 
 # ...............................................
-def writeReadme(outpath, basefname, readmeLineLists):
+def writeReadme(outpath, basefname, readmeLines):
    readmeFname = getFilename(outpath, basefname, 'readme')
    rmf = open(readmeFname, 'w')
    rmf.write('*********************************************************************')
    rmf.write('This README was generated to accompany data dumped into files: ')
-   for helpLines in readmeLineLists:
-      for line in helpLines:
-         rmf.write(line+'\n')
+   for line in readmeLines:
+      rmf.write(line+'\n')
    rmf.close()
    return readmeFname
+
+# ...............................................
+def backupDBAndData(backupChoice, outpath, dbschema, dbname, 
+                    tableDependencies, dbuser, dumpformat):
+   helpLines = []
+   # Naming variables
+   scriptname = os.path.splitext(os.path.basename(__file__))[0]
+   datestr = getTimestamp(dateonly=True).replace('-', '_')
+   basefname = '{}.{}.{}.{}'.format(scriptname, dbname, backupChoice, datestr)
+   
+   if dbname == MAL_STORE:
+      onlyUsers = ['Tash_New', 'Dermot', 'besatisfied', 'gbjaime', 'czs0021', 'changeThinking', 
+      'maximo', 'Noctuary', 'LiMa', 'Frantest2', 'deomurari', 'chaoukiforet', 'perianesmaria',
+      'sergiodd', 'camposds', 'DermotV2', 'jrmiller07', 'AJ', 'brocktreece', 'Burton29',
+      'MobileAlabama2', 'camposds2', 'camposds', 'ptizzani', 'tundra', '321', 'vishalbhave',
+      'TashiTestMay', 'Franzone89', 'Frantest2', 'Frantest4', 'tashitso', 'Burton29',
+      'TashiNew_March', 'krahsin', 'abdallahsamy', 'AfricaEPSCOR', 'Pooka8', 'CCAR1626', 'Frantest6', 
+      'fjferrer', 'tadelsbach', 'piotrmed', 'bominosh', 'arbor', 'Dermot4', 'jessop',
+      'TashiTestMay', 'plockwo', 'TashiFourSpecies', 'ssoti', 'cjezequel', 'tsoc', 'CT_Amphibia',
+      'CT_Butterfly', 'CT_Mammalia', 'CT_Mustards', 'CT_SongBirds', 'Workshop']
+   else:
+      onlyUsers = ['TestFrogs', 'Dermot', 'florida', 'AmphPHTest', 'reinal2', 
+      'Jacob3', 'Pooka8', 'hodinar', 'Jacob6', 'tashitso', 'Workshop', 'Jacob4', 
+      'TestMask96', 'Jacob', 'TashiFrogs']
+
+      
+   dbcmd = 'psql --username={} --dbname={} '.format(dbuser, dbname)
+   # Identify users for file backup
+   datapath, backupusers = getUsersToBackup(backupChoice, dbuser, dbname, dbschema, 
+                                            onlyUsers=onlyUsers)
+   # Dump Schema
+   dbschemaHelp = dumpDbSchema(outpath, basefname, dbuser, dumpformat, 
+                               dbschema, dbname)
+   helpLines.extend(dbschemaHelp)
+      
+   # Dump Database records
+   tableHelp = copyOutDatabaseUsers(outpath, basefname, backupusers, 
+                                       dbcmd, tableDependencies)
+   helpLines.extend(tableHelp)
+
+   # Compress user data in DATA_PATH/MODEL_PATH/<user>  
+   if backupChoice != ARCHIVE_USER:
+      tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
+   helpLines.extend(tarballHelp)
+   
+   return helpLines, basefname
+
 
 # ..............................................................................
 # MAIN
 # ..............................................................................
 # Note: Add any existing users to ignore list
-IGNORE_USERS = [DEFAULT_POST_USER, 'aimee', 'astewart', 'changeThinking', 'cgwillis', 
-               'pragma', 'unitTest', 'zeppo', 'aimee.stewart@ku.edu', 'cjgrady@ku.edu', 
-               'DermotYeti', 'DermotYeti2', 'DermotYeti3', 'DermotYeti4', 'camposds1', 
-               'kubi'] 
-IGNORE_USER_PREFIXES = ['CT', 'elseweb', 'Dermot', 'Workshop']
-ONLY_USERS = [ 'changeThinking'] 
-ONLY_USERS_PREFIXES = ['CT', 'elseweb']
+# IGNORE_USERS = [DEFAULT_POST_USER, 'aimee', 'astewart', 'changeThinking', 'cgwillis', 
+#                'pragma', 'unitTest', 'zeppo', 'aimee.stewart@ku.edu', 'cjgrady@ku.edu', 
+#                'DermotYeti', 'DermotYeti2', 'DermotYeti3', 'DermotYeti4', 'camposds1', 
+#                'kubi'] 
+# IGNORE_USER_PREFIXES = ['CT', 'elseweb', 'Dermot', 'Workshop']
 CSV_DELIMITER='\t'
-ARCHIVE_DEPENDENCIES = ['{}.lmuser'.format(LM_SCHEMA), 
-                        '{}.scenario'.format(LM_SCHEMA), 
-                        '{}.layertype'.format(LM_SCHEMA), 
-                        '{}.layer'.format(LM_SCHEMA), 
-                        '{}.scenariolayers'.format(LM_SCHEMA), 
-                        '{}.keyword'.format(LM_SCHEMA), 
-                        '{}.layertypekeyword'.format(LM_SCHEMA), 
-                        '{}.scenariokeywords'.format(LM_SCHEMA)]
-
 
 if __name__ == '__main__':
    parser = argparse.ArgumentParser(
@@ -418,9 +525,9 @@ if __name__ == '__main__':
          backupChoice = ARCHIVE_USER
       elif args.singleUser:
          backupChoice = args.singleUser
-      filepath = args.outpath
-      if not os.path.exists(filepath):
-         print '{} does not exist'.format(filepath)
+      outpath = args.outpath
+      if not os.path.exists(outpath):
+         print '{} does not exist'.format(outpath)
          exit(-1)
          
    elif cmd == 'restore':
@@ -428,75 +535,33 @@ if __name__ == '__main__':
       if not os.path.exists(ingestfname):
          print '{} does not exist'.format(ingestfname)
          exit(-1)
-      filepath = os.path.split(ingestfname)[0]
-      
-   # Naming variables
-   scriptname = os.path.splitext(os.path.basename(__file__))[0]
-   datestr = getTimestamp(dateonly=True).replace('-', '_')
-#    logfname = getFilename(filepath, basefname, 'log')
-    
+      outpath = os.path.split(ingestfname)[0]
+          
    # PostgreSQL dump/restore options
    dbuser = 'admin'
    dumpformat = 'custom'
-   dbcmd = 'psql --username={} --dbname={} '.format(dbuser, MAL_STORE)
-   
    
    if cmd == 'backup':
-      basefname = '{}.{}.{}'.format(scriptname, backupChoice, datestr)
-      # Text for README
-      dbschemaHelp = [''] 
-      tableHelp = [''] 
-      tarballHelp = ['']
-      
-      # Identify users for file backup
-      cutoffDate = mx.DateTime.gmt().mjd - (180)
-      datapath, backupusers = getUsersToBackup(backupChoice, dbcmd, LM_SCHEMA, ARCHIVE_USER, 
-                                               ignoreUsers=IGNORE_USERS, 
-                                               ignoreUserPrefixes=IGNORE_USER_PREFIXES)
-      # Dump Schema and Database
-      dbschemaHelp = dumpDbSchema(filepath, basefname, dbuser, dumpformat, 
-                                  LM_SCHEMA, MAL_STORE)
-      # Dump tables of default input data 
-      if backupChoice == ARCHIVE_USER:
-         tableHelp = copyOutDatabaseUsers(filepath, basefname, backupusers, dbcmd, 
-                                          restrictToTables=ARCHIVE_DEPENDENCIES)
-      # Dump tables of user data 
-      else:
-         tableHelp = copyOutDatabaseUsers(filepath, basefname, backupusers, dbcmd)
-      
-#       # Backup, compress requested DATA_PATH/MODEL_PATH/<user> directories 
-#       if backupChoice != ARCHIVE_USER:
-#          tarballHelp = dumpFileData(filepath, basefname, datapath, backupusers)
-      
+#       helpLines1, basefname1 = backupDBAndData(backupChoice, outpath, LM_SCHEMA, 
+#                            MAL_STORE, SDM_USER_DEPENDENCIES, dbuser, dumpformat)
+#       # Explain outputs
+#       readmeFname = writeReadme(outpath, basefname1, helpLines1)
+
+      helpLines2, basefname2 = backupDBAndData(backupChoice, outpath, LM_SCHEMA, 
+                           RAD_STORE, RAD_USER_DEPENDENCIES, dbuser, dumpformat)
       # Explain outputs
-      readmeFname = writeReadme(filepath, basefname, 
-                                [dbschemaHelp, tableHelp, tarballHelp])
+      readmeFname = writeReadme(outpath, basefname2, helpLines2)
       
       print 'Instructions for using output from this script are in {}'.format(readmeFname)
       
    elif cmd == 'restore':
-#       untarFileData(filepath, scriptname)
+#       untarFileData(outpath, scriptname)
       
       with open(ingestfname) as csvfile:
          reader = csv.reader(csvfile, delimiter=CSV_DELIMITER)
          for row in reader:
             baseinfname, tablename, columnStr = row
-            ingestRecordData(filepath, baseinfname, tablename, columnStr)
+#             ingestRecordData(outpath, baseinfname, tablename, columnStr, dbuser, MAL_STORE)
+            ingestRecordData(outpath, baseinfname, tablename, columnStr, dbuser, RAD_STORE)
       csvfile.close()
       
-      '''
-      lm3.lmuser
-      lm3.lmjob
-      lm3.experiment
-      lm3.occurrenceset
-      lm3.scenario
-      lm3.layertype
-      lm3.layer
-      lm3.scenariolayers
-      lm3.keyword
-      lm3.layertypekeyword
-      lm3.scenariokeywords
-      lm3.model
-      lm3.projection
-      '''   
-   

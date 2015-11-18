@@ -371,11 +371,7 @@ create table lm3.Projection
    resolution double precision,
    epsgcode int,
    bbox varchar(60),
-   -- dataPath+dataFilename = dlocation
-   -- TODO: change to dlocation, text
    dlocation text,
-   -- TODO: delete dataPath
-   dataPath varchar(60),
    dataType int,
    jobId int,
    computeResourceId int REFERENCES lm3.ComputeResource
