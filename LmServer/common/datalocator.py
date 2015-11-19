@@ -425,6 +425,7 @@ class EarlJr(LMObject):
       return wcsUrl   
 
 # ...............................................
+   # TODO: Replace this with constructMapPrefixNew
    def constructMapPrefix(self, mapname=None, ftype=None, scenarioCode=None,
                           occsetId=None, modelId=None, projId=None,
                           radexpId=None, bucketId=None, pamsumId=None,
@@ -452,6 +453,35 @@ class EarlJr(LMObject):
          lyrname = self.createLayername(occsetId=occsetId, projId=projId)
       if lyrname is not None:
          prefix += '&layers=%s' % lyrname
+      return prefix
+
+# ...............................................
+   def constructMapPrefixNew(self, metadataurl, mapname=None, ftype=None, 
+                  scenarioCode=None, occsetId=None, projId=None, bucketId=None, 
+                  lyrname=None, usr=None, epsg=None):
+      """
+      @summary: Construct a Lifemapper URL (prefix) for a map or map layer, 
+                including 'ogc' format, '?', map=<mapname> key/value pair, and
+                optional layers=<layername> pair.
+      """
+      if mapname is not None:
+         if mapname.endswith(OutputFormat.MAP):
+            mapname = mapname[:-1*len(OutputFormat.MAP)]
+      else:
+         if ftype in (LMFileType.SCENARIO_MAP, LMFileType.BUCKET_MAP, 
+                      LMFileType.OTHER_MAP, LMFileType.SDM_MAP, 
+                      LMFileType.SHAPEGRID):
+            mapname = self.createBasename(ftype, scenarioCode=scenarioCode, 
+                                          occsetId=occsetId, bucketId=bucketId, 
+                                          usr=usr, epsg=epsg)
+         else:
+            raise LMError('Invalid LMFileType %s' % ftype)
+         
+      prefix = '{}/ogc?map={}'.format(metadataurl, mapname)
+      if lyrname is None and (occsetId is not None or projId is not None):
+         lyrname = self.createLayername(occsetId=occsetId, projId=projId)
+      if lyrname is not None:
+         prefix += '&layers={}'.format(lyrname)
       return prefix
 
 # ...............................................

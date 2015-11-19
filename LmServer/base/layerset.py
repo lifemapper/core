@@ -318,6 +318,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
 #       return mapprefix
       
 # ...............................................
+   # TODO: remove this property
    @property
    def mapPrefix(self):
       self.setMapPrefix()

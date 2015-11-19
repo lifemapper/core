@@ -2616,20 +2616,30 @@ DECLARE
    start int = 0;
 BEGIN
    start = char_length(olddir) + 1;
-   UPDATE lm3.Experiment SET attrmatrixdlocation = newdir || substr(attrmatrixdlocation, start);
-	UPDATE lm3.Experiment SET attrtreedlocation = newdir || substr(attrtreedlocation, start);
+   UPDATE lm3.Experiment SET attrmatrixdlocation = newdir || substr(attrmatrixdlocation, start)  
+	   WHERE dlocation like olddir || '%';
+	UPDATE lm3.Experiment SET attrtreedlocation = newdir || substr(attrtreedlocation, start)  
+	   WHERE dlocation like olddir || '%';
    
-   UPDATE lm3.Bucket SET slindicesdlocation = newdir || substr(slindicesdlocation, start);
-   UPDATE lm3.Bucket SET pamdlocation = newdir || substr(pamdlocation, start);
+   UPDATE lm3.Bucket SET slindicesdlocation = newdir || substr(slindicesdlocation, start)  
+	   WHERE dlocation like olddir || '%';
+   UPDATE lm3.Bucket SET pamdlocation = newdir || substr(pamdlocation, start)  
+	   WHERE dlocation like olddir || '%';
 
-   UPDATE lm3.Pamsum SET splotchpamdlocation = newdir || substr(splotchpamdlocation, start);
-   UPDATE lm3.Pamsum SET splotchsitesdlocation = newdir || substr(splotchsitesdlocation, start);
-   UPDATE lm3.Pamsum SET pamdlocation = newdir || substr(pamdlocation, start);
-   UPDATE lm3.Pamsum SET sumdlocation = newdir || substr(sumdlocation, start);
+   UPDATE lm3.Pamsum SET splotchpamdlocation = newdir || substr(splotchpamdlocation, start)  
+	   WHERE dlocation like olddir || '%';
+   UPDATE lm3.Pamsum SET splotchsitesdlocation = newdir || substr(splotchsitesdlocation, start)  
+	   WHERE dlocation like olddir || '%';
+   UPDATE lm3.Pamsum SET pamdlocation = newdir || substr(pamdlocation, start)  
+	   WHERE dlocation like olddir || '%';
+   UPDATE lm3.Pamsum SET sumdlocation = newdir || substr(sumdlocation, start)  
+	   WHERE dlocation like olddir || '%';
 	
-   UPDATE lm3.Layer SET dlocation = newdir || substr(dlocation, start);
+   UPDATE lm3.Layer SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
    
-	UPDATE lm3.Experiment SET attrtreedlocation = newdir || substr(attrtreedlocation, start);
+	UPDATE lm3.Experiment SET attrtreedlocation = newdir || substr(attrtreedlocation, start)  
+	   WHERE dlocation like olddir || '%';
 	
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
@@ -2645,11 +2655,14 @@ DECLARE
    start int = 0;
 BEGIN
    start = char_length(oldbase) + 1;
-   UPDATE lm3.Layer SET metadataUrl = newbase || substr(metadataUrl, start);
-   UPDATE lm3.Layer SET layerurl = metadataurl;
+   UPDATE lm3.Layer SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataUrl like oldbase || '%';
    
-	UPDATE lm3.Experiment SET metadataUrl = newbase || substr(metadataUrl, start);
-   UPDATE lm3.Bucket SET metadataUrl = newbase || substr(metadataUrl, start);
-   UPDATE lm3.Pamsum SET metadataUrl = newbase || substr(metadataUrl, start);
+	UPDATE lm3.Experiment SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataUrl like oldbase || '%';
+   UPDATE lm3.Bucket SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataUrl like oldbase || '%';
+   UPDATE lm3.Pamsum SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataUrl like oldbase || '%';
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
