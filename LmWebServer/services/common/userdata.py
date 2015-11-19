@@ -1340,6 +1340,12 @@ class DataPoster(object):
       if success:
          return occ
       else:
+         try:
+            occ.updateStatus(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR)
+            self.scribe.updateOccState(occ)
+         except:
+            pass
+         
          msg = 'Error inserting, writing, or updating occurrenceset'
          self.log.error(msg)
          raise LmHTTPError(HTTPStatus.INTERNAL_SERVER_ERROR, 
