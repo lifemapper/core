@@ -2323,7 +2323,8 @@ DECLARE
 BEGIN
    SELECT INTO id projectionid FROM lm3.projection 
       WHERE modelid = mdlid
-        AND scenarioid = scenid;
+        AND scenarioid = scenid
+        AND maskId = mskid;
         
    IF NOT FOUND THEN
       BEGIN
@@ -6125,25 +6126,54 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
-
--- ----------------------------------------------------------------------------
--- lm_fixUrls
--- select * from lm3.lm_fixUrls('http://lifemapper.org', 'http://beta.lifemapper.org');
-CREATE OR REPLACE FUNCTION lm3.lm_fixUrls(oldprefix varchar, newprefix varchar)
+CREATE OR REPLACE FUNCTION lm3.lm_updatePaths(olddir varchar, newdir varchar)
    RETURNS void AS
 $$
 DECLARE
    start int = 0;
 BEGIN
-   start = char_length(oldprefix) + 1;
-   UPDATE lm3.Layer SET metadataUrl = newprefix || substr(metadataUrl, start);
-   UPDATE lm3.Occurrenceset SET metadataUrl = newprefix || substr(metadataUrl, start);
-   UPDATE lm3.Projection SET metadataUrl = newprefix || substr(metadataUrl, start); 
+   start = char_length(olddir) + 1;
+   UPDATE lm3.OccurrenceSet SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+	UPDATE lm3.Layer SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+	UPDATE lm3.Model SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+	UPDATE lm3.Projection SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+	
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
 
+
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- SELECT * from lm3.lm_updateUrls('http://lifemapper.org', 'http://yeti.lifemapper.org');
 
+CREATE OR REPLACE FUNCTION lm3.lm_updateUrls(oldbase varchar, newbase varchar)
+   RETURNS void AS
+$$
+DECLARE
+   start int = 0;
+BEGIN
+   start = char_length(oldbase) + 1;   
+	UPDATE lm3.Experiment SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataurl like oldbase || '%';
+   UPDATE lm3.Occurrenceset SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataurl like oldbase || '%';
+   UPDATE lm3.Scenario SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataurl like oldbase || '%';
+   UPDATE lm3.Layer SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataurl like oldbase || '%';
+   UPDATE lm3.Projection SET metadataUrl = newbase || substr(metadataUrl, start)  
+	   WHERE metadataurl like oldbase || '%';
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 
 
+UPDATE lm3.Occurrenceset SET 
+  dlocation = '/share/lmserver/data/archive' || substr(dlocation, 38) 
+  WHERE dlocation like '/share/lmserver/data/archivea/archive%';
+  
 -- ----------------------------------------------------------------------------
