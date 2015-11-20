@@ -1685,7 +1685,7 @@ class MAL(DbPostgresql):
       @return: True on success, False on failure
       @note lm_deleteLayerType(int) returns 0/-1
       """
-      success = self.executeModifyFunction('lm_deleteLayerType',sdmlyrid)
+      success = self.executeModifyFunction('lm_deleteLayerType',typeid)
       return success
    
 # ...............................................
@@ -2962,55 +2962,6 @@ class MAL(DbPostgresql):
                                modTime=modtime, touchTime=touchtime,
                                epsgcode=epsg, bbox=bbox, 
                                primaryEnv=primaryEnv, userId=usr,
-                               occId=occsetId, rawDLocation=rdloc, 
-                               sciName=sciname, 
-                               status=stat, statusModTime=stattime)
-      return occ
-
-# ...............................................
-   def _createOccurrenceSetOld(self, row, idxs):
-      """
-      @summary Returns an OccurrenceLayer object from:
-                - an occurrences row, lm_fullOccurrenceset, lm_occJob
-                - an lm_fullmodel, lm_fullprojection, lm_mdlJob, lm_prjJob, lm_msgJob
-                - a model row  in the MAL database
-      @param row: A row of occurrences data
-      @param idxs: Indexes for the row of data
-      @return A OccurrenceLayer object generated from the information in the row
-      """
-      occ = None
-      if row is not None:
-         sciname = self._createScientificName(row, idxs)
-         occsetId = self._getColumnValue(row, idxs, ['occurrencesetid'])
-         if not(idxs.has_key('displayname')):
-            return OccurrenceLayer(None, occId=occsetId)
-         usr = self._getColumnValue(row, idxs, ['occuserid', 'userid'])
-         stat = self._getColumnValue(row, idxs, ['occstatus', 'status'])
-         stattime = self._getColumnValue(row, idxs, ['occstatusmodtime', 'statusmodtime'])
-         murl = self._getColumnValue(row, idxs, ['occmetadataurl', 'metadataurl'])
-         dloc = self._getColumnValue(row, idxs, ['occdlocation', 'dlocation'])
-         bbox = self._getColumnValue(row, idxs, ['occbbox', 'bbox'])
-         if bbox == '':
-            bbox = None
-         fromgbif = self._getColumnValue(row, idxs, ['fromgbif'])
-         dname = self._getColumnValue(row, idxs, ['displayname'])
-         sciid = self._getColumnValue(row, idxs, ['scientificnameid'])
-         qcount = self._getColumnValue(row, idxs, ['querycount'])
-         modtime = self._getColumnValue(row, idxs, ['datelastmodified'])
-         touchtime = self._getColumnValue(row, idxs, ['datelastchecked'])
-         epsg = self._getColumnValue(row, idxs, ['occepsgcode', 'epsgcode'])
-         primaryEnv = self._getColumnValue(row, idxs, ['primaryenv'])
-         rdloc = self._getColumnValue(row, idxs, ['rawdlocation'])
-         geom = self._getColumnValue(row, idxs, ['occgeom', 'geom'])
-                
-   
-         # Calculate and populate name in constructor
-         # TODO: Require/Accept name from non-Archive Users
-         occ = OccurrenceLayer(dname, fromGbif=fromgbif, dlocation=dloc, 
-                               metadataUrl=murl, queryCount=qcount,
-                               modTime=modtime, touchTime=touchtime,
-                               epsgcode=epsg, bbox=bbox, 
-                               primaryEnv=primaryEnv, userId=userid,
                                occId=occsetId, rawDLocation=rdloc, 
                                sciName=sciname, 
                                status=stat, statusModTime=stattime)
