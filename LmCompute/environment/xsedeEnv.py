@@ -137,7 +137,7 @@ class XsedeEnv(_EnvironmentMethods):
          ext = 'zip'
          writeMode = 'wb'
       elif contentType == "image/tiff":
-         ext = 'tiff'
+         ext = 'tif'
          writeMode = 'wb'
       elif contentType == "text/plain":
          ext = 'txt'
