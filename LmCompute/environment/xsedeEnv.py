@@ -146,7 +146,7 @@ class XsedeEnv(_EnvironmentMethods):
          raise Exception, "Unknown content type: %s" % contentType
       
       outputFn = os.path.join(self.getJobOutputPath(), 'completed', 
-                              '%s.%s' % (jobId, ext))
+                              '%s-%s.%s' % (jobType, jobId, ext))
 
       with open(outputFn, writeMode) as outF:
          outF.write(content)
