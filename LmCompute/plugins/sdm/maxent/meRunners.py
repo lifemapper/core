@@ -467,7 +467,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       self.log.debug("Ready to push results")
       
       component = "projection"
-      contentType = "image/x-aaigrid"
+      contentType = "image/tiff"
       outFn = os.path.join(os.path.split(self.outputFile)[0], 'out.tif')
       
       # Look to see if the layer should be scaled
