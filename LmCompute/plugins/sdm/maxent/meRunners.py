@@ -160,6 +160,8 @@ class MEModelRunner(ApplicationRunner):
       self.metrics['jobId'] = self.job.jobId
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
+      self.metrics['numPoints'] = len(self.job.points.point)
+      self.matrics['numLayers'] = len(self.job.layers.layer)
       
       self.dataDir = self.env.getJobDataPath()
       self.jobLayerDir = os.path.join(self.outputPath, 'layers')

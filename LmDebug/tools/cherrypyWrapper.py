@@ -36,8 +36,7 @@ from urlparse import urlparse
 
 from LmCommon.common.localconstants import WEBSERVICES_ROOT
 from LmCommon.common.singleton import singleton
-
-from svc import conf, svc, SESSION_DIR # Our cherrypy application.  This should be in PYTHONPATH
+from LmWebServer.services.common.svc import conf, svc, SESSION_DIR 
 
 
 LOCAL_IP = '127.0.0.1'
