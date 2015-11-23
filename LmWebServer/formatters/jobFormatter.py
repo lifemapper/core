@@ -28,7 +28,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.lmconstants import ProcessType, DEFAULT_POST_USER
+from LmCommon.common.lmconstants import DEFAULT_POST_USER, JobStatus, ProcessType
 from LmCommon.common.lmXml import CDATA, Element, SubElement, fromstring, tostring
 from LmCommon.common.localconstants import WEBSERVICES_ROOT, ARCHIVE_USER
 
@@ -146,7 +146,11 @@ class JobFormatter(Formatter):
             rasterFormat = "GTiff"
          jobId = self.obj.jobData.jid
          mdl = dObj.getModel()
-         rawModel = open(mdl.ruleset).read()
+         
+         if mdl.status == JobStatus.COMPLETE:
+            rawModel = open(mdl.ruleset).read()
+         else:
+            rawModel = None
          
          tree = Element("job")
 
@@ -163,15 +167,20 @@ class JobFormatter(Formatter):
          SubElement(tree, "userId", value=dObj.user)
          
          if mdl.algorithmCode != 'ATT_MAXENT':
-            mdlEl = fromstring(rawModel)
-            alg = tostring(mdlEl.find("Algorithm"))
             algEl = SubElement(tree, 'algorithm')
-            algEl.append(CDATA(alg))
-            #SubElement(algEl, '![CDATA[', value=alg)
+            if rawModel is not None:
+               mdlEl = fromstring(rawModel)
+               alg = tostring(mdlEl.find("Algorithm"))
+               algEl.append(CDATA(alg))
+            else:
+               algEl.append(CDATA("REPLACE-THIS"))
             
          else:
             lambdasEl = SubElement(tree, 'lambdas')
-            lambdasEl.append(CDATA(rawModel))
+            if rawModel is not None:
+               lambdasEl.append(CDATA(rawModel))
+            else:
+               lambdasEl.append(CDATA("REPLACE-THIS"))
             #SubElement(lambdasEl, '![CDATA[', value=rawModel)
             #SubElement(tree, 'lambdas', value=rawModel)
          

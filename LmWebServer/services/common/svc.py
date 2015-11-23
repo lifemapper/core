@@ -467,7 +467,7 @@ class svc(object):
             try:
                virpath.append("formSignUp.shtml")
                try:
-                  retFile = getFileContents(os.path.join(STATIC_DIR, virpath))
+                  retFile = getFileContents(os.path.join(STATIC_DIR, *virpath))
                except Exception, e:
                   err = LMError(e, doTrace=True)
                   return errorResponse(log, HTTPStatus.NOT_FOUND, url='/'.join(virpath), err=err)

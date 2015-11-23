@@ -129,9 +129,27 @@ class XsedeEnv(_EnvironmentMethods):
       @param content: The content of the post
       @param contentType: The MIME-type of the content
       @param component: The part of the job being posted (data, log, error, etc)
-      @note: Leave jobs in place
       """
-      return
+      if contentType == "application/xml":
+         ext = 'xml'
+         writeMode = 'w'
+      elif contentType == "application/zip":
+         ext = 'zip'
+         writeMode = 'wb'
+      elif contentType == "image/tiff":
+         ext = 'tif'
+         writeMode = 'wb'
+      elif contentType == "text/plain":
+         ext = 'txt'
+         writeMode = 'w'
+      else:
+         raise Exception, "Unknown content type: %s" % contentType
+      
+      outputFn = os.path.join(self.getJobOutputPath(), 'completed', 
+                              '%s-%s.%s' % (jobType, jobId, ext))
+
+      with open(outputFn, writeMode) as outF:
+         outF.write(content)
    
    # ..................................
    def requestJob(self, validTypes=[], parameters={}):
