@@ -370,15 +370,16 @@ def checkMergedFile(log, datapath, filePrefix, keyCol):
             failCount += 1
          else:
             log.debug('Failure to chunk key %d' % (prevKey))
-         tmp = bigSortedData.getThisChunk()         
+         tmp = bigSortedData.getThisChunk()
+#          log.debug('ok {}  fail {}'.format(uniqueCount, failCount))    
 
    except Exception, e:
       log.error(str(e))
    finally:
       bigSortedData.close()
       
-   log.debug('%d uniqueCount; %d failCount; currRecnum %d' 
-             % (uniqueCount, failCount, bigSortedData.currRecnum))
+   log.debug('{} uniqueCount; {} failCount; currRecnum {}'.format( 
+             uniqueCount, failCount, bigSortedData.currRecnum))
 
 # ...............................................
 def usage():
