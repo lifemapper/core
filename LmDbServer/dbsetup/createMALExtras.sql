@@ -4836,6 +4836,52 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_getModelJobsForOcc(occid int)
+   RETURNS SETOF lm3.lm_mdlJob AS
+$$
+DECLARE
+   rec lm3.lm_mdlJob;
+BEGIN
+   FOR rec in SELECT * FROM lm3.lm_mdlJob WHERE occurrenceSetId = occid
+   LOOP
+      RETURN NEXT rec;
+   END LOOP;   
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_getCompletedModelsForOcc(occid int)
+   RETURNS SETOF lm3.model AS
+$$
+DECLARE
+   rec lm3.model;
+BEGIN
+   FOR rec in SELECT * FROM lm3.model WHERE occurrenceSetId = occid
+   LOOP
+      RETURN NEXT rec;
+   END LOOP;   
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_getProjectionJobsForModel(mdlid int)
+   RETURNS SETOF lm3.lm_prjJob AS
+$$
+DECLARE
+   rec lm3.lm_prjJob;
+BEGIN
+   FOR rec in SELECT * FROM lm3.lm_prjJob WHERE modelid = mdlid
+   LOOP
+      RETURN NEXT rec;
+   END LOOP;   
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_getProjectionJob(jid int)
    RETURNS lm3.lm_prjJob AS
 $$

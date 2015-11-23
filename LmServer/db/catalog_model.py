@@ -624,19 +624,95 @@ class MAL(DbPostgresql):
       return job
 
 # ...............................................
-   def getJobOfType(self, obj):
+   def getJobOfType(self, obj, refType=None):
       job = None
-      if isinstance(obj, SDMModel): 
-         fnName = 'lm_getModelJobForId'
-      elif isinstance(obj, SDMProjection):
-         fnName = 'lm_getProjectionJobForId'
-      elif isinstance(obj, OccurrenceLayer):
-         fnName = 'lm_getOccurrenceJobForId'
-      else:
-         raise LMError('Unknown Job object type %s' % str(type(obj)))   
-      row, idxs = self.executeSelectOneFunction(fnName, obj.getId())
+      if refType is not None:
+         objid = obj
+         if refType == ReferenceType.OccurrenceSet:
+            fnName = 'lm_getOccurrenceJobForId'
+         elif refType == ReferenceType.SDMModel:
+            fnName = 'lm_getModelJobForId'
+         elif refType == ReferenceType.SDMProjection:
+            fnName = 'lm_getProjectionJobForId'
+         else:
+            raise LMError('Unknown ReferenceType {}'.format(refType))  
+          
+      else: 
+         objid = obj.getId()
+         if isinstance(obj, SDMModel): 
+            fnName = 'lm_getModelJobForId'
+         elif isinstance(obj, SDMProjection):
+            fnName = 'lm_getProjectionJobForId'
+         elif isinstance(obj, OccurrenceLayer):
+            fnName = 'lm_getOccurrenceJobForId'
+         else:
+            raise LMError('Unknown Job object type %s' % str(type(obj))) 
+      
+      row, idxs = self.executeSelectOneFunction(fnName, objid)
       job = self._createSDMJobNew(row, idxs)
       return job
+   
+# # ...............................................
+#    def _getPrjDependents(self, prj):
+#       prjDeps = []
+#       if isinstance(prj, _Job):
+#          prjid = prj.dataObj.getId()
+#       else:
+#          prjid = prj.getId()
+#          
+#       rows, idxs = self.executeSelectManyFunction('lm_getIntersectJobsForProjection', 
+#                                                     prjid)
+#       for r in rows:
+#          job = self._createSDMJobNew(r, idxs)
+#          prjDeps.append(job)
+#       
+#       return prjDeps
+
+# ...............................................
+   def _getMdlDependents(self, modelid):
+      mdlDeps = []
+      rows, idxs = self.executeSelectManyFunction('lm_getProjectionJobsForModel', 
+                                                    modelid)
+      for r in rows:
+         job = self._createSDMJobNew(r, idxs)
+         mdlDeps.append(job)
+      
+      return mdlDeps
+            
+# ...............................................
+   def _getOccDependents(self, occid):
+      occDeps = []
+      rows, midxs = self.executeSelectManyFunction('lm_getModelJobsForOcc', occid)
+      for mr in rows:
+         mdlDeps = []
+         mdljob = self._createSDMJobNew(mr, midxs)
+         mdlDependents = self._getMdlDependents(mdljob.dataObj.getId())
+            
+         occDeps.append((mdljob, mdlDeps))
+            
+      rows, midxs = self.executeSelectManyFunction('lm_getCompletedModelsForOcc', occid)
+      for mr in rows:
+         mdlDeps = []
+         mdl = self._createModel(mr, midxs, doFillScenario=False)
+         mdlDependents = self._getMdlDependents(mdl.getId())
+
+         if len(mdlDependents) > 0:
+            occDeps.append((mdl, mdlDeps))
+            
+      return occDeps
+
+# ...............................................
+   def getTopDownJobChain(self, occ):
+      top = None
+      
+      if occ.status == JobStatus.INITIALIZE:
+         row, idxs = self.executeSelectOneFunction('lm_getOccurrenceJobForId', occ.getId())
+         top = self._createSDMJobNew(row, idxs)
+      elif occ.status == JobStatus.COMPLETE:
+         top = occ   
+         
+      occDeps = self._getOccDependents(occ.getId())
+      return (top, occDeps)
       
 # ...............................................
    def pullJobs(self, count, processType, startStat, endStat, usr, 
