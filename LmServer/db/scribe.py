@@ -44,7 +44,7 @@ from LmServer.common.notifyJob import NotifyJob
 from LmServer.db.peruser import Peruser
 from LmServer.rad.pamvim import PamSum
 from LmServer.rad.radJob import (RADIntersectJob, RADCompressJob, RADGradyJob,
-                                RADSwapJob, RADSplotchJob, RADCalculateJob)
+                  RADSwapJob, RADSplotchJob, RADCalculateJob, RADBuildGridJob)
 from LmServer.sdm.envlayer import EnvironmentalLayer, EnvironmentalType
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, \
                                 SDMProjectionJob
@@ -178,6 +178,7 @@ class Scribe(Peruser):
 
 # ...............................................
    def reinitSDMExperiment(self, occ):
+      total = 0
       # make sure raw input data is valid
       processtype = None
       if occ.getRawDLocation() is not None:
@@ -1538,9 +1539,8 @@ class Scribe(Peruser):
       if pamsum is not None:
          pamsum.clear()
          success = self._rad.deletePamSum(pamsum.getId())
-         if not deleted:
+         if not success:
             self.log.error('Unable to delete PamSum %d' % pamsum.getId())
-            success = False
       return success
    
 # ...............................................

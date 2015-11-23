@@ -646,9 +646,13 @@ BEGIN
    -- Is this LayerType used anywhere else?
    SELECT count(*) INTO typecount FROM lm3.layer WHERE layertypeid = typeid;
          
-   -- No, orphaned LayerType
+   -- It is used, do not delete
    IF typecount > 0 THEN
       success := 0;
+      subsuccess := 0;
+      RAISE NOTICE 'Unable to delete LayerType % connected to % Layers', typeid, typecount;
+      
+   -- Ok, delete orphan
    ELSE
       begin
       -- Delete LayerType-Keyword joins for this orphaned LayerType
@@ -659,7 +663,7 @@ BEGIN
             SELECT k.keywordid FROM lm3.keyword k, lm3.LayerTypeKeyword ltk 
               WHERE ltk.layerTypeId = typeid AND ltk.keywordid = k.keywordid
          LOOP
-            SELECT INTO success lm3.lm_deleteKeyword(kwdid) ;
+            SELECT INTO subsuccess lm3.lm_deleteKeyword(kwdid) ;
          END LOOP;
                
          -- Delete the LayerType

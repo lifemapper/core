@@ -23,14 +23,10 @@
 """
 import csv
 import os
-import subprocess
 import sys
 
 from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD) 
-
-from LmServer.common.localconstants import APP_PATH
-from LmServer.common.log import ThreadLogger
-
+from LmServer.common.log import ScriptLogger
 
 # .............................................................................
 class FileData(object):
@@ -373,7 +369,8 @@ def checkMergedFile(log, datapath, filePrefix, keyCol):
                       % (prevKey, bigSortedData.key))
             failCount += 1
          else:
-            log.debug('Failure to chunk key %d' % (prevKey))            
+            log.debug('Failure to chunk key %d' % (prevKey))
+         tmp = bigSortedData.getThisChunk()         
 
    except Exception, e:
       log.error(str(e))
@@ -394,7 +391,6 @@ def usage():
 # ..............................................................................
 # MAIN
 # ..............................................................................
-basename = os.path.splitext(os.path.basename(__file__))[0]
 # datestr = subprocess.check_output(['date', '+%F']).strip().replace('-', '_')
 # datapath = '/tank/data/input/gbif/{}/'.format(datestr)
 dumpFilename = 'aimee_export.txt'
@@ -404,7 +400,7 @@ oneGb = 1000000000
 
 # ...............................................
 if __name__ == '__main__':
-   log = ThreadLogger(basename)
+   basename = os.path.splitext(os.path.basename(__file__))[0]
    
    keyCol = None
    for idx, vals in GBIF_EXPORT_FIELDS.iteritems():
@@ -418,7 +414,10 @@ if __name__ == '__main__':
       usage()
    else:
       cmd = sys.argv[1]
+      log = ScriptLogger('{}_{}'.format(basename, cmd))
       datapath = sys.argv[2]
+      if not (os.path.exists(datapath)):
+         print('Datapath {} does not exist'.format(datapath))
       if cmd == 'split':   
          # Split big, semi-sorted file, to multiple smaller sorted files
          sortedRuns = splitIntoSortedFiles(log, datapath, dumpFilename, 

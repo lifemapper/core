@@ -93,7 +93,7 @@ class RADBuildGridJob(_Job):
             zf.extractall(path=outDir)
             
             # We need to fix the filenames to match what we expect
-            for zname in z.namelist():
+            for zname in zf.namelist():
                name, ext = os.path.splitext(zname)
                if ext in SHAPEFILE_EXTENSIONS:
                   if name.find('shapegrid') >= 0:
@@ -107,6 +107,7 @@ class RADBuildGridJob(_Job):
          raise LMError(["Do not know how to write content (%s) for BuildGrid job" % component])
 
 # .............................................................................
+#TODO: Finish this for arbitrary layersets or subsets !!
 class RADNewIntersectJob(_Job):
    """
    @summary: Job object used to intersect a shapegrid with a set of layers
@@ -118,7 +119,8 @@ class RADNewIntersectJob(_Job):
    stage=JobStage.INTERSECT
 
    # ....................................
-   def __init__(self, lyrset, computeId=None, status=JobStatus.GENERAL, 
+   def __init__(self, lyrset, shapegrid, outputPath, 
+                computeId=None, status=JobStatus.GENERAL, 
                 statusModTime=None, priority=None, lastHeartbeat=None, 
                 createTime=None, jid=None, retryCount=None):
       """
@@ -129,45 +131,10 @@ class RADNewIntersectJob(_Job):
                      LayerParameters
       @copydoc LmServer.base.job._Job::__init__()
       """
-      bucket = radexp.bucketList[0]
-      self.bucketId = bucket.getId()
-      self.outputPath = bucket.outputPath
-      self.doSpecies = doSpecies
-
-      if doSpecies:
-         layerset = radexp.orgLayerset
-         layersPresent = radexp.initOrgLayersPresent()
-         sitesPresent = bucket.shapegrid.initSitesPresent()
-         bucket.clearPresenceIndices()
-         bucket.setSitesPresent(sitesPresent)
-         bucket.setLayersPresent(layersPresent)
-         inputType = InputDataType.USER_PRESENCE_ABSENCE
-      else:
-         raise LMError('Ancillary Intersection is not yet supported')
-#          layerset = radexp.envLayerset
-#          layersPresent = radexp.initEnvLayersPresent()
-#          inputType = InputDataType.USER_ANCILLARY
-
-      if status == JobStatus.INITIALIZE:
-         # Update layerIndices (for entire experiment)
-         radexp.writeLayerIndices()
-#          # Initialize layersPresent and sitesPresent for this bucket
-#          bucket.writePresenceIndices()
-
-      jobData = RADIntersectJobData(layerset, bucket.shapegrid, jid, 
-                                    radexp.getUserId(), bucket.metadataUrl, 
-                                    radexp.metadataUrl, inputType=inputType)
-      _Job.__init__(self, jobData, bucket, ReferenceType.Bucket, 
-                       jobFamily=JobFamily.RAD, computeId=computeId, 
-                       status=status, statusModTime=statusModTime, 
-                       priority=priority, lastHeartbeat=lastHeartbeat, 
-                       createTime=createTime, retryCount=retryCount)
-#    
-#    # ....................................
-#    def run(self):
-#       status, lyrArrays = intersect(self.dataObj['layerset'], 
-#                                     self.dataObj['shapegrid'])
-#       return [status, lyrArrays]
+      self.outputPath = outputPath
+      shapegrid.initSitesPresent()
+      lyrset.initLayersPresent()
+      inputType = lyrset.matrixType
       
    # ....................................
    def _readIntersectOutput(self, content):
@@ -203,47 +170,18 @@ class RADNewIntersectJob(_Job):
       @param contentType: The mime-type of the content
       """
       if component.lower() == 'pam':
-         status = self.writeMatrix(content)
+         status = self.writeVectors(content)
          self.update(status=status)
       else:
-         raise LMError(["Do not know how to write content (%s) for intersect job" % component])
+         raise LMError(["Do not know how to write content (%s) for NEW intersect job" % component])
 
    # ....................................
-   def writeMatrix(self, content):
+   def writeVectors(self, content):
       """
       @summary: Writes out the RADBucket's pickeled PAM or GRIM file (numpy format)
       @postcondition: The PAM or GRIM is written to the filesystem
       """
-      layerArrays = self._readIntersectOutput(content)
-      
-      print "Writing intersection for radBucket %s" % self._outputObj.getId()
-      if len(layerArrays) > 0:
-         idx1 = layerArrays.keys()[0]
-         sitecount = len(layerArrays[idx1])
-         
-      if len(layerArrays) > 0:
-         mtx = Matrix.initEmpty(sitecount, len(layerArrays))
-         for mtxidx, lyrdata in layerArrays.iteritems():
-            mtx.addColumn(lyrdata, mtxidx)
-         if self.doSpecies:
-            self._outputObj.setFullPAM(mtx)
-         else:         
-            self._outputObj.setFullGRIM(mtx)
-
-      try:
-         if self.doSpecies:
-            # Can write each individual layer here too
-            self._outputObj.writePam()
-         else:            
-            self._outputObj.writeGrim()
-         
-         status = JobStatus.COMPLETE
-            
-      except Exception, e:
-         status = JobStatus.IO_MATRIX_WRITE_ERROR
-
-      return status
-
+      pass
 
 # .............................................................................
 class RADIntersectJob(_Job):

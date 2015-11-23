@@ -1,13 +1,23 @@
 # Note: This file must have the same basename as the CSV file it describes
-# Key = field heading; Value = (Shortname, type)
-# Shortname must be 10 characters or fewer
+# 
+# This file must contain a Python dictionary with:
+#     Key = field heading
+#     Value = (Shortname, Type [,Keyword | AcceptedValues])
+# 
+# Key is a fieldname in the first row of the CSV data file
+# Shortname must be 10 characters or fewer and will be used in the shapefile 
+#   created for each dataset.  
 # Type may be 'integer', 'string', or 'real'
-# Five fields must be identified with the keywords: 
-#   ID, Longitude, Latitude, GroupBy, Dataname (all case-insensitive)
-#   ID is the string or integer field containing a unique ID for each record.
-#   Longitude and Latitude are real fields with the x and y coordinates 
-#   GroupBy is an integer field identifying which value to group records by
-#   Dataname is the string field containing the display name for the recordset
+# Keyword (case-insensitive) MUST identify exactly five of the fields: 
+#   Five fields MUST be identified with the keywords: 
+#   ID, Longitude, Latitude, GroupBy, Dataname 
+#     ID is the string or integer field containing a unique ID for each record.
+#     Longitude and Latitude are real fields with the x and y coordinates 
+#     GroupBy is an integer field identifying which value to group records by
+#     Dataname is the string field containing the display name for the recordset
+# AcceptedValues (optional) is a list of accepted values for this field.  
+#   Records with non-accepted values will be discarded.
+# 
 
 {'gbifid': ('gbifid', 'integer', 'id'),
   'datasetkey': ('datasetkey', 'string'), 

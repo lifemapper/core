@@ -26,6 +26,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from LmCommon.common.lmconstants import InputDataType
 from LmServer.base.layer import _Layer, _LayerParameters
 from LmServer.base.layerset import _LayerSet
 from LmServer.base.lmobj import LMError
@@ -92,6 +93,20 @@ class MatrixLayerset(_LayerSet, ServiceObject):
          for lyr in lyrs:
             self.addLayer(lyr) 
          self._bbox = _LayerSet._getUnionBounds(self)
+         
+         
+# ...............................................
+   @property
+   def matrixType(self):
+      """
+      @summary: Identify the type of layerset  
+      """
+      if len(self._layers) == 0:
+         return None
+      elif isinstance(self.layers[0], _AncillaryValue):
+         return InputDataType.USER_ANCILLARY
+      elif isinstance(self.layers[0], _PresenceAbsence):
+         return InputDataType.USER_PRESENCE_ABSENCE
    
 # .........................................................................
 # Public Properties
