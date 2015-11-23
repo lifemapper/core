@@ -160,8 +160,8 @@ class MEModelRunner(ApplicationRunner):
       self.metrics['jobId'] = self.job.jobId
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
-      self.metrics['numPoints'] = len(self.job.points.point)
-      self.matrics['numLayers'] = len(self.job.layers.layer)
+      #self.metrics['numPoints'] = len(self.job.points.point)
+      #self.matrics['numLayers'] = len(self.job.layers.layer)
       
       self.dataDir = self.env.getJobDataPath()
       self.jobLayerDir = os.path.join(self.outputPath, 'layers')
@@ -400,24 +400,24 @@ optional args can contain any flags understood by Maxent -- for example, a
       #handleLayers(self.job.layers, self.env, self.dataDir, self.jobLayerDir)
       
       
-      # Get omission file from package
-      #      This is needed for cumulative projections
-      packageUrl = "%s/package" % self.job.parentUrl
-      
-      # Pull value of url and put it in StringIO object
-      pkgZipString = StringIO(urllib2.urlopen(packageUrl).read())
-      
-      # Make it a zip file
-      with zipfile.ZipFile(pkgZipString, mode="r", allowZip64=True) as zf:
-         # Look for omissions file in name list
-         for fn in zf.namelist():
-            if fn.find("_omission.csv") >= 0:
-               # Extract the file if found
-               omissionFn = os.path.join(self.outputPath, 'input_omission.csv')
-               omissionContents = zf.read(fn)
-               with open(omissionFn, 'w') as oF:
-                  oF.write(omissionContents)
-               #zf.extract(fn, omissionFn)
+      ## Get omission file from package
+      ##      This is needed for cumulative projections
+      #packageUrl = "%s/package" % self.job.parentUrl
+      #
+      ## Pull value of url and put it in StringIO object
+      #pkgZipString = StringIO(urllib2.urlopen(packageUrl).read())
+      #
+      ## Make it a zip file
+      #with zipfile.ZipFile(pkgZipString, mode="r", allowZip64=True) as zf:
+      #   # Look for omissions file in name list
+      #   for fn in zf.namelist():
+      #      if fn.find("_omission.csv") >= 0:
+      #         # Extract the file if found
+      #         omissionFn = os.path.join(self.outputPath, 'input_omission.csv')
+      #         omissionContents = zf.read(fn)
+      #         with open(omissionFn, 'w') as oF:
+      #            oF.write(omissionContents)
+      #         #zf.extract(fn, omissionFn)
       
       
       self.log.debug("Inputs acquired...")
@@ -490,15 +490,6 @@ optional args can contain any flags understood by Maxent -- for example, a
             multiplier = int(self.job.postProcessing.multiply.multiplier)
             multiplyAndConvertLayer(self.outputFile, outFn, 
                               multiplier=multiplier, dataType=multiplyDataType)
-            
-            # Since this is only done for Charlie right now, add stuff for him
-            zipFn = outFn + '.gz'
-            import gzip
-            import shutil
-            with open(outFn, 'rb') as f_in, gzip.open(zipFn, 'wb') as f_out:
-               shutil.copyfileobj(f_in, f_out)            
-            outFn = zipFn
-            contentType = 'application/zip'
          except:
             convertLayer(self.outputFile, outFn)
       
