@@ -4,7 +4,7 @@
       <baseUrl>http://yeti.lifemapper.org</baseUrl>
       <version>4.0</version>
       <minimumClientVersion>3.1.0</minimumClientVersion>
-      <maximumClientVersion>3.1.0</maximumClientVersion>
+      <maximumClientVersion>3.3.0</maximumClientVersion>
    </instance>
    <!-- 
    <instance name="iDigBio">
