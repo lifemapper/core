@@ -4836,19 +4836,38 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getModelJobsForOcc(occid int)
+CREATE OR REPLACE FUNCTION lm3.lm_pullModelJobsForOcc(occid int,
+                                                  processType int,
+                                                  startStat int,
+                                                  endStat int,
+                                                  currtime double precision,
+                                                  crid int)
    RETURNS SETOF lm3.lm_mdlJob AS
 $$
 DECLARE
    rec lm3.lm_mdlJob;
 BEGIN
-   FOR rec in SELECT * FROM lm3.lm_mdlJob WHERE occurrenceSetId = occid
+   FOR rec in SELECT * FROM lm3.lm_mdlJob 
+      WHERE occurrenceSetId = occid  AND jbstatus = startStat
    LOOP
+      UPDATE lm3.LmJob SET (status, statusmodtime, lastheartbeat, computeResourceId) 
+                         = (endStat, currtime, currtime, crid) 
+         WHERE lmJobId = rec.lmJobId;
+      UPDATE lm3.Model SET (status, statusmodtime, computeResourceId) 
+                                 = (endStat, currtime, crid) 
+         WHERE modelid = rec.modelid;
+   	rec.jbstatus = endstat; 
+   	rec.jbstatusmodtime = currtime;
+   	rec.lastheartbeat = currtime;
+   	rec.jbcomputeresourceid = crid;
+   	rec.mdlstatus = endstat; 
+   	rec.mdlstatusmodtime = currtime;
+   	rec.mdlcomputeresourceid = crid;
       RETURN NEXT rec;
    END LOOP;   
    RETURN;
 END;
-$$  LANGUAGE 'plpgsql' STABLE;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_getCompletedModelsForOcc(occid int)
@@ -4867,19 +4886,38 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getProjectionJobsForModel(mdlid int)
+CREATE OR REPLACE FUNCTION lm3.lm_pullProjectionJobsForModel(mdlid int,
+                                                  processType int,
+                                                  startStat int,
+                                                  endStat int,
+                                                  currtime double precision,
+                                                  crid int)
    RETURNS SETOF lm3.lm_prjJob AS
 $$
 DECLARE
    rec lm3.lm_prjJob;
 BEGIN
-   FOR rec in SELECT * FROM lm3.lm_prjJob WHERE modelid = mdlid
+   FOR rec in SELECT * FROM lm3.lm_prjJob 
+      WHERE modelid = mdlid  AND jbstatus = startStat
    LOOP
+      UPDATE lm3.LmJob SET (status, statusmodtime, lastheartbeat, computeResourceId) 
+                         = (endStat, currtime, currtime, crid) 
+         WHERE lmJobId = rec.lmJobId;
+      UPDATE lm3.Projection SET (status, statusmodtime, computeResourceId) 
+                                 = (endStat, currtime, crid) 
+         WHERE modelid = rec.modelid;
+   	rec.jbstatus = endstat; 
+   	rec.jbstatusmodtime = currtime;
+   	rec.lastheartbeat = currtime;
+   	rec.jbcomputeresourceid = crid;
+   	rec.prjstatus = endstat; 
+   	rec.prjstatusmodtime = currtime;
+   	rec.prjcomputeresourceid = crid;
       RETURN NEXT rec;
    END LOOP;   
    RETURN;
 END;
-$$  LANGUAGE 'plpgsql' STABLE;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_getProjectionJob(jid int)
@@ -4930,16 +4968,76 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getOccurrenceJobForId(occid int)
+CREATE OR REPLACE FUNCTION lm3.lm_getComputeId(varchar int, msk varchar)
+   RETURNS int AS
+$$
+DECLARE
+   int crid := -1;
+BEGIN
+   begin
+      -- Get computeresource id for requesting resource.
+      SELECT computeResourceId INTO STRICT crid FROM lm3.ComputeResource
+         WHERE ipaddress = crip AND ipmask = msk;
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'ComputeResource not found for IP %, mask %', crip, msk;
+   end;
+   RETURN crid;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_getComputeRec(varchar int, msk varchar)
+   RETURNS lm3.ComputeResource AS
+$$
+DECLARE
+   rec lm3.ComputeResource;
+BEGIN
+   begin
+      -- Get computeresource id for requesting resource.
+      SELECT * INTO STRICT rec FROM lm3.ComputeResource
+         WHERE ipaddress = crip AND ipmask = msk;
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'ComputeResource not found for IP %, mask %', crip, msk;
+   end;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- TODO: Change to also use reqsoftware (LmCommon.common.lmconstants.ProcessType)?
+CREATE OR REPLACE FUNCTION lm3.lm_pullOccurrenceJobForId(occid int,
+                                                  startStat int,
+                                                  endStat int,
+                                                  currtime double precision,
+                                                  crid int)
    RETURNS lm3.lm_occJob AS
 $$
 DECLARE
    rec lm3.lm_occJob;
 BEGIN
-   SELECT * INTO rec FROM lm3.lm_occJob WHERE occurrencesetid = occid;
+   SELECT * INTO rec FROM lm3.lm_occJob 
+      WHERE occurrencesetid = occid AND jbstatus = startStat;
+   
+   IF FOUND THEN 
+      UPDATE lm3.LmJob SET (status, statusmodtime, lastheartbeat, computeResourceId) 
+                         = (endStat, currtime, currtime, crid) 
+         WHERE lmJobId = rec.lmJobId;
+      UPDATE lm3.OccurrenceSet SET (status, statusmodtime) 
+                                 = (endStat, currtime) 
+         WHERE occurrencesetid = rec.occurrencesetid;
+   	rec.jbstatus = endstat; 
+   	rec.jbstatusmodtime = currtime;
+   	rec.lastheartbeat = currtime;
+   	rec.jbcomputeresourceid = crid;
+   	rec.occstatus = endstat; 
+   	rec.occstatusmodtime = currtime;
+   END IF;
+   
    RETURN rec;
 END;
-$$  LANGUAGE 'plpgsql' STABLE;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_insertJob(jfam int,
