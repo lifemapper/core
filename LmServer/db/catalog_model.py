@@ -1009,7 +1009,6 @@ class MAL(DbPostgresql):
             pass
       return rawMdl
             
-            
 # ...............................................
    def insertJob(self, job):
       """
@@ -1308,7 +1307,80 @@ class MAL(DbPostgresql):
 #      self.log.debug('Reset %d Status.RETRIEVE_QUEUE(%d) jobs' 
 #                     % (cnt3, JobStatus.RETRIEVE_QUEUE))
 #      return cnt1 + cnt2 + cnt3
-   
+# .............................................................................
+   def resetSDMJobs(self, reftype, oldstat, newstat, usr):
+      """
+      @summary Reset jobs and their referenced objects from one status to another.
+      @param reftype: LmServer.common.lmconstants.ReferenceType
+      @param oldstat: target status to change
+      @param newstat: desired status
+      @param usr: optional filter by userId
+      @note: lm_resetJobs(int, int, int, double, varchar) changes status 
+             and returns the number of modified jobs
+      """
+      cnt = self.executeModifyReturnValue('lm_resetJobs', reftype, oldstat, 
+                                          newstat, mx.DateTime.utc().mjd, usr)
+      return cnt
+
+# .............................................................................
+   def resetObjectAndJob(self, reftype, objid, oldstat, newstat):
+      """
+      @summary Reset object and referenced jobs from one status to another.
+      @param reftype: LmServer.common.lmconstants.ReferenceType
+      @param oldstat: target status to change
+      @param newstat: desired status
+      @note: lm_resetObject(int, int, int, double, varchar) changes status 
+             and returns the number of modified jobs
+      """
+      cnt = self.executeModifyReturnValue('lm_resetObjectAndJob', reftype, objid,
+                                          oldstat, newstat, mx.DateTime.utc().mjd)
+      return cnt
+
+# .............................................................................
+   def resetSDMChain(self, top, oldstat, startstat, depstat, usr):
+      '''
+      @summary: Reset a chain of jobs, starting with a 'top' level dependency, 
+                then all objects/jobs dependent on completion of that object 
+      @note: If an object does not have a job, it will not create one
+      @param oldstat: target status to change
+      @param startstat: desired status for top level job
+      @param depstat: desired status for dependent jobs
+      @param top: LmServer.common.lmconstants.ReferenceType, could start at 
+                  OccurrenceSet, SDMModel, or SDMProjection.  
+      @param usr: optional filter by userId
+      @todo: put dependencies in object classes
+      '''
+      objids = []
+      rows, idxs = self.executeSelectManyFunction('lm_getJobObjIds', top, 
+                                                  oldstat, usr)
+      for r in rows:
+         objids.append(r['objid'])
+      
+      # Reset top level   
+      total = self.resetSDMJobs(top, oldstat, startstat, usr)
+      
+      # Reset dependent objects
+      depObjs = {ReferenceType.SDMModel: [], ReferenceType.SDMProjection: []}
+      if top == ReferenceType.OccurrenceSet:
+         for occid in objids:
+            mdldeps = self.getModelsForOcc(occid, None, None)
+            depObjs[ReferenceType.SDMModel].extend([mdl.getId() for mdl in mdldeps]) 
+            
+            prjdeps = self.getProjectionsForOcc(occid)
+            depObjs[ReferenceType.SDMProjection].extend([prj.getId() for prj in prjdeps])
+            
+      elif top == ReferenceType.SDMModel:
+         for mdlid in objids:
+            prjdeps = self.getProjectionsForModel(mdlid, None)
+            depObjs[ReferenceType.SDMProjection].extend([prj.getId() for prj in prjdeps])
+      
+      for reftype, refids in depObjs.iteritems():
+         for oid in refids:
+            count = self.resetObjectAndJob(reftype, oid, oldstat, depstat)
+            total += count
+            
+      return count
+            
 # .............................................................................
    def rollbackSDMJobs(self, queuedStatus):
       """

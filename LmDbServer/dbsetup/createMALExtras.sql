@@ -348,10 +348,8 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*)
-               FROM lm3.LayerType ';
-   wherecls = ' 
-               WHERE userid =  ' || quote_literal(usrid) ;
+   cmd = 'SELECT count(*) FROM lm3.LayerType ';
+   wherecls = ' WHERE userid =  ' || quote_literal(usrid) ;
 
    -- filter by modified before given time
    IF beforetime is not null THEN
@@ -6295,7 +6293,161 @@ $$ LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_measureProgress(reftype int,
+                                                  starttime double precision,
+                                                  endtime double precision, 
+                                                  usr varchar)
+   RETURNS rec AS
+$$
+DECLARE
+   statcol varchar;
+   timecol varchar;
+   usercol varchar;
+   tblname varchar;
+   cmd varchar;
+   wherecls varchar;
+   aggcls varchar;
+BEGIN
+   IF reftype in (104, 101) THEN
+      begin
+         statcol = 'status';
+         timecol = 'statusmodtime';
+         usercol = 'userid';
+         IF reftype = 104 THEN
+            tblname = 'lm3.occurrenceset'
+         ELSEIF reftype = 101 THEN
+            tblname = 'lm3.model'
+         END IF;
+      end;
+   ELSEIF reftype = 102 THEN
+      begin
+         statcol = 'prjstatus';
+         timecol = 'prjstatusmodtime';
+         usercol = 'mdluserid';
+         tblname = 'lm3.lm_fullprojection'
+      end;
+   END IF;
+   
+   cmd = 'SELECT ' || statcol || ', count(*) FROM ' || tblname || ' ';
+   aggcls = ' group by ' || statcol || ' order by ' || statcol;
+   wherecls = ' WHERE ' || timecol || ' >= ' || quote_literal(starttime) ||
+              '   AND ' || timecol || ' <= ' || quote_literal(endtime) ;
+   IF usr IS NOT null THEN
+      wherecls = wherecls || ' AND ' || usercol || ' = ' || quote_literal(usr) ;
+   END IF;
+
+   cmd = cmd || wherecls || aggcls;   
+
+   RETURN QUERY EXECUTE cmd;
+END;
+$$ LANGUAGE 'plpgsql' STABLE; 
+
+
 -- ----------------------------------------------------------------------------
+-- uses 2-d array
+-- SELECT * FROM lm3.lm_getJobObjIds(102, 1100, 'kubi');
+CREATE OR REPLACE FUNCTION lm3.lm_getJobObjIds(reftype int,
+                                               oldstat int, 
+                                               usr varchar)
+   RETURNS TABLE(jobid int, objid int) AS
+$$
+DECLARE
+   cmd varchar;
+BEGIN
+   IF usr is null THEN
+      cmd = 'SELECT lmjobid, referenceid FROM lm3.lmjob WHERE referencetype = ' 
+             || quote_literal(reftype) || ' AND status = ' || quote_literal(oldstat);
+   ELSEIF reftype = 104 THEN
+      cmd = 'SELECT lmjobid, occurrencesetid FROM lm3.lm_occjob WHERE occuserid = ' 
+            || quote_literal(usr) || ' AND jbstatus = ' || quote_literal(oldstat);
+   ELSEIF reftype = 101 THEN
+      cmd = 'SELECT lmjobid, modelid FROM lm3.lm_mdljob WHERE mdluserid = ' 
+            || quote_literal(usr) || ' AND jbstatus = ' || quote_literal(oldstat);
+   ELSEIF reftype = 102 THEN
+      cmd = 'SELECT lmjobid, projectionid FROM lm3.lm_prjjob WHERE mdluserid = ' 
+            || quote_literal(usr) || ' AND jbstatus = ' || quote_literal(oldstat);
+   END IF;
+   
+   RETURN QUERY EXECUTE cmd;
+END;
+$$ LANGUAGE 'plpgsql' STABLE; 
+
+
+-- ----------------------------------------------------------------------------
+-- Uses reftype defined in LmServer.common.lmconstants ReferenceType 
+--   and LmDbServer/dbsetup/createMALViews.sql
+-- SELECT * FROM lm3.lm_resetJobs(101, 1100, 1, 57358, null);
+CREATE OR REPLACE FUNCTION lm3.lm_resetJobs(reftype int,
+                                            oldstat int,
+                                            newstat int,
+                                            currtime double precision,
+                                            usr varchar)
+   RETURNS int AS
+$$
+DECLARE
+   num int := 0;
+   jobid int; 
+   objid int;
+   rec record ;
+BEGIN
+   FOR jobid, objid IN SELECT * FROM lm3.lm_getJobObjIds(reftype, oldstat, usr)
+   LOOP
+      IF reftype = 104 THEN
+         UPDATE lm3.occurrenceset SET (status, statusmodtime) = (newstat, currtime) 
+            WHERE occurrencesetid = objid;
+      ELSEIF reftype = 101 THEN
+         UPDATE lm3.model SET (status, statusmodtime) = (newstat, currtime) 
+            WHERE modelid = objid;
+      ELSEIF reftype = 102 THEN
+         UPDATE lm3.projection SET (status, statusmodtime) = (newstat, currtime) 
+            WHERE projectionid = objid;
+      END IF;
+      
+      UPDATE lm3.lmjob SET (status, statusmodtime) = (newstat, currtime) 
+         WHERE lmjobid = jobid;
+      num = num + 1; 
+   END LOOP;
+   RETURN num;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 
+
+-- ----------------------------------------------------------------------------
+-- Uses reftype defined in LmServer.common.lmconstants ReferenceType 
+--   and LmDbServer/dbsetup/createMALViews.sql
+-- SELECT * FROM lm3.lm_resetObjectAndJob(101, 36262346, 1, 57358);
+CREATE OR REPLACE FUNCTION lm3.lm_resetObjectAndJob(reftype int,
+                                                    objid int,
+                                                    oldstat int,
+                                                    newstat int,
+                                                    currtime double precision)
+   RETURNS int AS
+$$
+DECLARE
+   num int := 0;
+BEGIN
+   IF reftype = 104 THEN
+      UPDATE lm3.occurrenceset SET (status, statusmodtime) = (newstat, currtime) 
+         WHERE occurrencesetid = objid;
+   ELSEIF reftype = 101 THEN
+      UPDATE lm3.model SET (status, statusmodtime) = (newstat, currtime) 
+         WHERE modelid = objid;
+   ELSEIF reftype = 102 THEN
+      UPDATE lm3.projection SET (status, statusmodtime) = (newstat, currtime) 
+         WHERE projectionid = objid;
+   END IF;
+   IF FOUND THEN
+      num = num + 1;
+   END IF;
+      
+   UPDATE lm3.lmjob SET (status, statusmodtime) = (newstat, currtime) 
+      WHERE referencetype = reftype AND referenceid = objid;
+   IF FOUND THEN
+      num = num + 1;
+   END IF;
+   RETURN num;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 
+
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- SELECT * from lm3.lm_updateUrls('http://lifemapper.org', 'http://yeti.lifemapper.org');
@@ -6319,9 +6471,5 @@ BEGIN
 	   WHERE metadataurl like oldbase || '%';
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
-
-UPDATE lm3.Occurrenceset SET 
-  dlocation = '/share/lmserver/data/archive' || substr(dlocation, 38) 
-  WHERE dlocation like '/share/lmserver/data/archivea/archive%';
   
 -- ----------------------------------------------------------------------------

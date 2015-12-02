@@ -840,6 +840,27 @@ class Scribe(Peruser):
       return (topOcc, occDependents)
       
 # ...............................................
+   def resetTopDownJobChain(self, oldstat, startstat, depstat, 
+                            top=ReferenceType.OccurrenceSet, usr=None):
+      '''
+      @summary: Reset a chain of jobs, starting with a 'top' level dependency, 
+                then all jobs dependent on completion of that object 
+      @param oldstat: target status to change
+      @param startstat: desired status for top level job
+      @param depstat: desired status for dependent jobs
+      @param top: LmServer.common.lmconstants.ReferenceType, could start at 
+                  OccurrenceSet, SDMModel, or SDMProjection.  
+      @param usr: optional filter by userId
+      @todo: put dependencies in subclasses of LmServer.base._JobData or 
+             LmServer.base._Job, or in object classes
+      '''
+      if ReferenceType.isSDM(top):
+         cnt = self._mal.resetSDMChain(top, oldstat, startstat, depstat, usr)
+      elif ReferenceType.isRAD(top):
+         raise LMError('resetRADJobs is not yet implemented')
+      return cnt
+      
+# ...............................................
    def pullJobs(self, count, computeIP, 
                 processTypes=[ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
                               ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 
@@ -892,6 +913,20 @@ class Scribe(Peruser):
          jobs.extend(currjobs)
       return jobs
    
+# ...............................................
+   def resetJobs(self, reftype, oldstat, newstat, usr=None):
+      '''
+      @param reftype: LmServer.common.lmconstants.ReferenceType
+      @param oldstat: target status to change
+      @param newstat: desired status
+      @param usr: optional filter by userId
+      '''
+      if ReferenceType.isSDM(reftype):
+         cnt = self._mal.resetSDMJobs(reftype, oldstat, newstat, usr)
+      elif ReferenceType.isRAD(reftype):
+         raise LMError('resetRADJobs is not yet implemented')
+      return cnt
+      
 # ...............................................
    def _getJobFilters(self, count, processTypes, userIds, inputTypes):
       from random import choice
