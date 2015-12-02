@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <instances>
    <instance name="Lifemapper">
-      <baseUrl>http://yeti.lifemapper.org</baseUrl>
+      <baseUrl>http://svc.lifemapper.org</baseUrl>
       <version>4.0</version>
       <minimumClientVersion>3.1.0</minimumClientVersion>
       <maximumClientVersion>3.3.0</maximumClientVersion>
