@@ -828,6 +828,18 @@ class Scribe(Peruser):
       return sct + rct
 
 # ...............................................
+   def pullTopDownJobChain(self, occ, startStat, endStat, currtime, computeIP, msk=None):
+      """
+      @return: a nested tuple of dependent jobs and objects as:
+         (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
+                   (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
+      @note: The top occurrence object will be a Job if it must be computed
+      """
+      (topOcc, occDependents) = self._mal.pullTopDownJobChain(occ, startStat, 
+                                             endStat, currtime, computeIP, msk)
+      return (topOcc, occDependents)
+      
+# ...............................................
    def pullJobs(self, count, computeIP, 
                 processTypes=[ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
                               ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 

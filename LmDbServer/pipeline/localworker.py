@@ -38,7 +38,7 @@ from LmCommon.common.localconstants import ARCHIVE_USER
 from LmDbServer.common.localconstants import WORKER_JOB_LIMIT
 from LmDbServer.pipeline.pipeline import _Worker
 
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LMError, LmHTTPError
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (JobFamily, Priority, 
                                          PrimaryEnvironment, LOG_PATH)
@@ -1272,13 +1272,16 @@ class GBIFChainer(_LMWorker):
                speciesName = self._scribe.findTaxon(self._taxonSourceId, 
                                                     speciesKey)
                if speciesName is None:
-                  speciesName = self._processInputTaxa(speciesKey)
-               if speciesName is None:
-                  self.log.info('Revisit this: Unknown taxon (genus or species) for key %d' 
-                                % speciesKey)
-               else:
-                  self._processInputSpecies(speciesName, dataCount, dataChunk)
-                  
+                  try:
+                     speciesName = self._processInputTaxa(speciesKey)
+                  except LmHTTPError, e:
+                     self.log.info('Failed lookup for key {}, ({})'.format(
+                                                            speciesKey, e.msg))
+                  if speciesName is not None:
+                     self._processInputSpecies(speciesName, dataCount, dataChunk)
+                  else:
+                     self.log.info('Unknown taxa for key {}'.format(speciesKey))
+
                if self._existKillFile():
                   break
                         

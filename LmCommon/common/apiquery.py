@@ -31,22 +31,22 @@ from types import BooleanType, DictionaryType, FloatType, IntType, ListType, \
 import urllib, urllib2
 import xml.etree.ElementTree as ET
 
-from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
-         BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_MAX_POINT_COUNT,
-         BISON_NAME_KEY, BISON_OCC_FILTERS, BISON_OCCURRENCE_URL,
-         BISON_QFILTERS, BISON_RECORD_KEYS, BISON_RESPONSE_FIELDS,
-         BISON_TSN_FILTERS, BISON_TSN_KEY, BISON_TSN_LIST_KEYS,
-         BISON_BINOMIAL_REGEX, GBIF_DATASET_SERVICE, GBIF_OCCURRENCE_SERVICE,
+         BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_NAME_KEY, BISON_OCC_FILTERS, 
+         BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_FILTERS, BISON_TSN_LIST_KEYS,
+         BISON_BINOMIAL_REGEX, BISON_OCCURRENCE_URL,
          GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
          IDIGBIO_AGG_SPECIES_GEO_MIN_40, IDIGBIO_BINOMIAL_KEYS, 
          IDIGBIO_BINOMIAL_REGEX, IDIGBIO_FILTERS, IDIGBIO_URL_PREFIX, 
          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, IDIGBIO_QFILTERS, 
-         IDIGBIO_SPECIMENS_BY_BINOMIAL, ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, 
+         IDIGBIO_SPECIMENS_BY_BINOMIAL, 
+         ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, 
          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
          ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
          ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
-         ITIS_TAXONOMY_KEY, URL_ESCAPES)
+         ITIS_TAXONOMY_KEY, URL_ESCAPES,
+         HTTPStatus)
+from LmServer.base.lmobj import LmHTTPError
 
 # .............................................................................
 class APIQuery(object):
@@ -79,7 +79,7 @@ class APIQuery(object):
    @property
    def url(self):
       # All filters added to url
-      return '%s?%s' % (self.baseurl, self.filterString)
+      return '{}?{}'.format(self.baseurl, self.filterString)
 
 # ...............................................
    def addFilters(self, qFilters={}, otherFilters={}):
@@ -146,7 +146,7 @@ class APIQuery(object):
    def _interpretQClause(self, key, val):
       cls = None
       if isinstance(val, (FloatType, IntType, StringType, UnicodeType)):
-         cls = '%s:%s' % (key, str(val))
+         cls = '{}:{}'.format(key, str(val))
       # Tuple for negated or range value
       elif isinstance(val, TupleType):            
          # negated filter
@@ -196,7 +196,8 @@ class APIQuery(object):
    def query(self, outputType='json'):
 #       # Also Works
 #       response = urllib2.urlopen(fullUrl.decode('utf-8'))
-      data = None
+      data = retcode = None
+      
       if self._qFilters:
          # All q and other filters are on url
          req = urllib2.Request(self.url, None, self.headers)
@@ -205,25 +206,35 @@ class APIQuery(object):
             data = urllib.urlencode(self._otherFilters)
          # Any filters are in data
          req = urllib2.Request(self.baseurl, data, self.headers)
-      response = urllib2.urlopen(req)
-      output = response.read()
-      if outputType == 'json':
-         import json
-         try:
-            self.output = json.loads(output)
-         except Exception, e:
-            print str(e)
-            raise
-      elif outputType == 'xml':
-         try:
-            root = ET.fromstring(output)
-            self.output = root    
-         except Exception, e:
-            print str(e)
-            raise
+      try:
+         response = urllib2.urlopen(req)
+         retcode = response.getcode()
+      except Exception, e:
+         if retcode is None:
+            retcode = HTTPStatus.INTERNAL_SERVER_ERROR
+         raise LmHTTPError(retcode, msg='Failed on URL {}; ({})'.format(
+                                        self.url, str(e)))
       else:
-         print 'Unrecognized output type %s' % str(outputType)
-         self.output = None  
+         try:
+            output = response.read()
+         except Exception, e:
+            raise LmHTTPError(HTTPStatus.INTERNAL_SERVER_ERROR, 
+              msg='Failed to read output of URL {}; ({})'.format(self.url, str(e)))
+         
+      try:
+         if outputType == 'json':
+            self.output = json.loads(output)
+         elif outputType == 'xml':
+            root = ET.fromstring(output)
+            self.output = root
+         else:
+            print 'Unrecognized output type %s' % str(outputType)
+            self.output = None   
+      except Exception, e:
+         raise LmHTTPError(HTTPStatus.INTERNAL_SERVER_ERROR,
+                msg='Failed to interpret output of URL {}; ({})'.format(self.url, 
+                                                                        str(e)))
+      
 
 # .............................................................................
 class BisonAPI(APIQuery):
@@ -267,9 +278,9 @@ class BisonAPI(APIQuery):
             for key in keylst:
                dict = dict[key]
          except Exception, e:
-            raise Exception('Invalid keylist for output (%s)' % str(keylst))
+            raise Exception('Invalid keylist for output ({})'.format(keylst))
       else:
-         raise Exception('Invalid output type (%s)' % str(type(dict)))
+         raise Exception('Invalid output type ({})'.format(type(dict)))
       return dict
          
 # ...............................................
@@ -486,49 +497,49 @@ class GbifAPI(APIQuery):
       """
       APIQuery.query(self, outputType='json')
 
-# .............................................................................
-class IdigbioAPI(APIQuery):
-# .............................................................................
-   """
-   Class to query iDigBio APIs and return results
-   """
-# ...............................................
-   def __init__(self, qFilters={}, otherFilters={}, filterString=None,
-                headers={'Content-Type': 'application/json'}):
-      """
-      @summary: Constructor for IdigbioAPI class      
-      """
-      # Add Q filters for this instance
-      for key, val in IDIGBIO_QFILTERS.iteritems():
-         qFilters[key] = val
-      # Add other filters for this instance
-      for key, val in IDIGBIO_FILTERS.iteritems():
-         otherFilters[key] = val
-          
-      idigSearchUrl = '/'.join((IDIGBIO_OCCURRENCE_URL, IDIGBIO_SEARCH_QUERY_KEY))
-          
-      APIQuery.__init__(self, idigSearchUrl, qFilters=qFilters, 
-                        otherFilters=otherFilters, filterString=filterString, 
-                        headers=headers)
-       
-# ...............................................
-   @classmethod
-   def initFromUrl(cls, url, headers={'Content-Type': 'application/json'}):
-      base, filters = url.split('?')
-      if base == IDIGBIO_OCCURRENCE_URL:
-         qry = IdigbioAPI(filterString=filters)
-      else:
-         raise Exception('iDigBio occurrence API must start with %s' 
-                         % IDIGBIO_OCCURRENCE_URL)
-      return qry
-       
-# ...............................................
-   def _burrow(self, keylst):
-      dict = self.output
-      for key in keylst:
-         dict = dict[key]
-      return dict
-          
+# # .............................................................................
+# class IdigbioAPI(APIQuery):
+# # .............................................................................
+#    """
+#    Class to query iDigBio APIs and return results
+#    """
+# # ...............................................
+#    def __init__(self, qFilters={}, otherFilters={}, filterString=None,
+#                 headers={'Content-Type': 'application/json'}):
+#       """
+#       @summary: Constructor for IdigbioAPI class      
+#       """
+#       # Add Q filters for this instance
+#       for key, val in IDIGBIO_QFILTERS.iteritems():
+#          qFilters[key] = val
+#       # Add other filters for this instance
+#       for key, val in IDIGBIO_FILTERS.iteritems():
+#          otherFilters[key] = val
+#           
+#       idigSearchUrl = '/'.join((IDIGBIO_OCCURRENCE_URL, IDIGBIO_SEARCH_QUERY_KEY))
+#           
+#       APIQuery.__init__(self, idigSearchUrl, qFilters=qFilters, 
+#                         otherFilters=otherFilters, filterString=filterString, 
+#                         headers=headers)
+#        
+# # ...............................................
+#    @classmethod
+#    def initFromUrl(cls, url, headers={'Content-Type': 'application/json'}):
+#       base, filters = url.split('?')
+#       if base == IDIGBIO_OCCURRENCE_URL:
+#          qry = IdigbioAPI(filterString=filters)
+#       else:
+#          raise Exception('iDigBio occurrence API must start with %s' 
+#                          % IDIGBIO_OCCURRENCE_URL)
+#       return qry
+#        
+# # ...............................................
+#    def _burrow(self, keylst):
+#       dict = self.output
+#       for key in keylst:
+#          dict = dict[key]
+#       return dict
+#           
 # # ...............................................
 #    def getBinomial(self):
 #       """
@@ -558,7 +569,7 @@ class IdigbioAPI(APIQuery):
 #       if self.debug:
 #          print 'Filtered:', filtered
 #       return binomialList
- 
+#   
 # # ...............................................
 #    def getSpecimensByBinomial(self):
 #       """
@@ -573,7 +584,7 @@ class IdigbioAPI(APIQuery):
 #       for entry in dataList:
 #          specimenList.append(entry[IDIGBIO_OCCURRENCE_CONTENT_KEY])
 #       return specimenList
-# 
+#  
 # # ...............................................
 #    def getOccurrences(self, asShapefile=False):
 #       """
@@ -588,13 +599,13 @@ class IdigbioAPI(APIQuery):
 #       for entry in dataList:
 #          specimenList.append(entry[IDIGBIO_OCCURRENCE_CONTENT_KEY])
 #       return specimenList
- 
-# ...............................................
-   def query(self):
-      """
-      @summary: Queries the API and sets 'output' attribute to a JSON object 
-      """
-      APIQuery.query(self, outputType='json')
+#  
+# # ...............................................
+#    def query(self):
+#       """
+#       @summary: Queries the API and sets 'output' attribute to a JSON object 
+#       """
+#       APIQuery.query(self, outputType='json')
       
 
 # .............................................................................
