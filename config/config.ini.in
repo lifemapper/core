@@ -124,9 +124,9 @@ JOB_DATA_PATH: @LMDISK@/data/
 JOB_OUTPUT_PATH: @LMDISK@/jobs/
 JOB_REQUEST_DIR: @LMDISK@/jobRequests/
 PLUGINS_DIR: @LMHOME@/LmCompute/plugins
-SAMPLE_JOBS_PATH: @LMDISK@/test/sampleJobs
-SAMPLE_LAYERS_PATH: @LMDISK@/test/jobData/layers/testLayers.txt
-SAMPLE_DATA_PATH: @LMDISK@/test/jobData
+SAMPLE_JOBS_PATH: @LMDISK@/tests/config/sampleJobs
+SAMPLE_LAYERS_PATH: @LMDISK@/tests/data/layers/testLayers.txt
+SAMPLE_DATA_PATH: @LMDISK@/tests/data
 TEMPORARY_FILE_PATH: @LMDISK@/temp/
 
 ; ...............................................
