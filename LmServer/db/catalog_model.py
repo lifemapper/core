@@ -1296,32 +1296,31 @@ class MAL(DbPostgresql):
    
 
 # .............................................................................
-   def resetSDMJobs(self, reftype, oldstat, newstat, usr):
+   def resetObjectsJobsFromStatus(self, reftype, oldstat, newstat, usr):
       """
       @summary Reset objects and any dependent jobs from one status to another.
       @param reftype: LmServer.common.lmconstants.ReferenceType
       @param oldstat: target status to change
       @param newstat: desired status
       @param usr: optional filter by userId
-      @note: lm_resetJobsObjectsAtStatus(int, int, int, double, varchar) 
+      @note: lm_resetObjectsJobsAtStatus(int, int, int, double, varchar) 
       @return: number of modified jobs
       """
-      cnt = self.executeModifyReturnValue('lm_resetJobsObjectsAtStatus', 
+      cnt = self.executeModifyReturnValue('lm_resetObjectsJobsAtStatus', 
                         reftype, oldstat, newstat, mx.DateTime.utc().mjd, usr)
       return cnt
 
 # .............................................................................
-   def resetObjectAndJob(self, reftype, objid, oldstat, newstat):
+   def resetObjectAndJobs(self, reftype, objid, newstat):
       """
-      @summary Reset object and referenced jobs from one status to another.
+      @summary Reset object and any related jobs to new status.
       @param reftype: LmServer.common.lmconstants.ReferenceType
-      @param oldstat: target status to change
       @param newstat: desired status
       @note: lm_resetObject(int, int, int, double, varchar) changes status 
              and returns the number of modified jobs
       """
       cnt = self.executeModifyReturnValue('lm_resetObjectAndJob', reftype, objid,
-                                          oldstat, newstat, mx.DateTime.utc().mjd)
+                                          newstat, mx.DateTime.utc().mjd)
       return cnt
 
 # .............................................................................

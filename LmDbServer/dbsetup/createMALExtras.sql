@@ -6376,8 +6376,8 @@ $$ LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Uses reftype defined in LmServer.common.lmconstants ReferenceType 
---   and LmDbServer/dbsetup/createMALViews.sql
-CREATE OR REPLACE FUNCTION lm3.lm_resetJobsObjectsAtStatus(reftype int,
+--   and LmDbServer/dbsetup/createMALViews.sql 
+CREATE OR REPLACE FUNCTION lm3.lm_resetObjectsJobsAtStatus(reftype int,
                                             oldstat int,
                                             newstat int,
                                             currtime double precision,
@@ -6413,10 +6413,9 @@ $$ LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Uses reftype defined in LmServer.common.lmconstants ReferenceType 
---   and LmDbServer/dbsetup/createMALViews.sql
+--   and LmDbServer/dbsetup/createMALViews.sql  
 CREATE OR REPLACE FUNCTION lm3.lm_resetObjectAndJob(reftype int,
                                                     objid int,
-                                                    oldstat int,
                                                     newstat int,
                                                     currtime double precision)
    RETURNS int AS

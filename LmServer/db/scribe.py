@@ -914,17 +914,32 @@ class Scribe(Peruser):
       return jobs
    
 # ...............................................
-   def resetJobs(self, reftype, oldstat, newstat, usr=None):
+   def resetObjectsJobsFromStatus(self, reftype, oldstat, newstat, usr=None):
       '''
+      @summary: Change status of multiple objects at oldstat and any related jobs
       @param reftype: LmServer.common.lmconstants.ReferenceType
       @param oldstat: target status to change
       @param newstat: desired status
       @param usr: optional filter by userId
       '''
       if ReferenceType.isSDM(reftype):
-         cnt = self._mal.resetSDMJobs(reftype, oldstat, newstat, usr)
+         cnt = self._mal.resetObjectsJobsFromStatus(reftype, oldstat, newstat, usr)
       elif ReferenceType.isRAD(reftype):
-         raise LMError('resetRADJobs is not yet implemented')
+         raise LMError('RAD resetObjectsJobsFromStatus is not yet implemented')
+      return cnt
+      
+# ...............................................
+   def resetObjectAndJobs(self, reftype, objid, newstat):
+      '''
+      @summary: Change status of one object and any related jobs
+      @param reftype: LmServer.common.lmconstants.ReferenceType
+      @param objid: primary id of object to change
+      @param newstat: desired status
+      '''
+      if ReferenceType.isSDM(reftype):
+         cnt = self._mal.resetObjectAndJobs(reftype, objid, newstat)
+      elif ReferenceType.isRAD(reftype):
+         raise LMError('RAD resetObjectAndJobs is not yet implemented')
       return cnt
       
 # ...............................................
