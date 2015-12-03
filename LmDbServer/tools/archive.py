@@ -36,7 +36,6 @@ from LmCommon.common.localconstants import ARCHIVE_USER
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import MAL_STORE, RAD_STORE, LM_SCHEMA
 from LmServer.common.localconstants import APP_PATH
-from LmDbServer.populate.GBIF.sortGbifExport import datapath
  
 DEBUG = False
 USER_REPLACE_STR = '#USERS#'

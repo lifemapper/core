@@ -70,32 +70,3 @@ if __name__ == "__main__":
    
    scribe.closeConnections()
 
-
-
-# 
-# from LmCommon.common.lmconstants import DEFAULT_POST_USER, ONE_DAY
-# from LmServer.common.log import ConsoleLogger
-# from LmServer.db.scribe import Scribe
-# 
-# import glob
-# import mx.DateTime as DT
-# 
-# tooOldTime = DT.gmt().mjd - (ONE_DAY * 14)
-# 
-# log = ConsoleLogger()
-# scribe = Scribe(log)
-# scribe.openConnections()
-# atoms = scribe.listModels(0, 500, userId=DEFAULT_POST_USER, 
-#                           beforeTime=tooOldTime)
-# 
-# log.info('Deleting %d experiments for %s' % (len(atoms), DEFAULT_POST_USER))
-# for atm in atoms:
-#    model = scribe.getModel(atm.getId())
-#    if model is not None:
-#       success = scribe.deleteExperiment(model)
-#       log.info ('   Success %s deleting experiment %d' % atm.getId())
-#    else:
-#       log.warning('  Unable to get model %d' % atm.getId())
-#       
-# scribe.closeConnections()
-

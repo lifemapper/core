@@ -27,19 +27,17 @@
 """
 from LmServer.common.localconstants import (COMPUTE_NAME, COMPUTE_IP, 
             COMPUTE_IP_MASK, COMPUTE_CONTACT_USERID, COMPUTE_CONTACT_EMAIL, 
-            COMPUTE_CONTACT_FIRSTNAME, COMPUTE_CONTACT_LASTNAME, 
-            COMPUTE_INSTITUTION, COMPUTE_ADDR1, COMPUTE_ADDR2, COMPUTE_ADDR3)
-from LmDbServer.populate.computeMeta import LM_COMPUTE_INSTANCES
+            COMPUTE_CONTACT_FIRSTNAME, COMPUTE_INSTITUTION, COMPUTE_ADDR1, 
+            COMPUTE_ADDR2, COMPUTE_ADDR3)
+from LmDbServer.tools.computeMeta import LM_COMPUTE_INSTANCES
 
 from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
-from LmServer.common.localconstants import DATA_PATH
 from LmServer.common.log import DebugLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe
 
 import mx.DateTime as DT
-import os
 
 # ...............................................
 def getOptionalVal(dict, key):

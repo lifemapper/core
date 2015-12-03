@@ -32,7 +32,7 @@ from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
-from LmDbServer.populate.bioclimMeta import (BASELINE_DATA, 
+from LmDbServer.tools.bioclimMeta import (BASELINE_DATA, 
          CLIMATE_KEYWORDS, CLIMATE_PACKAGES, ENVLYR_GDALFORMAT, ENVLYR_GDALTYPE, 
          LAYERTYPE_DATA, REPORTS, RESOLUTIONS, TIME_PERIODS, TAXONOMIC_SOURCE)
 
