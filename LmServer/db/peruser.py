@@ -883,6 +883,18 @@ class Peruser(LMObject):
    def getStatisticsQueries(self):
       statsDict = self._mal.getStatisticsQueries()
       return statsDict
+
+# ...............................................
+   def getProgress(self, starttime=None, endtime=None, usrid=None):
+      '''
+      @summary: returns a dictionary of {objectTypes: {status: count}}
+      @note: uses the db view lm_progress
+      '''
+      statusDict = {}
+      for reftype in ReferenceType.sdmTypes:
+         statusDict[reftype] = self._mal.getProgress(reftype, starttime, 
+                                                     endtime, usrid)
+      return statusDict
    
 # ...............................................
    def getModeledSpeciesCount(self):

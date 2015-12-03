@@ -2679,30 +2679,6 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_resetJobs(stattime double precision, 
-                                        inprocess_stat int, 
-                                        preprocess_stat int)
-   RETURNS int AS
-$$
-DECLARE
-   rowcount int;
-   total int;
-BEGIN
-   UPDATE lm3.Model SET (status, statusModTime) = (preprocess_stat, stattime) 
-      WHERE status = inprocess_stat; 
-   GET DIAGNOSTICS total = ROW_COUNT;
-   
-
-   UPDATE lm3.Projection SET (status, statusModTime) = (preprocess_stat, stattime) 
-      WHERE status = inprocess_stat; 
-   GET DIAGNOSTICS rowcount = ROW_COUNT;
-   
-   total = total + rowcount;
-   RETURN total;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_resetSDMJobsToReadyAndWaiting(stattime double precision, 
                                                                 inprocess_stat int, 
                                                                 ready_stat int, 
@@ -6293,19 +6269,22 @@ $$ LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
+-- Uses reftype defined in LmServer.common.lmconstants ReferenceType 
+--   and LmDbServer/dbsetup/createMALViews.sql
 CREATE OR REPLACE FUNCTION lm3.lm_measureProgress(reftype int,
                                                   starttime double precision,
-                                                  endtime double precision, 
+                                                  endtime double precision,
                                                   usr varchar)
-   RETURNS rec AS
+   RETURNS SETOF lm3.lm_progress AS
 $$
 DECLARE
+   rec lm3.lm_progress%ROWTYPE;
    statcol varchar;
    timecol varchar;
    usercol varchar;
    tblname varchar;
    cmd varchar;
-   wherecls varchar;
+   wherecls varchar := '';
    aggcls varchar;
 BEGIN
    IF reftype in (104, 101) THEN
@@ -6314,9 +6293,9 @@ BEGIN
          timecol = 'statusmodtime';
          usercol = 'userid';
          IF reftype = 104 THEN
-            tblname = 'lm3.occurrenceset'
+            tblname = 'lm3.occurrenceset';
          ELSEIF reftype = 101 THEN
-            tblname = 'lm3.model'
+            tblname = 'lm3.model';
          END IF;
       end;
    ELSEIF reftype = 102 THEN
@@ -6324,21 +6303,43 @@ BEGIN
          statcol = 'prjstatus';
          timecol = 'prjstatusmodtime';
          usercol = 'mdluserid';
-         tblname = 'lm3.lm_fullprojection'
+         tblname = 'lm3.lm_fullprojection';
       end;
    END IF;
    
    cmd = 'SELECT ' || statcol || ', count(*) FROM ' || tblname || ' ';
    aggcls = ' group by ' || statcol || ' order by ' || statcol;
-   wherecls = ' WHERE ' || timecol || ' >= ' || quote_literal(starttime) ||
-              '   AND ' || timecol || ' <= ' || quote_literal(endtime) ;
+              
    IF usr IS NOT null THEN
-      wherecls = wherecls || ' AND ' || usercol || ' = ' || quote_literal(usr) ;
+      wherecls = ' WHERE ' || usercol || ' = ' || quote_literal(usr) ;
    END IF;
-
-   cmd = cmd || wherecls || aggcls;   
-
-   RETURN QUERY EXECUTE cmd;
+   IF starttime IS NOT null THEN
+      begin
+         IF char_length(wherecls) = 0 THEN
+            wherecls = ' WHERE ' || timecol || ' >= ' || quote_literal(starttime);
+         ELSE
+            wherecls = wherecls || ' AND ' || timecol || ' >= ' || quote_literal(starttime) ;
+         END IF;
+      end;
+   END IF;
+   IF endtime IS NOT null THEN
+      begin
+         IF char_length(wherecls) = 0 THEN
+            wherecls = ' WHERE ' || timecol || ' <= ' || quote_literal(endtime);
+         ELSE
+            wherecls = wherecls || ' AND ' || timecol || ' <= ' || quote_literal(endtime) ;
+         END IF;
+      end;
+   END IF;
+   
+   cmd = cmd || wherecls || aggcls;
+   RAISE NOTICE 'cmd= %', cmd;   
+	
+	FOR rec IN EXECUTE cmd
+	LOOP
+		RETURN NEXT rec;
+	END LOOP;
+	RETURN;
 END;
 $$ LANGUAGE 'plpgsql' STABLE; 
 
@@ -6376,8 +6377,7 @@ $$ LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- Uses reftype defined in LmServer.common.lmconstants ReferenceType 
 --   and LmDbServer/dbsetup/createMALViews.sql
--- SELECT * FROM lm3.lm_resetJobs(101, 1100, 1, 57358, null);
-CREATE OR REPLACE FUNCTION lm3.lm_resetJobs(reftype int,
+CREATE OR REPLACE FUNCTION lm3.lm_resetJobsObjectsAtStatus(reftype int,
                                             oldstat int,
                                             newstat int,
                                             currtime double precision,
@@ -6414,7 +6414,6 @@ $$ LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- Uses reftype defined in LmServer.common.lmconstants ReferenceType 
 --   and LmDbServer/dbsetup/createMALViews.sql
--- SELECT * FROM lm3.lm_resetObjectAndJob(101, 36262346, 1, 57358);
 CREATE OR REPLACE FUNCTION lm3.lm_resetObjectAndJob(reftype int,
                                                     objid int,
                                                     oldstat int,

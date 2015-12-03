@@ -1037,6 +1037,19 @@ class MAL(DbPostgresql):
       return job
                
 # ...............................................
+   def getProgress(self, reftype, starttime=None, endtime=None, usrid=None):
+      '''
+      @summary: returns a dictionary of {status: count}
+      @note: uses the db view lm_progress
+      '''
+      statusDict = {}
+      rows, idxs = self.executeSelectManyFunction('lm_measureProgress', reftype,
+                                                 starttime, endtime, usrid)
+      for r in rows:
+         statusDict[r[0]] = r[1]
+      return statusDict
+   
+# ...............................................
    def getEmail(self, usrid):
       row, idxs = self.executeSelectOneFunction('lm_getEmail', usrid)
       return row[0]
@@ -1281,45 +1294,20 @@ class MAL(DbPostgresql):
                                            occId, primaryEnvCode)
       return success
    
-## .............................................................................
-#   def resetInprocessJobs(self):
-#      """
-#      @summary Reset models (JobStatus.xxx_QUEUED) that were not 
-#      completed for whatever reason.  Set models to previously-completed-stage.
-#      @note: lm_resetJobs(double, int, int) changes status and returns int
-#      """
-#      cnt1 = self.executeModifyReturnValue('lm_resetJobs', 
-#                                                   mx.DateTime.utc().mjd, 
-#                                                   JobStatus.DISPATCH_QUEUE,
-#                                                   JobStatus.INITIALIZE)
-#      self.log.debug('Reset %d Status.DISPATCH_QUEUE(%d) jobs' 
-#                     % (cnt1, JobStatus.DISPATCH_QUEUE))
-#      cnt2 = self.executeModifyReturnValue('lm_resetJobs', 
-#                                                   mx.DateTime.utc().mjd, 
-#                                                   JobStatus.WAIT_QUEUE,
-#                                                   JobStatus.DISPATCH_COMPLETE)
-#      self.log.debug('Reset %d Status.WAIT_QUEUE(%d) jobs' 
-#                     % (cnt2, JobStatus.WAIT_QUEUE))
-#      cnt3 = self.executeModifyReturnValue('lm_resetJobs', 
-#                                                   mx.DateTime.utc().mjd, 
-#                                                   JobStatus.RETRIEVE_QUEUE,
-#                                                   JobStatus.WAIT_COMPLETE)
-#      self.log.debug('Reset %d Status.RETRIEVE_QUEUE(%d) jobs' 
-#                     % (cnt3, JobStatus.RETRIEVE_QUEUE))
-#      return cnt1 + cnt2 + cnt3
+
 # .............................................................................
    def resetSDMJobs(self, reftype, oldstat, newstat, usr):
       """
-      @summary Reset jobs and their referenced objects from one status to another.
+      @summary Reset objects and any dependent jobs from one status to another.
       @param reftype: LmServer.common.lmconstants.ReferenceType
       @param oldstat: target status to change
       @param newstat: desired status
       @param usr: optional filter by userId
-      @note: lm_resetJobs(int, int, int, double, varchar) changes status 
-             and returns the number of modified jobs
+      @note: lm_resetJobsObjectsAtStatus(int, int, int, double, varchar) 
+      @return: number of modified jobs
       """
-      cnt = self.executeModifyReturnValue('lm_resetJobs', reftype, oldstat, 
-                                          newstat, mx.DateTime.utc().mjd, usr)
+      cnt = self.executeModifyReturnValue('lm_resetJobsObjectsAtStatus', 
+                        reftype, oldstat, newstat, mx.DateTime.utc().mjd, usr)
       return cnt
 
 # .............................................................................
@@ -1387,7 +1375,7 @@ class MAL(DbPostgresql):
       @summary Reset models (JobStatus.xxx_QUEUED) that were not 
       completed for whatever reason.  Set models to previously-completed-stage.
       @param queuedStatus: status within a Pipeline.Worker queue
-      @note: lm_resetJobs(double, int, int) changes status and returns int
+      @note: lm_resetSDMJobsToReadyAndWaiting(double, int, int) changes status and returns int
       """
       cnt = self.executeModifyReturnValue('lm_resetSDMJobsToReadyAndWaiting', 
                                           mx.DateTime.utc().mjd, 

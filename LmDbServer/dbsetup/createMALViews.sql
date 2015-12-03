@@ -100,6 +100,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullmodel (
       WHERE m.occurrencesetid = o.occurrencesetid;
       
 -- ----------------------------------------------------------------------------
+-- referenceType defined in LmServer.common.lmconstants ReferenceType 
 -- lm_mdlJob
 DROP VIEW IF EXISTS lm3.lm_mdlJob CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_mdlJob (
@@ -177,6 +178,8 @@ CREATE OR REPLACE VIEW lm3.lm_mdlJob (
         AND j.referenceid = m.modelid;
               
 -- ----------------------------------------------------------------------------
+-- referenceType defined in LmServer.common.lmconstants ReferenceType 
+-- reqSoftware defined in LmCommon.common.lmconstants ProcessType
 -- lm_msgJob
 DROP VIEW IF EXISTS lm3.lm_msgJob CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_msgJob (
@@ -329,6 +332,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullprojection (
         AND m.occurrencesetid = o.occurrencesetid;
 
 -- ----------------------------------------------------------------------------
+-- referenceType defined in LmServer.common.lmconstants ReferenceType 
 DROP VIEW IF EXISTS lm3.lm_prjJob CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_prjJob (
    -- lm_fullprojection.*
@@ -480,6 +484,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullOccurrenceset (
      AND n.taxonomysourceid = t.taxonomysourceid;
 
 -- ----------------------------------------------------------------------------
+-- referenceType defined in LmServer.common.lmconstants ReferenceType 
 DROP VIEW IF EXISTS lm3.lm_occJob CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_occJob (
    -- occurrenceset.* (without geom, geompts)
@@ -727,7 +732,13 @@ CREATE TYPE lm3.lm_occStats AS
     totalmodels int
    );
         
-        
+-- ----------------------------------------------------------------------------
+-- lm_atom returns only an a few object attributes
+DROP TYPE IF EXISTS lm3.lm_progress CASCADE;
+CREATE TYPE lm3.lm_progress AS (
+  status int,
+  total int);
+ 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 GRANT SELECT ON TABLE 
