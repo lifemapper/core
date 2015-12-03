@@ -6,8 +6,8 @@
 import argparse
 import urllib2
 
-WEBSITE_ROOT = "http://dev.lifemapper.org"
-REWRITE_ROOT = "http://dev.lifemapper.org"
+WEBSITE_ROOT = "http://lifemapper.org"
+REWRITE_ROOT = "http://lifemapper.org"
 FORWARD_ROOT = "http://svc.lifemapper.org"
 
 # These URLs stay at the same host but have a new URL
