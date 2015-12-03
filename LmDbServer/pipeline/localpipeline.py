@@ -27,24 +27,22 @@ from time import sleep
 
 from LmCommon.common.apiquery import BisonAPI
 from LmCommon.common.localconstants import ARCHIVE_USER
-from LmCommon.common.lmconstants import BISON_BINOMIAL_REGEX, BISON_NAME_KEY, \
-          BISON_TSN_FILTERS, GBIF_EXPORT_FIELDS, \
-          GBIF_PROVIDER_FIELD, GBIF_TAXONKEY_FIELD, Instances, ONE_MONTH, \
-          ProcessType
+from LmCommon.common.lmconstants import (BISON_BINOMIAL_REGEX, BISON_NAME_KEY, 
+          BISON_TSN_FILTERS, GBIF_EXPORT_FIELDS, GBIF_PROVIDER_FIELD, 
+          GBIF_TAXONKEY_FIELD, Instances, ONE_MONTH, ProcessType)
 
 from LmDbServer.common.lmconstants import (OCC_DUMP_FILE, 
                BISON_TSN_FILE, IDIGBIO_BINOMIAL_FILE, PROVIDER_DUMP_FILE,
                USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
-from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, \
+from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
          SPECIES_EXP_MONTH, SPECIES_EXP_DAY, DEFAULT_GRID_NAME)
 from LmDbServer.pipeline.pipeline import _Pipeline
 from LmDbServer.pipeline.localworker import (Infiller, Troubleshooter, 
                ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer, UserChainer)
-from LmDbServer.populate.bioclimMeta import TAXONOMIC_SOURCE
+from LmDbServer.tools.bioclimMeta import TAXONOMIC_SOURCE
 
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.localconstants import DATASOURCE
 from LmServer.db.scribe import Scribe
 from LmServer.sdm.algorithm import Algorithm
