@@ -9,7 +9,6 @@ import glob
 import os
 import time
 import traceback
-import urllib2
 
 from LmBackend.common.urllib2mock import addUrlMappingFromFile, installMockOpener
 from LmCommon.common.lmXml import deserialize, fromstring, parse
