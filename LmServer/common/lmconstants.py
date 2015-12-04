@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import inspect
 from osgeo.gdalconst import GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, \
                             GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, \
                             GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64
@@ -64,9 +65,17 @@ class ReferenceType:
    ShapeGrid = 205
    
    @staticmethod
+   def name(rt):
+      attrs = inspect.getmembers(ReferenceType, lambda a:not(inspect.isroutine(a)))
+      for att in attrs:
+         if rt == att[1]:
+            return att[0]
+      return None 
+   
+   @staticmethod
    def sdmTypes():
-      return [ReferenceType.SDMModel, ReferenceType.SDMProjection, 
-              ReferenceType.SDMExperiment, ReferenceType.OccurrenceSet]
+      return [ReferenceType.OccurrenceSet, ReferenceType.SDMModel, 
+              ReferenceType.SDMProjection, ReferenceType.SDMExperiment]
       
    @staticmethod
    def isSDM(rtype):
@@ -76,9 +85,9 @@ class ReferenceType:
       
    @staticmethod
    def radTypes():
-      return [ReferenceType.RADExperiment, ReferenceType.Bucket, 
+      return [ReferenceType.ShapeGrid, ReferenceType.Bucket, 
               ReferenceType.OriginalPamSum, ReferenceType.RandomPamSum,
-              ReferenceType.ShapeGrid]
+              ReferenceType.RADExperiment]
 
    @staticmethod
    def isRAD(rtype):
@@ -88,9 +97,9 @@ class ReferenceType:
    
    @staticmethod
    def boomTypes():
-      return [ReferenceType.SDMModel, ReferenceType.SDMProjection, 
-              ReferenceType.SDMExperiment, ReferenceType.OccurrenceSet,
-              ReferenceType.GridPAV]
+      return [ReferenceType.OccurrenceSet, ReferenceType.SDMModel, 
+              ReferenceType.SDMProjection, ReferenceType.GridPAV, 
+              ReferenceType.SDMExperiment]
 
    @staticmethod
    def isBOOM(rtype):

@@ -31,14 +31,14 @@ import mx.DateTime
 import os
 from types import IntType
 
-from LmCommon.common.lmconstants import JobStage, JobStatus, ProcessType, \
-                                        RandomizeMethods, Instances
+from LmCommon.common.lmconstants import (JobStage, JobStatus, ProcessType, 
+                                        RandomizeMethods, Instances)
 from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.layer import Vector
 from LmServer.base.lmobj import LMError, LMMissingDataError
-from LmServer.common.lmconstants import DbUser, JobFamily, Priority, \
-                                        ReferenceType
+from LmServer.common.lmconstants import (DbUser, JobFamily, Priority, 
+                                        ReferenceType)
 from LmServer.common.localconstants import POINT_COUNT_MIN, DATASOURCE
 from LmServer.common.notifyJob import NotifyJob
 from LmServer.db.peruser import Peruser
@@ -46,8 +46,8 @@ from LmServer.rad.pamvim import PamSum
 from LmServer.rad.radJob import (RADIntersectJob, RADCompressJob, RADGradyJob,
                   RADSwapJob, RADSplotchJob, RADCalculateJob, RADBuildGridJob)
 from LmServer.sdm.envlayer import EnvironmentalLayer, EnvironmentalType
-from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, \
-                                SDMProjectionJob
+from LmServer.sdm.sdmJob import (SDMOccurrenceJob, SDMModelJob, 
+                                SDMProjectionJob)
 from LmServer.sdm.sdmmodel import SDMModel
 from LmServer.sdm.sdmprojection import SDMProjection
 from LmServer.sdm.sdmexperiment import SDMExperiment
