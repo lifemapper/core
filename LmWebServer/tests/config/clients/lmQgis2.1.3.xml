@@ -282,10 +282,12 @@
                      <SubItem>
                         <itemType>string</itemType>
                         <name>typeCode</name>
+                        <optional>true</optional>
                      </SubItem>
                      <SubItem>
                         <itemType>string</itemType>
                         <name>title</name>
+                        <optional>true</optional>
                      </SubItem>
                      <SubItem>
                         <itemType>numeric</itemType>
@@ -320,10 +322,12 @@
                      <SubItem>
                         <itemType>string</itemType>
                         <name>typeCode</name>
+                        <optional>true</optional>
                      </SubItem>
                      <SubItem>
                         <itemType>string</itemType>
                         <name>title</name>
+                        <optional>true</optional>
                      </SubItem>
                      <SubItem>
                         <itemType>numeric</itemType>
@@ -338,7 +342,7 @@
 
    <!-- Get public SDM layer -->
    <Request 
-        url="#SERVER#/services/sdm/layers/#PUB_SDM_LYR_ID#/xml?fullObjects=1" 
+        url="#SERVER#/services/sdm/layers/#PUB_SDM_LYR_ID#/xml" 
         method="GET" credentials="False">
       <replaceString>#SERVER#</replaceString>
       <replaceString>#PUB_SDM_LYR_ID#</replaceString>
@@ -369,7 +373,7 @@
 
    <!-- Get user SDM layer -->
    <Request 
-        url="#SERVER#/services/sdm/layers/#USR_SDM_LYR_ID#/xml?fullObjects=1" 
+        url="#SERVER#/services/sdm/layers/#USR_SDM_LYR_ID#/xml" 
         method="GET" credentials="True">
       <replaceString>#SERVER#</replaceString>
       <replaceString>#USR_SDM_LYR_ID#</replaceString>
@@ -954,7 +958,7 @@
                      </SubItem>
                      <SubItem>
                         <itemType>object</itemType>
-                        <name>pamsum</name>
+                        <name>pamSum</name>
 	                     <SubItem>
 	                        <itemType>integer</itemType>
 	                        <name>status</name>
@@ -993,7 +997,7 @@
                         </SubItem>
                         <SubItem>
                            <itemType>numeric</itemType>
-                           <name>cellside</name>
+                           <name>cellsides</name>
                         </SubItem>
                      </SubItem>
                   </SubItem>
@@ -1100,39 +1104,32 @@
             <itemType>object</itemType>
             <name>response</name>
             <SubItem>
-               <name>items</name>
+               <name>experiment</name>
                <itemType>object</itemType>
                <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>epsgcode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>modTime</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>name</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>modTime</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>description</name>
-                     </SubItem>
-                  </SubItem>
+                  <itemType>integer</itemType>
+                  <name>epsgcode</name>
+               </SubItem>
+               <SubItem>
+                  <itemType>integer</itemType>
+                  <name>id</name>
+               </SubItem>
+               <SubItem>
+                  <itemType>string</itemType>
+                  <name>modTime</name>
+               </SubItem>
+               <SubItem>
+                  <itemType>string</itemType>
+                  <name>name</name>
+               </SubItem>
+               <SubItem>
+                  <itemType>string</itemType>
+                  <name>modTime</name>
+               </SubItem>
+               <SubItem>
+                  <itemType>string</itemType>
+                  <name>description</name>
+                  <optional>true</optional>
                </SubItem>
             </SubItem>
          </ResponseItem>
@@ -1253,6 +1250,7 @@
                <SubItem>
                   <name>title</name>
                   <itemType>string</itemType>
+                  <optional>true</optional>
                </SubItem>
                <SubItem>
                   <name>stage</name>

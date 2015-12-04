@@ -149,7 +149,7 @@ if __name__ == "__main__":
          print desc
          url = req.url
          method = req.method
-         creds = req.credentials
+         creds = req.credentials.lower() == "true"
          
          try:
             rs = req.replaceString
@@ -160,11 +160,20 @@ if __name__ == "__main__":
          for replaceString in rs:
             url = url.replace(replaceString, env.getReplacementValue(replaceString))
          print "URL: ", url
+         
+         parameters = []
+         urlParts = url.split('?')
+         if len(urlParts) > 1:
+            url = urlParts[0]
+            qParams = urlParts[1].split('&')
+            for qp in qParams:
+               parameters.append(tuple(qp.split('=')))
+         
          if creds:
             opener = authOpener
          else:
             opener = publicOpener
-         cnt = makeRequest(url, method=method, opener=opener)
+         cnt = makeRequest(url, parameters=parameters, method=method, opener=opener)
          if req.Response.contentType == 'application/json':
             validator = JsonValidator()
          elif req.Response.contentType == 'application/xml':
