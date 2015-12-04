@@ -127,6 +127,9 @@ if __name__ == "__main__":
    # server (optional)
    # env type
    # client file or directory
+   successes = []
+   failures = []
+   
    
    publicOpener, authOpener = getOpeners(env, userId, pwd)
    # For each client
@@ -140,9 +143,10 @@ if __name__ == "__main__":
          reqs = [reqs]
       for req in reqs:
          try:
-            print " ---", req.description
+            desc = " ---", req.description
          except:
-            print " --- %s %s" % (req.method, req.url)
+            desc = " --- %s %s" % (req.method, req.url)
+         print desc
          url = req.url
          method = req.method
          creds = req.credentials
@@ -170,7 +174,17 @@ if __name__ == "__main__":
          try:
             validator.validate(cnt, req.Response.ResponseItem)
             print "Valid"
+            successes.append((url, creds, desc))
          except Exception, e:
-            print str(e)
             print "Invalid"
-            
+            failures.append((url, creds, desc, str(e)))
+
+   print "Successes:"
+   for s in successes:
+      print "User" if s[1] else "Public", s[0], s[2]
+      
+   print
+   print
+   print "Failures:"
+   for f in failures:
+      print "User" if f[1] else "Public", f[0], f[2], "Reason:", f[3]
