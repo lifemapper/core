@@ -181,10 +181,10 @@ if __name__ == "__main__":
 
    print "Successes:"
    for s in successes:
-      print "User" if s[1] else "Public", s[0], s[2]
+      print s[0], s[2]
       
    print
    print
    print "Failures:"
    for f in failures:
-      print "User" if f[1] else "Public", f[0], f[2], "Reason:", f[3]
+      print f[0], f[2], "Reason:", f[3]
