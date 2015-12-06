@@ -1084,6 +1084,7 @@
                      <SubItem>
                         <itemType>string</itemType>
                         <name>description</name>
+                        <optional>true</optional>
                      </SubItem>
                   </SubItem>
                </SubItem>
