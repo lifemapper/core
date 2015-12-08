@@ -293,6 +293,10 @@
                         <itemType>numeric</itemType>
                         <name>id</name>
                      </SubItem>
+                     <SubItem>
+                     	<itemType>string</itemType>
+                     	<name>name</name>
+                     </SubItem>
                   </SubItem>
                </SubItem>
             </SubItem>
@@ -332,6 +336,10 @@
                      <SubItem>
                         <itemType>numeric</itemType>
                         <name>id</name>
+                     </SubItem>
+                     <SubItem>
+                     	<itemType>string</itemType>
+                     	<name>name</name>
                      </SubItem>
                   </SubItem>
                </SubItem>
