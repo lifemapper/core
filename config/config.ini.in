@@ -121,7 +121,7 @@ PYTHON_CMD: @PYBIN@
 [LmCompute - environment]
 APP_PATH: @LMHOME@/bin/
 JOB_DATA_PATH: @LMDISK@/data/
-JOB_OUTPUT_PATH: @LMDISK@/jobs/
+JOB_OUTPUT_PATH: @LMTEMPDISK@/jobs/
 JOB_REQUEST_DIR: @LMDISK@/jobRequests/
 PLUGINS_DIR: @LMHOME@/LmCompute/plugins
 SAMPLE_JOBS_PATH: @LMDISK@/tests/config/sampleJobs
