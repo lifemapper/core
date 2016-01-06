@@ -4810,6 +4810,18 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_getOccurrenceJobForId(occid int)
+   RETURNS lm3.lm_occJob AS
+$$
+DECLARE
+   rec lm3.lm_occJob;
+BEGIN
+   SELECT * INTO rec FROM lm3.lm_occJob WHERE occurrencesetid = occid;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_pullModelJobsForOcc(occid int,
                                                   processType int,
                                                   startStat int,
