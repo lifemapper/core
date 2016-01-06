@@ -16,12 +16,13 @@ from LmCommon.common.lmXml import deserialize, fromstring
 from LmCommon.common.singleton import singleton
 from LmCommon.common.unicode import toUnicode
 
+from LmServer.common.localconstants import APP_PATH
+
 from LmWebServer.tools.schemaTester.envMethods.server import LmServerEnv
 from LmWebServer.tools.schemaTester.validators.jsonValidator import JsonValidator
 from LmWebServer.tools.schemaTester.validators.xmlValidator import XmlValidator
 
-# TODO: Get this from config or make it an argument
-CLIENTS_DIR = "../config/clients"
+CLIENTS_DIR = os.path.join(APP_PATH, 'LmWebServer/tests/config/clients')
 
 # .............................................................................
 @singleton
