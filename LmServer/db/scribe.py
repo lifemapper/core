@@ -178,7 +178,7 @@ class Scribe(Peruser):
 
 # ...............................................
    def reinitSDMExperiment(self, occ):
-      total = 0
+      jobs = []
       # make sure raw input data is valid
       processtype = None
       if occ.getRawDLocation() is not None:
@@ -195,18 +195,24 @@ class Scribe(Peruser):
          if occ.status < JobStatus.COMPLETE:
             occ.updateStatus(JobStatus.LM_RAW_POINT_DATA_ERROR)
             self.updateOccset(occ)
+      
       if occ.status <= JobStatus.COMPLETE:
-         jobs = self.initSDMChain(ARCHIVE_USER, occ, self.algs, 
-                                   self.modelScenario, 
-                                   self.projScenarios, 
-                                   occJobProcessType=processtype,
-                                   priority=Priority.OBSOLETE, 
-                                   intersectGrid=None,
-                                   minPointCount=POINT_COUNT_MIN)
-         total += len(jobs)
+         try:
+            jobs = self.initSDMChain(ARCHIVE_USER, occ, self.algs, 
+                                      self.modelScenario, 
+                                      self.projScenarios, 
+                                      occJobProcessType=processtype,
+                                      priority=Priority.OBSOLETE, 
+                                      intersectGrid=None,
+                                      minPointCount=POINT_COUNT_MIN)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+                     
       self.log.debug('Created %d chained jobs for ready occset %d' 
-                     % (total, occ.getId()))
-      return total
+                     % (len(jobs), occ.getId()))
+      return len(jobs)
 
 # ...............................................
    def reinitSDMModel(self, mdl, priority, modtime=mx.DateTime.gmt().mjd, 
@@ -1725,11 +1731,19 @@ class Scribe(Peruser):
                      priority=Priority.NORMAL): 
       occJob = self.getJobOfType(JobFamily.SDM, occ)
       if occJob is None:
-         occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
-         occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
-                                   status=JobStatus.INITIALIZE, 
-                                   statusModTime=modtime, createTime=modtime,
-                                   priority=Priority.NORMAL)
+         try:
+            occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
+            occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
+                                      status=JobStatus.INITIALIZE, 
+                                      statusModTime=modtime, createTime=modtime,
+                                      priority=Priority.NORMAL)
+         except Exception, e:
+            self.log.error('   Failed to update occurrenceset or create Job for %s (%s)'
+                           % (str(occ.getId()), str(e)))
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+            
          try:
             success = self.updateOccState(occ)
             updatedOccJob = self.insertJob(occJob)
@@ -1738,6 +1752,7 @@ class Scribe(Peruser):
                            % (str(occ.getId()), str(e)))
             raise LMError(e)
          else:
+            occJob = updatedOccJob
             self.log.debug('   inserted job to write points for occurrenceSet %s in MAL' 
                            % (str(occ.getId()))) 
       return occJob
