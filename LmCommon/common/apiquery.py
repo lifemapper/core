@@ -36,17 +36,16 @@ from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
          BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_FILTERS, BISON_TSN_LIST_KEYS,
          BISON_BINOMIAL_REGEX, BISON_OCCURRENCE_URL,
          GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
-         IDIGBIO_AGG_SPECIES_GEO_MIN_40, IDIGBIO_BINOMIAL_KEYS, 
-         IDIGBIO_BINOMIAL_REGEX, IDIGBIO_FILTERS, IDIGBIO_URL_PREFIX, 
-         IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, IDIGBIO_QFILTERS, 
-         IDIGBIO_SPECIMENS_BY_BINOMIAL, 
+#          IDIGBIO_AGG_SPECIES_GEO_MIN_40, IDIGBIO_BINOMIAL_KEYS, 
+#          IDIGBIO_BINOMIAL_REGEX, IDIGBIO_FILTERS, IDIGBIO_URL_PREFIX, 
+#          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, IDIGBIO_QFILTERS, 
+#          IDIGBIO_SPECIMENS_BY_BINOMIAL, 
          ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, 
          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
          ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
          ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
          ITIS_TAXONOMY_KEY, URL_ESCAPES,
          HTTPStatus)
-from LmServer.base.lmobj import LmHTTPError
 
 # .............................................................................
 class APIQuery(object):
@@ -212,13 +211,13 @@ class APIQuery(object):
       except Exception, e:
          if retcode is None:
             retcode = HTTPStatus.INTERNAL_SERVER_ERROR
-         raise LmHTTPError(retcode, msg='Failed on URL {}; ({})'.format(
+         raise Exception(retcode, msg='Failed on URL {}; ({})'.format(
                                         self.url, str(e)))
       else:
          try:
             output = response.read()
          except Exception, e:
-            raise LmHTTPError(HTTPStatus.INTERNAL_SERVER_ERROR, 
+            raise Exception(HTTPStatus.INTERNAL_SERVER_ERROR, 
               msg='Failed to read output of URL {}; ({})'.format(self.url, str(e)))
          
       try:
@@ -231,7 +230,7 @@ class APIQuery(object):
             print 'Unrecognized output type %s' % str(outputType)
             self.output = None   
       except Exception, e:
-         raise LmHTTPError(HTTPStatus.INTERNAL_SERVER_ERROR,
+         raise Exception(HTTPStatus.INTERNAL_SERVER_ERROR,
                 msg='Failed to interpret output of URL {}; ({})'.format(self.url, 
                                                                         str(e)))
       
