@@ -4954,7 +4954,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getComputeId(varchar int, msk varchar)
+CREATE OR REPLACE FUNCTION lm3.lm_getComputeId(crip varchar, msk varchar)
    RETURNS int AS
 $$
 DECLARE
@@ -4973,7 +4973,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getComputeRec(varchar int, msk varchar)
+CREATE OR REPLACE FUNCTION lm3.lm_getComputeRec(crip int, msk varchar)
    RETURNS lm3.ComputeResource AS
 $$
 DECLARE
