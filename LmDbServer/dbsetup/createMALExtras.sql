@@ -640,6 +640,7 @@ DECLARE
    lkcount int;
    skcount int;
    success int := -1;
+   subsuccess := 0;
 BEGIN
    -- Is this LayerType used anywhere else?
    SELECT count(*) INTO typecount FROM lm3.layer WHERE layertypeid = typeid;
@@ -4958,7 +4959,7 @@ CREATE OR REPLACE FUNCTION lm3.lm_getComputeId(crip varchar, msk varchar)
    RETURNS int AS
 $$
 DECLARE
-   int crid := -1;
+   crid int := -1;
 BEGIN
    begin
       -- Get computeresource id for requesting resource.
