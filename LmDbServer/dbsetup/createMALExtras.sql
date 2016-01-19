@@ -640,7 +640,7 @@ DECLARE
    lkcount int;
    skcount int;
    success int := -1;
-   subsuccess := 0;
+   subsuccess int := 0;
 BEGIN
    -- Is this LayerType used anywhere else?
    SELECT count(*) INTO typecount FROM lm3.layer WHERE layertypeid = typeid;
