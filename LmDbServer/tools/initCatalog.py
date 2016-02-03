@@ -30,11 +30,12 @@ from LmCommon.common.lmconstants import (DEFAULT_EPSG,
          DEFAULT_MAPUNITS)
 from LmCommon.common.localconstants import ARCHIVE_USER
 
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
 from LmDbServer.tools.bioclimMeta import (BASELINE_DATA, 
          CLIMATE_KEYWORDS, CLIMATE_PACKAGES, ENVLYR_GDALFORMAT, ENVLYR_GDALTYPE, 
-         LAYERTYPE_DATA, REPORTS, RESOLUTIONS, TIME_PERIODS, TAXONOMIC_SOURCE)
+         LAYERTYPE_DATA, REPORTS, RESOLUTIONS, TIME_PERIODS)
 
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
@@ -45,7 +46,8 @@ from LmServer.db.scribe import Scribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
 from LmServer.sdm.scenario import Scenario
-from LmServer.rad.shapegrid import ShapeGrid  
+from LmServer.rad.shapegrid import ShapeGrid
+
 
 # ...............................................
 def addDefaultUser(scribe):
@@ -127,16 +129,13 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   remoteLocs = {}
+   lyrKeys = set()
    currtime = DT.gmt().mjd
    (starttime, endtime) = baseMeta['time']
    relativePath = os.path.join(pkgMeta['topdir'], baseMeta['directory'])
 
-   rstType = None
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
-   if lyrMeta['remoteurl'] is not None:
-      rstType = lyrMeta['gdaltype']
-      scenpth = '/'.join((lyrMeta['remoteurl'], relativePath))
+   rstType = lyrMeta['gdaltype']
    
    for ltype, ltvals in lyrtypeMeta.iteritems():
       fname = _getbioFname(ltype, rptcode=pkgMeta['present'])
@@ -144,12 +143,11 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
       lyrtitle = _getbioName('%s, %s' % (ltvals['title'], baseMeta['title']),
                              pkgMeta['res'], suffix=pkgMeta['suffix'],
                              isTitle=True)
+      # TODO: this will be a locally unique identifier for seeding and
+      #       identifying layers between lmcompute and lmserver
+      lyrKeys.add(os.path.join(relativePath, fname))
       dloc = os.path.join(scenpth, fname)
-      metaurl = None
-      if lyrMeta['remoteurl'] is not None:
-         metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
-         remoteLocs[metaurl] = os.path.join(relativePath, fname)
-      elif not os.path.exists(dloc):
+      if not os.path.exists(dloc):
          raise LMError('Missing local data %s' % dloc)
       envlyr = EnvironmentalLayer(lyrname, 
                 title=lyrtitle, 
@@ -165,7 +163,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                 keywords=ltvals['keywords'], 
                 description='%s, %s' % (ltvals['description'], 
                                         baseMeta['description']), 
-                metadataUrl=metaurl,
                 layerType=ltype, 
                 layerTypeTitle=ltvals['title'], 
                 layerTypeDescription=ltvals['description'], 
@@ -173,7 +170,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
       layers.append(envlyr)
       if ltype in baseMeta['staticLayerTypes']:
          staticLayers[ltype] = envlyr
-   return layers, staticLayers, remoteLocs
+   return layers, staticLayers, lyrKeys
 
 # ...............................................
 def writeRemoteDataPairs(remoteData, scenPkgName):
@@ -187,12 +184,23 @@ def writeRemoteDataPairs(remoteData, scenPkgName):
       f.close()
    
 # ...............................................
+def writeRemoteDataList(localKeys, scenPkgName):
+   if localKeys is not None:
+      fname = os.path.join(DATA_PATH, ENV_DATA_PATH, '%s.txt' % scenPkgName)
+      if os.path.exists(fname):
+         os.remove(fname)
+      f = open(fname, 'w')
+      for relfilepath in localKeys:
+         f.write('%s:%s\n' % (scenPkgName, relfilepath))
+      f.close()
+
+# ...............................................
 def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativePath, scendesc, 
                      rpt, mdlvals, sfam, sfamvals, tm, tmvals):
    """
    @summary Assembles layer metadata for a single layerset
    """
-   remoteLocs = {}
+   lyrKeys = set()
    currtime = DT.gmt().mjd
    layers = []
    rstType = None
@@ -209,14 +217,11 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
          lyrtitle = _getbioName('%s, IPCC %s %s, %s' % 
                                 (ltvals['title'], rpt, sfam, tm), 
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], isTitle=True)
+         lyrKeys.add(os.path.join(relativePath, fname))
          dloc = os.path.join(scenpth, fname)
-         metaurl = None
-         if lyrMeta['remoteurl'] is not None:
-            metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
-            remoteLocs[metaurl] = os.path.join(relativePath, fname)
-         elif not os.path.exists(dloc):
-            raise LMError('Missing local data %s' % dloc)
-         
+         if not os.path.exists(dloc):
+            print('Missing local data %s' % dloc)
+            dloc = None
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
                   valUnits=ltvals['valunits'],
@@ -232,25 +237,21 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
                   epsgcode=lyrMeta['epsg'], 
                   keywords=ltvals['keywords'], 
                   description='%s, %s' % (ltvals['description'], scendesc), 
-                  metadataUrl=metaurl,
                   layerType=ltype, layerTypeTitle=ltvals['title'], 
                   layerTypeDescription=ltvals['description'], 
                   userId=usr, createTime=currtime, modTime=currtime)
          layers.append(envlyr)
-   return layers, remoteLocs
+   return layers, lyrKeys
       
 # ...............................................
 def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, 
                    relativePath, scendesc, rpt, mdlvals, tm, tmvals):
-   remoteLocs = {}
+   lyrKeys = set()
    currtime = DT.gmt().mjd
    layers = []
    
-   rstType = None
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
-   if lyrMeta['remoteurl'] is not None:
-      rstType = lyrMeta['gdaltype']
-      scenpth = '/'.join((lyrMeta['remoteurl'], relativePath))
+   rstType = lyrMeta['gdaltype']
 
    for ltype, ltvals in lyrtypeMeta.iteritems():
       if ltype not in staticLayers.keys():
@@ -260,14 +261,11 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
          lyrtitle = _getbioName('%s, %s' % (ltvals['title'], tmvals['name']),
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], 
                                 isTitle=True)
-         
+         lyrKeys.add(os.path.join(relativePath, fname))
          dloc = os.path.join(scenpth, fname)
-         metaurl = None
-         if lyrMeta['remoteurl'] is not None:
-            metaurl = '/'.join((lyrMeta['remoteurl'], relativePath, fname))
-            remoteLocs[metaurl] = os.path.join(relativePath, fname)
-         elif not os.path.exists(dloc):
-            raise LMError('Missing local data %s' % dloc)
+         if not os.path.exists(dloc):
+            print('Missing local data %s' % dloc)
+            dloc = None
 
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
@@ -282,13 +280,12 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
                   epsgcode=lyrMeta['epsg'], 
                   keywords=ltvals['keywords'], 
                   description='%s, %s' % (ltvals['description'], scendesc), 
-                  metadataUrl=metaurl,
                   layerType=ltype, 
                   layerTypeTitle=ltvals['title'], 
                   layerTypeDescription=ltvals['description'], 
                   userId=usr, createTime=currtime, modTime=currtime)
          layers.append(envlyr)
-   return layers, remoteLocs
+   return layers, lyrKeys
 
 # ...............................................
 def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
@@ -301,7 +298,7 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    (starttime, endtime) = baseMeta['time']
    scencode = _getbioName(pkgMeta['present'], pkgMeta['res'], 
                           suffix=pkgMeta['suffix'])
-   lyrs, staticLayers, remoteLocs = _getBaselineLayers(usr, pkgMeta, 
+   lyrs, staticLayers, lyrKeys = _getBaselineLayers(usr, pkgMeta, 
                                                 baseMeta, lyrMeta, lyrtypeMeta)
    scen = Scenario(scencode, 
             title=baseMeta['title'], 
@@ -314,7 +311,7 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
             bbox=pkgMeta['bbox'], 
             modTime=DT.gmt().mjd, keywords=basekeywords, 
             epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
-   return scen, remoteLocs, staticLayers
+   return scen, lyrKeys, staticLayers
 
 # ...............................................
 def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
@@ -351,7 +348,7 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
          # Relative path to data
          relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], 
                                      tm, sfam)            
-         lyrs, remoteLocs = _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+         lyrs, lyrKeys = _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                               staticLayers, relativePath, scendesc, rpt, mdlvals, 
                               sfam, sfamvals, tm, tmvals)
          lyrs.extend(stlyr for stlyr in staticLayers.values())
@@ -363,7 +360,7 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                          keywords=scenkeywords, epsgcode=lyrMeta['epsg'],
                          layers=lyrs, userId=usr)
          futScenarios[scencode] = scen
-   return futScenarios, remoteLocs
+   return futScenarios, lyrKeys
 
 # ...............................................
 def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
@@ -394,7 +391,7 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
              'plus Worldclim 1.4 observed mean climate'))
          # Relative path to data
          relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], tm)            
-         lyrs, remoteLocs = _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+         lyrs, lyrKeys = _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                                  staticLayers, relativePath, scendesc, 
                                  rpt, mdlvals, tm, tmvals)
          scen = Scenario(scencode, title=scentitle, author=mdlvals['author'], 
@@ -404,7 +401,7 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                          keywords=scenkeywords, 
                          epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
          pastScenarios[scen.code] = scen
-   return pastScenarios, remoteLocs
+   return pastScenarios, lyrKeys
 
 # ...............................................
 def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
@@ -412,23 +409,20 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    @summary Assemble current, predicted past, predicted future scenarios 
    """
    # Current
-   basescen, remoteLocs, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+   basescen, baseLyrKeys, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta)
    # Past
-   allScenarios, allRemoteLocs = createPastScenarios(usr, pkgMeta, lyrMeta, 
+   unionScenarios, unionLyrKeys = createPastScenarios(usr, pkgMeta, lyrMeta, 
                                                      lyrtypeMeta, staticLayers)
    # Future
-   futScenarios, futRemoteLocs = createFutureScenarios(usr, pkgMeta, lyrMeta, 
+   futScenarios, futLyrKeys = createFutureScenarios(usr, pkgMeta, lyrMeta, 
                                                        lyrtypeMeta, staticLayers)
-   # Join all dictionaries
-   allScenarios[basescen.code] = basescen
-   for k, v in remoteLocs.iteritems(): 
-      allRemoteLocs[k] = v
+   # Join all sets and dictionaries
+   unionLyrKeys.union(baseLyrKeys, futLyrKeys)
+   unionScenarios[basescen.code] = basescen
    for k,v in futScenarios.iteritems():
-      allScenarios[k] = v
-   for k, v in futRemoteLocs.iteritems(): 
-      allRemoteLocs[k] = v
+      unionScenarios[k] = v
       
-   return allScenarios, allRemoteLocs
+   return unionScenarios, unionLyrKeys
       
 
 # ...............................................
@@ -451,15 +445,27 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
                      lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
                      pkgMeta['bbox'], usr)
 
-   scens, remoteLocs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+   scens, lyrKeys = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
     
    for scode, scen in scens.iteritems():
       scribe.insertScenario(scen)
    # LayerPairs for seeding LmCompute
-   writeRemoteDataPairs(remoteLocs, scenPkgName)
+   writeRemoteDataList(lyrKeys, scenPkgName)
+
+# ...............................................
+# def _readScenarioMeta(scenPkg):
+#    # Metadata is packaged with data and should be uncompressed into the same location 
+#    metafile = os.path.join(DATA_PATH, ENV_DATA_PATH, scenPkg+'.py')
+#    f = open(metafile, 'r')
+#    content = f.read()
+#    f.close()
+#    
+#    eval(content)
+      
 
 # ...............................................
 def _getClimateMeta(scenPkg):
+#    pkgMeta = _readScenarioMeta(scenPkg)
    pkgMeta = CLIMATE_PACKAGES[scenPkg]
    lyrMeta = {'epsg': DEFAULT_EPSG, 
               'mapunits': DEFAULT_MAPUNITS, 
