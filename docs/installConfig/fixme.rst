@@ -32,4 +32,5 @@ Current problems with code/configuration
 #. Clear off old install from Yeti nodes (old data is on /state/partition1; 
    delete all but kvm and lost+found)
 #. Separate configuration files by roll, to avoid conflicts
+#. Change pipeline into a service and/or lm command
 
