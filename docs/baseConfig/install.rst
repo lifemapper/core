@@ -1,7 +1,12 @@
-# Notes:
-## Fresh Rocks Install:
+
+------
+Notes:
+------
+Fresh Rocks Install:
+--------------------
 
 Install the rolls:
+
 * area51
 * base 
 * ganglia
@@ -15,7 +20,9 @@ Install the rolls:
 * webserver (LmServer)
 * zfs (on physical devel server)
 
-## Update Python Roll
+------------------
+Update Python Roll
+------------------
 
 **If** the sqlite3 module is not available in python2.7:
 
