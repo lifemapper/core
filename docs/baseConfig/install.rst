@@ -27,8 +27,7 @@ Update Python Roll
 **If** the sqlite3 module is not available in python2.7:
 
 * Get an updated python roll from pc-167.calit2.optiputer.net in /root/roll/ with sqlite3.so
-* Copy the iso, then remove old rpm, add roll making sure it will override existing
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+* Copy the iso, then remove old rpm, add roll making sure it will override existing::
 
         rpm -el opt-python-27-2.7.9-1.x86_64
         rocks add roll python-6.2….iso clean=1
