@@ -17,6 +17,9 @@ this file may be overridden by the user in <APP_PATH>/config/site.ini.  APP_PATH
 is also present in the config file, and generally is configured as 
 /opt/lifemapper.
 
+Any feature described below by "Currently" will be made more configurable in the 
+near future.  
+
 ****************
 Data computation
 ****************
@@ -52,8 +55,8 @@ To start the pipeline as user lmwriter do::
 
     $ $PYTHON /opt/lifemapper/LmDbServer/pipeline/localpipeline.py
 
-To Stop the pipeline (replace pragma with the datasource name configured for 
-this instance, i.e. bison, idigbio)::
+To Stop the pipeline (replace pragma with the (lowercase) datasource name 
+configured for this instance, i.e. bison, idigbio)::
 
     $ touch /opt/lifemapper/log/pipeline.pragma.die
     
@@ -69,7 +72,7 @@ algorithm parameters.  These may all be modified.
 Species Data
 ************
 Species data may be pre-defined CSV file, such as the GBIF data dump, or 
-a web service, such as the BISON service.  The DATASOURCE variable in the 
+a web service, such as the BISON service.  The **DATASOURCE** variable in the 
 config file is a keyword which identifies the source and tells the pipeline 
 how to process it.
 
@@ -79,28 +82,34 @@ or IDIGBIO.
 ******************
 Environmental Data
 ******************
-Available environmental data is defined by the SCENARIO_PACKAGE variable in the 
+Available environmental data is defined by the **SCENARIO_PACKAGE** variable in the 
 config file. One scenarios for modeling (for current-day species data, this is 
-usually observed environmental data), DEFAULT_MODEL_SCENARIO, and 
-one or more for projecting, DEFAULT_PROJECTION_SCENARIOS, are set in the 
+usually observed environmental data), **DEFAULT_MODEL_SCENARIO**, and 
+one or more for projecting, **DEFAULT_PROJECTION_SCENARIOS**, are set in the 
 config file.
 
 Currently environmental data must be one of the pre-defined options; 
-SCENARIO_PACKAGE codes are: 30sec-present-future-SEA (Southeast Asia), 
-30sec-present-future-CONUS (Continental United States), 5min-past-present-future 
-and 10min-past-present-future (both global).  These data may be downloaded from 
-svc.lifemapper.org/dl/ with filenames the code with extension tar.gz.  Metadata 
-for each of these packages is included in the source code, and will be populated 
-correctly for the configured code.
+SCENARIO_PACKAGE codes are::
+
+    30sec-present-future-SEA (Southeast Asia)
+    30sec-present-future-CONUS (Continental United States)
+    5min-past-present-future (global)
+    10min-past-present-future (global)
+
+These data may be downloaded from svc.lifemapper.org/dl/ with filenames the code 
+with extension tar.gz.  Metadata for each of these packages is included in the 
+source code, and will be populated correctly for the configured SCENARIO_PACKAGE.
 
 
 **********
 Algorithms
 **********
 One or more algorithms must be set in the DEFAULT_ALGORITHMS variable in the 
-config file.  The algorithm must be designated by the code in the database.  
+config file.  The algorithm must be designated by the code pre-populated in the 
+database.  
 
-Currently algorithms available are the AT&T version of Maxent, and the 12 
+Currently, the pipeline will use default parameters for all algorithms.  
+Algorithms available are the AT&T version of Maxent, and the 12 
 algorithms provided by openModeller::
 
     ATT_MAXENT    | Maximum Entropy (ATT Implementation)
@@ -118,3 +127,5 @@ algorithms provided by openModeller::
     MAXENT        | Maximum Entropy (openModeller Implementation)
     CSMBS         | Climate Space Model - Broken-Stick Implementation
     ANN           | Artificial Neural Network
+    
+ 
