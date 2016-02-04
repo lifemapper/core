@@ -20,6 +20,12 @@ Install the rolls:
 * webserver (LmServer)
 * zfs (on physical devel server)
 
+_________________
+Enable www access
+_________________
+
+Follow procedure at http://yeti.lifemapper.org/roll-documentation/base/6.2/enable-www.html
+
 ------------------
 Update Python Roll
 ------------------
