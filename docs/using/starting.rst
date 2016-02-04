@@ -85,20 +85,36 @@ usually observed environmental data), DEFAULT_MODEL_SCENARIO, and
 one or more for projecting, DEFAULT_PROJECTION_SCENARIOS, are set in the 
 config file.
 
-Currently environmental data must be one of the pre-defined options, 
-30sec-past-present-future-SEA (Southeast Asia), 30sec-past-present-future-CONUS
-(Continental United States), 5min-past-present-future, 10min-past-present-future
-(both global).
+Currently environmental data must be one of the pre-defined options; 
+SCENARIO_PACKAGE codes are: 30sec-present-future-SEA (Southeast Asia), 
+30sec-present-future-CONUS (Continental United States), 5min-past-present-future 
+and 10min-past-present-future (both global).  These data may be downloaded from 
+svc.lifemapper.org/dl/ with filenames the code with extension tar.gz.  Metadata 
+for each of these packages is included in the source code, and will be populated 
+correctly for the configured code.
 
 
 **********
 Algorithms
 **********
 One or more algorithms must be set in the DEFAULT_ALGORITHMS variable in the 
-config file.  The algorithm must be designated by the code in the database, 
-which can be queried through the REST services url or the python client.  The 
-list is:
-
+config file.  The algorithm must be designated by the code in the database.  
 
 Currently algorithms available are the AT&T version of Maxent, and the 12 
-algorithms provided by openModeller.
+algorithms provided by openModeller::
+
+    ATT_MAXENT    | Maximum Entropy (ATT Implementation)
+    SVM           | SVM (Support Vector Machines)
+    DG_GARP_BS    | GARP (single run) - DesktopGARP implementation
+    AQUAMAPS      | AquaMaps (beta version) 
+    RNDFOREST     | Random Forests
+    GARP_BS       | GARP with Best Subsets - new openModeller implementation 
+    ENFA          | Ecological-Niche Factor Analysis
+    ENVSCORE      | Envelope Score
+    GARP          | GARP (single run) - new openModeller implementation
+    ENVDIST       | Environmental Distance
+    BIOCLIM       | Bioclimatic Envelope Algorithm
+    DG_GARP       | GARP (single run) - DesktopGARP implementation
+    MAXENT        | Maximum Entropy (openModeller Implementation)
+    CSMBS         | Climate Space Model - Broken-Stick Implementation
+    ANN           | Artificial Neural Network
