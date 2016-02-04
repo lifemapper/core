@@ -20,12 +20,6 @@ Install the rolls:
 * webserver (LmServer)
 * zfs (on physical devel server)
 
-_________________
-Enable www access
-_________________
-
-Follow procedure at http://yeti.lifemapper.org/roll-documentation/base/6.2/enable-www.html
-
 ------------------
 Update Python Roll
 ------------------
@@ -42,3 +36,25 @@ Update Python Roll
         yum clean all
         rocks run roll python > add-roll-python.sh
         bash add-roll-python.sh > add-roll-python.out 2>&1
+
+_________________
+Enable www access
+_________________
+
+Follow procedure at http://yeti.lifemapper.org/roll-documentation/base/6.2/enable-www.html
+
+--------------------------
+All KU-Lifemapper Clusters
+--------------------------
+
+Add public key to new virtual frontend for key-based authentication::
+
+    ssh-copy-id -i ~/.ssh/id_rsa.pub root@xxx.xxx.xxx.xxx
+
+Turn off password authentication by editing the values in /etc/ssh/sshd_config, 
+then restarting the sshd service::
+
+    ChallengeResponseAuthentication no
+    PasswordAuthentication no
+    UsePAM no 
+
