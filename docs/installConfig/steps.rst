@@ -30,8 +30,6 @@ It is easiest to install LmCompute first, until some conflicts are resolved.
         
 #. **FIXME** Copy the /opt/lifemapper/config/config.ini and save it for updating
    the version installed by the LmServer roll.        
-#. Configure and test: 
-   https://github.com/pragmagrid/lifemapper-compute#using-a-roll
 
 *********************
 LmServer Roll Install
@@ -54,6 +52,11 @@ LmServer Roll Install
    LmCompute installation.  This may be only 2 variables: @JOB_SUBMITTER_TYPE@  
    and @JOB_CAPACITY@.
  
+**********************
+Finish LmCompute Setup
+**********************
+#. Configure and test: 
+   https://github.com/pragmagrid/lifemapper-compute#using-a-roll
 
 ****************
 Using Lifemapper
