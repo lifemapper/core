@@ -47,8 +47,9 @@ USER_OCCURRENCE_CSV = os.path.join(DATA_PATH, SPECIES_DATA_PATH,
 USER_OCCURRENCE_META = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
                                     USER_OCCURRENCE_META_FILENAME)
 
+# Key must match DATASOURCE in config/config.ini
 TAXONOMIC_SOURCE = {
    'GBIF': {'name': 'GBIF Backbone Taxonomy',
             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},
-   'ITIS': {'name':  'ITIS Taxonomy',
+   'BISON': {'name':  'ITIS Taxonomy',
             'url': 'http://www.itis.gov'} }
