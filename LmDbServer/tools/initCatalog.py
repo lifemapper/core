@@ -445,6 +445,7 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
                      lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
                      pkgMeta['bbox'], usr)
 
+   # TODO: lyrKeys will be GUIDs, and stored with layer metadata
    scens, lyrKeys = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
     
    for scode, scen in scens.iteritems():

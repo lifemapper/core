@@ -31,7 +31,6 @@ import argparse
 import glob
 import os
 from StringIO import StringIO
-import sys
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, ZIP_DEFLATED
 
