@@ -22,7 +22,7 @@ LmCompute Roll Install
 It is easiest to install LmCompute first, until some conflicts are resolved.
 
 #. Add the roll to your cluster:  
-   https://github.com/pragmagrid/lifemapper-compute#adding-a-roll-to-a-live-frontend
+   https://github.com/pragmagrid/lifemapper-compute/tree/kutest#adding-a-roll-to-a-live-frontend
 #. **FIXME** Replace the following file with updated version::
         
         wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/master/src/lmserver/patch-files/core-1.0.3.lw/LmCommon/common/apiquery.py
@@ -35,7 +35,7 @@ It is easiest to install LmCompute first, until some conflicts are resolved.
 LmServer Roll Install
 *********************
 #. Add the roll to your cluster with the following, but delay the reboot:
-   https://github.com/pragmagrid/lifemapper-server#adding-a-roll-to-a-live-frontend
+   https://github.com/pragmagrid/lifemapper-server/tree/kutest#adding-a-roll-to-a-live-frontend
 #. **FIXME** Before rebooting, replace the file with updated version::
 
         wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/master/src/rocks-lifemapper/confDbconnect
@@ -59,7 +59,7 @@ LmServer Roll Install
 Finish LmCompute Setup
 **********************
 #. Configure and test: 
-   https://github.com/pragmagrid/lifemapper-compute#using-a-roll
+   https://github.com/pragmagrid/lifemapper-compute/tree/kutest#using-a-roll
 
 ****************
 Using Lifemapper
