@@ -23,7 +23,7 @@ It is easiest to install LmCompute first, until some conflicts are resolved.
 
 #. Add the roll to your cluster:  
    https://github.com/pragmagrid/lifemapper-compute#adding-a-roll-to-a-live-frontend
-#. **FIXME** Replace the following files with updated versions::
+#. **FIXME** Replace the following file with updated version::
         
         wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/master/src/lmserver/patch-files/core-1.0.3.lw/LmCommon/common/apiquery.py
         cp apiquery.py /opt/lifemapper/LmCommon/common/apiquery.py
@@ -36,11 +36,14 @@ LmServer Roll Install
 *********************
 #. Add the roll to your cluster with the following, but delay the reboot:
    https://github.com/pragmagrid/lifemapper-server#adding-a-roll-to-a-live-frontend
-#. **FIXME** Before rebooting, replace the following files with updated versions::
+#. **FIXME** Before rebooting, replace the file with updated version::
 
         wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/master/src/rocks-lifemapper/confDbconnect
-        wget https://raw.githubusercontent.com/lifemapper/core/master/LmDbServer/dbsetup/createMALExtras.sql
         cp confDbconnect /opt/lifemapper/rocks/bin/confDbconnect
+
+#. **FIXME** Before rebooting, replace the following file with updated version::
+
+        wget https://raw.githubusercontent.com/lifemapper/core/master/LmDbServer/dbsetup/createMALExtras.sql
         cp createMALExtras.sql /opt/lifemapper/LmDbServer/dbsetup/
 
 #. Reboot as directed in the instructions
