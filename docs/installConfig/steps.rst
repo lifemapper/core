@@ -23,10 +23,13 @@ It is easiest to install LmCompute first, until some conflicts are resolved.
 
 #. Add the roll to your cluster:  
    https://github.com/pragmagrid/lifemapper-compute/tree/kutest#adding-a-roll-to-a-live-frontend
-#. **FIXME** Replace the following file with updated version::
+#. **FIXME** Replace the following file with updated version on the frontend
+   and on the nodes::
         
         wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/master/src/lmserver/patch-files/core-1.0.3.lw/LmCommon/common/apiquery.py
-        cp apiquery.py /opt/lifemapper/LmCommon/common/apiquery.py
+        /bin/cp -fp apiquery.py /opt/lifemapper/LmCommon/common/apiquery.py
+        /bin/cp -fp apiquery.py /share/lm/temp
+        rocks run host compute "/bin/cp -fp /share/lm/temp/apiquery.py /opt/lifemapper/LmCommon/common/apiquery.py"
         
 #. **FIXME** Copy the /opt/lifemapper/config/config.ini and save it for updating
    the version installed by the LmServer roll.        
