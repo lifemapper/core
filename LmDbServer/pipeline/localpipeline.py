@@ -33,14 +33,13 @@ from LmCommon.common.lmconstants import (BISON_BINOMIAL_REGEX, BISON_NAME_KEY,
 
 from LmDbServer.common.lmconstants import (OCC_DUMP_FILE, 
                BISON_TSN_FILE, IDIGBIO_BINOMIAL_FILE, PROVIDER_DUMP_FILE,
-               USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
+               USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
          SPECIES_EXP_MONTH, SPECIES_EXP_DAY, DEFAULT_GRID_NAME)
 from LmDbServer.pipeline.pipeline import _Pipeline
 from LmDbServer.pipeline.localworker import (Infiller, Troubleshooter, 
                ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer, UserChainer)
-from LmDbServer.tools.bioclimMeta import TAXONOMIC_SOURCE
 
 from LmServer.base.lmobj import LMError
 from LmServer.common.localconstants import DATASOURCE
@@ -71,6 +70,10 @@ class LMArchivePipeline(_Pipeline):
       self.modelMask = None
       self.projMask = None
       self.intersectGrid = None
+      try:
+         self.taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+      except:
+         self.taxname = None
       self._fillDefaultObjects(algCodes, mdlScenarioCode, projScenarioCodes, 
                                mdlMaskId, prjMaskId, DEFAULT_GRID_NAME)
    
@@ -208,7 +211,7 @@ class GBIFPipeline(LMArchivePipeline):
    
 # ...............................................
    def _initWorkers(self, expDate):
-      taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+#       taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
       self.workers = []
       updateInterval = ONE_MONTH
       gbifFldNames = []
@@ -224,7 +227,7 @@ class GBIFPipeline(LMArchivePipeline):
          self.workers.append(GBIFChainer(self.lock, self.name, updateInterval, 
                              self.algs, self.modelScenario, self.projScenarios, 
                              OCC_DUMP_FILE, expDate, gbifFldNames, 
-                             GBIF_TAXONKEY_FIELD, taxname,
+                             GBIF_TAXONKEY_FIELD, self.taxname,
                              providerKeyFile=PROVIDER_DUMP_FILE, 
                              providerKeyColname=GBIF_PROVIDER_FIELD,
                              mdlMask=self.modelMask, prjMask=self.projMask,
@@ -292,14 +295,14 @@ class BisonPipeline(LMArchivePipeline):
 
 # ...............................................
    def _initWorkers(self, tsnfilename, expDate):
-      taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+#       taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
       self.workers = []
       updateInterval = ONE_MONTH
       
       try:
          self.workers.append(BisonChainer(self.lock, self.name, updateInterval, 
                               self.algs, self.modelScenario, self.projScenarios, 
-                              tsnfilename, expDate, taxname, 
+                              tsnfilename, expDate, self.taxname, 
                               mdlMask=self.modelMask, prjMask=self.projMask,
                               intersectGrid=self.intersectGrid))
          self.workers.append(Infiller(self.lock, self.name, updateInterval, 
