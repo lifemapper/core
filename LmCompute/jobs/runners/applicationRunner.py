@@ -156,6 +156,8 @@ class ApplicationRunner(JobRunner):
       @summary: Polls the active subprocess running the application
       """
       if self.subprocess.poll() is not None:
+         if self.subprocess.stderr is not None:
+            self.log.error(self.subprocess.stderr.read())
          return True
       else:
          return False
