@@ -1,0 +1,17 @@
+<lmTest>
+   <testType>system</testType>
+   <name>Test /var disk usage</name>
+   <description>
+      This test checks that there is enough free space on the /var partition.
+      The test passes if less than 70% of the partition is used, warns if 
+      between 70% and 90% of the partition is being used, and fails if more 
+      than 90% of the partition is in use.
+   </description>
+   <testLevel>1</testLevel>
+   <command>
+      df -h | grep '/var' | awk '{print $5}' | tr -d % | awk '{if ($1 &lt; 70) {exit 0} else {if ($1 &lt; 90) {exit 1} else {exit 2}}}'
+   </command>
+   <passMsg>Acceptable free space on /var</passMsg>
+   <warnMsg>Warning: Between 70% and 90% of /var in use</warnMsg>
+   <failMsg>Critical: More than 90% of /var used</failMsg>
+</lmTest>

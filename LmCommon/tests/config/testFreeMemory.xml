@@ -1,0 +1,16 @@
+<lmTest>
+   <testType>system</testType>
+   <name>Test Free Memory</name>
+   <description>
+      This test checks that there is adequate memory available on the system.
+      Passes if memory free is at least 50%, warns between 10% and 50%, fails
+      when there is less than 10% free memory.
+   </description>
+   <testLevel>1</testLevel>
+   <command>
+      free -m | grep Mem | awk '{if ($4/$2 * 100.0 > 50) {exit 0} else {if ($4/$2 * 100.0 > 10) {exit 1} else {exit 2}}}'
+   </command>
+   <passMsg>Acceptable memory available</passMsg>
+   <warnMsg>Memory available is between 10% and 50%</warnMsg>
+   <failMsg>Less than 10% memory available</failMsg>
+</lmTest>
