@@ -617,6 +617,9 @@ DEFAULT_POST_USER = 'anon'
 # .............................................................................
 # .                             Instance constants                            .
 # .............................................................................
+LM_CLIENT_VERSION_URL = "http://svc.lifemapper.org/clients/versions.xml"
+LM_INSTANCES_URL = "http://svc.lifemapper.org/clients/instances.xml"
+
 class Instances:
    """
    @summary: These are Lifemapper instances that we know how to work with 

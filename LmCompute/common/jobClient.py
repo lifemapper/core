@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -32,11 +32,10 @@ import urllib
 import urllib2
 import zipfile
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, LM_CLIENT_VERSION_URL
 from LmCommon.common.lmXml import deserialize, fromstring
 
 from LmCompute.common.jobTypes import JOB_TYPES
-from LmCompute.common.lmconstants import LM_CLIENT_VERSION_URL
 from LmCompute.common.localconstants import LOCAL_MACHINE_ID
 from LmCompute.common.log import JobClientLogger
 

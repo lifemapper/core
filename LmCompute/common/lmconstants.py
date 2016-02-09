@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,11 +26,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
-
 # ============================================================================
 # =                             Client Constants                             =
 # ============================================================================
 CLIENT_VERSION = "3.0.0"
-LM_CLIENT_VERSION_URL = "{0}/clients/versions.xml".format(WEBSERVICES_ROOT)
 INPUT_LAYER_DIR = 'layers'
