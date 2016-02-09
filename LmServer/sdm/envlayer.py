@@ -21,9 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.lmconstants import LAYERS_SERVICE, LAYERTYPES_SERVICE, \
-                                 DEFAULT_EPSG
-from LmCommon.common.localconstants import ARCHIVE_USER
+from LmCommon.common.lmconstants import DEFAULT_EPSG
+from LmServer.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.layer import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError

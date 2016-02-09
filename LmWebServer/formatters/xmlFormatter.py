@@ -29,20 +29,19 @@
 """
 from types import NoneType, StringType, UnicodeType
 
-from LmCommon.common.lmXml import Element, register_namespace, \
-                                  setDefaultNamespace, SubElement, tostring, \
-                                  PI, QName
-from LmCommon.common.lmconstants import LM_NAMESPACE, LM_NS_PREFIX, \
-                                           LM_RESPONSE_SCHEMA_LOCATION
+from LmCommon.common.lmXml import (Element, register_namespace, 
+                     setDefaultNamespace, SubElement, tostring, PI, QName)
+from LmCommon.common.lmconstants import (ENCODING, LM_NAMESPACE, LM_NS_PREFIX, 
+                                         LM_RESPONSE_SCHEMA_LOCATION)
 
 from LmServer.base.layerset import _LayerSet
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.base.utilities import escapeString, ObjectAttributeIterator
+from LmServer.common.localconstants import ARCHIVE_USER
 
 from LmWebServer.common.lmconstants import XSI_NAMESPACE
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse
 from LmWebServer.formatters.unmodifiedXmlFormatter import UnmodifiedXmlFormatter
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 # .............................................................................
 class XmlFormatter(Formatter):
@@ -144,7 +143,7 @@ def formatXml(obj, user, title, pages=[], interfaces=[], stylesheet=False):
    el = Element("response", attrib={QName(XSI_NAMESPACE, "schemaLocation") : "%s %s" % (LM_NAMESPACE, LM_RESPONSE_SCHEMA_LOCATION)})
 
    pis = []
-   pis.append(PI("xml", 'version="1.0" encoding="utf-8"'))
+   pis.append(PI("xml", 'version="1.0" encoding="{}"'.format(ENCODING)))
    if stylesheet:
       pis.append(PI("xml-stylesheet", 
                     'type="text/xsl" href="/css/services.xsl?r=20140721"'))

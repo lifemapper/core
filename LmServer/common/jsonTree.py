@@ -31,7 +31,7 @@
 
 from types import StringType, UnicodeType
 
-from LmCommon.common.localconstants import ENCODING
+from LmCommon.common.lmconstants import ENCODING
 from LmServer.base.lmobj import LMObject
 from LmServer.base.utilities import escapeString
 

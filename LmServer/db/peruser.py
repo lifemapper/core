@@ -28,8 +28,8 @@ import socket
 from types import StringType, UnicodeType, IntType
 import xml.etree.ElementTree as ET 
 
-from LmCommon.common.lmconstants import JobStatus, RandomizeMethods, ProcessType
-from LmCommon.common.localconstants import ARCHIVE_USER
+from LmCommon.common.lmconstants import (ENCODING, JobStatus, RandomizeMethods, 
+                                         ProcessType)
 
 from LmServer.base.lmobj import LMError, LMObject
 
@@ -39,8 +39,8 @@ from LmServer.db.connect import HL_NAME
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import  DbUser, JobFamily, ReferenceType
-from LmServer.common.localconstants import CONNECTION_PORT, DB_HOSTNAME, \
-                                          POINT_COUNT_MIN, POINT_COUNT_MAX
+from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
+                                 POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
   
 from LmServer.sdm.sdmexperiment import SDMExperiment
 
@@ -1054,9 +1054,9 @@ class Peruser(LMObject):
    # ...............................................
    def _getLatin1FromUtf8(self, str_utf8):
       try:
-         str_latin1 = unicode(str_utf8, "utf-8").encode("iso-8859-1")
+         str_latin1 = unicode(str_utf8, ENCODING).encode("iso-8859-1")
       except Exception, e:
-         self.log.error('Failed encoding %s to utf8' % str_utf8)
+         self.log.error('Failed encoding {} to {}'.format(str_utf8, ENCODING))
          
       return str_latin1
    

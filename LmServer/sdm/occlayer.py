@@ -25,16 +25,15 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import DEFAULT_EPSG, JobStatus, \
-               GBIF_LINK_FIELD, LM_NAMESPACE, OCCURRENCES_SERVICE, ProcessType
-from LmCommon.common.localconstants import ARCHIVE_USER
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, GBIF_LINK_FIELD, 
+                                         LM_NAMESPACE)
+from LmServer.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.layer import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
-from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, FeatureNames,
-                    ID_PLACEHOLDER, SDM_MODULE, LMFileType, LMServiceType, LMServiceModule)
+                    ID_PLACEHOLDER, LMFileType, LMServiceType, LMServiceModule)
 
 # .............................................................................
 # .............................................................................

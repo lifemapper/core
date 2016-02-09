@@ -25,7 +25,6 @@ import mx.DateTime
 import os 
    
 from LmCommon.common.lmconstants import JobStatus, DEFAULT_EPSG, ProcessType
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.job import _Job
@@ -33,11 +32,11 @@ from LmServer.base.layer import Raster, Vector
 from LmServer.base.taxon import ScientificName
 from LmServer.base.layerset import MapLayerSet                                  
 from LmServer.base.lmobj import LMError
-from LmServer.base.serviceobject import ServiceObject, ProcessObject
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
                   DEFAULT_PROJECTION_FORMAT, JobFamily, MAL_STORE, ReferenceType)
 from LmServer.common.lmuser import LMUser
+from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.notifyJob import NotifyJob
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer

@@ -25,14 +25,12 @@
           02110-1301, USA.
 """
 import mx.DateTime
-import os
 
-from LmCommon.common.lmconstants import EXPERIMENTS_SERVICE, JobStatus
-from LmCommon.common.localconstants import ARCHIVE_USER
-
+from LmCommon.common.lmconstants import JobStatus
 from LmServer.base.atom import Atom
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
+from LmServer.common.localconstants import ARCHIVE_USER
 
 # .............................................................................
 class SDMModel(ServiceObject, ProcessObject):

@@ -30,7 +30,7 @@ from osgeo.ogr import OFTInteger, OFTReal, OFTString
 # .............................................................................
 # DATA FORMATS
 MASK_TYPECODE = 'MASK'
-   
+ENCODING =  'utf-8'   
 
 class OutputFormat:
 # ............................................................................

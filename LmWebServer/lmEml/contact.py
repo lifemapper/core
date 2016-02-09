@@ -30,7 +30,7 @@
 from LmCommon.common.lmXml import SubElement
 from LmCommon.common.localconstants import WEBSERVICES_ROOT
 
-from LmBackend.common.localconstants import SMTP_SENDER
+from LmServer.common.localconstants import SMTP_SENDER
 
 # .............................................................................
 def addContactElement(el):

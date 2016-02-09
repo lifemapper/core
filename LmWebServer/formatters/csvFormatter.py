@@ -30,7 +30,7 @@
 import csv
 from StringIO import StringIO
 
-from LmCommon.common.localconstants import ENCODING
+from LmCommon.common.lmconstants import ENCODING
 from LmServer.base.lmobj import LMError
 from LmServer.rad.radbucket import RADBucket
 from LmServer.rad.pamvim import PamSum

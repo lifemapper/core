@@ -31,7 +31,7 @@ import traceback
 from types import TupleType, ListType, FloatType, IntType, StringType, UnicodeType
 
 from LmCommon.common.lmconstants import OutputFormat, SHAPEFILE_EXTENSIONS
-from LmBackend.common.localconstants import SMTP_SENDER
+from LmServer.common.localconstants import SMTP_SENDER
 
 # ............................................................................
 # ............................................................................
