@@ -26,14 +26,14 @@ from types import IntType, StringType, UnicodeType
 
 from LmCommon.common.lmconstants import InputDataType, JobStatus, JobStage, \
                                  ProcessType, RandomizeMethods
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LMError
-from LmServer.base.serviceobject import ServiceObject, ProcessObject
+from LmServer.base.serviceobject import ProcessObject
 
 from LmServer.common.lmconstants import ReferenceType, RAD_STORE, LMServiceModule
+from LmServer.common.localconstants import ARCHIVE_USER
 
 from LmServer.common.notifyJob import NotifyJob
 

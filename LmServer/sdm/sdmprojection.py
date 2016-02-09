@@ -26,7 +26,6 @@ import mx.DateTime
 import os
 
 from LmCommon.common.lmconstants import OutputFormat, JobStatus
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.layer import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError

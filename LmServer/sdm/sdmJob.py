@@ -31,21 +31,18 @@
           now, but it is possible that this is not necessary since no 
           additional input is needed for the subclasses at this time.
 """
-from glob import iglob
 import os
 from StringIO import StringIO
 import subprocess
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZipFile
 
-from LmCommon.common.lmconstants import JobStatus, JobStage, ProcessType, \
-                                        SHAPEFILE_EXTENSIONS, OutputFormat
-from LmCommon.common.localconstants import ARCHIVE_USER
+from LmCommon.common.lmconstants import (JobStatus, JobStage, ProcessType, 
+                                        SHAPEFILE_EXTENSIONS, OutputFormat)
 
 from LmServer.base.job import _Job, _JobData
 from LmServer.base.lmobj import LMError, LMMissingDataError
-
 from LmServer.common.lmconstants import JobFamily, ReferenceType
-from LmServer.common.localconstants import POINT_COUNT_MAX
+from LmServer.common.localconstants import POINT_COUNT_MAX, ARCHIVE_USER
 
 # .............................................................................
 class SDMOccurrenceJob(_Job):

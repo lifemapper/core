@@ -1,0 +1,84 @@
+; .............................................................................
+; LmServer
+; .............................................................................
+[LmServer - environment]
+;; [LmCommon - common]
+ARCHIVE_USER: @LMUSER@ 
+ENCODING:  utf-8
+OGC_SERVICE_URL: http://@PUBLIC_FQDN@/ogc
+WEBSERVICES_ROOT: http://@PUBLIC_FQDN@
+
+DATASOURCE: @DATASOURCE@
+APP_PATH: @LMHOME@
+DATA_PATH: @DATADIR_SERVER@
+TEMP_PATH: @TEMPDIR@
+MAPSERVER_ROOT: http://@PUBLIC_FQDN@
+
+; ...............................................
+[LmServer - registeredcompute]
+COMPUTE_NAME: 
+COMPUTE_IP: 
+COMPUTE_IP_MASK: 
+COMPUTE_CONTACT_USERID:
+COMPUTE_CONTACT_EMAIL:
+COMPUTE_CONTACT_FIRSTNAME:
+COMPUTE_CONTACT_LASTNAME:
+COMPUTE_INSTITUTION:
+COMPUTE_ADDR1:
+COMPUTE_ADDR2: 
+COMPUTE_ADDR3: 
+
+; ...............................................
+[LmServer - pipeline]
+TROUBLESHOOTERS: null@nowhere.com 
+SPECIES_EXP_YEAR: 2015
+SPECIES_EXP_MONTH: 9
+SPECIES_EXP_DAY: 27
+POINT_COUNT_MIN: 30
+POINT_COUNT_MAX: 1000
+WORKER_JOB_LIMIT: 50
+TAXONOMY_FILENAME: gbif_taxonomy.txt
+OCCURRENCE_FILENAME: gbif_merged.txt
+PROVIDER_FILENAME: gbif_orgs.txt
+TSN_FILENAME: bison_species_tsns.txt
+BINOMIAL_FILENAME: iDigBio_20150513.txt
+
+DEFAULT_ALGORITHMS: @ALGORITHMS@ 
+DEFAULT_MODEL_SCENARIO: @MODEL_SCENARIO@ 
+DEFAULT_PROJECTION_SCENARIOS: @PROJECTION_SCENARIOS@ 
+SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
+DEFAULT_GRID_NAME: lmgrid_1d
+DEFAULT_GRID_CELLSIZE: 1
+USER_OCCURRENCE_CSV: @SPECIES_DATA@.csv
+USER_OCCURRENCE_META: @SPECIES_DATA@.meta
+
+; ...............................................
+[LmServer - dbserver]
+CONNECTION_PORT: 6432
+DB_HOSTNAME: @DB_FQDN@
+
+; ...............................................
+[LmServer - webserver]
+LM_LIB_PATH: @LMWEB@
+WEB_HOSTNAME:  @WEB_FQDN@
+CHERRYPY_CONFIG_FILE: @LMHOME@/config/cherrypy.conf
+
+; .............................................................................
+; LmClient
+; .............................................................................
+[LmClient - Open Tree of Life]
+OTL_HINT_URL: http://api.opentreeoflife.org/v2/tnrs/autocomplete_name
+OTL_TREE_WEB_URL: http://api.opentreeoflife.org/v2/tree_of_life/subtree
+
+; ...............................................
+[LmClient - contact]
+INSTITUTION_NAME: University of Kansas Biodiversity Institute
+ADMIN_NAME: Jeff Cavner
+ADMIN_EMAIL: jcavner@ku.edu 
+
+; .............................................................................
+; SiteConfig 
+; .............................................................................
+[SiteConfig]
+SITE_CONFIG: site.ini
+

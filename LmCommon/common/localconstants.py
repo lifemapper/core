@@ -21,12 +21,11 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.config import Config
+from LmBackend.common.config import Config
 
 _CONFIG_HEADING = "LmCommon - common"
 # LmCommon (LmClient, LmCompute, LmDbServer, LmWebServer) 
 ENCODING = Config().get(_CONFIG_HEADING, 'ENCODING')
-ARCHIVE_USER = Config().get(_CONFIG_HEADING, 'ARCHIVE_USER')
 OGC_SERVICE_URL = Config().get(_CONFIG_HEADING, 'OGC_SERVICE_URL')
 WEBSERVICES_ROOT = Config().get(_CONFIG_HEADING, 'WEBSERVICES_ROOT')
 

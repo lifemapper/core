@@ -29,7 +29,6 @@ from types import StringType, UnicodeType, IntType
 import xml.etree.ElementTree as ET 
 
 from LmCommon.common.lmconstants import JobStatus, RandomizeMethods, ProcessType
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.lmobj import LMError, LMObject
 
@@ -39,8 +38,8 @@ from LmServer.db.connect import HL_NAME
 
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import  DbUser, JobFamily, ReferenceType
-from LmServer.common.localconstants import CONNECTION_PORT, DB_HOSTNAME, \
-                                          POINT_COUNT_MIN, POINT_COUNT_MAX
+from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
+                                 POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
   
 from LmServer.sdm.sdmexperiment import SDMExperiment
 

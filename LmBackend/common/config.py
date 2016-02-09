@@ -34,7 +34,8 @@ from LmCommon.common.singleton import singleton
 
 # Looks for a Lifemapper configuration file path environment variable.  If one
 #    cannot be found, raise an exception
-CONFIG_FILENAME = os.getenv('LIFEMAPPER_CONFIG_FILE') 
+COMPUTE_CONFIG_FILENAME = os.getenv('LIFEMAPPER_COMPUTE_CONFIG_FILE') 
+SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
 SITE_CONFIG_SECTION = 'SiteConfig'
 SITE_CONFIG_ITEM = 'SITE_CONFIG'
 
@@ -43,14 +44,14 @@ SITE_CONFIG_ITEM = 'SITE_CONFIG'
 @singleton
 class Config(object):
    """
-   @summary: Lifemapper configuration object will read config.ini and store 
-                values
+   @summary: Lifemapper configuration object will read config.lmserver.ini and/or
+             config.lmcompute.ini and site.ini and store values
    """
    # .....................................
-   def __init__(self, fn=CONFIG_FILENAME):
-      if fn is None or len(fn) == 0:
-         raise ValueError, "Missing LIFEMAPPER_CONFIG_FILE environment variable"
-      self.fn = fn
+   def __init__(self, fns=[COMPUTE_CONFIG_FILENAME, SERVER_CONFIG_FILENAME]):
+      if fns is None or len(fns) == 0:
+         raise ValueError, "Missing LIFEMAPPER_SERVER_CONFIG_FILE or LIFEMAPPER_COMPUTE_CONFIG_FILE environment variable"
+      self.configFiles = fns
       self.reload()
       
    # .....................................
@@ -77,21 +78,26 @@ class Config(object):
    # .....................................
    def reload(self):
       """
-      @summary: This function will reload the configuration file and the 
+      @summary: This function will reload the configuration file(s) and the 
                    site-specific configuration file.  This will catch any  
                    updates to the configuration without having to stop and 
                    restart the process.
       """
       self.config = ConfigParser.SafeConfigParser()
-      self.config.read(self.fn)
-      pth, tmp = os.path.split(self.fn)
-      try:
-         fname = self.get(SITE_CONFIG_SECTION, SITE_CONFIG_ITEM)
-      except Exception, e:
-         msg = str(e) + '\n'
-         msg += 'Config file = ' + self.fn
-         raise Exception(msg)
-      else:
-         self.site = os.path.join(pth, fname)
-         self.config.read(self.site)
-      
+      found = False
+      for fn in self.configFiles:
+         if os.path.exists(fn):
+            self.config.read(fn)
+            found = True
+            pth, tmp = os.path.split(self.fn)
+            try:
+               fname = self.get(SITE_CONFIG_SECTION, SITE_CONFIG_ITEM)
+            except Exception, e:
+               msg = str(e) + '\n'
+               msg += 'Missing site config in file = ' + fn
+               raise Exception(msg)
+            else:
+               self.site = os.path.join(pth, fname)
+               self.config.read(self.site)
+      if not found:
+         raise Exception('No config files found matching {}'.format(self.configFiles))

@@ -36,10 +36,9 @@ from LmCommon.common.lmXml import Element, register_namespace, \
 from LmServer.base.atom import Atom
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject
-from LmServer.base.utilities import escapeString, formatTimeAtom, \
-                                            ObjectAttributeIterator
-
-from LmBackend.common.localconstants import SMTP_SENDER
+from LmServer.base.utilities import (escapeString, formatTimeAtom, 
+                                     ObjectAttributeIterator)
+from LmServer.common.localconstants import SMTP_SENDER
 
 from LmWebServer.common.lmconstants import ATOM_NAMESPACE
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse

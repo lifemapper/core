@@ -33,13 +33,13 @@ from types import IntType
 
 from LmCommon.common.lmconstants import (JobStage, JobStatus, ProcessType, 
                                         RandomizeMethods, Instances)
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.layer import Vector
 from LmServer.base.lmobj import LMError, LMMissingDataError
 from LmServer.common.lmconstants import (DbUser, JobFamily, Priority, 
                                         ReferenceType)
-from LmServer.common.localconstants import POINT_COUNT_MIN, DATASOURCE
+from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN, 
+                                            DATASOURCE)
 from LmServer.common.notifyJob import NotifyJob
 from LmServer.db.peruser import Peruser
 from LmServer.rad.pamvim import PamSum

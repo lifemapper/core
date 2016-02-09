@@ -15,13 +15,16 @@ DATASOURCE: PRAGMA
 ; ...............................................
 ; LmBackend-gt
 ; ...............................................
-[LmBackend - SMTP]
-SMTP_SERVER: smtp.ku.edu
-SMTP_SENDER: lifemapper@ku.edu
+;; [LmBackend - SMTP]
+;; SMTP_SERVER: smtp.ku.edu
+;; SMTP_SENDER: lifemapper@ku.edu
 
 ; ...............................................
 [LmServer - pipeline]
 ; ...............................................
+SMTP_SERVER: smtp.ku.edu
+SMTP_SENDER: lifemapper@ku.edu
+
 TROUBLESHOOTERS: a.real.address@somewhere.com
 SPECIES_EXP_YEAR: 2015
 SPECIES_EXP_MONTH: 9
@@ -67,35 +70,3 @@ COMPUTE_INSTITUTION:
 COMPUTE_ADDR1:
 COMPUTE_ADDR2: 
 COMPUTE_ADDR3: 
-
-; ...............................................
-; LmCompute
-; ...............................................
-[LmCompute - contact]
-INSTITUTION_NAME: University of Kansas Biodiversity Institute
-ADMIN_NAME: Aimee Stewart
-ADMIN_EMAIL: aimeestewart@ku.edu 
-LOCAL_MACHINE_ID: 
-
-; ...............................................
-;; [LmCompute - Job Retrievers]
-;; JOB_RETRIEVER_KEYS: lifemapperJobServer,dir1
-
-; ...............lifemapperJobServer.................
-;; [LmCompute - Job Retrievers - lifemapperJobServer]
-;; RETRIEVER_TYPE: server
-;; JOB_SERVER: http://svc.lifemapper.org/jobs
-;; PULL_THRESHOLD: 50
-;; NUM_TO_PULL: 50
-
-; ...............dir1.................
-;; [LmCompute - Job Retrievers - dir1]
-;; RETRIEVER_TYPE: directory
-;; JOB_DIR: /home/lmwriter/holdJobs/
-
-; ...............................................
-[LmCompute - plugins - maxent]
-;; JAVA_MAX_MEM_OPTION = 4g
-;; JAVA_INIT_MEM_OPTION = 4g
-;;;; Reassemble this command if changing any component options
-JAVA_CMD: %(JAVA_EXE)s -Xms%(JAVA_INIT_MEM_OPTION)s -Xmx%(JAVA_MAX_MEM_OPTION)s -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT)s -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT)s -cp
