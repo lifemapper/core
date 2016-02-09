@@ -37,6 +37,12 @@ the suite script with -h or --help::
      -t [TESTDIR [TESTDIR ...]], --testDir [TESTDIR [TESTDIR ...]]
                            Add tests from this directory
 
+
+#######################
+How to interpret output
+#######################
+If you use the summary flag, test results will be listed under three categories, successful, warnings, and failures.
+
 Example output::
    
    cjgrady@sporks:~/git/core/LmCommon/tools/testing$ python testSuite.py --summarize --pedantic -t ~/git/core/LmCommon/tests/config/
@@ -51,6 +57,7 @@ Example output::
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     Failures
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     ---------------------
 
+Additionally, the test suite itself will produce an exit status code upon completion.  This should be checked to determine if any failures have occurred.  If there were any failures, the exit status will be 2, otherwise it will be 0.
 
 #####
 Tests
