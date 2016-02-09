@@ -4,9 +4,8 @@ Running Tests
 
 Use a testing suite to run tests.  To start, the base testing suite class can
 be used to run simple system test. Available options can be found by calling
-the suite script with -h or --help
+the suite script with -h or --help::
 
-.. compound::
    cjgrady@sporks:~/git/core/LmCommon/tools/testing$ python testSuite.py --help
    usage: Lifemapper Testing Suite [-h] [-v] [-o OUTPUT] [-e ERROR] [-d OUTDIR]
                                    [--pedantic] [--quickStop] [--summarize]
@@ -38,7 +37,8 @@ the suite script with -h or --help
      -t [TESTDIR [TESTDIR ...]], --testDir [TESTDIR [TESTDIR ...]]
                            Add tests from this directory
 
-Example::
+Example output::
+   
    cjgrady@sporks:~/git/core/LmCommon/tools/testing$ python testSuite.py --summarize --pedantic -t ~/git/core/LmCommon/tests/config/
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     Successful Tests
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     ---------------------
@@ -50,6 +50,7 @@ Example::
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     Failures
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     ---------------------
+
 
 #####
 Tests
