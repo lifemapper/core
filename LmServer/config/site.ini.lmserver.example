@@ -1,7 +1,7 @@
 ; .............................................................................
 ; Lifemapper configuration file for site-specific parameters 
-; This file must be renamed config.site.ini and placed in the same directory as 
-;   LIFEMAPPER_CONFIG_FILE
+; This file must be named or appended to site.ini, and installed in  
+;   @LMHOME@/config to override variables in LIFEMAPPER_SERVER_CONFIG_FILE
 ; NOTE: For list variables, separate with commas, one line
 ; NOTE: This particular version is for badenov
 ; .............................................................................
