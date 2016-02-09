@@ -30,7 +30,7 @@ import sys
 import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
-from LmCommon.common.localconstants import ENCODING
+from LmCommon.common.lmconstants import ENCODING
 # .............................................................................
 class OccDataParser(object):
    """

@@ -7,15 +7,11 @@ from types import NoneType
 import urllib2
 
 from LmCommon.common.lmAttObject import LmAttObj
-from LmCommon.common.lmconstants import LM_NAMESPACE, LM_NS_PREFIX, \
-                                           LM_RESPONSE_SCHEMA_LOCATION
-from LmCommon.common.lmXml import Element, register_namespace, \
-                                  setDefaultNamespace, SubElement, tostring, \
-                                  PI, QName
+from LmCommon.common.lmconstants import LM_NAMESPACE, LM_NS_PREFIX, ENCODING
+from LmCommon.common.lmXml import (Element, register_namespace, 
+                        setDefaultNamespace, SubElement, tostring, PI)
 
 from LmServer.base.utilities import escapeString, ObjectAttributeIterator
-
-from LmWebServer.common.lmconstants import XSI_NAMESPACE
 
 SERVER = "localhost:8983/solr/"
 COLLECTION = "lmArchive"
@@ -188,7 +184,7 @@ def formatXml(obj):
    el = Element("response")
 
    pis = []
-   pis.append(PI("xml", 'version="1.0" encoding="utf-8"'))
+   pis.append(PI("xml", 'version="1.0" encoding="{}"'.format(ENCODING)))
    
    attribs = dict([(k, obj.attributes[k]) for k in obj.attributes.keys()])
    objEl = SubElement(el, obj.name, attrib=attribs)

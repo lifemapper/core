@@ -34,9 +34,8 @@ import StringIO
 from types import UnicodeType, FloatType
 
 from LmBackend.common.occparse import OccDataParser
-from LmCommon.common.localconstants import ENCODING
 from LmCommon.common.unicode import fromUnicode, toUnicode
-from LmCommon.common.lmconstants import (BISON_RESPONSE_FIELDS,
+from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, IDIGBIO_EXPORT_FIELDS, IDIGBIO_ID_FIELD,
       IDIGBIO_LINK_FIELD, IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
       IDIGBIO_SEARCH_POSTFIX, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 

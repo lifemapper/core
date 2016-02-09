@@ -30,7 +30,8 @@
 from osgeo import ogr
 from LmCommon.common.lmXml import CDATA, Element, register_namespace, \
                                   setDefaultNamespace, SubElement, tostring
-from LmCommon.common.localconstants import ENCODING, WEBSERVICES_ROOT
+from LmCommon.common.localconstants import WEBSERVICES_ROOT
+from LmCommon.common.lmconstants import ENCODING
 
 from LmServer.base.layer import Raster
 from LmServer.base.lmobj import LMError

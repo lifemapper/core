@@ -27,7 +27,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.localconstants import ENCODING
+from LmCommon.common.lmconstants import ENCODING
 
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject

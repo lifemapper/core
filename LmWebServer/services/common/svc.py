@@ -34,15 +34,14 @@ import os
 from StringIO import StringIO
 from types import FileType
 
-from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus
-from LmCommon.common.localconstants import (ARCHIVE_USER, ENCODING, 
-                                            WEBSERVICES_ROOT)
+from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, ENCODING
+from LmCommon.common.localconstants import (WEBSERVICES_ROOT)
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
 from LmServer.common.lmconstants import DbUser, LOG_PATH, SESSION_PATH, WEB_PATH
-from LmServer.common.localconstants import APP_PATH 
+from LmServer.common.localconstants import APP_PATH, ARCHIVE_USER 
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
                                  UserLogger)
