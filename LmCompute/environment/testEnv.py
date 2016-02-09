@@ -35,7 +35,7 @@ from LmCommon.common.lmXml import deserialize, fromstring
 
 from LmCompute.environment.environmentMethods import _EnvironmentMethods
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.localconstants import APP_PATH, JOB_DATA_PATH, \
+from LmCompute.common.localconstants import BIN_PATH, JOB_DATA_PATH, \
                                     JOB_OUTPUT_PATH, PLUGINS_DIR, PYTHON_CMD, \
                                     SAMPLE_JOBS_PATH, SAMPLE_LAYERS_PATH, \
                                     TEMPORARY_FILE_PATH
@@ -108,7 +108,7 @@ class TestEnv(_EnvironmentMethods):
       @return: The base path for applications in this environment
       @rtype: String
       """
-      return APP_PATH
+      return BIN_PATH
    
    # ..................................
    def getJobDataPath(self):

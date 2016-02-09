@@ -43,7 +43,7 @@ _JOB_RETRIEVERS_SECTION = "LmCompute - Job Retrievers"
 
 # Environment variables
 PLUGINS_DIR = _cfg.get(_ENV_SECTION, 'PLUGINS_DIR')
-APP_PATH = _cfg.get(_ENV_SECTION, 'APP_PATH')
+BIN_PATH = _cfg.get(_ENV_SECTION, 'BIN_PATH')
 JOB_DATA_PATH = _cfg.get(_ENV_SECTION, 'JOB_DATA_PATH')
 JOB_OUTPUT_PATH = _cfg.get(_ENV_SECTION, 'JOB_OUTPUT_PATH')
 JOB_REQUEST_DIR = _cfg.get(_ENV_SECTION, "JOB_REQUEST_DIR")
