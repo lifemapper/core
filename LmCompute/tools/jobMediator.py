@@ -32,10 +32,9 @@ import sys
 from time import sleep
 import traceback
 
-from LmCompute.common.localconstants import ADMIN_EMAIL, ADMIN_NAME, \
+from LmCompute.common.localconstants import \
                                         JM_INACTIVE_TIME, \
-                                        JM_SLEEP_TIME, JOB_MEDIATOR_PID_FILE, \
-                                        LOCAL_MACHINE_ID
+                                        JM_SLEEP_TIME, JOB_MEDIATOR_PID_FILE
 from LmCompute.common.log import MediatorLogger
 from LmCompute.jobs.retrievers.factory import getJobRetrieversDictFromConfig
 from LmCompute.jobs.submitters.factory import getJobSubmitterFromConfig
@@ -116,25 +115,9 @@ class JobMediator(Daemon):
          self.log.debug("Exiting")
       except Exception, e:
          tb = traceback.format_exc()
-         # Something happened, email developers
-         recipients = ADMIN_EMAIL
-         subject = "The %s job mediator has failed" % LOCAL_MACHINE_ID
-         message = """\
-Hi {adminName},
-
-The Lifemapper job mediator at {machineId} has failed with the following message:
-
-{errMsg}
-
-{tb}""".format(adminName=ADMIN_NAME, machineId=LOCAL_MACHINE_ID, 
-                   errMsg=str(e), tb=tb)
-         try:
-            notifier = EmailNotifier()
-            notifier.sendMessage(recipients, subject, message)
-         except Exception, e:
-            self.log.error('Failed to notify %s about %s, \n message: %s' 
-                        % (str(recipients), subject, message))
-
+         self.log.error("An error occurred")
+         self.log.error(str(e))
+         self.log.error(tb)
    
    # .............................
    def onUpdate(self):
@@ -190,8 +173,7 @@ if __name__ == "__main__":
       elif sys.argv[1].lower() == 'restart':
          jobMediator.restart()
       else:
-         print("Unknown command")
-         self.log.error("Unknown command: %s" % sys.argv[1].lower())
+         print("Unknown command: %s" % sys.argv[1].lower())
          sys.exit(2)
    else:
       print("usage: %s start|stop|update" % sys.argv[0])
