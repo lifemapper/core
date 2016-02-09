@@ -29,9 +29,10 @@
 
 from subprocess import Popen
 from time import sleep
+import multiprocessing
+CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
 
 from LmCommon.common.lmXml import serialize, tostring
-from LmCommon.common.localconstants import CONCURRENT_PROCESSES
 
 WAIT_TIME = 10
 

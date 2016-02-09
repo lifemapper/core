@@ -22,7 +22,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.config import Config
+from LmBackend.common.config import Config
 
 _ENV_CONFIG_HEADING = "LmServer - environment"
 _PIPELINE_CONFIG_HEADING = "LmServer - pipeline"
@@ -39,7 +39,9 @@ DATASOURCE = Config().get(_ENV_CONFIG_HEADING, 'DATASOURCE')
 
 SMTP_SERVER = Config().get(_ENV_CONFIG_HEADING, 'SMTP_SERVER')
 SMTP_SENDER = Config().get(_ENV_CONFIG_HEADING, 'SMTP_SENDER')
-
+OGC_SERVICE_URL = Config().get(_ENV_CONFIG_HEADING, 'OGC_SERVICE_URL')
+WEBSERVICES_ROOT = Config().get(_ENV_CONFIG_HEADING, 'WEBSERVICES_ROOT')
+ 
 COMPUTE_NAME = Config().get(_COMPUTE_HEADING, 'COMPUTE_NAME')
 COMPUTE_IP = Config().get(_COMPUTE_HEADING, 'COMPUTE_IP')
 COMPUTE_IP_MASK = Config().get(_COMPUTE_HEADING, 'COMPUTE_IP_MASK')
