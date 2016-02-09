@@ -7,18 +7,19 @@ from types import NoneType
 import urllib2
 
 from LmCommon.common.lmAttObject import LmAttObj
-from LmCommon.common.lmconstants import LM_NAMESPACE, LM_NS_PREFIX, \
-                                           LM_RESPONSE_SCHEMA_LOCATION
+from LmCommon.common.lmconstants import LM_NAMESPACE, LM_NS_PREFIX
 from LmCommon.common.lmXml import Element, register_namespace, \
                                   setDefaultNamespace, SubElement, tostring, \
-                                  PI, QName
+                                  PI
 
 from LmServer.base.utilities import escapeString, ObjectAttributeIterator
+import LmServer.common.jsonTree as lmJson
 
-from LmWebServer.common.lmconstants import XSI_NAMESPACE
+#from LmWebServer.common.lmconstants import XSI_NAMESPACE
 
 SERVER = "localhost:8983/solr/"
 COLLECTION = "lmArchive"
+HINT_COLLECTION = "lmSpeciesHint"
 
 # .............................................................................
 def formatHit(hit):
@@ -195,3 +196,114 @@ def formatXml(obj):
    _addObjectToTree(objEl, obj)
 
    return '%s\n%s' % ('\n'.join([tostring(pi) for pi in pis]), tostring(el))
+
+# .............................................................................
+# .............................................................................
+def searchHintIndex(name, retFormat, numColumns, maxReturned):
+   """
+   @summary: Search the hint service
+   @todo: This is pretty brittle.  These constants should be read from config 
+             and this function could use quite a bit of bullet-proofing
+   """
+   url = "http://{server}{collection}/select?q=displayName%3A{name}*&wt=python&indent=true&sort=displayName desc".format(
+                               server=SERVER, collection=HINT_COLLECTION, name=name)
+   res = urllib2.urlopen(url)
+   resp = res.read()
+   rDict = literal_eval(resp)
+   
+   hits = rDict['response']['docs']
+
+   if retFormat.lower() == "json":
+      ret = transformHintsForJson(hits, columns=numColumns)
+   elif retFormat.lower() == "newjson":
+      ret = transformHintsForJsonNew(hits)
+   else:
+      ret = transformHintsForAutocomplete(hits, maximum=maxReturned)
+      
+   return ret
+
+# .............................................................................
+def transformHintsForAutocomplete(hits, maximum=24):
+   """
+   @summary: Transforms the results of a search for autocomplete
+   @param hits: A list of Lucene search hits
+   @param maximum: (optional) Return a maximum of this number of results
+   """
+   if hits is None or len(hits) == 0:
+      return "No Suggestions\t0\t0"
+   else:
+      if len(hits) < maximum:
+         maximum = len(hits)
+         
+      return ''.join(["%s\t%s\t%s\n" % (hits[x]["displayName"], 
+           hits[x]["occurrenceSetId"], 
+           str(hits[x]["numberOfOccurrencePoints"])) for x in xrange(maximum)])
+   
+# .............................................................................
+def transformHintsForJson(hits, columns=1):
+   """
+   @summary: Transforms the results of a search into a JSON document
+   @param hits: A list of Lucene search hits
+   @param columns: (optional) Return this many columns of results
+   @deprecated: This will be replaced in the future with the new version
+   """
+   jTree = lmJson.JsonObject()
+   if hits is None:
+      return "Search too broad, please enter additional characters"
+   elif len(hits) > 0:
+      if len(hits) < columns:
+         columns = len(hits)
+      
+      i = 0 if len(hits) % columns == 0 else 1
+      subListLength = len(hits) / columns + i
+   
+      colsAry = jTree.addArray("columns")
+      for y in xrange(columns):
+         ary = colsAry.addArray("")
+         for x in xrange(y*subListLength, (y+1)*subListLength):
+            try:
+               o = ary.addObject("")
+               o.addValue("className", 
+                       "%sSpeciesRow" % str(x % 2 == 0 and 'even' or 'odd'))
+               o.addValue("name", hits[x]["displayName"])
+               o.addValue("numPoints", str(hits[x]["numberOfOccurrencePoints"]))
+               o.addValue("numModels", str(hits[x]["numberOfModels"]))
+               o.addValue("occurrenceSet", str(hits[x]["occurrenceSetId"]))
+               o.addValue("binomial", hits[x]["binomial"])
+               o.addValue("downloadUrl", hits[x]["occurrenceSetDownloadUrl"])
+            except Exception, e:
+               print str(e)
+               #pass
+      jTree.addValue("colWidth", "%s%%" % str(100/columns))
+      return lmJson.tostring(jTree)
+   else:
+      return "None of the species currently in the Lifemapper database match"
+
+# .............................................................................
+def transformHintsForJsonNew(hits):
+   """
+   @summary: Transforms the results of a search into a JSON document
+   @param hits: A list of Lucene search hits
+   @note: This method does not include the extra "column" information and 
+             will replace the _transformForJson method
+   """
+   jTree = lmJson.JsonObject()
+   if hits is None:
+      return "Search too broad, please enter additional characters"
+   elif len(hits) > 0:
+      ary = jTree.addArray("hits")
+      for i in hits:
+         try:
+            o = ary.addObject("")
+            o.addValue("name", i["displayName"])
+            o.addValue("numPoints", str(i["numberOfOccurrencePoints"]))
+            o.addValue("numModels", str(i["numberOfModels"]))
+            o.addValue("occurrenceSet", str(i["occurrenceSetId"]))
+            o.addValue("binomial", i["binomial"])
+            o.addValue("downloadUrl", i["occurrenceSetDownloadUrl"])
+         except:
+            pass
+      return lmJson.tostring(jTree)
+   else:
+      return "None of the species currently in the Lifemapper database match"
+   

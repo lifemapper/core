@@ -12,6 +12,7 @@ import subprocess
 from time import sleep
 
 from LmCommon.common.lmconstants import JobStatus
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.peruser import Peruser
 
@@ -127,6 +128,32 @@ def makeProjectionDoc(prj):
    return doc
 
 # .............................................................................
+def makeOccurrenceDoc(occId, acceptedName, numPoints, numMod, binomial, downloadUrl):
+   """
+   @summary: Make an occurrence set document to be posted to Solr
+   @param occId: The occurrence set id
+   @param acceptedName: The accepted name of the occurrence set taxon
+   @param numPoints: The number of points in the occurrence set
+   @param binomial: The binomial name of the taxon
+   @param downloadUrl: A URL where the occurrence set can be downloaded
+   """
+   doc = """\
+<add>
+   <doc>
+      <field name="id">{id}</field>
+      <field name="displayName">{displayName}</field>
+      <field name="occurrenceSetId">{occId}</field>
+      <field name="numberOfOccurrencePoints">{numPoints}</field>
+      <field name="numberOfModels">{numModels}</field>
+      <field name="binomial">{binomial></field>
+      <field name="occurrenceSetDownloadUrl">{occDlUrl}</field>
+   </doc>
+</add>""".format(id=occId, displayName=acceptedName, occId=occId,
+                 numPoints=numPoints, numModels=numMod, binomial=binomial, 
+                 occDlUrl=downloadUrl)
+   return doc
+
+# .............................................................................
 def postDocument(doc, collection, mimeType='application/xml'):
    """
    @summary: Posts a document to a local Solr server
@@ -142,10 +169,11 @@ def postDocument(doc, collection, mimeType='application/xml'):
    #   sleep(.2)
    subprocess.call(cmd, shell=True)
       
-
 # .............................................................................
-if __name__ == "__main__":
-   
+def buildProjectionIndex():
+   """
+   @summary: Build the Lifemapper archive Solr index
+   """
    peruser = Peruser(ConsoleLogger())
    peruser.openConnections()
    
@@ -174,4 +202,47 @@ if __name__ == "__main__":
    
    peruser.closeConnections()
    
+# .............................................................................
+def buildOccurrenceIndex():
+   """
+   @summary: Build the Lifemapper Species Hint service index
+   """
+   collection = "lmSpeciesHint"
+   peruser = Peruser(ConsoleLogger())
+   peruser.openConnections()
+   
+   speciesList = peruser.getOccurrenceStats()
+   #speciesList.sort(compareTitles)
+   peruser.closeConnections()
+   
+   ej = EarlJr()
+   
+   for sp in speciesList:
+      acceptedName = sp[1].strip()
+      nameParts = acceptedName.split(' ')
+      
+      binomial = nameParts[0]
+      
+      if len(nameParts) > 1:
+         if nameParts[1].lower() == nameParts[1] and \
+               not nameParts[1].startswith('('): # This is a check for an author
+            binomial = "%s %s" % (nameParts[0], nameParts[1]) 
+      
+      occId = str(sp[0])
+      numOcc = str(sp[3])
+      numMod = str(sp[4])
+      
+      downloadUrl = "{0}/shapefile".format(ej.constructLMMetadataUrl(
+                                               "occurrences", occId, "sdm"))
+      
+      doc = makeOccurrenceDoc(occId, acceptedName, numOcc, numMod, binomial, downloadUrl)
+         
+      # Post document
+      postDocument(doc, collection, mimeType='application/xml')
+   
+
+# .............................................................................
+if __name__ == "__main__":
+   buildProjectionIndex()
+   buildOccurrenceIndex()
    

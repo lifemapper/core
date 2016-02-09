@@ -55,12 +55,11 @@ from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE,
                                             STATIC_PATH)
 from LmWebServer.common.localconstants import CP_CONFIG_FILE, LM_LIB_PATH
 from LmWebServer.formatters.formatterFactory import FormatterFactory
-from LmWebServer.lucene.lmLucene import LmLuceneClient
 from LmWebServer.services.common.authentication import checkUserLogin
 from LmWebServer.services.common.group import LMServiceGroup
 from LmWebServer.services.common.jobMule import JobMule
 from LmWebServer.services.ogc.sdmMapper import MapConstructor
-from LmWebServer.solr.lmSolr import searchArchive
+from LmWebServer.solr.lmSolr import searchArchive, searchHintIndex
           
 # .............................................................................
 # Constants for CherryPy application
@@ -121,13 +120,18 @@ class svc(object):
          
             if frmt is None:
                frmt = "autocomplete"
-             
+            
+            if frmt.lower() in ["json", "newjson"]:
+               content_type = "application/json"
+            else:
+               content_type = "text/plain"
+            
             if numCols is None:
                numCols = "3"
-   
-            cli = LmLuceneClient()
-            response = cli.querySpecies(query, maxReturned, frmt, numCols)
-            return response
+
+            cherrypy.response.headers["Content-Type"] = content_type
+            return searchHintIndex(query, frmt, numCols, maxReturned)
+               
          elif queryType == "archive":
             content_type = "application/xml"
             cherrypy.response.headers["Content-Type"] = content_type
