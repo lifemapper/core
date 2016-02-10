@@ -22,7 +22,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmBackend.common.config import Config
+from LmCommon.common.config import Config
 
 _ENV_CONFIG_HEADING = "LmServer - environment"
 _PIPELINE_CONFIG_HEADING = "LmServer - pipeline"
