@@ -629,6 +629,7 @@ class Instances:
    BISON = "BISON"
    GBIF = "GBIF"
    CHARLIE = "Charlie"
+   LIFEMAPPER = "Lifemapper"
 
 class ShortDWCNames:
    OCCURRENCE_ID = 'occurid'
