@@ -28,7 +28,7 @@
 import smtplib
 from types import ListType
 
-from LmBackend.common.localconstants import SMTP_SERVER, SMTP_SENDER 
+from LmServer.common.localconstants import SMTP_SERVER, SMTP_SENDER 
 # .............................................................................
 class EmailNotifier(object):
    """

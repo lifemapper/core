@@ -29,7 +29,7 @@ from LmCommon.common.lmconstants import JobStage, ProcessType
 from LmServer.base.job import _Job, _JobData
 from LmServer.base.lmobj import LMMessage
 
-from LmBackend.notifications.email import EmailNotifier
+from LmServer.notifications.email import EmailNotifier
 
 # .............................................................................
 class NotifyJobData(_JobData):
