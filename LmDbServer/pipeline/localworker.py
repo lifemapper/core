@@ -33,7 +33,6 @@ from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, Instances, ProcessType, DEFAULT_EPSG, 
             DEFAULT_POST_USER, JobStatus, ONE_DAY, ONE_HOUR, ONE_MIN)
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmDbServer.common.localconstants import WORKER_JOB_LIMIT
 from LmDbServer.pipeline.pipeline import _Worker
@@ -42,7 +41,8 @@ from LmServer.base.lmobj import LMError, LmHTTPError
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (JobFamily, Priority, 
                                          PrimaryEnvironment, LOG_PATH)
-from LmServer.common.localconstants import POINT_COUNT_MIN, APP_PATH, DATASOURCE
+from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN, 
+                                            APP_PATH, DATASOURCE)
 from LmServer.db.scribe import Scribe
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.omJob import OmProjectionJob, OmModelJob

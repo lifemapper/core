@@ -32,18 +32,16 @@ from LmDbServer.common.localconstants import DEFAULT_ALGORITHMS, \
                                   DEFAULT_MODEL_SCENARIO, \
                                   DEFAULT_PROJECTION_SCENARIOS 
                                   
-from LmCommon.common.lmconstants import ONE_DAY, JobStatus
-from LmCommon.common.localconstants import ARCHIVE_USER 
+from LmCommon.common.lmconstants import JobStatus
 
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import APP_PATH, POINT_COUNT_MIN
+from LmServer.common.localconstants import (ARCHIVE_USER, APP_PATH, 
+                                            POINT_COUNT_MIN)
 from LmServer.common.lmconstants import Priority, ARCHIVE_DELETE_YEAR, \
                                        ARCHIVE_DELETE_MONTH, ARCHIVE_DELETE_DAY
-from LmServer.common.log import ConsoleLogger, ThreadLogger
-from LmServer.db.scribe import Scribe
+from LmServer.common.log import ThreadLogger
+from LmServer.notifications.email import EmailNotifier
 from LmServer.sdm.algorithm import Algorithm
-
-from LmBackend.notifications.email import EmailNotifier
 
 DAYS_OLD = 90
 STOPFILE = os.path.join(APP_PATH, 'stopcleanup.die')

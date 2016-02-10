@@ -32,10 +32,9 @@ import subprocess
 import tarfile
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, OutputFormat
-from LmCommon.common.localconstants import ARCHIVE_USER
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import MAL_STORE, RAD_STORE, LM_SCHEMA
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.localconstants import APP_PATH, ARCHIVE_USER
  
 DEBUG = False
 USER_REPLACE_STR = '#USERS#'

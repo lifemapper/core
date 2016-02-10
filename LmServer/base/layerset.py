@@ -26,7 +26,6 @@ import os
 from osgeo import gdal, gdalconst, ogr
 
 from LmCommon.common.lmconstants import DEFAULT_EPSG, DEFAULT_MAPUNITS
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.layer import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMError, LMSpatialObject
@@ -39,7 +38,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, LMServiceType,
          DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
          CT_SPECIES_KEYWORD, PROJ_LIB)
-from LmServer.common.localconstants import DATA_PATH, POINT_COUNT_MAX
+from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH, POINT_COUNT_MAX
 from LmServer.common.lmconstants import CT_USER
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.sdmprojection import SDMProjection

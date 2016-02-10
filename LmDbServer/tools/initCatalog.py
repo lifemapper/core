@@ -28,7 +28,6 @@ import sys
 
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
          DEFAULT_MAPUNITS)
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
@@ -39,7 +38,7 @@ from LmDbServer.tools.bioclimMeta import (BASELINE_DATA,
 
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import DATA_PATH
+from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe

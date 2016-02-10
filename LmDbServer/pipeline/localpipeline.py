@@ -26,7 +26,6 @@ import os
 from time import sleep
 
 from LmCommon.common.apiquery import BisonAPI
-from LmCommon.common.localconstants import ARCHIVE_USER
 from LmCommon.common.lmconstants import (BISON_BINOMIAL_REGEX, BISON_NAME_KEY, 
           BISON_TSN_FILTERS, GBIF_EXPORT_FIELDS, GBIF_PROVIDER_FIELD, 
           GBIF_TAXONKEY_FIELD, Instances, ONE_MONTH, ProcessType)
@@ -42,7 +41,7 @@ from LmDbServer.pipeline.localworker import (Infiller, Troubleshooter,
                ProcessRunner, GBIFChainer, BisonChainer, iDigBioChainer, UserChainer)
 
 from LmServer.base.lmobj import LMError
-from LmServer.common.localconstants import DATASOURCE
+from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
 from LmServer.db.scribe import Scribe
 from LmServer.sdm.algorithm import Algorithm
 
