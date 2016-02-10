@@ -7,7 +7,7 @@
 @status: alpha
 
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -35,13 +35,14 @@ from StringIO import StringIO
 from types import FileType
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, ENCODING
-from LmCommon.common.localconstants import (WEBSERVICES_ROOT)
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
-from LmServer.common.lmconstants import DbUser, LOG_PATH, SESSION_PATH, WEB_PATH
-from LmServer.common.localconstants import APP_PATH, ARCHIVE_USER 
+from LmServer.common.lmconstants import (DbUser, LOG_PATH, SESSION_PATH, 
+                                         WEB_PATH)
+from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
+                                            WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
                                  UserLogger)
@@ -129,7 +130,7 @@ class svc(object):
                numCols = "3"
 
             cherrypy.response.headers["Content-Type"] = content_type
-            return searchHintIndex(query, frmt, numCols, maxReturned)
+            return searchHintIndex(query, frmt, numCols, maxReturned).encode(ENCODING)
                
          elif queryType == "archive":
             content_type = "application/xml"
