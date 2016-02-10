@@ -145,7 +145,7 @@ def makeOccurrenceDoc(occId, acceptedName, numPoints, numMod, binomial, download
       <field name="occurrenceSetId">{occId}</field>
       <field name="numberOfOccurrencePoints">{numPoints}</field>
       <field name="numberOfModels">{numModels}</field>
-      <field name="binomial">{binomial></field>
+      <field name="binomial">{binomial}></field>
       <field name="occurrenceSetDownloadUrl">{occDlUrl}</field>
    </doc>
 </add>""".format(id=occId, displayName=acceptedName, occId=occId,
