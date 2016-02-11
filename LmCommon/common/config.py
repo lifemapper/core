@@ -92,7 +92,7 @@ class Config(object):
          if os.path.exists(fn):
             self.config.read(fn)
             found = True
-            pth, tmp = os.path.split(self.fn)
+            pth, tmp = os.path.split(fn)
             try:
                fname = self.get(SITE_CONFIG_SECTION, SITE_CONFIG_ITEM)
             except Exception, e:
