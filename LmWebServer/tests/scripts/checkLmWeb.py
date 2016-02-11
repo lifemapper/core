@@ -52,7 +52,7 @@ def assembleUrls(logger, urls):
    BASEURLS = {}
    for key in INTERFACES:
       BASEURLS[key] = None
-      
+      /opt/lifemapper/LmWebServer/solr/buildIndex.py
    peruser = Scribe(logger)
 # #    # debug
 #    peruser = Scribe(ConsoleLogger(), overrideDB='hera.nhm.ku.edu')
@@ -129,6 +129,8 @@ urls = [
         "%s/services/rad/" % WEBSERVICES_ROOT,
         "%s/services/rad/experiments" % WEBSERVICES_ROOT,
         "%s/services/rad/layers" % WEBSERVICES_ROOT,
+        # Hint services
+        "{0}/hint/species/ace?maxReturned=1000&format=json".format(WEBSERVICES_ROOT),
         ]
 
 ctBBox = '-5702214.17,-3732756.48,4073244.21,4704460.00'
@@ -139,11 +141,10 @@ ctBckPrefix = '{0}/ogc?map=anc_ctbackground&{1}&styles='.format(WEBSERVICES_ROOT
 ctClmPrefix = '{0}/ogc?map=anc_ctclim&{1}&TRANSPARENT=true&styles='.format(WEBSERVICES_ROOT, ctParamStr)
 ctRadPrefix = '{0}/ogc?map=anc_ctRAD&{1}&styles='.format(WEBSERVICES_ROOT, ctParamStr)
 kuUrls = [
-           # Hint services
-           "{0}/hint/species/ace?maxReturned=1000&format=json".format(WEBSERVICES_ROOT),
-
            # Species page
            "%s/species/" % WEBSERVICES_ROOT,
+           # Specify
+           "{0}/ogc?MAP=anc_nasalocal.map&layers=bmnglowres&height=200&width=400&request=GetMap&service=WMS&bbox=-180.0,-90.0,180.0,90.0&srs=epsg:4326&format=image/gif&version=1.1.0&styles=".format(WEBSERVICES_ROOT)
            # Change Thinking
            #"{0}&layers=prj_1699113".format(ctPrjPrefix),
            #"{0}&layers=prj_1699186".format(ctPrjPrefix),
@@ -185,10 +186,7 @@ kuUrls = [
            #"{0}&layers=northern_cardinal".format(ctNSPrefix),
            #"{0}&layers=northern_leopard_frog".format(ctNSPrefix),
            #"{0}&layers=red_tailed_hawk".format(ctNSPrefix),
-           #"{0}&layers=American_crow".format(ctNSPrefix),
-           
-           # Specify
-           "{0}/ogc?MAP=anc_nasalocal.map&layers=bmnglowres&height=200&width=400&request=GetMap&service=WMS&bbox=-180.0,-90.0,180.0,90.0&srs=epsg:4326&format=image/gif&version=1.1.0&styles=".format(WEBSERVICES_ROOT)
+           #"{0}&layers=American_crow".format(ctNSPrefix),           
        ]
 
 # ..............................................................................
@@ -196,7 +194,7 @@ kuUrls = [
 if __name__ == '__main__':
    logger = ScriptLogger('checkLmWeb')
    
-   if WEBSERVICES_ROOT.find('lifemapper.org') >= 0:
+   if WEBSERVICES_ROOT.find('svc.lifemapper.org') >= 0:
       urls.extend(kuUrls)
    urls = assembleUrls(logger, urls)
    
