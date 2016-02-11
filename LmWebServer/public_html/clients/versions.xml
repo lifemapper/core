@@ -15,13 +15,7 @@
    <client name="lmQGIS">
       <versions>
          <current>2.3.0</current>
-         <minimum>2.1.1</minimum>
-      </versions>
-   </client>
-   <client name="lmVt">
-      <versions>
-         <current>2.0.0 beta</current>
-         <minimum>2.0.0 beta</minimum>
+         <minimum>2.2.0</minimum>
       </versions>
    </client>
 </clients>
