@@ -1,9 +1,10 @@
-
-------
+######
 Notes:
-------
+######
+
+********************
 Fresh Rocks Install:
---------------------
+********************
 
 Install the rolls:
 
@@ -20,9 +21,9 @@ Install the rolls:
 * webserver (LmServer)
 * zfs (on physical devel server)
 
-------------------
+******************
 Update Python Roll
-------------------
+******************
 
 **If** the sqlite3 module is not available in python2.7:
 
@@ -37,15 +38,15 @@ Update Python Roll
         rocks run roll python > add-roll-python.sh
         bash add-roll-python.sh > add-roll-python.out 2>&1
 
-_________________
+*****************
 Enable www access
-_________________
+*****************
 
 Follow procedure at http://yeti.lifemapper.org/roll-documentation/base/6.2/enable-www.html
 
---------------------------
+**************************
 All KU-Lifemapper Clusters
---------------------------
+**************************
 
 Add public key to new virtual frontend for key-based authentication::
 
