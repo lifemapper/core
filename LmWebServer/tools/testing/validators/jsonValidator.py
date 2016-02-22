@@ -6,7 +6,8 @@
 """
 import json
 
-from LmWebServer.tools.schemaTester.validators.validatorError import InvalidResponseException
+from LmWebServer.tools.testing.validators.validatorError import \
+                                                       InvalidResponseException
 
 # .............................................................................
 class JsonValidator(object):

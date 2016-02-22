@@ -4,7 +4,8 @@
 @author: CJ Grady
 @see: http://www.json.org
 """
-from LmWebServer.tools.schemaTester.validators.validatorError import InvalidResponseException
+from LmWebServer.tools.testing.validators.validatorError import \
+                                                       InvalidResponseException
 
 from LmCommon.common.lmXml import deserialize, fromstring
 from LmCommon.common.lmAttObject import LmAttObj, LmAttList
