@@ -68,21 +68,20 @@ the process currently in use, as of February 23, 2016.
      MF_PROJECT="cgwRun2_1"
      NUM_WORKERS=4095
      
-#. Submit the job.
+#. Submit the job with the following arguments:
 
-  Arguments sent:
-       -p : This is the queue to send the job to.  We primarily use the normal
-              queue for jobs and the development queue for testing.
-       -n : This is the number of cores to use for the job.  4096 has proven to
-              cause issues with disk concurrency.  For these runs I am only 
-              using 1024 (64 machines).  This should be a multiple of 16 (the 
-              number of cores per node) as you are allocated an entire machine.
-       -t : This is the amount of time that the resources are requested for
-              (HH:MM:SS)
+     -p : This is the queue to send the job to.  We primarily use the normal
+          queue for jobs and the development queue for testing.
+     -n : This is the number of cores to use for the job.  4096 has proven to
+          cause issues with disk concurrency.  For these runs I am only 
+          using 1024 (64 machines).  This should be a multiple of 16 (the 
+          number of cores per node) as you are allocated an entire machine.
+     -t : This is the amount of time that the resources are requested for
+          (HH:MM:SS)
 
-  The last argument is the name of the script to run::
+   The last argument is the name of the script to run::
 
-    login1.stampede(5)$ sbatch -p normal -n 4096 -t 3:00:00 mfJob.sh
+   login1.stampede(5)$ sbatch -p normal -n 4096 -t 3:00:00 mfJob.sh
     
 #. Check the status of the job.  TACC uses SLURM for job management.  You can
      use the command showq with your user id as an argument to see the status 
