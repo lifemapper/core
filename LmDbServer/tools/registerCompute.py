@@ -59,6 +59,8 @@ def registerConfiguredCompute(scribe):
          crMachine = LMComputeResource(COMPUTE_NAME, COMPUTE_IP, 
                            COMPUTE_CONTACT_USERID, ipMask=COMPUTE_IP_MASK,
                            createTime=currtime, modTime=currtime, hbTime=currtime)
+         scribe.log.info('  Inserting compute resource {} with contact {} ...'.format(
+                              COMPUTE_NAME, COMPUTE_CONTACT_USERID))
          compResource = scribe.registerComputeResource(crMachine, crContact)
          
    except Exception, e:
@@ -84,6 +86,8 @@ def registerStandardComputes(scribe):
                                        ipMask=getOptionalVal(lmc,'ipmask'), 
                                        createTime=currtime, 
                                        modTime=currtime, hbTime=currtime)
+         scribe.log.info('  Inserting compute resource {} with contact {} ...'.format(
+                                       name, lmc['contactid']))
          compResource = scribe.registerComputeResource(crMachine, crContact)
          
    except Exception, e:

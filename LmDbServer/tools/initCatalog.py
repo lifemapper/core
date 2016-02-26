@@ -55,6 +55,7 @@ def addDefaultUser(scribe):
    """
    em = '%s@nowhere.com' % ARCHIVE_USER
    defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
+   scribe.log.info('  Inserting ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
    id = scribe.insertUser(defaultUser)
    return id
 
@@ -66,6 +67,7 @@ def addAlgorithms(scribe):
    ids = []
    for algcode, algdict in ALGORITHM_DATA.iteritems():
       alg = Algorithm(algcode, name=algdict['name'])
+      scribe.log.info('  Inserting algorithm {} ...'.format(algcode))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
    return ids
@@ -78,6 +80,7 @@ def addLayerTypes(scribe, layertypeData, usr):
                                 typeinfo['description'], usr, 
                                 keywords=typeinfo['keywords'], 
                                 modTime=DT.gmt().mjd)
+      scribe.log.info('  Inserting or getting layertype {} ...'.format(ltype))
       etypeid = scribe.getOrInsertLayerTypeCode(ltype)
       ids.append(etypeid)
    return ids
@@ -86,6 +89,7 @@ def addLayerTypes(scribe, layertypeData, usr):
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
    shp = ShapeGrid(gridname, cellsides, cellsize, mapunits, epsg, bbox, userId=usr)
    # TODO: Insert a ShapeGrid job here (would also insert object), delete insert
+   scribe.log.info('Inserting shapegrid {} ...'.format(gridname))
    newshp = scribe.insertShapeGrid(shp)
    return newshp.getId()
    
@@ -367,7 +371,7 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
    @summary Assemble predicted past scenarios defined by CMIP5
    """
    pastScenarios = {}
-   remoteLocs = {}
+   lyrKeys = set()
    pastScens = pkgMeta['past']
    for rpt in pastScens.keys():
       for tm in pastScens[rpt]:
@@ -407,21 +411,28 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    """
    @summary Assemble current, predicted past, predicted future scenarios 
    """
+   msgs = []
    # Current
-   basescen, baseLyrKeys, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+   basescen, baseLyrKeys, staticLayers = createBaselineScenario(usr, pkgMeta, 
+                                                         lyrMeta, lyrtypeMeta)
+   msgs.append('Created base scenario with base layerkeys')
    # Past
    unionScenarios, unionLyrKeys = createPastScenarios(usr, pkgMeta, lyrMeta, 
                                                      lyrtypeMeta, staticLayers)
+   msgs.append('Created past scenarios with past layerkeys'.format(
+                                       len(unionScenarios), len(unionLyrKeys)))
    # Future
    futScenarios, futLyrKeys = createFutureScenarios(usr, pkgMeta, lyrMeta, 
                                                        lyrtypeMeta, staticLayers)
+   msgs.append('Created future scenarios with future layerkeys'.format(
+                                       len(futScenarios), len(futLyrKeys)))
    # Join all sets and dictionaries
    unionLyrKeys.union(baseLyrKeys, futLyrKeys)
    unionScenarios[basescen.code] = basescen
    for k,v in futScenarios.iteritems():
       unionScenarios[k] = v
       
-   return unionScenarios, unionLyrKeys
+   return unionScenarios, unionLyrKeys, msgs
       
 
 # ...............................................
@@ -445,9 +456,12 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
                      pkgMeta['bbox'], usr)
 
    # TODO: lyrKeys will be GUIDs, and stored with layer metadata
-   scens, lyrKeys = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+   scens, lyrKeys, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+   for msg in msgs:
+      scribe.log.info()
     
    for scode, scen in scens.iteritems():
+      scribe.log.info('Inserting scenario {}'.format(scode))
       scribe.insertScenario(scen)
    # LayerPairs for seeding LmCompute
    writeRemoteDataList(lyrKeys, scenPkgName)
@@ -523,6 +537,8 @@ if __name__ == '__main__':
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                        LAYERTYPE_DATA, SCENARIO_PACKAGE)
             if taxSource is not None:
+               logger.info('  Inserting taxonomy source {} ...'.format(
+                                                            taxSource['name']))
                taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
                                                          taxSource['url'])
          
@@ -536,6 +552,8 @@ if __name__ == '__main__':
             
          elif action == 'taxonomy':
             if taxSource is not None:
+               logger.info('  Inserting taxonomy source {} ...'.format(
+                                                            taxSource['name']))
                taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
                                                          taxSource['url']) 
       finally:
