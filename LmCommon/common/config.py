@@ -103,9 +103,10 @@ class Config(object):
             try:
                fname = self.get(SITE_CONFIG_SECTION, SITE_CONFIG_ITEM)
             except Exception, e:
-               msg = str(e) + '\n'
-               msg += 'Missing site config in file = ' + fn
-               raise Exception(msg)
+               print('Missing site config in file = {}'.format(fn))
+#                msg = str(e) + '\n'
+#                msg += 'Missing site config in file = ' + fn
+#                raise Exception(msg)
             else:
                self.site = os.path.join(pth, fname)
                self.config.read(self.site)
