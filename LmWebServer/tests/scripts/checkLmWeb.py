@@ -49,7 +49,6 @@ def assembleUrls(logger, urls):
    BASEURLS = {}
    for key in INTERFACES:
       BASEURLS[key] = None
-      /opt/lifemapper/LmWebServer/solr/buildIndex.py
    peruser = Scribe(logger)
 # #    # debug
 #    peruser = Scribe(ConsoleLogger(), overrideDB='hera.nhm.ku.edu')
