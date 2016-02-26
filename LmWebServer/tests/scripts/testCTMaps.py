@@ -33,8 +33,6 @@ from LmServer.common.lmconstants import CT_USER
 from LmServer.common.log import ThreadLogger
 from LmServer.db.scribe import Scribe
 
-from LmBackend.notifications.email import EmailNotifier
-
 # ...............................................
 def createTestMap(lyr):
    height, width = lyr.getHeightWidthByBBox(limitWidth=500)

@@ -26,7 +26,7 @@
           02110-1301, USA.
 """
 
-from LmBackend.notifications.email import EmailNotifier
+from LmServer.notifications.email import EmailNotifier
 
 class TriggerEmail(object):
    """
