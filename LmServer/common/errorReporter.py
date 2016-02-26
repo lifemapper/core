@@ -34,9 +34,9 @@ except:
    
 import traceback
 
-from LmBackend.notifications.email import EmailNotifier
 from LmServer.common.lmconstants import ERROR_LOG_PATH, LOG_PATH
 from LmServer.common.localconstants import APP_PATH, TROUBLESHOOTERS
+from LmServer.notifications.email import EmailNotifier
 
 # .............................................................................
 def reportError(err, cpRequest, cpResponse):
