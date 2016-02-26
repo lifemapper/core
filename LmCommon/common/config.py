@@ -29,7 +29,7 @@
 """
 import ConfigParser
 import os
-from types import StringType, UnicodeType
+from types import StringType, UnicodeType, ListType, TupleType
 
 from LmCommon.common.singleton import singleton
 
@@ -52,9 +52,16 @@ class Config(object):
    def __init__(self, fns=[COMPUTE_CONFIG_FILENAME, SERVER_CONFIG_FILENAME]):
       if fns is None or len(fns) == 0:
          raise ValueError, "Missing LIFEMAPPER_SERVER_CONFIG_FILE or LIFEMAPPER_COMPUTE_CONFIG_FILE environment variable"
+      fileList = []
       if isinstance(fns, StringType) or isinstance(fns, UnicodeType):
-         fns = [fns]
-      self.configFiles = fns
+         fileList.append(fns)
+      elif isinstance(fns, ListType) or isinstance(fns, TupleType):
+         for tmp in fns:
+            if tmp is not None:
+               fileList.append(tmp)
+      else:
+         raise Exception('Construct Config with a list')
+      self.configFiles = fileList
       self.reload()
       
    # .....................................
