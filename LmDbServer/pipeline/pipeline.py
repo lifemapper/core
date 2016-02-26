@@ -34,8 +34,7 @@ from LmServer.base.lmobj import LMObject, LMError
 from LmServer.common.localconstants import APP_PATH, TROUBLESHOOTERS
 from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.log import ScriptLogger
-
-from LmBackend.notifications.email import EmailNotifier
+from LmServer.notifications.email import EmailNotifier
 
 TIMEOUT = 30.0
 

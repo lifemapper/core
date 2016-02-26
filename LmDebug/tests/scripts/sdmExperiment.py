@@ -134,7 +134,7 @@ if __name__ == "__main__":
    try:
       testExperiment()
    except Exception, e:
-      from LmBackend.notifications.email import EmailNotifier
+      from LmServer.notifications.email import EmailNotifier
       msg = "End to end test of SDM experiment failed: %s" % str(e)
       notifier = EmailNotifier()
       notifier.sendMessage(TROUBLESHOOTERS, "SDM experiment test failed", msg)

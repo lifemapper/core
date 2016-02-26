@@ -27,11 +27,9 @@
 from mx.DateTime import gmt
 
 from LmCommon.common.lmconstants import ONE_DAY
-
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.scribe import Scribe
-
-from LmBackend.notifications.email import EmailNotifier
+from LmServer.notifications.email import EmailNotifier
 
 USER = "anon"
 DAYS_OLD = 14

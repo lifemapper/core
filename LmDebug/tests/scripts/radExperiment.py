@@ -136,18 +136,18 @@ def testExperiment():
    sleep(SLEEP_INTERVAL)
    intersectTime = SLEEP_INTERVAL
    
-   bkt1Finished = bkt1.status >= JobStatus.GENERAL_ERROR or (bkt1.status >= JobStatus.COMPLETE and bkt1.stage == JobStage.RAD_CALCULATE)
-   bkt2Finished = bkt2.status >= JobStatus.GENERAL_ERROR or (bkt2.status >= JobStatus.COMPLETE and bkt2.stage == JobStage.RAD_CALCULATE)
+   bkt1Finished = bkt1.status >= JobStatus.GENERAL_ERROR or (bkt1.status >= JobStatus.COMPLETE and bkt1.stage == JobStage.CALCULATE)
+   bkt2Finished = bkt2.status >= JobStatus.GENERAL_ERROR or (bkt2.status >= JobStatus.COMPLETE and bkt2.stage == JobStage.CALCULATE)
    while not (bkt1Finished and bkt2Finished) and intersectTime <= MAX_INTERSECT_TIME:
       sleep(SLEEP_INTERVAL)
       if not bkt1Finished:
          bkt1 = cl.rad.getBucket(expId, bkt1Id)
-         bkt1Finished = bkt1.status >= JobStatus.GENERAL_ERROR or (bkt1.status >= JobStatus.COMPLETE and bkt1.stage == JobStage.RAD_CALCULATE)
+         bkt1Finished = bkt1.status >= JobStatus.GENERAL_ERROR or (bkt1.status >= JobStatus.COMPLETE and bkt1.stage == JobStage.CALCULATE)
          if bkt1.status >= JobStatus.GENERAL_ERROR:
             raise Exception, "Bucket %s failed with status %s" % (bkt1Id, bkt1.status)
       if not bkt2Finished:
          bkt2 = cl.rad.getBucket(expId, bkt2Id)
-         bkt2Finished = bkt2.status >= JobStatus.GENERAL_ERROR or (bkt2.status >= JobStatus.COMPLETE and bkt2.stage == JobStage.RAD_CALCULATE)
+         bkt2Finished = bkt2.status >= JobStatus.GENERAL_ERROR or (bkt2.status >= JobStatus.COMPLETE and bkt2.stage == JobStage.CALCULATE)
          if bkt2.status >= JobStatus.GENERAL_ERROR:
             raise Exception, "Bucket %s failed with status %s" % (bkt2Id, bkt2.status)
       intersectTime += MAX_INTERSECT_TIME
@@ -184,7 +184,7 @@ def testExperiment():
       newPsIds = []
       for bId, psId in psIds:
          ps = cl.rad.getPamSum(expId, bId, psId)
-         if not (ps.status >= JobStatus.GENERAL_ERROR or (ps.status >= JobStatus.COMPLETE and ps.stage == JobStatus.RAD_CALCULATE)):
+         if not (ps.status >= JobStatus.GENERAL_ERROR or (ps.status >= JobStatus.COMPLETE and ps.stage == JobStatus.CALCULATE)):
             if ps.status >= JobStatus.GENERAL_ERROR:
                raise Exception, "Pam Sum %s failed with status %s" % (psId, ps.status)
             newPsIds.append((bId, psId))
@@ -208,7 +208,7 @@ if __name__ == "__main__":
    try:
       testExperiment()
    except Exception, e:
-      from LmBackend.notifications.email import EmailNotifier
+      from LmServer.notifications.email import EmailNotifier
       msg = "End to end test of RAD experiment failed: %s" % str(e)
       notifier = EmailNotifier()
       notifier.sendMessage(TROUBLESHOOTERS, "RAD experiment test failed", msg)
