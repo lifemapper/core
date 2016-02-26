@@ -21,28 +21,22 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-#from glob import iglob
-import glob
 import mx.DateTime 
-import os
-#import osgeo.ogr as ogr
 import re
 from types import ListType
 import traceback
 import urllib2
 
 from LmCommon.common.lmXml import deserialize, fromstring
-from LmCommon.common.lmconstants import DEFAULT_EPSG, DEFAULT_POST_USER, \
-                                        JobStatus, JobStage, HTTPStatus, \
-                                        LM_NAMESPACE
-from LmCommon.common.localconstants import ARCHIVE_USER
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, DEFAULT_POST_USER, 
+               JobStatus, JobStage, HTTPStatus, LM_NAMESPACE)
 
 from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LmHTTPError, LMError
-from LmServer.base.utilities import getMjdTimeFromISO8601, \
-                                          getUrlParameter, getXmlListFromTree, \
-                                          getXmlValueFromTree
+from LmServer.base.utilities import (getMjdTimeFromISO8601, getUrlParameter, 
+               getXmlListFromTree, getXmlValueFromTree)
 from LmServer.common.lmconstants import Priority, LMServiceModule
+from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.db.scribe import Scribe
 from LmServer.rad.anclayer import AncillaryRaster, AncillaryVector
 from LmServer.rad.palayer import PresenceAbsenceRaster, PresenceAbsenceVector

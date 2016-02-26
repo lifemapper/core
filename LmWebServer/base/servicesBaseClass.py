@@ -30,13 +30,12 @@ from collections import namedtuple
 
 from LmCommon.common.lmAttObject import LmAttList
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, JobStatus
-from LmCommon.common.localconstants import ARCHIVE_USER
  
 from LmCommon.common.lmXml import Element, PI, QName, register_namespace, setDefaultNamespace, SubElement, tostring
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.base.utilities import formatTimeHuman
+from LmServer.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
 
 LIST_INTERFACES = ['atom', 'html', 'json', 'list', 'xml']
 META_INTERFACES = ['atom', 'html', 'json', 'xml']

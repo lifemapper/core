@@ -39,8 +39,8 @@
 @todo: RAD pam sum as base
 """
 from LmCommon.common.lmconstants import RandomizeMethods
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
 
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.peruser import Peruser
 from LmServer.rad.radbucket import RADBucket

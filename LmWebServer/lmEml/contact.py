@@ -28,9 +28,7 @@
           02110-1301, USA.
 """
 from LmCommon.common.lmXml import SubElement
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
-
-from LmServer.common.localconstants import SMTP_SENDER
+from LmServer.common.localconstants import SMTP_SENDER, WEBSERVICES_ROOT
 
 # .............................................................................
 def addContactElement(el):

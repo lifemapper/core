@@ -28,7 +28,6 @@
 @see: LmWebServer.formatters.formatter.Formatter
 """
 from LmCommon.common.lmconstants import HTTPStatus
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.lmobj import LMError, LmHTTPError
 from LmServer.common.lmconstants import LMFileType

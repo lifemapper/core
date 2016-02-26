@@ -30,18 +30,17 @@
 """
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, JobStatus, ProcessType
 from LmCommon.common.lmXml import CDATA, Element, SubElement, fromstring, tostring
-from LmCommon.common.localconstants import WEBSERVICES_ROOT, ARCHIVE_USER
 
 from LmServer.base.lmobj import LMError
-from LmServer.common.localconstants import POINT_COUNT_MAX
-from LmServer.rad.radJob import RADBuildGridJob, RADCompressJob, \
-                                RADIntersectJob, RADSplotchJob, RADSwapJob, \
-                                RADCalculateJob, RADGradyJob
-from LmServer.sdm.sdmJob import SDMModelJob, SDMProjectionJob, \
-                                      SDMOccurrenceJob
+from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MAX,
+               WEBSERVICES_ROOT)
+from LmServer.rad.radJob import (RADBuildGridJob, RADCompressJob, 
+               RADIntersectJob, RADSplotchJob, RADSwapJob, RADCalculateJob, 
+               RADGradyJob)
+from LmServer.sdm.sdmJob import SDMModelJob, SDMProjectionJob, SDMOccurrenceJob
 
-from LmWebServer.common.lmconstants import SCALE_DATA_TYPE, \
-                             SCALE_PROJECTION_MAXIMUM, SCALE_PROJECTION_MINIMUM
+from LmWebServer.common.lmconstants import (SCALE_DATA_TYPE, 
+               SCALE_PROJECTION_MAXIMUM, SCALE_PROJECTION_MINIMUM)
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse
 
 # .............................................................................

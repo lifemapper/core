@@ -26,15 +26,12 @@
 import decimal
 import mx.DateTime
 import numpy
-import smtplib
-from types import BuiltinFunctionType, BuiltinMethodType, CodeType, \
-                  FloatType, FunctionType, IntType, LambdaType, ListType, \
-                  MethodType, NoneType, StringType, TypeType, UnicodeType
+from types import (BuiltinFunctionType, BuiltinMethodType, CodeType, 
+         FloatType, FunctionType, IntType, LambdaType, MethodType, NoneType, 
+         StringType, TypeType, UnicodeType)
 
-from LmCommon.common.lmconstants import ISO_8601_TIME_FORMAT_FULL, \
-                                  ISO_8601_TIME_FORMAT_TRUNCATED, JobStatus, \
-                                  LM_NAMESPACE, YMD_HH_MM_SS
-from LmCommon.common.localconstants import ENCODING
+from LmCommon.common.lmconstants import (ISO_8601_TIME_FORMAT_FULL, 
+         ISO_8601_TIME_FORMAT_TRUNCATED, LM_NAMESPACE, YMD_HH_MM_SS, ENCODING)
 from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import STRING_ESCAPE_FORMATS
 

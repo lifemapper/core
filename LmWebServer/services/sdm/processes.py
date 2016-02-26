@@ -28,8 +28,8 @@
 """
 from LmCommon.common.lmXml import deserialize, fromstring
 from LmCommon.common.lmconstants import JobStatus
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
 
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.peruser import Peruser
 

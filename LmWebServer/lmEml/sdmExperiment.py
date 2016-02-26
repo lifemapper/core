@@ -26,21 +26,19 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.lmXml import CDATA, Element, fromstring, PI, QName, \
-                                  register_namespace, setDefaultNamespace, \
-                                  SubElement, tostring
-from LmCommon.common.lmconstants import JobStatus, LM_PROC_NAMESPACE, \
-                                           LM_PROC_SCHEMA_LOCATION
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
+from LmCommon.common.lmXml import (CDATA, Element, fromstring, PI, QName, 
+               register_namespace, setDefaultNamespace, SubElement, tostring)
+from LmCommon.common.lmconstants import (JobStatus, LM_PROC_NAMESPACE, 
+               LM_PROC_SCHEMA_LOCATION)
 
 from LmServer.base.utilities import formatTimeHuman, getPackageId
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 
 from LmWebServer.common.lmconstants import XSI_NAMESPACE
-
 from LmWebServer.lmEml.contact import addContactElement
 from LmWebServer.lmEml.customUnits import processCustomUnits
-from LmWebServer.lmEml.emlConstants import EML_KNOWN_FEATURES, EML_NAMESPACE, \
-                                           EML_SCHEMA_LOCATION, EML_SYSTEM
+from LmWebServer.lmEml.emlConstants import (EML_KNOWN_FEATURES, EML_NAMESPACE, 
+               EML_SCHEMA_LOCATION, EML_SYSTEM)
 
 # .............................................................................
 def buildSdmExperimentPackage(exp):

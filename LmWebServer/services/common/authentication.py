@@ -27,8 +27,8 @@
           02110-1301, USA.
 """
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
-from LmCommon.common.localconstants import ARCHIVE_USER
 
+from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.scribe import Scribe
 

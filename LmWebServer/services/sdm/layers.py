@@ -28,9 +28,9 @@
 """
 from types import ListType
 
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.utilities import formatTimeUrl, getMjdTimeFromISO8601
+from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.base.servicesBaseClass import buildAttListResponse, \

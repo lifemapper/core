@@ -27,12 +27,10 @@
 import json
 import urllib2
 
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
-
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.scribe import Scribe
-
-from LmBackend.notifications.email import EmailNotifier
+from LmServer.notifications.email import EmailNotifier
 
 # ............................................................................. 
 def testSearch():

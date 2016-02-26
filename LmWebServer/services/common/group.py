@@ -25,10 +25,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
-
 from LmServer.db.scribe import Scribe
 from LmServer.common.lmconstants import DbUser
+from LmServer.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
 from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.common.lmconstants import SERVICE_MOUNTS

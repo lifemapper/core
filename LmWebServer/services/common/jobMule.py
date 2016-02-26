@@ -36,13 +36,10 @@ import zipfile
 
 
 from LmCommon.common.lmconstants import JobStatus, HTTPStatus, ProcessType
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.lmobj import LmHTTPError, LMError
-
-from LmServer.common.lmconstants import DbUser, JobFamily, \
-                                              RECOVERABLE_ERRORS
-from LmServer.common.localconstants import TROUBLESHOOTERS
+from LmServer.common.lmconstants import DbUser, JobFamily, RECOVERABLE_ERRORS
+from LmServer.common.localconstants import ARCHIVE_USER, TROUBLESHOOTERS
 from LmServer.common.log import JobMuleLogger
 
 from LmServer.db.scribe import Scribe

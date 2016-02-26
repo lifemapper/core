@@ -26,17 +26,15 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.lmXml import Element, fromstring, PI, QName, \
-                                  register_namespace, setDefaultNamespace, \
-                                  SubElement, tostring
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
+from LmCommon.common.lmXml import (Element, PI, QName, register_namespace, 
+               setDefaultNamespace, SubElement, tostring)
 
 from LmServer.base.utilities import formatTimeYear, getPackageId
 
 from LmWebServer.common.lmconstants import XSI_NAMESPACE
 from LmWebServer.lmEml.contact import addContactElement
-from LmWebServer.lmEml.emlConstants import EML_KNOWN_FEATURES, EML_NAMESPACE, \
-                                           EML_SCHEMA_LOCATION, EML_SYSTEM
+from LmWebServer.lmEml.emlConstants import (EML_NAMESPACE, EML_SCHEMA_LOCATION, 
+                                            EML_SYSTEM)
 from LmWebServer.lmEml.serviceVector import addServiceVector
 
 # .............................................................................

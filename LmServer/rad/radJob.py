@@ -29,15 +29,14 @@ import tempfile
 from zipfile import ZipFile
 
 from LmCommon.common.lmAttObject import LmAttObj, LmAttList
-from LmCommon.common.lmconstants import InputDataType, JobStage, \
-                                        JobStatus, ProcessType, \
-                                        RandomizeMethods,SHAPEFILE_EXTENSIONS
+from LmCommon.common.lmconstants import (InputDataType, JobStage, JobStatus, 
+            ProcessType, RandomizeMethods,SHAPEFILE_EXTENSIONS)
 from LmCommon.common.lmXml import Element, CDATA, fromstring, deserialize
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
                                         
 from LmServer.base.job import _Job, _JobData
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import JobFamily, ReferenceType
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.rad.matrix import Matrix
 
 # TODO: remove these when they become LmCompute plugins

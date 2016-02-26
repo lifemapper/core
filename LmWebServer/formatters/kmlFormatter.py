@@ -28,9 +28,8 @@
           02110-1301, USA.
 """
 from osgeo import ogr
-from LmCommon.common.lmXml import CDATA, Element, register_namespace, \
-                                  setDefaultNamespace, SubElement, tostring
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
+from LmCommon.common.lmXml import (CDATA, Element, register_namespace, 
+                                  setDefaultNamespace, SubElement, tostring)
 from LmCommon.common.lmconstants import ENCODING
 
 from LmServer.base.layer import Raster
@@ -38,6 +37,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.base.utilities import escapeString, formatTimeHuman
 from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.sdmexperiment import SDMExperiment
 from LmServer.sdm.sdmprojection import SDMProjection

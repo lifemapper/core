@@ -3,10 +3,10 @@
              scribe / peruser to fill in values for URLs
 """
 from LmCommon.common.lmconstants import JobStatus
-from LmCommon.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
+from LmServer.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
 from LmServer.common.log import LmServerLogger
 from LmServer.db.scribe import Scribe
-from LmWebServer.tools.schemaTester.envMethods.base import LmEnv
+from LmWebServer.tools.testing.envMethods.base import LmEnv
 
 # .............................................................................
 class LmServerEnv(LmEnv):

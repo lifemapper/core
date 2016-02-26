@@ -30,14 +30,11 @@
 import urllib2
 
 from LmCommon.common.lmconstants import JobStatus
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
 
-from LmServer.common.localconstants import TROUBLESHOOTERS
+from LmServer.common.localconstants import TROUBLESHOOTERS, WEBSERVICES_ROOT
 from LmServer.common.log import ScriptLogger
-
 from LmServer.db.scribe import Scribe
-
-from LmBackend.notifications.email import EmailNotifier
+from LmServer.notifications.email import EmailNotifier
 
 
 # ..............................................................................

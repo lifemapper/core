@@ -34,7 +34,7 @@ from StringIO import StringIO
 import urllib
 from urlparse import urlparse
 
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmCommon.common.singleton import singleton
 from LmWebServer.services.common.svc import conf, svc, SESSION_DIR 
 

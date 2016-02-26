@@ -38,12 +38,10 @@ import zipfile
 from LmCommon.common.lmXml import deserialize, fromstring
 from LmCommon.common.lmconstants import (JobStatus, ProcessType, Instances, 
                                          DEFAULT_MAPUNITS, DEFAULT_EPSG)
-from LmCommon.common.localconstants import WEBSERVICES_ROOT
 
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.common.lmconstants import JobFamily
-from LmServer.common.localconstants import DATA_PATH, DATASOURCE
+from LmServer.common.localconstants import DATA_PATH, WEBSERVICES_ROOT
 from LmServer.common.log import ThreadLogger
 from LmServer.db.scribe import Scribe
 from LmServer.sdm.envlayer import EnvironmentalLayer

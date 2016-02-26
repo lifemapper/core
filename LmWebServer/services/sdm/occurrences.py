@@ -29,10 +29,9 @@
 from types import ListType
 
 from LmCommon.common.lmconstants import JobStatus
-from LmCommon.common.localconstants import ARCHIVE_USER
 
 from LmServer.base.utilities import formatTimeUrl, getMjdTimeFromISO8601
-from LmServer.common.localconstants import POINT_COUNT_MAX
+from LmServer.common.localconstants import ARCHIVE_USER, POINT_COUNT_MAX
 from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.base.servicesBaseClass import buildAttListResponse, \
