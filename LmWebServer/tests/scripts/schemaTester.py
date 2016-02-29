@@ -1,8 +1,16 @@
 """
+
+*********************************************************************
+This module has been deprecated and is replaced by web testing suite
+*********************************************************************
+
+
+
 @summary: This script runs through each of the client schemas defined in the
              "clients" directory and validates each of the requests to check if
              the response is what is expected
 @author: CJ Grady
+@status: deprecated
 """
 import argparse
 import cookielib

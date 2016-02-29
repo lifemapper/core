@@ -143,47 +143,67 @@ class LMWebTestBuilder(LMTestBuilder):
    """
    name = "web"
    # ...........................
-   def buildTest(self, testObj):
+   def buildTests(self, testObj):
       """
       @summary: Build a a LMWebTest object
       @param testObj: Deserialized XML with system test information
       """
+      
+      # Now processing whole file
       name = testObj.name
       description = testObj.description
       testLevel = int(testObj.testLevel)
-      url = testObj.url
-      try:
-         method = testObj.method
-      except:
-         method = "GET"
-         
-      try:
-         httpStatus = int(testObj.httpStatus)
-      except:
-         httpStatus = 200
 
-      try:
-         parameters = testObj.parameters
-         # TODO: Process these
-      except:
-         parameters = []
-         
-      try:
-         body = testObj.body
-      except:
-         body = None
-         
-      try:
-         headers = testObj.headers
-         # TODO: Process these
-      except:
-         headers = {}
+      tests = []
       
-      try:
-         rewriteUrl = testObj.rewriteUrl
-      except:
-         rewriteUrl = None
+      for t in testObj.lmTest:
+         try:
+            tName = t.name
+         except:
+            tName = name
          
-      return LMWebTest(name, description, testLevel, url, method=method, 
-                httpStatus=httpStatus, parameters=parameters, body=body, 
-                headers=headers, rewriteUrl=rewriteUrl)
+         try:
+            tDescription = t.description
+         except:
+            tDescription = description
+
+         url = t.url
+
+         try:
+            method = t.method
+         except:
+            method = "GET"
+         
+         try:
+            httpStatus = int(t.httpStatus)
+         except:
+            httpStatus = 200
+
+         try:
+            parameters = t.parameters
+            # TODO: Process these
+         except:
+            parameters = []
+            
+         try:
+            body = t.body
+         except:
+            body = None
+         
+         try:
+            headers = t.headers
+            # TODO: Process these
+         except:
+            headers = {}
+         
+         try:
+            rewriteUrl = t.rewriteUrl
+         except:
+            rewriteUrl = None
+         
+         tests.append(LMWebTest(tName, tDescription, testLevel, url, 
+            method=method, httpStatus=httpStatus, parameters=parameters, 
+            body=body, headers=headers, rewriteUrl=rewriteUrl))
+   
+      return tests
+   

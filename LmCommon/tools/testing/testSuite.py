@@ -56,6 +56,7 @@ class LMTestSuite(object):
                                             version=self.version)
       self._addBaseArguments()
       self.addArguments()
+      self.kwargs = {}
       
       # Run argparser parser
       self.args = self.parser.parse_args()
@@ -145,16 +146,31 @@ If omitted, uses output path / std out""")
       pass
       
    # ...........................
+   def addTestsFromFile(self, filepath, testFactory=None):
+      """
+      @summary: Adds all of the tests found in a test configuration file
+      @param filepath: The path to the file to find tests in
+      """
+      if testFactory is None:
+         testFactory = LMTestFactory(self.testBuilders, **self.kwargs)
+      
+      if os.path.exists(filepath) and os.path.isfile(filepath):
+         with open(filepath) as inF:
+            testStr = inF.read()
+         testObj = deserialize(fromstring(testStr))
+         self.tests.extend(testFactory.getTests(testObj))
+      else:
+         raise Exception, "%s does not exist or is not a file" % filepath
+      
+   # ...........................
    def addTestsFromDirectory(self, dirPath):
       """
       @summary: Iterates through the test files to get tests to run
       """
       testFactory = LMTestFactory(self.testBuilders)
-      for fn in glob.glob(os.path.join(dirPath, "*")):
-         with open(fn) as inF:
-            testStr = inF.read() 
-         testObj = deserialize(fromstring(testStr))
-         self.tests.append(testFactory.getTest(testObj))
+      if os.path.exists(dirPath) and os.path.isdir(dirPath):
+         for fn in glob.glob(os.path.join(dirPath, "*")):
+            self.addTestsFromFile(fn, testFactory=testFactory)
    
    # ...........................
    def getOutputLogger(self, logName):

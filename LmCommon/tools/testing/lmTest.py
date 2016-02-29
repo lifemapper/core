@@ -85,7 +85,13 @@ class LMTestBuilder(object):
                 object as input and build a LMTest object
    """
    name = "BASE"
-   def buildTest(self, testObj):
+   
+   # ...............................
+   def __init__(self, **kwargs):
+      self.kwargs = dict(kwargs)
+   
+   # ...............................
+   def buildTests(self, testObj):
       name = testObj.name
       description = testObj.description
       testLevel = testObj.testLevel
@@ -157,9 +163,9 @@ class LMSystemTestBuilder(LMTestBuilder):
    """
    name = "system"
    # ...........................
-   def buildTest(self, testObj):
+   def buildTests(self, testObj):
       """
-      @summary: Build a a LMSystemTest object
+      @summary: Build a LMSystemTest objects
       @param testObj: Deserialized XML with system test information
       """
       name = testObj.name

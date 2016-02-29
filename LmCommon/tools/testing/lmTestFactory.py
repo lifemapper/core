@@ -32,16 +32,16 @@ class LMTestFactory(object):
                 builders to be added.
    """
    # ...........................
-   def __init__(self, builders):
+   def __init__(self, builders, **kwargs):
       self.builders = {}
       for builder in builders:
-         self.builders[builder.name.lower()] = builder
+         self.builders[builder.name.lower()] = builder(kwargs)
 
    # ...........................
-   def getTest(self, tObj):
+   def getTests(self, tObj):
       """
       @summary: Gets a test object by selecting the appropriate test builder 
                    and giving it the deserialized test object data
       """
       if self.builders.has_key(tObj.testType.lower()):
-         return self.builders[tObj.testType.lower()]().buildTest(tObj)
+         return self.builders[tObj.testType.lower()].buildTests(tObj)
