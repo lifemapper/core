@@ -1,67 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Client name="Specify" version="6">
-   <Request 
-        url="#SERVER#/hint/species/ursus?format=json&amp;columns=1&amp;maxreturned=1000" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>Lucene Hint Service for Specify</description>
-      <Response contentType="application/json">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <SubItem>
-               <name>columns</name>
-	            <itemType>array</itemType>
+<lmTest>
+   <testType>webservice</testType>
+   <name>Specify 6 web service assumptions tests</name>
+   <description>
+      These tests check that the web services used by Specify work as expected
+      and that the results produced can be returned.
+   </description>
+   <testLevel>1</testLevel>
+
+	<Client name="Specify" version="6">
+	   <Request 
+	        url="#SERVER#/hint/species/ursus?format=json&amp;columns=1&amp;maxreturned=1000" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>Lucene Hint Service for Specify</description>
+	      <Response contentType="application/json">
+	         <ResponseItem>
+	            <itemType>object</itemType>
 	            <SubItem>
+	               <name>columns</name>
+		            <itemType>array</itemType>
+		            <SubItem>
+		               <itemType>array</itemType>
+		               <SubItem>
+		                  <itemType>object</itemType>
+		                  <SubItem>
+		                     <name>name</name>
+		                     <itemType>string</itemType>
+		                  </SubItem>
+		                  <SubItem>
+		                     <name>numPoints</name>
+		                     <itemType>integer</itemType>
+		                  </SubItem>
+		                  <SubItem>
+		                     <name>occurrenceSet</name>
+		                     <itemType>integer</itemType>
+		                  </SubItem>
+		               </SubItem>
+		            </SubItem>
+		         </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	   <Request 
+	        url="#SERVER#/services/sdm/occurrences/#PUB_SDM_OCC_ID#/json?format=specify&amp;fillPoints=true" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#PUB_SDM_OCC_ID#</replaceString>
+	      <description>Get an SDM Occurrence Set for Specify</description>
+	      <Response contentType="application/json">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <SubItem>
+	               <name>feature</name>
 	               <itemType>array</itemType>
 	               <SubItem>
 	                  <itemType>object</itemType>
 	                  <SubItem>
-	                     <name>name</name>
-	                     <itemType>string</itemType>
+	                     <name>lat</name>
+	                     <itemType>float</itemType>
 	                  </SubItem>
 	                  <SubItem>
-	                     <name>numPoints</name>
-	                     <itemType>integer</itemType>
-	                  </SubItem>
-	                  <SubItem>
-	                     <name>occurrenceSet</name>
-	                     <itemType>integer</itemType>
+	                     <name>lon</name>
+	                     <itemType>float</itemType>
 	                  </SubItem>
 	               </SubItem>
 	            </SubItem>
-	         </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-   <Request 
-        url="#SERVER#/services/sdm/occurrences/#PUB_SDM_OCC_ID#/json?format=specify&amp;fillPoints=true" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#PUB_SDM_OCC_ID#</replaceString>
-      <description>Get an SDM Occurrence Set for Specify</description>
-      <Response contentType="application/json">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <SubItem>
-               <name>feature</name>
-               <itemType>array</itemType>
-               <SubItem>
-                  <itemType>object</itemType>
-                  <SubItem>
-                     <name>lat</name>
-                     <itemType>float</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>lon</name>
-                     <itemType>float</itemType>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-            <SubItem>
-               <name>queryCount</name>
-               <itemType>integer</itemType>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-</Client>
+	            <SubItem>
+	               <name>queryCount</name>
+	               <itemType>integer</itemType>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	</Client>
+</lmTest>

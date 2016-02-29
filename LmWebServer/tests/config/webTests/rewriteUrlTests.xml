@@ -1,184 +1,148 @@
-<lifemapperTests>
-   <!-- Rewrite Rule Tests for Species Page -->
-   <lmTest>
-      <testType>web</testType>
+<lmTest>
+   <testType>web</testType>
+   <name>Rewrite rule tests</name>
+   <description>
+      These tests check that URLs are rewritten or forwarded correctly from the
+      KU wordpress installation to the Lifemapper web services machine.
+   </description>
+   <testLevel>1</testLevel>
+
+   <webTest>
       <name>Test species page rewrite 1</name>
       <description>Test species page rewrite rule with no taxon provided</description>
-      <testLevel>10</testLevel>
       <url>http://svc.lifemapper.org/species</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/?page_id=863</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+
+   <webTest>
       <name>Test species page rewrite 2</name>
       <description>Test species page rewrite rule with no taxon provided (trailing slash)</description>
-      <testLevel>10</testLevel>
       <url>http://svc.lifemapper.org/species/</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/?page_id=863</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Test species page rewrite 3</name>
       <description>Test species page rewrite rule with taxon provided</description>
-      <testLevel>10</testLevel>
       <url>http://svc.lifemapper.org/species/Acer</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/?page_id=863&amp;speciesname=Acer</rewriteUrl>
-   </lmTest>
+   </webTest>
    <!-- URL Forwarding Tests -->
-   <lmTest>
-      <testType>web</testType>
+   <webTest>
       <name>Algorithms XML URL forwarding test</name>
       <description>Tests that requests to the algorithms XML document are forwarded to the services machine</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/cleints/algorithms.xml</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/clients/algorithms.xml</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Instances XML URL forwarding test</name>
       <description>Tests that requests to the instances XML document are forwarded to the services machine</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/cleints/instances.xml</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/clients/instances.xml</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Client versions XML URL forwarding test</name>
       <description>Tests that requests to the client versions XML document are forwarded to the services machine</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/cleints/versions.xml</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/clients/versions.xml</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Services XSL docuemnt URL forwarding test</name>
       <description>Tests that a request for the services XSL document is forwarded correctly to the services machine</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/css/services.xsl</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/css/services.xsl</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
-      <name></name>
-      <description></description>
-      <testLevel>10</testLevel>
-      <url>http://lifemapper.org/</url>
-      <method>GET</method>
-      <httpStatus>200</httpStatus>
-      <rewriteUrl>http://svc.lifemapper.org/</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Species hint service URL forwarding test</name>
       <description>Tests that requests to the species hint service at lifemapper.org are correctly forwarded to the services machine</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/species/bre?maxReturned=60&amp;format=json</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/species/bre?maxTreturned=60&amp;format=json</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Login URL forwarding test</name>
       <description>Tests that login forwards correctly</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/login</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/login</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Logout URL forwarding test</name>
       <description>Test that logout requests are forwarded correctly and the result is the login page</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/logout</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/login</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Service response schema URL forwarding test</name>
       <description>Tests that a request to retrieve the service response XSD from lifemapper.org forwards to the services machine</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/schemas/serviceResponse.xsd</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/schemas/serviceResponse.xsd</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Signup page URL forwarding test</name>
       <description>Tests that requests to the signup page are forwarded correctly</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/signup</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/signup</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Base services page URL forwarding test</name>
       <description>Tests that requests to the base services page are forwarded correctly</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/services</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/services</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>RAD services page URL forwarding test</name>
       <description>Tests that requests to the base RAD services page are forwarded correctly</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/services/rad</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/services/rad</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>SDM services page URL forwarding test</name>
       <description>Test that requests to the base SDM services page are forwarded correctly</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/services/sdm</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/services/sdm</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Species page links URL forwarding test</name>
       <description>Tests that requests to the species links page are forwarded correctly to services machine</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/spLinks</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/spLinks</rewriteUrl>
-   </lmTest>
-   <lmTest>
-      <testType>web</testType>
+   </webTest>
+   <webTest>
       <name>Robots.txt URL forwarding test</name>
       <description>Tests taht requests to retrieve the robots.txt document are forwarded correctly</description>
-      <testLevel>10</testLevel>
       <url>http://lifemapper.org/robots.txt</url>
       <method>GET</method>
       <httpStatus>200</httpStatus>
       <rewriteUrl>http://svc.lifemapper.org/robots.txt</rewriteUrl>
-   </lmTest>
-</lifemapperTests>
+   </webTest>
+</lmTest>

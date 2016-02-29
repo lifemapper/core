@@ -1,972 +1,971 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Client name="LM - QGIS plugin" version="2.1.3">
-   <!-- Lifemapper SDM -->
-   <!-- =================================================================== -->
-   <!-- ======================== -->
-   <!-- SDM Experiments -->
-   <!-- ======================== -->
-   <!-- List public SDM experiments -->
-   <Request 
-        url="#SERVER#/services/sdm/experiments/xml" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>List Public SDM Experiments</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>epsgcode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>modTime</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>url</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>description</name>
-                        <optional>true</optional>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- List user SDM experiments -->
-   <Request 
-        url="#SERVER#/services/sdm/experiments/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <description>List User SDM Experiments</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>epsgcode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>modTime</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>url</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>description</name>
-                        <optional>true</optional>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Get public experiment -->
-   <Request 
-        url="#SERVER#/services/sdm/experiments/#PUB_SDM_EXP_ID#/xml" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#PUB_SDM_EXP_ID#</replaceString>
-      <description>Get a Public SDM Experiment</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <itemType>object</itemType>
-               <name>experiment</name>
-               <SubItem>
-                  <name>model</name>
-                  <itemType>object</itemType>
-                  <SubItem>
-                     <name>name</name>
-                     <itemType>string</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>status</name>
-                     <itemType>integer</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>algorithmCode</name>
-                     <itemType>string</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>occurrenceSet</name>
-                     <itemType>object</itemType>
-                     <SubItem>
-                        <name>displayName</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>id</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>metadataUrl</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-               <SubItem>
-                  <name>projections</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <name>projection</name>
-                     <itemType>object</itemType>
-                     <SubItem>
-                        <name>status</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>scenarioCode</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>id</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>title</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Get user SDM experiment -->
-   <Request 
-        url="#SERVER#/services/sdm/experiments/#USR_SDM_EXP_ID#/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_SDM_EXP_ID#</replaceString>
-      <description>Get a User SDM Experiment</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <itemType>object</itemType>
-               <name>experiment</name>
-               <SubItem>
-                  <name>model</name>
-                  <itemType>object</itemType>
-                  <SubItem>
-                     <name>name</name>
-                     <itemType>string</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>status</name>
-                     <itemType>integer</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>algorithmCode</name>
-                     <itemType>string</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>occurrenceSet</name>
-                     <itemType>object</itemType>
-                     <SubItem>
-                        <name>displayName</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>id</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>metadataUrl</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-               <SubItem>
-                  <name>projections</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <name>projection</name>
-                     <itemType>object</itemType>
-                     <SubItem>
-                        <name>status</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>scenarioCode</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>id</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>title</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- ======================== -->
-   <!-- SDM Layers -->
-   <!-- ======================== -->
-   <!-- List public layers -->
-   <Request 
-        url="#SERVER#/services/sdm/layers/xml?fullObjects=1" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>List Public SDM Layers</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeCode</name>
-                        <optional>true</optional>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                        <optional>true</optional>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                     	<itemType>string</itemType>
-                     	<name>name</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- List user SDM layers -->
-   <Request 
-        url="#SERVER#/services/sdm/layers/xml?fullObjects=1" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <description>List User SDM Layers</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeCode</name>
-                        <optional>true</optional>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                        <optional>true</optional>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                     	<itemType>string</itemType>
-                     	<name>name</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Get public SDM layer -->
-   <Request 
-        url="#SERVER#/services/sdm/layers/#PUB_SDM_LYR_ID#/xml" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#PUB_SDM_LYR_ID#</replaceString>
-      <description>Get a Public SDM Layer</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>layer</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>typeCode</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>title</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>numeric</itemType>
-                  <name>id</name>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Get user SDM layer -->
-   <Request 
-        url="#SERVER#/services/sdm/layers/#USR_SDM_LYR_ID#/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_SDM_LYR_ID#</replaceString>
-      <description>Get a User SDM Layer</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>layer</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>typeCode</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>title</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>numeric</itemType>
-                  <name>id</name>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- ======================== -->
-   <!-- SDM Occurrence Sets -->
-   <!-- ======================== -->
-   <!-- Get public SDM occurrence set -->
-   <Request 
-        url="#SERVER#/services/sdm/occurrences/#PUB_SDM_OCC_ID#/xml" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#PUB_SDM_OCC_ID#</replaceString>
-      <description>Get a public SDM Occurrence Set</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <itemType>object</itemType>
-               <name>occurrence</name>
-               <SubItem>
-                  <name>displayName</name>
-                  <itemType>string</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>id</name>
-                  <itemType>integer</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>count</name>
-                  <itemType>integer</itemType>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-   
-   <!-- Get user SDM occurrence set -->
-   <Request 
-        url="#SERVER#/services/sdm/occurrences/#USR_SDM_OCC_ID#/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_SDM_OCC_ID#</replaceString>
-      <description>Get a User SDM Occurrence Set</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <itemType>object</itemType>
-               <name>occurrence</name>
-               <SubItem>
-                  <name>displayName</name>
-                  <itemType>string</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>id</name>
-                  <itemType>integer</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>count</name>
-                  <itemType>integer</itemType>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-   
-   <!-- ======================== -->
-   <!-- SDM Projections -->
-   <!-- ======================== -->
-   <!-- List public SDM projections -->
-   <Request 
-        url="#SERVER#/services/sdm/projections/xml?status=300&amp;fullObjects=1" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>List Public SDM Projections</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>name</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>scenarioCode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>algorithmCode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>float</itemType>
-                        <name>minVal</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>float</itemType>
-                        <name>maxVal</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>nodataVal</name>
-                        <optional>true</optional>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>resolution</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- List user SDM projections -->
-   <Request 
-        url="#SERVER#/services/sdm/projections/xml?status=300&amp;fullObjects=1" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <description>List User SDM Projections</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>name</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>scenarioCode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>algorithmCode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>float</itemType>
-                        <name>minVal</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>float</itemType>
-                        <name>maxVal</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>nodataVal</name>
-                        <optional>true</optional>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>resolution</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- ======================== -->
-   <!-- SDM Scenarios -->
-   <!-- ======================== -->
-   <!-- List public scenarios -->
-   <Request 
-        url="#SERVER#/services/sdm/scenarios/xml" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>List Public SDM Scenarios</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- List user SDM scenarios -->
-   <Request 
-        url="#SERVER#/services/sdm/scenarios/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <description>List User SDM Scenarios</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Get public scenario -->
-   <Request 
-        url="#SERVER#/services/sdm/scenarios/#PUB_SDM_SCN_ID#/xml" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#PUB_SDM_SCN_ID#</replaceString>
-      <description>Get a Public SDM Scenario</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>scenario</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>id</name>
-                  <itemType>integer</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>layers</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>projection</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeCode</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-   
-   <!-- Get user SDM scenario -->
-   <Request 
-        url="#SERVER#/services/sdm/scenarios/#USR_SDM_SCN_ID#/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_SDM_SCN_ID#</replaceString>
-      <description>Get a User SDM Scenario</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>scenario</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>id</name>
-                  <itemType>integer</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>layers</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>projection</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeCode</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-   
-   <!-- ======================== -->
-   <!-- SDM Type Codes -->
-   <!-- ======================== -->
-   <!-- List public type codes -->
-   <Request 
-        url="#SERVER#/services/sdm/typecodes/xml?fullObjects=1" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>List Public SDM Type Codes</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeCode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeTitle</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- List user type codes -->
-   <Request 
-        url="#SERVER#/services/sdm/typecodes/xml?fullObjects=1" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <description>List User SDM Type Codes</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeCode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>typeTitle</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Lifemapper Hint Services -->
-   <!-- =================================================================== -->
-   <!-- Lucene hints -->
-   <Request 
-        url="#SERVER#/hint/species/ursus?format=json&amp;columns=1&amp;maxreturned=1000" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>Test Lucene Hint Service</description>
-      <Response contentType="application/json">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <SubItem>
-               <name>columns</name>
-               <itemType>array</itemType>
-               <SubItem>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <SubItem>
-                        <name>name</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <!-- This maps to id in the client library -->
-                        <name>occurrenceSet</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>downloadUrl</name>
-                        <itemType>string</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>numModels</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                     <SubItem>
-                        <name>numPoints</name>
-                        <itemType>integer</itemType>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Solr hints -->
-   <Request 
-        url="#SERVER#/hint/archive/Car" 
-        method="GET" credentials="False">
-      <replaceString>#SERVER#</replaceString>
-      <description>Test Solr Archive Hint Service</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>hits</name>
-               <itemType>array</itemType>
-               <SubItem>
-                  <itemType>object</itemType>
-                  <SubItem>
-                     <name>numPoints</name>
-                     <itemType>integer</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>displayName</name>
-                     <itemType>string</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>occurrenceSetId</name>
-                     <itemType>integer</itemType>
-                  </SubItem>
-                  <SubItem>
-                     <name>models</name>
-                     <itemType>array</itemType>
-                     <SubItem>
-                        <name>model</name>
-                        <itemType>object</itemType>
-                        <SubItem>
-                           <name>algorithmCode</name>
-                           <itemType>string</itemType>
-                        </SubItem>
-                        <SubItem>
-                           <name>projections</name>
-                           <itemType>array</itemType>
-                           <SubItem>
-                              <name>projection</name>
-                              <itemType>object</itemType>
-                              <SubItem>
-                                 <name>projectionId</name>
-                                 <itemType>integer</itemType>
-                              </SubItem>
-                              <SubItem>
-                                 <name>projectionScenarioCode</name>
-                                 <itemType>string</itemType>
-                              </SubItem>
-                           </SubItem>
-                        </SubItem>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Lifemapper RAD -->
-   <!-- =================================================================== -->
-   <!-- ======================== -->
-   <!-- RAD Buckets -->
-   <!-- ======================== -->
-   <!-- List user RAD buckets -->
-   <Request 
-        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/buckets/xml?fullObjects=1" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_RAD_EXP_ID#</replaceString>
-      <description>List User RAD Buckets</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>name</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>status</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>stage</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>object</itemType>
-                        <name>pamSum</name>
+<lmTest>
+   <testType>webservice</testType>
+   <name>Lifemapper QGIS plugin tests - version 2.1.3</name>
+   <description>
+      These tests check that the web services used by version 2.1.3 of the 
+      Lifemapper QGIS plugin operate as expected.  If the services change for
+      some reason, these tests will fail and we will know that this plugin will
+      then be invalid.
+   </description>
+   <testLevel>1</testLevel>
+	<Client name="LM - QGIS plugin" version="2.1.3">
+	   <!-- Lifemapper SDM -->
+	   <!-- =================================================================== -->
+	   <!-- ======================== -->
+	   <!-- SDM Experiments -->
+	   <!-- ======================== -->
+	   <!-- List public SDM experiments -->
+	   <Request 
+	        url="#SERVER#/services/sdm/experiments/xml" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List Public SDM Experiments</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>epsgcode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>modTime</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>url</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>description</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- List user SDM experiments -->
+	   <Request 
+	        url="#SERVER#/services/sdm/experiments/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List User SDM Experiments</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>epsgcode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>modTime</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>url</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>description</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Get public experiment -->
+	   <Request 
+	        url="#SERVER#/services/sdm/experiments/#PUB_SDM_EXP_ID#/xml" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#PUB_SDM_EXP_ID#</replaceString>
+	      <description>Get a Public SDM Experiment</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <itemType>object</itemType>
+	               <name>experiment</name>
+	               <SubItem>
+	                  <name>model</name>
+	                  <itemType>object</itemType>
+	                  <SubItem>
+	                     <name>name</name>
+	                     <itemType>string</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>status</name>
+	                     <itemType>integer</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>algorithmCode</name>
+	                     <itemType>string</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>occurrenceSet</name>
+	                     <itemType>object</itemType>
+	                     <SubItem>
+	                        <name>displayName</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>id</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>metadataUrl</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	               <SubItem>
+	                  <name>projections</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <name>projection</name>
+	                     <itemType>object</itemType>
+	                     <SubItem>
+	                        <name>status</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>scenarioCode</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>id</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>title</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Get user SDM experiment -->
+	   <Request 
+	        url="#SERVER#/services/sdm/experiments/#USR_SDM_EXP_ID#/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_SDM_EXP_ID#</replaceString>
+	      <description>Get a User SDM Experiment</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <itemType>object</itemType>
+	               <name>experiment</name>
+	               <SubItem>
+	                  <name>model</name>
+	                  <itemType>object</itemType>
+	                  <SubItem>
+	                     <name>name</name>
+	                     <itemType>string</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>status</name>
+	                     <itemType>integer</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>algorithmCode</name>
+	                     <itemType>string</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>occurrenceSet</name>
+	                     <itemType>object</itemType>
+	                     <SubItem>
+	                        <name>displayName</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>id</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>metadataUrl</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	               <SubItem>
+	                  <name>projections</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <name>projection</name>
+	                     <itemType>object</itemType>
+	                     <SubItem>
+	                        <name>status</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>scenarioCode</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>id</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>title</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- ======================== -->
+	   <!-- SDM Layers -->
+	   <!-- ======================== -->
+	   <!-- List public layers -->
+	   <Request 
+	        url="#SERVER#/services/sdm/layers/xml?fullObjects=1" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List Public SDM Layers</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeCode</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                     	<itemType>string</itemType>
+	                     	<name>name</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- List user SDM layers -->
+	   <Request 
+	        url="#SERVER#/services/sdm/layers/xml?fullObjects=1" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List User SDM Layers</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeCode</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                     	<itemType>string</itemType>
+	                     	<name>name</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Get public SDM layer -->
+	   <Request 
+	        url="#SERVER#/services/sdm/layers/#PUB_SDM_LYR_ID#/xml" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#PUB_SDM_LYR_ID#</replaceString>
+	      <description>Get a Public SDM Layer</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>layer</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>typeCode</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>title</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>numeric</itemType>
+	                  <name>id</name>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Get user SDM layer -->
+	   <Request 
+	        url="#SERVER#/services/sdm/layers/#USR_SDM_LYR_ID#/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_SDM_LYR_ID#</replaceString>
+	      <description>Get a User SDM Layer</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>layer</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>typeCode</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>title</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>numeric</itemType>
+	                  <name>id</name>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- ======================== -->
+	   <!-- SDM Occurrence Sets -->
+	   <!-- ======================== -->
+	   <!-- Get public SDM occurrence set -->
+	   <Request 
+	        url="#SERVER#/services/sdm/occurrences/#PUB_SDM_OCC_ID#/xml" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#PUB_SDM_OCC_ID#</replaceString>
+	      <description>Get a public SDM Occurrence Set</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <itemType>object</itemType>
+	               <name>occurrence</name>
+	               <SubItem>
+	                  <name>displayName</name>
+	                  <itemType>string</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>id</name>
+	                  <itemType>integer</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>count</name>
+	                  <itemType>integer</itemType>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	   
+	   <!-- Get user SDM occurrence set -->
+	   <Request 
+	        url="#SERVER#/services/sdm/occurrences/#USR_SDM_OCC_ID#/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_SDM_OCC_ID#</replaceString>
+	      <description>Get a User SDM Occurrence Set</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <itemType>object</itemType>
+	               <name>occurrence</name>
+	               <SubItem>
+	                  <name>displayName</name>
+	                  <itemType>string</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>id</name>
+	                  <itemType>integer</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>count</name>
+	                  <itemType>integer</itemType>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	   
+	   <!-- ======================== -->
+	   <!-- SDM Projections -->
+	   <!-- ======================== -->
+	   <!-- List public SDM projections -->
+	   <Request 
+	        url="#SERVER#/services/sdm/projections/xml?status=300&amp;fullObjects=1" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List Public SDM Projections</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>name</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>scenarioCode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>algorithmCode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>float</itemType>
+	                        <name>minVal</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>float</itemType>
+	                        <name>maxVal</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>nodataVal</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>resolution</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- List user SDM projections -->
+	   <Request 
+	        url="#SERVER#/services/sdm/projections/xml?status=300&amp;fullObjects=1" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List User SDM Projections</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>name</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>scenarioCode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>algorithmCode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>float</itemType>
+	                        <name>minVal</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>float</itemType>
+	                        <name>maxVal</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>nodataVal</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>resolution</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- ======================== -->
+	   <!-- SDM Scenarios -->
+	   <!-- ======================== -->
+	   <!-- List public scenarios -->
+	   <Request 
+	        url="#SERVER#/services/sdm/scenarios/xml" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List Public SDM Scenarios</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- List user SDM scenarios -->
+	   <Request 
+	        url="#SERVER#/services/sdm/scenarios/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List User SDM Scenarios</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Get public scenario -->
+	   <Request 
+	        url="#SERVER#/services/sdm/scenarios/#PUB_SDM_SCN_ID#/xml" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#PUB_SDM_SCN_ID#</replaceString>
+	      <description>Get a Public SDM Scenario</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>scenario</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>id</name>
+	                  <itemType>integer</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>layers</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>projection</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeCode</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	   
+	   <!-- Get user SDM scenario -->
+	   <Request 
+	        url="#SERVER#/services/sdm/scenarios/#USR_SDM_SCN_ID#/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_SDM_SCN_ID#</replaceString>
+	      <description>Get a User SDM Scenario</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>scenario</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>id</name>
+	                  <itemType>integer</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>layers</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>projection</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeCode</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	   
+	   <!-- ======================== -->
+	   <!-- SDM Type Codes -->
+	   <!-- ======================== -->
+	   <!-- List public type codes -->
+	   <Request 
+	        url="#SERVER#/services/sdm/typecodes/xml?fullObjects=1" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List Public SDM Type Codes</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeCode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeTitle</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- List user type codes -->
+	   <Request 
+	        url="#SERVER#/services/sdm/typecodes/xml?fullObjects=1" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List User SDM Type Codes</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeCode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>typeTitle</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Lifemapper Hint Services -->
+	   <!-- =================================================================== -->
+	   <!-- Lucene hints -->
+	   <Request 
+	        url="#SERVER#/hint/species/ursus?format=json&amp;columns=1&amp;maxreturned=1000" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>Test Lucene Hint Service</description>
+	      <Response contentType="application/json">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <SubItem>
+	               <name>columns</name>
+	               <itemType>array</itemType>
+	               <SubItem>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <SubItem>
+	                        <name>name</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <!-- This maps to id in the client library -->
+	                        <name>occurrenceSet</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>downloadUrl</name>
+	                        <itemType>string</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>numModels</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                     <SubItem>
+	                        <name>numPoints</name>
+	                        <itemType>integer</itemType>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Solr hints -->
+	   <Request 
+	        url="#SERVER#/hint/archive/Car" 
+	        method="GET" credentials="False">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>Test Solr Archive Hint Service</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>hits</name>
+	               <itemType>array</itemType>
+	               <SubItem>
+	                  <itemType>object</itemType>
+	                  <SubItem>
+	                     <name>numPoints</name>
+	                     <itemType>integer</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>displayName</name>
+	                     <itemType>string</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>occurrenceSetId</name>
+	                     <itemType>integer</itemType>
+	                  </SubItem>
+	                  <SubItem>
+	                     <name>models</name>
+	                     <itemType>array</itemType>
+	                     <SubItem>
+	                        <name>model</name>
+	                        <itemType>object</itemType>
+	                        <SubItem>
+	                           <name>algorithmCode</name>
+	                           <itemType>string</itemType>
+	                        </SubItem>
+	                        <SubItem>
+	                           <name>projections</name>
+	                           <itemType>array</itemType>
+	                           <SubItem>
+	                              <name>projection</name>
+	                              <itemType>object</itemType>
+	                              <SubItem>
+	                                 <name>projectionId</name>
+	                                 <itemType>integer</itemType>
+	                              </SubItem>
+	                              <SubItem>
+	                                 <name>projectionScenarioCode</name>
+	                                 <itemType>string</itemType>
+	                              </SubItem>
+	                           </SubItem>
+	                        </SubItem>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Lifemapper RAD -->
+	   <!-- =================================================================== -->
+	   <!-- ======================== -->
+	   <!-- RAD Buckets -->
+	   <!-- ======================== -->
+	   <!-- List user RAD buckets -->
+	   <Request 
+	        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/buckets/xml?fullObjects=1" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_RAD_EXP_ID#</replaceString>
+	      <description>List User RAD Buckets</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>name</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>id</name>
+	                     </SubItem>
 	                     <SubItem>
 	                        <itemType>integer</itemType>
 	                        <name>status</name>
@@ -975,303 +974,314 @@
 	                        <itemType>integer</itemType>
 	                        <name>stage</name>
 	                     </SubItem>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>object</itemType>
-                        <name>shapegrid</name>
-                        <SubItem>
-                           <itemType>numeric</itemType>
-                           <name>resolution</name>
-                        </SubItem>
-                        <SubItem>
-                           <itemType>numeric</itemType>
-                           <name>minX</name>
-                        </SubItem>
-                        <SubItem>
-                           <itemType>numeric</itemType>
-                           <name>maxX</name>
-                        </SubItem>
-                        <SubItem>
-                           <itemType>numeric</itemType>
-                           <name>minY</name>
-                        </SubItem>
-                        <SubItem>
-                           <itemType>numeric</itemType>
-                           <name>maxY</name>
-                        </SubItem>
-                        <SubItem>
-                           <itemType>numeric</itemType>
-                           <name>featureCount</name>
-                        </SubItem>
-                        <SubItem>
-                           <itemType>numeric</itemType>
-                           <name>cellsides</name>
-                        </SubItem>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Get user RAD bucket -->
-   <Request 
-        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/buckets/#USR_RAD_BKT_ID#/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_RAD_EXP_ID#</replaceString>
-      <replaceString>#USR_RAD_BKT_ID#</replaceString>
-      <description>Get User RAD Bucket</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>bucket</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>id</name>
-                  <itemType>numeric</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>status</name>
-                  <itemType>numeric</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>stage</name>
-                  <itemType>numeric</itemType>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- ======================== -->
-   <!-- RAD Experiments -->
-   <!-- ======================== -->
-   <!-- List user RAD experiments -->
-   <Request 
-        url="#SERVER#/services/rad/experiments/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <description>List User RAD Experiments</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>epsgcode</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>modTime</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>title</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>modTime</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>description</name>
-                        <optional>true</optional>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- Get user RAD experiment -->
-   <Request 
-        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_RAD_EXP_ID#</replaceString>
-      <description>Get a User RAD Experiment</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>experiment</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <itemType>integer</itemType>
-                  <name>epsgcode</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>integer</itemType>
-                  <name>id</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>modTime</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>name</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>modTime</name>
-               </SubItem>
-               <SubItem>
-                  <itemType>string</itemType>
-                  <name>description</name>
-                  <optional>true</optional>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-
-   <!-- ======================== -->
-   <!-- RAD Layers -->
-   <!-- ======================== -->
-   <!-- List user RAD layers -->
-   <Request 
-        url="#SERVER#/services/rad/layers/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <description>List user RAD layers</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>items</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>item</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>item</name>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- ======================== -->
-   <!-- RAD PA Layers -->
-   <!-- ======================== -->
-   <!-- List RAD experiment PA layers -->
-   <Request 
-        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/pa/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_RAD_EXP_ID#</replaceString>
-      <description>Get a User RAD Experiment's PA layers</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>layerset</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>layers</name>
-                  <itemType>array</itemType>
-                  <SubItem>
-                     <itemType>object</itemType>
-                     <name>layer</name>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>name</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>integer</itemType>
-                        <name>id</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>attrPresence</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>minPresence</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>string</itemType>
-                        <name>maxPresence</name>
-                     </SubItem>
-                     <SubItem>
-                        <itemType>numeric</itemType>
-                        <name>percentPresence</name>
-                     </SubItem>
-                  </SubItem>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-   <!-- ======================== -->
-   <!-- RAD PAM Sums -->
-   <!-- ======================== -->
-   <!-- Get RAD pam sum -->
-   <Request 
-        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/buckets/#USR_RAD_BKT_ID#/pamsums/#USR_RAD_PS_ID#/xml" 
-        method="GET" credentials="True">
-      <replaceString>#SERVER#</replaceString>
-      <replaceString>#USR_RAD_EXP_ID#</replaceString>
-      <replaceString>#USR_RAD_BKT_ID#</replaceString>
-      <replaceString>#USR_RAD_PS_ID#</replaceString>
-      <description>Get a User RAD PAM Sum</description>
-      <Response contentType="application/xml">
-         <ResponseItem>
-            <itemType>object</itemType>
-            <name>response</name>
-            <SubItem>
-               <name>pamsum</name>
-               <itemType>object</itemType>
-               <SubItem>
-                  <name>id</name>
-                  <itemType>numeric</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>title</name>
-                  <itemType>string</itemType>
-                  <optional>true</optional>
-               </SubItem>
-               <SubItem>
-                  <name>stage</name>
-                  <itemType>numeric</itemType>
-               </SubItem>
-               <SubItem>
-                  <name>status</name>
-                  <itemType>numeric</itemType>
-               </SubItem>
-            </SubItem>
-         </ResponseItem>
-      </Response>
-   </Request>
-
-</Client>
+	                     <SubItem>
+	                        <itemType>object</itemType>
+	                        <name>pamSum</name>
+		                     <SubItem>
+		                        <itemType>integer</itemType>
+		                        <name>status</name>
+		                     </SubItem>
+		                     <SubItem>
+		                        <itemType>integer</itemType>
+		                        <name>stage</name>
+		                     </SubItem>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>object</itemType>
+	                        <name>shapegrid</name>
+	                        <SubItem>
+	                           <itemType>numeric</itemType>
+	                           <name>resolution</name>
+	                        </SubItem>
+	                        <SubItem>
+	                           <itemType>numeric</itemType>
+	                           <name>minX</name>
+	                        </SubItem>
+	                        <SubItem>
+	                           <itemType>numeric</itemType>
+	                           <name>maxX</name>
+	                        </SubItem>
+	                        <SubItem>
+	                           <itemType>numeric</itemType>
+	                           <name>minY</name>
+	                        </SubItem>
+	                        <SubItem>
+	                           <itemType>numeric</itemType>
+	                           <name>maxY</name>
+	                        </SubItem>
+	                        <SubItem>
+	                           <itemType>numeric</itemType>
+	                           <name>featureCount</name>
+	                        </SubItem>
+	                        <SubItem>
+	                           <itemType>numeric</itemType>
+	                           <name>cellsides</name>
+	                        </SubItem>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Get user RAD bucket -->
+	   <Request 
+	        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/buckets/#USR_RAD_BKT_ID#/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_RAD_EXP_ID#</replaceString>
+	      <replaceString>#USR_RAD_BKT_ID#</replaceString>
+	      <description>Get User RAD Bucket</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>bucket</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>id</name>
+	                  <itemType>numeric</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>status</name>
+	                  <itemType>numeric</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>stage</name>
+	                  <itemType>numeric</itemType>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- ======================== -->
+	   <!-- RAD Experiments -->
+	   <!-- ======================== -->
+	   <!-- List user RAD experiments -->
+	   <Request 
+	        url="#SERVER#/services/rad/experiments/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List User RAD Experiments</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>epsgcode</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>modTime</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>title</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>modTime</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>description</name>
+	                        <optional>true</optional>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- Get user RAD experiment -->
+	   <Request 
+	        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_RAD_EXP_ID#</replaceString>
+	      <description>Get a User RAD Experiment</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>experiment</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <itemType>integer</itemType>
+	                  <name>epsgcode</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>integer</itemType>
+	                  <name>id</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>modTime</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>name</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>modTime</name>
+	               </SubItem>
+	               <SubItem>
+	                  <itemType>string</itemType>
+	                  <name>description</name>
+	                  <optional>true</optional>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	
+	   <!-- ======================== -->
+	   <!-- RAD Layers -->
+	   <!-- ======================== -->
+	   <!-- List user RAD layers -->
+	   <Request 
+	        url="#SERVER#/services/rad/layers/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <description>List user RAD layers</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>items</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>item</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>item</name>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- ======================== -->
+	   <!-- RAD PA Layers -->
+	   <!-- ======================== -->
+	   <!-- List RAD experiment PA layers -->
+	   <Request 
+	        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/pa/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_RAD_EXP_ID#</replaceString>
+	      <description>Get a User RAD Experiment's PA layers</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>layerset</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>layers</name>
+	                  <itemType>array</itemType>
+	                  <SubItem>
+	                     <itemType>object</itemType>
+	                     <name>layer</name>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>name</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>integer</itemType>
+	                        <name>id</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>attrPresence</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>minPresence</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>string</itemType>
+	                        <name>maxPresence</name>
+	                     </SubItem>
+	                     <SubItem>
+	                        <itemType>numeric</itemType>
+	                        <name>percentPresence</name>
+	                     </SubItem>
+	                  </SubItem>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	
+	   <!-- ======================== -->
+	   <!-- RAD PAM Sums -->
+	   <!-- ======================== -->
+	   <!-- Get RAD pam sum -->
+	   <Request 
+	        url="#SERVER#/services/rad/experiments/#USR_RAD_EXP_ID#/buckets/#USR_RAD_BKT_ID#/pamsums/#USR_RAD_PS_ID#/xml" 
+	        method="GET" credentials="True">
+	      <replaceString>#SERVER#</replaceString>
+	      <replaceString>#USR_RAD_EXP_ID#</replaceString>
+	      <replaceString>#USR_RAD_BKT_ID#</replaceString>
+	      <replaceString>#USR_RAD_PS_ID#</replaceString>
+	      <description>Get a User RAD PAM Sum</description>
+	      <Response contentType="application/xml">
+	         <ResponseItem>
+	            <itemType>object</itemType>
+	            <name>response</name>
+	            <SubItem>
+	               <name>pamsum</name>
+	               <itemType>object</itemType>
+	               <SubItem>
+	                  <name>id</name>
+	                  <itemType>numeric</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>title</name>
+	                  <itemType>string</itemType>
+	                  <optional>true</optional>
+	               </SubItem>
+	               <SubItem>
+	                  <name>stage</name>
+	                  <itemType>numeric</itemType>
+	               </SubItem>
+	               <SubItem>
+	                  <name>status</name>
+	                  <itemType>numeric</itemType>
+	               </SubItem>
+	            </SubItem>
+	         </ResponseItem>
+	      </Response>
+	   </Request>
+	</Client>
+</lmTest>

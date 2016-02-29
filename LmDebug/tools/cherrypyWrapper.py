@@ -36,7 +36,8 @@ from urlparse import urlparse
 
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmCommon.common.singleton import singleton
-from LmWebServer.services.common.svc import conf, svc, SESSION_DIR 
+from LmWebServer.services.common.svc import svc 
+from LmWebServer.common.localconstants import CP_CONFIG_FILE
 
 
 LOCAL_IP = '127.0.0.1'
@@ -53,16 +54,9 @@ class AppWrapper(object):
    """
    # ..............................
    def __init__(self):
-      self.app = cherrypy.Application(svc(), config=conf)
-      cherrypy.config.update(
-         {
-          'tools.sessions.on' : True,
-          'tools.sessions.storage_type' : 'file',
-          'tools.sessions.storage_path' : SESSION_DIR,
-          'tools.sessions.timeout' : 20160,
-          'tools.sessions.locking' : 'explicit'
-         }
-      )
+      cherrypy.config.update(CP_CONFIG_FILE)
+      self.app = cherrypy.Application(svc(), config=CP_CONFIG_FILE)
+      
 # .............................................................................
 def getApp():
    """
@@ -199,8 +193,8 @@ def executeRequest(vpath='/', method='GET', scheme='http',
       response = request.run(method, vpath, qs, proto, h, fd)
    finally:
       if fd:
-          fd.close()
-          fd = None
+         fd.close()
+         fd = None
 
    if response.status.startswith('500'):
       print response.body
