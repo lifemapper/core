@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>Basic Maxent Model Test</name>
    <!-- A description of what this test does -->
@@ -6,7 +6,7 @@
       This is a simple test to make sure Maxent models are created successfully
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>
@@ -139,4 +139,4 @@
 </job>
       ]]>
    </jobXml>
-</testJob>
+</lmTest>

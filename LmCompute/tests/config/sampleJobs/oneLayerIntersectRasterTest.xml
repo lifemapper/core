@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>One Raster Layer RAD Intersect Test</name>
    <!-- A description of what this test does -->
@@ -6,7 +6,7 @@
       This test makes sure that RAD intersects work with only one raster layer
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>
@@ -42,4 +42,4 @@
 </job>
       ]]>
    </jobXml>
-</testJob>
+</lmTest>

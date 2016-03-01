@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>openModeller Model Unicode Display Name Test</name>
    <!-- A description of what this test does -->
@@ -8,7 +8,7 @@
       characters.
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>
@@ -219,4 +219,4 @@
 </job>
       ]]>
    </jobXml>
-</testJob>
+</lmTest>

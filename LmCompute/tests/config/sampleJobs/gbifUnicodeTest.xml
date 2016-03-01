@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>Unicode GBIF Occurrences Test</name>
    <!-- A description of what this test does -->
@@ -7,7 +7,7 @@
       are unicode characters in the taxon name.
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>
@@ -102,4 +102,4 @@
 </job>
       ]]>
    </jobXml>
-</testJob>
+</lmTest>

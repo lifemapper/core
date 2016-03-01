@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>Maxent No Feature Classes Available Model Test</name>
    <!-- A description of what this test does -->
@@ -9,7 +9,7 @@
       than the number of points available with linear features disabled.
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>3751</expectedStatus>
    <jobXml>
@@ -81,4 +81,4 @@
 </job>
       ]]>
    </jobXml>
-</testJob>
+</lmTest>

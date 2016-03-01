@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>Maxent Projection New Parameters Test</name>
    <!-- A description of what this test does -->
@@ -7,7 +7,7 @@
       parameters.
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>
@@ -99,4 +99,4 @@ entropy, 5.864624672945166
 </job>      
 ]]>
    </jobXml>
-</testJob>
+</lmTest>

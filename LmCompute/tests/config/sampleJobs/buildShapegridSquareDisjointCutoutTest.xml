@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>RAD Build ShapeGrid Square with Disjoint Cutout Test</name>
    <!-- A description of what this test does -->
@@ -8,7 +8,7 @@
       in the shapegrid (square cells).
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>8610</expectedStatus>
    <jobXml>
@@ -31,4 +31,4 @@
 </Job>
       ]]>
    </jobXml>
-</testJob>
+</lmTest>

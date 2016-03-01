@@ -1,4 +1,4 @@
-<testJob>
+<lmTest>
    <!-- The name of the test -->
    <name>Basic RAD Calculate Test</name>
    <!-- A description of what this test does -->
@@ -6,7 +6,7 @@
       This is a simple test to make sure that RAD calculate jobs work correctly
    </description>
    <!-- Is this test enabled -->
-   <enabled>True</enabled>
+   <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>
@@ -134,4 +134,4 @@
 </Job>
       ]]>
    </jobXml>
-</testJob>
+</lmTest>
