@@ -1,9 +1,15 @@
 """
+
+*********************************
+Deprecated - Replace with LmCompute.tools.testing.computeTestSuite.py
+*********************************
+
 @summary: This script runs all of the available job tests to make sure an 
              LmCompute instance is working properly
 @author: CJ Grady
 @version: 3.0
-@status: beta
+@status: deprecated
+@note: This is being replaced with LmCompute.tools.testing.computeTestSuite.py
 """
 import glob
 import os
