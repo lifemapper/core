@@ -100,7 +100,10 @@ class LMWebServiceTestBuilder(LMTestBuilder):
    name = "webservice"
    # ...........................
    def __init__(self, **kwargs):
-      LMTestBuilder.__init__(self, kwargs)
+      LMTestBuilder.__init__(self, **kwargs)
+      
+      print self.kwargs
+      print kwargs
       
       self.env = self.kwargs["env"]
       userId = self.kwargs["userId"]

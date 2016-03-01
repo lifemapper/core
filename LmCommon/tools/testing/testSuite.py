@@ -63,6 +63,9 @@ class LMTestSuite(object):
       
       self._parseBaseArguments()
       self.parseArguments()
+      # Process test directories
+      for tDir in self.args.testDir:
+         self.addTestsFromDirectory(tDir)
       
    # ...........................
    def _addBaseArguments(self):
@@ -127,10 +130,6 @@ If omitted, uses output path / std out""")
       self.summarize = self.args.summarize
       self.testLevel = self.args.testLevel
       
-      # Process test directories
-      for tDir in self.args.testDir:
-         self.addTestsFromDirectory(tDir)
-      
    # ...........................
    def addArguments(self):
       """
@@ -151,6 +150,7 @@ If omitted, uses output path / std out""")
       @summary: Adds all of the tests found in a test configuration file
       @param filepath: The path to the file to find tests in
       """
+      print self.kwargs
       if testFactory is None:
          testFactory = LMTestFactory(self.testBuilders, **self.kwargs)
       

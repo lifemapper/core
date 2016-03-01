@@ -35,7 +35,8 @@ class LMTestFactory(object):
    def __init__(self, builders, **kwargs):
       self.builders = {}
       for builder in builders:
-         self.builders[builder.name.lower()] = builder(kwargs)
+         print kwargs
+         self.builders[builder.name.lower()] = builder(**kwargs)
 
    # ...........................
    def getTests(self, tObj):
