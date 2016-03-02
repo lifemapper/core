@@ -13,57 +13,28 @@ Initial Rocks Setup
 #. Optional troubleshooting steps for virtual clusters:  
    https://github.com/lifemapper/core/blob/master/docs/installConfig/virtualCluster.rst
 
+*********************
+LmServer Roll Install
+*********************
+
+This may be installed first or second, little difference.
+
+#. Add the roll to your cluster with the following:
+   https://github.com/pragmagrid/lifemapper-server/tree/kutest#adding-a-roll-to-a-live-frontend
+#. Reboot as directed in the instructions
+#. Configure, populate, test :
+   https://github.com/pragmagrid/lifemapper-server/blob/master/docs/Using.rst
+#. Create Layer package (until this is replaced by a package used by both LmServer and LmCompute).
+#. https://github.com/lifemapper/core/blob/master/docs/using/starting.rst
 
 **********************
 LmCompute Roll Install
 **********************
-It is easiest to install LmCompute first, until some conflicts are resolved.
 
 #. Add the roll to your cluster:  
    https://github.com/pragmagrid/lifemapper-compute/tree/kutest#adding-a-roll-to-a-live-frontend
-#. **FIXME - 1.0.3.lw, ok in 1.0.4.lw** Replace the following file with updated version on the frontend
-   and on the nodes::
-        
-        wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/master/src/lmserver/patch-files/core-1.0.3.lw/LmCommon/common/apiquery.py
-        /bin/cp -fp apiquery.py /opt/lifemapper/LmCommon/common/apiquery.py
-        /bin/cp -fp apiquery.py /share/lm/temp
-        rocks run host compute "/bin/cp -fp /share/lm/temp/apiquery.py /opt/lifemapper/LmCommon/common/apiquery.py"
-        
-#. **FIXME - ??** Copy the /opt/lifemapper/config/config.ini and save it for updating
-   the version installed by the LmServer roll.        
-
-*********************
-LmServer Roll Install
-*********************
-#. Add the roll to your cluster with the following, but delay the reboot:
-   https://github.com/pragmagrid/lifemapper-server/tree/kutest#adding-a-roll-to-a-live-frontend
-#. **FIXME - 1.0.3.lw, ok in 1.0.4.lw** Before rebooting, replace the file with updated version::
-
-        wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/master/src/rocks-lifemapper/confDbconnect
-        cp confDbconnect /opt/lifemapper/rocks/bin/confDbconnect
-
-#. **FIXME - 1.0.3.lw, ok in 1.0.4.lw** Before rebooting, replace the following file with updated version::
-
-        wget https://raw.githubusercontent.com/lifemapper/core/master/LmDbServer/dbsetup/createMALExtras.sql
-        cp createMALExtras.sql /opt/lifemapper/LmDbServer/dbsetup/
-
 #. Reboot as directed in the instructions
-#. Configure, populate, test :
-   https://github.com/pragmagrid/lifemapper-server/blob/master/docs/Using.rst
-#. **FIXME - ??** Edit the newly installed config/config.ini file to fill in the 
-   LmCompute  @variables@ in the new LmServer version.  You can find the values  
-   for these variables in the version of config.ini that you saved from the  
-   LmCompute installation.  This may be only 2 variables: @JOB_SUBMITTER_TYPE@  
-   and @JOB_CAPACITY@.
- 
-**********************
-Finish LmCompute Setup
-**********************
+#. Install on compute nodes, as directed in instructions.
+#. Seed Layers (until this is replaced by a package used by both LmServer and LmCompute).
 #. Configure and test: 
    https://github.com/pragmagrid/lifemapper-compute/tree/kutest#using-a-roll
-
-****************
-Using Lifemapper
-****************
-#. https://github.com/lifemapper/core/blob/master/docs/using/starting.rst
-
