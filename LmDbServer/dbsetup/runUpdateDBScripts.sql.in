@@ -1,6 +1,6 @@
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
--- -- psql -U admin -d template1 --file=LmDbServer/dbsetup/runAllSQLScripts.sql
+-- -- psql -U admin -d template1 --file=LmDbServer/dbsetup/runUpdateDBScripts.sql
 -- ----------------------------------------------------------------------------
 
 
