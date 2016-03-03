@@ -6,6 +6,7 @@
       This is a test to make sure that CJ's randomization algorithm can operate
       with large datasets.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>50</testLevel>
    <!-- What is the expected job status result -->

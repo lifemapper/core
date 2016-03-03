@@ -8,6 +8,7 @@
       create a shapegrid with approximately 1 million cells, which is larger
       than our current usage.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

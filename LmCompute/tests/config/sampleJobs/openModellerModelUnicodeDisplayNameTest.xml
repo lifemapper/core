@@ -7,6 +7,7 @@
       successfully when the display name for the points contains unicode 
       characters.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

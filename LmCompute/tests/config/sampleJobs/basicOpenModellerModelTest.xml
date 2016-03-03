@@ -6,6 +6,7 @@
       This is a simple test to make sure that openModeller models are generated 
       successfully
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

@@ -83,32 +83,3 @@ if __name__ == "__main__":
    testSuite = LMComputeTestSuite()
    testSuite.runTests()
    
-
-
-
-# .............................................................................
-# .............................................................................
-if __name__ == "__main__":
-   
-   # Set up mock HTTP opener
-   # This is used to return local files instead of trying to fulfill invalid 
-   #   HTTP requests
-   print("Installing mock opener")
-   installMockOpener()
-   addUrlMappingFromFile(MOCK_URLS_FN, basePath=SAMPLE_DATA_PATH)
-   
-   jobTests = getEnabledTestsInDirectory()
-   passed, failed, disabled = runTests(jobTests)
-   
-   print("\n-----------------------------------------------")
-   print("-                   Summary                   -")
-   print("-----------------------------------------------")
-   print("Successful Tests:")
-   for t in passed:
-      print("   %s" % t)
-   print("\nFailed Tests:")
-   for t, msg in failed:
-      print("   %s - %s" % (t, msg))
-   print("\nDisabled Tests:")
-   for t in disabled:
-      print("   %s" % t)

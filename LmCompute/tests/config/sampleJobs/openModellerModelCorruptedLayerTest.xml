@@ -6,6 +6,7 @@
       This test makes sure that the openModeller job fails properly when one of
       the layer URLs returns an invalid layer
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

@@ -8,6 +8,7 @@
       features and setting the thresholds for feature classes to be greater 
       than the number of points available with linear features disabled.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

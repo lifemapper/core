@@ -6,6 +6,7 @@
       This test checks that the GBIF occurrence job runner throws an 
       OCC_NO_POINTS_ERROR (3901) when the point data specified is empty.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

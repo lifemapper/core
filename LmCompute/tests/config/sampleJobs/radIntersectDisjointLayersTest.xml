@@ -6,6 +6,7 @@
       This test makes sure that RAD intersect doesn't fail when the layers 
       don't intersect.  Should just return a layer with no presences.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

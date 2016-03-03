@@ -6,6 +6,7 @@
       This is a test to make sure openModeller projections fail properly when
       a layer URL cannot be resolved.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->

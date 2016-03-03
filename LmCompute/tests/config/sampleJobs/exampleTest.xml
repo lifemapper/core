@@ -5,6 +5,7 @@
    <description>
       This is just an example of what the test XML file should look like
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>1000</testLevel>
    <!-- What is the expected job status result -->

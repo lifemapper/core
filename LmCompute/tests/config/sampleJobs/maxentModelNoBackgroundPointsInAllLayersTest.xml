@@ -6,6 +6,7 @@
       This test ensures that the Maxent job fails correctly when there are no 
       background points that contain data in all layers.
    </description>
+   <testType>compute</testType>
    <!-- Is this test enabled -->
    <testLevel>20</testLevel>
    <!-- What is the expected job status result -->
