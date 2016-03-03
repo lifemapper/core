@@ -102,14 +102,16 @@ class ApplicationRunner(JobRunner):
          try:
             self.log.debug(str(lme))
          except: # Logger not initialized
-            pass
+            print("Logging not initialized (early fail)")
+            print(str(lme))
          self.status = lme.code
          self._update()
       except Exception, e:
          try:
             self.log.debug(str(e))
          except: # Logger not initialized
-            pass
+            print("Logging not initialized (early fail)")
+            print(str(e))
          self.status = JobStatus.UNKNOWN_CLUSTER_ERROR
          self._update()
          raise e

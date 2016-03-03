@@ -76,11 +76,19 @@ class PythonRunner(JobRunner):
       except LmException, lme:
          self.status = lme.code
          self._update()
-         self.log.error(str(lme))
+         try:
+            self.log.error(str(lme))
+         except: # Log not initialized (early failure)
+            print("Logging not initialized (early fail)")
+            print(str(lme))
       except Exception, e:
          self.status = JobStatus.UNKNOWN_CLUSTER_ERROR
          self._update()
-         self.log.error(str(e))
+         try:
+            self.log.error(str(e))
+         except: # Log not initialized (early failure)
+            print("Logging not initialized (early fail)")
+            print(str(e))
          raise e # This will prevent the job request from being deleted.  Catch this and handle job request properly
    
    # ...................................
