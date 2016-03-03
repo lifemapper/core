@@ -111,4 +111,4 @@ class Config(object):
                self.site = os.path.join(pth, fname)
                self.config.read(self.site)
       if not found:
-         raise Exception('No config files found matching {}'.format(self.configFiles))
+         raise Exception('No config files found matching {0}'.format(self.configFiles))
