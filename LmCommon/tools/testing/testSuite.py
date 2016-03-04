@@ -106,8 +106,8 @@ If omitted, uses output path / std out""")
 
       # Test level
       self.parser.add_argument("--testLevel", type=int,
-         help="Run tests less than or equal to this level (default: 10)", 
-         default=10)
+         help="Run tests less than or equal to this level (default: 50)", 
+         default=50)
       
       # Test directories
       self.parser.add_argument("-t", "--testDir", nargs="*",
