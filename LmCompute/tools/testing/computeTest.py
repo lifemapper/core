@@ -65,7 +65,7 @@ class LMComputeTest(LMTest):
          self.resultStatus = int(jr.status)
       except Exception, e:
          self.message = str(e)
-         print self.url
+         print self.message
          self.status = 2
 
    # ...............................
