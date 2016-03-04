@@ -51,6 +51,7 @@ class LMTestSuite(object):
       self.successful = []
       self.warnings = []
       self.failed = []
+      self.skipped = []
       self.parser = argparse.ArgumentParser(prog=self.name, 
                                             description=self.description, 
                                             version=self.version)
@@ -251,6 +252,8 @@ If omitted, uses output path / std out""")
                if self.quickStop and (
                      t.status == 2 or (self.pedantic and t.status == 1)):
                   break
+            else:
+               self.skipped.append(t.name)
       except Exception, e:
          print "An exception occurred, aborting"
          print str(e)
@@ -287,6 +290,11 @@ If omitted, uses output path / std out""")
       log.info("---------------------")
       for tName, msg in self.failed:
          log.info("{testName}, {msg}".format(testName=tName, msg=msg))
+      
+      log.info("Skipped tests")
+      log.info("---------------------")
+      for tName in self.skipped:
+         log.info("{testName}".format(testName=tName))
       
    
 # .............................................................................
