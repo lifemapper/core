@@ -38,3 +38,23 @@ LmCompute Roll Install
 #. Seed Layers (until this is replaced by a package used by both LmServer and LmCompute).
 #. Configure and test: 
    https://github.com/pragmagrid/lifemapper-compute/tree/kutest#using-a-roll
+
+#######################
+Lifemapper update steps
+#######################
+   
+#. Update LmServer source code with new lifemapper-lmserver rpm for code,
+   and rocks-lifemapper rpm for configuration.  One-time configuration changes 
+   may be needed and should be implemented in the rocks-lifemapper script
+   'updateLM' in the /opt/lifemapper/rocks/bin directory.  Full instructions at:
+   https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/Updating.rst
+   
+   **Do not** re-install the LmServer roll, as that will destroy the existing 
+   database.
+   
+#. Update LmCompute source code with new lifemapper-lmcompute rpm for code,
+   and rocks-lmcompute rpm for configuration.  One-time configuration changes 
+   may be needed and should be implemented in the rocks-lmcompute script
+   'updateIP-lmcompute' in the /opt/lifemapper/rocks/bin directory.  Full
+   instructions at:
+   https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/Updating.rst
