@@ -181,7 +181,7 @@ If omitted, uses output path / std out""")
       if self.outDir is not None:
          log = LmLogger(logName, logging.DEBUG)
          log._addFileHandler(os.path.join(self.outDir, 
-                                          "{logName}.log".format(logName)))
+                                      "{logName}.log".format(logName=logName)))
       else:
          log = LmLogger(self.name, logging.DEBUG)
          if self.output is not None:
@@ -198,7 +198,7 @@ If omitted, uses output path / std out""")
       if self.outDir is not None:
          log = LmLogger(logName, logging.DEBUG)
          log._addFileHandler(os.path.join(self.outDir, 
-                                          "{logName}.log".format(logName)))
+                                     "{logName}.log".format(logName=logName)))
       else:
          log = LmLogger(self.name, logging.DEBUG)
          if self.output is not None:
