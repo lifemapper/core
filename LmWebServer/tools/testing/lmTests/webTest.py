@@ -156,7 +156,7 @@ class LMWebTestBuilder(LMTestBuilder):
 
       tests = []
       
-      for t in testObj.lmTest:
+      for t in testObj.webTest:
          try:
             tName = t.name
          except:
