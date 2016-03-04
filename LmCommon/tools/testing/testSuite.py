@@ -151,24 +151,27 @@ If omitted, uses output path / std out""")
       @summary: Adds all of the tests found in a test configuration file
       @param filepath: The path to the file to find tests in
       """
-      print self.kwargs
-      if testFactory is None:
-         testFactory = LMTestFactory(self.testBuilders, **self.kwargs)
+      try:
+         if testFactory is None:
+            testFactory = LMTestFactory(self.testBuilders, **self.kwargs)
       
-      if os.path.exists(filepath) and os.path.isfile(filepath):
-         with open(filepath) as inF:
-            testStr = inF.read()
-         testObj = deserialize(fromstring(testStr))
-         self.tests.extend(testFactory.getTests(testObj))
-      else:
-         raise Exception, "%s does not exist or is not a file" % filepath
-      
+         if os.path.exists(filepath) and os.path.isfile(filepath):
+            with open(filepath) as inF:
+               testStr = inF.read()
+            testObj = deserialize(fromstring(testStr))
+            self.tests.extend(testFactory.getTests(testObj))
+         else:
+            raise Exception, "%s does not exist or is not a file" % filepath
+      except Exception, e:
+         print "Could not add tests from: %s" % filepath
+         print str(e)
+         
    # ...........................
    def addTestsFromDirectory(self, dirPath):
       """
       @summary: Iterates through the test files to get tests to run
       """
-      testFactory = LMTestFactory(self.testBuilders)
+      testFactory = LMTestFactory(self.testBuilders, **self.kwargs)
       if os.path.exists(dirPath) and os.path.isdir(dirPath):
          for fn in glob.glob(os.path.join(dirPath, "*")):
             self.addTestsFromFile(fn, testFactory=testFactory)
