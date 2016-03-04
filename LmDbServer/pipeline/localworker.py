@@ -1277,10 +1277,10 @@ class GBIFChainer(_LMWorker):
                   except LmHTTPError, e:
                      self.log.info('Failed lookup for key {}, ({})'.format(
                                                             speciesKey, e.msg))
-                  if speciesName is not None:
-                     self._processInputSpecies(speciesName, dataCount, dataChunk)
-                  else:
-                     self.log.info('Unknown taxa for key {}'.format(speciesKey))
+               if speciesName is not None:
+                  self._processInputSpecies(speciesName, dataCount, dataChunk)
+               else:
+                  self.log.info('Unknown taxa for key {}'.format(speciesKey))
 
                if self._existKillFile():
                   break
