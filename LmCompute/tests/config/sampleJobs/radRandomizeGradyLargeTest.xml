@@ -8,7 +8,7 @@
    </description>
    <testType>compute</testType>
    <!-- Is this test enabled -->
-   <testLevel>50</testLevel>
+   <testLevel>60</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>
