@@ -85,7 +85,7 @@ class LMWebServiceTest(LMWebTest):
          raise Exception, "Cannot currently validate: %s" % self.testResponse.contentType
       
       try:
-         validator.validate(self.ret.readlines(), self.testResponse.ResponseItem)
+         validator.validate(self.ret.read(), self.testResponse.ResponseItem)
          self.status = 0
       except Exception, e:
          self.message = str(e)
@@ -145,7 +145,7 @@ class LMWebServiceTestBuilder(LMTestBuilder):
 
       tests = []
 
-      reqs = testObj.Request
+      reqs = testObj.Client.Request
       if not isinstance(reqs, list):
          reqs = [reqs]
       for req in reqs:
