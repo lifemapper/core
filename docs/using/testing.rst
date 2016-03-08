@@ -78,14 +78,17 @@ Running Tests
 #############
 
 LmCommon Tests
-##############
-   -bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmCommon/tools/testing/testSuite.py -t /opt/lifemapper/LmCommon/tests/config/ --summarize
+--------------
+
+   bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmCommon/tools/testing/testSuite.py -t /opt/lifemapper/LmCommon/tests/config/ --summarize
 
 LmWebServer Tests
-#################
-   -bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmWebServer/tools/testing/lmTests/webTestSuite.py -t /opt/lifemapper/LmWebServer/tests/config/clients/ /opt/lifemapper/LmWebServer/tests/config/webTests/ --summarize Dermot Dermot
+-----------------
+
+   bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmWebServer/tools/testing/lmTests/webTestSuite.py -t /opt/lifemapper/LmWebServer/tests/config/clients/ /opt/lifemapper/LmWebServer/tests/config/webTests/ --summarize Dermot Dermot
 
 LmCompute Tests (from the nodes)
-################################
-   -bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmCompute/tools/testing/computeTestSuite.py -t /opt/lifemapper/LmCompute/tests/config/sampleJobs/ --summarize
+--------------------------------
+
+   bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmCompute/tools/testing/computeTestSuite.py -t /opt/lifemapper/LmCompute/tests/config/sampleJobs/ --summarize
    
