@@ -73,22 +73,26 @@ Test builders are used to process input files into tests.  There is a test
 builder for each test type.
 
 
-############
+#############
 Running Tests
 #############
 
 LmCommon Tests
---------------
+**************
+.. code-block:: 
 
-   bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmCommon/tools/testing/testSuite.py -t /opt/lifemapper/LmCommon/tests/config/ --summarize
+   $ /opt/python/bin/python /opt/lifemapper/LmCommon/tools/testing/testSuite.py -t /opt/lifemapper/LmCommon/tests/config/ --summarize
+
 
 LmWebServer Tests
------------------
+*****************
+.. code-block::
 
-   bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmWebServer/tools/testing/lmTests/webTestSuite.py -t /opt/lifemapper/LmWebServer/tests/config/clients/ /opt/lifemapper/LmWebServer/tests/config/webTests/ --summarize Dermot Dermot
+   $ /opt/python/bin/python /opt/lifemapper/LmWebServer/tools/testing/lmTests/webTestSuite.py -t /opt/lifemapper/LmWebServer/tests/config/clients/ /opt/lifemapper/LmWebServer/tests/config/webTests/ --summarize Dermot Dermot
 
 LmCompute Tests (from the nodes)
---------------------------------
+********************************
+.. code-block::
 
-   bash-4.1$ /opt/python/bin/python /opt/lifemapper/LmCompute/tools/testing/computeTestSuite.py -t /opt/lifemapper/LmCompute/tests/config/sampleJobs/ --summarize
+   $ /opt/python/bin/python /opt/lifemapper/LmCompute/tools/testing/computeTestSuite.py -t /opt/lifemapper/LmCompute/tests/config/sampleJobs/ --summarize
    
