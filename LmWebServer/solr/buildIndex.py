@@ -7,17 +7,22 @@
           projections individually as they are completed.
 """
 from mx.DateTime.DateTime import DateTimeFromMJD
+import os
 #from subprocess import Popen
 import subprocess
-from time import sleep
+import tempfile
+#from time import sleep
 
 from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import TEMP_PATH
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.peruser import Peruser
 
 COLLECTION = "lmArchive"
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
+
+POST_THRESHOLD = 500
 
 # .............................................................................
 def getBboxWKT(bbox):
@@ -85,7 +90,6 @@ def makeProjectionDoc(prj):
    prjScnUrl = prjScn.metadataUrl
    
    doc = """\
-<add>
    <doc>
       <field name="id">{id}</field>
       <field name="userId">{userId}</field>
@@ -114,8 +118,7 @@ def makeProjectionDoc(prj):
       <field name="projectionScenarioCode">{prjScnCode}</field>
       <field name="projectionScenarioId">{prjScnId}</field>
       <field name="projectionScenarioUrl">{prjScnUrl}</field>
-   </doc>
-</add>""".format(id=id, userId=userId, displayName=displayName, occId=occId,
+   </doc>""".format(id=id, userId=userId, displayName=displayName, occId=occId,
                  occUrl=occUrl, occBboxWKT=occBboxWKT, occModTime=occModTime,
                  occDlUrl=occDlUrl, numPoints=numPoints, epsg=epsg, 
                  mdlId=mdlId, mdlUrl=mdlUrl, rulesetUrl=rulesetUrl, 
@@ -138,7 +141,6 @@ def makeOccurrenceDoc(occId, acceptedName, numPoints, numMod, binomial, download
    @param downloadUrl: A URL where the occurrence set can be downloaded
    """
    doc = """\
-<add>
    <doc>
       <field name="id">{id}</field>
       <field name="displayName">{displayName}</field>
@@ -147,27 +149,37 @@ def makeOccurrenceDoc(occId, acceptedName, numPoints, numMod, binomial, download
       <field name="numberOfModels">{numModels}</field>
       <field name="binomial">{binomial}</field>
       <field name="occurrenceSetDownloadUrl">{occDlUrl}</field>
-   </doc>
-</add>""".format(id=occId, displayName=acceptedName, occId=occId,
+   </doc>""".format(id=occId, displayName=acceptedName, occId=occId,
                  numPoints=numPoints, numModels=numMod, binomial=binomial, 
                  occDlUrl=downloadUrl)
    return doc
 
 # .............................................................................
-def postDocument(doc, collection, mimeType='application/xml'):
+def postDocuments(docs, collection, mimeType='application/xml'):
    """
    @summary: Posts a document to a local Solr server
-   @param doc: A document to post (string)
+   @param doc: A list of documents to post (list of strings)
    @param collection: The collection to add the document to
-   @param mimeType: (optional) The MIME type of the document
+   @param mimeType: (deprecated) This is not needed if posting a file
    """
-   cmd = "{cmd} -c {collection} -type {mimeType} -out no -d $'{data}'".format(
-            cmd=SOLR_POST_COMMAND, collection=collection, mimeType=mimeType,
-            data=doc)
-   #p = Popen(cmd)
-   #while p.poll() is None:
-   #   sleep(.2)
+   
+   postFn = tempfile.mkstemp(suffix='.xml', dir=TEMP_PATH)[1]
+   with open(postFn, 'w') as postF:
+      postFn = postF.name
+      postF.write("<add>\n")
+      for doc in docs:
+         postF.write(doc)
+         postF.write('\n')
+      postF.write("</add>")
+   
+   
+   cmd = "{cmd} -c {collection} -out no {filename}".format(
+            cmd=SOLR_POST_COMMAND, collection=collection, filename=postFn)
+
    subprocess.call(cmd, shell=True)
+
+   # Clean up
+   os.remove(postFn)
       
 # .............................................................................
 def buildProjectionIndex():
@@ -184,12 +196,17 @@ def buildProjectionIndex():
    prjs = peruser.listProjections(startRecord, maxReturned, 
                               beforeTime=beforeTime, status=JobStatus.COMPLETE, 
                               atom=False)
+   docs = []
    while len(prjs) > 0:
       # Make documents and post
       for prj in prjs:
-         doc = makeProjectionDoc(prj)
-         # Post document
-         postDocument(doc, COLLECTION, mimeType='application/xml')
+         docs.append(makeProjectionDoc(prj))
+         
+         # If there are enough docs to meet the threshold, post them
+         if len(docs) >= POST_THRESHOLD:
+            # Post document
+            postDocuments(docs, COLLECTION, mimeType='application/xml')
+            docs = []
       
       #startRecord += len(prjs)
       beforeTime = prjs[-1].modTime
@@ -199,6 +216,10 @@ def buildProjectionIndex():
                               atom=False)
       else:
          prjs = []
+   
+   # Post any remaining docs
+   if len(docs) > 0:
+      postDocuments(docs, COLLECTION, mimeType='application/xml')
    
    peruser.closeConnections()
    
@@ -217,6 +238,7 @@ def buildOccurrenceIndex():
    
    ej = EarlJr()
    
+   docs = []
    for sp in speciesList:
       acceptedName = sp[1].strip()
       nameParts = acceptedName.split(' ')
@@ -235,10 +257,17 @@ def buildOccurrenceIndex():
       downloadUrl = "{0}/shapefile".format(ej.constructLMMetadataUrl(
                                                "occurrences", occId, "sdm"))
       
-      doc = makeOccurrenceDoc(occId, acceptedName, numOcc, numMod, binomial, downloadUrl)
-         
-      # Post document
-      postDocument(doc, collection, mimeType='application/xml')
+      docs.append(makeOccurrenceDoc(occId, acceptedName, numOcc, numMod, 
+                                    binomial, downloadUrl))
+      
+      # If the number of docs has reached the threshold
+      if len(docs) >= POST_THRESHOLD:
+         # Post document
+         postDocuments(docs, collection, mimeType='application/xml')
+   
+   # Post any leftovers
+   if len(docs) > 0:
+      postDocuments(docs, collection, mimeType='application/xml')
    
 
 # .............................................................................
