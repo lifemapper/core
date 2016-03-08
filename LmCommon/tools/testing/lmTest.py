@@ -95,7 +95,7 @@ class LMTestBuilder(object):
       name = testObj.name
       description = testObj.description
       testLevel = testObj.testLevel
-      return LMTest(name, description, testLevel)
+      return [LMTest(name, description, testLevel)]
    
 # .............................................................................   
 class LMSystemTest(LMTest):
@@ -192,9 +192,9 @@ class LMSystemTestBuilder(LMTestBuilder):
       except:
          fMsg = "Fail"
       
-      return LMSystemTest(name, description, testLevel, cmd, 
+      return [LMSystemTest(name, description, testLevel, cmd, 
                           cleanupCmd=cleanupCmd, successMessage=sMsg, 
-                          warningMessage=wMsg, failMessage=fMsg)
+                          warningMessage=wMsg, failMessage=fMsg)]
 # Client library test (remote test?)
 # Unit test
 # Local test
