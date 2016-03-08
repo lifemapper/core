@@ -66,14 +66,6 @@
       <rewriteUrl>http://svc.lifemapper.org/css/services.xsl</rewriteUrl>
    </webTest>
    <webTest>
-      <name>Species hint service URL forwarding test</name>
-      <description>Tests that requests to the species hint service at lifemapper.org are correctly forwarded to the services machine</description>
-      <url>http://lifemapper.org/species/bre?maxReturned=60&amp;format=json</url>
-      <method>GET</method>
-      <httpStatus>200</httpStatus>
-      <rewriteUrl>http://svc.lifemapper.org/species/bre?maxTreturned=60&amp;format=json</rewriteUrl>
-   </webTest>
-   <webTest>
       <name>Login URL forwarding test</name>
       <description>Tests that login forwards correctly</description>
       <url>http://lifemapper.org/login</url>
