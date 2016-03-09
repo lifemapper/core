@@ -163,15 +163,13 @@ def postDocuments(docs, collection, mimeType='application/xml'):
    @param mimeType: (deprecated) This is not needed if posting a file
    """
    
-   postFn = tempfile.mkstemp(suffix='.xml', dir=TEMP_PATH)[1]
-   with open(postFn, 'w') as postF:
-      postFn = postF.name
-      postF.write("<add>\n")
-      for doc in docs:
-         postF.write(doc)
-         postF.write('\n')
-      postF.write("</add>")
-   
+   fd, postFn = tempfile.mkstemp(suffix='.xml', dir=TEMP_PATH)
+   os.write(fd, "<add>\n")
+   for doc in docs:
+      os.write(fd, doc)
+      os.write(fd, '\n')
+   os.write(fd, "</add>")
+   os.close(fd)
    
    cmd = "{cmd} -c {collection} -out no {filename}".format(
             cmd=SOLR_POST_COMMAND, collection=collection, filename=postFn)
