@@ -5,13 +5,15 @@
 @todo: Add spatial components
 @todo: Change calling mechanism from a loop through projections to posting 
           projections individually as they are completed.
+          
+@todo: RST for solr
+@todo: Document required cron job changes
 """
-from mx.DateTime.DateTime import DateTimeFromMJD
+import argparse
+from mx.DateTime import DateTimeFromMJD, gmt, oneHour
 import os
-#from subprocess import Popen
 import subprocess
 import tempfile
-#from time import sleep
 
 from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.datalocator import EarlJr
@@ -21,8 +23,6 @@ from LmServer.db.peruser import Peruser
 
 COLLECTION = "lmArchive"
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
-
-POST_THRESHOLD = 500
 
 # .............................................................................
 def getBboxWKT(bbox):
@@ -155,20 +155,19 @@ def makeOccurrenceDoc(occId, acceptedName, numPoints, numMod, binomial, download
    return doc
 
 # .............................................................................
-def postDocuments(docs, collection, mimeType='application/xml'):
+def postDocuments(docs, collection, action="add"):
    """
    @summary: Posts a document to a local Solr server
    @param doc: A list of documents to post (list of strings)
    @param collection: The collection to add the document to
-   @param mimeType: (deprecated) This is not needed if posting a file
+   @param action: The action to send to Solr (add / delete)
    """
-   
    fd, postFn = tempfile.mkstemp(suffix='.xml', dir=TEMP_PATH)
-   os.write(fd, "<add>\n")
+   os.write(fd, "<{action}>\n".format(action=action))
    for doc in docs:
       os.write(fd, doc)
       os.write(fd, '\n')
-   os.write(fd, "</add>")
+   os.write(fd, "</{action}>".format(action=action))
    os.close(fd)
    
    cmd = "{cmd} -c {collection} -out no {filename}".format(
@@ -180,7 +179,7 @@ def postDocuments(docs, collection, mimeType='application/xml'):
    os.remove(postFn)
       
 # .............................................................................
-def buildProjectionIndex():
+def buildProjectionIndex(afterTime=None):
    """
    @summary: Build the Lifemapper archive Solr index
    """
@@ -188,36 +187,36 @@ def buildProjectionIndex():
    peruser.openConnections()
    
    beforeTime = None
-   maxReturned = 10000
+   maxReturned = 100000
    startRecord = 0
    
+   addDocs = []
+   removeDocs = []
+   
    prjs = peruser.listProjections(startRecord, maxReturned, 
-                              beforeTime=beforeTime, status=JobStatus.COMPLETE, 
-                              atom=False)
-   docs = []
+               afterTime=afterTime, beforeTime=beforeTime, atom=False)
+   
    while len(prjs) > 0:
-      # Make documents and post
       for prj in prjs:
-         docs.append(makeProjectionDoc(prj))
-         
-         # If there are enough docs to meet the threshold, post them
-         if len(docs) >= POST_THRESHOLD:
-            # Post document
-            postDocuments(docs, COLLECTION, mimeType='application/xml')
-            docs = []
-      
-      #startRecord += len(prjs)
+         if prj.status == JobStatus.COMPLETE:
+            # Add
+            addDocs.append(makeProjectionDoc(prj))
+         else:
+            # Purge
+            removeDocs.append("   <id>%s</id>" % prj.getId())
+
       beforeTime = prjs[-1].modTime
       if len(prjs) == maxReturned:
          prjs = peruser.listProjections(startRecord, maxReturned, 
-                              beforeTime=beforeTime, status=JobStatus.COMPLETE, 
-                              atom=False)
+                     afterTime=afterTime, beforeTime=beforeTime, atom=False)
       else:
          prjs = []
    
-   # Post any remaining docs
-   if len(docs) > 0:
-      postDocuments(docs, COLLECTION, mimeType='application/xml')
+   # Purge Index
+   postDocuments(removeDocs, COLLECTION, action='delete')
+
+   # Post new documents
+   postDocuments(addDocs, COLLECTION, action='add')
    
    peruser.closeConnections()
    
@@ -258,18 +257,38 @@ def buildOccurrenceIndex():
       docs.append(makeOccurrenceDoc(occId, acceptedName, numOcc, numMod, 
                                     binomial, downloadUrl))
       
-      # If the number of docs has reached the threshold
-      if len(docs) >= POST_THRESHOLD:
-         # Post document
-         postDocuments(docs, collection, mimeType='application/xml')
-   
-   # Post any leftovers
-   if len(docs) > 0:
-      postDocuments(docs, collection, mimeType='application/xml')
-   
+   # Post documents
+   postDocuments(docs, collection, action='add')
 
 # .............................................................................
 if __name__ == "__main__":
-   buildProjectionIndex()
-   buildOccurrenceIndex()
+   parser = argparse.ArgumentParser(
+               prog="Lifemapper Solr index builder",
+               description="This script builds and maintains the Lifemapper Solr indecies",
+               version="2.0")
+   
+   parser.add_argument('-i', '--index', choices=['a', 's', 'b'], 
+      help="Which indecies to build. (a - archive, s - species, b - both (default)")
+   
+   parser.add_argument('-t', '--time', type=int, 
+        help="Add / purge projections for archive modified in this many hours")
+
+   args = parser.parse_args()
+   
+   tDelta = args.time
+   idxToBuild = args.index
+   
+   if tDelta is not None:
+      afterTime = (gmt() - (int(tDelta) * oneHour)).mjd
+   else:
+      afterTime = None
+   
+   print "Time delta:", tDelta
+   print "Index to build:", idxToBuild
+   
+   if idxToBuild is None or idxToBuild in ['a', 'b']:
+      buildProjectionIndex(afterTime=afterTime)
+   
+   if idxToBuild is None or idxToBuild in ['s', 'b']:
+      buildOccurrenceIndex()
    
