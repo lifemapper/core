@@ -10,6 +10,7 @@ Cron job changes
 * Remove the buildLuceneIndex cron job
 * Add arguments to build solr index call.  Add -t 4 to line 18 in buildLmSolrIndex
 
+Modifications to **/opt/lifemapper/bin/buildLmSolrIndex**
 .. code-block:: 
 
    #!/bin/bash
