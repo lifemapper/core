@@ -2,16 +2,13 @@
 Plans for Virtual Cluster on Comet
 ##################################
 
-Makeflow process
-****************
-
-#. We will more effectively utilize Makeflow (MF) and Work Queue (WQ) from the 
-   CCL group at Notre Dame.  
+Makeflow/Work Queue process
+***************************
    
-   #. We will start generating MF documents from the pipeline (LmServer).  Each   
-      MF document will represent one “experiment” consisting of the chain of 
-      jobs/objects created for every species and keeps track of the dependencies 
-      within the chain.
+#. We will start generating MF documents from the pipeline (LmServer).  Each   
+   MF document will represent one “experiment” consisting of the chain of 
+   jobs/objects created for every species and keeps track of the dependencies 
+   within the chain.
       
    #. A MF process will be instantiated on LmServer for each MF document, up to
       some limit of concurrent MF processes.  As one is completed, another will 
