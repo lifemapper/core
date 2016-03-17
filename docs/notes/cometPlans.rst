@@ -6,7 +6,7 @@ Makeflow/Work Queue process
 ***************************
    
 #. We will start generating MF documents from the pipeline (LmServer).  Each   
-   MF document will represent one “experiment” consisting of the chain of 
+   MF document will represent one, or more, “experiment(s)” consisting of the chain of 
    jobs/objects created for every species and keeps track of the dependencies 
    within the chain.
       
