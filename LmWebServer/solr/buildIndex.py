@@ -56,7 +56,7 @@ def makeProjectionDoc(prj):
    occId = occ.getId()
    occUrl = occ.metadataUrl
    occBboxWKT = getBboxWKT(occ.bbox)
-   occModTime = getModTimeStringFromMJD(occ.modTime)
+   occModTime = getModTimeStringFromMJD(occ.statusModTime)
    occDlUrl = "%s/shapefile" % occ.metadataUrl
    numPoints = occ.count
    epsg = occ.epsgcode
