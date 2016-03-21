@@ -1,33 +1,51 @@
-## Preparation
-1. Install QGIS 
+####################
+Basic QGIS operation
+####################
+
+Preparation
+***********
+
+#. Install QGIS 
    * Windows/Linux install version 2.10 or 2.12
    * OSX: install version 2.8 (QGIS has a bug in the OSX version of 2.10 and 2.12)
-1. Open QGIS
-1. Install plugin
+#. Open QGIS
+#. Install plugin
     * Plugins (top menu) → Manage and Install Plugins …
     * Search for Lifemapper, select Lifemapper MacroEcology Range and Diversity Tools 
     * Click Install plugin
     * Copy sample data from the shared drive to the local drive
-1. Sign in to Lifemapper
+#. Sign in to Lifemapper
     * Lifemapper top menu option, choose Sign In
     * Create a user account by clicking the **sign up** link in the left of dialog to open a browser 
     * If you are a new user, the app will prompt you to create a new workspace - choose a local drive in the lab and  and create a new directory
-1. In all Lifemapper dialogs, click the ? button to display context-sensitive help
+#. In all Lifemapper dialogs, click the ? button to display context-sensitive help
 
-## Species Distribution Modeling 
 
-**Definitions (in this context)**
-* **Algorithm** is the statistical procedure or method for calculating a model from data inputs 
-* **Model** is a formula relating species data to environmental layerset 
-* **Projection** is an application of the model onto an environmental layerset resulting in a raster map
+Species Distribution Modeling
+*****************************
 
-1. First, explore the species archive
+Definitions (in this context)
+-----------------------------
+
+Algorithm
+  a statistical procedure or method for calculating a model from data inputs 
+  
+Model
+  a formula relating species data to environmental layerset 
+  
+Projection
+  an application of the model onto an environmental layerset resulting in a raster map
+
+Steps
+-----
+
+#. First, explore the species archive
     * Click on the LM logo on the right side of the second row of the toolbar - this brings up a panel in the lower left
     * To explore some of the contents of this instance of Lifemapper, just type in the box, to get a list of species that start with the letters you typed.  A list of scientific names of species with over 100 points is at Modeled-Southeast-Asian-Species.
     * When you find a species, double click it to get the point layer, and a list of projections available for that species.  
     * Double click a point layer, or projection layer to add it to the canvas on the right.  They will be automatically colored, if you do this with your own layers, you must do this by hand.
 
-1. To request an SDM experiment:
+#. To request an SDM experiment:
     * Choose Lifemapper (top menu) → LmSDM: Species Distribution Modeling
     * In the Perform a Lifemapper SDM Experiment dialog there are four sections:
         * Name and Description
@@ -46,7 +64,7 @@
         * Advanced tab: parameters (initially filled with defaults)
     * Finally, Click the Submit Exp button
 
-1. To List your Experiments - and retrieve data and metadata 
+#. To List your Experiments - and retrieve data and metadata 
    * Choose Lifemapper (top menu) → LmSDM: Species Distribution Modeling → List Experiments
    * Choose experiment
    * Drill down to projections (final maps)
@@ -54,8 +72,10 @@
        * The projection is added to your canvas; choose symbolization by double clicking on the layer (or right click then choose Properties)
        * Calculate the min/max, then stretch the values for a better display
 
-## Multi-species analyses - Range and Diversity
-1. First look at an existing experiment.  Logout of your account and login with astewart, password jetsons.
+Multi-species analyses - Range and Diversity
+********************************************
+
+#. First look at an existing experiment.  Logout of your account and login with astewart, password jetsons.
    * Choose **ovenbirds** (small group of tropical birds) experiment - we can explore this easy set of data, then try a more complex experiment if there is time.
     * List Experiments,
     * Select ovenbirds, click Get Grids button below
@@ -66,7 +86,7 @@
 
 
 
-1. Create a new experiment
+#. Create a new experiment
     * Lifemapper (top menu) → LmRAD: Range and Diversity → New Experiment
     * Define Experiment Projection: use 4326, which is basic Geographic Projection (also known as Latitude/Longitude) 
     * Define Input Grid:  the bounding box for the Southeast Asia data is longitude 95 to 153 and latitude -11 to 21.  One degree (the map units) is a good grid cell size.
@@ -77,4 +97,4 @@
    * Fill in the parameters to determine presence or absence for a species in a grid cell.  The Bioclim models in this archive are very simple and have only values of 0, 50 and 100.  Choose 50 for the min and 100 for the max.  
 
 
-1. Explore an existing experiment
+#. Explore an existing experiment (not yet written)
