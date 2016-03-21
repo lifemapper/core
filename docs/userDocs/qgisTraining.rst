@@ -118,21 +118,6 @@ Steps
 Multi-species analyses - Range and Diversity
 ********************************************
 
-#. First look at an existing experiment.  
-
-   * Choose **ovenbirds** (small group of tropical birds) experiment - we can 
-     explore this easy set of data, then try a more complex experiment if there is time.
-   * List Experiments
-   * Select ovenbirds, click Get Grids button below
-   * In Get Grids dialog …
-   * Select OneDegree, check that it says Stage=Calculate, Status=completed, 
-     then click Get Grid in the left column to download the grid into your 
-     workspace and add it to QGIS canvas
-   * (Tip) If you dismiss this dialog, you can return to it by choosing the menu 
-     options LmRAD:Range and Diversity → Current Experiment →Access Grids
-   * Select the OneDegree  in the QGIS canvas, then Click the Get Statistics 
-     button 
-
 #. Create a new experiment
 
    * Lifemapper (top menu) → LmRAD: Range and Diversity → New Experiment
@@ -153,3 +138,4 @@ Multi-species analyses - Range and Diversity
      only values of 0, 50 and 100.  Choose 50 for the min and 100 for the max.  
 
 #. Explore an existing experiment (not yet written)
+
