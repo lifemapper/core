@@ -17,7 +17,8 @@ Preparation
 #. Sign in to Lifemapper
     * Lifemapper top menu option, choose Sign In
     * Create a user account by clicking the **sign up** link in the left of dialog to open a browser 
-    * If you are a new user, the app will prompt you to create a new workspace - choose a local drive in the lab and  and create a new directory
+    * If you are a new user, the app will prompt you to create a new workspace - choose a local 
+      drive and create a new directory
 #. In all Lifemapper dialogs, click the ? button to display context-sensitive help
 
 
@@ -40,6 +41,7 @@ Steps
 -----
 
 #. First, explore the species archive
+
     * Click on the LM logo on the right side of the second row of the toolbar - 
       this brings up a panel in the lower left
     * To explore some of the contents of this instance of Lifemapper, type 
@@ -49,7 +51,7 @@ Steps
     * Double click a point layer, or projection layer to add it to the canvas on 
       the right.  They will be automatically colored, if you do this with your 
       own layers, you must do this by hand.
-
+      
 #. To request an SDM experiment:
 
     * Choose Lifemapper (top menu) → LmSDM: Species Distribution Modeling
@@ -62,7 +64,7 @@ Steps
         
     * In the Species Points, type in the middle box to activate auto-complete 
       and choose a species with some points. The Lifemapper Species point 
-      set id will be filled in.  
+      set id will be filled in.
       
          * Click the **layerset** icon (it looks like a stack of papers) to the 
            right of the point set id.  This will populate the Environmental 
@@ -92,7 +94,7 @@ Steps
           filled with defaults.
           
     * Finally, Click the Submit Exp button
-
+    
 #. To List your Experiments - and retrieve data and metadata 
 
    * Choose Lifemapper (top menu) → LmSDM: Species Distribution Modeling → List 
