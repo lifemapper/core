@@ -5,23 +5,29 @@ Basic QGIS operation
 Preparation
 ***********
 
-#. Install QGIS 
+#. Install QGIS
+
    * Windows/Linux install version 2.10 or 2.12
    * OSX: install version 2.8 (QGIS has a bug in the OSX version of 2.10 and 
      2.12)
+     
 #. Open QGIS
 #. Install plugin
+
    * Plugins (top menu) → Manage and Install Plugins …
    * Search for Lifemapper, select Lifemapper MacroEcology Range and Diversity 
      Tools 
    * Click Install plugin
    * Copy sample data from the shared drive to the local drive
+   
 #. Sign in to Lifemapper
+
    * Lifemapper top menu option, choose Sign In
    * Create a user account by clicking the **sign up** link in the left of 
      dialog to open a browser 
    * If you are a new user, the app will prompt you to create a new workspace - 
      choose a local drive and create a new directory
+     
 #. In all Lifemapper dialogs, click the ? button to display context-sensitive help
 
 
