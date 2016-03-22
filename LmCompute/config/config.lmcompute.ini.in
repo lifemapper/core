@@ -49,6 +49,7 @@ ME_CMD: @LMHOME@/LmCompute/apps/maxent.jar
 MDL_TOOL: density.MaxEnt
 PRJ_TOOL: density.Project
 ME_VERSION: 3.3.3k
+CONVERT_TOOL: density.Convert
 
 ; ...............................................
 [LmCompute - plugins - openModeller]
