@@ -57,4 +57,4 @@ Lifemapper update steps
    may be needed and should be implemented in the rocks-lmcompute script
    'updateIP-lmcompute' in the /opt/lifemapper/rocks/bin directory.  Full
    instructions at:
-   https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/Updating.rst
+   https://github.com/pragmagrid/lifemapper-compute/blob/kutest/docs/Updating.rst
