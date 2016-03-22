@@ -166,6 +166,18 @@ class LayerManager(object):
                            "GeoTIFF is missing for: %s" % layerId)
    
    # .................................
+   def _findOldLayers(self, lastTouchedBefore):
+      cmd = "SELECT {lyrIdAtt}, {lyrFmtAtt} FROM layers WHERE {touchAtt} < {touchTime} AND {statusAtt} != {seededStatus}".format(
+               lyrIdAtt=LayerAttributes.LAYER_ID, 
+               lyrFmtAtt=LayerAttributes.FILE_TYPE,
+               touchAtt=LayerAttributes.TOUCH_TIME,
+               touchTime=lastTouchedBefore,
+               statusAtt=LayerAttributes.STATUS,
+               seededStatus=LayerStatus.SEEDED)
+      rows = self._executeDbFunction(cmd)
+      return rows
+
+   # .................................
    def _insertLayer(self, layerId, layerFormat, filePath, status):
       nowMjd = gmt().mjd
       cmd = "INSERT INTO layers VALUES ('{layerId}', '{filePath}', {fileType}, {status}, {createTime}, {touchTime})".format(
@@ -324,11 +336,24 @@ class LayerManager(object):
                            "Unknown layer status: %s" % status)
       if lyr is not None: # Should never be None, but just in case
          fn = lyr['filepath']
+         self._touchLayer(layerId, layerFormat)
       else:
          raise LmException(JobStatus.IO_LAYER_ERROR, 
                            "Layer is unexpectedly None")
       return fn
-      
+   
+   # .................................
+   def purgeLayers(self, lastTouched):
+      """
+      @summary: Purge layers from the database that were last touched before 
+                   the parameter
+      @param lastTouched: Purge (non-seeded) layers that were last touched 
+                             before this time (MJD format)
+      """
+      rows = self._findOldLayers(lastTouched)
+      for row in rows:
+         print "Deleting layer:", row[0]
+         self._deleteLayer(row[0], row[1])
    
    # .................................
    def seedLayers(self, layerTups, makeASCIIs=True, makeMXEs=True):
