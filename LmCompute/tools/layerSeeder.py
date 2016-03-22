@@ -2,11 +2,11 @@
 @summary: This script is used to seed layers into the layers database for a 
              compute resource so that they are not downloaded unnecessarily
 @author: CJ Grady
-@version: 1.0
-@status: alpha
+@version: 2.0.0
+@status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -27,8 +27,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import argparse
 import os
-import sys
 
 from LmCompute.common.layerManager import LayerManager
 from LmCompute.common.lmconstants import INPUT_LAYER_DIR
@@ -36,23 +36,50 @@ from LmCompute.common.localconstants import JOB_DATA_PATH
 
 SEED_DIR = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR)
 
-def processFile(fn):
-   f = open(fn)
-   lyrs = [tuple(line.split(',')) for line in f.readlines()]
-   f.close()
+def processFile(fn, seedDir=SEED_DIR):
+   lyrs = []
+   with open(fn) as f:
+      for line in f:
+         ident, fp = line.split(',')
+         lyrs.append((ident.strip(), os.path.join(seedDir, fp.strip())))
    return lyrs
 
 # .............................................................................
 if __name__ == "__main__":
-   if len(sys.argv) < 2:
-      print("Usage: python layerSeeder.py <scenPkgCsvFilename>")
-      print("   File should be pairs of url, local file path separated by line feeds")
-   else:
-      lyrFile = sys.argv[1]
+   
+   parser = argparse.ArgumentParser(prog="Lifemapper LmCompute Layer Seeder",
+                           description="Seeds the LmCompute layers database",
+                           version="2.0.0")
+   parser.add_argument('-a', '--ascii', type=int, choices=[0,1], default=1,
+                       help="Generate and seed ASCII grids (default 1 - yes)")
+   parser.add_argument('-m', '--mxe', type=int, choices=[0,1], default=1,
+                       help="Generate and seed MXE files (default 1 - yes)")
+   parser.add_argument('-d', '--seedDir', 
+                       help="Use this directory as the base for seeded layers", 
+                       default=SEED_DIR)
+   parser.add_argument('scnPkgCsvFn', 
+                       help="Scenario package CSV with (identifier, relative path) pairs",
+                       nargs="*")
+   
+   args = parser.parse_args()
+   
+   # Should we generate ASCIIs and MXEs?
+   asciis = bool(args.ascii)
+   mxes = bool(args.mxe)
+   
+   # Check seed directory
+   seedDir = args.seedDir
+   if not os.path.exists(seedDir):
+      raise Exception, "The specified layer directory does not exist: %s" % seedDir
+   
    lm = LayerManager(JOB_DATA_PATH)
    
-   for ident, fn in processFile(lyrFile):
-      lm.seedLayer(ident.strip(), os.path.join(SEED_DIR, fn.strip()))
+   for fn in args.scnPkgCsvFn:
+      if os.path.exists(fn):
+         lyrTups = processFile(fn)
+         lm.seedLayers(lyrTups, makeASCIIs=asciis, makeMXEs=mxes)
+      else:
+         print "The CSV file %s does not exist, skipping" % fn
    
    lm.close()
    
