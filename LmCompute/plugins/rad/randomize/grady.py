@@ -31,8 +31,6 @@
 
 from random import random, choice, randint#shuffle, randint
 import numpy as np
-import os
-import sys
 import time
 
 from LmCommon.common.lmconstants import JobStatus

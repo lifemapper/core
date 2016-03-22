@@ -37,6 +37,7 @@ from LmCommon.common.lmXml import Element, SubElement, fromstring, \
 from LmCompute.common.layerManager import LayerManager
 
 from LmCompute.plugins.sdm.openModeller.localconstants import DEFAULT_FILE_TYPE
+from LmCompute.common.lmconstants import LayerFormat
 
 # .............................................................................
 class OmRequest(object):
@@ -84,11 +85,15 @@ class OmModelRequest(OmRequest):
       self.lyrs = []
       
       lyrMgr = LayerManager(dataDir)
-      for lyrUrl in model.layers:
-         self.lyrs.append(lyrMgr.getLayerFilename(lyrUrl))
+      #TODO: Layers need to be layer id, layer url tuples where url is optional
+      for lyrId, lyrUrl in model.layers: # Probably won't work, but this is the idea
+         self.lyrs.append(lyrMgr.getLayerFilename(lyrId, LayerFormat.GTIFF, 
+                                                  layerUrl=lyrUrl))
 
       try:
-         self.mask = lyrMgr.getLayerFilename(model.mask)
+         # TODO: Need to process mask to get the id and url
+         self.mask = lyrMgr.getLayerFilename(model.maskId, LayerFormat.GTIFF, 
+                                             layerUrl=model.maskUrl)
       except:
          if len(self.lyrs) > 0:
             self.mask = self.lyrs[0]
@@ -170,11 +175,16 @@ class OmProjectionRequest(OmRequest):
       self.lyrs = []
       
       lyrMgr = LayerManager(dataDir)
-      for lyrUrl in projection.layers:
-         self.lyrs.append(lyrMgr.getLayerFilename(lyrUrl))
+      #TODO: This will probably not match the deserialized object and need to 
+      #         be updated
+      for lyrId, lyrUrl in projection.layers:
+         self.lyrs.append(lyrMgr.getLayerFilename(lyrId, LayerFormat.GTIFF, 
+                                                  layerUrl=lyrUrl))
 
       try:
-         self.mask = lyrMgr.getLayerFilename(projection.mask)
+         #TODO: This will probably need to be updated after job formatter changes
+         self.mask = lyrMgr.getLayerFilename(projection.maskId, 
+                                LayerFormat.GTIFF, layerUrl=projection.maskUrl)
       except:
          if len(self.lyrs) > 0:
             self.mask = self.lyrs[0]
