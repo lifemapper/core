@@ -31,7 +31,8 @@ import os
 
 from LmCommon.common.lmconstants import JobStatus, OutputFormat, ProcessType
 
-from LmCompute.common.layerManager import getAndStoreShapefile
+from LmCompute.common.layerManager import LayerManager
+from LmCompute.common.lmconstants import LayerFormat
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
 from LmCompute.plugins.rad.common.matrixTools import getNumpyMatrixFromCSV
 from LmCompute.plugins.rad.randomize.randomize import splotch, swap
@@ -113,12 +114,17 @@ class RandomizeSplotchRunner(_RandomizeRunner):
    # ...................................
    def _processJobInput(self):
       self.log.debug("Start of process job input")
-      sgUrl = self.job.shapegrid.url
       print self.job.matrix.url
-      vectorPath = os.path.join(self.outputPath, 'vectorLayers')
        
+      lyrMgr = LayerManager(self.env.getJobDataPath())
+      sgLayerId = self.job.shapegrid.layerId
+      sgUrl = self.job.shapegrid.url
+      
       self.shapegrid = {
-                   'dlocation' : getAndStoreShapefile(sgUrl, vectorPath),
+                        #TODO: Make sure this works correctly
+                   'dlocation' : lyrMgr.getLayerFilename(sgLayerId, 
+                                                         LayerFormat.SHAPE, 
+                                                         layerUrl=sgUrl),
                    'localIdIdx' : self.job.shapegrid.localIdIndex,
                    'cellsideCount' : self.job.shapegrid.cellSides
                   }

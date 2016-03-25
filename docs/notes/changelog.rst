@@ -32,4 +32,8 @@ Modifications to **/opt/lifemapper/bin/buildLmSolrIndex**
    #   /var/solr/data/cores/lmArchive
    /opt/python/bin/python2.7 /opt/lifemapper/LmWebServer/solr/buildIndex.py -t 4
 
-    
+
+Layer Changes
+#############
+   Add constant 'CONVERT_TOOL' to 'LmCompute - plugins - maxent' in the compute 
+   config file.  It should be set to 'density.Convert'

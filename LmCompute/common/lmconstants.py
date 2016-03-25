@@ -30,4 +30,41 @@
 # =                             Client Constants                             =
 # ============================================================================
 CLIENT_VERSION = "3.0.0"
+
+# ============================================================================
+# =                             Layer Constants                              =
+# ============================================================================
 INPUT_LAYER_DIR = 'layers'
+RETRIEVED_LAYER_DIR = 'retrieved'
+
+class LayerStatus:
+   """
+   @summary: This class contains possible layer statuses for LmCompute layers
+   """
+   ABSENT = 0
+   STORED = 1
+   RETRIEVING = 2
+   SEEDED = 3
+   TIFF_AVAILABLE = 4
+   
+class LayerFormat:
+   """
+   @summary: Class containing LmCompute compatible layer formats
+   """
+   GTIFF = 0
+   ASCII = 1
+   MXE = 2
+   SHAPE = 3
+
+class LayerAttributes:
+   """
+   @summary: Compute layer db table attributes
+   """
+   LAYER_ID = 'layerid'
+   FILE_PATH = 'filepath'
+   FILE_TYPE = 'filetype'
+   STATUS = 'status'
+   CREATE_TIME = 'createdate'
+   TOUCH_TIME = 'touchdate'
+   
+   

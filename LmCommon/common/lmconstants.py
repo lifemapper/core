@@ -42,6 +42,7 @@ class OutputFormat:
    MAP = '.map'
    CSV = '.csv'
    JSON = '.json'
+   MXE = '.mxe'
    NUMPY = '.npy'
    PICKLE = '.pkl'
    GTIFF = '.tif'

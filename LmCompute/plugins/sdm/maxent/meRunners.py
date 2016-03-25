@@ -32,15 +32,14 @@
 """
 import os
 from StringIO import StringIO
-import urllib2
 import zipfile
 
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType, OutputFormat
 from LmCommon.common.unicode import fromUnicode, toUnicode
 
-from LmCompute.common.layerManager import convertLayer, \
-                               multiplyAndConvertLayer, scaleAndConvertLayer, \
-                               LayerManager
+from LmCompute.common.layerManager import (convertAndModifyAsciiToTiff, 
+                                           LayerManager)
+from LmCompute.common.lmconstants import LayerFormat
 
 from LmCompute.jobs.runners.applicationRunner import ApplicationRunner
 
@@ -185,12 +184,15 @@ class MEModelRunner(ApplicationRunner):
       self.log.debug("-------------------------------------------------------")
 
       # Layers
+      #TODO: This needs to end up as a list of layer id, layer url tuples where
+      #         layer url can be optional (None)
       layers = self.job.layers
       
       try:
+         #TODO: This needs to be a layer id, layer url tuple
          mask = self.job.mask
       except: # mask not provided
-         mask = None
+         mask = (None, None)
       
       self.log.debug("Acquiring inputs...")
       self.status = JobStatus.ACQUIRING_INPUTS
@@ -385,12 +387,15 @@ optional args can contain any flags understood by Maxent -- for example, a
 
       self.log.debug("MaxEnt Version: %s" % ME_VERSION)
       self.log.debug("-------------------------------------------------------")
-
+      
+      #TODO: Make this a list of layer id , layer url tuples (where url can be
+      #         None)
       layers = self.job.layers
       try:
+         #TODO: This needs to be a tuple
          mask = self.job.mask
       except: # mask not provided
-         mask = None
+         mask = (None, None)
       
       self.log.debug("Acquiring inputs...")
       self.status = JobStatus.ACQUIRING_INPUTS
@@ -481,18 +486,18 @@ optional args can contain any flags understood by Maxent -- for example, a
             scaleMin = float(self.job.postProcessing.scale.scaleMin)
             scaleMax = float(self.job.postProcessing.scale.scaleMax)
          
-         scaleAndConvertLayer(self.outputFile, outFn, scaleMax=scaleMax, 
-                              scaleMin=scaleMin, lyrMin=0.0, lyrMax=1.0, 
-                              dataType=scaleDataType)
+         convertAndModifyAsciiToTiff(self.outputFile, outFn, 
+                                     scale=(scaleMin, scaleMax), 
+                                     dataType=scaleDataType)
       except:
          try: # See if the output should be multiplied instead
             multiplyDataType = self.job.postProcessing.multiply.dataType
             multiplier = int(self.job.postProcessing.multiply.multiplier)
-            multiplyAndConvertLayer(self.outputFile, outFn, 
-                              multiplier=multiplier, dataType=multiplyDataType)
+            convertAndModifyAsciiToTiff(self.outputFile, outFn, 
+                                        multiplier=multiplier, 
+                                        dataType=multiplyDataType)
          except:
-            convertLayer(self.outputFile, outFn)
-      
+            convertAndModifyAsciiToTiff(self.outFile, outFn)
       
       #scaleAndConvertLayer(self.outputFile, outFn, lyrMin=0.0, lyrMax=1.0)
       #content = open(self.outputFile).read()
@@ -570,28 +575,33 @@ def processParameter(param, value):
       return None
 
 # .................................
-def handleLayers(layerUrls, env, dataDir, jobLayerDir, mask=None):
+def handleLayers(layers, env, dataDir, jobLayerDir, mask=(None, None)):
    """
    @summary: Iterates through the list of layer urls and stores them on the 
                 file system if they are not there yet.  Then creates links
                 in the job layer directory so that the layers may be stored
                 long term on the machine but still used per job.
+   @param layers: A list of tuples of the form layer id, layer url
    @param layerUrls: List of layer urls
    @param env: The environment to operate in
    @param dataDir: Directory to store layers
    @param jobLayerDir: The layer directory of the job
-   @param mask: (optional) Mask layer to be added if provided
+   @param mask: (optional) Mask layer to be added if provided (layer id, layer url)
    """
    lyrs = []
    lyrMgr = LayerManager(dataDir)
-   for lyrUrl in layerUrls:
-      lyrs.append(lyrMgr.getLayerFilename(lyrUrl))
-   for i in range(len(lyrs)):
-      env.createLink("{0}/layer{1}.asc".format(jobLayerDir, i), lyrs[i])
    
-   if mask is not None:
-      mskLyr = lyrMgr.getLayerFilename(mask)
-      env.createLink("{0}/mask.asc".format(jobLayerDir), mskLyr)
+   for layerId, layerUrl in layers:
+      lyrs.append(lyrMgr.getLayerFilename(layerId, LayerFormat.MXE, layerUrl))
+      
+   for i in range(len(lyrs)):
+      env.createLink("{0}/layer{1}{2}".format(
+                              jobLayerDir, i, OutputFormat.MXE), lyrs[i])
+   
+   if mask[0] is not None:
+      mskLyr = lyrMgr.getLayerFilename(mask[0], LayerFormat.MXE, mask[1])
+      env.createLink("{0}/mask{1}".format(jobLayerDir, OutputFormat.MXE), 
+                     mskLyr)
       
    lyrMgr.close()
 

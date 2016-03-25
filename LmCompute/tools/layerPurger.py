@@ -1,11 +1,12 @@
 """
-@summary: MaxEnt plugin local constants
+@summary: This script is used to purge layers that have not been used for some
+             amount of time.
 @author: CJ Grady
-@version: 3.0.0
+@version: 1.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,15 +27,24 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.config import Config
+import argparse
+from mx.DateTime import gmt
 
-_cfg = Config()
-_ME_PLUGIN_SECTION = 'LmCompute - plugins - maxent'
+from LmCompute.common.layerManager import LayerManager
+from LmCompute.common.localconstants import JOB_DATA_PATH
 
-JAVA_CMD = _cfg.get(_ME_PLUGIN_SECTION, 'JAVA_CMD')
-ME_CMD = _cfg.get(_ME_PLUGIN_SECTION, 'ME_CMD')
-MDL_TOOL = _cfg.get(_ME_PLUGIN_SECTION, 'MDL_TOOL')
-PRJ_TOOL = _cfg.get(_ME_PLUGIN_SECTION, 'PRJ_TOOL')
-CONVERT_TOOL = _cfg.get(_ME_PLUGIN_SECTION, 'CONVERT_TOOL')
-ME_VERSION = _cfg.get(_ME_PLUGIN_SECTION, 'ME_VERSION')
-
+# .............................................................................
+if __name__ == "__main__":
+   
+   parser = argparse.ArgumentParser(prog="Lifemapper LmCompute Layer Purger",
+                           description="Purges old layers from the database",
+                           version="1.0.0")
+   parser.add_argument('-t', '--daysOld', type=int, default=30,
+      help="Purge (non-seeded) layers that haven't been touched in more than this many days")
+   
+   args = parser.parse_args()
+   
+   lm = LayerManager(JOB_DATA_PATH)
+   lm.purgeLayers(gmt().mjd - args.daysOld)
+   lm.close()
+   

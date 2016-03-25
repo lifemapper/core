@@ -36,9 +36,10 @@ from LmCommon.common.lmAttObject import LmAttList
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.lmXml import Element, SubElement, tostring
 
-from LmCompute.common.layerManager import getAndStoreShapefile, LayerManager
+from LmCompute.common.layerManager import LayerManager
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
 from LmCompute.plugins.rad.intersect.radIntersect import intersect
+from LmCompute.common.lmconstants import LayerFormat
 
 # .............................................................................
 class IntersectRunner(PythonRunner):
@@ -53,11 +54,15 @@ class IntersectRunner(PythonRunner):
       lyrMgr = LayerManager(self.env.getJobDataPath())
       
       self.log.debug("Layer manager has been initialized")
+      sgLayerId = self.job.shapegrid.layerId
       sgUrl = self.job.shapegrid.url
-      vectorPath = os.path.join(self.outputPath, 'vectorLayers')
       
       self.shapegrid = {
-                   'dlocation' : getAndStoreShapefile(sgUrl, vectorPath),
+                        #TODO: Make sure this works correctly
+                   'dlocation' : lyrMgr.getLayerFilename(sgLayerId, 
+                                                         LayerFormat.SHAPE, 
+                                                         layerUrl=sgUrl),
+                   #getAndStoreShapefile(sgUrl, vectorPath),
                    #'dlocation' : lyrMgr.getLayerFilename(sgUrl),
                    'localIdIdx' : self.job.shapegrid.localIdIndex
                   }
@@ -77,11 +82,14 @@ class IntersectRunner(PythonRunner):
          if lyr.isRaster.lower() != "false":
             lyrVals['isRaster'] = True
             lyrVals['resolution'] = lyr.resolution
-            lyrVals['dlocation'] = lyrMgr.getLayerFilename(lyr.url)
+            lyrFrmt = LayerFormat.GTIFF
          else:
             lyrVals['isRaster'] = False
-            #lyrVals['dlocation'] = self._storeVectorFile(lyr.url)
-            lyrVals['dlocation'] = getAndStoreShapefile(lyr.url, vectorPath)
+            lyrFrmt = LayerFormat.SHAPE
+            
+         #TODO: Make sure this works after job formatter change
+         lyrVals['dlocation'] = lyrMgr.getLayerFilename(lyr.layerId, lyrFrmt,
+                                                        layerUrl=lyr.url)
 
          try:
             lyrVals['isOrganism'] = True
