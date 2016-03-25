@@ -2700,6 +2700,8 @@ class MAL(DbPostgresql):
             mskid = self._getColumnValue(row, idxs, ['prjmaskid', 'maskid'])
             gtype = self._getColumnValue(row, idxs, ['datatype'])
             projid = self._getColumnValue(row, idxs, ['projectionid'])
+            verify = self._getColumnValue(row, idxs, ['prjverify', 'verify'])
+            squid = self._getColumnValue(row, idxs, ['prjsquid', 'squid'])
                
             if doFillScenario:
                prjscenario = self.getScenarioById(scenid, None)
@@ -2876,6 +2878,8 @@ class MAL(DbPostgresql):
       """
       lyr = None
       if row is not None:
+         verify = self._getColumnValue(row, idxs, ['verify'])
+         squid = self._getColumnValue(row, idxs, ['squid'])
          name = self._getColumnValue(row, idxs, ['name'])
          title = self._getColumnValue(row, idxs, ['title'])
          author = self._getColumnValue(row, idxs, ['author'])
@@ -3093,6 +3097,8 @@ class MAL(DbPostgresql):
       if row is not None:
          sciname = self._createScientificName(row, idxs)
          occsetId = self._getColumnValue(row, idxs, ['occurrencesetid'])
+         verify = self._getColumnValue(row, idxs, ['occverify', 'verify'])
+         squid = self._getColumnValue(row, idxs, ['occsquid', 'squid'])
          if not(idxs.has_key('displayname')):
             return OccurrenceLayer(None, occId=occsetId)
          

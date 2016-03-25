@@ -45,6 +45,7 @@ class DbUser:
    WebService = 'wsuser'
    Pipeline = 'sdlapp'
    Job = 'jobuser'
+   Anon = 'anon'
 
 # ............................................................................
 class PrimaryEnvironment:

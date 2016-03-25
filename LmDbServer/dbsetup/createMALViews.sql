@@ -6,6 +6,7 @@ DROP VIEW IF EXISTS lm3.lm_envlayer CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_envlayer (
              -- Layer.* 
              layerId,
+             verify,
              userid,
              name,
              title,
@@ -37,7 +38,7 @@ CREATE OR REPLACE VIEW lm3.lm_envlayer (
              typetitle,
              typedescription,
              typemodtime) AS
-      SELECT l.layerId, l.userid, l.name, l.title, l.author, l.description, l.dlocation, 
+      SELECT l.layerId, l.verify, l.userid, l.name, l.title, l.author, l.description, l.dlocation, 
              l.metadataUrl, l.metalocation, l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, 
              l.epsgcode, l.mapunits, l.resolution, l.valAttribute, l.startDate, 
              l.endDate, l.dateLastModified, l.bbox, l.thumbnail, l.nodataVal, 
@@ -263,6 +264,8 @@ DROP VIEW IF EXISTS lm3.lm_fullprojection CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_fullprojection (
    -- projection.*
    projectionId, 
+   prjverify, 
+   prjsquid,   
    prjMetadataUrl, 
    modelId, 
    prjscenarioCode, 
@@ -301,6 +304,8 @@ CREATE OR REPLACE VIEW lm3.lm_fullprojection (
    email, 
    mdlcomputeresourceid,
    -- occurrenceSet
+   occverify,
+   occsquid,
    occUserId, 
    fromGbif, 
    displayName, 
@@ -316,7 +321,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullprojection (
    occbbox, 
    occgeom
    ) AS
-      SELECT p.projectionId, p.metadataUrl, p.modelId, p.scenarioCode, p.scenarioId, p.maskId,
+      SELECT p.projectionId, p.verify, p.squid, p.metadataUrl, p.modelId, p.scenarioCode, p.scenarioId, p.maskId,
              p.createTime, p.status, p.statusModTime, p.priority, p.units, 
              p.resolution, p.epsgcode, p.bbox, p.dlocation, p.dataType, 
              p.jobId, p.computeResourceId, p.geom, 
@@ -324,7 +329,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullprojection (
              m.scenarioId, m.maskId, m.algorithmCode, m.algorithmParams, 
              m.createTime, m.status, m.statusModTime, m.priority, 
              m.dlocation, m.qc, m.jobId, m.email, m.computeResourceId,
-             o.userId, o.fromGbif, o.displayName, o.scientificNameId, 
+             o.verify, o.squid, o.userId, o.fromGbif, o.displayName, o.scientificNameId, 
              o.status, o.statusmodtime, o.metadataUrl, o.dlocation, 
              o.queryCount, o.dateLastModified, o.dateLastChecked, o.epsgcode, o.bbox, o.geom
       FROM lm3.projection p, lm3.model m, lm3.occurrenceSet o
@@ -337,6 +342,8 @@ DROP VIEW IF EXISTS lm3.lm_prjJob CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_prjJob (
    -- lm_fullprojection.*
    projectionId, 
+   prjverify,
+   prjsquid,
    prjMetadataUrl, 
    modelId, 
    prjscenarioCode, 
@@ -373,6 +380,8 @@ CREATE OR REPLACE VIEW lm3.lm_prjJob (
    mdlJobId, 
    email, 
    mdlcomputeresourceid,
+   occverify,
+   occsquid,
    occUserId, 
    fromGbif, 
    displayName, 
@@ -407,7 +416,7 @@ CREATE OR REPLACE VIEW lm3.lm_prjJob (
    lastheartbeat,
    retrycount
     ) AS
-      SELECT p.projectionId, p.prjMetadataUrl, p.modelId, p.prjscenarioCode, 
+      SELECT p.projectionId, p.prjverify, p.prjsquid, p.prjMetadataUrl, p.modelId, p.prjscenarioCode, 
              p.prjscenarioId, p.prjMaskId, p.prjcreateTime, p.prjstatus, 
              p.prjstatusModTime, p.prjpriority, p.units, p.resolution, 
              p.prjepsgcode, p.prjbbox, p.prjdlocation, p.dataType, 
@@ -417,7 +426,7 @@ CREATE OR REPLACE VIEW lm3.lm_prjJob (
              p.algorithmParams, p.mdlCreateTime, p.mdlStatus, p.mdlStatusModTime, 
              p.mdlPriority, p.mdldlocation, p.qc, p.mdlJobId, p.email, 
              p.mdlcomputeresourceid,
-             p.occUserId, p.fromGbif, p.displayName, p.scientificNameId, 
+             p.occverify, p.occsquid, p.occUserId, p.fromGbif, p.displayName, p.scientificNameId, 
              p.occstatus, p.occstatusmodtime, p.occMetadataUrl, p.occdlocation, 
              p.queryCount, p.dateLastModified, p.dateLastChecked, p.occepsgcode, p.occbbox, 
              p.occgeom, 
@@ -434,6 +443,8 @@ DROP VIEW IF EXISTS lm3.lm_fullOccurrenceset CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_fullOccurrenceset (
    -- occurrenceset.* (without geom, geompts)
    occurrenceSetId,
+   verify,
+   squid,
    userId,
    fromGbif,
    displayName,
@@ -471,7 +482,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullOccurrenceset (
    taxdateCreated,
    taxdateLastModified
    ) AS
-   SELECT o.occurrenceSetId, o.userId, o.fromGbif, o.displayName, 
+   SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.fromGbif, o.displayName, 
           o.scientificNameId, o.primaryEnv, o.metadataUrl, o.dlocation,
           o.queryCount, o.dateLastModified, o.dateLastChecked, o.bbox, 
           o.epsgcode, o.status, o.statusmodtime, o.rawDlocation,
@@ -489,6 +500,8 @@ DROP VIEW IF EXISTS lm3.lm_occJob CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_occJob (
    -- occurrenceset.* (without geom, geompts)
    occurrenceSetId,
+   verify,
+   squid,
    occuserId,
    fromGbif,
    displayName,
@@ -524,7 +537,7 @@ CREATE OR REPLACE VIEW lm3.lm_occJob (
    lastheartbeat,
    retrycount
    ) AS
-     SELECT o.occurrenceSetId, o.userid, o.fromgbif, o.displayname, 
+     SELECT o.occurrenceSetId, o.verify, o.squid, o.userid, o.fromgbif, o.displayname, 
             o.scientificNameId,
             o.primaryenv, o.metadataUrl, o.dlocation, o.querycount, o.datelastmodified, 
             o.datelastchecked, o.bbox, o.epsgcode, o.status, o.statusmodtime, 
@@ -594,16 +607,6 @@ CREATE OR REPLACE VIEW lm3.lm_bloat AS
       ORDER BY wastedbytes DESC, wastedibytes DESC;
 
 -- ----------------------------------------------------------------------------
-GRANT SELECT ON TABLE 
-lm3.lm_envlayer, lm3.lm_fullmodel, lm3.lm_fullProjection, 
-lm3.lm_mdlJob, lm3.lm_prjJob, lm3.lm_msgJob, lm3.lm_occJob, lm3.lm_bloat
-TO GROUP reader;
-
-GRANT SELECT ON TABLE 
-lm3.lm_envlayer, lm3.lm_fullmodel, lm3.lm_fullProjection, 
-lm3.lm_mdlJob, lm3.lm_prjJob, lm3.lm_msgJob, lm3.lm_occJob, lm3.lm_bloat
-TO GROUP writer;
-     
 -- ----------------------------------------------------------------------------
 -- DATA TYPES (used on multiple tables)
 -- Note: All column names are returned in lower case
@@ -647,6 +650,7 @@ CREATE TYPE lm3.lm_envlayerAndKeywords AS
 (
              -- lm_envlayer.* + layertype keywords 
              layerId int,
+             verify varchar,
              userid varchar,
              name varchar,
              title varchar,
@@ -700,7 +704,8 @@ DROP TYPE IF EXISTS lm3.lm_scenarioMapLayer;
 CREATE TYPE lm3.lm_scenarioMapLayer AS
 (
    layerid      int, 
-   metadataUrl     varchar,
+   verify     varchar,
+   metadataUrl  varchar,
    layername    varchar,
    layertitle   varchar,
    startdate    double precision,
@@ -739,6 +744,7 @@ CREATE TYPE lm3.lm_progress AS (
   status int,
   total int);
  
+-- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 GRANT SELECT ON TABLE 

@@ -81,8 +81,10 @@ create table lm3.LMJob
 -- -------------------------------
 create table lm3.Layer
 (
-   layerId serial UNIQUE PRIMARY KEY, --
-   userId varchar(20) NOT NULL, --
+   layerId serial UNIQUE PRIMARY KEY,
+   verify varchar(32),
+   squid varchar(32),
+   userId varchar(20) NOT NULL,
    layername varchar(50) NOT NULL,
    title varchar(100),
    description varchar(256),
@@ -108,6 +110,7 @@ create table lm3.Layer
 Select AddGeometryColumn('lm3', 'layer', 'geom', 4326, 'POLYGON', 2);
 ALTER TABLE lm3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
 CREATE INDEX spidx_lyr ON lm3.Layer USING GIST ( geom );
+CREATE INDEX idx_lyrSquid on lm3.Layer(squid);
 
 -- -------------------------------
 create table lm3.ShapeGrid

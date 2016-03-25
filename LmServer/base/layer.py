@@ -55,6 +55,7 @@ class _Layer(LMSpatialObject, ServiceObject):
    def __init__(self, name, metalocation, dlocation, dataFormat, title, bbox, 
                 startDate, endDate, mapunits, valUnits, isCategorical, 
                 resolution, keywdSeq, epsgcode, description, author, 
+                verify=None, squid=None,
                 svcObjId=None, lyrId=None, lyrUserId=None, 
                 createTime=None, modTime=None, metadataUrl=None,
                 serviceType=LMServiceType.LAYERS, moduleType=None):
@@ -85,6 +86,8 @@ class _Layer(LMSpatialObject, ServiceObject):
                              serviceType, moduleType=moduleType, 
                              metadataUrl=metadataUrl)
 #      ogr.UseExceptions()
+      self.verify = verify
+      self.squid = squid
       self.name = name
       self._mapFilename = None
       self._dataFormat = dataFormat
@@ -156,6 +159,15 @@ class _Layer(LMSpatialObject, ServiceObject):
       @raise LMError: on failure to read data.
       """
       raise LMError(currargs='readData must be implemented in Subclass')
+
+# ...............................................
+   def _verifyData(self, dlocation=None):
+      """
+      @summary: Compute the sha256sum of the file at dlocation.
+      @TODO: complete this with commonly used library
+      """
+      if dlocation is None:
+         dlocation = self._dlocation
 
 # ...............................................
    def getMetaLocation(self): 

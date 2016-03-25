@@ -37,6 +37,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullradbucket (
 
    -- Layer.* except geom
    layerId,
+   verify,
    lyruserId,
    layername,
    title,
@@ -91,7 +92,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullradbucket (
              b.pamDlocation, b.grimDlocation,  
              b.status, b.statusmodtime, b.stage, b.stagemodtime,             
              b.datecreated, b.keywords, b.metadataurl, b.computeresourceid,
-             l.layerId, l.userId, l.layername, l.title, l.description, l.dlocation, 
+             l.layerId, l.verify, l.userId, l.layername, l.title, l.description, l.dlocation, 
              l.metadataurl, l.layerurl, l.ogrType, l.gdalType, l.dataFormat, 
              l.epsgcode, l.mapunits, 
              l.resolution, l.startDate, l.endDate, l.metalocation, 
@@ -113,6 +114,7 @@ DROP VIEW IF EXISTS lm3.lm_shapegrid CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_shapegrid (
    -- Layer.* except geom
    layerId,
+   verify,
    lyruserId,
    layername,
    title,
@@ -142,7 +144,7 @@ CREATE OR REPLACE VIEW lm3.lm_shapegrid (
    yAttribute,
    shpstatus,
    shpstatusmodtime) 
-   AS SELECT l.layerId, l.userId, l.layername, l.title, l.description, 
+   AS SELECT l.layerId, l.verify, l.userId, l.layername, l.title, l.description, 
              l.dlocation, l.metadataurl, l.layerurl, l.ogrType, l.gdalType, 
              l.dataFormat, l.epsgcode, l.mapunits, 
              l.resolution, l.startDate, l.endDate, l.metalocation, 
@@ -196,6 +198,8 @@ DROP VIEW IF EXISTS lm3.lm_anclayer CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_anclayer (
    -- Layer.* except geom
    layerId,
+   verify, 
+   squid,
    lyruserId,
    layername,
    title,
@@ -230,7 +234,7 @@ CREATE OR REPLACE VIEW lm3.lm_anclayer (
    experimentId, 
    matrixidx
    ) AS
-      SELECT l.layerId, l.userId, l.layername, l.title, l.description, 
+      SELECT l.layerId, l.verify, l.squid, l.userId, l.layername, l.title, l.description, 
              l.dlocation, l.metadataurl, l.layerurl, l.ogrType, l.gdalType, 
              l.dataFormat, l.epsgcode, l.mapunits, 
              l.resolution, l.startDate, l.endDate, l.metalocation, 
@@ -247,6 +251,7 @@ DROP VIEW IF EXISTS lm3.lm_bktanclayer CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_bktanclayer (
    -- lm_anclayer.* 
    layerId,
+   verify,
    lyruserId,
    layername,
    title,
@@ -282,7 +287,7 @@ CREATE OR REPLACE VIEW lm3.lm_bktanclayer (
    status,
    statusmodtime
    ) AS
-      SELECT al.layerId, al.lyruserId, al.layername, al.title, al.description,
+      SELECT al.layerId, al.verify, al.lyruserId, al.layername, al.title, al.description,
              al.lyrdlocation, al.lyrmetadataurl, al.layerurl, al.ogrType,
              al.gdalType, al.dataFormat, al.epsgcode, al.mapunits, al.resolution, 
              al.startDate, al.endDate, al.metalocation, al.lyrdatecreated,  
@@ -299,6 +304,8 @@ DROP VIEW IF EXISTS lm3.lm_palayer CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_palayer (
    -- Layer.* (except geom)
    layerId,
+   verify, 
+   squid,
    lyruserId,
    layername,
    title,
@@ -335,7 +342,7 @@ CREATE OR REPLACE VIEW lm3.lm_palayer (
    experimentId, 
    matrixidx
    ) AS
-      SELECT l.layerId, l.userId, l.layername, l.title, l.description, l.dlocation, 
+      SELECT l.layerId, l.verify, l.squid, l.userId, l.layername, l.title, l.description, l.dlocation, 
              l.metadataurl, l.layerurl, l.ogrType, l.gdalType, l.dataFormat, 
              l.epsgcode, l.mapunits, 
              l.resolution, l.startDate, l.endDate, l.metalocation, 
@@ -354,6 +361,8 @@ DROP VIEW IF EXISTS lm3.lm_bktpalayer CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_bktpalayer (
    -- lm_palayer.*
    layerId,
+   verify, 
+   squid,
    lyruserId,
    layername,
    title,
@@ -391,7 +400,7 @@ CREATE OR REPLACE VIEW lm3.lm_bktpalayer (
    status,
    statusmodtime
    ) AS
-      SELECT pal.layerId, pal.lyruserId, pal.layername, pal.title, pal.description, 
+      SELECT pal.layerId, pal.verify, pal.squid, pal.lyruserId, pal.layername, pal.title, pal.description, 
              pal.lyrdlocation, pal.lyrmetadataurl, pal.layerurl, pal.ogrType, 
              pal.gdalType, pal.dataFormat, pal.epsgcode, pal.mapunits, pal.resolution, 
              pal.startDate, pal.endDate, pal.metalocation, pal.lyrdatecreated, 
@@ -410,6 +419,7 @@ DROP VIEW IF EXISTS lm3.lm_grdjob CASCADE;
 CREATE OR REPLACE VIEW lm3.lm_grdjob (
    -- lm_shapegrid
    layerId,
+   verify,
    lyruserId,
    layername,
    lyrdlocation,
@@ -446,7 +456,7 @@ CREATE OR REPLACE VIEW lm3.lm_grdjob (
    datecreated,
    lastheartbeat,
    retryCount)
-   AS SELECT s.layerId, s.lyruserId, s.layername, s.lyrdlocation, s.lyrmetadataurl, 
+   AS SELECT s.layerId, s.verify, s.lyruserId, s.layername, s.lyrdlocation, s.lyrmetadataurl, 
              s.ogrType, s.dataFormat, s.epsgcode, s.mapunits, s.bbox, 
              s.shapeGridId, s.cellsides, s.cellsize, s.vsize, s.idAttribute,
              s.xAttribute, s.yAttribute, s.shpstatus, s.shpstatusmodtime,
@@ -483,6 +493,7 @@ CREATE OR REPLACE VIEW lm3.lm_intJob (
    
    -- lm_shapegrid
    layerId,
+   verify,
    layername,
    lyrdlocation,
    lyrmetadataurl,
@@ -520,7 +531,7 @@ CREATE OR REPLACE VIEW lm3.lm_intJob (
    retryCount)
    AS SELECT e.experimentId, e.userId, e.expname, e.email, e.epsgcode, 
              e.metadataurl, b.bucketId, b.metadataurl, b.stage, b.status, 
-             s.layerId, s.layername, s.lyrdlocation, s.lyrmetadataurl, s.ogrType,
+             s.layerId, s.verify, s.layername, s.lyrdlocation, s.lyrmetadataurl, s.ogrType,
              s.dataFormat,  s.mapunits, s.bbox, s.shapeGridId, 
              s.cellsides, s.cellsize, s.vsize, s.idAttribute, s.xAttribute, s.yAttribute,
              s.shpstatus, s.shpstatusmodtime,
@@ -557,6 +568,7 @@ CREATE OR REPLACE VIEW lm3.lm_mtxJob (
    
       -- lm_shapegrid
    layerId,
+   verify,
    layername,
    lyrdlocation,
    lyrmetadataurl,
@@ -613,7 +625,7 @@ CREATE OR REPLACE VIEW lm3.lm_mtxJob (
    AS SELECT e.experimentId, e.userId, e.expname, e.email, e.epsgcode, 
              e.metadataurl, 
              b.bucketId, b.metadataurl, b.stage, b.status, b.pamDlocation,  
-             s.layerId, s.layername, s.lyrdlocation, s.lyrmetadataurl, s.ogrType,
+             s.layerId, s.verify, s.layername, s.lyrdlocation, s.lyrmetadataurl, s.ogrType,
              s.dataFormat,  s.mapunits, s.bbox, s.shapeGridId, 
              s.cellsides, s.cellsize, s.vsize, s.idAttribute, s.xAttribute, s.yAttribute,
              s.shpstatus, s.shpstatusModTime,
@@ -758,6 +770,8 @@ DROP TYPE IF EXISTS lm3.lm_layeridx CASCADE;
 CREATE TYPE lm3.lm_layeridx AS (
    -- Layer
    layerid int,
+   verify varchar,
+   squid varchar,
    lyruserid varchar,
    layername varchar,
    metadataurl varchar,

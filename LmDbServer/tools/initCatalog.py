@@ -49,7 +49,7 @@ from LmServer.rad.shapegrid import ShapeGrid
 
 
 # ...............................................
-def addDefaultUser(scribe):
+def addUsers(scribe):
    """
    @summary Adds algorithms to the database from the algorithm dictionary
    """
@@ -57,7 +57,14 @@ def addDefaultUser(scribe):
    defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
    scribe.log.info('  Inserting ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
    id = scribe.insertUser(defaultUser)
-   return id
+
+   anonName = 'anon'
+   anonEmail = '%s@nowhere.com' % anonName
+   anonUser = LMUser(anonName, anonEmail, anonEmail, modTime=DT.gmt().mjd)
+   scribe.log.info('  Inserting anon {} ...'.format(anonName))
+   id2 = scribe.insertUser(defaultUser)
+
+   return [id, id2]
 
 # ...............................................
 def addAlgorithms(scribe):
@@ -529,7 +536,7 @@ if __name__ == '__main__':
             logger.critical('Failed to open database')
             exit(0)
          
-         uId = addDefaultUser(scribe)
+         archiveUserId, anonUserId = addUsers(scribe)
          
          if action == 'all':
             aIds = addAlgorithms(scribe)

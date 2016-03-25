@@ -1609,6 +1609,8 @@ class RAD(DbPostgresql):
          dataformat = self._getColumnValue(row, idxs, ['dataformat'])
          desc = self._getColumnValue(row, idxs, ['description'])
          lyrid = self._getColumnValue(row, idxs, ['layerid'])
+         verify = self._getColumnValue(row, idxs, ['verify'])
+         squid = self._getColumnValue(row, idxs, ['squid'])
          lyrusr = self._getColumnValue(row, idxs, ['userid', 'lyruserid'])
          dloc = self._getColumnValue(row, idxs, ['dlocation', 'lyrdlocation'])
          # Try column names for most specific (subclassed) layer types first

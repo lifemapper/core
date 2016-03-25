@@ -146,13 +146,13 @@ create table lm3.ScientificName
 create table lm3.OccurrenceSet
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
+   verify varchar(32),
+   squid varchar(32),
    userId varchar(20) NOT NULL REFERENCES lm3.LMUser ON DELETE CASCADE,
    fromGbif boolean,
    displayName text,
-   
-   -- New
-   scientificNameId int REFERENCES lm3.ScientificName,
-   
+      
+   scientificNameId int REFERENCES lm3.ScientificName,   
    primaryEnv int,
    metadataUrl text UNIQUE,
    dlocation text,
@@ -185,6 +185,7 @@ CREATE INDEX idx_occLastModified ON lm3.OccurrenceSet(dateLastModified);
 CREATE INDEX idx_occLastChecked ON lm3.OccurrenceSet(dateLastChecked);
 CREATE INDEX idx_occUser ON lm3.OccurrenceSet(userId);
 CREATE INDEX idx_occStatus ON lm3.OccurrenceSet(status);
+CREATE INDEX idx_occSquid on lm3.OccurrenceSet(squid);
 
 
 -- -------------------------------
@@ -239,6 +240,8 @@ ALTER TABLE lm3.LayerType ADD CONSTRAINT unique_layertype UNIQUE (userid, code);
 create table lm3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
+   verify varchar(32),
+   squid varchar(32),
    userid varchar(20),
    name text,
    title text,
@@ -284,6 +287,7 @@ create table lm3.Layer
  ALTER TABLE lm3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
  ALTER TABLE lm3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
  CREATE INDEX spidx_layer ON lm3.Layer USING GIST ( geom );
+ CREATE INDEX idx_lyrSquid on lm3.Layer(squid);
 
 -- -------------------------------
 create table lm3.ScenarioLayers
@@ -358,6 +362,8 @@ CREATE INDEX idx_mdlStatus ON lm3.Model(status);
 create table lm3.Projection
 (
    projectionId serial UNIQUE PRIMARY KEY,
+   verify varchar(32),
+   squid varchar(32),
    metadataUrl text UNIQUE,
    modelId int REFERENCES lm3.Model ON DELETE CASCADE,
    scenarioCode varchar(30),
@@ -384,6 +390,7 @@ ALTER TABLE lm3.Projection ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom
 CREATE INDEX spidx_projection ON lm3.Projection USING GIST ( geom );
 CREATE INDEX idx_projLastModified ON lm3.Projection(statusModTime);
 CREATE INDEX idx_prjStatus ON lm3.Projection(status);
+CREATE INDEX idx_prjSquid on lm3.Projection(squid);
 
 -- ----------------------------------------------------------------------------
 create table lm3.Statistics

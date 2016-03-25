@@ -2636,7 +2636,7 @@ DECLARE
    i int := 0;
 BEGIN
    IF ispresenceabsence THEN
-      FOR rec in SELECT l.layerId, l.userId, l.layername, l.metadataurl, l.layerurl,
+      FOR rec in SELECT l.layerId, l.verify, l.squid, l.userId, l.layername, l.metadataurl, l.layerurl,
                         epl.presenceAbsenceId, epl.matrixidx, epl.experimentid
                     FROM lm3.Layer l, lm3.ExperimentPALayer epl
                     WHERE epl.experimentid = expid AND epl.layerId = l.layerId 
@@ -2645,7 +2645,7 @@ BEGIN
          RETURN NEXT rec;
       END LOOP;
    ELSE
-      FOR rec in SELECT l.layerId, l.userId, l.layername, l.metadataurl, l.layerurl,
+      FOR rec in SELECT l.layerId, l.verify, l.squid, l.userId, l.layername, l.metadataurl, l.layerurl,
                         eal.ancillaryValueId, eal.matrixidx, eal.experimentid
                     FROM lm3.Layer l, lm3.ExperimentAncLayer eal
                     WHERE eal.experimentid = expid AND eal.layerId = l.layerId 
