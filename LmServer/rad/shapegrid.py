@@ -21,8 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from osgeo import ogr
-from osgeo import osr
+from osgeo import ogr, osr
 import os
 from types import IntType
 import math
@@ -51,7 +50,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                 epsgcode, bounds, dlocation=None, 
                 ogrType=ogr.wkbPolygon, ogrFormat='ESRI Shapefile', 
                 siteId='siteid', siteX='centerX', siteY='centerY', size=None, 
-                userId=None, layerId=None, shapegridId=None, 
+                userId=None, layerId=None, shapegridId=None, verify=None, 
                 bucketId=None, status=None, statusModTime=None,
                 modTime=None, createTime=None, metadataUrl=None):
       """
@@ -96,7 +95,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       Vector.__init__(self, name=layername, bbox=bounds, dlocation=dlocation, 
          mapunits=mapunits, resolution=cellsize, epsgcode=epsgcode, ogrType=ogrType, 
          ogrFormat=ogrFormat, fidAttribute=siteId, 
-         svcObjId=shapegridId, lyrId=layerId, lyrUserId=userId, 
+         svcObjId=shapegridId, lyrId=layerId, lyrUserId=userId, verify=verify, 
          createTime=createTime, modTime=modTime, metadataUrl=metadataUrl, 
          serviceType=LMServiceType.LAYERS, moduleType=LMServiceModule.RAD)
       ProcessObject.__init__(self, objId=shapegridId, parentId=bucketId, 

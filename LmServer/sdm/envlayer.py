@@ -92,7 +92,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
    Class to hold a Raster object used for species distribution modeling.
    """
 # .............................................................................
-   def __init__(self, name, scencode=None, title=None,
+   def __init__(self, name, scencode=None, title=None, verify=None,
                 minVal=None, maxVal=None, nodataVal=None, valUnits=None,
                 isCategorical=False, bbox=None, dlocation=None, metalocation=None,
                 gdalType=None, gdalFormat=None, author=None, 
@@ -133,7 +133,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                       gdalType=gdalType, gdalFormat=gdalFormat, 
                       description=description,
                       isDiscreteData=isDiscreteData, svcObjId=layerId,
-                      lyrId=layerId, lyrUserId=userId, 
+                      lyrId=layerId, lyrUserId=userId, verify=verify, 
                       createTime=createTime, modTime=modTime,
                       metadataUrl=metadataUrl, serviceType=LMServiceType.LAYERS, 
                       moduleType=LMServiceModule.SDM)

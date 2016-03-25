@@ -261,6 +261,7 @@ class PresenceAbsenceRaster(_PresenceAbsence, Raster, ProcessObject):
                 attrAbsence=None, minAbsence=None, maxAbsence=None, 
                 percentAbsence=None, 
                 paUserId=None, paId=None, lyrUserId=None, lyrId=None, paLyrId=None,
+                verify=None, squid=None,
                 bucketId=None, status=None, statusModTime=None,
                 createTime=None, modTime=None, metadataUrl=None):
       """
@@ -330,6 +331,7 @@ class PresenceAbsenceRaster(_PresenceAbsence, Raster, ProcessObject):
                       gdalType=gdalType, gdalFormat=dataFormat, keywords=keywords,
                       description=description, 
                       svcObjId=paLyrId, lyrId=lyrId, lyrUserId=lyrUserId, 
+                      verify=verify, squid=squid,
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=LMServiceType.PRESENCEABSENCE_LAYERS, 
                       moduleType=LMServiceModule.RAD)
@@ -363,6 +365,7 @@ class PresenceAbsenceRaster(_PresenceAbsence, Raster, ProcessObject):
                  percentAbsence=paParam.percentAbsence,                
                  paUserId=paParam.getParametersUserId(), 
                  paId=paParam.getParametersId(), lyrId=rlayer.getLayerId(), 
+                 verify=rlayer.verify, squid=rlayer.squid,
                  lyrUserId=rlayer.getLayerUserId(), paLyrId=procObj.objId,
                  bucketId=procObj.parentId, 
                  status=procObj.status, statusModTime=procObj.statusModTime,

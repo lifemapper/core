@@ -92,6 +92,7 @@ class AncillaryVector(_AncillaryValue, Raster, ProcessObject):
                 attrValue=None, weightedMean=False, largestClass=False, 
                 minPercent=None, 
                 ancUserId=None, ancId=None, lyrId=None, lyrUserId=None, ancLyrId=None,
+                verify=None, squid=None,
                 bucketId=None, status=None, statusModTime=None,
                 createTime=None, modTime=None, metadataUrl=None,
                 serviceType=LMServiceType.ANCILLARY_LAYERS, 
@@ -118,6 +119,7 @@ class AncillaryVector(_AncillaryValue, Raster, ProcessObject):
                       isCategorical=isCategorical, keywords=keywords, 
                       description=description, 
                       svcObjId=ancLyrId, lyrId=lyrId, lyrUserId=lyrUserId,
+                      verify=verify, squid=squid,
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=serviceType, moduleType=moduleType )
       ProcessObject.__init__(self, objId=ancLyrId, parentId=bucketId, 
@@ -151,7 +153,8 @@ class AncillaryVector(_AncillaryValue, Raster, ProcessObject):
                  minAbsence=ancParam.minAbsence, maxAbsence=ancParam.maxAbsence, 
                  percentAbsence=ancParam.percentAbsence,                
                  paUserId=ancParam.getParametersUserId(), 
-                 paId=ancParam.getParametersId(), lyrId=vlayer.getLayerId(), 
+                 paId=ancParam.getParametersId(), lyrId=vlayer.getLayerId(),
+                 verify=vlayer.verify, squid=vlayer.squid, 
                  lyrUserId=vlayer.getLayerUserId(), ancLyrId=procObj.objId,
                  bucketId=procObj.parentId, 
                  status=procObj.status, statusModTime=procObj.statusModTime,
@@ -196,6 +199,7 @@ class AncillaryRaster(_AncillaryValue, Raster, ProcessObject):
                 matrixIndex=-1, attrValue=None, weightedMean=False, 
                 largestClass=False, minPercent=None, 
                 ancUserId=None, ancId=None, lyrUserId=None, lyrId=None, ancLyrId=None,
+                verify=None, squid=None,
                 bucketId=None, status=None, statusModTime=None,
                 createTime=None, modTime=None, metadataUrl=None):
       """
@@ -214,6 +218,7 @@ class AncillaryRaster(_AncillaryValue, Raster, ProcessObject):
                isCategorical=isCategorical, gdalType=gdalType, 
                gdalFormat=dataFormat, keywords=keywords, description=description, 
                svcObjId=ancLyrId, lyrId=lyrId, lyrUserId=lyrUserId, 
+               verify=verify, squid=squid,
                createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                serviceType=LMServiceType.ANCILLARY_LAYERS, 
                moduleType=LMServiceModule.RAD)
@@ -249,6 +254,7 @@ class AncillaryRaster(_AncillaryValue, Raster, ProcessObject):
                  percentAbsence=ancParam.percentAbsence,                
                  paUserId=ancParam.getParametersUserId(), 
                  paId=ancParam.getParametersId(), lyrId=rlayer.getLayerId(), 
+                 verify=rlayer.verify, squid=rlayer.squid,
                  lyrUserId=rlayer.getLayerUserId(), ancLyrId=procObj.objId,
                  bucketId=procObj.parentId, 
                  status=procObj.status, statusModTime=procObj.statusModTime,

@@ -86,7 +86,7 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
                 gdalType=None, gdalFormat=DEFAULT_PROJECTION_FORMAT,
                 mapunits=None, resolution=None, isDiscreteData=None,
                 #TODO: remove userId keyword parameter, not needed
-                userId=None, projectionId=None, 
+                userId=None, projectionId=None, verify=None, squid=None,
                 createTime=None, metadataUrl=None):
       """
       @summary Constructor for the Projection class
@@ -128,7 +128,7 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
          gdalFormat = ALGORITHM_DATA[model.algorithmCode]['outputFormat']
       ProcessObject.__init__(self, objId=projectionId, parentId=None, 
                              status=status, statusModTime=statusModTime)
-      Raster.__init__(self, bbox=bbox, 
+      Raster.__init__(self, bbox=bbox, verify=verify, squid=squid,
             startDate=scenario.startDate, endDate=scenario.endDate, 
             mapunits=mapunits, resolution=resolution, epsgcode=epsgcode, 
             dlocation=dlocation, gdalType=gdalType, gdalFormat=gdalFormat, 

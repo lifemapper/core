@@ -40,13 +40,13 @@ from LmServer.common.notifyJob import NotifyJob
 from LmServer.rad.anclayer import _AncillaryValue, AncillaryRaster, AncillaryVector
 from LmServer.rad.matrix import Matrix
 from LmServer.rad.matrixlayerset import MatrixLayerset
-from LmServer.rad.palayer import _PresenceAbsence, PresenceAbsenceRaster, PresenceAbsenceVector
+from LmServer.rad.palayer import (_PresenceAbsence, PresenceAbsenceRaster, 
+                                  PresenceAbsenceVector)
 from LmServer.rad.pamvim import PamSum
 from LmServer.rad.radbucket import RADBucket
 from LmServer.rad.radexperiment import RADExperiment
-from LmServer.rad.radJob import RADIntersectJob, RADSwapJob, \
-                               RADSplotchJob, RADCompressJob, \
-                               RADCalculateJob
+from LmServer.rad.radJob import (RADIntersectJob, RADSwapJob, RADSplotchJob, 
+                                 RADCompressJob, RADCalculateJob)
 from LmServer.rad.shapegrid import ShapeGrid
 
 # .............................................................................
@@ -498,8 +498,7 @@ class RAD(DbPostgresql):
 # ...............................................
    def deleteBucket(self, bktid):
       # Also deletes associated jobs
-      if success:
-         success = self.executeModifyFunction('lm_deleteBucket', bktid)
+      success = self.executeModifyFunction('lm_deleteBucket', bktid)
       return success
       
 # ...............................................
@@ -657,8 +656,7 @@ class RAD(DbPostgresql):
 # ...............................................
    def deletePamSum(self, psid):
       # Also deletes associated jobs
-      if success:
-         success = self.executeModifyFunction('lm_deletePamSum', psid)
+      success = self.executeModifyFunction('lm_deletePamSum', psid)
       return success
 
 # .............................................................................
@@ -1624,7 +1622,8 @@ class RAD(DbPostgresql):
          murl = self._getColumnValue(row, idxs, ['metadataurl', 'lyrmetadataurl'])
    
          if vtype is not None:
-            lyr = Vector(name=name, title=title, bbox=bbox, dlocation=dloc, 
+            lyr = Vector(name=name, title=title, bbox=bbox, dlocation=dloc,
+                      verify=verify, squid=squid, 
                       metalocation=mloc, startDate=sDate, endDate=eDate, 
                       mapunits=munits, resolution=res, epsgcode=epsg, 
                       ogrType=vtype, ogrFormat=dataformat, description=desc, 
@@ -1633,6 +1632,7 @@ class RAD(DbPostgresql):
                       moduleType=LMServiceModule.RAD)
          elif rtype is not None:
             lyr = Raster(name=name, title=title, bbox=bbox, dlocation=dloc,
+                      verify=verify, squid=squid,
                       metalocation=mloc, startDate=sDate, endDate=eDate, 
                       mapunits=munits, resolution=res, epsgcode=epsg, 
                       gdalType=rtype, gdalFormat=dataformat, description=desc, 
@@ -1798,6 +1798,7 @@ class RAD(DbPostgresql):
                    self._getColumnValue(row,idxs,['mapunits']), 
                    self._getColumnValue(row,idxs,['epsgcode']), 
                    self._getColumnValue(row,idxs,['bbox']),
+                   verify=self._getColumnValue(row,idxs,['verify']), 
                    dlocation=self._getColumnValue(row,idxs,['lyrdlocation']), 
                    siteId=self._getColumnValue(row,idxs,['idattribute']),
                    siteX=self._getColumnValue(row,idxs,['xattribute']),

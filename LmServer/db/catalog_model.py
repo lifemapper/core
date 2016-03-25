@@ -75,7 +75,6 @@ class MAL(DbPostgresql):
       @note: lm_insertModel(varchar, int, varchar, int, int, int, int, double, int) 
              returns int
       """
-      currTime = mx.DateTime.utc().mjd
       scen = mdl.getScenario()
       
       try:
@@ -118,8 +117,6 @@ class MAL(DbPostgresql):
       @param proj: a Projection object to be inserted
       @raise LMError: on failure to insert Projection. 
       """
-      currtime = mx.DateTime.utc().mjd
-      
       maskid = None
       if proj.getMask() is not None:
          maskid = proj.getMask().getId()
@@ -1677,9 +1674,7 @@ class MAL(DbPostgresql):
          lyr.setParametersId(envTypeId)
 
       lyrid = self.executeInsertFunction('lm_insertEnvLayer', 
-                                         # TODO: TEST THIS  Will this mess up existing mapfiles?
-                                         # Must: replace(metadataUrlprefix, '#id#', idstr)
-#                                          lyr.mapPrefix,
+                                         lyr.verify,
                                          lyr.metadataUrl,
                                          envTypeId,
                                          lyr.title,
@@ -2727,6 +2722,8 @@ class MAL(DbPostgresql):
          try:
             prj = SDMProjection(model, 
                              prjscenario, 
+                             verify=verify, 
+                             squid=squid,
                              mask=masklyr,
                              priority=priority,
                              metadataUrl=murl,
@@ -2916,6 +2913,7 @@ class MAL(DbPostgresql):
                      
          if vtype is not None:
             lyr = Vector(name=name, title=title, bbox=bbox, startDate=sDate, 
+                         verify=verify, squid=squid,
                          endDate=eDate, mapunits=munits, resolution=res, 
                          epsgcode=epsg, dlocation=dlocation, 
                          metalocation=mlocation, valAttribute=vattr, 
@@ -2927,6 +2925,7 @@ class MAL(DbPostgresql):
                          metadataUrl=murl, moduleType=LMServiceModule.SDM) 
          elif rtype is not None:
             lyr = Raster(name=name, title=title, bbox=bbox, startDate=sDate, 
+                         verify=verify, squid=squid,
                          endDate=eDate, mapunits=munits, resolution=res, 
                          epsgcode=epsg, dlocation=dlocation, 
                          metalocation=mlocation, minVal=minval, maxVal=maxval, 
@@ -3125,6 +3124,7 @@ class MAL(DbPostgresql):
          # Calculate and populate name in constructor
          # TODO: Require/Accept name from non-Archive User
          occ = OccurrenceLayer(dname, fromGbif=fromgbif, dlocation=dloc, 
+                               verify=verify, squid=squid,
                                metadataUrl=murl, queryCount=qcount,
                                modTime=modtime, touchTime=touchtime,
                                epsgcode=epsg, bbox=bbox, 

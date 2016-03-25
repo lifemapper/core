@@ -104,6 +104,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
                 ogrType=ogr.wkbPoint, ogrFormat='ESRI Shapefile', bbox=None,
                 featureAttributes={}, features={}, primaryEnv=None, sciName=None,
                 userId=ARCHIVE_USER, occId=None, metadataUrl=None,
+                verify=None, squid=None,
                 createTime=None, modTime=None, touchTime=0,
                 rawDLocation=None, status=None, statusModTime=None):
       """
@@ -143,6 +144,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
                       ogrType=ogrType, ogrFormat=ogrFormat, 
                       featureAttributes=featureAttributes, features=features,
                       svcObjId= occId, lyrId=occId, lyrUserId=userId, 
+                      verify=verify, squid=squid,
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=LMServiceType.OCCURRENCES, moduleType=LMServiceModule.SDM)
       self._rawDLocation = rawDLocation

@@ -33,15 +33,16 @@ from types import ListType, TupleType
 import zipfile
 
 from LmCommon.common.lmAttObject import LmAttObj
-from LmCommon.common.lmconstants import OutputFormat, DEFAULT_EPSG, \
-               SHAPEFILE_EXTENSIONS, SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, SHAPEFILE_EXTENSIONS, 
+                                         SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits)
+from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMError, LMObject, LMSpatialObject
 from LmServer.base.serviceobject import ServiceObject
 
-from LmServer.common.lmconstants import DEFAULT_WMS_FORMAT, LMFileType, \
-            DEFAULT_WCS_FORMAT, FeatureNames, OutputFormat, GDALFormatCodes, \
-            GDALDataTypes, OGRFormats, OGRDataTypes, LMServiceType, LMServiceModule
+from LmServer.common.lmconstants import (FeatureNames, OutputFormat, 
+            GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
+            LMServiceType)
 from LmServer.common.localconstants import TEMP_PATH
 
 # .............................................................................
@@ -86,8 +87,7 @@ class _Layer(LMSpatialObject, ServiceObject):
                              serviceType, moduleType=moduleType, 
                              metadataUrl=metadataUrl)
 #      ogr.UseExceptions()
-      self.verify = verify
-      self.squid = squid
+      self._verify = None
       self.name = name
       self._mapFilename = None
       self._dataFormat = dataFormat
@@ -97,6 +97,8 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._layerId = lyrId
       self._layerUserId = lyrUserId
       self.setDLocation(dlocation)
+      self._setVerify(verify)
+      self.squid = squid
       self._metalocation = metalocation
       self.title = title
       self.startDate = startDate
@@ -161,13 +163,42 @@ class _Layer(LMSpatialObject, ServiceObject):
       raise LMError(currargs='readData must be implemented in Subclass')
 
 # ...............................................
-   def _verifyData(self, dlocation=None):
+   def computeHash(self, dlocation=None):
       """
       @summary: Compute the sha256sum of the file at dlocation.
-      @TODO: complete this with commonly used library
+      @return: hash string for data file
       """
       if dlocation is None:
          dlocation = self._dlocation
+      value = computeHash(dlocation)
+      return value
+
+# ...............................................
+   def verifyHash(self, hash):
+      """
+      @summary: Compute the sha256sum of the file at dlocation.
+      @param hash: hash string to compare with data
+      """
+      if self._dlocation is not None:
+         verified = verifyHash(self._dlocation, hash)
+      else:
+         LMError('Cannot verify hash for missing data file {}'.format(self._dlocation))
+      return verified
+   
+# ...............................................
+   def _setVerify(self, verify):
+      if verify is not None:
+         self._verify = verify
+      elif self._dlocation is not None:
+         value = self.computeHash(self._dlocation)
+         self._verify = value
+      else:
+         self._verify = None
+
+# ...............................................
+   @property
+   def verify(self):
+      return self._verify
 
 # ...............................................
    def getMetaLocation(self): 
@@ -225,58 +256,6 @@ class _Layer(LMSpatialObject, ServiceObject):
       if self._baseFilename is None and self._dlocation is not None:
          self._absolutePath, self._baseFilename = os.path.split(self._dlocation)
       return self._baseFilename
-
-# # ...............................................
-#    def createLocalMapFilename(self):
-#       """
-#       @summary: Create mapfilename containing this layer.  
-#       @note: Mapfiles which are not default User mapfiles (using this method)
-#              (in /UserData/<userid>/<epsgcode> directory) should be created in 
-#              the appropriate Subclass (Scenario, EnvironmentalLayer, 
-#              OccurrenceSet, SDMProjections) 
-#       """
-#       fname = self._earlJr.createFilename(LMFileType.OTHER_MAP, usr=self._userId, 
-#                                            epsg=self._epsg)
-#       return fname
-#    
-# # ...............................................
-#    def setLocalMapFilename(self, mapfname=None):
-#       """
-#       @summary: Set absolute mapfilename containing this layer. 
-#       """
-#       if self._mapFilename is None:
-#          if mapfname is None:
-#             mapfname = self.createLocalMapFilename()
-#          self._mapFilename = mapfname
-         
-#    @property
-#    def mapName(self):
-#       basename = None
-#       if self._mapFilename is not None:
-#          pth, fname = os.path.split(self._mapFilename)
-#          basename, ext = os.path.splitext(fname)
-#       return basename 
-# 
-# # ...............................................
-#    def clearLocalMapfile(self):
-#       """
-#       @summary: Delete the mapfile containing this layer
-#       """
-#       if self._mapFilename is None:
-#          try:
-#             self.setLocalMapFilename()
-#          except:
-#             # Fails if we don't have dbId yet
-#             pass
-#       self.deleteLocalMapfile()
-#       self._mapFilename = None
-# 
-# # ...............................................
-#    def deleteLocalMapfile(self):
-#       """
-#       @summary: Delete the mapfile containing this layer
-#       """
-#       success, msg = self._deleteFile(self._mapFilename, deleteDir=True)
    
 # ...............................................
    def getSRSAsWkt(self):
@@ -379,8 +358,6 @@ class _LayerParameters(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-#   def __init__(self, matrixIndex, metadataUrl, metalocation, 
-#                paramUserId, paramId, lyrUserId, lyrId, modTime):
    def __init__(self, matrixIndex, modTime, userId, paramId, 
                 attrFilter=None, valueFilter=None):
       """
@@ -497,6 +474,7 @@ class Raster(_Layer):
                 mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
                 keywords=None, description=None, isDiscreteData=None,
                 svcObjId=None, lyrId=None, lyrUserId=None, 
+                verify=None, squid=None,
                 createTime=None, modTime=None, metadataUrl=None,
                 serviceType=LMServiceType.LAYERS, moduleType=None):
       """
@@ -534,7 +512,7 @@ class Raster(_Layer):
       _Layer.__init__(self, name, metalocation, dlocation, gdalFormat, title, 
                       bbox, startDate, endDate, mapunits, valUnits, 
                       isCategorical, resolution, keywords, epsgcode, 
-                      description, author, 
+                      description, author, verify=verify, squid=squid,
                       svcObjId=svcObjId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, 
                       metadataUrl=metadataUrl, serviceType=serviceType, 
@@ -617,19 +595,7 @@ class Raster(_Layer):
 
 # .............................................................................
 # Public methods
-# # .............................................................................
-#    def getHistogram(self):
-#       """
-#       @summary: Return an ordered list of values present in the raster ONLY
-#                 for 8-bit data.
-#       @return: An ordered list of integers between 0 and 255 representing 
-#                 values present in the raster.
-#       """
-#       vals = []
-#       if self.gdalType == gdalconst.GDT_Byte:
-#          geoFI = GeoFileInfo(self._dlocation)
-#          vals = geoFI.getHistogram(1)
-#       return vals
+# .............................................................................
 # ...............................................
    def _openWithGDAL(self, bandnum=1):
       """
@@ -668,44 +634,8 @@ class Raster(_Layer):
       return vals
    
 # ...............................................
-#    def getHistogram(self):
-#       """
-#       @summary: Return an ordered list of values present in the raster ONLY
-#                 for 8-bit data.
-#       @return: An ordered list of integers between 0 and 255 representing 
-#                 values present in the raster.
-#       """
-#       vals = []
-#       try:
-#          dataset = gdal.Open(str(self._dlocation), gdalconst.GA_ReadOnly)
-#          band = dataset.GetRasterBand(1)
-#       except Exception, e:
-#          raise LMError(['Unable to open file %s with GDAL (%s)' 
-#                         % self._dlocation, str(e)])
-#          
-#       # Get histogram only for 8bit data (projections)
-#       if band.DataType == gdalconst.GDT_Byte:
-#          hist = band.GetHistogram()
-#          for i in range(len(hist)):
-#             if i > 0 and i != self.nodata and hist[i] > 0:
-#                vals.append(i)
-#       else:
-#          print 'Histogram calculated only for 8-bit data'
-#       return vals
-
    def getIsDiscreteData(self):
       return self._isDiscreteData
-   
-## ...............................................
-#   def getSize(self):
-#      """
-#      @summary: Return a tuple of xsize and ysize (in pixels).
-#      @return: A tuple of size 2, where the first number is the number of 
-#               columns and the second number is the number of rows.
-#      """
-#      geoFI = GeoFileInfo(self._dlocation)
-#      size = (geoFI.xsize, geoFI.ysize)
-#      return size
    
 # ...............................................
    def getSize(self, bandnum=1):
@@ -1012,7 +942,7 @@ class Vector(_Layer):
                 featureCount=0, featureAttributes={}, features={}, fidAttribute=None, 
                 valAttribute=None, valUnits=None, isCategorical=False,
                 keywords=None, description=None, 
-                svcObjId=None, lyrId=None, lyrUserId=None,
+                svcObjId=None, lyrId=None, lyrUserId=None, verify=None, squid=None,
                 createTime=None, modTime=None, metadataUrl=None,
                 serviceType=LMServiceType.LAYERS, moduleType=None):
       """
@@ -1047,7 +977,7 @@ class Vector(_Layer):
       _Layer.__init__(self, name, metalocation, dlocation, ogrFormat, title, 
                       bbox, startDate, endDate, mapunits, valUnits, 
                       isCategorical, resolution, keywords, epsgcode, 
-                      description, author, 
+                      description, author, verify=verify, squid=squid,
                       svcObjId=svcObjId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=serviceType, moduleType=moduleType)
@@ -1246,21 +1176,7 @@ class Vector(_Layer):
          for fid, vals in features.iteritems():
             self._features[fid] = vals
          self._featureCount = len(self._features)
-   
-# ...............................................
-#   def setFeatureAttributes(self, featureAttributes):
-#      """
-#      @summary: Sets Vector._featureAttributes and Vector._geomIdx
-#      @param featureAttribues: a dictionary of featureAttributes, with key the 
-#                field index, and value a tuple of (fieldname, fieldtype).
-#      @note: fieldtype is an OGR constant
-#      """
-#      if featureAttributes:
-#         self._featureAttributes = featureAttributes
-#      else:
-#         self._featureAttributes = {}
-#      self._setGeometryIndex()
-      
+         
    def getFeatureAttributes(self):
       return self._featureAttributes
 
@@ -1309,12 +1225,6 @@ class Vector(_Layer):
             if colname in self.getLocalIdFieldNameOptions():
                self._localIdIdx = idx
                break
-
-#    # TODO: delete this one, 
-#    def _getLocalIdIndex(self):
-#       if self._localIdIdx is None:
-#          self._setLocalIdIndex()
-#       return self._localIdIdx
 
    def getLocalIdIndex(self):
       if self._localIdIdx is None:
@@ -1622,20 +1532,6 @@ class Vector(_Layer):
          print 'Failure to create new feature; Error: %s' % (str(e))
       return newFeat
    
-# # ...............................................
-#    @staticmethod
-#    def _setFeature(layer, feature):
-#       if feature is not None:
-#          try:
-#             layer.CreateFeature(feature)
-#          except Exception, e:
-#             print 'Failure to set feature; Error: %s' % (str(e))
-#          else:
-#             try:
-#                feature.Destroy()
-#             except Exception, e:
-#                print 'Failure to DESTROY feature; Error: %s' % (str(e))
-         
 # ...............................................
    @staticmethod
    def createPointFeature(oDict, xCol, yCol, lyrDef, newNames):
@@ -1911,33 +1807,6 @@ class Vector(_Layer):
             yCol = fldname
             
       return idCol, xCol, yCol
-#            
-## ...............................................
-#   def writeShapefileFromCSVPoint(self, inDLocation, outDLocation, 
-#                                  delimiter=';', quotechar='\"'):
-#      from osgeo.ogr import OFTReal, OFTString
-#      import csv
-#      
-#      self.clearFeatures()
-#      ptreader = csv.DictReader(f, delimiter=delim, quotechar=qchar)
-#      xname, yname = Vector._getXYfields(ptreader.fieldnames)
-#               
-#      if xCol is None or yCol is None:
-#         raise LMError('Must supply longitude and latitude')
-#         
-#      featAttrs = self.getUserPointFeatureAttributes()
-#      feats = {}
-#      for row in reader:
-#         try:
-#            id = row[idCol]
-#            x = row[xCol]
-#            y = row[yCol]
-#            feats[id] = self.getUserPointFeature(id, x, y)
-#         except:
-#            # Skip point if fails.  This could be a blank row or something
-#            pass
-#         
-#      self.setFeatures(feats, featAttrs)
       
 # ...............................................
    def writeTempFromZippedShapefile(self, zipdata, isTemp=True, overwrite=False):
@@ -2044,23 +1913,6 @@ class Vector(_Layer):
                      (str(fvals[self.getLocalIdIndex()])) )
             else:
                geom.AddGeometryDirectly(fgeom)
-#                # debugging
-#                if gtype == ogr.wkbMultiPoint:
-#                   x = fgeom.GetX()
-#                   y = fgeom.GetY()
-#                   if firstPoint:
-#                      minx = maxx = x
-#                      miny = maxy = y
-#                      firstPoint = False
-#                   else:
-#                      if x < minx:
-#                         minx = x 
-#                      elif x > maxx:
-#                         maxx = x
-#                      if y < miny:
-#                         miny = y 
-#                      elif y > maxy:
-#                         maxy = y
          
          self._geometry = geom
          
@@ -2143,8 +1995,6 @@ class Vector(_Layer):
          newds.Destroy()
       except Exception, e:
          raise LMError(currargs='Failed to copy data source')
-#       else:
-#          self._deleteShapefiles(otherlocation=sourceDataLocation)
 
 # ...............................................
    def verifyField(self, dlocation, ogrFormat, attrname):
@@ -2352,7 +2202,6 @@ class Vector(_Layer):
       @todo: Save the rest of the fields using Vector.splitCSVPointsToShapefiles
       @todo: remove featureLimit, read subsetDLocation if there is a limit 
       """
-      from osgeo.ogr import OFTReal, OFTString
       import csv
       idCol = None
       xCol = None
@@ -2581,106 +2430,3 @@ class Vector(_Layer):
          elif val is not None and val != 'None':
             feat.SetField(fldname, val)
       
-# # .............................................................................
-# # Generic Vector class with ServiceObject properties (inherits from ServiceObject, Vector)
-# # .............................................................................
-# class ServiceVector(ServiceObject, Vector):
-# 
-#    def __init__(self, name=None, title=None, author=None, bbox=None, startDate=None, 
-#                 endDate=None, mapunits=None, resolution=None, 
-#                 epsgcode=DEFAULT_EPSG, dlocation=None, metalocation=None, 
-#                 ogrType=None, dataFormat=None, 
-#                 featureAttributes={}, features={}, fidAttribute=None,
-#                 valAttribute=None, valUnits=None, isCategorical=False,
-#                 description=None, keywords=None, 
-#                 lyrId=None, userId=None, createTime=None, modTime=None,
-#                 metadataUrl=None):
-#       """
-#       @copydoc LmServer.base.serviceobject.ServiceObject::__init__
-#       @copydoc LmServer.base.layer.Vector::__init__
-#       """
-#       ServiceObject.__init__(self,  userId, lyrId, createTime, modTime,
-#                              metadataUrl=metadataUrl)      
-#       Vector.__init__(self, name=name, title=title, author=author, bbox=bbox, 
-#                       startDate=startDate, endDate=endDate, mapunits=mapunits, 
-#                       resolution=resolution, 
-#                       epsgcode=epsgcode, dlocation=dlocation,
-#                       metalocation=metalocation,
-#                       ogrType=ogrType, ogrFormat=dataFormat, 
-#                       featureAttributes=featureAttributes, features=features, fidAttribute=fidAttribute, 
-#                       valAttribute=valAttribute, valUnits=valUnits, 
-#                       isCategorical=isCategorical,
-#                       keywords=keywords, description=description )
-#       # Filled in by subclass
-#       self._mapPrefix = None
-#       
-# # ...............................................
-#    @classmethod
-#    def initFromParts(cls, vlayer, svcObj):
-#       lyr = ServiceVector.__init__(self, name=vlayer.name, title=vlayer.title,
-#                author=vlayer.author, bbox=vlayer.bbox, startDate=vlayer.startDate, 
-#                endDate=vlayer.endDate, mapunits=vlayer.mapUnits, 
-#                resolution=vlayer.resolution, epsgcode=vlayer.epsgcode, 
-#                dlocation=vlayer.getDLocation(), 
-#                metalocation=vlayer.getMetaLocation(), 
-#                ogrType=vlayer.ogrType, dataFormat=vlayer.dataFormat, 
-#                featureAttributes=vlayer.getFeatureAttributes(), 
-#                features=vlayer.getFeatures(), fidAttribute=vlayer.fidAttribute,
-#                valAttribute=vlayer.getValAttribute(), valUnits=vlayer.valUnits, 
-#                isCategorical=vlayer.isCategorical,
-#                description=vlayer.description, keywords=vlayer.keywords, 
-#                lyrId=vlayer.getLayerId(), 
-#                lyrUserId=vlayer.getLayerUserId(), createTime=svcObj.createTime, 
-#                modTime=svcObj.modTime, metadataUrl=svcObj.metadataUrl)
-#       return lyr
-#    
-# # .............................................................................
-# # Generic Raster class with ServiceObject properties (inherits from ServiceObject, Raster)
-# # .............................................................................
-# class ServiceRaster(ServiceObject, Raster):
-# 
-#    def __init__(self, name=None, title=None, bbox=None, startDate=None, 
-#                 endDate=None, mapunits=None, resolution=None, 
-#                 epsgcode=DEFAULT_EPSG, dlocation=None, metalocation=None,
-#                 minVal=None, maxVal=None, nodataVal=None, valUnits=None,
-#                 isCategorical=None, isDiscreteData=None,
-#                 gdalType=None, dataFormat=None, author=None, description=None, 
-#                 keywords=None, userId=None, lyrId=None, 
-#                 createTime=None, modTime=None, metadataUrl=None):
-#       """
-#       @copydoc LmServer.base.serviceobject.ServiceObject::__init__()
-#       @copydoc LmServer.base.layer.Raster::__init__()
-#       """
-#       ServiceObject.__init__(self,  userId, lyrId, createTime, modTime,
-#                              metadataUrl=metadataUrl)
-#       Raster.__init__(self, name=name, title=title, author=author, bbox=bbox, 
-#                       startDate=startDate, endDate=endDate, mapunits=mapunits, 
-#                       resolution=resolution, 
-#                       epsgcode=epsgcode, dlocation=dlocation, metalocation=metalocation,
-#                       minVal=minVal, maxVal=maxVal, nodataVal=nodataVal, 
-#                       valUnits=valUnits, isCategorical=isCategorical,
-#                       gdalType=gdalType, gdalFormat=dataFormat, 
-#                       keywords=keywords, description=description,
-#                       isDiscreteData=isDiscreteData)
-#       # Filled in by subclass
-#       self._mapPrefix = None
-#       
-# # ...............................................
-#    @classmethod
-#    def initFromParts(cls, rlayer, svcObj):
-#       lyr = ServiceRaster.__init__(self, name=rlayer.name, title=rlayer.title, 
-#                bbox=rlayer.bbox, startDate=rlayer.startDate, endDate=rlayer.endDate, 
-#                mapunits=rlayer.mapUnits, resolution=rlayer.resolution, 
-#                epsgcode=rlayer.epsgcode, dlocation=rlayer.getDLocation(), 
-#                metalocation=rlayer.getMetaLocation(), minVal=rlayer.minVal, 
-#                maxVal=rlayer.maxVal, nodataVal=rlayer.nodataVal, 
-#                valUnits=rlayer.valUnits, isCategorical=rlayer.isCategorical, 
-#                isDiscreteData=rlayer.getIsDiscreteData(), gdalType=rlayer.gdalType, 
-#                dataFormat=rlayer.dataFormat, author=rlayer.author, 
-#                description=rlayer.description, keywords=rlayer.keywords,
-#                userId=rlayer.getLayerUserId(), lyrId=rlayer.getLayerId(), 
-#                createTime=svcObj.createTime, modTime=svcObj.modTime, 
-#                metadataUrl=svcObj.metadataUrl)
-#       return lyr
-#    
-   
