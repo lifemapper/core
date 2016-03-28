@@ -231,7 +231,7 @@ def _calcRasterLargestClassColumn(areaDict, minPercent):
    for siteidx, (summary, cellarea) in areaDict.iteritems():
       maxArea = max(summary.values())
       if maxArea / cellarea >= minPercent:
-         layerArray[siteidx] = maxArea
+         layerArray[siteidx] = summary.keys()[summary.values().index(maxArea)]
       else:
          layerArray[siteidx] = np.nan
    return layerArray      
