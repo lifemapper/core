@@ -390,13 +390,16 @@ class svc(object):
       uLog = getUserLog(sessionUser)
       method = cherrypy.request.method
       bodyRaw = cherrypy.request.body
-      try: # CherryPy 3.1
-         body = ''.join(bodyRaw.readlines())
+      try: # CherryPy 3.8 
+         body =   cherrypy.request.params['request'].fullvalue().replace('\r\n', '\n').replace('\r', '\n')
       except:
-         try: # CherryPy 3.2
-            body = bodyRaw.fullvalue()
+         try: # CherryPy 3.1
+            body = ''.join(bodyRaw.readlines())
          except:
-            body = None
+            try: # CherryPy 3.2
+               body = bodyRaw.fullvalue()
+            except:
+               body = None
       respFormat = DEFAULT_INTERFACE
       if len(virpath) > 0:
          respFormat = virpath[-1]
