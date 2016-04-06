@@ -252,6 +252,7 @@ CREATE OR REPLACE VIEW lm3.lm_bktanclayer (
    -- lm_anclayer.* 
    layerId,
    verify,
+   squid,
    lyruserId,
    layername,
    title,
@@ -287,7 +288,7 @@ CREATE OR REPLACE VIEW lm3.lm_bktanclayer (
    status,
    statusmodtime
    ) AS
-      SELECT al.layerId, al.verify, al.lyruserId, al.layername, al.title, al.description,
+      SELECT al.layerId, al.verify, al.squid, al.lyruserId, al.layername, al.title, al.description,
              al.lyrdlocation, al.lyrmetadataurl, al.layerurl, al.ogrType,
              al.gdalType, al.dataFormat, al.epsgcode, al.mapunits, al.resolution, 
              al.startDate, al.endDate, al.metalocation, al.lyrdatecreated,  

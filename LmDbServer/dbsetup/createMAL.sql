@@ -288,6 +288,7 @@ create table lm3.Layer
  ALTER TABLE lm3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
  CREATE INDEX spidx_layer ON lm3.Layer USING GIST ( geom );
  CREATE INDEX idx_lyrSquid on lm3.Layer(squid);
+ CREATE INDEX idx_lyrVerify on lm3.Layer(verify);
 
 -- -------------------------------
 create table lm3.ScenarioLayers

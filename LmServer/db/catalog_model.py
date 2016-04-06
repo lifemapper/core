@@ -124,6 +124,8 @@ class MAL(DbPostgresql):
          maskid = proj.getScenario().layers[0].getId()
                
       pid = self.executeInsertFunction('lm_insertProjection', 
+                                      proj.verify,
+                                      proj.squid,
                                       proj.getModel().getId(), 
                                       proj.getScenario().getId(), 
                                       maskid,
@@ -1662,11 +1664,8 @@ class MAL(DbPostgresql):
       @note: Layer should already have name, filename, and url populated.
       @note: We are setting the layername to the layertype to ensure that they 
              will be unique within a scenario
-      @note: lm_insertEnvLayer(int, varchar, varchar, varchar, varchar, 
-                varchar, varchar, double, double, double, varchar, varchar, int,
-                double, double, varchar, double, int, varchar, double, varchar, 
-                varchar) returns int
-      @note lm_insertLayerTypeKeyword(int, int, varchar) returns int
+      @note: lm_insertEnvLayer(...) returns int
+      @note lm_insertLayerTypeKeyword(...) returns int
       """
       lyr.modTime = mx.DateTime.utc().mjd
       envTypeId = self._insertEnvironmentalTypeFromLayer(lyr)
@@ -1724,6 +1723,8 @@ class MAL(DbPostgresql):
          wkt = lyr.getFeaturesWkt()
       # This updates the metadataUrl and dlocation to new values (incl layerid)
       lyrid = self.executeInsertFunction('lm_insertAncillaryLayer', 
+                                         lyr.verify,
+                                         lyr.squid,
                                          lyr.getUserId(),
                                          lyr.name,
                                          lyr.title,
@@ -2019,6 +2020,8 @@ class MAL(DbPostgresql):
          polywkt = None
          pointswkt = None
       occid = self.executeInsertFunction('lm_insertOccurrenceSet', 
+                                      occ.verify,
+                                      occ.squid,
                                       occ.getUserId(),
                                       occ.fromGbif,
                                       occ.displayName, occ.getDLocation(), 

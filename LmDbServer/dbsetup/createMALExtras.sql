@@ -244,7 +244,8 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertEnvLayer(lyrurl varchar, 
+CREATE OR REPLACE FUNCTION lm3.lm_insertEnvLayer(lyrverify varchar,
+                                             lyrurl varchar, 
                                              lyrtypeid int,
                                              lyrtitle varchar,
                                              lyrname varchar, 
@@ -293,13 +294,13 @@ BEGIN
       BEGIN      
          -- Default LM EPSG Code
          IF epsg = 4326 THEN 
-            INSERT INTO lm3.Layer (layerTypeId, metadataUrl, title, name, 
+            INSERT INTO lm3.Layer (verify, layerTypeId, metadataUrl, title, name, 
                                minVal, maxVal, nodataVal, valUnits, 
                                iscategorical, dlocation, metalocation, 
                                dataformat, gdalType, startDate, endDate, mapunits, 
                                resolution, epsgcode, userid, dateLastModified, 
                                description, bbox, geom)
-            VALUES (lyrtypeid, lyrurl, lyrtitle, lyrname, 
+            VALUES (lyrverify, lyrtypeid, lyrurl, lyrtitle, lyrname, 
                     vmin, vmax, vnodata, vunits, iscat, dloc, mloc, 
                     dformat, gtype, stdt, enddt, munits, 
                     res, epsg, usr, modtime, 
@@ -307,13 +308,13 @@ BEGIN
          
          -- Other EPSG Codes skip geometry
          ELSE
-            INSERT INTO lm3.Layer (layerTypeId, metadataUrl, title, name, 
+            INSERT INTO lm3.Layer (verify, layerTypeId, metadataUrl, title, name, 
                                minVal, maxVal, nodataVal, valUnits, 
                                iscategorical, dlocation, metalocation, 
                                dataformat, gdalType, startDate, endDate, mapunits, 
                                resolution, epsgcode, userid, dateLastModified, 
                                description, bbox)
-            VALUES (lyrtypeid, lyrurl, lyrtitle, lyrname, 
+            VALUES (lyrverify, lyrtypeid, lyrurl, lyrtitle, lyrname, 
                     vmin, vmax, vnodata, vunits, iscat, dloc, mloc, 
                     dformat, gtype, stdt, enddt, munits, 
                     res, epsg, usr, modtime, descr, bboxstring);
@@ -1752,7 +1753,9 @@ $$ LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- Find or insert occurrenceSet and return id.  Return -1 on failure.
-CREATE OR REPLACE FUNCTION lm3.lm_insertOccurrenceSet(usrid varchar,
+CREATE OR REPLACE FUNCTION lm3.lm_insertOccurrenceSet(lyrverify varchar,
+                                                  lyrsquid varchar,
+                                                  usrid varchar,
                                                   frmgbif boolean,
                                                   name varchar,
                                                   dloc varchar,
@@ -1781,11 +1784,11 @@ BEGIN
          -- Default LM EPSG Code
          IF epsg = 4326 THEN 
             INSERT INTO lm3.OccurrenceSet 
-               (userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
+               (verify, squid, userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
                 dateLastChecked, epsgcode, bbox, geom, geompts,
                 primaryEnv, rawdlocation, status, statusModTime, scientificNameId)
             VALUES 
-               (usrid, frmgbif, name, dloc, qrynum, qrytime, 
+               (lyrverify, lyrsquid, usrid, frmgbif, name, dloc, qrynum, qrytime, 
                 qrytime, epsg, bounds, 
                 ST_GeomFromText(polywkt, epsg), ST_GeomFromText(pointswkt, epsg),
                 env, rdloc, stat, stattime, scinameid);
@@ -1793,11 +1796,11 @@ BEGIN
          -- Other EPSG Codes skip geometry
          ELSE 
             INSERT INTO lm3.OccurrenceSet 
-               (userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
+               (verify, squid, userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
                 dateLastChecked, epsgcode, bbox,
                 primaryEnv, rawdlocation, status, statusModTime, scientificNameId)
             VALUES 
-               (usrid, frmgbif, name, dloc, qrynum, qrytime, 
+               (lyrverify, lyrsquid, usrid, frmgbif, name, dloc, qrynum, qrytime, 
                 qrytime, epsg, bounds, env, rdloc, stat, stattime, scinameid);
 
          END IF;
@@ -1840,7 +1843,9 @@ END;
 $$ LANGUAGE 'plpgsql' STABLE; 
                                                                         
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertAncillaryLayer(usr varchar,
+CREATE OR REPLACE FUNCTION lm3.lm_insertAncillaryLayer(lyrverify varchar,
+                                                lyrsquid varchar,
+                                                usr varchar,
                                                 lyrname varchar, 
                                                 lyrtitle varchar,
                                                 lyrdesc varchar,
@@ -1880,24 +1885,24 @@ BEGIN
       BEGIN
          -- Default LM EPSG Code
          IF epsg = 4326 THEN 
-            INSERT INTO lm3.Layer (userid, name, title, description, dlocation, 
+            INSERT INTO lm3.Layer (verify, squid, userid, name, title, description, dlocation, 
                                 metadataUrl, gdalType, ogrType, dataFormat, 
                                 epsgcode, mapunits, resolution, valAttribute, 
                                 startDate, endDate, dateLastModified, 
                                 nodataVal, minVal, maxVal, valUnits, bbox, geom)
-            VALUES (usr, lyrname, lyrtitle, lyrdesc, dloc, lyrurl, 
+            VALUES (lyrverify, lyrsquid, usr, lyrname, lyrtitle, lyrdesc, dloc, lyrurl, 
                     gtype, otype, fmtcode, epsg, munits, res, vname, 
                     stdt, enddt, modtime, nodata, minv, maxv, vunits, 
                     bboxstring, ST_GeomFromText(wkt, epsg));
          
          -- Any other EPSG Code
          ELSE
-            INSERT INTO lm3.Layer (userid, name, title, description, dlocation, 
+            INSERT INTO lm3.Layer (verify, squid, userid, name, title, description, dlocation, 
                                 metadataUrl, gdalType, ogrType, dataFormat, epsgcode, mapunits, 
                                 resolution, valAttribute, startDate, endDate, 
                                 dateLastModified, 
                                 nodataVal, minVal, maxVal, valUnits, bbox)
-            VALUES (usr, lyrname, lyrtitle, lyrdesc, dloc, lyrurl, 
+            VALUES (lyrverify, lyrsquid, usr, lyrname, lyrtitle, lyrdesc, dloc, lyrurl, 
                     gtype, otype, fmtcode, epsg, munits, res, vname, 
                     stdt, enddt, modtime, nodata, minv, maxv, vunits, bboxstring);
          END IF;
@@ -2304,7 +2309,9 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- Insert a new, initialized but not yet created, projection into the database
 -- Returns -1 on failure (pre-existing projection with modelid,scenarioid).
-CREATE OR REPLACE FUNCTION lm3.lm_insertProjection(mdlid int,
+CREATE OR REPLACE FUNCTION lm3.lm_insertProjection(lyrverify varchar,
+                                               lyrsquid varchar,
+                                               mdlid int,
                                                scenid int, 
                                                mskid int,
                                                createtm double precision,
@@ -2338,19 +2345,19 @@ BEGIN
          -- Default LM EPSG Code
          IF epsg = 4326 THEN 
             INSERT INTO lm3.Projection 
-               (modelId, scenarioCode, scenarioId, maskId, createTime, status, 
+               (verify, squid, modelId, scenarioCode, scenarioId, maskId, createTime, status, 
                 statusModTime, priority, units, resolution, epsgcode, bbox, geom)
                VALUES 
-               (mdlid, scencode, scenid, mskid, createtm, stat, 
+               (lyrverify, lyrsquid, mdlid, scencode, scenid, mskid, createtm, stat, 
                 createtm, prty, rstunits, rstres, epsg, bounds, ST_GeomFromText(wkt, epsg));
                       
          -- Other EPSG Code skip geometry
          ELSE
             INSERT INTO lm3.Projection 
-               (modelId, scenarioCode, scenarioId, maskId, createTime, status, 
+               (verify, squid, modelId, scenarioCode, scenarioId, maskId, createTime, status, 
                 statusModTime, priority, units, resolution, epsgcode, bbox)
                VALUES 
-               (mdlid, scencode, scenid, mskid, createtm, stat, 
+               (lyrverify, lyrsquid, mdlid, scencode, scenid, mskid, createtm, stat, 
                 createtm, prty, rstunits, rstres, epsg, bounds);
          END IF;
          

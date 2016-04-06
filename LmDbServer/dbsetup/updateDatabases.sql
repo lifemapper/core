@@ -3,6 +3,7 @@
 
 alter table lm3.layer add column verify varchar(32);
 alter table lm3.layer add column squid varchar(32);
+CREATE INDEX idx_lyrVerify on lm3.Layer(verify);
 CREATE INDEX idx_lyrSquid on lm3.Layer(squid);
 
 alter table lm3.occurrenceset add column verify varchar(32);
@@ -17,6 +18,7 @@ CREATE INDEX idx_prjSquid on lm3.Projection(squid);
 \c speco
 alter table lm3.layer add column verify varchar(32);
 alter table lm3.layer add column squid varchar(32);
+CREATE INDEX idx_lyrVerify on lm3.Layer(verify);
 CREATE INDEX idx_lyrSquid on lm3.Layer(squid);
 
 -- ----------------------------------------------------------------------------

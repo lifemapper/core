@@ -303,7 +303,8 @@ END;
 $$ LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertShapeGrid(usr varchar,
+CREATE OR REPLACE FUNCTION lm3.lm_insertShapeGrid(lyrverify varchar,
+                                              usr varchar,
                                               csides int,
                                               csize double precision,
                                               vsz int,
@@ -335,7 +336,7 @@ BEGIN
    IF NOT FOUND THEN
       begin
          -- get or insert layer 
-         SELECT lm3.lm_insertLayer(usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
+         SELECT lm3.lm_insertLayer(lyrverify, null, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
                                null, datafmt, epsg, mpunits, null, null, null, 
                                metaloc, modtime, modtime, bboxstr, bboxwkt, murlprefix)  
                 INTO lyrid;          
@@ -821,7 +822,9 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertLayer(usr varchar,
+CREATE OR REPLACE FUNCTION lm3.lm_insertLayer(lyrverify varchar,
+                                          lyrsquid varchar,
+                                          usr varchar,
                                           lyrname varchar, 
                                           lyrtitle varchar,
                                           lyrdesc varchar,
@@ -858,21 +861,21 @@ BEGIN
       BEGIN
          RAISE NOTICE 'This layer not FOUND';
          IF epsg = 4326 THEN 
-            INSERT INTO lm3.Layer (userId, layername, title, description, dlocation, 
+            INSERT INTO lm3.Layer (verify, squid, userId, layername, title, description, dlocation, 
                                ogrtype, gdaltype, dataformat, 
                                epsgcode, mapunits,
                                 resolution, startDate, endDate, metalocation,
                                 datecreated, datelastmodified, bbox, geom)
-            VALUES (usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, rtype,
+            VALUES (lyrverify, lyrsquid, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, rtype,
                     datafmt, epsg, munits, res, startdt, enddt, metaloc, 
                     createtime, modtime, bboxstr, ST_GeomFromText(bboxwkt, epsg));
          ELSE  --non-epsg:4326
-            INSERT INTO lm3.Layer (userId, layername, title, description, dlocation,
+            INSERT INTO lm3.Layer (verify, squid, userId, layername, title, description, dlocation,
                                ogrtype, gdaltype, dataformat, 
                                epsgcode, mapunits,
                                 resolution, startDate, endDate, metalocation,
                                datecreated, datelastmodified, bbox)
-            VALUES (usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, rtype,
+            VALUES (lyrverify, lyrsquid, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, rtype,
                     datafmt, epsg, munits, res, startdt, enddt, metaloc, 
                     createtime, modtime, bboxstr);         
          END IF;   
@@ -1553,7 +1556,9 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertAncLayer(usr varchar,
+CREATE OR REPLACE FUNCTION lm3.lm_insertAncLayer(lyrverify varchar,
+                                             lyrsquid varchar,
+                                             usr varchar,
                                              expid int,
                                              lyrname varchar, 
                                              lyrtitle varchar,
@@ -1594,7 +1599,7 @@ BEGIN
    END IF;
    
    -- get or insert layer 
-   SELECT lm3.lm_insertLayer(usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
+   SELECT lm3.lm_insertLayer(lyrverify, lyrsquid, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
                          rtype, datafmt, epsg, munits, res, startdt, enddt, metaloc, 
                          createtime, modtime, bboxstr, bboxwkt, murlprefix)  INTO lyrid;          
    IF lyrid = -1 THEN
@@ -2518,7 +2523,9 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- select * from lm3.lm_insertPALayer('HuwPrice',14,'Acabaria_Projection_2374610',NULL,NULL,'/share/data/archive/HuwPrice/4326/Acabaria_Projection_2374610.tif','http://sporks.nhm.ku.edu/ogc?map=usr_HuwPrice_4326&layers=Acabaria_Projection_2374610',NULL,1,'GTiff',4326,'dd',0.25,NULL,NULL,NULL,57008.9540555,57008.9540555,'-180.00,-90.00,180.00,90.00','POLYGON((-180.0 -90.0,-180.0 90.0,180.0 90.0,180.0 -90.0,-180.0 -90.0))','pixel','30','254','30',NULL,NULL,NULL,NULL,'http://sporks.nhm.ku.edu/services/rad/layers/19');
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertPALayer(usr varchar,
+CREATE OR REPLACE FUNCTION lm3.lm_insertPALayer(lyrverify varchar,
+                                            lyrsquid varchar,
+                                            usr varchar,
                                             expid int,
                                             lyrname varchar, 
                                             lyrtitle varchar,
@@ -2564,7 +2571,7 @@ BEGIN
    END IF;
 
    -- get or insert layer 
-   SELECT lm3.lm_insertLayer(usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
+   SELECT lm3.lm_insertLayer(lyrverify, lyrsquid, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
                          rtype, datafmt, epsg, munits, res, startdt, enddt, metaloc, 
                          createtime, modtime, bboxstr, bboxwkt, murlprefix) INTO lyrid;   
    IF lyrid = -1 THEN
