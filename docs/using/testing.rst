@@ -6,7 +6,7 @@ Use a testing suite to run tests.  To start, the base testing suite class can
 be used to run simple system test. Available options can be found by calling
 the suite script with -h or --help::
 
-   cjgrady@sporks:~/git/core/LmCommon/tools/testing$ python testSuite.py --help
+   $ $PYTHON /opt/lifemapper/LmCommon/tools/testing/testSuite.py --help
    usage: Lifemapper Testing Suite [-h] [-v] [-o OUTPUT] [-e ERROR] [-d OUTDIR]
                                    [--pedantic] [--quickStop] [--summarize]
                                    [--testLevel TESTLEVEL]
@@ -45,7 +45,8 @@ If you use the summary flag, test results will be listed under three categories,
 
 Example output::
    
-   cjgrady@sporks:~/git/core/LmCommon/tools/testing$ python testSuite.py --summarize --pedantic -t ~/git/core/LmCommon/tests/config/
+   $ $PYTHON /opt/lifemapper/LmCommon/tools/testing/testSuite.py \
+     --summarize --pedantic -t /opt/lifemapper/LmCommon/tests/config/
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     Successful Tests
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     ---------------------
    08 Feb 2016 17:11 MainThread.log.info line 113 INFO     Test Free Memory in 3.00472903252 seconds
@@ -81,18 +82,22 @@ LmCommon Tests
 **************
 .. code-block:: 
 
-   $ /opt/python/bin/python /opt/lifemapper/LmCommon/tools/testing/testSuite.py -t /opt/lifemapper/LmCommon/tests/config/ --summarize
+   $ $PYTHON /opt/lifemapper/LmCommon/tools/testing/testSuite.py -t \
+     /opt/lifemapper/LmCommon/tests/config/ --summarize
 
 
 LmWebServer Tests
 *****************
 .. code-block::
 
-   $ /opt/python/bin/python /opt/lifemapper/LmWebServer/tools/testing/lmTests/webTestSuite.py -t /opt/lifemapper/LmWebServer/tests/config/clients/ /opt/lifemapper/LmWebServer/tests/config/webTests/ --summarize Dermot Dermot
+   $ $PYTHON /opt/lifemapper/LmWebServer/tools/testing/lmTests/webTestSuite.py -t \
+     /opt/lifemapper/LmWebServer/tests/config/clients/ \
+     /opt/lifemapper/LmWebServer/tests/config/webTests/ --summarize Dermot Dermot
 
 LmCompute Tests (from the nodes)
 ********************************
 .. code-block::
 
-   $ /opt/python/bin/python /opt/lifemapper/LmCompute/tools/testing/computeTestSuite.py -t /opt/lifemapper/LmCompute/tests/config/sampleJobs/ --summarize
+   $ $PYTHON /opt/lifemapper/LmCompute/tools/testing/computeTestSuite.py -t \
+     /opt/lifemapper/LmCompute/tests/config/sampleJobs/ --summarize
    
