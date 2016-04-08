@@ -25,9 +25,10 @@
           02110-1301, USA.
 """
 import json
+import idigbio, requests
 import re
-from types import BooleanType, DictionaryType, FloatType, IntType, ListType, \
-                  StringType, TupleType, UnicodeType
+from types import (BooleanType, DictionaryType, FloatType, IntType, ListType, 
+                   StringType, TupleType, UnicodeType)
 import urllib, urllib2
 import xml.etree.ElementTree as ET
 
@@ -35,17 +36,26 @@ from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
          BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_NAME_KEY, BISON_OCC_FILTERS, 
          BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_FILTERS, BISON_TSN_LIST_KEYS,
          BISON_BINOMIAL_REGEX, BISON_OCCURRENCE_URL,
+         
          GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
-#          IDIGBIO_AGG_SPECIES_GEO_MIN_40, IDIGBIO_BINOMIAL_KEYS, 
-#          IDIGBIO_BINOMIAL_REGEX, IDIGBIO_FILTERS, IDIGBIO_URL_PREFIX, 
-#          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, IDIGBIO_QFILTERS, 
-#          IDIGBIO_SPECIMENS_BY_BINOMIAL, 
-         ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, 
+         
+         IDIGBIO_FIELDS_DESIRED, IDIGBIO_SEARCH_LIMIT, 
+         IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
+         IDIGBIO_RECORD_INDEX_KEY,
+         
+         IDIGBIO_BINOMIAL_KEYS, IDIGBIO_NAME_KEY,
+         IDIGBIO_BINOMIAL_REGEX, IDIGBIO_FILTERS, IDIGBIO_URL_PREFIX, 
+         IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, IDIGBIO_QFILTERS, 
+         IDIGBIO_SPECIMENS_BY_BINOMIAL,  
+         IDIGBIO_NAME_POSTFIX_FILTER, 
+         IDIGBIO_OCCURRENCE_KEYS, 
+         
+         ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY,  
          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
          ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
          ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
-         ITIS_TAXONOMY_KEY, URL_ESCAPES,
-         HTTPStatus)
+         
+         URL_ESCAPES, HTTPStatus, DWCNames)
 
 # .............................................................................
 class APIQuery(object):
@@ -496,185 +506,125 @@ class GbifAPI(APIQuery):
       """
       APIQuery.query(self, outputType='json')
 
-# # .............................................................................
-# class IdigbioAPI(APIQuery):
-# # .............................................................................
-#    """
-#    Class to query iDigBio APIs and return results
-#    """
-# # ...............................................
-#    def __init__(self, qFilters={}, otherFilters={}, filterString=None,
-#                 headers={'Content-Type': 'application/json'}):
-#       """
-#       @summary: Constructor for IdigbioAPI class      
-#       """
-#       # Add Q filters for this instance
-#       for key, val in IDIGBIO_QFILTERS.iteritems():
-#          qFilters[key] = val
-#       # Add other filters for this instance
-#       for key, val in IDIGBIO_FILTERS.iteritems():
-#          otherFilters[key] = val
-#           
-#       idigSearchUrl = '/'.join((IDIGBIO_OCCURRENCE_URL, IDIGBIO_SEARCH_QUERY_KEY))
-#           
-#       APIQuery.__init__(self, idigSearchUrl, qFilters=qFilters, 
-#                         otherFilters=otherFilters, filterString=filterString, 
-#                         headers=headers)
-#        
-# # ...............................................
-#    @classmethod
-#    def initFromUrl(cls, url, headers={'Content-Type': 'application/json'}):
-#       base, filters = url.split('?')
-#       if base == IDIGBIO_OCCURRENCE_URL:
-#          qry = IdigbioAPI(filterString=filters)
-#       else:
-#          raise Exception('iDigBio occurrence API must start with %s' 
-#                          % IDIGBIO_OCCURRENCE_URL)
-#       return qry
-#        
-# # ...............................................
-#    def _burrow(self, keylst):
-#       dict = self.output
-#       for key in keylst:
-#          dict = dict[key]
-#       return dict
-#           
-# # ...............................................
-#    def getBinomial(self):
-#       """
-#       @summary: Returns a list of dictionaries where each dictionary is an 
-#                 occurrence record
-#       """
-#       if self.debug:
-#          print self.url
-#       if self.output is None:
-#          self.query()
-#       dataList = self._burrow(IDIGBIO_BINOMIAL_KEYS)
-#       binomialList = []
-#       filtered = []
-#       print 'Distinct scientific names count = %d' % (len(dataList))
-#       for entry in dataList:
-#          matches = re.match(IDIGBIO_BINOMIAL_REGEX, entry[IDIGBIO_NAME_KEY])
-#          if matches:
-#             if not matches.group(2) == IDIGBIO_NAME_POSTFIX_FILTER:
-#                binomialList.append(entry)
-#             else:
-#                if self.debug:
-#                   filtered.append(entry[IDIGBIO_NAME_KEY])
-#          else:
-#             if self.debug:
-#                filtered.append(entry[IDIGBIO_NAME_KEY])
-#       print 'Distinct binomials count = %d' % (len(binomialList))
-#       if self.debug:
-#          print 'Filtered:', filtered
-#       return binomialList
-#   
-# # ...............................................
-#    def getSpecimensByBinomial(self):
-#       """
-#       @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
-#       """
-#       if self.debug:
-#          print self.url
-#       if self.output is None:
-#          self.query()
-#       specimenList = []
-#       dataList = self._burrow(IDIGBIO_OCCURRENCE_KEYS)
-#       for entry in dataList:
-#          specimenList.append(entry[IDIGBIO_OCCURRENCE_CONTENT_KEY])
-#       return specimenList
-#  
-# # ...............................................
-#    def getOccurrences(self, asShapefile=False):
-#       """
-#       @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
-#       """
-#       if self.debug:
-#          print self.url
-#       if self.output is None:
-#          self.query()
-#       specimenList = []
-#       dataList = self._burrow(IDIGBIO_OCCURRENCE_KEYS)
-#       for entry in dataList:
-#          specimenList.append(entry[IDIGBIO_OCCURRENCE_CONTENT_KEY])
-#       return specimenList
-#  
-# # ...............................................
-#    def query(self):
-#       """
-#       @summary: Queries the API and sets 'output' attribute to a JSON object 
-#       """
-#       APIQuery.query(self, outputType='json')
+# .............................................................................
+class IdigbioAPI(APIQuery):
+# .............................................................................
+   """
+   Class to query iDigBio APIs and return results
+   """
+# ...............................................
+   def __init__(self, qFilters={}, otherFilters={}, filterString=None,
+                headers={'Content-Type': 'application/json'}):
+      """
+      @summary: Constructor for IdigbioAPI class      
+      """
+      idigSearchUrl = '/'.join((IDIGBIO_URL_PREFIX, IDIGBIO_SEARCH_POSTFIX, 
+                                IDIGBIO_OCCURRENCE_POSTFIX))
+      # Add Q filters for this instance
+      for key, val in IDIGBIO_QFILTERS.iteritems():
+         qFilters[key] = val
+      # Add other filters for this instance
+      for key, val in IDIGBIO_FILTERS.iteritems():
+         otherFilters[key] = val
+           
+      APIQuery.__init__(self, idigSearchUrl, qFilters=qFilters, 
+                        otherFilters=otherFilters, filterString=filterString, 
+                        headers=headers)
+
+        
+# ...............................................
+   def query(self):
+      """
+      @note: outputType is json
+      """
+      flds = ["uuid","scientificname","dwc:decimalLatitude","dwc:decimalLongitude"]
+      api = idigbio.json()
+      rqStr = json.dumps(self._qFilters)
+      self.output = api.search_records(rq=rqStr)
+
+      print self.output
+  
+# ...............................................
+   def getOccurrences(self, asShapefile=False):
+      """
+      @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
+      """
+      if self.output is None:
+         self.query()
+      specimenList = []
+      for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
+         newitem = {}
+         for data in item[IDIGBIO_RECORD_CONTENT_KEY]:
+            newitem[data] = item[data]
+         for idx in item[IDIGBIO_RECORD_INDEX_KEY]:
+            if idx == 'geopoint':
+               newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = \
+                  item[IDIGBIO_RECORD_INDEX_KEY][idx]['lon']
+               newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = \
+                  item[IDIGBIO_RECORD_INDEX_KEY][idx]['lat']
+            else:
+               newitem[idx] = item[IDIGBIO_RECORD_INDEX_KEY][idx]
+         specimenList.append(newitem)            
+      return specimenList
       
 
 # .............................................................................
 # .............................................................................
 
 if __name__ == '__main__':
-#    spnames = ('Regulus calendula', 'Phainopepla nitens', 'Piranga ludoviciana', 
-#               'Piranga flava', 'Hippodamia convergens', 'Catharus fuscescens', 
-#               'Helichus suturalis', 'Regulus satrapa', 'Myadestes townsendi', 
-#               'Sialia mexicana', 'Hylaeus modestus', 'Catharus guttatus', 
-#               'Catharus ustulatus', 'Catharus minimus', 'Sialia sialis', 
-#               'Polioptila caerulea', 'Polioptila melanura')
-   tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
-                       otherFilters=BISON_TSN_FILTERS)
-   tsnList = tsnQuery.getBinomialTSNs()
-   print len(tsnList)
-    
-   tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
-   response = {u'facet_counts': 
-               {u'facet_ranges': {}, 
-                u'facet_fields': {u'TSNs': tsnList}
-                }
-               }
- 
-   loopCount = 0
-   occAPI = None
-   taxAPI = None
-    
-   for tsnPair in tsnList:
-      tsn = int(tsnPair[0])
-      count = int(tsnPair[1])
-  
-#       taxAPI = ItisAPI(otherFilters={ITIS_TAXONOMY_KEY: tsn})
-#       taxPath = taxQuery.getTSNHierarchy()
-#       for tax in taxPath:
-#          print str(tax)
-  
-      newQ = {BISON_HIERARCHY_KEY: '*-%d-*' % tsn}
-      occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
-      print occAPI.url
-      occList = occAPI.getTSNOccurrences()
-      print 'Received %d occurrences for TSN %d' % (len(occList), tsn)
-        
-      tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-' % tsn}, 
-                        otherFilters={'rows': 1})
-      hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
-      name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)
-      print name, hier
-        
-      GbifAPI.getTaxonomy(1000225)
-        
-      # Only loop twice for debugging
-      loopCount += 1
-      if loopCount > 2:
-         break
-# 
-#       """
-# # .............................................................................
-# # Main method to (a) retrieve all scientific names in iDigBio, (b) keep only
-# # binomials, (c) for each binomial create a list of other names to be included
-# # (usually subspecies and names with authors), and (d) retrieve occurrences
-# # for each species.
-# # .............................................................................
-#       """
-# 
+#    # ******************* BISON ********************************
+#    tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
+#                        otherFilters=BISON_TSN_FILTERS)
+#    tsnList = tsnQuery.getBinomialTSNs()
+#    print len(tsnList)
+#      
+#    tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
+#    response = {u'facet_counts': 
+#                {u'facet_ranges': {}, 
+#                 u'facet_fields': {u'TSNs': tsnList}
+#                 }
+#                }
+#   
+#    loopCount = 0
+#    occAPI = None
+#    taxAPI = None
+#      
+#    for tsnPair in tsnList:
+#       tsn = int(tsnPair[0])
+#       count = int(tsnPair[1])
+#    
+#       newQ = {BISON_HIERARCHY_KEY: '*-%d-*' % tsn}
+#       occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
+#       print occAPI.url
+#       occList = occAPI.getTSNOccurrences()
+#       print 'Received %d occurrences for TSN %d' % (len(occList), tsn)
+#          
+#       tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-' % tsn}, 
+#                         otherFilters={'rows': 1})
+#       hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
+#       name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)
+#       print name, hier
+#         
+#    # ******************* GBIF ********************************
+#       GbifAPI.getTaxonomy(1000225)
+#         
+#       # Only loop twice for debugging
+#       loopCount += 1
+#       if loopCount > 2:
+#          break
+
+   # .............................................................................
+   # Main method to (a) retrieve all scientific names in iDigBio, (b) keep only
+   # binomials, (c) for each binomial create a list of other names to be included
+   # (usually subspecies and names with authors), and (d) retrieve occurrences
+   # for each species.
+   # .............................................................................
+
+   # ******************* iDigBio ********************************
 #    scinameQuery = IdigbioAPI(filterString="source=" + 
 #                              IDIGBIO_AGG_SPECIES_GEO_MIN_40)
 #    binomials = scinameQuery.getBinomial()
-#    #print binomials
-# 
+#    print binomials
 #    for id, binomial in enumerate(binomials):
 #       if id > 10:
 #          quit()
@@ -684,4 +634,44 @@ if __name__ == '__main__':
 #                                                         binomial[IDIGBIO_NAME_KEY]))
 #          specimens = specimenQuery.getSpecimensByBinomial()
 #          print "Retrieved %d specimens as %s" % (len(specimens), binomial[IDIGBIO_NAME_KEY])
+   
+   fname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
+   try:
+      f = open(fname, 'r')
+   except:
+      raise Exception('Failed to open {}'.format(fname))
+   
+   speciesList = []
+   for i in range(5):
+      vals = []
+      binomial = None
+      line = f.readline()
+      tempvals = line.strip().split()
+      if len(tempvals) < 3:
+         print('Missing data in line {}'.format(line))
+      for v in tempvals:
+         if v.isdigit():
+            vals.append(int(v))
+         elif v.isalpha():
+            if binomial is None:
+               binomial = v
+            else:
+               binomial = ' '.join([binomial, v])
+      vals.append(binomial)
+      speciesList.append(vals)
+   f.close()
+
+   speciesList = [[4639168, 106, 'kormagnostus simplex']]
+   for gbifTaxonid, idigTaxonid, binomial in speciesList:
+      qfilters = {'scientificname': binomial}
+      api = IdigbioAPI(qFilters=qfilters)
+      specimens = api.getOccurrences()
+      
+   for key, val in specimens[50].iteritems():
+      print key, ' --- ', val
+
+print "Retrieved %d specimens for gbif taxonid %s" % (len(specimens), gbifTaxonid)
+   
+      
+ 
 
