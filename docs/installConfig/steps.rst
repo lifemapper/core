@@ -43,6 +43,17 @@ LmCompute Roll Install
 Lifemapper update steps
 #######################
    
+Updating a System with both LmCompute and LmServer
+**************************************************
+#. Update LmCompute and LmServer with new LmCompute roll, 
+   lifemapper-lmserver rpm for LmServer code, rocks-lifemapper rpm for LmServer 
+   configuration.  Configuration changes should be implemented in the 
+   rocks-lifemapper script 'updateLM' in the /opt/lifemapper/rocks/bin directory.  
+   Full instructions at:
+   https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/UpdatingCombinedSystem.rst
+
+Updating a System with only LmServer
+************************************
 #. Update LmServer source code with new lifemapper-lmserver rpm for code,
    and rocks-lifemapper rpm for configuration.  One-time configuration changes 
    may be needed and should be implemented in the rocks-lifemapper script
@@ -52,6 +63,8 @@ Lifemapper update steps
    **Do not** re-install the LmServer roll, as that will destroy the existing 
    database.
    
+Updating a System with only LmCompute
+*************************************
 #. Update LmCompute source code with new lifemapper-lmcompute rpm for code,
    and rocks-lmcompute rpm for configuration.  One-time configuration changes 
    may be needed and should be implemented in the rocks-lmcompute script
