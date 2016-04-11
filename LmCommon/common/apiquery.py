@@ -25,30 +25,25 @@
           02110-1301, USA.
 """
 import json
-import idigbio, requests
-import re
+import requests, idigbio
+# import re
 from types import (BooleanType, DictionaryType, FloatType, IntType, ListType, 
                    StringType, TupleType, UnicodeType)
 import urllib, urllib2
 import xml.etree.ElementTree as ET
 
 from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
-         BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_NAME_KEY, BISON_OCC_FILTERS, 
-         BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_FILTERS, BISON_TSN_LIST_KEYS,
-         BISON_BINOMIAL_REGEX, BISON_OCCURRENCE_URL,
+         BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_NAME_KEY, 
+         BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_LIST_KEYS,
+         BISON_OCCURRENCE_URL, BISON_BINOMIAL_REGEX, BISON_TSN_FILTERS, 
+         BISON_OCC_FILTERS,
          
          GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
          
-         IDIGBIO_FIELDS_DESIRED, IDIGBIO_SEARCH_LIMIT, 
+         IDIGBIO_FILTERS, IDIGBIO_QFILTERS, IDIGBIO_ID_FIELD,
          IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
-         IDIGBIO_RECORD_INDEX_KEY,
-         
-         IDIGBIO_BINOMIAL_KEYS, IDIGBIO_NAME_KEY,
-         IDIGBIO_BINOMIAL_REGEX, IDIGBIO_FILTERS, IDIGBIO_URL_PREFIX, 
-         IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, IDIGBIO_QFILTERS, 
-         IDIGBIO_SPECIMENS_BY_BINOMIAL,  
-         IDIGBIO_NAME_POSTFIX_FILTER, 
-         IDIGBIO_OCCURRENCE_KEYS, 
+         IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_URL_PREFIX, 
+         IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
          
          ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY,  
          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
@@ -63,11 +58,12 @@ class APIQuery(object):
    Class to query APIs and return results
    """
    def __init__(self, baseurl, 
-                qFilters={}, otherFilters={}, filterString=None, 
+                qKey = None, qFilters={}, otherFilters={}, filterString=None, 
                 headers={}):
       """
       @summary Constructor for the APIQuery class
       """
+      self._qKey = qKey
       self.headers = headers
       # No added filters are on url (unless initialized with filters in url)
       self.baseurl = baseurl
@@ -138,7 +134,7 @@ class APIQuery(object):
          allFilters = self._otherFilters.copy()
          if self._qFilters:
             qVal = self._assembleQVal(self._qFilters)
-            allFilters['q'] = qVal
+            allFilters[self._qKey] = qVal
          filterString = self._assembleKeyValFilters(allFilters)
       return filterString
 
@@ -202,48 +198,103 @@ class APIQuery(object):
       return qval
 
 # ...............................................
-   def query(self, outputType='json'):
-#       # Also Works
+   def queryOld(self):
+      """
+      @summary: Queries the API and sets 'output' attribute to a JSON object 
+      """
+#       # or ...
 #       response = urllib2.urlopen(fullUrl.decode('utf-8'))
-      data = retcode = None
-      
-      if self._qFilters:
-         # All q and other filters are on url
-         req = urllib2.Request(self.url, None, self.headers)
-      else:
-         if self._otherFilters:
-            data = urllib.urlencode(self._otherFilters)
-         # Any filters are in data
-         req = urllib2.Request(self.baseurl, data, self.headers)
+      data = retcode = None       
+      req = urllib2.Request(self.url, None, self.headers)
+#       if self._qFilters:
+#          # All q and other filters are on url
+#          req = urllib2.Request(self.url, None, self.headers)
+#       else:
+#          if self._otherFilters:
+#             data = urllib.urlencode(self._otherFilters)
+#          # Any filters are in data
+#          req = urllib2.Request(self.baseurl, data, self.headers)
       try:
          response = urllib2.urlopen(req)
          retcode = response.getcode()
       except Exception, e:
          if retcode is None:
             retcode = HTTPStatus.INTERNAL_SERVER_ERROR
-         raise Exception(retcode, msg='Failed on URL {}; ({})'.format(
-                                        self.url, str(e)))
+         raise Exception('Failed on URL {}; ({})'.format(self.url, str(e)))
       else:
          try:
             output = response.read()
          except Exception, e:
-            raise Exception(HTTPStatus.INTERNAL_SERVER_ERROR, 
-              msg='Failed to read output of URL {}; ({})'.format(self.url, str(e)))
-         
+            raise Exception('Failed to read output of URL {}; ({})'.format(
+                              self.url, str(e)))
+          
+      try:
+         self.output = json.loads(output)
+      except Exception, e:
+         raise Exception('Failed to interpret output of URL {}; ({})'.format(
+                           self.url, str(e)))
+
+# ...............................................
+   def queryByGet(self, outputType='json'):
+      """
+      @summary: Queries the API and sets 'output' attribute to a JSON object 
+      """
+      data = retcode = None
+      try:
+         response = requests.get(self.url, headers=self.headers)
+      except Exception, e:
+         try:
+            retcode = response.status_code
+            reason = response.reason
+         except:
+            reason = 'Unknown Error'
+         raise Exception('Failed on URL {}, code = {}, reason = {} ({})'
+                         .format(self.url, retcode, reason, str(e)))
+       
       try:
          if outputType == 'json':
-            self.output = json.loads(output)
-         elif outputType == 'xml':
-            root = ET.fromstring(output)
-            self.output = root
+            self.output = response.json()
          else:
-            print 'Unrecognized output type %s' % str(outputType)
-            self.output = None   
+            self.output = response.content
       except Exception, e:
-         raise Exception(HTTPStatus.INTERNAL_SERVER_ERROR,
-                msg='Failed to interpret output of URL {}; ({})'.format(self.url, 
-                                                                        str(e)))
+         raise Exception('Failed to interpret output of URL {} ({})'
+               .format(self.url, str(e)))
+
+# ...............................................
+   def queryByPost(self, outputType='json'):
+      allParams = self._otherFilters.copy()
+      allParams[self._qKey] = self._qFilters
+      queryAsString = json.dumps(allParams)
+      try:
+         response = requests.post(self.baseurl, 
+                                  data=queryAsString,
+                                  headers=self.headers)
+      except Exception, e:
+         try:
+            retcode = response.status_code
+            reason = response.reason
+         except:
+            retcode = HTTPStatus.INTERNAL_SERVER_ERROR
+            reason = 'Unknown Error'
+         raise Exception('Failed on URL {}, code = {}, reason = {} ({})'.format(
+                           self.url, retcode, reason, str(e)))
       
+      if response.ok:
+         try:
+            if outputType == 'json':
+               self.output = response.json()
+            elif outputType == 'xml':
+               output = response.text
+               self.output = ET.fromstring(output)
+            else:
+               print 'Unrecognized output type %s' % str(outputType)
+               self.output = None   
+         except Exception, e:
+            raise Exception('Failed to interpret output of URL {}, content = {}; ({})'
+                            .format(self.url, response.content, str(e)))
+      else:
+         print 'Did not return OK'
+         self.output = None      
 
 # .............................................................................
 class BisonAPI(APIQuery):
@@ -257,15 +308,17 @@ class BisonAPI(APIQuery):
       """
       @summary: Constructor for BisonAPI class      
       """
-      # Add Q filters for this instance
-      for key, val in BISON_QFILTERS.iteritems():
-         qFilters[key] = val
-      # Add other filters for this instance
-      for key, val in BISON_FILTERS.iteritems():
-         otherFilters[key] = val
+      allQFilters = BISON_QFILTERS.copy()
+      for key, val in qFilters.iteritems():
+         allQFilters[key] = val
          
-      APIQuery.__init__(self, BISON_OCCURRENCE_URL, qFilters=qFilters, 
-                        otherFilters=otherFilters, filterString=filterString, 
+      # Add/replace other filters to defaults for this instance
+      allOtherFilters = BISON_FILTERS.copy()
+      for key, val in otherFilters.iteritems():
+         allOtherFilters[key] = val
+         
+      APIQuery.__init__(self, BISON_OCCURRENCE_URL, qKey='q', qFilters=allQFilters, 
+                        otherFilters=allOtherFilters, filterString=filterString, 
                         headers=headers)
       
 # ...............................................
@@ -278,7 +331,14 @@ class BisonAPI(APIQuery):
          raise Exception('Bison occurrence API must start with %s' 
                          % BISON_OCCURRENCE_URL)
       return qry
-      
+
+# ...............................................
+   def query(self):
+      """
+      @summary: Queries the API and sets 'output' attribute to a JSON object 
+      """
+      APIQuery.queryByGet(self, outputType='json')
+
 # ...............................................
    def _burrow(self, keylst):
       dict = self.output
@@ -298,11 +358,13 @@ class BisonAPI(APIQuery):
       @summary: Returns a list of dictionaries where each dictionary is an 
                 occurrence record
       """
+      dataList = None
       if self.output is None:
          self.query()
-      dataCount = self._burrow(BISON_COUNT_KEYS)
-      dataList = self._burrow(BISON_TSN_LIST_KEYS)
-      print 'Reported count = %d, actual count = %d' % (dataCount, len(dataList))
+      if self.output is not None:
+         dataCount = self._burrow(BISON_COUNT_KEYS)
+         dataList = self._burrow(BISON_TSN_LIST_KEYS)
+         print 'Reported count = %d, actual count = %d' % (dataCount, len(dataList))
       return dataList
 
 # ...............................................
@@ -329,18 +391,14 @@ class BisonAPI(APIQuery):
       """
       @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
       """
+      dataList = []
       if self.output is None:
          self.query()
-      dataCount = self._burrow(BISON_COUNT_KEYS)
-      dataList = self._burrow(BISON_RECORD_KEYS)
+      if self.output is not None:
+         dataCount = self._burrow(BISON_COUNT_KEYS)
+         print dataCount
+         dataList = self._burrow(BISON_RECORD_KEYS)
       return dataList
-
-# ...............................................
-   def query(self):
-      """
-      @summary: Queries the API and sets 'output' attribute to a JSON object 
-      """
-      APIQuery.query(self, outputType='json')
       
 # ...............................................
    def getFirstValueFor(self, fieldname):
@@ -420,7 +478,7 @@ class ItisAPI(APIQuery):
       """
       @summary: Queries the API and sets 'output' attribute to a ElementTree object 
       """
-      APIQuery.query(self, outputType='xml')
+      APIQuery.queryByGet(self, outputType='xml')
 
 # .............................................................................
 class GbifAPI(APIQuery):
@@ -504,7 +562,7 @@ class GbifAPI(APIQuery):
       """
       @summary: Queries the API and sets 'output' attribute to a ElementTree object 
       """
-      APIQuery.query(self, outputType='json')
+      APIQuery.queryByGet(self, outputType='json')
 
 # .............................................................................
 class IdigbioAPI(APIQuery):
@@ -513,37 +571,56 @@ class IdigbioAPI(APIQuery):
    Class to query iDigBio APIs and return results
    """
 # ...............................................
-   def __init__(self, qFilters={}, otherFilters={}, filterString=None,
+   def __init__(self, qFilters={}, otherFilters={}, 
                 headers={'Content-Type': 'application/json'}):
       """
       @summary: Constructor for IdigbioAPI class      
       """
       idigSearchUrl = '/'.join((IDIGBIO_URL_PREFIX, IDIGBIO_SEARCH_POSTFIX, 
                                 IDIGBIO_OCCURRENCE_POSTFIX))
-      # Add Q filters for this instance
-      for key, val in IDIGBIO_QFILTERS.iteritems():
-         qFilters[key] = val
-      # Add other filters for this instance
-      for key, val in IDIGBIO_FILTERS.iteritems():
-         otherFilters[key] = val
+      # Add/replace Q filters to defaults for this instance
+      allQFilters = IDIGBIO_QFILTERS.copy()
+      for key, val in qFilters.iteritems():
+         allQFilters[key] = val
+         
+      # Add/replace other filters to defaults for this instance
+      allOtherFilters = IDIGBIO_FILTERS.copy()
+      for key, val in otherFilters.iteritems():
+         allOtherFilters[key] = val
            
-      APIQuery.__init__(self, idigSearchUrl, qFilters=qFilters, 
-                        otherFilters=otherFilters, filterString=filterString, 
-                        headers=headers)
+      APIQuery.__init__(self, idigSearchUrl, headers=headers, qKey='rq',
+                        qFilters=allQFilters, otherFilters=allOtherFilters)
 
-        
+# # ...............................................
+#    def query2(self, offset=0, doAttribute=False):
+#       """
+#       @note: outputType is json
+#       """
+#       allParams = self._otherFilters.copy()
+#       allParams[self._qKey] = self._qFilters
+#       queryAsString = json.dumps(allParams)
+#       try:
+#          req = requests.post(self.baseurl, 
+#                              data=queryAsString, 
+#                              headers=self.headers)
+#          self.output = req.json()
+#       except Exception, e:
+#          try:
+#             retcode = req.status_code
+#             reason = req.reason
+#          except:
+#             retcode = HTTPStatus.INTERNAL_SERVER_ERROR
+#             reason = 'Unknown Error'
+#          raise Exception(retcode, 
+#                   msg='Failed on URL {}, code = {}, reason = {} ({})'.format(
+#                                  self.url, retcode, reason, str(e)))
 # ...............................................
    def query(self):
       """
-      @note: outputType is json
+      @summary: Queries the API and sets 'output' attribute to a JSON object 
       """
-      flds = ["uuid","scientificname","dwc:decimalLatitude","dwc:decimalLongitude"]
-      api = idigbio.json()
-      rqStr = json.dumps(self._qFilters)
-      self.output = api.search_records(rq=rqStr)
-
-      print self.output
-  
+      APIQuery.queryByPost(self, outputType='json')
+          
 # ...............................................
    def getOccurrences(self, asShapefile=False):
       """
@@ -552,19 +629,21 @@ class IdigbioAPI(APIQuery):
       if self.output is None:
          self.query()
       specimenList = []
+      success = 0
       for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
          newitem = {}
-         for data in item[IDIGBIO_RECORD_CONTENT_KEY]:
-            newitem[data] = item[data]
-         for idx in item[IDIGBIO_RECORD_INDEX_KEY]:
-            if idx == 'geopoint':
-               newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = \
-                  item[IDIGBIO_RECORD_INDEX_KEY][idx]['lon']
-               newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = \
-                  item[IDIGBIO_RECORD_INDEX_KEY][idx]['lat']
+         for dataFld, dataVal in item[IDIGBIO_RECORD_CONTENT_KEY].iteritems():
+            newitem[dataFld] = dataVal
+         for idxFld, idxVal in item[IDIGBIO_RECORD_INDEX_KEY].iteritems():
+            if idxFld == 'geopoint':
+               newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
+               newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
             else:
-               newitem[idx] = item[IDIGBIO_RECORD_INDEX_KEY][idx]
-         specimenList.append(newitem)            
+               newitem[idxFld] = idxVal
+               if idxFld == 'taxonid':
+                  success += 1
+         specimenList.append(newitem)
+      print 'With taxonid = ', success        
       return specimenList
       
 
@@ -572,75 +651,66 @@ class IdigbioAPI(APIQuery):
 # .............................................................................
 
 if __name__ == '__main__':
-#    # ******************* BISON ********************************
-#    tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
-#                        otherFilters=BISON_TSN_FILTERS)
+   # ******************* BISON ********************************
+   tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
+                       otherFilters=BISON_TSN_FILTERS)
+
+   qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
+               'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
+               'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
+   otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
+               'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
+   headers = {'Content-Type': 'application/json'}
+
 #    tsnList = tsnQuery.getBinomialTSNs()
 #    print len(tsnList)
-#      
-#    tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
-#    response = {u'facet_counts': 
-#                {u'facet_ranges': {}, 
-#                 u'facet_fields': {u'TSNs': tsnList}
-#                 }
-#                }
-#   
-#    loopCount = 0
-#    occAPI = None
-#    taxAPI = None
-#      
-#    for tsnPair in tsnList:
-#       tsn = int(tsnPair[0])
-#       count = int(tsnPair[1])
-#    
-#       newQ = {BISON_HIERARCHY_KEY: '*-%d-*' % tsn}
-#       occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
-#       print occAPI.url
-#       occList = occAPI.getTSNOccurrences()
-#       print 'Received %d occurrences for TSN %d' % (len(occList), tsn)
-#          
-#       tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-' % tsn}, 
-#                         otherFilters={'rows': 1})
-#       hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
-#       name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)
-#       print name, hier
-#         
-#    # ******************* GBIF ********************************
-#       GbifAPI.getTaxonomy(1000225)
-#         
-#       # Only loop twice for debugging
-#       loopCount += 1
-#       if loopCount > 2:
-#          break
-
-   # .............................................................................
-   # Main method to (a) retrieve all scientific names in iDigBio, (b) keep only
-   # binomials, (c) for each binomial create a list of other names to be included
-   # (usually subspecies and names with authors), and (d) retrieve occurrences
-   # for each species.
-   # .............................................................................
-
-   # ******************* iDigBio ********************************
-#    scinameQuery = IdigbioAPI(filterString="source=" + 
-#                              IDIGBIO_AGG_SPECIES_GEO_MIN_40)
-#    binomials = scinameQuery.getBinomial()
-#    print binomials
-#    for id, binomial in enumerate(binomials):
-#       if id > 10:
-#          quit()
-#       else:
-#          specimenQuery = IdigbioAPI(filterString="source=" + 
-#                   IDIGBIO_SPECIMENS_BY_BINOMIAL.replace("__BINOMIAL__", 
-#                                                         binomial[IDIGBIO_NAME_KEY]))
-#          specimens = specimenQuery.getSpecimensByBinomial()
-#          print "Retrieved %d specimens as %s" % (len(specimens), binomial[IDIGBIO_NAME_KEY])
+      
+   tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
+   tsnList = []
+   response = {u'facet_counts': 
+               {u'facet_ranges': {}, 
+                u'facet_fields': {u'TSNs': tsnList}
+                }
+               }
    
+   loopCount = 0
+   occAPI = None
+   taxAPI = None
+      
+   for tsnPair in tsnList:
+      tsn = int(tsnPair[0])
+      count = int(tsnPair[1])
+    
+      newQ = {BISON_HIERARCHY_KEY: '*-%d-*' % tsn}
+      occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
+      print occAPI.url
+      occList = occAPI.getTSNOccurrences()
+      count = None if not occList else len(occList)
+      print 'Received {} occurrences for TSN {}'.format(count, tsn)
+          
+      tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-' % tsn}, 
+                        otherFilters={'rows': 1})
+      hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
+      name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)
+      print name, hier
+#         
+   # ******************* GBIF ********************************
+   taxonid = 1000225
+   output = GbifAPI.getTaxonomy(taxonid)
+   print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
+         
+ 
+   # ******************* iDigBio ********************************
+   # Previous workflow: (a) retrieve all scientific names in iDigBio, (b) keep
+   # only binomials, (c) for each binomial create a list of other names to be 
+   # included (usually subspecies and names with authors), and (d) retrieve 
+   # occurrences for each species.
    fname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
    try:
       f = open(fname, 'r')
    except:
       raise Exception('Failed to open {}'.format(fname))
-   
+    
    speciesList = []
    for i in range(5):
       vals = []
@@ -660,18 +730,25 @@ if __name__ == '__main__':
       vals.append(binomial)
       speciesList.append(vals)
    f.close()
-
+ 
    speciesList = [[4639168, 106, 'kormagnostus simplex']]
    for gbifTaxonid, idigTaxonid, binomial in speciesList:
       qfilters = {'scientificname': binomial}
       api = IdigbioAPI(qFilters=qfilters)
       specimens = api.getOccurrences()
-      
-   for key, val in specimens[50].iteritems():
-      print key, ' --- ', val
-
+       
 print "Retrieved %d specimens for gbif taxonid %s" % (len(specimens), gbifTaxonid)
-   
-      
  
-
+baseurl = 'https://beta-search.idigbio.org/v2/search/records'
+idigParams = {
+            'fields': ['taxonid', 'kingdom', 'scientificname', 'uuid', 
+                       'basisofrecord', 'canonicalname', 'geopoint'], 
+             'no_attribution': True, 
+             'limit': 10, 
+#              'rq': {'taxonid': '4639168'}, 
+            'rq': {'canonicalname': 'peromyscus maniculatus'}, 
+            'rq': {'scientificname': 'peromyscus maniculatus'}, 
+             'offset': 0}
+headers = {'Content-Type': 'application/json'}
+url = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-100637-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil&rows=5000000&json.nl=arrarr&wt=json'
+url = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select?None=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-100637-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil&rows=5000000&json.nl=arrarr&wt=json'
