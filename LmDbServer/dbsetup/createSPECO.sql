@@ -82,8 +82,8 @@ create table lm3.LMJob
 create table lm3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
-   verify varchar(32),
-   squid varchar(32),
+   verify varchar(64),
+   squid varchar(64),
    userId varchar(20) NOT NULL,
    layername varchar(50) NOT NULL,
    title varchar(100),

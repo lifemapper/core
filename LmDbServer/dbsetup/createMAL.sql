@@ -146,8 +146,8 @@ create table lm3.ScientificName
 create table lm3.OccurrenceSet
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
-   verify varchar(32),
-   squid varchar(32),
+   verify varchar(64),
+   squid varchar(64),
    userId varchar(20) NOT NULL REFERENCES lm3.LMUser ON DELETE CASCADE,
    fromGbif boolean,
    displayName text,
@@ -240,8 +240,8 @@ ALTER TABLE lm3.LayerType ADD CONSTRAINT unique_layertype UNIQUE (userid, code);
 create table lm3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
-   verify varchar(32),
-   squid varchar(32),
+   verify varchar(64),
+   squid varchar(64),
    userid varchar(20),
    name text,
    title text,
@@ -363,8 +363,8 @@ CREATE INDEX idx_mdlStatus ON lm3.Model(status);
 create table lm3.Projection
 (
    projectionId serial UNIQUE PRIMARY KEY,
-   verify varchar(32),
-   squid varchar(32),
+   verify varchar(64),
+   squid varchar(64),
    metadataUrl text UNIQUE,
    modelId int REFERENCES lm3.Model ON DELETE CASCADE,
    scenarioCode varchar(30),
