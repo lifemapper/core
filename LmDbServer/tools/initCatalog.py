@@ -23,7 +23,6 @@
 """
 import mx.DateTime as DT
 import os
-from osgeo import ogr
 import sys
 
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
@@ -56,15 +55,15 @@ def addUsers(scribe):
    em = '%s@nowhere.com' % ARCHIVE_USER
    defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
    scribe.log.info('  Inserting ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
-   id = scribe.insertUser(defaultUser)
+   usrid = scribe.insertUser(defaultUser)
 
    anonName = 'anon'
    anonEmail = '%s@nowhere.com' % anonName
    anonUser = LMUser(anonName, anonEmail, anonEmail, modTime=DT.gmt().mjd)
    scribe.log.info('  Inserting anon {} ...'.format(anonName))
-   id2 = scribe.insertUser(defaultUser)
+   usrid2 = scribe.insertUser(anonUser)
 
-   return [id, id2]
+   return [usrid, usrid2]
 
 # ...............................................
 def addAlgorithms(scribe):
@@ -139,7 +138,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   lyrKeys = set()
    currtime = DT.gmt().mjd
    (starttime, endtime) = baseMeta['time']
    relativePath = os.path.join(pkgMeta['topdir'], baseMeta['directory'])
@@ -153,9 +151,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
       lyrtitle = _getbioName('%s, %s' % (ltvals['title'], baseMeta['title']),
                              pkgMeta['res'], suffix=pkgMeta['suffix'],
                              isTitle=True)
-      # TODO: this will be a locally unique identifier for seeding and
-      #       identifying layers between lmcompute and lmserver
-      lyrKeys.add(os.path.join(relativePath, fname))
       dloc = os.path.join(scenpth, fname)
       if not os.path.exists(dloc):
          raise LMError('Missing local data %s' % dloc)
@@ -180,7 +175,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
       layers.append(envlyr)
       if ltype in baseMeta['staticLayerTypes']:
          staticLayers[ltype] = envlyr
-   return layers, staticLayers, lyrKeys
+   return layers, staticLayers
 
 # ...............................................
 def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativePath, scendesc, 
@@ -188,7 +183,6 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
    """
    @summary Assembles layer metadata for a single layerset
    """
-   lyrKeys = set()
    currtime = DT.gmt().mjd
    layers = []
    rstType = None
@@ -202,7 +196,6 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
          lyrtitle = _getbioName('%s, IPCC %s %s, %s' % 
                                 (ltvals['title'], rpt, sfam, tm), 
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], isTitle=True)
-         lyrKeys.add(os.path.join(relativePath, fname))
          dloc = os.path.join(scenpth, fname)
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
@@ -226,7 +219,7 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
                   layerTypeDescription=ltvals['description'], 
                   userId=usr, createTime=currtime, modTime=currtime)
          layers.append(envlyr)
-   return layers, lyrKeys
+   return layers
       
 # ...............................................
 def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, 
@@ -246,7 +239,6 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
          lyrtitle = _getbioName('%s, %s' % (ltvals['title'], tmvals['name']),
                                 pkgMeta['res'], suffix=pkgMeta['suffix'], 
                                 isTitle=True)
-         lyrKeys.add(os.path.join(relativePath, fname))
          dloc = os.path.join(scenpth, fname)
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
@@ -394,26 +386,23 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    """
    msgs = []
    # Current
-   basescen, baseLyrKeys, staticLayers = createBaselineScenario(usr, pkgMeta, 
-                                                         lyrMeta, lyrtypeMeta)
-   msgs.append('Created base scenario with base layerkeys')
+   basescen, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, 
+                                                   lyrtypeMeta)
+   msgs.append('Created base scenario')
    # Past
-   unionScenarios, unionLyrKeys = createPastScenarios(usr, pkgMeta, lyrMeta, 
-                                                     lyrtypeMeta, staticLayers)
-   msgs.append('Created past scenarios with past layerkeys'.format(
-                                       len(unionScenarios), len(unionLyrKeys)))
+   unionScenarios = createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+                                        staticLayers)
+   msgs.append('Created past scenarios')
    # Future
-   futScenarios, futLyrKeys = createFutureScenarios(usr, pkgMeta, lyrMeta, 
-                                                       lyrtypeMeta, staticLayers)
-   msgs.append('Created future scenarios with future layerkeys'.format(
-                                       len(futScenarios), len(futLyrKeys)))
+   futScenarios = createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+                                        staticLayers)
+   msgs.append('Created future scenarios')
    # Join all sets and dictionaries
-   unionLyrKeys.union(baseLyrKeys, futLyrKeys)
    unionScenarios[basescen.code] = basescen
    for k,v in futScenarios.iteritems():
       unionScenarios[k] = v
       
-   return unionScenarios, unionLyrKeys, msgs
+   return unionScenarios, msgs
       
 
 # ...............................................
@@ -435,25 +424,13 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
                      lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
                      pkgMeta['bbox'], usr)
 
-   # TODO: lyrKeys will be GUIDs, and stored with layer metadata
-   scens, lyrKeys, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+   scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
    for msg in msgs:
-      scribe.log.info()
+      scribe.log.info(msg)
     
    for scode, scen in scens.iteritems():
       scribe.log.info('Inserting scenario {}'.format(scode))
       scribe.insertScenario(scen)
-
-# ...............................................
-# def _readScenarioMeta(scenPkg):
-#    # Metadata is packaged with data and should be uncompressed into the same location 
-#    metafile = os.path.join(DATA_PATH, ENV_DATA_PATH, scenPkg+'.py')
-#    f = open(metafile, 'r')
-#    content = f.read()
-#    f.close()
-#    
-#    eval(content)
-      
 
 # ...............................................
 def _getClimateMeta(scenPkg):

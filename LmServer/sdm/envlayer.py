@@ -238,7 +238,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
       self._scenCode = scencode
 
 # ...............................................
-   def createLocalMapFilename(self):
+   def createLocalMapFilename(self, scencode=None):
       """
       @summary: Find mapfile containing this layer.  
       """

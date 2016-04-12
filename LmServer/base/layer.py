@@ -174,13 +174,13 @@ class _Layer(LMSpatialObject, ServiceObject):
       return value
 
 # ...............................................
-   def verifyHash(self, hash):
+   def verifyHash(self, hashval):
       """
       @summary: Compute the sha256sum of the file at dlocation.
       @param hash: hash string to compare with data
       """
       if self._dlocation is not None:
-         verified = verifyHash(self._dlocation, hash)
+         verified = verifyHash(self._dlocation, hashval)
       else:
          LMError('Cannot verify hash for missing data file {}'.format(self._dlocation))
       return verified
@@ -603,7 +603,6 @@ class Raster(_Layer):
       @note: this returns only a list, not a true histogram.  
       @note: this only works on 8-bit data.
       """
-      vals = []
       try:
          dataset = gdal.Open(str(self._dlocation), gdalconst.GA_ReadOnly)
          band = dataset.GetRasterBand(1)
@@ -692,11 +691,11 @@ class Raster(_Layer):
             self._setBBox([ulx, lry, lrx, uly])
          if self._gdalType is None:
             self._gdalType = band.DataType
-         min, max, mean, stddev = band.GetStatistics(False,True)
+         bmin, bmax, bmean, bstddev = band.GetStatistics(False,True)
          if self.minVal is None:
-            self.minVal = min
+            self.minVal = bmin
          if self.maxVal is None:
-            self.maxVal = max
+            self.maxVal = bmax
          if self.nodataVal is None:
             self.nodataVal = band.GetNoDataValue()
          
@@ -1273,15 +1272,15 @@ class Vector(_Layer):
       """
       fnames = self.getShapefiles()
       tgStream = StringIO()      
-      zip = zipfile.ZipFile(tgStream, mode="w", 
+      zipf = zipfile.ZipFile(tgStream, mode="w", 
                              compression=zipfile.ZIP_DEFLATED, allowZip64=True)
       if baseName is None:
          baseName = os.path.splitext(os.path.split(fnames[0])[1])[0]
       
       for fname in fnames:
          ext = os.path.splitext(fname)[1]
-         zip.write(fname, "%s%s" % (baseName, ext))
-      zip.close()
+         zipf.write(fname, "%s%s" % (baseName, ext))
+      zipf.close()
       
       tgStream.seek(0)
       ret = ''.join(tgStream.readlines())
@@ -1442,7 +1441,7 @@ class Vector(_Layer):
       if lyrDef is not None:
          for i in range(lyrDef.GetFieldCount()):
             fldDef = lyrDef.GetFieldDefn(i)
-            fldName = fldDef.GetNameRef()
+#             fldName = fldDef.GetNameRef()
             returnVal = newLyr.CreateField(fldDef)
             if returnVal != 0:
                raise LMError('CreateField failed for \'%s\' in %s' 
@@ -1547,11 +1546,11 @@ class Vector(_Layer):
          ptFeat = ogr.Feature(lyrDef)
          ptFeat.SetGeometryDirectly(ptgeom)
          # set other fields to match original values
-         for key, val in oDict.iteritems():
-            if key in newNames.keys():
-               ptFeat.SetField(newNames[key], oDict[key])
+         for okey in oDict.keys():
+            if okey in newNames.keys():
+               ptFeat.SetField(newNames[okey], oDict[okey])
             else:
-               ptFeat.SetField(key, oDict[key])
+               ptFeat.SetField(okey, oDict[okey])
       return ptFeat
    
 # ...............................................
@@ -1576,11 +1575,8 @@ class Vector(_Layer):
       ogr.UseExceptions()
       import csv
 
-      comboDs = None
       data = {}
       successfulWrites = []
-      oldpth, filename = os.path.split(dlocation)
-      basename, ext = os.path.splitext(filename)
       
       ogr.RegisterAll()
       drv = ogr.GetDriverByName('ESRI Shapefile')
@@ -1643,7 +1639,6 @@ class Vector(_Layer):
       @note: This does NOT set the  self._dlocation attribute
       """
       import csv
-      success = False
       if dlocation is None:
          dlocation = self._dlocation
          
@@ -1843,7 +1838,7 @@ class Vector(_Layer):
       
       # unzip zip file stream
       for zname in z.namelist():
-         zfnamewoext, ext = os.path.splitext(zname)
+         tmp, ext = os.path.splitext(zname)
          # Check file extension and only unzip valid files
          if ext in SHAPEFILE_EXTENSIONS:
             newname = newfnamewoext + ext
@@ -1904,7 +1899,6 @@ class Vector(_Layer):
          srs = self.createSRSFromEPSG()   
          gidx = self._getGeometryIndex()
          
-         firstPoint = True
          for fvals in self._features.values():
             wkt = fvals[gidx]
             fgeom = ogr.CreateGeometryFromWkt(wkt, srs)
