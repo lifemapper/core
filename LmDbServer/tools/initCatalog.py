@@ -224,7 +224,6 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
 # ...............................................
 def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, 
                    relativePath, scendesc, rpt, mdlvals, tm, tmvals):
-   lyrKeys = set()
    currtime = DT.gmt().mjd
    layers = []
    
@@ -262,7 +261,7 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
                   layerTypeDescription=ltvals['description'], 
                   userId=usr, createTime=currtime, modTime=currtime)
          layers.append(envlyr)
-   return layers, lyrKeys
+   return layers
 
 # ...............................................
 def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
@@ -275,7 +274,7 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    (starttime, endtime) = baseMeta['time']
    scencode = _getbioName(pkgMeta['present'], pkgMeta['res'], 
                           suffix=pkgMeta['suffix'])
-   lyrs, staticLayers, lyrKeys = _getBaselineLayers(usr, pkgMeta, 
+   lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, 
                                                 baseMeta, lyrMeta, lyrtypeMeta)
    scen = Scenario(scencode, 
             title=baseMeta['title'], 
@@ -288,7 +287,7 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
             bbox=pkgMeta['bbox'], 
             modTime=DT.gmt().mjd, keywords=basekeywords, 
             epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
-   return scen, lyrKeys, staticLayers
+   return scen, staticLayers
 
 # ...............................................
 def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
@@ -324,9 +323,9 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
          # Relative path to data
          relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], 
                                      tm, sfam)            
-         lyrs, lyrKeys = _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
-                              staticLayers, relativePath, scendesc, rpt, mdlvals, 
-                              sfam, sfamvals, tm, tmvals)
+         lyrs = _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+                                 staticLayers, relativePath, scendesc, rpt, 
+                                 mdlvals, sfam, sfamvals, tm, tmvals)
          lyrs.extend(stlyr for stlyr in staticLayers.values())
          scen = Scenario(scencode, title=scentitle, author=mdlvals['author'], 
                          description=scendesc, 
@@ -336,7 +335,7 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                          keywords=scenkeywords, epsgcode=lyrMeta['epsg'],
                          layers=lyrs, userId=usr)
          futScenarios[scencode] = scen
-   return futScenarios, lyrKeys
+   return futScenarios
 
 # ...............................................
 def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
@@ -344,7 +343,6 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
    @summary Assemble predicted past scenarios defined by CMIP5
    """
    pastScenarios = {}
-   lyrKeys = set()
    pastScens = pkgMeta['past']
    for rpt in pastScens.keys():
       for tm in pastScens[rpt]:
@@ -367,9 +365,9 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
              'plus Worldclim 1.4 observed mean climate'))
          # Relative path to data
          relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], tm)            
-         lyrs, lyrKeys = _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
-                                 staticLayers, relativePath, scendesc, 
-                                 rpt, mdlvals, tm, tmvals)
+         lyrs = _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+                               staticLayers, relativePath, scendesc, 
+                               rpt, mdlvals, tm, tmvals)
          scen = Scenario(scencode, title=scentitle, author=mdlvals['author'], 
                          description=scendesc, 
                          units=lyrMeta['mapunits'], res=lyrMeta['resolution'], 
@@ -377,7 +375,7 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                          keywords=scenkeywords, 
                          epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
          pastScenarios[scen.code] = scen
-   return pastScenarios, lyrKeys
+   return pastScenarios
 
 # ...............................................
 def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
