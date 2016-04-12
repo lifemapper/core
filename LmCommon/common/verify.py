@@ -27,20 +27,30 @@ import hashlib
 import os
 
 # .............................................................................
+def _getHexHashValue(dlocation):
+   """
+   @summary: Returns a hexidecimal representation of the sha256sum of a datafile
+   @param dlocation: The file on which to compute the hash
+   """
+   hexhash = None
+   if os.path.exists(dlocation):
+      f = open(dlocation, 'r')
+      contents = f.read()
+      f.close()
+      hashval = hashlib.sha256(contents)
+      hexhash = hashval.hexdigest()
+   else:
+      print('{} does not exist'.format(dlocation))
+   return hexhash
+
+# .............................................................................
 def computeHash(dlocation):
    """
    @summary: Computes an sha256sum on a datafile
    @param dlocation: The file on which to compute the hash
    """
-   value = None
-   if os.path.exists(dlocation):
-      f = open(dlocation, 'r')
-      contents = f.read()
-      f.close()
-      value = hashlib.sha256(contents)
-   else:
-      print('{} does not exist'.format(dlocation))
-   return value
+   hexhash = _getHexHashValue(dlocation)
+   return hexhash
 
 # .............................................................................
 def verifyHash(dlocation, verify):
@@ -49,12 +59,5 @@ def verifyHash(dlocation, verify):
    @param dlocation: The file on which to compute the hash
    @param verify: The hash to compare results
    """
-   value = None
-   if os.path.exists(dlocation):
-      f = open(dlocation, 'r')
-      contents = f.read()
-      f.close()
-      value = hashlib.sha256(contents)
-   else:
-      print('{} does not exist'.format(dlocation))
-   return value == verify
+   hexhash = _getHexHashValue(dlocation)
+   return hexhash == verify
