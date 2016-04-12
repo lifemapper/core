@@ -2,7 +2,6 @@
 ; LmServer
 ; .............................................................................
 [LmServer - environment]
-;; [LmCommon - common]
 ARCHIVE_USER: @LMUSER@ 
 OGC_SERVICE_URL: http://@PUBLIC_FQDN@/ogc
 WEBSERVICES_ROOT: http://@PUBLIC_FQDN@

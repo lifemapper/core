@@ -6,10 +6,8 @@
 ; NOTE: This particular version is for badenov
 ; .............................................................................
 
-[LmCommon - common]
-ARCHIVE_USER:  pragma
-
 [LmServer - environment]
+ARCHIVE_USER:  pragma
 DATASOURCE: PRAGMA
 
 ; ...............................................
