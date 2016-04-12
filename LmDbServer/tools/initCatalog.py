@@ -183,28 +183,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    return layers, staticLayers, lyrKeys
 
 # ...............................................
-def writeRemoteDataPairs(remoteData, scenPkgName):
-   if remoteData is not None:
-      fname = os.path.join(DATA_PATH, ENV_DATA_PATH, '%s.csv' % scenPkgName)
-      if os.path.exists(fname):
-         os.remove(fname)
-      f = open(fname, 'w')
-      for remoteurl, relfilepath in remoteData.iteritems():
-         f.write('%s, %s\n' % (remoteurl + '/GTiff', relfilepath))
-      f.close()
-   
-# ...............................................
-def writeRemoteDataList(localKeys, scenPkgName):
-   if localKeys is not None:
-      fname = os.path.join(DATA_PATH, ENV_DATA_PATH, '%s.txt' % scenPkgName)
-      if os.path.exists(fname):
-         os.remove(fname)
-      f = open(fname, 'w')
-      for relfilepath in localKeys:
-         f.write('%s:%s\n' % (scenPkgName, relfilepath))
-      f.close()
-
-# ...............................................
 def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativePath, scendesc, 
                      rpt, mdlvals, sfam, sfamvals, tm, tmvals):
    """
@@ -215,9 +193,6 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
    layers = []
    rstType = None
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
-   if lyrMeta['remoteurl'] is not None:
-      rstType = lyrMeta['gdaltype']
-      scenpth = '/'.join((lyrMeta['remoteurl'], relativePath))
 
    for ltype, ltvals in lyrtypeMeta.iteritems():
       if ltype not in staticLayers.keys():
@@ -329,7 +304,6 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
    @summary Assemble predicted future scenarios defined by IPCC report
    """
    futScenarios = {}
-   remoteLocs = {}
    futScens = pkgMeta['future']
    for rpt in futScens.keys():
       for (sfam, tm) in futScens[rpt]:
@@ -450,7 +424,6 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
                        'mapunits': DEFAULT_MAPUNITS, 
                        'resolution': RESOLUTIONS[pkgMeta['res']], 
                        'gdaltype': ENVLYR_GDALTYPE, 
-                       'remoteurl': REMOTE_DATA_URL,
                        'gridname': DEFAULT_GRID_NAME, 
                        'gridsides': 4, 
                        'gridsize': DEFAULT_GRID_CELLSIZE}
@@ -470,8 +443,6 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
    for scode, scen in scens.iteritems():
       scribe.log.info('Inserting scenario {}'.format(scode))
       scribe.insertScenario(scen)
-   # LayerPairs for seeding LmCompute
-   writeRemoteDataList(lyrKeys, scenPkgName)
 
 # ...............................................
 # def _readScenarioMeta(scenPkg):
@@ -493,7 +464,7 @@ def _getClimateMeta(scenPkg):
               'resolution': RESOLUTIONS[pkgMeta['res']], 
               'gdaltype': ENVLYR_GDALTYPE, 
               'gdalformat': ENVLYR_GDALFORMAT,
-              'remoteurl': REMOTE_DATA_URL,
+#               'remoteurl': REMOTE_DATA_URL,
               'gridname': DEFAULT_GRID_NAME, 
               'gridsides': 4, 
               'gridsize': DEFAULT_GRID_CELLSIZE}
@@ -508,19 +479,21 @@ def usage():
    print output
 
 # ...............................................
-if __name__ == '__main__':  
+if __name__ == '__main__':
+   basefilename = os.path.basename(__file__)
+   basename, ext = os.path.splitext(basefilename)
    if ARCHIVE_USER == 'bison':
-      REMOTE_DATA_URL = 'http://notyeti'
+#       REMOTE_DATA_URL = 'http://notyeti'
       taxSource = TAXONOMIC_SOURCE['ITIS'] 
    elif ARCHIVE_USER == 'kubi':
-      REMOTE_DATA_URL = None
+#       REMOTE_DATA_URL = None
       taxSource = TAXONOMIC_SOURCE['GBIF'] 
    elif ARCHIVE_USER == 'idigbio':
-      REMOTE_DATA_URL = 'http://felix'
+#       REMOTE_DATA_URL = 'http://felix'
       taxSource = TAXONOMIC_SOURCE['GBIF'] 
    else:
       taxSource = None
-      REMOTE_DATA_URL = None
+#       REMOTE_DATA_URL = None
    
    if len(sys.argv) != 2:
       usage()
@@ -528,8 +501,9 @@ if __name__ == '__main__':
    
    action = sys.argv[1].lower()
    if action in ('algorithms', 'scenario', 'taxonomy', 'user', 'all'):
+      
       try:
-         logger = ScriptLogger('initCatalog')
+         logger = ScriptLogger(basename)
          scribe = Scribe(logger)
          success = scribe.openConnections()
          if not success: 
@@ -563,6 +537,9 @@ if __name__ == '__main__':
                                                             taxSource['name']))
                taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
                                                          taxSource['url']) 
+      except Exception, e:
+         logger.error(str(e))
+         raise
       finally:
          scribe.closeConnections()
        
