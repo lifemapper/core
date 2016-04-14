@@ -1,17 +1,15 @@
 -- ----------------------------------------------------------------------------
+-- -- psql -U admin -d template1 --file=LmDbServer/dbsetup/addDBFunctions.sql
 -- ----------------------------------------------------------------------------
--- -- psql -U admin -d template1 --file=LmDbServer/dbsetup/runAllSQLScripts.sql
--- --------------------------------
--- createMAL also calls createCommon, some of its tables are referenced later
--- in foreign keys of other createMAL tables
--- --------------------------------
-\i @LMHOME@/LmDbServer/dbsetup/createMAL.sql
+\c mal
+-- ----------------------------------------------------------------------------
 \i @LMHOME@/LmDbServer/dbsetup/createMALViews.sql
 \i @LMHOME@/LmDbServer/dbsetup/createCommonExtras.sql
 \i @LMHOME@/LmDbServer/dbsetup/createMALExtras.sql
 
 -- ----------------------------------------------------------------------------
-\i @LMHOME@/LmDbServer/dbsetup/createSPECO.sql
+\c speco
+-- ----------------------------------------------------------------------------
 \i @LMHOME@/LmDbServer/dbsetup/createSPECOViews.sql
 \i @LMHOME@/LmDbServer/dbsetup/createCommonExtras.sql
 \i @LMHOME@/LmDbServer/dbsetup/createSPECOExtras.sql

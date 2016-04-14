@@ -64,6 +64,5 @@ target/
 # Installed files
 LmServer/db/connect.py
 config/config.*.ini
-LmDbServer/dbsetup/runAllSQLScripts.sql
-LmDbServer/dbsetup/runUpdateDBScripts.sql
-
+LmDbServer/dbsetup/addDBFunctions.sql
+LmDbServer/dbsetup/createDBTables.sql

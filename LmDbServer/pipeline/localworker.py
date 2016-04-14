@@ -1537,7 +1537,6 @@ class iDigBioChainer(_LMWorker):
    def __init__(self, lock, pipelineName, updateInterval, 
                 algLst, mdlScen, prjScenLst, binomialfilename, expDate,
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      import json
       threadspeed = WORKER_JOB_LIMIT
       _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
@@ -1555,6 +1554,9 @@ class iDigBioChainer(_LMWorker):
          self._binomialFile = open(binomialfilename, 'r')
       except Exception, e:
          raise LMError('Invalid file %s (%s)' % (str(binomialfilename), str(e)))
+      self._currBinomial = None
+      self._currGbifTaxonId = None
+      self._currReportedCount = None
       # Start mid-file 
       self._skipAhead()
          
@@ -1602,25 +1604,51 @@ class iDigBioChainer(_LMWorker):
       
 # ...............................................
    def _getBinomial(self):
+      """
+      @summary: Sets member attributes:
+          self._currBinomial, self._currGbifTaxonId, self._currReportedCount 
+      """
+      self._currGbifTaxonId = None
+      self._currReportedCount = None
+      self._currBinomial = None
       success = False
-      line = binomial = None
       while not success:
          try:
             line = self._binomialFile.readline()
-            self._linenum += 1
-            success = True
-         except OverflowError, e:
-            self._linenum += 1
-            self.log.debug( 'OverflowError on %d (%s), moving on' % (self._linenum, str(e)))
          except Exception, e:
             self._linenum += 1
-            self.log.debug('Exception reading line %d (%s)' % (self._linenum, str(e)))
-            success = True
-         else:
-            if line == '':
-               self._linenum = -9999
+            if isinstance(e, OverflowError):
+               self.log.debug( 'OverflowError on {} ({}), moving on'.format(
+                                                self._linenum, str(e)))
+            else:
+               self.log.debug('Exception reading line %d (%s)'.format(
+                                                self._linenum, str(e)))
                success = True
-      return line.rstrip()
+         else:
+            self._linenum += 1
+            success = True
+            if line == '':
+               line = None
+               self._linenum = -9999
+         
+      if line is not None:
+         tempvals = line.strip().split()
+         if len(tempvals) < 3:
+            print('Missing data in line {}'.format(line))
+         else:
+            try:
+               self._currGbifTaxonId = int(tempvals[0])
+            except:
+               pass
+            try:
+               self._currReportedCount = int(tempvals[1])
+            except:
+               pass
+            self._currBinomial = tempvals[2]
+            try:
+               self._currBinomial = ' '.join([self._currBinomial, tempvals[2]])
+            except:
+               pass
 
 # ...............................................
    def _skipAhead(self):
