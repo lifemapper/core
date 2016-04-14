@@ -25,7 +25,7 @@
           02110-1301, USA.
 """
 import json
-import requests, idigbio
+import requests
 # import re
 from types import (BooleanType, DictionaryType, FloatType, IntType, ListType, 
                    StringType, TupleType, UnicodeType)
@@ -40,7 +40,7 @@ from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
          
          GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
          
-         IDIGBIO_FILTERS, IDIGBIO_QFILTERS, IDIGBIO_ID_FIELD,
+         IDIGBIO_FILTERS, IDIGBIO_QFILTERS, 
          IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
          IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_URL_PREFIX, 
          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
@@ -341,16 +341,16 @@ class BisonAPI(APIQuery):
 
 # ...............................................
    def _burrow(self, keylst):
-      dict = self.output
-      if isinstance(dict, DictionaryType):
+      thisdict = self.output
+      if isinstance(thisdict, DictionaryType):
          try:         
             for key in keylst:
-               dict = dict[key]
+               thisdict = thisdict[key]
          except Exception, e:
             raise Exception('Invalid keylist for output ({})'.format(keylst))
       else:
-         raise Exception('Invalid output type ({})'.format(type(dict)))
-      return dict
+         raise Exception('Invalid output type ({})'.format(type(thisdict)))
+      return thisdict
          
 # ...............................................
    def getBinomialTSNs(self):
@@ -732,12 +732,14 @@ if __name__ == '__main__':
    f.close()
  
    speciesList = [[4639168, 106, 'kormagnostus simplex']]
-   for gbifTaxonid, idigTaxonid, binomial in speciesList:
+   for gbifTaxonid, count, binomial in speciesList:
       qfilters = {'scientificname': binomial}
       api = IdigbioAPI(qFilters=qfilters)
       specimens = api.getOccurrences()
+      print "Retrieved {} specimens for gbif taxonid {}".format(len(specimens), 
+                                                                gbifTaxonid)
        
-print "Retrieved %d specimens for gbif taxonid %s" % (len(specimens), gbifTaxonid)
+
  
 baseurl = 'https://beta-search.idigbio.org/v2/search/records'
 idigParams = {

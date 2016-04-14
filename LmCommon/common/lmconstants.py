@@ -883,7 +883,6 @@ IDIGBIO_RECORDSETS_POSTFIX = 'recordsets'
 # IDIGBIO_RECORDSETS_SEARCH_URL_PREFIX="http://search.idigbio.org/idigbio/recordsets/_search"
 
 IDIGBIO_SEARCH_LIMIT = 1000000
-IDIGBIO_SEARCH_LIMIT = 100
 
 IDIGBIO_ID_FIELD = 'uuid'
 IDIGBIO_LINK_FIELD = 'idigbiourl'
