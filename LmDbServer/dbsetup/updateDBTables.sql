@@ -1,6 +1,8 @@
 -- ----------------------------------------------------------------------------
--- -- psql -U admin -d template1 --file=LmDbServer/dbsetup/updateDBTables.sql
 -- ----------------------------------------------------------------------------
+-- psql -U admin -d template1 --file=LmDbServer/dbsetup/updateDBTables.sql
+-- ----------------------------------------------------------------------------
+-- These functions should change NOTHING if columns / indices already exist.
 -- ----------------------------------------------------------------------------
 \c mal
 

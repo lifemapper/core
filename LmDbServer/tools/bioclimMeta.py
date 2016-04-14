@@ -1,18 +1,43 @@
-from osgeo import gdalconst
+"""
+@license: gpl2
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
+ 
+          Lifemapper Project, lifemapper [at] ku [dot] edu, 
+          Biodiversity Institute,
+          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
+    
+          This program is free software; you can redistribute it and/or modify 
+          it under the terms of the GNU General Public License as published by 
+          the Free Software Foundation; either version 2 of the License, or (at 
+          your option) any later version.
+   
+          This program is distributed in the hope that it will be useful, but 
+          WITHOUT ANY WARRANTY; without even the implied warranty of 
+          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+          General Public License for more details.
+   
+          You should have received a copy of the GNU General Public License 
+          along with this program; if not, write to the Free Software 
+          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
+          02110-1301, USA.
+"""
 
+"""
+These constants represent metadata for Lifemapper-available climate data 
+packages.  New climate data packages should be in a file named 
+CLIMATE_PACKAGE.tar.gz with a 
+"""
+from osgeo import gdalconst
+ 
 # For remote data, cannot read to get this 
 ENVLYR_GDALTYPE = gdalconst.GDT_Int16
 ENVLYR_GDALFORMAT = 'GTiff'
-
+ 
+# Decimal degrees for EPSG 4326
 RESOLUTIONS = {'10min': 0.16667, '5min': 0.083333, '30sec': 0.0083333}
 CLIMATE_KEYWORDS = ['bioclimatic variables', 'climate', 'elevation']
 
-# TAXONOMIC_SOURCE = {
-#    'GBIF': {'name': 'GBIF Backbone Taxonomy',
-#             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},
-#    'ITIS': {'name':  'ITIS Taxonomy',
-#             'url': 'http://www.itis.gov'} }
-
+# Observed climate data, from www.worldclim.org 
 BASELINE_DATA = {
    'WC':
       {'name': 'Worldclim 1.4',
@@ -25,7 +50,9 @@ BASELINE_DATA = {
        'author': ' Hijmans, R.J., S.E. Cameron, J.L. Parra, P.G. Jones and A. Jarvis, 2005. Very high resolution interpolated climate surfaces for global land areas. International Journal of Climatology 25: 1965-1978', 
        'description': 'WorldClim 1.4 elevation and bioclimatic variables computed from interpolated observation data collected between 1950 and 2000 (http://www.worldclim.org/), 5 min resolution',    # Add time
        'keywords': ['observed', 'present']}}
-
+ 
+# Time periods available for worldclim data, AR5 future projections, 
+# CMIP5 past projections, from www.worldclim.org 
 TIME_PERIODS = {'mid': {'name': 'Mid Holocene (~ 6000 years ago)',
                          'startdate': None,
                          'enddate': None,
@@ -50,6 +77,7 @@ REPORTS = {
                        'shortcode': 'cc',
                        'author': 'National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/'},
            'scenarios': None },
+   # Future
    'AR5': {'name': 'IPCC Fifth Assessment Report (2013)',
            'model': {'code': 'CCSM4',
                       'name': 'Community Climate System Model, 4.0',
@@ -76,15 +104,17 @@ REPORTS = {
                        'keywords': ['radiative forcing +8.5', 
                                  'likely temperature increase 2.6-4.8 C',
                                  'likely sea level increase 0.45-0.82 m'] } } } }
+
+# Lifemapper-packaged data, produced by Worldclim, www.worldclim.org 
 CLIMATE_PACKAGES = {
    '30sec-present-future-CONUS':
    # Continental United States, for BISON
    # current: WC-30sec-CONUS
    # future: CCSM4-RCP4.5-2050-30sec-CONUS,CCSM4-RCP4.5-2070-30sec-CONUS,CCSM4-RCP8.5-2050-30sec-CONUS,CCSM4-RCP8.5-2070-30sec-CONUS
       {'res': '30sec',
+       'topdir': '30sec-CONUS',
        'bbox': [-125, 24, -66, 50],
        'helpme': None,
-       'topdir': '30sec-CONUS',
        # {REPORT: [Time,Time, ...]} 
        'past': {},
        # Name only
@@ -99,9 +129,9 @@ CLIMATE_PACKAGES = {
    # current: WC-30sec-SEA
    # future: CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA,CCSM4-RCP8.5-2070-30sec-SEA
       {'res': '30sec',
+       'topdir': '30sec-SEA',
        'bbox': [95, -11, 153, 21],
        'helpme': None,
-       'topdir': '30sec-SEA',
        # {REPORT: [Time,Time, ...]} 
        'past': {},
        # Name only
@@ -116,9 +146,9 @@ CLIMATE_PACKAGES = {
    # current: WC-10min
    # future: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
       {'res': '10min',
+       'topdir': '10min',
        'bbox': [-180, -60, 180, 90],
        'helpme': None,
-       'topdir': '10min',
        # {REPORT: [Time,Time, ...]} 
        'past': {'CMIP5': ['mid', 'lgm']},
        # Name only (same as BASELINE_DATA 'code')
@@ -133,9 +163,9 @@ CLIMATE_PACKAGES = {
    # current: WC-5min
    # future: CCSM4-lgm-5min,CCSM4-mid-5min,CCSM4-RCP8.5-2070-5min,CCSM4-RCP4.5-2070-5min,CCSM4-RCP8.5-2050-5min,CCSM4-RCP4.5-2050-5min
       {'res': '5min',
+       'topdir': '5min',
        'bbox': [-180, -60, 180, 90],
        'helpme': None,
-       'topdir': '5min',
        # {REPORT: [Time,Time, ...]} 
        'past': {'CMIP5': ['mid', 'lgm']},
        # Name only (same as BASELINE_DATA 'code')
@@ -146,6 +176,8 @@ CLIMATE_PACKAGES = {
        # Append to all scenario codes
        'suffix': None} }
                      
+# Bioclimatic variable descriptions, originally defined by ANUCLIM, 
+# created for these data by www.worldclim.org
 LAYERTYPE_DATA = {'ALT': {'title': 'Elevation',
                           'description': 'Worldclim Elevation (altitude above sea level, from SRTM, http://www2.jpl.nasa.gov/srtm/)',
                           'valunits': 'meters',

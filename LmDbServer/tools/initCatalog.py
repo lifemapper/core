@@ -31,10 +31,7 @@ from LmCommon.common.lmconstants import (DEFAULT_EPSG,
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
-from LmDbServer.tools.bioclimMeta import (BASELINE_DATA, 
-         CLIMATE_KEYWORDS, CLIMATE_PACKAGES, ENVLYR_GDALFORMAT, ENVLYR_GDALTYPE, 
-         LAYERTYPE_DATA, REPORTS, RESOLUTIONS, TIME_PERIODS)
-
+import LmDbServer.tools.bioclimMeta as meta
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH
@@ -45,6 +42,7 @@ from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
 from LmServer.sdm.scenario import Scenario
 from LmServer.rad.shapegrid import ShapeGrid
+
 
 
 # ...............................................
@@ -140,7 +138,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    staticLayers = {}
    currtime = DT.gmt().mjd
    (starttime, endtime) = baseMeta['time']
-   relativePath = os.path.join(pkgMeta['topdir'], baseMeta['directory'])
+   relativePath = os.path.join(pkgMeta('topdir'), baseMeta['directory'])
 
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
    rstType = lyrMeta['gdaltype']
@@ -268,8 +266,8 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    """
    @summary Assemble Worldclim/bioclim scenario
    """
-   baseMeta = BASELINE_DATA[pkgMeta['present']]
-   basekeywords = [k for k in CLIMATE_KEYWORDS]
+   baseMeta = meta.BASELINE_DATA[pkgMeta['present']]
+   basekeywords = [k for k in meta.CLIMATE_KEYWORDS]
    basekeywords.extend(baseMeta['keywords'])
    (starttime, endtime) = baseMeta['time']
    scencode = _getbioName(pkgMeta['present'], pkgMeta['res'], 
@@ -298,11 +296,11 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
    futScens = pkgMeta['future']
    for rpt in futScens.keys():
       for (sfam, tm) in futScens[rpt]:
-         mdlvals = REPORTS[rpt]['model']
-         sfamvals = REPORTS[rpt]['scenarios'][sfam]
-         tmvals = TIME_PERIODS[tm]
+         mdlvals = meta.REPORTS[rpt]['model']
+         sfamvals = meta.REPORTS[rpt]['scenarios'][sfam]
+         tmvals = meta.TIME_PERIODS[tm]
          # Reset keywords
-         scenkeywords = [k for k in CLIMATE_KEYWORDS]
+         scenkeywords = [k for k in meta.CLIMATE_KEYWORDS]
          for vals in (mdlvals, sfamvals, tmvals):
             try:
                scenkeywords.extend(vals['keywords'])
@@ -318,10 +316,10 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
          scendesc =  ' '.join(
             ('Predicted %s climate calculated from' % (tmvals['name']),
              'change modeled by %s, %s for the %s, Scenario %s' 
-               % (mdlvals['name'], mdlvals['author'], REPORTS[rpt]['name'], sfam),
+               % (mdlvals['name'], mdlvals['author'], meta.REPORTS[rpt]['name'], sfam),
              'plus Worldclim 1.4 observed mean climate'))
          # Relative path to data
-         relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], 
+         relativePath = os.path.join(pkgMeta('topdir'), mdlvals['code'], 
                                      tm, sfam)            
          lyrs = _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                                  staticLayers, relativePath, scendesc, rpt, 
@@ -346,10 +344,10 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
    pastScens = pkgMeta['past']
    for rpt in pastScens.keys():
       for tm in pastScens[rpt]:
-         mdlvals = REPORTS[rpt]['model']
-         tmvals = TIME_PERIODS[tm]
+         mdlvals = meta.REPORTS[rpt]['model']
+         tmvals = meta.TIME_PERIODS[tm]
          # Reset keywords
-         scenkeywords = [k for k in CLIMATE_KEYWORDS]
+         scenkeywords = [k for k in meta.CLIMATE_KEYWORDS]
          scenkeywords.extend(tmvals['keywords'])
 
          # LM Scenario code, title, description
@@ -361,10 +359,10 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
          scendesc =  ' '.join(
             ('Predicted %s climate calculated from' % (tmvals['name'].lower()),
              'change modeled by %s, %s for %s' 
-               % (mdlvals['name'], mdlvals['author'], REPORTS[rpt]['name']),
+               % (mdlvals['name'], mdlvals['author'], meta.REPORTS[rpt]['name']),
              'plus Worldclim 1.4 observed mean climate'))
          # Relative path to data
-         relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], tm)            
+         relativePath = os.path.join(pkgMeta('topdir'), mdlvals['code'], tm)            
          lyrs = _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                                staticLayers, relativePath, scendesc, 
                                rpt, mdlvals, tm, tmvals)
@@ -432,18 +430,30 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
 
 # ...............................................
 def _getClimateMeta(scenPkg):
-#    pkgMeta = _readScenarioMeta(scenPkg)
-   pkgMeta = CLIMATE_PACKAGES[scenPkg]
+   pkgMeta = meta.CLIMATE_PACKAGES[scenPkg]
    lyrMeta = {'epsg': DEFAULT_EPSG, 
+              'topdir': meta.CLIMATE_PACKAGES('topdir'),
               'mapunits': DEFAULT_MAPUNITS, 
-              'resolution': RESOLUTIONS[pkgMeta['res']], 
-              'gdaltype': ENVLYR_GDALTYPE, 
-              'gdalformat': ENVLYR_GDALFORMAT,
+              'resolution': meta.RESOLUTIONS[pkgMeta['res']], 
+              'gdaltype': meta.ENVLYR_GDALTYPE, 
+              'gdalformat': meta.ENVLYR_GDALFORMAT,
 #               'remoteurl': REMOTE_DATA_URL,
               'gridname': DEFAULT_GRID_NAME, 
               'gridsides': 4, 
               'gridsize': DEFAULT_GRID_CELLSIZE}
    return pkgMeta, lyrMeta
+
+# ...............................................
+def _importClimatePackageMetadata(scribe):
+   # Override the above imports if scenario metadata file exists
+   metabasename = SCENARIO_PACKAGE+'.py'
+   metafname = os.path.join(DATA_PATH, ENV_DATA_PATH, metabasename)
+   # TODO: change on update python from 2.7 to 3.3+  
+   try:
+      import imp
+      meta = imp.load_source('currentmetadata', metafname)
+   except Exception, e:
+      scribe.log.warning('Climate metadata {} cannot be imported'.format(metafname))
 
 # ...............................................
 def usage():
@@ -457,26 +467,23 @@ def usage():
 if __name__ == '__main__':
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
+   _importClimatePackageMetadata()
+
    if ARCHIVE_USER == 'bison':
-#       REMOTE_DATA_URL = 'http://notyeti'
       taxSource = TAXONOMIC_SOURCE['ITIS'] 
    elif ARCHIVE_USER == 'kubi':
-#       REMOTE_DATA_URL = None
       taxSource = TAXONOMIC_SOURCE['GBIF'] 
    elif ARCHIVE_USER == 'idigbio':
-#       REMOTE_DATA_URL = 'http://felix'
       taxSource = TAXONOMIC_SOURCE['GBIF'] 
    else:
       taxSource = None
-#       REMOTE_DATA_URL = None
    
    if len(sys.argv) != 2:
       usage()
       exit(0)
    
    action = sys.argv[1].lower()
-   if action in ('algorithms', 'scenario', 'taxonomy', 'user', 'all'):
-      
+   if action in ('algorithms', 'scenario', 'taxonomy', 'user', 'all'):      
       try:
          logger = ScriptLogger(basename)
          scribe = Scribe(logger)
@@ -491,7 +498,7 @@ if __name__ == '__main__':
             aIds = addAlgorithms(scribe)
             pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
-                                       LAYERTYPE_DATA, SCENARIO_PACKAGE)
+                                       meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
             if taxSource is not None:
                logger.info('  Inserting taxonomy source {} ...'.format(
                                                             taxSource['name']))
@@ -504,7 +511,7 @@ if __name__ == '__main__':
          elif action == 'scenario':
             pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
-                                       LAYERTYPE_DATA, SCENARIO_PACKAGE)
+                                       meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
             
          elif action == 'taxonomy':
             if taxSource is not None:
