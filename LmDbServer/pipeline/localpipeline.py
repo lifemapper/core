@@ -68,10 +68,6 @@ class LMArchivePipeline(_Pipeline):
       self.modelMask = None
       self.projMask = None
       self.intersectGrid = None
-      try:
-         self.taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
-      except:
-         self.taxname = None
       self._fillDefaultObjects(algCodes, mdlScenarioCode, projScenarioCodes, 
                                mdlMaskId, prjMaskId, DEFAULT_GRID_NAME)
    
@@ -82,10 +78,18 @@ class LMArchivePipeline(_Pipeline):
          alg = Algorithm(acode)
          alg.fillWithDefaults()
          self.algs.append(alg)
-
+         
       try:
          scribe = Scribe(self.log)
          success = scribe.openConnections()
+
+         try:
+            # Taxonomic Source info
+            txSourceId, url, createdate, moddate = \
+               self._scribe.findTaxonSource(TAXONOMIC_SOURCE[DATASOURCE]['name'])
+            self.txSourceId = txSourceId
+         except Exception, e:
+            self.txSourceId = None
          
          mscen = scribe.getScenario(mdlScenarioCode)
          if mscen is not None:
@@ -143,7 +147,7 @@ class UserPipeline(LMArchivePipeline):
              model onto alternate scenarios (besides the original 
              model scenario).
    """
-   def __init__(self, pipelineName, 
+   def __init__(self, pipelineName, userId,
                 algCodes, mdlScenarioCode, projScenarioCodes, 
                 mdlMaskId=None, prjMaskId=None, expDate=None):
       """
@@ -242,7 +246,7 @@ class GBIFPipeline(LMArchivePipeline):
          self.workers.append(GBIFChainer(self.lock, self.name, updateInterval, 
                              self.algs, self.modelScenario, self.projScenarios, 
                              OCC_DUMP_FILE, expDate, gbifFldNames, 
-                             GBIF_TAXONKEY_FIELD, self.taxname,
+                             GBIF_TAXONKEY_FIELD, taxonSource=self.txSourceId,
                              providerKeyFile=PROVIDER_DUMP_FILE, 
                              providerKeyColname=GBIF_PROVIDER_FIELD,
                              mdlMask=self.modelMask, prjMask=self.projMask,
@@ -282,19 +286,6 @@ class BisonPipeline(LMArchivePipeline):
       self._updateFile(BISON_TSN_FILE, expDate)
       self._initWorkers(BISON_TSN_FILE, expDate)
 
-# # ...............................................
-#    def _updateTSNFile(self, filename, expDate):
-#       """
-#       If file does not exist or is older than expDate, create a new file. 
-#       """
-#       if filename is None or not os.path.exists(filename):
-#          self._recreateTSNFile(filename)
-#       else:
-#          ticktime = os.path.getmtime(filename)
-#          modtime = mx.DateTime.DateFromTicks(ticktime).mjd
-#          if modtime < expDate:
-#             self._recreateTSNFile(filename)
-   
 # ...............................................
    def _recreateFile(self, filename):
       """
@@ -317,7 +308,7 @@ class BisonPipeline(LMArchivePipeline):
       try:
          self.workers.append(BisonChainer(self.lock, self.name, updateInterval, 
                               self.algs, self.modelScenario, self.projScenarios, 
-                              tsnfilename, expDate, self.taxname, 
+                              tsnfilename, expDate, taxonSource=self.txSourceId, 
                               mdlMask=self.modelMask, prjMask=self.projMask,
                               intersectGrid=self.intersectGrid))
          self.workers.append(Infiller(self.lock, self.name, updateInterval, 
@@ -350,10 +341,6 @@ class iDigBioPipeline(LMArchivePipeline):
       LMArchivePipeline.__init__(self, pipelineName, algCodes, 
                                  mdlScenarioCode, projScenarioCodes, 
                                  mdlMaskId=mdlMaskId, prjMaskId=prjMaskId)
-      # Prep in rocks-lifemapper rpm install.
-      #  in SPECIES directory:
-      #   1) unzip dumped zip file
-      #   2) list species directories into txt file with same basename
       self._updateFile(IDIGBIO_FILE, expDate)
       self._initWorkers(IDIGBIO_FILE, expDate)
 
@@ -365,7 +352,7 @@ class iDigBioPipeline(LMArchivePipeline):
       try:
          self.workers.append(iDigBioChainer(self.lock, self.name, updateInterval, 
                               self.algs, self.modelScenario, self.projScenarios, 
-                              idigFname, expDate, 
+                              idigFname, expDate, taxonSource=self.txSourceId,
                               mdlMask=self.modelMask, prjMask=self.projMask,
                               intersectGrid=self.intersectGrid))
          self.workers.append(Infiller(self.lock, self.name, updateInterval, 

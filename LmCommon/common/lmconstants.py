@@ -892,12 +892,12 @@ IDIGBIO_EXPORT_FIELDS = {0: (IDIGBIO_ID_FIELD, OFTString),
                          3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                          4: ('provider', OFTString)
                          }
-
+IDIGBIO_GBIFID_FIELD = 'taxonid'
 # Geopoint.lat and Geopoint.lon are modified on return to short names
 # Response record fields: https://beta-search.idigbio.org/v2/meta/fields/records
 IDIGBIO_RETURN_FIELDS = {
                         IDIGBIO_ID_FIELD: ('uuid', OFTString),
-                        'taxonid': ('taxonid', OFTInteger),
+                        IDIGBIO_GBIFID_FIELD: ('taxonid', OFTInteger),
                         'canonicalname': ('canonical', OFTString),
                         'kingdom': ('kingdom', OFTString),
 #                         'phylum': ('phylum', OFTString),

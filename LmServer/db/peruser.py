@@ -855,7 +855,7 @@ class Peruser(LMObject):
       return scenarios
          
 # ...............................................
-   def getOccurrenceSet(self, id, firstRecNum=0, maxCount=POINT_COUNT_MAX):
+   def getOccurrenceSet(self, occid, firstRecNum=0, maxCount=POINT_COUNT_MAX):
       """
       @summary: get an occurrence point, possible including its points
       @param id: the database primary key of the OccurrenceSet in the MAL
@@ -863,18 +863,20 @@ class Peruser(LMObject):
              beginning of query results)
       @param maxCount: the maximum number of points to return
       """
-      occset = self._mal.getOccurrenceSet(id)
+      occset = self._mal.getOccurrenceSet(occid)
       return occset
       
 # ...............................................
-   def getOccurrenceSetsForTaxon(self, sciName, userId):
+   def getOccurrenceSetsForScientificName(self, sciName, userId):
       """
       @summary: get a list of occurrencesets for the given scientificName, 
                 possibly reading its points
       @param sciName: a ScientificName object
       @param userId: the database primary key of the LMUser
       """
-      occsets = self._mal.getOccurrenceSetsForTaxonUser(sciName.getId(), userId)
+      occsets = []
+      if sciName is not None:
+         occsets = self._mal.getOccurrenceSetsForTaxonUser(sciName.getId(), userId)
       return occsets
 
 # ...............................................

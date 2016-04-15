@@ -894,7 +894,7 @@ class MAL(DbPostgresql):
       return names
    
 # ...............................................
-   def getOccurrenceSetsForTaxonUser(self, sciNameId, userid):
+   def getOccurrenceSetsForScientificName(self, sciNameId, userid):
       """
       @param sciName: ScientificName for searching 
       @param userid: Userid for filtering results 

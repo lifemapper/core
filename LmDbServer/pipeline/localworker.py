@@ -29,10 +29,11 @@ import sys
 
 from LmBackend.common.occparse import OccDataParser
 
-from LmCommon.common.apiquery import BisonAPI, GbifAPI
+from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, Instances, ProcessType, DEFAULT_EPSG, 
-            DEFAULT_POST_USER, JobStatus, ONE_DAY, ONE_HOUR, ONE_MIN)
+            DEFAULT_POST_USER, JobStatus, ONE_DAY, ONE_HOUR, ONE_MIN,
+            IDIGBIO_GBIFID_FIELD)
 
 from LmDbServer.common.localconstants import WORKER_JOB_LIMIT
 from LmDbServer.pipeline.pipeline import _Worker
@@ -265,30 +266,36 @@ class _LMWorker(_Worker):
          self.log.debug('   removed occurrenceset %s/%s in MAL' 
                         % (str(occSet.getId()), occSet.displayName))
       return deleted
-      
+         
 # ...............................................
-   def _processGbifTaxaKey(self, taxKey):
-      # This gets the record for the accepted species key, so the record 
-      # scientific name = accepted name (i.e. full, not canonical, species name)
-      speciesName = None
+   def _getInsertSciNameForGBIFSpeciesKey(self, speciesKey):
+      """
+      Returns an existing or newly inserted ScientificName
+      """
       try:
          self._getLock()           
-         # Use API to get and insert species name 
-         (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-          speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(taxKey)
-         if retSpecieskey == taxKey:
-            currtime = dt.gmt().mjd
-            speciesName = ScientificName(speciesStr, 
-                            kingdom=kingdomStr, phylum=phylumStr, 
-                            txClass=None, txOrder=orderStr, 
-                            family=familyStr, genus=genusStr, 
-                            createTime=currtime, modTime=currtime, 
-                            taxonomySourceId=self._taxonSourceId, 
-                            taxonomySourceKey=taxKey, 
-                            taxonomySourceGenusKey=genuskey, 
-                            taxonomySourceSpeciesKey=taxKey)
-            self._scribe.insertTaxon(speciesName)
-            return speciesName
+         sciName = self._scribe.findTaxon(self._taxonSourceId, 
+                                              speciesKey)
+         if sciName is None:
+            # Use API to get and insert species name 
+            try:
+               (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
+                speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(speciesKey)
+            except LmHTTPError, e:
+               self.log.info('Failed lookup for key {}, ({})'.format(
+                                                      speciesKey, e.msg))
+            if retSpecieskey == speciesKey:
+               currtime = dt.gmt().mjd
+               sciName = ScientificName(speciesStr, 
+                               kingdom=kingdomStr, phylum=phylumStr, 
+                               txClass=None, txOrder=orderStr, 
+                               family=familyStr, genus=genusStr, 
+                               createTime=currtime, modTime=currtime, 
+                               taxonomySourceId=self._taxonSourceId, 
+                               taxonomySourceKey=speciesKey, 
+                               taxonomySourceGenusKey=genuskey, 
+                               taxonomySourceSpeciesKey=speciesKey)
+               self._scribe.insertTaxon(sciName)
       except LMError, e:
          raise e
       except Exception, e:
@@ -296,6 +303,55 @@ class _LMWorker(_Worker):
       finally:
          self._freeLock()
          
+      return sciName
+         
+# ...............................................
+   def _processSDMChainForDynamicQuery(self, sciname, taxonSourceKeyVal, dataCount):
+      currtime = dt.gmt().mjd
+      occ = None
+      jobs = []
+      try:
+         occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
+                                                             ARCHIVE_USER)
+         if not occs:
+            occ = OccurrenceLayer(sciname.scientificName, 
+                  name=sciname.scientificName, fromGbif=False, 
+                  queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
+                  ogrType=wkbPoint, userId=ARCHIVE_USER,
+                  primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
+                  status=JobStatus.INITIALIZE, statusModTime=currtime, 
+                  sciName=sciname)
+            occid = self._scribe.insertOccurrenceSet(occ)
+         elif len(occs) == 1:
+            if occs[0].statusModTime > 0 and occs[0].statusModTime < self._obsoleteTime:
+               occ = occs[0]
+            else:
+               self.log.debug('Occurrenceset %d (%s) is up to date' 
+                              % (occs[0].getId(), sciname.scientificName))
+         else:
+            raise LMError('Too many (%d) occurrenceLayers for %s'
+                          % (len(occs), sciname.scientificName))
+            
+         if occ is not None:
+            url = self._getQueryUrl(taxonSourceKeyVal)
+            occ.setRawDLocation(url, currtime)
+            # Create jobs for Archive Chain: occurrence population, 
+            # model, projection, and (later) intersect computation
+            jobs = self._scribe.initSDMChain(ARCHIVE_USER, occ, self.algs, 
+                                      self.modelScenario, 
+                                      self.projScenarios, 
+                                      occJobProcessType=ProcessType.BISON_TAXA_OCCURRENCE, 
+                                      priority=Priority.NORMAL, 
+                                      intersectGrid=self.intersectGrid,
+                                      minPointCount=BISON_MIN_POINT_COUNT)
+            self.log.debug('Created %d jobs for occurrenceset %d' 
+                           % (len(jobs), occ.getId()))
+      except Exception, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         raise e
+
+
 
 # .............................................................................
 class Troubleshooter(_LMWorker):
@@ -823,21 +879,16 @@ class BisonChainer(_LMWorker):
    @summary: Initializes the job chainer for BISON.
    """
    def __init__(self, lock, pipelineName, updateInterval, algLst, mdlScen, 
-                prjScenLst, tsnfilename, expDate, taxonSourceName, 
+                prjScenLst, tsnfilename, expDate, taxonSource=None, 
                 mdlMask=None, prjMask=None, intersectGrid=None):
       threadspeed = WORKER_JOB_LIMIT
       _LMWorker.__init__(self, lock, threadspeed, pipelineName, None,
                          updateInterval)
       
-      try:
-         txSourceId, url, createdate, moddate = \
-                                   self._scribe.findTaxonSource(taxonSourceName)
-         self._taxonSourceId = txSourceId
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         self._failGracefully(e)
-         
+      if taxonSource is None:
+         self._failGracefully('Missing taxonomic source')
+      else:
+         self._taxonSourceId = taxonSource
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
       self.algs = algLst
       self.modelScenario = mdlScen
@@ -901,14 +952,7 @@ class BisonChainer(_LMWorker):
                tsn = self._getItisTsn()
                try:
                   self._getLock()           
-                  speciesName = self._scribe.findTaxon(self._taxonSourceId, tsn)
-                  if speciesName is None:
-                     # Use API to get and insert species name 
-                     speciesName = self._processInputTaxa(tsn, self._getTsnCount())
-                  if speciesName is None:
-                     print('What happened to TSN %s?' % tsn)
-                  else:
-                     self._processInputSpecies(speciesName, tsn, self._getTsnCount())
+                  self.processInputItisTSN(tsn, self._getTsnCount())
                finally:
                   self._freeLock()
                self._currRec = self._getTsnRec()
@@ -947,49 +991,20 @@ class BisonChainer(_LMWorker):
       _LMWorker._failGracefully(self, lmerr, allFail=allFail)
       
 # ...............................................
-   def _processInputSpecies(self, speciesName, speciesTsn, dataCount):
-      currtime = dt.gmt().mjd
-      occ = None
-      jobs = []
+   def _getQueryUrl(self, speciesTsn):
+      occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-*' % speciesTsn}, 
+                        otherFilters=BISON_OCC_FILTERS)
+      # TODO: Remove this when we can properly parse XML file with full URL
+      occAPI.clearOtherFilters()
+      return occAPI.url
+
+# ...............................................
+   def _processInputItisTSN(self, speciesTsn, dataCount):
       try:
-         occs = self._scribe.getOccurrenceSetsForTaxon(speciesName, 
-                                                       ARCHIVE_USER)
-         if not occs:
-            occ = OccurrenceLayer(speciesName.scientificName, 
-                  name=speciesName.scientificName, fromGbif=False, 
-                  queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
-                  ogrType=wkbPoint, userId=ARCHIVE_USER,
-                  primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
-                  status=JobStatus.INITIALIZE, statusModTime=currtime, 
-                  sciName=speciesName)
-            occid = self._scribe.insertOccurrenceSet(occ)
-         elif len(occs) == 1:
-            if occs[0].statusModTime > 0 and occs[0].statusModTime < self._obsoleteTime:
-               occ = occs[0]
-            else:
-               self.log.debug('Occurrenceset %d (%s) is up to date' 
-                              % (occs[0].getId(), speciesName.scientificName))
-         else:
-            raise LMError('Too many (%d) occurrenceLayers for %s'
-                          % (len(occs), speciesName.scientificName))
-            
-         if occ is not None:
-            occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-*' % speciesTsn}, 
-                              otherFilters=BISON_OCC_FILTERS)
-            # TODO: Remove this when we can properly parse XML file with full URL
-            occAPI.clearOtherFilters()
-            occ.setRawDLocation(occAPI.url, currtime)
-            # Create jobs for Archive Chain: occurrence population, 
-            # model, projection, and (later) intersect computation
-            jobs = self._scribe.initSDMChain(ARCHIVE_USER, occ, self.algs, 
-                                      self.modelScenario, 
-                                      self.projScenarios, 
-                                      occJobProcessType=ProcessType.BISON_TAXA_OCCURRENCE, 
-                                      priority=Priority.NORMAL, 
-                                      intersectGrid=self.intersectGrid,
-                                      minPointCount=BISON_MIN_POINT_COUNT)
-            self.log.debug('Created %d jobs for occurrenceset %d' 
-                           % (len(jobs), occ.getId()))
+         sciName = self._getInsertSciNameForItisTSN(speciesTsn, dataCount)
+         self._processSDMChainForDynamicQuery(sciName, speciesTsn, dataCount, 
+                                              ProcessType.BISON_TAXA_OCCURRENCE,
+                                              BISON_MIN_POINT_COUNT)
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -1008,7 +1023,7 @@ class BisonChainer(_LMWorker):
          
 # ...............................................
 # ...............................................
-   def  _processInputTaxa(self, itisTsn, tsnCount):
+   def  _getInsertSciNameForItisTSN(self, itisTsn, tsnCount):
       if itisTsn is None:
          return None
       sciname = self._scribe.findTaxon(self._taxonSourceId, itisTsn)
@@ -1190,21 +1205,16 @@ class GBIFChainer(_LMWorker):
    """
    def __init__(self, lock, pipelineName, updateInterval, 
                 algLst, mdlScen, prjScenLst, occfilename, expDate,
-                fieldnames, keyColname, taxonSourceName, 
+                fieldnames, keyColname, taxonSource=None, 
                 providerKeyFile=None, providerKeyColname=None,
                 mdlMask=None, prjMask=None, intersectGrid=None):
       threadspeed = WORKER_JOB_LIMIT
       _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
-      try:
-         # Taxonomic Source info
-         txSourceId, url, createdate, moddate = \
-                                   self._scribe.findTaxonSource(taxonSourceName)
-         self._taxonSourceId = txSourceId
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         self._failGracefully(e)
+      if taxonSource is None:
+         self._failGracefully('Missing taxonomic source')
+      else:
+         self._taxonSourceId = taxonSource
 
       self.algs = algLst
       self.modelScenario = mdlScen
@@ -1269,18 +1279,17 @@ class GBIFChainer(_LMWorker):
             while self._currRec is not None:
                occ = None
                speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
-               speciesName = self._scribe.findTaxon(self._taxonSourceId, 
-                                                    speciesKey)
-               if speciesName is None:
-                  try:
-                     speciesName = self._processInputTaxa(speciesKey)
-                  except LmHTTPError, e:
-                     self.log.info('Failed lookup for key {}, ({})'.format(
-                                                            speciesKey, e.msg))
-               if speciesName is not None:
-                  self._processInputSpecies(speciesName, dataCount, dataChunk)
-               else:
-                  self.log.info('Unknown taxa for key {}'.format(speciesKey))
+#                speciesName = self._scribe.findTaxon(self._taxonSourceId, 
+#                                                     speciesKey)
+#                if speciesName is None:
+#                   try:
+#                      speciesName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey)
+#                   except LmHTTPError, e:
+#                      self.log.info('Failed lookup for key {}, ({})'.format(
+#                                                             speciesKey, e.msg))
+               self._processInputSpeciesKey(speciesKey, dataCount, dataChunk)
+#                else:
+#                   self.log.info('Unknown taxa for key {}'.format(speciesKey))
 
                if self._existKillFile():
                   break
@@ -1327,55 +1336,57 @@ class GBIFChainer(_LMWorker):
          while self._currRec is not None and self._recnum < linenum:
             self._currRec, tmp = self._getCSVRecord(parse=False)
             
-# ...............................................
-   def _processInputTaxa(self, speciesKey):
-      # This gets the record for the accepted species key, so the record 
-      # scientific name = accepted name (i.e. full, not canonical, species name)
-      speciesName = None
-      try:
-         self._getLock()           
-         # Use API to get and insert species name 
-         (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-          speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(speciesKey)
-         if retSpecieskey == speciesKey:
-            currtime = dt.gmt().mjd
-            speciesName = ScientificName(speciesStr, 
-                            kingdom=kingdomStr, phylum=phylumStr, 
-                            txClass=None, txOrder=orderStr, 
-                            family=familyStr, genus=genusStr, 
-                            createTime=currtime, modTime=currtime, 
-                            taxonomySourceId=self._taxonSourceId, 
-                            taxonomySourceKey=speciesKey, 
-                            taxonomySourceGenusKey=genuskey, 
-                            taxonomySourceSpeciesKey=speciesKey)
-            self._scribe.insertTaxon(speciesName)
-            return speciesName
-      except LMError, e:
-         raise e
-      except Exception, e:
-         raise LMError(currargs=e.args, lineno=self.getLineno())
-      finally:
-         self._freeLock()
+# # ...............................................
+#    def _processInputTaxa(self, speciesKey):
+#       # This gets the record for the accepted species key, so the record 
+#       # scientific name = accepted name (i.e. full, not canonical, species name)
+#       speciesName = None
+#       try:
+#          self._getLock()           
+#          # Use API to get and insert species name 
+#          (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
+#           speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(speciesKey)
+#          if retSpecieskey == speciesKey:
+#             currtime = dt.gmt().mjd
+#             speciesName = ScientificName(speciesStr, 
+#                             kingdom=kingdomStr, phylum=phylumStr, 
+#                             txClass=None, txOrder=orderStr, 
+#                             family=familyStr, genus=genusStr, 
+#                             createTime=currtime, modTime=currtime, 
+#                             taxonomySourceId=self._taxonSourceId, 
+#                             taxonomySourceKey=speciesKey, 
+#                             taxonomySourceGenusKey=genuskey, 
+#                             taxonomySourceSpeciesKey=speciesKey)
+#             self._scribe.insertTaxon(speciesName)
+#             return speciesName
+#       except LMError, e:
+#          raise e
+#       except Exception, e:
+#          raise LMError(currargs=e.args, lineno=self.getLineno())
+#       finally:
+#          self._freeLock()
          
 # ...............................................
-   def _processInputSpecies(self, speciesName, dataCount, dataChunk):
+   def _processInputSpeciesKey(self, speciesKey, dataCount, dataChunk):
       # This gets the record for the species key, so the record 
       # scientific name = species name
       currtime = dt.gmt().mjd
       occ = None
       try:
-         self._getLock()           
-         occs = self._scribe.getOccurrenceSetsForTaxon(speciesName, 
+         self._getLock()
+         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey)
+         
+         occs = self._scribe.getOccurrenceSetsForScientificName(sciName, 
                                                        ARCHIVE_USER)
          if not occs:
-            occ = OccurrenceLayer(speciesName.scientificName, 
-                  name=speciesName.scientificName, fromGbif=True, 
+            occ = OccurrenceLayer(sciName.scientificName, 
+                  name=sciName.scientificName, fromGbif=True, 
                   queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
                   ogrType=wkbPoint, ogrFormat='CSV', 
                   primaryEnv=PrimaryEnvironment.TERRESTRIAL,
                   userId=ARCHIVE_USER, createTime=currtime, 
                   status=JobStatus.INITIALIZE, 
-                  statusModTime=currtime, sciName=speciesName)
+                  statusModTime=currtime, sciName=sciName)
             occid = self._scribe.insertOccurrenceSet(occ)
          elif len(occs) == 1:
             if (occs[0].status != JobStatus.COMPLETE or 
@@ -1386,7 +1397,7 @@ class GBIFChainer(_LMWorker):
                               % (occs[0].getId(), occs[0].statusModTime))
          else:
             raise LMError('Too many (%d) occurrenceLayers for %s'
-                          % (len(occs), speciesName.scientificName))
+                          % (len(occs), sciName.scientificName))
             
          if occ is not None:
             # Write new raw data
@@ -1536,10 +1547,15 @@ class iDigBioChainer(_LMWorker):
    """
    def __init__(self, lock, pipelineName, updateInterval, 
                 algLst, mdlScen, prjScenLst, idigFname, expDate,
-                mdlMask=None, prjMask=None, intersectGrid=None):
+                taxonSource=None, mdlMask=None, prjMask=None, intersectGrid=None):
       threadspeed = WORKER_JOB_LIMIT
       _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
+
+      if taxonSource is None:
+         self._failGracefully('Missing taxonomic source')
+      else:
+         self._taxonSourceId = taxonSource
 
       self.algs = algLst
       self.modelScenario = mdlScen
@@ -1557,23 +1573,24 @@ class iDigBioChainer(_LMWorker):
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None
-      # Start mid-file 
-      self._skipAhead()
          
 # ...............................................
    def run(self):
       allFail = True
       nextStart = None
+      # Start mid-file 
+      taxonId, taxonCount, taxonName = self._skipAhead()
+
       # Gets and frees lock for each name checked
       while (not(self._existKillFile())):
          try:
-            while self._currBinomial is not None:
+            while taxonId is not None:
                occ = None
-               self._processInputBinomial()
+               self._processInputSpecies(taxonName, taxonId, taxonCount)
                if self._existKillFile():
                   break
                else:
-                  self._setCurrTaxonData()
+                  taxonId, taxonCount, taxonName = self._getCurrTaxon()
                         
             self._idigFile.close()
             if self._currBinomial is None:
@@ -1603,14 +1620,13 @@ class iDigBioChainer(_LMWorker):
       _LMWorker._failGracefully(self, lmerr, allFail=allFail)
       
 # ...............................................
-   def _setCurrTaxonData(self):
+   def _getCurrTaxon(self):
       """
-      @summary: Sets member attributes:
-          self._currBinomial, self._currGbifTaxonId, self._currReportedCount 
+      @summary: Returns currBinomial, currGbifTaxonId, currReportedCount 
       """
-      self._currGbifTaxonId = None
-      self._currReportedCount = None
-      self._currBinomial = None
+      currGbifTaxonId = None
+      currReportedCount = None
+      currBinomial = None
       success = False
       while not success:
          try:
@@ -1637,29 +1653,31 @@ class iDigBioChainer(_LMWorker):
             print('Missing data in line {}'.format(line))
          else:
             try:
-               self._currGbifTaxonId = int(tempvals[0])
+               currGbifTaxonId = int(tempvals[0])
             except:
                pass
             try:
-               self._currReportedCount = int(tempvals[1])
+               currReportedCount = int(tempvals[1])
             except:
                pass
-            self._currBinomial = tempvals[2]
+            currBinomial = tempvals[2]
             try:
-               self._currBinomial = ' '.join([self._currBinomial, tempvals[2]])
+               currBinomial = ' '.join([currBinomial, tempvals[2]])
             except:
                pass
+      return currGbifTaxonId, currReportedCount, currBinomial
 
 # ...............................................
    def _skipAhead(self):
+      taxonId = taxonCount = taxonName = None
       startline = self._findStart()         
       if startline < 0:
          self._linenum = 0
-         self._currBinomial = None
       else:
-         self._setCurrTaxonData()
-         while self._currBinomial is not None and self._linenum < startline:
-            self._setCurrTaxonData()
+         taxonId, taxonCount, taxonName = self._getCurrTaxon()
+         while taxonName is not None and self._linenum < startline:
+            taxonId, taxonCount, taxonName = self._getCurrTaxon()
+      return  taxonId, taxonCount, taxonName
          
 # ...............................................
    def _countRecords(self, rawfname):
@@ -1680,52 +1698,20 @@ class iDigBioChainer(_LMWorker):
       return pointcount
       
 # ...............................................
-   def _processInputBinomial(self):
-      # This gets the record for the species key, so the record 
-      # scientific name = species name
-      currtime = dt.gmt().mjd
-      rawfname = os.path.join(self._dumpDir, self._currBinomial, 
-                              self._currBinomial+'_sp.csv')
-      pointcount = self._countRecords(rawfname)
-      if pointcount == 0:
-         return
+   def _getQueryUrl(self, taxonId):
+      occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonId})
+      # TODO: Remove this when we can properly parse XML file with full URL
+      occAPI.clearOtherFilters()
+      return occAPI.url
       
-      occ = None
+# ...............................................
+   def _processInputGBIFTaxonId(self, taxonName, taxonId, taxonCount):
       try:
          self._getLock()
-         occs = self._scribe.getOccurrenceSetsForName(self._currBinomial, 
-                                                      userid=ARCHIVE_USER)
-         if not occs:
-            occ = OccurrenceLayer(self._currBinomial, fromGbif=False, 
-                                  queryCount=pointcount, rawDLocation=rawfname,
-                                  epsgcode=DEFAULT_EPSG, ogrType=wkbPoint, 
-                                  ogrFormat='CSV', 
-                                  primaryEnv=PrimaryEnvironment.TERRESTRIAL,
-                                  userId=ARCHIVE_USER, createTime=currtime, 
-                                  status=JobStatus.INITIALIZE, 
-                                  statusModTime=currtime)
-            occid = self._scribe.insertOccurrenceSet(occ)
-         elif len(occs) == 1:
-            if (occs[0].status != JobStatus.COMPLETE or 
-                occs[0].statusModTime < self._obsoleteTime):
-               occ = occs[0]
-            else:
-               self.log.debug('OccurrenceSet %d is up to date (%.2f)' 
-                              % (occs[0].getId(), occs[0].statusModTime))
-         else:
-            raise LMError('Too many (%d) occurrenceLayers for %s'
-                          % (len(occs), self._currBinomial))
-            
-         if occ is not None:
-            # Create jobs for Archive Chain: occurrence population, 
-            # model, projection, and (later) intersect computation
-            jobs = self._scribe.initSDMChain(ARCHIVE_USER, occ, self.algs, 
-                           self.modelScenario, self.projScenarios, 
-                           occJobProcessType=ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                           priority=Priority.NORMAL, 
-                           intersectGrid=None,
-                           minPointCount=POINT_COUNT_MIN)
-            self.log.debug('Initialized %d jobs for occ %d' % (len(jobs), occ.getId()))
+         sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonId)
+         self._processSDMChainForDynamicQuery(sciName, taxonId, taxonCount,
+                                              ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                                              POINT_COUNT_MIN)
       except LMError, e:
          raise e
       except Exception, e:
