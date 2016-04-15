@@ -1,9 +1,9 @@
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
--- -- psql -U admin -d template1 --file=@LMHOME/rocks/bin/createDBTables.sql
+-- -- psql -U admin -d template1 --file=@LMHOME@/rocks/bin/defineDBTables.sql
 -- --------------------------------
--- createMAL also calls createCommon, some of its tables are referenced later
--- in foreign keys of other MAL tables
+-- createMAL and createSPECO also call createCommon; some tables are referenced
+-- later in foreign keys of other tables
 -- --------------------------------
 \i @LMHOME@/LmDbServer/dbsetup/createMAL.sql
 \i @LMHOME@/LmDbServer/dbsetup/createSPECO.sql
