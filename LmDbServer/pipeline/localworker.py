@@ -1535,7 +1535,7 @@ class iDigBioChainer(_LMWorker):
              updates the Occurrence record and inserts a job.
    """
    def __init__(self, lock, pipelineName, updateInterval, 
-                algLst, mdlScen, prjScenLst, binomialfilename, expDate,
+                algLst, mdlScen, prjScenLst, idigFname, expDate,
                 mdlMask=None, prjMask=None, intersectGrid=None):
       threadspeed = WORKER_JOB_LIMIT
       _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
@@ -1549,11 +1549,11 @@ class iDigBioChainer(_LMWorker):
       self.intersectGrid = intersectGrid
       self._obsoleteTime = expDate
       self._linenum = 0
-      self._dumpDir, ext = os.path.splitext(binomialfilename)
+      self._dumpDir, ext = os.path.splitext(idigFname)
       try:
-         self._binomialFile = open(binomialfilename, 'r')
+         self._idigFile = open(idigFname, 'r')
       except Exception, e:
-         raise LMError('Invalid file %s (%s)' % (str(binomialfilename), str(e)))
+         raise LMError('Invalid file %s (%s)' % (str(idigFname), str(e)))
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None
@@ -1573,9 +1573,9 @@ class iDigBioChainer(_LMWorker):
                if self._existKillFile():
                   break
                else:
-                  self._currBinomial = self._getBinomial()
+                  self._setCurrTaxonData()
                         
-            self._binomialFile.close()
+            self._idigFile.close()
             if self._currBinomial is None:
                nextStart = -9999
                allFail = False
@@ -1603,7 +1603,7 @@ class iDigBioChainer(_LMWorker):
       _LMWorker._failGracefully(self, lmerr, allFail=allFail)
       
 # ...............................................
-   def _getBinomial(self):
+   def _setCurrTaxonData(self):
       """
       @summary: Sets member attributes:
           self._currBinomial, self._currGbifTaxonId, self._currReportedCount 
@@ -1614,7 +1614,7 @@ class iDigBioChainer(_LMWorker):
       success = False
       while not success:
          try:
-            line = self._binomialFile.readline()
+            line = self._idigFile.readline()
          except Exception, e:
             self._linenum += 1
             if isinstance(e, OverflowError):
@@ -1657,9 +1657,9 @@ class iDigBioChainer(_LMWorker):
          self._linenum = 0
          self._currBinomial = None
       else:
-         self._currBinomial = self._getBinomial()
+         self._setCurrTaxonData()
          while self._currBinomial is not None and self._linenum < startline:
-            self._currBinomial = self._getBinomial()
+            self._setCurrTaxonData()
          
 # ...............................................
    def _countRecords(self, rawfname):

@@ -353,14 +353,20 @@ class BisonAPI(APIQuery):
       return thisdict
          
 # ...............................................
-   def getBinomialTSNs(self):
+   @staticmethod
+   def getTsnListForBinomials(cls):
       """
-      @summary: Returns a list of dictionaries where each dictionary is an 
-                occurrence record
+      @summary: Returns a list of sequences containing tsn and tsnCount
       """
+      bisonQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
+                            otherFilters=BISON_TSN_FILTERS)
+      tsnList = bisonQuery._getBinomialTSNs()
+      return tsnList
+
+# ...............................................
+   def _getBinomialTSNs(self):
       dataList = None
-      if self.output is None:
-         self.query()
+      self.query()
       if self.output is not None:
          dataCount = self._burrow(BISON_COUNT_KEYS)
          dataList = self._burrow(BISON_TSN_LIST_KEYS)
@@ -621,6 +627,11 @@ class IdigbioAPI(APIQuery):
       """
       APIQuery.queryByPost(self, outputType='json')
           
+# ...............................................
+   @staticmethod
+   def getTaxonIdsBinomials():
+      pass
+
 # ...............................................
    def getOccurrences(self, asShapefile=False):
       """

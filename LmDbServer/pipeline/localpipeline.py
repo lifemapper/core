@@ -25,13 +25,12 @@ import mx.DateTime
 import os
 from time import sleep
 
-from LmCommon.common.apiquery import BisonAPI
-from LmCommon.common.lmconstants import (BISON_BINOMIAL_REGEX, BISON_NAME_KEY, 
-          BISON_TSN_FILTERS, GBIF_EXPORT_FIELDS, GBIF_PROVIDER_FIELD, 
+from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, GBIF_PROVIDER_FIELD, 
           GBIF_TAXONKEY_FIELD, Instances, ONE_MONTH, ProcessType)
 
 from LmDbServer.common.lmconstants import (OCC_DUMP_FILE, 
-               BISON_TSN_FILE, IDIGBIO_BINOMIAL_FILE, PROVIDER_DUMP_FILE,
+               BISON_TSN_FILE, IDIGBIO_FILE, PROVIDER_DUMP_FILE,
                USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
@@ -116,6 +115,23 @@ class LMArchivePipeline(_Pipeline):
 
 # ...............................................
    def _initWorkers(self):
+      raise LMError('Must be implemented in data-specific subclass')
+
+# ...............................................
+   def _updateFile(self, filename, expDate):
+      """
+      If file does not exist or is older than expDate, create a new file. 
+      """
+      if filename is None or not os.path.exists(filename):
+         self._recreateFile(filename)
+      elif expDate is not None:
+         ticktime = os.path.getmtime(filename)
+         modtime = mx.DateTime.DateFromTicks(ticktime).mjd
+         if modtime < expDate:
+            self._recreateFile(filename)
+
+# ...............................................
+   def _recreateFile(self, filename):
       raise LMError('Must be implemented in data-specific subclass')
 
 # .............................................................................
@@ -263,35 +279,35 @@ class BisonPipeline(LMArchivePipeline):
       LMArchivePipeline.__init__(self, pipelineName, algCodes, 
                                  mdlScenarioCode, projScenarioCodes, 
                                  mdlMaskId=mdlMaskId, prjMaskId=prjMaskId)
-      self._updateTSNFile(BISON_TSN_FILE, expDate)
+      self._updateFile(BISON_TSN_FILE, expDate)
       self._initWorkers(BISON_TSN_FILE, expDate)
 
-# ...............................................
-   def _updateTSNFile(self, filename, expDate):
-      """
-      If file does not exist or is older than expDate, create a new file. 
-      """
-      if filename is None or not os.path.exists(filename):
-         self._recreateTSNFile(filename)
-      else:
-         ticktime = os.path.getmtime(filename)
-         modtime = mx.DateTime.DateFromTicks(ticktime).mjd
-         if modtime < expDate:
-            self._recreateTSNFile(filename)
+# # ...............................................
+#    def _updateTSNFile(self, filename, expDate):
+#       """
+#       If file does not exist or is older than expDate, create a new file. 
+#       """
+#       if filename is None or not os.path.exists(filename):
+#          self._recreateTSNFile(filename)
+#       else:
+#          ticktime = os.path.getmtime(filename)
+#          modtime = mx.DateTime.DateFromTicks(ticktime).mjd
+#          if modtime < expDate:
+#             self._recreateTSNFile(filename)
    
 # ...............................................
-   def _recreateTSNFile(self, filename):
+   def _recreateFile(self, filename):
       """
       Create a new file from BISON TSN query for binomials with > 20 points. 
       """
-      bisonQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
-                            otherFilters=BISON_TSN_FILTERS)
-      tsnList = bisonQuery.getBinomialTSNs()
+      tsnList = BisonAPI.getTsnListForBinomials()
+#       bisonQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
+#                             otherFilters=BISON_TSN_FILTERS)
+#       tsnList = bisonQuery.getBinomialTSNs()
       with open(filename, 'w') as f:
          for tsn, tsnCount in tsnList:
-            f.write('%d, %d\n' % (int(tsn), int(tsnCount)))
-      
-
+            f.write('{}, {}\n'.format(tsn, tsnCount))
+         
 # ...............................................
    def _initWorkers(self, tsnfilename, expDate):
 #       taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
@@ -338,17 +354,18 @@ class iDigBioPipeline(LMArchivePipeline):
       #  in SPECIES directory:
       #   1) unzip dumped zip file
       #   2) list species directories into txt file with same basename
-      self._initWorkers(IDIGBIO_BINOMIAL_FILE, expDate)
+      self._updateFile(IDIGBIO_FILE, expDate)
+      self._initWorkers(IDIGBIO_FILE, expDate)
 
 # ...............................................
-   def _initWorkers(self, binomialfilename, expDate):
+   def _initWorkers(self, idigFname, expDate):
       self.workers = []
       updateInterval = ONE_MONTH
       
       try:
          self.workers.append(iDigBioChainer(self.lock, self.name, updateInterval, 
                               self.algs, self.modelScenario, self.projScenarios, 
-                              binomialfilename, expDate, 
+                              idigFname, expDate, 
                               mdlMask=self.modelMask, prjMask=self.projMask,
                               intersectGrid=self.intersectGrid))
          self.workers.append(Infiller(self.lock, self.name, updateInterval, 
@@ -362,6 +379,20 @@ class iDigBioPipeline(LMArchivePipeline):
       else:
          self.ready = True
 
+# ...............................................
+   def _recreateFile(self, filename):
+      """
+      Create a new file from BISON TSN query for binomials with > 20 points.
+      @todo: Implement this with dynamic iDigBio query when their service
+             is available 
+      """
+#       idigQuery = IdigbioAPI()
+#       taxaList = idigQuery.getTaxonIdsBinomials()
+#       if taxaList:
+#          with open(filename, 'w') as f:
+#             for gbifid, taxonCount, taxonName in taxaList:
+#                f.write('{}, {}, {}\n'.format(gbifid, taxonCount, taxonName))
+      pass
 
 # .....................................................
 """
