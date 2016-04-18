@@ -66,3 +66,7 @@ LmServer/db/connect.py
 config/config.*.ini
 LmDbServer/dbsetup/addDBFunctions.sql
 LmDbServer/dbsetup/createDBTables.sql
+LmDbServer/dbsetup/defineDBTables.sql
+LmDbServer/dbsetup/runAllSQLScripts.sql
+LmDbServer/dbsetup/runUpdateDBScripts.sql
+LmServer/db/connect.py.orig
