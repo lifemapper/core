@@ -1849,4 +1849,27 @@ class ProcessRunner(_LMWorker):
 
       if self._existKillFile():
          self._failGracefully(None)
-         
+
+# .............................................................................
+# .............................................................................         
+if __name__ == '__main__':
+   from LmCommon.common.lmconstants import ONE_MONTH
+
+   from LmDbServer.common.lmconstants import IDIGBIO_FILE
+   from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
+            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
+            SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
+
+   expdate = mx.DateTime.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
+                                  SPECIES_EXP_DAY)
+   pname = DATASOURCE.lower()
+#    txSourceId, url, createdate, moddate = \
+#       scribe.findTaxonSource(TAXONOMIC_SOURCE[DATASOURCE]['name'])
+   txSourceId = 1
+   try:
+      w = iDigBioChainer(None, pname, ONE_MONTH, DEFAULT_ALGORITHMS, 
+                      DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                      IDIGBIO_FILE, expDate=expdate.mjd, taxonSource=txSourceId,
+                      mdlMask=None, prjMask=None, intersectGrid=None)
+   except Exception, e:
+      raise LMError(e)
