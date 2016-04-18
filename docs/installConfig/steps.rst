@@ -1,6 +1,7 @@
 ########################
 Lifemapper install steps
 ########################
+
 The following details how to install both Lifemapper rolls, LmServer and 
 LmCompute, on a single physical or virtual cluster.  Some steps may be 
 unnecessary, or already complete, for your instance.
