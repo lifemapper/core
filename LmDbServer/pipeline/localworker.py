@@ -59,7 +59,7 @@ class _LMWorker(_Worker):
                 startStatus=None, queueStatus=None, endStatus=None, 
                 threadSuffix=None):
       
-      _Worker.__init__(self, lock, pipelineName, threadSuffix=threadSuffix)
+      super(_Worker, self).__init__(lock, pipelineName, threadSuffix=threadSuffix)
       self.threadSpeed = threadSpeed
       self.startStatus = startStatus
       self.queueStatus = queueStatus
@@ -359,7 +359,8 @@ class Troubleshooter(_LMWorker):
                 archiveDataDeleteTime=None):
       threadspeed = WORKER_JOB_LIMIT/2
       self.archiveDataDeleteTime = archiveDataDeleteTime
-      _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
+      super(_LMWorker, self).__init__(lock, threadspeed, pipelineName, 
+                                      updateInterval)
       
 # ...............................................
    def run(self):
@@ -606,10 +607,11 @@ class Infiller(_LMWorker):
                 mdlScen, prjScenLst, mdlMask=None, prjMask=None,
                 intersectGrid=None):
       threadspeed = WORKER_JOB_LIMIT * 2
-      _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval, 
-                         startStatus=JobStatus.GENERAL, 
-                         queueStatus=JobStatus.GENERAL, 
-                         endStatus=JobStatus.INITIALIZE)
+      super(_LMWorker, self).__init__(lock, threadspeed, pipelineName, 
+                                      updateInterval, 
+                                      startStatus=JobStatus.GENERAL, 
+                                      queueStatus=JobStatus.GENERAL, 
+                                      endStatus=JobStatus.INITIALIZE)
       self.algs = algLst
       self.modelScenario = mdlScen
       self.projScenarios = prjScenLst
@@ -881,9 +883,8 @@ class BisonChainer(_LMWorker):
    def __init__(self, lock, pipelineName, updateInterval, algLst, mdlScen, 
                 prjScenLst, tsnfilename, expDate, taxonSource=None, 
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      threadspeed = WORKER_JOB_LIMIT
-      _LMWorker.__init__(self, lock, threadspeed, pipelineName, None,
-                         updateInterval)
+      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, None,
+                                      updateInterval)
       
       if taxonSource is None:
          self._failGracefully('Missing taxonomic source')
@@ -1055,10 +1056,9 @@ class UserChainer(_LMWorker):
    def __init__(self, lock, pipelineName, updateInterval, 
                 algLst, mdlScen, prjScenLst, occDataFname, occMetaFname, expDate,
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      threadspeed = WORKER_JOB_LIMIT
-      _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
+      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
+                                      updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
-      
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
       except Exception, e:
@@ -1208,8 +1208,8 @@ class GBIFChainer(_LMWorker):
                 fieldnames, keyColname, taxonSource=None, 
                 providerKeyFile=None, providerKeyColname=None,
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      threadspeed = WORKER_JOB_LIMIT
-      _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
+      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
+                                      updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
       if taxonSource is None:
          self._failGracefully('Missing taxonomic source')
@@ -1547,36 +1547,32 @@ class iDigBioChainer(_LMWorker):
    """
    def __init__(self, lock, pipelineName, updateInterval, 
                 algLst, mdlScen, prjScenLst, idigFname, expDate,
-                taxonSource=None, mdlMask=None, prjMask=None, intersectGrid=None):
-      threadspeed = WORKER_JOB_LIMIT
-      _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
-      try:      
-            if taxonSource is None:
-               self._failGracefully('Missing taxonomic source')
-            else:
-               self._taxonSourceId = taxonSource
-      
-            self.startFile = os.path.join(APP_PATH, LOG_PATH, 
-                                          'start.{}.txt'.format(pipelineName))
-            self.algs = algLst
-            self.modelScenario = mdlScen
-            self.projScenarios = prjScenLst
-            self.modelMask = mdlMask
-            self.projMask = prjMask
-            self.intersectGrid = intersectGrid
-            self._obsoleteTime = expDate
-            self._linenum = 0
-            self._dumpDir, ext = os.path.splitext(idigFname)
-            try:
-               self._idigFile = open(idigFname, 'r')
-            except Exception, e:
-               raise LMError('Invalid file %s (%s)' % (str(idigFname), str(e)))
-            self._currBinomial = None
-            self._currGbifTaxonId = None
-            self._currReportedCount = None
+                taxonSource=None, mdlMask=None, prjMask=None, 
+                intersectGrid=None):
+      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
+                                      updateInterval)
+      self.startFile = os.path.join(APP_PATH, LOG_PATH, 
+                                    'start.{}.txt'.format(pipelineName))
+      self.algs = algLst
+      self.modelScenario = mdlScen
+      self.projScenarios = prjScenLst
+      self.modelMask = mdlMask
+      self.projMask = prjMask
+      self.intersectGrid = intersectGrid
+      self._obsoleteTime = expDate
+      self._linenum = 0
+      self._dumpDir, ext = os.path.splitext(idigFname)
+      try:
+         self._idigFile = open(idigFname, 'r')
       except Exception, e:
-         raise LMError('Failed to construct iDigBioChainer' + str(e))
-      
+         raise LMError('Invalid file %s (%s)' % (str(idigFname), str(e)))
+      self._currBinomial = None
+      self._currGbifTaxonId = None
+      self._currReportedCount = None
+      if taxonSource is None:
+         self._failGracefully('Missing taxonomic source')
+      else:
+         self._taxonSourceId = taxonSource      
          
 # ...............................................
    def run(self):
@@ -1739,9 +1735,9 @@ class ProcessRunner(_LMWorker):
       self.ipaddress = None
       (self.ipaddress, network, cidr, iface) = self._getNetworkInfo()
       
-      _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval, 
-                         startStatus, queueStatus, endStatus, 
-                         threadSuffix=threadSuffix)
+      super(_LMWorker, self).__init__(lock, threadspeed, pipelineName, 
+                                      updateInterval, startStatus, queueStatus, 
+                                      endStatus, threadSuffix=threadSuffix)
       self.processTypes = processTypes
       try:
          # Rolls back and moves dependent jobs for SDM and RAD
