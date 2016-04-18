@@ -1541,38 +1541,42 @@ class GBIFChainer(_LMWorker):
 # ..............................................................................
 class iDigBioChainer(_LMWorker):
    """
-   @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
-             text chunk to a file, then creates an OccurrenceJob for it and 
-             updates the Occurrence record and inserts a job.
+   @summary: Parses an iDigBio provided file of GBIF Taxon ID, count, binomial, 
+             creating a chain of SDM jobs for each, unless the species is 
+             up-to-date. 
    """
    def __init__(self, lock, pipelineName, updateInterval, 
                 algLst, mdlScen, prjScenLst, idigFname, expDate,
                 taxonSource=None, mdlMask=None, prjMask=None, intersectGrid=None):
       threadspeed = WORKER_JOB_LIMIT
       _LMWorker.__init__(self, lock, threadspeed, pipelineName, updateInterval)
-      self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
-
-      if taxonSource is None:
-         self._failGracefully('Missing taxonomic source')
-      else:
-         self._taxonSourceId = taxonSource
-
-      self.algs = algLst
-      self.modelScenario = mdlScen
-      self.projScenarios = prjScenLst
-      self.modelMask = mdlMask
-      self.projMask = prjMask
-      self.intersectGrid = intersectGrid
-      self._obsoleteTime = expDate
-      self._linenum = 0
-      self._dumpDir, ext = os.path.splitext(idigFname)
-      try:
-         self._idigFile = open(idigFname, 'r')
+      try:      
+            if taxonSource is None:
+               self._failGracefully('Missing taxonomic source')
+            else:
+               self._taxonSourceId = taxonSource
+      
+            self.startFile = os.path.join(APP_PATH, LOG_PATH, 
+                                          'start.{}.txt'.format(pipelineName))
+            self.algs = algLst
+            self.modelScenario = mdlScen
+            self.projScenarios = prjScenLst
+            self.modelMask = mdlMask
+            self.projMask = prjMask
+            self.intersectGrid = intersectGrid
+            self._obsoleteTime = expDate
+            self._linenum = 0
+            self._dumpDir, ext = os.path.splitext(idigFname)
+            try:
+               self._idigFile = open(idigFname, 'r')
+            except Exception, e:
+               raise LMError('Invalid file %s (%s)' % (str(idigFname), str(e)))
+            self._currBinomial = None
+            self._currGbifTaxonId = None
+            self._currReportedCount = None
       except Exception, e:
-         raise LMError('Invalid file %s (%s)' % (str(idigFname), str(e)))
-      self._currBinomial = None
-      self._currGbifTaxonId = None
-      self._currReportedCount = None
+         raise LMError('Failed to construct iDigBioChainer' + str(e))
+      
          
 # ...............................................
    def run(self):
@@ -1585,7 +1589,6 @@ class iDigBioChainer(_LMWorker):
       while (not(self._existKillFile())):
          try:
             while taxonId is not None:
-               occ = None
                self._processInputSpecies(taxonName, taxonId, taxonCount)
                if self._existKillFile():
                   break
@@ -1853,14 +1856,14 @@ class ProcessRunner(_LMWorker):
 # .............................................................................
 # .............................................................................         
 if __name__ == '__main__':
+   
    from LmCommon.common.lmconstants import ONE_MONTH
-
    from LmDbServer.common.lmconstants import IDIGBIO_FILE
    from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
             SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
 
-   expdate = mx.DateTime.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
+   expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                   SPECIES_EXP_DAY)
    pname = DATASOURCE.lower()
 #    txSourceId, url, createdate, moddate = \
@@ -1873,3 +1876,14 @@ if __name__ == '__main__':
                       mdlMask=None, prjMask=None, intersectGrid=None)
    except Exception, e:
       raise LMError(e)
+   else:
+      print 'iDigBioChainer is fine'
+      
+   try:
+      w2 = Infiller(None, pname, ONE_MONTH, DEFAULT_ALGORITHMS, 
+               DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+               mdlMask=None, prjMask=None, intersectGrid=None)
+   except Exception, e:
+      raise LMError(e)
+   else:
+      print 'Infiller is fine'
