@@ -896,11 +896,9 @@ class MAL(DbPostgresql):
 # ...............................................
    def getOccurrenceSetsForScientificName(self, sciNameId, userid):
       """
-      @param sciName: ScientificName for searching 
+      @param sciNameId: ScientificName ID for searching 
       @param userid: Userid for filtering results 
       @return: list of occurrenceSet objects
-      @note: lm_getOccurrenceSetsForName(varchar, varchar, varchar) 
-             returns setof occurrenceset
       """
       occSets = []
       rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSetsForScinameUser', 
@@ -916,8 +914,6 @@ class MAL(DbPostgresql):
       @param taxName: Occurrenceset displayname for searching 
       @param userid: Userid for filtering results 
       @return: list of occurrenceSet objects
-      @note: lm_getOccurrenceSetsForName(varchar, varchar, varchar) 
-             returns setof occurrenceset
       """
       occSets = []
       rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSetsForName', 
@@ -962,34 +958,32 @@ class MAL(DbPostgresql):
       return occSets
 
 # ...............................................
-   def getGBIFOccurrenceSetsForName(self, taxName):
+#    def getGBIFOccurrenceSetsForName(self, taxName, usrid=ARCHIVE_USER):
+   def getOccurrenceSetsForNameAndUser(self, taxName, usrid):
       """
       @summary: Return OccurrenceLayers for the given name
-      @param taxName: taxonomic name to match 
-      @return: list of OccurrenceLayer objects
-      @note: lm_getOccurrenceSetsForUser(varchar, varchar) 
-             returns setof occurrenceset
+      @param taxName: taxonomic name to match exactly
+      @return: list of OccurrenceLayer objects owned by usrid
       """
       occSets = []
-      rows, idxs = self.executeSelectManyFunction('lm_getGBIFOccurrenceSetsForUserAndName', 
-                                                  taxName, ARCHIVE_USER)
+      rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSetsForNameAndUser', 
+                                                  taxName, usrid)
       if rows:
          for row in rows:
             occSets.append(self._createOccurrenceSet(row, idxs))
       return occSets
 
 # ...............................................
-   def getGBIFOccurrenceSetsLikeName(self, taxName):
+#    def getGBIFOccurrenceSetsLikeName(self, taxName, usrid=ARCHIVE_USER):
+   def getOccurrenceSetsLikeNameAndUser(self, taxName, usrid):
       """
       @summary: Return OccurrenceLayers starting with the given name
       @param taxName: taxonomic name to match 
-      @return: list of OccurrenceLayer objects
-      @note: lm_getOccurrenceSetsForUser(varchar, varchar) 
-             returns setof occurrenceset
+      @return: list of OccurrenceLayer objects owned by usrid
       """
       occSets = []
-      rows, idxs = self.executeSelectManyFunction('lm_getGBIFOccurrenceSetsLikeName', 
-                                                  taxName, ARCHIVE_USER)
+      rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSetsLikeNameAndUser', 
+                                                  taxName, usrid)
       if rows:
          for row in rows:
             occSets.append(self._createOccurrenceSet(row, idxs))

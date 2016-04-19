@@ -1731,7 +1731,8 @@ class Scribe(Peruser):
       occJob = self.getJobOfType(JobFamily.SDM, occ)
       if occJob is None:
          try:
-            occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
+            if occ.status != JobStatus.INITIALIZE:
+               occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
             occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
                                       status=JobStatus.INITIALIZE, 
                                       statusModTime=modtime, createTime=modtime,

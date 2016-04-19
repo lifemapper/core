@@ -58,30 +58,33 @@ class _LMWorker(_Worker):
    def __init__(self, lock, threadSpeed, pipelineName, updateInterval, 
                 startStatus=None, queueStatus=None, endStatus=None, 
                 threadSuffix=None):
-      
-      super(_Worker, self).__init__(lock, pipelineName, threadSuffix=threadSuffix)
-      self.threadSpeed = threadSpeed
-      self.startStatus = startStatus
-      self.queueStatus = queueStatus
-      self.updateInterval = updateInterval
-      self.updateTime = None
-      self._gbifQueryTime = None
-      self.simpleChecked = set()
-
       try:
-         self._scribe = Scribe(self.log)
-         success = self._scribe.openConnections()
-
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         self._failGracefully(e)
-
-      if success:
-         self.log.info('%s opened databases' % (self.name))
-      else:
-         raise LMError('%s failed to open databases' % self.name)
+         super(_Worker, self).__init__(lock, pipelineName, threadSuffix=threadSuffix)
+         self.threadSpeed = threadSpeed
+         self.startStatus = startStatus
+         self.queueStatus = queueStatus
+         self.updateInterval = updateInterval
+         self.updateTime = None
+         self._gbifQueryTime = None
+         self.simpleChecked = set()
    
+         try:
+            self._scribe = Scribe(self.log)
+            success = self._scribe.openConnections()
+   
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            self._failGracefully(e)
+   
+      except Exception, e:
+         raise LMError(prevargs=e.args)
+      else:
+         if success:
+            self.log.info('%s opened databases' % (self.name))
+         else:
+            raise LMError('%s failed to open databases' % self.name)
+      
 # ...............................................
    def _findStart(self):
       linenum = 0
@@ -146,19 +149,20 @@ class _LMWorker(_Worker):
          primaryEnv = PrimaryEnvironment.MARINE
       return primaryEnv
    
-# ...............................................
-   def _getLocalOccurrencesets(self, name):
-      occSets = []
-      try:
-         # For genus-only: exact match, for genus-species: all occurrencesets 
-         # with display name starting with namestring, case-insensitive 
-         # Convert to string in case of numeric 'names'
-         occSets = self._scribe.getGBIFOccurrenceSetsForName(str(name))
-      except Exception, e:
-         self.log.error('Failed to get LM Occsets starting with %s (%s)'
-                        % (name, str(e)))
-      return occSets
-   
+# # ...............................................
+#    def _getLocalOccurrencesets(self, name):
+#       occSets = []
+#       try:
+#          # For genus-only: exact match, for genus-species: all occurrencesets 
+#          # with display name starting with namestring, case-insensitive 
+#          # Convert to string in case of numeric 'names'
+#          occSets = self._scribe.getOccurrenceSetsLikeNameAndUser(str(name), 
+#                                                                usrid=ARCHIVE_USER)
+#       except Exception, e:
+#          self.log.error('Failed to get LM Occsets starting with %s (%s)'
+#                         % (name, str(e)))
+#       return occSets
+#    
 # ...............................................
    def _notifyComplete(self, job):
       # Should already have lock
@@ -217,43 +221,7 @@ class _LMWorker(_Worker):
                self.log.info('Failed to notify user %s of %s (%s)' % 
                              (job.email, subject, str(e)))
                success = False
-      return success         
-
-# ...............................................
-   def _findSingleOccset(self, taxonName, originalOcc):
-      """
-      Create, update, or delete Name
-      """
-      deletedOriginal = False
-      matchingOcc = None
-      occSets = self._getLocalOccurrencesets(taxonName)
-
-      for occ in occSets:
-         if occ.displayName == taxonName:
-            matchingOcc = occ
-         else:
-            try:
-               deleted = self._scribe.completelyRemoveOccurrenceSet(occ)
-            except Exception, e:
-               self.log.error('Failed to completely remove similar occurrenceSet %s/%s (%s)'
-                              % (str(occ.getId()), occ.displayName, str(e)))
-            else:
-               self.log.debug('   removed similar occurrenceset %s/%s in MAL' 
-                              % (str(occ.getId()), occ.displayName))
-
-      if originalOcc is not None: 
-         if (originalOcc.displayName != taxonName or 
-             (matchingOcc is not None and originalOcc.getId() != matchingOcc.getId())):
-            try:
-               deletedOriginal = self._scribe.completelyRemoveOccurrenceSet(originalOcc)
-            except Exception, e:
-               self.log.error('Failed to completely remove occurrenceSet %s with synonym %s (%s)'
-                              % (str(originalOcc.getId()), originalOcc.displayName, str(e)))
-            else:
-               self.log.debug('   removed occurrenceset %s/ with synonym %s in MAL' 
-                              % (str(originalOcc.getId()), originalOcc.displayName))
-
-      return matchingOcc, deletedOriginal
+      return success
 
    # ...............................................
    def _deleteOccurrenceSet(self, occSet):

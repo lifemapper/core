@@ -567,20 +567,20 @@ class Peruser(LMObject):
       return occs
 
 # ...............................................
-   def getGBIFOccurrenceSetsForName(self, taxName):
+   def getOccurrenceSetsForNameAndUser(self, taxName, usrid=ARCHIVE_USER):
       """
       @copydoc LmServer.db.catalog_model.MAL::getOccurrenceSetsForName()
       """
-      occs = self._mal.getGBIFOccurrenceSetsForName(taxName)
+      occs = self._mal.getOccurrenceSetsForNameAndUser(taxName, usrid)
       return occs
 
 # ...............................................
-   def getGBIFOccurrenceSetsLikeName(self, taxName):
+   def getOccurrenceSetsLikeNameAndUser(self, taxName, usrid=ARCHIVE_USER):
       """
       @copydoc LmServer.db.catalog_model.MAL::getOccurrenceSetsLikeName()
       """
       taxName = taxName.lower().capitalize()
-      occs = self._mal.getGBIFOccurrenceSetsLikeName(taxName)
+      occs = self._mal.getOccurrenceSetsLikeNameAndUser(taxName, usrid)
       return occs
 
 # ...............................................

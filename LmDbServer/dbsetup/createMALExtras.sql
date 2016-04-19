@@ -2596,27 +2596,9 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- lm_getGBIFOccurrenceSetsForName
-CREATE OR REPLACE FUNCTION lm3.lm_getGBIFOccurrenceSetsForName(name varchar)
-   RETURNS SETOF lm3.occurrenceset AS
-$$
-DECLARE
-   rec lm3.occurrenceset%ROWTYPE;
-   cmd varchar;
-   wherecls varchar;
-BEGIN
-   FOR rec in SELECT o.* FROM lm3.occurrenceset o 
-              WHERE lower(o.displayname) = lower(name)
-      LOOP
-         RETURN NEXT rec;
-      END LOOP;
-   RETURN;
-END;
-$$  LANGUAGE 'plpgsql' STABLE;
-
--- ----------------------------------------------------------------------------
--- lm_getGBIFOccurrenceSetsForUserAndName
-CREATE OR REPLACE FUNCTION lm3.lm_getGBIFOccurrenceSetsForUserAndName(
+-- lm_getOccurrenceSetsForNameAndUser  
+-- OLD=lm3.lm_getGBIFOccurrenceSetsForUserAndName
+CREATE OR REPLACE FUNCTION lm3.lm_getOccurrenceSetsForNameAndUser(
                                                           name varchar,
                                                           usr varchar)
    RETURNS SETOF lm3.occurrenceset AS
@@ -2637,9 +2619,10 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- lm_getGBIFOccurrenceSetsLikeName
-CREATE OR REPLACE FUNCTION lm3.lm_getGBIFOccurrenceSetsLikeName(name varchar,
-                                                                defusr varchar)
+-- lm_getOccurrenceSetsLikeNameAndUser
+-- OLD=lm_getGBIFOccurrenceSetsLikeName
+CREATE OR REPLACE FUNCTION lm3.lm_getOccurrenceSetsLikeNameAndUser(name varchar,
+                                                                usr varchar)
    RETURNS SETOF lm3.occurrenceset AS
 $$
 DECLARE
@@ -2649,16 +2632,14 @@ DECLARE
 BEGIN
    FOR rec in SELECT o.* FROM lm3.occurrenceset o 
               WHERE o.displayname like concat(name, '%') 
-                AND fromgbif is true
-                AND userid = defusr
+                AND userid = usr
       LOOP
          RETURN NEXT rec;
       END LOOP;
 
    FOR rec in SELECT o.* FROM lm3.occurrenceset o 
               WHERE o.displayname like concat(lower(name), '%') 
-                AND fromgbif is true
-                AND userid = defusr
+                AND userid = usr
       LOOP
          RETURN NEXT rec;
       END LOOP;
