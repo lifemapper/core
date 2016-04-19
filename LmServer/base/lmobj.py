@@ -645,8 +645,8 @@ class LMError(Exception, LMObject):
       @param prevargs: (optional) sequence of previous arguments for exception
                         being wrapped by LMError
       """
-      LMObject.__init__(self)
-      Exception.__init__(self)
+      super(LMObject, self).__init__()
+      super(Exception, self).__init__()
       self.location = location
       self.lineno = lineno
       
@@ -673,14 +673,6 @@ class LMError(Exception, LMObject):
          allargs.append(prevargs)
       self.args = tuple(allargs)
       
-#      if self.location:
-#         msg += 'Location: %s\n' % (str(self.location))
-#      msg += 'Traceback: \n' + self.getTraceback()
-#      if logger is not None:
-#         logger.error(msg)
-#      else:
-#         print msg
-
 # ............................................................................
    def __str__(self):
       """

@@ -1641,22 +1641,25 @@ class Vector(_Layer):
       import csv
       if dlocation is None:
          dlocation = self._dlocation
-         
+      didWrite = False
       success = self._readyFilename(dlocation, overwrite=overwrite)
-      if success:      
-         with open(dlocation, 'wb') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',')
-            if header:
-               spamwriter.writerow(header)
-            for rec in dataRecords:
-               try:
-                  spamwriter.writerow(rec)
-               except Exception, e:
-                  # Report and move on
-                  print ('Failed to write record %s (%s)' % (str(rec), str(e)))
-         return True
-      else:
-         return False
+      if success:
+         try:
+            with open(dlocation, 'wb') as csvfile:
+               spamwriter = csv.writer(csvfile, delimiter=',')
+               if header:
+                  spamwriter.writerow(header)
+               for rec in dataRecords:
+                  try:
+                     spamwriter.writerow(rec)
+                  except Exception, e:
+                     # Report and move on
+                     print ('Failed to write record {} ({})'.format(rec, str(e)))
+            didWrite = True
+         except Exception, e:
+            print ('Failed to write file {} ({})'.format(dlocation, str(e)))
+      return didWrite
+
 # ...............................................
    def writeShapefile(self, dlocation=None, overwrite=False):
       """
