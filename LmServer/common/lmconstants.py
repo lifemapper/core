@@ -348,6 +348,12 @@ PRJ_PREFIX = 'prj'
 SPLOTCH_PREFIX = 'splotch'
 PAMSUM_PREFIX = 'pamsum'
 
+LOCAL_ID_FIELD_NAMES = ['siteid', 'localId', 'localid', 'id', 'occkey', 'uuid']
+   
+LONGITUDE_FIELD_NAMES =  ['x', 'lon', 'longitude', 'long', 'dec_lon']
+
+LATITUDE_FIELD_NAMES =  ['y', 'lat', 'latitude', 'dec_lat']
+
 class FileFix:
    PREFIX = {LMFileType.OTHER_MAP: MapPrefix.USER,
              LMFileType.ENVIRONMENTAL_LAYER: None,

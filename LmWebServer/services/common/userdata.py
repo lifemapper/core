@@ -586,7 +586,7 @@ class DataPoster(object):
 
       # Get the experiment object
       expId = int(self.parameters["experimentid"])
-      exp = scribe.getRADExperiment(self.userId, expid=expId)
+      exp = self.scribe.getRADExperiment(self.userId, expid=expId)
       
       # Loop through Anc layer parameter tuples
       for lyrId, attrValue, weightedMean, largestClass, minPercent \
@@ -766,7 +766,10 @@ class DataPoster(object):
                            msg="Cannot determine type of layer")
 
       lyr.readFromUploadedData(layerContent)
-      updatedLyr, isNewLyr = self.scribe.insertRADLayer(lyr, lyrContent=layerContent)
+      lyrTempFile = lyr.getDLocation()
+      # scribe function deletes temp data after successful insert/write
+      updatedLyr, isNewLyr = self.scribe.insertRADLayer(lyr, 
+                                                        lyrTempFile=lyrTempFile)
       return updatedLyr
    
    # ............................................
@@ -858,7 +861,7 @@ class DataPoster(object):
 
       # Get the experiment object
       expId = int(self.parameters["experimentid"])
-      exp = scribe.getRADExperiment(self.userId, expid=expId)
+      exp = self.scribe.getRADExperiment(self.userId, expid=expId)
       
       # Loop through PA layer parameter tuples
       for lyrId, attrPresence, minPresence, maxPresence, percentPresence, \
@@ -970,10 +973,8 @@ class DataPoster(object):
       
       if mdlMaskId is not None:
          mMask = self.scribe.getLayer(mdlMaskId)
-      
       if prjMaskId is not None:
          pMask = self.scribe.getLayer(prjMaskId)
-      
       occ = self.scribe.getOccurrenceSet(occSetId)
       
       if occ.epsgcode != mdlScen.epsgcode:
@@ -1004,33 +1005,24 @@ class DataPoster(object):
                cherrypy.response.headers['LM-message'] = msg
             except Exception, e:
                self.log.debug("Failed to add message to headers: %s" % str(e))
-      
-      if occ.getUserId() == ARCHIVE_USER or \
-          (occ.getUserId() == DEFAULT_POST_USER and \
-           self.userId != DEFAULT_POST_USER):
+      # if occ = ARCHIVE_USER or (occ = anon and user != anon), copy to new occ 
+      if (occ.getUserId() == ARCHIVE_USER or 
+          (occ.getUserId() == DEFAULT_POST_USER and 
+           self.userId != DEFAULT_POST_USER)):
          
          newOcc = OccurrenceLayer(occ.displayName, name=occ.name,
                                   epsgcode=occ.epsgcode, bbox=occ.bbox,
                                   userId=self.userId, status=JobStatus.COMPLETE)
-
          newOcc.readShapefile(dlocation=occ.getDLocation())
-         
          occId = self.scribe.insertOccurrenceSet(newOcc)
-         
-         newOcc.writeShapefile()
-         
-         # Need to set occ to the new occurrence set since occ is the variable 
-         #    used to initialize the job
+         newOcc.writeShapefile()         
+         # Set occ to the newOcc b/ occ initializes the job
          occ = newOcc
-
-      #occSets = [occ]
-
 
       jobs = self.scribe.initSDMModelProjectionJobs(occ, mdlScen, prjScens, 
                                   algo, self.userId, Priority.REQUESTED, 
                                   mdlMask=mMask, prjMask=pMask, email=email, 
                                   name=name, description=description)
-      
       mdl = None
       prjs = []
       for job in jobs:
@@ -1320,13 +1312,13 @@ class DataPoster(object):
          body = body.replace('\r', '\n')
       
       occ.readFromUploadedData(body, uploadedType=uploadedType)
-
-      occ.deleteData()
-      
+      tmplocation = occ.getDLocation()
+      occ.clearDLocation()
       occ.setDLocation()
-      occId = self.scribe.insertOccurrenceSet(occ)
-         
+      occId = self.scribe.insertOccurrenceSet(occ)         
       success = occ.writeShapefile(overwrite=True)
+      occ.deleteData(dlocation=tmplocation, isTemp=True)
+      
       if success:
          occ.updateStatus(JobStatus.COMPLETE, queryCount=occ.count)
          success = self.scribe.updateOccState(occ)

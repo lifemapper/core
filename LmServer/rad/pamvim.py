@@ -672,13 +672,10 @@ class PamSum(ServiceObject, ProcessObject):
       """
       shpSum = Vector(epsgcode=epsgcode, ogrType=ogr.wkbPolygon, 
                       ogrFormat='ESRI Shapefile')
-      shpSum.writeTempFromZippedShapefile(zipdata, overwrite=overwrite)
       fname = self._getSumShapeFilename()
       shpSum.setDLocation(fname)
-      try:
-         shpSum.writeShapefile(overwrite=overwrite)
-      except Exception, e:
-         raise LMError('Error writing summary shapefile %s' % str(fname))
+      shpSum.writeFromZippedShapefile(zipdata, isTemp=False, 
+                                      overwrite=overwrite)
             
 # ..............................................................................
    def writeSplotch(self, filename=None, overwrite=True):

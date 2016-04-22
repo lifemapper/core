@@ -42,8 +42,9 @@ from LmServer.base.serviceobject import ServiceObject
 
 from LmServer.common.lmconstants import (FeatureNames, OutputFormat, 
             GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
-            LMServiceType)
-from LmServer.common.localconstants import TEMP_PATH
+            LMServiceType, 
+            LOCAL_ID_FIELD_NAMES, LONGITUDE_FIELD_NAMES, LATITUDE_FIELD_NAMES)
+from LmServer.common.localconstants import UPLOAD_PATH
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
@@ -709,8 +710,9 @@ class Raster(_Layer):
       """
       self.clearDLocation()
       # Create temp location and write layer to it
-      outLocation = os.path.join(TEMP_PATH, self.name+extension)
+      outLocation = os.path.join(UPLOAD_PATH, self.name+extension)
       self.writeLayer(srcData=datacontent, outFile=outLocation, overwrite=True)
+      self.setDLocation(dlocation=outLocation)
           
 # ...............................................
    def writeLayer(self, srcData=None, srcFile=None, outFile=None, overwrite=False):
@@ -724,10 +726,10 @@ class Raster(_Layer):
                          2) attempt to overwrite existing file with overwrite=False
                          3) _dlocation is None  
       """
+      if outFile is None:
+         outFile = self.getDLocation()
       if outFile is not None:
-         self.setDLocation(outFile)
-      if self._dlocation is not None:
-         self._readyFilename(self._dlocation, overwrite=overwrite)
+         self._readyFilename(outFile, overwrite=overwrite)
          
          # Copy from input file using GDAL (no test necessary later)
          if srcFile is not None:
@@ -736,26 +738,26 @@ class Raster(_Layer):
          # Copy from input stream
          elif srcData is not None:
             try:
-               f = open(self._dlocation,"w")
+               f = open(outFile,"w")
                f.write(srcData)
                f.close()
             except Exception, e:
                raise LMError(currargs='Error writing data to raster %s (%s)' 
-                             % (self._dlocation, str(e)))
+                             % (outFile, str(e)))
             # Test input with GDAL
             try:
                self.populateStats()
             except Exception, e:
-               success, msg = self._deleteFile(self._dlocation)
+               success, msg = self._deleteFile(outFile)
                raise LMError(currargs='Invalid data written to %s (%s); Deleted (success=%s, %s)' 
-                             % (self._dlocation, str(e), str(success), msg))
-
+                             % (outFile, str(e), str(success), msg))
          else:
             raise LMError(currargs=
                           'Source data or source filename required for write to %s' 
                           % self._dlocation)
       else:
          raise LMError(['Must setDLocation before writing file'])
+      self.setDLocation(dlocation=outFile)
 
 # .............................................
    def _copyGDALData(self, bandnum, infname, outfname, format='GTiff', kwargs={}):
@@ -894,25 +896,26 @@ class Raster(_Layer):
       return valid
 
 # ...............................................
-   def deleteData(self):
+   def deleteData(self, dlocation=None, isTemp=False):
       """
-      @summary: Deletes the local data file(s) on disk and clears the dlocation
-                attribute
-      @note: May be extended to delete remote data controlled by us.
+      @summary: Deletes the local data file(s) on disk
+      @note: Does NOT clear the dlocation attribute
       """
       success = False
-      if (self._dlocation is not None and os.path.isfile(self._dlocation)):
+      if dlocation is None:
+         dlocation = self._dlocation
+      if (dlocation is not None and os.path.isfile(dlocation)):
          drv = gdal.GetDriverByName(self._dataFormat)
-         result = drv.Delete(self._dlocation)
+         result = drv.Delete(dlocation)
          if result == 0:
             success = True
-      pth, fname = os.path.split(self._dlocation)
-      if os.path.isdir(pth) and len(os.listdir(pth)) == 0:
-         try:
-            os.rmdir(pth)
-         except:
-            print 'Unable to rmdir %s' % pth
-      self.clearDLocation()
+      if not isTemp:
+         pth, fname = os.path.split(dlocation)
+         if os.path.isdir(pth) and len(os.listdir(pth)) == 0:
+            try:
+               os.rmdir(pth)
+            except:
+               print 'Unable to rmdir %s' % pth
       return success
 
 # .............................................................................
@@ -1000,10 +1003,8 @@ class Vector(_Layer):
 # Static methods
 # .............................................................................
 # LM field definitions for data fields (geomwkt, ufid, url) written to shapefiles. 
-   @staticmethod
-   def getLocalIdFieldNameOptions():
-      return ['siteid', 'localId', 'localid', 'id', 'occkey', 'uuid']
-   
+
+
    @classmethod
    def getLocalIdFieldDef(cls):
       return (FeatureNames.LOCAL_ID, ogr.OFTString)
@@ -1011,6 +1012,7 @@ class Vector(_Layer):
    @staticmethod
    def getGeometryFieldDef():
       return (FeatureNames.GEOMETRY_WKT, ogr.OFTString)
+   
    @staticmethod
    def getGeometryFieldName():
       return Vector.getGeometryFieldDef()[0]
@@ -1221,7 +1223,7 @@ class Vector(_Layer):
    def _setLocalIdIndex(self):
       if self._localIdIdx is None and self._featureAttributes:
          for idx, (colname, coltype) in self._featureAttributes.iteritems():
-            if colname in self.getLocalIdFieldNameOptions():
+            if colname in LOCAL_ID_FIELD_NAMES:
                self._localIdIdx = idx
                break
 
@@ -1354,8 +1356,8 @@ class Vector(_Layer):
 # ...............................................
    def deleteData(self, dlocation=None, isTemp=False):
       """
-      @summary: Deletes the local data file(s) on disk and clears the dlocation
-                attribute
+      @summary: Deletes the local data file(s) on disk
+      @note: Does NOT clear the dlocation attribute
       @note: May be extended to delete remote data controlled by us.
       """
       if dlocation is None:
@@ -1365,7 +1367,7 @@ class Vector(_Layer):
          self.clearLocalMapfile()
          deleteDir = True
       self._deleteFile(dlocation, deleteDir=deleteDir)
-      self.clearDLocation()
+#       self.clearDLocation()
 
 # ...............................................
    @staticmethod
@@ -1391,7 +1393,7 @@ class Vector(_Layer):
 # ...............................................
    def writeLayer(self, srcData=None, srcFile=None, outFile=None, overwrite=False):
       """
-      @summary: Writes vector data to file.
+      @summary: Writes vector data to file and sets dlocation.
       @param srcData: A stream, or string of valid vector data
       @param srcFile: A filename for valid vector data.  Currently only 
                       supports CSV and ESRI shapefiles.
@@ -1417,6 +1419,7 @@ class Vector(_Layer):
                self.writeCSV(dlocation=outFile, overwrite=overwrite)
          else:
             raise LMError('Writing vector is currently supported only for file or iterable input data')
+      self.setDLocation(dlocation=outFile)
 
 # ...............................................
    @staticmethod
@@ -1584,12 +1587,13 @@ class Vector(_Layer):
             
       f = open(dlocation, 'rb')
       ptreader = csv.DictReader(f, delimiter=delimiter, quotechar=quotechar)
-      idCol, xCol, yCol = Vector._getIdXYfields(ptreader.fieldnames, idCol, xCol, yCol)
-      
+      ((idName, idPos), (xName, xPos), 
+       (yName, yPos)) = Vector._getIdXYNamePos(ptreader.fieldnames, idName=idCol, 
+                                               xName=xCol, yName=yCol)
       comboDs, comboLyr, nameChanges = Vector._createPointShapefile(drv, outpath, 
                                               spRef, comboLayerName, 
                                               fldnames=ptreader.fieldnames,
-                                              idCol=idCol, xCol=xCol, yCol=yCol, 
+                                              idCol=idName, xCol=xName, yCol=yName, 
                                               overwrite=overwrite)
       lyrDef = comboLyr.GetLayerDefn()
       # Iterate through records 
@@ -1751,9 +1755,8 @@ class Vector(_Layer):
       """
       if uploadedType == 'shapefile':
       # Writes zipped stream to temp file and sets dlocation on layer
-         self.writeTempFromZippedShapefile(data, overwrite=overwrite)
+         self.writeFromZippedShapefile(data, isTemp=True, overwrite=overwrite)
          self._dataFormat = 'ESRI Shapefile'
-         # Read shapefile for validity and points, also does populateStats on object
          try:
             # read to make sure it's valid (and populate stats)
             self.readData()
@@ -1763,55 +1766,80 @@ class Vector(_Layer):
       elif uploadedType == 'csv':
          self.writeTempFromCSV(data)
          self._dataFormat = 'CSV'
-         # Read shapefile for validity and points, also does populateStats on object
          try:
             # read to make sure it's valid (and populate stats)
             self.readData()
          except Exception, e:
             raise LMError('Invalid uploaded data in temp file %s (%s)' 
-                          % (self._dlocation, str(e)) )
-      
-      # Need to delete temporary files
-      tempDlocation = self.getDLocation()
-      base, ext = os.path.splitext(tempDlocation)
-      for fn in glob.iglob('%s*' % base):
-         os.remove(fn)
-      self.clearDLocation()
-         
+                          % (self._dlocation, str(e)) )         
 
+# # ...............................................
+#    @staticmethod
+#    def _getIdXYfields(fieldnames, idCol=None, xCol=None, yCol=None):
+#       if idCol is not None and idCol not in fieldnames:
+#          idCol = None
+#       if xCol is not None and xCol not in fieldnames:
+#          xCol = None
+#       if yCol is not None and yCol not in fieldnames:
+#          yCol = None
+#          
+#       for fldname in fieldnames:
+#          if xCol is None and fldname.lower() in LONGITUDE_FIELD_NAMES:
+#             xCol = fldname
+#          elif yCol is None and fldname.lower() in LATITUDE_FIELD_NAMES:
+#             yCol = fldname
+#          elif idCol is None and fldname.lower() in LOCAL_ID_FIELD_NAMES:
+#             yCol = fldname
+#       # Last resort
+#       if xCol is None:
+#          if fldname.lower().startswith('lon'):
+#             xCol = fldname
+#       if yCol is None:
+#          if fldname.lower().startswith('lat'):
+#             yCol = fldname
+#             
+#       return idCol, xCol, yCol
+      
 # ...............................................
    @staticmethod
-   def _getIdXYfields(fieldnames, idCol=None, xCol=None, yCol=None):
-      if idCol is not None and idCol not in fieldnames:
-         idCol = None
-      if xCol is not None and xCol not in fieldnames:
-         xCol = None
-      if yCol is not None and yCol not in fieldnames:
-         yCol = None
-         
-      for fldname in fieldnames:
-         if xCol is None and fldname.lower() in ['x', 'lon', "longitude"]:
-            xCol = fldname
-         elif yCol is None and fldname.lower() in ['y', 'lat', "latitude"]:
-            yCol = fldname
-         elif idCol is None and fldname.lower() in Vector.getLocalIdFieldNameOptions():
-            yCol = fldname
-      # Last resort
-      if xCol is None:
-         if fldname.lower().startswith('lon'):
-            xCol = fldname
-      if yCol is None:
-         if fldname.lower().startswith('lat'):
-            yCol = fldname
+   def _getIdXYNamePos(fieldnames, idName=None, xName=None, yName=None):
+      if idName is not None:
+         try:
+            idPos = fieldnames.index(idName)
+         except:
+            idName = None
+      if xName is not None:
+         try:
+            xPos = fieldnames.index(xName)
+         except:
+            xName = None
+      if yName is not None:
+         try:
+            yPos = fieldnames.index(yName)
+         except:
+            yName = None
             
-      return idCol, xCol, yCol
-      
+      if not (idName and xName and yName):
+         for i in range(len(fieldnames)):
+            fldname = fieldnames[i].lower()
+            if xName is None and fldname in LONGITUDE_FIELD_NAMES:
+               xName = fldname
+               xPos = i
+            if yName is None and fldname in LATITUDE_FIELD_NAMES:
+               yName = fldname
+               yPos = i
+            if idName is None and fldname in LOCAL_ID_FIELD_NAMES:
+               idName = fldname
+               idPos = i
+            
+      return ((idName, idPos), (xName, xPos), (yName, yPos))
+
 # ...............................................
-   def writeTempFromZippedShapefile(self, zipdata, isTemp=True, overwrite=False):
+   def writeFromZippedShapefile(self, zipdata, isTemp=True, overwrite=False):
       """
       @summary: Write a shapefile from a zipped stream of shapefile files to
                 temporary files.  Read vector info into layer attributes, 
-                DO NOT delete temporary files or reset dlocation 
+                Reset dlocation. 
       @raise LMError: on failure to write file.
       """
       newfnamewoext = None
@@ -1822,38 +1850,45 @@ class Vector(_Layer):
       
       # Get filename, prepare directory, delete if overwrite=True
       if isTemp:
-         pth = TEMP_PATH
          zfnames = z.namelist()
          for zfname in zfnames:
             if zfname.endswith(OutputFormat.SHAPE):
-               newbasename, shpext = os.path.splitext(zfname)
-               newfnamewoext = os.path.join(pth, newbasename)
-               self._readyFilename(newfnamewoext + shpext, overwrite=overwrite)
-         if newfnamewoext is None:
+               pth, basefilename = os.path.split(zfname)
+               basename, dext = os.path.splitext(basefilename)
+               newfnamewoext = os.path.join(pth, basename)
+               outfname = os.path.join(UPLOAD_PATH, basefilename)
+               ready = self._readyFilename(outfname, overwrite=overwrite)
+               break
+         if outfname is None:
             raise Exception('Invalid shapefile, zipped data does not contain .shp')
       else:
          if self._dlocation is None:
             self.setDLocation()
-         pth, newbasefname = os.path.split(self._dlocation)
-         newbasename, dext = os.path.splitext(newbasefname)
-         newfnamewoext = os.path.join(pth, newbasename)
-         self._readyFilename(self._dlocation, overwrite=overwrite)
+         outfname = self._dlocation
+         if outfname is None:
+            raise LMError('Must setDLocation prior to writing shapefile')
+         pth, basefilename = os.path.split(outfname)
+         basename, dext = os.path.splitext(basefilename)
+         newfnamewoext = os.path.join(pth, basename)
+         ready = self._readyFilename(outfname, overwrite=overwrite)
       
-      # unzip zip file stream
-      for zname in z.namelist():
-         tmp, ext = os.path.splitext(zname)
-         # Check file extension and only unzip valid files
-         if ext in SHAPEFILE_EXTENSIONS:
-            newname = newfnamewoext + ext
-            success, msg = self._deleteFile(newname)
-            z.extract(zname, pth)
-            if not isTemp:
-               oldname = os.path.join(pth, zname)
-               os.rename(oldname, newname)
-               
-      if isTemp:
+      if ready:
+         # unzip zip file stream
+         for zname in z.namelist():
+            tmp, ext = os.path.splitext(zname)
+            # Check file extension and only unzip valid files
+            if ext in SHAPEFILE_EXTENSIONS:
+               newname = newfnamewoext + ext
+               success, msg = self._deleteFile(newname)
+               z.extract(zname, pth)
+               if not isTemp:
+                  oldname = os.path.join(pth, zname)
+                  os.rename(oldname, newname)
+         # Reset dlocation on successful write
          self.clearDLocation()
-         self.setDLocation(newfnamewoext + OutputFormat.SHAPE)
+         self.setDLocation(outfname)
+      else:
+         raise LMError(currargs='{} exists, overwrite = False'.format(outfname))
             
 # ...............................................
    def writeTempFromCSV(self, csvdata):
@@ -1866,12 +1901,12 @@ class Vector(_Layer):
       import mx.DateTime
       currtime = str(mx.DateTime.gmt().mjd)
       pid = str(os.getpid())
-      dumpname = os.path.join(TEMP_PATH, '%s_%s_dump.csv' % (currtime, pid))
+      dumpname = os.path.join(UPLOAD_PATH, '%s_%s_dump.csv' % (currtime, pid))
       f1 = open(dumpname, 'w')
       f1.write(csvdata)
       f1.close()
       f1 = open(dumpname, 'rU')
-      tmpname = os.path.join(TEMP_PATH, '%s_%s.csv' % (currtime, pid))
+      tmpname = os.path.join(UPLOAD_PATH, '%s_%s.csv' % (currtime, pid))
       f2 = open(tmpname, 'w')
       try:
          for line in f1:
@@ -1882,7 +1917,7 @@ class Vector(_Layer):
          f1.close()
          f2.close()
       self.clearDLocation()
-      self.setDLocation(tmpname)
+      self.setDLocation(dlocation=tmpname)
       
 # ...............................................
    def _setGeometry(self):
@@ -2200,9 +2235,6 @@ class Vector(_Layer):
       @todo: remove featureLimit, read subsetDLocation if there is a limit 
       """
       import csv
-      idCol = None
-      xCol = None
-      yCol = None
       minX = minY = maxX = maxY = None
       localid = None
       
@@ -2210,32 +2242,20 @@ class Vector(_Layer):
       infile = open(self._dlocation, 'rU')
       reader = csv.reader(infile)
       rowone = reader.next()
-      colcount = len(rowone)
       
-      for i in range(colcount):
-         if idCol is None or xCol is None or yCol is None:
-            colname = rowone[i].lower()
-            if colname in self.getLocalIdFieldNameOptions():
-               idCol = i
-            elif colname in ['x', 'lon', "longitude"]:
-               xCol = i
-            elif colname in ['y', 'lat', "latitude"]:
-               yCol = i
-         else:
-            break
+      ((idName, idPos), (xName, xPos), (yName, yPos)) = Vector._getIdXYNamePos(rowone)
           
-      if not idCol:
+      if not idPos:
          # If no id column, create it
-         if (xCol and yCol):
+         if (xPos and yPos):
             localid = 0
          # If no headers, assume columns 1 = id, 2 = longitude, 3 = latitude
          else:
-            idCol = 0
-            xCol = 1
-            yCol = 2
-            colcount = 3
+            idPos = 0
+            xPos = 1
+            yPos = 2
 
-      if xCol is None or yCol is None:
+      if xPos is None or yPos is None:
          raise LMError('Must supply longitude and latitude')
       
       featAttrs = self.getUserPointFeatureAttributes()
@@ -2245,12 +2265,12 @@ class Vector(_Layer):
       for row in reader:
          try:
             if localid is None:
-               thisid = row[idCol]
+               thisid = row[idPos]
             else:
                localid += 1
                thisid = localid
-            x = float(row[xCol])
-            y = float(row[yCol])
+            x = float(row[xPos])
+            y = float(row[yPos])
             Xs.append(x)
             Ys.append(y)
             feats[thisid] = self.getUserPointFeature(thisid, x, y)
@@ -2386,7 +2406,7 @@ class Vector(_Layer):
             if fldname == fieldname:
                fieldIdx = fldidx
                break
-            elif findLocalId and fldname in self.getLocalIdFieldNameOptions():
+            elif findLocalId and fldname in LOCAL_ID_FIELD_NAMES:
                fieldIdx = fldidx
                break
             

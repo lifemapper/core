@@ -485,7 +485,7 @@ class Scribe(Peruser):
       return lyr
 
 # ...............................................
-   def insertRADLayer(self, lyr, lyrContent=None):
+   def insertRADLayer(self, lyr, lyrContent=None, lyrTempFile=None):
       """
       @summary: Insert a Raster Layer into the appropriate table(s)
       @param lyr: Layer to be inserted
@@ -502,9 +502,14 @@ class Scribe(Peruser):
       if isNewLyr:
          if lyrContent:
             updatedLyr.writeLayer(srcData=lyrContent)
-         else:
+         elif lyrTempFile:
+            updatedLyr.writeLayer(srcFile=lyrTempFile)
+            updatedLyr.deleteData(dlocation=lyrTempFile, isTemp=True)
+         elif updatedLyr.features is not None:
             updatedLyr.writeLayer(overwrite=True)
-             
+         else:
+            self.log.debug('Missing input data to write RAD layer {}'
+                           .format(updatedLyr.getId()))
       return updatedLyr, isNewLyr
 
 # ...............................................
