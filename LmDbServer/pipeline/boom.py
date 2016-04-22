@@ -73,6 +73,7 @@ class _LMBoomer(object):
          self.name = '{}_{}'.format(self.__class__.__name__.lower(), userid)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 
                                     'start.{}.txt'.format(self.name))
+      self._linenum = None
       self.log = ScriptLogger(self.name)
       self.developers = TROUBLESHOOTERS
       self.startStatus=JobStatus.GENERAL 
@@ -80,7 +81,6 @@ class _LMBoomer(object):
       self.endStatus=JobStatus.INITIALIZE
       import socket
       self.hostname = socket.gethostname().lower()
-      self.lastError = None
       self.updateTime = None
 
       try:
@@ -101,16 +101,16 @@ class _LMBoomer(object):
             raise LMError('%s failed to open databases' % self.name)
          
 # ...............................................
-   def _failGracefully(self, lmerr):
-      self.lastError = lmerr
-      logmsg = None
-
+   def _failGracefully(self, lmerr=None):
+      self._writeNextStart()
       if lmerr is not None:
          logmsg = str(lmerr)
          logmsg += '\n Error catch location: %s' % lmerr.location
          logmsg += '\n Traceback: %s' % lmerr.getTraceback()
          self.log.error(logmsg)
-         self._notifyPeople('Lifemapper BOOM error', logmsg)
+         self._notifyPeople("Lifemapper BOOM has failed", 
+               '{} Lifemapper BOOM has crashed with the message:\n\n{}'
+               .format(self.hostname, logmsg))
 
       if self._scribe.isOpen:
          try:
@@ -118,12 +118,12 @@ class _LMBoomer(object):
          except Exception, e:
             self.log.warning('Error while failing: %s' % str(e))
             
-      if lmerr is not None:
-         self._notifyPeople("Lifemapper BOOM has failed", 
-               '{} Lifemapper BOOM has crashed with the message:\n\n{}'
-               .format(self.hostname, str(lmerr)))
-                     
       self.log.debug('Time: {}; gracefully exiting ...'.format(dt.utc().mjd))
+
+# ...............................................
+   @property
+   def nextStart(self):
+      return None
 
 # ...............................................
    def _notifyPeople(self, subject, message, recipients=None):
@@ -156,14 +156,15 @@ class _LMBoomer(object):
       return linenum
                   
 # ...............................................
-   def _writeNextStart(self, linenum):
-      try:
-         f = open(self.startFile, 'w')
-         f.write(str(linenum))
-         f.close()
-      except Exception, e:
-         self.log.error('Failed to write %d to chainer start file %s' 
-                        % (linenum, self.startFile))
+   def _writeNextStart(self, linenum=None):
+      if self.nextStart is not None:
+         try:
+            f = open(self.startFile, 'w')
+            f.write(str(self.nextStart))
+            f.close()
+         except Exception, e:
+            self.log.error('Failed to write {} to chainer start file {}'
+                           .format(self.nextStart, self.startFile))
    
 # ...............................................
    def _rollbackQueuedJobs(self):
@@ -297,26 +298,32 @@ class _LMBoomer(object):
       return sciName
          
 # ...............................................
-   def _locateRawData(self, occ, taxonSourceKeyVal, data=None):
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
       raise LMError(currargs='Function must be implemented in subclass')
    
 # ...............................................
-   def _createOrResetOccurrenceset(self, sciname, taxonSourceKeyVal, occProcessType,
-                        dataCount, data=None):
+   def _createOrResetOccurrenceset(self, sciname, taxonSourceKeyVal, 
+                                   occProcessType, dataCount, data=None):
       """
       @note: Updates to existing occset are not saved until 
       """
       currtime = dt.gmt().mjd
       occ = None
       try:
-         occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
-                                                             self.userid)
+         if isinstance(sciname, ScientificName):
+            occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
+                                                                self.userid)
+            taxonName = sciname.scientificName
+         else:
+            occs = self._scribe.getOccurrenceSetsForName(sciname, userid=self.userid)
+            taxonName = sciname
+            sciname = None
+            
          if not occs:
             ogrFormat = None
             if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
                ogrFormat = 'CSV'
-            occ = OccurrenceLayer(sciname.scientificName, 
-                  name=sciname.scientificName, fromGbif=False, 
+            occ = OccurrenceLayer(taxonName, name=taxonName, fromGbif=False, 
                   queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
                   ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
                   primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
@@ -329,14 +336,14 @@ class _LMBoomer(object):
                occ = occs[0]
                occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
             else:
-               self.log.debug('Occurrenceset %d (%s) is up to date' 
-                              % (occs[0].getId(), sciname.scientificName))
+               self.log.debug('Occurrenceset {} ({}) is up to date'
+                              .format(occs[0].getId(), taxonName))
          else:
-            raise LMError('Too many (%d) occurrenceLayers for %s'
-                          % (len(occs), sciname.scientificName))
-            
+            raise LMError('Too many ({}) occurrenceLayers for {}'
+                          .format(len(occs), taxonName))
          if occ:
-            rdloc = self._locateRawData(occ, taxonSourceKeyVal, data=data)
+            rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
+                                        data=data)
             if rdloc:
                occ.setRawDLocation(rdloc, currtime)
             else:
@@ -388,7 +395,7 @@ class BisonBoom(_LMBoomer):
 
       self.modelMask = mdlMask
       self.projMask = prjMask
-      self._recnum = 0
+      self._linenum = 0
       self._tsnfile = open(tsnfilename, 'r')
       self._obsoleteTime = expDate
       self._currTsn, self._currCount = self._skipAhead()
@@ -396,7 +403,7 @@ class BisonBoom(_LMBoomer):
 # ...............................................
    @property
    def nextStart(self):
-      return self._recnum
+      return self._linenum
 
 # ...............................................
    def _getTsnRec(self):
@@ -411,10 +418,10 @@ class BisonBoom(_LMBoomer):
                first, second = line.split(',')
                # Returns TSN, TSNCount
                tsn, tsnCount = (int(first), int(second))
-               self._recnum += 1
+               self._linenum += 1
                success = True
             except Exception, e:
-               self.log.debug('Exception reading line %d (%s)' % (self._recnum, str(e)))
+               self.log.debug('Exception reading line %d (%s)' % (self._linenum, str(e)))
       return tsn, tsnCount
 
 # ...............................................
@@ -441,16 +448,11 @@ class BisonBoom(_LMBoomer):
       while tsn is not None:
          self._processTsn(tsn, tsnCount)
          tsn, tsnCount = self._getTsnRec()
-
-# # ...............................................
-#    def _failGracefully(self, lmerr, linenum=None):
-#       if linenum is None:
-#          linenum = self.nextStart
-#       self._writeNextStart(linenum)
-#       _LMBoomer._failGracefully(self, lmerr)
       
 # ...............................................
-   def _locateRawData(self, occ, taxonSourceKeyVal, dataChunk=None):
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, dataChunk=None):
+      if taxonSourceKeyVal is None:
+         raise LMError('Missing taxonSourceKeyVal for BISON query url')
       occAPI = BisonAPI(qFilters=
                         {BISON_HIERARCHY_KEY: '*-%d-*'.format(taxonSourceKeyVal)}, 
                         otherFilters=BISON_OCC_FILTERS)
@@ -473,21 +475,21 @@ class BisonBoom(_LMBoomer):
    def _skipAhead(self):
       startline = self._findStart()  
       if startline < 0:
-         self._recnum = startline
+         self._linenum = startline
          self._currRec = None
       else:
          tsn, tsnCount = self._getTsnRec()      
-         while tsn is not None and self._recnum < startline:
+         while tsn is not None and self._linenum < startline:
             tsn, tsnCount = self._getTsnRec()
       return tsn, tsnCount
          
 # ...............................................
-# ...............................................
-   def _getQueryUrl(self, speciesTsn):
-      occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-*' % speciesTsn}, 
-                        otherFilters=BISON_OCC_FILTERS)
-      occAPI.clearOtherFilters()
-      return occAPI.url
+# # ...............................................
+#    def _getQueryUrl(self, speciesTsn):
+#       occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-*' % speciesTsn}, 
+#                         otherFilters=BISON_OCC_FILTERS)
+#       occAPI.clearOtherFilters()
+#       return occAPI.url
 
 # ...............................................
    def  _getInsertSciNameForItisTSN(self, itisTsn, tsnCount):
@@ -519,30 +521,22 @@ class UserBoom(_LMBoomer):
              text chunk to a file, then creates an OccurrenceJob for it and 
              updates the Occurrence record and inserts a job.
    """
-   def __init__(self, lock, pipelineName, updateInterval, 
-                algLst, mdlScen, prjScenLst, occDataFname, occMetaFname, expDate,
+   def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
+                occMetaFname, expDate, 
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(_LMBoomer, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
-                                      updateInterval)
-      self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
+      super(_LMBoomer, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+                                      intersectGrid=intersectGrid)      
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          self._failGracefully(e)
-
-      self.algs = algLst
-      self.modelScenario = mdlScen
-      self.projScenarios = prjScenLst
+         
+      self._fieldNames = self.occParser.header
       self.modelMask = mdlMask
       self.projMask = prjMask
-      self.intersectGrid = intersectGrid
       self._obsoleteTime = expDate
-      # Start mid-file? Assumes first line is header
-      linenum = self._findStart()
-      if linenum > 2:
-         self.occParser.skipToRecord(linenum)
       
 # ...............................................
    @property
@@ -552,6 +546,36 @@ class UserBoom(_LMBoomer):
       except:
          num = 0
       return num
+
+# ...............................................
+   def _skipAhead(self):
+      startline = self._findStart()
+      # Start mid-file? Assumes first line is header
+      if startline > 2:
+         self.occParser.skipToRecord(startline)
+      elif startline < 0:
+         self._linenum = startline
+         self._currRec = None
+
+# ...............................................
+   def _getChunk(self):
+      chunk = self.occParser.pullCurrentChunk()
+      taxonName = self.occParser.nameValue
+      return chunk, len(chunk), taxonName
+      
+# ...............................................
+   def chainOne(self):
+      self._skipAhead()
+      dataChunk, dataCount, taxonName  = self._getChunk()
+      if dataChunk:
+         self._processInputSpecies(dataChunk, dataCount, taxonName)
+
+# ...............................................
+   def chainAll(self):
+      self._skipAhead()
+      dataChunk, dataCount, taxonName  = self._getChunk()
+      while dataChunk:
+         self._processInputSpecies(dataChunk, dataCount, taxonName)
 
 # ...............................................
    def run(self):
@@ -593,72 +617,33 @@ class UserBoom(_LMBoomer):
       return finalfront
    
 # ...............................................
-   def _processInputSpecies(self, dataChunk):
-      currtime = dt.gmt().mjd
-      occ = None
-      spname = self._simplifyName(self.occParser.nameValue)
-      try:
-         self._getLock()           
-         occs = self._scribe.getOccurrenceSetsForName(spname, userid=self.userid)
-         if not occs:
-            # Populate metadataUrl with metadata filename for computation
-            occ = OccurrenceLayer(spname, name=spname, 
-                  queryCount=len(dataChunk), epsgcode=DEFAULT_EPSG, 
-                  ogrType=wkbPoint, ogrFormat='CSV', 
-                  primaryEnv=PrimaryEnvironment.TERRESTRIAL,
-                  userId=self.userid, createTime=currtime, 
-                  status=JobStatus.INITIALIZE, statusModTime=currtime)
-            occid = self._scribe.insertOccurrenceSet(occ)
-         elif len(occs) == 1:
-            if (occs[0].status > JobStatus.COMPLETE or 
-                occs[0].statusModTime < self._obsoleteTime):
-               occ = occs[0]
-            else:
-               self.log.debug('OccurrenceSet %d is up to date (%.2f)' 
-                              % (occs[0].getId(), occs[0].statusModTime))
-         else:
-            raise LMError('Too many (%d) occurrenceLayers for %s'
-                          % (len(occs), spname))
-            
-         if occ is not None:
-            # Write new raw data
-            processtype = ProcessType.USER_TAXA_OCCURRENCE
-            rdloc = occ.createLocalDLocation(raw=True)
-            success = occ.writeCSV(dataChunk, dlocation=rdloc, overwrite=True,
-                                   header=self.occParser.header)
-            if not success:
-               self.log.debug('Unable to write CSV file %s' % rdloc)
-            else:
-               occ.setRawDLocation(rdloc, currtime)
-               # Create jobs for Archive Chain: occurrence population, 
-               # model, projection, and (later) intersect computation
-               jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
-                                         self.modelScenario, 
-                                         self.projScenarios, 
-                                         occJobProcessType=processtype,
-                                         priority=Priority.NORMAL, 
-                                         intersectGrid=None,
-                                         minPointCount=POINT_COUNT_MIN)
-               self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                              len(jobs), spname, len(dataChunk), occ.getId()))
-      except LMError, e:
-         raise e
-      except Exception, e:
-         raise LMError(currargs=e.args, lineno=self.getLineno())
-      finally:
-         self._freeLock()
-
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+      rdloc = occ.createLocalDLocation(raw=True)
+      success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
+                             header=self.fieldnames)
+      if not success:
+         rdloc = None
+         self.log.debug('Unable to write CSV file %s' % rdloc)
+      return rdloc
 
 # ...............................................
-   def _failGracefully(self, lmerr, linenum=None):
-      if linenum is None: 
-         try:
-            linenum = self.nextStart
-         except:
-            pass
-      if linenum:
-         self._writeNextStart(linenum)
-      _LMBoomer._failGracefully(self, lmerr)
+   def _processInputSpecies(self, dataChunk, dataCount, taxonName):
+      occ = self._createOrResetOccurrenceset(taxonName, None, 
+                                       ProcessType.USER_TAXA_OCCURRENCE,
+                                       dataCount, data=dataChunk)
+
+      # Create jobs for Archive Chain: occurrence population, 
+      # model, projection, and (later) intersect computation
+      jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+                                self.modelScenario, 
+                                self.projScenarios, 
+                                occJobProcessType=processtype,
+                                priority=Priority.NORMAL, 
+                                intersectGrid=None,
+                                minPointCount=POINT_COUNT_MIN)
+      self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
+                     len(jobs), spname, len(dataChunk), occ.getId()))
+
 
 # ..............................................................................
 class GBIFBoom(_LMBoomer):
@@ -688,7 +673,7 @@ class GBIFBoom(_LMBoomer):
       csv.field_size_limit(sys.maxsize)
       self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
       self._keyCol = fieldnames.index(keyColname)
-      self._recnum = 0
+      self._linenum = 0
       self._obsoleteTime = expDate
 #       # Populate self._currKeyFirstRecnum
 #       self._currRec, self._currSpeciesKey = self._skipAhead()
@@ -776,15 +761,15 @@ class GBIFBoom(_LMBoomer):
       else:
          line, specieskey = self._getCSVRecord(parse=True)
          # If not there yet, power through lines
-         while line is not None and self._recnum < linenum:
+         while line is not None and self._linenum < linenum:
             line, specieskey = self._getCSVRecord(parse=False)
          # Finish by parsing and saving the record to be processed next
-         self._currKeyFirstRecnum = self._recnum
+         self._currKeyFirstRecnum = self._linenum
          line, specieskey = self._parseCSVRecord(line)
          return line, specieskey
       
 # ...............................................
-   def _locateRawData(self, occ, taxonSourceKeyVal, data=None):
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
       rdloc = occ.createLocalDLocation(raw=True)
       success = occ.writeCSV(data, dlocation=rdloc, overwrite=True)
       if not success:
@@ -799,13 +784,13 @@ class GBIFBoom(_LMBoomer):
       while not success:
          try:
             line = self._csvreader.next()
-            self._recnum += 1
+            self._linenum += 1
             success = True
          except OverflowError, e:
-            self._recnum += 1
-            self.log.debug( 'OverflowError on %d (%s), moving on' % (self._recnum, str(e)))
+            self._linenum += 1
+            self.log.debug( 'OverflowError on %d (%s), moving on' % (self._linenum, str(e)))
          except Exception, e:
-            self.log.debug('Exception reading line %d (%s)' % (self._recnum, str(e)))
+            self.log.debug('Exception reading line %d (%s)' % (self._linenum, str(e)))
             success = True
          if parse:
             # Post-parse, line is a dictionary
@@ -821,14 +806,14 @@ class GBIFBoom(_LMBoomer):
          except Exception, e:
             line = None
             self.log.debug('Skipping line; failed to convert specieskey on record %d (%s)' 
-                   % (self._recnum, str(line)))
+                   % (self._linenum, str(line)))
             
          if self._provCol is not None:
             try:
                provkey = line[self._provCol]
             except Exception, e:
                self.log.debug('Failed to find providerKey on record %d (%s)' 
-                      % (self._recnum, str(line)))
+                      % (self._linenum, str(line)))
             else:
                provname = provkey
                try:
@@ -857,7 +842,7 @@ class GBIFBoom(_LMBoomer):
 #          line, specieskey = self._parseCSVRecord(self._currRec)
          if currKey is None:
             currKey = self._currSpeciesKey
-            self._currKeyFirstRecnum = self._recnum
+            self._currKeyFirstRecnum = self._linenum
          
          if self._currSpeciesKey == currKey:
             currCount += 1
@@ -870,7 +855,7 @@ class GBIFBoom(_LMBoomer):
             if self._currRec is None:
                completeChunk = True
                self.log.debug('Ended on line %d (chunk started on %d)' 
-                      % (self._recnum, self._currKeyFirstRecnum))
+                      % (self._linenum, self._currKeyFirstRecnum))
       self.log.debug('Returning %d records for %d (starting on line %d)' 
             % (currCount, currKey, self._currKeyFirstRecnum))
       return currKey, currCount, currChunk
@@ -886,21 +871,10 @@ class iDigBioBoom(_LMBoomer):
                 taxonSource=None, mdlMask=None, prjMask=None, 
                 intersectGrid=None):
       super(_LMBoomer, self).__init__(userid)
-      self.startFile = os.path.join(APP_PATH, LOG_PATH, 
-                                    'start.{}.txt'.format(pipelineName))
-      self.algs = algLst
-      self.modelScenario = mdlScen
-      self.projScenarios = prjScenLst
       self.modelMask = mdlMask
       self.projMask = prjMask
-      self.intersectGrid = intersectGrid
       self._obsoleteTime = expDate
       self._linenum = 0
-      self._dumpDir, ext = os.path.splitext(idigFname)
-      try:
-         self._idigFile = open(idigFname, 'r')
-      except Exception, e:
-         raise LMError('Invalid file %s (%s)' % (str(idigFname), str(e)))
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None
@@ -910,39 +884,18 @@ class iDigBioBoom(_LMBoomer):
          self._taxonSourceId = taxonSource      
          
 # ...............................................
-   def run(self):
-      nextStart = None
-      # Start mid-file 
+   def chainOne(self):
       taxonId, taxonCount, taxonName = self._skipAhead()
+      self._processInputSpecies(taxonName, taxonId, taxonCount)
+      self._writeNextStart(self._linenum)
 
-      # Gets and frees lock for each name checked
-      while (not(self._existKillFile())):
-         try:
-            while taxonId is not None:
-               self._processInputSpecies(taxonName, taxonId, taxonCount)
-               if self._existKillFile():
-                  break
-               else:
-                  taxonId, taxonCount, taxonName = self._getCurrTaxon()
-                        
-            self._idigFile.close()
-            if self._currBinomial is None:
-               nextStart = -9999
-               self.log.info('Boom complete, last line num = %d' 
-                             % self._linenum)
-               break
-         
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            self._failGracefully(e)
-            break
-
-      if self._existKillFile():
-         self.log.info('LAST CHECKED line %d (stopped with killfile)' 
-                       % (self._linenum))
-         self._failGracefully(None, linenum=nextStart)
-
+# ...............................................
+   def chainAll(self):
+      taxonId, taxonCount, taxonName = self._skipAhead()
+      while taxonId is not None:
+         self._processInputSpecies(taxonName, taxonId, taxonCount)
+         taxonId, taxonCount, taxonName = self._getCurrTaxon()
+      
 # ...............................................
    def _failGracefully(self, lmerr, linenum=None):
       if linenum is None: 
@@ -1027,14 +980,15 @@ class iDigBioBoom(_LMBoomer):
             pass
          
       return pointcount
-      
+    
 # ...............................................
-   def _getQueryUrl(self, taxonId):
-      occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonId})
-      # TODO: Remove this when we can properly parse XML file with full URL
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, dataChunk=None):
+      if taxonSourceKeyVal is None:
+         raise LMError('Missing taxonSourceKeyVal for iDigBio query url')
+      occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonSourceKeyVal})
       occAPI.clearOtherFilters()
       return occAPI.url
-      
+         
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonName, taxonId, taxonCount):
       try:
@@ -1054,29 +1008,29 @@ class iDigBioBoom(_LMBoomer):
 # .............................................................................
 # .............................................................................
 if __name__ == "__main__":
-   
-   if os.path.exists(JOB_MEDIATOR_PID_FILE):
-      pid = open(JOB_MEDIATOR_PID_FILE).read().strip()
-   else:
-      pid = os.getpid()
-   
-   jobMediator = JobMediator(JOB_MEDIATOR_PID_FILE, log=MediatorLogger(pid))
-   
-   if len(sys.argv) == 2:
-      if sys.argv[1].lower() == 'start':
-         jobMediator.start()
-      elif sys.argv[1].lower() == 'stop':
-         jobMediator.stop()
-      #elif sys.argv[1].lower() == 'update':
-      #   jobMediator.update()
-      elif sys.argv[1].lower() == 'restart':
-         jobMediator.restart()
-      else:
-         print("Unknown command: %s" % sys.argv[1].lower())
-         sys.exit(2)
-   else:
-      print("usage: %s start|stop|update" % sys.argv[0])
-      sys.exit(2)
+   pass
+#    if os.path.exists(JOB_MEDIATOR_PID_FILE):
+#       pid = open(JOB_MEDIATOR_PID_FILE).read().strip()
+#    else:
+#       pid = os.getpid()
+#    
+#    jobMediator = JobMediator(JOB_MEDIATOR_PID_FILE, log=MediatorLogger(pid))
+#    
+#    if len(sys.argv) == 2:
+#       if sys.argv[1].lower() == 'start':
+#          jobMediator.start()
+#       elif sys.argv[1].lower() == 'stop':
+#          jobMediator.stop()
+#       #elif sys.argv[1].lower() == 'update':
+#       #   jobMediator.update()
+#       elif sys.argv[1].lower() == 'restart':
+#          jobMediator.restart()
+#       else:
+#          print("Unknown command: %s" % sys.argv[1].lower())
+#          sys.exit(2)
+#    else:
+#       print("usage: %s start|stop|update" % sys.argv[0])
+#       sys.exit(2)
 """      
 # .............................................................................         
 if __name__ == '__main__':
