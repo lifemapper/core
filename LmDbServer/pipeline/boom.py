@@ -35,16 +35,18 @@ import os
 import sys
 from types import ListType, TupleType
 
+from LmBackend.common.daemon import Daemon
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
             ONE_HOUR, ONE_MIN, IDIGBIO_GBIFID_FIELD)
-from LmDbServer.common.localconstants import WORKER_JOB_LIMIT
+from LmCommon.common.log import DaemonLogger
+from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError, LmHTTPError
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, 
+from LmServer.common.localconstants import (POINT_COUNT_MIN, DATASOURCE,
                                     TROUBLESHOOTERS, APP_PATH)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
@@ -52,7 +54,6 @@ from LmServer.notifications.email import EmailNotifier
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.omJob import OmProjectionJob, OmModelJob
 from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
-from LmServer.sdm.sdmJob import SDMOccurrenceJob
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 GBIF_SERVICE_INTERVAL = 3 * ONE_MIN            
@@ -440,6 +441,9 @@ class BisonBoom(_LMBoomer):
    def chainOne(self):
       tsn, tsnCount = self._skipAhead()
       self._processTsn(tsn, tsnCount)
+      self._writeNextStart()
+      self.log.info('Processed tsn {}, with {} points; next start {}'
+                    .format(tsn, tsnCount, self.nextStart()))
 
 # ...............................................
    def chainAll(self):
@@ -566,8 +570,10 @@ class UserBoom(_LMBoomer):
    def chainOne(self):
       self._skipAhead()
       dataChunk, dataCount, taxonName  = self._getChunk()
-      if dataChunk:
-         self._processInputSpecies(dataChunk, dataCount, taxonName)
+      self._processInputSpecies(dataChunk, dataCount, taxonName)
+      self._writeNextStart()
+      self.log.info('Processed name {}, with {} records; next start {}'
+                    .format(taxonName, len(dataChunk), self.nextStart()))
 
 # ...............................................
    def chainAll(self):
@@ -627,21 +633,25 @@ class UserBoom(_LMBoomer):
 
 # ...............................................
    def _processInputSpecies(self, dataChunk, dataCount, taxonName):
-      occ = self._createOrResetOccurrenceset(taxonName, None, 
-                                       ProcessType.USER_TAXA_OCCURRENCE,
-                                       dataCount, data=dataChunk)
+      if dataChunk:
+         occ = self._createOrResetOccurrenceset(taxonName, None, 
+                                          ProcessType.USER_TAXA_OCCURRENCE,
+                                          dataCount, data=dataChunk)
+   
+         # Create jobs for Archive Chain: occurrence population, 
+         # model, projection, and (later) intersect computation
+         jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+                                   self.modelScenario, 
+                                   self.projScenarios, 
+                                   occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
+                                   priority=Priority.NORMAL, 
+                                   intersectGrid=None,
+                                   minPointCount=POINT_COUNT_MIN)
+         self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
+                        len(jobs), taxonName, len(dataChunk), occ.getId()))
+      else:
+         self.log.debug('No data in chunk')
 
-      # Create jobs for Archive Chain: occurrence population, 
-      # model, projection, and (later) intersect computation
-      jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
-                                self.modelScenario, 
-                                self.projScenarios, 
-                                occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-                                priority=Priority.NORMAL, 
-                                intersectGrid=None,
-                                minPointCount=POINT_COUNT_MIN)
-      self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                     len(jobs), taxonName, len(dataChunk), occ.getId()))
 
 
 # ..............................................................................
@@ -727,6 +737,9 @@ class GBIFBoom(_LMBoomer):
       self._currRec, self._currSpeciesKey = self._skipAhead()
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       self._processChunk(speciesKey, dataCount, dataChunk)
+      self._writeNextStart()
+      self.log.info('Processed gbif key {} with {} records; next start {}'
+                    .format(speciesKey, len(dataChunk), self.nextStart()))
 
 # ...............................................
    def chainAll(self):
@@ -740,17 +753,6 @@ class GBIFBoom(_LMBoomer):
                                ProcessType.GBIF_TAXA_OCCURRENCE, 
                                dataCount, POINT_COUNT_MIN, data=dataChunk)
 
-# ...............................................
-   def _failGracefully(self, lmerr, linenum=None):
-      if linenum is None: 
-         try:
-            linenum = self.nextStart
-         except:
-            pass
-      if linenum:
-         self._writeNextStart(linenum)
-      _LMBoomer._failGracefully(self, lmerr)
-            
 # ...............................................
    def _skipAhead(self):
       linenum = self._findStart()         
@@ -885,23 +887,23 @@ class iDigBioBoom(_LMBoomer):
 # ...............................................
    def chainOne(self):
       taxonId, taxonCount, taxonName = self._skipAhead()
-      self._processInputSpecies(taxonName, taxonId, taxonCount)
-      self._writeNextStart(self._linenum)
+      self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
+      self._writeNextStart()
+      self.log.info('Processed taxonId {}, {}, with {} points; next start {}'
+                    .format(taxonId, taxonName, taxonCount, self.nextStart()))
 
 # ...............................................
    def chainAll(self):
       taxonId, taxonCount, taxonName = self._skipAhead()
       while taxonId is not None:
-         self._processInputSpecies(taxonName, taxonId, taxonCount)
+         self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
          taxonId, taxonCount, taxonName = self._getCurrTaxon()
       
 # ...............................................
-   def _failGracefully(self, lmerr, linenum=None):
-      if linenum is None: 
-         linenum = self._linenum
-      self._writeNextStart(linenum)
-      _LMBoomer._failGracefully(self, lmerr)
-      
+   @property
+   def nextStart(self):
+      return self._linenum
+
 # ...............................................
    def _getCurrTaxon(self):
       """
@@ -1007,33 +1009,6 @@ class iDigBioBoom(_LMBoomer):
 # .............................................................................
 # .............................................................................
 if __name__ == "__main__":
-   pass
-#    if os.path.exists(JOB_MEDIATOR_PID_FILE):
-#       pid = open(JOB_MEDIATOR_PID_FILE).read().strip()
-#    else:
-#       pid = os.getpid()
-#    
-#    jobMediator = JobMediator(JOB_MEDIATOR_PID_FILE, log=MediatorLogger(pid))
-#    
-#    if len(sys.argv) == 2:
-#       if sys.argv[1].lower() == 'start':
-#          jobMediator.start()
-#       elif sys.argv[1].lower() == 'stop':
-#          jobMediator.stop()
-#       #elif sys.argv[1].lower() == 'update':
-#       #   jobMediator.update()
-#       elif sys.argv[1].lower() == 'restart':
-#          jobMediator.restart()
-#       else:
-#          print("Unknown command: %s" % sys.argv[1].lower())
-#          sys.exit(2)
-#    else:
-#       print("usage: %s start|stop|update" % sys.argv[0])
-#       sys.exit(2)
-"""      
-# .............................................................................         
-if __name__ == '__main__':
-   
    from LmCommon.common.lmconstants import ONE_MONTH
    from LmDbServer.common.lmconstants import IDIGBIO_FILE
    from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
@@ -1045,13 +1020,34 @@ if __name__ == '__main__':
    pname = DATASOURCE.lower()
    txSourceId = 1
    try:
-      w = iDigBioBoom(None, pname, ONE_MONTH, DEFAULT_ALGORITHMS, 
-                      DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                      IDIGBIO_FILE, expDate=expdate.mjd, taxonSource=txSourceId,
-                      mdlMask=None, prjMask=None, intersectGrid=None)
+      idig = iDigBioBoom(None, pname, ONE_MONTH, DEFAULT_ALGORITHMS, 
+                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                         IDIGBIO_FILE, expDate=expdate.mjd, taxonSource=txSourceId,
+                         mdlMask=None, prjMask=None, intersectGrid=None)
    except Exception, e:
       raise LMError(e)
    else:
       print 'iDigBioBoom is fine'
       
-"""
+   idig.chainOne()
+
+#    if os.path.exists(BOOM_PID_FILE):
+#       pid = open(BOOM_PID_FILE).read().strip()
+#    else:
+#       pid = os.getpid()
+#     
+#    idig = iDigBioBoom(BOOM_PID_FILE, log=DaemonLogger(pid))
+#     
+#    if len(sys.argv) == 2:
+#       if sys.argv[1].lower() == 'start':
+#          idig.start()
+#       elif sys.argv[1].lower() == 'stop':
+#          idig.stop()
+#       elif sys.argv[1].lower() == 'restart':
+#          idig.restart()
+#       else:
+#          print("Unknown command: %s" % sys.argv[1].lower())
+#          sys.exit(2)
+#    else:
+#       print("usage: %s start|stop|update" % sys.argv[0])
+#       sys.exit(2)
