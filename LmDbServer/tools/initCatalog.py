@@ -34,7 +34,7 @@ from LmDbServer.common.localconstants import (SCENARIO_PACKAGE,
 import LmDbServer.tools.bioclimMeta as meta
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH
+from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH, DATASOURCE
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe
@@ -470,13 +470,9 @@ if __name__ == '__main__':
    basename, ext = os.path.splitext(basefilename)
    _importClimatePackageMetadata()
 
-   if ARCHIVE_USER == 'bison':
-      taxSource = TAXONOMIC_SOURCE['ITIS'] 
-   elif ARCHIVE_USER == 'kubi':
-      taxSource = TAXONOMIC_SOURCE['GBIF'] 
-   elif ARCHIVE_USER == 'idigbio':
-      taxSource = TAXONOMIC_SOURCE['GBIF'] 
-   else:
+   try:
+      taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
+   except:
       taxSource = None
    
    if len(sys.argv) != 2:

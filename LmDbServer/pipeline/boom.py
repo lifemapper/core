@@ -391,7 +391,7 @@ class BisonBoom(_LMBoomer):
 # ...............................................
    @property
    def nextStart(self):
-      return self._linenum
+      return self._linenum + 1
 
 # ...............................................
    def _getTsnRec(self):
@@ -666,8 +666,7 @@ class GBIFBoom(_LMBoomer):
       self._keyCol = fieldnames.index(keyColname)
       self._linenum = 0
       self._obsoleteTime = expDate
-#       # Populate self._currKeyFirstRecnum
-#       self._currRec, self._currSpeciesKey = self.moveToStart()
+      self._currKeyFirstRecnum = None
       
 # ...............................................
    @property
@@ -887,7 +886,7 @@ class iDigBioBoom(_LMBoomer):
 # ...............................................
    @property
    def nextStart(self):
-      return self._linenum
+      return self._linenum+1
 
 # ...............................................
    def _getCurrTaxon(self):

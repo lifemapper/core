@@ -28,7 +28,7 @@ import time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.log import DaemonLogger
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
-         GBIF_DUMP_FILE, IDIGBIO_FILE)
+         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
@@ -37,28 +37,29 @@ from LmDbServer.pipeline.boom import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
 from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
 
 # .............................................................................
-class _Archivist(Daemon):
+class Archivist(Daemon):
    # .............................
    def initialize(self):
       self.name = self.__class__.__name__.lower()
       expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                      SPECIES_EXP_DAY)
+      taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
       if DATASOURCE == 'BISON':
          self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         BISON_TSN_FILE, expdate.mjd, taxonSource=1,
+                         BISON_TSN_FILE, expdate.mjd, taxonSourceName=taxname,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
       elif DATASOURCE == 'GBIF':
          self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         GBIF_DUMP_FILE, expdate.mjd, taxonSource=1,
+                         GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
       elif DATASOURCE == 'IDIGBIO':
          self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         IDIGBIO_FILE, expdate.mjd, taxonSource=1,
+                         IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
    else:
       pid = os.getpid()
      
-   idig = iDigBioBoom(BOOM_PID_FILE, log=DaemonLogger(pid))
+   idig = Archivist(BOOM_PID_FILE, log=DaemonLogger(pid))
      
    if len(sys.argv) == 2:
       if sys.argv[1].lower() == 'start':

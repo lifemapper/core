@@ -760,11 +760,11 @@ class LMMissingDataError(LMError):
    
    # ......................................
    def __repr__(self):
-      return "LmHTTPError %s (%s)" % (self.code, self.msg)
+      return "{} [] ({})".format(self.__class__.__name__, self.code, self.msg)
 
    # ......................................
    def __str__(self):
-      return "LmHTTPError %s (%s)" % (self.code, self.msg)
+      return "{} {} ({})".format(self.__class__.__name__, self.code, self.msg)
 
 # .............................................................................
 class LMMessage(list, LMObject):
