@@ -324,10 +324,10 @@ class OccDataParser(object):
    # ...............................................
    def skipToRecord(self, targetnum):
       """
-      @note: Does not check for goodEnough line
+      @note: Reads up to, not including, targetnum line.  
       """
       complete = False
-      while self.currLine is not None and self.currRecnum < targetnum:
+      while self.currLine is not None and self.currRecnum < targetnum-1:
          line, goodEnough = self._getLine()
 
    # ...............................................

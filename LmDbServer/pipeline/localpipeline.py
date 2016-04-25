@@ -29,7 +29,7 @@ from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, GBIF_PROVIDER_FIELD, 
           GBIF_TAXONKEY_FIELD, Instances, ONE_MONTH, ProcessType)
 
-from LmDbServer.common.lmconstants import (OCC_DUMP_FILE, 
+from LmDbServer.common.lmconstants import (GBIF_DUMP_FILE, 
                BISON_TSN_FILE, IDIGBIO_FILE, PROVIDER_DUMP_FILE,
                USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, TAXONOMIC_SOURCE)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
@@ -245,7 +245,7 @@ class GBIFPipeline(LMArchivePipeline):
                              threadSuffix='_email'))
          self.workers.append(GBIFChainer(self.lock, self.name, updateInterval, 
                              self.algs, self.modelScenario, self.projScenarios, 
-                             OCC_DUMP_FILE, expDate, gbifFldNames, 
+                             GBIF_DUMP_FILE, expDate, gbifFldNames, 
                              GBIF_TAXONKEY_FIELD, taxonSource=self.txSourceId,
                              providerKeyFile=PROVIDER_DUMP_FILE, 
                              providerKeyColname=GBIF_PROVIDER_FIELD,

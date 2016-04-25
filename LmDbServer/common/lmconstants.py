@@ -32,7 +32,7 @@ from LmDbServer.common.localconstants import (TAXONOMY_FILENAME,
 # ............................................................................
 
 BOOM_PID_FILE = os.path.join(APP_PATH, LOG_PATH, 'lmboom.pid')
-OCC_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
+GBIF_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
                              OCCURRENCE_FILENAME)
 TAXONOMY_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
                                   TAXONOMY_FILENAME)

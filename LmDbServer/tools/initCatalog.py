@@ -444,7 +444,7 @@ def _getClimateMeta(scenPkg):
    return pkgMeta, lyrMeta
 
 # ...............................................
-def _importClimatePackageMetadata(scribe):
+def _importClimatePackageMetadata():
    # Override the above imports if scenario metadata file exists
    metabasename = SCENARIO_PACKAGE+'.py'
    metafname = os.path.join(DATA_PATH, ENV_DATA_PATH, metabasename)
@@ -453,7 +453,8 @@ def _importClimatePackageMetadata(scribe):
       import imp
       meta = imp.load_source('currentmetadata', metafname)
    except Exception, e:
-      scribe.log.warning('Climate metadata {} cannot be imported'.format(metafname))
+      raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+                    .format(metafname, e))
 
 # ...............................................
 def usage():
@@ -499,11 +500,12 @@ if __name__ == '__main__':
             pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
             addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                        meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
-            if taxSource is not None:
+            # Insert all taxonomic sources for now
+            for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
                logger.info('  Inserting taxonomy source {} ...'.format(
-                                                            taxSource['name']))
-               taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
-                                                         taxSource['url'])
+                                                            taxInfo['name']))
+               taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
+                                                         taxInfo['url'])
          
          elif action == 'algorithms':   
             aIds = addAlgorithms(scribe)
@@ -514,11 +516,12 @@ if __name__ == '__main__':
                                        meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
             
          elif action == 'taxonomy':
-            if taxSource is not None:
+            # Insert all taxonomic sources for now
+            for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
                logger.info('  Inserting taxonomy source {} ...'.format(
-                                                            taxSource['name']))
-               taxSourceId = scribe.insertTaxonomySource(taxSource['name'],
-                                                         taxSource['url']) 
+                                                            taxInfo['name']))
+               taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
+                                                         taxInfo['url'])
       except Exception, e:
          logger.error(str(e))
          raise

@@ -35,14 +35,11 @@ import os
 import sys
 from types import ListType, TupleType
 
-from LmBackend.common.daemon import Daemon
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
             ONE_HOUR, ONE_MIN, IDIGBIO_GBIFID_FIELD)
-from LmCommon.common.log import DaemonLogger
-from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError, LmHTTPError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH)
@@ -104,7 +101,7 @@ class _LMBoomer(LMObject):
          
 # ...............................................
    def _failGracefully(self, lmerr=None):
-      self._writeNextStart()
+      self.saveNextStart()
       if lmerr is not None:
          logmsg = str(lmerr)
          logmsg += '\n Traceback: {}'.format(lmerr.getTraceback())
@@ -156,7 +153,7 @@ class _LMBoomer(LMObject):
       return linenum
                   
 # ...............................................
-   def _writeNextStart(self, linenum=None):
+   def saveNextStart(self):
       if self.nextStart is not None:
          try:
             f = open(self.startFile, 'w')
@@ -310,11 +307,11 @@ class _LMBoomer(LMObject):
          elif len(occs) == 1:
             tmpOcc = occs[0]
             # waiting but raw data missing
-            if ((JobStatus.waiting(tmpOcc.stat) 
+            if ((JobStatus.waiting(tmpOcc.status) 
                  and tmpOcc.getRawDLocation() is None)
                 or
                 # complete but obsolete
-                (tmpOcc.stat == JobStatus.COMPLETE 
+                (tmpOcc.status == JobStatus.COMPLETE 
                  and tmpOcc.statusModTime > 0 
                  and tmpOcc.statusModTime < self._obsoleteTime)
                 or 
@@ -372,13 +369,14 @@ class BisonBoom(_LMBoomer):
    @summary: Initializes the job chainer for BISON.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
-                taxonSource=None, mdlMask=None, prjMask=None, intersectGrid=None):
+                taxonSourceName=None, mdlMask=None, prjMask=None, intersectGrid=None):
       super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
-      if taxonSource is None:
+      if taxonSourceName is None:
          self._failGracefully('Missing taxonomic source')
       else:
-         self._taxonSourceId = taxonSource
+         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
+         self._taxonSourceId = txSourceId
 
       self.modelMask = mdlMask
       self.projMask = prjMask
@@ -388,7 +386,7 @@ class BisonBoom(_LMBoomer):
       except Exception, e:
          raise LMError(currargs='Unable to open {}'.format(tsnfilename))
       self._obsoleteTime = expDate
-      self._currTsn, self._currCount = self._skipAhead()
+      self._currTsn, self._currCount = self.moveToStart()
       
 # ...............................................
    @property
@@ -430,15 +428,14 @@ class BisonBoom(_LMBoomer):
 
 # ...............................................
    def chainOne(self):
-      tsn, tsnCount = self._skipAhead()
+      tsn, tsnCount = self._getTsnRec()
       self._processTsn(tsn, tsnCount)
-      self._writeNextStart()
       self.log.info('Processed tsn {}, with {} points; next start {}'
                     .format(tsn, tsnCount, self.nextStart))
 
 # ...............................................
    def chainAll(self):
-      tsn, tsnCount = self._skipAhead()
+      tsn, tsnCount = self.moveToStart()
       while tsn is not None:
          self._processTsn(tsn, tsnCount)
          tsn, tsnCount = self._getTsnRec()
@@ -466,24 +463,15 @@ class BisonBoom(_LMBoomer):
          raise e
 
 # ...............................................
-   def _skipAhead(self):
+   def moveToStart(self):
       startline = self._findStart()  
-      if startline < 0:
-         self._linenum = startline
+      if startline < 1:
+         self._linenum = 0
          self._currRec = None
       else:
          tsn, tsnCount = self._getTsnRec()      
-         while tsn is not None and self._linenum < startline:
+         while tsn is not None and self._linenum < startline-1:
             tsn, tsnCount = self._getTsnRec()
-      return tsn, tsnCount
-         
-# ...............................................
-# # ...............................................
-#    def _getQueryUrl(self, speciesTsn):
-#       occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-*' % speciesTsn}, 
-#                         otherFilters=BISON_OCC_FILTERS)
-#       occAPI.clearOtherFilters()
-#       return occAPI.url
 
 # ...............................................
    def  _getInsertSciNameForItisTSN(self, itisTsn, tsnCount):
@@ -520,7 +508,8 @@ class UserBoom(_LMBoomer):
                 occMetaFname, expDate, 
                 mdlMask=None, prjMask=None, intersectGrid=None):
       super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
-                                      intersectGrid=intersectGrid)      
+                                      intersectGrid=intersectGrid)
+      self._taxonSourceId = None
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
       except Exception, e:
@@ -543,9 +532,9 @@ class UserBoom(_LMBoomer):
       return num
 
 # ...............................................
-   def _skipAhead(self):
+   def moveToStart(self):
       startline = self._findStart()
-      # Start mid-file? Assumes first line is header
+      # Assumes first line is header
       if startline > 2:
          self.occParser.skipToRecord(startline)
       elif startline < 0:
@@ -560,16 +549,16 @@ class UserBoom(_LMBoomer):
       
 # ...............................................
    def chainOne(self):
-      self._skipAhead()
+      self.moveToStart()
       dataChunk, dataCount, taxonName  = self._getChunk()
       self._processInputSpecies(dataChunk, dataCount, taxonName)
-      self._writeNextStart()
+      self.saveNextStart()
       self.log.info('Processed name {}, with {} records; next start {}'
                     .format(taxonName, len(dataChunk), self.nextStart))
 
 # ...............................................
    def chainAll(self):
-      self._skipAhead()
+      self.moveToStart()
       dataChunk, dataCount, taxonName  = self._getChunk()
       while dataChunk:
          self._processInputSpecies(dataChunk, dataCount, taxonName)
@@ -654,15 +643,16 @@ class GBIFBoom(_LMBoomer):
              updates the Occurrence record and inserts a job.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
-                fieldnames, keyColname, taxonSource=None, 
+                fieldnames, keyColname, taxonSourceName=None, 
                 providerKeyFile=None, providerKeyColname=None,
                 mdlMask=None, prjMask=None, intersectGrid=None):
       super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
-      if taxonSource is None:
+      if taxonSourceName is None:
          self._failGracefully('Missing taxonomic source')
       else:
-         self._taxonSourceId = taxonSource
+         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
+         self._taxonSourceId = txSourceId
 
       self.modelMask = mdlMask
       self.projMask = prjMask
@@ -677,7 +667,7 @@ class GBIFBoom(_LMBoomer):
       self._linenum = 0
       self._obsoleteTime = expDate
 #       # Populate self._currKeyFirstRecnum
-#       self._currRec, self._currSpeciesKey = self._skipAhead()
+#       self._currRec, self._currSpeciesKey = self.moveToStart()
       
 # ...............................................
    @property
@@ -726,41 +716,30 @@ class GBIFBoom(_LMBoomer):
 
 # ...............................................
    def chainOne(self):
-      # Populate self._currKeyFirstRecnum
-      self._currRec, self._currSpeciesKey = self._skipAhead()
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       self._processChunk(speciesKey, dataCount, dataChunk)
-      self._writeNextStart()
       self.log.info('Processed gbif key {} with {} records; next start {}'
                     .format(speciesKey, len(dataChunk), self.nextStart))
 
 # ...............................................
    def chainAll(self):
-      # Populate self._currKeyFirstRecnum
-      self._currRec, self._currSpeciesKey = self._skipAhead()
+      self.moveToStart()
       while self._currRec is not None:
          # _getOccurrenceChunk advances self._currRec
          speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
-         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)         
-         self._processSDMChain(sciName, speciesKey, 
-                               ProcessType.GBIF_TAXA_OCCURRENCE, 
-                               dataCount, POINT_COUNT_MIN, data=dataChunk)
+         self._processChunk(speciesKey, dataCount, dataChunk)
 
 # ...............................................
-   def _skipAhead(self):
-      linenum = self._findStart()         
-      if linenum < 0:
-         self._currKeyFirstRecnum = linenum
+   def moveToStart(self):
+      startline = self._findStart()         
+      if startline < 0:
+         self._currKeyFirstRecnum = startline
          self._currRec = self._currSpeciesKey = None
       else:
          line, specieskey = self._getCSVRecord(parse=True)
          # If not there yet, power through lines
-         while line is not None and self._linenum < linenum:
+         while line is not None and self._linenum < startline-1:
             line, specieskey = self._getCSVRecord(parse=False)
-         # Finish by parsing and saving the record to be processed next
-         self._currKeyFirstRecnum = self._linenum
-         line, specieskey = self._parseCSVRecord(line)
-         return line, specieskey
       
 # ...............................................
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
@@ -834,18 +813,22 @@ class GBIFBoom(_LMBoomer):
       currKey = None
       currCount = 0
       currChunk = []
+      # if we're at the beginning, pull a record
+      if self._currSpeciesKey is None:
+         self._currRec, self._currSpeciesKey = self._getCSVRecord()
+         
       while not completeChunk:
-#          line, specieskey = self._parseCSVRecord(self._currRec)
+         # If first record of chunk
          if currKey is None:
             currKey = self._currSpeciesKey
             self._currKeyFirstRecnum = self._linenum
-         
+         # If record of this chunk
          if self._currSpeciesKey == currKey:
             currCount += 1
             currChunk.append(self._currRec)
          else:
             completeChunk = True
-                  
+         # Get another record
          if not completeChunk:
             self._currRec, self._currSpeciesKey = self._getCSVRecord()
             if self._currRec is None:
@@ -864,10 +847,16 @@ class iDigBioBoom(_LMBoomer):
              up-to-date. 
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
-                taxonSource=None, mdlMask=None, prjMask=None, 
+                taxonSourceName=None, mdlMask=None, prjMask=None, 
                 intersectGrid=None):
       super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
+      if taxonSourceName is None:
+         self._failGracefully('Missing taxonomic source')
+      else:
+         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
+         self._taxonSourceId = txSourceId
+
       self.modelMask = mdlMask
       self.projMask = prjMask
       self._obsoleteTime = expDate
@@ -879,22 +868,18 @@ class iDigBioBoom(_LMBoomer):
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None
-      if taxonSource is None:
-         self._failGracefully('Missing taxonomic source')
-      else:
-         self._taxonSourceId = taxonSource      
          
 # ...............................................
    def chainOne(self):
-      taxonId, taxonCount, taxonName = self._skipAhead()
+      taxonId, taxonCount, taxonName = self._getCurrTaxon()
       self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
-      self._writeNextStart()
       self.log.info('Processed taxonId {}, {}, with {} points; next start {}'
                     .format(taxonId, taxonName, taxonCount, self.nextStart))
 
 # ...............................................
    def chainAll(self):
-      taxonId, taxonCount, taxonName = self._skipAhead()
+      self.moveToStart()
+      taxonId, taxonCount, taxonName = self._getCurrTaxon()
       while taxonId is not None:
          self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
          taxonId, taxonCount, taxonName = self._getCurrTaxon()
@@ -953,16 +938,14 @@ class iDigBioBoom(_LMBoomer):
       return currGbifTaxonId, currReportedCount, currBinomial
 
 # ...............................................
-   def _skipAhead(self):
+   def moveToStart(self):
       startline = self._findStart()         
-      taxonId = taxonCount = taxonName = None
-      if startline < 0:
+      if startline < 1:
          self._linenum = 0
       else:
          taxonId, taxonCount, taxonName = self._getCurrTaxon()
-         while taxonName is not None and self._linenum < startline:
+         while taxonName is not None and self._linenum < startline-1:
             taxonId, taxonCount, taxonName = self._getCurrTaxon()
-      return  taxonId, taxonCount, taxonName
          
 # ...............................................
    def _countRecords(self, rawfname):
@@ -992,15 +975,16 @@ class iDigBioBoom(_LMBoomer):
          
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonName, taxonId, taxonCount):
-      try:
-         sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonId, taxonCount)
-         self._processSDMChain(sciName, taxonId, 
-                               ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                               taxonCount, POINT_COUNT_MIN)
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         raise e
+      if taxonId is not None:
+         try:
+            sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonId, taxonCount)
+            self._processSDMChain(sciName, taxonId, 
+                                  ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                                  taxonCount, POINT_COUNT_MIN)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
          
 
 # .............................................................................
@@ -1023,24 +1007,3 @@ if __name__ == "__main__":
       print 'iDigBioBoom is fine'
       
    idig.chainOne()
-
-#    if os.path.exists(BOOM_PID_FILE):
-#       pid = open(BOOM_PID_FILE).read().strip()
-#    else:
-#       pid = os.getpid()
-#     
-#    idig = iDigBioBoom(BOOM_PID_FILE, log=DaemonLogger(pid))
-#     
-#    if len(sys.argv) == 2:
-#       if sys.argv[1].lower() == 'start':
-#          idig.start()
-#       elif sys.argv[1].lower() == 'stop':
-#          idig.stop()
-#       elif sys.argv[1].lower() == 'restart':
-#          idig.restart()
-#       else:
-#          print("Unknown command: {}" % sys.argv[1].lower())
-#          sys.exit(2)
-#    else:
-#       print("usage: {} start|stop|update" % sys.argv[0])
-#       sys.exit(2)
