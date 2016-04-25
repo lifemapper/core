@@ -504,6 +504,35 @@ class JobStatus:
    # 301000-301999  - Process (3) openModeller SDM Projection (02)   
    # ............................................
    OM_PROJECTION_ERROR = 302150 
+   
+   # ............................................
+   @staticmethod
+   def waiting(stat):
+      if stat == JobStatus.GENERAL or stat == JobStatus.INITIALIZE:
+         return True
+      else:
+         return False
+
+   @staticmethod
+   def inProcess(stat):
+      if stat > JobStatus.INITIALIZE and stat < JobStatus.COMPLETE:
+         return True
+      else:
+         return False
+
+   @staticmethod
+   def finished(stat):
+      if stat >= JobStatus.COMPLETE:
+         return True
+      else:
+         return False
+
+   @staticmethod
+   def failed(stat):
+      if stat == JobStatus.NOT_FOUND or stat >= JobStatus.GENERAL_ERROR:
+         return True
+      else:
+         return False
 
 # ............................................................................
 # Aka reqSoftware in LmJob table

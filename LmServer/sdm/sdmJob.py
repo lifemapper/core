@@ -443,30 +443,32 @@ class SDMOccurrenceJobData(_JobData):
    # ....................................
    def __init__(self, occSet, jid, processtype):
       """
-      @summary: SDM GBIF Occurrence job constructor
+      @summary: SDM Occurrence job constructor
       @param occSet: Lifemapper OccurrenceSet object that contains parameters 
                      for the occurrenceSet to be populated.
       @copydoc LmServer.base.job._Job::__init__()
       """
-      if processtype in [ProcessType.USER_TAXA_OCCURRENCE, 
-                         ProcessType.GBIF_TAXA_OCCURRENCE, 
-                         ProcessType.IDIGBIO_TAXA_OCCURRENCE]:
+      if processtype not in [ProcessType.USER_TAXA_OCCURRENCE, 
+                             ProcessType.GBIF_TAXA_OCCURRENCE,
+                             ProcessType.BISON_TAXA_OCCURRENCE, 
+                             ProcessType.IDIGBIO_TAXA_OCCURRENCE]:
+         raise LMError(currargs='Unsupported OccurrenceJob ProcessType {}'
+                                 .format(processtype))
+      
+      rdloc = occSet.getRawDLocation()
+      if rdloc is None:
+         raise LMError('Missing raw data location')
+         
+      if os.path.exists(rdloc):
          # Add the delimited values so they can be sent to cluster
-         with open(occSet.getRawDLocation()) as dFile:
+         with open(rdloc) as dFile:
             tmpStr = dFile.read()
-            
             # Remove non-printable characters
             import string
             self.delimitedOccurrenceValues = ''.join(
-                                    filter(
-                                       lambda x: x in string.printable, tmpStr))
-      # For Bison we just send URL
-      elif processtype == ProcessType.BISON_TAXA_OCCURRENCE:
-         pass
-      else:
-         raise LMError('Unsupported OccurrenceJob ProcessType %d' % processtype)
+                              filter(lambda x: x in string.printable, tmpStr))
       
-      obj = {'dlocation': occSet.getRawDLocation(),
+      obj = {'dlocation': rdloc,
              'count': occSet.queryCount}
       _JobData.__init__(self, obj, jid, processtype, 
                         occSet.getUserId(), occSet.metadataUrl, 

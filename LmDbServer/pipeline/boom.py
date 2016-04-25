@@ -43,7 +43,7 @@ from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             ONE_HOUR, ONE_MIN, IDIGBIO_GBIFID_FIELD)
 from LmCommon.common.log import DaemonLogger
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
-from LmServer.base.lmobj import LMError, LmHTTPError
+from LmServer.base.lmobj import LMError, LmHTTPError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH)
 from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
@@ -59,9 +59,10 @@ TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 GBIF_SERVICE_INTERVAL = 3 * ONE_MIN            
 
 # .............................................................................
-class _LMBoomer(object):
+class _LMBoomer(LMObject):
    # .............................
    def __init__(self, userid, algLst, mdlScen, prjScenLst, intersectGrid=None):
+      super(_LMBoomer, self).__init__()
       self.userid = userid
       self.algs = algLst
       self.modelScenario = mdlScen
@@ -97,16 +98,16 @@ class _LMBoomer(object):
          raise LMError(prevargs=e.args)
       else:
          if success:
-            self.log.info('%s opened databases' % (self.name))
+            self.log.info('{} opened databases'.format(self.name))
          else:
-            raise LMError('%s failed to open databases' % self.name)
+            raise LMError(currargs='{} failed to open databases'.format(self.name))
          
 # ...............................................
    def _failGracefully(self, lmerr=None):
       self._writeNextStart()
       if lmerr is not None:
          logmsg = str(lmerr)
-         logmsg += '\n Traceback: %s' % lmerr.getTraceback()
+         logmsg += '\n Traceback: {}'.format(lmerr.getTraceback())
          self.log.error(logmsg)
          self._notifyPeople("Lifemapper BOOM has failed", 
                '{} Lifemapper BOOM has crashed with the message:\n\n{}'
@@ -116,7 +117,7 @@ class _LMBoomer(object):
          try:
             self._scribe.closeConnections()
          except Exception, e:
-            self.log.warning('Error while failing: %s' % str(e))
+            self.log.warning('Error while failing: {}'.format(str(e)))
             
       self.log.debug('Time: {}; gracefully exiting ...'.format(dt.utc().mjd))
 
@@ -136,8 +137,7 @@ class _LMBoomer(object):
       try:
          notifier.sendMessage(recipients, subject, message)
       except Exception, e:
-         self.log.error('Failed to notify %s about %s' 
-                        % (str(recipients), subject))
+         self.log.error('Failed to notify {} about {}'.format(recipients, subject))
 
 # ...............................................
    def _findStart(self):
@@ -148,9 +148,9 @@ class _LMBoomer(object):
             try:
                linenum = int(line)
             except:
-               print 'Failed to interpret %s' % str(line)
+               print 'Failed to interpret {}'.format(line)
             else:
-               self.log.debug('Start location = %d' % linenum)
+               self.log.debug('Start location = {}'.format(linenum))
          if linenum > 0:
             os.remove(self.startFile)
       return linenum
@@ -169,21 +169,10 @@ class _LMBoomer(object):
 # ...............................................
    def _rollbackQueuedJobs(self):
       if self.startStatus < self.queueStatus:
-         try:
-            self._getLock()
-            count = self._scribe.rollbackIncompleteRADJobs(self.queueStatus)
-            self.updateTime = dt.gmt().mjd
-            self.log.debug('Reset %d queued (%d) jobs to completed status (%d)' 
-                           % (count, self.queueStatus, self.startStatus))
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            self.log.debug(str(e))
-               
-            self.log.error('Failed in _rollbackQueuedJobs %s' % str(e))
-            raise
-         finally:
-            self._freeLock()
+         count = self._scribe.rollbackIncompleteRADJobs(self.queueStatus)
+         self.updateTime = dt.gmt().mjd
+         self.log.debug('Reset {} queued ({}) jobs to completed status ({})'
+                        .format(count, self.queueStatus, self.startStatus))
    
 # ...............................................
    def _notifyComplete(self, job):
@@ -194,54 +183,42 @@ class _LMBoomer(object):
          # Notify on Model only if fail
          if isinstance(job, (MeModelJob, OmModelJob)):
             if job.status >= JobStatus.NOT_FOUND:
-               subject = 'Lifemapper SDM Model %d Error' % job.jid
+               subject = 'Lifemapper SDM Model {} Error'.format(job.jid)
                msg = ''.join(('The Lifemapper Species Distribution Modeling '
-                              '(LmSDM) job that you requested has failed with code %d.  '
-                              % job.status,
-                              'You may visit %s for error information' 
-                              % job.metadataUrl))
+                              '(LmSDM) job that you requested has failed with code {}.  '
+                              .format(job.status),
+                              'You may visit {} for error information'
+                              .format(job.metadataUrl)))
          # Notify on Projection only if it's the last one
          elif isinstance(job, (MeProjectionJob, OmProjectionJob)):
             model = job.projection.getModel()
-            try:
-               self._getLock()
-               unfinishedCount = self._scribe.countProjections(job.userId, 
-                                                               inProcess=True, 
-                                                               mdlId=model.getId())
-            except Exception, e:
-               if not isinstance(e, LMError):
-                  e = LMError(currargs=e.args, lineno=self.getLineno(), 
-                              location=self.getLocation())
-               raise e
-            
-            finally:
-               self._freeLock()
-   
+            unfinishedCount = self._scribe.countProjections(job.userId, 
+                                                            inProcess=True, 
+                                                            mdlId=model.getId())   
             if unfinishedCount == 0:
                if job.status == JobStatus.COMPLETE:
-                  subject = 'Lifemapper SDM Experiment %d Completed' % model.getId()
+                  subject = 'Lifemapper SDM Experiment {} Completed'.format(model.getId())
                   msg = ''.join(('The Lifemapper Species Distribution Modeling '
                                  '(LmSDM) job that you requested is now complete.  ',
-                                 'You may visit %s to retrieve your data' 
-                                 % job.metadataUrl)) 
+                                 'You may visit {} to retrieve your data' 
+                                 .format(job.metadataUrl))) 
                else:
-                  subject = 'Lifemapper SDM Experiment %d Error' % model.getId()
+                  subject = 'Lifemapper SDM Experiment {} Error'.format(model.getId())
                   msg = ''.join(('The Lifemapper Species Distribution Modeling '
-                                 '(LmSDM) job that you requested has failed with code %d.  '
-                                 % job.status,
-                                 'You may visit %s for error information' 
-                                 % job.metadataUrl))  
+                                 '(LmSDM) job that you requested has failed with code {}.  '
+                                 .format(job.status),
+                                 'You may visit {} for error information' 
+                                 .format(job.metadataUrl)))  
             else:
-               self.log.info('Notify: %d unfinished projections for model %d, user %s'
-                             % (unfinishedCount, model.getId(), job.email))
+               self.log.info('Notify: {} unfinished projections for model {}, user {}'
+                             .format(unfinishedCount, model.getId(), job.email))
          if msg is not None:
             try:
                self._notifyPeople(subject, msg, recipients=[job.email])
-               self.log.info('Notified: %s, user %s'
-                             % (subject, job.email))
+               self.log.info('Notified: {}, user {}'.format(subject, job.email))
             except LMError, e:
-               self.log.info('Failed to notify user %s of %s (%s)' % 
-                             (job.email, subject, str(e)))
+               self.log.info('Failed to notify user {} of {} ({})'
+                             .format(job.email, subject, str(e)))
                success = False
       return success         
 
@@ -331,15 +308,25 @@ class _LMBoomer(object):
                   sciName=sciname)
             occid = self._scribe.insertOccurrenceSet(occ)
          elif len(occs) == 1:
-            if (occs[0].statusModTime > 0 and 
-                occs[0].statusModTime < self._obsoleteTime):
-               occ = occs[0]
+            tmpOcc = occs[0]
+            # waiting but raw data missing
+            if ((JobStatus.waiting(tmpOcc.stat) 
+                 and tmpOcc.getRawDLocation() is None)
+                or
+                # complete but obsolete
+                (tmpOcc.stat == JobStatus.COMPLETE 
+                 and tmpOcc.statusModTime > 0 
+                 and tmpOcc.statusModTime < self._obsoleteTime)
+                or 
+                # failed
+                JobStatus.failed(tmpOcc.status)):
+               occ = tmpOcc
                occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
             else:
                self.log.debug('Occurrenceset {} ({}) is up to date'
                               .format(occs[0].getId(), taxonName))
          else:
-            raise LMError('Too many ({}) occurrenceLayers for {}'
+            raise LMError(currargs='Too many ({}) occurrenceLayers for {}'
                           .format(len(occs), taxonName))
          if occ:
             rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
@@ -361,7 +348,7 @@ class _LMBoomer(object):
                         dataCount, minPointCount, data=None):
       try:
          occ = self._createOrResetOccurrenceset(sciname, taxonSourceKeyVal, 
-                           occProcessType, dataCount, minPointCount, data=data)
+                           occProcessType, dataCount, data=data)
          if occ:
             # Create jobs for Archive Chain; 'reset' to existing occset will be 
             # saved here
@@ -396,7 +383,10 @@ class BisonBoom(_LMBoomer):
       self.modelMask = mdlMask
       self.projMask = prjMask
       self._linenum = 0
-      self._tsnfile = open(tsnfilename, 'r')
+      try:
+         self._tsnfile = open(tsnfilename, 'r')
+      except Exception, e:
+         raise LMError(currargs='Unable to open {}'.format(tsnfilename))
       self._obsoleteTime = expDate
       self._currTsn, self._currCount = self._skipAhead()
       
@@ -421,7 +411,8 @@ class BisonBoom(_LMBoomer):
                self._linenum += 1
                success = True
             except Exception, e:
-               self.log.debug('Exception reading line %d (%s)' % (self._linenum, str(e)))
+               self.log.debug('Exception reading line {} ({})'
+                              .format(self._linenum, str(e)))
       return tsn, tsnCount
 
 # ...............................................
@@ -443,7 +434,7 @@ class BisonBoom(_LMBoomer):
       self._processTsn(tsn, tsnCount)
       self._writeNextStart()
       self.log.info('Processed tsn {}, with {} points; next start {}'
-                    .format(tsn, tsnCount, self.nextStart()))
+                    .format(tsn, tsnCount, self.nextStart))
 
 # ...............................................
    def chainAll(self):
@@ -455,9 +446,9 @@ class BisonBoom(_LMBoomer):
 # ...............................................
    def _locateRawData(self, occ, taxonSourceKeyVal=None, dataChunk=None):
       if taxonSourceKeyVal is None:
-         raise LMError('Missing taxonSourceKeyVal for BISON query url')
+         raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
       occAPI = BisonAPI(qFilters=
-                        {BISON_HIERARCHY_KEY: '*-%d-*'.format(taxonSourceKeyVal)}, 
+                        {BISON_HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
                         otherFilters=BISON_OCC_FILTERS)
       occAPI.clearOtherFilters()
       return occAPI.url
@@ -489,7 +480,7 @@ class BisonBoom(_LMBoomer):
 # ...............................................
 # # ...............................................
 #    def _getQueryUrl(self, speciesTsn):
-#       occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-*' % speciesTsn}, 
+#       occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-*' % speciesTsn}, 
 #                         otherFilters=BISON_OCC_FILTERS)
 #       occAPI.clearOtherFilters()
 #       return occAPI.url
@@ -505,7 +496,8 @@ class BisonBoom(_LMBoomer):
             (itisname, king, tsnHier) = BisonAPI.getItisTSNValues(itisTsn)
             self._wait(20)
          except Exception, e:
-            self.log.error('Failed to get results for ITIS TSN %s (%s)' % (str(itisTsn), str(e)))
+            self.log.error('Failed to get results for ITIS TSN {} ({})'
+                           .format(itisTsn, str(e)))
          else:
             if itisname is not None and itisname != '':
                sciname = ScientificName(itisname, kingdom=king,
@@ -573,7 +565,7 @@ class UserBoom(_LMBoomer):
       self._processInputSpecies(dataChunk, dataCount, taxonName)
       self._writeNextStart()
       self.log.info('Processed name {}, with {} records; next start {}'
-                    .format(taxonName, len(dataChunk), self.nextStart()))
+                    .format(taxonName, len(dataChunk), self.nextStart))
 
 # ...............................................
    def chainAll(self):
@@ -628,7 +620,7 @@ class UserBoom(_LMBoomer):
                              header=self.fieldnames)
       if not success:
          rdloc = None
-         self.log.debug('Unable to write CSV file %s' % rdloc)
+         self.log.debug('Unable to write CSV file {}'.format(rdloc))
       return rdloc
 
 # ...............................................
@@ -698,13 +690,14 @@ class GBIFBoom(_LMBoomer):
       try:
          provKeyCol = self._fieldnames.index(providerKeyColname)
       except Exception, e:
-         self.log.error('Unable to find %s in fieldnames' % providerKeyColname)
+         self.log.error('Unable to find {} in fieldnames'
+                        .format(providerKeyColname))
          provKeyCol = None
          
       if providerKeyFile is not None and providerKeyColname is not None: 
          import os
          if not os.path.exists(providerKeyFile):
-            self.log.error('Missing provider file %s' % providerKeyFile)
+            self.log.error('Missing provider file {}'.format(providerKeyFile))
          else:
             dumpfile = open(providerKeyFile, 'r')
             csv.field_size_limit(sys.maxsize)
@@ -739,7 +732,7 @@ class GBIFBoom(_LMBoomer):
       self._processChunk(speciesKey, dataCount, dataChunk)
       self._writeNextStart()
       self.log.info('Processed gbif key {} with {} records; next start {}'
-                    .format(speciesKey, len(dataChunk), self.nextStart()))
+                    .format(speciesKey, len(dataChunk), self.nextStart))
 
 # ...............................................
    def chainAll(self):
@@ -775,7 +768,7 @@ class GBIFBoom(_LMBoomer):
       success = occ.writeCSV(data, dlocation=rdloc, overwrite=True)
       if not success:
          rdloc = None
-         self.log.debug('Unable to write CSV file %s' % rdloc)
+         self.log.debug('Unable to write CSV file {}}'.format(rdloc))
       return rdloc
          
 # ...............................................
@@ -789,9 +782,11 @@ class GBIFBoom(_LMBoomer):
             success = True
          except OverflowError, e:
             self._linenum += 1
-            self.log.debug( 'OverflowError on %d (%s), moving on' % (self._linenum, str(e)))
+            self.log.debug( 'OverflowError on {} ({}), moving on'
+                            .format(self._linenum, e))
          except Exception, e:
-            self.log.debug('Exception reading line %d (%s)' % (self._linenum, str(e)))
+            self.log.debug('Exception reading line {} ({})'
+                           .format(self._linenum, e))
             success = True
          if parse:
             # Post-parse, line is a dictionary
@@ -806,15 +801,15 @@ class GBIFBoom(_LMBoomer):
             specieskey = int(line[self._keyCol])
          except Exception, e:
             line = None
-            self.log.debug('Skipping line; failed to convert specieskey on record %d (%s)' 
-                   % (self._linenum, str(line)))
+            self.log.debug('Skipping line; failed to convert specieskey on record {} ({})' 
+                  .format(self._linenum, str(line)))
             
          if self._provCol is not None:
             try:
                provkey = line[self._provCol]
             except Exception, e:
-               self.log.debug('Failed to find providerKey on record %d (%s)' 
-                      % (self._linenum, str(line)))
+               self.log.debug('Failed to find providerKey on record {} ({})' 
+                     .format(self._linenum, str(line)))
             else:
                provname = provkey
                try:
@@ -824,8 +819,8 @@ class GBIFBoom(_LMBoomer):
                      provname = GbifAPI.getPublishingOrg(provkey)
                      self._providers[provkey] = provname
                   except:
-                     self.log.debug('Failed to find providerKey %s in providers or GBIF API' 
-                                 % (provkey))
+                     self.log.debug('Failed to find providerKey {} in providers or GBIF API' 
+                                .format(provkey))
 
                line[self._provCol] = provname
             
@@ -855,10 +850,10 @@ class GBIFBoom(_LMBoomer):
             self._currRec, self._currSpeciesKey = self._getCSVRecord()
             if self._currRec is None:
                completeChunk = True
-               self.log.debug('Ended on line %d (chunk started on %d)' 
-                      % (self._linenum, self._currKeyFirstRecnum))
-      self.log.debug('Returning %d records for %d (starting on line %d)' 
-            % (currCount, currKey, self._currKeyFirstRecnum))
+               self.log.debug('Ended on line {} (chunk started on {})' 
+                              .format(self._linenum, self._currKeyFirstRecnum))
+      self.log.debug('Returning {} records for {} (starting on line {})' 
+                     .format(currCount, currKey, self._currKeyFirstRecnum))
       return currKey, currCount, currChunk
          
 # ..............................................................................
@@ -876,6 +871,10 @@ class iDigBioBoom(_LMBoomer):
       self.modelMask = mdlMask
       self.projMask = prjMask
       self._obsoleteTime = expDate
+      try:
+         self._idigFile = open(idigFname, 'r')
+      except Exception, e:
+         raise LMError(currargs='Unable to open {}'.format(idigFname))
       self._linenum = 0
       self._currBinomial = None
       self._currGbifTaxonId = None
@@ -891,7 +890,7 @@ class iDigBioBoom(_LMBoomer):
       self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
       self._writeNextStart()
       self.log.info('Processed taxonId {}, {}, with {} points; next start {}'
-                    .format(taxonId, taxonName, taxonCount, self.nextStart()))
+                    .format(taxonId, taxonName, taxonCount, self.nextStart))
 
 # ...............................................
    def chainAll(self):
@@ -923,7 +922,7 @@ class iDigBioBoom(_LMBoomer):
                self.log.debug( 'OverflowError on {} ({}), moving on'.format(
                                                 self._linenum, str(e)))
             else:
-               self.log.debug('Exception reading line %d (%s)'.format(
+               self.log.debug('Exception reading line {} ({})'.format(
                                                 self._linenum, str(e)))
                success = True
          else:
@@ -972,7 +971,7 @@ class iDigBioBoom(_LMBoomer):
          f  = open(rawfname, 'r')
          blob = f.read()
       except Exception, e:
-         self.log.debug('Failed to read %s' % rawfname)
+         self.log.debug('Failed to read {}'.format(rawfname))
       else:
          pointcount = len(blob.split('\n')) - 1
       finally:
@@ -984,9 +983,9 @@ class iDigBioBoom(_LMBoomer):
       return pointcount
     
 # ...............................................
-   def _locateRawData(self, occ, taxonSourceKeyVal=None, dataChunk=None):
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
       if taxonSourceKeyVal is None:
-         raise LMError('Missing taxonSourceKeyVal for iDigBio query url')
+         raise LMError(currargs='Missing taxonSourceKeyVal for iDigBio query url')
       occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonSourceKeyVal})
       occAPI.clearOtherFilters()
       return occAPI.url
@@ -994,17 +993,14 @@ class iDigBioBoom(_LMBoomer):
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonName, taxonId, taxonCount):
       try:
-         self._getLock()
          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonId, taxonCount)
-         self._processSDMChainForDynamicQuery(sciName, taxonId, taxonCount,
-                                              ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                                              POINT_COUNT_MIN)
-      except LMError, e:
-         raise e
+         self._processSDMChain(sciName, taxonId, 
+                               ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                               taxonCount, POINT_COUNT_MIN)
       except Exception, e:
-         raise LMError(currargs=e.args, lineno=self.getLineno())
-      finally:
-         self._freeLock()
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         raise e
          
 
 # .............................................................................
@@ -1043,8 +1039,8 @@ if __name__ == "__main__":
 #       elif sys.argv[1].lower() == 'restart':
 #          idig.restart()
 #       else:
-#          print("Unknown command: %s" % sys.argv[1].lower())
+#          print("Unknown command: {}" % sys.argv[1].lower())
 #          sys.exit(2)
 #    else:
-#       print("usage: %s start|stop|update" % sys.argv[0])
+#       print("usage: {} start|stop|update" % sys.argv[0])
 #       sys.exit(2)

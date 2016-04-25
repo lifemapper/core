@@ -876,7 +876,7 @@ class Peruser(LMObject):
       """
       occsets = []
       if sciName is not None:
-         occsets = self._mal.getOccurrenceSetsForTaxonUser(sciName.getId(), userId)
+         occsets = self._mal.getOccurrenceSetsForScientificName(sciName.getId(), userId)
       return occsets
 
 # ...............................................
