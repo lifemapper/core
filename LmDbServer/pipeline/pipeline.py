@@ -137,7 +137,6 @@ class _Worker(LMObject, threading.Thread):
 
       if lmerr is not None:
          logmsg = str(lmerr)
-         logmsg += '\n Error catch location: %s' % lmerr.location
          logmsg += '\n Traceback: %s' % lmerr.getTraceback()
          self.log.error(logmsg)
          self._notifyPeople('LM Pipeline error', logmsg)

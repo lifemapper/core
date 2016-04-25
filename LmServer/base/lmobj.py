@@ -635,7 +635,7 @@ class LMError(Exception, LMObject):
    Base class for exceptions in the lifemapper project
    """
    
-   def __init__(self, currargs=None, prevargs=None, lineno=None, location=None, 
+   def __init__(self, currargs=None, prevargs=None, lineno=None,  
                 doTrace=False, logger=None):
       """
       @todo: Exception will change in Python 3.0: update this.  
@@ -647,7 +647,6 @@ class LMError(Exception, LMObject):
       """
       super(LMObject, self).__init__()
       super(Exception, self).__init__()
-      self.location = location
       self.lineno = lineno
       
       allargs = []
@@ -720,7 +719,7 @@ class LmHTTPError(LMError):
    """
    
    def __init__(self, code, msg=None, currargs=None, prevargs=None, lineno=None, 
-                                                 location=None, doTrace=False):
+                doTrace=False):
       """
       @summary: Constructor for the LmHTTPError class
       @param code: (optional - HTTPException does not have a code) 
@@ -730,7 +729,7 @@ class LmHTTPError(LMError):
       self.code = code
       self.msg = msg
       LMError.__init__(self, currargs=currargs, prevargs=prevargs, 
-                       lineno=lineno, location=location, doTrace=doTrace)
+                       lineno=lineno, doTrace=doTrace)
    
    # ......................................
    def __repr__(self):
@@ -748,7 +747,7 @@ class LMMissingDataError(LMError):
    """
    
    def __init__(self, code, msg=None, currargs=None, prevargs=None, lineno=None, 
-                                                 location=None, doTrace=False):
+                doTrace=False):
       """
       @summary: Constructor for the LmHTTPError class
       @param code: (optional - HTTPException does not have a code) 
@@ -758,7 +757,7 @@ class LMMissingDataError(LMError):
       self.code = code
       self.msg = msg
       LMError.__init__(self, currargs=currargs, prevargs=prevargs, 
-                       lineno=lineno, location=location, doTrace=doTrace)
+                       lineno=lineno, doTrace=doTrace)
    
    # ......................................
    def __repr__(self):

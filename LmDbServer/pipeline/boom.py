@@ -105,7 +105,6 @@ class _LMBoomer(object):
       self._writeNextStart()
       if lmerr is not None:
          logmsg = str(lmerr)
-         logmsg += '\n Error catch location: %s' % lmerr.location
          logmsg += '\n Traceback: %s' % lmerr.getTraceback()
          self.log.error(logmsg)
          self._notifyPeople("Lifemapper BOOM has failed", 
@@ -637,12 +636,12 @@ class UserBoom(_LMBoomer):
       jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
                                 self.modelScenario, 
                                 self.projScenarios, 
-                                occJobProcessType=processtype,
+                                occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
                                 priority=Priority.NORMAL, 
                                 intersectGrid=None,
                                 minPointCount=POINT_COUNT_MIN)
       self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                     len(jobs), spname, len(dataChunk), occ.getId()))
+                     len(jobs), taxonName, len(dataChunk), occ.getId()))
 
 
 # ..............................................................................
