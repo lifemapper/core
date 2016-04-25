@@ -46,8 +46,8 @@ from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError, LmHTTPError
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, DATASOURCE,
-                                    TROUBLESHOOTERS, APP_PATH)
+from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
+                                            APP_PATH)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.notifications.email import EmailNotifier
@@ -386,7 +386,7 @@ class BisonBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
                 taxonSource=None, mdlMask=None, prjMask=None, intersectGrid=None):
-      super(_LMBoomer, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+      super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
       if taxonSource is None:
          self._failGracefully('Missing taxonomic source')
@@ -527,7 +527,7 @@ class UserBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
                 occMetaFname, expDate, 
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(_LMBoomer, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+      super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)      
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
@@ -665,7 +665,7 @@ class GBIFBoom(_LMBoomer):
                 fieldnames, keyColname, taxonSource=None, 
                 providerKeyFile=None, providerKeyColname=None,
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(_LMBoomer, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+      super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
       if taxonSource is None:
          self._failGracefully('Missing taxonomic source')
@@ -871,7 +871,8 @@ class iDigBioBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
                 taxonSource=None, mdlMask=None, prjMask=None, 
                 intersectGrid=None):
-      super(_LMBoomer, self).__init__(userid)
+      super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+                                      intersectGrid=intersectGrid)
       self.modelMask = mdlMask
       self.projMask = prjMask
       self._obsoleteTime = expDate
@@ -1009,23 +1010,19 @@ class iDigBioBoom(_LMBoomer):
 # .............................................................................
 # .............................................................................
 if __name__ == "__main__":
-   from LmCommon.common.lmconstants import ONE_MONTH
    from LmDbServer.common.lmconstants import IDIGBIO_FILE
    from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SPECIES_EXP_YEAR, 
-            SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
-
-   expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
-                                  SPECIES_EXP_DAY)
-   pname = DATASOURCE.lower()
-   txSourceId = 1
+            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
+   from LmServer.common.localconstants import ARCHIVE_USER
+   
+   expdate = dt.DateTime(2016, 1, 1)
    try:
-      idig = iDigBioBoom(None, pname, ONE_MONTH, DEFAULT_ALGORITHMS, 
+      idig = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         IDIGBIO_FILE, expDate=expdate.mjd, taxonSource=txSourceId,
+                         IDIGBIO_FILE, expdate.mjd, taxonSource=1,
                          mdlMask=None, prjMask=None, intersectGrid=None)
    except Exception, e:
-      raise LMError(e)
+      raise LMError(prevargs=e.args)
    else:
       print 'iDigBioBoom is fine'
       

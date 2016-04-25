@@ -32,9 +32,8 @@ import sys
 from time import sleep
 import traceback
 
-from LmCompute.common.localconstants import \
-                                        JM_INACTIVE_TIME, \
-                                        JM_SLEEP_TIME, JOB_MEDIATOR_PID_FILE
+from LmCompute.common.localconstants import (JM_INACTIVE_TIME, 
+                                        JM_SLEEP_TIME, JOB_MEDIATOR_PID_FILE)
 from LmCompute.common.log import MediatorLogger
 from LmCompute.jobs.retrievers.factory import getJobRetrieversDictFromConfig
 from LmCompute.jobs.submitters.factory import getJobSubmitterFromConfig

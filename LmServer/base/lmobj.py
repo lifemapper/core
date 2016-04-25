@@ -645,8 +645,7 @@ class LMError(Exception, LMObject):
       @param prevargs: (optional) sequence of previous arguments for exception
                         being wrapped by LMError
       """
-      super(LMObject, self).__init__()
-      super(Exception, self).__init__()
+      super(LMError, self).__init__()
       self.lineno = lineno
       
       allargs = []

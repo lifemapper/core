@@ -58,25 +58,19 @@ class _LMWorker(_Worker):
    def __init__(self, lock, threadSpeed, pipelineName, updateInterval, 
                 startStatus=None, queueStatus=None, endStatus=None, 
                 threadSuffix=None):
+      success = False
+      
+      super(_LMWorker, self).__init__(lock, pipelineName, threadSuffix=threadSuffix)
+      self.threadSpeed = threadSpeed
+      self.startStatus = startStatus
+      self.queueStatus = queueStatus
+      self.updateInterval = updateInterval
+      self.updateTime = None
+      self._gbifQueryTime = None
+      self.simpleChecked = set()
       try:
-         super(_Worker, self).__init__(lock, pipelineName, threadSuffix=threadSuffix)
-         self.threadSpeed = threadSpeed
-         self.startStatus = startStatus
-         self.queueStatus = queueStatus
-         self.updateInterval = updateInterval
-         self.updateTime = None
-         self._gbifQueryTime = None
-         self.simpleChecked = set()
-   
-         try:
-            self._scribe = Scribe(self.log)
-            success = self._scribe.openConnections()
-   
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            self._failGracefully(e)
-   
+         self._scribe = Scribe(self.log)
+         success = self._scribe.openConnections()   
       except Exception, e:
          raise LMError(prevargs=e.args)
       else:
@@ -327,7 +321,7 @@ class Troubleshooter(_LMWorker):
                 archiveDataDeleteTime=None):
       threadspeed = WORKER_JOB_LIMIT/2
       self.archiveDataDeleteTime = archiveDataDeleteTime
-      super(_LMWorker, self).__init__(lock, threadspeed, pipelineName, 
+      super(Troubleshooter, self).__init__(lock, threadspeed, pipelineName, 
                                       updateInterval)
       
 # ...............................................
@@ -575,7 +569,7 @@ class Infiller(_LMWorker):
                 mdlScen, prjScenLst, mdlMask=None, prjMask=None,
                 intersectGrid=None):
       threadspeed = WORKER_JOB_LIMIT * 2
-      super(_LMWorker, self).__init__(lock, threadspeed, pipelineName, 
+      super(Infiller, self).__init__(lock, threadspeed, pipelineName, 
                                       updateInterval, 
                                       startStatus=JobStatus.GENERAL, 
                                       queueStatus=JobStatus.GENERAL, 
@@ -851,7 +845,7 @@ class BisonChainer(_LMWorker):
    def __init__(self, lock, pipelineName, updateInterval, algLst, mdlScen, 
                 prjScenLst, tsnfilename, expDate, taxonSource=None, 
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, None,
+      super(BisonChainer, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, None,
                                       updateInterval)
       
       if taxonSource is None:
@@ -1024,7 +1018,7 @@ class UserChainer(_LMWorker):
    def __init__(self, lock, pipelineName, updateInterval, 
                 algLst, mdlScen, prjScenLst, occDataFname, occMetaFname, expDate,
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
+      super(UserChainer, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
                                       updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
       try:
@@ -1176,7 +1170,7 @@ class GBIFChainer(_LMWorker):
                 fieldnames, keyColname, taxonSource=None, 
                 providerKeyFile=None, providerKeyColname=None,
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
+      super(GBIFChainer, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
                                       updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 'start.%s.txt' % pipelineName)
       if taxonSource is None:
@@ -1517,7 +1511,7 @@ class iDigBioChainer(_LMWorker):
                 algLst, mdlScen, prjScenLst, idigFname, expDate,
                 taxonSource=None, mdlMask=None, prjMask=None, 
                 intersectGrid=None):
-      super(_LMWorker, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
+      super(iDigBioChainer, self).__init__(lock, WORKER_JOB_LIMIT, pipelineName, 
                                       updateInterval)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 
                                     'start.{}.txt'.format(pipelineName))
@@ -1533,12 +1527,13 @@ class iDigBioChainer(_LMWorker):
       try:
          self._idigFile = open(idigFname, 'r')
       except Exception, e:
-         raise LMError('Invalid file %s (%s)' % (str(idigFname), str(e)))
+         raise LMError(currargs='Invalid file {} ({})'.format(idigFname), str(e))
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None
       if taxonSource is None:
-         self._failGracefully('Missing taxonomic source')
+         e = LMError(currargs='Missing taxonomic source')
+         self._failGracefully(e)
       else:
          self._taxonSourceId = taxonSource      
          
@@ -1703,7 +1698,7 @@ class ProcessRunner(_LMWorker):
       self.ipaddress = None
       (self.ipaddress, network, cidr, iface) = self._getNetworkInfo()
       
-      super(_LMWorker, self).__init__(lock, threadspeed, pipelineName, 
+      super(ProcessRunner, self).__init__(lock, threadspeed, pipelineName, 
                                       updateInterval, startStatus, queueStatus, 
                                       endStatus, threadSuffix=threadSuffix)
       self.processTypes = processTypes
