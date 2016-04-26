@@ -241,18 +241,18 @@ class _LMBoomer(LMObject):
       """
       Returns an existing or newly inserted ScientificName
       """
-      try:
-         sciName = self._scribe.findTaxon(self._taxonSourceId, 
-                                              taxonKey)
-         if sciName is None:
-            # Use API to get and insert species name 
-            try:
-               (rankStr, kingdomStr, phylumStr, classStr, orderStr, 
-                familyStr, genusStr, speciesStr, genuskey, 
-                retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
-            except LmHTTPError, e:
-               self.log.info('Failed lookup for key {}, ({})'.format(
-                                                      taxonKey, e.msg))
+      sciName = self._scribe.findTaxon(self._taxonSourceId, 
+                                           taxonKey)
+      if sciName is None:
+         # Use API to get and insert species name 
+         try:
+            (rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genuskey, 
+             retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
+         except Exception, e:
+            self.log.info('Failed lookup for key {}, ({})'.format(
+                                                   taxonKey, e))
+         else:
             # if no species key, this is not a species
             if retSpecieskey == taxonKey:
                currtime = dt.gmt().mjd
@@ -266,11 +266,12 @@ class _LMBoomer(LMObject):
                                taxonomySourceKey=taxonKey, 
                                taxonomySourceGenusKey=genuskey, 
                                taxonomySourceSpeciesKey=taxonKey)
-               self._scribe.insertTaxon(sciName)
-      except LMError, e:
-         raise e
-      except Exception, e:
-         raise LMError(currargs=e.args, lineno=self.getLineno())
+               try:
+                  self._scribe.insertTaxon(sciName)
+               except LMError, e:
+                  raise e
+               except Exception, e:
+                  raise LMError(currargs=e.args, lineno=self.getLineno())
          
       return sciName
          

@@ -725,10 +725,10 @@ class LmHTTPError(LMError):
                    The HTTP error code of this error
       @param msg: A message to return in the headers
       """
-      self.code = code
-      self.msg = msg
       LMError.__init__(self, currargs=currargs, prevargs=prevargs, 
                        lineno=lineno, doTrace=doTrace)
+      self.code = code
+      self.msg = msg
    
    # ......................................
    def __repr__(self):
@@ -753,10 +753,10 @@ class LMMissingDataError(LMError):
                    The HTTP error code of this error
       @param msg: A message to return in the headers
       """
-      self.code = code
-      self.msg = msg
       LMError.__init__(self, currargs=currargs, prevargs=prevargs, 
                        lineno=lineno, doTrace=doTrace)
+      self.code = code
+      self.msg = msg
    
    # ......................................
    def __repr__(self):
