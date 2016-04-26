@@ -160,11 +160,11 @@ class APIQuery(object):
          # range filter (better be numbers)
          elif ((isinstance(val[0], IntType) or isinstance(val[0], FloatType))
                and (isinstance(val[1], IntType) or isinstance(val[1], FloatType))):
-            cls = '%s:[%s TO %s]' % (key, str(val[0]), str(val[1]))
+            cls = '{}:[{} TO {}]'.format(key, str(val[0]), str(val[1]))
          else:
-            print 'Unexpected value type %s' % str(val)
+            print 'Unexpected value type {}'.format(val)
       else:
-         print 'Unexpected value type %s' % str(val)
+         print 'Unexpected value type {}'.format(val)
       return cls
    
 # ...............................................
@@ -287,7 +287,7 @@ class APIQuery(object):
                output = response.text
                self.output = ET.fromstring(output)
             else:
-               print 'Unrecognized output type %s' % str(outputType)
+               print 'Unrecognized output type {}'.format(outputType)
                self.output = None   
          except Exception, e:
             raise Exception('Failed to interpret output of URL {}, content = {}; ({})'
@@ -328,8 +328,8 @@ class BisonAPI(APIQuery):
       if base.strip().startswith(BISON_OCCURRENCE_URL):
          qry = BisonAPI(filterString=filters)
       else:
-         raise Exception('Bison occurrence API must start with %s' 
-                         % BISON_OCCURRENCE_URL)
+         raise Exception('Bison occurrence API must start with {}' 
+                        .format(BISON_OCCURRENCE_URL))
       return qry
 
 # ...............................................
@@ -370,7 +370,8 @@ class BisonAPI(APIQuery):
       if self.output is not None:
          dataCount = self._burrow(BISON_COUNT_KEYS)
          dataList = self._burrow(BISON_TSN_LIST_KEYS)
-         print 'Reported count = %d, actual count = %d' % (dataCount, len(dataList))
+         print 'Reported count = {}, actual count = {}'.format(dataCount, 
+                                                               len(dataList))
       return dataList
 
 # ...............................................
@@ -382,7 +383,7 @@ class BisonAPI(APIQuery):
       """
       itisname = king = tsnHier = None
       try:
-         occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-' % itisTSN}, 
+         occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(itisTSN)}, 
                            otherFilters={'rows': 1})
          tsnHier = occAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
          itisname = occAPI.getFirstValueFor(BISON_NAME_KEY)
@@ -419,7 +420,7 @@ class BisonAPI(APIQuery):
             val = records[0][fieldname]
             break
          except:
-            print('Missing %s for %s' % (fieldname, self.url))
+            print('Missing {} for {}'.format(fieldname, self.url))
                
       return val
 
@@ -440,11 +441,11 @@ class ItisAPI(APIQuery):
    
 # ...............................................
    def _findTaxonByRank(self, root, rankKey):
-      for tax in root.iter('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_HIERARCHY_TAG)):
-         rank = tax.find('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_RANK_TAG)).text
+      for tax in root.iter('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_HIERARCHY_TAG)):
+         rank = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_RANK_TAG)).text
          if rank == rankKey:
-            name = tax.find('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_TAXON_TAG)).text
-            tsn = tax.find('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY)).text
+            name = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXON_TAG)).text
+            tsn = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY)).text
          return (tsn, name)
       
 # ...............................................
@@ -460,10 +461,10 @@ class ItisAPI(APIQuery):
       @note: for 
       """
       taxPath = []
-      for tax in self.output.iter('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_HIERARCHY_TAG)):
-         rank = tax.find('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_RANK_TAG)).text
-         name = tax.find('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_TAXON_TAG)).text
-         tsn = tax.find('{%s}%s' % (ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY)).text
+      for tax in self.output.iter('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_HIERARCHY_TAG)):
+         rank = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_RANK_TAG)).text
+         name = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXON_TAG)).text
+         tsn = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY)).text
          taxPath.append((rank, tsn, name))
       return taxPath
 
@@ -544,7 +545,7 @@ class GbifAPI(APIQuery):
       except Exception, e:
          print str(e)
          raise
-      return (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
+      return (rankStr, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
               speciesStr, genuskey, specieskey)
  
 # ...............................................
@@ -692,14 +693,14 @@ if __name__ == '__main__':
       tsn = int(tsnPair[0])
       count = int(tsnPair[1])
     
-      newQ = {BISON_HIERARCHY_KEY: '*-%d-*' % tsn}
+      newQ = {BISON_HIERARCHY_KEY: '*-{}-*'.format(tsn)}
       occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
       print occAPI.url
       occList = occAPI.getTSNOccurrences()
       count = None if not occList else len(occList)
       print 'Received {} occurrences for TSN {}'.format(count, tsn)
           
-      tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-' % tsn}, 
+      tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
                         otherFilters={'rows': 1})
       hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
       name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)

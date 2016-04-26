@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from types import StringType, UnicodeType
 try:
    import mx.DateTime as dt
 except:
@@ -246,11 +247,13 @@ class _LMBoomer(LMObject):
          if sciName is None:
             # Use API to get and insert species name 
             try:
-               (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-                speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
+               (rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+                familyStr, genusStr, speciesStr, genuskey, 
+                retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
             except LmHTTPError, e:
                self.log.info('Failed lookup for key {}, ({})'.format(
                                                       taxonKey, e.msg))
+            # if no species key, this is not a species
             if retSpecieskey == taxonKey:
                currtime = dt.gmt().mjd
                sciName = ScientificName(speciesStr, 
@@ -282,86 +285,106 @@ class _LMBoomer(LMObject):
       @note: Updates to existing occset are not saved until 
       """
       currtime = dt.gmt().mjd
-      occ = None
+      occ = occs = None
+      # Find existing
       try:
          if isinstance(sciname, ScientificName):
             occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
                                                                 self.userid)
             taxonName = sciname.scientificName
-         else:
+         elif isinstance(sciname, StringType) or isinstance(sciname, UnicodeType):
             occs = self._scribe.getOccurrenceSetsForName(sciname, userid=self.userid)
             taxonName = sciname
             sciname = None
-            
-         if not occs:
-            ogrFormat = None
-            if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
-               ogrFormat = 'CSV'
-            occ = OccurrenceLayer(taxonName, name=taxonName, fromGbif=False, 
-                  queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
-                  ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
-                  primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
-                  status=JobStatus.INITIALIZE, statusModTime=currtime, 
-                  sciName=sciname)
-            occid = self._scribe.insertOccurrenceSet(occ)
-         elif len(occs) == 1:
-            tmpOcc = occs[0]
-            # waiting but raw data missing
-            if ((JobStatus.waiting(tmpOcc.status) 
-                 and tmpOcc.getRawDLocation() is None)
-                or
-                # complete but obsolete
-                (tmpOcc.status == JobStatus.COMPLETE 
-                 and tmpOcc.statusModTime > 0 
-                 and tmpOcc.statusModTime < self._obsoleteTime)
-                or 
-                # failed
-                JobStatus.failed(tmpOcc.status)):
-               occ = tmpOcc
-               occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-            else:
-               self.log.debug('Occurrenceset {} ({}) is up to date'
-                              .format(occs[0].getId(), taxonName))
-         else:
-            raise LMError(currargs='Too many ({}) occurrenceLayers for {}'
-                          .format(len(occs), taxonName))
-         if occ:
-            rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
-                                        data=data)
-            if rdloc:
-               occ.setRawDLocation(rdloc, currtime)
-            else:
-               raise LMError(currargs='Unable to set raw data location')
-            
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
+         
+      # Create new
+      if not occs:
+         ogrFormat = None
+         if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
+            ogrFormat = 'CSV'
+         occ = OccurrenceLayer(taxonName, name=taxonName, fromGbif=False, 
+               queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
+               ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
+               primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
+               status=JobStatus.INITIALIZE, statusModTime=currtime, 
+               sciName=sciname)
+         try:
+            occid = self._scribe.insertOccurrenceSet(occ)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+            
+      # Reset existing if missing data, obsolete, or failed
+      elif len(occs) == 1:
+         tmpOcc = occs[0]
+         # waiting but raw data missing
+         if ((JobStatus.waiting(tmpOcc.status) 
+              and tmpOcc.getRawDLocation() is None)
+             or
+             # complete but obsolete
+             (tmpOcc.status == JobStatus.COMPLETE 
+              and tmpOcc.statusModTime > 0 
+              and tmpOcc.statusModTime < self._obsoleteTime)
+             or 
+             # failed
+             JobStatus.failed(tmpOcc.status)):
+            # Reset existing 
+            occ = tmpOcc
+            occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
+         else:
+            self.log.debug('Occurrenceset {} ({}) is up to date'
+                           .format(occs[0].getId(), taxonName))
+      else:
+         raise LMError(currargs='Too many ({}) occurrenceLayers for {}'
+                       .format(len(occs), taxonName))
+
+      # Set raw data
+      if occ:
+         rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
+                                     data=data)
+         if rdloc:
+            occ.setRawDLocation(rdloc, currtime)
+         else:
+            raise LMError(currargs='Unable to set raw data location')
       
       return occ
    
 # ...............................................
    def _processSDMChain(self, sciname, taxonSourceKeyVal, occProcessType,
                         dataCount, minPointCount, data=None):
-      try:
-         occ = self._createOrResetOccurrenceset(sciname, taxonSourceKeyVal, 
-                           occProcessType, dataCount, data=data)
+      if sciname is not None:
+         try:
+            occ = self._createOrResetOccurrenceset(sciname, taxonSourceKeyVal, 
+                              occProcessType, dataCount, data=data)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+   
          if occ:
             # Create jobs for Archive Chain; 'reset' to existing occset will be 
             # saved here
-            jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
-                                      self.modelScenario, 
-                                      self.projScenarios, 
-                                      occJobProcessType=occProcessType, 
-                                      priority=Priority.NORMAL, 
-                                      intersectGrid=self.intersectGrid,
-                                      minPointCount=minPointCount)
-            self.log.debug('Created {} jobs for occurrenceset {}'
-                           .format(len(jobs), occ.getId()))
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         raise e
+            try:
+               jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+                                         self.modelScenario, 
+                                         self.projScenarios, 
+                                         occJobProcessType=occProcessType, 
+                                         priority=Priority.NORMAL, 
+                                         intersectGrid=self.intersectGrid,
+                                         minPointCount=minPointCount)
+               self.log.debug('Created {} jobs for occurrenceset {}'
+                              .format(len(jobs), occ.getId()))
+            except Exception, e:
+               if not isinstance(e, LMError):
+                  e = LMError(currargs=e.args, lineno=self.getLineno())
+               raise e
+      else:
+         self.log.debug('ScientificName does not exist')
 
 # ..............................................................................
 class BisonBoom(_LMBoomer):
@@ -449,18 +472,6 @@ class BisonBoom(_LMBoomer):
                         otherFilters=BISON_OCC_FILTERS)
       occAPI.clearOtherFilters()
       return occAPI.url
-   
-# ...............................................
-   def _processInputItisTSN(self, tsn, tsnCount):
-      try:
-         sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
-         self._processSDMChain(sciName, tsn, 
-                               ProcessType.BISON_TAXA_OCCURRENCE, 
-                               tsnCount, BISON_MIN_POINT_COUNT)
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         raise e
 
 # ...............................................
    def moveToStart(self):
@@ -704,8 +715,9 @@ class GBIFBoom(_LMBoomer):
 # ...............................................
    def _processChunk(self, speciesKey, dataCount, dataChunk):
       try:
-         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)         
-         self._processSDMChain(sciName, speciesKey, 
+         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
+         if sciName:       
+            self._processSDMChain(sciName, speciesKey, 
                                ProcessType.GBIF_TAXA_OCCURRENCE, 
                                dataCount, POINT_COUNT_MIN, data=dataChunk)
       except LMError, e:

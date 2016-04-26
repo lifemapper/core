@@ -241,8 +241,9 @@ class _LMWorker(_Worker):
          if sciName is None:
             # Use API to get and insert species name 
             try:
-               (kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-                speciesStr, genuskey, retSpecieskey) = GbifAPI.getTaxonomy(speciesKey)
+               (rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+                familyStr, genusStr, speciesStr, genuskey, 
+                retSpecieskey) = GbifAPI.getTaxonomy(speciesKey)
             except LmHTTPError, e:
                self.log.info('Failed lookup for key {}, ({})'.format(
                                                       speciesKey, e.msg))

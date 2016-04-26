@@ -69,8 +69,8 @@ class Archivist(Daemon):
       self.boomer.moveToStart()
       while self.keepRunning:
          self.boomer.chainOne()
-         time.sleep(20)
-      self.log.debug("self.cont: %s" % self.cont)
+         time.sleep(10)
+      self.log.debug('Stopping Archivist')
     
    # .............................
    def onUpdate(self):
