@@ -243,6 +243,8 @@ class _LMBoomer(LMObject):
       """
       sciName = self._scribe.findTaxon(self._taxonSourceId, 
                                            taxonKey)
+      self.log.info('Found sciname for taxonKey {}, {}, with {} points'
+                    .format(taxonKey, sciName.scientificName, taxonCount))
       if sciName is None:
          # Use API to get and insert species name 
          try:
@@ -268,6 +270,8 @@ class _LMBoomer(LMObject):
                                taxonomySourceSpeciesKey=taxonKey)
                try:
                   self._scribe.insertTaxon(sciName)
+                  self.log.info('Inserted sciname for taxonKey {}, {}, with {} points'
+                                .format(taxonKey, sciName.scientificName, taxonCount))
                except LMError, e:
                   raise e
                except Exception, e:
@@ -315,6 +319,7 @@ class _LMBoomer(LMObject):
                sciName=sciname)
          try:
             occid = self._scribe.insertOccurrenceSet(occ)
+            self.log.info('Inserted occset for taxonname {}'.format(taxonName))
          except Exception, e:
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -337,11 +342,13 @@ class _LMBoomer(LMObject):
             # Reset existing 
             occ = tmpOcc
             occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
+            self.log.info('Updating occset {} ({})'
+                          .format(tmpOcc.getId(), taxonName))
          else:
-            self.log.debug('Occurrenceset {} ({}) is up to date'
-                           .format(occs[0].getId(), taxonName))
+            self.log.debug('Ignoring occset {} ({}) is up to date'
+                           .format(tmpOcc.getId(), taxonName))
       else:
-         raise LMError(currargs='Too many ({}) occurrenceLayers for {}'
+         raise LMError(currargs='Too many ({}) occsets for {}'
                        .format(len(occs), taxonName))
 
       # Set raw data
@@ -885,8 +892,6 @@ class iDigBioBoom(_LMBoomer):
    def chainOne(self):
       taxonId, taxonCount, taxonName = self._getCurrTaxon()
       self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
-      self.log.info('Processed taxonId {}, {}, with {} points; next start {}'
-                    .format(taxonId, taxonName, taxonCount, self.nextStart))
 
 # ...............................................
    def chainAll(self):
