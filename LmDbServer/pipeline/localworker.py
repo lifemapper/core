@@ -241,7 +241,7 @@ class _LMWorker(_Worker):
          if sciName is None:
             # Use API to get and insert species name 
             try:
-               (rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+               (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
                 familyStr, genusStr, speciesStr, genuskey, 
                 retSpecieskey) = GbifAPI.getTaxonomy(speciesKey)
             except LmHTTPError, e:
@@ -257,7 +257,7 @@ class _LMWorker(_Worker):
                                taxonomySourceId=self._taxonSourceId, 
                                taxonomySourceKey=speciesKey, 
                                taxonomySourceGenusKey=genuskey, 
-                               taxonomySourceSpeciesKey=speciesKey)
+                               taxonomySourceSpeciesKey=retSpecieskey)
                self._scribe.insertTaxon(sciName)
       except LMError, e:
          raise e

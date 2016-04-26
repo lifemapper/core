@@ -545,8 +545,8 @@ class GbifAPI(APIQuery):
       except Exception, e:
          print str(e)
          raise
-      return (rankStr, kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr,
-              speciesStr, genuskey, specieskey)
+      return (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
+              familyStr, genusStr, speciesStr, genuskey, specieskey)
  
 # ...............................................
    @staticmethod

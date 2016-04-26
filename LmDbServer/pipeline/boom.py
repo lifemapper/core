@@ -243,12 +243,13 @@ class _LMBoomer(LMObject):
       """
       sciName = self._scribe.findTaxon(self._taxonSourceId, 
                                            taxonKey)
-      self.log.info('Found sciname for taxonKey {}, {}, with {} points'
-                    .format(taxonKey, sciName.scientificName, taxonCount))
-      if sciName is None:
+      if sciName is not None:
+         self.log.info('Found sciname for taxonKey {}, {}, with {} points'
+                       .format(taxonKey, sciName.scientificName, taxonCount))
+      else:
          # Use API to get and insert species name 
          try:
-            (rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+            (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
              familyStr, genusStr, speciesStr, genuskey, 
              retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
          except Exception, e:
@@ -256,7 +257,7 @@ class _LMBoomer(LMObject):
                                                    taxonKey, e))
          else:
             # if no species key, this is not a species
-            if taxonKey in (retSpecieskey, genuskey):
+            if taxonKey in (retSpecieskey, acceptedkey, genuskey):
                currtime = dt.gmt().mjd
                sciName = ScientificName(speciesStr, 
                                lastOccurrenceCount=taxonCount,
@@ -265,13 +266,13 @@ class _LMBoomer(LMObject):
                                family=familyStr, genus=genusStr, 
                                createTime=currtime, modTime=currtime, 
                                taxonomySourceId=self._taxonSourceId, 
-                               taxonomySourceKey=taxonKey, 
+                               taxonomySourceKey=acceptedkey, 
                                taxonomySourceGenusKey=genuskey, 
-                               taxonomySourceSpeciesKey=taxonKey)
+                               taxonomySourceSpeciesKey=retSpecieskey)
                try:
                   self._scribe.insertTaxon(sciName)
-                  self.log.info('Inserted sciname for taxonKey {}, {}, with {} points'
-                                .format(taxonKey, sciName.scientificName, taxonCount))
+                  self.log.info('Inserted sciname for taxonKey {}, {}'
+                                .format(taxonKey, sciName.scientificName))
                except LMError, e:
                   raise e
                except Exception, e:
@@ -904,16 +905,16 @@ class iDigBioBoom(_LMBoomer):
       
 # ...............................................
    def chainOne(self):
-      taxonId, taxonCount, taxonName = self._getCurrTaxon()
-      self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
+      taxonKey, taxonCount, taxonName = self._getCurrTaxon()
+      self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
 
 # ...............................................
    def chainAll(self):
       self.moveToStart()
-      taxonId, taxonCount, taxonName = self._getCurrTaxon()
-      while taxonId is not None:
-         self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
-         taxonId, taxonCount, taxonName = self._getCurrTaxon()
+      taxonKey, taxonCount, taxonName = self._getCurrTaxon()
+      while taxonKey is not None:
+         self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
+         taxonKey, taxonCount, taxonName = self._getCurrTaxon()
       
 # ...............................................
    @property
@@ -972,9 +973,9 @@ class iDigBioBoom(_LMBoomer):
       if startline < 1:
          self._linenum = 0
       else:
-         taxonId, taxonCount, taxonName = self._getCurrTaxon()
+         taxonKey, taxonCount, taxonName = self._getCurrTaxon()
          while taxonName is not None and self._linenum < startline-1:
-            taxonId, taxonCount, taxonName = self._getCurrTaxon()
+            taxonKey, taxonCount, taxonName = self._getCurrTaxon()
          
 # ...............................................
    def _countRecords(self, rawfname):
@@ -1003,11 +1004,11 @@ class iDigBioBoom(_LMBoomer):
       return occAPI.url
          
 # ...............................................
-   def _processInputGBIFTaxonId(self, taxonName, taxonId, taxonCount):
-      if taxonId is not None:
+   def _processInputGBIFTaxonId(self, taxonName, taxonKey, taxonCount):
+      if taxonKey is not None:
          try:
-            sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonId, taxonCount)
-            self._processSDMChain(sciName, taxonId, 
+            sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
+            self._processSDMChain(sciName, taxonKey, 
                                   ProcessType.IDIGBIO_TAXA_OCCURRENCE,
                                   taxonCount, POINT_COUNT_MIN)
          except Exception, e:
@@ -1042,8 +1043,8 @@ if __name__ == "__main__":
 import mx.DateTime as dt
 import os, sys
 import time
-from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 
+from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.log import DaemonLogger
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
@@ -1051,14 +1052,10 @@ from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE,
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
-
 from LmDbServer.pipeline.boom import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
+from LmServer.base.taxon import ScientificName
 from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
 
-from LmDbServer.common.lmconstants import IDIGBIO_FILE
-from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
-from LmServer.common.localconstants import ARCHIVE_USER
 
 expdate = dt.DateTime(2016, 1, 1)
 taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
@@ -1069,5 +1066,11 @@ boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                          intersectGrid=DEFAULT_GRID_NAME)
                    
 taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
-
+(rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genuskey, 
+             retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
+print(rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genuskey, 
+             retSpecieskey)             
+             
 """
