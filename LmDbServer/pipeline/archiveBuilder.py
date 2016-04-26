@@ -66,14 +66,17 @@ class Archivist(Daemon):
       
    # .............................
    def run(self):
-      self.boomer.moveToStart()
-      while self.keepRunning:
-         try:
-            self.boomer.chainOne()
-         except:
-            self.boomer.saveNextStart()
-         else:
-            time.sleep(10)
+      try:
+         self.boomer.moveToStart()
+         while self.keepRunning:
+            try:
+               self.boomer.chainOne()
+            except:
+               self.boomer.saveNextStart()
+            else:
+               time.sleep(10)
+      finally:
+         self.boomer.close()
       self.log.debug('Stopping Archivist')
     
    # .............................
@@ -82,6 +85,7 @@ class Archivist(Daemon):
        
    # .............................
    def onShutdown(self):
+      self.boomer.close()
       self.boomer.saveNextStart()
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)

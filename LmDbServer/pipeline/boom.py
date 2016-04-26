@@ -256,7 +256,7 @@ class _LMBoomer(LMObject):
                                                    taxonKey, e))
          else:
             # if no species key, this is not a species
-            if retSpecieskey == taxonKey:
+            if taxonKey in (retSpecieskey, genuskey):
                currtime = dt.gmt().mjd
                sciName = ScientificName(speciesStr, 
                                lastOccurrenceCount=taxonCount,
@@ -276,7 +276,9 @@ class _LMBoomer(LMObject):
                   raise e
                except Exception, e:
                   raise LMError(currargs=e.args, lineno=self.getLineno())
-         
+            else:
+               self.log.info('taxonKey {} is not a genus or accepted species, ({})'
+                             .format(rankStr, taxonKey))
       return sciName
          
 # ...............................................
@@ -418,6 +420,10 @@ class BisonBoom(_LMBoomer):
          raise LMError(currargs='Unable to open {}'.format(tsnfilename))
       self._obsoleteTime = expDate
       self._currTsn, self._currCount = self.moveToStart()
+      
+# ...............................................
+   def close(self):
+      self._tsnfile.close()
       
 # ...............................................
    @property
@@ -688,6 +694,10 @@ class GBIFBoom(_LMBoomer):
       self._currKeyFirstRecnum = None
       
 # ...............................................
+   def close(self):
+      self._dumpfile.close()
+      
+# ...............................................
    @property
    def nextStart(self):
       return self._currKeyFirstRecnum
@@ -889,6 +899,10 @@ class iDigBioBoom(_LMBoomer):
       self._currReportedCount = None
          
 # ...............................................
+   def close(self):
+      self._idigFile.close()
+      
+# ...............................................
    def chainOne(self):
       taxonId, taxonCount, taxonName = self._getCurrTaxon()
       self._processInputGBIFTaxonId(taxonName, taxonId, taxonCount)
@@ -947,12 +961,10 @@ class iDigBioBoom(_LMBoomer):
                currReportedCount = int(tempvals[1])
             except:
                pass
-            currBinomial = tempvals[2]
-            try:
-               currBinomial = ' '.join([currBinomial, tempvals[2]])
-            except:
-               pass
-      return currGbifTaxonId, currReportedCount, currBinomial
+            tempvals = tempvals[1:]
+            tempvals = tempvals[1:]
+            currName = ' '.join(tempvals)
+      return currGbifTaxonId, currReportedCount, currName
 
 # ...............................................
    def moveToStart(self):
@@ -1014,7 +1026,7 @@ if __name__ == "__main__":
    
    expdate = dt.DateTime(2016, 1, 1)
    try:
-      idig = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+      boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                          IDIGBIO_FILE, expdate.mjd, taxonSource=1,
                          mdlMask=None, prjMask=None, intersectGrid=None)
@@ -1023,4 +1035,39 @@ if __name__ == "__main__":
    else:
       print 'iDigBioBoom is fine'
       
-   idig.chainOne()
+   boomer.chainOne()
+
+
+"""
+import mx.DateTime as dt
+import os, sys
+import time
+from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
+
+from LmBackend.common.daemon import Daemon
+from LmCommon.common.log import DaemonLogger
+from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
+         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
+from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
+         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
+         SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
+
+from LmDbServer.pipeline.boom import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
+from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
+
+from LmDbServer.common.lmconstants import IDIGBIO_FILE
+from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
+         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
+from LmServer.common.localconstants import ARCHIVE_USER
+
+expdate = dt.DateTime(2016, 1, 1)
+taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                         IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
+                         mdlMask=None, prjMask=None, 
+                         intersectGrid=DEFAULT_GRID_NAME)
+                   
+taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
+
+"""
