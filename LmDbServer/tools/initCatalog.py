@@ -138,7 +138,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    staticLayers = {}
    currtime = DT.gmt().mjd
    (starttime, endtime) = baseMeta['time']
-   relativePath = os.path.join(pkgMeta('topdir'), baseMeta['directory'])
+   relativePath = os.path.join(pkgMeta['topdir'], baseMeta['directory'])
 
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
    rstType = lyrMeta['gdaltype']
@@ -319,7 +319,7 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                % (mdlvals['name'], mdlvals['author'], meta.REPORTS[rpt]['name'], sfam),
              'plus Worldclim 1.4 observed mean climate'))
          # Relative path to data
-         relativePath = os.path.join(pkgMeta('topdir'), mdlvals['code'], 
+         relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], 
                                      tm, sfam)            
          lyrs = _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                                  staticLayers, relativePath, scendesc, rpt, 
@@ -362,7 +362,7 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                % (mdlvals['name'], mdlvals['author'], meta.REPORTS[rpt]['name']),
              'plus Worldclim 1.4 observed mean climate'))
          # Relative path to data
-         relativePath = os.path.join(pkgMeta('topdir'), mdlvals['code'], tm)            
+         relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], tm)            
          lyrs = _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                                staticLayers, relativePath, scendesc, 
                                rpt, mdlvals, tm, tmvals)
@@ -432,7 +432,7 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
 def _getClimateMeta(scenPkg):
    pkgMeta = meta.CLIMATE_PACKAGES[scenPkg]
    lyrMeta = {'epsg': DEFAULT_EPSG, 
-              'topdir': meta.CLIMATE_PACKAGES('topdir'),
+              'topdir': pkgMeta['topdir'],
               'mapunits': DEFAULT_MAPUNITS, 
               'resolution': meta.RESOLUTIONS[pkgMeta['res']], 
               'gdaltype': meta.ENVLYR_GDALTYPE, 
