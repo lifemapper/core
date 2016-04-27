@@ -69,5 +69,4 @@ LmDbServer/dbsetup/createDBTables.sql
 LmDbServer/dbsetup/defineDBTables.sql
 LmDbServer/dbsetup/runAllSQLScripts.sql
 LmDbServer/dbsetup/runUpdateDBScripts.sql
-LmDbServer/pipeline/buildBoom.py
 LmServer/db/connect.py.orig
