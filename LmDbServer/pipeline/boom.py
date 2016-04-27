@@ -40,8 +40,9 @@ from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
-            ONE_HOUR, ONE_MIN, IDIGBIO_GBIFID_FIELD)
-from LmServer.base.lmobj import LMError, LmHTTPError, LMObject
+            ONE_HOUR, ONE_MIN, IDIGBIO_GBIFID_FIELD, GBIF_EXPORT_FIELDS,
+            GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
+from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH)
 from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
@@ -670,8 +671,7 @@ class GBIFBoom(_LMBoomer):
              updates the Occurrence record and inserts a job.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
-                fieldnames, keyColname, taxonSourceName=None, 
-                providerKeyFile=None, providerKeyColname=None,
+                taxonSourceName=None, providerListFile=None,
                 mdlMask=None, prjMask=None, intersectGrid=None):
       super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
@@ -680,21 +680,30 @@ class GBIFBoom(_LMBoomer):
       else:
          txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
-
+               
       self.modelMask = mdlMask
       self.projMask = prjMask
 
-      self._fieldnames = fieldnames
-      self._providers, self._provCol = self._readProviderKeys(providerKeyFile, 
-                                                              providerKeyColname)
-      self._dumpfile = open(occfilename, 'r')
+      gbifFldNames = []
+      idxs = GBIF_EXPORT_FIELDS.keys()
+      idxs.sort()
+      for idx in idxs:
+         gbifFldNames.append(GBIF_EXPORT_FIELDS[idx][0])
+      self._fieldnames = gbifFldNames
+      
+      self._providers, self._provCol = self._readProviderKeys(providerListFile, 
+                                                         GBIF_PROVIDER_FIELD)
       csv.field_size_limit(sys.maxsize)
       self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
-      self._keyCol = fieldnames.index(keyColname)
+      self._keyCol = self._fieldnames.index(GBIF_TAXONKEY_FIELD)
       self._linenum = 0
       self._obsoleteTime = expDate
       self._currKeyFirstRecnum = None
-      
+      try:
+         self._dumpfile = open(occfilename, 'r')
+      except Exception, e:
+         raise LMError('Failed to open {}'.format(occfilename))
+
 # ...............................................
    def close(self):
       self._dumpfile.close()

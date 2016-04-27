@@ -28,7 +28,8 @@ import time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.log import DaemonLogger
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
-         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
+         GBIF_DUMP_FILE, PROVIDER_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE,
+         USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
@@ -50,12 +51,15 @@ class Archivist(Daemon):
                          BISON_TSN_FILE, expdate.mjd, taxonSourceName=taxname,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
+         
       elif DATASOURCE == 'GBIF':
          self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                          GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
+                         providerListFile=PROVIDER_DUMP_FILE,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
+         
       elif DATASOURCE == 'IDIGBIO':
          self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
@@ -63,6 +67,13 @@ class Archivist(Daemon):
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
 
+      elif DATASOURCE == 'USER':
+         # Set variables in config/site.ini to override installed defaults
+         self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                         USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate.mjd, 
+                         mdlMask=None, prjMask=None, 
+                         intersectGrid=DEFAULT_GRID_NAME)
       
    # .............................
    def run(self):
