@@ -84,8 +84,11 @@ class APIQuery(object):
    @property
    def url(self):
       # All filters added to url
-      return '{}?{}'.format(self.baseurl, self.filterString)
-
+      if self.filterString and len(self.filterString) > 1:
+         return '{}?{}'.format(self.baseurl, self.filterString)
+      else:
+         return self.baseurl
+      
 # ...............................................
    def addFilters(self, qFilters={}, otherFilters={}):
       """
@@ -517,12 +520,12 @@ class GbifAPI(APIQuery):
    
 # ...............................................
    @staticmethod
-   def getTaxonomy(taxonkey):
+   def getTaxonomy(taxonKey):
       """
       @summary: Return ITISScientificName, kingdom, and TSN hierarchy from one 
                 occurrence record ending in this TSN (species rank) 
       """
-      taxAPI = GbifAPI(service=GBIF_SPECIES_SERVICE, key=taxonkey)
+      taxAPI = GbifAPI(service=GBIF_SPECIES_SERVICE, key=taxonKey)
       try:
          taxAPI.query()
          kingdomStr = taxAPI._getOutputVal(taxAPI.output, 'kingdom')
@@ -535,18 +538,34 @@ class GbifAPI(APIQuery):
          genusStr = taxAPI._getOutputVal(taxAPI.output, 'genus')
          speciesStr = taxAPI._getOutputVal(taxAPI.output, 'species') 
          rankStr = taxAPI._getOutputVal(taxAPI.output, 'rank')
-         genuskey = taxAPI._getOutputVal(taxAPI.output, 'genusKey')
-         specieskey = taxAPI._getOutputVal(taxAPI.output, 'speciesKey')
-         acceptedkey = taxAPI._getOutputVal(taxAPI.output, 'acceptedKey')
-         if rankStr == 'SPECIES':
-            fullSpeciesStr = taxAPI._getOutputVal(taxAPI.output, 'accepted')
-            if fullSpeciesStr is not None:
-               speciesStr = fullSpeciesStr
+         genusKey = taxAPI._getOutputVal(taxAPI.output, 'genusKey')
+         speciesKey = taxAPI._getOutputVal(taxAPI.output, 'speciesKey')
+         acceptedKey = taxAPI._getOutputVal(taxAPI.output, 'acceptedKey')
+         nubKey = taxAPI._getOutputVal(taxAPI.output, 'nubKey')
+         taxstatus = taxAPI._getOutputVal(taxAPI.output, 'taxonomicStatus')
+         acceptedStr = taxAPI._getOutputVal(taxAPI.output, 'accepted')
+         canonicalStr = taxAPI._getOutputVal(taxAPI.output, 'canonicalName')
+         loglines = []
+         if taxstatus != 'ACCEPTED':
+            try:
+               loglines.append(taxAPI.url)
+               loglines.append('   genusKey = {}'.format(genusKey))
+               loglines.append('   speciesKey = {}'.format(speciesKey))
+               loglines.append('   acceptedKey = {}'.format(acceptedKey))
+               loglines.append('   acceptedStr = {}'.format(acceptedStr))
+               loglines.append('   nubKey = {}'.format(nubKey))
+               loglines.append('   taxonomicStatus = {}'.format(taxstatus))
+               loglines.append('   accepted = {}'.format(acceptedStr))
+               loglines.append('   canonicalName = {}'.format(canonicalStr))
+               loglines.append('   rank = {}'.format(rankStr))
+            except:
+               loglines.append('Failed to format data from {}'.format(taxonKey))
       except Exception, e:
          print str(e)
          raise
-      return (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
-              familyStr, genusStr, speciesStr, genuskey, specieskey)
+      return (rankStr, acceptedKey, acceptedStr, nubKey, canonicalStr, taxstatus, 
+              kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
+              speciesStr, genusKey, speciesKey, loglines)
  
 # ...............................................
    @staticmethod
@@ -655,114 +674,146 @@ class IdigbioAPI(APIQuery):
                if idxFld == 'taxonid':
                   success += 1
          specimenList.append(newitem)
-      print 'With taxonid = ', success        
+      print 'With taxonid = {}'.format(success)       
       return specimenList
-      
+
 
 # .............................................................................
 # .............................................................................
-
 if __name__ == '__main__':
-   # ******************* BISON ********************************
-   tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
-                       otherFilters=BISON_TSN_FILTERS)
-
-   qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
-               'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
-               'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
-   otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
-               'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
-   headers = {'Content-Type': 'application/json'}
-
-#    tsnList = tsnQuery.getBinomialTSNs()
-#    print len(tsnList)
-      
-   tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
-   tsnList = []
-   response = {u'facet_counts': 
-               {u'facet_ranges': {}, 
-                u'facet_fields': {u'TSNs': tsnList}
-                }
-               }
+   bison = gbif = False
+   idigbio = True
    
-   loopCount = 0
-   occAPI = None
-   taxAPI = None
-      
-   for tsnPair in tsnList:
-      tsn = int(tsnPair[0])
-      count = int(tsnPair[1])
+   if bison:
+      # ******************* BISON ********************************
+      tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
+                          otherFilters=BISON_TSN_FILTERS)
     
-      newQ = {BISON_HIERARCHY_KEY: '*-{}-*'.format(tsn)}
-      occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
-      print occAPI.url
-      occList = occAPI.getTSNOccurrences()
-      count = None if not occList else len(occList)
-      print 'Received {} occurrences for TSN {}'.format(count, tsn)
+      qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
+                  'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
+                  'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
+      otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
+                  'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
+      headers = {'Content-Type': 'application/json'}
+    
+   #    tsnList = tsnQuery.getBinomialTSNs()
+   #    print len(tsnList)
           
-      tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
-                        otherFilters={'rows': 1})
-      hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
-      name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)
-      print name, hier
-#         
-   # ******************* GBIF ********************************
-   taxonid = 1000225
-   output = GbifAPI.getTaxonomy(taxonid)
-   print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
-         
- 
-   # ******************* iDigBio ********************************
-   # Previous workflow: (a) retrieve all scientific names in iDigBio, (b) keep
-   # only binomials, (c) for each binomial create a list of other names to be 
-   # included (usually subspecies and names with authors), and (d) retrieve 
-   # occurrences for each species.
-   fname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
-   try:
-      f = open(fname, 'r')
-   except:
-      raise Exception('Failed to open {}'.format(fname))
-    
-   speciesList = []
-   for i in range(5):
-      vals = []
-      binomial = None
-      line = f.readline()
-      tempvals = line.strip().split()
-      if len(tempvals) < 3:
-         print('Missing data in line {}'.format(line))
-      for v in tempvals:
-         if v.isdigit():
-            vals.append(int(v))
-         elif v.isalpha():
-            if binomial is None:
-               binomial = v
-            else:
-               binomial = ' '.join([binomial, v])
-      vals.append(binomial)
-      speciesList.append(vals)
-   f.close()
- 
-   speciesList = [[4639168, 106, 'kormagnostus simplex']]
-   for gbifTaxonid, count, binomial in speciesList:
-      qfilters = {'scientificname': binomial}
-      api = IdigbioAPI(qFilters=qfilters)
-      specimens = api.getOccurrences()
-      print "Retrieved {} specimens for gbif taxonid {}".format(len(specimens), 
-                                                                gbifTaxonid)
+      tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
+      tsnList = []
+      response = {u'facet_counts': 
+                  {u'facet_ranges': {}, 
+                   u'facet_fields': {u'TSNs': tsnList}
+                   }
+                  }
        
+      loopCount = 0
+      occAPI = None
+      taxAPI = None
+          
+      for tsnPair in tsnList:
+         tsn = int(tsnPair[0])
+         count = int(tsnPair[1])
+        
+         newQ = {BISON_HIERARCHY_KEY: '*-{}-*'.format(tsn)}
+         occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
+         print occAPI.url
+         occList = occAPI.getTSNOccurrences()
+         count = None if not occList else len(occList)
+         print 'Received {} occurrences for TSN {}'.format(count, tsn)
+              
+         tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
+                           otherFilters={'rows': 1})
+         hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
+         name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)
+         print name, hier
+   
+   if gbif:
+      # ******************* GBIF ********************************
+      taxonid = 1000225
+      output = GbifAPI.getTaxonomy(taxonid)
+      print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
+         
+   if idigbio:
+      # ******************* iDigBio ********************************
+      # Workflow: (a) retrieve all scientific names with Accepted GBIF TaxonId 
+      # in iDigBio, (b) keep only binomials, (c) for each binomial create a list  
+      # of other names to be included (usually subspecies and names with  
+      # authors), and (d) retrieve occurrences for each species.
 
- 
-baseurl = 'https://beta-search.idigbio.org/v2/search/records'
-idigParams = {
-            'fields': ['taxonid', 'kingdom', 'scientificname', 'uuid', 
-                       'basisofrecord', 'canonicalname', 'geopoint'], 
-             'no_attribution': True, 
-             'limit': 10, 
-#              'rq': {'taxonid': '4639168'}, 
-            'rq': {'canonicalname': 'peromyscus maniculatus'}, 
-            'rq': {'scientificname': 'peromyscus maniculatus'}, 
-             'offset': 0}
-headers = {'Content-Type': 'application/json'}
-url = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-100637-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil&rows=5000000&json.nl=arrarr&wt=json'
-url = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select?None=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-100637-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil&rows=5000000&json.nl=arrarr&wt=json'
+      import os
+      statii = {}
+      # Test GBIF TaxonIds from iDigBio list
+      # Input/Subset
+      fname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
+      # Input/Entire file
+      fname = '/state/partition1/workspace/lifemapper-server/src/lmdata-species/idig_gbifids.txt'
+       
+      # Output
+      outfname = '/tmp/idigbio_summary.txt'
+      if os.path.exists(outfname):
+         os.remove(outfname)
+      outf = open(outfname, 'w')
+
+      with open(fname, 'r') as f:
+         for line in f:
+            vals = []
+            if line is not None:
+               tempvals = line.strip().split()
+               if len(tempvals) < 3:
+                  print('Missing data in line {}'.format(line))
+               else:
+                  try:
+                     currGbifTaxonId = int(tempvals[0])
+                  except:
+                     pass
+                  try:
+                     currReportedCount = int(tempvals[1])
+                  except:
+                     pass
+                  tempvals = tempvals[1:]
+                  tempvals = tempvals[1:]
+                  currName = ' '.join(tempvals)
+                  
+               (rankStr, acceptedkey, acceptedStr, nubkey, canonicalStr, taxstatus, 
+                kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
+                speciesStr, genuskey, specieskey, loglines) = GbifAPI.getTaxonomy(currGbifTaxonId)
+            
+               if taxstatus != 'ACCEPTED':
+                  outf.write('\n######### {}   {}\n'.format(currGbifTaxonId, currName))
+                  for line in loglines:
+                     outf.write(line+'\n')
+   
+               if taxstatus not in statii.keys():
+                  statii[taxstatus] = {}   
+               if rankStr not in statii[taxstatus].keys():
+                  statii[taxstatus][rankStr] = 1
+               else:
+                  statii[taxstatus][rankStr] += 1
+      f.close()
+      # Print summary
+      for stat, vals in statii.iteritems():
+         print('{}'.format(stat))
+         for rank, count in vals.iteritems():
+            print('   {}  {}'.format(rank, count))
+             
+#               
+#          # Test contents of list
+#          for gbifid, count, binomial in speciesList:
+#             qfilters = {'scientificname': binomial}
+#             api = IdigbioAPI(qFilters=qfilters)
+#             specimens = api.getOccurrences()
+#             print "Retrieved {} specimens for gbif taxonid {}".format(len(specimens), 
+#                                                                       gbifid)
+# 
+# baseurl = 'https://beta-search.idigbio.org/v2/search/records'
+# idigParams = {
+#             'fields': ['taxonid', 'kingdom', 'scientificname', 'uuid', 
+#                        'basisofrecord', 'canonicalname', 'geopoint'], 
+#              'no_attribution': True, 
+#              'limit': 10, 
+# #              'rq': {'taxonid': '4639168'}, 
+#             'rq': {'canonicalname': 'peromyscus maniculatus'}, 
+#             'rq': {'scientificname': 'peromyscus maniculatus'}, 
+#              'offset': 0}
+# headers = {'Content-Type': 'application/json'}

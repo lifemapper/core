@@ -230,24 +230,24 @@ class _LMWorker(_Worker):
       return deleted
          
 # ...............................................
-   def _getInsertSciNameForGBIFSpeciesKey(self, speciesKey):
+   def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey):
       """
       Returns an existing or newly inserted ScientificName
       """
       try:
          self._getLock()           
-         sciName = self._scribe.findTaxon(self._taxonSourceId, 
-                                              speciesKey)
+         sciName = self._scribe.findTaxon(self._taxonSourceId, taxonKey)
          if sciName is None:
             # Use API to get and insert species name 
             try:
-               (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
-                familyStr, genusStr, speciesStr, genuskey, 
-                retSpecieskey) = GbifAPI.getTaxonomy(speciesKey)
+               (rankStr, acceptedKey, acceptedStr, nubKey, canonicalStr, 
+                taxStatus, kingdomStr, phylumStr, classStr, orderStr, familyStr, 
+                genusStr, speciesStr, genusKey, speciesKey, 
+                loglines) = GbifAPI.getTaxonomy(taxonKey)
             except LmHTTPError, e:
                self.log.info('Failed lookup for key {}, ({})'.format(
                                                       speciesKey, e.msg))
-            if retSpecieskey == speciesKey:
+            if taxStatus == 'ACCEPTED':
                currtime = dt.gmt().mjd
                sciName = ScientificName(speciesStr, 
                                kingdom=kingdomStr, phylum=phylumStr, 
@@ -255,9 +255,9 @@ class _LMWorker(_Worker):
                                family=familyStr, genus=genusStr, 
                                createTime=currtime, modTime=currtime, 
                                taxonomySourceId=self._taxonSourceId, 
-                               taxonomySourceKey=speciesKey, 
-                               taxonomySourceGenusKey=genuskey, 
-                               taxonomySourceSpeciesKey=retSpecieskey)
+                               taxonomySourceKey=taxonKey, 
+                               taxonomySourceGenusKey=genusKey, 
+                               taxonomySourceSpeciesKey=speciesKey)
                self._scribe.insertTaxon(sciName)
       except LMError, e:
          raise e

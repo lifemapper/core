@@ -1,7 +1,7 @@
 .. hightlight:: rest
 
-Lifemapper install steps
-########################
+Install
+#######
 
 .. contents::
 
@@ -40,8 +40,8 @@ LmCompute Roll Install
 #. Configure and test: 
    https://github.com/pragmagrid/lifemapper-compute/tree/kutest#using-a-roll
 
-Lifemapper update steps
-#######################
+Update
+######
    
 Updating a System with both LmCompute and LmServer
 --------------------------------------------------

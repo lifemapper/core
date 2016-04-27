@@ -249,26 +249,27 @@ class _LMBoomer(LMObject):
       else:
          # Use API to get and insert species name 
          try:
-            (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
-             familyStr, genusStr, speciesStr, genuskey, 
-             retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
+            (rankStr, acceptedKey, acceptedStr, nubKey, canonicalStr, taxStatus, 
+              kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
+              speciesStr, genusKey, speciesKey, loglines) = GbifAPI.getTaxonomy(taxonKey)
          except Exception, e:
             self.log.info('Failed lookup for key {}, ({})'.format(
                                                    taxonKey, e))
          else:
             # if no species key, this is not a species
-            if taxonKey in (retSpecieskey, acceptedkey, genuskey):
+            if taxStatus == 'ACCEPTED':
+#             if taxonKey in (retSpecieskey, acceptedkey, genuskey):
                currtime = dt.gmt().mjd
-               sciName = ScientificName(speciesStr, 
+               sciName = ScientificName(canonicalStr, 
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
                                family=familyStr, genus=genusStr, 
                                createTime=currtime, modTime=currtime, 
                                taxonomySourceId=self._taxonSourceId, 
-                               taxonomySourceKey=acceptedkey, 
-                               taxonomySourceGenusKey=genuskey, 
-                               taxonomySourceSpeciesKey=retSpecieskey)
+                               taxonomySourceKey=taxonKey, 
+                               taxonomySourceGenusKey=genusKey, 
+                               taxonomySourceSpeciesKey=speciesKey)
                try:
                   self._scribe.insertTaxon(sciName)
                   self.log.info('Inserted sciname for taxonKey {}, {}'
@@ -1066,11 +1067,10 @@ boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                          intersectGrid=DEFAULT_GRID_NAME)
                    
 taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
-(rankStr, kingdomStr, phylumStr, classStr, orderStr, 
+(rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
              familyStr, genusStr, speciesStr, genuskey, 
              retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
-print(rankStr, kingdomStr, phylumStr, classStr, orderStr, 
-             familyStr, genusStr, speciesStr, genuskey, 
-             retSpecieskey)             
+print('orig={}, accepted={}, species={}, genus={}'.format(taxonKey, acceptedkey, 
+      retSpecieskey,  genuskey)) 
              
 """
