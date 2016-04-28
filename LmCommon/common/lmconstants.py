@@ -928,12 +928,12 @@ IDIGBIO_RETURN_FIELDS = {
                         IDIGBIO_ID_FIELD: ('uuid', OFTString),
                         IDIGBIO_GBIFID_FIELD: ('taxonid', OFTInteger),
                         'canonicalname': ('canonical', OFTString),
-                        'kingdom': ('kingdom', OFTString),
+#                         'kingdom': ('kingdom', OFTString),
 #                         'phylum': ('phylum', OFTString),
 #                         'class': ('class', OFTString), 
 #                         'order': ('order', OFTString),
 #                         'family': ('family', OFTString),
-#                         'genus': ('genus', OFTString),
+                        'genus': ('genus', OFTString),
                         'scientificname': 
                            (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),                        
                         'basisofrecord':  
@@ -951,20 +951,19 @@ IDIGBIO_RETURN_FIELDS = {
 #                         'countrycode': 
 #                            (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
 #                         'county': ('county', OFTString),
-#                         'datecollected':('date_coll', OFTString),
-#                         'eventdate':('date', OFTString),
-#                         'institutioncode': 
-#                            (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
-#                         'institutionid': ('inst_id', OFTString),
-#                         'institutionname': ('inst_name', OFTString),
-#                         'occurrenceid': 
-#                            (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
-#                         'stateprovince': ('stprov', OFTString),
-
-                        DWCNames.DECIMAL_LATITUDE['SHORT']: 
-                           (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                        DWCNames.DECIMAL_LONGITUDE['SHORT']:
-                           (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                        'datecollected':('date_coll', OFTString),
+                        'eventdate':('date', OFTString),
+                        'institutioncode': 
+                           (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
+                        'institutionid': ('inst_id', OFTString),
+                        'institutionname': ('inst_name', OFTString),
+                        'occurrenceid': 
+                           (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+                        'stateprovince': ('stprov', OFTString),
+#                         DWCNames.DECIMAL_LATITUDE['SHORT']: 
+#                            (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+#                         DWCNames.DECIMAL_LONGITUDE['SHORT']:
+#                            (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
                         }
 
 IDIGBIO_BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
@@ -974,11 +973,9 @@ IDIGBIO_RECORD_CONTENT_KEY = 'data'
 IDIGBIO_RECORD_INDEX_KEY = 'indexTerms'
 
 IDIGBIO_QFILTERS = {
-#                     'basisOfRecord': [(False, 'fossilspecimen')]
+                     'basisofrecord': 'preservedspecimen',
                     }
 queryFlds = IDIGBIO_RETURN_FIELDS.keys()
-queryFlds.remove(DWCNames.DECIMAL_LONGITUDE['SHORT'])
-queryFlds.remove(DWCNames.DECIMAL_LATITUDE['SHORT'])
 queryFlds.append('geopoint')
 
 IDIGBIO_FILTERS = {'fields': queryFlds,

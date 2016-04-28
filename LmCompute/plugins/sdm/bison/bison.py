@@ -36,11 +36,13 @@ def createBisonShapefileFromUrl(url, basePath, env, maxPoints):
    """
    @summary: Receives a BISON url, pulls in the data, and returns a shapefile
    @param url: The url to pull data from
-   @param basePath: The base path for job data
+   @param basePath: A directory where the shapefile should be stored
    @param env: An EnvironmentMethods class that can be used to get locations in 
                   the environment
+   @param maxPoints: The maximum number of points to include if subsetting
+   @return: The name of the file(s) where the data is stored (.shp extension)
+   @rtype: String and String/None
    """
-   # Aimee: Fill in this function
    try:
       outfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
    except:

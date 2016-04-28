@@ -87,14 +87,12 @@ class _LMBoomer(LMObject):
       try:
          self._scribe = Scribe(self.log)
          success = self._scribe.openConnections()
-
       except Exception, e:
+         self._failGracefully('Failed to initialize LMBoomer')
          if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         self._failGracefully(e)
-   
-      except Exception, e:
-         raise LMError(prevargs=e.args)
+            e = LMError(currargs='Failed to initialize LMBoomer', 
+                        prevargs=e.args)
+         raise e
       else:
          if success:
             self.log.info('{} opened databases'.format(self.name))
@@ -680,6 +678,13 @@ class GBIFBoom(_LMBoomer):
       else:
          txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
+
+      try:
+         self._dumpfile = open(occfilename, 'r')
+      except Exception, e:
+         raise LMError('Failed to open {}'.format(occfilename))
+      csv.field_size_limit(sys.maxsize)
+      self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
                
       self.modelMask = mdlMask
       self.projMask = prjMask
@@ -693,16 +698,10 @@ class GBIFBoom(_LMBoomer):
       
       self._providers, self._provCol = self._readProviderKeys(providerListFile, 
                                                          GBIF_PROVIDER_FIELD)
-      csv.field_size_limit(sys.maxsize)
-      self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
       self._keyCol = self._fieldnames.index(GBIF_TAXONKEY_FIELD)
       self._linenum = 0
       self._obsoleteTime = expDate
       self._currKeyFirstRecnum = None
-      try:
-         self._dumpfile = open(occfilename, 'r')
-      except Exception, e:
-         raise LMError('Failed to open {}'.format(occfilename))
 
 # ...............................................
    def close(self):

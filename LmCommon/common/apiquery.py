@@ -44,13 +44,14 @@ from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
          IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
          IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_URL_PREFIX, 
          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
+         IDIGBIO_GBIFID_FIELD, IDIGBIO_RETURN_FIELDS,
          
          ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY,  
          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
          ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
          ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
          
-         URL_ESCAPES, HTTPStatus, DWCNames)
+         URL_ESCAPES, HTTPStatus, DWCNames, IDIGBIO_RETURN_FIELDS)
 
 # .............................................................................
 class APIQuery(object):
@@ -189,7 +190,7 @@ class APIQuery(object):
       for key, val in qDict.iteritems():
          clauses.extend(self._assembleQItem(key, val))
       # convert to string
-      firstClause = None
+      firstClause = ''
       for cls in clauses:
          if not firstClause and not cls.startswith('NOT'):
             firstClause = cls
@@ -296,7 +297,7 @@ class APIQuery(object):
             raise Exception('Failed to interpret output of URL {}, content = {}; ({})'
                             .format(self.url, response.content, str(e)))
       else:
-         print 'Did not return OK'
+         print('Failed query: {}'.format(response.content))
          self.output = None      
 
 # .............................................................................
@@ -617,29 +618,6 @@ class IdigbioAPI(APIQuery):
       APIQuery.__init__(self, idigSearchUrl, headers=headers, qKey='rq',
                         qFilters=allQFilters, otherFilters=allOtherFilters)
 
-# # ...............................................
-#    def query2(self, offset=0, doAttribute=False):
-#       """
-#       @note: outputType is json
-#       """
-#       allParams = self._otherFilters.copy()
-#       allParams[self._qKey] = self._qFilters
-#       queryAsString = json.dumps(allParams)
-#       try:
-#          req = requests.post(self.baseurl, 
-#                              data=queryAsString, 
-#                              headers=self.headers)
-#          self.output = req.json()
-#       except Exception, e:
-#          try:
-#             retcode = req.status_code
-#             reason = req.reason
-#          except:
-#             retcode = HTTPStatus.INTERNAL_SERVER_ERROR
-#             reason = 'Unknown Error'
-#          raise Exception(retcode, 
-#                   msg='Failed on URL {}, code = {}, reason = {} ({})'.format(
-#                                  self.url, retcode, reason, str(e)))
 # ...............................................
    def query(self):
       """
@@ -653,6 +631,29 @@ class IdigbioAPI(APIQuery):
       pass
 
 # ...............................................
+   def queryByGBIFTaxonId(self, taxonKey):
+      """
+      @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
+      """
+      self._qFilters[IDIGBIO_GBIFID_FIELD] = taxonKey
+      self.query()
+      specimenList = []
+      if self.output is not None:
+         fullCount = self.output['itemCount']
+         for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
+            newitem = {}
+            for dataFld, dataVal in item[IDIGBIO_RECORD_CONTENT_KEY].iteritems():
+               newitem[dataFld] = dataVal
+            for idxFld, idxVal in item[IDIGBIO_RECORD_INDEX_KEY].iteritems():
+               if idxFld == 'geopoint':
+                  newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
+                  newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
+               else:
+                  newitem[idxFld] = idxVal
+            specimenList.append(newitem)
+      return specimenList
+
+# ...............................................
    def getOccurrences(self, asShapefile=False):
       """
       @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
@@ -660,7 +661,6 @@ class IdigbioAPI(APIQuery):
       if self.output is None:
          self.query()
       specimenList = []
-      success = 0
       for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
          newitem = {}
          for dataFld, dataVal in item[IDIGBIO_RECORD_CONTENT_KEY].iteritems():
@@ -671,12 +671,8 @@ class IdigbioAPI(APIQuery):
                newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
             else:
                newitem[idxFld] = idxVal
-               if idxFld == 'taxonid':
-                  success += 1
          specimenList.append(newitem)
-      print 'With taxonid = {}'.format(success)       
       return specimenList
-
 
 # .............................................................................
 # .............................................................................
@@ -755,8 +751,11 @@ if __name__ == '__main__':
          os.remove(outfname)
       outf = open(outfname, 'w')
 
+      idigList = []
       with open(fname, 'r') as f:
-         for line in f:
+#          with line in file:
+         for i in range(100):
+            line = f.readline()
             vals = []
             if line is not None:
                tempvals = line.strip().split()
@@ -778,12 +777,10 @@ if __name__ == '__main__':
                (rankStr, acceptedkey, acceptedStr, nubkey, canonicalStr, taxstatus, 
                 kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
                 speciesStr, genuskey, specieskey, loglines) = GbifAPI.getTaxonomy(currGbifTaxonId)
-            
-               if taxstatus != 'ACCEPTED':
-                  outf.write('\n######### {}   {}\n'.format(currGbifTaxonId, currName))
-                  for line in loglines:
-                     outf.write(line+'\n')
-   
+                            
+               if taxstatus == 'ACCEPTED':
+                  idigList.append([currGbifTaxonId, currReportedCount, currName])
+                  
                if taxstatus not in statii.keys():
                   statii[taxstatus] = {}   
                if rankStr not in statii[taxstatus].keys():
@@ -796,6 +793,22 @@ if __name__ == '__main__':
          print('{}'.format(stat))
          for rank, count in vals.iteritems():
             print('   {}  {}'.format(rank, count))
+         
+      sptypes = {}   
+      idigAPI = IdigbioAPI(otherFilters={'limit': 100})
+      for currGbifTaxonId, currReportedCount, currName in idigList:
+         specimens = idigAPI.queryByGBIFTaxonId(currGbifTaxonId)
+         for spec in specimens:
+            if spec['basisofrecord'] not in sptypes.keys():
+               sptypes[spec['basisofrecord']] = 1
+            else:
+               sptypes[spec['basisofrecord']] += 1
+               
+         print("Retrieved {} specimens for gbif taxonid {}"
+               .format(len(specimens), currGbifTaxonId))
+      for key, val in sptypes.iteritems():
+         print('{}:  {}'.format(key, val))
+
              
 #               
 #          # Test contents of list

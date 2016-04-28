@@ -35,6 +35,7 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS,
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
 
 from LmDbServer.pipeline.boom import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
+from LmServer.base.lmobj import LMError
 from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
 
 # .............................................................................
@@ -45,35 +46,38 @@ class Archivist(Daemon):
       expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                      SPECIES_EXP_DAY)
       taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
-      if DATASOURCE == 'BISON':
-         self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         BISON_TSN_FILE, expdate.mjd, taxonSourceName=taxname,
-                         mdlMask=None, prjMask=None, 
-                         intersectGrid=DEFAULT_GRID_NAME)
-         
-      elif DATASOURCE == 'GBIF':
-         self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
-                         providerListFile=PROVIDER_DUMP_FILE,
-                         mdlMask=None, prjMask=None, 
-                         intersectGrid=DEFAULT_GRID_NAME)
-         
-      elif DATASOURCE == 'IDIGBIO':
-         self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
-                         mdlMask=None, prjMask=None, 
-                         intersectGrid=DEFAULT_GRID_NAME)
-
-      elif DATASOURCE == 'USER':
-         # Set variables in config/site.ini to override installed defaults
-         self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate.mjd, 
-                         mdlMask=None, prjMask=None, 
-                         intersectGrid=DEFAULT_GRID_NAME)
+      try:
+         if DATASOURCE == 'BISON':
+            self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            BISON_TSN_FILE, expdate.mjd, taxonSourceName=taxname,
+                            mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
+            
+         elif DATASOURCE == 'GBIF':
+            self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
+                            providerListFile=PROVIDER_DUMP_FILE,
+                            mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
+            
+         elif DATASOURCE == 'IDIGBIO':
+            self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
+                            mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
+   
+         elif DATASOURCE == 'USER':
+            # Set variables in config/site.ini to override installed defaults
+            self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate.mjd, 
+                            mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
+      except Exception, e:
+         raise LMError(currargs='Failed to initialize Archivist ({})'.format(e))
       
    # .............................
    def run(self):

@@ -1,7 +1,6 @@
 import csv
 
-from LmDbServer.common.lmconstants import TAXONOMY_DUMP_FILE
-from LmDbServer.tools.bioclimMeta import TAXONOMIC_SOURCE 
+from LmDbServer.common.lmconstants import TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 from LmServer.db.scribe import Scribe
 from LmServer.common.log import ThreadLogger 
 

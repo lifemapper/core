@@ -31,7 +31,7 @@ import json
 import os
 from osgeo import ogr, osr
 import StringIO
-from types import UnicodeType, FloatType
+from types import ListType, TupleType, UnicodeType, FloatType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.unicode import fromUnicode, toUnicode
@@ -39,7 +39,7 @@ from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, IDIGBIO_EXPORT_FIELDS, IDIGBIO_ID_FIELD,
       IDIGBIO_LINK_FIELD, IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
       IDIGBIO_SEARCH_POSTFIX, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
-      SHAPEFILE_MAX_STRINGSIZE, ShortDWCNames)
+      SHAPEFILE_MAX_STRINGSIZE, DWCNames)
 
 # .............................................................................
 class ShapeShifter(object):
@@ -86,8 +86,8 @@ class ShapeShifter(object):
          self.idField = GBIF_ID_FIELD
          self.linkField = GBIF_LINK_FIELD
          self.linkUrl = GBIF_OCCURRENCE_URL
-         self.xField = ShortDWCNames.DECIMAL_LONGITUDE
-         self.yField = ShortDWCNames.DECIMAL_LATITUDE
+         self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
+         self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
          self._reader = self._getCSVReader()
          
       elif processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
@@ -96,16 +96,16 @@ class ShapeShifter(object):
          self.linkField = IDIGBIO_LINK_FIELD
          self.linkUrl = '/'.join([IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
                                   IDIGBIO_SEARCH_POSTFIX])
-         self.xField = ShortDWCNames.DECIMAL_LONGITUDE
-         self.yField = ShortDWCNames.DECIMAL_LATITUDE
+         self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
+         self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
          self._reader = self._getCSVReader()
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
          self.lookupFields = self._mapBisonNames()
          self.idField = LM_ID_FIELD
-         self.xField = self._lookupReverse(ShortDWCNames.DECIMAL_LONGITUDE)
-         self.yField = self._lookupReverse(ShortDWCNames.DECIMAL_LATITUDE)
+         self.xField = self._lookupReverse(DWCNames.DECIMAL_LONGITUDE['SHORT'])
+         self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
          
       else:
          raise Exception('Invalid processType %s' % (str(processType)))
@@ -139,7 +139,7 @@ class ShapeShifter(object):
          if len(fldmeta[oname]) == 3:
             if type(fldmeta[oname][2]) in (ListType, TupleType):
                acceptedVals = fldmeta[oname][2]
-               if ogrtype == OFTString:
+               if ogrtype == ogr.OFTString:
                   acceptedVals = [val.lower() for val in fldmeta[oname][2]]
                self.filters[i] = acceptedVals 
             else:
@@ -157,15 +157,15 @@ class ShapeShifter(object):
       self.fieldCount = len(self.fieldNames)
       
       if self._idIdx == None:
-         raise LMError('Missing \'id\' unique identifier field')
+         raise Exception('Missing \'id\' unique identifier field')
       if self._xIdx == None:
-         raise LMError('Missing \'longitude\' georeference field')
+         raise Exception('Missing \'longitude\' georeference field')
       if self._yIdx == None:
-         raise LMError('Missing \'latitude\' georeference field')
+         raise Exception('Missing \'latitude\' georeference field')
       if self._sortIdx == None:
-         raise LMError('Missing \'groupby\' sorting field')
+         raise Exception('Missing \'groupby\' sorting field')
       if self._nameIdx == None:
-         raise LMError('Missing \'dataname\' dataset name field')
+         raise Exception('Missing \'dataname\' dataset name field')
 
 
    # .............................................................................
@@ -173,11 +173,11 @@ class ShapeShifter(object):
    def getOgrFieldType(typeString):
       typestr = typeString.lower()
       if typestr == 'integer':
-         return OFTInteger
+         return ogr.OFTInteger
       elif typestr == 'string':
-         return OFTString
+         return ogr.OFTString
       elif typestr == 'real':
-         return OFTReal
+         return ogr.OFTReal
       else:
          raise Exception('Unsupported field type %s (use integer, string, or real)' 
                          % typeString)
@@ -188,7 +188,6 @@ class ShapeShifter(object):
    def writeUserOccurrences(self, outfname, maxPoints=None, subsetfname=None):
       ogrFormat = 'ESRI Shapefile'
       
-      recIdx = -1
       if subsetfname is not None:
          if maxPoints is not None and self._recCount > maxPoints: 
             from random import shuffle
@@ -256,7 +255,6 @@ class ShapeShifter(object):
    def writeOccurrences(self, outfname, maxPoints=None, subsetfname=None):
       ogrFormat = 'ESRI Shapefile'
       
-      recIdx = -1
       if subsetfname is not None:
          if maxPoints is not None and self._recCount > maxPoints: 
             from random import shuffle
@@ -438,15 +436,18 @@ class ShapeShifter(object):
          try:
             recDict = self._reader.next()
             # ignore records without valid lat/long; all occ jobs contain these fields
-            recDict[ShortDWCNames.DECIMAL_LATITUDE] = float(recDict[ShortDWCNames.DECIMAL_LATITUDE])
-            recDict[ShortDWCNames.DECIMAL_LONGITUDE] = float(recDict[ShortDWCNames.DECIMAL_LONGITUDE])
+            recDict[DWCNames.DECIMAL_LATITUDE['SHORT']] = \
+                  float(recDict[DWCNames.DECIMAL_LATITUDE['SHORT']])
+            recDict[DWCNames.DECIMAL_LONGITUDE['SHORT']] = \
+                  float(recDict[DWCNames.DECIMAL_LONGITUDE['SHORT']])
             success = True
          except OverflowError, e:
-            print('OverflowError on %d (%s), moving on' % (self._currRecum, fromUnicode(toUnicode(e))))
+            print('OverflowError on {} ({}), moving on'
+                  .format(self._currRecum, fromUnicode(toUnicode(e))))
          except ValueError, e:
-            print('Ignoring invalid lat %s, long %s data' 
-                  % (str(recDict[ShortDWCNames.DECIMAL_LATITUDE]),
-                     str(recDict[ShortDWCNames.DECIMAL_LONGITUDE])))
+            print('Ignoring invalid lat {}, long {} data'
+                  .format(recDict[DWCNames.DECIMAL_LATITUDE]['SHORT'],
+                     recDict[DWCNames.DECIMAL_LONGITUDE]['SHORT']))
          except StopIteration, e:
             success = True
          except Exception, e:
@@ -471,7 +472,6 @@ class ShapeShifter(object):
       if newLyr is None:
          raise Exception('Layer creation failed')
        
-      idIdx = None
       for pos in range(len(self.op.fieldNames)):
          fldname = self.op.fieldNames[pos]
          fldtype = self.op.fieldTypes[pos]
@@ -500,7 +500,6 @@ class ShapeShifter(object):
       if newLyr is None:
          raise Exception('Layer creation failed')
        
-      idIdx = None
       for fielddesc in self.dataFields.values():
          if fielddesc is not None:
             fldname = fielddesc[0]

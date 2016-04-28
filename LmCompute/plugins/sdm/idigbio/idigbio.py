@@ -30,6 +30,7 @@ import os
 from osgeo import ogr, osr
 import StringIO
 
+from LmCommon.common.apiquery import IdigbioAPI
 from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import OutputFormat, ProcessType
 
@@ -39,24 +40,28 @@ from LmCommon.common.lmconstants import OutputFormat, ProcessType
 
 
 # .............................................................................
-def parseIDigData(count, csvInputBlob, basePath, env, maxPoints):
+def parseIDigData(url, basePath, env, maxPoints):
    """
-   @summary: Parses a CSV-format GBIF data set and saves it to a shapefile in the 
-                specified location
-   @param csvInputBlob: A string of CSV data
+   @summary: Receives an iDigBio url, pulls in the data, and returns a shapefile
+   @param url: The url to pull data from
    @param basePath: A directory where the shapefile should be stored
+   @param env: An EnvironmentMethods class that can be used to get locations in 
+                  the environment
    @param maxPoints: The maximum number of points to include if subsetting
-   @return: The name of the file where the data is stored (.shp extension)
-   @rtype: String
+   @return: The name of the file(s) where the data is stored (.shp extension)
+   @rtype: String and String/None
    """
    outfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
    subsetOutfilename = None
-   subsetIndices = None
-   
+
+   occAPI = IdigbioAPI.initFromUrl(url)
+   occList = occAPI.getOccurrences()
+      
+   count = len(occList)
    if count > maxPoints:
       subsetOutfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
    
-   shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, csvInputBlob, count)
+   shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
    shaper.writeOccurrences(outfilename, maxPoints=maxPoints, 
                            subsetfname=subsetOutfilename)
 
