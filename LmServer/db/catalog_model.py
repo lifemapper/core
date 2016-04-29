@@ -3206,16 +3206,19 @@ class MAL(DbPostgresql):
 # ...............................................
    def findTaxonSource(self, taxonSourceName):
       txSourceId = url = createdate = moddate = None
-      try:
-         row, idxs = self.executeSelectOneFunction('lm_findTaxonSource', 
-                                                   taxonSourceName)
-      except Exception, e:
-         raise e
-      if row is not None:
-         txSourceId = row[idxs['taxonomysourceid']]
-         url = row[idxs['url']]
-         createdate = row[idxs['datecreated']]
-         moddate =  row[idxs['datelastmodified']]
+      if taxonSourceName is not None:
+         try:
+            row, idxs = self.executeSelectOneFunction('lm_findTaxonSource', 
+                                                      taxonSourceName)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+         if row is not None:
+            txSourceId = row[idxs['taxonomysourceid']]
+            url = row[idxs['url']]
+            createdate = row[idxs['datecreated']]
+            moddate =  row[idxs['datelastmodified']]
       return txSourceId, url, createdate, moddate
 
 # ...............................................

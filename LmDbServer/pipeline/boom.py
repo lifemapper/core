@@ -50,6 +50,7 @@ from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS,
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.notifications.email import EmailNotifier
+from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.omJob import OmProjectionJob, OmModelJob
 from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
@@ -60,13 +61,19 @@ GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
 # .............................................................................
 class _LMBoomer(LMObject):
    # .............................
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, intersectGrid=None):
+   def __init__(self, userid, algLst, mdlScen, prjScenLst, 
+                taxonSourceName=None, mdlMask=None, prjMask=None, 
+                intersectGrid=None):
       super(_LMBoomer, self).__init__()
+      import socket
+      self.hostname = socket.gethostname().lower()
       self.userid = userid
-      self.algs = algLst
-      self.modelScenario = mdlScen
-      self.projScenarios = prjScenLst
-      self.intersectGrid = intersectGrid
+      self.algs = None
+      self.modelScenario = None
+      self.projScenarios = None
+      self.modelMask = None
+      self.projMask = None
+      self.intersectGrid = None
 
       if userid is None:
          self.name = self.__class__.__name__.lower()
@@ -74,14 +81,11 @@ class _LMBoomer(LMObject):
          self.name = '{}_{}'.format(self.__class__.__name__.lower(), userid)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 
                                     'start.{}.txt'.format(self.name))
-      self._linenum = None
       self.log = ScriptLogger(self.name)
       self.developers = TROUBLESHOOTERS
       self.startStatus=JobStatus.GENERAL 
       self.queueStatus=JobStatus.GENERAL 
       self.endStatus=JobStatus.INITIALIZE
-      import socket
-      self.hostname = socket.gethostname().lower()
       self.updateTime = None
 
       try:
@@ -93,11 +97,49 @@ class _LMBoomer(LMObject):
                         prevargs=e.args)
          self._failGracefully(lmerr=e)
       else:
-         if success:
-            self.log.info('{} opened databases'.format(self.name))
-         else:
+         if not success:
             self._failGracefully(lmerr='Failed to open database')
+            
+      self.log.info('{} opened databases'.format(self.name))
+      self._fillDefaultObjects(algLst, mdlScen, prjScenLst, mdlMask, prjMask, 
+                               intersectGrid, taxonSourceName)
          
+# ...............................................
+   def _fillDefaultObjects(self, algCodes, mdlScenarioCode, projScenarioCodes, 
+                           mdlMaskId, prjMaskId, intersectGridName,
+                           taxonSourceName):
+      for acode in algCodes:
+         alg = Algorithm(acode)
+         alg.fillWithDefaults()
+         self.algs.append(alg)
+
+      try:
+         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
+         self._taxonSourceId = txSourceId
+         
+         mscen = self._scribe.getScenario(mdlScenarioCode)
+         if mscen is not None:
+            self.modelScenario = mscen
+            if mdlScenarioCode not in projScenarioCodes:
+               self.projScenarios.append(self.modelScenario)
+            for pcode in projScenarioCodes:
+               scen = self._scribe.getScenario(pcode)
+               if scen is not None:
+                  self.projScenarios.append(scen)
+               else:
+                  raise LMError('Failed to retrieve scenario {}'.format(pcode))
+         else:
+            raise LMError('Failed to retrieve scenario {}'.format(mdlScenarioCode))
+         
+         self.modelMask = self._scribe.getLayer(mdlMaskId)
+         self.projMask = self._scribe.getLayer(prjMaskId)
+         self.intersectGrid = self._scribe.getShapeGrid(self.userid, 
+                                                  shpname=intersectGridName)
+      except Exception, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         raise e
+
 # ...............................................
    def _failGracefully(self, lmerr=None):
       self.saveNextStart()
@@ -406,21 +448,18 @@ class BisonBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, intersectGrid=None):
-      super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
-                                      intersectGrid=intersectGrid)
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
-      else:
-         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
-         self._taxonSourceId = txSourceId
-
-      self.modelMask = mdlMask
-      self.projMask = prjMask
-      self._linenum = 0
       try:
          self._tsnfile = open(tsnfilename, 'r')
+         self._linenum = 0
       except Exception, e:
          self._failGracefully(lmerr='Unable to open {}'.format(tsnfilename))
+
+      super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+                                      taxonSourceName=taxonSourceName, 
+                                      mdlMask=mdlMask, prjMask=prjMask, 
+                                      intersectGrid=intersectGrid)
       self._obsoleteTime = expDate
       self._currTsn, self._currCount = self.moveToStart()
       
@@ -535,19 +574,18 @@ class UserBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
                 occMetaFname, expDate, 
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
-                                      intersectGrid=intersectGrid)
-      self._taxonSourceId = None
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
+         self._linenum = 0
+         self._fieldNames = self.occParser.header
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          self._failGracefully(lmerr=e)
-         
-      self._fieldNames = self.occParser.header
-      self.modelMask = mdlMask
-      self.projMask = prjMask
+      super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+                                     taxonSourceName=None, 
+                                     mdlMask=mdlMask, prjMask=prjMask, 
+                                     intersectGrid=intersectGrid)
       self._obsoleteTime = expDate
       
 # ...............................................
@@ -673,24 +711,18 @@ class GBIFBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
                 taxonSourceName=None, providerListFile=None,
                 mdlMask=None, prjMask=None, intersectGrid=None):
-      super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
-                                      intersectGrid=intersectGrid)
-      if taxonSourceName is None:
-         self._failGracefully(lmerr='Missing taxonomic source')
-      else:
-         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
-         self._taxonSourceId = txSourceId
-
       try:
          self._dumpfile = open(occfilename, 'r')
+         self._linenum = 0
+         csv.field_size_limit(sys.maxsize)
+         self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
       except Exception, e:
          self._failGracefully(lmerr='Failed to open {}'.format(occfilename))
-      csv.field_size_limit(sys.maxsize)
-      self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
-               
-      self.modelMask = mdlMask
-      self.projMask = prjMask
 
+      super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+                                      taxonSourceName=taxonSourceName, 
+                                      mdlMask=mdlMask, prjMask=prjMask, 
+                                      intersectGrid=intersectGrid)               
       gbifFldNames = []
       idxs = GBIF_EXPORT_FIELDS.keys()
       idxs.sort()
@@ -702,7 +734,6 @@ class GBIFBoom(_LMBoomer):
                                                          GBIF_PROVIDER_FIELD)
       self._keyCol = self._fieldnames.index(GBIF_TAXONKEY_FIELD)
       self._obsoleteTime = expDate
-      self._linenum = 0
       self._currKeyFirstRecnum = None
       self._currRec = None
       self._currSpeciesKey = None
@@ -892,22 +923,19 @@ class iDigBioBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
                 intersectGrid=None):
-      super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
-                                      intersectGrid=intersectGrid)
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
-      else:
-         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
-         self._taxonSourceId = txSourceId
-
-      self.modelMask = mdlMask
-      self.projMask = prjMask
-      self._obsoleteTime = expDate
       try:
          self._idigFile = open(idigFname, 'r')
+         self._linenum = 0
       except Exception, e:
          raise LMError(currargs='Unable to open {}'.format(idigFname))
-      self._linenum = 0
+
+      super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+                                        taxonSourceName=taxonSourceName, 
+                                        mdlMask=mdlMask, prjMask=prjMask, 
+                                        intersectGrid=intersectGrid)
+      self._obsoleteTime = expDate      
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None

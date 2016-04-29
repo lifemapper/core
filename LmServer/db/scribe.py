@@ -81,8 +81,6 @@ class Scribe(Peruser):
       """
       try:
          self._mal.insertProjection(proj)
-      except LMError, e:
-         raise e
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -188,7 +186,7 @@ class Scribe(Peruser):
          elif DATASOURCE == Instances.IDIGBIO and os.path.exists(occ.getRawDLocation()):
             processtype = ProcessType.IDIGBIO_TAXA_OCCURRENCE
          else:
-            raise LMError('Unknown DATASOURCE %s' % str(DATASOURCE))
+            raise LMError(currargs='Unknown DATASOURCE {}'.format(DATASOURCE))
       # inits jobs for occset, model and projections
       if processtype is None:
          if occ.status < JobStatus.COMPLETE:
@@ -473,15 +471,16 @@ class Scribe(Peruser):
                if exLyr.typeCode == lyr.typeCode:
                   lyr = exLyr
                else:
-                  raise LMError(currargs='Layer %d already exists with typeCode \'%s\''
-                                          % (exLyr.getId(), exLyr.typeCode))
+                  raise LMError(currargs='Layer {} already exists with typeCode \'{}\''
+                                .format(exLyr.getId(), exLyr.typeCode))
             else:
                lyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
          else:
-            raise LMError(currargs='Invalid environmental layer: %s'
-                          % str(lyr.getDLocation()), lineno=self.getLineno())
+            raise LMError(currargs='Invalid environmental layer: {}'
+                                    .format(lyr.getDLocation()), 
+                          lineno=self.getLineno())
       else:
-         raise LMError(currargs = 'Call Scribe.insertRADLayer instead')
+         raise LMError(currargs='Call Scribe.insertRADLayer instead')
       return lyr
 
 # ...............................................
@@ -563,8 +562,7 @@ class Scribe(Peruser):
             if rollback:
                bucketRollbackCount = self.rollbackRADExperiment(radexp)
       else:
-         raise LMError(currargs='Wrong object type', 
-                       location=self.getLocation(lineno=self.getLineno()))
+         raise LMError(currargs='Wrong object type', lineno=self.getLineno())
       return updatedlyr
    
 
@@ -580,8 +578,9 @@ class Scribe(Peruser):
          if lyr.isValidDataset():
             updatedLyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
          else:
-            raise LMError(currargs='Invalid environmental layer: %s'
-                           % str(lyr.getDLocation()), lineno=self.getLineno())
+            raise LMError(currargs='Invalid environmental layer: {}'
+                                    .format(lyr.getDLocation()), 
+                          lineno=self.getLineno())
       return updatedLyr
 
 # ...............................................
@@ -612,11 +611,13 @@ class Scribe(Peruser):
          if lyr.isValidDataset() or lyr.isFilled():
             lyrid = self._mal.insertVectorLayer(lyr)
          else:
-            raise LMError(currargs='Invalid vector layer: %s'
-                           % str(lyr.getDLocation()), lineno=self.getLineno())
+            raise LMError(currargs='Invalid vector layer: {}'
+                                    .format(lyr.getDLocation()), 
+                          lineno=self.getLineno())
       else:
-         raise LMError(currargs='Error %s insertion is not supported' 
-                       % str(type(lyr)), lineno=self.getLineno())
+         raise LMError(currargs='Error %s insertion is not supported'
+                                 .format(type(lyr)), 
+                       lineno=self.getLineno())
       return lyrid
 
 # ...............................................
@@ -642,7 +643,7 @@ class Scribe(Peruser):
          dsuccess = self._rad.moveDependentJobs(job, completeStat, errorStat,
                                                 notReadyStat, readyStat, currtime)
       else:
-         raise LMError('Invalid JobFamily %s' % str(job.jobFamily))
+         raise LMError('Invalid JobFamily {}'.format(job.jobFamily))
       
       return dsuccess
 
@@ -689,15 +690,15 @@ class Scribe(Peruser):
       elif job.jobFamily == JobFamily.RAD:
          osuccess, jsuccess = self._rad.updateRADJob(job, errorStat, incrementRetry)
       else:
-         raise LMError('Invalid JobFamily %s' % str(job.jobFamily))
+         raise LMError('Invalid JobFamily {}'.format(job.jobFamily))
       
       if not osuccess:
-         self.log.error('Failed to update object %s, %d' 
-                        % (type(job.outputObj).__name__, job.outputObj.getId()))
+         self.log.error('Failed to update object {}, {}'
+                        .format(type(job.outputObj), job.outputObj.getId()))
       if not jsuccess:
-         self.log.error('Failed to update family %s, type %s, id %s, job %s' 
-                        % (str(job.jobFamily), str(job.outputObjType), 
-                           str(job.outputObj.getId()), str(job.getId()) ))
+         self.log.error('Failed to update family {}, type {}, id {}, job {}'
+                        .format(job.jobFamily, job.outputObjType, 
+                                job.outputObj.getId(), job.getId() ))
       return osuccess and jsuccess
       
 # ...............................................
@@ -735,7 +736,7 @@ class Scribe(Peruser):
          occId = proj.getOccurrenceSet().getId()
          obj = proj
       else:
-         raise LMError('Must provide a model or projection')
+         raise LMError(lmerr='Must provide a model or projection')
         
       obj.clearLocalMapfile()
       obj.setLocalMapFilename()
@@ -867,7 +868,7 @@ class Scribe(Peruser):
       if ReferenceType.isSDM(top):
          cnt = self._mal.resetSDMChain(top, oldstat, startstat, depstat, usr)
       elif ReferenceType.isRAD(top):
-         raise LMError('resetRADJobs is not yet implemented')
+         raise LMError(lmerr='resetRADJobs is not yet implemented')
       return cnt
       
 # ...............................................
@@ -935,7 +936,7 @@ class Scribe(Peruser):
       if ReferenceType.isSDM(reftype):
          cnt = self._mal.resetObjectsJobsFromStatus(reftype, oldstat, newstat, usr)
       elif ReferenceType.isRAD(reftype):
-         raise LMError('RAD resetObjectsJobsFromStatus is not yet implemented')
+         raise LMError(lmerr='RAD resetObjectsJobsFromStatus is not yet implemented')
       return cnt
       
 # ...............................................
@@ -949,7 +950,7 @@ class Scribe(Peruser):
       if ReferenceType.isSDM(reftype):
          cnt = self._mal.resetObjectAndJobs(reftype, objid, newstat)
       elif ReferenceType.isRAD(reftype):
-         raise LMError('RAD resetObjectAndJobs is not yet implemented')
+         raise LMError(lmerr='RAD resetObjectAndJobs is not yet implemented')
       return cnt
       
 # ...............................................
@@ -1064,17 +1065,17 @@ class Scribe(Peruser):
                # Update database record with featureCount and geometry 
                success = self._mal.updateOccurrenceSetMetadataAndStatus(occ)
                if not success:
-                  raise LMError(currargs='Failed to update occurrenceset %d' 
-                                % occ.getId(), lineno=self.getLineno())
-         except LMError, e:
-            raise e
+                  raise LMError(currargs='Failed to update occurrenceset {}'
+                                          .format(occ.getId()), 
+                                lineno=self.getLineno())
          except Exception, e:
-            raise LMError(currargs='Failed', prevargs=e.args, 
-                          lineno=self.getLineno())
-
+            if not isinstance(e, LMError):
+               e = LMError(currargs='Failed', prevargs=e.args, 
+                           lineno=self.getLineno())
+            raise e
       else:
-         self.log.error('OccurrenceLayer %s already contains a database ID' 
-                        % str(occ.getId()))
+         self.log.error('OccurrenceLayer {} already contains a database ID'
+                        .format(occ.getId()))
             
 # ...............................................
    def insertOccurrenceSet(self, occ):
@@ -1088,8 +1089,8 @@ class Scribe(Peruser):
       if occ.getId() is None :
          id = self._mal.insertOccurrenceSetMetadata(occ)
       else:
-         self.log.error('OccurrenceLayer %s already contains a database ID' 
-                        % str(occ.getId()))
+         self.log.error('OccurrenceLayer {} already contains a database ID'
+                        .format(occ.getId()))
       return id
          
 # ...............................................
@@ -1244,11 +1245,11 @@ class Scribe(Peruser):
       try:
          exps = self.getExperimentsForOccurrenceSet(occ.getId(), status=None, 
                                                     userid=userid)
-      except LMError, e:
-         raise e
       except Exception, e:
-         raise LMError(currargs='Failed getting experiments', 
-                       prevargs=e.args, lineno=self.getLineno())
+         if not isinstance(e, LMError):
+            e = LMError(currargs='Failed getting experiments', 
+                        prevargs=e.args, lineno=self.getLineno())
+         raise e
    
       for exp in exps:
          # low priority or mid-execution, raise to higher priority
@@ -1264,14 +1265,14 @@ class Scribe(Peruser):
                # If failed to update OccurrenceLayer, exp=ERROR
                success = self._rollbackExp(exp, 
                                errstatus=JobStatus.LM_PIPELINE_UPDATEOCC_ERROR)
-               self.log.error('Rolled back experiments to status %d for failed occurrenceset %d (%s)'
-                              % (JobStatus.LM_PIPELINE_UPDATEOCC_ERROR,
-                                 occ.getId(), occ.displayName ))
-         except LMError, e:
-            raise e
+               self.log.error('Rolled back experiments to status {} for failed occurrenceset {} ({})'
+                              .format(JobStatus.LM_PIPELINE_UPDATEOCC_ERROR,
+                                      occ.getId(), occ.displayName ))
          except Exception, e:
-            raise LMError(currargs='Failed updating old exp %d' % exp.getId(), 
-                          prevargs=e.args, lineno=self.getLineno())
+            if not isinstance(e, LMError):
+               e = LMError(currargs='Failed updating old exp {}'.format(exp.getId()), 
+                           prevargs=e.args, lineno=self.getLineno())
+            raise e
          
 # ...............................................         
    def _deleteOverlyComplexOccset(self, occ):
@@ -1309,15 +1310,17 @@ class Scribe(Peruser):
             for prj in exp.projections:
                prjJob = self.reinitSDMProjection(prj, priority, modtime=currtime)
                jobs.append(prjJob)
-         except LMError, e:
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs='Failed updating old exp {}'
+                                    .format(exp.getId()),
+                           prevargs=e.args, lineno=self.getLineno())
             self.log.debug('Failed rollback exp, deleting instead (%s)' % (str(e)))
             self.deleteExperiment(exp.model)
-         except Exception, e:
-            raise LMError(currargs='Failed updating old exp %d' % exp.getId(), 
-                          prevargs=e.args, lineno=self.getLineno())
-         self.log.info('Rolled back experiment %d (%s) to status %d'
-                        % (exp.getId(), exp.model.occurrenceSet.displayName, 
-                           JobStatus.INITIALIZE))
+            raise e
+         self.log.info('Rolled back experiment {} ({}) to status {}'
+                       .format(exp.getId(), exp.model.occurrenceSet.displayName, 
+                               JobStatus.INITIALIZE))
       return jobs
 # ...............................................
    def updateModel(self, mdl):
@@ -1660,7 +1663,7 @@ class Scribe(Peruser):
          if updatedlyr and not radexp.getEnvLayer(anclyr.metadataUrl, anclyr.getParametersId()):
             radexp.addAncillaryLayer(updatedlyr)
       else:
-         raise LMError(currargs='Wrong object type', location=self.getLocation())
+         raise LMError(currargs='Wrong object type', lineno=self.getLocation())
       return updatedlyr
 
 # ...............................................
@@ -1743,23 +1746,25 @@ class Scribe(Peruser):
                                       statusModTime=modtime, createTime=modtime,
                                       priority=Priority.NORMAL)
          except Exception, e:
-            self.log.error('   Failed to update occurrenceset or create Job for %s (%s)'
-                           % (str(occ.getId()), str(e)))
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
+            self.log.error('   Failed to update occurrenceset or create Job for {} ({})'
+                           .format(occ.getId()), str(e))
             raise e
             
          try:
             success = self.updateOccState(occ)
             updatedOccJob = self.insertJob(occJob)
          except Exception, e:
-            self.log.error('   Failed to insert occurrenceSet Job for %s (%s)'
-                           % (str(occ.getId()), str(e)))
-            raise LMError(e)
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            self.log.error('   Failed to insert occurrenceSet Job for {} ({})'
+                           .format(occ.getId()), str(e))
+            raise e
          else:
             occJob = updatedOccJob
-            self.log.debug('   inserted job to write points for occurrenceSet %s in MAL' 
-                           % (str(occ.getId()))) 
+            self.log.debug('   inserted job to write points for occurrenceSet {}' 
+                           .format(occ.getId()))
       return occJob
 
 # ...............................................
@@ -2029,7 +2034,7 @@ class Scribe(Peruser):
          return clones
          
       else:
-         raise LMError('Must provide an experimentId or bucketId to initialize Intersect')
+         raise LMError(currargs='Must provide an experimentId or bucketId to initialize Intersect')
    
 
 # .............................................................................
