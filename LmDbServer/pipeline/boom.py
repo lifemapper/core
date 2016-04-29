@@ -471,13 +471,18 @@ class BisonBoom(_LMBoomer):
       return self._linenum + 1
 
 # ...............................................
+   @property
+   def complete(self):
+      return self._tsnfile.closed
+      
+# ...............................................
    def _getTsnRec(self):
       eof = success = False
       tsn = tsnCount = None
-      while not eof and not success:
+      while not self._tsnfile.closed and not success:
          line = self._tsnfile.readline()
          if line == '':
-            eof = True
+            self._tsnfile.close()
          else:
             try:               
                first, second = line.split(',')
@@ -589,6 +594,11 @@ class UserBoom(_LMBoomer):
       
 # ...............................................
    @property
+   def complete(self):
+      return self.occParser.closed
+            
+# ...............................................
+   @property
    def nextStart(self):
       try:
          num = self.occParser.keyFirstRec
@@ -615,7 +625,7 @@ class UserBoom(_LMBoomer):
 # ...............................................
    def chainOne(self):
       dataChunk, dataCount, taxonName  = self._getChunk()
-      if dataChunk is not None:
+      if dataChunk:
          self._processInputSpecies(dataChunk, dataCount, taxonName)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
@@ -742,6 +752,11 @@ class GBIFBoom(_LMBoomer):
       
 # ...............................................
    @property
+   def complete(self):
+      return self._dumpfile.closed
+            
+# ...............................................
+   @property
    def nextStart(self):
       return self._currKeyFirstRecnum
    
@@ -827,7 +842,7 @@ class GBIFBoom(_LMBoomer):
    def _getCSVRecord(self, parse=True):
       success = False
       line = specieskey = None
-      while self._csvreader and not success:
+      while not self._dumpfile.closed and not success:
          try:
             line = self._csvreader.next()
             self._linenum += 1
@@ -837,7 +852,6 @@ class GBIFBoom(_LMBoomer):
             self.log.debug('Finished file {} on line {}'
                            .format(self._dumpfile.name, self._linenum))
             self._dumpfile.close()
-            self._csvreader = None
             self._linenum = -9999
             success = True
             
@@ -972,6 +986,11 @@ class iDigBioBoom(_LMBoomer):
       
 # ...............................................
    @property
+   def complete(self):
+      return self._idigFile.closed
+                  
+# ...............................................
+   @property
    def nextStart(self):
       return self._linenum+1
 
@@ -982,7 +1001,6 @@ class iDigBioBoom(_LMBoomer):
       """
       currGbifTaxonId = None
       currReportedCount = None
-      currBinomial = None
       success = False
       while not success:
          try:

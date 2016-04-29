@@ -413,7 +413,7 @@ class OccDataParser(object):
          print ('Tried to append bad rec')
          
       try:
-         while self._csvreader is not None and not complete:
+         while not self.closed and not complete:
             # get next line
             self.pullNextValidRec()
             
@@ -464,6 +464,11 @@ class OccDataParser(object):
    def eof(self):
       return self.currLine is None
    
+# ...............................................
+   @property
+   def closed(self):
+      return self._file.closed
+      
    # ...............................................
    def close(self):
       try:

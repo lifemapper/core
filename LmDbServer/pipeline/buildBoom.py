@@ -88,6 +88,8 @@ class Archivist(Daemon):
             try:
                self.log.info('Chaining one ...')
                self.boomer.chainOne()
+               if self.keepRunning:
+                  self.keepRunning = not self.boomer.complete
             except:
                self.log.info('Saving next start ...')
                self.boomer.saveNextStart()
