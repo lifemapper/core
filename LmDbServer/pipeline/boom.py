@@ -506,9 +506,10 @@ class BisonBoom(_LMBoomer):
 # ...............................................
    def chainOne(self):
       tsn, tsnCount = self._getTsnRec()
-      self._processTsn(tsn, tsnCount)
-      self.log.info('Processed tsn {}, with {} points; next start {}'
-                    .format(tsn, tsnCount, self.nextStart))
+      if tsn is not None:
+         self._processTsn(tsn, tsnCount)
+         self.log.info('Processed tsn {}, with {} points; next start {}'
+                       .format(tsn, tsnCount, self.nextStart))
 
 # ...............................................
    def chainAll(self):
@@ -613,12 +614,11 @@ class UserBoom(_LMBoomer):
       
 # ...............................................
    def chainOne(self):
-      self.moveToStart()
       dataChunk, dataCount, taxonName  = self._getChunk()
-      self._processInputSpecies(dataChunk, dataCount, taxonName)
-      self.saveNextStart()
-      self.log.info('Processed name {}, with {} records; next start {}'
-                    .format(taxonName, len(dataChunk), self.nextStart))
+      if dataChunk is not None:
+         self._processInputSpecies(dataChunk, dataCount, taxonName)
+         self.log.info('Processed name {}, with {} records; next start {}'
+                       .format(taxonName, len(dataChunk), self.nextStart))
 
 # ...............................................
    def chainAll(self):
@@ -789,9 +789,10 @@ class GBIFBoom(_LMBoomer):
 # ...............................................
    def chainOne(self):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
-      self._processChunk(speciesKey, dataCount, dataChunk)
-      self.log.info('Processed gbif key {} with {} records; next start {}'
-                    .format(speciesKey, len(dataChunk), self.nextStart))
+      if speciesKey:
+         self._processChunk(speciesKey, dataCount, dataChunk)
+         self.log.info('Processed gbif key {} with {} records; next start {}'
+                       .format(speciesKey, len(dataChunk), self.nextStart))
 
 # ...............................................
    def chainAll(self):
@@ -826,7 +827,7 @@ class GBIFBoom(_LMBoomer):
    def _getCSVRecord(self, parse=True):
       success = False
       line = specieskey = None
-      while not success:
+      while self._csvreader and not success:
          try:
             line = self._csvreader.next()
             self._linenum += 1
@@ -899,8 +900,10 @@ class GBIFBoom(_LMBoomer):
       # if we're at the beginning, pull a record
       if self._currSpeciesKey is None:
          self._currRec, self._currSpeciesKey = self._getCSVRecord()
+         if self._currRec is None:
+            completeChunk = True
          
-      while self._currRec and not completeChunk:
+      while not completeChunk:
          # If first record of chunk
          if currKey is None:
             currKey = self._currSpeciesKey
@@ -956,7 +959,8 @@ class iDigBioBoom(_LMBoomer):
 # ...............................................
    def chainOne(self):
       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-      self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
+      if taxonKey:
+         self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
 
 # ...............................................
    def chainAll(self):
