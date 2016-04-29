@@ -88,27 +88,27 @@ class _LMBoomer(LMObject):
          self._scribe = Scribe(self.log)
          success = self._scribe.openConnections()
       except Exception, e:
-         self._failGracefully('Failed to initialize LMBoomer')
          if not isinstance(e, LMError):
-            e = LMError(currargs='Failed to initialize LMBoomer', 
+            e = LMError(currargs='Failed to open database', 
                         prevargs=e.args)
-         raise e
+         self._failGracefully(lmerr=e)
       else:
          if success:
             self.log.info('{} opened databases'.format(self.name))
          else:
-            raise LMError(currargs='{} failed to open databases'.format(self.name))
+            self._failGracefully(lmerr='Failed to open database')
          
 # ...............................................
    def _failGracefully(self, lmerr=None):
       self.saveNextStart()
       if lmerr is not None:
          logmsg = str(lmerr)
-         logmsg += '\n Traceback: {}'.format(lmerr.getTraceback())
+         if isinstance(lmerr, LMError):
+            logmsg += '\n Traceback: {}'.format(lmerr.getTraceback())
+            self._notifyPeople("Lifemapper BOOM has failed", 
+                  '{} Lifemapper BOOM has crashed with the message:\n\n{}'
+                  .format(self.hostname, logmsg))
          self.log.error(logmsg)
-         self._notifyPeople("Lifemapper BOOM has failed", 
-               '{} Lifemapper BOOM has crashed with the message:\n\n{}'
-               .format(self.hostname, logmsg))
 
       if self._scribe.isOpen:
          try:
@@ -273,10 +273,10 @@ class _LMBoomer(LMObject):
                   self._scribe.insertTaxon(sciName)
                   self.log.info('Inserted sciname for taxonKey {}, {}'
                                 .format(taxonKey, sciName.scientificName))
-               except LMError, e:
-                  raise e
                except Exception, e:
-                  raise LMError(currargs=e.args, lineno=self.getLineno())
+                  if not isinstance(e, LMError):
+                     e = LMError(currargs=e.args, lineno=self.getLineno())
+                  raise e
             else:
                self.log.info('taxonKey {} is not a genus or accepted species, ({})'
                              .format(rankStr, taxonKey))
@@ -409,7 +409,7 @@ class BisonBoom(_LMBoomer):
       super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
       if taxonSourceName is None:
-         self._failGracefully('Missing taxonomic source')
+         self._failGracefully(lmerr='Missing taxonomic source')
       else:
          txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
@@ -420,7 +420,7 @@ class BisonBoom(_LMBoomer):
       try:
          self._tsnfile = open(tsnfilename, 'r')
       except Exception, e:
-         raise LMError(currargs='Unable to open {}'.format(tsnfilename))
+         self._failGracefully(lmerr='Unable to open {}'.format(tsnfilename))
       self._obsoleteTime = expDate
       self._currTsn, self._currCount = self.moveToStart()
       
@@ -543,7 +543,7 @@ class UserBoom(_LMBoomer):
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
-         self._failGracefully(e)
+         self._failGracefully(lmerr=e)
          
       self._fieldNames = self.occParser.header
       self.modelMask = mdlMask
@@ -616,12 +616,12 @@ class UserBoom(_LMBoomer):
          except Exception, e:
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
-            self._failGracefully(e)
+            self._failGracefully(lmerr=e)
             break
 
       if self._existKillFile():
          self.log.info('LAST CHECKED line {} (killfile)'.format(self.nextStart))
-         self._failGracefully(None)
+         self._failGracefully()
 
 # ...............................................
    def _simplifyName(self, longname):
@@ -676,7 +676,7 @@ class GBIFBoom(_LMBoomer):
       super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
       if taxonSourceName is None:
-         self._failGracefully('Missing taxonomic source')
+         self._failGracefully(lmerr='Missing taxonomic source')
       else:
          txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
@@ -684,7 +684,7 @@ class GBIFBoom(_LMBoomer):
       try:
          self._dumpfile = open(occfilename, 'r')
       except Exception, e:
-         raise LMError('Failed to open {}'.format(occfilename))
+         self._failGracefully(lmerr='Failed to open {}'.format(occfilename))
       csv.field_size_limit(sys.maxsize)
       self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
                
@@ -753,10 +753,10 @@ class GBIFBoom(_LMBoomer):
                                ProcessType.GBIF_TAXA_OCCURRENCE, 
                                dataCount, POINT_COUNT_MIN, data=dataChunk)
       except LMError, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
-      except Exception, e:
-         raise LMError(currargs=e.args, lineno=self.getLineno())
-
+      
 # ...............................................
    def chainOne(self):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
@@ -895,7 +895,7 @@ class iDigBioBoom(_LMBoomer):
       super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       intersectGrid=intersectGrid)
       if taxonSourceName is None:
-         self._failGracefully('Missing taxonomic source')
+         self._failGracefully(lmerr='Missing taxonomic source')
       else:
          txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
