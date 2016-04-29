@@ -68,9 +68,9 @@ class _LMBoomer(LMObject):
       import socket
       self.hostname = socket.gethostname().lower()
       self.userid = userid
-      self.algs = None
+      self.algs = []
       self.modelScenario = None
-      self.projScenarios = None
+      self.projScenarios = []
       self.modelMask = None
       self.projMask = None
       self.intersectGrid = None
@@ -410,8 +410,6 @@ class _LMBoomer(LMObject):
 # ...............................................
    def _processSDMChain(self, sciname, taxonSourceKeyVal, occProcessType,
                         dataCount, minPointCount, data=None):
-      self.log.debug('Processing {} with {} points and {} key'
-                     .format(sciname, dataCount, taxonSourceKeyVal))
       if sciname is not None:
          try:
             occ = self._createOrResetOccurrenceset(sciname, taxonSourceKeyVal, 
@@ -833,15 +831,26 @@ class GBIFBoom(_LMBoomer):
             line = self._csvreader.next()
             self._linenum += 1
             success = True
+            
+         except StopIteration, e:
+            self.log.debug('Finished file {} on line {}'
+                           .format(self._dumpfile.name, self._linenum))
+            self._dumpfile.close()
+            self._csvreader = None
+            self._linenum = -9999
+            success = True
+            
          except OverflowError, e:
-            self._linenum += 1
             self.log.debug( 'OverflowError on {} ({}), moving on'
                             .format(self._linenum, e))
+            self._linenum += 1
+            
          except Exception, e:
-            self.log.debug('Exception reading line {} ({})'
+            self.log.debug('Exception reading line {} ({}), moving on'
                            .format(self._linenum, e))
-            success = True
-         if parse:
+            self._linenum += 1
+         
+         if line and parse:
             # Post-parse, line is a dictionary
             line, specieskey = self._parseCSVRecord(line)
       return line, specieskey
@@ -891,7 +900,7 @@ class GBIFBoom(_LMBoomer):
       if self._currSpeciesKey is None:
          self._currRec, self._currSpeciesKey = self._getCSVRecord()
          
-      while not completeChunk:
+      while self._currRec and not completeChunk:
          # If first record of chunk
          if currKey is None:
             currKey = self._currSpeciesKey
@@ -1105,14 +1114,20 @@ boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                          IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
+taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
+
+
+
 boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
                             providerListFile=PROVIDER_DUMP_FILE,
                             mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME)
-                   
-taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
+speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+
+
+
 (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
              familyStr, genusStr, speciesStr, genuskey, 
              retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
