@@ -469,6 +469,8 @@ CREATE OR REPLACE VIEW lm3.lm_fullOccurrenceset (
    tx_order,
    family,
    genus,
+   rank,
+   canonical
    sciname,
    genuskey,
    specieskey,
@@ -487,7 +489,8 @@ CREATE OR REPLACE VIEW lm3.lm_fullOccurrenceset (
           o.queryCount, o.dateLastModified, o.dateLastChecked, o.bbox, 
           o.epsgcode, o.status, o.statusmodtime, o.rawDlocation,
           n.taxonomySourceId, n.taxonomyKey, n.kingdom, n.phylum, n.tx_class,
-          n.tx_order, n.family, n.genus, n.sciname, n.genuskey, n.specieskey,
+          n.tx_order, n.family, n.genus, n.rank, n.canonical, n.sciname, 
+          n.genuskey, n.specieskey,
           n.keyHierarchy, n.lastcount, n.datecreated, n.datelastmodified,
           t.url, t.datasetIdentifier, t.dateCreated, t.dateLastModified
    FROM lm3.occurrenceset o, lm3.scientificname n, lm3.taxonomysource t

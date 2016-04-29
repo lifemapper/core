@@ -19,6 +19,10 @@ alter table lm3.projection add column verify varchar(64);
 alter table lm3.projection add column squid varchar(64);
 CREATE INDEX idx_prjSquid on lm3.Projection(squid);
 
+alter table lm3.ScientificName add column rank varchar(20);
+alter table lm3.ScientificName add column canonical text;
+
+
 -- ----------------------------------------------------------------------------
 \c speco
 alter table lm3.layer add column verify varchar(64);

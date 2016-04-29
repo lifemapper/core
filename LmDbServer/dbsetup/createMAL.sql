@@ -128,6 +128,8 @@ create table lm3.ScientificName
    tx_order text,
    family  text,
    genus text,
+   rank varchar(20),
+   canonical text,
    sciname text,
    genuskey int,
    specieskey int,
