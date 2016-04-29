@@ -290,9 +290,10 @@ class _LMBoomer(LMObject):
       else:
          # Use API to get and insert species name 
          try:
-            (rankStr, acceptedKey, acceptedStr, nubKey, canonicalStr, taxStatus, 
-              kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
-              speciesStr, genusKey, speciesKey, loglines) = GbifAPI.getTaxonomy(taxonKey)
+            (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+             nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+             loglines) = GbifAPI.getTaxonomy(taxonKey)
          except Exception, e:
             self.log.info('Failed lookup for key {}, ({})'.format(
                                                    taxonKey, e))
@@ -301,7 +302,9 @@ class _LMBoomer(LMObject):
             if taxStatus == 'ACCEPTED':
 #             if taxonKey in (retSpecieskey, acceptedkey, genuskey):
                currtime = dt.gmt().mjd
-               sciName = ScientificName(canonicalStr, 
+               sciName = ScientificName(scinameStr, 
+                               rank=rankStr, 
+                               canonicalName=canonicalStr,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
@@ -468,7 +471,10 @@ class BisonBoom(_LMBoomer):
 # ...............................................
    @property
    def nextStart(self):
-      return self._linenum + 1
+      if self.complete:
+         return 0
+      else:
+         return self._linenum + 1
 
 # ...............................................
    @property
@@ -600,11 +606,13 @@ class UserBoom(_LMBoomer):
 # ...............................................
    @property
    def nextStart(self):
-      try:
-         num = self.occParser.keyFirstRec
-      except:
-         num = 0
-      return num
+      if self.complete:
+         return 0
+      else:
+         try:
+            return self.occParser.keyFirstRec
+         except:
+            return 0
 
 # ...............................................
    def moveToStart(self):
@@ -758,7 +766,10 @@ class GBIFBoom(_LMBoomer):
 # ...............................................
    @property
    def nextStart(self):
-      return self._currKeyFirstRecnum
+      if self.complete:
+         return 0
+      else:
+         return self._currKeyFirstRecnum
    
 # ...............................................
    def _readProviderKeys(self, providerKeyFile, providerKeyColname):
@@ -852,7 +863,6 @@ class GBIFBoom(_LMBoomer):
             self.log.debug('Finished file {} on line {}'
                            .format(self._dumpfile.name, self._linenum))
             self._dumpfile.close()
-            self._linenum = -9999
             success = True
             
          except OverflowError, e:
@@ -933,8 +943,6 @@ class GBIFBoom(_LMBoomer):
             self._currRec, self._currSpeciesKey = self._getCSVRecord()
             if self._currRec is None:
                completeChunk = True
-               self.log.debug('Ended on line {} (chunk started on {})' 
-                              .format(self._linenum, self._currKeyFirstRecnum))
       self.log.debug('Returning {} records for {} (starting on line {})' 
                      .format(currCount, currKey, self._currKeyFirstRecnum))
       return currKey, currCount, currChunk
@@ -992,7 +1000,10 @@ class iDigBioBoom(_LMBoomer):
 # ...............................................
    @property
    def nextStart(self):
-      return self._linenum+1
+      if self.complete:
+         return 0
+      else:
+         return self._linenum+1
 
 # ...............................................
    def _getCurrTaxon(self):

@@ -3048,6 +3048,8 @@ class MAL(DbPostgresql):
          name = self._getColumnValue(row, idxs, ['sciname'])
          
          if name is not None:
+            canonical = self._getColumnValue(row, idxs, ['canonical'])
+            rank = self._getColumnValue(row, idxs, ['rank'])
             kingdom = self._getColumnValue(row, idxs, ['kingdom'])
             phylum = self._getColumnValue(row, idxs, ['phylum']) 
             txClass = self._getColumnValue(row, idxs, ['tx_class'])
@@ -3065,7 +3067,8 @@ class MAL(DbPostgresql):
             spkey = self._getColumnValue(row, idxs, ['specieskey'])
             hier = self._getColumnValue(row, idxs, ['keyhierarchy'])
             id = self._getColumnValue(row, idxs, ['scientificnameid'])
-            sciname = ScientificName(name, kingdom=kingdom, phylum=phylum,  
+            sciname = ScientificName(name, rank=rank, canonicalName=canonical, 
+                                     kingdom=kingdom, phylum=phylum,  
                                      txClass=txClass, txOrder=txOrder, 
                                      family=family, genus=genus, 
                                      lastOccurrenceCount=lcnt, 

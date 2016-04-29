@@ -44,14 +44,14 @@ from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
          IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
          IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_URL_PREFIX, 
          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
-         IDIGBIO_GBIFID_FIELD, IDIGBIO_RETURN_FIELDS,
+         IDIGBIO_GBIFID_FIELD, 
          
          ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY,  
          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
          ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
          ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
          
-         URL_ESCAPES, HTTPStatus, DWCNames, IDIGBIO_RETURN_FIELDS)
+         URL_ESCAPES, HTTPStatus, DWCNames)
 
 # .............................................................................
 class APIQuery(object):
@@ -529,11 +529,10 @@ class GbifAPI(APIQuery):
       taxAPI = GbifAPI(service=GBIF_SPECIES_SERVICE, key=taxonKey)
       try:
          taxAPI.query()
+         scinameStr = taxAPI._getOutputVal(taxAPI.output, 'scientificName')
          kingdomStr = taxAPI._getOutputVal(taxAPI.output, 'kingdom')
          phylumStr = taxAPI._getOutputVal(taxAPI.output, 'phylum')
-         # Missing class string in GBIF output
-#          classStr = taxAPI._getOutputVal(taxAPI.output, '')
-         classStr = None
+         classStr = taxAPI._getOutputVal(taxAPI.output, 'class')
          orderStr = taxAPI._getOutputVal(taxAPI.output, 'order')
          familyStr = taxAPI._getOutputVal(taxAPI.output, 'family')
          genusStr = taxAPI._getOutputVal(taxAPI.output, 'genus')
@@ -543,11 +542,11 @@ class GbifAPI(APIQuery):
          speciesKey = taxAPI._getOutputVal(taxAPI.output, 'speciesKey')
          acceptedKey = taxAPI._getOutputVal(taxAPI.output, 'acceptedKey')
          nubKey = taxAPI._getOutputVal(taxAPI.output, 'nubKey')
-         taxstatus = taxAPI._getOutputVal(taxAPI.output, 'taxonomicStatus')
+         taxStatus = taxAPI._getOutputVal(taxAPI.output, 'taxonomicStatus')
          acceptedStr = taxAPI._getOutputVal(taxAPI.output, 'accepted')
          canonicalStr = taxAPI._getOutputVal(taxAPI.output, 'canonicalName')
          loglines = []
-         if taxstatus != 'ACCEPTED':
+         if taxStatus != 'ACCEPTED':
             try:
                loglines.append(taxAPI.url)
                loglines.append('   genusKey = {}'.format(genusKey))
@@ -555,7 +554,7 @@ class GbifAPI(APIQuery):
                loglines.append('   acceptedKey = {}'.format(acceptedKey))
                loglines.append('   acceptedStr = {}'.format(acceptedStr))
                loglines.append('   nubKey = {}'.format(nubKey))
-               loglines.append('   taxonomicStatus = {}'.format(taxstatus))
+               loglines.append('   taxonomicStatus = {}'.format(taxStatus))
                loglines.append('   accepted = {}'.format(acceptedStr))
                loglines.append('   canonicalName = {}'.format(canonicalStr))
                loglines.append('   rank = {}'.format(rankStr))
@@ -564,18 +563,18 @@ class GbifAPI(APIQuery):
       except Exception, e:
          print str(e)
          raise
-      return (rankStr, acceptedKey, acceptedStr, nubKey, canonicalStr, taxstatus, 
-              kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
-              speciesStr, genusKey, speciesKey, loglines)
+      return (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+              nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+              familyStr, genusStr, speciesStr, genusKey, speciesKey, loglines)
  
 # ...............................................
    @staticmethod
-   def getPublishingOrg(puborgkey):
+   def getPublishingOrg(puborgKey):
       """
       @summary: Return title from one organization record with this key  
-      @param puborgkey: GBIF identifier for this publishing organization
+      @param puborgKey: GBIF identifier for this publishing organization
       """
-      orgAPI = GbifAPI(service=GBIF_ORGANIZATION_SERVICE, key=puborgkey)
+      orgAPI = GbifAPI(service=GBIF_ORGANIZATION_SERVICE, key=puborgKey)
       try:
          orgAPI.query()
          puborgName = orgAPI._getOutputVal(orgAPI.output, 'title')
@@ -774,19 +773,20 @@ if __name__ == '__main__':
                   tempvals = tempvals[1:]
                   currName = ' '.join(tempvals)
                   
-               (rankStr, acceptedkey, acceptedStr, nubkey, canonicalStr, taxstatus, 
-                kingdomStr, phylumStr, classStr, orderStr, familyStr, genusStr, 
-                speciesStr, genuskey, specieskey, loglines) = GbifAPI.getTaxonomy(currGbifTaxonId)
+               (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+                nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+                familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+                loglines) = GbifAPI.getTaxonomy(currGbifTaxonId)
                             
-               if taxstatus == 'ACCEPTED':
+               if taxStatus == 'ACCEPTED':
                   idigList.append([currGbifTaxonId, currReportedCount, currName])
                   
-               if taxstatus not in statii.keys():
-                  statii[taxstatus] = {}   
-               if rankStr not in statii[taxstatus].keys():
-                  statii[taxstatus][rankStr] = 1
+               if taxStatus not in statii.keys():
+                  statii[taxStatus] = {}   
+               if rankStr not in statii[taxStatus].keys():
+                  statii[taxStatus][rankStr] = 1
                else:
-                  statii[taxstatus][rankStr] += 1
+                  statii[taxStatus][rankStr] += 1
       f.close()
       # Print summary
       for stat, vals in statii.iteritems():

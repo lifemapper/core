@@ -240,16 +240,17 @@ class _LMWorker(_Worker):
          if sciName is None:
             # Use API to get and insert species name 
             try:
-               (rankStr, acceptedKey, acceptedStr, nubKey, canonicalStr, 
-                taxStatus, kingdomStr, phylumStr, classStr, orderStr, familyStr, 
-                genusStr, speciesStr, genusKey, speciesKey, 
+               (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+                nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+                familyStr, genusStr, speciesStr, genusKey, speciesKey, 
                 loglines) = GbifAPI.getTaxonomy(taxonKey)
             except LmHTTPError, e:
                self.log.info('Failed lookup for key {}, ({})'.format(
                                                       speciesKey, e.msg))
             if taxStatus == 'ACCEPTED':
                currtime = dt.gmt().mjd
-               sciName = ScientificName(speciesStr, 
+               sciName = ScientificName(scinameStr,
+                               rank=rankStr, canonicalName=canonicalStr, 
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
                                family=familyStr, genus=genusStr, 
@@ -277,8 +278,8 @@ class _LMWorker(_Worker):
          occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
                                                              ARCHIVE_USER)
          if not occs:
-            occ = OccurrenceLayer(sciname.scientificName, 
-                  name=sciname.scientificName, fromGbif=False, 
+            occ = OccurrenceLayer(sciname.name, 
+                  name=sciname.name, fromGbif=False, 
                   queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
                   ogrType=wkbPoint, userId=ARCHIVE_USER,
                   primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
@@ -1342,8 +1343,8 @@ class GBIFChainer(_LMWorker):
          occs = self._scribe.getOccurrenceSetsForScientificName(sciName, 
                                                        ARCHIVE_USER)
          if not occs:
-            occ = OccurrenceLayer(sciName.scientificName, 
-                  name=sciName.scientificName, fromGbif=True, 
+            occ = OccurrenceLayer(sciName.name, 
+                  name=sciName.name, fromGbif=True, 
                   queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
                   ogrType=wkbPoint, ogrFormat='CSV', 
                   primaryEnv=PrimaryEnvironment.TERRESTRIAL,

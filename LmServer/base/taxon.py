@@ -72,6 +72,12 @@ class ScientificName(LMObject):
       @param id: The database id for the object
       """
       self._dbId = id
+      
+   @property
+   def name(self):
+      if self.canonicalName is None:
+         return self.scientificName
+      return self.canonicalName
 
 #    @property
 #    def rank(self):
