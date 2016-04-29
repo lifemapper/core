@@ -25,8 +25,9 @@ from LmServer.base.lmobj import LMObject
 
 # ..............................................................................
 class ScientificName(LMObject):
-   def __init__(self, scientificName, kingdom=None, phylum=None, txClass=None, 
-                txOrder=None, family=None, genus=None, lastOccurrenceCount=None, 
+   def __init__(self, scientificName, rank=None, canonicalName=None, 
+                kingdom=None, phylum=None, txClass=None, txOrder=None, 
+                family=None, genus=None, lastOccurrenceCount=None, 
                 createTime=None, modTime=None, 
                 taxonomySourceId=None, taxonomySourceKey=None, 
                 taxonomySourceGenusKey=None, taxonomySourceSpeciesKey=None, 
@@ -37,6 +38,8 @@ class ScientificName(LMObject):
       LMObject.__init__(self)
       # species
       self.scientificName = scientificName
+      self.canonicalName = canonicalName
+      self.rank = rank
       self.kingdom = kingdom 
       self.phylum = phylum
       self.txClass = txClass
@@ -70,14 +73,14 @@ class ScientificName(LMObject):
       """
       self._dbId = id
 
-   @property
-   def rank(self):
-      if self._sourceKey is not None:
-         if (self._sourceSpeciesKey is not None and
-             self._sourceKey == self._sourceSpeciesKey):
-            return 'SPECIES' 
-         elif (self._sourceGenusKey is not None and 
-               self._sourceKey == self._sourceGenusKey):
-            return 'GENUS'
-         else:
-            return None
+#    @property
+#    def rank(self):
+#       if self._sourceKey is not None:
+#          if (self._sourceSpeciesKey is not None and
+#              self._sourceKey == self._sourceSpeciesKey):
+#             return 'SPECIES' 
+#          elif (self._sourceGenusKey is not None and 
+#                self._sourceKey == self._sourceGenusKey):
+#             return 'GENUS'
+#          else:
+#             return None
