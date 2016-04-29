@@ -344,7 +344,7 @@ class _LMBoomer(LMObject):
          if isinstance(sciname, ScientificName):
             occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
                                                                 self.userid)
-            taxonName = sciname.scientificName
+            taxonName = sciname.name
          elif isinstance(sciname, StringType) or isinstance(sciname, UnicodeType):
             occs = self._scribe.getOccurrenceSetsForName(sciname, userid=self.userid)
             taxonName = sciname
