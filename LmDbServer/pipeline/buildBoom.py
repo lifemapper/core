@@ -82,17 +82,21 @@ class Archivist(Daemon):
    # .............................
    def run(self):
       try:
+         self.log.info('Moving to start ...')
          self.boomer.moveToStart()
          while self.keepRunning:
             try:
+               self.log.info('Chaining one ...')
                self.boomer.chainOne()
             except:
+               self.log.info('Saving next start ...')
                self.boomer.saveNextStart()
+               raise
             else:
                time.sleep(10)
       finally:
          self.boomer.close()
-      self.log.debug('Stopping Archivist')
+      self.log.debug('Stopped Archivist')
     
    # .............................
    def onUpdate(self):

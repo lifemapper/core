@@ -368,6 +368,8 @@ class _LMBoomer(LMObject):
 # ...............................................
    def _processSDMChain(self, sciname, taxonSourceKeyVal, occProcessType,
                         dataCount, minPointCount, data=None):
+      self.log.debug('Processing {} with {} points and {} key'
+                     .format(sciname, dataCount, taxonSourceKeyVal))
       if sciname is not None:
          try:
             occ = self._createOrResetOccurrenceset(sciname, taxonSourceKeyVal, 
@@ -699,9 +701,11 @@ class GBIFBoom(_LMBoomer):
       self._providers, self._provCol = self._readProviderKeys(providerListFile, 
                                                          GBIF_PROVIDER_FIELD)
       self._keyCol = self._fieldnames.index(GBIF_TAXONKEY_FIELD)
-      self._linenum = 0
       self._obsoleteTime = expDate
+      self._linenum = 0
       self._currKeyFirstRecnum = None
+      self._currRec = None
+      self._currSpeciesKey = None
 
 # ...............................................
    def close(self):
@@ -1057,7 +1061,7 @@ from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.log import DaemonLogger
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
-         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
+         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE, PROVIDER_DUMP_FILE)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
@@ -1073,6 +1077,12 @@ boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                          IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
+boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
+                            providerListFile=PROVIDER_DUMP_FILE,
+                            mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
                    
 taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
 (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
