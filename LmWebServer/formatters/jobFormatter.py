@@ -55,16 +55,17 @@ class JobFormatter(Formatter):
       @return: A response containing the content and metadata of the format 
                   operation
       @rtype: FormatterResponse
+      @todo: Always use GeoTIFFs
+      @todo: Change all layer elements
+      @todo: Remove jobType
       """
       if isinstance(self.obj, SDMModelJob):
          dObj = self.obj.jobData._dataObj
          if dObj.algorithmCode == 'ATT_MAXENT':
-            jobType = "3"
             processType = ProcessType.ATT_MODEL
             #rasterFormat = "image/x-aaigrid"
             rasterFormat = "AAIGrid"
          else:
-            jobType = "1"
             processType = ProcessType.OM_MODEL
             #rasterFormat = "image/tiff"
             rasterFormat = "GTiff"
@@ -77,7 +78,6 @@ class JobFormatter(Formatter):
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
          
-         SubElement(tree, "jobType", value=jobType)
          SubElement(tree, "processType", value=processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "parentUrl", value=dObj.metadataUrl)
@@ -134,12 +134,10 @@ class JobFormatter(Formatter):
       elif isinstance(self.obj, SDMProjectionJob):
          dObj = self.obj.jobData._dataObj
          if dObj.algorithmCode == 'ATT_MAXENT':
-            jobType = "4"
             processType = ProcessType.ATT_PROJECT
             #rasterFormat = "image/x-aaigrid"
             rasterFormat = "AAIGrid"
          else:
-            jobType = "2"
             processType = ProcessType.OM_PROJECT
             #rasterFormat = "image/tiff"
             rasterFormat = "GTiff"
@@ -158,7 +156,6 @@ class JobFormatter(Formatter):
          postEl = SubElement(postPEl, "post")
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
-         SubElement(tree, "jobType", value=jobType)
          SubElement(tree, "processType", value=processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "parentUrl", value=dObj.getModel().metadataUrl)
@@ -215,8 +212,15 @@ class JobFormatter(Formatter):
          
          for lyr in dObj.layers:
             # get directly from EnvironmentalLayer
-            lyrUrl = lyr.getURL(format=rasterFormat)
-            SubElement(layers, "layer", value=lyrUrl)
+            try:
+               lyrUrl = lyr.getURL(format=rasterFormat)
+            except:
+               lyrUrl = None
+            lyrEl = SubElement(layers, "layer")#, value=lyrUrl)
+            SubElement(lyrEl, "identifier", value=lyr.verify)
+            if lyrUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=lyrUrl)
+            
 
          # Add mask
          mask = dObj.getMask()
@@ -230,7 +234,6 @@ class JobFormatter(Formatter):
          temp = temp.replace('&gt;', '>')
          cont = temp
       elif isinstance(self.obj, SDMOccurrenceJob):
-         jobType = self.obj.processType
          jobId = self.obj.jobData.jid
          processType = self.obj.processType
          
@@ -242,7 +245,6 @@ class JobFormatter(Formatter):
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
 
-         SubElement(tree, "jobType", value=self.obj.processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "processType", value=self.obj.processType)
          SubElement(tree, "parentUrl", value="None")
@@ -269,7 +271,6 @@ class JobFormatter(Formatter):
          temp = temp.replace('&gt;', '>')
          cont = temp
       elif isinstance(self.obj, RADIntersectJob):
-         jobType = ProcessType.RAD_INTERSECT
          jobId = self.obj.jobData.jid
          processType = ProcessType.RAD_INTERSECT
          tree = Element("Job")
@@ -279,7 +280,6 @@ class JobFormatter(Formatter):
          postEl = SubElement(postPEl, "post")
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
-         SubElement(tree, "jobType", value=self.obj.processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "processType", value=self.obj.processType)
          SubElement(tree, "parentUrl", value="None")
@@ -315,10 +315,9 @@ class JobFormatter(Formatter):
       elif isinstance(self.obj, (RADSplotchJob, RADSwapJob, RADCompressJob, 
                                  RADCalculateJob, RADBuildGridJob, RADGradyJob)):
          cont = self.obj.serialize()
-         jobType = self.obj.processType
          jobId = self.obj.jobData.jid
          
       else:
          raise LMError("Don't know how to format object of type: %s for job" % str(self.obj.__class__))
       
-      return FormatterResponse(cont, contentType="application/xml", filename="job%s-%s.xml" % (jobType, jobId))
+      return FormatterResponse(cont, contentType="application/xml", filename="job%s-%s.xml" % (self.obj.processType, jobId))
