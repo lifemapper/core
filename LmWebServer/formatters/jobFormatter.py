@@ -55,9 +55,6 @@ class JobFormatter(Formatter):
       @return: A response containing the content and metadata of the format 
                   operation
       @rtype: FormatterResponse
-      @todo: Always use GeoTIFFs
-      @todo: Change all layer elements
-      @todo: Remove jobType
       """
       if isinstance(self.obj, SDMModelJob):
          dObj = self.obj.jobData._dataObj
@@ -119,12 +116,22 @@ class JobFormatter(Formatter):
          
          for lyr in dObj.layers:
             lyrUrl = lyr.getURL(format=GEOTIFF_INTERFACE)
-            SubElement(layers, "layer", value=lyrUrl)
+            lyrEl = SubElement(layers, "layer")
+            SubElement(lyrEl, "identifier", value=lyr.verify)
+            if lyrUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=lyrUrl)
 
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            SubElement(tree, "mask", value=mask.getURL(format=GEOTIFF_INTERFACE))
+            mdlEl = SubElement(tree, "mask")
+            try:
+               maskUrl = mask.getURL(format=GEOTIFF_INTERFACE)
+            except:
+               maskUrl = None
+            SubElement(mdlEl, "identifier", value=mask.verify)
+            if maskUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=maskUrl)
          
          cont = tostring(tree)
       elif isinstance(self.obj, SDMProjectionJob):
@@ -217,7 +224,14 @@ class JobFormatter(Formatter):
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            SubElement(tree, "mask", value=mask.getURL(format=GEOTIFF_INTERFACE))
+            mdlEl = SubElement(tree, "mask")
+            try:
+               maskUrl = mask.getURL(format=GEOTIFF_INTERFACE)
+            except:
+               maskUrl = None
+            SubElement(mdlEl, "identifier", value=mask.verify)
+            if maskUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=maskUrl)
          
          temp = tostring(tree)
          #temp = temp.replace('<![CDATA[>', '<![CDATA[')
@@ -286,6 +300,7 @@ class JobFormatter(Formatter):
             lyr = self.obj.dataObj['layerset'][lyrKey]
             lyrEl = SubElement(layerSet, "layer")
             SubElement(lyrEl, "index", value=lyrKey)
+            SubElement(lyrEl, "identifier", value=lyr.verify)
             SubElement(lyrEl, "url", value=lyr['layerUrl'])
             SubElement(lyrEl, "isRaster", value=str(lyr['isRaster']))
             try:
