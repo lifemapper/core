@@ -43,3 +43,7 @@ Layer Changes
 #############
    Add constant 'CONVERT_TOOL' to 'LmCompute - plugins - maxent' in the compute 
    config file.  It should be set to 'density.Convert'
+   
+   Add subdirectory 'retrieved' under LmCompute layers directory.  By default,
+   at: /share/lm/data/layers/retrieved  - this directory will contain downloaded
+   and converted layers
