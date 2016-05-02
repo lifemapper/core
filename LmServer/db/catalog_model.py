@@ -3237,16 +3237,27 @@ class MAL(DbPostgresql):
 # ...............................................
    def findOrUpdateTaxonRec(self, taxonSourceId, taxonkey, kingdomStr, phylumStr, 
                             classStr, orderStr, familyStr, genusStr, scinameStr, 
-                            genuskey, specieskey, keyhierarchy, count):
+                            canonicalStr, rankStr, genuskey, specieskey, 
+                            keyhierarchy, count):
       updated = False
       scinameId = None
       currtime = mx.DateTime.gmt().mjd
       try:
-         row, idxs = self.executeSelectOneFunction('lm_findOrUpdateTaxon', taxonSourceId,
-                                                   taxonkey, kingdomStr, phylumStr, 
-                                                   classStr, orderStr, familyStr, 
-                                                   genusStr, scinameStr, genuskey, 
-                                                   specieskey, keyhierarchy, 
+         row, idxs = self.executeSelectOneFunction('lm_findOrUpdateTaxon', 
+                                                   taxonSourceId,
+                                                   taxonkey, 
+                                                   kingdomStr, 
+                                                   phylumStr, 
+                                                   classStr, 
+                                                   orderStr, 
+                                                   familyStr, 
+                                                   genusStr, 
+                                                   scinameStr, 
+                                                   canonicalStr,
+                                                   rankStr,
+                                                   genuskey, 
+                                                   specieskey, 
+                                                   keyhierarchy, 
                                                    count, currtime)
       except Exception, e:
          raise e
@@ -3263,13 +3274,16 @@ class MAL(DbPostgresql):
 # ...............................................
    def insertTaxonRec(self, taxonSourceId, taxonkey, kingdomStr, phylumStr, 
                       classStr, orderStr, familyStr, genusStr, scinameStr, 
-                      genuskey, specieskey, keyhierarchy, count):
+                      canonicalStr, rankStr, genuskey, specieskey, 
+                      keyhierarchy, count):
       inserted = False
       scinameId, updated = self.findOrUpdateTaxonRec(taxonSourceId, taxonkey, 
                                                      kingdomStr, phylumStr, 
                                                      classStr, orderStr, 
                                                      familyStr, genusStr, 
-                                                     scinameStr, genuskey, 
+                                                     scinameStr, 
+                                                     canonicalStr, rankStr, 
+                                                     genuskey, 
                                                      specieskey, keyhierarchy, 
                                                      count)
       if scinameId is None:
@@ -3299,6 +3313,8 @@ class MAL(DbPostgresql):
                                                 sciName.txClass, sciName.txOrder,
                                                 sciName.family, sciName.genus,
                                                 sciName.scientificName,
+                                                sciName.canonicalName, 
+                                                sciName.rank, 
                                                 sciName._sourceGenusKey,
                                                 sciName._sourceSpeciesKey,
                                                 sciName._sourceKeyHierarchy,

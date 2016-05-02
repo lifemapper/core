@@ -6042,6 +6042,8 @@ CREATE OR REPLACE FUNCTION lm3.lm_insertTaxon(tsourceid int,
                                               fam  varchar,
                                               gen  varchar,
                                               name varchar,
+                                              can varchar,
+                                              rnk varchar,
                                               gkey int,
                                               skey int,
                                               hierkey varchar,
@@ -6060,11 +6062,13 @@ BEGIN
       begin
          INSERT INTO lm3.ScientificName (taxonomysourceid, taxonomykey, kingdom, 
                                          phylum, tx_class, tx_order, family, 
-                                         genus, sciname, genuskey, specieskey, 
+                                         genus, sciname, canonical, rank, 
+                                         genuskey, specieskey, 
                                          keyHierarchy, lastcount, 
                                          datecreated, datelastmodified)
                  VALUES (tsourceid, tkey, king, phyl, clss, ordr, fam, gen, 
-                         name, gkey, skey, hierkey, cnt, currtime, currtime);
+                         name, can, rnk, gkey, skey, 
+                         hierkey, cnt, currtime, currtime);
          IF FOUND THEN 
             SELECT INTO id last_value FROM lm3.scientificname_scientificnameid_seq;
          END IF;
@@ -6158,6 +6162,8 @@ CREATE OR REPLACE FUNCTION lm3.lm_findOrUpdateTaxon(tsourceid int,
                                             fam  varchar,
                                             gen  varchar,
                                             name varchar,
+                                            can varchar,
+                                            rnk varchar,
                                             gkey int,
                                             skey int,
                                             hierkey varchar,
@@ -6175,14 +6181,16 @@ BEGIN
       BEGIN
          IF (rec.kingdom != king OR rec.phylum != phyl OR rec.tx_class != clss
              OR rec.tx_order != ordr OR rec.family != fam OR rec.genus != gen
-             OR rec.sciname != name OR rec.genuskey != gkey 
+             OR rec.sciname != name 
+             OR rec.canonical != can OR rec.rank != rnk
+             OR rec.genuskey != gkey 
              OR rec.specieskey != skey OR rec.keyHierarchy != hierkey) THEN
             UPDATE lm3.ScientificName 
                SET (kingdom, phylum, tx_class, tx_order, family, genus, 
-                    sciname, genuskey, specieskey, keyHierarchy, 
+                    sciname, canonical, rank, genuskey, specieskey, keyHierarchy, 
                     lastcount, datelastmodified)
-               =   (king, phyl, clss, ordr, fam, gen, name, gkey, skey, hierkey,
-                    cnt, currtime)
+               =   (king, phyl, clss, ordr, fam, gen, name, can, rnk, gkey, skey, 
+                    hierkey, cnt, currtime)
                WHERE taxonomysourceid = tsourceid AND taxonomykey = tkey
                RETURNING * INTO rec;
          ELSEIF rec.lastcount != cnt THEN
