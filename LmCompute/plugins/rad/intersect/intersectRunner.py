@@ -52,7 +52,7 @@ class IntersectRunner(PythonRunner):
       lyrMgr = LayerManager(self.env.getJobDataPath())
       
       self.log.debug("Layer manager has been initialized")
-      sgLayerId = self.job.shapegrid.layerId
+      sgLayerId = self.job.shapegrid.identifier
       sgUrl = self.job.shapegrid.shapegridUrl
       
       self.shapegrid = {
@@ -85,9 +85,8 @@ class IntersectRunner(PythonRunner):
             lyrVals['isRaster'] = False
             lyrFrmt = LayerFormat.SHAPE
             
-         #TODO: Make sure this works after job formatter change
-         lyrVals['dlocation'] = lyrMgr.getLayerFilename(lyr.identifier, lyrFrmt,
-                                                        layerUrl=lyr.layerUrl)
+         lyrVals['dlocation'] = lyrMgr.getLayerFilename(lyr.identifier, 
+                                             lyrFrmt, layerUrl=lyr.layerUrl)
 
          try:
             lyrVals['isOrganism'] = True

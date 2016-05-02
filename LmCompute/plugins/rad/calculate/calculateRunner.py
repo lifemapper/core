@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -247,7 +247,7 @@ class CalculateRunner(PythonRunner):
       lyrMgr = LayerManager(self.env.getJobDataPath())
        
       sgLayerId = self.job.shapegrid.layerId
-      sgUrl = self.job.shapegrid.url
+      sgUrl = self.job.shapegrid.shapegridUrl
       
       self.shapegrid = {
                         #TODO: Make sure this works correctly

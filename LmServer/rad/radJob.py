@@ -944,6 +944,7 @@ class RADIntersectJobData(_JobData):
       shapegridVals = {
                        'dlocation': shapegrid.getDLocation(),
                        'localIdIdx': shapegrid.getLocalIdIndex(),
+                       'identifier': shaepgrid.verify,
                        'shapegridUrl' : "%s/shapefile" % shapegrid.metadataUrl
                       }
 
@@ -1064,7 +1065,8 @@ class RADMatrixJobData(_JobData):
       # Shapegrid
       if processtype in [ProcessType.RAD_SPLOTCH, ProcessType.RAD_CALCULATE]:
          self.shapegrid = LmAttObj(name="shapegrid")
-         self.shapegrid.url = "%s/shapefile" % shapegrid.metadataUrl
+         self.shapegrid.shapegridUrl = "%s/shapefile" % shapegrid.metadataUrl
+         self.shapegrid.identifier = shapegrid.verify
          self.shapegrid.localIdIndex = shapegrid.getLocalIdIndex()
          self.shapegrid.cellSides = shapegrid.cellsides
          
