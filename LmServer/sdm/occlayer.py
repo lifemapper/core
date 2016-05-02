@@ -33,7 +33,8 @@ from LmServer.base.layer import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
 from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, FeatureNames,
-                    ID_PLACEHOLDER, LMFileType, LMServiceType, LMServiceModule)
+                    ID_PLACEHOLDER, LMFileType, LMServiceType, LMServiceModule,
+                    LOCAL_ID_FIELD_NAMES)
 
 # .............................................................................
 # .............................................................................
@@ -547,7 +548,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       yname = 'latitude'
       for pt in allPoints:
          if idname is None:
-            for name in self.getLocalIdFieldNameOptions():
+            for name in LOCAL_ID_FIELD_NAMES:
                val = getXmlValueFromTree(pt, name)
                if val is not None:
                   idname = name

@@ -2115,7 +2115,7 @@ class Vector(_Layer):
                self._localIdIdx = i
                foundLocalId = True
             # Don't reset if already found
-            if not foundLocalId and fldname in self.getLocalIdFieldNameOptions():
+            if not foundLocalId and fldname in LOCAL_ID_FIELD_NAMES:
                self._localIdIdx = i
                foundLocalId = True
             featureAttributes[i] = (fld.GetNameRef(), fld.GetType())
@@ -2206,7 +2206,7 @@ class Vector(_Layer):
                self._localIdIdx = i
                foundLocalId = True
             # Don't reset if already found
-            if not foundLocalId and fldname in self.getLocalIdFieldNameOptions():
+            if not foundLocalId and fldname in LOCAL_ID_FIELD_NAMES:
                self._localIdIdx = i
                foundLocalId = True
             featureAttributes[i] = (fld.GetNameRef(), fld.GetType())
@@ -2397,7 +2397,7 @@ class Vector(_Layer):
    def getFieldIndex(self, fieldname):      
       if self._featureAttributes:
          fieldIdx = None
-         if fieldname in self.getLocalIdFieldNameOptions():
+         if fieldname in LOCAL_ID_FIELD_NAMES:
             findLocalId = True
          else:
             findLocalId = False
