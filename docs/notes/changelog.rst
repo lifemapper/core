@@ -2,7 +2,13 @@
 Changes made to current version that need to be incorporated
 ############################################################
 
-
+Java Environment Variable
+#########################
+* The default memory options for Java are inadequate to actually start java, add
+    the following environment variable
+    
+    JAVA_TOOL_OPTIONS=-Xmx512m
+    
 
 Cron job changes
 ################
