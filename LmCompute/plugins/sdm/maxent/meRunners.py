@@ -184,13 +184,21 @@ class MEModelRunner(ApplicationRunner):
       self.log.debug("-------------------------------------------------------")
 
       # Layers
-      #TODO: This needs to end up as a list of layer id, layer url tuples where
-      #         layer url can be optional (None)
-      layers = self.job.layers
+      layers = []
+      for lyr in self.job.layers:
+         try:
+            lUrl = lyr.layerUrl
+         except:
+            lUrl = None
+         layers.append((lyr.identifier, lUrl))
       
       try:
-         #TODO: This needs to be a layer id, layer url tuple
-         mask = self.job.mask
+         mEl = self.job.mask
+         try:
+            mUrl = mEl.layerUrl
+         except:
+            mUrl = None
+         mask = (mEl.identifier, mUrl)
       except: # mask not provided
          mask = (None, None)
       
@@ -388,12 +396,22 @@ optional args can contain any flags understood by Maxent -- for example, a
       self.log.debug("MaxEnt Version: %s" % ME_VERSION)
       self.log.debug("-------------------------------------------------------")
       
-      #TODO: Make this a list of layer id , layer url tuples (where url can be
-      #         None)
-      layers = self.job.layers
+      # Layers
+      layers = []
+      for lyr in self.job.layers:
+         try:
+            lUrl = lyr.layerUrl
+         except:
+            lUrl = None
+         layers.append((lyr.identifier, lUrl))
+
       try:
-         #TODO: This needs to be a tuple
-         mask = self.job.mask
+         mEl = self.job.mask
+         try:
+            mUrl = mEl.layerUrl
+         except:
+            mUrl = None
+         mask = (mEl.identifier, mUrl)
       except: # mask not provided
          mask = (None, None)
       
