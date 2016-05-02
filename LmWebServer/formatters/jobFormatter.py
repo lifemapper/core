@@ -39,7 +39,7 @@ from LmServer.rad.radJob import (RADBuildGridJob, RADCompressJob,
                RADGradyJob)
 from LmServer.sdm.sdmJob import SDMModelJob, SDMProjectionJob, SDMOccurrenceJob
 
-from LmWebServer.common.lmconstants import (SCALE_DATA_TYPE, 
+from LmWebServer.common.lmconstants import (GEOTIFF_INTERFACE, SCALE_DATA_TYPE, 
                SCALE_PROJECTION_MAXIMUM, SCALE_PROJECTION_MINIMUM)
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse
 
@@ -59,15 +59,9 @@ class JobFormatter(Formatter):
       if isinstance(self.obj, SDMModelJob):
          dObj = self.obj.jobData._dataObj
          if dObj.algorithmCode == 'ATT_MAXENT':
-            jobType = "3"
             processType = ProcessType.ATT_MODEL
-            #rasterFormat = "image/x-aaigrid"
-            rasterFormat = "AAIGrid"
          else:
-            jobType = "1"
             processType = ProcessType.OM_MODEL
-            #rasterFormat = "image/tiff"
-            rasterFormat = "GTiff"
          jobId = self.obj.jobData.jid
          tree = Element("job")
          
@@ -77,7 +71,6 @@ class JobFormatter(Formatter):
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
          
-         SubElement(tree, "jobType", value=jobType)
          SubElement(tree, "processType", value=processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "parentUrl", value=dObj.metadataUrl)
@@ -122,27 +115,31 @@ class JobFormatter(Formatter):
          layers = SubElement(tree, "layers", attrib={"large" : str(largeScn)})
          
          for lyr in dObj.layers:
-            lyrUrl = lyr.getURL(format=rasterFormat)
-            SubElement(layers, "layer", value=lyrUrl)
+            lyrUrl = lyr.getURL(format=GEOTIFF_INTERFACE)
+            lyrEl = SubElement(layers, "layer")
+            SubElement(lyrEl, "identifier", value=lyr.verify)
+            if lyrUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=lyrUrl)
 
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            SubElement(tree, "mask", value=mask.getURL(format=rasterFormat))
+            mdlEl = SubElement(tree, "mask")
+            try:
+               maskUrl = mask.getURL(format=GEOTIFF_INTERFACE)
+            except:
+               maskUrl = None
+            SubElement(mdlEl, "identifier", value=mask.verify)
+            if maskUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=maskUrl)
          
          cont = tostring(tree)
       elif isinstance(self.obj, SDMProjectionJob):
          dObj = self.obj.jobData._dataObj
          if dObj.algorithmCode == 'ATT_MAXENT':
-            jobType = "4"
             processType = ProcessType.ATT_PROJECT
-            #rasterFormat = "image/x-aaigrid"
-            rasterFormat = "AAIGrid"
          else:
-            jobType = "2"
             processType = ProcessType.OM_PROJECT
-            #rasterFormat = "image/tiff"
-            rasterFormat = "GTiff"
          jobId = self.obj.jobData.jid
          mdl = dObj.getModel()
          
@@ -158,7 +155,6 @@ class JobFormatter(Formatter):
          postEl = SubElement(postPEl, "post")
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
-         SubElement(tree, "jobType", value=jobType)
          SubElement(tree, "processType", value=processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "parentUrl", value=dObj.getModel().metadataUrl)
@@ -215,13 +211,27 @@ class JobFormatter(Formatter):
          
          for lyr in dObj.layers:
             # get directly from EnvironmentalLayer
-            lyrUrl = lyr.getURL(format=rasterFormat)
-            SubElement(layers, "layer", value=lyrUrl)
+            try:
+               lyrUrl = lyr.getURL(format=GEOTIFF_INTERFACE)
+            except:
+               lyrUrl = None
+            lyrEl = SubElement(layers, "layer")#, value=lyrUrl)
+            SubElement(lyrEl, "identifier", value=lyr.verify)
+            if lyrUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=lyrUrl)
+            
 
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            SubElement(tree, "mask", value=mask.getURL(format=rasterFormat))
+            mdlEl = SubElement(tree, "mask")
+            try:
+               maskUrl = mask.getURL(format=GEOTIFF_INTERFACE)
+            except:
+               maskUrl = None
+            SubElement(mdlEl, "identifier", value=mask.verify)
+            if maskUrl is not None:
+               SubElement(lyrEl, "layerUrl", value=maskUrl)
          
          temp = tostring(tree)
          #temp = temp.replace('<![CDATA[>', '<![CDATA[')
@@ -230,7 +240,6 @@ class JobFormatter(Formatter):
          temp = temp.replace('&gt;', '>')
          cont = temp
       elif isinstance(self.obj, SDMOccurrenceJob):
-         jobType = self.obj.processType
          jobId = self.obj.jobData.jid
          processType = self.obj.processType
          
@@ -242,7 +251,6 @@ class JobFormatter(Formatter):
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
 
-         SubElement(tree, "jobType", value=self.obj.processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "processType", value=self.obj.processType)
          SubElement(tree, "parentUrl", value="None")
@@ -269,7 +277,6 @@ class JobFormatter(Formatter):
          temp = temp.replace('&gt;', '>')
          cont = temp
       elif isinstance(self.obj, RADIntersectJob):
-         jobType = ProcessType.RAD_INTERSECT
          jobId = self.obj.jobData.jid
          processType = ProcessType.RAD_INTERSECT
          tree = Element("Job")
@@ -279,7 +286,6 @@ class JobFormatter(Formatter):
          postEl = SubElement(postPEl, "post")
          SubElement(postEl, "jobServer", value="%s/jobs" % WEBSERVICES_ROOT)
          
-         SubElement(tree, "jobType", value=self.obj.processType)
          SubElement(tree, "jobId", value=jobId)
          SubElement(tree, "processType", value=self.obj.processType)
          SubElement(tree, "parentUrl", value="None")
@@ -294,6 +300,7 @@ class JobFormatter(Formatter):
             lyr = self.obj.dataObj['layerset'][lyrKey]
             lyrEl = SubElement(layerSet, "layer")
             SubElement(lyrEl, "index", value=lyrKey)
+            SubElement(lyrEl, "identifier", value=lyr.verify)
             SubElement(lyrEl, "url", value=lyr['layerUrl'])
             SubElement(lyrEl, "isRaster", value=str(lyr['isRaster']))
             try:
@@ -315,10 +322,9 @@ class JobFormatter(Formatter):
       elif isinstance(self.obj, (RADSplotchJob, RADSwapJob, RADCompressJob, 
                                  RADCalculateJob, RADBuildGridJob, RADGradyJob)):
          cont = self.obj.serialize()
-         jobType = self.obj.processType
          jobId = self.obj.jobData.jid
          
       else:
          raise LMError("Don't know how to format object of type: %s for job" % str(self.obj.__class__))
       
-      return FormatterResponse(cont, contentType="application/xml", filename="job%s-%s.xml" % (jobType, jobId))
+      return FormatterResponse(cont, contentType="application/xml", filename="job%s-%s.xml" % (self.obj.processType, jobId))

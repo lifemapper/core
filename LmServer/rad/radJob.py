@@ -944,6 +944,7 @@ class RADIntersectJobData(_JobData):
       shapegridVals = {
                        'dlocation': shapegrid.getDLocation(),
                        'localIdIdx': shapegrid.getLocalIdIndex(),
+                       'identifier': shaepgrid.verify,
                        'shapegridUrl' : "%s/shapefile" % shapegrid.metadataUrl
                       }
 
@@ -952,9 +953,11 @@ class RADIntersectJobData(_JobData):
          try:
             lyrVals['isRaster'] = lyr.gdalType is not None
             lyrVals['resolution'] = lyr.resolution
+            lyrVals['identifier'] = lyr.verify
             lyrVals['layerUrl'] = "%s/GTiff" % lyr.metadataUrl
          except:
             lyrVals['isRaster'] = False
+            lyrVals['identifier'] = lyr.verify
             lyrVals['layerUrl'] = "%s/shapefile" % lyr.metadataUrl
                         
          try:
@@ -1062,7 +1065,8 @@ class RADMatrixJobData(_JobData):
       # Shapegrid
       if processtype in [ProcessType.RAD_SPLOTCH, ProcessType.RAD_CALCULATE]:
          self.shapegrid = LmAttObj(name="shapegrid")
-         self.shapegrid.url = "%s/shapefile" % shapegrid.metadataUrl
+         self.shapegrid.shapegridUrl = "%s/shapefile" % shapegrid.metadataUrl
+         self.shapegrid.identifier = shapegrid.verify
          self.shapegrid.localIdIndex = shapegrid.getLocalIdIndex()
          self.shapegrid.cellSides = shapegrid.cellsides
          
