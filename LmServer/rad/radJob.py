@@ -952,9 +952,11 @@ class RADIntersectJobData(_JobData):
          try:
             lyrVals['isRaster'] = lyr.gdalType is not None
             lyrVals['resolution'] = lyr.resolution
+            lyrVals['identifier'] = lyr.verify
             lyrVals['layerUrl'] = "%s/GTiff" % lyr.metadataUrl
          except:
             lyrVals['isRaster'] = False
+            lyrVals['identifier'] = lyr.verify
             lyrVals['layerUrl'] = "%s/shapefile" % lyr.metadataUrl
                         
          try:
