@@ -405,7 +405,7 @@ class LayerManager(object):
       @summary: Attempts to create a layers database table
       """
       try:
-         self.con.execute("CREATE TABLE layers({lyrIdAtt} TEXT, {fpAtt} TEXT,          {ftypeAtt} INT, {statAtt} INT, {createAtt} REAL, {touchAtt} REAL, PRIMARY KEY (id, filetype))".format(
+         self.con.execute("CREATE TABLE layers({lyrIdAtt} TEXT, {fpAtt} TEXT, {ftypeAtt} INT, {statAtt} INT, {createAtt} REAL, {touchAtt} REAL, PRIMARY KEY ({lyrIdAtt}, {ftypeAtt}))".format(
                lyrIdAtt=LayerAttributes.LAYER_ID, 
                fpAtt=LayerAttributes.FILE_PATH, 
                ftypeAtt=LayerAttributes.FILE_TYPE,
