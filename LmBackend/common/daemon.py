@@ -29,6 +29,7 @@
 """
 import sys, os, time, atexit
 import signal
+import subprocess
 
 from LmCommon.common.log import DaemonLogger
 
@@ -190,6 +191,38 @@ class Daemon:
       self.stop()
       self.start()
    
+   # .............................
+   def status(self):
+      """
+      @summary: Check the status of the daemon
+      """
+      # Check for a pidfile to see if the daemon is running
+      try:
+         pf = file(self.pidfile,'r')
+         pid = int(pf.read().strip())
+         pf.close()
+      except IOError:
+         pid = None
+      
+      if pid:
+         cmd = 'ps -Alf | grep {} | grep -v grep | wc -l'.format(pid)
+         info, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+                                      stderr=subprocess.PIPE).communicate()
+         count = int(info.rstrip("\n"))
+         
+         if count == 1:
+            msg = "Status: Process {} is running at PID {}".format(
+                                       self.__class__.__name__, pid)
+         else:
+            msg = "Process {} is not running at PID {}, but lock file {} exists"\
+                  .format(self.__class__.__name__, pid)
+      else:
+         msg = "Process {} is not running".format(self.__class__.__name__)
+         
+      self.log.info(msg)
+      print msg
+      sys.exit(1)
+
    # .............................
    def update(self):
       """

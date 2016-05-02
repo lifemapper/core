@@ -127,9 +127,11 @@ if __name__ == "__main__":
          idig.stop()
       elif sys.argv[1].lower() == 'restart':
          idig.restart()
+      elif sys.argv[1].lower() == 'status':
+         idig.status()
       else:
-         print("Unknown command: {}" % sys.argv[1].lower())
+         print("Unknown command: {}".format(sys.argv[1].lower()))
          sys.exit(2)
    else:
-      print("usage: {} start|stop|update" % sys.argv[0])
+      print("usage: {} start|stop|update".format(sys.argv[0]))
       sys.exit(2)
