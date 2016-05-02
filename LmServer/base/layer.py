@@ -164,37 +164,46 @@ class _Layer(LMSpatialObject, ServiceObject):
       raise LMError(currargs='readData must be implemented in Subclass')
 
 # ...............................................
-   def computeHash(self, dlocation=None):
+   def computeHash(self, dlocation=None, content=None):
       """
       @summary: Compute the sha256sum of the file at dlocation.
       @return: hash string for data file
       """
-      if dlocation is None:
-         dlocation = self._dlocation
-      value = computeHash(dlocation)
+      if content is not None:
+         value = computeHash(content=content)
+      else:
+         if dlocation is None:
+            dlocation = self._dlocation
+         value = computeHash(dlocation=dlocation)
+
       return value
 
 # ...............................................
-   def verifyHash(self, hashval):
+   def verifyHash(self, hashval, dlocation=None, content=None):
       """
       @summary: Compute the sha256sum of the file at dlocation.
       @param hash: hash string to compare with data
       """
-      if self._dlocation is not None:
-         verified = verifyHash(self._dlocation, hashval)
+      if content is not None:
+         verified = verifyHash(hashval, content=content)
       else:
-         LMError('Cannot verify hash for missing data file {}'.format(self._dlocation))
+         if dlocation is None:
+            dlocation = self._dlocation
+         verified = verifyHash(hashval, dlocation=dlocation)
       return verified
    
 # ...............................................
-   def _setVerify(self, verify):
+   def _setVerify(self, verify, dlocation=None, content=None):
       if verify is not None:
          self._verify = verify
-      elif self._dlocation is not None:
-         value = self.computeHash(self._dlocation)
-         self._verify = value
       else:
-         self._verify = None
+         if content is not None:
+            value = self.computeHash(content=content)
+         else:
+            if dlocation is None:
+               dlocation = self._dlocation         
+            value = self.computeHash(dlocation=dlocation)
+         self._verify = value
 
 # ...............................................
    @property
