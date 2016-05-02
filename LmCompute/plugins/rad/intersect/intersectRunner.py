@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -25,8 +25,6 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-
-@todo: Store vector files using layer manager
 """
 import os
 from StringIO import StringIO
@@ -55,7 +53,7 @@ class IntersectRunner(PythonRunner):
       
       self.log.debug("Layer manager has been initialized")
       sgLayerId = self.job.shapegrid.layerId
-      sgUrl = self.job.shapegrid.url
+      sgUrl = self.job.shapegrid.shapegridUrl
       
       self.shapegrid = {
                         #TODO: Make sure this works correctly
@@ -88,8 +86,8 @@ class IntersectRunner(PythonRunner):
             lyrFrmt = LayerFormat.SHAPE
             
          #TODO: Make sure this works after job formatter change
-         lyrVals['dlocation'] = lyrMgr.getLayerFilename(lyr.layerId, lyrFrmt,
-                                                        layerUrl=lyr.url)
+         lyrVals['dlocation'] = lyrMgr.getLayerFilename(lyr.identifier, lyrFrmt,
+                                                        layerUrl=lyr.layerUrl)
 
          try:
             lyrVals['isOrganism'] = True
