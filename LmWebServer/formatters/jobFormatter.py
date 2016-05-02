@@ -39,7 +39,7 @@ from LmServer.rad.radJob import (RADBuildGridJob, RADCompressJob,
                RADGradyJob)
 from LmServer.sdm.sdmJob import SDMModelJob, SDMProjectionJob, SDMOccurrenceJob
 
-from LmWebServer.common.lmconstants import (SCALE_DATA_TYPE, 
+from LmWebServer.common.lmconstants import (GEOTIFF_INTERFACE, SCALE_DATA_TYPE, 
                SCALE_PROJECTION_MAXIMUM, SCALE_PROJECTION_MINIMUM)
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse
 
@@ -63,12 +63,8 @@ class JobFormatter(Formatter):
          dObj = self.obj.jobData._dataObj
          if dObj.algorithmCode == 'ATT_MAXENT':
             processType = ProcessType.ATT_MODEL
-            #rasterFormat = "image/x-aaigrid"
-            rasterFormat = "AAIGrid"
          else:
             processType = ProcessType.OM_MODEL
-            #rasterFormat = "image/tiff"
-            rasterFormat = "GTiff"
          jobId = self.obj.jobData.jid
          tree = Element("job")
          
@@ -122,25 +118,21 @@ class JobFormatter(Formatter):
          layers = SubElement(tree, "layers", attrib={"large" : str(largeScn)})
          
          for lyr in dObj.layers:
-            lyrUrl = lyr.getURL(format=rasterFormat)
+            lyrUrl = lyr.getURL(format=GEOTIFF_INTERFACE)
             SubElement(layers, "layer", value=lyrUrl)
 
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            SubElement(tree, "mask", value=mask.getURL(format=rasterFormat))
+            SubElement(tree, "mask", value=mask.getURL(format=GEOTIFF_INTERFACE))
          
          cont = tostring(tree)
       elif isinstance(self.obj, SDMProjectionJob):
          dObj = self.obj.jobData._dataObj
          if dObj.algorithmCode == 'ATT_MAXENT':
             processType = ProcessType.ATT_PROJECT
-            #rasterFormat = "image/x-aaigrid"
-            rasterFormat = "AAIGrid"
          else:
             processType = ProcessType.OM_PROJECT
-            #rasterFormat = "image/tiff"
-            rasterFormat = "GTiff"
          jobId = self.obj.jobData.jid
          mdl = dObj.getModel()
          
@@ -213,7 +205,7 @@ class JobFormatter(Formatter):
          for lyr in dObj.layers:
             # get directly from EnvironmentalLayer
             try:
-               lyrUrl = lyr.getURL(format=rasterFormat)
+               lyrUrl = lyr.getURL(format=GEOTIFF_INTERFACE)
             except:
                lyrUrl = None
             lyrEl = SubElement(layers, "layer")#, value=lyrUrl)
@@ -225,7 +217,7 @@ class JobFormatter(Formatter):
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            SubElement(tree, "mask", value=mask.getURL(format=rasterFormat))
+            SubElement(tree, "mask", value=mask.getURL(format=GEOTIFF_INTERFACE))
          
          temp = tostring(tree)
          #temp = temp.replace('<![CDATA[>', '<![CDATA[')
