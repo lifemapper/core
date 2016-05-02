@@ -118,22 +118,24 @@ class LMWebTest(LMTest):
                    tests should produce exit values of 0 for success, 1 for 
                    warning, and 2 for error
       """
-      try:
-         self.status = 0
-         self.message = "%s responded correctly" % self.url
-         # Check for rewrite rule
-         if self.rewriteUrl is not None:
-            if self.ret.url != self.rewriteUrl:
-               self.message = "URL was not rewritten properly, %s != %s" % (
-                                                    self.ret.url, self.rewriteUrl)
+      if self.status is None or self.status < 2:
+         try:
+            self.status = 0
+            self.message = "%s responded correctly" % self.url
+            # Check for rewrite rule
+            if self.rewriteUrl is not None:
+               if self.ret.url != self.rewriteUrl:
+                  self.message = "URL was not rewritten properly, %s != %s" % (
+                                                       self.ret.url, self.rewriteUrl)
+                  self.status = 2
+            
+            if self.ret.code != self.httpStatus:
                self.status = 2
-         
-         if self.ret.code != self.httpStatus:
+               self.message = "%s did not respond with the expected HTTP status (%s != %s)" % (
+                                            self.url, self.ret.code, self.httpStatus)
+         except Exception, e:
             self.status = 2
-            self.message = "%s did not respond with the expected HTTP status (%s != %s)" % (
-                                         self.url, self.ret.code, self.httpStatus)
-      except:
-         pass
+            self.message = "Failed to evaluate test, error message: %s" % str(e)
 
 # .............................................................................
 class LMWebTestBuilder(LMTestBuilder):
