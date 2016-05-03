@@ -59,7 +59,7 @@ if __name__ == "__main__":
       for dirpath, dirnames, filenames in os.walk(datapath):
          for fname in filenames:
             fullname = os.path.join(dirpath, fname)
-            hashval = computeHash(fullname)
+            hashval = computeHash(dlocation=fullname)
             relname = fullname.strip(basepath)
             outf.write('{},  {}\n'.format(hashval, relname))
    except Exception, e:
