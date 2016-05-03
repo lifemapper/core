@@ -531,7 +531,7 @@ def convertAsciisToMxes(fnTups):
    outDir = os.path.join(TEMPORARY_FILE_PATH, 'mxes-%s' % t)
 
    # Just in case we happen to collide
-   while not os.path.exists(inDir):
+   while os.path.exists(inDir):
       t = md5(str(gmt())).hexdigest() # Should be roughly unique
    
       inDir = os.path.join(TEMPORARY_FILE_PATH, 'asciis-%s' % t)
