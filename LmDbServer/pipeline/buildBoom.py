@@ -44,20 +44,21 @@ class Archivist(Daemon):
    def initialize(self):
       self.name = self.__class__.__name__.lower()
       expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
-                                     SPECIES_EXP_DAY)
+                                     SPECIES_EXP_DAY).mjd
+#       expdate = 57511
       taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
       try:
          if DATASOURCE == 'BISON':
             self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            BISON_TSN_FILE, expdate.mjd, 
+                            BISON_TSN_FILE, expdate, 
                             taxonSourceName=taxname, mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
             
          elif DATASOURCE == 'GBIF':
             self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
+                            GBIF_DUMP_FILE, expdate, taxonSourceName=taxname,
                             providerListFile=PROVIDER_DUMP_FILE,
                             mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
@@ -65,7 +66,7 @@ class Archivist(Daemon):
          elif DATASOURCE == 'IDIGBIO':
             self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
+                            IDIGBIO_FILE, expdate, taxonSourceName=taxname,
                             mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
    
@@ -73,7 +74,7 @@ class Archivist(Daemon):
             # Set variables in config/site.ini to override installed defaults
             self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate.mjd, 
+                            USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate, 
                             mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
       except Exception, e:
@@ -118,7 +119,7 @@ if __name__ == "__main__":
    else:
       pid = os.getpid()
      
-   logger = ScriptLogger('archivist' + pid)
+   logger = ScriptLogger('archivist_{}'.format(pid))
    idig = Archivist(BOOM_PID_FILE, log=logger)
      
    if len(sys.argv) == 2:
