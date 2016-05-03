@@ -318,10 +318,12 @@ class _LMBoomer(LMObject):
                                 .format(taxonKey, sciName.scientificName))
                except Exception, e:
                   if not isinstance(e, LMError):
-                     e = LMError(currargs=e.args, lineno=self.getLineno())
+                     e = LMError(currargs='Failed on taxonKey {}, linenum {}'
+                                          .format(taxonKey, self._linenum), 
+                                 prevargs=e.args, lineno=self.getLineno())
                   raise e
             else:
-               self.log.info('taxonKey {} is not a genus or accepted species, ({})'
+               self.log.info('taxonKey {} is not an accepted genus or species'
                              .format(rankStr, taxonKey))
       return sciName
          
@@ -437,8 +439,8 @@ class _LMBoomer(LMObject):
                if not isinstance(e, LMError):
                   e = LMError(currargs=e.args, lineno=self.getLineno())
                raise e
-      else:
-         self.log.debug('ScientificName does not exist')
+#       else:
+#          self.log.debug('ScientificName does not exist')
 
 # ..............................................................................
 class BisonBoom(_LMBoomer):
@@ -503,16 +505,11 @@ class BisonBoom(_LMBoomer):
 # ...............................................
    def _processTsn(self, tsn, tsnCount):
       if tsn is not None:
-         try:
-            sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
-            self._processSDMChain(sciName, tsn, 
-                                  ProcessType.BISON_TAXA_OCCURRENCE, 
-                                  tsnCount, BISON_MIN_POINT_COUNT)
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            raise e
-
+         sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
+         self._processSDMChain(sciName, tsn, 
+                               ProcessType.BISON_TAXA_OCCURRENCE, 
+                               tsnCount, BISON_MIN_POINT_COUNT)
+         
 # ...............................................
    def chainOne(self):
       tsn, tsnCount = self._getTsnRec()
@@ -800,16 +797,11 @@ class GBIFBoom(_LMBoomer):
          
 # ...............................................
    def _processChunk(self, speciesKey, dataCount, dataChunk):
-      try:
-         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
-         if sciName:       
-            self._processSDMChain(sciName, speciesKey, 
-                               ProcessType.GBIF_TAXA_OCCURRENCE, 
-                               dataCount, POINT_COUNT_MIN, data=dataChunk)
-      except LMError, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         raise e
+      sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
+      if sciName:       
+         self._processSDMChain(sciName, speciesKey, 
+                            ProcessType.GBIF_TAXA_OCCURRENCE, 
+                            dataCount, POINT_COUNT_MIN, data=dataChunk)
       
 # ...............................................
    def chainOne(self):
@@ -1046,7 +1038,10 @@ class iDigBioBoom(_LMBoomer):
                pass
             tempvals = tempvals[1:]
             tempvals = tempvals[1:]
-            currName = ' '.join(tempvals)
+            try:
+               currName = ' '.join(tempvals)
+            except:
+               pass
       return currGbifTaxonId, currReportedCount, currName
 
 # ...............................................
@@ -1088,16 +1083,10 @@ class iDigBioBoom(_LMBoomer):
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonName, taxonKey, taxonCount):
       if taxonKey is not None:
-         try:
-            sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
-            self._processSDMChain(sciName, taxonKey, 
-                                  ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                                  taxonCount, POINT_COUNT_MIN)
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            raise e
-         
+         sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
+         self._processSDMChain(sciName, taxonKey, 
+                               ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                               taxonCount, POINT_COUNT_MIN)
 
 # .............................................................................
 # .............................................................................

@@ -45,7 +45,6 @@ class Archivist(Daemon):
       self.name = self.__class__.__name__.lower()
       expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                      SPECIES_EXP_DAY).mjd
-#       expdate = 57511
       taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
       try:
          if DATASOURCE == 'BISON':
@@ -92,7 +91,8 @@ class Archivist(Daemon):
                if self.keepRunning:
                   self.keepRunning = not self.boomer.complete
             except:
-               self.log.info('Saving next start ...')
+               self.log.info('Saving next start {} ...'
+                             .format(self.boomer.nextStart))
                self.boomer.saveNextStart()
                raise
             else:
