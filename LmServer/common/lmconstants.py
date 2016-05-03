@@ -24,8 +24,8 @@
 import inspect
 try:
    from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
-                                GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
-                                GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64)
+                        GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
+                        GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64)
 except:
    GDT_Unknown = 0
    GDT_Byte = 1
@@ -42,7 +42,7 @@ except:
    
 try:
    from osgeo.ogr import (wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, 
-                         wkbMultiLineString, wkbMultiPolygon)
+                          wkbMultiLineString, wkbMultiPolygon)
 except:
    wkbPoint = 1
    wkbLineString = 2

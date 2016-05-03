@@ -26,7 +26,7 @@ import os, sys
 import time
 
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.log import DaemonLogger
+from LmServer.common.log import ScriptLogger
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
          GBIF_DUMP_FILE, PROVIDER_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE,
          USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
@@ -50,9 +50,9 @@ class Archivist(Daemon):
          if DATASOURCE == 'BISON':
             self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            BISON_TSN_FILE, expdate.mjd, taxonSourceName=taxname,
-                            mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
+                            BISON_TSN_FILE, expdate.mjd, 
+                            taxonSourceName=taxname, mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
             
          elif DATASOURCE == 'GBIF':
             self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
@@ -60,14 +60,14 @@ class Archivist(Daemon):
                             GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
                             providerListFile=PROVIDER_DUMP_FILE,
                             mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
+                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
             
          elif DATASOURCE == 'IDIGBIO':
             self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
                             mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
+                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
    
          elif DATASOURCE == 'USER':
             # Set variables in config/site.ini to override installed defaults
@@ -75,7 +75,7 @@ class Archivist(Daemon):
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate.mjd, 
                             mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
+                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Archivist ({})'.format(e))
       
@@ -118,7 +118,8 @@ if __name__ == "__main__":
    else:
       pid = os.getpid()
      
-   idig = Archivist(BOOM_PID_FILE, log=DaemonLogger(pid))
+   logger = ScriptLogger('archivist' + pid)
+   idig = Archivist(BOOM_PID_FILE, log=logger)
      
    if len(sys.argv) == 2:
       if sys.argv[1].lower() == 'start':
