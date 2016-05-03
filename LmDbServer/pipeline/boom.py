@@ -21,20 +21,15 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import StringType, UnicodeType
 try:
    import mx.DateTime as dt
 except:
    pass
-try:
-   from osgeo.ogr import wkbPoint
-except:
-   wkbPoint = 1
 
 import csv
 import os
 import sys
-from types import ListType, TupleType
+from types import ListType, TupleType, StringType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
@@ -44,7 +39,8 @@ from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH)
+from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH, 
+                                         wkbPoint)
 from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
                                             APP_PATH)
 from LmServer.common.log import ScriptLogger

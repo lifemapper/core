@@ -26,6 +26,7 @@
 import argparse
 import os
 
+from LmCommon.common.lmconstants import OutputFormat
 from LmCommon.common.verify import computeHash
 
 # .............................................................................
@@ -49,7 +50,7 @@ if __name__ == "__main__":
       datapath = datapath.rstrip(os.path.sep)
    basepath, topDir = os.path.split(datapath)
    
-   outfname = os.path.join(basepath, pkgName+'.csv')
+   outfname = os.path.join(basepath, pkgName + OutputFormat.CSV)
    if os.path.exists(outfname):
       os.remove(outfname)
       
@@ -59,9 +60,10 @@ if __name__ == "__main__":
       for dirpath, dirnames, filenames in os.walk(datapath):
          for fname in filenames:
             fullname = os.path.join(dirpath, fname)
-            hashval = computeHash(dlocation=fullname)
-            relname = fullname.strip(basepath)
-            outf.write('{},  {}\n'.format(hashval, relname))
+            if fullname.endswith(OutputFormat.GTIFF):
+               hashval = computeHash(dlocation=fullname)
+               relname = fullname.strip(basepath)
+               outf.write('{},  {}\n'.format(hashval, relname))
    except Exception, e:
       print('Failed to write {}, ({})'.format(outfname, e))
    finally:

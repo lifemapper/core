@@ -22,11 +22,35 @@
           02110-1301, USA.
 """
 import inspect
-from osgeo.gdalconst import GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, \
-                            GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, \
-                            GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64
-from osgeo.ogr import wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, \
-                      wkbMultiLineString, wkbMultiPolygon
+try:
+   from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
+                                GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
+                                GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64)
+except:
+   GDT_Unknown = 0
+   GDT_Byte = 1
+   GDT_UInt16 = 2
+   GDT_Int16 = 3
+   GDT_UInt32 = 4
+   GDT_Int32 = 5
+   GDT_Float32 = 6
+   GDT_Float64 = 7
+   GDT_CInt16 = 8
+   GDT_CInt32 = 9
+   GDT_CFloat32 = 10
+   GDT_CFloat64 = 11
+   
+try:
+   from osgeo.ogr import (wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, 
+                         wkbMultiLineString, wkbMultiPolygon)
+except:
+   wkbPoint = 1
+   wkbLineString = 2
+   wkbPolygon = 3
+   wkbMultiPoint = 4
+   wkbMultiLineString = 5
+   wkbMultiPolygon = 6
+   
 import os.path
 from types import IntType, FloatType
 

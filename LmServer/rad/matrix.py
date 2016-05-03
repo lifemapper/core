@@ -26,7 +26,8 @@
 import numpy
 import os
 from types import BooleanType
-from osgeo.ogr import OFTReal, OFTInteger, OFTBinary 
+
+from LmCommon.common.lmconstants import OFTInteger, OFTReal, OFTBinary
 from LmServer.base.lmobj import LMObject, LMError
 
 
@@ -267,22 +268,6 @@ class Matrix(LMObject):
          if sitesPresent[r]:
             lyrdata[r] = self._matrix[r,lyridx]
       return lyrdata   
-
-# # ..............................................................................
-#    def _createDirectory(self, filename):
-#       """
-#       @summary: Write the matrix out to a file
-#       @param filename: The location on disk to write the file
-#       @todo: test this - there could be a more appropriate numpy method
-#       """
-#       pth, basefilename = os.path.split(filename)
-#       try:
-#          os.makedirs(pth, 0775)
-#       except:
-#          pass
-# 
-#       if not os.path.isdir(pth):         
-#          raise LMError('Unable to create directories %s' % pth)
 
 # ..............................................................................
    def write(self, filename=None, overwrite=True):
