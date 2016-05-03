@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -28,7 +28,6 @@ import sys
 from LmDbServer.common.lmconstants import (USER_OCCURRENCE_META, 
                                               USER_OCCURRENCE_CSV)
 from LmBackend.common.occparse import OccDataParser
-from LmServer.base.lmobj import LMObject, LMError
 from LmServer.common.log import ScriptLogger
 
 # ...............................................
@@ -164,11 +163,10 @@ def sortFiles(sortvalIdx, datapath, inprefix, outprefix, basename):
    return idx
 
 # ...............................................
-def _switchFiles(openFile, csvwriter, datapath, prefix, run=None):
+def _switchFiles(openFile, csvwriter, datapath, prefix, basename, run=None):
    openFile.close()
-   csvwriter = None
    # Open next output sorted file
-   newFname = _getSortedName(datapath, prefix, run=run)
+   newFname = _getOPFilename(datapath, prefix, basename, run=run)
    newFile = open(newFname, 'wb')
    csvwriter = csv.writer(newFile, delimiter='\t')
    return newFile, csvwriter
@@ -236,7 +234,7 @@ def mergeSortedFiles(log, mergefname, datapath, inputPrefix, basename,
 #          if (maxFileSize and os.fstat(mergeFile.fileno()).st_size >= maxFileSize):
 #             outIdx += 1
 #             mergeFile, csvwriter = _switchFiles(mergeFile, csvwriter, datapath, 
-#                                                 mergePrefix, run=outIdx)
+#                                                 mergePrefix, basename, run=outIdx)
          # Find smallest again
          smallKey, pos = _getSmallestKeyAndPosition(sortedFiles)
          
