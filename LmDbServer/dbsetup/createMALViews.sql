@@ -470,7 +470,7 @@ CREATE OR REPLACE VIEW lm3.lm_fullOccurrenceset (
    family,
    genus,
    rank,
-   canonical
+   canonical,
    sciname,
    genuskey,
    specieskey,
