@@ -26,8 +26,10 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 @todo: Add convert tool to config
+@todo: Use verify module
+@todo: Skip if exists
 """
-from hashlib import md5, sha256
+from hashlib import md5
 from mx.DateTime import gmt
 import numpy
 import os
@@ -43,6 +45,7 @@ import zipfile
 
 from LmCommon.common.lmconstants import (JobStatus, OutputFormat,
                                          SHAPEFILE_EXTENSIONS)
+from LmCommon.common.verify import verifyHash
 from LmCompute.common.lmconstants import (INPUT_LAYER_DIR, LayerAttributes, 
                                           LayerFormat, LayerStatus, 
                                           RETRIEVED_LAYER_DIR)
@@ -98,7 +101,7 @@ class LayerManager(object):
       cmd = "SELECT {lyrIdAtt}, {fpAtt}, {fTypeAtt}, {statAtt}, {createAtt}, {touchAtt} FROM layers WHERE layerid = '{layerId}'".format(
                lyrIdAtt=LayerAttributes.LAYER_ID, 
                fpAtt=LayerAttributes.FILE_PATH, 
-               ftypeAtt=LayerAttributes.FILE_TYPE,
+               fTypeAtt=LayerAttributes.FILE_TYPE,
                statAtt=LayerAttributes.STATUS,
                createAtt=LayerAttributes.CREATE_TIME,
                touchAtt=LayerAttributes.TOUCH_TIME,
@@ -120,7 +123,7 @@ class LayerManager(object):
                    LayerAttributes.TOUCH_TIME: row[5]
                   }
             status = lyr[LayerAttributes.STATUS]
-            if lyr[LayerAttributes.FILE_TYPE]:
+            if lyr[LayerAttributes.FILE_TYPE] == layerFormat:
                status = lyr[LayerAttributes.STATUS]
                break # We found what we wanted
             elif lyr[LayerAttributes.FILE_TYPE] == LayerFormat.GTIFF:
@@ -210,7 +213,7 @@ class LayerManager(object):
       rows = self._executeDbFunction(cmd)
    
    # .................................
-   def _waitOnLayer(self, layerId, layerFormat, layerUrl):
+   def _waitOnLayer(self, layerId, layerFormat, layerUrl=None):
       
       status, lyr = self._queryLayer(layerId, layerFormat)
       
@@ -266,7 +269,7 @@ class LayerManager(object):
       self._insertLayer(layerId, rLyrFormat, lyrPath, LayerStatus.RETRIEVING)
 
       # Retrieve content
-      lyrCnt = urllib2.urlopen(layerUrl)
+      lyrCnt = urllib2.urlopen(layerUrl).read()
       
       if layerFormat == LayerFormat.SHAPE:
          outDir = os.path.split(lyrPath)[0]
@@ -280,9 +283,9 @@ class LayerManager(object):
             outF.write(lyrCnt)
 
       # Validate content
-      if not self.validateLayer(layerId, lyrPath):
+      if not verifyHash(layerId, dlocation=lyrPath):
          raise LmException(JobStatus.IO_LAYER_ERROR, 
-                           "Layer content does not match SHA256")
+                           "Layer content does not match identifier")
       # Update db
       self._updateLayerStatus(layerId, rLyrFormat, LayerStatus.STORED)
       
@@ -294,25 +297,6 @@ class LayerManager(object):
 
       return lyr
    
-   # .................................
-   def validateLayer(self, validValue, layerFn):
-      """
-      @summary: Checks that a stored layer has the correct SHA-256 sum.  We can
-                   change this validation methodology here if we want
-      @param validValue: The valid SHA256sum
-      @param layerFn: The file to check the SHA256sum against
-      @todo: Consider providing a direct variable for comparison, such as 
-                layer content.  This could be useful if we are comparing a 
-                download from a URL
-      """
-      with open(layerFn, 'r') as inF:
-         layerCnt = inF.read()
-      cmpVal = sha256(layerCnt).hexdigest()
-      if cmpVal != validValue:
-         return False
-      else:
-         return True
-      
    # .................................
    def getLayerFilename(self, layerId, layerFormat, layerUrl=None):
       """
@@ -367,11 +351,11 @@ class LayerManager(object):
       """
       print "Seeding GeoTiffs"
       for layerId, layerPath in layerTups:
-         if self.validateLayer(layerId, layerPath):
+         if verifyHash(layerId, dlocation=layerPath):
             self._insertLayer(layerId, LayerFormat.GTIFF, layerPath, 
                               LayerStatus.SEEDED)
          else:
-            raise Exception, "SHA256 of %s did not match %s" % (
+            raise Exception, "Identifier of %s did not match %s" % (
                                                             layerPath, layerId)
       print "Done seeding GeoTiffs"
       
@@ -405,10 +389,10 @@ class LayerManager(object):
       @summary: Attempts to create a layers database table
       """
       try:
-         self.con.execute("CREATE TABLE layers({lyrIdAtt} TEXT, {fpAtt} TEXT, {ftypeAtt} INT, {statAtt} INT, {createAtt} REAL, {touchAtt} REAL, PRIMARY KEY ({lyrIdAtt}, {ftypeAtt}))".format(
+         self.con.execute("CREATE TABLE layers({lyrIdAtt} TEXT, {fpAtt} TEXT, {fTypeAtt} INT, {statAtt} INT, {createAtt} REAL, {touchAtt} REAL, PRIMARY KEY ({lyrIdAtt}, {fTypeAtt}))".format(
                lyrIdAtt=LayerAttributes.LAYER_ID, 
                fpAtt=LayerAttributes.FILE_PATH, 
-               ftypeAtt=LayerAttributes.FILE_TYPE,
+               fTypeAtt=LayerAttributes.FILE_TYPE,
                statAtt=LayerAttributes.STATUS,
                createAtt=LayerAttributes.CREATE_TIME,
                touchAtt=LayerAttributes.TOUCH_TIME))
