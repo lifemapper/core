@@ -75,7 +75,7 @@ class LmLogger(logging.Logger):
       """
       if location is not None:
 #         message = '{0}: {1}'.format(location, message)
-         message = '%s: %s'.format(location, message)
+         message = '{}: {}'.format(location, message)
       try:
          self.log.debug(message)
       except Exception, e:
@@ -199,8 +199,8 @@ class DaemonLogger(LmLogger):
                 logger is provided to the daemon process.
    """
    def __init__(self, pid, level=logging.DEBUG):
-      name = 'daemon.%s' % pid
+      name = 'daemon.{}'.format(pid)
       LmLogger.__init__(self, name, level=level)
       import tempfile
-      fn = os.path.join(tempfile.mkdtemp(), '%s.log' % name)
+      fn = os.path.join(tempfile.mkdtemp(), '{}.log'.format(name))
       self._addFileHandler(fn)
