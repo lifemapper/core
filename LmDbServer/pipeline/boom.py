@@ -59,7 +59,7 @@ class _LMBoomer(LMObject):
    # .............................
    def __init__(self, userid, algLst, mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
-                intersectGrid=None):
+                intersectGrid=None, log=None):
       super(_LMBoomer, self).__init__()
       import socket
       self.hostname = socket.gethostname().lower()
@@ -77,7 +77,9 @@ class _LMBoomer(LMObject):
          self.name = '{}_{}'.format(self.__class__.__name__.lower(), userid)
       self.startFile = os.path.join(APP_PATH, LOG_PATH, 
                                     'start.{}.txt'.format(self.name))
-      self.log = ScriptLogger(self.name)
+      if log is None:
+         log = ScriptLogger(self.name)
+      self.log = log
       self.developers = TROUBLESHOOTERS
       self.startStatus=JobStatus.GENERAL 
       self.queueStatus=JobStatus.GENERAL 
@@ -444,7 +446,8 @@ class BisonBoom(_LMBoomer):
    @summary: Initializes the job chainer for BISON.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
-                taxonSourceName=None, mdlMask=None, prjMask=None, intersectGrid=None):
+                taxonSourceName=None, mdlMask=None, prjMask=None, 
+                intersectGrid=None, log=None):
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
       try:
@@ -456,7 +459,7 @@ class BisonBoom(_LMBoomer):
       super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
-                                      intersectGrid=intersectGrid)
+                                      intersectGrid=intersectGrid, log=log)
       self._obsoleteTime = expDate
       self._currTsn, self._currCount = self.moveToStart()
       
@@ -579,7 +582,7 @@ class UserBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
                 occMetaFname, expDate, 
-                mdlMask=None, prjMask=None, intersectGrid=None):
+                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
          self._linenum = 0
@@ -591,7 +594,7 @@ class UserBoom(_LMBoomer):
       super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
                                      mdlMask=mdlMask, prjMask=prjMask, 
-                                     intersectGrid=intersectGrid)
+                                     intersectGrid=intersectGrid, log=log)
       self._obsoleteTime = expDate
       
 # ...............................................
@@ -722,7 +725,7 @@ class GBIFBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
                 taxonSourceName=None, providerListFile=None,
-                mdlMask=None, prjMask=None, intersectGrid=None):
+                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       try:
          self._dumpfile = open(occfilename, 'r')
          self._linenum = 0
@@ -734,7 +737,7 @@ class GBIFBoom(_LMBoomer):
       super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
-                                      intersectGrid=intersectGrid)               
+                                      intersectGrid=intersectGrid, log=log)               
       gbifFldNames = []
       idxs = GBIF_EXPORT_FIELDS.keys()
       idxs.sort()
@@ -952,7 +955,7 @@ class iDigBioBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
-                intersectGrid=None):
+                intersectGrid=None, log=None):
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
       try:
@@ -964,7 +967,7 @@ class iDigBioBoom(_LMBoomer):
       super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                         taxonSourceName=taxonSourceName, 
                                         mdlMask=mdlMask, prjMask=prjMask, 
-                                        intersectGrid=intersectGrid)
+                                        intersectGrid=intersectGrid, log=log)
       self._obsoleteTime = expDate      
       self._currBinomial = None
       self._currGbifTaxonId = None
