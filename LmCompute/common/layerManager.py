@@ -101,7 +101,7 @@ class LayerManager(object):
       cmd = "SELECT {lyrIdAtt}, {fpAtt}, {fTypeAtt}, {statAtt}, {createAtt}, {touchAtt} FROM layers WHERE layerid = '{layerId}'".format(
                lyrIdAtt=LayerAttributes.LAYER_ID, 
                fpAtt=LayerAttributes.FILE_PATH, 
-               ftypeAtt=LayerAttributes.FILE_TYPE,
+               fTypeAtt=LayerAttributes.FILE_TYPE,
                statAtt=LayerAttributes.STATUS,
                createAtt=LayerAttributes.CREATE_TIME,
                touchAtt=LayerAttributes.TOUCH_TIME,
@@ -123,7 +123,7 @@ class LayerManager(object):
                    LayerAttributes.TOUCH_TIME: row[5]
                   }
             status = lyr[LayerAttributes.STATUS]
-            if lyr[LayerAttributes.FILE_TYPE]:
+            if lyr[LayerAttributes.FILE_TYPE] == layerFormat:
                status = lyr[LayerAttributes.STATUS]
                break # We found what we wanted
             elif lyr[LayerAttributes.FILE_TYPE] == LayerFormat.GTIFF:
@@ -213,7 +213,7 @@ class LayerManager(object):
       rows = self._executeDbFunction(cmd)
    
    # .................................
-   def _waitOnLayer(self, layerId, layerFormat, layerUrl):
+   def _waitOnLayer(self, layerId, layerFormat, layerUrl=None):
       
       status, lyr = self._queryLayer(layerId, layerFormat)
       
@@ -269,7 +269,7 @@ class LayerManager(object):
       self._insertLayer(layerId, rLyrFormat, lyrPath, LayerStatus.RETRIEVING)
 
       # Retrieve content
-      lyrCnt = urllib2.urlopen(layerUrl)
+      lyrCnt = urllib2.urlopen(layerUrl).read()
       
       if layerFormat == LayerFormat.SHAPE:
          outDir = os.path.split(lyrPath)[0]
@@ -389,10 +389,10 @@ class LayerManager(object):
       @summary: Attempts to create a layers database table
       """
       try:
-         self.con.execute("CREATE TABLE layers({lyrIdAtt} TEXT, {fpAtt} TEXT, {ftypeAtt} INT, {statAtt} INT, {createAtt} REAL, {touchAtt} REAL, PRIMARY KEY ({lyrIdAtt}, {ftypeAtt}))".format(
+         self.con.execute("CREATE TABLE layers({lyrIdAtt} TEXT, {fpAtt} TEXT, {fTypeAtt} INT, {statAtt} INT, {createAtt} REAL, {touchAtt} REAL, PRIMARY KEY ({lyrIdAtt}, {fTypeAtt}))".format(
                lyrIdAtt=LayerAttributes.LAYER_ID, 
                fpAtt=LayerAttributes.FILE_PATH, 
-               ftypeAtt=LayerAttributes.FILE_TYPE,
+               fTypeAtt=LayerAttributes.FILE_TYPE,
                statAtt=LayerAttributes.STATUS,
                createAtt=LayerAttributes.CREATE_TIME,
                touchAtt=LayerAttributes.TOUCH_TIME))
