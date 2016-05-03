@@ -24,11 +24,12 @@
           02110-1301, USA.
 """
 try:
-   from osgeo.ogr import OFTInteger, OFTReal, OFTString
+   from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 except:
    OFTInteger = 0
    OFTReal = 2
    OFTString = 4
+   OFTBinary = 8
    
 # .............................................................................
 # .                               File constants                              .

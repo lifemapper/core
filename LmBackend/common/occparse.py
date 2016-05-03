@@ -25,12 +25,12 @@
 import ast
 import csv
 import os
-from osgeo.ogr import OFTInteger, OFTReal, OFTString
 import sys
 import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
-from LmCommon.common.lmconstants import ENCODING
+from LmCommon.common.lmconstants import (ENCODING,OFTInteger, OFTReal, OFTString)
+
 # .............................................................................
 class OccDataParser(object):
    """
