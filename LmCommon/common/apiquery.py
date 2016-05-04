@@ -514,7 +514,8 @@ class GbifAPI(APIQuery):
    @staticmethod
    def _getOutputVal(outDict, name):
       try:
-         val = outDict[name]
+         tmp = outDict[name]
+         val = unicode(tmp).encode('utf-8')
       except:
          return None
       return val
