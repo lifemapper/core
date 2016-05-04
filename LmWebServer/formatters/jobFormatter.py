@@ -124,14 +124,14 @@ class JobFormatter(Formatter):
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            mdlEl = SubElement(tree, "mask")
+            mskEl = SubElement(tree, "mask")
             try:
                maskUrl = mask.getURL(format=GEOTIFF_INTERFACE)
             except:
                maskUrl = None
-            SubElement(mdlEl, "identifier", value=mask.verify)
+            SubElement(mskEl, "identifier", value=mask.verify)
             if maskUrl is not None:
-               SubElement(lyrEl, "layerUrl", value=maskUrl)
+               SubElement(mskEl, "layerUrl", value=maskUrl)
          
          cont = tostring(tree)
       elif isinstance(self.obj, SDMProjectionJob):
@@ -224,14 +224,14 @@ class JobFormatter(Formatter):
          # Add mask
          mask = dObj.getMask()
          if mask is not None:
-            mdlEl = SubElement(tree, "mask")
+            mskEl = SubElement(tree, "mask")
             try:
                maskUrl = mask.getURL(format=GEOTIFF_INTERFACE)
             except:
                maskUrl = None
-            SubElement(mdlEl, "identifier", value=mask.verify)
+            SubElement(mskEl, "identifier", value=mask.verify)
             if maskUrl is not None:
-               SubElement(lyrEl, "layerUrl", value=maskUrl)
+               SubElement(mskEl, "layerUrl", value=maskUrl)
          
          temp = tostring(tree)
          #temp = temp.replace('<![CDATA[>', '<![CDATA[')
