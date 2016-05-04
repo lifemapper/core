@@ -412,7 +412,7 @@ class LayerManager(object):
                   lyrIdAtt=LayerAttributes.LAYER_ID,
                   lyrId=layerId,
                   fTypeAtt=LayerAttributes.FILE_TYPE,
-                  fType=LayerFormat)
+                  fType=layerFormat)
       self._executeDbFunction(cmd)
       
       lyrFn = self._getFilePath(layerId, layerFormat)
