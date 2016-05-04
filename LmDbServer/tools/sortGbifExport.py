@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import argparse
 import csv
 import os
 import sys
@@ -394,14 +395,31 @@ def usage():
 # ..............................................................................
 # datestr = subprocess.check_output(['date', '+%F']).strip().replace('-', '_')
 # datapath = '/tank/data/input/gbif/{}/'.format(datestr)
-dumpFilename = 'aimee_export.txt'
+# dumpFname = 'aimee_export.txt'
 splitPrefix = 'gbif_split'
 mergedPrefix = 'gbif_merged'
 oneGb = 1000000000
+maxFileSize = None
 
 # ...............................................
 if __name__ == '__main__':
-   basename = os.path.splitext(os.path.basename(__file__))[0]
+   
+   # Use the argparse.ArgumentParser class to handle the command line arguments
+   parser = argparse.ArgumentParser(
+            description=('Process a GBIF CSV database dump file containing ' +
+                         'multiple sections of sorted data (one per node)' +
+                         'into a single file sorted on the TaxonomyKey field'))
+   parser.add_argument('filename', metavar='filename', type=str,
+                       help='The absolute path of the top directory containing datafile')   
+   args = parser.parse_args()
+   
+   fullfilename = args.filename
+   if not os.path.exists(fullfilename):
+      print 'Missing input file {}'.format(fullfilename)
+      return -1
+   
+   datapath, dumpFname = os.path.split(fullfilename)
+   basename, ext = os.path.splitext(dumpFname) 
    
    keyCol = None
    for idx, vals in GBIF_EXPORT_FIELDS.iteritems():
@@ -411,24 +429,13 @@ if __name__ == '__main__':
       
    csv.field_size_limit(sys.maxsize)
    
-   if len(sys.argv) != 3:
-      usage()
-   else:
-      cmd = sys.argv[1]
-      log = ScriptLogger('{}_{}'.format(basename, cmd))
-      datapath = sys.argv[2]
-      if not (os.path.exists(datapath)):
-         print('Datapath {} does not exist'.format(datapath))
-      if cmd == 'split':   
-         # Split big, semi-sorted file, to multiple smaller sorted files
-         sortedRuns = splitIntoSortedFiles(log, datapath, dumpFilename, 
-                                           splitPrefix, keyCol)
-      elif cmd == 'merge':
-         # Merge all data for production system into multiple subset files
-         mergeSortedFiles(log, datapath, splitPrefix, mergedPrefix, keyCol, 
-                          maxFileSize=None)
-      elif cmd == 'check':
-         # Check final output (only for single file now)
-         checkMergedFile(log, datapath, mergedPrefix, keyCol)
-      else:
-         usage()
+   log = ScriptLogger('{}'.format(os.path.basename(__file__)))
+   # Split big, semi-sorted file, to multiple smaller sorted files
+   sortedRuns = splitIntoSortedFiles(log, datapath, dumpFname, 
+                                     splitPrefix, keyCol)
+   # Merge all data for production system into one or more files
+   mergeSortedFiles(log, datapath, splitPrefix, mergedPrefix, keyCol, 
+                    maxFileSize=maxFileSize)
+   # Check final output (only for a single sorted output file)
+   if maxFileSize is None:
+      checkMergedFile(log, datapath, mergedPrefix, keyCol)

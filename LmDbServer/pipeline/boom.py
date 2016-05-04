@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -1136,6 +1136,7 @@ boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                          mdlMask=None, prjMask=None, 
                          intersectGrid=DEFAULT_GRID_NAME)
 taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
+
 
 
 
