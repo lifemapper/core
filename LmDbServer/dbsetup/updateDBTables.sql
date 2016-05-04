@@ -25,6 +25,7 @@ alter table lm3.ScientificName add column canonical text;
 
 -- ----------------------------------------------------------------------------
 \c speco
+
 alter table lm3.layer add column verify varchar(64);
 alter table lm3.layer add column squid varchar(64);
 CREATE INDEX idx_lyrVerify on lm3.Layer(verify);
