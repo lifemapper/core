@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import argparse
 import mx.DateTime as DT
 import os
 import sys
@@ -457,17 +458,17 @@ def _importClimatePackageMetadata():
                     .format(metafname, e))
 
 # ...............................................
-def usage():
-   output = """
-   Usage:
-      initCatalog [algorithms | scenario | taxonomy | user | all) 
-   """
-   print output
-
-# ...............................................
 if __name__ == '__main__':
-   basefilename = os.path.basename(__file__)
-   basename, ext = os.path.splitext(basefilename)
+   # Use the argparse.ArgumentParser class to handle the command line arguments
+   parser = argparse.ArgumentParser(
+            description=('Initialize a new Lifemapper database with metadata ' +
+                         'specific to the configured input data'))
+   parser.add_argument('-m', '--metadata', default='all',
+            choices=['algorithm', 'climate', 'taxonomy', 'all'], 
+            help="Which metadata to catalog (algorithm, climate, taxonomy, all (default))")
+   args = parser.parse_args()
+   metaType = args.metadata
+
    _importClimatePackageMetadata()
 
    try:
@@ -475,52 +476,40 @@ if __name__ == '__main__':
    except:
       taxSource = None
    
-   if len(sys.argv) != 2:
-      usage()
-      exit(0)
-   
-   action = sys.argv[1].lower()
-   if action in ('algorithms', 'scenario', 'taxonomy', 'user', 'all'):      
-      try:
-         logger = ScriptLogger(basename)
-         scribe = Scribe(logger)
-         success = scribe.openConnections()
-         if not success: 
-            logger.critical('Failed to open database')
-            exit(0)
-         
-         archiveUserId, anonUserId = addUsers(scribe)
-         
-         if action == 'all':
-            aIds = addAlgorithms(scribe)
-            pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-            addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
-                                       meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
-            # Insert all taxonomic sources for now
-            for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-               logger.info('  Inserting taxonomy source {} ...'.format(
-                                                            taxInfo['name']))
-               taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
-                                                         taxInfo['url'])
-         
-         elif action == 'algorithms':   
-            aIds = addAlgorithms(scribe)
-            
-         elif action == 'scenario':
-            pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-            addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
-                                       meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
-            
-         elif action == 'taxonomy':
-            # Insert all taxonomic sources for now
-            for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-               logger.info('  Inserting taxonomy source {} ...'.format(
-                                                            taxInfo['name']))
-               taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
-                                                         taxInfo['url'])
-      except Exception, e:
-         logger.error(str(e))
-         raise
-      finally:
-         scribe.closeConnections()
+   basefilename = os.path.basename(__file__)
+   basename, ext = os.path.splitext(basefilename)
+   try:
+      logger = ScriptLogger(basename)
+      scribe = Scribe(logger)
+      success = scribe.openConnections()
+      if not success: 
+         logger.critical('Failed to open database')
+         exit(0)
+      
+      logger.info('  Inserting user {} metadata ...'.format(ARCHIVE_USER))
+      archiveUserId, anonUserId = addUsers(scribe)
+      
+      if metaType in ('algorithm', 'all'):
+         logger.info('  Inserting algorithm metadata ...')
+         aIds = addAlgorithms(scribe)
+
+      if metaType in ('climate', 'all'):
+         logger.info('  Inserting climate {} metadata ...'
+                     .format(SCENARIO_PACKAGE))
+         pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
+         addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
+                                    meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
+
+      if metaType in ('taxonomy', 'all'):
+         # Insert all taxonomic sources for now
+         for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+            logger.info('  Inserting taxonomy {} metadata ...'
+                        .format(taxInfo['name']))
+            taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
+                                                      taxInfo['url'])      
+   except Exception, e:
+      logger.error(str(e))
+      raise
+   finally:
+      scribe.closeConnections()
        

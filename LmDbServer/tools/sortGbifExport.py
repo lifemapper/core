@@ -1,3 +1,4 @@
+#!/opt/python/bin/python2.7
 """
 @license: gpl2
 @copyright: Copyright (C) 2016, University of Kansas Center for Research
@@ -27,7 +28,6 @@ import os
 import sys
 
 from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD) 
-from LmServer.common.log import ScriptLogger
 
 # .............................................................................
 class FileData(object):
@@ -36,8 +36,7 @@ class FileData(object):
              recently read data chunk
    """
    # ...............................................
-   def __init__(self, filename, keyCol, log):
-      self.log = log
+   def __init__(self, filename, keyCol):
       self._file = open(filename, 'r')
       self._keyCol = keyCol
       self.currLine = None
@@ -62,9 +61,9 @@ class FileData(object):
             self.currRecnum += 1
          except OverflowError, e:
             self.currRecnum += 1
-            self.log.debug( 'Overflow on {} ({})'.format(self.currRecnum, str(e)))
+            logfile.write( 'Overflow on {} ({})\n'.format(self.currRecnum, str(e)))
          except Exception, e:
-            self.log.debug('Exception reading line {}, probably EOF ({})'.format(
+            logfile.write('Exception reading line {}, probably EOF ({})\n'.format(
                                                       self.currRecnum, str(e)))
             self.close()
             self.currRecnum = self.currLine = None
@@ -90,8 +89,8 @@ class FileData(object):
                try:
                   txkey = int(self.currLine[self._keyCol])
                except Exception, e:
-                  self.log.debug('Failed on line {} ({})'.format(self.currRecnum, 
-                                                            self.currLine))
+                  logfile.write('ERROR: Failed on line {} ({})\n'
+                                .format(self.currRecnum, self.currLine))
                else:
                   self.key = txkey
                   complete = True
@@ -103,8 +102,8 @@ class FileData(object):
                   self.key = None
                   
       except Exception, e:
-         self.log.error('Failed in getNextKey, currRecnum={}, e={}'.format(
-                                                self.currRecnum, str(e)))
+         logfile.write('ERROR: Failed in getNextKey, currRecnum={}, e={}\n'
+                       .format(self.currRecnum, str(e)))
          self.currLine = self.key = None
          
    # ...............................................
@@ -134,8 +133,8 @@ class FileData(object):
             return chunk
                   
       except Exception, e:
-         self.log.error('Failed in getNextChunkForCurrKey, currRecnum={}, e={}'.format(
-                   self.currRecnum, str(e)))
+         logfile.write('ERROR: Failed in getNextChunkForCurrKey, currRecnum={}, e={}\n'
+                       .format(self.currRecnum, e))
          self.currLine = self.key = None
 
    # ...............................................
@@ -179,10 +178,10 @@ def _getSmallestKeyAndPosition(splitFiles):
       return smallest, idxOfSmallest
    
 # ...............................................
-def splitIntoSortedFiles(log, datapath, dumpFilename, sortedSubsetPrefix, keyCol):
+def splitIntoSortedFiles(datapath, dumpFilename, sortedSubsetPrefix, keyCol, logfile):
    fulldumpfilename = os.path.join(datapath, dumpFilename)
    if not os.path.exists(fulldumpfilename):
-      raise Exception('{} file does not exist'.format(fulldumpfilename))
+      raise Exception('ERROR: {} file does not exist'.format(fulldumpfilename))
     
    # Indexes begin with 1
    sortedRuns = 1
@@ -197,13 +196,12 @@ def splitIntoSortedFiles(log, datapath, dumpFilename, sortedSubsetPrefix, keyCol
       while dumpData.currLine is not None:
          # Start new file when encountering a key out of order
          if dumpData.key < prevkey:
-            log.debug('Wrote {} species to {}, next line = {}'.format(spCount, 
-                                    currSortedFile.name, dumpData.currRecnum))
+            logfile.write('Wrote {} species to {}, next line = {}\n'.format(
+                           spCount, currSortedFile.name, dumpData.currRecnum))
             sortedRuns += 1
             spCount = 0
             currSortedFile, csvwriter = _switchFiles(currSortedFile, csvwriter, 
-                                                     datapath, sortedSubsetPrefix, 
-                                                     run=sortedRuns)
+                        datapath, sortedSubsetPrefix, logfile, run=sortedRuns)
             prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
              
          elif dumpData.key >= prevkey:
@@ -211,27 +209,25 @@ def splitIntoSortedFiles(log, datapath, dumpFilename, sortedSubsetPrefix, keyCol
             prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
              
    except Exception, e:
-      log.error(str(e))
+      logfile.write('ERROR: {}\n'.format(e))
    finally:
       csvwriter = None
-      log.debug('Wrote final species to {}, next line = {}'.format(currfname, 
-                                                         dumpData.currRecnum))
+      logfile.write('Wrote final species to {}, next line = {}\n'
+                    .format(currfname, dumpData.currRecnum))
       dumpData.close()
       try:
          currSortedFile.close()
       except:
          pass
        
-   log.debug('{} sorted runs; final line {}'.format(sortedRuns, 
-                                                    dumpData.currRecnum))
+   logfile.write('{} sorted runs; final line {}\n'
+                 .format(sortedRuns, dumpData.currRecnum))
    return sortedRuns
     
 
 # ...............................................
-   # mergeSortedFiles(log, datapath, prefix, bigSortedFilePrefix, keyCol)
-#    mergeSortedFiles(log, datapath, prefix, subsetFilePrefix, keyCol, subset=20000)
 
-def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol, 
+def mergeSortedFiles(datapath, inputPrefix, mergePrefix, keyCol, logfile,
                      maxFileSize=None):
    """
    @summary: Merge multiple files of csv records sorted on keyCol, with the 
@@ -261,14 +257,14 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
    splitFiles = []
    splitFname = _getSortedName(datapath, inputPrefix, run=inIdx)
    while os.path.exists(splitFname):
-      fd = FileData(splitFname, keyCol, log)
+      fd = FileData(splitFname, keyCol)
       splitFiles.append(fd)
       inIdx += 1
       splitFname = _getSortedName(datapath, inputPrefix, run=inIdx)
             
    try:
       if len(splitFiles) < 2:
-         raise Exception('Only {} files to merge (expecting \'{}\')'.format(
+         raise Exception('ERROR: Only {} files to merge (expecting \'{}\')'.format(
                            len(splitFiles), splitFname))
       # find file with record containing smallest key
       smallKey, pos = _getSmallestKeyAndPosition(splitFiles)
@@ -284,11 +280,11 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
              os.fstat(mergeFile.fileno()).st_size >= maxFileSize):
             outIdx += 1
             mergeFile, csvwriter = _switchFiles(mergeFile, csvwriter, datapath, 
-                                                mergePrefix, run=outIdx)
+                                                mergePrefix, logfile, run=outIdx)
             
          # Find smallest again
          smallKey, pos = _getSmallestKeyAndPosition(splitFiles)
-         _logProgress(log, pos, smallKey, lastKey, lastCount, smallKeyCount)
+         _logProgress(pos, smallKey, lastKey, lastCount, smallKeyCount, logfile)
          if smallKey != lastKey:
             smallKeyCount = 0
          
@@ -301,12 +297,13 @@ def mergeSortedFiles(log, datapath, inputPrefix, mergePrefix, keyCol,
          fd.close()
             
 # ...............................................
-def _switchFiles(openFile, csvwriter, datapath, prefix, run=None):
+def _switchFiles(openFile, csvwriter, datapath, prefix, logfile, run=None):
    openFile.close()
    csvwriter = None
    # Open next output sorted file
    newFname = _getSortedName(datapath, prefix, run=run)
    newFile = open(newFname, 'wb')
+   logfile.write('Closed {}, opened {}'.format(openFile.name, newFile.name))
    csvwriter = csv.writer(newFile, delimiter='\t')
    return newFile, csvwriter
       
@@ -341,23 +338,23 @@ def _popChunkAndWrite(csvwriter, filedata):
             
   
 # ...............................................
-def _logProgress(log, idx, smallKey, lastKey, lastCount, currentCount):
+def _logProgress(idx, smallKey, lastKey, lastCount, currentCount, logfile):
    if idx is None:
-      log.debug('Completed, final key {}'.format(lastKey))
+      logfile.write('Completed, final key {}\n'.format(lastKey))
    else:
-      log.debug('         count = {} (file {})'.format(lastCount, idx))
+      logfile.write('         count = {} (file {})\n'.format(lastCount, idx))
       if smallKey > lastKey:
-         log.debug('         Total = {}'.format(currentCount))
-         log.debug('New key     = {} (file {})'.format(smallKey, idx))
+         logfile.write('         Total = {}\n'.format(currentCount))
+         logfile.write('New key     = {} (file {})\n'.format(smallKey, idx))
       elif smallKey < lastKey:
-         log.debug('Problem = {} (file {})' % (smallKey, idx))
+         logfile.write('Problem = {} (file {})\n'.format(smallKey, idx))
 
       
 # ...............................................
-def checkMergedFile(log, datapath, filePrefix, keyCol):
+def checkMergedFile(datapath, filePrefix, keyCol, logfile):
    uniqueCount = failCount = 0
    filename = _getSortedName(datapath, filePrefix)
-   bigSortedData = FileData(filename, keyCol, log)
+   bigSortedData = FileData(filename, keyCol)
    prevKey = bigSortedData.key
    tmp = bigSortedData.getThisChunk()
    
@@ -366,43 +363,34 @@ def checkMergedFile(log, datapath, filePrefix, keyCol):
          if bigSortedData.key > prevKey: 
             uniqueCount += 1
          elif bigSortedData.key < prevKey:
-            log.debug('Failure to sort prevKey %d, bigSortedData.key %d' 
-                      % (prevKey, bigSortedData.key))
+            logfile.write('ERROR: Failure to sort prevKey {}, bigSortedData.key {}\n'
+                  .format(prevKey, bigSortedData.key))
             failCount += 1
          else:
-            log.debug('Failure to chunk key %d' % (prevKey))
+            logfile.write('ERROR: Failure to chunk key {}\n'.format(prevKey))
          tmp = bigSortedData.getThisChunk()
-#          log.debug('ok {}  fail {}'.format(uniqueCount, failCount))    
+#          logfile.write('ok {}  fail {}'.format(uniqueCount, failCount))    
 
    except Exception, e:
-      log.error(str(e))
+      logfile.write('ERROR: {}\n'.format(e))
    finally:
       bigSortedData.close()
       
-   log.debug('{} uniqueCount; {} failCount; currRecnum {}'.format( 
+   logfile.write('{} uniqueCount; {} failCount; currRecnum {}\n'.format( 
              uniqueCount, failCount, bigSortedData.currRecnum))
 
-# ...............................................
-def usage():
-   output = """
-   Usage:
-      sortGbifExport [split | merge | check] <datapath>
-   """
-   print output
-   
 # ..............................................................................
 # MAIN
 # ..............................................................................
 # datestr = subprocess.check_output(['date', '+%F']).strip().replace('-', '_')
 # datapath = '/tank/data/input/gbif/{}/'.format(datestr)
 # dumpFname = 'aimee_export.txt'
-splitPrefix = 'gbif_split'
-mergedPrefix = 'gbif_merged'
-oneGb = 1000000000
-maxFileSize = None
-
 # ...............................................
 if __name__ == '__main__':
+   splitPrefix = 'gbif_split'
+   mergedPrefix = 'gbif_merged'
+   oneGb = 1000000000
+   maxFileSize = None
    
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
@@ -415,27 +403,36 @@ if __name__ == '__main__':
    
    fullfilename = args.filename
    if not os.path.exists(fullfilename):
-      print 'Missing input file {}'.format(fullfilename)
-      return -1
-   
-   datapath, dumpFname = os.path.split(fullfilename)
-   basename, ext = os.path.splitext(dumpFname) 
-   
+      print('Missing input file {}'.format(fullfilename))
+      exit(0)
+
+   datapath, dumpFname = os.path.split(fullfilename)   
+   csv.field_size_limit(sys.maxsize)
    keyCol = None
    for idx, vals in GBIF_EXPORT_FIELDS.iteritems():
       if vals[0] == GBIF_TAXONKEY_FIELD:
          keyCol = idx
          break
-      
-   csv.field_size_limit(sys.maxsize)
    
-   log = ScriptLogger('{}'.format(os.path.basename(__file__)))
-   # Split big, semi-sorted file, to multiple smaller sorted files
-   sortedRuns = splitIntoSortedFiles(log, datapath, dumpFname, 
-                                     splitPrefix, keyCol)
-   # Merge all data for production system into one or more files
-   mergeSortedFiles(log, datapath, splitPrefix, mergedPrefix, keyCol, 
-                    maxFileSize=maxFileSize)
-   # Check final output (only for a single sorted output file)
-   if maxFileSize is None:
-      checkMergedFile(log, datapath, mergedPrefix, keyCol)
+   thisname = os.path.basename(__file__)
+   sname, ext = os.path.split(thisname)
+   logfname = '/tmp/{}.log'.format(sname)
+   try:
+      logfile = open(logfname, 'w')
+      logfile.write('{} to be sorted on column {}, {}; logfile {}\n'
+                    .format(dumpFname, keyCol, GBIF_TAXONKEY_FIELD, logfname))
+      
+      # Split big, semi-sorted file, to multiple smaller sorted files
+      logfile.write('Splitting ...\n')
+      sortedRuns = splitIntoSortedFiles(datapath, dumpFname, splitPrefix, 
+                                        keyCol, logfile)
+      # Merge all data for production system into one or more files
+      logfile.write('Merging ...\n')
+      mergeSortedFiles(datapath, splitPrefix, mergedPrefix, keyCol, logfile,
+                       maxFileSize=maxFileSize)
+      # Check final output (only for a single sorted output file)
+      if maxFileSize is None:
+         logfile.write('Checking ...\n')
+         checkMergedFile(datapath, mergedPrefix, keyCol, logfile)
+   finally:
+      logfile.close()
