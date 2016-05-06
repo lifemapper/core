@@ -174,7 +174,8 @@ class _LMBoomer(LMObject):
       try:
          notifier.sendMessage(recipients, subject, message)
       except Exception, e:
-         self.log.error('Failed to notify {} about {}'.format(recipients, subject))
+         self.log.error('Failed to notify {} about {} (e={})'
+                        .format(recipients, subject, e))
 
 # ...............................................
    def _findStart(self):
@@ -199,7 +200,7 @@ class _LMBoomer(LMObject):
             f = open(self.startFile, 'w')
             f.write(str(self.nextStart))
             f.close()
-         except Exception, e:
+         except:
             self.log.error('Failed to write {} to chainer start file {}'
                            .format(self.nextStart, self.startFile))
    
@@ -455,7 +456,7 @@ class BisonBoom(_LMBoomer):
       try:
          self._tsnfile = open(tsnfilename, 'r')
          self._linenum = 0
-      except Exception, e:
+      except:
          self._failGracefully(lmerr='Unable to open {}'.format(tsnfilename))
 
       super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
@@ -484,7 +485,7 @@ class BisonBoom(_LMBoomer):
       
 # ...............................................
    def _getTsnRec(self):
-      eof = success = False
+      success = False
       tsn = tsnCount = None
       while not self._tsnfile.closed and not success:
          line = self._tsnfile.readline()
@@ -573,9 +574,11 @@ class BisonBoom(_LMBoomer):
 # ..............................................................................
 class UserBoom(_LMBoomer):
    """
-   @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
-             text chunk to a file, then creates an OccurrenceJob for it and 
-             updates the Occurrence record and inserts a job.
+   @summary: Parses a CSV file (with headers) of Occurrences using a metadata 
+             file.  A template for the metadata, with instructions, is at 
+             LmDbServer/tools/occurrence.meta.example.  
+             The parser writes each new text chunk to a file, updates the 
+             Occurrence record and inserts one or more jobs.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
                 occMetaFname, expDate, 
@@ -648,7 +651,6 @@ class UserBoom(_LMBoomer):
       while (not(self._existKillFile())):
          try:
             while not(self.occParser.eof()):
-               occ = None
                chunk = self.occParser.pullCurrentChunk()
                self._processInputSpecies(chunk)
                            
@@ -676,8 +678,8 @@ class UserBoom(_LMBoomer):
 # ...............................................
    def _simplifyName(self, longname):
       front = longname.split('(')[0]
-      newfront = front.split(',')
-      finalfront = front.strip()
+      newfront = front.split(',')[0]
+      finalfront = newfront.strip()
       return finalfront
    
 # ...............................................
@@ -728,7 +730,7 @@ class GBIFBoom(_LMBoomer):
          self._linenum = 0
          csv.field_size_limit(sys.maxsize)
          self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
-      except Exception, e:
+      except:
          self._failGracefully(lmerr='Failed to open {}'.format(occfilename))
 
       super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
@@ -752,13 +754,18 @@ class GBIFBoom(_LMBoomer):
 
 # ...............................................
    def close(self):
-      self._dumpfile.close()
-      
+      try:
+         self._dumpfile.close()
+      except:
+         self.log.error('Failed to close {}'.format(self._dumpfile))
 # ...............................................
    @property
    def complete(self):
-      return self._dumpfile.closed
-            
+      try:
+         return self._dumpfile.closed
+      except:
+         return True
+         
 # ...............................................
    @property
    def nextStart(self):
@@ -772,13 +779,12 @@ class GBIFBoom(_LMBoomer):
       providers = {}
       try:
          provKeyCol = self._fieldnames.index(providerKeyColname)
-      except Exception, e:
+      except:
          self.log.error('Unable to find {} in fieldnames'
                         .format(providerKeyColname))
          provKeyCol = None
          
       if providerKeyFile is not None and providerKeyColname is not None: 
-         import os
          if not os.path.exists(providerKeyFile):
             self.log.error('Missing provider file {}'.format(providerKeyFile))
          else:
@@ -877,15 +883,15 @@ class GBIFBoom(_LMBoomer):
       if line is not None and len(line) >= 16:
          try:
             specieskey = int(line[self._keyCol])
-         except Exception, e:
+         except:
             line = None
             self.log.debug('Skipping line; failed to convert specieskey on record {} ({})' 
-                  .format(self._linenum, str(line)))
+                  .format(self._linenum, line))
             
          if self._provCol is not None:
             try:
                provkey = line[self._provCol]
-            except Exception, e:
+            except:
                self.log.debug('Failed to find providerKey on record {} ({})' 
                      .format(self._linenum, str(line)))
             else:
@@ -953,7 +959,7 @@ class iDigBioBoom(_LMBoomer):
       try:
          self._idigFile = open(idigFname, 'r')
          self._linenum = 0
-      except Exception, e:
+      except:
          raise LMError(currargs='Unable to open {}'.format(idigFname))
 
       super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 

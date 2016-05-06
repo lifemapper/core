@@ -54,5 +54,7 @@ TAXONOMIC_SOURCE = {
             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},
    'BISON': {'name':  'ITIS Taxonomy',
             'url': 'http://www.itis.gov'},
+   'PRAGMA': {'name': 'GBIF Backbone Taxonomy',
+            'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},
    'IDIGBIO': {'name': 'GBIF Backbone Taxonomy',
             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'}}
