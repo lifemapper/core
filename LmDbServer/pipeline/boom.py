@@ -29,6 +29,7 @@ except:
 import csv
 import os
 import sys
+from time import sleep
 from types import ListType, TupleType, StringType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
@@ -464,7 +465,6 @@ class BisonBoom(_LMBoomer):
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       intersectGrid=intersectGrid, log=log)
       self._obsoleteTime = expDate
-      self._currTsn, self._currCount = self.moveToStart()
       
 # ...............................................
    def close(self):
@@ -520,13 +520,6 @@ class BisonBoom(_LMBoomer):
                        .format(tsn, tsnCount, self.nextStart))
 
 # ...............................................
-   def chainAll(self):
-      tsn, tsnCount = self.moveToStart()
-      while tsn is not None:
-         self._processTsn(tsn, tsnCount)
-         tsn, tsnCount = self._getTsnRec()
-      
-# ...............................................
    def _locateRawData(self, occ, taxonSourceKeyVal=None, dataChunk=None):
       if taxonSourceKeyVal is None:
          raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
@@ -556,11 +549,11 @@ class BisonBoom(_LMBoomer):
       if sciname is None:
          try:
             (itisname, king, tsnHier) = BisonAPI.getItisTSNValues(itisTsn)
-            self._wait(20)
          except Exception, e:
             self.log.error('Failed to get results for ITIS TSN {} ({})'
                            .format(itisTsn, str(e)))
          else:
+            sleep(5)
             if itisname is not None and itisname != '':
                sciname = ScientificName(itisname, kingdom=king,
                                      lastOccurrenceCount=tsnCount, 
@@ -636,13 +629,6 @@ class UserBoom(_LMBoomer):
          self._processInputSpecies(dataChunk, dataCount, taxonName)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
-
-# ...............................................
-   def chainAll(self):
-      self.moveToStart()
-      dataChunk, dataCount, taxonName  = self._getChunk()
-      while dataChunk:
-         self._processInputSpecies(dataChunk, dataCount, taxonName)
 
 # ...............................................
    def run(self):
@@ -818,14 +804,6 @@ class GBIFBoom(_LMBoomer):
                        .format(speciesKey, len(dataChunk), self.nextStart))
 
 # ...............................................
-   def chainAll(self):
-      self.moveToStart()
-      while self._currRec is not None:
-         # _getOccurrenceChunk advances self._currRec
-         speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
-         self._processChunk(speciesKey, dataCount, dataChunk)
-
-# ...............................................
    def moveToStart(self):
       startline = self._findStart()         
       if startline < 0:
@@ -982,14 +960,6 @@ class iDigBioBoom(_LMBoomer):
          self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
 
 # ...............................................
-   def chainAll(self):
-      self.moveToStart()
-      taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-      while taxonKey is not None:
-         self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
-         taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-      
-# ...............................................
    @property
    def complete(self):
       return self._idigFile.closed
@@ -1143,7 +1113,11 @@ boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                          intersectGrid=DEFAULT_GRID_NAME)
 taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
 
-
+boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            BISON_TSN_FILE, expdate, 
+                            taxonSourceName=taxname, mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
 
 
 boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
