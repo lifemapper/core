@@ -97,7 +97,7 @@ JOB_RETRIEVER_KEYS: lifemapperJobServer
 ; ...............lifemapperJobServer.................
 [LmCompute - Job Retrievers - lifemapperJobServer]
 RETRIEVER_TYPE: server
-JOB_SERVER: http://@PUBLIC_FQDN@/jobs
+JOB_SERVER: http://@WEB_FQDN@/jobs
 PULL_THRESHOLD: 50
 NUM_TO_PULL: 50
 ;;;; Optional parameters.  Use if needed

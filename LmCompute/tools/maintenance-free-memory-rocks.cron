@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# This script tells the machines to free up cached memory that is not being 
-#    used.  Note that you need to run it as root
-
-sync && echo 3 > /proc/sys/vm/drop_caches
