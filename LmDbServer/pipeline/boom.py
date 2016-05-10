@@ -160,11 +160,6 @@ class _LMBoomer(LMObject):
       self.log.debug('Time: {}; gracefully exiting ...'.format(dt.utc().mjd))
 
 # ...............................................
-   @property
-   def nextStart(self):
-      return None
-
-# ...............................................
    def _notifyPeople(self, subject, message, recipients=None):
       if recipients is None:
          recipients = self.developers
@@ -274,10 +269,6 @@ class _LMBoomer(LMObject):
       return deleted
          
 # ...............................................
-   def _getInsertSciNameForExternalSpeciesKey(self, speciesKey):
-      raise LMError(currargs='Function must be implemented in subclass')
-
-# ...............................................
    def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
       """
       Returns an existing or newly inserted ScientificName
@@ -330,9 +321,40 @@ class _LMBoomer(LMObject):
       return sciName
          
 # ...............................................
-   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+   def _raiseSubclassError(self):
       raise LMError(currargs='Function must be implemented in subclass')
+
+# ...............................................
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+      self._raiseSubclassError()
    
+# ...............................................
+   def _getInsertSciNameForExternalSpeciesKey(self, speciesKey):
+      self._raiseSubclassError()
+
+# ...............................................
+   def chainOne(self):
+      self._raiseSubclassError()
+
+# ...............................................
+   def close(self):
+      self._raiseSubclassError()
+      
+# ...............................................
+   @property
+   def complete(self):
+      self._raiseSubclassError()
+                  
+# ...............................................
+   @property
+   def nextStart(self):
+      self._raiseSubclassError()
+   
+# ...............................................
+   def moveToStart(self):
+      self._raiseSubclassError()
+   
+
 # ...............................................
    def _createOrResetOccurrenceset(self, sciname, taxonSourceKeyVal, 
                                    occProcessType, dataCount, data=None):
@@ -454,13 +476,14 @@ class BisonBoom(_LMBoomer):
                 intersectGrid=None, log=None):
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
+         
       self._updateFile(tsnfilename, expDate)
       try:
          self._tsnfile = open(tsnfilename, 'r')
-         self._linenum = 0
       except:
          self._failGracefully(lmerr='Unable to open {}'.format(tsnfilename))
-
+      
+      self._linenum = 0
       super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
@@ -602,18 +625,26 @@ class UserBoom(_LMBoomer):
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
-         self._linenum = 0
-         self._fieldNames = self.occParser.header
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          self._failGracefully(lmerr=e)
+         
+      self._fieldNames = self.occParser.header
       super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      intersectGrid=intersectGrid, log=log)
       self._obsoleteTime = expDate
       
+# ...............................................
+   def close(self):
+      try:
+         self.occParser.close()
+      except:
+         self.log.error('Failed to close OccDataParser with file {} or data'
+                        .format(self.occParser.dataFname))
+               
 # ...............................................
    @property
    def complete(self):
@@ -637,7 +668,6 @@ class UserBoom(_LMBoomer):
       if startline > 2:
          self.occParser.skipToRecord(startline)
       elif startline < 0:
-         self._linenum = startline
          self._currRec = None
 
 # ...............................................
@@ -737,12 +767,16 @@ class GBIFBoom(_LMBoomer):
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       try:
          self._dumpfile = open(occfilename, 'r')
-         self._linenum = 0
-         csv.field_size_limit(sys.maxsize)
-         self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
       except:
          self._failGracefully(lmerr='Failed to open {}'.format(occfilename))
 
+      csv.field_size_limit(sys.maxsize)
+      try:
+         self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
+      except:
+         self._failGracefully(lmerr='Failed to init CSV reader with {}'.format(occfilename))
+
+      self._linenum = 0
       super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
@@ -768,6 +802,7 @@ class GBIFBoom(_LMBoomer):
          self._dumpfile.close()
       except:
          self.log.error('Failed to close {}'.format(self._dumpfile))
+         
 # ...............................................
    @property
    def complete(self):
@@ -958,6 +993,7 @@ class iDigBioBoom(_LMBoomer):
                 intersectGrid=None, log=None):
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
+         
       try:
          self._idigFile = open(idigFname, 'r')
          self._linenum = 0
@@ -974,15 +1010,15 @@ class iDigBioBoom(_LMBoomer):
       self._currReportedCount = None
          
 # ...............................................
-   def close(self):
-      self._idigFile.close()
-      
-# ...............................................
    def chainOne(self):
       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
       if taxonKey:
          self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
 
+# ...............................................
+   def close(self):
+      self._idigFile.close()
+      
 # ...............................................
    @property
    def complete(self):
