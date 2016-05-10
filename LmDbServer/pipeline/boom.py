@@ -544,7 +544,7 @@ class BisonBoom(_LMBoomer):
                        .format(tsn, tsnCount, self.nextStart))
 
 # ...............................................
-   def _locateRawData(self, occ, taxonSourceKeyVal=None, dataChunk=None):
+   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
       if taxonSourceKeyVal is None:
          raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
       occAPI = BisonAPI(qFilters=
