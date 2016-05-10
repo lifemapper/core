@@ -474,6 +474,8 @@ class BisonBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
                 intersectGrid=None, log=None):
+      self._tsnfile = None
+      
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
          
@@ -492,8 +494,11 @@ class BisonBoom(_LMBoomer):
       
 # ...............................................
    def close(self):
-      self._tsnfile.close()
-      
+      try:
+         self._tsnfile.close()
+      except:
+         self.log.error('Unable to close tsnfile {}'.format(self._tsnfile))
+         
 # ...............................................
    @property
    def nextStart(self):
@@ -505,8 +510,11 @@ class BisonBoom(_LMBoomer):
 # ...............................................
    @property
    def complete(self):
-      return self._tsnfile.closed
-   
+      try:
+         return self._tsnfile.closed
+      except:
+         return True
+      
 # ...............................................
    def _updateFile(self, filename, expDate):
       """
@@ -623,6 +631,11 @@ class UserBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
                 occMetaFname, expDate, 
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+      super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+                                     taxonSourceName=None, 
+                                     mdlMask=mdlMask, prjMask=prjMask, 
+                                     intersectGrid=intersectGrid, log=log)
+      self.occParser = None
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
       except Exception, e:
@@ -630,26 +643,32 @@ class UserBoom(_LMBoomer):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          self._failGracefully(lmerr=e)
          
-      self._fieldNames = self.occParser.header
-      super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
-                                     taxonSourceName=None, 
-                                     mdlMask=mdlMask, prjMask=prjMask, 
-                                     intersectGrid=intersectGrid, log=log)
-      self._obsoleteTime = expDate
+      if self.occParser is not None:
+         self._fieldNames = self.occParser.header
+         self._obsoleteTime = expDate
+      else:
+         raise LMError('Failed to initialize OccDataParser')
       
 # ...............................................
    def close(self):
       try:
          self.occParser.close()
       except:
-         self.log.error('Failed to close OccDataParser with file {} or data'
-                        .format(self.occParser.dataFname))
+         try:
+            dataname = self.occParser.dataFname
+         except:
+            dataname = None
+         self.log.error('Unable to close OccDataParser with file/data {}'
+                        .format(dataname))
                
 # ...............................................
    @property
    def complete(self):
-      return self.occParser.closed
-            
+      if self.occParser is not None:
+         return self.occParser.closed
+      else:
+         return True
+       
 # ...............................................
    @property
    def nextStart(self):
@@ -765,6 +784,7 @@ class GBIFBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
                 taxonSourceName=None, providerListFile=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+      self._dumpfile = None
       try:
          self._dumpfile = open(occfilename, 'r')
       except:
@@ -801,7 +821,7 @@ class GBIFBoom(_LMBoomer):
       try:
          self._dumpfile.close()
       except:
-         self.log.error('Failed to close {}'.format(self._dumpfile))
+         self.log.error('Unable to close {}'.format(self._dumpfile))
          
 # ...............................................
    @property
@@ -1017,7 +1037,10 @@ class iDigBioBoom(_LMBoomer):
 
 # ...............................................
    def close(self):
-      self._idigFile.close()
+      try:
+         self._idigFile.close()
+      except:
+         self.log.error('Unable to close idigFile {}'.format(self._idigFile))
       
 # ...............................................
    @property
@@ -1155,7 +1178,8 @@ from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.log import DaemonLogger
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
-         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE, PROVIDER_DUMP_FILE)
+         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE, PROVIDER_DUMP_FILE,
+         USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
@@ -1189,7 +1213,12 @@ boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 
 
-
+boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate, 
+                            mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
+                            
 (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
              familyStr, genusStr, speciesStr, genuskey, 
              retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
