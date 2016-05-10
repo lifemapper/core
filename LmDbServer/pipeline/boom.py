@@ -745,7 +745,7 @@ class UserBoom(_LMBoomer):
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
       rdloc = occ.createLocalDLocation(raw=True)
       success = occ.writeCSV(data, dlocation=rdloc, overwrite=True,
-                             header=self.fieldnames)
+                             header=self._fieldNames)
       if not success:
          rdloc = None
          self.log.debug('Unable to write CSV file {}'.format(rdloc))
@@ -806,11 +806,11 @@ class GBIFBoom(_LMBoomer):
       idxs.sort()
       for idx in idxs:
          gbifFldNames.append(GBIF_EXPORT_FIELDS[idx][0])
-      self._fieldnames = gbifFldNames
+      self._fieldNames = gbifFldNames
       
       self._providers, self._provCol = self._readProviderKeys(providerListFile, 
                                                          GBIF_PROVIDER_FIELD)
-      self._keyCol = self._fieldnames.index(GBIF_TAXONKEY_FIELD)
+      self._keyCol = self._fieldNames.index(GBIF_TAXONKEY_FIELD)
       self._obsoleteTime = expDate
       self._currKeyFirstRecnum = None
       self._currRec = None
@@ -843,7 +843,7 @@ class GBIFBoom(_LMBoomer):
    def _readProviderKeys(self, providerKeyFile, providerKeyColname):
       providers = {}
       try:
-         provKeyCol = self._fieldnames.index(providerKeyColname)
+         provKeyCol = self._fieldNames.index(providerKeyColname)
       except:
          self.log.error('Unable to find {} in fieldnames'
                         .format(providerKeyColname))
