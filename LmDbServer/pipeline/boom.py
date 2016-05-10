@@ -454,6 +454,7 @@ class BisonBoom(_LMBoomer):
                 intersectGrid=None, log=None):
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
+      self._updateFile(tsnfilename, expDate)
       try:
          self._tsnfile = open(tsnfilename, 'r')
          self._linenum = 0
@@ -482,6 +483,29 @@ class BisonBoom(_LMBoomer):
    @property
    def complete(self):
       return self._tsnfile.closed
+   
+# ...............................................
+   def _updateFile(self, filename, expDate):
+      """
+      If file does not exist or is older than expDate, create a new file. 
+      """
+      if filename is None or not os.path.exists(filename):
+         self._recreateFile(filename)
+      elif expDate is not None:
+         ticktime = os.path.getmtime(filename)
+         modtime = dt.DateFromTicks(ticktime).mjd
+         if modtime < expDate:
+            self._recreateFile(filename)
+
+# ...............................................
+   def _recreateFile(self, filename):
+      """
+      Create a new file from BISON TSN query for binomials with > 20 points. 
+      """
+      tsnList = BisonAPI.getTsnListForBinomials()
+      with open(filename, 'w') as f:
+         for tsn, tsnCount in tsnList:
+            f.write('{}, {}\n'.format(tsn, tsnCount))
       
 # ...............................................
    def _getTsnRec(self):
