@@ -358,7 +358,7 @@ class BisonAPI(APIQuery):
          
 # ...............................................
    @staticmethod
-   def getTsnListForBinomials(cls):
+   def getTsnListForBinomials():
       """
       @summary: Returns a list of sequences containing tsn and tsnCount
       """
