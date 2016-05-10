@@ -407,7 +407,6 @@ class BisonAPI(APIQuery):
          self.query()
       if self.output is not None:
          dataCount = self._burrow(BISON_COUNT_KEYS)
-         print dataCount
          dataList = self._burrow(BISON_RECORD_KEYS)
       return dataList
       
