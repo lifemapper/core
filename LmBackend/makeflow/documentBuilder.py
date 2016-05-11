@@ -41,7 +41,7 @@ from LmCommon.common.lmconstants import JobStatus
 BASE_JOB_COMMAND = """\
 # Build job request
 $JOB_REQUESTS/{processType}-{jobId}Req.xml: {dependency}
-   $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} $JOB_REQUESTS/{processType}-{jobId}Req.xml
+   $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f $JOB_REQUESTS/{processType}-{jobId}Req.xml
 
 # Run job
 {dLocation}: $JOB_REQUESTS/{processType}-{jobId}Req.xml
