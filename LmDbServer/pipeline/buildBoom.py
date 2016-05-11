@@ -69,7 +69,7 @@ class Archivist(Daemon):
                             mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
    
-         elif DATASOURCE in ('PRAGMA', 'USER'):
+         else:
             # Set variables in config/site.ini to override installed defaults
             self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 

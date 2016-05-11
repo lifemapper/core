@@ -760,15 +760,15 @@ class UserBoom(_LMBoomer):
    
          # Create jobs for Archive Chain: occurrence population, 
          # model, projection, and (later) intersect computation
-         jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
-                                   self.modelScenario, 
-                                   self.projScenarios, 
-                                   occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-                                   priority=Priority.NORMAL, 
-                                   intersectGrid=None,
-                                   minPointCount=POINT_COUNT_MIN)
-         self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                        len(jobs), taxonName, len(dataChunk), occ.getId()))
+         if occ is not None:
+            jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+                                 self.modelScenario, self.projScenarios, 
+                                 occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
+                                 priority=Priority.NORMAL, 
+                                 intersectGrid=None,
+                                 minPointCount=POINT_COUNT_MIN)
+            self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
+                           len(jobs), taxonName, len(dataChunk), occ.getId()))
       else:
          self.log.debug('No data in chunk')
 
@@ -1173,10 +1173,10 @@ if __name__ == "__main__":
 import mx.DateTime as dt
 import os, sys
 import time
-
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.log import DaemonLogger
+from LmCommon.common.lmconstants import ProcessType
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
          GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE, PROVIDER_DUMP_FILE,
          USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
@@ -1186,10 +1186,11 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS,
 from LmDbServer.pipeline.boom import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
 from LmServer.base.taxon import ScientificName
 from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
-
-
 expdate = dt.DateTime(2016, 1, 1)
 taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+
+
+# ...............................................
 boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                          IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
@@ -1197,6 +1198,7 @@ boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                          intersectGrid=DEFAULT_GRID_NAME)
 taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
 
+# ...............................................
 boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             BISON_TSN_FILE, expdate, 
@@ -1204,6 +1206,7 @@ boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                             intersectGrid=DEFAULT_GRID_NAME)
 
 
+# ...............................................
 boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
@@ -1213,12 +1216,26 @@ boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 
 
+# ...............................................
 boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate, 
                             mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME)
-                            
+dataChunk, dataCount, taxonName  = boomer._getChunk()
+occ = boomer._createOrResetOccurrenceset(taxonName, None, 
+                                       ProcessType.USER_TAXA_OCCURRENCE,
+                                       dataCount, data=dataChunk)
+
+jobs = boomer._scribe.initSDMChain(boomer.userid, occ, boomer.algs, 
+                          boomer.modelScenario, 
+                          boomer.projScenarios, 
+                          occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
+                          priority=Priority.NORMAL, 
+                          intersectGrid=None,
+                          minPointCount=POINT_COUNT_MIN)
+
+# ...............................................
 (rankStr, acceptedkey, kingdomStr, phylumStr, classStr, orderStr, 
              familyStr, genusStr, speciesStr, genuskey, 
              retSpecieskey) = GbifAPI.getTaxonomy(taxonKey)
