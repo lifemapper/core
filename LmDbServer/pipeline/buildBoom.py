@@ -82,8 +82,9 @@ class Archivist(Daemon):
    # .............................
    def run(self):
       try:
-         self.log.info('Moving to start ...')
          self.boomer.moveToStart()
+         self.log.debug('Starting boomer at location {} ... '
+                        .format(self.boomer.currRecnum))
          while self.keepRunning:
             try:
                self.log.info('Chaining one ...')

@@ -183,8 +183,6 @@ class _LMBoomer(LMObject):
                linenum = int(line)
             except:
                print 'Failed to interpret {}'.format(line)
-            else:
-               self.log.debug('Start location = {}'.format(linenum))
          if linenum > 0:
             os.remove(self.startFile)
       return linenum
@@ -354,6 +352,13 @@ class _LMBoomer(LMObject):
    def moveToStart(self):
       self._raiseSubclassError()
    
+# ...............................................
+   @property
+   def currRecnum(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum
 
 # ...............................................
    def _createOrResetOccurrenceset(self, sciname, taxonSourceKeyVal, 
@@ -682,6 +687,17 @@ class UserBoom(_LMBoomer):
          except:
             return 0
 
+# ...............................................
+   @property
+   def currRecnum(self):
+      if self.complete:
+         return 0
+      else:
+         try:
+            return self.occParser.currRecnum
+         except:
+            return 0
+         
 # ...............................................
    def moveToStart(self):
       startline = self._findStart()
