@@ -117,10 +117,10 @@ class LMMakeflowDocument(object):
    
    # ...........................
    def buildProjection(self, prjJob):
-      if prjJob.outputObj.getModel.status == JobStatus.COMPLETE:
+      if prjJob.outputObj.getModel().status == JobStatus.COMPLETE:
          dep = ''
       else:
-         dep = prjJob.outputObj.getModel.getDLocation()
+         dep = prjJob.outputObj.getModel().getDLocation()
       job = BASE_JOB_COMMAND.format(processType=prjJob.processType, 
                                     jobId=prjJob.getId(), 
                                     objectFamily=JobFamily.SDM, 
