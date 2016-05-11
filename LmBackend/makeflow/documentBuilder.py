@@ -63,17 +63,18 @@ class LMMakeflowDocument(object):
       self.inputs = []
       self.outputs = []
       self.headers = []
+      # Calling this automatically.  We will have conditional headers someday
+      self._addDocumentHeaders()
    
    # ...........................
    def _addDocumentHeaders(self):
-      #TODO: Pull from constants
       self.headers.append("PYTHON={pyCmd}".format(pyCmd=PYTHON_CMD))
       self.headers.append("RUNNER={factoryPath}".format(
                                        factoryPath=os.path.join(APP_PATH, 
                                          "LmCompute/jobs/runners/factory.py")))
       self.headers.append("JOB_REQUESTS={jrDir}".format(jrDir=JOB_REQUEST_DIR))
       self.headers.append("MAKE_JOB_REQUEST={jrScript}".format(
-                                 os.path.join(APP_PATH, 
+                                 jrScript=os.path.join(APP_PATH, 
                                       "LmBackend/makeflow/makeJobRequest.py")))
       #REQ_FILL=$HOME/git/core/LmCompute/scripts/fillProjectionRequest.py
       
