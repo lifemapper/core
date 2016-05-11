@@ -155,8 +155,8 @@ class Scribe(Peruser):
          mdlJob = SDMModelJob(mdl, processType=processType, createTime=modtime, 
                            retryCount=0)
       except LMMissingDataError, e:
-         self.log.error('Missing/invalid data for occ %d; rollback occ, delete experiments' 
-                        % (occset.getId()))
+         self.log.error('Missing/invalid data for occ {}; will rollback'
+                        .format(occset.getId()))
          self.rollbackOccurrenceDeleteDependents(occset)
       except Exception, e:
          raise e
@@ -381,15 +381,13 @@ class Scribe(Peruser):
          oldexp.model.rollback(modtime, status=errstatus, priority=newpriority)
          success = self._mal.rollbackModel(oldexp.model, JobStatus.GENERAL_ERROR)
          if not success:
-            self.log.error('Failed to _rollbackExp %d' % oldexp.model.getId())
+            self.log.error('Failed to rollback experiment {}'.format(oldexp.getId()))
          else:
-            self.log.info('Success:%s _rollbackExp error experiment%d' % 
-                          (str(success), oldexp.getId()))
+            self.log.info('Rolled back experiment {}'.format(oldexp.getId()))
       else:
          mdlJob, notJob = self.reinitSDMModel(oldexp.model, newpriority, 
                                               modtime=modtime)
-         self.log.info('Success _rollbackExp re-initialized model %d' % 
-                       (oldexp.getId()))
+         self.log.info('Re-initialized experiment {}'.format(oldexp.getId()))
          
       # Update existing projections
       for oldprj in oldexp.projections:
@@ -397,7 +395,7 @@ class Scribe(Peruser):
             oldprj.rollback(modtime, priority=newpriority, status=errstatus)
             psuccess = self._mal.rollbackProjection(oldprj)
             if not psuccess:
-               self.log.error('Failed to update projection %d' % oldprj.getId())
+               self.log.error('Failed to update projection {}'.format(oldprj.getId()))
          else:
             prjJob = self.reinitSDMProjection(oldprj, newpriority)
       return success
@@ -507,7 +505,7 @@ class Scribe(Peruser):
          elif updatedLyr.features is not None:
             updatedLyr.writeLayer(overwrite=True)
          else:
-            self.log.debug('Missing input data to write RAD layer {}'
+            self.log.error('Missing input data to write RAD layer {}'
                            .format(updatedLyr.getId()))
       return updatedLyr, isNewLyr
 
@@ -802,8 +800,8 @@ class Scribe(Peruser):
       for kw in typekeywords:
          typeid = self._mal.updateLayerTypeKeyword(layerid, None, kw)
          if typeid == -1: 
-            self.log.warning('Error inserting %s for layertype %d' % 
-                             (kw, layerid))
+            self.log.warning('Error inserting {} for layertype {}'
+                             .format(kw, layerid))
       return typeid
 # ...............................................
 # Model
@@ -823,8 +821,8 @@ class Scribe(Peruser):
       sdmCount = self._mal.moveAllDependentJobs(completeStat, errorStat, 
                                                 notReadyStat, readyStat, 
                                                 currtime)
-      self.log.debug('Moved %d dependent SDM jobs and %d dependent RAD jobs to ready (status=1)' 
-                     % (sdmCount, radCount))
+      self.log.debug('Moved {}/{} dependent SDM/RAD jobs to ready (status=1)'
+                     .format(sdmCount, radCount))
       return sdmCount, radCount
       
 # ...............................................
@@ -909,7 +907,7 @@ class Scribe(Peruser):
                                           JobStatus.PULL_REQUESTED, usr, inType, 
                                           computeIP)
             currjobs.extend(morejobs)
-            self.log.debug('Pulled %d SMTP Jobs' % (len(morejobs)))
+            self.log.debug('Pulled {} SMTP Jobs'.format(len(morejobs)))
             
          if ProcessType.isRAD(ptType):
             currjobs = self._rad.pullJobs(ptCount, ptType, JobStatus.INITIALIZE,
@@ -989,13 +987,6 @@ class Scribe(Peruser):
       currjobs = []
       jbCount = max(count, count/len(jobTypes))
       for jobType in jobTypes:
-         self.log.debug('Job type: %s' % jobType)
-         self.log.debug('Count: %s' % jbCount)
-         self.log.debug('start status: %s' % startStat)
-         self.log.debug('end status: %s' % endStat)
-         self.log.debug('user: %s' % usr)
-         self.log.debug('input type: %s' % inputType)
-         self.log.debug('compute type: %s' % computeType)
          currjobs = self._mal.moveSDMJobs(jobType, jbCount, startStat, 
                                           endStat, usr, inputType, 
                                           computeType, computeId)
@@ -1110,8 +1101,6 @@ class Scribe(Peruser):
             count += 1
       if models:
          occ.clearLocalMapfile()
-         self.log.info ('  Removed %d experiments for occurrence set %d' 
-                        % (count, occ.getId()))
       return count
       
 # ...............................................
@@ -1150,9 +1139,7 @@ class Scribe(Peruser):
          occ.deleteData()
       success = self._mal.deleteOccAndDependentObjects(occ.getId(), 
                                                        occ.getUserId())
-      if success:
-         self.log.info ('  Removed occurrence set %d' % (occ.getId()))
-      else:
+      if not success:
          self.log.info ('  Failed to remove occurrence set %d' % (occ.getId()))
 
       return success
@@ -1183,11 +1170,8 @@ class Scribe(Peruser):
       occ.deleteData()
       occ.updateStatus(JobStatus.GENERAL, queryCount=-1)
       success = self.updateOccState(occ)
-      if success:
-         self.log.info ('  Removed experiments for occurrence set %d' 
-                        % (occ.getId()))
-      else:
-         self.log.info ('  Failed to remove experiments for occurrence set %d' 
+      if not success:
+         self.log.error ('  Failed to remove experiments for occurrence set %d' 
                         % (occ.getId()))
       return success
       
@@ -1200,11 +1184,8 @@ class Scribe(Peruser):
       @occ: OccurrenceLayer object to delete
       """
       success = self._mal.setSpeciesEnvironment(occ.getId(), primaryEnvCode)
-      if success:
-         self.log.info ('Set occurrence set %d to environment %d' % 
-                        (occ.getId(), primaryEnvCode))
-      else:
-         self.log.info ('Failed to set occurrence set %d to environment %d' % 
+      if not success:
+         self.log.error ('Failed to set occurrence set %d to environment %d' % 
                         (occ.getId(), primaryEnvCode))
 
       return success
@@ -1233,11 +1214,7 @@ class Scribe(Peruser):
       
       success = self._mal.updateOccurrenceSetMetadataAndStatus(occ)
       if not success:
-         self.log.error('Failed to update occurrenceset %d' % occ.getId())
-      else:
-         self.log.info ('Cleared occurrence set %d with %d experiments' 
-                        % (occ.getId(), len(models)))
-
+         self.log.error('Failed to update occurrenceset {}'.format(occ.getId()))
    
 # ...............................................         
    def updateExperimentsForOcc(self, occ, userid, occSuccess=True):
@@ -1279,8 +1256,6 @@ class Scribe(Peruser):
       deleted = False
       # Delete if overly-complex name
       if len(occ.displayName.split()) > 2:
-         self.log.info('Deleting GBIF complex name %s (occset %d) ...' % 
-                       (occ.displayName, occ.getId()))
          self.completelyRemoveOccurrenceSet(occ)
          deleted = True
       return deleted
@@ -1297,7 +1272,7 @@ class Scribe(Peruser):
          try:
             self.deleteExperiment(exp.model)
          except Exception, e:
-            self.log.error('Failed to delete experiment %d with %d points' % 
+            self.log.error('Failed to delete experiment {} with {} points' % 
                            (exp.getId(), exp.model.occurrenceSet.queryCount))
       else:
          try:
@@ -1315,7 +1290,7 @@ class Scribe(Peruser):
                e = LMError(currargs='Failed updating old exp {}'
                                     .format(exp.getId()),
                            prevargs=e.args, lineno=self.getLineno())
-            self.log.debug('Failed rollback exp, deleting instead (%s)' % (str(e)))
+            self.log.debug('Failed rollback exp, deleting instead ({})'.format(e))
             self.deleteExperiment(exp.model)
             raise e
          self.log.info('Rolled back experiment {} ({}) to status {}'
@@ -1508,8 +1483,8 @@ class Scribe(Peruser):
       existExp = self.getRADExperiment(radexp.getUserId(), expid=radexp.getId(), 
                                        expname=radexp.name, fillLayers=True)
       if existExp is not None:
-         self.log.warning('Using existing RADExperiment %s for user %s'
-                          % (radexp.name, radexp.getUserId()) )
+         self.log.warning('Using existing RADExperiment {} for user {}'
+                          .format(radexp.name, radexp.getUserId()))
          # Make sure all the buckets exist too
          for currbuck in radexp.bucketList:
             if existExp.getBucket(currbuck.name) is None:
@@ -1542,7 +1517,7 @@ class Scribe(Peruser):
          bck.clear()
          bsuccess = self.deleteBucket(bck)
          if not bsuccess:
-            self.log.error('Failed to delete bucket %s' % str(bck.getId()))
+            self.log.error('Failed to delete bucket {}'.format(bck.getId()))
       exp.clear()
       success = self._rad.deleteExperiment(exp.getId())
       return success
@@ -1615,7 +1590,7 @@ class Scribe(Peruser):
          pamsum.clear()
          success = self._rad.deletePamSum(pamsum.getId())
          if not success:
-            self.log.error('Unable to delete PamSum %d' % pamsum.getId())
+            self.log.error('Unable to delete PamSum {}'.format(pamsum.getId()))
       return success
    
 # ...............................................
@@ -1708,8 +1683,8 @@ class Scribe(Peruser):
          existSG = self.getShapeGrid(shpgrd.getUserId(),shpname=shpgrd.name)
 
       if existSG is not None:
-         self.log.warning('Using existing ShapeGrid for user %s with name %s'
-                          % (shpgrd.getUserId(), shpgrd.name))
+         self.log.warning('Using existing ShapeGrid {} for user {}'
+                          .format(shpgrd.name, shpgrd.getUserId()))
          return existSG
          
       else:
@@ -1763,8 +1738,6 @@ class Scribe(Peruser):
             raise e
          else:
             occJob = updatedOccJob
-            self.log.debug('   inserted job to write points for occurrenceSet {}' 
-                           .format(occ.getId()))
       return occJob
 
 # ...............................................

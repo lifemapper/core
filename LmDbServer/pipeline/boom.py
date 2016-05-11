@@ -617,6 +617,8 @@ class BisonBoom(_LMBoomer):
                                      taxonomySourceSpeciesKey=itisTsn,
                                      taxonomySourceKeyHierarchy=tsnHier)
                self._scribe.insertTaxon(sciname)
+               self.log.info('Inserted sciname for ITIS tsn {}, {}'
+                             .format(itisTsn, sciname.scientificName))
       return sciname
 
 # ..............................................................................
@@ -770,6 +772,7 @@ class UserBoom(_LMBoomer):
             self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
                            len(jobs), taxonName, len(dataChunk), occ.getId()))
       else:
+         
          self.log.debug('No data in chunk')
 
 
