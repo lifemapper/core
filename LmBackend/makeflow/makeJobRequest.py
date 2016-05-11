@@ -37,11 +37,11 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(prog="Lifemapper Job Request creator",
                       description="Creates a job request file from the inputs",
                       version="1.0.0")
-   parser.add_argument('-jobFamily', type=int, 
+   parser.add_argument('jobFamily', type=int, 
       choices=[JobFamily.SDM, JobFamily.RAD],
       help="Generate a job request from this family (%s - SDM, %s - RAD)" % (
                                                  JobFamily.SDM, JobFamily.RAD))
-   parser.add_argument('-jobId', type=int, 
+   parser.add_argument('jobId', type=int, 
                        help="Generate a job request for this job id")
    parser.add_argument('-f', nargs='+', type=str,
                     help="Write the output here.  Write to std out if missing")
@@ -55,7 +55,7 @@ if __name__ == "__main__":
    scribe = Scribe(ScriptLogger)
    scribe.openConnections()
    
-   job = scribe.getJOb(jobFam, jobId)
+   job = scribe.getJob(jobFam, jobId)
    
    scribe.closeConnections()
    
