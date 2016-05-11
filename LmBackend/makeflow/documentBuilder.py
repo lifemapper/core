@@ -35,11 +35,12 @@ import os
 from LmServer.common.lmconstants import JobFamily
 from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD
 from LmServer.common.localconstants import APP_PATH
+from LmCommon.common.lmconstants import JobStatus
 
 # For now, most of the jobs follow the same pattern, build the request, submit
 BASE_JOB_COMMAND = """\
 # Build job request
-$JOB_REQUESTS/{processType}-{jobId}Req.xml:
+$JOB_REQUESTS/{processType}-{jobId}Req.xml: {dependency}
    $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} $JOB_REQUESTS/{processType}-{jobId}Req.xml
 
 # Run job
@@ -89,7 +90,8 @@ class LMMakeflowDocument(object):
       job = BASE_JOB_COMMAND.format(processType=occJob.processType, 
                                     jobId=occJob.getId(), 
                                     objectFamily=JobFamily.SDM, 
-                                    dLocation=occJob.outputObj.getDLocation())
+                                    dLocation=occJob.outputObj.getDLocation(),
+                                    dependency="")
       self.jobs.append(job)
       self.outputs.append(occJob.outputObj.getDLocation())
    
@@ -101,19 +103,29 @@ class LMMakeflowDocument(object):
       @note: Output is model ruleset, this will be used in other jobs 
                 potentially
       """
+      if mdlJob.outputObj.occurrenceSet.status == JobStatus.COMPLETE:
+         dep = ''
+      else:
+         dep = mdlJob.outputObj.occurrenceSet.getDLocation()
       job = BASE_JOB_COMMAND.format(processType=mdlJob.processType, 
                                     jobId=mdlJob.getId(), 
                                     objectFamily=JobFamily.SDM, 
-                                    dLocation=mdlJob.outputObj.getDLocation())
+                                    dLocation=mdlJob.outputObj.getDLocation(),
+                                    dependency=dep)
       self.jobs.append(job)
       self.outputs.append(mdlJob.outputObj.getDLocation())
    
    # ...........................
    def buildProjection(self, prjJob):
+      if prjJob.outputObj.model.status == JobStatus.COMPLETE:
+         dep = ''
+      else:
+         dep = prjJob.outputObj.model.getDLocation()
       job = BASE_JOB_COMMAND.format(processType=prjJob.processType, 
                                     jobId=prjJob.getId(), 
                                     objectFamily=JobFamily.SDM, 
-                                    dLocation=prjJob.outputObj.getDLocation())
+                                    dLocation=prjJob.outputObj.getDLocation(),
+                                    dependency=dep)
       self.jobs.append(job)
       self.outputs.append(prjJob.outputObj.getDLocation())
    
@@ -138,7 +150,8 @@ class LMMakeflowDocument(object):
       job = BASE_JOB_COMMAND.format(processType=intJob.processType, 
                                     jobId=intJob.getId(), 
                                     objectFamily=JobFamily.RAD, 
-                                    dLocation=intJob.outputObj.getDLocation())
+                                    dLocation=intJob.outputObj.getDLocation(),
+                                    dependency='')
       self.jobs.append(job)
       self.outputs.append(intJob.outputObj.getDLocation())
    
@@ -148,14 +161,16 @@ class LMMakeflowDocument(object):
       job = BASE_JOB_COMMAND.format(processType=calcJob.processType, 
                                     jobId=calcJob.getId(), 
                                     objectFamily=JobFamily.RAD, 
-                                    dLocation=calcJob.outputObj.getDLocation())
+                                    dLocation=calcJob.outputObj.getDLocation(),
+                                    dependency='')
       self.jobs.append(job)
       self.outputs.append(calcJob.outputObj.getDLocation())
       # Compress
       job = BASE_JOB_COMMAND.format(processType=compJob.processType, 
                                     jobId=compJob.getId(), 
                                     objectFamily=JobFamily.RAD, 
-                                    dLocation=compJob.outputObj.getDLocation())
+                                    dLocation=compJob.outputObj.getDLocation(),
+                                    dependency='')
       self.jobs.append(job)
       self.outputs.append(compJob.outputObj.getDLocation())
    
@@ -165,7 +180,8 @@ class LMMakeflowDocument(object):
       job = BASE_JOB_COMMAND.format(processType=randJob.processType, 
                                     jobId=randJob.getId(), 
                                     objectFamily=JobFamily.RAD, 
-                                    dLocation=randJob.outputObj.getDLocation())
+                                    dLocation=randJob.outputObj.getDLocation(),
+                                    dependency='')
       self.jobs.append(job)
       self.outputs.append(randJob.outputObj.getDLocation())
 
