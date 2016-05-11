@@ -64,7 +64,7 @@ if __name__ == "__main__":
    output = str(jf.format())
    
    if fn is not None:
-      with open(fn, 'w') as outF:
+      with open(fn[0], 'w') as outF:
          outF.write(output)
    else:
       print(output)
