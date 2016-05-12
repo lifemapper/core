@@ -7,19 +7,32 @@ Fresh Rocks Install:
 ********************
 
 Install the rolls:
+------------------
 
-* area51
-* base 
-* ganglia
-* hpc
-* java
-* kernel
-* kvm (on physical devel server)
-* os
-* python
-* sge (LmCompute)
-* webserver (LmServer)
-* zfs (on physical devel server)
+Physical and Virtual clusters::
+  
+  * area51
+  * base 
+  * ganglia
+  * hpc
+  * java
+  * kernel
+  * os
+  * python
+  * sge (LmCompute)
+  * webserver (LmServer)
+
+Physical clusters::
+  
+  * kvm
+  * zfs
+
+Lawrence Geo:  N38.969  W95.245
+Public Interface: assigned by Greg for MAC address
+Private Interface:  (notyeti VMs: available internal 192.168.202.x on notyeti)
+Gateway:  129.237.201.254
+DNS:  129.237.133.1
+Auto-Partitioning
 
 ******************
 Update Python Roll
