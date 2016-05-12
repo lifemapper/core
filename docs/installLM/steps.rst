@@ -12,14 +12,15 @@ unnecessary, or already complete, for your instance.
 Initial Rocks Setup
 -------------------
 #. Install and configure: 
-   https://github.com/lifemapper/core/blob/master/docs/installConfig/install.rst
+   https://github.com/lifemapper/core/blob/master/docs/developer/rocksInstall.rst
 #. Optional troubleshooting steps for virtual clusters:  
-   https://github.com/lifemapper/core/blob/master/docs/installConfig/virtualCluster.rst
+   https://github.com/lifemapper/core/blob/master/docs/developer/virtualCluster.rst
 
 LmServer Roll Install
 ---------------------
 
-This may be installed first or second, little difference.
+If both rolls will be installed on the server, LmServer and LmCompute may be 
+installed at the same time to save time and reboot only once.
 
 #. Add the roll to your cluster with the following:
    https://github.com/pragmagrid/lifemapper-server/tree/kutest#adding-a-roll-to-a-live-frontend
@@ -48,16 +49,14 @@ Updating a System with both LmCompute and LmServer
 #. Update LmCompute and LmServer with new LmCompute and LmServer rolls. These
    two rolls must have the same version of lifemapper code. The LmServer roll 
    has code in the lifemapper-lmserver-<version>-<release>.x86_64 rpm.  
-   LmCompute has code in the lifemapper-compute-<version>-<release>.x86_64 rpm.
+   LmCompute has code in the lifemapper-lmcompute-<version>-<release>.x86_64 rpm.
    Full instructions at:
    https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/UpdatingCombinedSystem.rst
 
 Updating a System with only LmServer
 ------------------------------------
-#. Update LmServer source code with new lifemapper-lmserver rpm for code,
-   and rocks-lifemapper rpm for configuration.  One-time configuration changes 
-   may be needed and should be implemented in the rocks-lifemapper script
-   'updateLM' in the /opt/lifemapper/rocks/bin directory.  Full instructions at:
+#. Update LmServer source code with new roll for both code and configuration.
+   Full instructions at:
    https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/Updating.rst
    
    

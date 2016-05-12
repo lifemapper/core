@@ -1,7 +1,11 @@
 
+.. hightlight:: rest
+
 ########
 Overview
 ########
+
+.. contents::  
 
 ***************
 Important notes
