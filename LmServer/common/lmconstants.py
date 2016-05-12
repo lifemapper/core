@@ -280,14 +280,6 @@ LINE_SIZE = 3
 POLYGON_SIZE = 0.91
 
 RAD_EXPERIMENT_DIR_PREFIX = 'RAD'
-# # Mapservice for OccurrenceSets and their Projections.
-# SDM_MAP_PREFIX = 'data'
-# # other/ancillary layer map prefix
-# USER_MAP_PREFIX = 'usr'
-# # RAD computed layer map prefix (not input)
-# RAD_MAP_PREFIX = 'rad'
-# ANC_MAP_PREFIX = 'anc'
-# SCEN_MAP_PREFIX = 'scen'
 
 class MapPrefix:
    SDM = 'data'
@@ -296,22 +288,6 @@ class MapPrefix:
    RAD = 'rad'
    ANC = 'anc'
    SCEN = 'scen'
-   
-# # DATA FORMATS
-# class OutputFormat:
-# # ............................................................................
-#    TAR_GZ = '.tar.gz'
-#    TXT = '.txt'
-#    XML = '.xml'
-#    ZIP = '.zip'
-#    TMP = '.tmp'
-#    MAP = '.map'
-#    CSV = '.csv'
-#    JSON = '.json'
-#    NUMPY = '.npy'
-#    PICKLE = '.pkl'
-#    TIFF = '.tif'
-#    SHAPE = '.shp'
 
 class LMFileType:
    # User level
