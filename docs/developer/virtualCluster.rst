@@ -1,3 +1,20 @@
+
+--------------------------
+Create the Virtual Cluster
+--------------------------
+
+Notyeti contains tools in the directory: /tank/root/
+
+add-cluster.sh::
+   A helper script
+   
+notyeti-vcs.csv::
+   A list of clusters on this machine, with the command and parameters for creation
+   
+Note MAC addresses and talk with Greg about these/IPs
+   
+
+
 ---------------------------------
 Defer checksum from NIC to kernel
 ---------------------------------
@@ -24,5 +41,15 @@ Build VCs on NotYeti with SGE
 -----------------------------
 If building a virtual cluster on NotYeti, make sure to add SGE from the   
 default Rocks server. SGE was (mistakenly) not installed on NotYeti.
+(???) The SGE roll has problems if installed after the initial build.
 
-    
+------------------------
+Remove a Virtual Cluster
+------------------------
+To completely remove a cluster (i.e. notyeti-193) and associated files, 
+files and database records::
+
+   # rocks remove cluster notyeti-193
+   # zfs destroy tank/vms/notyeti-193
+   
+   

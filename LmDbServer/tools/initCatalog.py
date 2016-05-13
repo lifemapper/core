@@ -93,9 +93,9 @@ def addLayerTypes(scribe, layertypeData, usr):
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
    shp = ShapeGrid(gridname, cellsides, cellsize, mapunits, epsg, bbox, userId=usr)
-   # TODO: Insert a ShapeGrid job here (would also insert object), delete insert
-   scribe.log.info('Inserting shapegrid {} ...'.format(gridname))
    newshp = scribe.insertShapeGrid(shp)
+   scribe.log.info('Inserted, now building shapegrid {} ...'.format(gridname))
+   newshp.buildShape()
    return newshp.getId()
    
 # ...............................................

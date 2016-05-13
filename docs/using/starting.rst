@@ -1,7 +1,11 @@
 
+.. hightlight:: rest
+
 ########
 Overview
 ########
+
+.. contents::  
 
 ***************
 Important notes
@@ -12,10 +16,10 @@ instance.  Using the root user will result in read/write permissions on
 data and logfiles getting set incorrectly, and will cause errors in later 
 operations.
 
-The 'config' file referenced below is <APP_PATH>/config/config.ini.  Variables in
-this file may be overridden by the user in <APP_PATH>/config/site.ini.  APP_PATH
-is also present in the config file, and generally is configured as 
-/opt/lifemapper.
+The 'config' file referenced below is <APP_PATH>/config/config.lmserver.ini 
+and config.lmcompute.ini.  Variables in these files may be overridden by the 
+user in <APP_PATH>/config/site.ini.  APP_PATH is also present in the config 
+file, and generally is configured as /opt/lifemapper.
 
 Any feature described below by "Currently" will be made more configurable in the 
 near future.  
@@ -23,7 +27,7 @@ near future.
 ****************
 Data computation
 ****************
-LmServer **Pipeline** assembles jobs for computation from input data and 
+LmServer **buildBoom** assembles jobs for computation from input data and 
 parameters.  Objects and related jobs are recorded in the database.
 
 LmCompute **JobMediator** requests jobs, retrieves them, 
@@ -51,14 +55,13 @@ of species names/ids and a web service supported by the apiquery module).
 The pipeline uses variables set in the config file.  These variables correspond 
 to values in the database and either Lifemapper code or provided data. 
 
-To start the pipeline as user lmwriter do::
+To start the buildBoom (previously pipeline) as user lmwriter do::
 
-    $ $PYTHON /opt/lifemapper/LmDbServer/pipeline/localpipeline.py
+    $ $PYTHON /opt/lifemapper/LmDbServer/pipeline/buildBoom.py start
 
-To Stop the pipeline (replace pragma with the (lowercase) datasource name 
-configured for this instance, i.e. bison, idigbio)::
+To stop::
 
-    $ touch /opt/lifemapper/log/pipeline.pragma.die
+    $ $PYTHON /opt/lifemapper/LmDbServer/pipeline/buildBoom.py stop
     
     
 ##########################
@@ -83,23 +86,96 @@ or IDIGBIO.
 Environmental Data
 ******************
 Available environmental data is defined by the **SCENARIO_PACKAGE** variable in the 
-config file. One scenarios for modeling (for current-day species data, this is 
+config file. One scenario for modeling (for current-day species data, this is 
 usually observed environmental data), **DEFAULT_MODEL_SCENARIO**, and 
 one or more for projecting, **DEFAULT_PROJECTION_SCENARIOS**, are set in the 
 config file.
 
 Currently environmental data must be one of the pre-defined options; 
-SCENARIO_PACKAGE codes are::
+SCENARIO_PACKAGE codes, and their corresponding scenario codes are listed
+in each package's metadata file (SCENARIO_PACKAGE.py), in 
+LmDbServer.tools.bioclimMeta.py and here::
+   
+     * 30sec-present-future-SEA (Southeast Asia)
+            
+         # current: WC-30sec-SEA
+         # future: CCSM4-RCP4.5-2050-30sec-SEA
+                   CCSM4-RCP4.5-2070-30sec-SEA
+                   CCSM4-RCP8.5-2050-30sec-SEA
+                   CCSM4-RCP8.5-2070-30sec-SEA
+                    
+     * 30sec-present-future-CONUS (Continental United States)
+            
+         # current: WC-30sec-CONUS
+         # future: CCSM4-RCP4.5-2050-30sec-CONUS
+                   CCSM4-RCP4.5-2070-30sec-CONUS
+                   CCSM4-RCP8.5-2050-30sec-CONUS
+                   CCSM4-RCP8.5-2070-30sec-CONUS
 
-    30sec-present-future-SEA (Southeast Asia)
-    30sec-present-future-CONUS (Continental United States)
-    5min-past-present-future (global)
-    10min-past-present-future (global)
+     * 5min-past-present-future (global)
+
+         # past: CCSM4-lgm-5min (last glacial maximimum)
+                 CCSM4-mid-5min (mid-holocene)
+         # current: WC-5min
+         # future: CCSM4-RCP4.5-2050-5min
+                   CCSM4-RCP4.5-2070-5min
+                   CCSM4-RCP8.5-2050-5min
+                   CCSM4-RCP8.5-2070-5min
+
+     * 10min-past-present-future (global)
+
+         # past: CCSM4-lgm-10min (last glacial maximimum)
+                 CCSM4-mid-10min (mid-holocene)
+         # current: WC-10min
+         # future: CCSM4-RCP4.5-2050-10min
+                   CCSM4-RCP4.5-2070-10min
+                   CCSM4-RCP8.5-2050-10min
+                   CCSM4-RCP8.5-2070-10min
+                   
 
 These data may be downloaded from svc.lifemapper.org/dl/ with filenames the code 
 with extension tar.gz.  Metadata for each of these packages is included in the 
 source code, and will be populated correctly for the configured SCENARIO_PACKAGE.
 
+To update the user and/or climate data, copy the variables in the 
+[LmServer - pipeline] section of config.lmserver.ini into the site.ini file and 
+change as desired.  
+
+----------------
+SCENARIO_PACKAGE
+----------------
+must be one of the pre-defined options listed above
+
+-----------------------------------------------------
+DEFAULT_MODEL_SCENARIO / DEFAULT_PROJECTION_SCENARIOS
+-----------------------------------------------------
+must be pre-defined codes for the chosen scenario package listed above  
+
+----------
+DATASOURCE
+----------
+
+GBIF::
+   If GBIF, a CSV file with the expected fields must be provided.  The files 
+   gbif_merged.tar.gz or gbif_subset.tar.gz may be downloaded from 
+   http://lifemapper.org/dl , and uncompressed into 
+   /state/partition1/lmserver/data/species/.  If using the subset, the 
+   variable OCCURRENCE_FILENAME must contain that filename in site.ini.  
+   
+IDIGBIO or BISON::
+   When either of these options are chosen, the buildBoom process will 
+   dynamically query the provider to build the archive.  With BISON, the first 
+   query will build a list of taxa for which to query the BISON service.
+   With IDIGBIO, a list of taxa with 'accepted GBIF taxon id', is queried.  
+   This file, idig_gbifids.txt, is installed with the roll.
+   
+USER::
+   Anything other than the GBIF, IDIGBIO, or BISON in DATASOURCE indicates 
+   user-provided data, installed into /state/partition1/lmserver/data/species/.  
+   Data and metadata files must have the same basename.  The Data file must be 
+   in CSV format and the metadata file must be a python dictionary.  
+   Data and metadata must conform to the requirements listed in 
+   LmDbServer/tools/occurrence.meta.example 
 
 **********
 Algorithms

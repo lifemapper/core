@@ -144,7 +144,7 @@ CLIMATE_PACKAGES = {
    '10min-past-present-future':
    # past: CCSM4-lgm-10min,CCSM4-mid-10min
    # current: WC-10min
-   # future: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
+   # future: CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
       {'res': '10min',
        'topdir': '10min',
        'bbox': [-180, -60, 180, 90],
@@ -161,7 +161,7 @@ CLIMATE_PACKAGES = {
    '5min-past-present-future':
    # past: CCSM4-lgm-5min,CCSM4-mid-5min
    # current: WC-5min
-   # future: CCSM4-lgm-5min,CCSM4-mid-5min,CCSM4-RCP8.5-2070-5min,CCSM4-RCP4.5-2070-5min,CCSM4-RCP8.5-2050-5min,CCSM4-RCP4.5-2050-5min
+   # future: CCSM4-RCP8.5-2070-5min,CCSM4-RCP4.5-2070-5min,CCSM4-RCP8.5-2050-5min,CCSM4-RCP4.5-2050-5min
       {'res': '5min',
        'topdir': '5min',
        'bbox': [-180, -60, 180, 90],

@@ -1885,7 +1885,6 @@ class MAL(DbPostgresql):
       if successcode == 0:
          return usr.userid
       else:
-         self.log.error('userid %s already present in database' % usr.userid)
          return None
       
 # ...............................................
@@ -2216,10 +2215,7 @@ class MAL(DbPostgresql):
          val = qrow[0]
          success = self.executeModifyFunction('lm_updateStatistic', 
                                               key, val, currtime)
-         if success:
-            self.log.debug('MAL.updateStatistics key: %s; val: %s'
-                            % (key, str(val)))
-         else:
+         if not success:
             self.log.error('MAL.updateStatistics %s failed to update to %s'
                             % (key, str(val)))
       else:
@@ -3266,9 +3262,6 @@ class MAL(DbPostgresql):
          modtime = row[idxs['datelastmodified']]
          if modtime == currtime:
             updated = True
-            self.log.debug('Updated %s' % scinameStr)
-         else:
-            self.log.debug('Static %s' % scinameStr)
       return scinameId, updated
 
 # ...............................................
@@ -3297,7 +3290,6 @@ class MAL(DbPostgresql):
          except Exception, e:
             raise e
          inserted = True
-         self.log.debug('Inserted taxon %d, %s' % (scinameId, scinameStr))
 
       return scinameId, updated, inserted
    
@@ -3324,7 +3316,6 @@ class MAL(DbPostgresql):
          raise e
       else:
          sciName.setId(scinameId)
-      self.log.debug('Inserted taxon %d, %s' % (scinameId, sciName.scientificName))
 
 # ...............................................
    def deleteTaxon(self, sciName):
