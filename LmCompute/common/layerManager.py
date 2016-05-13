@@ -351,12 +351,14 @@ class LayerManager(object):
       """
       print "Seeding GeoTiffs"
       for layerId, layerPath in layerTups:
-         if verifyHash(layerId, dlocation=layerPath):
-            self._insertLayer(layerId, LayerFormat.GTIFF, layerPath, 
-                              LayerStatus.SEEDED)
-         else:
-            raise Exception, "Identifier of %s did not match %s" % (
-                                                            layerPath, layerId)
+         # Check for existing layer
+         if self._queryLayer(layerId, LayerFormat.GTIFF) is None:
+            if verifyHash(layerId, dlocation=layerPath):
+               self._insertLayer(layerId, LayerFormat.GTIFF, layerPath, 
+                                 LayerStatus.SEEDED)
+            else:
+               raise Exception, "Identifier of %s did not match %s" % (
+                                                               layerPath, layerId)
       print "Done seeding GeoTiffs"
       
       # ASCII Grids
@@ -370,7 +372,8 @@ class LayerManager(object):
             mxeTups.append((ascFn, mxeFn))
             
             convertTiffToAscii(layerPath, ascFn)
-            self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
+            if self._queryLayer(layerId, LayerFormat.ASCII) is None:
+               self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
                               LayerStatus.SEEDED)
          print "Done converting ASCIIs"
          # Only make MXEs if we make ASCIIs
@@ -378,7 +381,8 @@ class LayerManager(object):
             print "Seeding MXEs"
             convertAsciisToMxes(mxeTups)
             for layerId, _ in layerTups:
-               self._insertLayer(layerId, LayerFormat.MXE, 
+               if self._queryLayer(layerId, LayerFormat.MXE) is None:
+                  self._insertLayer(layerId, LayerFormat.MXE, 
                                  self._getFilePath(layerId, LayerFormat.MXE), 
                                  LayerStatus.SEEDED)
             print "Done seeding MXEs"
