@@ -837,25 +837,24 @@ class Scribe(Peruser):
       return sct + rct
 
 # ...............................................
-   def pullTopDownJobChain(self, occ, startStat, endStat, currtime, computeIP, msk=None):
+   def pullJobChainTopDown(self, occ):
       """
       @return: a nested tuple of dependent jobs and objects as:
          (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
                    (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
       @note: The top occurrence object will be a Job if it must be computed
       """
-      (topOcc, occDependents) = self._mal.pullTopDownJobChain(occ, startStat, 
-                                             endStat, currtime, computeIP, msk)
+      (topOcc, occDependents) = self._mal.pullJobChainTopDown(occ)
       return (topOcc, occDependents)
       
 # ...............................................
    def resetTopDownJobChain(self, oldstat, startstat, depstat, 
                             top=ReferenceType.OccurrenceSet, usr=None):
       '''
-      @summary: Reset a chain of jobs, starting with a 'top' level dependency, 
-                then all jobs dependent on completion of that object 
+      @summary: Reset all job chains, starting with a 'top' level dependency, 
+                then all jobs dependent on completion of those objects 
       @param oldstat: target status to change
-      @param startstat: desired status for top level job
+      @param startstat: desired status for top level jobs
       @param depstat: desired status for dependent jobs
       @param top: LmServer.common.lmconstants.ReferenceType, could start at 
                   OccurrenceSet, SDMModel, or SDMProjection.  

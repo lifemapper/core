@@ -667,16 +667,22 @@ class MAL(DbPostgresql):
 #       return prjDeps
 
 # ...............................................
-   def _getMdlDependents(self, modelid, startStat, endStat, currtime, crid):
+   def _getMdlDependents(self, modelid):
       """
       @todo: Add PAV (Intersect) jobs to Projection dependents
       """
       mdlDeps = []
       rows, idxs = self.executeSelectManyFunction('lm_getProjectionJobsForModel', 
-                                    modelid, startStat, endStat, currtime, crid)
+                                                  modelid)
       for r in rows:
          job = self._createSDMJobNew(r, idxs)
          mdlDeps.append(job)
+
+      rows, idxs = self.executeSelectManyFunction('lm_getProjectionsForModel', 
+                                                  modelid, JobStatus.COMPLETE)
+      for r in rows:
+         prj = self._createProjection(r, idxs, doFillScenario=False)
+         mdlDeps.append(prj)
       
       return mdlDeps
         
@@ -692,10 +698,10 @@ class MAL(DbPostgresql):
          return cr
             
 # ...............................................
-   def _getOccDependents(self, occid, startStat, endStat, currtime, crid):
+   def _getOccDependents(self, occid):
       occDeps = []
-      rows, midxs = self.executeSelectManyFunction('lm_pullModelJobsForOcc', 
-                           occid, startStat, endStat, currtime, crid)
+      rows, midxs = self.executeSelectManyFunction('lm_getModelJobsForOcc', 
+                                                   occid)
       for mr in rows:
          mdlDeps = []
          mdljob = self._createSDMJobNew(mr, midxs)
@@ -703,12 +709,12 @@ class MAL(DbPostgresql):
             
          occDeps.append((mdljob, mdlDeps))
             
-      rows, midxs = self.executeSelectManyFunction('lm_getCompletedModelsForOcc', occid)
+      rows, midxs = self.executeSelectManyFunction('lm_getModelsByOccurrenceSet', 
+                                                   occid, None, JobStatus.COMPLETE)
       for mr in rows:
          mdlDeps = []
          mdl = self._createModel(mr, midxs, doFillScenario=False)
-         mdlDependents = self._getMdlDependents(mdl.getId(), startStat, endStat, 
-                                                currtime, crid)
+         mdlDependents = self._getMdlDependents(mdl.getId())
 
          if len(mdlDependents) > 0:
             occDeps.append((mdl, mdlDeps))
@@ -716,27 +722,32 @@ class MAL(DbPostgresql):
       return occDeps
 
 # ...............................................
-   def pullTopDownJobChain(self, occ, startStat, endStat, currtime, computeIP, msk=None):
+   def getChainTopDown(self, occ=None, mdl=None, prj=None):
+      """
+      @return: a nested tuple of dependent objects as:
+         (occ, [(mdl, [(prj, [(pav, None)]), (prj, None)]), ... ])
+      """
+      top = None
+      occDeps = []
+      return (top, occDeps)
+      
+# ...............................................
+   def getJobChainTopDown(self, occ):
       """
       @return: a nested tuple of dependent jobs and objects as:
          (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
                    (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
       """
       top = None
-      cr = self._getCompute(computeIP, msk)
-      if cr:
-         if occ.status == JobStatus.INITIALIZE:
+      if occ.status == JobStatus.INITIALIZE:
+         
+         row, idxs = self.executeSelectOneFunction('lm_getOccurrenceJobForId', 
+                                                   occ.getId())
+         top = self._createSDMJobNew(row, idxs)
+      elif occ.status == JobStatus.COMPLETE:
+         top = occ   
             
-            row, idxs = self.executeSelectOneFunction('lm_pullOccurrenceJobForId', 
-                     occ.getId(), startStat, endStat, currtime, cr.getId())
-            top = self._createSDMJobNew(row, idxs)
-         elif occ.status == JobStatus.COMPLETE:
-            top = occ   
-            
-         occDeps = self._getOccDependents(occ.getId(), startStat, endStat, 
-                                          currtime, cr.getId())
-      else:
-         raise LMError('Compute Resource {} / {} is not registered'.format(computeIP, msk))
+      occDeps = self._getOccDependents(occ.getId())
       return (top, occDeps)
       
 # ...............................................
@@ -1318,8 +1329,8 @@ class MAL(DbPostgresql):
 # .............................................................................
    def resetSDMChain(self, top, oldstat, startstat, depstat, usr):
       '''
-      @summary: Reset a chain of jobs, starting with a 'top' level dependency, 
-                then all objects/jobs dependent on completion of that object 
+      @summary: Reset all job chains, starting with a 'top' level dependency, 
+                then all jobs dependent on completion of those objects 
       @note: If an object does not have a job, it will not create one
       @param oldstat: target status to change
       @param startstat: desired status for top level job
