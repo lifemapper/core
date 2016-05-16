@@ -37,18 +37,6 @@ from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD
 from LmServer.common.localconstants import APP_PATH
 from LmCommon.common.lmconstants import JobStatus
 
-# For now, most of the jobs follow the same pattern, build the request, submit
-BASE_JOB_COMMAND = """\
-# Build job request
-$JOB_REQUESTS/{processType}-{jobId}Req.xml: {dependency}
-   $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f $JOB_REQUESTS/{processType}-{jobId}Req.xml
-
-# Run job
-{dLocation}: $JOB_REQUESTS/{processType}-{jobId}Req.xml
-   $PYTHON $RUNNER $JOB_REQUESTS/{processType}-{jobId}Req.xml
-   
-"""
-
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
 BUILD_JOB_REQUEST_CMD = "$PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
 LM_JOB_RUNNER_CMD = "$PYTHON $RUNNER {jrFn}"
@@ -304,7 +292,3 @@ class LMMakeflowDocument(object):
          for job in self.jobs:
             outF.write(job) # These have built-in newlines
    
-
-
-
-
