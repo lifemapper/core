@@ -49,6 +49,10 @@ $JOB_REQUESTS/{processType}-{jobId}Req.xml: {dependency}
    
 """
 
+JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
+BUILD_JOB_REQUEST_CMD = "$PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
+LM_JOB_RUNNER_CMD = "$PYTHON $RUNNER {jrFn}"
+
 # .............................................................................
 class LMMakeflowDocument(object):
    """
@@ -66,6 +70,24 @@ class LMMakeflowDocument(object):
       self.headers = []
       # Calling this automatically.  We will have conditional headers someday
       self._addDocumentHeaders()
+   
+   # ...........................
+   def _addJobCommand(self, outputs, cmd, dependencies=[], comment=''):
+      """
+      @summary: Adds a job command to the document
+      @param outputs: A list of output files created by this job
+      @param cmd: The command to execute
+      @param dependencies: A list of dependencies (files that must exist before 
+                              this job can run
+      """
+      job = """\
+# {comment}
+{outputs}: {dependencies}
+   {cmd}
+""".format(outputs=' '.join(outputs), cmd=cmd, comment=comment, 
+           dependencies=' '.join(dependencies))
+      self.jobs.append(job)
+      self.outputs.extend(outputs)
    
    # ...........................
    def _addDocumentHeaders(self):
@@ -87,48 +109,75 @@ class LMMakeflowDocument(object):
       @note: We will continue to use the job server (for now) to update the job
       @todo: To remove job server, need to have a script update the db here
       """
-      job = BASE_JOB_COMMAND.format(processType=occJob.processType, 
-                                    jobId=occJob.getId(), 
-                                    objectFamily=JobFamily.SDM, 
-                                    dLocation=occJob.outputObj.getDLocation(),
-                                    dependency="")
-      self.jobs.append(job)
-      self.outputs.append(occJob.outputObj.getDLocation())
-   
+      jobId = occJob.getId()
+      jrFn = JOB_REQUEST_FILENAME.format(processType=occJob.processType, 
+                                         jobId=jobId)
+      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.SDM, 
+                                           jobId=jobId, jrFn=jrFn)
+      # Add job to create job request
+      self._addJobCommand([jrFn], jrCmd, 
+                  comment='Build occurrence set {0} job request'.format(jobId))
+      
+      # Add job to create occurrence set
+      self._addJobCommand([occJob.outputObj.getDLocation()], 
+                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
+                          dependencies=[jrFn], 
+                          comment="Build occurrence set {0}".format(jobId))
+
    # ...........................
    def buildModel(self, mdlJob):
       """
       @summary: Adds commands to build an SDM model
-      @param model: A Lifemapper SDM model object
+      @param mdlJob: A Lifemapper model job
       @note: Output is model ruleset, this will be used in other jobs 
                 potentially
       """
+      # Determine if there is a dependent job to build an occurrence set
       if mdlJob.outputObj.occurrenceSet.status == JobStatus.COMPLETE:
-         dep = ''
+         dep = []
       else:
-         dep = mdlJob.outputObj.occurrenceSet.getDLocation()
-      job = BASE_JOB_COMMAND.format(processType=mdlJob.processType, 
-                                    jobId=mdlJob.getId(), 
-                                    objectFamily=JobFamily.SDM, 
-                                    dLocation=mdlJob.outputObj.getDLocation(),
-                                    dependency=dep)
-      self.jobs.append(job)
-      self.outputs.append(mdlJob.outputObj.getDLocation())
+         dep = [mdlJob.outputObj.occurrenceSet.getDLocation()]
+
+      jobId = mdlJob.getId()
+      jrFn = JOB_REQUEST_FILENAME.format(processType=mdlJob.processType, 
+                                         jobId=jobId)
+      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.SDM, 
+                                           jobId=jobId, jrFn=jrFn)
+      # Add job to create job request
+      self._addJobCommand([jrFn], jrCmd, dependencies=dep,
+                  comment='Build model {0} job request'.format(jobId))
+      
+      # Add job to create model
+      self._addJobCommand([mdlJob.outputObj.getDLocation()], 
+                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
+                          dependencies=[jrFn], 
+                          comment="Build model {0}".format(jobId))
    
    # ...........................
    def buildProjection(self, prjJob):
+      """
+      @summary: Adds commands to create an SDM projection
+      """
+      # Determine if there is a dependent job to build a model
       if prjJob.outputObj.getModel().status == JobStatus.COMPLETE:
          dep = ''
       else:
          dep = prjJob.outputObj.getModel().getDLocation()
-      job = BASE_JOB_COMMAND.format(processType=prjJob.processType, 
-                                    jobId=prjJob.getId(), 
-                                    objectFamily=JobFamily.SDM, 
-                                    dLocation=prjJob.outputObj.getDLocation(),
-                                    dependency=dep)
-      self.jobs.append(job)
-      self.outputs.append(prjJob.outputObj.getDLocation())
-   
+
+      jobId = prjJob.getId()
+      jrFn = JOB_REQUEST_FILENAME.format(processType=prjJob.processType, 
+                                         jobId=jobId)
+      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.SDM, 
+                                           jobId=jobId, jrFn=jrFn)
+      # Add job to create job request
+      self._addJobCommand([jrFn], jrCmd, dependencies=dep,
+                  comment='Build projection {0} job request'.format(jobId))
+      
+      # Add job to create projection
+      self._addJobCommand([prjJob.outputObj.getDLocation()], 
+                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
+                          dependencies=[jrFn], 
+                          comment="Build projection {0}".format(jobId))
    
    # ...........................
    def addProjectionToGlobalPAM(self, prj, shapegrid):
@@ -143,10 +192,24 @@ class LMMakeflowDocument(object):
 
   
 """
-      self.jobs.append(job)
+      #self.jobs.append(job)
+
+   # ...........................
+   def addNotification(self, toAddresses, subject, message, dependencies=[]):
+      """
+      @summary: Adds a notification job to the workflow
+      """
+      emailCmd = "$NOTIFIER {toAddrs} -s {subject} -m {msg}".format(
+                              toAddrs=' -t '.join(toAddresses),
+                              subject=subject, msg=message)
+      self._addJobCommand([], emailCmd, dependencies=dependencies, 
+                          comment="Notify user")
 
    # ...........................
    def addIntersectJob(self, intJob):
+      # Loop through job inputs to see if layers have an incomplete status
+      # Add completes to inputs?
+      
       job = BASE_JOB_COMMAND.format(processType=intJob.processType, 
                                     jobId=intJob.getId(), 
                                     objectFamily=JobFamily.RAD, 
@@ -176,7 +239,7 @@ class LMMakeflowDocument(object):
    
    # ...........................
    #def randomizePAM(self, pam, method, iterations):
-   def addRandomozeJob(self, randJob):
+   def addRandomizeJob(self, randJob):
       job = BASE_JOB_COMMAND.format(processType=randJob.processType, 
                                     jobId=randJob.getId(), 
                                     objectFamily=JobFamily.RAD, 
