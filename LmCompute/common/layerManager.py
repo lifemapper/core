@@ -352,7 +352,7 @@ class LayerManager(object):
       print "Seeding GeoTiffs"
       for layerId, layerPath in layerTups:
          # Check for existing layer
-         if self._queryLayer(layerId, LayerFormat.GTIFF) is None:
+         if self._queryLayer(layerId, LayerFormat.GTIFF)[1] is None:
             if verifyHash(layerId, dlocation=layerPath):
                self._insertLayer(layerId, LayerFormat.GTIFF, layerPath, 
                                  LayerStatus.SEEDED)
@@ -372,7 +372,7 @@ class LayerManager(object):
             mxeTups.append((ascFn, mxeFn))
             
             convertTiffToAscii(layerPath, ascFn)
-            if self._queryLayer(layerId, LayerFormat.ASCII) is None:
+            if self._queryLayer(layerId, LayerFormat.ASCII)[1] is None:
                self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
                               LayerStatus.SEEDED)
          print "Done converting ASCIIs"
@@ -381,7 +381,7 @@ class LayerManager(object):
             print "Seeding MXEs"
             convertAsciisToMxes(mxeTups)
             for layerId, _ in layerTups:
-               if self._queryLayer(layerId, LayerFormat.MXE) is None:
+               if self._queryLayer(layerId, LayerFormat.MXE)[1] is None:
                   self._insertLayer(layerId, LayerFormat.MXE, 
                                  self._getFilePath(layerId, LayerFormat.MXE), 
                                  LayerStatus.SEEDED)
