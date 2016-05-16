@@ -207,46 +207,93 @@ class LMMakeflowDocument(object):
 
    # ...........................
    def addIntersectJob(self, intJob):
-      # Loop through job inputs to see if layers have an incomplete status
-      # Add completes to inputs?
+      """
+      @summary: Adds an intersect job to the workflow
+      @note: Currently expects all input layers to be ready
+      @todo: Figure out output object
+      """
+      # TODO: When an entire end to end chain can be built, fill in this variable
+      deps = []
       
-      job = BASE_JOB_COMMAND.format(processType=intJob.processType, 
-                                    jobId=intJob.getId(), 
-                                    objectFamily=JobFamily.RAD, 
-                                    dLocation=intJob.outputObj.getDLocation(),
-                                    dependency='')
-      self.jobs.append(job)
-      self.outputs.append(intJob.outputObj.getDLocation())
+      jobId = intJob.getId()
+      jrFn = JOB_REQUEST_FILENAME.format(processType=intJob.processType, 
+                                         jobId=jobId)
+      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.RAD, 
+                                           jobId=jobId, jrFn=jrFn)
+      # Add job to create job request
+      self._addJobCommand([jrFn], jrCmd, dependencies=deps,
+                  comment='Build intersect {0} job request'.format(jobId))
+      
+      # Add job to create intersect
+      self._addJobCommand([intJob.outputObj.getDLocation()], 
+                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
+                          dependencies=[jrFn], 
+                          comment="Build intersect {0}".format(jobId))
    
    # ...........................
    def addCalculateAndCompressPAM(self, calcJob, compJob):
+      """
+      @summary: Adds calculate and compress jobs to the workflow
+      @todo: Establish dependencies
+      """
       # Calculate
-      job = BASE_JOB_COMMAND.format(processType=calcJob.processType, 
-                                    jobId=calcJob.getId(), 
-                                    objectFamily=JobFamily.RAD, 
-                                    dLocation=calcJob.outputObj.getDLocation(),
-                                    dependency='')
-      self.jobs.append(job)
-      self.outputs.append(calcJob.outputObj.getDLocation())
+      calcDep = []
+      calcOutput = calcJob.outputObj.getDLocation()
+      
+      calcJobId = calcJob.getId()
+      calcJrFn = JOB_REQUEST_FILENAME.format(processType=calcJob.processType, 
+                                         jobId=calcJobId)
+      calcJrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.RAD, 
+                                           jobId=calcJobId, jrFn=calcJrFn)
+      # Add job to create job request
+      self._addJobCommand([calcJrFn], calcJrCmd, dependencies=calcDep,
+                  comment='Build calculate {0} job request'.format(calcJobId))
+      
+      # Add job to calculate stats
+      self._addJobCommand([calcJob.outputObj.getDLocation()], 
+                          LM_JOB_RUNNER_CMD.format(jrFn=calcJrFn),
+                          dependencies=[calcJrFn], 
+                          comment="Calculate stats {0}".format(calcJobId))
+      
       # Compress
-      job = BASE_JOB_COMMAND.format(processType=compJob.processType, 
-                                    jobId=compJob.getId(), 
-                                    objectFamily=JobFamily.RAD, 
-                                    dLocation=compJob.outputObj.getDLocation(),
-                                    dependency='')
-      self.jobs.append(job)
-      self.outputs.append(compJob.outputObj.getDLocation())
+      compDep = [calcOutput]
+      compJobId = compJob.getId()
+      compJrFn = JOB_REQUEST_FILENAME.format(processType=compJob.processType, 
+                                         jobId=compJobId)
+      compJrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.RAD, 
+                                           jobId=compJobId, jrFn=compJrFn)
+      # Add job to create job request
+      self._addJobCommand([compJrFn], compJrCmd, dependencies=compDep,
+                  comment='Build compress {0} job request'.format(compJobId))
+      
+      # Add job to create model
+      self._addJobCommand([compJob.outputObj.getDLocation()], 
+                          LM_JOB_RUNNER_CMD.format(jrFn=compJrFn),
+                          dependencies=[compJrFn], 
+                          comment="Compress {0}".format(compJobId))
    
    # ...........................
    #def randomizePAM(self, pam, method, iterations):
    def addRandomizeJob(self, randJob):
-      job = BASE_JOB_COMMAND.format(processType=randJob.processType, 
-                                    jobId=randJob.getId(), 
-                                    objectFamily=JobFamily.RAD, 
-                                    dLocation=randJob.outputObj.getDLocation(),
-                                    dependency='')
-      self.jobs.append(job)
-      self.outputs.append(randJob.outputObj.getDLocation())
+      """
+      @summary: Add a randomize job to the workflow
+      @todo: Establish dependencies
+      """
+      dep = []
+      jobId = randJob.getId()
+      jrFn = JOB_REQUEST_FILENAME.format(processType=randJob.processType, 
+                                         jobId=jobId)
+      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.RAD, 
+                                           jobId=jobId, jrFn=jrFn)
+      # Add job to create job request
+      self._addJobCommand([jrFn], jrCmd, dependencies=dep,
+                  comment='Randomize {0} job request'.format(jobId))
+      
+      # Add job to create model
+      self._addJobCommand([randJob.outputObj.getDLocation()], 
+                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
+                          dependencies=[jrFn], 
+                          comment="Randomize {0}".format(jobId))
 
    # ...........................
    def write(self, filename):
