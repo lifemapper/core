@@ -837,14 +837,14 @@ class Scribe(Peruser):
       return sct + rct
 
 # ...............................................
-   def pullJobChainTopDown(self, occ):
+   def getJobChainTopDown(self, occ):
       """
       @return: a nested tuple of dependent jobs and objects as:
          (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
                    (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
       @note: The top occurrence object will be a Job if it must be computed
       """
-      (topOcc, occDependents) = self._mal.pullJobChainTopDown(occ)
+      (topOcc, occDependents) = self._mal.getJobChainTopDown(occ)
       return (topOcc, occDependents)
       
 # ...............................................

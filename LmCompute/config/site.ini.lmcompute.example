@@ -15,6 +15,10 @@ ADMIN_EMAIL: aimeestewart@ku.edu
 LOCAL_MACHINE_ID: 
 
 ; ...............................................
+;; [LmCompute - data]
+;; SCENARIO_PACKAGE_SEED: 30sec-present-future-SEA
+
+; ...............................................
 ;; [LmCompute - Job Retrievers]
 ;; JOB_RETRIEVER_KEYS: lifemapperJobServer,dir1
 
