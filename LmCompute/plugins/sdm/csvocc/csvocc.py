@@ -76,7 +76,7 @@ def parseCSVData(log, count, csvInputBlob, metadata, basePath, env, maxPoints):
 
 # ...............................................
 if __name__ == '__main__':
-   from LmServer.common.log import ScriptLogger
+   from LmCompute.common.log import RetrieverLogger
    PRAGMA_META = {'gbifid': ('gbifid', 'integer', 'id'),
                  'datasetkey': ('datasetkey', 'string'), 
                  'occurrenceid': ('occurid', 'string'),
@@ -133,7 +133,7 @@ if __name__ == '__main__':
    # data must have a header
    count = len(csvblob) - 1
    
-   log = ScriptLogger('csvocc')
+   log = RetrieverLogger('csvocc')
    fname, tmp = parseCSVData(log, count, csvblob, PRAGMA_META, basepth, env, 
                              maxPoints)
    print fname, tmp
