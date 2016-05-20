@@ -336,29 +336,30 @@ class _LMBoomer(LMObject):
 # ...............................................
    def _createMakeflow(self, jobs):
       jobchainId = usr = filename = None
-      mfdoc = LMMakeflowDocument()
-      for j in jobs:
-         if isinstance(j, SDMOccurrenceJob):
-            mfdoc.buildOccurrenceSet(j)
-         elif isinstance(j, SDMModelJob):
-            mfdoc.buildModel(j)
-         elif isinstance(j, SDMProjectionJob):
-            mfdoc.buildProjection()
-         if usr is None:
-            usr = j.getUserId()
-         if filename is None:
-            filename = j.makeflowFilename
-      self.log.info('Writing makeflow document {} ...'.format(filename))
-      try:
-         mfdoc.write(filename)
-      except Exception, e:
-         raise LMError(currargs='Failed to write {}; ({})'.format(filename, str(e)))
-      
-      try:
-         jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
-      except Exception, e:
-         raise LMError(currargs='Failed to insert jobChain for {}; ({})'
-                       .format(filename, str(e)))
+      if jobs:
+         mfdoc = LMMakeflowDocument()
+         for j in jobs:
+            if isinstance(j, SDMOccurrenceJob):
+               mfdoc.buildOccurrenceSet(j)
+            elif isinstance(j, SDMModelJob):
+               mfdoc.buildModel(j)
+            elif isinstance(j, SDMProjectionJob):
+               mfdoc.buildProjection()
+            if usr is None:
+               usr = j.getUserId()
+            if filename is None:
+               filename = j.makeflowFilename
+         self.log.info('Writing makeflow document {} ...'.format(filename))
+         try:
+            mfdoc.write(filename)
+         except Exception, e:
+            raise LMError(currargs='Failed to write {}; ({})'.format(filename, str(e)))
+         
+         try:
+            jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
+         except Exception, e:
+            raise LMError(currargs='Failed to insert jobChain for {}; ({})'
+                          .format(filename, str(e)))
       return jobchainId
 
 # ...............................................

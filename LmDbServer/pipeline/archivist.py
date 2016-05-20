@@ -113,7 +113,7 @@ class Archivist(Daemon):
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
-def isCorrectUser(self):
+def isCorrectUser():
    """ find current user """
    import subprocess
    cmd = "/usr/bin/whoami"

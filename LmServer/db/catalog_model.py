@@ -45,7 +45,6 @@ from LmServer.sdm.sdmJob import SDMModelJob, SDMProjectionJob, SDMOccurrenceJob
 from LmServer.sdm.scenario import Scenario
 from LmServer.sdm.sdmmodel import SDMModel
 from LmServer.sdm.sdmprojection import SDMProjection
-from LmServer.db.scribe import success
 
 # .............................................................................
 class MAL(DbPostgresql):
