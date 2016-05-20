@@ -155,6 +155,12 @@ class _Job(LMAbstractObject):
       """
       self.jobData.jid = jid
 
+# ...............................................
+   @property
+   def makeflowFilename(self):
+      dloc = self._outputObj.createLocalDLocation(makeflow=True)
+      return dloc
+
    # .........................................
    @property
    def processType(self):
