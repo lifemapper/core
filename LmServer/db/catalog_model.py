@@ -45,6 +45,7 @@ from LmServer.sdm.sdmJob import SDMModelJob, SDMProjectionJob, SDMOccurrenceJob
 from LmServer.sdm.scenario import Scenario
 from LmServer.sdm.sdmmodel import SDMModel
 from LmServer.sdm.sdmprojection import SDMProjection
+from LmServer.db.scribe import success
 
 # .............................................................................
 class MAL(DbPostgresql):
@@ -734,6 +735,7 @@ class MAL(DbPostgresql):
 # ...............................................
    def getJobChainTopDown(self, occ):
       """
+      @note: Gets job/objects from database, modifies nothing
       @return: a nested tuple of dependent jobs and objects as:
          (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
                    (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
@@ -750,6 +752,61 @@ class MAL(DbPostgresql):
       occDeps = self._getOccDependents(occ.getId())
       return (top, occDeps)
       
+# ...............................................
+   def insertJobChain(self, usr, dlocation, status, priority=None):
+      """
+      @note: Gets jobChains from database, updating from startStat to endStat
+      @return: a list of tuples, i.e. [(jobChainId, filename), ...]
+      """
+      currtime = mx.DateTime.gmt().mjd
+      jobchainid = self.executeInsertFunction('lm_insertJobChain', usr, 
+                                          dlocation, status, priority, currtime)
+      return jobchainid   
+
+# ...............................................
+   def moveAndReturnJobChains(self, count, startStat, endStat, usr):
+      """
+      @note: Gets jobChains from database, updating from startStat to endStat
+      @return: a list of tuples, i.e. [(jobChainId, filename), ...]
+      """
+      jobchains = []
+      if count == 0: 
+         return jobchains
+      currtime = mx.DateTime.gmt().mjd
+      rows, idxs = self.executeSelectAndModifyManyFunction('lm_moveAndReturnJobChains',
+                                       startStat, endStat, currtime, count, usr)
+      for r in rows:
+         jobid = self._getColumnValue(r, idxs, ['jobchainid'])
+         fname = self._getColumnValue(r, idxs, ['dlocation'])
+         jobchains.append((jobid, fname))
+      return jobchains
+
+# ...............................................
+   def getJobChains(self, count, stat, usr):
+      """
+      @note: Gets jobChains from database, modifying nothing
+      @return: a list of tuples, i.e. [(jobChainId, filename), ...]
+      """
+      jobchains = []
+      if count == 0: 
+         return jobchains
+      rows, idxs = self.executeSelectManyFunction('lm_getJobChains',
+                                                  stat, count, usr)
+      for r in rows:
+         jobid = self._getColumnValue(r, idxs, ['jobchainid'])
+         fname = self._getColumnValue(r, idxs, ['dlocation'])
+         jobchains.append((jobid, fname))
+      return jobchains
+
+# ...............................................
+   def deleteJobChain(self, jobchainId):
+      """
+      @note: Deletes a jobChain from database
+      @return: success
+      """
+      success = self.executeModifyFunction('lm_deleteJobChain', jobchainId)
+      return success
+
 # ...............................................
    def pullJobs(self, count, processType, startStat, endStat, usr, 
                 inputType, computeIP):
