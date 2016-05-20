@@ -161,12 +161,20 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
          self._setMapPrefix()
 
 # ...............................................
-   def createLocalDLocation(self):
+   @property
+   def makeflowFilename(self):
+      dloc = self.createLocalDLocation(makeflow=True)
+      return dloc
+   
+# ...............................................
+   def createLocalDLocation(self, makeflow=False):
       """
       @summary: Create data location
       """
       dloc = None
-      if self.getId() is not None:
+      if makeflow:
+         dloc = self._model.createLocalDLocation(makeflow=True)
+      elif self.getId() is not None:
          dloc = self._earlJr.createFilename(LMFileType.PROJECTION_LAYER, 
                    projId=self.getId(), pth=self.getAbsolutePath(), 
                    usr=self._userId, epsg=self._epsg)

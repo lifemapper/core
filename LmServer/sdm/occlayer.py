@@ -310,21 +310,29 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       return Vector.getAbsolutePath(self)
 
 # ...............................................
-   def createLocalDLocation(self, raw=False, subset=False):
+   @property
+   def makeflowFilename(self):
+      dloc = self.createLocalDLocation(makeflow=True)
+      return dloc
+
+# ...............................................
+   def createLocalDLocation(self, raw=False, subset=False, makeflow=False):
       """
       @summary: Create filename for this layer.
       @param raw: If true, this indicates a raw dump of occurrences (CSV for
-                    GBIF dump).
+                    GBIF dump or User file, a URL for a BISON or iDigBio query).
       @param subset: If true, this indicates a subset of occurrences, limiting
                      the number of points to ease map display and model 
                      computation.  
-      @note: If this is an LM Archive OccurrenceSet (for SDM modeling), the 
-             location is calculated differently than for User OccurrenceSets.
+      @param makeflow: If true, this indicates a makeflow document of jobs 
+                       related to this object
       """
       dloc = None
       if self.getId() is not None:
          if raw:
             ftype = LMFileType.OCCURRENCE_RAW_FILE
+         elif makeflow:
+            ftype = LMFileType.SDM_MAKEFLOW_FILE
          else:
             ftype = LMFileType.OCCURRENCE_FILE
          dloc = self._earlJr.createFilename(ftype, occsetId=self.getId(), 

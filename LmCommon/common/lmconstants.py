@@ -56,6 +56,7 @@ class OutputFormat:
    HFA = '.img'
    SHAPE = '.shp'
    LOG = '.log'
+   MAKEFLOW = '.mf'
    
 SHAPEFILE_EXTENSIONS = [".shp", ".shx", ".dbf", ".prj", ".sbn", ".sbx", ".fbn", 
                         ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", 

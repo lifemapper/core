@@ -249,6 +249,24 @@ class SDMModel(ServiceObject, ProcessObject):
       return fname
 
 # ...............................................
+   @property
+   def makeflowFilename(self):
+      dloc = self.createLocalDLocation(makeflow=True)
+      return dloc
+
+# ...............................................
+   def createLocalDLocation(self, makeflow=False):
+      """
+      @summary: Create filename for this layer.
+      @param makeflow: If true, this indicates a makeflow document of jobs 
+                       related to this object
+      """
+      dloc = None
+      if makeflow:
+         dloc = self.occurrenceSet.createLocalDLocation(makeflow=True)
+      return dloc
+
+# ...............................................
    def _getModelResultFilename(self):
       if self._ruleset is None:
          self._setModelResultFilename()
