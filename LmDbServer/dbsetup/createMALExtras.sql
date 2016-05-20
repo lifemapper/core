@@ -4810,7 +4810,7 @@ DECLARE
    rec lm3.JobChain;
 BEGIN
    cmd = 'SELECT * FROM lm3.JobChain ';
-   wherecls = ' WHERE status = ' || quote_literal(startstat) ';
+   wherecls = ' WHERE status = ' || quote_literal(startstat);
    lastcls = ' ORDER BY priority, datecreated ASC LIMIT ' || quote_literal(total);
 
    -- optional filter by userid
