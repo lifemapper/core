@@ -4743,8 +4743,8 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_insertJobChain(usr varchar,
                                                  dloc varchar,
-                                                 prior int, 
                                                  stat int,
+                                                 prior int, 
                                                  currtime double precision)
 RETURNS int AS
 $$
