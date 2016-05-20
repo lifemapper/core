@@ -837,6 +837,44 @@ class Scribe(Peruser):
       return sct + rct
 
 # ...............................................
+   def insertJobChain(self, usr, dlocation, priority=None):
+      """
+      @summary: Inserts a jobChain into database
+      @return: jobChainId
+      """
+      jobchainid = self._mal.insertJobChain(usr, dlocation, JobStatus.INITIALIZE, 
+                                            priority)
+      return jobchainid   
+
+# ...............................................
+   def moveAndReturnJobChains(self, count, usr):
+      """
+      @note: Gets jobChains from database, updating from INITIALIZE to COMPLETE
+      @return: a list of tuples, i.e. [(jobChainId, filename), ...]
+      """
+      jobchains = self._mal.moveAndReturnJobChains(count, JobStatus.INITIALIZE, 
+                                                   JobStatus.PULL_COMPLETE, usr)
+      return jobchains
+
+# ...............................................
+   def getJobChains(self, count, usr):
+      """
+      @note: Gets jobChains from database, modifying nothing
+      @return: a list of tuples, i.e. [(jobChainId, filename), ...]
+      """
+      jobchains = self._mal.getJobChains(count, JobStatus.INITIALIZE, usr)
+      return jobchains
+
+# ...............................................
+   def deleteJobChain(self, jobchainId):
+      """
+      @note: Deletes a jobChain from database
+      @return: success
+      """
+      success = self._mal.deleteJobChain(jobchainId)
+      return success
+
+# ...............................................
    def getJobChainTopDown(self, occ):
       """
       @return: a nested tuple of dependent jobs and objects as:

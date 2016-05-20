@@ -753,10 +753,10 @@ class MAL(DbPostgresql):
       return (top, occDeps)
       
 # ...............................................
-   def insertJobChain(self, usr, dlocation, status, priority=None):
+   def insertJobChain(self, usr, dlocation, status, priority):
       """
-      @note: Gets jobChains from database, updating from startStat to endStat
-      @return: a list of tuples, i.e. [(jobChainId, filename), ...]
+      @summary: Inserts a jobChain into database
+      @return: jobChainId
       """
       currtime = mx.DateTime.gmt().mjd
       jobchainid = self.executeInsertFunction('lm_insertJobChain', usr, 
