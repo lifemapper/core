@@ -30,7 +30,6 @@ import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
 from LmCommon.common.lmconstants import (ENCODING,OFTInteger, OFTReal, OFTString)
-from LmServer.base.lmobj import LMError
 
 # .............................................................................
 class OccDataParser(object):
@@ -95,7 +94,7 @@ class OccDataParser(object):
             csvData.seek(0)
             self._csvreader = csv.reader(csvData, delimiter=self.delimiter)
          except Exception, e:
-            raise LMError(currargs='Failed to read or open {}'.format(data))
+            raise Exception('Failed to read or open {}'.format(data))
       
       # Assume header in first row of data
       self.header = self._csvreader.next()
@@ -104,8 +103,8 @@ class OccDataParser(object):
          # Read metadata file and close
          self._getMetadata(metadata, self.header)
       except Exception, e:
-         raise LMError(currargs='Failed to read header or metadata', 
-                       prevargs=e.args)
+         raise Exception(currargs='Failed to read header or metadata, ({})'
+                         .format(str(e.args))) 
          
       # populates key, currLine and currRecnum
       self.pullNextValidRec()
