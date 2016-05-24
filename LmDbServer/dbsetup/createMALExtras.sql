@@ -1702,6 +1702,23 @@ END;
 $$ LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
+-- New
+CREATE OR REPLACE FUNCTION lm3.lm_getProjectionsForOccurrenceSet(occId int)
+   RETURNS SETOF lm3.lm_fullProjection AS
+$$
+DECLARE
+   rec_prj lm3.lm_fullProjection;
+BEGIN
+   FOR rec_prj in 
+      SELECT * FROM lm3.lm_fullProjection WHERE occurrenceSetId = occId
+   LOOP
+      RETURN NEXT rec_prj;
+   END LOOP;   
+   RETURN;
+END;
+$$ LANGUAGE 'plpgsql' STABLE; 
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_getProjectionsByOccurrenceSet(occId int, completeStat int)
    RETURNS SETOF lm3.lm_fullProjection AS
 $$

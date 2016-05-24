@@ -861,6 +861,7 @@ class Scribe(Peruser):
       """
       @note: Gets jobChains from database, modifying nothing
       @return: a list of tuples, i.e. [(jobChainId, filename), ...]
+      @todo: Working in next roll build/code tag (1.0.93+)
       """
       jobchains = self._mal.getJobChains(count, JobStatus.INITIALIZE, usr)
       return jobchains
@@ -875,7 +876,19 @@ class Scribe(Peruser):
       return success
 
 # ...............................................
-   def getJobChainTopDown(self, occ):
+   def getObjectChain(self, occ=None, mdl=None, prj=None):
+      """
+      @return: a set of projections (models and occurrenceset are included
+               in each projection)
+      @note: this will soon contain RAD-related objects as well
+      @todo: CJ: want dependencies in the return structure? Layers?
+      """
+      projs = self._mal.getObjectChain(occ, mdl, prj)
+      
+      return projs
+      
+# ...............................................
+   def getJobChainTopDown(self, occ=None, mdl=None, prj=None):
       """
       @return: a nested tuple of dependent jobs and objects as:
          (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
