@@ -113,12 +113,27 @@ class Archivist(Daemon):
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
+def isCorrectUser():
+   """ find current user """
+   import subprocess
+   cmd = "/usr/bin/whoami"
+   info, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE).communicate()
+   usr = info.split()[0]
+   if usr == 'lmwriter':
+      return True
+   return False
+
 # .............................................................................
 if __name__ == "__main__":
    if os.path.exists(BOOM_PID_FILE):
       pid = open(BOOM_PID_FILE).read().strip()
    else:
       pid = os.getpid()
+      
+   if not isCorrectUser():
+      print("Run this script as `lmwriter`")
+      sys.exit(2)
      
    logger = ScriptLogger('archivist_{}'.format(pid))
    idig = Archivist(BOOM_PID_FILE, log=logger)

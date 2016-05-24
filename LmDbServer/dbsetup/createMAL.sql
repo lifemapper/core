@@ -46,7 +46,7 @@ create table lm3.ComputeResource
    fqdn varchar(100),
    
    -- Contact info will be in LMUser table
-   userId varchar(32) NOT NULL REFERENCES lm3.LMUser,
+   userId varchar(20) NOT NULL REFERENCES lm3.LMUser,
    
    datecreated double precision,
    datelastmodified double precision,
@@ -87,22 +87,17 @@ create table lm3.LMJob
    UNIQUE (jobFamily, referenceType, referenceId, reqSoftware)
 );
 
--- ----------------------------------------------------------------------------
-
 -- -------------------------------
-create table lm3.Experiment
+create table lm3.JobChain
 (
-   experimentId serial UNIQUE PRIMARY KEY,
-   userId varchar(20) NOT NULL,
-   expname text NOT NULL,
-   email varchar(64),
-   epsgcode int,
-   keywords  text,
-   metadataUrl text,
-   datelastmodified double precision,
-   datecreated double precision,
-   description text,
-   UNIQUE (userId, expname)
+   jobchainId serial UNIQUE PRIMARY KEY,
+   userid varchar(20) NOT NULL REFERENCES lm3.LMUser ON DELETE CASCADE,
+   dlocation text,
+   priority int,
+   progress int,
+   status int,
+   statusmodtime double precision,
+   datecreated double precision
 );
 
 

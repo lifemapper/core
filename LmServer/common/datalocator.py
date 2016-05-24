@@ -186,7 +186,7 @@ class EarlJr(LMObject):
          nameparts.append(lyrname)
          
       elif ftype in (LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-                     LMFileType.OCCURRENCE_RAW_FILE):
+                     LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE):
          nameparts.append(occsetId)
          if subset:
             nameparts.append('subset')

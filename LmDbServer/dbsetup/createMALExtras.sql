@@ -4741,6 +4741,115 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_insertJobChain(usr varchar,
+                                                 dloc varchar,
+                                                 stat int,
+                                                 prior int, 
+                                                 currtime double precision)
+RETURNS int AS
+$$
+DECLARE
+   rec lm3.JobChain%ROWTYPE;
+   jid int = -1;
+BEGIN
+   INSERT INTO lm3.JobChain 
+             (userid, dlocation, priority, status, statusmodtime, datecreated)
+      VALUES (usr, dloc, prior, stat, currtime, currtime);
+   IF FOUND THEN 
+      SELECT INTO jid last_value FROM lm3.jobchain_jobchainid_seq;
+   END IF;
+
+   RETURN jid;
+
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_getJobChains(startstat int, 
+                                               total int, 
+                                               usr varchar)
+RETURNS SETOF lm3.JobChain AS
+$$
+DECLARE
+   cmd varchar;
+   wherecls varchar;
+   lastcls varchar;
+   rec lm3.JobChain;
+BEGIN
+   cmd = 'SELECT * FROM lm3.JobChain ';
+   wherecls = ' WHERE status = ' || quote_literal(startstat);
+   lastcls = ' ORDER BY priority, datecreated ASC LIMIT ' || quote_literal(total);
+
+   -- optional filter by userid
+   IF usr is NOT NULL THEN
+      wherecls = wherecls || ' AND userid = ' || quote_literal(usr);
+   END IF;
+   
+   cmd := cmd || wherecls || lastcls;
+   RAISE NOTICE 'cmd = %', cmd;
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_moveAndReturnJobChains(startstat int, 
+                                                         endstat int,
+                                                         currtime double precision,
+                                                         total int, 
+                                                         usr varchar)
+RETURNS SETOF lm3.JobChain AS
+$$
+DECLARE
+   cmd varchar;
+   wherecls varchar;
+   lastcls varchar;
+   rec lm3.JobChain;
+BEGIN
+   cmd = 'SELECT * FROM lm3.JobChain ';
+   wherecls = ' WHERE status = ' || quote_literal(startstat);
+   lastcls = ' ORDER BY priority, datecreated ASC LIMIT ' || quote_literal(total);
+
+   -- optional filter by userid
+   IF usr is NOT NULL THEN
+      wherecls = wherecls || ' AND userid = ' || quote_literal(usr);
+   END IF;
+   
+   cmd := cmd || wherecls || lastcls;
+   RAISE NOTICE 'cmd = %', cmd;
+   FOR rec in EXECUTE cmd
+      LOOP
+         UPDATE lm3.JobChain SET (status, statusmodtime) = (endstat, currtime)
+            WHERE jobchainId = rec.jobchainId;
+         rec.status = endstat;
+         rec.statusmodtime = currtime;
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_deleteJobChain(jcid int)
+RETURNS INT AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   DELETE FROM lm3.JobChain WHERE jobchainId = jcid; 
+
+   IF FOUND THEN
+      success := 0;
+   END IF;
+
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_getJobType(jobid int)
 RETURNS int AS
 $$
@@ -6467,8 +6576,6 @@ DECLARE
    start int = 0;
 BEGIN
    start = char_length(oldbase) + 1;   
-	UPDATE lm3.Experiment SET metadataUrl = newbase || substr(metadataUrl, start)  
-	   WHERE metadataurl like oldbase || '%';
    UPDATE lm3.Occurrenceset SET metadataUrl = newbase || substr(metadataUrl, start)  
 	   WHERE metadataurl like oldbase || '%';
    UPDATE lm3.Scenario SET metadataUrl = newbase || substr(metadataUrl, start)  

@@ -301,6 +301,7 @@ class LMFileType:
    SDM_MAP = 110
    OCCURRENCE_FILE = 111
    OCCURRENCE_RAW_FILE = 112
+   SDM_MAKEFLOW_FILE = 113
    # Model level
    MODEL_REQUEST = 120
    MODEL_STATS = 121
@@ -357,6 +358,7 @@ class FileFix:
              LMFileType.ENVIRONMENTAL_LAYER: None,
              LMFileType.SCENARIO_MAP: MapPrefix.SCEN,
              LMFileType.SDM_MAP: MapPrefix.SDM,
+             LMFileType.SDM_MAKEFLOW_FILE: OCC_NAME_PREFIX,
              LMFileType.OCCURRENCE_FILE: OCC_PREFIX,
              LMFileType.OCCURRENCE_RAW_FILE: OCC_PREFIX,
              LMFileType.MODEL_REQUEST: 'modReq',
@@ -388,6 +390,7 @@ class FileFix:
                 LMFileType.ENVIRONMENTAL_LAYER: OutputFormat.GTIFF,
                 LMFileType.SCENARIO_MAP: OutputFormat.MAP,
                 LMFileType.SDM_MAP: OutputFormat.MAP,
+                LMFileType.SDM_MAKEFLOW_FILE: OutputFormat.MAKEFLOW,
                 LMFileType.OCCURRENCE_FILE: OutputFormat.SHAPE,
                 LMFileType.OCCURRENCE_RAW_FILE: OutputFormat.CSV,
                 LMFileType.MODEL_REQUEST: OutputFormat.XML,

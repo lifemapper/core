@@ -285,10 +285,12 @@ class LMMakeflowDocument(object):
 
    # ...........................
    def write(self, filename):
-      with open(filename, 'w') as outF:
-         for header in self.headers:
-            outF.write("%s\n" % header) # Assume that they need newlines
-         
-         for job in self.jobs:
-            outF.write(job) # These have built-in newlines
+      if self.jobs:
+         with open(filename, 'w') as outF:
+            for header in self.headers:
+               # Assume that they need newlines
+               outF.write("{}\n".format(header)) 
+            for job in self.jobs:
+               # These have built-in newlines
+               outF.write(job) 
    

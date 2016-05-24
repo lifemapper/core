@@ -33,6 +33,7 @@ from time import sleep
 from types import ListType, TupleType, StringType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
+from LmBackend.makeflow.documentBuilder import LMMakeflowDocument
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
@@ -51,6 +52,7 @@ from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.omJob import OmProjectionJob, OmModelJob
 from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
+from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 GBIF_SERVICE_INTERVAL = 3 * ONE_MIN            
@@ -58,13 +60,14 @@ GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
 # .............................................................................
 class _LMBoomer(LMObject):
    # .............................
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, 
+   def __init__(self, userid, priority, algLst, mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
                 intersectGrid=None, log=None):
       super(_LMBoomer, self).__init__()
       import socket
       self.hostname = socket.gethostname().lower()
       self.userid = userid
+      self.priority = priority
       self.algs = []
       self.modelScenario = None
       self.projScenarios = []
@@ -329,6 +332,35 @@ class _LMBoomer(LMObject):
 # ...............................................
    def _getInsertSciNameForExternalSpeciesKey(self, speciesKey):
       self._raiseSubclassError()
+      
+# ...............................................
+   def _createMakeflow(self, jobs):
+      jobchainId = usr = filename = None
+      if jobs:
+         mfdoc = LMMakeflowDocument()
+         for j in jobs:
+            if isinstance(j, SDMOccurrenceJob):
+               mfdoc.buildOccurrenceSet(j)
+            elif isinstance(j, SDMModelJob):
+               mfdoc.buildModel(j)
+            elif isinstance(j, SDMProjectionJob):
+               mfdoc.buildProjection()
+            if usr is None:
+               usr = j.getUserId()
+            if filename is None:
+               filename = j.makeflowFilename
+         self.log.info('Writing makeflow document {} ...'.format(filename))
+         try:
+            mfdoc.write(filename)
+         except Exception, e:
+            raise LMError(currargs='Failed to write {}; ({})'.format(filename, str(e)))
+         
+         try:
+            jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
+         except Exception, e:
+            raise LMError(currargs='Failed to insert jobChain for {}; ({})'
+                          .format(filename, str(e)))
+      return jobchainId
 
 # ...............................................
    def chainOne(self):
@@ -442,6 +474,7 @@ class _LMBoomer(LMObject):
 # ...............................................
    def _processSDMChain(self, sciname, taxonSourceKeyVal, occProcessType,
                         dataCount, minPointCount, data=None):
+      jobs = []
       if sciname is not None:
          try:
             occ = self._createOrResetOccurrenceset(sciname, taxonSourceKeyVal, 
@@ -459,7 +492,7 @@ class _LMBoomer(LMObject):
                                          self.modelScenario, 
                                          self.projScenarios, 
                                          occJobProcessType=occProcessType, 
-                                         priority=Priority.NORMAL, 
+                                         priority=self.priority, 
                                          intersectGrid=self.intersectGrid,
                                          minPointCount=minPointCount)
                self.log.debug('Created {} jobs for occurrenceset {}'
@@ -468,6 +501,7 @@ class _LMBoomer(LMObject):
                if not isinstance(e, LMError):
                   e = LMError(currargs=e.args, lineno=self.getLineno())
                raise e
+      return jobs
 #       else:
 #          self.log.debug('ScientificName does not exist')
 
@@ -477,8 +511,8 @@ class BisonBoom(_LMBoomer):
    @summary: Initializes the job chainer for BISON.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
-                taxonSourceName=None, mdlMask=None, prjMask=None, 
-                intersectGrid=None, log=None):
+                priority=Priority.NORMAL, taxonSourceName=None, 
+                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       self._tsnfile = None
       
       if taxonSourceName is None:
@@ -491,7 +525,8 @@ class BisonBoom(_LMBoomer):
          self._failGracefully(lmerr='Unable to open {}'.format(tsnfilename))
       
       self._linenum = 0
-      super(BisonBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+      super(BisonBoom, self).__init__(userid, priority, algLst, 
+                                      mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       intersectGrid=intersectGrid, log=log)
@@ -565,19 +600,22 @@ class BisonBoom(_LMBoomer):
 
 # ...............................................
    def _processTsn(self, tsn, tsnCount):
+      jobs = []
       if tsn is not None:
          sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
-         self._processSDMChain(sciName, tsn, 
+         jobs = self._processSDMChain(sciName, tsn, 
                                ProcessType.BISON_TAXA_OCCURRENCE, 
                                tsnCount, BISON_MIN_POINT_COUNT)
+      return jobs
          
 # ...............................................
    def chainOne(self):
       tsn, tsnCount = self._getTsnRec()
       if tsn is not None:
-         self._processTsn(tsn, tsnCount)
+         jobs = self._processTsn(tsn, tsnCount)
          self.log.info('Processed tsn {}, with {} points; next start {}'
                        .format(tsn, tsnCount, self.nextStart))
+         self._createMakeflow(jobs)
 
 # ...............................................
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
@@ -636,9 +674,9 @@ class UserBoom(_LMBoomer):
              Occurrence record and inserts one or more jobs.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
-                occMetaFname, expDate, 
+                occMetaFname, expDate, priority=Priority.HIGH,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
-      super(UserBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+      super(UserBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      intersectGrid=intersectGrid, log=log)
@@ -717,40 +755,10 @@ class UserBoom(_LMBoomer):
    def chainOne(self):
       dataChunk, dataCount, taxonName  = self._getChunk()
       if dataChunk:
-         self._processInputSpecies(dataChunk, dataCount, taxonName)
+         jobs = self._processInputSpecies(dataChunk, dataCount, taxonName)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
-
-# ...............................................
-   def run(self):
-      killMeNow = False
-      # Gets and frees lock for each name checked
-      while (not(self._existKillFile())):
-         try:
-            while not(self.occParser.eof()):
-               chunk = self.occParser.pullCurrentChunk()
-               self._processInputSpecies(chunk)
-                           
-               if self._existKillFile():
-                  break
-                           
-            if self.occParser.eof():
-               killMeNow = True
-            self.occParser.close()
-               
-            if killMeNow:
-               self.log.info('Boom complete')
-               break
-
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            self._failGracefully(lmerr=e)
-            break
-
-      if self._existKillFile():
-         self.log.info('LAST CHECKED line {} (killfile)'.format(self.nextStart))
-         self._failGracefully()
+         self._createMakeflow(jobs)
 
 # ...............................................
    def _simplifyName(self, longname):
@@ -771,6 +779,7 @@ class UserBoom(_LMBoomer):
 
 # ...............................................
    def _processInputSpecies(self, dataChunk, dataCount, taxonName):
+      jobs = []
       if dataChunk:
          occ = self._createOrResetOccurrenceset(taxonName, None, 
                                           ProcessType.USER_TAXA_OCCURRENCE,
@@ -782,16 +791,14 @@ class UserBoom(_LMBoomer):
             jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
                                  self.modelScenario, self.projScenarios, 
                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-                                 priority=Priority.NORMAL, 
+                                 priority=self.priority, 
                                  intersectGrid=None,
                                  minPointCount=POINT_COUNT_MIN)
             self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
                            len(jobs), taxonName, len(dataChunk), occ.getId()))
       else:
-         
          self.log.debug('No data in chunk')
-
-
+      return jobs
 
 # ..............................................................................
 class GBIFBoom(_LMBoomer):
@@ -801,7 +808,7 @@ class GBIFBoom(_LMBoomer):
              updates the Occurrence record and inserts a job.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
-                taxonSourceName=None, providerListFile=None,
+                priority=Priority.NORMAL, taxonSourceName=None, providerListFile=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       self._dumpfile = None
       try:
@@ -816,7 +823,7 @@ class GBIFBoom(_LMBoomer):
          self._failGracefully(lmerr='Failed to init CSV reader with {}'.format(occfilename))
 
       self._linenum = 0
-      super(GBIFBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+      super(GBIFBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       intersectGrid=intersectGrid, log=log)               
@@ -887,19 +894,22 @@ class GBIFBoom(_LMBoomer):
          
 # ...............................................
    def _processChunk(self, speciesKey, dataCount, dataChunk):
+      jobs = []
       sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
       if sciName:       
-         self._processSDMChain(sciName, speciesKey, 
+         jobs = self._processSDMChain(sciName, speciesKey, 
                             ProcessType.GBIF_TAXA_OCCURRENCE, 
                             dataCount, POINT_COUNT_MIN, data=dataChunk)
-      
+      return jobs
+   
 # ...............................................
    def chainOne(self):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
-         self._processChunk(speciesKey, dataCount, dataChunk)
+         jobs = self._processChunk(speciesKey, dataCount, dataChunk)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
+         self._createMakeflow(jobs)
 
 # ...............................................
    def moveToStart(self):
@@ -1028,8 +1038,8 @@ class iDigBioBoom(_LMBoomer):
              up-to-date. 
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
-                taxonSourceName=None, mdlMask=None, prjMask=None, 
-                intersectGrid=None, log=None):
+                priority=Priority.NORMAL, taxonSourceName=None, 
+                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
          
@@ -1039,7 +1049,7 @@ class iDigBioBoom(_LMBoomer):
       except:
          raise LMError(currargs='Unable to open {}'.format(idigFname))
 
-      super(iDigBioBoom, self).__init__(userid, algLst, mdlScen, prjScenLst, 
+      super(iDigBioBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
                                         taxonSourceName=taxonSourceName, 
                                         mdlMask=mdlMask, prjMask=prjMask, 
                                         intersectGrid=intersectGrid, log=log)
@@ -1052,7 +1062,8 @@ class iDigBioBoom(_LMBoomer):
    def chainOne(self):
       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
       if taxonKey:
-         self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
+         jobs = self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
+         self._createMakeflow(jobs)
 
 # ...............................................
    def close(self):
@@ -1160,11 +1171,13 @@ class iDigBioBoom(_LMBoomer):
          
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonName, taxonKey, taxonCount):
+      jobs = []
       if taxonKey is not None:
          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
-         self._processSDMChain(sciName, taxonKey, 
+         jobs = self._processSDMChain(sciName, taxonKey, 
                                ProcessType.IDIGBIO_TAXA_OCCURRENCE,
                                taxonCount, POINT_COUNT_MIN)
+      return jobs
 
 # .............................................................................
 # .............................................................................
