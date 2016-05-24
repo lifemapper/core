@@ -129,7 +129,9 @@ def runTests(jobTests):
 
 # .............................................................................
 if __name__ == "__main__":
-   
+   import sys
+   print("This has been deprecated, use new testing suite")
+   sys.exit(2)
    # Set up mock HTTP opener
    # This is used to return local files instead of trying to fulfill invalid 
    #   HTTP requests
