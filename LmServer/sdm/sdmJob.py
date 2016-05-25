@@ -467,6 +467,8 @@ class SDMOccurrenceJobData(_JobData):
             import string
             self.delimitedOccurrenceValues = ''.join(
                               filter(lambda x: x in string.printable, tmpStr))
+      else:
+         raise LMError("Data location: %s, does not exist" % rdloc)
       
       obj = {'dlocation': rdloc,
              'count': occSet.queryCount}
