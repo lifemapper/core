@@ -722,19 +722,38 @@ class MAL(DbPostgresql):
       return occDeps
 
 # ...............................................
-   def getChainTopDown(self, occ=None, mdl=None, prj=None):
+   def getObjectChain(self, occ, mdl, prj):
       """
-      @return: a nested tuple of dependent objects as:
-         (occ, [(mdl, [(prj, [(pav, None)]), (prj, None)]), ... ])
+      @return: a set of projections (models and occurrenceset are included
+               in each projection)
       """
-      top = None
-      occDeps = []
-      return (top, occDeps)
+      projs = []
+
+      occid = None
+      if occ is not None:
+         occid = occ.getId()
+      elif mdl is not None:
+         occid = mdl.getOccurrenceSet().getId()
+      elif prj is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getProjection', prj.getId())
+         occid = self._getColumnValue(row, idxs, ['occurrencesetid'])
+      else:
+         raise LMError(currargs='Must provide OccurrenceSet, Model, or Projection')
       
+      rows, idxs = self.executeSelectManyFunction('lm_getProjectionsForOccurrenceSet',
+                                                  occid, None, None)
+      for r in rows:
+         projs.append(self._createProjection(r, idxs, doFillScenario=False))
+      
+      return projs
+            
 # ...............................................
    def getJobChainTopDown(self, occ):
       """
       @note: Gets job/objects from database, modifies nothing
+      @note: This is a temporary function, will be replaced with `getObjectChain`
+             to return objects with dependencies, and `getJobChain` to return a 
+             JobChain record
       @return: a nested tuple of dependent jobs and objects as:
          (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
                    (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
