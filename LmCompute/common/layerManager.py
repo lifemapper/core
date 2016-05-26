@@ -571,7 +571,8 @@ def convertAsciisToMxes(fnTups):
          # We used the ASCII base name.  This is probably the same as the MXE 
          #    with a different extension, but just in case
          baseName = os.path.basename(asciiFn)
-         tmpMxeFn = '%s%s' % (os.path.splitext(baseName)[0], OutputFormat.MXE)
+         tmpMxeFn = os.path.join(inDir, 
+                     '%s%s' % (os.path.splitext(baseName)[0], OutputFormat.MXE))
          os.rename(tmpMxeFn, mxeFn)
       except Exception, e:
          print "Failed to rename layer: %s -> %s" % (tmpMxeFn, mxeFn)
