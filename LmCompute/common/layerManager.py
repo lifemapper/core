@@ -160,16 +160,21 @@ class LayerManager(object):
             
          # Now check to see if we need to create an MXE
          if layerFormat == LayerFormat.MXE:
-            mxeFn = self._getFilePath(layerId, layerFormat)
-            self._insertLayer(layerId, layerFormat, mxeFn, LayerStatus.RETRIEVING)
-            convertAsciisToMxes([(ascFn, mxeFn)])
+            mxeStatus, mxeLyr = self._queryLayer(layerId, LayerFormat.MXE)
             
-            if os.path.exists(mxeFn):
-               self._updateLayerStatus(layerId, layerFormat, LayerStatus.STORED)
+            if mxeStatus == LayerStatus.RETRIEVING:
+               mxeLyr = self._waitOnLayer(layerId, LayerFormat.MXE)
             else:
-               print "Failed to create MXE file:", mxeFn
-               raise LmException(JobStatus.IO_LAYER_WRITE_ERROR, 
-                                 "Failed to convert layer to MXE")
+               mxeFn = self._getFilePath(layerId, layerFormat)
+               self._insertLayer(layerId, layerFormat, mxeFn, LayerStatus.RETRIEVING)
+               convertAsciisToMxes([(ascFn, mxeFn)])
+               
+               if os.path.exists(mxeFn):
+                  self._updateLayerStatus(layerId, layerFormat, LayerStatus.STORED)
+               else:
+                  print "Failed to create MXE file:", mxeFn
+                  raise LmException(JobStatus.IO_LAYER_WRITE_ERROR, 
+                                    "Failed to convert layer to MXE")
          
       else:
          raise LmException(JobStatus.DB_LAYER_READ_ERROR,
