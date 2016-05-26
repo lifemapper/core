@@ -142,31 +142,35 @@ class LayerManager(object):
          lyr = self._waitOnLayer(layerId, LayerFormat.GTIFF)
 
       if lyr is not None:
-         newFn = self._getFilePath(layerId, layerFormat)
-         self._insertLayer(layerId, layerFormat, newFn, LayerStatus.RETRIEVING)
-         if layerFormat == LayerFormat.ASCII:
-            convertTiffToAscii(lyr[LayerAttributes.FILE_PATH], newFn)
-         elif layerFormat == LayerFormat.MXE:
-            aStatus, aLyr = self._queryLayer(layerId, LayerFormat.ASCII)
+         # For now, there are only two conversion options, ASCII and MXE
+         # That means we'll always need an ASCII
+         ascStatus, ascLyr = self._queryLayer(layerId, LayerFormat.ASCII)
+         
+         if ascStatus == LayerStatus.RETRIEVING:
+            # Wait for the ASCII to generate
+            ascLyr = self._waitOnLayer(layerId, LayerFormat.ASCII)
+            ascFn = ascLyr[LayerAttributes.FILE_PATH]
+         if ascStatus in [LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE]:
+            # Convert to ASCII
+            ascFn = self._getFilePath(layerId, LayerFormat.ASCII)
+            self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
+                             LayerStatus.RETRIEVING)
+            convertTiffToAscii(lyr[LayerAttributes.FILE_PATH], ascFn)
+            self._updateLayerStatus(layerId, LayerFormat.ASCII, LayerStatus.STORED)
             
-            if aStatus not in [LayerStatus.SEEDED, LayerStatus.STORED]:
-               ascFn = aLyr[LayerAttributes.FILE_PATH]
-            elif aStatus == LayerStatus.ABSENT:
-               ascFn = self._getFilePath(layerId, LayerFormat.ASCII)
-               convertTiffToAscii(lyr[LayerAttributes.FILE_PATH], ascFn)
+         # Now check to see if we need to create an MXE
+         if layerFormat == LayerFormat.MXE:
+            mxeFn = self._getFilePath(layerId, layerFormat)
+            self._insertLayer(layerId, layerFormat, mxeFn, LayerStatus.RETRIEVING)
+            convertAsciisToMxes([(ascFn, mxeFn)])
+            
+            if os.path.exists(mxeFn):
+               self._updateLayerStatus(layerId, layerFormat, LayerStatus.STORED)
             else:
-               # Note, if it takes to long to write the layer, an excpetion 
-               #    will be thrown that will bubble up from here
-               aLyr = self._waitOnLayer(layerId, LayerFormat.ASCII)
-               ascFn = aLyr[LayerAttributes.FILE_PATH]
-            convertAsciisToMxes([(ascFn, newFn)])
-            
-            #TODO: Check that MXEs were created
-            
-         else:
-            raise LmException(JobStatus.DB_LAYER_ERROR, 
-                              "Don't know how to convert to: %s" % layerFormat)
-         self._updateLayerStatus(layerId, layerFormat, LayerStatus.STORED)
+               print "Failed to create MXE file:", mxeFn
+               raise LmException(JobStatus.IO_LAYER_WRITE_ERROR, 
+                                 "Failed to convert layer to MXE")
+         
       else:
          raise LmException(JobStatus.DB_LAYER_READ_ERROR,
                            "GeoTIFF is missing for: %s" % layerId)
