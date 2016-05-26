@@ -160,6 +160,9 @@ class LayerManager(object):
                aLyr = self._waitOnLayer(layerId, LayerFormat.ASCII)
                ascFn = aLyr[LayerAttributes.FILE_PATH]
             convertAsciisToMxes([(ascFn, newFn)])
+            
+            #TODO: Check that MXEs were created
+            
          else:
             raise LmException(JobStatus.DB_LAYER_ERROR, 
                               "Don't know how to convert to: %s" % layerFormat)
@@ -257,37 +260,45 @@ class LayerManager(object):
    
    # .................................
    def _retrieveLayer(self, layerId, layerFormat, layerUrl):
-      # Have to determine file name to retrieve (shapefile or tiff)
-      if layerFormat == LayerFormat.SHAPE:
-         lyrPath = self._getFilePath(layerId, layerFormat)
-         rLyrFormat = LayerFormat.SHAPE
-      else:
-         lyrPath = self._getFilePath(layerId, LayerFormat.GTIFF)
-         rLyrFormat = LayerFormat.GTIFF
-         
-      # Insert layer into db
-      self._insertLayer(layerId, rLyrFormat, lyrPath, LayerStatus.RETRIEVING)
-
-      # Retrieve content
-      lyrCnt = urllib2.urlopen(layerUrl).read()
       
-      if layerFormat == LayerFormat.SHAPE:
-         outDir = os.path.split(lyrPath)[0]
-         content = StringIO(lyrCnt)
-         content.seek(0)
-         with zipfile.ZipFile(content, allowZip64=True) as z:
-            for name in z.namelist():
-               z.extract(name, outDir)
-      else:
-         with open(lyrPath, 'w') as outF:
-            outF.write(lyrCnt)
-
-      # Validate content
-      if not verifyHash(layerId, dlocation=lyrPath):
-         raise LmException(JobStatus.IO_LAYER_ERROR, 
-                           "Layer content does not match identifier")
-      # Update db
-      self._updateLayerStatus(layerId, rLyrFormat, LayerStatus.STORED)
+      # Check to see if the TIFF is available, if so, go to convert
+      #  This could happen if we didn't store the ASCII / MXE on initial 
+      #  retrieve, or if the convert failed before
+      
+      initStatus, _ = self._queryLayer(layerId, layerFormat)
+      
+      if initStatus != LayerStatus.TIFF_AVAILABLE:
+         # Have to determine file name to retrieve (shapefile or tiff)
+         if layerFormat == LayerFormat.SHAPE:
+            lyrPath = self._getFilePath(layerId, layerFormat)
+            rLyrFormat = LayerFormat.SHAPE
+         else:
+            lyrPath = self._getFilePath(layerId, LayerFormat.GTIFF)
+            rLyrFormat = LayerFormat.GTIFF
+            
+         # Insert layer into db
+         self._insertLayer(layerId, rLyrFormat, lyrPath, LayerStatus.RETRIEVING)
+   
+         # Retrieve content
+         lyrCnt = urllib2.urlopen(layerUrl).read()
+         
+         if layerFormat == LayerFormat.SHAPE:
+            outDir = os.path.split(lyrPath)[0]
+            content = StringIO(lyrCnt)
+            content.seek(0)
+            with zipfile.ZipFile(content, allowZip64=True) as z:
+               for name in z.namelist():
+                  z.extract(name, outDir)
+         else:
+            with open(lyrPath, 'w') as outF:
+               outF.write(lyrCnt)
+   
+         # Validate content
+         if not verifyHash(layerId, dlocation=lyrPath):
+            raise LmException(JobStatus.IO_LAYER_ERROR, 
+                              "Layer content does not match identifier")
+         # Update db
+         self._updateLayerStatus(layerId, rLyrFormat, LayerStatus.STORED)
       
       # Convert if necessary
       if layerFormat in [LayerFormat.ASCII, LayerFormat.MXE]:
@@ -545,11 +556,17 @@ def convertAsciisToMxes(fnTups):
    
    # Move all of the MXEs to the correct location
    for asciiFn, mxeFn in fnTups:
-      # We used the ASCII base name.  This is probably the same as the MXE with
-      #    a different extension, but just in case
-      baseName = os.path.basename(asciiFn)
-      tmpMxeFn = '%s%s' % (os.path.splitext(baseName)[0], OutputFormat.MXE)
-      os.rename(tmpMxeFn, mxeFn)
+      
+      #TODO: Add a try except here
+      try:
+         # We used the ASCII base name.  This is probably the same as the MXE 
+         #    with a different extension, but just in case
+         baseName = os.path.basename(asciiFn)
+         tmpMxeFn = '%s%s' % (os.path.splitext(baseName)[0], OutputFormat.MXE)
+         os.rename(tmpMxeFn, mxeFn)
+      except Exception, e:
+         print "Failed to rename layer: %s -> %s" % (tmpMxeFn, mxeFn)
+         print str(e)
       
    # Remove temporary directories
    # TODO: Make this safer 
