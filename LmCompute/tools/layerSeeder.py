@@ -31,7 +31,7 @@ import argparse
 import os
 
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.lmconstants import INPUT_LAYER_DIR
+from LmCompute.common.localconstants import INPUT_LAYER_DIR
 from LmCompute.common.localconstants import JOB_DATA_PATH
 
 SEED_DIR = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR)

@@ -15,7 +15,7 @@ ADMIN_EMAIL: aimeestewart@ku.edu
 LOCAL_MACHINE_ID: 
 
 ; ...............................................
-;; [LmCompute - data]
+;; [LmCompute - environment]
 ;; SCENARIO_PACKAGE_SEED: 30sec-present-future-SEA
 
 ; ...............................................

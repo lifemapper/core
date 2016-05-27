@@ -35,10 +35,10 @@ from LmCommon.common.lmXml import deserialize, fromstring
 
 from LmCompute.environment.environmentMethods import _EnvironmentMethods
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.localconstants import BIN_PATH, JOB_DATA_PATH, \
-                                    JOB_OUTPUT_PATH, PLUGINS_DIR, PYTHON_CMD, \
-                                    SAMPLE_JOBS_PATH, SAMPLE_LAYERS_PATH, \
-                                    TEMPORARY_FILE_PATH
+from LmCompute.common.localconstants import (BIN_PATH, JOB_DATA_PATH, 
+         JOB_OUTPUT_PATH, PLUGINS_DIR, PYTHON_CMD, SAMPLE_JOBS_PATH, 
+         SAMPLE_LAYERS_PATH, TEMPORARY_FILE_PATH, 
+         INPUT_LAYER_DIR, INPUT_LAYER_DB)
 
 # Create a constant to save space
 VALID_TYPES = [ProcessType.OM_MODEL,
@@ -67,9 +67,9 @@ class TestEnv(_EnvironmentMethods):
       self._initialize()
       
    def _initialize(self):
-      # check for existing layers db
-      lyrBasePath = os.path.join(self.getJobDataPath(), "layers")
-      dbFile = os.path.join(lyrBasePath, "layers.db")
+      # check for existing INPUT_LAYER_DB
+      lyrBasePath = os.path.join(self.getJobDataPath(), INPUT_LAYER_DIR)
+      dbFile = os.path.join(lyrBasePath, INPUT_LAYER_DB)
 
       # if it doesn't exist, seed layers
       if not os.path.exists(dbFile):
