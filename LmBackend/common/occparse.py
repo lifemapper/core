@@ -486,12 +486,12 @@ class OccDataParser(object):
 
 
 if __name__ == '__main__':
-   from LmServer.common.log import ScriptLogger
+   from LmCompute.common.log import TestLogger
    metafname = '/tank/data/input/species/gbif_borneo_simple.meta'
    datafname = '/tank/data/input/species/sorted_gbif_borneo_simple.csv'
 #    datafname = '/tank/data/input/species/gbif_borneo_simple.csv'
    
-   log = ScriptLogger('occparse_checkInput')
+   log = TestLogger('occparse_checkInput')
    op = OccDataParser(log, datafname, metafname)
    op.readAllRecs()
    op.printStats()

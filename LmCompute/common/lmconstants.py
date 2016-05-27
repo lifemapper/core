@@ -34,7 +34,6 @@ CLIENT_VERSION = "3.0.0"
 # ============================================================================
 # =                             Layer Constants                              =
 # ============================================================================
-# INPUT_LAYER_DIR = 'layers'
 RETRIEVED_LAYER_DIR = 'retrieved'
 
 class LayerStatus:

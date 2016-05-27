@@ -90,3 +90,12 @@ class SubmitterLogger(LmComputeLogger):
    def __init__(self, level=logging.DEBUG):
       LmComputeLogger.__init__(self, 'submitter', level=level, addFile=True)
 
+# .............................................................................
+class TestLogger(LmComputeLogger):
+   """
+   @summary: This logger can be used with the job retriever to log job 
+                retrieval actions
+   """
+   def __init__(self, scriptname, level=logging.DEBUG):
+      LmComputeLogger.__init__(self, scriptname, level=level, addConsole=True, 
+                               addFile=True)
