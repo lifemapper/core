@@ -304,7 +304,9 @@ class LayerManager(object):
                outF.write(lyrCnt)
    
          # Validate content
-         if not verifyHash(layerId, dlocation=lyrPath):
+         if layerFormat in (LayerFormat.GTIFF, LayerFormat.SHAPE) and \
+               not verifyHash(layerId, dlocation=lyrPath):
+            print "Layer hash did not match for", layerId
             raise LmException(JobStatus.IO_LAYER_ERROR, 
                               "Layer content does not match identifier")
          # Update db
@@ -566,7 +568,7 @@ def convertAsciisToMxes(fnTups):
                      inDir=inDir, outDir=outDir)
    p = subprocess.Popen(meConvertCmd, shell=True)
    
-   while p.poll() is not None:
+   while p.poll() is None:
       print "Waiting for layer conversion (asc to mxe) to finish..."
       sleep(WAIT_SECONDS)
    
@@ -578,7 +580,7 @@ def convertAsciisToMxes(fnTups):
          # We used the ASCII base name.  This is probably the same as the MXE 
          #    with a different extension, but just in case
          baseName = os.path.basename(asciiFn)
-         tmpMxeFn = os.path.join(inDir, 
+         tmpMxeFn = os.path.join(outDir, 
                      '%s%s' % (os.path.splitext(baseName)[0], OutputFormat.MXE))
          os.rename(tmpMxeFn, mxeFn)
       except Exception, e:
