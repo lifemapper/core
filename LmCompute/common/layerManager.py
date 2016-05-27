@@ -304,7 +304,9 @@ class LayerManager(object):
                outF.write(lyrCnt)
    
          # Validate content
-         if not verifyHash(layerId, dlocation=lyrPath):
+         if layerFormat in (LayerFormat.GTIFF, LayerFormat.SHAPE) and \
+               not verifyHash(layerId, dlocation=lyrPath):
+            print "Layer hash did not match for", layerId
             raise LmException(JobStatus.IO_LAYER_ERROR, 
                               "Layer content does not match identifier")
          # Update db
