@@ -167,7 +167,7 @@ class LayerManager(object):
                mxeLyr = self._waitOnLayer(layerId, LayerFormat.MXE)
             else:
                mxeFn = self._getFilePath(layerId, layerFormat)
-               self._insertLayer(layerId, layerFormat, mxeFn, LayerStatus.RETRIEVING)
+               self._insertLayer(layerId, LayerFormat.MXE, mxeFn, LayerStatus.RETRIEVING)
                convertAsciisToMxes([(ascFn, mxeFn)])
                
                if os.path.exists(mxeFn):
@@ -271,22 +271,22 @@ class LayerManager(object):
    # .................................
    def _retrieveLayer(self, layerId, layerFormat, layerUrl):
       
-      # Check to see if the TIFF is available, if so, go to convert
-      #  This could happen if we didn't store the ASCII / MXE on initial 
-      #  retrieve, or if the convert failed before
+      initStatus, initLayer = self._queryLayer(layerId, layerFormat)
       
-      initStatus, _ = self._queryLayer(layerId, layerFormat)
-      
-      if initStatus != LayerStatus.TIFF_AVAILABLE:
-         # Have to determine file name to retrieve (shapefile or tiff)
-         if layerFormat == LayerFormat.SHAPE:
-            lyrPath = self._getFilePath(layerId, layerFormat)
+      if initStatus in [LayerStatus.SEEDED, LayerStatus.STORED]:
+         return initLayer
+      elif initStatus == LayerStatus.RETRIEVING:
+         return self._waitOnLayer(layerId, layerFormat, layerUrl)
+      elif initStatus == LayerStatus.ABSENT:
+         # Need to go retrieve content
+         if layerFormat == LayerFormat.SHAPE: # Shapefile
+            lyrPath = self._getFilePath(layerId, LayerFormat.SHAPE)
             rLyrFormat = LayerFormat.SHAPE
-         else:
-            lyrPath = self._getFilePath(layerId, LayerFormat.GTIFF)
+         else: # Raster
+            lyrPath = self._getFilePath(layerId, layerFormat)
             rLyrFormat = LayerFormat.GTIFF
-            
-         # Insert layer into db
+         
+         # Insert layer inot db
          self._insertLayer(layerId, rLyrFormat, lyrPath, LayerStatus.RETRIEVING)
    
          # Retrieve content
@@ -310,11 +310,17 @@ class LayerManager(object):
          # Update db
          self._updateLayerStatus(layerId, rLyrFormat, LayerStatus.STORED)
       
+      else: 
+         # This will be TIFF_AVAILABLE and we'll need to convert
+         #  We may need to convert anyway, so just pass through
+         pass
+      
+      # -------------------
       # Convert if necessary
       if layerFormat in [LayerFormat.ASCII, LayerFormat.MXE]:
          self._convertLayer(layerId, layerFormat)
 
-      status, lyr = self._queryLayer(layerId, layerFormat)
+      finStatus, lyr = self._queryLayer(layerId, layerFormat)
 
       return lyr
    
