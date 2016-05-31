@@ -54,6 +54,11 @@ PRJ_TOOL: density.Project
 ME_VERSION: 3.3.3k
 CONVERT_TOOL: density.Convert
 
+; For converting ASCIIs to MXEs
+CONVERT_JAVA_MAX_MEM_OPTION = 2g
+CONVERT_JAVA_INIT_MEM_OPTION = 2g
+CONVERT_JAVA_CMD: %(JAVA_EXE)s -Xms%(CONVERT_JAVA_INIT_MEM_OPTION)s -Xmx%(CONVERT_JAVA_MAX_MEM_OPTION)s -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT)s -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT)s -cp
+
 ; ...............................................
 [LmCompute - plugins - openModeller]
 DEFAULT_FILE_TYPE: GreyTiff100

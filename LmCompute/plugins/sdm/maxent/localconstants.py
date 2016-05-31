@@ -32,6 +32,7 @@ _cfg = Config()
 _ME_PLUGIN_SECTION = 'LmCompute - plugins - maxent'
 
 JAVA_CMD = _cfg.get(_ME_PLUGIN_SECTION, 'JAVA_CMD')
+CONVERT_JAVA_CMD = _cfg.get(_ME_PLUGIN_SECTION, 'CONVERT_JAVA_CMD')
 ME_CMD = _cfg.get(_ME_PLUGIN_SECTION, 'ME_CMD')
 MDL_TOOL = _cfg.get(_ME_PLUGIN_SECTION, 'MDL_TOOL')
 PRJ_TOOL = _cfg.get(_ME_PLUGIN_SECTION, 'PRJ_TOOL')

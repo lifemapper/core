@@ -52,8 +52,8 @@ from LmCompute.common.lmconstants import (LayerAttributes,
 from LmCompute.common.localconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DIR,
                                              INPUT_LAYER_DB)
 from LmCompute.common.lmObj import LmException
-from LmCompute.plugins.sdm.maxent.localconstants import (JAVA_CMD, ME_CMD,
-                                                         CONVERT_TOOL)
+from LmCompute.plugins.sdm.maxent.localconstants import (CONVERT_JAVA_CMD, 
+                                                         ME_CMD, CONVERT_TOOL)
 
 TIMEOUT = 600
 WAIT_SECONDS = 30
@@ -564,8 +564,8 @@ def convertAsciisToMxes(fnTups):
       
    # Run Maxent converter
    meConvertCmd = "{javaCmd} {meCmd} {convertTool} -t {inDir} asc {outDir} mxe".format(
-                     javaCmd=JAVA_CMD, meCmd=ME_CMD, convertTool=CONVERT_TOOL,
-                     inDir=inDir, outDir=outDir)
+                     javaCmd=CONVERT_JAVA_CMD, meCmd=ME_CMD, 
+                     convertTool=CONVERT_TOOL, inDir=inDir, outDir=outDir)
    p = subprocess.Popen(meConvertCmd, shell=True)
    
    while p.poll() is None:
