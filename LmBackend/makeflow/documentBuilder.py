@@ -162,7 +162,7 @@ class LMMakeflowDocument(object):
                   comment='Build projection {0} job request'.format(jobId))
       
       # Add job to create projection
-      self._addJobCommand([prjJob.outputObj.getDLocation()], 
+      self._addJobCommand([prjJob.outputObj.createLocalDLocation()], 
                           LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
                           dependencies=[jrFn], 
                           comment="Build projection {0}".format(jobId))

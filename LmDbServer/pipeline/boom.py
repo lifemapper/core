@@ -344,7 +344,7 @@ class _LMBoomer(LMObject):
             elif isinstance(j, SDMModelJob):
                mfdoc.buildModel(j)
             elif isinstance(j, SDMProjectionJob):
-               mfdoc.buildProjection()
+               mfdoc.buildProjection(j)
             if usr is None:
                usr = j.getUserId()
             if filename is None:
