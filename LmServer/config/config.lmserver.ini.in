@@ -39,20 +39,31 @@ SPECIES_EXP_DAY: 6
 POINT_COUNT_MIN: 30
 POINT_COUNT_MAX: 1000
 WORKER_JOB_LIMIT: 50
+DEFAULT_ALGORITHMS: BIOCLIM,ATT_MAXENT
+DEFAULT_GRID_NAME: lmgrid_1d
+DEFAULT_GRID_CELLSIZE: 1
+
+;; Used when DATASOURCE is GBIF. 
 TAXONOMY_FILENAME: gbif_taxonomy.txt
 OCCURRENCE_FILENAME: gbif_merged.txt
 PROVIDER_FILENAME: gbif_orgs.txt
+;; Used when DATASOURCE is BISON. 
 TSN_FILENAME: bison_species_tsns.txt
+;; Used when DATASOURCE is IDIGBIO 
 IDIG_FILENAME: idig_gbifids.txt
-
-DEFAULT_ALGORITHMS: @ALGORITHMS@ 
-DEFAULT_MODEL_SCENARIO: @MODEL_SCENARIO@ 
-DEFAULT_PROJECTION_SCENARIOS: @PROJECTION_SCENARIOS@ 
-SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
-DEFAULT_GRID_NAME: lmgrid_1d
-DEFAULT_GRID_CELLSIZE: 1
+;; The default SPECIES_DATA set on 'lifemapper-server' roll installation
+;; is used when DATASOURCE is anything **except** GBIF, IDIGBIO, or BISON. 
+;; Change defaults in @LMHOME@/config/site.ini
 USER_OCCURRENCE_CSV: @SPECIES_DATA@.csv
 USER_OCCURRENCE_META: @SPECIES_DATA@.meta
+
+;; The default SCENARIO_PACKAGE set on 'lifemapper-server' roll installation
+;; matches these default scenarios. Change defaults in @LMHOME@/config/site.ini 
+;; file then run @LMHOME@/rocks/bin/updateArchiveInput.  Scenario codes for 
+;; each SCENARIO_PACKAGE are listed in @LMHOME@/LmDbServer/tools/bioclimMeta.py
+DEFAULT_MODEL_SCENARIO: WC-30sec-SEA
+DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-SEA,CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA
+SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 
 ; ...............................................
 [LmServer - dbserver]
