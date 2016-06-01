@@ -33,7 +33,7 @@ import os
 from LmCompute.common.layerManager import LayerManager
 from LmCompute.common.localconstants import (JOB_DATA_PATH, INPUT_LAYER_DIR, 
                                              INPUT_LAYER_DB)
-from LmCompute.common.lmconstants import LayerAttributes
+from LmCompute.common.lmconstants import LayerAttributes, SchemaMetadata
 
 SEED_DIR = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR)
 
@@ -77,7 +77,8 @@ if __name__ == "__main__":
    lm = LayerManager(JOB_DATA_PATH)
    dbfname = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR, INPUT_LAYER_DB)
    if os.path.exists(dbfname):
-      version, createTime = lm.getDbMetadata()
+      meta = lm.getDbMetadata()
+      version = meta[SchemaMetadata.VERSION]
       if version is None or version < LayerAttributes.VERSION:
          try:
             os.remove(dbfname)
