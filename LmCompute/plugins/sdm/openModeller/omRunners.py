@@ -152,6 +152,8 @@ class OMModelRunner(ApplicationRunner):
       elif omLog.find(
           "[Error] Cannot use zero presence points for sampling") >= 0:
          status = JobStatus.OM_MOD_REQ_POINTS_MISSING_ERROR
+      elif omLog.find("[Error] Algorithm could not be initialized") >= 0:
+         status = JobStatus.OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR
       elif omLog.find(
           "[Error] Cannot create model without any presence or absence point."
           ) >= 0:
