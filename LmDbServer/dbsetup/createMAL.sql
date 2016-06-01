@@ -420,7 +420,8 @@ lm3.computeresource, lm3.computeresource_computeresourceid_seq,
 lm3.lmjob, lm3.lmjob_lmjobid_seq,
 lm3.experiment, lm3.experiment_experimentid_seq,
 lm3.taxonomysource, lm3.taxonomysource_taxonomysourceid_seq,
-lm3.scientificname, lm3.scientificname_scientificnameid_seq
+lm3.scientificname, lm3.scientificname_scientificnameid_seq,
+lm3.jobchain, lm3.jobchain_jobchainid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
@@ -438,7 +439,8 @@ lm3.computeresource,
 lm3.lmjob,
 lm3.experiment,
 lm3.taxonomysource,
-lm3.scientificname
+lm3.scientificname,
+lm3.jobchain
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
@@ -455,7 +457,8 @@ lm3.computeresource_computeresourceid_seq,
 lm3.lmjob_lmjobid_seq,
 lm3.experiment_experimentid_seq,
 lm3.taxonomysource_taxonomysourceid_seq,
-lm3.scientificname_scientificnameid_seq
+lm3.scientificname_scientificnameid_seq,
+lm3.jobchain_jobchainid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------

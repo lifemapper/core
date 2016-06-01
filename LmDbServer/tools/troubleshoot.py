@@ -21,44 +21,22 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import argparse
 import mx.DateTime as dt
 from types import ListType, TupleType
 
-from LmBackend.common.occparse import OccDataParser
+from LmCommon.common.lmconstants import JobStatus, ONE_HOUR
 
-from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
-from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            BISON_MIN_POINT_COUNT, Instances, ProcessType, DEFAULT_EPSG, 
-            DEFAULT_POST_USER, JobStatus, ONE_DAY, ONE_HOUR, ONE_MIN,
-            IDIGBIO_GBIFID_FIELD)
-
-from LmDbServer.common.localconstants import WORKER_JOB_LIMIT
-from LmDbServer.pipeline.pipeline import _Worker
-
-from LmServer.base.lmobj import LMError, LmHTTPError
-from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (JobFamily, Priority, 
-                                         PrimaryEnvironment, LOG_PATH)
-from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN, 
-                                            APP_PATH, DATASOURCE)
+from LmServer.base.lmobj import LMError
+from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.db.scribe import Scribe
 from LmServer.notifications.email import EmailNotifier
-from LmServer.sdm.occlayer import OccurrenceLayer
-from LmServer.sdm.omJob import OmProjectionJob, OmModelJob
-from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
-from LmServer.sdm.sdmJob import SDMOccurrenceJob
 
 TROUBLESHOOT_UPDATE_INTERVAL = 2 * ONE_HOUR
-COMPUTE_CHECK_INTERVAL = 12 * ONE_HOUR
-GBIF_SERVICE_INTERVAL = 3 * ONE_MIN            
 
 # .............................................................................
 class Troubleshooter(object):
-   def __init__(self, updateInterval):
+   def __init__(self, cmd):
       currTime = dt.gmt().mjd
-      self.checkJobTime = currTime - COMPUTE_CHECK_INTERVAL
-      self.updateTime = None
 
 # ...............................................
    def _organizeProblemObjects(self, objects, objname):
@@ -116,10 +94,7 @@ class Troubleshooter(object):
 # ...............................................
    def run(self, commandList):
       currtime = dt.gmt().mjd
-      if (self.updateTime is None or
-          currtime - self.updateTime > TROUBLESHOOT_UPDATE_INTERVAL): 
-         oldtime = currtime - TROUBLESHOOT_UPDATE_INTERVAL
-         self.updateTime = currtime
+      oldtime = currtime - TROUBLESHOOT_UPDATE_INTERVAL
       for cmd in commandList:
          cmd = cmd.lower()
          if cmd == 'limbo':
@@ -134,13 +109,6 @@ class Troubleshooter(object):
 ### Main ###
 # ...............................................
 if __name__ == '__main__':
-#    parser = argparse.ArgumentParser(
-#             description=('Search for stalled, error, or other problems with ' +
-#                          'boom pipeline'))
-#    parser.add_argument('commands', help="Problem type(s) to solve", nargs="*")
-# 
-#    args = parser.parse_args()
-#    cmdList = args.commands
    cmdList = ['limbo', 'error']
    app = Troubleshooter(cmdList)
    app.run()

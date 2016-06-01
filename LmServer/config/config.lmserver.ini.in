@@ -2,14 +2,14 @@
 ; LmServer
 ; .............................................................................
 [LmServer - environment]
-ARCHIVE_USER: @LMUSER@ 
+ARCHIVE_USER: kubi
 OGC_SERVICE_URL: http://@PUBLIC_FQDN@/ogc
 WEBSERVICES_ROOT: http://@PUBLIC_FQDN@
 
 SMTP_SERVER: @SMTPSERVER@
 SMTP_SENDER: no-reply-lifemapper@@PUBLIC_FQDN@
 
-DATASOURCE: @DATASOURCE@
+DATASOURCE: GBIF
 APP_PATH: @LMHOME@
 DATA_PATH: @DATADIR_SERVER@
 UPLOAD_PATH: @DATADIR_SERVER@/tmpUpload
@@ -45,7 +45,7 @@ DEFAULT_GRID_CELLSIZE: 1
 
 ;; Used when DATASOURCE is GBIF. 
 TAXONOMY_FILENAME: gbif_taxonomy.txt
-OCCURRENCE_FILENAME: gbif_merged.txt
+OCCURRENCE_FILENAME: gbif_subset.txt
 PROVIDER_FILENAME: gbif_orgs.txt
 ;; Used when DATASOURCE is BISON. 
 TSN_FILENAME: bison_species_tsns.txt
@@ -57,12 +57,13 @@ IDIG_FILENAME: idig_gbifids.txt
 USER_OCCURRENCE_CSV: @SPECIES_DATA@.csv
 USER_OCCURRENCE_META: @SPECIES_DATA@.meta
 
-;; The default SCENARIO_PACKAGE set on 'lifemapper-server' roll installation
-;; matches these default scenarios. Change defaults in @LMHOME@/config/site.ini 
-;; file then run @LMHOME@/rocks/bin/updateArchiveInput.  Scenario codes for 
-;; each SCENARIO_PACKAGE are listed in @LMHOME@/LmDbServer/tools/bioclimMeta.py
-DEFAULT_MODEL_SCENARIO: WC-30sec-SEA
-DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-SEA,CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA
+;; The default SCENARIO_PACKAGE (10min-past-present-future) is filled in and  
+;; installed during 'lifemapper-server' roll installation matches these default 
+;; scenarios. Change defaults in @LMHOME@/config/site.ini file then run 
+;; @LMHOME@/rocks/bin/updateArchiveInput.  Scenario codes for each 
+;; SCENARIO_PACKAGE are listed in @LMHOME@/LmDbServer/tools/bioclimMeta.py
+DEFAULT_MODEL_SCENARIO: WC-10min
+DEFAULT_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
 SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 
 ; ...............................................

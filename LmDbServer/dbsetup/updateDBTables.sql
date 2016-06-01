@@ -40,6 +40,10 @@ create table lm3.JobChain
    statusmodtime double precision,
    datecreated double precision
 );
+GRANT SELECT ON TABLE lm3.jobchain, lm3.jobchain_jobchainid_seq TO GROUP reader;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE lm3.jobchain TO GROUP writer;
+GRANT SELECT, UPDATE ON TABLE lm3.jobchain_jobchainid_seq TO GROUP writer;
+
 
 -- ----------------------------------------------------------------------------
 \c speco
