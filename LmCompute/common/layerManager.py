@@ -410,12 +410,17 @@ class LayerManager(object):
             mxeStatus, _ = self._queryLayer(layerId, LayerFormat.MXE)
 
             if ascStatus in (LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE):
-               convertTiffToAscii(layerPath, ascFn)
+               if not os.path.exists(ascFn): # Only create if file does not exist
+                  convertTiffToAscii(layerPath, ascFn)
+               # Insert into DB if not there
                self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
                               LayerStatus.SEEDED)
             
             if mxeStatus in (LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE):
-               mxeTups.append((ascFn, mxeFn))
+               # Only set MXE to generate if file does not exist
+               if not os.path.exists(mxeFn):
+                  mxeTups.append((ascFn, mxeFn))
+               # Set to insert into db if not present in db
                mxeLayers.append(layerId)
             
          print "Done converting ASCIIs"
