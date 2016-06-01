@@ -395,25 +395,36 @@ class LayerManager(object):
       # ASCII Grids
       if makeASCIIs:
          mxeTups = []
+         mxeLayers = [] # Identifiers for MXE layers we create
          print "Seeding ASCII layers"
          for layerId, layerPath in layerTups:
-            ascFn = self._getFilePath(layerId, LayerFormat.ASCII)
-            mxeFn = self._getFilePath(layerId, LayerFormat.MXE)
             
-            mxeTups.append((ascFn, mxeFn))
+            # Generate desired ASCII and MXE file names
+            lyrDir = os.path.split(layerPath)
+            ascFn = os.path.join(lyrDir, '%s%s' % (layerId, OutputFormat.ASCII))
+            mxeFn = os.path.join(lyrDir, '%s%s' % (layerId, OutputFormat.MXE))
             
-            convertTiffToAscii(layerPath, ascFn)
-            if self._queryLayer(layerId, LayerFormat.ASCII)[1] is None:
+            # Query to see if ASCII is already inserted
+            ascStatus, _ = self._queryLayer(layerId, LayerFormat.ASCII)
+            # Query to see if MXE is already inserted
+            mxeStatus, _ = self._queryLayer(layerId, LayerFormat.MXE)
+
+            if ascStatus in (LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE):
+               convertTiffToAscii(layerPath, ascFn)
                self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
                               LayerStatus.SEEDED)
+            
+            if mxeStatus in (LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE):
+               mxeTups.append((ascFn, mxeFn))
+               mxeLayers.append(layerId)
+            
          print "Done converting ASCIIs"
          # Only make MXEs if we make ASCIIs
          if makeMXEs:
             print "Seeding MXEs"
             convertAsciisToMxes(mxeTups)
-            for layerId, _ in layerTups:
-               if self._queryLayer(layerId, LayerFormat.MXE)[1] is None:
-                  self._insertLayer(layerId, LayerFormat.MXE, 
+            for layerId in mxeLayers:
+               self._insertLayer(layerId, LayerFormat.MXE, 
                                  self._getFilePath(layerId, LayerFormat.MXE), 
                                  LayerStatus.SEEDED)
             print "Done seeding MXEs"
