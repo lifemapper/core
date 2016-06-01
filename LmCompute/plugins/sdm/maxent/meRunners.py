@@ -521,7 +521,7 @@ optional args can contain any flags understood by Maxent -- for example, a
                                         multiplier=multiplier, 
                                         dataType=multiplyDataType)
          except:
-            convertAndModifyAsciiToTiff(self.outFile, outFn)
+            convertAndModifyAsciiToTiff(self.outputFile, outFn)
       
       #scaleAndConvertLayer(self.outputFile, outFn, lyrMin=0.0, lyrMax=1.0)
       #content = open(self.outputFile).read()
