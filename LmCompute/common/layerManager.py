@@ -400,7 +400,7 @@ class LayerManager(object):
          for layerId, layerPath in layerTups:
             
             # Generate desired ASCII and MXE file names
-            lyrDir = os.path.split(layerPath)
+            lyrDir = os.path.split(layerPath)[0]
             ascFn = os.path.join(lyrDir, '%s%s' % (layerId, OutputFormat.ASCII))
             mxeFn = os.path.join(lyrDir, '%s%s' % (layerId, OutputFormat.MXE))
             
