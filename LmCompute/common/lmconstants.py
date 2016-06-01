@@ -66,4 +66,12 @@ class LayerAttributes:
    CREATE_TIME = 'createdate'
    TOUCH_TIME = 'touchdate'
    
+class SchemaMetadata:
+   """
+   @summary: Compute layers db schema metadata
+   """
+   TABLE_NAME = 'lmMetadata'
+   VERSION = '2.0'
+   VERSION_ATTRIBUTE = 'version'
+   CREATE_TIME_ATTRIBUTE = 'createTime'
    

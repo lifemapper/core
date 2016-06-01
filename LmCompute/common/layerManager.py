@@ -48,7 +48,7 @@ from LmCommon.common.lmconstants import (JobStatus, OutputFormat,
 from LmCommon.common.verify import verifyHash
 from LmCompute.common.lmconstants import (LayerAttributes, 
                                           LayerFormat, LayerStatus, 
-                                          RETRIEVED_LAYER_DIR)
+                                          RETRIEVED_LAYER_DIR, SchemaMetadata)
 from LmCompute.common.localconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DIR,
                                              INPUT_LAYER_DB)
 from LmCompute.common.lmObj import LmException
@@ -416,6 +416,39 @@ class LayerManager(object):
                                  LayerStatus.SEEDED)
             print "Done seeding MXEs"
          
+   # .................................
+   def _createMetadataTable(self):
+      self.con.execute("CREATE TABLE {metaTableName}(attribute TEXT, value TEXT)".format(
+                                 metaTableName=SchemaMetadata.TABLE_NAME))
+      self.con.execute("INSERT INTO {metaTableName} VALUES ('{versionAtt}', '{version}')".format(
+                  metaTableName=SchemaMetadata.TABLE_NAME,
+                  versionAtt=SchemaMetadata.VERSION_ATTRIBUTE,
+                  version=SchemaMetadata.VERSION))
+      self.con.execute("INSERT INTO {metaTableName} VALUES ('{createAtt}', '{createTime}')".format(
+                  metaTableName=SchemaMetadata.TABLE_NAME,
+                  createAtt=SchemaMetadata.CREATE_TIME_ATTRIBUTE,
+                  createTime=gmt().mjd))
+   
+   def getDbMetadata(self):
+      """
+      @summary: Gets the database metadata.  At first this will be schema 
+                   version and db create time
+      @note: Will set values to None if they do not exist
+      @rtype: Dictionary
+      """
+      cmd = "SELECT attribute, value FROM {metaTableName}".format(
+                                       metaTableName=SchemaMetadata.TABLE_NAME)
+      try:
+         ret = {}
+         rows = self._executeDbFunction(cmd)
+         for att, val in rows:
+            ret[att] = val
+         return ret
+      except Exception, e:
+         print "Failed to get metadata"
+         print str(e)
+         return {"version": None, "createTime": None}
+      
    # .................................
    def _createLayerDb(self):
       """
