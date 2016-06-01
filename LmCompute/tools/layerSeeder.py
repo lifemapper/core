@@ -31,8 +31,9 @@ import argparse
 import os
 
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.localconstants import INPUT_LAYER_DIR
-from LmCompute.common.localconstants import JOB_DATA_PATH
+from LmCompute.common.localconstants import (JOB_DATA_PATH, INPUT_LAYER_DIR, 
+                                             INPUT_LAYER_DB)
+from LmCompute.common.lmconstants import LayerAttributes
 
 SEED_DIR = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR)
 
@@ -70,16 +71,28 @@ if __name__ == "__main__":
    # Check seed directory
    seedDir = args.seedDir
    if not os.path.exists(seedDir):
-      raise Exception, "The specified layer directory does not exist: %s" % seedDir
-   
+      raise Exception("The specified layer directory does not exist: {}"
+                      .format(seedDir))
+         
    lm = LayerManager(JOB_DATA_PATH)
+   dbfname = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR, INPUT_LAYER_DB)
+   if os.path.exists(dbfname):
+      version, createTime = lm.getDbMetadata()
+      if version is None or version < LayerAttributes.VERSION:
+         try:
+            os.remove(dbfname)
+         except Exception, e:
+            raise Exception('Unable to delete obsolete {}; ({})'
+                            .format(dbfname, e))
+         else:
+            lm = LayerManager(JOB_DATA_PATH)
    
    for fn in args.scnPkgCsvFn:
       if os.path.exists(fn):
          lyrTups = processFile(fn)
          lm.seedLayers(lyrTups, makeASCIIs=asciis, makeMXEs=mxes)
       else:
-         print "The CSV file %s does not exist, skipping" % fn
+         print "The CSV file {} does not exist, skipping".format(fn)
    
    lm.close()
    
