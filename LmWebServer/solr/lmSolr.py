@@ -208,7 +208,11 @@ def searchHintIndex(name, retFormat, numColumns, maxReturned):
    resp = res.read()
    rDict = literal_eval(resp)
    
-   hits = rDict['response']['docs']
+   oHits = rDict['response']['docs']
+   hits = []
+   for hit in oHits:
+      if hit['displayName'].startswith(name):
+         hits.append(hit)
 
    if retFormat.lower() == "json":
       ret = transformHintsForJson(hits, columns=numColumns)
