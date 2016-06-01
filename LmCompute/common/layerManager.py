@@ -400,9 +400,9 @@ class LayerManager(object):
          for layerId, layerPath in layerTups:
             
             # Generate desired ASCII and MXE file names
-            lyrDir = os.path.split(layerPath)[0]
-            ascFn = os.path.join(lyrDir, '%s%s' % (layerId, OutputFormat.ASCII))
-            mxeFn = os.path.join(lyrDir, '%s%s' % (layerId, OutputFormat.MXE))
+            basename = os.path.splitext(layerPath)[0]
+            ascFn = '%s%s' % (basename, OutputFormat.ASCII)
+            mxeFn = '%s%s' % (basename, OutputFormat.MXE)
             
             # Query to see if ASCII is already inserted
             ascStatus, _ = self._queryLayer(layerId, LayerFormat.ASCII)
