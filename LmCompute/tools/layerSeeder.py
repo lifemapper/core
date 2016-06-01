@@ -78,8 +78,8 @@ if __name__ == "__main__":
    dbfname = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR, INPUT_LAYER_DB)
    if os.path.exists(dbfname):
       meta = lm.getDbMetadata()
-      version = meta[SchemaMetadata.VERSION]
-      if version is None or version < LayerAttributes.VERSION:
+      version = meta[SchemaMetadata.VERSION_ATTRIBUTE]
+      if version is None or version < SchemaMetadata.VERSION:
          try:
             os.remove(dbfname)
          except Exception, e:
