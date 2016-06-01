@@ -449,7 +449,8 @@ class LayerManager(object):
       except Exception, e:
          print "Failed to get metadata"
          print str(e)
-         return {"version": None, "createTime": None}
+         return {SchemaMetadata.VERSION_ATTRIBUTE: None, 
+                 SchemaMetadata.CREATE_TIME_ATTRIBUTE: None}
       
    # .................................
    def _createLayerDb(self):
