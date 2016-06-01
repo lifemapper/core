@@ -145,6 +145,11 @@ class OMModelRunner(ApplicationRunner):
       omLog = ''.join(f.readlines())
       f.close()
       
+      print("openModeller error log")
+      print("-----------------------")
+      print(omLog)
+      print("-----------------------")
+      
       status = JobStatus.UNKNOWN_ERROR
       
       if omLog.find("[Error] No presence points available") >= 0:
@@ -295,9 +300,13 @@ class OMProjectionRunner(ApplicationRunner):
       @summary: Checks the projection log file to determine what error occurred
       @todo: Look for errors in log file
       """
-      #f = open(self.projLogFile)
-      #omLog = ''.join(f.readlines())
-      #f.close()
+      f = open(self.projLogFile)
+      omLog = ''.join(f.readlines())
+      f.close()
+      print("openModeller error log")
+      print("-----------------------")
+      print(omLog)
+      print("-----------------------")
       
       # Need to look for specific projection errors
       status = JobStatus.OM_PROJECTION_ERROR
