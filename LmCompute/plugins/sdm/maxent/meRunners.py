@@ -135,6 +135,9 @@ class MEModelRunner(ApplicationRunner):
                   self.log.debug("---------------------------------------")
                   self.log.debug(logContent)
                   self.log.debug("---------------------------------------")
+                  print("-----------------------------")
+                  print logContent
+                  print("-----------------------------")
                if logContent.find('have different geographic dimensions') >= 0:
                   self.status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
                elif logContent.find('NumberFormatException') >= 0:
@@ -361,6 +364,9 @@ optional args can contain any flags understood by Maxent -- for example, a
                self.log.debug("---------------------------------------")
                self.log.debug(logContent)
                self.log.debug("---------------------------------------")
+               print("-----------------------------------------------")
+               print logContent
+               print("-----------------------------------------------")
             if logContent.find('have different geographic dimensions') >= 0:
                self.status = JobStatus.ME_MISMATCHED_LAYER_DIMENSIONS
             elif logContent.find('NumberFormatException') >= 0:
