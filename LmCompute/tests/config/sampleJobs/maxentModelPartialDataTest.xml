@@ -5,10 +5,13 @@
    <description>
       This is a test of Maxent models when background points are allowed to 
       only have partial data.
+      
+      This test should probably be changed or removed.  We changed the way layers are 
+      retrieved and we now retrieve the TIFFs and then convert to ASCII
    </description>
    <testType>compute</testType>
    <!-- Is this test enabled -->
-   <testLevel>20</testLevel>
+   <testLevel>1000</testLevel>
    <!-- What is the expected job status result -->
    <expectedStatus>300</expectedStatus>
    <jobXml>

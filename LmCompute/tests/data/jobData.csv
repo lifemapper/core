@@ -14,6 +14,7 @@ http://LmComputeTest/services/rad/layers/raster1/GTiff, rad/raster1.tif
 http://LmComputeTest/services/rad/layers/raster2/GTiff, rad/raster2.tif
 http://LmComputeTest/somePam/csv, rad/simpleCompressCsv.csv
 http://LmComputeTest/services/sdm/layers/blankLayer/AAIGrid, sdm/blankLayer.asc
+http://LmComputeTest/services/sdm/layers/blankLayer/GTiff, sdm/blankLayer.tif
 http://LmComputeTest/services/sdm/layers/halfLayer/AAIGrid, sdm/halfLayer.asc
 http://LmComputeTest/tinyShapegrid/shapefile, rad/tinyShapegrid.zip
 http://LmComputeTest/simpleRandomizePAM/csv, rad/simpleRandomizePAM.csv

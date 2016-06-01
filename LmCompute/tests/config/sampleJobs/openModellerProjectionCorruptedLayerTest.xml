@@ -482,10 +482,22 @@
 ]]]]><![CDATA[>
    </algorithm>
    <layers>
-      <layer>http://LmComputeTest/services/sdm/layers/266/GTiff</layer>
-      <layer>http://LmComputeTest/services/sdm/layers/276/GTiff</layer>
-      <layer>http://LmComputeTest/services/sdm/layers/283/GTiff</layer>
-      <layer>http://LmComputeTest/corruptedLayer/GTiff</layer>
+      <layer>
+         <identifier>effc2427fb58158c919b46de47acc0e726fa772b8afd7233a615cc2852f8caf8</identifier>
+         <layerUrl>http://LmComputeTest/services/sdm/layers/266/GTiff</layerUrl>
+      </layer>
+      <layer>
+         <identifier>b5d756b496ff429247ec90cace422de3a1e6a96128f8dd72ba3102bf373e2f73</identifier>
+         <layerUrl>http://LmComputeTest/services/sdm/layers/276/GTiff</layerUrl>
+      </layer>
+      <layer>
+         <identifier>2e4455fc2eba197d21d3d998967b9a34a2731ebd32e727192645130bd3775cf0</identifier>
+         <layerUrl>http://LmComputeTest/services/sdm/layers/283/GTiff</layerUrl>
+      </layer>
+      <layer>
+         <identifier>bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb</identifier>
+         <layerUrl>http://LmComputeTest/corruptedLayer/GTiff</layerUrl>
+      </layer>
    </layers>
 </job>
       ]]>
