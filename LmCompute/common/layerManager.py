@@ -72,6 +72,8 @@ class LayerManager(object):
          createDb = True
       self.con = sqlite3.connect(dbFile, isolation_level=None)
       if createDb:
+         print("Database does not exist, creating...")
+         self._createMetadataTable()
          self._createLayerDb()
    
    # .................................
