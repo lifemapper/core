@@ -33,7 +33,9 @@
 """
 import os
 from StringIO import StringIO
+import string
 import subprocess
+import urllib2
 from zipfile import ZipFile
 
 from LmCommon.common.lmconstants import (JobStatus, JobStage, ProcessType, 
@@ -463,12 +465,16 @@ class SDMOccurrenceJobData(_JobData):
          # Add the delimited values so they can be sent to cluster
          with open(rdloc) as dFile:
             tmpStr = dFile.read()
-            # Remove non-printable characters
-            import string
-            self.delimitedOccurrenceValues = ''.join(
-                              filter(lambda x: x in string.printable, tmpStr))
+      elif rdloc.startswith('http'):
+         remoteFile = urllib2.urlopen(rdloc)
+         tmpStr = remoteFile.read()
+         remoteFile.close()
       else:
          raise LMError("Data location: %s, does not exist" % rdloc)
+
+      # Remove non-printable characters
+      self.delimitedOccurrenceValues = ''.join(
+                              filter(lambda x: x in string.printable, tmpStr))
       
       obj = {'dlocation': rdloc,
              'count': occSet.queryCount}
