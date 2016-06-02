@@ -32,6 +32,7 @@
 """
 import os
 
+from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
 from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD
 from LmServer.common.localconstants import APP_PATH
@@ -42,7 +43,7 @@ BUILD_JOB_REQUEST_CMD = "$PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jr
 LM_JOB_RUNNER_CMD = "$PYTHON $RUNNER {jrFn}"
 
 # .............................................................................
-class LMMakeflowDocument(object):
+class LMMakeflowDocument(LMObject):
    """
    @summary: Class used to generate a Makeflow document with Lifemapper 
                 computational jobs
@@ -285,12 +286,20 @@ class LMMakeflowDocument(object):
 
    # ...........................
    def write(self, filename):
+      didWrite = False
       if self.jobs:
-         with open(filename, 'w') as outF:
-            for header in self.headers:
-               # Assume that they need newlines
-               outF.write("{}\n".format(header)) 
-            for job in self.jobs:
-               # These have built-in newlines
-               outF.write(job) 
+         success = self._readyFilename(filename, overwrite=True)
+         if success:
+            try:
+               with open(filename, 'w') as outF:
+                  for header in self.headers:
+                     # Assume that they need newlines
+                     outF.write("{}\n".format(header)) 
+                  for job in self.jobs:
+                     # These have built-in newlines
+                     outF.write(job) 
+               didWrite = True
+            except Exception, e:
+               print ('Failed to write file {} ({})'.format(filename, str(e)))
+      return didWrite
    

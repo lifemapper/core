@@ -350,10 +350,9 @@ class _LMBoomer(LMObject):
             if filename is None:
                filename = j.makeflowFilename
          self.log.info('Writing makeflow document {} ...'.format(filename))
-         try:
-            mfdoc.write(filename)
-         except Exception, e:
-            raise LMError(currargs='Failed to write {}; ({})'.format(filename, str(e)))
+         success = mfdoc.write(filename)
+         if not success:
+            self.log.error('Failed to write {}'.format(filename))
          
          try:
             jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
