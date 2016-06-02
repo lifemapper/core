@@ -30,6 +30,7 @@ import glob
 import os
 from StringIO import StringIO
 from time import sleep
+import urllib2
 import zipfile
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType, \
@@ -50,12 +51,8 @@ class IDIGBIORetrieverRunner(PythonRunner):
    # ...................................
    def _processJobInput(self):
       # Get the job inputs
+      self.taxonKey = self.job.taxonKey
       self.maxPoints = int(self.job.maxPoints)
-      self.csvInputBlob = self.job.points
-      self.count = int(self.job.count)
-      if self.count < 0:
-         # Subtract first line of fieldnames
-         self.count = len(self.csvInputBlob.split('\n')-1)
       # Set job outputs
       self.shapefileLocation = None 
       self.subsetLocation = None
@@ -63,8 +60,16 @@ class IDIGBIORetrieverRunner(PythonRunner):
    # ...................................
    def _doWork(self):
       # Write and optionally subset points
-      self.shapefileLocation, self.subsetLocation = parseIDigData(self.count, 
-               self.csvInputBlob, self.outputPath, self.env, self.maxPoints)
+      try:
+         self.shapefileLocation, self.subsetLocation = parseIDigData(
+                  self.taxonKey, self.outputPath, self.env, self.maxPoints)
+      except urllib2.HTTPError, e:
+         # The HTTP_GENERAL_ERROR status is 4000, each of the HTTP error codes
+         #   corresponds to 4000 + the HTTP error code
+         #    Ex: HTTP 500 error -> HTTP_SERVER_INTERNAL_SERVER_ERROR = 4500
+         self.status = JobStatus.HTTP_GENERAL_ERROR + int(e.code)
+      except Exception, e:
+         self.status = JobStatus.UNKNOWN_CLUSTER_ERROR
       
    # ...................................
    def _getFiles(self, shapefileName):

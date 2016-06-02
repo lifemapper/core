@@ -26,9 +26,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import os
 from osgeo import ogr, osr
-import StringIO
 
 from LmCommon.common.apiquery import IdigbioAPI
 from LmCommon.common.createshape import ShapeShifter
@@ -40,10 +38,10 @@ from LmCommon.common.lmconstants import OutputFormat, ProcessType
 
 
 # .............................................................................
-def parseIDigData(url, basePath, env, maxPoints):
+def parseIDigData(taxonKey, basePath, env, maxPoints):
    """
    @summary: Receives an iDigBio url, pulls in the data, and returns a shapefile
-   @param url: The url to pull data from
+   @param taxonKey: The GBIF taxonID (in iDigBio) for which to pull data
    @param basePath: A directory where the shapefile should be stored
    @param env: An EnvironmentMethods class that can be used to get locations in 
                   the environment
@@ -54,8 +52,8 @@ def parseIDigData(url, basePath, env, maxPoints):
    outfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
    subsetOutfilename = None
 
-   occAPI = IdigbioAPI.initFromUrl(url)
-   occList = occAPI.getOccurrences()
+   occAPI = IdigbioAPI()
+   occList = occAPI.queryByGBIFTaxonId(taxonKey)
       
    count = len(occList)
    if count > maxPoints:

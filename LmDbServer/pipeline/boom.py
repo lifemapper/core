@@ -1165,9 +1165,10 @@ class iDigBioBoom(_LMBoomer):
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
       if taxonSourceKeyVal is None:
          raise LMError(currargs='Missing taxonSourceKeyVal for iDigBio query url')
-      occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonSourceKeyVal})
-      occAPI.clearOtherFilters()
-      return occAPI.url
+      return taxonSourceKeyVal
+#       occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonSourceKeyVal})
+#       occAPI.clearOtherFilters()
+#       return occAPI.url
          
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonName, taxonKey, taxonCount):

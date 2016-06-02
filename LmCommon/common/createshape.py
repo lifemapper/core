@@ -31,12 +31,13 @@ import json
 import os
 from osgeo import ogr, osr
 import StringIO
-from types import ListType, TupleType, UnicodeType, FloatType
+from types import ListType, TupleType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
-      GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, IDIGBIO_EXPORT_FIELDS, IDIGBIO_ID_FIELD,
+      GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, 
+      IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD,
       IDIGBIO_LINK_FIELD, IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
       IDIGBIO_SEARCH_POSTFIX, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
       SHAPEFILE_MAX_STRINGSIZE, DWCNames)
@@ -91,7 +92,7 @@ class ShapeShifter(object):
          self._reader = self._getCSVReader()
          
       elif processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-         self.dataFields = IDIGBIO_EXPORT_FIELDS
+         self.dataFields = IDIGBIO_RETURN_FIELDS
          self.idField = IDIGBIO_ID_FIELD
          self.linkField = IDIGBIO_LINK_FIELD
          self.linkUrl = '/'.join([IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 

@@ -269,6 +269,7 @@ class APIQuery(object):
       allParams = self._otherFilters.copy()
       allParams[self._qKey] = self._qFilters
       queryAsString = json.dumps(allParams)
+      print('queryAsString = {}'.format(queryAsString))
       try:
          response = requests.post(self.baseurl, 
                                   data=queryAsString,
@@ -597,13 +598,14 @@ class IdigbioAPI(APIQuery):
    Class to query iDigBio APIs and return results
    """
 # ...............................................
-   def __init__(self, qFilters={}, otherFilters={}, 
+   def __init__(self, qFilters={}, otherFilters={}, filterString=None,
                 headers={'Content-Type': 'application/json'}):
       """
       @summary: Constructor for IdigbioAPI class      
       """
       idigSearchUrl = '/'.join((IDIGBIO_URL_PREFIX, IDIGBIO_SEARCH_POSTFIX, 
                                 IDIGBIO_OCCURRENCE_POSTFIX))
+
       # Add/replace Q filters to defaults for this instance
       allQFilters = IDIGBIO_QFILTERS.copy()
       for key, val in qFilters.iteritems():
@@ -613,9 +615,21 @@ class IdigbioAPI(APIQuery):
       allOtherFilters = IDIGBIO_FILTERS.copy()
       for key, val in otherFilters.iteritems():
          allOtherFilters[key] = val
-           
-      APIQuery.__init__(self, idigSearchUrl, headers=headers, qKey='rq',
-                        qFilters=allQFilters, otherFilters=allOtherFilters)
+         
+      APIQuery.__init__(self, idigSearchUrl, qKey='rq',
+                        qFilters=allQFilters, otherFilters=allOtherFilters, 
+                        filterString=filterString, headers=headers)
+
+# ...............................................
+   @classmethod
+   def initFromUrl(cls, url):
+      base, filters = url.split('?')
+      if base.strip().startswith(IDIGBIO_URL_PREFIX):
+         qry = IdigbioAPI(filterString=filters)
+      else:
+         raise Exception('iDigBio occurrence API must start with {}' 
+                        .format(IDIGBIO_URL_PREFIX))
+      return qry
 
 # ...............................................
    def query(self):
@@ -660,18 +674,70 @@ class IdigbioAPI(APIQuery):
       if self.output is None:
          self.query()
       specimenList = []
-      for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
-         newitem = {}
-         for dataFld, dataVal in item[IDIGBIO_RECORD_CONTENT_KEY].iteritems():
-            newitem[dataFld] = dataVal
-         for idxFld, idxVal in item[IDIGBIO_RECORD_INDEX_KEY].iteritems():
-            if idxFld == 'geopoint':
-               newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
-               newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
-            else:
-               newitem[idxFld] = idxVal
-         specimenList.append(newitem)
+      if self.output is not None:
+         for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
+            newitem = {}
+            for dataFld, dataVal in item[IDIGBIO_RECORD_CONTENT_KEY].iteritems():
+               newitem[dataFld] = dataVal
+            for idxFld, idxVal in item[IDIGBIO_RECORD_INDEX_KEY].iteritems():
+               if idxFld == 'geopoint':
+                  newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
+                  newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
+               else:
+                  newitem[idxFld] = idxVal
+            specimenList.append(newitem)
       return specimenList
+
+# ...............................................
+# ...............................................
+def testIdigbioTaxonIds(infname):
+   import os
+#    statii = {}
+   # Output
+#    outfname = '/tmp/idigbio_summary.txt'
+#    if os.path.exists(outfname):
+#       os.remove(outfname)
+   outlist = '/tmp/idigbio_accepted_list.txt'
+   if os.path.exists(outlist):
+      os.remove(outlist)
+   outf = open(outlist, 'w')
+
+   idigList = []
+   with open(infname, 'r') as inf:
+#          with line in file:
+      for i in range(10):
+         line = inf.readline()
+         vals = []
+         if line is not None:
+            tempvals = line.strip().split()
+            if len(tempvals) < 3:
+               print('Missing data in line {}'.format(line))
+            else:
+               try:
+                  currGbifTaxonId = int(tempvals[0])
+               except:
+                  pass
+               try:
+                  currReportedCount = int(tempvals[1])
+               except:
+                  pass
+               tempvals = tempvals[1:]
+               tempvals = tempvals[1:]
+               currName = ' '.join(tempvals)
+               
+            (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+             nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+             loglines) = GbifAPI.getTaxonomy(currGbifTaxonId)
+                         
+            if taxStatus == 'ACCEPTED':
+               idigList.append([currGbifTaxonId, currReportedCount, currName])
+               outf.write(line)
+               
+   inf.close()
+   outf.close()
+         
+   return idigList
 
 # .............................................................................
 # .............................................................................
@@ -730,95 +796,39 @@ if __name__ == '__main__':
       print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
          
    if idigbio:
+      infname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
+      idigList =  testIdigbioTaxonIds(infname)
+
       # ******************* iDigBio ********************************
       # Workflow: (a) retrieve all scientific names with Accepted GBIF TaxonId 
       # in iDigBio, (b) keep only binomials, (c) for each binomial create a list  
       # of other names to be included (usually subspecies and names with  
       # authors), and (d) retrieve occurrences for each species.
 
-      import os
-      statii = {}
       # Test GBIF TaxonIds from iDigBio list
       # Input/Subset
-      fname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
-      # Input/Entire file
-      fname = '/state/partition1/workspace/lifemapper-server/src/lmdata-species/idig_gbifids.txt'
-       
-      # Output
-      outfname = '/tmp/idigbio_summary.txt'
-      if os.path.exists(outfname):
-         os.remove(outfname)
-      outf = open(outfname, 'w')
-
-      idigList = []
-      with open(fname, 'r') as f:
-#          with line in file:
-         for i in range(100):
-            line = f.readline()
-            vals = []
-            if line is not None:
-               tempvals = line.strip().split()
-               if len(tempvals) < 3:
-                  print('Missing data in line {}'.format(line))
-               else:
-                  try:
-                     currGbifTaxonId = int(tempvals[0])
-                  except:
-                     pass
-                  try:
-                     currReportedCount = int(tempvals[1])
-                  except:
-                     pass
-                  tempvals = tempvals[1:]
-                  tempvals = tempvals[1:]
-                  currName = ' '.join(tempvals)
-                  
-               (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
-                nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
-                familyStr, genusStr, speciesStr, genusKey, speciesKey, 
-                loglines) = GbifAPI.getTaxonomy(currGbifTaxonId)
-                            
-               if taxStatus == 'ACCEPTED':
-                  idigList.append([currGbifTaxonId, currReportedCount, currName])
-                  
-               if taxStatus not in statii.keys():
-                  statii[taxStatus] = {}   
-               if rankStr not in statii[taxStatus].keys():
-                  statii[taxStatus][rankStr] = 1
-               else:
-                  statii[taxStatus][rankStr] += 1
-      f.close()
-      # Print summary
-      for stat, vals in statii.iteritems():
-         print('{}'.format(stat))
-         for rank, count in vals.iteritems():
-            print('   {}  {}'.format(rank, count))
-         
-      sptypes = {}   
-      idigAPI = IdigbioAPI(otherFilters={'limit': 100})
       for currGbifTaxonId, currReportedCount, currName in idigList:
-         specimens = idigAPI.queryByGBIFTaxonId(currGbifTaxonId)
-         for spec in specimens:
-            if spec['basisofrecord'] not in sptypes.keys():
-               sptypes[spec['basisofrecord']] = 1
-            else:
-               sptypes[spec['basisofrecord']] += 1
-               
-         print("Retrieved {} specimens for gbif taxonid {}"
-               .format(len(specimens), currGbifTaxonId))
-      for key, val in sptypes.iteritems():
-         print('{}:  {}'.format(key, val))
-
-             
-#               
-#          # Test contents of list
-#          for gbifid, count, binomial in speciesList:
-#             qfilters = {'scientificname': binomial}
-#             api = IdigbioAPI(qFilters=qfilters)
-#             specimens = api.getOccurrences()
-#             print "Retrieved {} specimens for gbif taxonid {}".format(len(specimens), 
-#                                                                       gbifid)
-# 
+         # direct query
+         api = IdigbioAPI()
+         occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
+         url1 = api.url
+         
+         api2 = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: currGbifTaxonId})
+         url0 = api2.url
+         print("url0 {}".format(url0))
+#          # GET url
+#          tmpAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: currGbifTaxonId})
+#          occList2 = tmpAPI.getOccurrences()
+#          url2 = tmpAPI.url
+#          # test response from url
+#          occAPI2 = IdigbioAPI.initFromUrl(url2)
+#          occList2 = occAPI2.getOccurrences()
+#          url3 = occAPI2.url
+         
+#          print("Retrieved {} records for gbif taxonid {}"
+#                .format(len(occList1), currGbifTaxonId))
+#          print("URL1 {} \nURL2 {}".format(url1, url2))
+  
 # baseurl = 'https://beta-search.idigbio.org/v2/search/records'
 # idigParams = {
 #             'fields': ['taxonid', 'kingdom', 'scientificname', 'uuid', 

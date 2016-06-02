@@ -927,8 +927,8 @@ IDIGBIO_GBIFID_FIELD = 'taxonid'
 # Geopoint.lat and Geopoint.lon are modified on return to short names
 # Response record fields: https://beta-search.idigbio.org/v2/meta/fields/records
 IDIGBIO_RETURN_FIELDS = {
-                        IDIGBIO_ID_FIELD: ('uuid', OFTString),
-                        IDIGBIO_GBIFID_FIELD: ('taxonid', OFTInteger),
+                        IDIGBIO_ID_FIELD: (IDIGBIO_ID_FIELD, OFTString),
+                        IDIGBIO_GBIFID_FIELD: (IDIGBIO_GBIFID_FIELD, OFTInteger),
                         'canonicalname': ('canonical', OFTString),
 #                         'kingdom': ('kingdom', OFTString),
 #                         'phylum': ('phylum', OFTString),
