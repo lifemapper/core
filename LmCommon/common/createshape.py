@@ -38,9 +38,10 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, 
       IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD,
-      IDIGBIO_LINK_FIELD, IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
-      IDIGBIO_SEARCH_POSTFIX, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
+      IDIGBIO_LINK_FIELD, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
       SHAPEFILE_MAX_STRINGSIZE, DWCNames)
+
+IDIGBIO_LINK_PREFIX = 'https://search.idigbio.org/v2/view/records'
 
 # .............................................................................
 class ShapeShifter(object):
@@ -96,8 +97,7 @@ class ShapeShifter(object):
          self.lookupFields = self._mapAPIResponseNames()
          self.idField = IDIGBIO_ID_FIELD
          self.linkField = IDIGBIO_LINK_FIELD
-         self.linkUrl = '/'.join([IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
-                                  IDIGBIO_SEARCH_POSTFIX])
+         self.linkUrl = IDIGBIO_LINK_PREFIX
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
 #          print('x = {}, y = {}, id = {}, lookupFields = {}'
@@ -597,6 +597,7 @@ if __name__ == '__main__':
       basename, ext = os.path.splitext(outfilename)
       fnames = glob.glob(basename + '*')
       for fname in fnames:
+         print('Removing {}'.format(fname))
          os.remove(fname)
 
    from LmCommon.common.apiquery import IdigbioAPI
