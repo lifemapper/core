@@ -93,16 +93,17 @@ class ShapeShifter(object):
          
       elif processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
          self.dataFields = IDIGBIO_RETURN_FIELDS
+         self.lookupFields = self._mapAPIResponseNames()
          self.idField = IDIGBIO_ID_FIELD
          self.linkField = IDIGBIO_LINK_FIELD
          self.linkUrl = '/'.join([IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
                                   IDIGBIO_SEARCH_POSTFIX])
-         self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
-         self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
+         self.xField = self._lookupReverse(DWCNames.DECIMAL_LONGITUDE['SHORT'])
+         self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
-         self.lookupFields = self._mapBisonNames()
+         self.lookupFields = self._mapAPIResponseNames()
          self.idField = LM_ID_FIELD
          self.xField = self._lookupReverse(DWCNames.DECIMAL_LONGITUDE['SHORT'])
          self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
@@ -320,7 +321,7 @@ class ShapeShifter(object):
 # .............................................................................
 # Private functions
 # .............................................................................
-   def _mapBisonNames(self):
+   def _mapAPIResponseNames(self):
       lookupDict = {}
       for bisonkey, flddesc in self.dataFields.iteritems():
          if flddesc is not None:
@@ -377,25 +378,28 @@ class ShapeShifter(object):
    def _getRecord(self):
       if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
          recDict = self._getUserCSVRec() 
-      elif self.processType in (ProcessType.GBIF_TAXA_OCCURRENCE,
-                              ProcessType.IDIGBIO_TAXA_OCCURRENCE):
+      elif self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          recDict = self._getCSVRec()
       else:
-         recDict = self._getBISONRec()
+         recDict = self._getAPIResponseRec()
       if recDict is not None:
          self._currRecum += 1
       return recDict
       
    # ...............................................
-   def _getBISONRec(self):
+   def _getAPIResponseRec(self):
       """
       @note: We modify BISON returned fieldnames, they are too long for shapefiles
       """
       recDict = None
-      try:
-         recDict = self.rawdata.pop()
-      except:
-         pass
+      success = False
+      while not success and len(self.rawdata) > 0: 
+         try:
+            recDict = self.rawdata.pop()
+         except:
+            success = True
+         if recDict is not None:
+            if recDict[]
       return recDict
    
    # ...............................................
