@@ -99,7 +99,6 @@ class ShapeShifter(object):
                                   IDIGBIO_SEARCH_POSTFIX])
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-         self._reader = self._getCSVReader()
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
@@ -578,35 +577,28 @@ class ShapeShifter(object):
       
 # ...............................................
 if __name__ == '__main__':
-
-   provfname = '/share/data/species/iDigBio_20150222/zonotrichia leucophrys/zonotrichia leucophrys_attr.json'         
-   csvfname = '/share/data/species/iDigBio_20150222/zonotrichia leucophrys/zonotrichia leucophrys_sp.csv'
-   binomialfilename = '/share/data/species/iDigBio_20150222.txt'
+   outfilename = '/tmp/testidigpoints.shp'
+   subsetOutfilename = '/tmp/testidigpoints_sub.shp'
    
-   outputfname = '/tmp/testidigpoints.shp'
-   subsetfname = '/tmp/testidigpoints_sub.shp'
-   
-   if os.path.exists(outputfname):
+   taxonIds = [2437967, 4990907, 5171118, 2348086, 6151618, 2438019, 1392011]
+      
+   if os.path.exists(outfilename):
       import glob
-      basename, ext = os.path.splitext(outputfname)
+      basename, ext = os.path.splitext(outfilename)
       fnames = glob.glob(basename + '*')
       for fname in fnames:
          os.remove(fname)
-      
-   csvblob = ''
-   count = -1            # don't count first line
-   f = open(csvfname, 'r')
-   for line in f:
-      csvblob += line
-      count += 1
-   f.close()
+
+   from LmCommon.common.apiquery import IdigbioAPI
    
-   shp = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, csvblob, count)
+   for taxonKey in taxonIds:
+      occAPI = IdigbioAPI()
+      occList = occAPI.queryByGBIFTaxonId(taxonKey)
       
-   shp.writeOccurrences(outputfname, 10, subsetfname)
+      count = len(occList)
+      
+      shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
+      shaper.writeOccurrences(outfilename, maxPoints=40, 
+                              subsetfname=subsetOutfilename)
    
-   f = open(provfname, 'r')
-   jsondata = f.read()
-   f.close()
-   provdict = json.loads(jsondata)
-   print(str(provdict))
+   
