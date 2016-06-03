@@ -398,8 +398,20 @@ class ShapeShifter(object):
             recDict = self.rawdata.pop()
          except:
             success = True
-         if recDict is not None:
-            if recDict[]
+         else:
+            x = recDict[self.xField]
+            y = recDict[self.yField]
+            try:
+               recDict[self.xField] = float(x)
+               recDict[self.yField] = float(y)
+            except OverflowError, e:
+               print('OverflowError ({}), moving on'.format(fromUnicode(toUnicode(e))))
+            except ValueError, e:
+               print('Ignoring invalid lat {}, long {} data'.format(x, y))
+            except Exception, e:
+               print('Exception ({})'.format(fromUnicode(toUnicode(e))))
+            else:
+               success = True
       return recDict
    
    # ...............................................
