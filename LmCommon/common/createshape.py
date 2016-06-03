@@ -98,8 +98,10 @@ class ShapeShifter(object):
          self.linkField = IDIGBIO_LINK_FIELD
          self.linkUrl = '/'.join([IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
                                   IDIGBIO_SEARCH_POSTFIX])
-         self.xField = self._lookupReverse(DWCNames.DECIMAL_LONGITUDE['SHORT'])
-         self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
+         self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
+         self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
+         print('x = {}, y = {}, id = {}, lookupFields = {}'
+               .format(self.xField, self.yField, self.idField, self.lookupFields))
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
@@ -399,6 +401,8 @@ class ShapeShifter(object):
          except:
             success = True
          else:
+            for k, v in recDict.iteritems():
+               print 'key = {}, val = {}'.format(k, v)
             x = recDict[self.xField]
             y = recDict[self.yField]
             try:
@@ -471,13 +475,6 @@ class ShapeShifter(object):
                   % (self._currRecum, fromUnicode(toUnicode(e))))
             success = True
       return recDict
-#    # ...............................................
-#    def _addField(self, newLyr, fldname, fldtype):
-#       # TODO: Try to use this function, may not work to pass layer
-#       fldDef = ogr.FieldDefn(fldname, fldtype)
-#       returnVal = newLyr.CreateField(fldDef)
-#       if returnVal != 0:
-#          raise Exception('Failed to create field %s' % fldname)
 
    # ...............................................
    def _addUserFieldDef(self, newDataset):
@@ -588,7 +585,7 @@ class ShapeShifter(object):
                      val = fromUnicode(val)
                   feat.SetField(fldname, val)
       except Exception, e:
-         print('Failed to fillFeature, e = %s' % fromUnicode(toUnicode(e)))
+         print('Failed to fillFeature, e = {}'.format(fromUnicode(toUnicode(e))))
          raise e
       
 # ...............................................
