@@ -100,8 +100,8 @@ class ShapeShifter(object):
                                   IDIGBIO_SEARCH_POSTFIX])
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-         print('x = {}, y = {}, id = {}, lookupFields = {}'
-               .format(self.xField, self.yField, self.idField, self.lookupFields))
+#          print('x = {}, y = {}, id = {}, lookupFields = {}'
+#                .format(self.xField, self.yField, self.idField, self.lookupFields))
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
@@ -111,7 +111,7 @@ class ShapeShifter(object):
          self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
          
       else:
-         raise Exception('Invalid processType %s' % (str(processType)))
+         raise Exception('Invalid processType {}'.format(processType))
 
 # .............................................................................
 # Private functions
@@ -121,7 +121,7 @@ class ShapeShifter(object):
       try:
          self._fillFeature(feat, recDict)
       except Exception, e:
-         print('Failed to fillOGRFeature, e = %s' % fromUnicode(toUnicode(e)))
+         print('Failed to fillOGRFeature, e = {}'.format(fromUnicode(toUnicode(e))))
          raise e
       else:
          # Create new feature, setting FID, in this layer
@@ -230,7 +230,7 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset %s' % outfname)
+         print('Closed/wrote dataset {}'.format(outfname))
          basename, ext = os.path.splitext(outfname)
          self._writeMetadata(basename, ogrFormat, geomtype, 
                              fcount, minX, minY, maxX, maxY)
@@ -238,12 +238,12 @@ class ShapeShifter(object):
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print("Closed/wrote dataset %s" % subsetfname)
+            print('Closed/wrote dataset {}'.format(subsetfname))
             basename, ext = os.path.splitext(subsetfname)
             self._writeMetadata(basename, ogrFormat, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
       except Exception, e:
-         print('Unable to read or write data (%s)' % fromUnicode(toUnicode(e)))
+         print('Unable to read or write data ({})'.format(fromUnicode(toUnicode(e))))
          raise e
    #    try:
    #       shpTreeCmd = os.path.join(appPath, "shptree")
@@ -297,7 +297,7 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset %s' % outfname)
+         print('Closed/wrote dataset {}'.format(outfname))
          basename, ext = os.path.splitext(outfname)
          self._writeMetadata(basename, ogrFormat, geomtype, 
                              fcount, minX, minY, maxX, maxY)
@@ -305,7 +305,7 @@ class ShapeShifter(object):
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print("Closed/wrote dataset %s" % subsetfname)
+            print('Closed/wrote dataset {}'.format(subsetfname))
             basename, ext = os.path.splitext(subsetfname)
             self._writeMetadata(basename, ogrFormat, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
@@ -401,17 +401,14 @@ class ShapeShifter(object):
          except:
             success = True
          else:
-            for k, v in recDict.iteritems():
-               print 'key = {}, val = {}'.format(k, v)
-            x = recDict[self.xField]
-            y = recDict[self.yField]
             try:
-               recDict[self.xField] = float(x)
-               recDict[self.yField] = float(y)
+               float(recDict[self.xField])
+               float(recDict[self.yField])
             except OverflowError, e:
                print('OverflowError ({}), moving on'.format(fromUnicode(toUnicode(e))))
             except ValueError, e:
-               print('Ignoring invalid lat {}, long {} data'.format(x, y))
+               print('Ignoring invalid lat {}, long {} data'
+                     .format(recDict[self.xField], recDict[self.yField]))
             except Exception, e:
                print('Exception ({})'.format(fromUnicode(toUnicode(e))))
             else:
