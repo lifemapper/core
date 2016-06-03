@@ -31,6 +31,7 @@ import json
 import os
 from osgeo import ogr, osr
 import StringIO
+from time import sleep
 from types import ListType, TupleType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
@@ -265,17 +266,17 @@ class ShapeShifter(object):
             shuffle(subsetIndices)
             subsetIndices = subsetIndices[:maxPoints]
 
-      subsetDs = None
+      newDs = subsetDs = None
       try:
          drv = ogr.GetDriverByName(ogrFormat)
          newDs = drv.CreateDataSource(outfname)
          if newDs is None:
-            raise Exception('Dataset creation failed for %s' % outfname)
+            raise Exception('Dataset creation failed for {}'.format(outfname))
+            
          if subsetfname is not None and subsetIndices:
             subsetDs = drv.CreateDataSource(subsetfname)
-            subsetMetaDict = {'ogrFormat': ogrFormat}
             if subsetDs is None:
-               raise Exception('Dataset creation failed for %s' % subsetfname)
+               raise Exception('Dataset creation failed for {}'.format(subsetfname))
          
          newLyr = self._addFieldDef(newDs)
          if subsetDs is not None:
@@ -589,9 +590,8 @@ class ShapeShifter(object):
 if __name__ == '__main__':
    outfilename = '/tmp/testidigpoints.shp'
    subsetOutfilename = '/tmp/testidigpoints_sub.shp'
+   taxid = 2437967
    
-   taxonIds = [2437967, 4990907, 5171118, 2348086, 6151618, 2438019, 1392011]
-      
    if os.path.exists(outfilename):
       import glob
       basename, ext = os.path.splitext(outfilename)
@@ -602,14 +602,13 @@ if __name__ == '__main__':
 
    from LmCommon.common.apiquery import IdigbioAPI
    
-   for taxonKey in taxonIds:
-      occAPI = IdigbioAPI()
-      occList = occAPI.queryByGBIFTaxonId(taxonKey)
-      
-      count = len(occList)
-      
-      shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
-      shaper.writeOccurrences(outfilename, maxPoints=40, 
-                              subsetfname=subsetOutfilename)
+   occAPI = IdigbioAPI()
+   occList = occAPI.queryByGBIFTaxonId(taxid)
+   
+   count = len(occList)
+   
+   shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
+   shaper.writeOccurrences(outfilename, maxPoints=40, 
+                           subsetfname=subsetOutfilename)
    
    
