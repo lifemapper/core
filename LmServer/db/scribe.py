@@ -1803,30 +1803,30 @@ class Scribe(Peruser):
          if mdl.scenarioCode == mdlScen.code:
             rightModels.append(mdl)
       if not rightModels:
-         try:
-            morejobs = self.initSDMModelProjectionJobs(occ, mdlScen, 
-                              prjScenList, alg, usr, priority, 
-                              modtime=currtime, 
-                              mdlMask=mdlMask, prjMask=prjMask)
-            jobs.extend(morejobs)
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            raise e
+#          try:
+         morejobs = self.initSDMModelProjectionJobs(occ, mdlScen, 
+                           prjScenList, alg, usr, priority, 
+                           modtime=currtime, 
+                           mdlMask=mdlMask, prjMask=prjMask)
+         jobs.extend(morejobs)
+#          except Exception, e:
+#             if not isinstance(e, LMError):
+#                e = LMError(currargs=e.args, lineno=self.getLineno())
+#             raise e
 
       else:
          desiredScenCodes = set([s.code for s in prjScenList])
          for mdl in rightModels:
             # ........................
             # Reinit existing Experiments
-            try:
-               projs = self.getProjectionsForModel(mdl, None)
-               exp = SDMExperiment(mdl, projs)
-               self.rollbackOrDeleteExperiment(exp, priority)
-            except Exception, e:
-               if not isinstance(e, LMError):
-                  e = LMError(currargs=e.args, lineno=self.getLineno())
-               raise e
+#             try:
+            projs = self.getProjectionsForModel(mdl, None)
+            exp = SDMExperiment(mdl, projs)
+            self.rollbackOrDeleteExperiment(exp, priority)
+#             except Exception, e:
+#                if not isinstance(e, LMError):
+#                   e = LMError(currargs=e.args, lineno=self.getLineno())
+#                raise e
 
             # ........................
             # Add any missing projections
@@ -1834,14 +1834,14 @@ class Scribe(Peruser):
             neededScenCodes = existingScenCodes.symmetric_difference(desiredScenCodes)
             for prjScen in prjScenList:
                if prjScen.code in neededScenCodes:
-                  try:
+#                   try:
                      prjJob = self.initSDMProjectionJob(mdl, prjScen, priority, 
                                           modtime=currtime, prjMask=prjMask)
                      jobs.append(prjJob)
-                  except Exception, e:
-                     if not isinstance(e, LMError):
-                        e = LMError(currargs=e.args, lineno=self.getLineno())
-                     raise e
+#                   except Exception, e:
+#                      if not isinstance(e, LMError):
+#                         e = LMError(currargs=e.args, lineno=self.getLineno())
+#                      raise e
       return jobs
 # @TODO: IntersectJobs for one layer + one grid + parameters
 
@@ -1859,14 +1859,14 @@ class Scribe(Peruser):
       # ........................
       # OccurrenceJobs
       if occJobProcessType is not None:
-         try:
-            occJob = self.initSDMOccJob(usr, occ, occJobProcessType, 
-                                        currtime, priority=priority)
-            jobs.append(occJob)
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            raise e
+#          try:
+         occJob = self.initSDMOccJob(usr, occ, occJobProcessType, 
+                                     currtime, priority=priority)
+         jobs.append(occJob)
+#          except Exception, e:
+#             if not isinstance(e, LMError):
+#                e = LMError(currargs=e.args, lineno=self.getLineno())
+#             raise e
       # ........................
       # ModelJobs and ProjectionJobs
       if minPointCount is None or occ.queryCount >= minPointCount: 
