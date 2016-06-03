@@ -99,7 +99,6 @@ class ShapeShifter(object):
                                   IDIGBIO_SEARCH_POSTFIX])
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-         self._reader = self._getCSVReader()
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
@@ -578,11 +577,6 @@ class ShapeShifter(object):
       
 # ...............................................
 if __name__ == '__main__':
-
-   provfname = '/share/data/species/iDigBio_20150222/zonotrichia leucophrys/zonotrichia leucophrys_attr.json'         
-   csvfname = '/share/data/species/iDigBio_20150222/zonotrichia leucophrys/zonotrichia leucophrys_sp.csv'
-   binomialfilename = '/share/data/species/iDigBio_20150222.txt'
-   
    outfilename = '/tmp/testidigpoints.shp'
    subsetOutfilename = '/tmp/testidigpoints_sub.shp'
    
@@ -607,5 +601,4 @@ if __name__ == '__main__':
       shaper.writeOccurrences(outfilename, maxPoints=40, 
                               subsetfname=subsetOutfilename)
    
-      return outfilename, subsetOutfilename
    

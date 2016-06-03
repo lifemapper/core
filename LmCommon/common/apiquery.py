@@ -269,7 +269,6 @@ class APIQuery(object):
       allParams = self._otherFilters.copy()
       allParams[self._qKey] = self._qFilters
       queryAsString = json.dumps(allParams)
-      print('queryAsString = {}'.format(queryAsString))
       try:
          response = requests.post(self.baseurl, 
                                   data=queryAsString,
