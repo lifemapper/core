@@ -5,8 +5,12 @@ For a development installation
 
 To set up working LmServer, LmCompute modules with editable LM code:
 
+___________
+Core system
+___________
 #. Install latest Rocks installation, including rolls
-#. Install latest LmServer and LmCompute rolls
+#. Install latest LmServer and LmCompute rolls 
+   (https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/UpdatingCombinedSystem.rst)
 #. Create workspace outside of home directory (/state/partition1/workspace)
 #. In workspace:
 

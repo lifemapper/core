@@ -18,89 +18,55 @@ If both LmServer and LmCompute are installed on this machine, use
 Stop processes
 **************
 
-#. **Stop the pipeline** as lmwriter (replace 'pragma' with the datasource name 
-   configured for this instance, i.e. bison, idigbio) ::    
+#. **Stop** the archivist and jobMediator as lmwriter ::    
 
-     % touch /opt/lifemapper/log/pipeline.pragma.die
+     % $PYTHON /opt/lifemapper/LmDbServer/pipeline/archivist.py stop
+     % $PYTHON /opt/lifemapper/LmCompute/tools/jobMediator.py stop
 
-   **TODO:** Move to command **lm stop pipeline** 
+   **TODO:** Move to lm commands 
 
-Update roll
-***********
+Update rolls
+************
 
-#. **Copy new Lifemapper roll with updated RPMs to server**, for example::
+#. **Update installation**, using **Update Combined System** instructions at 
+   `Update Combined System`_for example::
 
-   # scp lifemapper-server-6.2-0.x86_64.disk1.iso server.lifemapper.org:
-
-#. **If** this is a development machine:
+#. For a development machine:
 
    #. Clone or update lifemapper workspace git repository ::  
 
       # cd /state/partition1/workspace
       # git clone https://github.com/lifemapper/core
 
-   #. Remove symlinks to lifemapper workspace git repository directories ::  
-
-      # cd /opt/lifemapper
-      # rm Lm*
-
-   #. **If not already done** in your workspace, replace variables in *.in files 
-      within the source code into new files.  These can be found with the `find`
-      command.  Config files will be created in the non-linked config directory
-      correctly without intervention.  This **must** be done before rebooting::  
+   #. Save files with replaced variables from installation to your workspace. 
+      Config files will be created in the non-linked config directory
+      correctly without intervention.  Find files to be updated within the git 
+      tree with 'find' command, then copy them from the installed code before 
+      replacing it.  If you forget, fix them manually, similarly to the sed
+      command below::  
 
       # cd /state/partition1/workspace/core
-      # find . -name "*.in" | grep -v LmCompute | grep -v config 
-        ./LmDbServer/dbsetup/defineDBTables.sql.in
-        ./LmDbServer/dbsetup/addDBFunctions.sql.in
-      # cd LmDbServer/dbsetup/
+      # find . -name "*.in" | grep -v config 
+      ./LmDbServer/dbsetup/addDBFunctions.sql.in
+      ./LmDbServer/dbsetup/defineDBTables.sql.in
+      ./LmCompute/tools/lmJobScript.in
+
+      # cd /state/partition1/workspace/core/LmDbServer/dbsetup/
       # sed -e 's%@LMHOME@%/opt/lifemapper%g' addDBFunctions.sql.in > addDBFunctions.sql
       # sed -e 's%@LMHOME@%/opt/lifemapper%g' defineDBTables.sql.in > defineDBTables.sql
-
-#. **Add a new version of the roll**, using **clean=1** to ensure that 
-   old rpms/files are deleted::
-
-   # rocks add roll lifemapper-server-6.2-0.x86_64.disk1.iso clean=1
-
-#. **Remove some rpms manually** 
-   
-   #. If the **lifemapper-lmserver** rpm is new, the larger version git tag will  
-      force the new rpm to be installed. If the rpm has not changed, you will  
-      need to remove it to ensure that the rpm is installed and installation  
-      scripts are run.::  
-
-      # rpm -el lifemapper-lmserver
-   
-   #. Previously, the **rocks-lifemapper** rpm did not have a version, and so 
-      defaulted to rocks version 6.2 (rocks-lifemapper-6.2-0.x86_64.rpm).  
-      The new version, 1.0.x (i.e. rocks-lifemapper-1.0.0-0.x86_64.rpm) has a lower 
-      revision number than the previous rpm, so 1.0.0 will not be installed 
-      unless 6.2 is forcibly removed.::
-
-      # rpm -el rocks-lifemapper
-
-   **Note**: Make sure to change rocks-lifemapper version when building roll to 
-   make sure that the rpm is replaced and scripts are run.
-
-#. **Install roll**::
-
-   # rocks enable roll lifemapper-server
-   # (cd /export/rocks/install; rocks create distro)
-   # yum clean all
-   # rocks run roll lifemapper-server > add-server.sh 
-   # bash add-server.sh > add-server.out 2>&1
+      # cd /state/partition1/workspace/core/LmCompute/tools/
+      # sed -e 's%@LMHOME@%/opt/lifemapper%g' lmJobScript.in > lmJobScript
     
-#. **If** this is a development machine
+#. For a development machine
 
-   #. If there are changes to the config files, modify those in the 
-      /opt/lifemapper/config/ directory
+   #. If there are new changes to the config files, not included in the 
+      installed rpm, modify those in the /opt/lifemapper/config/ directory
 
    #. Move or remove installed lifemapper component directories and symlink to 
       your git repository ::  
 
       # cd /opt/lifemapper
-      # mkdir installed-1.0.8.lw
-      # mv Lm* installed-1.0.8.lw/
+      # rm -rf Lm* 
       # ln -s /state/partition1/workspace/core/LmBackend
       # ln -s /state/partition1/workspace/core/LmCommon
       # ln -s /state/partition1/workspace/core/LmCompute
@@ -142,8 +108,8 @@ Add a new computation server
 #. Follow instructions at  `Add a new LmCompute`_
 
 
-Add/change Archive User
-***********************
+Add/change Server input data/user
+*********************************
 
 #. Change the archive user  as ``root`` 
 
@@ -155,7 +121,7 @@ Add/change Archive User
 
      # $PYTHON /opt/lifemapper/LmDbServer/tools/initCatalog.py scenario 
 
-   **TODO:** Move to command **lm init catalog**
+   **TODO:** Move to lm command **lm init catalog**
 
 #. **Start the pipeline**  as ``lmserver`` to initialize all new jobs with the new species data.::
 

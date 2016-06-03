@@ -318,7 +318,7 @@ class _LMBoomer(LMObject):
                   raise e
             else:
                self.log.info('taxonKey {} is not an accepted genus or species'
-                             .format(rankStr, taxonKey))
+                             .format(taxonKey))
       return sciName
          
 # ...............................................

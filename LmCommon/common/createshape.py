@@ -378,9 +378,9 @@ class ShapeShifter(object):
    def _getRecord(self):
       if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
          recDict = self._getUserCSVRec() 
-      elif self.processType in (ProcessType.GBIF_TAXA_OCCURRENCE,
-                              ProcessType.IDIGBIO_TAXA_OCCURRENCE):
+      elif self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          recDict = self._getCSVRec()
+      # handle BISON, iDigBio the same
       else:
          recDict = self._getBISONRec()
       if recDict is not None:
