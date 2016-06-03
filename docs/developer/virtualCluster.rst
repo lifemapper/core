@@ -1,3 +1,10 @@
+.. hightlight:: rest
+
+Create a Lifemapper Virtual Cluster
+###################################
+.. contents::  
+
+.. _Basic Rocks Install : docs/developer/rocksInstall.rst
 
 --------------------------
 Create the Virtual Cluster
@@ -11,9 +18,15 @@ add-cluster.sh::
 notyeti-vcs.csv::
    A list of clusters on this machine, with the command and parameters for creation
    
-Note MAC addresses and talk with Greg about these/IPs
-   
+-----------------------------
+Build VCs on NotYeti with SGE
+-----------------------------
 
+Follow instructions at **Basic Rocks Install** at `Basic Rocks Install`_
+
+If building a virtual cluster on NotYeti, make sure to add SGE from the   
+default Rocks server. SGE was (mistakenly) not installed on NotYeti.
+(???) The SGE roll has problems if installed after the initial build.
 
 ---------------------------------
 Defer checksum from NIC to kernel
@@ -36,12 +49,27 @@ Add to /etc/rc.local::
     # node and building of compute node fails.
     ethtool -K eth0 tx off rx off
 
------------------------------
-Build VCs on NotYeti with SGE
------------------------------
-If building a virtual cluster on NotYeti, make sure to add SGE from the   
-default Rocks server. SGE was (mistakenly) not installed on NotYeti.
-(???) The SGE roll has problems if installed after the initial build.
+-------------------------
+Add virtual compute nodes
+-------------------------
+On the new virtual Front End, run insert-ethers, choosing Appliance Type 
+'Compute'::
+
+    [root@notyeti-195 ~]# insert-ethers
+
+Then start a virtual compute node from the physical host::
+
+    [root@notyeti ~]# rocks start host vm vm-notyeti-195-0
+    
+After a short time, the Virtual Frontend will recognize the new machine, 
+indicated by first a popup message, next list its MAC address in the window 
+with by empty parentheses.  
+
+After another short time, it will insert it as a compute node, indicated by an
+asterick between the parentheses.
+
+Follow this procedure for each virtual compute node, then exit the program.  
+    
 
 ------------------------
 Remove a Virtual Cluster

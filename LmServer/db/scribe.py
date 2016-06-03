@@ -1791,6 +1791,61 @@ class Scribe(Peruser):
       return occJob
 
 # ...............................................
+   def _initModelsProjsForOcc(self, usr, occ, alg, mdlScen, prjScenList, 
+                              priority, mdlMask, prjMask, intersectGrid):
+      jobs = []
+      rightModels = []
+      currtime = mx.DateTime.gmt().mjd 
+      mdls = self.listModels(0, 500, userId=usr, occSetId=occ.getId(), 
+                             algCode=alg.code, atom=False)
+      # TODO: Add scenario filter to listModels and listProjections
+      for mdl in mdls:
+         if mdl.scenarioCode == mdlScen.code:
+            rightModels.append(mdl)
+      if not rightModels:
+         try:
+            morejobs = self.initSDMModelProjectionJobs(occ, mdlScen, 
+                              prjScenList, alg, usr, priority, 
+                              modtime=currtime, 
+                              mdlMask=mdlMask, prjMask=prjMask)
+            jobs.extend(morejobs)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+
+      else:
+         desiredScenCodes = set([s.code for s in prjScenList])
+         for mdl in rightModels:
+            # ........................
+            # Reinit existing Experiments
+            try:
+               projs = self.getProjectionsForModel(mdl, None)
+               exp = SDMExperiment(mdl, projs)
+               self.rollbackOrDeleteExperiment(exp, priority)
+            except Exception, e:
+               if not isinstance(e, LMError):
+                  e = LMError(currargs=e.args, lineno=self.getLineno())
+               raise e
+
+            # ........................
+            # Add any missing projections
+            existingScenCodes = set([p.scenarioCode for p in projs])
+            neededScenCodes = existingScenCodes.symmetric_difference(desiredScenCodes)
+            for prjScen in prjScenList:
+               if prjScen.code in neededScenCodes:
+                  try:
+                     prjJob = self.initSDMProjectionJob(mdl, prjScen, priority, 
+                                          modtime=currtime, prjMask=prjMask)
+                     jobs.append(prjJob)
+                  except Exception, e:
+                     if not isinstance(e, LMError):
+                        e = LMError(currargs=e.args, lineno=self.getLineno())
+                     raise e
+      return jobs
+# @TODO: IntersectJobs for one layer + one grid + parameters
+
+# ...............................................
    def initSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
                     occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
                     priority=Priority.NORMAL, mdlMask=None, prjMask=None,
@@ -1804,48 +1859,73 @@ class Scribe(Peruser):
       # ........................
       # OccurrenceJobs
       if occJobProcessType is not None:
-         occJob = self.initSDMOccJob(usr, occ, occJobProcessType, 
-                                     currtime, priority=priority)
-         jobs.append(occJob)
+         try:
+            occJob = self.initSDMOccJob(usr, occ, occJobProcessType, 
+                                        currtime, priority=priority)
+            jobs.append(occJob)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
       # ........................
       # ModelJobs and ProjectionJobs
       if minPointCount is None or occ.queryCount >= minPointCount: 
          for alg in algList:
-            rightModels = [] 
-            mdls = self.listModels(0, 500, userId=usr, occSetId=occ.getId(), 
-                                   algCode=alg.code, atom=False)
-            # TODO: Add scenario filter to listModels and listProjections
-            for mdl in mdls:
-               if mdl.scenarioCode == mdlScen.code:
-                  rightModels.append(mdl)
-            if not rightModels:
-               morejobs = self.initSDMModelProjectionJobs(occ, mdlScen, 
-                                 prjScenList, alg, usr, priority, 
-                                 modtime=currtime, 
-                                 mdlMask=mdlMask, prjMask=prjMask)
-               jobs.extend(morejobs)
+            morejobs = self._initModelsProjsForOcc(usr, occ, alg, mdlScen, 
+                                                   prjScenList, priority, 
+                                                   mdlMask, prjMask, 
+                                                   intersectGrid)
+            jobs.extend(morejobs)
 
-            else:
-               desiredScenCodes = set([s.code for s in prjScenList])
-               for mdl in rightModels:
-                  # ........................
-                  # Reinit existing Experiments
-                  projs = self.getProjectionsForModel(mdl, None)
-                  exp = SDMExperiment(mdl, projs)
-                  self.rollbackOrDeleteExperiment(exp, priority)
-                  # ........................
-                  # Add any missing projections
-                  existingScenCodes = set([p.scenarioCode for p in projs])
-                  neededScenCodes = existingScenCodes.symmetric_difference(desiredScenCodes)
-                  for prjScen in prjScenList:
-                     if prjScen.code in neededScenCodes:
-                        prjJob = self.initSDMProjectionJob(mdl, prjScen, priority, 
-                                             modtime=currtime, prjMask=prjMask)
-                        jobs.append(prjJob)
-      # ........................
-      # @TODO: IntersectJobs for one layer + one grid + parameters
-      
       return jobs
+#             rightModels = [] 
+#             mdls = self.listModels(0, 500, userId=usr, occSetId=occ.getId(), 
+#                                    algCode=alg.code, atom=False)
+#             # TODO: Add scenario filter to listModels and listProjections
+#             for mdl in mdls:
+#                if mdl.scenarioCode == mdlScen.code:
+#                   rightModels.append(mdl)
+#             if not rightModels:
+#                try:
+#                   morejobs = self.initSDMModelProjectionJobs(occ, mdlScen, 
+#                                     prjScenList, alg, usr, priority, 
+#                                     modtime=currtime, 
+#                                     mdlMask=mdlMask, prjMask=prjMask)
+#                   jobs.extend(morejobs)
+#                except Exception, e:
+#                   if not isinstance(e, LMError):
+#                      e = LMError(currargs=e.args, lineno=self.getLineno())
+#                   raise e
+# 
+#             else:
+#                desiredScenCodes = set([s.code for s in prjScenList])
+#                for mdl in rightModels:
+#                   # ........................
+#                   # Reinit existing Experiments
+#                   try:
+#                      projs = self.getProjectionsForModel(mdl, None)
+#                      exp = SDMExperiment(mdl, projs)
+#                      self.rollbackOrDeleteExperiment(exp, priority)
+#                   except Exception, e:
+#                      if not isinstance(e, LMError):
+#                         e = LMError(currargs=e.args, lineno=self.getLineno())
+#                      raise e
+# 
+#                   # ........................
+#                   # Add any missing projections
+#                   existingScenCodes = set([p.scenarioCode for p in projs])
+#                   neededScenCodes = existingScenCodes.symmetric_difference(desiredScenCodes)
+#                   for prjScen in prjScenList:
+#                      if prjScen.code in neededScenCodes:
+#                         try:
+#                            prjJob = self.initSDMProjectionJob(mdl, prjScen, priority, 
+#                                                 modtime=currtime, prjMask=prjMask)
+#                            jobs.append(prjJob)
+#                         except Exception, e:
+#                            if not isinstance(e, LMError):
+#                               e = LMError(currargs=e.args, lineno=self.getLineno())
+#                            raise e
+      
 
 # ...............................................
    def initRADBuildGrid(self, usr, shapegrid, cutoutWKT=None, 

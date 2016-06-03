@@ -350,10 +350,9 @@ class _LMBoomer(LMObject):
             if filename is None:
                filename = j.makeflowFilename
          self.log.info('Writing makeflow document {} ...'.format(filename))
-         try:
-            mfdoc.write(filename)
-         except Exception, e:
-            raise LMError(currargs='Failed to write {}; ({})'.format(filename, str(e)))
+         success = mfdoc.write(filename)
+         if not success:
+            self.log.error('Failed to write {}'.format(filename))
          
          try:
             jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
@@ -1165,9 +1164,10 @@ class iDigBioBoom(_LMBoomer):
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
       if taxonSourceKeyVal is None:
          raise LMError(currargs='Missing taxonSourceKeyVal for iDigBio query url')
-      occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonSourceKeyVal})
-      occAPI.clearOtherFilters()
-      return occAPI.url
+      return taxonSourceKeyVal
+#       occAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: taxonSourceKeyVal})
+#       occAPI.clearOtherFilters()
+#       return occAPI.url
          
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonName, taxonKey, taxonCount):

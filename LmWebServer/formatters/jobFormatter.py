@@ -260,9 +260,11 @@ class JobFormatter(Formatter):
          if self.obj.processType == ProcessType.BISON_TAXA_OCCURRENCE:
             SubElement(tree, "pointsUrl", value=self.obj.jobData._dataObj['dlocation'])
             SubElement(tree, "maxPoints", value=POINT_COUNT_MAX)
+         elif self.obj.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+            SubElement(tree, "taxonKey", value=self.obj.jobData._dataObj['dlocation'])
+            SubElement(tree, "maxPoints", value=POINT_COUNT_MAX)
          elif self.obj.processType in [ProcessType.USER_TAXA_OCCURRENCE, 
-                                       ProcessType.GBIF_TAXA_OCCURRENCE, 
-                                       ProcessType.IDIGBIO_TAXA_OCCURRENCE]:
+                                       ProcessType.GBIF_TAXA_OCCURRENCE]:
             SubElement(tree, "count", value=self.obj.dataObj['count'])
             SubElement(tree, "maxPoints", value=POINT_COUNT_MAX)
             occData = SubElement(tree, "points")
