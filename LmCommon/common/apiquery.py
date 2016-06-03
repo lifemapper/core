@@ -809,21 +809,10 @@ if __name__ == '__main__':
       # Input/Subset
       for currGbifTaxonId, currReportedCount, currName in idigList:
          # direct query
-         api = IdigbioAPI()
-         occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
-         url1 = api.url
-         
-         api2 = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: currGbifTaxonId})
-         url0 = api2.url
-         print("url0 {}".format(url0))
-#          # GET url
-#          tmpAPI = IdigbioAPI(qFilters={IDIGBIO_GBIFID_FIELD: currGbifTaxonId})
-#          occList2 = tmpAPI.getOccurrences()
-#          url2 = tmpAPI.url
-#          # test response from url
-#          occAPI2 = IdigbioAPI.initFromUrl(url2)
-#          occList2 = occAPI2.getOccurrences()
-#          url3 = occAPI2.url
+#          api = IdigbioAPI()
+#          occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
+#          url1 = api.url
+         print currGbifTaxonId
          
 #          print("Retrieved {} records for gbif taxonid {}"
 #                .format(len(occList1), currGbifTaxonId))
