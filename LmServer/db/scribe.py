@@ -1763,31 +1763,31 @@ class Scribe(Peruser):
                      priority=Priority.NORMAL): 
       occJob = self.getJobOfType(JobFamily.SDM, occ)
       if occJob is None:
-         try:
-            if occ.status != JobStatus.INITIALIZE:
-               occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
-            occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
-                                      status=JobStatus.INITIALIZE, 
-                                      statusModTime=modtime, createTime=modtime,
-                                      priority=Priority.NORMAL)
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            self.log.error('   Failed to update occurrenceset or create Job for {} ({})'
-                           .format(occ.getId()), str(e))
-            raise e
+#          try:
+         if occ.status != JobStatus.INITIALIZE:
+            occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
+         occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
+                                   status=JobStatus.INITIALIZE, 
+                                   statusModTime=modtime, createTime=modtime,
+                                   priority=Priority.NORMAL)
+#          except Exception, e:
+#             if not isinstance(e, LMError):
+#                e = LMError(currargs=e.args, lineno=self.getLineno())
+#             self.log.error('   Failed to update occurrenceset or create Job for {} ({})'
+#                            .format(occ.getId()), str(e))
+#             raise e
             
-         try:
-            success = self.updateOccState(occ)
-            updatedOccJob = self.insertJob(occJob)
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            self.log.error('   Failed to insert occurrenceSet Job for {} ({})'
-                           .format(occ.getId()), str(e))
-            raise e
-         else:
-            occJob = updatedOccJob
+#          try:
+         success = self.updateOccState(occ)
+         updatedOccJob = self.insertJob(occJob)
+#          except Exception, e:
+#             if not isinstance(e, LMError):
+#                e = LMError(currargs=e.args, lineno=self.getLineno())
+#             self.log.error('   Failed to insert occurrenceSet Job for {} ({})'
+#                            .format(occ.getId()), str(e))
+#             raise e
+#          else:
+         occJob = updatedOccJob
       return occJob
 
 # ...............................................
