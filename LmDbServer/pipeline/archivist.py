@@ -108,8 +108,8 @@ class Archivist(Daemon):
        
    # .............................
    def onShutdown(self):
-      self.boomer.close()
       self.boomer.saveNextStart()
+      self.boomer.close()
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
