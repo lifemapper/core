@@ -31,6 +31,7 @@ import json
 import os
 from osgeo import ogr, osr
 import StringIO
+from time import sleep
 from types import ListType, TupleType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
@@ -38,9 +39,10 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, 
       IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD,
-      IDIGBIO_LINK_FIELD, IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
-      IDIGBIO_SEARCH_POSTFIX, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
+      IDIGBIO_LINK_FIELD, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
       SHAPEFILE_MAX_STRINGSIZE, DWCNames)
+
+IDIGBIO_LINK_PREFIX = 'https://search.idigbio.org/v2/view/records'
 
 # .............................................................................
 class ShapeShifter(object):
@@ -93,22 +95,24 @@ class ShapeShifter(object):
          
       elif processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
          self.dataFields = IDIGBIO_RETURN_FIELDS
+         self.lookupFields = self._mapAPIResponseNames()
          self.idField = IDIGBIO_ID_FIELD
          self.linkField = IDIGBIO_LINK_FIELD
-         self.linkUrl = '/'.join([IDIGBIO_URL_PREFIX, IDIGBIO_OCCURRENCE_POSTFIX, 
-                                  IDIGBIO_SEARCH_POSTFIX])
+         self.linkUrl = IDIGBIO_LINK_PREFIX
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
+#          print('x = {}, y = {}, id = {}, lookupFields = {}'
+#                .format(self.xField, self.yField, self.idField, self.lookupFields))
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
-         self.lookupFields = self._mapBisonNames()
+         self.lookupFields = self._mapAPIResponseNames()
          self.idField = LM_ID_FIELD
          self.xField = self._lookupReverse(DWCNames.DECIMAL_LONGITUDE['SHORT'])
          self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
          
       else:
-         raise Exception('Invalid processType %s' % (str(processType)))
+         raise Exception('Invalid processType {}'.format(processType))
 
 # .............................................................................
 # Private functions
@@ -118,7 +122,7 @@ class ShapeShifter(object):
       try:
          self._fillFeature(feat, recDict)
       except Exception, e:
-         print('Failed to fillOGRFeature, e = %s' % fromUnicode(toUnicode(e)))
+         print('Failed to fillOGRFeature, e = {}'.format(fromUnicode(toUnicode(e))))
          raise e
       else:
          # Create new feature, setting FID, in this layer
@@ -227,7 +231,7 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset %s' % outfname)
+         print('Closed/wrote dataset {}'.format(outfname))
          basename, ext = os.path.splitext(outfname)
          self._writeMetadata(basename, ogrFormat, geomtype, 
                              fcount, minX, minY, maxX, maxY)
@@ -235,12 +239,12 @@ class ShapeShifter(object):
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print("Closed/wrote dataset %s" % subsetfname)
+            print('Closed/wrote dataset {}'.format(subsetfname))
             basename, ext = os.path.splitext(subsetfname)
             self._writeMetadata(basename, ogrFormat, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
       except Exception, e:
-         print('Unable to read or write data (%s)' % fromUnicode(toUnicode(e)))
+         print('Unable to read or write data ({})'.format(fromUnicode(toUnicode(e))))
          raise e
    #    try:
    #       shpTreeCmd = os.path.join(appPath, "shptree")
@@ -262,17 +266,17 @@ class ShapeShifter(object):
             shuffle(subsetIndices)
             subsetIndices = subsetIndices[:maxPoints]
 
-      subsetDs = None
+      newDs = subsetDs = None
       try:
          drv = ogr.GetDriverByName(ogrFormat)
          newDs = drv.CreateDataSource(outfname)
          if newDs is None:
-            raise Exception('Dataset creation failed for %s' % outfname)
+            raise Exception('Dataset creation failed for {}'.format(outfname))
+            
          if subsetfname is not None and subsetIndices:
             subsetDs = drv.CreateDataSource(subsetfname)
-            subsetMetaDict = {'ogrFormat': ogrFormat}
             if subsetDs is None:
-               raise Exception('Dataset creation failed for %s' % subsetfname)
+               raise Exception('Dataset creation failed for {}'.format(subsetfname))
          
          newLyr = self._addFieldDef(newDs)
          if subsetDs is not None:
@@ -294,7 +298,7 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset %s' % outfname)
+         print('Closed/wrote dataset {}'.format(outfname))
          basename, ext = os.path.splitext(outfname)
          self._writeMetadata(basename, ogrFormat, geomtype, 
                              fcount, minX, minY, maxX, maxY)
@@ -302,7 +306,7 @@ class ShapeShifter(object):
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print("Closed/wrote dataset %s" % subsetfname)
+            print('Closed/wrote dataset {}'.format(subsetfname))
             basename, ext = os.path.splitext(subsetfname)
             self._writeMetadata(basename, ogrFormat, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
@@ -320,7 +324,7 @@ class ShapeShifter(object):
 # .............................................................................
 # Private functions
 # .............................................................................
-   def _mapBisonNames(self):
+   def _mapAPIResponseNames(self):
       lookupDict = {}
       for bisonkey, flddesc in self.dataFields.iteritems():
          if flddesc is not None:
@@ -381,21 +385,36 @@ class ShapeShifter(object):
          recDict = self._getCSVRec()
       # handle BISON, iDigBio the same
       else:
-         recDict = self._getBISONRec()
+         recDict = self._getAPIResponseRec()
       if recDict is not None:
          self._currRecum += 1
       return recDict
       
    # ...............................................
-   def _getBISONRec(self):
+   def _getAPIResponseRec(self):
       """
       @note: We modify BISON returned fieldnames, they are too long for shapefiles
       """
       recDict = None
-      try:
-         recDict = self.rawdata.pop()
-      except:
-         pass
+      success = False
+      while not success and len(self.rawdata) > 0: 
+         try:
+            recDict = self.rawdata.pop()
+         except:
+            success = True
+         else:
+            try:
+               float(recDict[self.xField])
+               float(recDict[self.yField])
+            except OverflowError, e:
+               print('OverflowError ({}), moving on'.format(fromUnicode(toUnicode(e))))
+            except ValueError, e:
+               print('Ignoring invalid lat {}, long {} data'
+                     .format(recDict[self.xField], recDict[self.yField]))
+            except Exception, e:
+               print('Exception ({})'.format(fromUnicode(toUnicode(e))))
+            else:
+               success = True
       return recDict
    
    # ...............................................
@@ -455,13 +474,6 @@ class ShapeShifter(object):
                   % (self._currRecum, fromUnicode(toUnicode(e))))
             success = True
       return recDict
-#    # ...............................................
-#    def _addField(self, newLyr, fldname, fldtype):
-#       # TODO: Try to use this function, may not work to pass layer
-#       fldDef = ogr.FieldDefn(fldname, fldtype)
-#       returnVal = newLyr.CreateField(fldDef)
-#       if returnVal != 0:
-#          raise Exception('Failed to create field %s' % fldname)
 
    # ...............................................
    def _addUserFieldDef(self, newDataset):
@@ -572,33 +584,32 @@ class ShapeShifter(object):
                      val = fromUnicode(val)
                   feat.SetField(fldname, val)
       except Exception, e:
-         print('Failed to fillFeature, e = %s' % fromUnicode(toUnicode(e)))
+         print('Failed to fillFeature, e = {}'.format(fromUnicode(toUnicode(e))))
          raise e
       
 # ...............................................
 if __name__ == '__main__':
    outfilename = '/tmp/testidigpoints.shp'
    subsetOutfilename = '/tmp/testidigpoints_sub.shp'
+   taxid = 2437967
    
-   taxonIds = [2437967, 4990907, 5171118, 2348086, 6151618, 2438019, 1392011]
-      
    if os.path.exists(outfilename):
       import glob
       basename, ext = os.path.splitext(outfilename)
       fnames = glob.glob(basename + '*')
       for fname in fnames:
+         print('Removing {}'.format(fname))
          os.remove(fname)
 
    from LmCommon.common.apiquery import IdigbioAPI
    
-   for taxonKey in taxonIds:
-      occAPI = IdigbioAPI()
-      occList = occAPI.queryByGBIFTaxonId(taxonKey)
-      
-      count = len(occList)
-      
-      shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
-      shaper.writeOccurrences(outfilename, maxPoints=40, 
-                              subsetfname=subsetOutfilename)
+   occAPI = IdigbioAPI()
+   occList = occAPI.queryByGBIFTaxonId(taxid)
+   
+   count = len(occList)
+   
+   shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
+   shaper.writeOccurrences(outfilename, maxPoints=40, 
+                           subsetfname=subsetOutfilename)
    
    
