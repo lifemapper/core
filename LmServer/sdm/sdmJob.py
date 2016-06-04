@@ -40,6 +40,7 @@ from LmCommon.common.lmconstants import (JobStatus, JobStage, ProcessType,
                                         SHAPEFILE_EXTENSIONS, OutputFormat)
 
 from LmServer.base.job import _Job, _JobData
+from LmServer.base.layer import Vector
 from LmServer.base.lmobj import LMError, LMMissingDataError
 from LmServer.common.lmconstants import JobFamily, ReferenceType
 from LmServer.common.localconstants import POINT_COUNT_MAX, ARCHIVE_USER
@@ -98,8 +99,13 @@ class SDMOccurrenceJob(_Job):
       """
       try:
          occ = self._outputObj
-         dLocParts = os.path.split(occ.getDLocation())
-         subsetDLocParts = os.path.split(occ.getDLocation(subset=True))
+         occFname = occ.getDLocation()
+         dLocParts = os.path.split(occFname)
+         self._readyFilename(occFname, overwrite=True)
+
+         subOccFname = occ.getDLocation(subset=True)
+         subsetDLocParts = os.path.split(subOccFname)  
+         self._readyFilename(subOccFname, overwrite=True)
          
          # Get path parts
          outDir = dLocParts[0] # Where all of the files will be extracted
@@ -125,12 +131,16 @@ class SDMOccurrenceJob(_Job):
                   oldName = os.path.join(outDir, zname)
                   newName = os.path.join(outDir, "%s%s" % (subsetBase, ext))
                   os.rename(oldName, newName)
+         
+         goodData, featCount = Vector.testShapefile(occFname)
+         if not goodData or featCount == 0:
+            raise LMError(currargs='Invalid returned shapefile {}'.format(occFname))
       except LMError, e:
          self.update(status=JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR)
          raise e
       except Exception, e:
          self.update(status=JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR)
-         raise LMError('Error writeShapefile (%s)' % str(e))
+         raise LMError(currargs='Error writeShapefile ({})'.format(str(e)))
          
       # Build indices on shapefile for speed
       try:
@@ -372,12 +382,13 @@ class SDMProjectionJob(_Job):
       @postcondition: The projection is written to the filesystem
       """
       projection = self.jobData._dataObj
-      # Converting ASCII grids to Tiffs on ComputeResource, prior to return
-      ext = OutputFormat.GTIFF
-      print "Writing projection for: %s" % self.jobData.jid
+      # Compute resource returns Tiffs, default for write  
+      fname = projection.createLocalDLocation()
+      self._readyFilename(fname, overwrite=True)
+      print "Writing projection for: {} to {}".format(self.jobData.jid, fname)
+      
       try:
-         projection.writeProjection(projdata, srs=srs, fileExtension=ext)
-         
+         projection.writeProjection(projdata, srs=srs, fname=fname)    
       except LMError, e:
          self.update(status=JobStatus.IO_PROJECTION_OUTPUT_WRITE_ERROR)
          raise 
@@ -400,8 +411,10 @@ class SDMProjectionJob(_Job):
       @postcondition: The projection is written to the filesystem
       """
       projection = self.jobData._dataObj
+      fname = projection.getProjPackageFilename()
+      self._readyFilename(fname, overwrite=True)
       try:
-         projection.writePackage(pkgdata)
+         projection.writePackage(pkgdata, fname=fname)
       except LMError, e:
          self.update(status=JobStatus.IO_PROJECTION_OUTPUT_WRITE_ERROR)
          raise 

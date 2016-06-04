@@ -2072,7 +2072,29 @@ class Vector(_Layer):
                      fieldOk = True
                   break
       return fieldOk
-            
+      
+# ...............................................
+   @staticmethod
+   def testShapefile(dlocation):
+      goodData = True
+      featCount = 0
+      if dlocation is not None and os.path.exists(dlocation):
+         ogr.RegisterAll()
+         drv = ogr.GetDriverByName('ESRI Shapefile')
+         try:
+            ds = drv.Open(dlocation)
+         except Exception, e:
+            goodData = False
+         else:
+            try:
+               slyr = ds.GetLayer(0)
+            except Exception, e:
+               goodData = False
+            else:  
+               featCount = slyr.GetFeatureCount()
+         
+      return goodData, featCount
+      
 # ...............................................
    def readOGRData(self, dlocation, ogrFormat, featureLimit=None):
       """

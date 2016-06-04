@@ -270,6 +270,7 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
       @param epsgcode: Standard EPSG code from which to create an SRS for use
                   in a GDAL or OGR dataset.
       @return Absolute path to the model
+      @todo: use or remove fileExtension param
       """
       if fname is None:
          fname = self.createLocalDLocation()
@@ -284,17 +285,12 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
    def writePackage(self, pkgData, fname=None):
       """
       @note: Overrides Raster.getAbsolutePath
-      @summary Gets the absolute path to the model
-      @param rasterData: Stream or string data to be written
-      @param srs: SRS from another geospatial file.  This will accept an SRS 
-                  copied from ChangeThinking files, EPSG 2163.  GDAL has trouble
-                  with this projection, this will sidestep those problems.
-      @param epsgcode: Standard EPSG code from which to create an SRS for use
-                  in a GDAL or OGR dataset.
-      @return Absolute path to the model
+      @summary Writes package data (job results) for the projection
+      @param pkgData: Stream or string data to be written
       """
       if fname is None:
          fname = self.getProjPackageFilename()
+      self._readyFilename(fname, overwrite=True)
       try:
          with open(fname, 'w+') as f:
             f.write(pkgData)
