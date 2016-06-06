@@ -1091,6 +1091,7 @@ class iDigBioBoom(_LMBoomer):
       """
       currGbifTaxonId = None
       currReportedCount = None
+      currName = None
       success = False
       while not success:
          try:
