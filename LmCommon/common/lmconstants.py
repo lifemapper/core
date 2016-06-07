@@ -906,7 +906,7 @@ ITIS_SPECIES_KEY = 'Species'
 # .............................................................................
 # .                           iDigBio constants                               .
 # .............................................................................
-IDIGBIO_URL_PREFIX = 'https://beta-search.idigbio.org/v2'
+IDIGBIO_URL_PREFIX = 'https://www.idigbio.org/portal/records'
 IDIGBIO_SEARCH_POSTFIX ='search'
 IDIGBIO_OCCURRENCE_POSTFIX = 'records'
 IDIGBIO_PUBLISHERS_POSTFIX = 'publishers'
