@@ -83,6 +83,16 @@ class SDMOccurrenceSetWebObject(WebObject):
                subset = False
             
             occ.readShapefile(subset=subset)
+            
+            # TODO: Combine this with the above more elegantly
+         if self.parameters.has_key('maxreturned'):
+            try:
+               feats = dict(occ.getFeatures().items()[:int(self.parameters['maxreturned'])])
+               atts = occ.getFeatureAttributes()
+               occ.clearFeatures()
+               occ.setFeatures(feats, atts)
+            except:
+               pass
       return occ
 
 # =============================================================================
