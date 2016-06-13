@@ -3,9 +3,9 @@
              Modeling Occurrence Sets service and object
 @author: CJ Grady
 @version: 2.0
-@status: alpha
+@status: release
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -36,8 +36,13 @@ from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.base.servicesBaseClass import buildAttListResponse, \
                                      getQueryParameters, RestService, WebObject
-from LmWebServer.common.lmconstants import QueryParamNames
+from LmWebServer.common.lmconstants import (ATOM_INTERFACE, CSV_INTERFACE, 
+      EML_INTERFACE, HTML_INTERFACE, JSON_INTERFACE, KML_INTERFACE, 
+      QueryParamNames, SHAPEFILE_INTERFACE, WMS_INTERFACE, XML_INTERFACE)
 from LmWebServer.services.common.userdata import DataPoster
+
+# TODO: Integrate maxCount and max returned
+# TODO: Reinstate fill points
                                           
 # =============================================================================
 class SDMOccurrenceSetWebObject(WebObject):
@@ -48,8 +53,9 @@ class SDMOccurrenceSetWebObject(WebObject):
                 ]
    subServices = [
                  ]
-   interfaces = ['atom', 'csv', 'eml', 'html', 'json', 'kml', 'shapefile', #'wfs', 
-                 'wms', 'xml']
+   interfaces = [ATOM_INTERFACE, CSV_INTERFACE, EML_INTERFACE, HTML_INTERFACE,
+                 JSON_INTERFACE, KML_INTERFACE, SHAPEFILE_INTERFACE,  
+                 WMS_INTERFACE, XML_INTERFACE]
    
    # ............................................
    def _deleteItem(self, item):
@@ -68,7 +74,7 @@ class SDMOccurrenceSetWebObject(WebObject):
       if occ.status == JobStatus.COMPLETE:
          maxPoints = None
          try:
-            if self.vpath[1].lower() == 'kml':
+            if self.vpath[1].lower() == KML_INTERFACE.lower():
                maxPoints = POINT_COUNT_MAX
          except:
             pass
@@ -81,9 +87,12 @@ class SDMOccurrenceSetWebObject(WebObject):
          occ.readShapefile(subset=subset)
             
             # TODO: Combine this with the above more elegantly
-         if self.parameters.has_key('maxreturned'):
+         if self.parameters.has_key(QueryParamNames.MAX_RETURNED['name'].lower()):
             try:
-               feats = dict(occ.getFeatures().items()[:int(self.parameters['maxreturned'])])
+               feats = dict(
+                  occ.getFeatures().items()[:int(
+                     self.parameters[
+                           QueryParamNames.MAX_RETURNED['name'].lower()])])
                atts = occ.getFeatureAttributes()
                occ.clearFeatures()
                occ.setFeatures(feats, atts)
