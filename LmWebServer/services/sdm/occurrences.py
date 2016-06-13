@@ -72,32 +72,37 @@ class SDMOccurrenceSetWebObject(WebObject):
       """
       occ = self.conn.getOccurrenceSet(self.id)
       if occ.status == JobStatus.COMPLETE:
-         maxPoints = None
-         try:
-            if self.vpath[1].lower() == KML_INTERFACE.lower():
-               maxPoints = POINT_COUNT_MAX
-         except:
-            pass
-
-         if maxPoints is not None and occ.queryCount > POINT_COUNT_MAX:
-            subset = True
+         if self.parameters.has_key(QueryParamNames.FILL_POINTS['name']) and \
+             int(self.parameters[QueryParamNames.FILL_POINTS['name']]) == 0:
+            pass # Skip if we shouldn't fill points
          else:
-            subset = False
-         
-         occ.readShapefile(subset=subset)
             
-            # TODO: Combine this with the above more elegantly
-         if self.parameters.has_key(QueryParamNames.MAX_RETURNED['name'].lower()):
+            maxPoints = None
             try:
-               feats = dict(
-                  occ.getFeatures().items()[:int(
-                     self.parameters[
-                           QueryParamNames.MAX_RETURNED['name'].lower()])])
-               atts = occ.getFeatureAttributes()
-               occ.clearFeatures()
-               occ.setFeatures(feats, atts)
+               if self.vpath[1].lower() == KML_INTERFACE.lower():
+                  maxPoints = POINT_COUNT_MAX
             except:
                pass
+      
+            if maxPoints is not None and occ.queryCount > POINT_COUNT_MAX:
+               subset = True
+            else:
+               subset = False
+            
+            occ.readShapefile(subset=subset)
+               
+               # TODO: Combine this with the above more elegantly
+            if self.parameters.has_key(QueryParamNames.MAX_RETURNED['name'].lower()):
+               try:
+                  feats = dict(
+                     occ.getFeatures().items()[:int(
+                        self.parameters[
+                              QueryParamNames.MAX_RETURNED['name'].lower()])])
+                  atts = occ.getFeatureAttributes()
+                  occ.clearFeatures()
+                  occ.setFeatures(feats, atts)
+               except:
+                  pass
       return occ
 
 # =============================================================================
