@@ -76,28 +76,36 @@ class SDMOccurrenceSetWebObject(WebObject):
              int(self.parameters[QueryParamNames.FILL_POINTS['name']]) == 0:
             pass # Skip if we shouldn't fill points
          else:
-            
             maxPoints = None
             try:
                if self.vpath[1].lower() == KML_INTERFACE.lower():
                   maxPoints = POINT_COUNT_MAX
             except:
                pass
-      
-            if maxPoints is not None and occ.queryCount > POINT_COUNT_MAX:
+            
+            if self.parameters.has_key(QueryParamNames.MAX_RETURNED['name'].lower()):
+               temp = int(self.parameters[QueryParamNames.MAX_RETURNED['name'].lower()])
+               if temp < maxPoints:
+                  maxPoints = temp
+                  
+            # If we have a maximum and that maximum is less than or equal to the
+            #    limit for subsetting and the occurrence set has more than the
+            #    subset limit
+            if maxPoints is not None \
+                and occ.queryCount > POINT_COUNT_MAX \
+                and maxPoints <= POINT_COUNT_MAX:
                subset = True
             else:
                subset = False
             
             occ.readShapefile(subset=subset)
                
-               # TODO: Combine this with the above more elegantly
-            if self.parameters.has_key(QueryParamNames.MAX_RETURNED['name'].lower()):
+            # If we have more points than maxPoints
+            if maxPoints is not None and len(occ.features) > maxPoints:
                try:
-                  feats = dict(
-                     occ.getFeatures().items()[:int(
-                        self.parameters[
-                              QueryParamNames.MAX_RETURNED['name'].lower()])])
+                  # Get A list of dictionary entries, slice the list, and 
+                  #   convert back to dictionary
+                  feats = dict(occ.getFeatures().items()[:int(maxPoints)])
                   atts = occ.getFeatureAttributes()
                   occ.clearFeatures()
                   occ.setFeatures(feats, atts)
@@ -119,43 +127,43 @@ class SDMOccurrenceSetsRestService(RestService):
    
    queryParameters = [
                    {
-                    "name" : "afterTime",
+                    "name" : QueryParamNames.AFTER_TIME['name'],
                     "process" : lambda x: getMjdTimeFromISO8601(x)
                    },
                    {
-                    "name" : "beforeTime",
+                    "name" : QueryParamNames.BEFORE_TIME['name'],
                     "process" : lambda x: getMjdTimeFromISO8601(x)
                    },
                    {
-                    "name" : "epsgCode",
+                    "name" : QueryParamNames.EPSG_CODE['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "hasProjections",
+                    "name" : QueryParamNames.HAS_PROJECTIONS['name'],
                     "process" : lambda x: bool(int(x))
                    },
                    {
-                    "name" : "page",
+                    "name" : QueryParamNames.PAGE['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "perPage",
+                    "name" : QueryParamNames.PER_PAGE['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "displayName",
+                    "name" : QueryParamNames.DISPLAY_NAME['name'],
                     "process" : lambda x: x
                    },
                    {
-                    "name" : "minimumNumberOfPoints",
+                    "name" : QueryParamNames.MIN_POINTS['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "public",
+                    "name" : QueryParamNames.PUBLIC['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "fullObjects",
+                    "name" : QueryParamNames.FULL_OBJECTS['name'],
                     "process" : lambda x: bool(int(x))
                    }
                   ]
