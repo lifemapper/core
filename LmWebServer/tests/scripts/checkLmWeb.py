@@ -36,6 +36,7 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.notifications.email import EmailNotifier
 
+MAP_PARAMETERS = "height=200&width=400&request=GetMap&service=WMS&bbox=-180.0,-90.0,180.0,90.0&srs=epsg:4326&format=image/png&color=ffff00&version=1.1.0&styles="
 
 # ..............................................................................
 def assembleUrls(logger, urls):
@@ -72,12 +73,39 @@ def assembleUrls(logger, urls):
       occs = peruser.listOccurrenceSets(0, 10, minOccurrenceCount=50, stat=JobStatus.COMPLETE)      
    if len(occs) > 0:
       BASEURLS['occ'] = "%s/services/sdm/occurrences/%s" % (WEBSERVICES_ROOT, occs[0].id)
+      # Add map urls
+      occMap = "%s/services/sdm/projections/%s/ogc?%s&layers=occ_%s" % (
+                                                         WEBSERVICES_ROOT, 
+                                                         occs[0].id, 
+                                                         MAP_PARAMETERS, 
+                                                         occs[0].id)
+      occBGMap = "%s/services/sdm/projections/%s/ogc?%s&layers=bmng,occ_%s" % (
+                                                         WEBSERVICES_ROOT, 
+                                                         occs[0].id, 
+                                                         MAP_PARAMETERS, 
+                                                         occs[0].id)
+      urls.append(occMap)
+      urls.append(occBGMap)
       
    # projection
    prjs = peruser.listProjections(0, 1, status=JobStatus.COMPLETE)
    if len(prjs) > 0:
       BASEURLS['prj'] = "%s/services/sdm/projections/%s" % (WEBSERVICES_ROOT, prjs[0].id)
-   
+      
+      # Add map urls
+      prjMap = "%s/services/sdm/projections/%s/ogc?%s&layers=prj_%s" % (
+                                                         WEBSERVICES_ROOT, 
+                                                         prjs[0].id, 
+                                                         MAP_PARAMETERS, 
+                                                         prjs[0].id)
+      prjBGMap = "%s/services/sdm/projections/%s/ogc?%s&layers=bmng,prj_%s" % (
+                                                         WEBSERVICES_ROOT, 
+                                                         prjs[0].id, 
+                                                         MAP_PARAMETERS, 
+                                                         prjs[0].id)
+      urls.append(prjMap)
+      urls.append(prjBGMap)
+
    # scenario
    scens = peruser.listScenarios(0, 1)
    if len(scens) > 0:
