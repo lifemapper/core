@@ -282,6 +282,23 @@ class QueryParamNames:
       "name"          : "experimentName",
       "type"          : "string",
    }
+   FILL_POINTS = {
+      "displayName"   : "Fill Points",
+      "documentation" : "",
+      "multiplicity"  : "1",
+      "name"          : "fillPoints",
+      "type"          : "integer",
+      "options"       : [
+                           {
+                              "name" : "True",
+                              "value" : "1"
+                           },
+                           {
+                              "name" : "False",
+                              "value" : "0"
+                           }
+                        ]
+   }
    FULL_OBJECTS = {
       "displayName"   : "Full Objects",
       "documentation" : "",
@@ -376,6 +393,13 @@ class QueryParamNames:
       "documentation" : "",
       "multiplicity"  : "1",
       "name"          : "matchingScenario",
+      "type"          : "integer",
+   }
+   MAX_RETURNED = {
+      "displayName"   : "Maximum Features Returned",
+      "documentation" : "",
+      "multiplicity"  : "1",
+      "name"          : "maxReturned",
       "type"          : "integer",
    }
    MIN_POINTS = {
