@@ -66,23 +66,19 @@ class SDMOccurrenceSetWebObject(WebObject):
       """
       occ = self.conn.getOccurrenceSet(self.id)
       if occ.status == JobStatus.COMPLETE:
-         if self.parameters.has_key("fillpoints") and self.parameters["fillpoints"].lower() == "false":
-            #log.debug("Fill points was present and false")
+         maxPoints = None
+         try:
+            if self.vpath[1].lower() == 'kml':
+               maxPoints = POINT_COUNT_MAX
+         except:
             pass
-         else:
-            maxPoints = None
-            try:
-               if self.vpath[1].lower() == 'kml':
-                  maxPoints = POINT_COUNT_MAX
-            except:
-               pass
 
-            if maxPoints is not None and occ.queryCount > POINT_COUNT_MAX:
-               subset = True
-            else:
-               subset = False
-            
-            occ.readShapefile(subset=subset)
+         if maxPoints is not None and occ.queryCount > POINT_COUNT_MAX:
+            subset = True
+         else:
+            subset = False
+         
+         occ.readShapefile(subset=subset)
             
             # TODO: Combine this with the above more elegantly
          if self.parameters.has_key('maxreturned'):
