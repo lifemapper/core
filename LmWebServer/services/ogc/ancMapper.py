@@ -28,13 +28,12 @@ Module to write a mapservice which will be cataloged in the SDL
 import mapscript
 import os 
 
-from LmCommon.common.lmconstants import HTTPStatus
+from LmCommon.common.lmconstants import HTTPStatus, OutputFormat
 
 from LmServer.base.lmobj import LmHTTPError, LMError, LMObject
 from LmServer.common.colorpalette import colorPalette
-from LmServer.common.lmconstants import (MapPrefix, LINE_SIZE, 
-         LINE_SYMBOL, MAP_TEMPLATE, OCC_NAME_PREFIX, POINT_SIZE, POINT_SYMBOL, 
-         POLYGON_SIZE, PRJ_PREFIX, WEB_PATH, MAP_PATH)
+from LmServer.common.lmconstants import (LINE_SIZE, LINE_SYMBOL, POINT_SIZE, 
+                              POINT_SYMBOL, POLYGON_SIZE, WEB_PATH, MAP_PATH)
 from LmServer.common.localconstants import APP_PATH
 
 PALETTES = ('gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia', 'aqua',
@@ -84,7 +83,7 @@ class MapConstructor2(LMObject):
             
       # if mapfile does not exist, create service from database, then write file
       if not (os.path.exists(self._mapFilename)):
-         raise LMError('File does not exist')
+         raise LMError('File {} does not exist'.format(self._mapFilename))
 
 # ...............................................
    def returnResponse(self):
@@ -155,6 +154,8 @@ class MapConstructor2(LMObject):
 
       # Add mapname with full path
       if mapname is not None:
+         if not mapname.endswith(OutputFormat.MAP):
+            mapname = mapname+OutputFormat.MAP
          mapFilename = os.path.join(APP_PATH, WEB_PATH, MAP_PATH, mapname)
          self._appendToQuery('map', mapname)
       else:
