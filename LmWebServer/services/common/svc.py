@@ -421,23 +421,29 @@ class svc(object):
          ret = s.doAction()
          conn.closeConnections()
          
-         ff = FormatterFactory(ret, format=respFormat, parameters=parameters)
-         fmtr = ff.doGetFormatter()
-         fResp = fmtr.format()
-         cherrypy.response.headers['Content-Type'] = fResp.contentType
-         for h in fResp.headers.keys():
-            cherrypy.response.headers[h] = fResp.headers[h]
-         cherrypy.response.status = getHttpStatus(ret, method)
-         #if isgenerator(fResp.resp):
-         if isinstance(fResp.resp, cherrypy.lib.file_generator):
-            cherrypy.response.stream = True
-            return fResp.resp
-         if isinstance(fResp.resp, (FileType, StringIO)):
-            return fResp.resp
-         try:
-            return fResp.resp.respond().encode(ENCODING)
-         except:
-            return str(fResp)
+         # Check to see if map service
+         if isinstance(ret, tuple):
+            contentType, content = ret
+            cherrypy.response.headers["Content-Type"] = contentType
+            return content
+         else:
+            ff = FormatterFactory(ret, format=respFormat, parameters=parameters)
+            fmtr = ff.doGetFormatter()
+            fResp = fmtr.format()
+            cherrypy.response.headers['Content-Type'] = fResp.contentType
+            for h in fResp.headers.keys():
+               cherrypy.response.headers[h] = fResp.headers[h]
+            cherrypy.response.status = getHttpStatus(ret, method)
+            #if isgenerator(fResp.resp):
+            if isinstance(fResp.resp, cherrypy.lib.file_generator):
+               cherrypy.response.stream = True
+               return fResp.resp
+            if isinstance(fResp.resp, (FileType, StringIO)):
+               return fResp.resp
+            try:
+               return fResp.resp.respond().encode(ENCODING)
+            except:
+               return str(fResp)
       except LmHTTPError, e:
          return errorResponse(uLog, e.code, msg=e.msg, err=e, url=parameters["url"])
       except Exception, e:

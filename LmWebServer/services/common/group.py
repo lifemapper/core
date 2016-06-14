@@ -32,6 +32,7 @@ from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.common.lmconstants import SERVICE_MOUNTS
 from LmWebServer.base.servicesBaseClass import ServiceGroup
+from LmWebServer.ogc.mapService import StaticMapService
 from LmWebServer.services.rad.group import RADServiceGroup
 from LmWebServer.services.sdm.group import SDMServiceGroup
 # SDM services needed for older Specify installations
@@ -58,6 +59,11 @@ class LMServiceGroup(ServiceGroup):
    @summary: LMM Service group.  Houses the Lifemapper service collection
    """
    subServices = [
+                   {
+                    "names" : ["maps"],
+                    "constructor" : StaticMapService,
+                    "idParameter" : "maps"
+                   },
                    {
                     "names" : SERVICE_MOUNTS["sdm"]["experiments"],
                     "constructor" : SDMExpRestService,
