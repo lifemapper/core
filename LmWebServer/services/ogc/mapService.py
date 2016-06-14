@@ -29,7 +29,7 @@
 from LmServer.base.utilities import getMjdTimeFromISO8601
 
 from LmWebServer.base.servicesBaseClass import OGCService
-from LmWebServer.ogc.ancMapper import MapConstructor
+from LmWebServer.services.ogc.ancMapper import MapConstructor
 
 # =============================================================================
 # =============================================================================
