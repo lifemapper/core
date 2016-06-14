@@ -41,7 +41,7 @@ PALETTES = ('gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia
             'bluered', 'bluegreen', 'greenred')
 
 # .............................................................................
-class MapConstructor(LMObject):
+class MapConstructor2(LMObject):
    """
    Private class to create a mapservice from a LayerSet object
    """
@@ -49,7 +49,7 @@ class MapConstructor(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, logger=None, overrideDB=None):
+   def __init__(self, logger):
       """
       @summary MapConstructor constructor
       @param logger: Logger to use
@@ -67,7 +67,7 @@ class MapConstructor(LMObject):
 # .............................................................................
 # Public functions
 # .............................................................................
-   def assembleMap(self, parameters, template=MAP_TEMPLATE, mapFilename=None):
+   def assembleMap(self, parameters, mapFilename=None):
       """
       @summary Create a mapfile by creating an LayerSet with layer/s,
                from the SDL, then replacing strings in a template mapfile 
@@ -382,3 +382,7 @@ class MapConstructor(LMObject):
          return None
       return colorstring
 
+# .............................................................................
+# .............................................................................
+if __name__ == "__main__":
+   url = "http://yeti.lifemapper.org/services/maps?map=ctAncillProduction.map&height=200&width=400&request=GetMap&service=WMS&bbox=-4387050.0,-3732756.479,4073244.205,4704460.0&srs=epsg:2163&format=image/png&color=ffff00&version=1.1.0&styles=&layers=biome""
