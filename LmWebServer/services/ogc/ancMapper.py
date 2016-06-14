@@ -32,11 +32,10 @@ from LmCommon.common.lmconstants import HTTPStatus
 
 from LmServer.base.lmobj import LmHTTPError, LMError, LMObject
 from LmServer.common.colorpalette import colorPalette
-from LmServer.common.lmconstants import (MapPrefix, DbUser, LINE_SIZE, 
+from LmServer.common.lmconstants import (MapPrefix, LINE_SIZE, 
          LINE_SYMBOL, MAP_TEMPLATE, OCC_NAME_PREFIX, POINT_SIZE, POINT_SYMBOL, 
          POLYGON_SIZE, PRJ_PREFIX, WEB_PATH, MAP_PATH)
 from LmServer.common.localconstants import APP_PATH
-from LmServer.db.peruser import Peruser
 
 PALETTES = ('gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia', 'aqua',
             'bluered', 'bluegreen', 'greenred')
@@ -63,6 +62,7 @@ class MapConstructor(LMObject):
       self._mapFilename = None
       self.serviceType = None
       self.requestType = None
+      self.color = None
       
 # .............................................................................
 # Public functions
@@ -141,6 +141,8 @@ class MapConstructor(LMObject):
 #         self.log.debug('key %s = %s' % (key, args[key]))
          if k == 'map':
             mapname = args[key]
+         elif k == 'color':
+            self.color =  args[key]
          elif k == 'service':
             self.serviceType = args[key]
             self._appendToQuery(k, args[key])
@@ -168,6 +170,71 @@ class MapConstructor(LMObject):
          self.queryString = pair
       else:
          self.queryString = '&'.join([self.queryString, pair])
+
+# ...............................................
+   def _findLayerToColor(self):
+      """
+      @note: This assumes that only one layer will be a candidate for change. If 
+      more than one layer is specified and can be colored, the first one will be
+      chosen.
+      @todo: make this work like 'styles' parameter, with a comma-delimited list
+             of colors, each entry applicable to the layer in the same position
+      """
+      lyrnames = self.owsreq.getValueByName('layers').split(',')
+      colorme = None
+      bluemarblelayer = 'bmng'
+
+      for lyrname in lyrnames: 
+         if lyrname != bluemarblelayer:
+            colorme = lyrname
+            break
+               
+      return colorme
+               
+# ...............................................
+   def _changeDataColor(self, map):
+      from types import ListType, TupleType
+      # This assumes only one layer will have a user-defined color
+      lyrname = self._findLayerToColor()
+      if ((isinstance(self.color, ListType) or isinstance(self.color, TupleType))
+          and len(self.color) > 0):
+         self.color = self.color[0]
+      # If there is more than one layer, decide which to change        
+      maplyr = map.getLayerByName(lyrname)
+      cls = maplyr.getClass(0)
+      # In case raster layer has no classes ...
+      if cls is None:
+         return
+      stl = cls.getStyle(0)
+      clr = self._getRGB(self.color)
+            
+      if maplyr.type == mapscript.MS_LAYER_RASTER:
+         if maplyr.numclasses == 1:
+            success = stl.updateFromString('STYLE COLOR %d %d %d END' 
+                                           % (clr[0], clr[1], clr[2]))
+         else:
+            palName = self._getPaletteName(self.color)
+            pal = colorPalette(n=maplyr.numclasses+1, ptype=palName)
+            for i in range(maplyr.numclasses):
+               stl = maplyr.getClass(i).getStyle(0)
+               clr = pal[i+1]
+               success = stl.updateFromString('STYLE COLOR %d %d %d END' % 
+                                              (clr[0], clr[1], clr[2]))
+      else:
+         if maplyr.type == mapscript.MS_LAYER_POINT:
+            sym = POINT_SYMBOL 
+            sz = POINT_SIZE
+         elif maplyr.type == mapscript.MS_LAYER_LINE:
+            sym = LINE_SYMBOL 
+            sz = LINE_SIZE
+         success = stl.updateFromString(
+                 'STYLE SYMBOL \"%s\" SIZE %d COLOR %d %d %d END' 
+                  % (sym, sz, clr[0], clr[1], clr[2]))
+
+         if maplyr.type == mapscript.MS_LAYER_POLYGON:
+            success = stl.updateFromString(
+                 'STYLE WIDTH %s COLOR %d %d %d END' 
+                  % (str(POLYGON_SIZE), clr[0], clr[1], clr[2]))
       
 # ...............................................
    def _wxsGetText(self, map):
@@ -217,6 +284,8 @@ class MapConstructor(LMObject):
          if lyr is None:
             raise LMError('Layer %s does not exist in mapfile %s' 
                           % (lyrname, self._mapFilename))
+      if self.color is not None: 
+         self._changeDataColor(map)
       mapscript.msIO_installStdoutToBuffer()
       result = map.OWSDispatch( self.owsreq )
       content_type = mapscript.msIO_stripStdoutBufferContentType()
@@ -254,4 +323,62 @@ class MapConstructor(LMObject):
          return 'GetLegendGraphic'
       else:
          raise Exception('%s is not implemented on this server' % request)
+
+# ...............................................
+   def _getRGB(self, colorstring):
+      if colorstring in PALETTES:
+         pal = colorPalette(n=2, ptype=colorstring)
+         return pal[1]
+      else:
+         return self._HTMLColorToRGB(colorstring)
+      
+# ...............................................
+   def _getPaletteName(self, colorstring):
+      if colorstring in PALETTES:
+         return colorstring
+      (r,g,b) = self._HTMLColorToRGB(colorstring)
+      if (r > g and r > b):
+         return 'red'
+      elif (g > r and g > b):
+         return 'green'
+      elif (b > r and b > g):
+         return 'blue'
+      elif (r < g and r < b):
+         return 'bluegreen'
+      elif (g < r and g < b):
+         return 'bluered'
+      elif (b < r and b < g):
+         return 'greenred'
+      
+# ...............................................
+   def _HTMLColorToRGB(self, colorstring):
+      """ convert #RRGGBB to an (R, G, B) tuple (integers) """
+      colorstring = self._checkHTMLColor(colorstring)
+      if colorstring is None:
+         colorstring = '#777777'
+      r, g, b = colorstring[1:3], colorstring[3:5], colorstring[5:]
+      r, g, b = [int(n, 16) for n in (r, g, b)]
+      return (r, g, b)
+
+# ...............................................
+   def _checkHTMLColor(self, colorstring):
+      """ ensure #RRGGBB format """
+      validChars = ['a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F']
+      colorstring = colorstring.strip()
+      if len(colorstring) == 6:
+         colorstring = '#' + colorstring
+      if len(colorstring) == 7:
+         if colorstring[0] != '#':
+            self.log.error('input %s is not in #RRGGBB format' % colorstring)
+            return None
+         
+         for i in range(len(colorstring)):
+            if i > 0:
+               if not(colorstring[i].isdigit()) and validChars.count(colorstring[i]) == 0:
+                  self.log.error('input %s is not a valid hex color' % colorstring)
+                  return None
+      else:
+         self.log.error('input %s is not in #RRGGBB format' % colorstring)
+         return None
+      return colorstring
 

@@ -191,7 +191,6 @@ class MapConstructor(LMObject):
    def _getAbsoluteMapFilenameAndUser(self, mapname):
       mapFname = None
       if mapname is not None:
-#         mapFname = DataAddresser().getAbsoluteMapPath(mapname)
          mapFname, usr = EarlJr().getMapFilenameAndUserFromMapname(mapname)
       return mapFname, usr
 
@@ -205,7 +204,6 @@ class MapConstructor(LMObject):
       point = None
       for key in args.keys():
          k = key.lower()
-#         self.log.debug('key %s = %s' % (key, args[key]))
          if k == 'map':
             mapname = args[key]
          elif k == 'service':
@@ -228,8 +226,6 @@ class MapConstructor(LMObject):
          self._appendToQuery('map', mapname)
       else:
          mapFilename = None
-         # This is part of a transition from the current URLs to the new ones
-         #raise LMError('Must specify a map and an occurrence or projection layer')
       
       return [mapFilename, color, point]
       
@@ -362,6 +358,7 @@ class MapConstructor(LMObject):
          for lyrname in lyrnames: 
             if lyrname != bluemarblelayer:
                colorme = lyrname
+               break
                
       return colorme
                
