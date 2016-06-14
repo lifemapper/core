@@ -32,7 +32,7 @@ from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.common.lmconstants import SERVICE_MOUNTS
 from LmWebServer.base.servicesBaseClass import ServiceGroup
-from LmWebServer.ogc.mapService import StaticMapService
+from LmWebServer.services.ogc.mapService import StaticMapService
 from LmWebServer.services.rad.group import RADServiceGroup
 from LmWebServer.services.sdm.group import SDMServiceGroup
 # SDM services needed for older Specify installations
