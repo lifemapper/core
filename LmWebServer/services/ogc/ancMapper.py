@@ -221,15 +221,17 @@ class MapConstructor2(LMObject):
                success = stl.updateFromString('STYLE COLOR %d %d %d END' % 
                                               (clr[0], clr[1], clr[2]))
       else:
+         sym = None
          if maplyr.type == mapscript.MS_LAYER_POINT:
             sym = POINT_SYMBOL 
             sz = POINT_SIZE
          elif maplyr.type == mapscript.MS_LAYER_LINE:
             sym = LINE_SYMBOL 
             sz = LINE_SIZE
-         success = stl.updateFromString(
-                 'STYLE SYMBOL \"%s\" SIZE %d COLOR %d %d %d END' 
-                  % (sym, sz, clr[0], clr[1], clr[2]))
+         if sym is not None:
+            success = stl.updateFromString(
+                    'STYLE SYMBOL \"%s\" SIZE %d COLOR %d %d %d END' 
+                     % (sym, sz, clr[0], clr[1], clr[2]))
 
          if maplyr.type == mapscript.MS_LAYER_POLYGON:
             success = stl.updateFromString(
@@ -385,4 +387,4 @@ class MapConstructor2(LMObject):
 # .............................................................................
 # .............................................................................
 if __name__ == "__main__":
-   url = "http://yeti.lifemapper.org/services/maps?map=ctAncillProduction.map&height=200&width=400&request=GetMap&service=WMS&bbox=-4387050.0,-3732756.479,4073244.205,4704460.0&srs=epsg:2163&format=image/png&color=ffff00&version=1.1.0&styles=&layers=biome""
+   url = "http://yeti.lifemapper.org/services/maps?map=ctAncillProduction.map&height=200&width=400&request=GetMap&service=WMS&bbox=-4387050.0,-3732756.479,4073244.205,4704460.0&srs=epsg:2163&format=image/png&color=ffff00&version=1.1.0&styles=&layers=biome"
