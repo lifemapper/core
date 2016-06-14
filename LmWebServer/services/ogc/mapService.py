@@ -26,10 +26,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmServer.base.utilities import getMjdTimeFromISO8601
-
+from LmServer.common.log import MapLogger
 from LmWebServer.base.servicesBaseClass import OGCService
-from LmWebServer.services.ogc.ancMapper import MapConstructor
+from LmWebServer.services.ogc.ancMapper import MapConstructor2
 
 # =============================================================================
 # =============================================================================
@@ -57,7 +56,8 @@ class StaticMapService(OGCService):
    
    # ............................................
    def doAction(self):
-      mapper = MapConstructor()
+      logger = MapLogger(isDev=True)
+      mapper = MapConstructor2(logger)
       params = dict(self.parameters)
       templ = None
       mapFn = None
