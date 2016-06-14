@@ -3,6 +3,7 @@ MAP
    STATUS ON
    DEBUG ON
    SIZE 600 600
+   CONFIG "PROJ_LIB" "/opt/lifemapper/share/proj/"
    IMAGETYPE png
    EXTENT  -4387050.000 -3732756.479 4073244.205 4704460.000
    UNITS meters
@@ -21,7 +22,7 @@ MAP
       METADATA
          ows_label   "Lifemapper Change Thinking Service"
          ows_title   "CT"
-         ows_onlineresource   "http://www.lifemapper.org/ogc?"
+         ows_onlineresource   "http://yeti.lifemapper.org/services/maps/map=anc_ctclim?"
          ows_srs   "epsg:4326 epsg:900913 epsg:2163"
          ows_enable_request  "*"
       END
@@ -41,7 +42,7 @@ MAP
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Present/worldclim/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/worldclim1.4/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -172,7 +173,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A1B/2010-2039/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A1B/2010-2039/NA/bio_12.tif'
     METADATA 
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -277,7 +278,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A1B/2040-2069/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A1B/2040-2069/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -382,7 +383,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A1B/2070-2099/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A1B/2070-2099/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -487,7 +488,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A2/2010-2039/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A2/2010-2039/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -592,7 +593,7 @@ LAYER
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A2/2040-2069/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A2/2040-2069/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -697,7 +698,7 @@ LAYER
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A2/2070-2099/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A2/2070-2099/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -802,7 +803,7 @@ LAYER
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/B1/2010-2039/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/B1/2010-2039/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -908,7 +909,7 @@ LAYER
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/B1/2040-2069/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/B1/2040-2069/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -1013,7 +1014,7 @@ LAYER
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/B1/2070-2099/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/B1/2070-2099/NA/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"
@@ -1120,7 +1121,7 @@ LAYER
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A1B/2010-2039/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A1B/2010-2039/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -1243,7 +1244,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A1B/2040-2069/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A1B/2040-2069/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -1366,7 +1367,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A1B/2070-2099/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A1B/2070-2099/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -1489,7 +1490,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A2/2010-2039/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A2/2010-2039/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -1612,7 +1613,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A2/2040-2069/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A2/2040-2069/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -1735,7 +1736,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/A2/2070-2099/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/A2/2070-2099/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -1858,7 +1859,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/B1/2010-2039/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/B1/2010-2039/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -1981,7 +1982,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/B1/2040-2069/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/B1/2040-2069/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -2104,7 +2105,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Future/NIES/B1/2070-2099/NA/bio_1.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/NIES/B1/2070-2099/NA/bio_1.tif'
     METADATA
       'ows_title' 'r_r_5_degree_11k_ann_temp2'
       "wms_include_items"   "all"
@@ -2229,7 +2230,7 @@ END
     
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     #EXTENT -8238943.443396 -3523215.000000 6725353.443396 4905135.000000
-    DATA '/share/data/ClimateData/Present/worldclim/NA/bio_12.tif'
+    DATA '/share/lmserver/data/climate/30sec-NA/worldclim1.4/bio_12.tif'
     METADATA
       'ows_title' 'r_r_50cm_11k_ann_precip'
       "wms_include_items"   "all"

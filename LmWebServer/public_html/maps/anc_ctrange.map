@@ -3,10 +3,11 @@ MAP
   STATUS ON
   DEBUG ON
   SIZE 600 300
-   EXTENT  -4387050.00  -3732756.48  4073244.21  4704460.00
+  CONFIG "PROJ_LIB" "/opt/lifemapper/share/proj/"
+  EXTENT  -4387050.00  -3732756.48  4073244.21  4704460.00
   UNITS dd
   IMAGECOLOR 0 0 0
-   SYMBOLSET  "/share/apps/lm2/public_html/maps/symbols.txt"
+  SYMBOLSET  "symbols.txt"
 
 
       PROJECTION
@@ -38,7 +39,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/American_crow.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/American_crow.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -106,7 +107,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/plains_g_snake.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/plains_g_snake.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -174,7 +175,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/south_bog_lemmings.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/south_bog_lemmings.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -242,7 +243,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/red_tailed_hawk.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/red_tailed_hawk.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -310,7 +311,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/north_cardinal.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/north_cardinal.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -378,7 +379,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/red_back_salamand.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/red_back_salamand.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -446,7 +447,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/great_Blue_Heron.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/great_Blue_Heron.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -514,7 +515,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/American_kestrel.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/American_kestrel.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -582,7 +583,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/eastern_kingbird.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/eastern_kingbird.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -650,7 +651,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/north_fly_squirrel.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/north_fly_squirrel.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -718,7 +719,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/sh_tailed_shrew.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/sh_tailed_shrew.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -786,7 +787,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/Coopers_hawk.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/Coopers_hawk.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -854,7 +855,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/Virginia_opossum.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/Virginia_opossum.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -922,7 +923,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/Elliots_s_tail_shrew.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/Elliots_s_tail_shrew.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -990,7 +991,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/comm_Garter_Snake.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/comm_Garter_Snake.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1058,7 +1059,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/blue_jay.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/blue_jay.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1126,7 +1127,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/white_foot_mouse.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/white_foot_mouse.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1194,7 +1195,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/black_Cap_Chickadee.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/black_Cap_Chickadee.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1262,7 +1263,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/north_leo_frog.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/north_leo_frog.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1330,7 +1331,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/eastern_bluebird.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/eastern_bluebird.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1398,7 +1399,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/south_s_tailed_shrew.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/south_s_tailed_shrew.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1466,7 +1467,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/sm_mouth_salamander.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/sm_mouth_salamander.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1534,7 +1535,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/barred_owl.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/barred_owl.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1602,7 +1603,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/canvasback.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/canvasback.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1670,7 +1671,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/south_r_back_vole.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/south_r_back_vole.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1738,7 +1739,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/rat_snake.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/rat_snake.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1806,7 +1807,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/no_water_snake.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/no_water_snake.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1874,7 +1875,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/great_horned_owl.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/great_horned_owl.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -1942,7 +1943,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/woodland_vole.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/woodland_vole.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2010,7 +2011,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/gray_Fox.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/gray_Fox.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2078,7 +2079,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/red_squirrel.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/red_squirrel.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2146,7 +2147,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/east_cottontail.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/east_cottontail.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2214,7 +2215,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/nine_b_armadillo.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/nine_b_armadillo.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2282,7 +2283,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/wood_Frog.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/wood_Frog.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2350,7 +2351,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/bullfrog.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/bullfrog.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2418,7 +2419,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/Canada_lynx.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/Canada_lynx.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2486,7 +2487,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/brown_bear.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/brown_bear.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels
@@ -2554,7 +2555,7 @@ MAP
       
 
       CONNECTIONTYPE  OGR
-      CONNECTION  "/share/data/UserData/changeThinking/2163/Layers/black_bear.shp"
+      CONNECTION  "/share/lmserver/data/archive/changeThinking/2163/Layers/black_bear.shp"
       
       TOLERANCE  3
       TOLERANCEUNITS  pixels

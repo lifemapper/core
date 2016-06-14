@@ -2,9 +2,10 @@ MAP
   NAME "anc_ctbackground"
   # Map image size
   SIZE 600 600
+  CONFIG "PROJ_LIB" "/opt/lifemapper/share/proj/"
   UNITS meters
   EXTENT -4387050.000 -3732756.479 4073244.205 4704460.000
-  SYMBOLSET '/share/apps/lm2/public_html/maps/symbols.txt'
+  SYMBOLSET 'symbols.txt'
   PROJECTION
     "init=epsg:2163"
   END
@@ -42,7 +43,7 @@ MAP
     # WMS server settings
     METADATA
       'ows_title'           'Ancillary'
-      'ows_onlineresource'  'http://www.lifemapper.org/ogc?map=anc_ctbackground'
+      'ows_onlineresource'  'http://www.lifemapper.org/services/maps/?map=anc_ctbackground'
       'ows_srs'             "epsg:4326 epsg:900913 epsg:2163"
       "ows_enable_request"  "*" 
     END
@@ -58,12 +59,12 @@ MAP
     TYPE POINT
     
     #EXTENT -7019322.115385 -4092250.000000 7433322.115385 5095250.000000
-    DATA '/share/data/UserData/changeThinking/2163/Layers/cities_na.shp'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/cities_na.shp'
     METADATA
        ows_title "Cities"
        ows_title  "Cities"
        ows_srs  "epsg:2163"
-       onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&layers=Cities"  
+       onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&layers=Cities"  
     END
     STATUS ON
     OPACITY 100
@@ -165,11 +166,11 @@ MAP
     TYPE LINE
     
     #EXTENT -7019322.115385 -4092250.000000 7433322.115385 5095250.000000
-    DATA '/share/data/UserData/changeThinking/2163/Layers/permeability_laea.shp'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/permeability_laea.shp'
     METADATA
        ows_title "corridors"
        ows_srs  "epsg:2163"
-       onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&layers=corridors"  
+       onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&layers=corridors"  
     END
     STATUS ON
     OPACITY 100
@@ -254,11 +255,11 @@ MAP
     NAME 'NationalParks'
     TYPE POLYGON
     
-    DATA '/share/data/UserData/changeThinking/2163/Layers/national_parks_boundaries_LAEAshp.shp'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/national_parks_boundaries_LAEAshp.shp'
     METADATA
        ows_title "NationalParks"
        ows_srs  "epsg:2163"
-       onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&layers=NationalParks"  
+       onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&layers=NationalParks"  
     END
     STATUS ON
     OPACITY 100
@@ -281,12 +282,12 @@ MAP
     TYPE POLYGON
     
     #EXTENT -7019322.115385 -4092250.000000 7433322.115385 5095250.000000
-    DATA '/share/data/UserData/changeThinking/2163/Layers/biome_na.shp'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/biome_na.shp'
     METADATA
        ows_title "Biome"
        ows_title  "Biome"
        ows_srs  "epsg:2163"
-       onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&Layers=Biome" 
+       onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&Layers=Biome" 
     END
     STATUS ON
     OPACITY 100
@@ -490,11 +491,11 @@ LAYER
     NAME 'terrestrial_water'
     TYPE POLYGON
     
-    DATA '/share/data/UserData/changeThinking/2163/Layers/terrestrial_water_na.shp'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/terrestrial_water_na.shp'
     METADATA
        ows_title "terrestrial_water"
        ows_srs   "epsg:2163"
-       onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&Layers=terrestrial_water"
+       onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&Layers=terrestrial_water"
     END
     STATUS ON
     OPACITY 100
@@ -516,12 +517,12 @@ LAYER
     TYPE POLYGON
     
     #EXTENT -7019322.115385 -4092250.000000 7433322.115385 5095250.000000
-    DATA '/share/data/UserData/changeThinking/2163/Layers/base_na.shp'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/base_na.shp'
     METADATA
        ows_title "base"
        ows_title  "base"
        ows_srs  "epsg:2163"
-       onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&Layers=base"  
+       onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&Layers=base"  
     END
     STATUS ON
     OPACITY 100
@@ -543,12 +544,12 @@ LAYER
     TYPE POLYGON
     
     #EXTENT -7019322.115385 -4092250.000000 7433322.115385 5095250.000000
-    DATA '/share/data/UserData/changeThinking/2163/Layers/states_na.shp'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/states_na.shp'
     METADATA
        ows_title "States_Outline"
        ows_title  "States_Outline"
        ows_srs  "epsg:2163"
-       onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&Layers=States" 
+       onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&Layers=States" 
     END
     STATUS ON
     OPACITY 100
@@ -571,14 +572,14 @@ LAYER
     TYPE RASTER
     
     #EXTENT -7019322.115385 -4092250.000000 7433322.115385 5095250.000000
-    DATA '/share/data/UserData/changeThinking/2163/Layers/NA_LandCover_2005.img'
+    DATA '/share/lmserver/data/archive/changeThinking/2163/Layers/NA_LandCover_2005.img'
     OFFSITE  0  0  0
     PROCESSING "NODATA=-9999.0"
     METADATA
          ows_name  "landcover"
          ows_title  "landcover"
          ows_srs  "epsg:2163"
-         onlineresource  "http://www.lifemapper.org/ogc?map=anc_ctbackground&Layers=Landcover"         
+         onlineresource  "http://yeti.lifemapper.org/services/maps/?map=anc_ctbackground&Layers=Landcover"         
          wcs_rangeset_nullvalue "-9999.0"
       END
    
