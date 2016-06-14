@@ -58,7 +58,7 @@ class StaticMapService(OGCService):
    # ............................................
    def doAction(self):
       mapper = MapConstructor()
-      params = self.parameters
+      params = dict(self.parameters)
       templ = None
       mapFn = None
       mapper.assembleMap(params)
