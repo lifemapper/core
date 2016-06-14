@@ -3,9 +3,9 @@
              Modeling Occurrence Sets service and object
 @author: CJ Grady
 @version: 2.0
-@status: alpha
+@status: release
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -36,8 +36,13 @@ from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.base.servicesBaseClass import buildAttListResponse, \
                                      getQueryParameters, RestService, WebObject
-from LmWebServer.common.lmconstants import QueryParamNames
+from LmWebServer.common.lmconstants import (ATOM_INTERFACE, CSV_INTERFACE, 
+      EML_INTERFACE, HTML_INTERFACE, JSON_INTERFACE, KML_INTERFACE, 
+      QueryParamNames, SHAPEFILE_INTERFACE, WMS_INTERFACE, XML_INTERFACE)
 from LmWebServer.services.common.userdata import DataPoster
+
+# TODO: Integrate maxCount and max returned
+# TODO: Reinstate fill points
                                           
 # =============================================================================
 class SDMOccurrenceSetWebObject(WebObject):
@@ -48,8 +53,9 @@ class SDMOccurrenceSetWebObject(WebObject):
                 ]
    subServices = [
                  ]
-   interfaces = ['atom', 'csv', 'eml', 'html', 'json', 'kml', 'shapefile', #'wfs', 
-                 'wms', 'xml']
+   interfaces = [ATOM_INTERFACE, CSV_INTERFACE, EML_INTERFACE, HTML_INTERFACE,
+                 JSON_INTERFACE, KML_INTERFACE, SHAPEFILE_INTERFACE,  
+                 WMS_INTERFACE, XML_INTERFACE]
    
    # ............................................
    def _deleteItem(self, item):
@@ -66,29 +72,45 @@ class SDMOccurrenceSetWebObject(WebObject):
       """
       occ = self.conn.getOccurrenceSet(self.id)
       if occ.status == JobStatus.COMPLETE:
-         maxPoints = None
-         try:
-            if self.vpath[1].lower() == 'kml':
-               maxPoints = POINT_COUNT_MAX
-         except:
-            pass
-
-         if maxPoints is not None and occ.queryCount > POINT_COUNT_MAX:
-            subset = True
+         if self.parameters.has_key(QueryParamNames.FILL_POINTS['name']) and \
+             int(self.parameters[QueryParamNames.FILL_POINTS['name']]) == 0:
+            pass # Skip if we shouldn't fill points
          else:
-            subset = False
-         
-         occ.readShapefile(subset=subset)
-            
-            # TODO: Combine this with the above more elegantly
-         if self.parameters.has_key('maxreturned'):
+            maxPoints = None
             try:
-               feats = dict(occ.getFeatures().items()[:int(self.parameters['maxreturned'])])
-               atts = occ.getFeatureAttributes()
-               occ.clearFeatures()
-               occ.setFeatures(feats, atts)
+               if self.vpath[1].lower() == KML_INTERFACE.lower():
+                  maxPoints = POINT_COUNT_MAX
             except:
                pass
+            
+            if self.parameters.has_key(QueryParamNames.MAX_RETURNED['name'].lower()):
+               temp = int(self.parameters[QueryParamNames.MAX_RETURNED['name'].lower()])
+               if temp < maxPoints:
+                  maxPoints = temp
+                  
+            # If we have a maximum and that maximum is less than or equal to the
+            #    limit for subsetting and the occurrence set has more than the
+            #    subset limit
+            if maxPoints is not None \
+                and occ.queryCount > POINT_COUNT_MAX \
+                and maxPoints <= POINT_COUNT_MAX:
+               subset = True
+            else:
+               subset = False
+            
+            occ.readShapefile(subset=subset)
+               
+            # If we have more points than maxPoints
+            if maxPoints is not None and len(occ.features) > maxPoints:
+               try:
+                  # Get A list of dictionary entries, slice the list, and 
+                  #   convert back to dictionary
+                  feats = dict(occ.getFeatures().items()[:int(maxPoints)])
+                  atts = occ.getFeatureAttributes()
+                  occ.clearFeatures()
+                  occ.setFeatures(feats, atts)
+               except:
+                  pass
       return occ
 
 # =============================================================================
@@ -105,43 +127,43 @@ class SDMOccurrenceSetsRestService(RestService):
    
    queryParameters = [
                    {
-                    "name" : "afterTime",
+                    "name" : QueryParamNames.AFTER_TIME['name'],
                     "process" : lambda x: getMjdTimeFromISO8601(x)
                    },
                    {
-                    "name" : "beforeTime",
+                    "name" : QueryParamNames.BEFORE_TIME['name'],
                     "process" : lambda x: getMjdTimeFromISO8601(x)
                    },
                    {
-                    "name" : "epsgCode",
+                    "name" : QueryParamNames.EPSG_CODE['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "hasProjections",
+                    "name" : QueryParamNames.HAS_PROJECTIONS['name'],
                     "process" : lambda x: bool(int(x))
                    },
                    {
-                    "name" : "page",
+                    "name" : QueryParamNames.PAGE['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "perPage",
+                    "name" : QueryParamNames.PER_PAGE['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "displayName",
+                    "name" : QueryParamNames.DISPLAY_NAME['name'],
                     "process" : lambda x: x
                    },
                    {
-                    "name" : "minimumNumberOfPoints",
+                    "name" : QueryParamNames.MIN_POINTS['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "public",
+                    "name" : QueryParamNames.PUBLIC['name'],
                     "process" : lambda x: int(x)
                    },
                    {
-                    "name" : "fullObjects",
+                    "name" : QueryParamNames.FULL_OBJECTS['name'],
                     "process" : lambda x: bool(int(x))
                    }
                   ]
