@@ -87,7 +87,7 @@ class Archivist(Daemon):
                         .format(self.boomer.currRecnum))
          while self.keepRunning:
             try:
-               self.log.info('Chaining one ...')
+               self.log.info('Next species ...')
                self.boomer.chainOne()
                if self.keepRunning:
                   self.keepRunning = not self.boomer.complete
