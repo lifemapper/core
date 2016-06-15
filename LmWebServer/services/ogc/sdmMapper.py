@@ -96,17 +96,6 @@ class MapConstructor(LMObject):
          self._mapFilename = mfn
       else:
          self._mapFilename = mapFilename
-      
-#      # Temporary to ensure re-creation for files modified before last production update
-#      if os.path.exists(self._mapFilename):
-#         pth, mapname = os.path.split(self._mapFilename)
-#         scencode, occsetId, usr, epsg, ancillary = Earl().parseMapname(mapname)
-#         if not ancillary:
-#            mtime = mx.DateTime.DateFromTicks(os.path.getmtime(self._mapFilename))
-#            goodtime = mx.DateTime.DateTime(PROD_UPDATE_YR, PROD_UPDATE_MO, 
-#                                            PROD_UPDATE_DY, 13)
-#            if mtime < goodtime:
-#               self._deleteFile(self._mapFilename)
             
       # if mapfile does not exist, create service from database, then write file
       if not (os.path.exists(self._mapFilename)):
@@ -126,15 +115,11 @@ class MapConstructor(LMObject):
          finally:
             self._peruser.closeConnections()
          
-#          if sessionUser is not None:
-#             if mapsvc.getUserId() not in [ARCHIVE_USER, DEFAULT_POST_USER, "changeThinking"]:
-#                if mapsvc.getUserId() != sessionUser:
-#                   raise LmHTTPError(HTTPStatus.FORBIDDEN, msg="You do not have permission to access this resource")
          if mapsvc is not None and mapsvc.count > 0:
             try:
                mapsvc.writeMap(template)
             except Exception, e:
-                self.log.reportError('Crap! Error writing map (Exception: %s)' 
+               self.log.reportError('Crap! Error writing map (Exception: %s)' 
                                     % (str(e)))
          else:
             self.log.error('Crap! No layers in mapservice')
@@ -158,6 +143,7 @@ class MapConstructor(LMObject):
             self.log.reportError('Damn!! Error on %s (Exception: %s)' 
                                  % (self._mapFilename, str(e)))
             raise e
+         
          if (self.requestType == 'GetCapabilities' or 
              self.requestType == 'DescribeCoverage' or 
              self.serviceType == 'WFS'):
@@ -167,18 +153,18 @@ class MapConstructor(LMObject):
                or
                (self.serviceType == 'WMS' and self.requestType == 'GetMap')
                or (self.serviceType == 'WMS' and self.requestType == 'GetLegendGraphic')):
-            content_type, content = self._wxsGetImage(map)
+            try:
+               content_type, content = self._wxsGetImage(map)
+            except Exception, e:
+               content_type, content = self._wxsGetText(map, msg=str(e))
                
-   #      elif service == 'WFS':
-   #         if reqtype == 'GetFeature':
-   #            return self._formatArgs(map, owsreq) 
-            
          else:
             raise LmHTTPError(HTTPStatus.BAD_REQUEST, 
-                     msg='Invalid service (%s) and request (%s) combination' \
-                            % (self.serviceType, self.requestType))
+               msg=('Unsupported or Invalid service (%s) and request (%s) combination'
+                    .format(self.serviceType, self.requestType)))
          if content is None:
             raise Exception('No content returned')
+         
       else:
          raise Exception('mapFilename %s does not exist' % self._mapFilename)
 
@@ -259,19 +245,22 @@ class MapConstructor(LMObject):
          self.queryString = '&'.join([self.queryString, pair])
       
 # ...............................................
-   def _wxsGetText(self, map):
+   def _wxsGetText(self, map, msg=None):
       """
       @summary: Return XML response to an W*S request
       @param map: mapscript mapObject for which to return information
       @return: XML response string.
       """
-      mapscript.msIO_installStdoutToBuffer()
-      map.OWSDispatch( self.owsreq )
-      content_type = mapscript.msIO_stripStdoutBufferContentType()
-      content = mapscript.msIO_getStdoutBufferString()
-      mapscript.msIO_resetHandlers()
+      if msg is not None:
+         content = msg
+         content_type = 'text-plain'
+      else:
+         mapscript.msIO_installStdoutToBuffer()
+         map.OWSDispatch( self.owsreq )
+         content_type = mapscript.msIO_stripStdoutBufferContentType()
+         content = mapscript.msIO_getStdoutBufferString()
+         mapscript.msIO_resetHandlers()
       
-      self.log.debug('content_type = ' + str(content_type))
       if content_type.endswith('_xml'):
          content_type = 'text/xml' 
       self.log.debug('content_type = ' + str(content_type))
@@ -525,3 +514,7 @@ class MapConstructor(LMObject):
          return None
       return colorstring
 
+# .............................................................................
+# .............................................................................
+# if __name__ == "__main__":
+   

@@ -104,6 +104,7 @@ class MapConstructor2(LMObject):
             self.log.reportError('Damn!! Error on %s (Exception: %s)' 
                                  % (self._mapFilename, str(e)))
             raise e
+         
          if (self.requestType == 'GetCapabilities' or 
              self.requestType == 'DescribeCoverage' or 
              self.serviceType == 'WFS'):
@@ -113,7 +114,10 @@ class MapConstructor2(LMObject):
                or
                (self.serviceType == 'WMS' and self.requestType == 'GetMap')
                or (self.serviceType == 'WMS' and self.requestType == 'GetLegendGraphic')):
-            content_type, content = self._wxsGetImage(map)
+            try:
+               content_type, content = self._wxsGetImage(map)
+            except Exception, e:
+               content_type, content = self._wxsGetText(map, msg=str(e))
                
          else:
             raise LmHTTPError(HTTPStatus.BAD_REQUEST, 
@@ -240,19 +244,22 @@ class MapConstructor2(LMObject):
                   % (str(POLYGON_SIZE), clr[0], clr[1], clr[2]))
       
 # ...............................................
-   def _wxsGetText(self, map):
+   def _wxsGetText(self, map, msg=None):
       """
       @summary: Return XML response to an W*S request
       @param map: mapscript mapObject for which to return information
       @return: XML response string.
       """
-      mapscript.msIO_installStdoutToBuffer()
-      map.OWSDispatch( self.owsreq )
-      content_type = mapscript.msIO_stripStdoutBufferContentType()
-      content = mapscript.msIO_getStdoutBufferString()
-      mapscript.msIO_resetHandlers()
+      if msg is not None:
+         content = msg
+         content_type = 'text-plain'
+      else:
+         mapscript.msIO_installStdoutToBuffer()
+         map.OWSDispatch( self.owsreq )
+         content_type = mapscript.msIO_stripStdoutBufferContentType()
+         content = mapscript.msIO_getStdoutBufferString()
+         mapscript.msIO_resetHandlers()
       
-      self.log.debug('content_type = ' + str(content_type))
       if content_type.endswith('_xml'):
          content_type = 'text/xml' 
       self.log.debug('content_type = ' + str(content_type))
