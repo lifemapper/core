@@ -678,6 +678,7 @@ class DWCNames:
    DECIMAL_LATITUDE = {'FULL': 'decimalLatitude', 'SHORT': 'dec_lat'}
    DECIMAL_LONGITUDE = {'FULL': 'decimalLongitude', 'SHORT': 'dec_long'}
    SCIENTIFIC_NAME = {'FULL': 'scientificName', 'SHORT': 'sciname'}
+   EVENT_DATE = {'FULL': 'eventDate', 'SHORT': 'evt_date'}
    DAY = {'FULL': 'day', 'SHORT': 'day'}
    MONTH = {'FULL': 'month', 'SHORT': 'month'}
    YEAR = {'FULL': 'year', 'SHORT': 'year'}
@@ -914,7 +915,7 @@ IDIGBIO_PUBLISHERS_POSTFIX = 'publishers'
 IDIGBIO_RECORDSETS_POSTFIX = 'recordsets'
 # IDIGBIO_RECORDSETS_SEARCH_URL_PREFIX="http://search.idigbio.org/idigbio/recordsets/_search"
 
-IDIGBIO_SEARCH_LIMIT = 1000000
+IDIGBIO_SEARCH_LIMIT = 5000
 
 IDIGBIO_ID_FIELD = 'uuid'
 IDIGBIO_LINK_FIELD = 'idigbiourl'
@@ -926,36 +927,29 @@ IDIGBIO_EXPORT_FIELDS = {0: (IDIGBIO_ID_FIELD, OFTString),
                          }
 IDIGBIO_GBIFID_FIELD = 'taxonid'
 # Geopoint.lat and Geopoint.lon are modified on return to short names
-# Response record fields: https://beta-search.idigbio.org/v2/meta/fields/records
+# Response record fields: https://search.idigbio.org/v2/meta/fields/records
 IDIGBIO_RETURN_FIELDS = {
                         IDIGBIO_ID_FIELD: (IDIGBIO_ID_FIELD, OFTString),
                         IDIGBIO_GBIFID_FIELD: (IDIGBIO_GBIFID_FIELD, OFTInteger),
                         'canonicalname': ('canonical', OFTString),
-#                         'kingdom': ('kingdom', OFTString),
-#                         'phylum': ('phylum', OFTString),
-#                         'class': ('class', OFTString), 
-#                         'order': ('order', OFTString),
-#                         'family': ('family', OFTString),
-                        'genus': ('genus', OFTString),
                         'scientificname': 
                            (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),                        
                         'basisofrecord':  
                            (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
-#                         'catalognumber': 
-#                            (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
-#                         'collectionid': ('coll_id', OFTString),
-#                         'collectioncode': 
-#                            (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-#                         'collectionname': ('coll_name', OFTString),
-#                         'collector': ('collector', OFTString),
-#                         'commonname': ('comname', OFTString),
-#                         'continent': ('continent', OFTString),
-#                         'country': ('country', OFTString),
-#                         'countrycode': 
-#                            (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
-#                         'county': ('county', OFTString),
+                        'catalognumber': 
+                           (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
+                        'collectionid': ('coll_id', OFTString),
+                        'collectioncode': 
+                           (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
+                        'collectionname': ('coll_name', OFTString),
+                        'collector': ('collector', OFTString),
+                        'commonname': ('comname', OFTString),
+                        'continent': ('continent', OFTString),
+                        'country': ('country', OFTString),
+                        'countrycode': 
+                           (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
+                        'county': ('county', OFTString),
                         'datecollected':('date_coll', OFTString),
-                        'eventdate':('date', OFTString),
                         'institutioncode': 
                            (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
                         'institutionid': ('inst_id', OFTString),
@@ -963,10 +957,10 @@ IDIGBIO_RETURN_FIELDS = {
                         'occurrenceid': 
                            (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
                         'stateprovince': ('stprov', OFTString),
-#                         DWCNames.DECIMAL_LATITUDE['SHORT']: 
-#                            (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-#                         DWCNames.DECIMAL_LONGITUDE['SHORT']:
-#                            (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                        DWCNames.DECIMAL_LATITUDE['FULL']: 
+                           (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+                        DWCNames.DECIMAL_LONGITUDE['FULL']:
+                           (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
                         }
 
 IDIGBIO_BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"

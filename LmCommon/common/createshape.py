@@ -99,8 +99,6 @@ class ShapeShifter(object):
          self.linkUrl = IDIGBIO_LINK_PREFIX
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
-#          print('x = {}, y = {}, id = {}, lookupFields = {}'
-#                .format(self.xField, self.yField, self.idField, self.lookupFields))
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
