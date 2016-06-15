@@ -907,8 +907,8 @@ ITIS_SPECIES_KEY = 'Species'
 # .............................................................................
 # .                           iDigBio constants                               .
 # .............................................................................
-# IDIGBIO_LINK_PREFIX = 'https://search.idigbio.org/v2/view/records'
 IDIGBIO_LINK_PREFIX = 'https://www.idigbio.org/portal/records'
+IDIGBIO_SEARCH_PREFIX = 'https://search.idigbio.org/v2'
 IDIGBIO_SEARCH_POSTFIX ='search'
 IDIGBIO_OCCURRENCE_POSTFIX = 'records'
 IDIGBIO_PUBLISHERS_POSTFIX = 'publishers'

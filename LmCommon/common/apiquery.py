@@ -42,7 +42,7 @@ from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
          
          IDIGBIO_FILTERS, IDIGBIO_QFILTERS, 
          IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
-         IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_URL_PREFIX, 
+         IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_SEARCH_PREFIX, 
          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
          IDIGBIO_GBIFID_FIELD, 
          
@@ -602,7 +602,7 @@ class IdigbioAPI(APIQuery):
       """
       @summary: Constructor for IdigbioAPI class      
       """
-      idigSearchUrl = '/'.join((IDIGBIO_URL_PREFIX, IDIGBIO_SEARCH_POSTFIX, 
+      idigSearchUrl = '/'.join((IDIGBIO_SEARCH_PREFIX, IDIGBIO_SEARCH_POSTFIX, 
                                 IDIGBIO_OCCURRENCE_POSTFIX))
 
       # Add/replace Q filters to defaults for this instance
@@ -623,11 +623,11 @@ class IdigbioAPI(APIQuery):
    @classmethod
    def initFromUrl(cls, url):
       base, filters = url.split('?')
-      if base.strip().startswith(IDIGBIO_URL_PREFIX):
+      if base.strip().startswith(IDIGBIO_SEARCH_PREFIX):
          qry = IdigbioAPI(filterString=filters)
       else:
          raise Exception('iDigBio occurrence API must start with {}' 
-                        .format(IDIGBIO_URL_PREFIX))
+                        .format(IDIGBIO_SEARCH_PREFIX))
       return qry
 
 # ...............................................
