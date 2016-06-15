@@ -2039,7 +2039,17 @@ if __name__ == "__main__":
    
    scribe = Scribe(ScriptLogger('scribeTest'))
    scribe.openConnections()
-   comps = scribe.getAllComputeResources()
-   print 'Output:'
-   for c in comps:
-      print '  ', c.name, c.ipAddress+'/'+c.ipMask
+   occList = scribe.listOccurrenceSets(0, 1, minOccurrenceCount=20, 
+                                    status=JobStatus.INITIALIZE, atom=False)
+   if len(occList) == 1:
+      occ1 = occList[0]
+      
+   occList = scribe.listOccurrenceSets(0, 1, minOccurrenceCount=20, 
+                                    status=JobStatus.COMPLETE, atom=False)
+   if len(occList) == 1:
+      occ2 = occList[0]
+      
+   chain1 = scribe.getJobChainTopDown(occ=occ1)
+   chain2 = scribe.getJobChainTopDown(occ=occ2)
+   
+   scribe.closeConnections()

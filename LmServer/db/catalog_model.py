@@ -764,8 +764,9 @@ class MAL(DbPostgresql):
          row, idxs = self.executeSelectOneFunction('lm_getOccurrenceJobForId', 
                                                    occ.getId())
          top = self._createSDMJobNew(row, idxs)
-      elif occ.status == JobStatus.COMPLETE:
-         top = occ   
+            
+      if top is None:
+         top = occ 
             
       occDeps = self._getOccDependents(occ.getId())
       return (top, occDeps)
