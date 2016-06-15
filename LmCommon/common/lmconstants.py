@@ -978,7 +978,7 @@ queryFlds.append('geopoint')
 IDIGBIO_FILTERS = {'fields': queryFlds,
                    'limit': IDIGBIO_SEARCH_LIMIT,
                    'offset': 0,
-                   'no_attribution': True}
+                   'no_attribution': False}
 
 # .............................................................................
 # .                  Provider/Local data fieldname constants                              .
