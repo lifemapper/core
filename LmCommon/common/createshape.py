@@ -31,18 +31,16 @@ import json
 import os
 from osgeo import ogr, osr
 import StringIO
-from time import sleep
 from types import ListType, TupleType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, 
-      IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD,
+      IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD, IDIGBIO_LINK_PREFIX,
       IDIGBIO_LINK_FIELD, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
       SHAPEFILE_MAX_STRINGSIZE, DWCNames)
 
-IDIGBIO_LINK_PREFIX = 'https://search.idigbio.org/v2/view/records'
 
 # .............................................................................
 class ShapeShifter(object):
