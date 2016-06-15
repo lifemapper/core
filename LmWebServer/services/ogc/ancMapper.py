@@ -289,11 +289,14 @@ class MapConstructor2(LMObject):
          lyrstr = self.owsreq.getValueByName('layers')
       if lyrstr is None:
          lyrstr = self.owsreq.getValueByName('coverage')
-      for lyrname in lyrstr.split(','):
-         lyr = map.getLayerByName(lyrname)
-         if lyr is None:
-            raise LMError('Layer %s does not exist in mapfile %s' 
-                          % (lyrname, self._mapFilename))
+      if lyrstr is not None and len(lyrstr) > 0:
+         for lyrname in lyrstr.split(','):
+            lyr = map.getLayerByName(lyrname)
+            if lyr is None:
+               raise LMError('Layer {} does not exist in mapfile {}'
+                             .format(lyrname, self._mapFilename))
+      else:
+         raise LMError('No layer/layers/coverage parameter provided')
       if self.color is not None: 
          self._changeDataColor(map)
       mapscript.msIO_installStdoutToBuffer()
