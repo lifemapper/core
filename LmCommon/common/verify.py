@@ -31,20 +31,22 @@ def _getHexHashValue(dlocation=None, content=None):
    """
    @summary: Returns a hexidecimal representation of the sha256sum of a datafile
    @param dlocation: The file on which to compute the hash
+   @param content: The data on which to compute the hash
+   @note: content is checked first, and if it exists, dlocation is ignored
    """
    hexhash = None
-   if dlocation:
+   if content:
+      hashval = hashlib.sha256(content)
+      hexhash = hashval.hexdigest()
+
+   elif dlocation:
       if os.path.exists(dlocation):
          f = open(dlocation, 'r')
          content = f.read()
          f.close()
       else:
-         print('{} does not exist'.format(dlocation))
+         print('Cannot hash non-existent file {}'.format(dlocation))
          
-   if content:
-      hashval = hashlib.sha256(content)
-      hexhash = hashval.hexdigest()
-
    return hexhash
 
 # .............................................................................

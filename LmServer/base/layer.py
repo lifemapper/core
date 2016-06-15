@@ -194,6 +194,7 @@ class _Layer(LMSpatialObject, ServiceObject):
    
 # ...............................................
    def _setVerify(self, verify, dlocation=None, content=None):
+      value = None
       if verify is not None:
          self._verify = verify
       else:
@@ -201,8 +202,9 @@ class _Layer(LMSpatialObject, ServiceObject):
             value = self.computeHash(content=content)
          else:
             if dlocation is None:
-               dlocation = self._dlocation         
-            value = self.computeHash(dlocation=dlocation)
+               dlocation = self._dlocation  
+            if os.path.exists(dlocation):       
+               value = self.computeHash(dlocation=dlocation)
          self._verify = value
 
 # ...............................................
