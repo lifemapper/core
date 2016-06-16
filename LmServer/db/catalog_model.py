@@ -672,17 +672,14 @@ class MAL(DbPostgresql):
       @todo: Add PAV (Intersect) jobs to Projection dependents
       """
       mdlDeps = []
-      rows, idxs = self.executeSelectManyFunction('lm_getProjectionJobsForModel', 
-                                                  modelid)
-      for r in rows:
-         job = self._createSDMJobNew(r, idxs)
-         mdlDeps.append(job)
-
       rows, idxs = self.executeSelectManyFunction('lm_getProjectionsForModel', 
                                                   modelid, JobStatus.COMPLETE)
       for r in rows:
-         prj = self._createProjection(r, idxs, doFillScenario=False)
-         mdlDeps.append(prj)
+         obj = self._createProjection(r, idxs, doFillScenario=False)
+         job = self.getJobOfType(obj)
+         if job is not None:
+            obj = job
+         mdlDeps.append(obj)
       
       return mdlDeps
         
@@ -700,23 +697,17 @@ class MAL(DbPostgresql):
 # ...............................................
    def _getOccDependents(self, occid):
       occDeps = []
-      rows, midxs = self.executeSelectManyFunction('lm_getModelJobsForOcc', 
-                                                   occid)
-      for mr in rows:
-         mdlDeps = []
-         mdljob = self._createSDMJobNew(mr, midxs)
-         mdlDependents = self._getMdlDependents(mdljob.dataObj.getId())
-            
-         occDeps.append((mdljob, mdlDeps))
             
       rows, midxs = self.executeSelectManyFunction('lm_getModelsByOccurrenceSet', 
                                                    occid, None, JobStatus.COMPLETE)
       for mr in rows:
-         mdlDeps = []
          mdl = self._createModel(mr, midxs, doFillScenario=False)
-         mdlDependents = self._getMdlDependents(mdl.getId())
-
-         if len(mdlDependents) > 0:
+         job = self.getJobOfType(mdl)
+         if job is not None:
+            mdl = job
+            
+         mdlDeps = self._getMdlDependents(mdl.getId())
+         if len(mdlDeps) > 0:
             occDeps.append((mdl, mdlDeps))
             
       return occDeps

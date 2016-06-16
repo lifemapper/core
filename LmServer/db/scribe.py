@@ -2035,21 +2035,23 @@ class Scribe(Peruser):
 
 # .............................................................................
 if __name__ == "__main__":
-   from LmServer.common.log import ScriptLogger
+   x = 1
+"""   
+from LmCommon.common.lmconstants import JobStatus
+from LmServer.common.log import ScriptLogger
+from LmServer.db.scribe import Scribe
+
+scribe = Scribe(ScriptLogger('scribeTest'))
+scribe.openConnections()
+occList1 = scribe.listOccurrenceSets(10, 1, minOccurrenceCount=20, status=JobStatus.INITIALIZE, atom=False)
+occ1 = occList1[0]
    
-   scribe = Scribe(ScriptLogger('scribeTest'))
-   scribe.openConnections()
-   occList = scribe.listOccurrenceSets(0, 1, minOccurrenceCount=20, 
-                                    status=JobStatus.INITIALIZE, atom=False)
-   if len(occList) == 1:
-      occ1 = occList[0]
-      
-   occList = scribe.listOccurrenceSets(0, 1, minOccurrenceCount=20, 
-                                    status=JobStatus.COMPLETE, atom=False)
-   if len(occList) == 1:
-      occ2 = occList[0]
-      
-   chain1 = scribe.getJobChainTopDown(occ=occ1)
-   chain2 = scribe.getJobChainTopDown(occ=occ2)
+occList = scribe.listOccurrenceSets(0, 1, minOccurrenceCount=20, status=JobStatus.COMPLETE, atom=False)
+occ2 = occList[0]
    
-   scribe.closeConnections()
+chain1 = scribe.getJobChainTopDown(occ=occ1)
+
+chain2 = scribe.getJobChainTopDown(occ=occ2)
+
+scribe.closeConnections()
+"""

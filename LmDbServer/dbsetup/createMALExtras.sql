@@ -4,10 +4,36 @@
 -- ----------------------------------------------------------------------------
 \c mal
 -- ----------------------------------------------------------------------------
+-- CLEANUP
+-- ----------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS lm3.lm_pullModelJobsForOcc(occid int,
+                                                  processType int,
+                                                  startStat int,
+                                                  endStat int,
+                                                  currtime double precision,
+                                                  crid int);
+DROP FUNCTION IF EXISTS lm3.lm_getModelJobsForOcc(occid int);
+DROP FUNCTION IF EXISTS lm3.lm_getCompletedModelsForOcc(occid int);
+DROP FUNCTION IF EXISTS lm3.lm_pullProjectionJobsForModel(mdlid int,
+                                                  processType int,
+                                                  startStat int,
+                                                  endStat int,
+                                                  currtime double precision,
+                                                  crid int);
+DROP FUNCTION IF EXISTS lm3.lm_pullOccurrenceJobForId(occid int,
+                                                  startStat int,
+                                                  endStat int,
+                                                  currtime double precision,
+                                                  crid int);
+DROP FUNCTION IF EXISTS lm3.lm_pullOccurrenceJob(occid int,
+                                                  startStat int,
+                                                  endStat int,
+                                                  currtime double precision,
+                                                  crid int);
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 -- FUNCTIONS
 -- Note: All column names are returned in lower case
--- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- Insert an algorithm into the database.  Return 
 CREATE OR REPLACE FUNCTION lm3.lm_insertAlgorithm(code varchar, aname varchar, modtime double precision)
@@ -4929,65 +4955,6 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm3.lm_pullModelJobsForOcc(occid int,
-                                                  processType int,
-                                                  startStat int,
-                                                  endStat int,
-                                                  currtime double precision,
-                                                  crid int);
-CREATE OR REPLACE FUNCTION lm3.lm_getModelJobsForOcc(occid int)
-   RETURNS SETOF lm3.lm_mdlJob AS
-$$
-DECLARE
-   rec lm3.lm_mdlJob;
-BEGIN
-   FOR rec in SELECT * FROM lm3.lm_mdlJob 
-      WHERE occurrenceSetId = occid 
-   LOOP
-      RETURN NEXT rec;
-   END LOOP;   
-   RETURN;
-END;
-$$  LANGUAGE 'plpgsql' STABLE;
-
--- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm3.lm_getCompletedModelsForOcc(occid int);
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_pullProjectionJobsForModel(mdlid int,
-                                                  processType int,
-                                                  startStat int,
-                                                  endStat int,
-                                                  currtime double precision,
-                                                  crid int)
-   RETURNS SETOF lm3.lm_prjJob AS
-$$
-DECLARE
-   rec lm3.lm_prjJob;
-BEGIN
-   FOR rec in SELECT * FROM lm3.lm_prjJob 
-      WHERE modelid = mdlid  AND jbstatus = startStat
-   LOOP
-      UPDATE lm3.LmJob SET (status, statusmodtime, lastheartbeat, computeResourceId) 
-                         = (endStat, currtime, currtime, crid) 
-         WHERE lmJobId = rec.lmJobId;
-      UPDATE lm3.Projection SET (status, statusmodtime, computeResourceId) 
-                                 = (endStat, currtime, crid) 
-         WHERE modelid = rec.modelid;
-   	rec.jbstatus = endstat; 
-   	rec.jbstatusmodtime = currtime;
-   	rec.lastheartbeat = currtime;
-   	rec.jbcomputeresourceid = crid;
-   	rec.prjstatus = endstat; 
-   	rec.prjstatusmodtime = currtime;
-   	rec.prjcomputeresourceid = crid;
-      RETURN NEXT rec;
-   END LOOP;   
-   RETURN;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_getProjectionJob(jid int)
    RETURNS lm3.lm_prjJob AS
 $$
@@ -5072,74 +5039,6 @@ BEGIN
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
-
--- ----------------------------------------------------------------------------
--- TODO: Change to also use reqsoftware (LmCommon.common.lmconstants.ProcessType)?
-CREATE OR REPLACE FUNCTION lm3.lm_pullOccurrenceJobForId(occid int,
-                                                  startStat int,
-                                                  endStat int,
-                                                  currtime double precision,
-                                                  crid int)
-   RETURNS lm3.lm_occJob AS
-$$
-DECLARE
-   rec lm3.lm_occJob;
-BEGIN
-   SELECT * INTO rec FROM lm3.lm_occJob 
-      WHERE occurrencesetid = occid AND jbstatus = startStat;
-   
-   IF FOUND THEN 
-      UPDATE lm3.LmJob SET (status, statusmodtime, lastheartbeat, computeResourceId) 
-                         = (endStat, currtime, currtime, crid) 
-         WHERE lmJobId = rec.lmJobId;
-      UPDATE lm3.OccurrenceSet SET (status, statusmodtime) 
-                                 = (endStat, currtime) 
-         WHERE occurrencesetid = rec.occurrencesetid;
-   	rec.jbstatus = endstat; 
-   	rec.jbstatusmodtime = currtime;
-   	rec.lastheartbeat = currtime;
-   	rec.jbcomputeresourceid = crid;
-   	rec.occstatus = endstat; 
-   	rec.occstatusmodtime = currtime;
-   END IF;
-   
-   RETURN rec;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
--- TODO: Change to also use reqsoftware (LmCommon.common.lmconstants.ProcessType)?
-CREATE OR REPLACE FUNCTION lm3.lm_pullOccurrenceJob(occid int,
-                                                  startStat int,
-                                                  endStat int,
-                                                  currtime double precision,
-                                                  crid int)
-   RETURNS lm3.lm_occJob AS
-$$
-DECLARE
-   rec lm3.lm_occJob;
-BEGIN
-   SELECT * INTO rec FROM lm3.lm_occJob 
-      WHERE occurrencesetid = occid AND jbstatus = startStat;
-   
-   IF FOUND THEN 
-      UPDATE lm3.LmJob SET (status, statusmodtime, lastheartbeat, computeResourceId) 
-                         = (endStat, currtime, currtime, crid) 
-         WHERE lmJobId = rec.lmJobId;
-      UPDATE lm3.OccurrenceSet SET (status, statusmodtime) 
-                                 = (endStat, currtime) 
-         WHERE occurrencesetid = rec.occurrencesetid;
-   	rec.jbstatus = endstat; 
-   	rec.jbstatusmodtime = currtime;
-   	rec.lastheartbeat = currtime;
-   	rec.jbcomputeresourceid = crid;
-   	rec.occstatus = endstat; 
-   	rec.occstatusmodtime = currtime;
-   END IF;
-   
-   RETURN rec;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm3.lm_insertJob(jfam int,
