@@ -27,7 +27,8 @@ import math
 import numpy as np
 from osgeo import ogr, osr
 
-from LmCommon.common.lmconstants import JobStatus, OutputFormat
+from LmCommon.common.lmconstants import (JobStatus, OutputFormat, 
+                                         DEFAULT_OGR_FORMAT)
 from LmCompute.common.lmObj import LmException
 
 # Calculate this once and store as a constant instead of for every cell
@@ -65,7 +66,7 @@ def buildShapegrid(env, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
    tSrs = osr.SpatialReference()
    tSrs.ImportFromEPSG(epsgCode)
    
-   drv = ogr.GetDriverByName('ESRI Shapefile')
+   drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
    ds = drv.CreateDataSource(shapePath)
    
    layer = ds.CreateLayer(ds.GetName(), geom_type=ogr.wkbPolygon, srs=tSrs)
@@ -184,7 +185,7 @@ def cutout(origPath, cutoutPath, cutoutWKT, epsgCode, siteId):
    tSrs = osr.SpatialReference()
    tSrs.ImportFromEPSG(epsgCode)
    
-   drv = ogr.GetDriverByName('ESRI Shapefile')
+   drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
    ds = drv.CreateDataSource(cutoutPath)
    newLayer = ds.CreateLayer(ds.GetName(), geom_type=ogr.wkbPolygon, srs=tSrs)
 

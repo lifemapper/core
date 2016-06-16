@@ -34,7 +34,7 @@ import os
 from osgeo import ogr
 import urllib2
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, DEFAULT_OGR_FORMAT
 
 # .............................................................................
 def calculate(matrix, covMatrix=False, Schluter=False, treeStats=False, treeData=None):
@@ -295,7 +295,7 @@ def createShapefileFromSum(sitesDict, shapefile, localIdIdx, sitesPresent):
                  'ProportionalSpeciesDiversity' : 'propspecDi',
                  'Per-siteRangeSizeofaLocality' : 'RaSLoc'}
    ogr.RegisterAll()
-   drv = ogr.GetDriverByName('ESRI Shapefile')
+   drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
    try:
       shpDs = drv.Open(shapefile, True)
    except Exception, e:

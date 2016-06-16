@@ -28,7 +28,7 @@ import math
 import numpy as np
 import rtree
 
-from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS
+from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS, DEFAULT_OGR_FORMAT
 from LmServer.base.layer import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ProcessObject
@@ -48,7 +48,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 # .............................................................................
    def __init__(self, layername, cellsides, cellsize, mapunits, 
                 epsgcode, bounds, dlocation=None, 
-                ogrType=ogr.wkbPolygon, ogrFormat='ESRI Shapefile', 
+                ogrType=ogr.wkbPolygon, ogrFormat=DEFAULT_OGR_FORMAT, 
                 siteId='siteid', siteX='centerX', siteY='centerY', size=None, 
                 userId=None, layerId=None, shapegridId=None, verify=None, 
                 bucketId=None, status=None, statusModTime=None,
@@ -243,7 +243,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             
       t_srs = osr.SpatialReference()
       t_srs.ImportFromEPSG(self.epsgcode)
-      drv = ogr.GetDriverByName('ESRI Shapefile')
+      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
       ds = drv.CreateDataSource(newdLoc)
       newlayer = ds.CreateLayer(ds.GetName(), geom_type = ogr.wkbPolygon, srs = t_srs)
       origLyrDefn = origLayer.GetLayerDefn()
@@ -317,7 +317,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             t_srs = osr.SpatialReference()
             #t_srs.SetFromUserInput('WGS84')
             t_srs.ImportFromEPSG(self.epsgcode)
-            drv = ogr.GetDriverByName('ESRI Shapefile')
+            drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
             ds = drv.CreateDataSource(shapepath)
             layer = ds.CreateLayer(ds.GetName(), geom_type = ogr.wkbPolygon, srs = t_srs)
             layer.CreateField(ogr.FieldDefn(self.siteId, ogr.OFTInteger))
@@ -372,7 +372,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             t_srs = osr.SpatialReference()
             #t_srs.SetFromUserInput('WGS84')
             t_srs.ImportFromEPSG(self.epsgcode)
-            drv = ogr.GetDriverByName('ESRI Shapefile')
+            drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
             ds = drv.CreateDataSource(shapepath)
             layer = ds.CreateLayer(ds.GetName(), geom_type = ogr.wkbPolygon, srs = t_srs)
             layer.CreateField(ogr.FieldDefn(self.siteId, ogr.OFTInteger))

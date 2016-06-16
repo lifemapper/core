@@ -34,7 +34,7 @@ import zipfile
 
 from LmCommon.common.lmAttObject import LmAttObj
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, SHAPEFILE_EXTENSIONS, 
-                                         SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits)
+                  DEFAULT_OGR_FORMAT, SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits)
 from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMError, LMObject, LMSpatialObject
@@ -44,7 +44,7 @@ from LmServer.common.lmconstants import (FeatureNames, OutputFormat,
             GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
             LMServiceType, 
             LOCAL_ID_FIELD_NAMES, LONGITUDE_FIELD_NAMES, LATITUDE_FIELD_NAMES)
-from LmServer.common.localconstants import UPLOAD_PATH
+from LmServer.common.localconstants import UPLOAD_PATH, APP_PATH
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
@@ -1593,7 +1593,7 @@ class Vector(_Layer):
       successfulWrites = []
       
       ogr.RegisterAll()
-      drv = ogr.GetDriverByName('ESRI Shapefile')
+      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
       spRef = Vector._getSpatialRef(srsEPSGOrWkt)
             
       f = open(dlocation, 'rb')
@@ -1705,7 +1705,7 @@ class Vector(_Layer):
          # Create the file object, a layer, and attributes
          tSRS = osr.SpatialReference()
          tSRS.ImportFromEPSG(self.epsgcode)
-         drv = ogr.GetDriverByName('ESRI Shapefile')
+         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
 
          ds = drv.CreateDataSource(self._dlocation)
          if ds is None:
@@ -1767,7 +1767,7 @@ class Vector(_Layer):
       if uploadedType == 'shapefile':
       # Writes zipped stream to temp file and sets dlocation on layer
          self.writeFromZippedShapefile(data, isTemp=True, overwrite=overwrite)
-         self._dataFormat = 'ESRI Shapefile'
+         self._dataFormat = DEFAULT_OGR_FORMAT
          try:
             # read to make sure it's valid (and populate stats)
             self.readData()
@@ -2012,7 +2012,7 @@ class Vector(_Layer):
 
 # ...............................................
    def copyData(self, sourceDataLocation, targetDataLocation=None, 
-                format='ESRI Shapefile'):
+                format=DEFAULT_OGR_FORMAT):
       """
       Copy sourceDataLocation dataset to targetDataLocation or this layer's 
       dlocation.
@@ -2082,7 +2082,7 @@ class Vector(_Layer):
       featCount = 0
       if dlocation is not None and os.path.exists(dlocation):
          ogr.RegisterAll()
-         drv = ogr.GetDriverByName('ESRI Shapefile')
+         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
          try:
             ds = drv.Open(dlocation)
          except Exception, e:
@@ -2094,9 +2094,20 @@ class Vector(_Layer):
                goodData = False
             else:  
                featCount = slyr.GetFeatureCount()
-         
+                  
       return goodData, featCount
       
+# ...............................................
+   @staticmethod
+   def indexShapefile(dlocation):
+      try:
+         shpTreeCmd = os.path.join(APP_PATH, 'shptree')
+         retcode = subprocess.call([shpTreeCmd, '{}'.format(dlocation)])
+         if retcode != 0: 
+            print 'Failed to create shptree index on {}'.format(dlocation)
+      except Exception, e:
+         print 'Failed create shptree index on {}: {}'.format(dlocation, str(e))
+                  
 # ...............................................
    def readOGRData(self, dlocation, ogrFormat, featureLimit=None):
       """
@@ -2361,7 +2372,7 @@ class Vector(_Layer):
       """
       if dlocation is None:
          dlocation = self._dlocation
-      if self._dataFormat == 'ESRI Shapefile':
+      if self._dataFormat == DEFAULT_OGR_FORMAT:
          thisBBox = self.readOGRData(dlocation, self._dataFormat, 
                                      featureLimit=featureLimit)
       elif self._dataFormat == 'CSV':

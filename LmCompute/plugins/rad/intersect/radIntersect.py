@@ -31,7 +31,8 @@ import os
 from osgeo import ogr
 import rtree
 
-from LmCommon.common.lmconstants import JobStatus, OutputFormat
+from LmCommon.common.lmconstants import (JobStatus, OutputFormat, 
+                                         DEFAULT_OGR_FORMAT)
 from LmCompute.common.agoodle import AGoodle
 
 from LmBackend.common.subprocessManager import SubprocessManager, \
@@ -265,7 +266,7 @@ def _getSpatialFilterBounds(layer, sgminx, sgmaxx, sgminy, sgmaxy):
 #................................................              
 def _openVectorLayer(dlocation):
    ogr.RegisterAll()
-   drv = ogr.GetDriverByName('ESRI Shapefile')
+   drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
    try:
       ds = drv.Open(dlocation)
    except Exception, e:

@@ -100,17 +100,16 @@ class SDMOccurrenceJob(_Job):
       try:
          occ = self._outputObj
          occFname = occ.getDLocation()
-         dLocParts = os.path.split(occFname)
+         print('--- writePackage ---')
+         print('occFname = {}'.format(occFname))
+         outDir, basename = os.path.split(occFname)
+         ptBase, tmp = os.path.splitext(basename)
          self._readyFilename(occFname, overwrite=True)
 
          subOccFname = occ.getDLocation(subset=True)
-         subsetDLocParts = os.path.split(subOccFname)  
+         tmp, subBasename = os.path.split(occFname)
+         subsetBase, tmp = os.path.splitext(subBasename)
          self._readyFilename(subOccFname, overwrite=True)
-         
-         # Get path parts
-         outDir = dLocParts[0] # Where all of the files will be extracted
-         ptBase = os.path.splitext(dLocParts[1])[0] # Gets the base name for the points
-         subsetBase = os.path.splitext(subsetDLocParts[1])[0] # Gets the subset base
          
          z = ZipFile(StringIO(pointData), allowZip64=True)
          

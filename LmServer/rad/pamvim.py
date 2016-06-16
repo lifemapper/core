@@ -31,8 +31,8 @@ import numpy
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import RandomizeMethods, PAMSUMS_SERVICE, \
-                                  JobStage, JobStatus
+from LmCommon.common.lmconstants import (RandomizeMethods, DEFAULT_OGR_FORMAT,
+                                         JobStage, JobStatus)
 from LmServer.base.layer import Vector
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
@@ -671,7 +671,7 @@ class PamSum(ServiceObject, ProcessObject):
       @param filename: The location on disk to write the shapefile
       """
       shpSum = Vector(epsgcode=epsgcode, ogrType=ogr.wkbPolygon, 
-                      ogrFormat='ESRI Shapefile')
+                      ogrFormat=DEFAULT_OGR_FORMAT)
       fname = self._getSumShapeFilename()
       shpSum.setDLocation(fname)
       shpSum.writeFromZippedShapefile(zipdata, isTemp=False, 
