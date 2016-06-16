@@ -100,8 +100,6 @@ class SDMOccurrenceJob(_Job):
       try:
          occ = self._outputObj
          occFname = occ.getDLocation()
-         print('--- writePackage ---')
-         print('occFname = {}'.format(occFname))
          outDir, basename = os.path.split(occFname)
          ptBase, tmp = os.path.splitext(basename)
          self._readyFilename(occFname, overwrite=True)

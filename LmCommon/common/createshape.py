@@ -39,9 +39,7 @@ from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, 
       IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD, IDIGBIO_LINK_PREFIX,
       IDIGBIO_LINK_FIELD, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
-      SHAPEFILE_MAX_STRINGSIZE, DWCNames)
-
-
+      SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
 # .............................................................................
 class ShapeShifter(object):
 # .............................................................................
@@ -185,9 +183,7 @@ class ShapeShifter(object):
 # .............................................................................
 # Public functions
 # .............................................................................
-   def writeUserOccurrences(self, outfname, maxPoints=None, subsetfname=None):
-      ogrFormat = 'ESRI Shapefile'
-      
+   def writeUserOccurrences(self, outfname, maxPoints=None, subsetfname=None):      
       if subsetfname is not None:
          if maxPoints is not None and self._recCount > maxPoints: 
             from random import shuffle
@@ -197,13 +193,13 @@ class ShapeShifter(object):
 
       subsetDs = None
       try:
-         drv = ogr.GetDriverByName(ogrFormat)
+         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
          newDs = drv.CreateDataSource(outfname)
          if newDs is None:
             raise Exception('Dataset creation failed for %s' % outfname)
          if subsetfname is not None and subsetIndices:
             subsetDs = drv.CreateDataSource(subsetfname)
-            subsetMetaDict = {'ogrFormat': ogrFormat}
+            subsetMetaDict = {'ogrFormat': DEFAULT_OGR_FORMAT}
             if subsetDs is None:
                raise Exception('Dataset creation failed for %s' % subsetfname)
          
@@ -229,7 +225,7 @@ class ShapeShifter(object):
          newDs.Destroy()
          print('Closed/wrote dataset {}'.format(outfname))
          basename, ext = os.path.splitext(outfname)
-         self._writeMetadata(basename, ogrFormat, geomtype, 
+         self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
                              fcount, minX, minY, maxX, maxY)
          
          if subsetDs is not None:
@@ -237,7 +233,7 @@ class ShapeShifter(object):
             subsetDs.Destroy()
             print('Closed/wrote dataset {}'.format(subsetfname))
             basename, ext = os.path.splitext(subsetfname)
-            self._writeMetadata(basename, ogrFormat, geomtype, 
+            self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
       except Exception, e:
          print('Unable to read or write data ({})'.format(fromUnicode(toUnicode(e))))
@@ -250,11 +246,31 @@ class ShapeShifter(object):
    #    except Exception, e:
    #       print 'Unable to create shapetree index on %s: %s' % (outfname, str(e))
 
+# ...............................................
+   @staticmethod
+   def testShapefile(dlocation):
+      goodData = True
+      featCount = 0
+      if dlocation is not None and os.path.exists(dlocation):
+         ogr.RegisterAll()
+         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+         try:
+            ds = drv.Open(dlocation)
+         except Exception, e:
+            goodData = False
+         else:
+            try:
+               slyr = ds.GetLayer(0)
+            except Exception, e:
+               goodData = False
+            else:  
+               featCount = slyr.GetFeatureCount()
+      if not goodData or featCount == 0:
+         print('Bad or empty data at {}'.format(dlocation))
+      return goodData, featCount
 
    # .............................................................................
    def writeOccurrences(self, outfname, maxPoints=None, subsetfname=None):
-      ogrFormat = 'ESRI Shapefile'
-      
       if subsetfname is not None:
          if maxPoints is not None and self._recCount > maxPoints: 
             from random import shuffle
@@ -262,9 +278,9 @@ class ShapeShifter(object):
             shuffle(subsetIndices)
             subsetIndices = subsetIndices[:maxPoints]
 
-      newDs = subsetDs = None
+      newDs = subsetDs = sfcount = None
       try:
-         drv = ogr.GetDriverByName(ogrFormat)
+         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
          newDs = drv.CreateDataSource(outfname)
          if newDs is None:
             raise Exception('Dataset creation failed for {}'.format(outfname))
@@ -295,27 +311,40 @@ class ShapeShifter(object):
          # Close dataset and flush to disk
          newDs.Destroy()
          print('Closed/wrote dataset {}'.format(outfname))
-         basename, ext = os.path.splitext(outfname)
-         self._writeMetadata(basename, ogrFormat, geomtype, 
-                             fcount, minX, minY, maxX, maxY)
-         
+                           
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
             print('Closed/wrote dataset {}'.format(subsetfname))
-            basename, ext = os.path.splitext(subsetfname)
-            self._writeMetadata(basename, ogrFormat, geomtype, 
-                                sfcount, minX, minY, maxX, maxY)
+            
       except Exception, e:
          print('Unable to read or write data (%s)' % fromUnicode(toUnicode(e)))
          raise e
-   #    try:
-   #       shpTreeCmd = os.path.join(appPath, "shptree")
-   #       retcode = subprocess.call([shpTreeCmd, "%s" % outfname])
-   #       if retcode != 0: 
-   #          print 'Unable to create shapetree index on %s' % outfname
-   #    except Exception, e:
-   #       print 'Unable to create shapetree index on %s: %s' % (outfname, str(e))
+      
+      self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount,
+                        subsetFname=subsetfname, subsetCount=sfcount)
+
+   # .............................................................................
+   def _finishWrite(self, outFname, minX, maxX, minY, maxY, geomtype, fcount,
+                    subsetFname=None, subsetCount=None):
+      # Test output data
+      goodData, featCount = self.testShapefile(outFname)
+      if not goodData or featCount == 0:
+         raise Exception('Failed to successfully write {}'.format(outFname))
+
+      # Write metadata as JSON
+      basename, ext = os.path.splitext(outFname)
+      self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
+                          fcount, minX, minY, maxX, maxY)
+
+      if subsetFname is not None:
+         basename, ext = os.path.splitext(subsetFname)
+         self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
+                             subsetCount, minX, minY, maxX, maxY)
+         
+         goodData, featCount = self.testShapefile(subsetFname)
+         if not goodData or featCount == 0:
+            raise Exception('Failed to shift shape {}'.format(subsetFname))
 
 # .............................................................................
 # Private functions
@@ -328,10 +357,10 @@ class ShapeShifter(object):
       return lookupDict
 
    # ...............................................
-   def _writeMetadata(self, basename, orgformat, geomtype, count, 
-                      minx, miny, maxx, maxy):
-      metaDict = {'ogrformat': orgformat, 'geomtype': geomtype, 'count': count,  
-                  'minx': minx, 'miny': miny, 'maxx': maxx, 'maxy': maxy}
+   def _writeMetadata(self, basename, geomtype, count, minx, miny, maxx, maxy):
+      metaDict = {'ogrformat': DEFAULT_OGR_FORMAT, 'geomtype': geomtype, 
+                  'count': count,  'minx': minx, 'miny': miny, 'maxx': maxx, 
+                  'maxy': maxy}
       with open(basename+'.meta', 'w') as outfile:
          json.dump(metaDict, outfile)
       
