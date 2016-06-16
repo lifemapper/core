@@ -614,6 +614,8 @@ class ShapeShifter(object):
       
 # ...............................................
 if __name__ == '__main__':
+#    from LmCommon.common.createshape import ShapeShifter
+   from LmCommon.common.apiquery import IdigbioAPI   
    outfilename = '/tmp/testidigpoints.shp'
    subsetOutfilename = '/tmp/testidigpoints_sub.shp'
    taxid = 2437967
@@ -626,8 +628,6 @@ if __name__ == '__main__':
          print('Removing {}'.format(fname))
          os.remove(fname)
 
-   from LmCommon.common.apiquery import IdigbioAPI
-   
    occAPI = IdigbioAPI()
    occList = occAPI.queryByGBIFTaxonId(taxid)
    

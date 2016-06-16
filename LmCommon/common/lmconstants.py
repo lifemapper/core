@@ -672,18 +672,21 @@ DWC_QUALIFIER = 'dwc:'
 class DWCNames:
    OCCURRENCE_ID = {'FULL': 'occurrenceID', 'SHORT': 'occurid'}
    INSTITUTION_CODE = {'FULL': 'institutionCode', 'SHORT': 'inst_code'}
+   INSTITUTION_ID = {'FULL': 'institutionID', 'SHORT': 'inst_id'}
    COLLECTION_CODE = {'FULL': 'collectionCode', 'SHORT': 'coll_code'}
+   COLLECTION_ID = {'FULL': 'collectionID', 'SHORT': 'coll_id'}
+   CONTINENT = {'FULL': 'continent', 'SHORT': 'continent'}
    CATALOG_NUMBER = {'FULL': 'catalogNumber', 'SHORT': 'catnum'}
    BASIS_OF_RECORD = {'FULL': 'basisOfRecord', 'SHORT': 'basisofrec'}
    DECIMAL_LATITUDE = {'FULL': 'decimalLatitude', 'SHORT': 'dec_lat'}
    DECIMAL_LONGITUDE = {'FULL': 'decimalLongitude', 'SHORT': 'dec_long'}
    SCIENTIFIC_NAME = {'FULL': 'scientificName', 'SHORT': 'sciname'}
-   EVENT_DATE = {'FULL': 'eventDate', 'SHORT': 'evt_date'}
    DAY = {'FULL': 'day', 'SHORT': 'day'}
    MONTH = {'FULL': 'month', 'SHORT': 'month'}
    YEAR = {'FULL': 'year', 'SHORT': 'year'}
    RECORDED_BY = {'FULL': 'recordedBy', 'SHORT': 'rec_by'}
    COUNTRY_CODE = {'FULL': 'countryCode', 'SHORT': 'ctrycode'}
+   STATE_PROVINCE = {'FULL': 'stateprovince', 'SHORT': 'stprov'}
 
 # Bison
 BISON_COUNT_KEYS = ['response', 'numFound']
@@ -925,41 +928,46 @@ IDIGBIO_EXPORT_FIELDS = {0: (IDIGBIO_ID_FIELD, OFTString),
                          3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                          4: ('provider', OFTString)
                          }
-IDIGBIO_GBIFID_FIELD = 'taxonid'
+IDIGBIO_GBIFID_FIELD = 'gbif_taxonid'
 # Geopoint.lat and Geopoint.lon are modified on return to short names
 # Response record fields: https://search.idigbio.org/v2/meta/fields/records
 IDIGBIO_RETURN_FIELDS = {
                         IDIGBIO_ID_FIELD: (IDIGBIO_ID_FIELD, OFTString),
-                        IDIGBIO_GBIFID_FIELD: (IDIGBIO_GBIFID_FIELD, OFTInteger),
-                        'canonicalname': ('canonical', OFTString),
-                        'scientificname': 
+                        IDIGBIO_GBIFID_FIELD: ('taxonid', OFTString),
+                        DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: 
                            (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),                        
-                        'basisofrecord':  
+                        DWCNames.BASIS_OF_RECORD['FULL']:  
                            (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
-                        'catalognumber': 
+                        DWC_QUALIFIER + DWCNames.CATALOG_NUMBER['FULL']: 
                            (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
-                        'collectionid': ('coll_id', OFTString),
-                        'collectioncode': 
+                        DWC_QUALIFIER + DWCNames.COLLECTION_ID['FULL']: 
+                           (DWC_QUALIFIER + DWCNames.COLLECTION_CODE['SHORT'], OFTString),
+                        DWC_QUALIFIER + DWCNames.COLLECTION_CODE['FULL']: 
                            (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-                        'collectionname': ('coll_name', OFTString),
-                        'collector': ('collector', OFTString),
+                        DWC_QUALIFIER + DWCNames.RECORDED_BY['FULL']: 
+                           (DWCNames.RECORDED_BY['SHORT'], OFTString),
                         'commonname': ('comname', OFTString),
-                        'continent': ('continent', OFTString),
-                        'country': ('country', OFTString),
-                        'countrycode': 
+                        DWC_QUALIFIER + DWCNames.CONTINENT['FULL']: 
+                           (DWCNames.CONTINENT['SHORT'], OFTString),
+                        DWC_QUALIFIER + DWCNames.COUNTRY_CODE['FULL']: 
                            (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
-                        'county': ('county', OFTString),
-                        'datecollected':('date_coll', OFTString),
-                        'institutioncode': 
+                        DWC_QUALIFIER + DWCNames.DAY['FULL']: 
+                           (DWCNames.DAY['SHORT'], OFTString),
+                        DWC_QUALIFIER + DWCNames.MONTH['FULL']: 
+                           (DWCNames.MONTH['SHORT'], OFTString),
+                        DWC_QUALIFIER + DWCNames.YEAR['FULL']: 
+                           (DWCNames.YEAR['SHORT'], OFTString),
+                        DWC_QUALIFIER + DWCNames.INSTITUTION_CODE['FULL']: 
                            (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
-                        'institutionid': ('inst_id', OFTString),
-                        'institutionname': ('inst_name', OFTString),
-                        'occurrenceid': 
+                        DWC_QUALIFIER + DWCNames.INSTITUTION_ID['FULL']: 
+                           (DWCNames.INSTITUTION_ID['SHORT'], OFTString),
+                        DWC_QUALIFIER + DWCNames.OCCURRENCE_ID['FULL']: 
                            (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
-                        'stateprovince': ('stprov', OFTString),
-                        DWCNames.DECIMAL_LATITUDE['FULL']: 
+                        DWC_QUALIFIER + DWCNames.STATE_PROVINCE['FULL']: 
+                           (DWCNames.STATE_PROVINCE['SHORT'], OFTString),
+                        DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: 
                            (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                        DWCNames.DECIMAL_LONGITUDE['FULL']:
+                        DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']:
                            (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
                         }
 
@@ -975,7 +983,8 @@ IDIGBIO_QFILTERS = {
 queryFlds = IDIGBIO_RETURN_FIELDS.keys()
 queryFlds.append('geopoint')
 
-IDIGBIO_FILTERS = {'fields': queryFlds,
+IDIGBIO_FILTERS = {
+#                    'fields': queryFlds,
                    'limit': IDIGBIO_SEARCH_LIMIT,
                    'offset': 0,
                    'no_attribution': False}
