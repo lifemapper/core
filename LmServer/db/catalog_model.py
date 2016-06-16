@@ -673,13 +673,13 @@ class MAL(DbPostgresql):
       """
       mdlDeps = []
       rows, idxs = self.executeSelectManyFunction('lm_getProjectionsForModel', 
-                                                  modelid, JobStatus.COMPLETE)
+                                                  modelid, None)
       for r in rows:
-         obj = self._createProjection(r, idxs, doFillScenario=False)
-         job = self.getJobOfType(obj)
+         prj = self._createProjection(r, idxs, doFillScenario=False)
+         job = self.getJobOfType(prj)
          if job is not None:
-            obj = job
-         mdlDeps.append(obj)
+            prj = job
+         mdlDeps.append(prj)
       
       return mdlDeps
         
@@ -697,9 +697,8 @@ class MAL(DbPostgresql):
 # ...............................................
    def _getOccDependents(self, occid):
       occDeps = []
-            
-      rows, midxs = self.executeSelectManyFunction('lm_getModelsByOccurrenceSet', 
-                                                   occid, None, JobStatus.COMPLETE)
+      rows, midxs = self.executeSelectManyFunction('lm_getModelsByOccurrenceSetUserAndStatus', 
+                                                   occid, None, None)
       for mr in rows:
          mdl = self._createModel(mr, midxs, doFillScenario=False)
          job = self.getJobOfType(mdl)
@@ -707,8 +706,7 @@ class MAL(DbPostgresql):
             mdl = job
             
          mdlDeps = self._getMdlDependents(mdl.getId())
-         if len(mdlDeps) > 0:
-            occDeps.append((mdl, mdlDeps))
+         occDeps.append((mdl, mdlDeps))
             
       return occDeps
 

@@ -2043,14 +2043,12 @@ from LmServer.db.scribe import Scribe
 
 scribe = Scribe(ScriptLogger('scribeTest'))
 scribe.openConnections()
-occList1 = scribe.listOccurrenceSets(10, 1, minOccurrenceCount=20, status=JobStatus.INITIALIZE, atom=False)
-occ1 = occList1[0]
+# occList1 = scribe.listOccurrenceSets(10, 1, minOccurrenceCount=20, status=JobStatus.INITIALIZE, atom=False)
+# occ1 = occList1[0]
+# chain1 = scribe.getJobChainTopDown(occ=occ1)
    
 occList = scribe.listOccurrenceSets(0, 1, minOccurrenceCount=20, status=JobStatus.COMPLETE, atom=False)
 occ2 = occList[0]
-   
-chain1 = scribe.getJobChainTopDown(occ=occ1)
-
 chain2 = scribe.getJobChainTopDown(occ=occ2)
 
 scribe.closeConnections()
