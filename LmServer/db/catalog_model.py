@@ -651,14 +651,9 @@ class MAL(DbPostgresql):
       return job
    
 # # ...............................................
-#    def _getPrjDependents(self, prj):
+#    def _getPrjDependents(self, prjid):
 #       prjDeps = []
-#       if isinstance(prj, _Job):
-#          prjid = prj.dataObj.getId()
-#       else:
-#          prjid = prj.getId()
-#          
-#       rows, idxs = self.executeSelectManyFunction('lm_getIntersectJobsForProjection', 
+#       rows, idxs = self.executeSelectManyFunction('lm_getPAVsForProjection', 
 #                                                     prjid)
 #       for r in rows:
 #          job = self._createSDMJobNew(r, idxs)
@@ -676,11 +671,12 @@ class MAL(DbPostgresql):
                                                   modelid, None)
       for r in rows:
          prj = self._createProjection(r, idxs, doFillScenario=False)
+#          prjDeps = self._getPrjDependents(prj.getId())
          job = self.getJobOfType(prj)
          if job is not None:
             prj = job
          mdlDeps.append(prj)
-      
+#          mdlDeps.append((prj, prjDeps))
       return mdlDeps
         
 # ...............................................
@@ -701,11 +697,12 @@ class MAL(DbPostgresql):
                                                    occid, None, None)
       for mr in rows:
          mdl = self._createModel(mr, midxs, doFillScenario=False)
+         mdlDeps = self._getMdlDependents(mdl.getId())
+
          job = self.getJobOfType(mdl)
          if job is not None:
             mdl = job
             
-         mdlDeps = self._getMdlDependents(mdl.getId())
          occDeps.append((mdl, mdlDeps))
             
       return occDeps
