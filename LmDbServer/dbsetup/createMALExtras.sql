@@ -30,6 +30,10 @@ DROP FUNCTION IF EXISTS lm3.lm_pullOccurrenceJob(occid int,
                                                   endStat int,
                                                   currtime double precision,
                                                   crid int);
+DROP FUNCTION IF EXISTS lm3.lm_getProjectionsByOccurrenceSet(occId int, completeStat int);
+DROP FUNCTION IF EXISTS lm3.lm_getProjectionsByOccurrenceSetAndUser(occId int, 
+                                                                   usr varchar, 
+                                                                   completeStat int);
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- FUNCTIONS
@@ -1707,18 +1711,14 @@ DECLARE
 BEGIN
    IF completeStat is null THEN
       FOR rec_prj in 
-         SELECT *
-         FROM lm3.lm_fullProjection
-         WHERE modelid = mdlid
+         SELECT * FROM lm3.lm_fullProjection WHERE modelid = mdlid
       LOOP
          RETURN NEXT rec_prj;
       END LOOP;
    ELSE
       FOR rec_prj in 
-         SELECT *
-         FROM lm3.lm_fullProjection
-         WHERE modelid = mdlid
-           AND prjstatus = completeStat
+         SELECT * FROM lm3.lm_fullProjection WHERE modelid = mdlid
+                                               AND prjstatus = completeStat
       LOOP
          RETURN NEXT rec_prj;
       END LOOP; 
@@ -1729,60 +1729,26 @@ $$ LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- New
-CREATE OR REPLACE FUNCTION lm3.lm_getProjectionsForOccurrenceSet(occId int)
+CREATE OR REPLACE FUNCTION lm3.lm_getProjectionsForOccurrenceSet(occId int, completeStat int)
    RETURNS SETOF lm3.lm_fullProjection AS
 $$
 DECLARE
    rec_prj lm3.lm_fullProjection;
 BEGIN
-   FOR rec_prj in 
-      SELECT * FROM lm3.lm_fullProjection WHERE occurrenceSetId = occId
-   LOOP
-      RETURN NEXT rec_prj;
-   END LOOP;   
-   RETURN;
-END;
-$$ LANGUAGE 'plpgsql' STABLE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getProjectionsByOccurrenceSet(occId int, completeStat int)
-   RETURNS SETOF lm3.lm_fullProjection AS
-$$
-DECLARE
-   rec_prj lm3.lm_fullProjection;
-BEGIN
-   FOR rec_prj in 
-      SELECT *
-      FROM lm3.lm_fullProjection
-      WHERE occurrenceSetId = occId
-        -- projection status
-        AND prjstatus = completeStat
-   LOOP
-      RETURN NEXT rec_prj;
-   END LOOP;   
-   RETURN;
-END;
-$$ LANGUAGE 'plpgsql' STABLE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getProjectionsByOccurrenceSetAndUser(occId int, 
-                                                                   usr varchar, 
-                                                                   completeStat int)
-   RETURNS SETOF lm3.lm_fullProjection AS
-$$
-DECLARE
-   rec_prj lm3.lm_fullProjection;
-BEGIN
-   FOR rec_prj in 
-      SELECT *
-      FROM lm3.lm_fullProjection
-      WHERE occurrenceSetId = occId
-        AND mdlUserId = usr
-        -- projection status
-        AND prjstatus = completeStat
-   LOOP
-      RETURN NEXT rec_prj;
-   END LOOP;   
+   IF completeStat is null THEN
+      FOR rec_prj in 
+         SELECT * FROM lm3.lm_fullProjection WHERE occurrencesetid = occId
+      LOOP
+         RETURN NEXT rec_prj;
+      END LOOP;
+   ELSE
+      FOR rec_prj in 
+         SELECT * FROM lm3.lm_fullProjection WHERE occurrencesetid = occId
+                                               AND prjstatus = completeStat
+      LOOP
+         RETURN NEXT rec_prj;
+      END LOOP; 
+   END IF;
    RETURN;
 END;
 $$ LANGUAGE 'plpgsql' STABLE; 

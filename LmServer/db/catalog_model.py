@@ -1222,13 +1222,13 @@ class MAL(DbPostgresql):
       @param occId: The occurrenceSetId of the occurrenceSet to get 
                     projections for
       @return A list of Projection objects that use the specified occurrenceSet
-      @note: lm_getProjectionsByOccurrenceSet(int, int) 
+      @note: lm_getProjectionsForOccurrenceSet(int, int) 
              returns setof lm_fullprojection  
       """
       # The MAL initializes the Scenario with its code and url only
       # Environmental layer info is filled in by the SDL
       # lm_getModelByName returns a mini-model
-      rows, idxs = self.executeSelectManyFunction('lm_getProjectionsByOccurrenceSet', 
+      rows, idxs = self.executeSelectManyFunction('lm_getProjectionsForOccurrenceSet', 
                                                   occId, JobStatus.COMPLETE)
       projs = []
       if rows:
@@ -2138,9 +2138,8 @@ class MAL(DbPostgresql):
       @return the new layers
       """
       lyrs = [occset]
-      rows, idxs = self.executeSelectManyFunction('lm_getProjectionsByOccurrenceSetAndUser', 
+      rows, idxs = self.executeSelectManyFunction('lm_getProjectionsForOccurrenceSet', 
                                                   occset.getId(),
-                                                  occset.getUserId(), 
                                                   JobStatus.COMPLETE)
       for r in rows:
          prjlyr = self._createProjection(r, idxs)
