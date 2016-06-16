@@ -270,7 +270,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       self._rawDLocation = rawDLocation
    
    # ...............................................
-   def updateStatus(self, status, modTime=None, queryCount=None,
+   def updateStatus(self, status, stage=None, modTime=None, queryCount=None,
                     statusModTime=None):
       """
       @note: Added to parallel other job object methods, stage is unused for now.
