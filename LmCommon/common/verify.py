@@ -45,7 +45,7 @@ def _getHexHashValue(dlocation=None, content=None):
          content = f.read()
          f.close()
       else:
-         print('Cannot hash non-existent file {}'.format(dlocation))
+         print('Failed to hash missing file {}'.format(dlocation))
          
    return hexhash
 
