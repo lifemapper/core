@@ -96,6 +96,6 @@ class ScientificName(LMObject):
       return self._sourceGenusKey
 
    @property
-   def _sourceKeyHierarchy(self):
+   def sourceKeyHierarchy(self):
       return self._sourceKeyHierarchy
 
