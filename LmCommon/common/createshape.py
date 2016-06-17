@@ -34,12 +34,14 @@ import StringIO
 from types import ListType, TupleType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
-from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, 
       IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD, IDIGBIO_LINK_PREFIX,
-      IDIGBIO_LINK_FIELD, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, 
+      IDIGBIO_LINK_FIELD, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
       SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+from LmCompute.common.lmObj import LmException
+from LmCommon.common.unicode import fromUnicode, toUnicode
+
 # .............................................................................
 class ShapeShifter(object):
 # .............................................................................
@@ -72,9 +74,11 @@ class ShapeShifter(object):
       #                              ShortDWCNames.DECIMAL_LONGITUDE
       if processType == ProcessType.USER_TAXA_OCCURRENCE:
          if not logger:
-            raise Exception('Failed to get a logger')
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                              'Failed to get a logger')
          if not metadata:
-            raise Exception('Failed to get metadata')
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                              'Failed to get metadata')
          self.op = OccDataParser(logger, rawdata, metadata, delimiter=',')
          self.idField = self.op.idFieldName
          self.xField = self.op.xFieldName
@@ -106,7 +110,8 @@ class ShapeShifter(object):
          self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
          
       else:
-         raise Exception('Invalid processType {}'.format(processType))
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Invalid processType {}'.format(processType))
 
 # .............................................................................
 # Private functions
@@ -155,15 +160,20 @@ class ShapeShifter(object):
       self.fieldCount = len(self.fieldNames)
       
       if self._idIdx == None:
-         raise Exception('Missing \'id\' unique identifier field')
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Missing \'id\' unique identifier field')
       if self._xIdx == None:
-         raise Exception('Missing \'longitude\' georeference field')
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Missing \'longitude\' georeference field')
       if self._yIdx == None:
-         raise Exception('Missing \'latitude\' georeference field')
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Missing \'latitude\' georeference field')
       if self._sortIdx == None:
-         raise Exception('Missing \'groupby\' sorting field')
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Missing \'groupby\' sorting field')
       if self._nameIdx == None:
-         raise Exception('Missing \'dataname\' dataset name field')
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Missing \'dataname\' dataset name field')
 
 
    # .............................................................................
@@ -177,8 +187,9 @@ class ShapeShifter(object):
       elif typestr == 'real':
          return ogr.OFTReal
       else:
-         raise Exception('Unsupported field type %s (use integer, string, or real)' 
-                         % typeString)
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Unsupported field type {} (integer, string, or real)'
+                           .format(typeString))
 
 # .............................................................................
 # Public functions
@@ -196,12 +207,14 @@ class ShapeShifter(object):
          drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
          newDs = drv.CreateDataSource(outfname)
          if newDs is None:
-            raise Exception('Dataset creation failed for %s' % outfname)
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                              'Dataset creation failed for {}'.format(outfname))
          if subsetfname is not None and subsetIndices:
             subsetDs = drv.CreateDataSource(subsetfname)
             subsetMetaDict = {'ogrFormat': DEFAULT_OGR_FORMAT}
             if subsetDs is None:
-               raise Exception('Dataset creation failed for %s' % subsetfname)
+               raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                                 'Dataset creation failed for {}'.format(subsetfname))
          
          newLyr = self._addUserFieldDef(newDs)
          if subsetDs is not None:
@@ -283,12 +296,14 @@ class ShapeShifter(object):
          drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
          newDs = drv.CreateDataSource(outfname)
          if newDs is None:
-            raise Exception('Dataset creation failed for {}'.format(outfname))
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                              'Dataset creation failed for {}'.format(outfname))
             
          if subsetfname is not None and subsetIndices:
             subsetDs = drv.CreateDataSource(subsetfname)
             if subsetDs is None:
-               raise Exception('Dataset creation failed for {}'.format(subsetfname))
+               raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                                 'Dataset creation failed for {}'.format(subsetfname))
          
          newLyr = self._addFieldDef(newDs)
          if subsetDs is not None:
@@ -318,8 +333,9 @@ class ShapeShifter(object):
             print('Closed/wrote dataset {}'.format(subsetfname))
             
       except Exception, e:
-         print('Unable to read or write data (%s)' % fromUnicode(toUnicode(e)))
-         raise e
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                           'Unable to read or write data ({})'
+                           .format(fromUnicode(toUnicode(e))))
       
       self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount,
                         subsetFname=subsetfname, subsetCount=sfcount)
@@ -329,8 +345,12 @@ class ShapeShifter(object):
                     subsetFname=None, subsetCount=None):
       # Test output data
       goodData, featCount = self.testShapefile(outFname)
-      if not goodData or featCount == 0:
-         raise Exception('Failed to successfully write {}'.format(outFname))
+      if not goodData: 
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Failed to create shapefile {}'.format(outFname))
+      elif featCount == 0:
+         raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
+                           'Failed to create shapefile {}'.format(outFname))
 
       # Write metadata as JSON
       basename, ext = os.path.splitext(outFname)
@@ -343,9 +363,13 @@ class ShapeShifter(object):
                              subsetCount, minX, minY, maxX, maxY)
          
          goodData, featCount = self.testShapefile(subsetFname)
-         if not goodData or featCount == 0:
-            raise Exception('Failed to shift shape {}'.format(subsetFname))
-
+         if not goodData: 
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                              'Failed to create shapefile {}'.format(subsetFname))
+         elif featCount == 0:
+            raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
+                              'Failed to create shapefile {}'.format(subsetFname))
+            
 # .............................................................................
 # Private functions
 # .............................................................................
@@ -507,7 +531,8 @@ class ShapeShifter(object):
     
       newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
       if newLyr is None:
-         raise Exception('Layer creation failed')
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Layer creation failed')
        
       for pos in range(len(self.op.fieldNames)):
          fldname = self.op.fieldNames[pos]
@@ -517,14 +542,16 @@ class ShapeShifter(object):
             fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
          returnVal = newLyr.CreateField(fldDef)
          if returnVal != 0:
-            raise Exception('Failed to create field %s' % fldname)
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                            'Failed to create field {}'.format(fldname))
             
       # Add wkt field
       fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
       fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
       returnVal = newLyr.CreateField(fldDef)
       if returnVal != 0:
-         raise Exception('Failed to create field %s' % fldname)
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Failed to create field {}'.format(fldname))
       
       return newLyr
          
@@ -535,7 +562,8 @@ class ShapeShifter(object):
     
       newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
       if newLyr is None:
-         raise Exception('Layer creation failed')
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                           'Layer creation failed')
        
       for fielddesc in self.dataFields.values():
          if fielddesc is not None:
@@ -546,14 +574,16 @@ class ShapeShifter(object):
                fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
             returnVal = newLyr.CreateField(fldDef)
             if returnVal != 0:
-               raise Exception('Failed to create field %s' % fldname)
+               raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                                 'Failed to create field {}'.format(fldname))
             
       # Add wkt field to all
       fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
       fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
       returnVal = newLyr.CreateField(fldDef)
       if returnVal != 0:
-         raise Exception('Failed to create field %s' % fldname)
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Failed to create field{}'.format(fldname))
       
       # Add URL field to GBIF/iDigBio data
       if self.linkField is not None:
@@ -561,14 +591,16 @@ class ShapeShifter(object):
          fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
          returnVal = newLyr.CreateField(fldDef)
          if returnVal != 0:
-            raise Exception('Failed to create field %s' % self.linkField)
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                              'Failed to create field {}'.format(self.linkField))
          
       # Add id field to BISON data
       if self.processType == ProcessType.BISON_TAXA_OCCURRENCE:
          fldDef = ogr.FieldDefn(LM_ID_FIELD, ogr.OFTString)
          returnVal = newLyr.CreateField(fldDef)
          if returnVal != 0:
-            raise Exception('Failed to create field %s' % LM_ID_FIELD)
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                              'Failed to create field {}'.format(LM_ID_FIELD))
     
       return newLyr
          
