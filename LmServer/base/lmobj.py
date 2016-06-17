@@ -46,16 +46,16 @@ class LMObject(object):
 # ...............................................
    def getModuleName(self):
 #      return '{0}.{1}'.format(__name__, self.__class__.__name__)
-      return '%s.%s' % (__name__, self.__class__.__name__)
+      return '{}.{}'.format(__name__, self.__class__.__name__)
 
 # ...............................................
    def getLocation(self, lineno=None):
 #      return '{0}.{1} line {2}'.format(__name__, 
 #                                       self.__class__.__name__,
 #                                       self.getLineno())
-      loc = '%s.%s' % (__name__, self.__class__.__name__)
+      loc = '{}.{}'.format(__name__, self.__class__.__name__)
       if lineno:
-         loc += ' Line %s' % str(lineno)         
+         loc += ' Line {}'.format(lineno)         
       return loc
    
 # ...............................................
@@ -77,7 +77,7 @@ class LMObject(object):
          if overwrite:
             success, msg = self._deleteFile(fullfilename)
             if not success:
-               raise LMError('Unable to delete %s' % fullfilename)
+               raise LMError('Unable to delete {}'.format(fullfilename))
             else:
                return True
          else:
@@ -92,7 +92,7 @@ class LMObject(object):
          if os.path.isdir(pth):
             return True
          else:
-            raise LMError('Failed to create directories %s' % pth)
+            raise LMError('Failed to create directories {}'.format(pth))
    
 # ...............................................
    def _deleteFile(self, fname, deleteDir=False):
@@ -121,19 +121,19 @@ class LMObject(object):
                         os.remove(simfname)
                except Exception, e:
                   success = False
-                  msg = 'Failed to remove %s, %s' % (simfname, str(e))
+                  msg = 'Failed to remove {}, {}'.format(simfname, str(e))
             else:
                try:
                   os.remove(fname)
                except Exception, e:
                   success = False
-                  msg = 'Failed to remove %s, %s' % (fname, str(e))
+                  msg = 'Failed to remove {}, {}'.format(fname, str(e))
             if deleteDir and len(os.listdir(pth)) == 0:
                try:
                   os.removedirs(pth)
                except Exception, e:
                   success = False
-                  msg = 'Failed to remove %s, %s' % (pth, str(e))
+                  msg = 'Failed to remove {}, {}'.format(pth, str(e))
       return success, msg
    
 # ............................................................................
@@ -207,7 +207,7 @@ class LMSpatialObject(LMObject):
                epsg = int(epsg)
                self._epsg = epsg
             except:
-               raise LMError('Invalid epsg code %s' % epsg)
+               raise LMError('Invalid epsg code {}'.format(epsg))
          elif isinstance(epsg, IntType):
             self._epsg = epsg
          elif isinstance(epsg, ListType) or isinstance(epsg, TupleType):
@@ -215,11 +215,10 @@ class LMSpatialObject(LMObject):
             if len(epsgcodes) == 1:
                self._epsg = epsgcodes[0]
             else:
-               raise LMError('LMSpatialObject may only contain a single EPSG code' % 
-                             str(epsgcodes))
+               raise LMError('LMSpatialObject may only contain a single EPSG code'
+                             .format(epsgcodes))
          else:
-            raise LMError('Invalid EPSG code %s type %s' 
-                          % (str(epsg), str(type(epsg))))
+            raise LMError('Invalid EPSG code {} type {}'.format(epsg, type(epsg)))
    epsgcode = property(_getEPSG, _setEPSG)
    
 # .............................................................................
@@ -268,23 +267,21 @@ class LMSpatialObject(LMObject):
             if (isinstance(bbox, TupleType) and len(bbox) == 4):
                for v in bbox:
                   if not(isinstance(v, FloatType) or isinstance(v, IntType)):
-                     raise LMError('Invalid bounding box type(s) %s' % (str(bbox)))
+                     raise LMError('Invalid bounding box type(s) {}'.format(bbox))
                   
                if LMSpatialObject._checkBounds(bbox):
                   self._bbox = bbox
                else:
                   # TODO: replace with LMError as soon as bad bboxes are cleared out
-                  print('Invalid bounding box boundaries %s' % (str(bbox)))
+                  print('Invalid bounding box boundaries {}'.format(bbox))
                   self._bbox = None
             else:
                raise LMError('Invalid BBox: require 4-tuple in format (minX, minY, maxX, maxY)')
          except LMError, e:
-#            raise
-            print('Invalid bounding box boundaries %s' % (str(bbox)))
+            print('Invalid bounding box boundaries {}'.format(bbox))
             self._bbox = None
          except Exception, e:
-#            raise LMError('Invalid BBox %s' % bbox)   
-            print('Invalid bounding box boundaries %s' % (str(bbox)))
+            print('Invalid bounding box boundaries {}'.format(bbox))
             self._bbox = None
 
 
@@ -300,7 +297,8 @@ class LMSpatialObject(LMObject):
       """
       bstrLst = None
       if self._bbox is not None:
-         bstrLst = ['%.2f' % b for b in self._bbox]
+         bstrLst = ['{0:.2f}, {1:.2f}, {2:.2f}, {3:.2f}'.format(self._bbox[0], 
+                                 self._bbox[1], self._bbox[2], self._bbox[3])]
       return bstrLst
 
 # ..............................................................................
@@ -395,7 +393,7 @@ class LMSpatialObject(LMObject):
                               ' '.join([coordStrings[2], coordStrings[3]]),
                               ' '.join([coordStrings[2], coordStrings[1]]),
                               ' '.join([coordStrings[0], coordStrings[1]])])
-         wkt = 'POLYGON((%s))' % corners;
+         wkt = 'POLYGON(({}))'.format(corners);
          return wkt
       else:
          return None         
@@ -406,7 +404,7 @@ class LMSpatialObject(LMObject):
       @summary: Return lower left and upper right points.
       @return: String in the format 'minX minY, maxX maxY'
       """
-      llur = '%s %s, %s %s' % (self.getMinX(), self.getMinY(), 
+      llur = '{} {}, {} {}'.format(self.getMinX(), self.getMinY(), 
                                self.getMaxX(), self.getMaxY())
       return llur
          
@@ -448,7 +446,7 @@ class LMSpatialObject(LMObject):
          if LMSpatialObject._checkBounds(bounds):
             return bounds
          else:
-            print('Non-intersecting bounding boxes, bounds: %s' % str(bounds))
+            print('Non-intersecting bounding boxes, bounds: {}'.format(bounds))
             return None
       else:
          return None
@@ -474,7 +472,7 @@ class LMSpatialObject(LMObject):
          if LMSpatialObject._checkBounds(bounds):
             return bounds
          else:
-            raise LMError('Invalid bounding box boundaries %s' % (bboxSeq))
+            raise LMError('Invalid bounding box boundaries {}'.format(bboxSeq))
       else:
          return None
       
@@ -517,7 +515,7 @@ class LMSpatialObject(LMObject):
       name = prjcsStr.split('"')[1]
       
       # GeoGCS
-      geocsStr = "GEOGCS%s" % prjcsStr.split('GEOGCS')[1].split('PROJECTION')[0]
+      geocsStr = "GEOGCS{}".format(prjcsStr.split('GEOGCS')[1].split('PROJECTION')[0])
       geocs = LMSpatialObject._processGEOGCS(geocsStr)
       
       # Projection Name
@@ -685,7 +683,7 @@ class LMError(Exception, LMObject):
          except UnicodeDecodeError, e:
             sarg = 'some unicode arg'
          except Exception, e:
-            sarg = 'some other non-string arg (%s)' % str(e)
+            sarg = 'some other non-string arg ({})'.format(e)
          l.append(sarg)
          
       return repr('\n'.join(l))
@@ -698,7 +696,7 @@ class LMError(Exception, LMObject):
          framecode = thisTraceback.tb_frame.f_code                                                 
          filename = str(framecode.co_filename)                          
          line_no = str(traceback.tb_lineno(thisTraceback))
-         msg += 'Traceback : Line: %s; File: %s\n' % (line_no, filename)                                                    
+         msg += 'Traceback : Line: {}; File: {}\n'.format(line_no, filename)                                                    
          thisTraceback = thisTraceback.tb_next    
       return msg
 
@@ -732,11 +730,11 @@ class LmHTTPError(LMError):
    
    # ......................................
    def __repr__(self):
-      return "LmHTTPError %s (%s)" % (self.code, self.msg)
+      return "LmHTTPError {} ({})".format(self.code, self.msg)
 
    # ......................................
    def __str__(self):
-      return "LmHTTPError %s (%s)" % (self.code, self.msg)
+      return "LmHTTPError {} ({})".format(self.code, self.msg)
 
 # ============================================================================
 class LMMissingDataError(LMError):

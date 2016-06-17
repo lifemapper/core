@@ -105,8 +105,9 @@ class MAL(DbPostgresql):
                                          mdl.priority)
       mdl.setId(mdlid)
       if mdlid < 0:
-         raise LMError(currargs='Unable to insert model for occ: %d, scen %d' %
-                       (mdl.occurrenceSet.getId(), mdl.getScenario().getId()),
+         raise LMError(currargs='Unable to insert model for occ: {}, scen {}'
+                       .format(mdl.occurrenceSet.getId(), 
+                               mdl.getScenario().getId()),
                         location=self.getLocation(), logger=self.log)
       
 # ...............................................
