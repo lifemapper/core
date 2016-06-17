@@ -36,6 +36,7 @@ from types import FileType
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, ENCODING
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
+from LmCommon.common.unicode import toUnicode
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
@@ -510,12 +511,12 @@ class svc(object):
                
                cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
                
-               welcomeMsg = """
+               welcomeMsg = toUnicode("""
                   <span class="signupWelcome">
-                     Welcome to Lifemapper, %s!
+                     Welcome to Lifemapper, {fName}!
                   </span>
-                  Your user id is: <span class="signupData">%s</span> 
-                  and your password is: <span class="signupData">%s</span>.
+                  Your user id is: <span class="signupData">{userId}</span> 
+                  and your password is: <span class="signupData">{pword}</span>.
                   <br /><br />
                   If you forget your password, you will need to contact us at 
                   <span class="signupData">[lifemapper at ku dot edu]</span> to 
@@ -524,14 +525,17 @@ class svc(object):
                   Now that you have created a user, any jobs you submit or 
                   occurrence sets you upload, while logged in, will belong to 
                   you.  If you navigate to <a href="/services/">
-                  %s/services/</a> all of the services 
+                  {website}/services/</a> all of the services 
                   listed will return your data.<br />
                   <br />
                   Welcome again to Lifemapper!<br />
                   <br />
-               """ % (str(fName), str(userId), str(pword), WEBSERVICES_ROOT)
-               return globalWebsite(''.join(("Welcome ", str(fName), "!")),
-                                    welcomeMsg)
+               """).format(fName=toUnicode(fName), userId=toUnicode(userId), 
+                           pword=toUnicode(pword), 
+                           website=toUnicode(WEBSERVICES_ROOT))
+               return globalWebsite(
+                   toUnicode("Welcome {fName}!").format(fName=toUnicode(fName)),
+                   welcomeMsg)
             else:
                scribe.closeConnections()
                return errorResponse(log, HTTPStatus.CONFLICT, msg="Duplicate user credentials", err=LMError("Duplicate user credentials"))
@@ -707,7 +711,7 @@ def globalWebsite(title, body):
    @param body: The body of the page
    @todo: Work towards removing this in favor of just using the main website for these pages
    """
-   return """\
+   return toUnicode("""\
 <html xmlns="http://www.w3.org/1999/xhtml">
    <head>
       <title>{title}</title>            
@@ -716,7 +720,7 @@ def globalWebsite(title, body):
 {body}
    </body>     
 </html>
-""".format(title=title, body=body)
+""").format(title=toUnicode(title), body=toUnicode(body))
 
 # .............................................................................
 def getUserLog(userId):
