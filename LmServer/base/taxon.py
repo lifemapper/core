@@ -79,14 +79,23 @@ class ScientificName(LMObject):
          return self.scientificName
       return self.canonicalName
 
-#    @property
-#    def rank(self):
-#       if self._sourceKey is not None:
-#          if (self._sourceSpeciesKey is not None and
-#              self._sourceKey == self._sourceSpeciesKey):
-#             return 'SPECIES' 
-#          elif (self._sourceGenusKey is not None and 
-#                self._sourceKey == self._sourceGenusKey):
-#             return 'GENUS'
-#          else:
-#             return None
+   @property
+   def taxonomySourceId(self):
+      return self._sourceId
+
+   @property
+   def sourceTaxonKey(self):
+      return self._sourceKey
+
+   @property
+   def sourceSpeciesKey(self):
+      return self._sourceSpeciesKey
+
+   @property
+   def sourceGenusKey(self):
+      return self._sourceGenusKey
+
+   @property
+   def _sourceKeyHierarchy(self):
+      return self._sourceKeyHierarchy
+
