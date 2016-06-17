@@ -59,6 +59,12 @@ if __name__ == "__main__":
    
    scribe.closeConnections()
    
+   # Read occurrence data for model jobs
+   try:
+      job.dataObj.occurrenceSet.readData()
+   except:
+      pass
+   
    jf = JobFormatter(job)
    
    output = str(jf.format())
