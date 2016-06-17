@@ -1229,7 +1229,7 @@ class Scribe(Peruser):
       for mdl in models:
          success = self.deleteExperiment(mdl)
          if not success:
-            self.log.error('Failed to delete experiment {}'.format(mdl.getId())
+            self.log.error('Failed to delete experiment {}'.format(mdl.getId()))
          
       # Should be present if GBIF or uploaded data
       occ.deleteData()
