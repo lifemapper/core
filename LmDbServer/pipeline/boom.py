@@ -34,11 +34,11 @@ from types import ListType, TupleType, StringType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
 from LmBackend.makeflow.documentBuilder import LMMakeflowDocument
-from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
+from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
-            ONE_HOUR, ONE_MIN, IDIGBIO_GBIFID_FIELD, GBIF_EXPORT_FIELDS,
-            GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
+            ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, 
+            GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH, 
