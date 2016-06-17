@@ -149,9 +149,9 @@ class LMMakeflowDocument(LMObject):
       """
       # Determine if there is a dependent job to build a model
       if prjJob.outputObj.getModel().status == JobStatus.COMPLETE:
-         dep = ''
+         dep = []
       else:
-         dep = prjJob.outputObj.getModel().getDLocation()
+         dep = [prjJob.outputObj.getModel().getDLocation()]
 
       jobId = prjJob.getId()
       jrFn = JOB_REQUEST_FILENAME.format(processType=prjJob.processType, 
