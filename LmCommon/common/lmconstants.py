@@ -911,7 +911,7 @@ ITIS_SPECIES_KEY = 'Species'
 # .                           iDigBio constants                               .
 # .............................................................................
 IDIGBIO_LINK_PREFIX = 'https://www.idigbio.org/portal/records'
-IDIGBIO_SEARCH_PREFIX = 'https://search.idigbio.org/v2'
+IDIGBIO_SEARCH_PREFIX = 'https://beta-search.idigbio.org/v2'
 IDIGBIO_SEARCH_POSTFIX ='search'
 IDIGBIO_OCCURRENCE_POSTFIX = 'records'
 IDIGBIO_PUBLISHERS_POSTFIX = 'publishers'
@@ -928,48 +928,45 @@ IDIGBIO_EXPORT_FIELDS = {0: (IDIGBIO_ID_FIELD, OFTString),
                          3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                          4: ('provider', OFTString)
                          }
-IDIGBIO_GBIFID_FIELD = 'gbif_taxonid'
+IDIGBIO_GBIFID_FIELD = 'taxonid'
 # Geopoint.lat and Geopoint.lon are modified on return to short names
 # Response record fields: https://search.idigbio.org/v2/meta/fields/records
 IDIGBIO_RETURN_FIELDS = {
-                        IDIGBIO_ID_FIELD: (IDIGBIO_ID_FIELD, OFTString),
-                        IDIGBIO_GBIFID_FIELD: ('taxonid', OFTString),
-                        DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: 
-                           (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),                        
-                        DWCNames.BASIS_OF_RECORD['FULL']:  
-                           (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.CATALOG_NUMBER['FULL']: 
-                           (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.COLLECTION_ID['FULL']: 
-                           (DWC_QUALIFIER + DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.COLLECTION_CODE['FULL']: 
+   IDIGBIO_ID_FIELD: (IDIGBIO_ID_FIELD, OFTString),
+   IDIGBIO_GBIFID_FIELD: ('taxonid', OFTString),
+   DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: (DWCNames.SCIENTIFIC_NAME['SHORT'], 
+                                                      OFTString),   
+   DWC_QUALIFIER + DWCNames.BASIS_OF_RECORD['FULL']:  (DWCNames.BASIS_OF_RECORD['SHORT'], 
+                                                       OFTString),
+   DWC_QUALIFIER + DWCNames.CATALOG_NUMBER['FULL']: (DWCNames.CATALOG_NUMBER['SHORT'], 
+                                                     OFTString),
+   DWC_QUALIFIER + DWCNames.COLLECTION_ID['FULL']: 
+                           (DWCNames.COLLECTION_ID['SHORT'], OFTString),
+   DWC_QUALIFIER + DWCNames.COLLECTION_CODE['FULL']: 
                            (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.RECORDED_BY['FULL']: 
+   DWC_QUALIFIER + DWCNames.RECORDED_BY['FULL']: 
                            (DWCNames.RECORDED_BY['SHORT'], OFTString),
-                        'commonname': ('comname', OFTString),
-                        DWC_QUALIFIER + DWCNames.CONTINENT['FULL']: 
-                           (DWCNames.CONTINENT['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.COUNTRY_CODE['FULL']: 
-                           (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.DAY['FULL']: 
-                           (DWCNames.DAY['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.MONTH['FULL']: 
-                           (DWCNames.MONTH['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.YEAR['FULL']: 
-                           (DWCNames.YEAR['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.INSTITUTION_CODE['FULL']: 
-                           (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.INSTITUTION_ID['FULL']: 
-                           (DWCNames.INSTITUTION_ID['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.OCCURRENCE_ID['FULL']: 
-                           (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
-                        DWC_QUALIFIER + DWCNames.STATE_PROVINCE['FULL']: 
-                           (DWCNames.STATE_PROVINCE['SHORT'], OFTString),
-                        DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: 
-                           (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                        DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']:
-                           (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                        }
+   'commonname': ('comname', OFTString),                  
+   DWC_QUALIFIER + DWCNames.CONTINENT['FULL']: (DWCNames.CONTINENT['SHORT'], 
+                                                OFTString),
+   DWC_QUALIFIER + DWCNames.COUNTRY_CODE['FULL']: (DWCNames.COUNTRY_CODE['SHORT'], 
+                                                   OFTString),
+   DWC_QUALIFIER + DWCNames.DAY['FULL']: (DWCNames.DAY['SHORT'], OFTString),
+   DWC_QUALIFIER + DWCNames.MONTH['FULL']: (DWCNames.MONTH['SHORT'], OFTString),
+   DWC_QUALIFIER + DWCNames.YEAR['FULL']: (DWCNames.YEAR['SHORT'], OFTString),
+   DWC_QUALIFIER + DWCNames.INSTITUTION_CODE['FULL']: (DWCNames.INSTITUTION_CODE['SHORT'], 
+                                                       OFTString),
+   DWC_QUALIFIER + DWCNames.INSTITUTION_ID['FULL']: (DWCNames.INSTITUTION_ID['SHORT'], 
+                                                     OFTString),
+   DWC_QUALIFIER + DWCNames.OCCURRENCE_ID['FULL']: (DWCNames.OCCURRENCE_ID['SHORT'], 
+                                                    OFTInteger),
+   DWC_QUALIFIER + DWCNames.STATE_PROVINCE['FULL']: (DWCNames.STATE_PROVINCE['SHORT'], 
+                                                     OFTString),
+   DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: (DWCNames.DECIMAL_LATITUDE['SHORT'], 
+                                                       OFTReal),
+   DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']: (DWCNames.DECIMAL_LONGITUDE['SHORT'], 
+                                                        OFTReal),
+   }
 
 IDIGBIO_BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
 

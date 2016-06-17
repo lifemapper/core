@@ -354,13 +354,11 @@ class ShapeShifter(object):
 
       # Write metadata as JSON
       basename, ext = os.path.splitext(outFname)
-      self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
-                          fcount, minX, minY, maxX, maxY)
+      self._writeMetadata(basename, geomtype, fcount, minX, minY, maxX, maxY)
 
       if subsetFname is not None:
          basename, ext = os.path.splitext(subsetFname)
-         self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
-                             subsetCount, minX, minY, maxX, maxY)
+         self._writeMetadata(basename, geomtype, subsetCount, minX, minY, maxX, maxY)
          
          goodData, featCount = self.testShapefile(subsetFname)
          if not goodData: 
@@ -646,8 +644,7 @@ class ShapeShifter(object):
       
 # ...............................................
 if __name__ == '__main__':
-#    from LmCommon.common.createshape import ShapeShifter
-   from LmCommon.common.apiquery import IdigbioAPI   
+   from LmCommon.common.apiquery import IdigbioAPI
    outfilename = '/tmp/testidigpoints.shp'
    subsetOutfilename = '/tmp/testidigpoints_sub.shp'
    taxid = 2437967
@@ -669,4 +666,31 @@ if __name__ == '__main__':
    shaper.writeOccurrences(outfilename, maxPoints=40, 
                            subsetfname=subsetOutfilename)
    
+"""
+from LmCommon.common.createshape import ShapeShifter
+from LmCommon.common.apiquery import IdigbioAPI
+from LmCommon.common.lmconstants import ProcessType
+
+outfilename = '/tmp/testidigpoints.shp'
+subsetOutfilename = '/tmp/testidigpoints_sub.shp'
+taxid = 2437967
+
+if os.path.exists(outfilename):
+   import glob
+   basename, ext = os.path.splitext(outfilename)
+   fnames = glob.glob(basename + '*')
+   for fname in fnames:
+      print('Removing {}'.format(fname))
+      os.remove(fname)
+
+occAPI = IdigbioAPI()
+occList = occAPI.queryByGBIFTaxonId(taxid)
+
+count = len(occList)
+
+shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
+
+shaper.writeOccurrences(outfilename, maxPoints=40, 
+                        subsetfname=subsetOutfilename)
    
+"""
