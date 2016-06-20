@@ -33,7 +33,6 @@ from time import sleep
 from types import ListType, TupleType, StringType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
-from LmBackend.makeflow.documentBuilder import LMMakeflowDocument
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
@@ -47,6 +46,7 @@ from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS,
                                             APP_PATH)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
+from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.occlayer import OccurrenceLayer
