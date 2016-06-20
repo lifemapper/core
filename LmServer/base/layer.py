@@ -203,7 +203,7 @@ class _Layer(LMSpatialObject, ServiceObject):
          else:
             if dlocation is None:
                dlocation = self._dlocation  
-            if os.path.exists(dlocation):       
+            if dlocation is not None and os.path.exists(dlocation):       
                value = self.computeHash(dlocation=dlocation)
          self._verify = value
 
