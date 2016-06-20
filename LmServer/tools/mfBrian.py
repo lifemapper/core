@@ -46,7 +46,7 @@ from LmCompute.common.log import MediatorLogger
 from LmServer.db.scribe import Scribe
 from LmServer.common.localconstants import ARCHIVE_USER
 
-MF_DAEMON_PID_FILE = ""
+MF_DAEMON_PID_FILE = "/share/lm/temp/mf-brian-daemon.pid"
 
 # .............................................................................
 class MfBrian(Daemon):
