@@ -37,6 +37,7 @@ from LmServer.common.lmconstants import JobFamily
 from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD
 from LmServer.common.localconstants import APP_PATH
 from LmCommon.common.lmconstants import JobStatus
+from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
 BUILD_JOB_REQUEST_CMD = "$PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
@@ -89,7 +90,40 @@ class LMMakeflowDocument(LMObject):
                                  jrScript=os.path.join(APP_PATH, 
                                       "LmBackend/makeflow/makeJobRequest.py")))
       #REQ_FILL=$HOME/git/core/LmCompute/scripts/fillProjectionRequest.py
+   
+   # ...........................
+   def addProcessesForChain(self, jobChain):
+      """
+      @summary: Adds all of the processes necessary for jobs in the chain
+      @param jobChain: A recursive iterable of (item, [dependencies])
+      @note: This job chain will start as jobs, but will switch to objects
+      """
       
+      # ......................
+      def addProcessForItem(item, deps):
+         """
+         @summary: Internal function to process recursive structure of chain
+         @param item: Job or object to add process for
+         """
+         try: # See if we have a self-aware object
+            for targets, cmd, deps, comment in item.getMakeflowProcess():
+               pass
+         except: # Should fail until we implement functions on objects
+            if isinstance(item, SDMOccurrenceJob):
+               self.buildOccurrenceSet(item)
+            elif isinstance(item, SDMModelJob):
+               self.buildModel(item)
+            elif isinstance(item, SDMProjectionJob):
+               self.buildProjection(item)
+            else:
+               raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
+         
+         for i, d in deps:
+            addProcessForItem(i, d)
+         
+      item, deps = jobChain
+      addProcessForItem(item, deps)
+   
    # ...........................
    def buildOccurrenceSet(self, occJob):
       """
