@@ -124,7 +124,7 @@ class LMMakeflowDocument(LMObject):
                raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
          
          for iTup in deps:
-            if isinstance(iTup, [TupleType, ListType]):
+            if isinstance(iTup, (TupleType, ListType)):
                i, d = iTup
             else:
                i = iTup
