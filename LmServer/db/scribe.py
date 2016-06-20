@@ -207,8 +207,8 @@ class Scribe(Peruser):
                e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
                      
-      self.log.debug('Created %d chained jobs for ready occset %d' 
-                     % (len(jobs), occ.getId()))
+      self.log.debug('Created {} chained jobs for ready occset {}'
+                     .format(len(jobs), occ.getId()))
       return len(jobs)
 
 # ...............................................
@@ -306,11 +306,11 @@ class Scribe(Peruser):
          prj.clearProjectionFiles()
          deleted = self._mal.deleteProjection(prj.getId())
          if not deleted:
-            self.log.error('Unable to delete projection %d' % prj.getId())
+            self.log.error('Unable to delete projection {}'.format(prj.getId()))
             success = False
       deleted = self._mal.deleteModel(model.getId())
       if not deleted:
-         self.log.error('Unable to delete model %d' % model.getId())
+         self.log.error('Unable to delete model {}'.format(model.getId()))
          success = False
       return success
 
@@ -327,35 +327,9 @@ class Scribe(Peruser):
          prj.clearProjectionFiles()
          deleted = self._mal.deleteProjection(prj.getId())
          if not deleted:
-            self.log.error('Unable to delete projection %d' % prj.getId())
+            self.log.error('Unable to delete projection {}'.format(prj.getId()))
             success = False
       return success
-
-
-# # ...............................................
-#    def deleteOccDependentObjects(self, occ):
-#       """
-#       @summary Delete a model and any projections associated with it.
-#       @param model: model to remove
-#       @todo: when we update the database to include occurrences within the MAL,
-#              we will want to delete orphaned occurrences here.
-#       """
-#       success = True
-#       self._mal.deleteOccAndDependentObjects(occ.getId())
-#       model.clearModelFiles()
-#       model.clearLocalMapfile()
-#       projs = self._mal.getProjectionsForModel(model.getId(), status=None)
-#       for prj in projs:
-#          prj.clearProjectionFiles()
-#          deleted = self._mal.deleteProjection(prj.getId())
-#          if not deleted:
-#             self.log.error('Unable to delete projection %d' % prj.getId())
-#             success = False
-#       deleted = self._mal.deleteModel(model.getId())
-#       if not deleted:
-#          self.log.error('Unable to delete model %d' % model.getId())
-#          success = False
-#       return success
 
 # ...............................................
    def _rollbackExp(self, oldexp, modtime=mx.DateTime.gmt().mjd, 
@@ -613,7 +587,7 @@ class Scribe(Peruser):
                                     .format(lyr.getDLocation()), 
                           lineno=self.getLineno())
       else:
-         raise LMError(currargs='Error %s insertion is not supported'
+         raise LMError(currargs='Error {} insertion is not supported'
                                  .format(type(lyr)), 
                        lineno=self.getLineno())
       return lyrid
@@ -1190,7 +1164,7 @@ class Scribe(Peruser):
       success = self._mal.deleteOccAndDependentObjects(occ.getId(), 
                                                        occ.getUserId())
       if not success:
-         self.log.info ('  Failed to remove occurrence set %d' % (occ.getId()))
+         self.log.info ('Failed to remove occurrence set {}'.format(occ.getId()))
 
       return success
       
@@ -1221,8 +1195,8 @@ class Scribe(Peruser):
       occ.updateStatus(JobStatus.GENERAL, queryCount=-1)
       success = self.updateOccState(occ)
       if not success:
-         self.log.error ('  Failed to remove experiments for occurrence set %d' 
-                        % (occ.getId()))
+         self.log.error ('Failed to remove experiments for occurrence set {}'
+                         .format(occ.getId()))
       return success
       
 # ...............................................
@@ -1235,8 +1209,8 @@ class Scribe(Peruser):
       """
       success = self._mal.setSpeciesEnvironment(occ.getId(), primaryEnvCode)
       if not success:
-         self.log.error ('Failed to set occurrence set %d to environment %d' % 
-                        (occ.getId(), primaryEnvCode))
+         self.log.error ('Failed to set occurrence set {} to environment {}'
+                         .format(occ.getId(), primaryEnvCode))
 
       return success
 
@@ -1255,7 +1229,7 @@ class Scribe(Peruser):
       for mdl in models:
          success = self.deleteExperiment(mdl)
          if not success:
-            self.log.error('Failed to delete experiment %d' % mdl.getId())
+            self.log.error('Failed to delete experiment {}'.format(mdl.getId()))
          
       # Should be present if GBIF or uploaded data
       occ.deleteData()
@@ -1322,8 +1296,8 @@ class Scribe(Peruser):
          try:
             self.deleteExperiment(exp.model)
          except Exception, e:
-            self.log.error('Failed to delete experiment {} with {} points' % 
-                           (exp.getId(), exp.model.occurrenceSet.queryCount))
+            self.log.error('Failed to delete experiment {} with {} points'
+                           .format(exp.getId(), exp.model.occurrenceSet.queryCount))
       else:
          try:
             mdlJob, notJob = self.reinitSDMModel(exp.model, priority, 
@@ -1337,8 +1311,7 @@ class Scribe(Peruser):
                jobs.append(prjJob)
          except Exception, e:
             if not isinstance(e, LMError):
-               e = LMError(currargs='Failed updating old exp {}'
-                                    .format(exp.getId()),
+               e = LMError(currargs='Failed updating old exp {}'.format(exp.getId()),
                            prevargs=e.args, lineno=self.getLineno())
             self.log.debug('Failed rollback exp, deleting instead ({})'.format(e))
             self.deleteExperiment(exp.model)

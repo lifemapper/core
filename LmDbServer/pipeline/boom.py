@@ -34,11 +34,11 @@ from types import ListType, TupleType, StringType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
 from LmBackend.makeflow.documentBuilder import LMMakeflowDocument
-from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
+from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
-            ONE_HOUR, ONE_MIN, IDIGBIO_GBIFID_FIELD, GBIF_EXPORT_FIELDS,
-            GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
+            ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, 
+            GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH, 
@@ -158,7 +158,7 @@ class _LMBoomer(LMObject):
          try:
             self._scribe.closeConnections()
          except Exception, e:
-            self.log.warning('Error while failing: {}'.format(str(e)))
+            self.log.warning('Error while failing: {}'.format(e))
             
       self.log.debug('Time: {}; gracefully exiting ...'.format(dt.utc().mjd))
 
@@ -253,7 +253,7 @@ class _LMBoomer(LMObject):
                self.log.info('Notified: {}, user {}'.format(subject, job.email))
             except LMError, e:
                self.log.info('Failed to notify user {} of {} ({})'
-                             .format(job.email, subject, str(e)))
+                             .format(job.email, subject, e))
                success = False
       return success         
 
@@ -263,7 +263,7 @@ class _LMBoomer(LMObject):
          deleted = self._scribe.completelyRemoveOccurrenceSet(occSet)
       except Exception, e:
          self.log.error('Failed to completely remove occurrenceSet {} ({})'
-                        .format(occSet.getId(), str(e)))
+                        .format(occSet.getId(), e))
       else:
          self.log.debug('   removed occurrenceset {}/{} in MAL'
                         .format(occSet.getId(), occSet.displayName))
@@ -358,7 +358,7 @@ class _LMBoomer(LMObject):
             jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
          except Exception, e:
             raise LMError(currargs='Failed to insert jobChain for {}; ({})'
-                          .format(filename, str(e)))
+                          .format(filename, e))
       return jobchainId
 
 # ...............................................
@@ -594,7 +594,7 @@ class BisonBoom(_LMBoomer):
                success = True
             except Exception, e:
                self.log.debug('Exception reading line {} ({})'
-                              .format(self._linenum, str(e)))
+                              .format(self._linenum, e))
       return tsn, tsnCount
 
 # ...............................................
@@ -648,7 +648,7 @@ class BisonBoom(_LMBoomer):
             (itisname, king, tsnHier) = BisonAPI.getItisTSNValues(itisTsn)
          except Exception, e:
             self.log.error('Failed to get results for ITIS TSN {} ({})'
-                           .format(itisTsn, str(e)))
+                           .format(itisTsn, e))
          else:
             sleep(5)
             if itisname is not None and itisname != '':
@@ -978,7 +978,7 @@ class GBIFBoom(_LMBoomer):
                provkey = line[self._provCol]
             except:
                self.log.debug('Failed to find providerKey on record {} ({})' 
-                     .format(self._linenum, str(line)))
+                     .format(self._linenum, line))
             else:
                provname = provkey
                try:
@@ -1100,10 +1100,10 @@ class iDigBioBoom(_LMBoomer):
             self._linenum += 1
             if isinstance(e, OverflowError):
                self.log.debug( 'OverflowError on {} ({}), moving on'.format(
-                                                self._linenum, str(e)))
+                                                self._linenum, e))
             else:
                self.log.debug('Exception reading line {} ({})'.format(
-                                                self._linenum, str(e)))
+                                                self._linenum, e))
                success = True
          else:
             self._linenum += 1

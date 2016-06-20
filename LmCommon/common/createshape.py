@@ -673,7 +673,7 @@ from LmCommon.common.lmconstants import ProcessType
 
 outfilename = '/tmp/testidigpoints.shp'
 subsetOutfilename = '/tmp/testidigpoints_sub.shp'
-taxid = 2437967
+taxid = 2427616
 
 if os.path.exists(outfilename):
    import glob

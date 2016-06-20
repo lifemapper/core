@@ -105,8 +105,9 @@ class MAL(DbPostgresql):
                                          mdl.priority)
       mdl.setId(mdlid)
       if mdlid < 0:
-         raise LMError(currargs='Unable to insert model for occ: %d, scen %d' %
-                       (mdl.occurrenceSet.getId(), mdl.getScenario().getId()),
+         raise LMError(currargs='Unable to insert model for occ: {}, scen {}'
+                       .format(mdl.occurrenceSet.getId(), 
+                               mdl.getScenario().getId()),
                         location=self.getLocation(), logger=self.log)
       
 # ...............................................
@@ -3371,17 +3372,17 @@ class MAL(DbPostgresql):
       currtime = mx.DateTime.gmt().mjd
       try:
          scinameId = self.executeInsertFunction('lm_insertTaxon', 
-                                                sciName._sourceId,
-                                                sciName._sourceSpeciesKey,
+                                                sciName.taxonomySourceId,
+                                                sciName.sourceTaxonKey,
                                                 sciName.kingdom, sciName.phylum,
                                                 sciName.txClass, sciName.txOrder,
                                                 sciName.family, sciName.genus,
                                                 sciName.scientificName,
                                                 sciName.canonicalName, 
                                                 sciName.rank, 
-                                                sciName._sourceGenusKey,
-                                                sciName._sourceSpeciesKey,
-                                                sciName._sourceKeyHierarchy,
+                                                sciName.sourceGenusKey,
+                                                sciName.sourceSpeciesKey,
+                                                sciName.sourceKeyHierarchy,
                                                 sciName.lastOccurrenceCount,
                                                 currtime)
       except Exception, e:
