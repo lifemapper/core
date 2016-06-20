@@ -29,14 +29,18 @@
 @todo: Many functions can take a subworkflow or a pre-existing object, handle that
 @note: Start by using job objects
 @note: Let job server handle object updates for now
+@todo: Job request dir and python command constants need to move out of compute
+@todo:   Or, use $PYTHON if that works and job requests will be generated in workspace
 """
 import os
 
+from LmCommon.common.lmconstants import JobStatus
+
+from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD
+
 from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
-from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD
 from LmServer.common.localconstants import APP_PATH
-from LmCommon.common.lmconstants import JobStatus
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
