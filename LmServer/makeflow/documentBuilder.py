@@ -42,6 +42,7 @@ from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
 from LmServer.common.localconstants import APP_PATH
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
+from types import TupleType, ListType
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
 BUILD_JOB_REQUEST_CMD = "$PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
@@ -104,7 +105,7 @@ class LMMakeflowDocument(LMObject):
       """
       
       # ......................
-      def addProcessForItem(item, deps):
+      def addProcessForItem(item, deps=[]):
          """
          @summary: Internal function to process recursive structure of chain
          @param item: Job or object to add process for
@@ -122,7 +123,12 @@ class LMMakeflowDocument(LMObject):
             else:
                raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
          
-         for i, d in deps:
+         for iTup in deps:
+            if isinstance(iTup, [TupleType, ListType]):
+               i, d = iTup
+            else:
+               i = iTup
+               d = []
             addProcessForItem(i, d)
          
       item, deps = jobChain
