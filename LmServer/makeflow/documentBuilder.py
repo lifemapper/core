@@ -86,6 +86,7 @@ class LMMakeflowDocument(LMObject):
    
    # ...........................
    def _addDocumentHeaders(self):
+      #TODO: Get these from constants
       self.headers.append("PYTHON={pyCmd}".format(pyCmd=PYTHON_CMD))
       self.headers.append("RUNNER={factoryPath}".format(
                                        factoryPath=os.path.join(APP_PATH, 
@@ -93,7 +94,7 @@ class LMMakeflowDocument(LMObject):
       self.headers.append("JOB_REQUESTS={jrDir}".format(jrDir=JOB_REQUEST_DIR))
       self.headers.append("MAKE_JOB_REQUEST={jrScript}".format(
                                  jrScript=os.path.join(APP_PATH, 
-                                      "LmBackend/makeflow/makeJobRequest.py")))
+                                      "LmServer/makeflow/makeJobRequest.py")))
       #REQ_FILL=$HOME/git/core/LmCompute/scripts/fillProjectionRequest.py
    
    # ...........................
