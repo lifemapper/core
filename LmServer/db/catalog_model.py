@@ -672,12 +672,11 @@ class MAL(DbPostgresql):
                                                   modelid, None)
       for r in rows:
          prj = self._createProjection(r, idxs, doFillScenario=False)
-#          prjDeps = self._getPrjDependents(prj.getId())
          job = self.getJobOfType(prj)
          if job is not None:
-            prj = job
-         mdlDeps.append(prj)
-#          mdlDeps.append((prj, prjDeps))
+            mdlDeps.append(job)
+         else:
+            mdlDeps.append(prj)
       return mdlDeps
         
 # ...............................................
@@ -699,64 +698,34 @@ class MAL(DbPostgresql):
       for mr in rows:
          mdl = self._createModel(mr, midxs, doFillScenario=False)
          mdlDeps = self._getMdlDependents(mdl.getId())
+         occDeps.extend(mdlDeps)
 
          job = self.getJobOfType(mdl)
          if job is not None:
-            mdl = job
-            
-         occDeps.append((mdl, mdlDeps))
+            occDeps.append(job)
+         else:
+            occDeps.append(mdl)
             
       return occDeps
-
-# ...............................................
-   def getObjectChain(self, occ, mdl, prj):
-      """
-      @return: a set of projections (models and occurrenceset are included
-               in each projection)
-      """
-      projs = []
-
-      occid = None
-      if occ is not None:
-         occid = occ.getId()
-      elif mdl is not None:
-         occid = mdl.getOccurrenceSet().getId()
-      elif prj is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getProjection', prj.getId())
-         occid = self._getColumnValue(row, idxs, ['occurrencesetid'])
-      else:
-         raise LMError(currargs='Must provide OccurrenceSet, Model, or Projection')
-      
-      rows, idxs = self.executeSelectManyFunction('lm_getProjectionsForOccurrenceSet',
-                                                  occid, None, None)
-      for r in rows:
-         projs.append(self._createProjection(r, idxs, doFillScenario=False))
-      
-      return projs
             
 # ...............................................
-   def getJobChainTopDown(self, occ):
+   def getObjectDependents(self, occ):
       """
       @note: Gets job/objects from database, modifies nothing
-      @note: This is a temporary function, will be replaced with `getObjectChain`
-             to return objects with dependencies, and `getJobChain` to return a 
-             JobChain record
-      @return: a nested tuple of dependent jobs and objects as:
-         (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
-                   (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
+      @return: a list of dependent jobs and objects
       """
-      top = None
       if occ.status == JobStatus.INITIALIZE:
          
          row, idxs = self.executeSelectOneFunction('lm_getOccurrenceJobForId', 
                                                    occ.getId())
-         top = self._createSDMJobNew(row, idxs)
-            
-      if top is None:
-         top = occ 
+         job = self._createSDMJobNew(row, idxs)
             
       occDeps = self._getOccDependents(occ.getId())
-      return (top, occDeps)
+      if job is not None:
+         occDeps.append(job)
+      else:
+         occDeps.append(occ)
+      return occDeps
       
 # ...............................................
    def insertJobChain(self, usr, dlocation, status, priority):

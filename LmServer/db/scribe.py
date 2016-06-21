@@ -831,11 +831,10 @@ class Scribe(Peruser):
       return jobchains
 
 # ...............................................
-   def getJobChains(self, count, usr):
+   def getJobChains(self, count, usr=None):
       """
       @note: Gets jobChains from database, modifying nothing
       @return: a list of tuples, i.e. [(jobChainId, filename), ...]
-      @todo: Working in next roll build/code tag (1.0.93+)
       """
       jobchains = self._mal.getJobChains(count, JobStatus.INITIALIZE, usr)
       return jobchains
@@ -848,30 +847,18 @@ class Scribe(Peruser):
       """
       success = self._mal.deleteJobChain(jobchainId)
       return success
-
-# ...............................................
-   def getObjectChain(self, occ=None, mdl=None, prj=None):
-      """
-      @return: a set of projections (models and occurrenceset are included
-               in each projection)
-      @note: this will soon contain RAD-related objects as well
-      @todo: CJ: want dependencies in the return structure? Layers?
-      """
-      projs = self._mal.getObjectChain(occ, mdl, prj)
-      
-      return projs
       
 # ...............................................
-   def getJobChainTopDown(self, occ=None, mdl=None, prj=None):
+   def getObjectDependents(self, occ=None, mdl=None, prj=None):
       """
       @return: a nested tuple of dependent jobs and objects as:
          (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
                    (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
       @note: The top occurrence object will be a Job if it must be computed
       """
-      (topOcc, occDependents) = self._mal.getJobChainTopDown(occ)
+      (topOcc, occDependents) = self._mal.getObjectDependents(occ)
       return (topOcc, occDependents)
-      
+
 # ...............................................
    def resetTopDownJobChain(self, oldstat, startstat, depstat, 
                             top=ReferenceType.OccurrenceSet, usr=None):
@@ -2022,7 +2009,7 @@ scribe.openConnections()
    
 occList = scribe.listOccurrenceSets(0, 1, minOccurrenceCount=20, status=JobStatus.COMPLETE, atom=False)
 occ2 = occList[0]
-chain2 = scribe.getJobChainTopDown(occ=occ2)
+chain2 = scribe.getObjectDependents(occ=occ2)
 
 scribe.closeConnections()
 """
