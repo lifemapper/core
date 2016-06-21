@@ -851,9 +851,7 @@ class Scribe(Peruser):
 # ...............................................
    def getObjectDependents(self, occ=None, mdl=None, prj=None):
       """
-      @return: a nested tuple of dependent jobs and objects as:
-         (occObj, [(mdlObj, [(prjObj, [(pavJob, None)]), (prjJob, None)]), 
-                   (mdlJob, [(prjJob, [(pavJob, None), (pavJob, None)])]) ])
+      @return: a list of dependent jobs and objects
       @note: The top occurrence object will be a Job if it must be computed
       """
       (topOcc, occDependents) = self._mal.getObjectDependents(occ)
