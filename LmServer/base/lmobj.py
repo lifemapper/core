@@ -297,8 +297,7 @@ class LMSpatialObject(LMObject):
       """
       bstrLst = None
       if self._bbox is not None:
-         bstrLst = ['{0:.2f}, {1:.2f}, {2:.2f}, {3:.2f}'.format(self._bbox[0], 
-                                 self._bbox[1], self._bbox[2], self._bbox[3])]
+         bstrLst = ['{0:.2f}'.format(b) for b in self._bbox]
       return bstrLst
 
 # ..............................................................................
