@@ -42,6 +42,7 @@ from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
 from LmServer.common.localconstants import APP_PATH
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
+from types import TupleType, ListType
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
 BUILD_JOB_REQUEST_CMD = "$PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
@@ -85,6 +86,7 @@ class LMMakeflowDocument(LMObject):
    
    # ...........................
    def _addDocumentHeaders(self):
+      #TODO: Get these from constants
       self.headers.append("PYTHON={pyCmd}".format(pyCmd=PYTHON_CMD))
       self.headers.append("RUNNER={factoryPath}".format(
                                        factoryPath=os.path.join(APP_PATH, 
@@ -92,7 +94,7 @@ class LMMakeflowDocument(LMObject):
       self.headers.append("JOB_REQUESTS={jrDir}".format(jrDir=JOB_REQUEST_DIR))
       self.headers.append("MAKE_JOB_REQUEST={jrScript}".format(
                                  jrScript=os.path.join(APP_PATH, 
-                                      "LmBackend/makeflow/makeJobRequest.py")))
+                                      "LmServer/makeflow/makeJobRequest.py")))
       #REQ_FILL=$HOME/git/core/LmCompute/scripts/fillProjectionRequest.py
    
    # ...........................
@@ -104,7 +106,7 @@ class LMMakeflowDocument(LMObject):
       """
       
       # ......................
-      def addProcessForItem(item, deps):
+      def addProcessForItem(item, deps=[]):
          """
          @summary: Internal function to process recursive structure of chain
          @param item: Job or object to add process for
@@ -122,7 +124,12 @@ class LMMakeflowDocument(LMObject):
             else:
                raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
          
-         for i, d in deps:
+         for iTup in deps:
+            if isinstance(iTup, (TupleType, ListType)):
+               i, d = iTup
+            else:
+               i = iTup
+               d = []
             addProcessForItem(i, d)
          
       item, deps = jobChain
