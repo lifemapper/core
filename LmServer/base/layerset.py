@@ -25,7 +25,8 @@
 import os
 from osgeo import gdal, gdalconst, ogr
 
-from LmCommon.common.lmconstants import DEFAULT_EPSG, DEFAULT_MAPUNITS
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, DEFAULT_MAPUNITS, 
+                                         GBIF_LINK_FIELD)
 
 from LmServer.base.layer import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMError, LMSpatialObject
@@ -543,7 +544,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
          
          elif isinstance(sdlLyr, OccurrenceLayer) and sdlLyr.fromGbif:
             # TODO: Remove this after certain that valAttribute is always populated
-            attMeta = ['wfs_featureid  \"%s\"' % OccurrenceLayer.getURLFieldName()]
+            attMeta = ['wfs_featureid  \"%s\"' % GBIF_LINK_FIELD]
                       
          meta = self._getLayerMetadata(sdlLyr, metalines=attMeta, 
                                        isVector=True)

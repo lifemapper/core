@@ -54,7 +54,8 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import DEFAULT_EPSG, JobStatus, OutputFormat
+from LmCommon.common.lmconstants import DEFAULT_EPSG, JobStatus, OutputFormat,\
+   OFTString
 from LmServer.common.localconstants import APP_PATH
 
 LM_SCHEMA = 'lm3'
@@ -208,40 +209,17 @@ class ReferenceType:
             theseDeps.append(ReferenceType.topDownChain(dep))
          return (rtype, theseDeps)
 
-               
-# .............................................................................
-class FeatureNames:
-   """
-   @summary: Shapefile feature names
-   """
-   SITE_ID = 'siteid'
-   SITE_X = 'centerX'
-   SITE_Y = 'centerY'
-   CANONICAL_NAME = "canname"
-   CATALOG_NUMBER = "catnum"
-   COLLECTION_CODE = "collcode"
-   COLLECTION_DATE = "colldate"
-   COLLECTOR = "collectr"
-   GBIF_LATITUDE = "lat"
-   GBIF_LONGITUDE = "lon"
-   GEOMETRY_WKT = "geomwkt"
-   INSTITUTION_CODE = "instcode"
-   LOCAL_ID = "localid"
-   MODIFICATION_DATE = "moddate"
-   NAME_KEY = "nmkey"
-   OCCURRENCE_KEY = "occkey"
-   PROVIDER_KEY = "provkey"
-   PROVIDER_NAME = "provname"
-   RESOURCE_KEY = "reskey"
-   RESOURCE_NAME = "resname"
-   URL = "url"
-   USER_LATITUDE = "latitude"
-   USER_LONGITUDE = "longitude"
 
-ARCHIVE_DELETE_YEAR = 2014
-ARCHIVE_DELETE_MONTH = 7
-ARCHIVE_DELETE_DAY = 13
-
+from LmCommon.common.lmconstants import DWCNames
+class OccurrenceFieldNames:
+   LOCAL_ID = ['localid', 'localId', 'id', 'occkey', 
+               DWCNames.OCCURRENCE_ID['SHORT']]
+   UUID = ['uuid']
+   LONGITUDE = ['longitude', 'x', 'lon', 'long', DWCNames.DECIMAL_LONGITUDE['SHORT']]
+   LATITUDE =  ['latitude', 'y', 'lat', DWCNames.DECIMAL_LATITUDE['SHORT']]
+   DATANAME = ['canname', 'species']
+   GEOMETRY_WKT = ['geomwkt']
+   
 # Web directories
 # TODO: See how many of these are still in use.  They should probably be 
 #          constants in LmWebServer if they are still needed
@@ -348,10 +326,6 @@ OCC_PREFIX = 'pt'
 PRJ_PREFIX = 'prj'
 SPLOTCH_PREFIX = 'splotch'
 PAMSUM_PREFIX = 'pamsum'
-
-LOCAL_ID_FIELD_NAMES = ['siteid', 'localId', 'localid', 'id', 'occkey', 'uuid']
-LONGITUDE_FIELD_NAMES =  ['x', 'lon', 'longitude', 'long', 'dec_lon']
-LATITUDE_FIELD_NAMES =  ['y', 'lat', 'latitude', 'dec_lat']
 
 class FileFix:
    PREFIX = {LMFileType.OTHER_MAP: MapPrefix.USER,

@@ -32,9 +32,8 @@ from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.base.layer import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
-from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, FeatureNames,
-                    ID_PLACEHOLDER, LMFileType, LMServiceType, LMServiceModule,
-                    LOCAL_ID_FIELD_NAMES)
+from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, OccurrenceFieldNames,
+                    ID_PLACEHOLDER, LMFileType, LMServiceType, LMServiceModule)
 
 # .............................................................................
 # .............................................................................
@@ -159,38 +158,16 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
 # .............................................................................
 
    @staticmethod
-   def getGBIFFeatureAttributes():
-      featureAttributes = {
-                  0: (FeatureNames.OCCURRENCE_KEY, ogr.OFTInteger),
-                  1: (FeatureNames.GBIF_LONGITUDE, ogr.OFTReal),
-                  2: (FeatureNames.GBIF_LATITUDE,  ogr.OFTReal),
-                  3: (FeatureNames.CANONICAL_NAME, ogr.OFTString),
-                  4: (FeatureNames.NAME_KEY, ogr.OFTInteger),
-                  5: (FeatureNames.RESOURCE_NAME, ogr.OFTString),
-                  6: (FeatureNames.RESOURCE_KEY, ogr.OFTInteger),
-                  7: (FeatureNames.PROVIDER_NAME, ogr.OFTString),
-                  8: (FeatureNames.PROVIDER_KEY, ogr.OFTInteger),
-                  9: (FeatureNames.COLLECTION_DATE, ogr.OFTReal),
-                  10: (FeatureNames.COLLECTOR, ogr.OFTString),
-                  11: (FeatureNames.INSTITUTION_CODE, ogr.OFTString),
-                  12: (FeatureNames.COLLECTION_CODE, ogr.OFTString),
-                  13: (FeatureNames.CATALOG_NUMBER, ogr.OFTString),
-                  14: (FeatureNames.MODIFICATION_DATE, ogr.OFTReal),
-                  15: Vector.getURLFieldDef(),
-                  16: Vector.getGeometryFieldDef()
-                  }
-      return featureAttributes
-   
-   @staticmethod
    def getUserPointFeatureAttributes():
       featureAttributes = {
-                  0: Vector.getLocalIdFieldDef(),
-                  1: (FeatureNames.USER_LONGITUDE, ogr.OFTReal),
-                  2: (FeatureNames.USER_LATITUDE,  ogr.OFTReal),
-                  3: Vector.getGeometryFieldDef()
+                  0: (Vector._localIdFieldName, Vector._localIdFieldType),
+                  1: (OccurrenceFieldNames.LONGITUDE[0], ogr.OFTReal),
+                  2: (OccurrenceFieldNames.LATITUDE[0],  ogr.OFTReal),
+                  3: (Vector._geomFieldName, Vector._geomFieldType)
                   }
       return featureAttributes
    
+# ...............................................
    @staticmethod
    def getUserPointFeature(id, x, y):
       geomwkt = OccurrenceLayer.getPointWkt(x, y)
@@ -497,7 +474,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       if self._localIdIdx is None:
          self.getLocalIdIndex()
             
-      geomIdx = self.getFieldIndex(self.getGeometryFieldName())
+      geomIdx = self.getFieldIndex(self._geomFieldName)
       for featureFID in self._features.keys():
          fid = self.getFeatureValByFieldIndex(self._localIdIdx, featureFID)
          wkt = self.getFeatureValByFieldIndex(geomIdx, featureFID)
@@ -556,7 +533,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       yname = 'latitude'
       for pt in allPoints:
          if idname is None:
-            for name in LOCAL_ID_FIELD_NAMES:
+            for name in OccurrenceFieldNames.LOCAL_ID:
                val = getXmlValueFromTree(pt, name)
                if val is not None:
                   idname = name
@@ -570,3 +547,71 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       self.setFeatures(feats, featAttrs)
       
       
+# ...............................................
+   def readCSVPoints(self, data, featureLimit=None):
+      """
+      @note: We are saving only latitude, longitude and localid if it exists.  
+             If localid does not exist, we create one.
+      @todo: Save the rest of the fields using Vector.splitCSVPointsToShapefiles
+      @todo: remove featureLimit, read subsetDLocation if there is a limit 
+      """
+      import csv
+      minX = minY = maxX = maxY = None
+      localid = None
+      
+      self.clearFeatures()
+      infile = open(self._dlocation, 'rU')
+      reader = csv.reader(infile)
+      rowone = reader.next()
+      
+      ((idName, idPos), (xName, xPos), (yName, yPos)) = Vector._getIdXYNamePos(rowone)
+          
+      if not idPos:
+         # If no id column, create it
+         if (xPos and yPos):
+            localid = 0
+         # If no headers, assume columns 1 = id, 2 = longitude, 3 = latitude
+         else:
+            idPos = 0
+            xPos = 1
+            yPos = 2
+
+      if xPos is None or yPos is None:
+         raise LMError('Must supply longitude and latitude')
+      
+      featAttrs = self.getUserPointFeatureAttributes()
+      feats = {}
+      Xs = []
+      Ys = []
+      for row in reader:
+         try:
+            if localid is None:
+               thisid = row[idPos]
+            else:
+               localid += 1
+               thisid = localid
+            x = float(row[xPos])
+            y = float(row[yPos])
+            Xs.append(x)
+            Ys.append(y)
+            feats[thisid] = self.getUserPointFeature(thisid, x, y)
+            if featureLimit is not None and len(feats) >= featureLimit:
+               break
+         except Exception, e:
+            # Skip point if fails.  This could be a blank row or something
+            pass
+      
+      if len(feats) == 0:
+         raise LMError('Unable to read points from CSV') 
+      
+      try:
+         minX = min(Xs)
+         minY = min(Ys)
+         maxX = max(Xs)
+         maxY = max(Ys)
+      except Exception, e:
+         raise LMError('Failed to get valid coordinates (%s)' % str(e))
+         
+      infile.close()
+      self.setFeatures(feats, featAttrs)
+      return (minX, minY, maxX, maxY)

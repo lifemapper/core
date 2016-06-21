@@ -692,15 +692,6 @@ class DWCNames:
 BISON_COUNT_KEYS = ['response', 'numFound']
   
 # ......................................................
-# For parsing GBIF data download, Jan 2015 and beyond
-# Dictionary key is column number; value is (column name, datatype)
-# occColnames = ['gbifId', 'occurrenceID_dwc', 'taxonKey', 'datasetKey', 
-#                'publishingOrgKey', 'basisOfRecord', 'kingdomKey', 'phylumKey', 
-#                'classKey', 'orderKey', 'familyKey', 'genusKey', 'speciesKey', 
-#                'scientificName', 'decimalLatitude', 'decimalLongitude', 'day', 
-#                'month', 'year', 'recordedBy']
-
-# ......................................................
 GBIF_TAXONKEY_FIELD = 'specieskey'
 GBIF_TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
 GBIF_PROVIDER_FIELD = 'puborgkey'

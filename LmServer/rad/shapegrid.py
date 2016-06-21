@@ -435,7 +435,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       contains all areas of intersection with one shpgrid cell, second list
       contains the area of the cell
       """
-      geomfieldname = layer.getGeometryFieldName()                
+      geomfieldname = layer._geomFieldName               
       poly = ogr.CreateGeometryFromWkt(layer.getFeatureValByFieldName(geomfieldname, fid))
       shpgridcellfids = []
       if poly.Intersect(shpgridextentpoly):

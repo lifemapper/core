@@ -34,16 +34,16 @@ import zipfile
 
 from LmCommon.common.lmAttObject import LmAttObj
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, SHAPEFILE_EXTENSIONS, 
-                  DEFAULT_OGR_FORMAT, SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits)
+                  DEFAULT_OGR_FORMAT, SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits,
+   OFTInteger, OFTString)
 from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMError, LMObject, LMSpatialObject
 from LmServer.base.serviceobject import ServiceObject
 
-from LmServer.common.lmconstants import (FeatureNames, OutputFormat, 
+from LmServer.common.lmconstants import (OccurrenceFieldNames, OutputFormat, 
             GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
-            LMServiceType, 
-            LOCAL_ID_FIELD_NAMES, LONGITUDE_FIELD_NAMES, LATITUDE_FIELD_NAMES)
+            LMServiceType)
 from LmServer.common.localconstants import UPLOAD_PATH, APP_PATH
 
 # .............................................................................
@@ -979,8 +979,14 @@ class Vector(_Layer):
       @param valAttribute: Attribute to be classified when mapping this layer 
       """
       self._geomIdx = None
-      self._localIdIdx = None
+      self._geomFieldName = OccurrenceFieldNames.GEOMETRY_WKT[0]
+      self._geomFieldType = OFTString      
       self._geometry = None
+      
+      self._localIdIdx = None
+      self._localIdFieldName = OccurrenceFieldNames.LOCAL_ID[0]
+      self._localIdFieldType = OFTInteger
+      
       self._convexHull = None
       self._fidAttribute = fidAttribute
       self._featureAttributes = None
@@ -1014,26 +1020,6 @@ class Vector(_Layer):
 # Static methods
 # .............................................................................
 # LM field definitions for data fields (geomwkt, ufid, url) written to shapefiles. 
-
-
-   @classmethod
-   def getLocalIdFieldDef(cls):
-      return (FeatureNames.LOCAL_ID, ogr.OFTString)
-
-   @staticmethod
-   def getGeometryFieldDef():
-      return (FeatureNames.GEOMETRY_WKT, ogr.OFTString)
-   
-   @staticmethod
-   def getGeometryFieldName():
-      return Vector.getGeometryFieldDef()[0]
-   
-   @staticmethod
-   def getURLFieldDef():
-      return (FeatureNames.URL, ogr.OFTString)
-   @staticmethod
-   def getURLFieldName():
-      return Vector.getURLFieldDef()[0]
    
 # .............................................................................
 # Properties
@@ -1221,7 +1207,7 @@ class Vector(_Layer):
    def _setGeometryIndex(self):
       if self._geomIdx is None and self._featureAttributes:
          for idx, (colname, coltype) in self._featureAttributes.iteritems():
-            if colname == self.getGeometryFieldName():
+            if colname == self._geomFieldName:
                self._geomIdx = idx
                break
 
@@ -1234,7 +1220,7 @@ class Vector(_Layer):
    def _setLocalIdIndex(self):
       if self._localIdIdx is None and self._featureAttributes:
          for idx, (colname, coltype) in self._featureAttributes.iteritems():
-            if colname in LOCAL_ID_FIELD_NAMES:
+            if colname in OccurrenceFieldNames.LOCAL_ID:
                self._localIdIdx = idx
                break
 
@@ -1718,7 +1704,7 @@ class Vector(_Layer):
          # Define the fields
          for idx in self._featureAttributes.keys():
             fldname, fldtype = self._featureAttributes[idx]
-            if fldname != self.getGeometryFieldName():
+            if fldname != self._geomFieldName:
                fldDefn = ogr.FieldDefn(fldname, fldtype)
                # Special case to handle long Canonical, Provider, Resource names
                if (fldname.endswith('name') and fldtype == ogr.OFTString):
@@ -1782,34 +1768,7 @@ class Vector(_Layer):
             self.readData()
          except Exception, e:
             raise LMError('Invalid uploaded data in temp file %s (%s)' 
-                          % (self._dlocation, str(e)) )         
-
-# # ...............................................
-#    @staticmethod
-#    def _getIdXYfields(fieldnames, idCol=None, xCol=None, yCol=None):
-#       if idCol is not None and idCol not in fieldnames:
-#          idCol = None
-#       if xCol is not None and xCol not in fieldnames:
-#          xCol = None
-#       if yCol is not None and yCol not in fieldnames:
-#          yCol = None
-#          
-#       for fldname in fieldnames:
-#          if xCol is None and fldname.lower() in LONGITUDE_FIELD_NAMES:
-#             xCol = fldname
-#          elif yCol is None and fldname.lower() in LATITUDE_FIELD_NAMES:
-#             yCol = fldname
-#          elif idCol is None and fldname.lower() in LOCAL_ID_FIELD_NAMES:
-#             yCol = fldname
-#       # Last resort
-#       if xCol is None:
-#          if fldname.lower().startswith('lon'):
-#             xCol = fldname
-#       if yCol is None:
-#          if fldname.lower().startswith('lat'):
-#             yCol = fldname
-#             
-#       return idCol, xCol, yCol
+                          % (self._dlocation, str(e)) )
       
 # ...............................................
    @staticmethod
@@ -1833,13 +1792,13 @@ class Vector(_Layer):
       if not (idName and xName and yName):
          for i in range(len(fieldnames)):
             fldname = fieldnames[i].lower()
-            if xName is None and fldname in LONGITUDE_FIELD_NAMES:
+            if xName is None and fldname in OccurrenceFieldNames.LONGITUDE:
                xName = fldname
                xPos = i
-            if yName is None and fldname in LATITUDE_FIELD_NAMES:
+            if yName is None and fldname in OccurrenceFieldNames.LATITUDE:
                yName = fldname
                yPos = i
-            if idName is None and fldname in LOCAL_ID_FIELD_NAMES:
+            if idName is None and fldname in OccurrenceFieldNames.LOCAL_ID:
                idName = fldname
                idPos = i
             
@@ -2159,7 +2118,7 @@ class Vector(_Layer):
                self._localIdIdx = i
                foundLocalId = True
             # Don't reset if already found
-            if not foundLocalId and fldname in LOCAL_ID_FIELD_NAMES:
+            if not foundLocalId and fldname in OccurrenceFieldNames.LOCAL_ID:
                self._localIdIdx = i
                foundLocalId = True
             featureAttributes[i] = (fld.GetNameRef(), fld.GetType())
@@ -2167,10 +2126,10 @@ class Vector(_Layer):
          # Add fields FID (if not present) and geom to featureAttributes
          i = fldCount
          if not foundLocalId:
-            featureAttributes[i] = self.getLocalIdFieldDef()
+            featureAttributes[i] = (self._localIdFieldName, self._localIdFieldType)
             self._localIdIdx = i
             i += 1
-         featureAttributes[i] = self.getGeometryFieldDef()
+         featureAttributes[i] = (self._geomFieldName, self._geomFieldType)
          self._geomIdx = i
          
          # Read feature values
@@ -2250,7 +2209,7 @@ class Vector(_Layer):
                self._localIdIdx = i
                foundLocalId = True
             # Don't reset if already found
-            if not foundLocalId and fldname in LOCAL_ID_FIELD_NAMES:
+            if not foundLocalId and fldname in OccurrenceFieldNames.LOCAL_ID:
                self._localIdIdx = i
                foundLocalId = True
             featureAttributes[i] = (fld.GetNameRef(), fld.GetType())
@@ -2258,10 +2217,10 @@ class Vector(_Layer):
          # Add fields FID (if not present) and geom to featureAttributes dictionary
          i = fldCount
          if not foundLocalId:
-            featureAttributes[i] = self.getLocalIdFieldDef()
+            featureAttributes[i] = (self._localIdFieldName, self._localIdFieldType)
             self._localIdIdx = i
             i += 1
-         featureAttributes[i] = self.getGeometryFieldDef()
+         featureAttributes[i] = (self._geomFieldName, self._geomFieldType)
          self._geomIdx = i
          
          # Read feature count
@@ -2270,74 +2229,6 @@ class Vector(_Layer):
       else:
          raise LMError('dlocation %s does not exist' % str(dlocation))
 
-# ...............................................
-   def readCSVPoints(self, data, featureLimit=None):
-      """
-      @note: We are saving only latitude, longitude and localid if it exists.  
-             If localid does not exist, we create one.
-      @todo: Save the rest of the fields using Vector.splitCSVPointsToShapefiles
-      @todo: remove featureLimit, read subsetDLocation if there is a limit 
-      """
-      import csv
-      minX = minY = maxX = maxY = None
-      localid = None
-      
-      self.clearFeatures()
-      infile = open(self._dlocation, 'rU')
-      reader = csv.reader(infile)
-      rowone = reader.next()
-      
-      ((idName, idPos), (xName, xPos), (yName, yPos)) = Vector._getIdXYNamePos(rowone)
-          
-      if not idPos:
-         # If no id column, create it
-         if (xPos and yPos):
-            localid = 0
-         # If no headers, assume columns 1 = id, 2 = longitude, 3 = latitude
-         else:
-            idPos = 0
-            xPos = 1
-            yPos = 2
-
-      if xPos is None or yPos is None:
-         raise LMError('Must supply longitude and latitude')
-      
-      featAttrs = self.getUserPointFeatureAttributes()
-      feats = {}
-      Xs = []
-      Ys = []
-      for row in reader:
-         try:
-            if localid is None:
-               thisid = row[idPos]
-            else:
-               localid += 1
-               thisid = localid
-            x = float(row[xPos])
-            y = float(row[yPos])
-            Xs.append(x)
-            Ys.append(y)
-            feats[thisid] = self.getUserPointFeature(thisid, x, y)
-            if featureLimit is not None and len(feats) >= featureLimit:
-               break
-         except Exception, e:
-            # Skip point if fails.  This could be a blank row or something
-            pass
-      
-      if len(feats) == 0:
-         raise LMError('Unable to read points from CSV') 
-      
-      try:
-         minX = min(Xs)
-         minY = min(Ys)
-         maxX = max(Xs)
-         maxY = max(Ys)
-      except Exception, e:
-         raise LMError('Failed to get valid coordinates (%s)' % str(e))
-         
-      infile.close()
-      self.setFeatures(feats, featAttrs)
-      return (minX, minY, maxX, maxY)
       
 # ...............................................
    def _transformBBox(self, origEpsg=None, origBBox=None):
@@ -2441,7 +2332,7 @@ class Vector(_Layer):
    def getFieldIndex(self, fieldname):      
       if self._featureAttributes:
          fieldIdx = None
-         if fieldname in LOCAL_ID_FIELD_NAMES:
+         if fieldname in OccurrenceFieldNames.LOCAL_ID:
             findLocalId = True
          else:
             findLocalId = False
@@ -2450,7 +2341,7 @@ class Vector(_Layer):
             if fldname == fieldname:
                fieldIdx = fldidx
                break
-            elif findLocalId and fldname in LOCAL_ID_FIELD_NAMES:
+            elif findLocalId and fldname in OccurrenceFieldNames.LOCAL_ID:
                fieldIdx = fldidx
                break
             
@@ -2485,7 +2376,7 @@ class Vector(_Layer):
       for j in self._featureAttributes.keys():
          fldname, fldtype = self._featureAttributes[j]
          val = fvals[j]
-         if fldname == self.getGeometryFieldName():
+         if fldname == self._geomFieldName:
             geom = ogr.CreateGeometryFromWkt(val)
             feat.SetGeometryDirectly(geom)
          elif val is not None and val != 'None':
