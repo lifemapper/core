@@ -1761,7 +1761,8 @@ class Scribe(Peruser):
             # Reinit existing Experiments
             projs = self.getProjectionsForModel(mdl, None)
             exp = SDMExperiment(mdl, projs)
-            self.rollbackOrDeleteExperiment(exp, priority)
+            expJobs = self.rollbackOrDeleteExperiment(exp, priority)
+            jobs.extend(expJobs)
 
             # ........................
             # Add any missing projections
