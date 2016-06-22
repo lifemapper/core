@@ -31,7 +31,7 @@ create table lm_v3.LMUser
    address3 text,
    phone varchar(20),
    email varchar(64) UNIQUE NOT NULL,
-   dateLastModified double precision, 
+   modtime double precision, 
    password varchar(32)
 );
 
@@ -44,8 +44,7 @@ create table lm_v3.ComputeResource
    ipmask varchar(2),
    fqdn varchar(100),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser,
-   datecreated double precision,
-   datelastmodified double precision,
+   modtime double precision,
    lastheartbeat double precision,
    UNIQUE (name, userId),
    UNIQUE (ipaddress, ipmask)
@@ -60,8 +59,7 @@ create table lm_v3.JobChain
    priority int,
    progress int,
    status int,
-   statusmodtime double precision,
-   datecreated double precision
+   statusmodtime double precision
 );
 
 
@@ -71,8 +69,7 @@ create table lm_v3.TaxonomySource
    taxonomySourceId serial UNIQUE PRIMARY KEY,
    url text,
    datasetIdentifier text UNIQUE,
-   dateCreated double precision,
-   dateLastModified double precision
+   modTime double precision
 );
 
 -- -------------------------------
@@ -81,6 +78,7 @@ create table lm_v3.Taxon
 (
 	-- ** MAL scientificNameId
    taxonId serial UNIQUE PRIMARY KEY,
+   squid varchar(64),
    taxonomySourceId int REFERENCES lm_v3.TaxonomySource,
    taxonomyKey int,
    kingdom text,
@@ -96,13 +94,126 @@ create table lm_v3.Taxon
    specieskey int,
    keyHierarchy text,
    lastcount int,
-   datecreated double precision,
-   datelastmodified double precision,
+   modTime double precision,
    UNIQUE (taxonomySourceId, taxonomyKey)
 );
 CREATE INDEX idx_lower_canonical on lm_v3.Taxon(lower(canonical));
 CREATE INDEX idx_lower_sciname on lm_v3.Taxon(lower(sciname));
 CREATE INDEX idx_lower_genus on lm_v3.Taxon(lower(genus));
+
+-- -------------------------------
+create table lm_v3.Keyword
+(
+   keywordId serial UNIQUE PRIMARY KEY,
+   keyword text UNIQUE
+);
+
+-- -------------------------------
+create table lm_v3.LayerType
+(
+   layerTypeId serial UNIQUE PRIMARY KEY,
+   code varchar(30),
+   title text,
+   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   description text,
+   modTime double precision
+);
+ALTER TABLE lm_v3.LayerType ADD CONSTRAINT unique_layertype UNIQUE (userid, code);
+
+-- -------------------------------
+create table lm_v3.LayerTypeKeyword
+(
+   layerTypeId int REFERENCES lm_v3.LayerType MATCH FULL ON DELETE CASCADE,
+   keywordId int REFERENCES lm_v3.Keyword MATCH FULL ON DELETE CASCADE,
+   PRIMARY KEY (layerTypeId, keywordId)
+);
+
+-- -------------------------------
+-- Note: Enforce unique userid/name pairs (in code) for display layers only
+create table lm_v3.Layer
+(
+   layerId serial UNIQUE PRIMARY KEY,
+   verify varchar(64),
+   squid varchar(64),
+   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   taxonId int REFERENCES lm_v3.Taxon,
+   name text,
+   title text,
+   author text,
+   description text,
+   dlocation text,
+   metadataUrl text UNIQUE,
+   metalocation text,
+   gdalType int,
+   ogrType int,
+   isCategorical boolean,
+   -- GDAL/OGR codes indicating driver to use when writing files
+   dataFormat varchar(32),
+   epsgcode int,
+   mapunits varchar(20),
+   resolution double precision,
+   startDate double precision,
+   endDate double precision,
+   modTime double precision,
+   bbox varchar(60),
+   valAttribute varchar(20),
+   nodataVal double precision,
+   minVal double precision,
+   maxVal double precision,
+   valUnits varchar(60),
+   layerTypeId int REFERENCES lm_v3.LayerType
+);
+ Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
+ ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+ CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
+ CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
+ CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
+
+-- -------------------------------
+ create table lm_v3.Scenario
+ (
+    scenarioId serial UNIQUE PRIMARY KEY,
+    scenarioCode varchar(30),
+    metadataUrl text UNIQUE,
+    dlocation text,
+    title text,
+    author text,
+    description text,
+    startDate double precision,
+    endDate double precision,
+    units varchar(20),
+    resolution double precision,
+    bbox varchar(60),
+    modTime double precision,
+    userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+    epsgcode int,
+    UNIQUE (scenarioCode, userid)
+ );
+ Select AddGeometryColumn('lm_v3', 'scenario', 'geom', 4326, 'POLYGON', 2);
+ ALTER TABLE lm_v3.Scenario ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
+ ALTER TABLE lm_v3.Scenario ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
+ ALTER TABLE lm_v3.Scenario ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+ CREATE INDEX spidx_scenario ON lm_v3.Scenario USING GIST ( geom );
+
+
+-- -------------------------------
+create table lm_v3.ScenarioLayers
+(
+   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
+   layerId int REFERENCES lm_v3.Layer MATCH FULL ON DELETE CASCADE,
+   PRIMARY KEY (scenarioId, layerId)
+);
+
+
+-- -------------------------------
+create table lm_v3.ScenarioKeywords
+(
+   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
+   keywordId int REFERENCES lm_v3.Keyword MATCH FULL ON DELETE CASCADE,
+   PRIMARY KEY (scenarioId, keywordId)
+);
 
 -- -------------------------------
 create table lm_v3.OccurrenceSet
@@ -111,21 +222,17 @@ create table lm_v3.OccurrenceSet
    verify varchar(64),
    squid varchar(64),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   fromGbif boolean,
    displayName text,
-   -- ** aka scientificNameId
    taxonId int REFERENCES lm_v3.Taxon,
    primaryEnv int,
    metadataUrl text UNIQUE,
    dlocation text,
+   rawDlocation text,
    queryCount int,
-   dateLastModified double precision,
-   dateLastChecked double precision,
    bbox varchar(60),
    epsgcode integer,
    status integer,
-   statusmodtime double precision,
-   rawDlocation text
+   statusmodtime double precision
 );
 Select AddGeometryColumn('lm_v3', 'occurrenceset', 'geom', 4326, 'POLYGON', 2);
 ALTER TABLE lm_v3.OccurrenceSet ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
@@ -143,8 +250,7 @@ CREATE INDEX idx_lower_displayName on lm_v3.OccurrenceSet(lower(displayName));
 CREATE INDEX idx_pattern_lower_displayname on lm_v3.OccurrenceSet  (lower(displayname) varchar_pattern_ops );
 CREATE INDEX idx_queryCount ON lm_v3.OccurrenceSet(queryCount);
 CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 50));
-CREATE INDEX idx_occLastModified ON lm_v3.OccurrenceSet(dateLastModified);
-CREATE INDEX idx_occLastChecked ON lm_v3.OccurrenceSet(dateLastChecked);
+CREATE INDEX idx_occmodTime ON lm_v3.OccurrenceSet(modTime);
 CREATE INDEX idx_occUser ON lm_v3.OccurrenceSet(userId);
 CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
@@ -156,140 +262,18 @@ create table lm_v3.Algorithm
    algorithmId serial UNIQUE PRIMARY KEY,
    algorithmCode varchar(30) UNIQUE,
    name varchar(60),
-   dateLastModified double precision
+   modTime double precision
 );
 
--- -------------------------------
- create table lm_v3.Scenario
- (
-    scenarioId serial UNIQUE PRIMARY KEY,
-    scenarioCode varchar(30),
-    metadataUrl text UNIQUE,
-    dlocation text,
-    title text,
-    author text,
-    description text,
-    startDate double precision,
-    endDate double precision,
-    units varchar(20),
-    resolution double precision,
-    bbox varchar(60),
-    dateLastModified double precision,
-    userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-    epsgcode int,
-    UNIQUE (scenarioCode, userid)
- );
- Select AddGeometryColumn('lm_v3', 'scenario', 'geom', 4326, 'POLYGON', 2);
- ALTER TABLE lm_v3.Scenario ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
- ALTER TABLE lm_v3.Scenario ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
- ALTER TABLE lm_v3.Scenario ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
- CREATE INDEX spidx_scenario ON lm_v3.Scenario USING GIST ( geom );
-
--- -------------------------------
-create table lm_v3.LayerType
-(
-   layerTypeId serial UNIQUE PRIMARY KEY,
-   code varchar(30),
-   title text,
-   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   description text,
-   dateLastModified double precision
-);
-ALTER TABLE lm_v3.LayerType ADD CONSTRAINT unique_layertype UNIQUE (userid, code);
-
--- -------------------------------
--- Note: Enforce unique userid/name pairs (in code) for display layers only
-create table lm_v3.Layer
-(
-   layerId serial UNIQUE PRIMARY KEY,
-   verify varchar(64),
-   squid varchar(64),
-   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   -- ** new
-   taxonId int REFERENCES lm_v3.Taxon,
-   -- ** layername in RAD
-   name text,
-   title text,
-   -- ** not in RAD
-   author text,
-   description text,
-   dlocation text,
-   metadataUrl text UNIQUE,
-   metalocation text,
-   -- ** layerurl in RAD
-   gdalType int,
-   ogrType int,
-   -- ** not in RAD
-   isCategorical boolean,
-   -- GDAL/OGR codes indicating driver to use when writing files
-   dataFormat varchar(32),
-   epsgcode int,
-   mapunits varchar(20),
-   resolution double precision,
-   startDate double precision,
-   endDate double precision,
-   -- ** not in MAL
-   datecreated double precision,
-   dateLastModified double precision,
-   bbox varchar(60),
-   -- removed from MAL: thumbnail bytea,
-   -- Used for classification on pixel or featAttribute
-   -- 'pixel' if raster data
-   valAttribute varchar(20),
-   nodataVal double precision,
-   minVal double precision,
-   maxVal double precision,
-   valUnits varchar(60),
-   -- Used to match layers between SDM scenarios
-   layerTypeId int REFERENCES lm_v3.LayerType
-);
- Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
- ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
- ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
- ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
- CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
- CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
- CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
-
--- -------------------------------
-create table lm_v3.ScenarioLayers
-(
-   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   layerId int REFERENCES lm_v3.Layer MATCH FULL ON DELETE CASCADE,
-   PRIMARY KEY (scenarioId, layerId)
-);
-
--- -------------------------------
-create table lm_v3.Keyword
-(
-   keywordId serial UNIQUE PRIMARY KEY,
-   keyword text UNIQUE
-);
-
--- -------------------------------
-create table lm_v3.LayerTypeKeyword
-(
-   layerTypeId int REFERENCES lm_v3.LayerType MATCH FULL ON DELETE CASCADE,
-   keywordId int REFERENCES lm_v3.Keyword MATCH FULL ON DELETE CASCADE,
-   PRIMARY KEY (layerTypeId, keywordId)
-);
-
--- -------------------------------
-create table lm_v3.ScenarioKeywords
-(
-   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   keywordId int REFERENCES lm_v3.Keyword MATCH FULL ON DELETE CASCADE,
-   PRIMARY KEY (scenarioId, keywordId)
-);
 
 -- -------------------------------
 -- The 'algorithmParams' column is algorithm parameters in JSON format, with the 
    -- key = case sensitive parameter name (previously omkey)
    -- value = parameter value for this model 
 -- ** Note change from pickled, protocol 0, to JSON 
-create table lm_v3.Model 
+create table lm_v3.SDMModel 
 (
-   modelId serial UNIQUE PRIMARY KEY,
+   sdmmodelid serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name text NOT NULL,
    description text,
@@ -297,63 +281,55 @@ create table lm_v3.Model
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    scenarioCode varchar(30),
    maskId int REFERENCES lm_v3.Layer,
-   createTime double precision,
    status int,
    statusModTime double precision,
    priority int,
    dlocation text,
-   qc varchar(20),
-   -- ** removed jobId,
    email varchar(64), 
    algorithmParams text,
    algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
    -- ** delete computeResourceId??
    computeResourceId int REFERENCES lm_v3.ComputeResource
 );
-CREATE INDEX idx_mdlLastModified ON lm_v3.Model(statusModTime);
-CREATE INDEX idx_modelUser ON lm_v3.Model(userId);
-CREATE INDEX idx_mdlStatus ON lm_v3.Model(status);
+CREATE INDEX idx_mdlLastModified ON lm_v3.SDMModel(statusModTime);
+CREATE INDEX idx_modelUser ON lm_v3.SDMModel(userId);
+CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
 
 -- -------------------------------
 -- Holds projection of a ruleset on to a set of environmental layers
 -- 
-create table lm_v3.Projection
+create table lm_v3.SDMProjection
 (
-   projectionId serial UNIQUE PRIMARY KEY,
+   sdmprojectionId serial UNIQUE PRIMARY KEY,
    verify varchar(64),
    squid varchar(64),
    metadataUrl text UNIQUE,
-   -- ** NEW
    metalocation text,
-   -- ** new
    taxonId int REFERENCES lm_v3.Taxon,
-   modelId int REFERENCES lm_v3.Model ON DELETE CASCADE,
+   sdmmodelid int REFERENCES lm_v3.SDMModel ON DELETE CASCADE,
    scenarioCode varchar(30),
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    maskId int REFERENCES lm_v3.Layer,
-   createTime double precision,
    status int,
    statusModTime double precision,
-   priority int,
    units varchar(20),
    resolution double precision,
    epsgcode int,
    bbox varchar(60),
    dlocation text,
    dataType int,
-   -- ** removed jobId,
    -- ** delete computeResourceId??
    computeResourceId int REFERENCES lm_v3.ComputeResource
 );  
 Select AddGeometryColumn('lm_v3', 'projection', 'geom', 4326, 'POLYGON', 2);
-ALTER TABLE lm_v3.Projection ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
-ALTER TABLE lm_v3.Projection ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
-ALTER TABLE lm_v3.Projection ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
+ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
+ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
 
-CREATE INDEX spidx_projection ON lm_v3.Projection USING GIST ( geom );
-CREATE INDEX idx_projLastModified ON lm_v3.Projection(statusModTime);
-CREATE INDEX idx_prjStatus ON lm_v3.Projection(status);
-CREATE INDEX idx_prjSquid on lm_v3.Projection(squid);
+CREATE INDEX spidx_projection ON lm_v3.SDMProjection USING GIST ( geom );
+CREATE INDEX idx_projLastModified ON lm_v3.SDMProjection(statusModTime);
+CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
+CREATE INDEX idx_prjSquid on lm_v3.SDMProjection(squid);
 
 -- -------------------------------
 create table lm_v3.ShapeGrid
@@ -422,8 +398,7 @@ create table lm_v3.Boom
    attrTreeDlocation varchar(256),
    epsgcode int,
    description text,
-   datelastmodified double precision,
-   datecreated double precision,
+   modTime double precision
    UNIQUE (userId, name)
 );
 
@@ -437,8 +412,7 @@ create table lm3.PAM
    -- Uncompressed
    pamDlocation varchar(256),
    status int,
-   statusmodtime double precision,
-   datecreated double precision
+   statusmodtime double precision
 );
 
 -- -------------------------------
@@ -451,8 +425,7 @@ create table lm3.GRIM
    -- Uncompressed 
    grimDlocation varchar(256),
    status int,
-   statusmodtime double precision,
-   datecreated double precision
+   statusmodtime double precision
 );
 
 -- -------------------------------
@@ -488,55 +461,58 @@ create table lm3.BoomAncLayer
 
 GRANT SELECT ON TABLE 
 lm_v3.lmuser, 
-lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
-lm_v3.keyword, lm_v3.keyword_keywordid_seq, 
-lm_v3.layer, lm_v3.layer_layerid_seq, 
-lm_v3.layertype, lm_v3.layertype_layertypeid_seq,
-lm_v3.layertypekeyword, lm_v3.scenariokeywords, lm_v3.scenariolayers,
-lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
-lm_v3.model, lm_v3.model_modelid_seq, 
-lm_v3.algorithm, lm_v3.algorithm_algorithmid_seq,
-lm_v3.projection, lm_v3.projection_projectionid_seq,
 lm_v3.computeresource, lm_v3.computeresource_computeresourceid_seq,
-lm_v3.lmjob, lm_v3.lmjob_lmjobid_seq,
 lm_v3.lmjobchain, lm_v3.lmjobchain_lmjobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
-lm_v3.taxon, lm_v3.taxon_taxonid_seq
+lm_v3.taxon, lm_v3.taxon_taxonid_seq,
+lm_v3.keyword, lm_v3.keyword_keywordid_seq, 
+lm_v3.layertype, lm_v3.layertype_layertypeid_seq,
+lm_v3.layertypekeyword, 
+lm_v3.layer, lm_v3.layer_layerid_seq, 
+lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
+lm_v3.scenariokeywords, 
+lm_v3.scenariolayers,
+lm_v3.algorithm, lm_v3.algorithm_algorithmid_seq,
+lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
+lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
+lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
+lm_v3.boom, lm_v3.boom_boomid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
 lm_v3.lmuser, 
-lm_v3.algorithm, 
-lm_v3.scenario,
-lm_v3.keyword,
-lm_v3.layer, lm_v3.layertype,
-lm_v3.layertypekeyword, lm_v3.scenariokeywords, lm_v3.scenariolayers,
-lm_v3.occurrenceset, 
-lm_v3.model,  
-lm_v3.projection,
 lm_v3.computeresource, 
-lm_v3.lmjob,
-lm_v3.boom,
+lm_v3.lmjobchain,
 lm_v3.taxonomysource,
-lm_v3.taxon
+lm_v3.taxon,
+lm_v3.keyword,
+lm_v3.layertype,
+lm_v3.layertypekeyword, 
+lm_v3.layer, 
+lm_v3.scenario,
+lm_v3.scenariokeywords, 
+lm_v3.scenariolayers,
+lm_v3.algorithm, 
+lm_v3.occurrenceset, 
+lm_v3.sdmmodel,  
+lm_v3.sdmprojection,
+lm_v3.boom
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
-lm_v3.occurrenceset_occurrencesetid_seq,
-lm_v3.algorithm_algorithmid_seq,
-lm_v3.keyword_keywordid_seq,
-lm_v3.scenario_scenarioid_seq,
-lm_v3.layer_layerid_seq,
-lm_v3.layertype_layertypeid_seq,
-lm_v3.model_modelid_seq,
-lm_v3.projection_projectionid_seq,
-lm_v3.statistics_statisticsid_seq,
 lm_v3.computeresource_computeresourceid_seq,
-lm_v3.lmjob_lmjobid_seq,
 lm_v3.lmjobchain_lmjobchainid_seq,
-lm_v3.boom_boomid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
-lm_v3.taxon_taxonid_seq
+lm_v3.taxon_taxonid_seq,
+lm_v3.keyword_keywordid_seq,
+lm_v3.layertype_layertypeid_seq,
+lm_v3.layer_layerid_seq,
+lm_v3.scenario_scenarioid_seq,
+lm_v3.algorithm_algorithmid_seq,
+lm_v3.occurrenceset_occurrencesetid_seq,
+lm_v3.sdmmodel_sdmmodelid_seq,
+lm_v3.sdmprojection_sdmprojectionid_seq,
+lm_v3.boom_boomid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------
