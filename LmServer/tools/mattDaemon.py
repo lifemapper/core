@@ -90,8 +90,10 @@ class MattDaemon(Daemon):
             for jid, mfDoc in self.getMakeflowDocs(self.maxMFs - numRunning):
                cmd = self.mfCmd.format(mfBin=self.mfBin, mfDoc=mfDoc, 
                                        mfName="lifemapper-{0}".format(jid))
-               self._mfPool.append(Popen(cmd, shell=True))
+               self.log.debug(cmd)
+               self._mfPool.append([jid, Popen(cmd, shell=True)])
             # Sleep
+            self.log.info("Sleep for {0} seconds".format(self.sleepTime))
             sleep(self.sleepTime)
             
             #TODO: Keep a cache of mf docs?
@@ -108,7 +110,7 @@ class MattDaemon(Daemon):
       """
       @summary: Use the scribe to get available makeflow documents
       """
-      jcs = self.scribe.getJobChains(count, ARCHIVE_USER)
+      jcs = self.scribe.moveAndReturnJobChains(count, ARCHIVE_USER)
       #mfDocs = [mf for _, mf in jcs]
       #return mfDocs
       return jcs
@@ -120,7 +122,7 @@ class MattDaemon(Daemon):
       """
       numRunning = 0
       for idx in xrange(len(self._mfPool)):
-         if self._mfPool[idx].poll() is None:
+         if self._mfPool[idx][1].poll() is None:
             numRunning = numRunning +1
          else:
             self._mfPool[idx] = None
