@@ -264,6 +264,8 @@ class SDMModel(ServiceObject, ProcessObject):
       dloc = None
       if makeflow:
          dloc = self.occurrenceSet.createLocalDLocation(makeflow=True)
+      else:
+         dloc = self._getModelResultFilename()
       return dloc
 
 # ...............................................
