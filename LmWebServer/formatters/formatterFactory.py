@@ -35,7 +35,7 @@ from LmServer.base.lmobj import LmHTTPError
 
 from LmWebServer.common.lmconstants import ASCIIGRID_INTERFACE, \
       ASCII_OLD_INTERFACE, ATOM_INTERFACE, CSV_INTERFACE, DEFAULT_INTERFACE, \
-      EML_INTERFACE, GEOTIFF_INTERFACE, HTML_INTERFACE, INDICES_INTERFACE, \
+      GEOTIFF_INTERFACE, HTML_INTERFACE, INDICES_INTERFACE, \
       JSON_INTERFACE, KML_INTERFACE, MODEL_INTERFACE, OGC_INTERFACE, \
       PACKAGE_INTERFACE, PRESENCE_INTERFACE, PROV_INTERFACE, RAW_INTERFACE, \
       SHAPEFILE_INTERFACE, STATISTICS_INTERFACE, STATUS_INTERFACE, \
@@ -44,7 +44,7 @@ from LmWebServer.common.lmconstants import ASCIIGRID_INTERFACE, \
 from LmWebServer.formatters.asciiFormatter import AsciiGridFormatter
 from LmWebServer.formatters.atomFormatter import AtomFormatter
 from LmWebServer.formatters.csvFormatter import CsvFormatter
-from LmWebServer.formatters.emlFormatter import EmlFormatter
+#from LmWebServer.formatters.emlFormatter import EmlFormatter
 from LmWebServer.formatters.fileFormatter import FileFormatter
 from LmWebServer.formatters.jsonFormatter import JsonFormatter
 from LmWebServer.formatters.kmlFormatter import KmlFormatter
@@ -69,7 +69,7 @@ formats = {
            ASCII_OLD_INTERFACE : AsciiGridFormatter,
            ATOM_INTERFACE : AtomFormatter,
            CSV_INTERFACE : CsvFormatter,
-           EML_INTERFACE : EmlFormatter,
+           #EML_INTERFACE : EmlFormatter,
            GEOTIFF_INTERFACE : TiffFormatter,
            HTML_INTERFACE : StyledXmlFormatter,
            INDICES_INTERFACE : FileFormatter,
@@ -90,42 +90,42 @@ formats = {
 interfaces = {
               "LmAttList" : [ATOM_INTERFACE, HTML_INTERFACE, 
                              JSON_INTERFACE, XML_INTERFACE],
-              "SDMExperiment" : [ATOM_INTERFACE, EML_INTERFACE, HTML_INTERFACE, 
+              "SDMExperiment" : [ATOM_INTERFACE, HTML_INTERFACE, #EML_INTERFACE,  
                   JSON_INTERFACE, KML_INTERFACE, MODEL_INTERFACE, 
                   PACKAGE_INTERFACE, PROV_INTERFACE, STATUS_INTERFACE, 
                   XML_INTERFACE],
               "EnvironmentalLayer" : [ASCIIGRID_INTERFACE, ASCII_OLD_INTERFACE, 
-                  ATOM_INTERFACE, EML_INTERFACE, GEOTIFF_INTERFACE, 
+                  ATOM_INTERFACE, GEOTIFF_INTERFACE, #EML_INTERFACE, 
                   HTML_INTERFACE, JSON_INTERFACE, KML_INTERFACE, 
                   PROV_INTERFACE, RAW_INTERFACE, TIFF_OLD_INTERFACE, 
                   XML_INTERFACE],
-              "OccurrenceLayer" : [ATOM_INTERFACE, CSV_INTERFACE, EML_INTERFACE, 
+              "OccurrenceLayer" : [ATOM_INTERFACE, CSV_INTERFACE, #EML_INTERFACE, 
                   HTML_INTERFACE, JSON_INTERFACE, KML_INTERFACE, 
                   PROV_INTERFACE, SHAPEFILE_INTERFACE, XML_INTERFACE],
               "PamSum" : [ATOM_INTERFACE, CSV_INTERFACE, HTML_INTERFACE,
                           JSON_INTERFACE, SHAPEFILE_INTERFACE, XML_INTERFACE],
               "SDMProjection" : [ASCIIGRID_INTERFACE, ASCII_OLD_INTERFACE, 
-                  ATOM_INTERFACE, EML_INTERFACE, GEOTIFF_INTERFACE, 
+                  ATOM_INTERFACE, GEOTIFF_INTERFACE, #EML_INTERFACE,  
                   HTML_INTERFACE, JSON_INTERFACE, KML_INTERFACE,  
                   PACKAGE_INTERFACE, PROV_INTERFACE, RAW_INTERFACE, 
                   STATUS_INTERFACE, TIFF_OLD_INTERFACE, XML_INTERFACE],
-              "Scenario" : [ATOM_INTERFACE, EML_INTERFACE, HTML_INTERFACE, 
+              "Scenario" : [ATOM_INTERFACE, HTML_INTERFACE, #EML_INTERFACE,  
                   JSON_INTERFACE, XML_INTERFACE],
               "Raster" : [ASCIIGRID_INTERFACE, ASCII_OLD_INTERFACE, 
-                  ATOM_INTERFACE, EML_INTERFACE, GEOTIFF_INTERFACE, 
+                  ATOM_INTERFACE, GEOTIFF_INTERFACE, #EML_INTERFACE, 
                   HTML_INTERFACE, JSON_INTERFACE, KML_INTERFACE, RAW_INTERFACE, 
                   TIFF_OLD_INTERFACE, XML_INTERFACE],
-              "Vector" : [ATOM_INTERFACE, CSV_INTERFACE, EML_INTERFACE, 
+              "Vector" : [ATOM_INTERFACE, CSV_INTERFACE, #EML_INTERFACE, 
                   HTML_INTERFACE, JSON_INTERFACE, SHAPEFILE_INTERFACE, 
                   XML_INTERFACE],
-              "RADBucket" : [ATOM_INTERFACE, EML_INTERFACE, HTML_INTERFACE, 
+              "RADBucket" : [ATOM_INTERFACE, HTML_INTERFACE, #EML_INTERFACE,  
                   JSON_INTERFACE, PRESENCE_INTERFACE, SHAPEFILE_INTERFACE, 
                   XML_INTERFACE],
-              "RADExperiment" : [ATOM_INTERFACE, EML_INTERFACE, HTML_INTERFACE, 
+              "RADExperiment" : [ATOM_INTERFACE, HTML_INTERFACE, #EML_INTERFACE,  
                   INDICES_INTERFACE, JSON_INTERFACE, XML_INTERFACE]
              }
-completeInterfaces = [ASCIIGRID_INTERFACE, ASCII_OLD_INTERFACE, CSV_INTERFACE, 
-     EML_INTERFACE, GEOTIFF_INTERFACE, KML_INTERFACE, MODEL_INTERFACE, 
+completeInterfaces = [ASCIIGRID_INTERFACE, ASCII_OLD_INTERFACE, CSV_INTERFACE, #EML_INTERFACE, 
+     GEOTIFF_INTERFACE, KML_INTERFACE, MODEL_INTERFACE, 
      PACKAGE_INTERFACE, PRESENCE_INTERFACE, PROV_INTERFACE, RAW_INTERFACE, 
      SHAPEFILE_INTERFACE, TIFF_OLD_INTERFACE]
 
