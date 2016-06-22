@@ -265,27 +265,33 @@ class SDMModel(ServiceObject, ProcessObject):
       if makeflow:
          dloc = self.occurrenceSet.createLocalDLocation(makeflow=True)
       else:
-         dloc = self._getModelResultFilename()
+         if self._algorithm.code == 'ATT_MAXENT':
+            ftype = LMFileType.MODEL_ATT_RESULT
+         else:
+            ftype = LMFileType.MODEL_RESULT
+         dloc = self._earlJr.createFilename(ftype, modelId=self.getId(), 
+                           pth=self.getAbsolutePath(), usr=self._userId, 
+                           epsg=self.occurrenceSet.epsgcode)
       return dloc
 
 # ...............................................
    def _getModelResultFilename(self):
+      """
+      @summary: Return filename for this layer.
+      @note: This also SETS the _ruleset attribute if it is None
+      """
       if self._ruleset is None:
          self._setModelResultFilename()
       return self._ruleset
    
    def _setModelResultFilename(self, fname=None):
-      if fname is not None:
-         self._ruleset = fname
-      else:
-         if self._algorithm.code == 'ATT_MAXENT':
-            ftype = LMFileType.MODEL_ATT_RESULT
-         else:
-            ftype = LMFileType.MODEL_RESULT
-         fname = self._earlJr.createFilename(ftype, modelId=self.getId(), 
-                           pth=self.getAbsolutePath(), usr=self._userId, 
-                           epsg=self.occurrenceSet.epsgcode)
-         self._ruleset = fname
+      """
+      @summary: Set filename for this layer.
+      @note: This may override the default location
+      """
+      if not fname:
+         fname = self.createLocalDLocation(makeflow=False)
+      self._ruleset = fname
          
    def getDLocation(self):
       return self._getModelResultFilename()
