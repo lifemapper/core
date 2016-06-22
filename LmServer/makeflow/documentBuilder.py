@@ -45,7 +45,7 @@ from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 from types import TupleType, ListType
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
-BUILD_JOB_REQUEST_CMD = "$PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
+BUILD_JOB_REQUEST_CMD = "LOCAL $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
 LM_JOB_RUNNER_CMD = "$PYTHON $RUNNER {jrFn}"
 
 # .............................................................................

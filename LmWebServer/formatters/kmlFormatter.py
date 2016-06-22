@@ -37,6 +37,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.base.utilities import escapeString, formatTimeHuman
 from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import OccurrenceFieldNames
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.sdmexperiment import SDMExperiment
@@ -146,28 +147,9 @@ def addGbifPoint(parent, point):
    @param point: The point to add
    """
    # Name
-   try:
-      name = point.canname
-   except:
-      name = point.sciname
+   name = getNameForPoint(point)
 
-   # Latitude
-   try:
-      latitude = point.lat
-   except:
-      try:
-         latitude = point.latitude
-      except:
-         latitude = point.dec_lat
-
-   # Longitude
-   try:
-      longitude = point.lon
-   except:
-      try:
-         longitude = point.longitude
-      except:
-         longitude = point.dec_long
+   latitude, longitude = getLatLonForPoint(point)
    
    # Provider name
    try:
@@ -274,25 +256,10 @@ def addUserPoint(parent, point):
    @param parent: The parent element to add it to
    @param point: The point to add
    """
-   try:
-      name = "Point %s" % point.localId
-   except:
-      try:
-         name = "Point %s" % point.localid
-      except:
-         name = point.canname
    
-   lat, lon = getLatLonFromPointWkt(point.geomwkt)
-   
-#    try:
-#       lat = point.latitude
-#    except:
-#       lat = point.lat
-#       
-#    try:
-#       lon = point.longitude
-#    except:
-#       lon = point.lon
+   name = getNameForPoint(point)
+
+   lat, lon = getLatLonForPoint(point)
 
    pmEl = SubElement(parent, "Placemark")
    SubElement(pmEl, "name", value=name)
@@ -653,11 +620,90 @@ def getKml(obj):
    return temp
 
 # .............................................................................
-def getLatLonFromPointWkt(ptWkt):
+def getNameForPoint(pt):
    """
-   @summary: Gets the latitude and longitude values for a point from the 
-                geometry wkt
-   @param ptWkt: The well known text for the point
+   @summary: Get a name for a point.  Tries to get the taxon name, falls back 
+                to local id
+   @param pt: A point object
    """
-   lon, lat, z = ogr.CreateGeometryFromWkt(ptWkt).GetPoint()
-   return lat, lon
+   name = None
+   
+   for att in OccurrenceFieldNames.DATANAME:
+      try:
+         name = pt.__getattribute__(att)
+         return name
+      except:
+         pass
+   
+   # If no data name fields were available
+   for att in OccurrenceFieldNames.LOCAL_ID:
+      try:
+         name = pt.__getattribute__(att)
+         return name
+      except:
+         pass
+   
+   # Return unknown if we can't find a name
+   return "Unknown"
+
+# .............................................................................
+def getLatLonForPoint(pt):
+   """
+   @summary: Get's the x and y for a point
+   @param pt: A point object
+   @note: Tries to get this from the geometry first, falls back to attributes
+   """
+   # Try wkt first
+   wkt = None
+   for att in OccurrenceFieldNames.GEOMETRY_WKT:
+      try:
+         wkt = pt.__getattribute__(att)
+         break
+      except:
+         pass
+      
+   if wkt is not None:
+      lon, lat, _ = ogr.CreateGeometryFromWkt(wkt).getPoint()
+      return lat, lon
+   else:
+      # Find lat and lon
+      lat = None
+      for att in OccurrenceFieldNames.LATITUDE:
+         try:
+            lat = pt.__getattribute__(att)
+            break
+         except:
+            pass
+      
+      lon = None
+      for att in OccurrenceFieldNames.LONGITUDE:
+         try:
+            lon = pt.__getattribute__(att)
+            break
+         except:
+            pass
+      
+      if lat is not None and lon is not None:
+         return lat, lon
+   
+   # Raise exception if we get to here without determining lat and lon
+   raise Exception, "Could not retrieve latitude and / or longitude for point"
+
+# .............................................................................
+def getLocalIdForPoint(pt):
+   """
+   @summary: Get a local id for a point.
+   @param pt: A point object
+   """
+   localId = None
+   
+   # If no data name fields were available
+   for att in OccurrenceFieldNames.LOCAL_ID:
+      try:
+         localId = pt.__getattribute__(att)
+         return localId
+      except:
+         pass
+   
+   # Return unknown if we can't find a name
+   return "Unknown"
