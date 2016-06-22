@@ -86,8 +86,9 @@ class MfBrian(Daemon):
             numRunning = self.getNumberOfRunningProcesses()
             
             #   Add mf processes for empty slots
-            for mfDoc in self.getMakeflowDocs(self.maxMFs - numRunning):
-               cmd = self.mfCmd.format(mfBin=self.mfBin, mfDoc=mfDoc)
+            for jid, mfDoc in self.getMakeflowDocs(self.maxMFs - numRunning):
+               cmd = self.mfCmd.format(mfBin=self.mfBin, mfDoc=mfDoc, 
+                                       mfName="lifemapper-{0}".format(jid))
                self._mfPool.append(Popen(cmd, shell=True))
             # Sleep
             sleep(self.sleepTime)
@@ -107,8 +108,9 @@ class MfBrian(Daemon):
       @summary: Use the scribe to get available makeflow documents
       """
       jcs = self.scribe.getJobChains(count, ARCHIVE_USER)
-      mfDocs = [mf for _, mf in jcs]
-      return mfDocs
+      #mfDocs = [mf for _, mf in jcs]
+      #return mfDocs
+      return jcs
       
    # .............................
    def getNumberOfRunningProcesses(self):
@@ -145,8 +147,8 @@ class MfBrian(Daemon):
       @summary: Get the maximum number of Makeflow processes for pool
       """
       # TODO: Get this from a constant and / or argument
-      self.maxMFs = 5
-      self.mfCmd = "{mfBin} {mfDoc}"
+      self.maxMFs = 1
+      self.mfCmd = "{mfBin} -T wq -N {mfName} -t 600 -u 600 {mfDoc}"
       # TODO: Get from constant
       self.mfBin = "makeflow"
 
