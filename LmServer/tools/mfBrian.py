@@ -33,6 +33,7 @@
 #TODO: MF_DAEMON_PID_FILE
 #TODO: Logger
 #TODO: Something other than a list for pool?
+#TODO: What if document does not exist?
 
 import argparse
 import os
@@ -46,10 +47,10 @@ from LmCompute.common.log import MediatorLogger
 from LmServer.db.scribe import Scribe
 from LmServer.common.localconstants import ARCHIVE_USER
 
-MF_DAEMON_PID_FILE = "/share/lm/temp/mf-brian-daemon.pid"
+MF_DAEMON_PID_FILE = "/share/lm/temp/matt-daemon.pid"
 
 # .............................................................................
-class MfBrian(Daemon):
+class MattDaemon(Daemon):
    """
    @summary: The JobController class manages a pool of Makeflow subprocesses
                 that workers connect to.   Once one of the Makeflow processes
@@ -160,7 +161,7 @@ if __name__ == "__main__":
    else:
       pid = os.getpid()
    
-   parser = argparse.ArgumentParser(prog="Lifemapper Makeflow Daemon (Brian)",
+   parser = argparse.ArgumentParser(prog="Lifemapper Makeflow Daemon (Matt Daemon)",
                            description="Controls a pool of Makeflow processes",
                            version="1.0.0")
    
@@ -169,7 +170,7 @@ if __name__ == "__main__":
 
    args = parser.parse_args()
 
-   mfDaemon = MfBrian(MF_DAEMON_PID_FILE, log=MediatorLogger(pid))
+   mfDaemon = MattDaemon(MF_DAEMON_PID_FILE, log=MediatorLogger(pid))
 
    if args.cmd.lower() == 'start':
       print "Start"
