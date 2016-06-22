@@ -156,6 +156,7 @@ class MattDaemon(Daemon):
       self.mfCmd = "{mfBin} -T wq -N {mfName} -t 600 -u 600 {mfDoc}"
       # TODO: Get from constant
       self.mfBin = "makeflow"
+      self.sleepTime = 30
 
 # .............................................................................
 if __name__ == "__main__":
