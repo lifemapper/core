@@ -125,7 +125,9 @@ class MattDaemon(Daemon):
          if self._mfPool[idx][1].poll() is None:
             numRunning = numRunning +1
          else:
+            jid = self._mfPool[idx][0]
             self._mfPool[idx] = None
+            self.scribe.deleteJobChain(jid)
       self._mfPool = filter(None, self._mfPool)
       return numRunning
 
