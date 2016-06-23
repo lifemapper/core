@@ -153,7 +153,7 @@ class LMMakeflowDocument(LMObject):
                   comment='Build occurrence set {0} job request'.format(jobId))
       
       # Add job to create occurrence set
-      self._addJobCommand([occJob.outputObj.getDLocation()], 
+      self._addJobCommand([occJob.outputObj.createLocalDLocation()], 
                           LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
                           dependencies=[jrFn], 
                           comment="Build occurrence set {0}".format(jobId))
@@ -170,7 +170,7 @@ class LMMakeflowDocument(LMObject):
       if mdlJob.outputObj.occurrenceSet.status == JobStatus.COMPLETE:
          dep = []
       else:
-         dep = [mdlJob.outputObj.occurrenceSet.getDLocation()]
+         dep = [mdlJob.outputObj.occurrenceSet.createLocalDLocation()]
 
       jobId = mdlJob.getId()
       jrFn = JOB_REQUEST_FILENAME.format(processType=mdlJob.processType, 
@@ -182,7 +182,7 @@ class LMMakeflowDocument(LMObject):
                   comment='Build model {0} job request'.format(jobId))
       
       # Add job to create model
-      self._addJobCommand([mdlJob.outputObj.getDLocation()], 
+      self._addJobCommand([mdlJob.dataObj.createLocalDLocation()], 
                           LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
                           dependencies=[jrFn], 
                           comment="Build model {0}".format(jobId))
@@ -196,7 +196,8 @@ class LMMakeflowDocument(LMObject):
       if prjJob.outputObj.getModel().status == JobStatus.COMPLETE:
          dep = []
       else:
-         dep = [prjJob.outputObj.getModel().getDLocation()]
+         mdl = prjJob.outputObj.getModel()
+         dep = [mdl.createLocalDLocation()]
 
       jobId = prjJob.getId()
       jrFn = JOB_REQUEST_FILENAME.format(processType=prjJob.processType, 
@@ -259,7 +260,7 @@ class LMMakeflowDocument(LMObject):
                   comment='Build intersect {0} job request'.format(jobId))
       
       # Add job to create intersect
-      self._addJobCommand([intJob.outputObj.getDLocation()], 
+      self._addJobCommand([intJob.outputObj.createLocalDLocation()], 
                           LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
                           dependencies=[jrFn], 
                           comment="Build intersect {0}".format(jobId))
@@ -272,7 +273,7 @@ class LMMakeflowDocument(LMObject):
       """
       # Calculate
       calcDep = []
-      calcOutput = calcJob.outputObj.getDLocation()
+      calcOutput = calcJob.outputObj.createLocalDLocation()
       
       calcJobId = calcJob.getId()
       calcJrFn = JOB_REQUEST_FILENAME.format(processType=calcJob.processType, 
@@ -284,7 +285,7 @@ class LMMakeflowDocument(LMObject):
                   comment='Build calculate {0} job request'.format(calcJobId))
       
       # Add job to calculate stats
-      self._addJobCommand([calcJob.outputObj.getDLocation()], 
+      self._addJobCommand([calcJob.outputObj.createLocalDLocation()], 
                           LM_JOB_RUNNER_CMD.format(jrFn=calcJrFn),
                           dependencies=[calcJrFn], 
                           comment="Calculate stats {0}".format(calcJobId))
@@ -301,7 +302,7 @@ class LMMakeflowDocument(LMObject):
                   comment='Build compress {0} job request'.format(compJobId))
       
       # Add job to create model
-      self._addJobCommand([compJob.outputObj.getDLocation()], 
+      self._addJobCommand([compJob.outputObj.createLocalDLocation()], 
                           LM_JOB_RUNNER_CMD.format(jrFn=compJrFn),
                           dependencies=[compJrFn], 
                           comment="Compress {0}".format(compJobId))
@@ -324,7 +325,7 @@ class LMMakeflowDocument(LMObject):
                   comment='Randomize {0} job request'.format(jobId))
       
       # Add job to create model
-      self._addJobCommand([randJob.outputObj.getDLocation()], 
+      self._addJobCommand([randJob.outputObj.createLocalDLocation()], 
                           LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
                           dependencies=[jrFn], 
                           comment="Randomize {0}".format(jobId))

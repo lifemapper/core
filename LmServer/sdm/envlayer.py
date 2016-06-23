@@ -144,8 +144,9 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
    @classmethod
    def initFromParts(cls, raster, envType):
       envLyr = EnvironmentalLayer(raster.name, title=raster.title, 
-                        minVal=raster.minVal, maxVal=raster.maxVal, 
-                        nodataVal=raster.nodataVal, valUnits=raster.valUnits,
+                        verify=raster.verify, minVal=raster.minVal, 
+                        maxVal=raster.maxVal, nodataVal=raster.nodataVal, 
+                        valUnits=raster.valUnits, 
                         isCategorical=raster.isCategorical,
                         bbox=raster.bbox, dlocation=raster.getDLocation(), 
                         metalocation=raster.getMetaLocation(),
