@@ -119,42 +119,42 @@ class LMMakeflowDocument(LMObject):
                raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
          
    # ...........................
-   def addProcessesForChain(self, jobChain):
-      """
-      @summary: Adds all of the processes necessary for jobs in the chain
-      @param jobChain: A recursive iterable of (item, [dependencies])
-      @note: This job chain will start as jobs, but will switch to objects
-      """
-      
-      # ......................
-      def addProcessForItem(item, deps=[]):
-         """
-         @summary: Internal function to process recursive structure of chain
-         @param item: Job or object to add process for
-         """
-         try: # See if we have a self-aware object
-            for targets, cmd, deps, comment in item.getMakeflowProcess():
-               pass
-         except: # Should fail until we implement functions on objects
-            if isinstance(item, SDMOccurrenceJob):
-               self.buildOccurrenceSet(item)
-            elif isinstance(item, SDMModelJob):
-               self.buildModel(item)
-            elif isinstance(item, SDMProjectionJob):
-               self.buildProjection(item)
-            else:
-               raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
-         
-         for iTup in deps:
-            if isinstance(iTup, (TupleType, ListType)):
-               i, d = iTup
-            else:
-               i = iTup
-               d = []
-            addProcessForItem(i, d)
-         
-      item, deps = jobChain
-      addProcessForItem(item, deps)
+   #def addProcessesForChain(self, jobChain):
+   #   """
+   #   @summary: Adds all of the processes necessary for jobs in the chain
+   #   @param jobChain: A recursive iterable of (item, [dependencies])
+   #   @note: This job chain will start as jobs, but will switch to objects
+   #   """
+   #   
+   #   # ......................
+   #   def addProcessForItem(item, deps=[]):
+   #      """
+   #      @summary: Internal function to process recursive structure of chain
+   #      @param item: Job or object to add process for
+   #      """
+   #      try: # See if we have a self-aware object
+   #         for targets, cmd, deps, comment in item.getMakeflowProcess():
+   #            pass
+   #      except: # Should fail until we implement functions on objects
+   #         if isinstance(item, SDMOccurrenceJob):
+   #            self.buildOccurrenceSet(item)
+   #         elif isinstance(item, SDMModelJob):
+   #            self.buildModel(item)
+   #         elif isinstance(item, SDMProjectionJob):
+   #            self.buildProjection(item)
+   #         else:
+   #            raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
+   #      
+   #      for iTup in deps:
+   #         if isinstance(iTup, (TupleType, ListType)):
+   #            i, d = iTup
+   #         else:
+   #            i = iTup
+   #            d = []
+   #         addProcessForItem(i, d)
+   #      
+   #   item, deps = jobChain
+   #   addProcessForItem(item, deps)
    
    # ...........................
    def buildOccurrenceSet(self, occJob):
