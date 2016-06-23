@@ -98,6 +98,27 @@ class LMMakeflowDocument(LMObject):
       #REQ_FILL=$HOME/git/core/LmCompute/scripts/fillProjectionRequest.py
    
    # ...........................
+   def addProcessesForList(self, itemList):
+      """
+      @summary: Adds all of the processes necessary for the jobs or objects in 
+                   the list
+      @param itemList: A list of jobs or objects
+      """
+      for item in itemList:
+         try: # See if we have a self-aware object
+            for targets, cmd, deps, comment in item.getMakeflowProcess():
+               pass
+         except: # Should fail until we implement functions on objects
+            if isinstance(item, SDMOccurrenceJob):
+               self.buildOccurrenceSet(item)
+            elif isinstance(item, SDMModelJob):
+               self.buildModel(item)
+            elif isinstance(item, SDMProjectionJob):
+               self.buildProjection(item)
+            else:
+               raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
+         
+   # ...........................
    def addProcessesForChain(self, jobChain):
       """
       @summary: Adds all of the processes necessary for jobs in the chain
