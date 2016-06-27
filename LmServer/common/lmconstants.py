@@ -64,6 +64,8 @@ SALT = "4303e8f7129243fd42a57bcc18a19f5b"
 # MAL, RAD, gbifCache database names
 RAD_STORE = 'speco'
 MAL_STORE = 'mal'
+DB_STORE = 'borg'
+
 # ............................................................................
 class DbUser:
    Map = 'mapuser'

@@ -276,7 +276,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmmodel (
       
 -- ----------------
 -- ----------------------------------------------------------------------------
--- lm_fullprojection 
+-- lm_sdmprojection 
 DROP VIEW IF EXISTS lm_v3.lm_sdmprojection CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    -- projection.*
@@ -341,133 +341,30 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
       WHERE p.sdmmodelid = m.sdmmodelid 
         AND m.occurrencesetid = o.occurrencesetid;
 
--- ----------------------------------------------------------------------------
--- referenceType defined in LmServer.common.lmconstants ReferenceType 
-DROP VIEW IF EXISTS lm_v3.lm_prjJob CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_prjJob (
-   -- lm_fullprojection.*
-   sdmprojectionId, 
-   prjverify,
-   prjsquid,
-   prjMetadataUrl, 
-   sdmmodelid, 
-   prjscenarioCode, 
-   prjscenarioId, 
-   prjMaskId, 
-   prjcreateTime, 
-   prjstatus, 
-   prjstatusModTime, 
-   prjpriority, 
-   units, 
-   resolution, 
-   prjepsgcode, 
-   prjbbox, 
-   prjdlocation, 
-   dataType, 
-   prjjobId, 
-   prjcomputeResourceId,
-   prjgeom, 
-   mdlUserId, 
-   mdlname,
-   mdldescription,
-   occurrenceSetId, 
-   mdlScenarioCode, 
-   mdlScenarioId, 
-   mdlMaskId, 
-   algorithmCode, 
-   algorithmParams, 
-   mdlCreateTime, 
-   mdlStatus, 
-   mdlStatusModTime, 
-   mdlPriority, 
-   mdldlocation, 
-   qc, 
-   mdlJobId, 
-   email, 
-   mdlcomputeresourceid,
-   occverify,
-   occsquid,
-   occUserId, 
-   fromGbif, 
-   displayName, 
-   scientificNameId,
-   occstatus, 
-   occstatusmodtime,
-   occMetadataUrl, 
-   occdlocation, 
-   queryCount, 
-   dateLastModified, 
-   dateLastChecked, 
-   occepsgcode, 
-   occbbox, 
-   occgeom,
-      
-   -- LmJob.*
-   lmJobId,
-   jobFamily,
-   referenceType,
-   referenceId,
-   jbcomputeResourceId,
-   priority,
-   progress,
-   jbstatus,
-   jbstatusmodtime,
-   jbstage,
-   jbstagemodtime,
-   donotify,
-   reqData,
-   reqSoftware,
-   jbdatecreated,
-   lastheartbeat,
-   retrycount
-    ) AS
-      SELECT p.sdmprojectionId, p.prjverify, p.prjsquid, p.prjMetadataUrl, p.sdmmodelid, p.prjscenarioCode, 
-             p.prjscenarioId, p.prjMaskId, p.prjcreateTime, p.prjstatus, 
-             p.prjstatusModTime, p.prjpriority, p.units, p.resolution, 
-             p.prjepsgcode, p.prjbbox, p.prjdlocation, p.dataType, 
-             p.prjjobId, p.prjcomputeResourceId, p.prjgeom, p.mdlUserId, p.mdlname, 
-             p.mdldescription, p.occurrenceSetId, 
-             p.mdlScenarioCode, p.mdlScenarioId, p.mdlMaskId, p.algorithmCode, 
-             p.algorithmParams, p.mdlCreateTime, p.mdlStatus, p.mdlStatusModTime, 
-             p.mdlPriority, p.mdldlocation, p.qc, p.mdlJobId, p.email, 
-             p.mdlcomputeresourceid,
-             p.occverify, p.occsquid, p.occUserId, p.fromGbif, p.displayName, p.scientificNameId, 
-             p.occstatus, p.occstatusmodtime, p.occMetadataUrl, p.occdlocation, 
-             p.queryCount, p.dateLastModified, p.dateLastChecked, p.occepsgcode, p.occbbox, 
-             p.occgeom, 
-             j.lmJobId, j.jobFamily, j.referenceType, j.referenceId, 
-             j.computeResourceId, j.priority, j.progress, 
-             j.status, j.statusmodtime, j.stage, j.stagemodtime, j.donotify,
-             j.reqdata, j.reqsoftware, j.datecreated, j.lastheartbeat, j.retrycount
-      FROM lm_v3.LmJob j, lm_v3.lm_fullprojection p 
-      WHERE j.referenceType = 102
-        AND j.referenceid = p.sdmprojectionId;
        
 -- ----------------------------------------------------------------------------
 DROP VIEW IF EXISTS lm_v3.lm_fullOccurrenceset CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_fullOccurrenceset (
+CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    -- occurrenceset.* (without geom, geompts)
    occurrenceSetId,
    verify,
    squid,
    userId,
-   fromGbif,
    displayName,
-   scientificNameId,
+   taxonId,
    primaryEnv,
    metadataUrl,
    dlocation,
+   rawDlocation,
    queryCount,
-   dateLastModified,
-   dateLastChecked,
    bbox,
    epsgcode,
    status,
    statusmodtime,
-   rawDlocation,
-   -- ScientificName.*
+   -- Taxon.*
    taxonomySourceId,
    taxonomyKey,
+   taxsquid,
    kingdom,
    phylum,
    tx_class,
@@ -481,83 +378,23 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullOccurrenceset (
    specieskey,
    keyHierarchy,
    lastcount,
-   scidatecreated,
-   scidatelastmodified, 
+   taxmodtime, 
    -- TaxonomySource.*
    url,
    datasetIdentifier,
-   taxdateCreated,
-   taxdateLastModified
+   taxsrcmodtime
    ) AS
-   SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.fromGbif, o.displayName, 
-          o.scientificNameId, o.primaryEnv, o.metadataUrl, o.dlocation,
-          o.queryCount, o.dateLastModified, o.dateLastChecked, o.bbox, 
-          o.epsgcode, o.status, o.statusmodtime, o.rawDlocation,
-          n.taxonomySourceId, n.taxonomyKey, n.kingdom, n.phylum, n.tx_class,
-          n.tx_order, n.family, n.genus, n.rank, n.canonical, n.sciname, 
-          n.genuskey, n.specieskey,
-          n.keyHierarchy, n.lastcount, n.datecreated, n.datelastmodified,
-          t.url, t.datasetIdentifier, t.dateCreated, t.dateLastModified
-   FROM lm_v3.occurrenceset o, lm_v3.scientificname n, lm_v3.taxonomysource t
-   WHERE o.scientificnameid = n.scientificnameid 
-     AND n.taxonomysourceid = t.taxonomysourceid;
+   SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.displayName, 
+          o.taxonId, o.primaryEnv, o.metadataUrl, o.dlocation, o.rawDlocation,
+          o.queryCount, o.bbox, o.epsgcode, o.status, o.statusmodtime, 
+          t.taxonomySourceId, t.taxonomyKey, t.squid, t.kingdom, t.phylum, t.tx_class,
+          t.tx_order, t.family, t.genus, t.rank, t.canonical, t.sciname, 
+          t.genuskey, t.specieskey, t.keyHierarchy, t.lastcount, t.modtime,
+          ts.url, ts.datasetIdentifier, ts.modtime
+   FROM lm_v3.occurrenceset o, lm_v3.taxon t, lm_v3.taxonomysource ts
+   WHERE o.taxonid = t.taxonid 
+     AND t.taxonomysourceid = ts.taxonomysourceid;
 
--- ----------------------------------------------------------------------------
--- referenceType defined in LmServer.common.lmconstants ReferenceType 
-DROP VIEW IF EXISTS lm_v3.lm_occJob CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_occJob (
-   -- occurrenceset.* (without geom, geompts)
-   occurrenceSetId,
-   verify,
-   squid,
-   occuserId,
-   fromGbif,
-   displayName,
-   scientificNameId,
-   primaryEnv,
-   occmetadataUrl,
-   occdlocation,
-   queryCount,
-   dateLastModified,
-   dateLastChecked,
-   occbbox,
-   occepsgcode, 
-   occstatus,
-   occstatusModTime,
-   rawdlocation,
-         
-   -- LmJob.*
-   lmJobId,
-   jobFamily,
-   referenceType,
-   referenceId,
-   jbcomputeResourceId,
-   priority,
-   progress,
-   jbstatus,
-   jbstatusmodtime,
-   jbstage,
-   jbstagemodtime,
-   donotify,
-   reqData,
-   reqSoftware,
-   jbdatecreated,
-   lastheartbeat,
-   retrycount
-   ) AS
-     SELECT o.occurrenceSetId, o.verify, o.squid, o.userid, o.fromgbif, o.displayname, 
-            o.scientificNameId,
-            o.primaryenv, o.metadataUrl, o.dlocation, o.querycount, o.datelastmodified, 
-            o.datelastchecked, o.bbox, o.epsgcode, o.status, o.statusmodtime, 
-            o.rawdlocation,
-            j.lmJobId, j.jobFamily, j.referenceType, j.referenceId, 
-            j.computeResourceId, j.priority, j.progress, 
-            j.status, j.statusmodtime, j.stage, j.stagemodtime, j.donotify,
-            j.reqdata, j.reqsoftware, j.datecreated, j.lastheartbeat, 
-            j.retrycount  
-      FROM lm_v3.LmJob j, lm_v3.occurrenceset o 
-      WHERE j.referenceType = 104
-        AND j.referenceid = o.occurrencesetid; 
         
 -- ----------------------------------------------------------------------------
 -- lm_bloat
@@ -614,20 +451,65 @@ CREATE OR REPLACE VIEW lm_v3.lm_bloat AS
       WHERE sml.relpages - otta > 0 OR ipages - iotta > 10
       ORDER BY wastedbytes DESC, wastedibytes DESC;
 
+ 
 -- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+GRANT SELECT ON TABLE 
+lm_v3.lm_envlayer,
+lm3.lm_shapegrid,
+lm3.lm_anclayer,  
+lm3.lm_palayer, 
+
+lm_v3.lm_fullOccurrenceset, 
+lm_v3.lm_fullmodel, lm_v3.lm_fullProjection, 
+lm_v3.lm_mdlJob, lm_v3.lm_prjJob, lm_v3.lm_msgJob, lm_v3.lm_occJob, lm_v3.lm_bloat
+TO GROUP reader;
+
+GRANT SELECT ON TABLE 
+lm_v3.lm_envlayer, lm_v3.lm_fullOccurrenceset,  
+lm_v3.lm_fullmodel, lm_v3.lm_fullProjection, 
+lm_v3.lm_mdlJob, lm_v3.lm_prjJob, lm_v3.lm_msgJob, lm_v3.lm_occJob, lm_v3.lm_bloat
+TO GROUP writer;
+
+GRANT UPDATE ON TABLE 
+lm_v3.lm_mdlJob, lm_v3.lm_prjJob, lm_v3.lm_msgJob, lm_v3.lm_occJob
+TO GROUP writer;
+
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+
 -- ----------------------------------------------------------------------------
 -- DATA TYPES (used on multiple tables)
 -- Note: All column names are returned in lower case
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- lm_atom returns only an a few object attributes
-DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
-CREATE TYPE lm_v3.lm_atom AS (
+DROP TYPE IF EXISTS lm3.lm_atom CASCADE;
+CREATE TYPE lm3.lm_atom AS (
   id int,
   title varchar,
   epsgcode int,
   description text,
-  modtime double precision);
+  modtime double precision
+  );
+
+-- ----------------------------------------------------------------------------
+-- lm_palayeridx OR lm_anclayeridx
+DROP TYPE IF EXISTS lm3.lm_layeridx CASCADE;
+CREATE TYPE lm3.lm_layeridx AS (
+   -- Layer
+   layerid int,
+   verify varchar,
+   squid varchar,
+   lyruserid varchar,
+   layername varchar,
+   metadataurl varchar,
+   layerurl varchar,
+   -- ExperimentPALayer OR ExperimentAncLayer
+   paramid int,
+   matrixidx int, 
+   boomid int);
 
 -- ----------------------------------------------------------------------------
 -- Type returning scenario with comma delimited list of keywords as string field
@@ -674,12 +556,11 @@ CREATE TYPE lm_v3.lm_envlayerAndKeywords AS
              epsgcode int,
              mapunits varchar,
              resolution double precision,
-             valAttribute varchar,
              startDate double precision,
              endDate double precision,
-             dateLastModified double precision,
+             modTime double precision,
              bbox varchar,
-             thumbnail bytea,
+             valAttribute varchar,
              nodataVal double precision,
              minVal double precision,
              maxVal double precision,
@@ -705,34 +586,6 @@ CREATE TYPE lm_v3.lm_layerTypeAndKeywords AS
              keywords varchar
 );
 
--- ----------------------------------------------------------------------------
--- Type for creating a mapservice from scenario layers.  Eventually replaces 
--- SDL mapservice and maplayers.
-DROP TYPE IF EXISTS lm_v3.lm_scenarioMapLayer;
-CREATE TYPE lm_v3.lm_scenarioMapLayer AS
-(
-   layerid      int, 
-   verify     varchar,
-   metadataUrl  varchar,
-   layername    varchar,
-   layertitle   varchar,
-   startdate    double precision,
-   enddate      double precision,
-   mapunits     varchar,
-   resolution   double precision, 
-   bbox         varchar,
-   dlocation     varchar,
-   gdaltype     int,
-   scenarioMetadataUrl varchar,
-   scenariocode varchar,
-   scenariotitle varchar
-);
-        
--- ----------------------------------------------------------------------------
-DROP TYPE IF EXISTS lm_v3.lm_mpids CASCADE;
-CREATE TYPE lm_v3.lm_mpids AS (
-  sdmmodelid int,
-  sdmprojectionId int); 
 
 -- ----------------------------------------------------------------------------
 DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
@@ -740,7 +593,7 @@ CREATE TYPE lm_v3.lm_occStats AS
 (
     occurrenceSetId int,
     displayname varchar,
-    datelastmodified double precision,
+    statusmodtime double precision,
     querycount int,
     totalmodels int
    );
@@ -751,31 +604,4 @@ DROP TYPE IF EXISTS lm_v3.lm_progress CASCADE;
 CREATE TYPE lm_v3.lm_progress AS (
   status int,
   total int);
- 
--- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
-GRANT SELECT ON TABLE 
-lm_v3.lm_envlayer,
-lm3.lm_shapegrid,
-lm3.lm_anclayer,  
-lm3.lm_palayer, 
-
-lm_v3.lm_fullOccurrenceset, 
-lm_v3.lm_fullmodel, lm_v3.lm_fullProjection, 
-lm_v3.lm_mdlJob, lm_v3.lm_prjJob, lm_v3.lm_msgJob, lm_v3.lm_occJob, lm_v3.lm_bloat
-TO GROUP reader;
-
-GRANT SELECT ON TABLE 
-lm_v3.lm_envlayer, lm_v3.lm_fullOccurrenceset,  
-lm_v3.lm_fullmodel, lm_v3.lm_fullProjection, 
-lm_v3.lm_mdlJob, lm_v3.lm_prjJob, lm_v3.lm_msgJob, lm_v3.lm_occJob, lm_v3.lm_bloat
-TO GROUP writer;
-
-GRANT UPDATE ON TABLE 
-lm_v3.lm_mdlJob, lm_v3.lm_prjJob, lm_v3.lm_msgJob, lm_v3.lm_occJob
-TO GROUP writer;
-
--- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
-
+   

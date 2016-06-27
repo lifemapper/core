@@ -78,9 +78,9 @@ create table lm_v3.Taxon
 (
 	-- ** MAL scientificNameId
    taxonId serial UNIQUE PRIMARY KEY,
-   squid varchar(64),
    taxonomySourceId int REFERENCES lm_v3.TaxonomySource,
    taxonomyKey int,
+   squid varchar(64),
    kingdom text,
    phylum text,
    tx_class  text,
@@ -177,7 +177,6 @@ create table lm_v3.Layer
     scenarioId serial UNIQUE PRIMARY KEY,
     scenarioCode varchar(30),
     metadataUrl text UNIQUE,
-    dlocation text,
     title text,
     author text,
     description text,
@@ -259,8 +258,7 @@ CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 -- -------------------------------
 create table lm_v3.Algorithm
 (
-   algorithmId serial UNIQUE PRIMARY KEY,
-   algorithmCode varchar(30) UNIQUE,
+   algorithmCode varchar(30) UNIQUE PRIMARY KEY,
    name varchar(60),
    modTime double precision
 );
@@ -472,7 +470,7 @@ lm_v3.layer, lm_v3.layer_layerid_seq,
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariokeywords, 
 lm_v3.scenariolayers,
-lm_v3.algorithm, lm_v3.algorithm_algorithmid_seq,
+lm_v3.algorithm, 
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
 lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
@@ -508,7 +506,6 @@ lm_v3.keyword_keywordid_seq,
 lm_v3.layertype_layertypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.scenario_scenarioid_seq,
-lm_v3.algorithm_algorithmid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,
 lm_v3.sdmprojection_sdmprojectionid_seq,
