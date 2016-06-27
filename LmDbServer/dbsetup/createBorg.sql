@@ -161,12 +161,14 @@ create table lm_v3.Layer
    minVal double precision,
    maxVal double precision,
    valUnits varchar(60),
-   layerTypeId int REFERENCES lm_v3.LayerType
+   layerTypeId int REFERENCES lm_v3.LayerType,
+   UNIQUE (userid, name, epsgcode)
 );
  Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
  ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
  ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
  ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT unique_usr_name CHECK (st_ndims(geom) = 2);
  CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
  CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
  CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
@@ -284,9 +286,7 @@ create table lm_v3.SDMModel
    dlocation text,
    email varchar(64), 
    algorithmParams text,
-   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
-   -- ** delete computeResourceId??
-   computeResourceId int REFERENCES lm_v3.ComputeResource
+   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode)
 );
 CREATE INDEX idx_mdlLastModified ON lm_v3.SDMModel(statusModTime);
 CREATE INDEX idx_modelUser ON lm_v3.SDMModel(userId);
@@ -314,9 +314,7 @@ create table lm_v3.SDMProjection
    epsgcode int,
    bbox varchar(60),
    dlocation text,
-   dataType int,
-   -- ** delete computeResourceId??
-   computeResourceId int REFERENCES lm_v3.ComputeResource
+   dataType int
 );  
 Select AddGeometryColumn('lm_v3', 'sdmprojection', 'geom', 4326, 'POLYGON', 2);
 ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
@@ -340,9 +338,7 @@ create table lm_v3.ShapeGrid
    xAttribute varchar(20),
    yAttribute varchar(20),
    status int,
-   statusmodtime double precision,
-   -- ** delete computeResourceId??
-   computeResourceId int REFERENCES lm_v3.ComputeResource
+   statusmodtime double precision
 );
 
 -- -------------------------------
@@ -471,7 +467,7 @@ create table lm_v3.JobChain
 GRANT SELECT ON TABLE 
 lm_v3.lmuser, 
 lm_v3.computeresource, lm_v3.computeresource_computeresourceid_seq,
-lm_v3.lmjobchain, lm_v3.lmjobchain_lmjobchainid_seq,
+lm_v3.jobchain, lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
 lm_v3.keyword, lm_v3.keyword_keywordid_seq, 
@@ -491,7 +487,7 @@ TO GROUP reader;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
 lm_v3.lmuser, 
 lm_v3.computeresource, 
-lm_v3.lmjobchain,
+lm_v3.jobchain,
 lm_v3.taxonomysource,
 lm_v3.taxon,
 lm_v3.keyword,
@@ -510,7 +506,7 @@ TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
 lm_v3.computeresource_computeresourceid_seq,
-lm_v3.lmjobchain_lmjobchainid_seq,
+lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
 lm_v3.keyword_keywordid_seq,

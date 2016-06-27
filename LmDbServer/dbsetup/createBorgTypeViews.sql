@@ -238,7 +238,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmmodel (
    name,
    description,
    occurrenceSetId,
-   scenarioId,
    scenarioCode,
    maskId,
    mdlstatus,
@@ -264,12 +263,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmmodel (
    occstatusmodtime
 ) AS
       SELECT m.sdmmodelId, m.userId, m.name, m.description, m.occurrenceSetId, 
-      m.scenarioId, m.scenarioCode, m.maskId, m.createTime, m.mdlstatus, 
-      m.mdlstatusModTime, m.priority, m.mdldlocation, m.email, m.algorithmParams,
-      m.algorithmCode, 
-      o.verify, o.squid, o.displayName, o.taxonId, o.primaryEnv, o.occmetadataUrl, 
-      o.occdlocation, o.rawDlocation, o.queryCount, o.bbox, o.epsgcode, 
-      o.occstatus, o.occstatusmodtime
+      m.scenarioCode, m.maskId, m.status, m.statusModTime, m.priority, 
+      m.dlocation, m.email, m.algorithmParams, m.algorithmCode, 
+      o.verify, o.squid, o.displayName, o.taxonId, o.primaryEnv, o.metadataUrl, 
+      o.dlocation, o.rawDlocation, o.queryCount, o.bbox, o.epsgcode, 
+      o.status, o.statusmodtime
       FROM lm_v3.sdmmodel m, lm_v3.occurrenceSet o
       WHERE m.occurrencesetid = o.occurrencesetid;
       
@@ -281,13 +279,13 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    -- projection.*
    sdmprojectionId,
    prjverify,
-   squid,
+   prjsquid,
    prjmetadataUrl,
    prjmetalocation,
-   taxonId,
+   prjtaxonId,
    sdmmodelid,
    scenarioCode,
-   maskId,
+   prjmaskId,
    prjstatus,
    prjstatusModTime,
    units,
@@ -301,28 +299,25 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    name,
    description,
    occurrenceSetId,
-   scenarioId,
-   scenarioCode,
-   maskId,
-   status,
-   statusModTime,
+   mdlscenarioCode,
+   mdlmaskId,
+   mdlstatus,
+   mdlstatusModTime,
    priority,
-   dlocation,
+   mdldlocation,
    email, 
    algorithmParams,
    algorithmCode,
    -- occurrenceSet
-   verify,
-   squid,
+   occverify,
    displayName,
-   taxonId,
    primaryEnv,
-   metadataUrl,
-   dlocation,
+   occmetadataUrl,
+   occdlocation,
    queryCount,
-   bbox,
-   status,
-   statusmodtime
+   occbbox,
+   occstatus,
+   occstatusmodtime
    ) AS
       SELECT p.sdmprojectionId, p.verify, p.squid, p.metadataUrl, p.metalocation, 
              p.taxonId, p.sdmmodelid, p.scenarioCode, p.maskId,
@@ -330,8 +325,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
              p.bbox, p.dlocation, p.dataType, 
              m.userId, m.name, m.description, m.occurrenceSetId, m.scenarioCode, 
              m.maskId, m.status, m.statusModTime, m.priority, 
-             m.dlocation, m.email, m.algorithmCode, m.algorithmParams,
-             o.verify, o.squid, o.displayName, o.taxonId, o.primaryEnv,
+             m.dlocation, m.email, m.algorithmParams, m.algorithmCode, 
+             o.verify, o.squid, o.displayName, o.primaryEnv,
              o.metadataUrl, o.dlocation, o.queryCount, o.bbox, o.status, o.statusmodtime
       FROM lm_v3.sdmprojection p, lm_v3.sdmmodel m, lm_v3.occurrenceSet o
       WHERE p.sdmmodelid = m.sdmmodelid 
@@ -457,14 +452,14 @@ lm_v3.lm_shapegrid,
 lm_v3.lm_anclayer,  
 lm_v3.lm_palayer, 
 
-lm_v3.lm_fullOccurrenceset, 
-lm_v3.lm_fullmodel, lm_v3.lm_fullProjection, 
+lm_v3.lm_occurrenceset, 
+lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP reader;
 
 GRANT SELECT ON TABLE 
-lm_v3.lm_envlayer, lm_v3.lm_fullOccurrenceset,  
-lm_v3.lm_fullmodel, lm_v3.lm_fullProjection, 
+lm_v3.lm_envlayer, lm_v3.lm_occurrenceset,  
+lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP writer;
 

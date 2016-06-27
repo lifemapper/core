@@ -94,6 +94,7 @@ class Scribe(Peruser):
       @param alg: The algorithm to add
       """
       algid = self._mal.insertAlgorithm(alg)
+      algid = self._borg.insertAlgorithm(alg)
       return algid
 
 # ...............................................
@@ -549,6 +550,7 @@ class Scribe(Peruser):
       if isinstance(lyr, EnvironmentalLayer):
          if lyr.isValidDataset():
             updatedLyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
+            updatedLyr2 = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
          else:
             raise LMError(currargs='Invalid environmental layer: {}'
                                     .format(lyr.getDLocation()), 
@@ -559,7 +561,9 @@ class Scribe(Peruser):
    def getOrInsertLayerTypeCode(self, envType):
       etypeid = None
       if isinstance(envType, EnvironmentalType):
-#          etypeid = self._borg.insertEnvironmentalType(envtype=envType)
+         
+         etypeid_borg = self._borg.insertEnvironmentalType(envtype=envType)
+         
          existingET = self._mal.getEnvironmentalType(envType.typeCode, 
                                           envType.getParametersUserId())
          if existingET is not None:
@@ -1376,6 +1380,7 @@ class Scribe(Peruser):
    def insertScenario(self, scen):
       lyrIds = []
       scenId = self._mal.insertScenario(scen)
+      updatedScen = self._borg.findOrInsertScenario(scen)
       for lyr in scen.layers:
          updatedLyr = self.insertScenarioLayer(lyr, scenId)
          lyrIds.append(updatedLyr.getId())

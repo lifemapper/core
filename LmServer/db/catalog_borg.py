@@ -27,12 +27,12 @@ import os
 from LmCommon.common.lmconstants import JobStatus, DEFAULT_EPSG, ProcessType
 
 from LmServer.base.dbpgsql import DbPostgresql
-from LmServer.base.job import _Job
 from LmServer.base.layer import Raster, Vector
 from LmServer.base.taxon import ScientificName
 from LmServer.base.layerset import MapLayerSet                                  
 from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
                   DEFAULT_PROJECTION_FORMAT, JobFamily, DB_STORE, ReferenceType)
 from LmServer.common.lmuser import LMUser
@@ -63,7 +63,95 @@ class Borg(DbPostgresql):
       """
       DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser, 
                             password=dbKey, host=dbHost, port=dbPort)
+      earl = EarlJr()
+      self._relativeArchivePath = earl.createArchiveDataPath()
+      self._webservicePrefix = earl.createWebServicePrefix()()
             
+# ...............................................
+   def _getRelativePath(self, dlocation=None, url=None):
+      relativePath = None
+      if dlocation is not None:
+         if dlocation.startswith(self._relativeArchivePath):
+            relativePath = dlocation[len(self._relativeArchivePath):]
+      elif url is not None:
+         if url.startswith(self._webservicePrefix):
+            relativePath = url[len(self._webservicePrefix)]
+      return relativePath
+
+# ...............................................
+   def _findOrInsertShapeGridParams(self, shpgrd, cutout):
+      """
+      @summary: Insert ShapeGrid parameters into the database
+      @param shpgrd: The ShapeGrid to insert
+      @postcondition: The database contains a new record with shpgrd 
+                   attributes.  The shpgrd has _dbId, _dlocation, _parametersId 
+                   and metadataUrl populated.
+      @note: findShapeGrids should be executed first to ensure that the
+             user and shapename combination are unique.
+      @raise LMError: on failure to insert or update the database record. 
+      """
+      shpgrdId = self.executeInsertFunction('lm_insertShapeGrid',
+                                             shpgrd.getLayerId(),
+                                             shpgrd.cellsides,
+                                             shpgrd.cellsize,
+                                             shpgrd.size,
+                                             shpgrd.siteId,
+                                             shpgrd.siteX, shpgrd.siteY,
+                                             shpgrd.status,
+                                             shpgrd.statusModTime)
+      shpgrd.setParametersId(shpgrdId)
+      return shpgrd
+
+# ...............................................
+   def _findOrInsertBaseLayer(self, lyr):
+      min = max = nodata = ltypeid = None
+      if isinstance(lyr, EnvironmentalLayer):
+         ltypeid = lyr.getParametersId()
+      if isinstance(lyr, Raster):
+         min = lyr.minVal
+         max = lyr.maxVal
+         nodata = lyr.nodataVal
+      if lyr.epsgcode == DEFAULT_EPSG:
+         wkt = lyr.getWkt()
+      lyrid = self.executeInsertFunction('lm_insertLayer', 
+                                         lyr.verify,
+                                         lyr.squid,
+                                         lyr.getLayerUserId(),
+                                         lyr.name,
+                                         lyr.title,
+                                         lyr.author,
+                                         lyr.description,
+                                         self._getRelativePath(
+                                             dlocation=lyr.getDLocation()),
+                                         self._getRelativePath(
+                                             dlocation=lyr.getMetaLocation()),
+                                         lyr.ogrType,
+                                         lyr.gdalType,
+                                         lyr.isCategorical,
+                                         lyr.dataFormat,
+                                         lyr.epsgcode,
+                                         lyr.mapUnits,
+                                         lyr.resolution,
+                                         lyr.startDate,
+                                         lyr.endDate,
+                                         lyr.modTime,
+                                         lyr.getCSVExtentString(), wkt,
+                                         lyr.getValAttribute(),
+                                         nodata, min, max,
+                                         lyr.valUnits,
+                                         ltypeid,
+                                         self._getRelativePath(
+                                             url=lyr.metadataUrl))
+      if lyrid != -1:
+         lyr.setLayerId(lyrid)
+         lyr.setId(lyrid)
+         lyr.resetMetadataUrl()
+         updatedLyr = lyr
+      else:
+         raise LMError(currargs='Error on adding Layer object (Command: %s)' % 
+                       str(self.lastCommands))
+      return updatedLyr
+
 # .............................................................................
 # Public functions
 # .............................................................................
@@ -80,24 +168,22 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def insertScenario(self, scen):
+   def findOrInsertScenario(self, scen):
       """
       @summary Inserts all scenario layers into the database
       @param scen: The scenario to insert
       """
-      currtime = mx.DateTime.utc().mjd
-      mUrlWithPlaceholder = scen.metadataUrl
+      scen.modTime = mx.DateTime.utc().mjd
       wkt = None
       if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
       scenid = self.executeInsertFunction('lm_insertScenario', scen.name, 
                                       scen.title, scen.author, scen.description,
-                                      mUrlWithPlaceholder, 
+                                      self._getRelativePath(url=scen.metadataUrl),
                                       scen.startDate, scen.endDate, 
-                                      scen.units, scen.resolution, 
-                                      scen.epsgcode,
-                                      scen.getCSVExtentString(), 
-                                      wkt, currtime, scen.getUserId())
+                                      scen.units, scen.resolution, scen.epsgcode,
+                                      scen.getCSVExtentString(), wkt, 
+                                      scen.modTime, scen.getUserId())
       scen.setId(scenid)
       for kw in scen.keywords:
          successCode = self.executeInsertFunction('lm_insertScenarioKeyword',
@@ -105,7 +191,7 @@ class Borg(DbPostgresql):
          if successCode != 0:
             self.log.error('Failed to insert keyword %s for scenario %d' % 
                            (kw, scenid))
-      return scenid
+      return scen
 
 # ...............................................
    def getEnvironmentalType(self, typeid, typecode, usrid):
@@ -122,24 +208,24 @@ class Borg(DbPostgresql):
       return envType
 
 # ...............................................
-   def insertEnvironmentalType(self, envtype=None, envlayer=None):
+   def findOrInsertEnvironmentalType(self, envtype):
       """
       @summary: Insert or find _EnvironmentalType values. Return the record id.
-      @param envtype: An EnvironmentalType object
-      @param envlayer: An EnvironmentalLayer object
+      @param envtype: An EnvironmentalType or EnvironmentalLayer object
       """
-      etid = None
-      # Find  
-      if envtype is None:
-         etid = envlayer.getParametersId()
-         if etid is None:
-            envtype = self.getEnvironmentalType(etid, envlayer.typeCode, 
-                                                envlayer.getUserId())
-            if envtype is not None:
-               etid = envtype.getId()
-               envlayer.setLayerParam(envtype)
-      # or Insert  
-      if etid is None and envtype is not None:
+      found = False
+      # Find
+      updatedET = self.getEnvironmentalType(envtype.getParametersId(), 
+                                            envtype.typeCode, envtype.getUserId())
+      if updatedET is not None:
+         found = True
+         if isinstance(envtype, EnvironmentalLayer):
+            envtype.setLayerParam(updatedET)
+         else:
+            envtype = updatedET
+            
+      # or Insert
+      if not found:
          envtype.parametersModTime = mx.DateTime.utc().mjd
          etid = self.executeInsertFunction('lm_insertLayerType',
                                             envtype.getParametersUserId(),
@@ -149,9 +235,49 @@ class Borg(DbPostgresql):
                                             envtype.parametersModTime)
          envtype.setParametersId(etid)
          for kw in envtype.typeKeywords:
-            etid = self.executeInsertFunction('lm_insertLayerTypeKeyword', 
-                                              etid, kw)
-      return etid
+            success = self.executeInsertFunction('lm_insertLayerTypeKeyword', 
+                                                 etid, kw)
+      return envtype
                              
 # ...............................................
+   def insertShapeGrid(self, shpgrd, cutout):
+      """
+      @summary: Find or insert a ShapeGrid into the database
+      @param shpgrd: The ShapeGrid to insert
+      @postcondition: The database contains a new or existing records for 
+                   shapegrid and layer.  The shpgrd object has _dbId, _dlocation, 
+                   and metadataUrl populated.
+      @note: findShapeGrids should be executed first to ensure that the
+             user and shapename combination are unique.
+      @raise LMError: on failure to insert or update the database record. 
+      """
+      shpgrd.modTime = mx.DateTime.utc().mjd
+      sgtmp = self._findOrInsertBaseLayer(shpgrd)
+      sg = self._findOrInsertShapeGridParams(sgtmp, cutout)
+      return sg
+
+# ...............................................
+   def findOrInsertEnvLayer(self, lyr, scenarioId=None):
+      """
+      @summary Insert or find a layer's metadata in the MAL. 
+      @param envLayer: layer to update
+      @return: the updated or found EnvironmentalLayer
+      @note: layer title and layertype title are the same
+      @note: Layer should already have name, filename, and url populated.
+      @note: We are setting the layername to the layertype to ensure that they 
+             will be unique within a scenario
+      @note: lm_insertEnvLayer(...) returns int
+      @note lm_insertLayerTypeKeyword(...) returns int
+      """
+      lyr.modTime = mx.DateTime.utc().mjd
+      partialUpdatedLyr = self.findOrInsertEnvironmentalType(envlayer=lyr)
+      updatedLyr = self._findOrInsertBaseLayer(partialUpdatedLyr)
+      if scenarioId is not None:
+         success = self.executeModifyFunction('lm_joinScenarioLayer', 
+                                              scenarioId, updatedLyr.getId())
+         if not success:
+            raise LMError(currargs='Failure joining layer {} to scenario {}'
+                          .format(updatedLyr.getId(), scenarioId))
+      return lyr
+
 
