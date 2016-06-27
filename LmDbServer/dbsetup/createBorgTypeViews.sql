@@ -161,7 +161,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
              a.ancillaryValueId, a.nameValue, a.weightedMean, a.largestClass, 
              a.minPercent, a.nameFilter, a.valueFilter,
              bal.boomAncLayerId, bal.boomId, bal.name, bal.matrixIdx,
-      FROM lm3.Layer l, lm3.AncillaryValue a, lm3.BoomAncLayer bal
+      FROM lm_v3..Layer l, lm_v3..AncillaryValue a, lm_v3..BoomAncLayer bal
       WHERE l.layerId = bal.layerId 
         AND bal.ancillaryValueId = a.ancillaryValueId;
         
@@ -225,7 +225,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
              pa.minPresence, pa.maxPresence, pa.percentPresence, pa.nameAbsence, 
              pa.minAbsence, pa.maxAbsence, pa.percentAbsence,
              bpal.boomPALayerId, bpal.boomId, bpal.name, bpal.matrixIdx
-      FROM lm3.Layer l, lm3.PresenceAbsence pa, lm3.BoomPALayer bpal
+      FROM lm_v3..Layer l, lm_v3..PresenceAbsence pa, lm_v3..BoomPALayer bpal
       WHERE l.layerId = bpal.layerId 
         AND bpal.presenceAbsenceId = pa.presenceAbsenceId;
         
@@ -457,9 +457,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_bloat AS
 -- ----------------------------------------------------------------------------
 GRANT SELECT ON TABLE 
 lm_v3.lm_envlayer,
-lm3.lm_shapegrid,
-lm3.lm_anclayer,  
-lm3.lm_palayer, 
+lm_v3..lm_shapegrid,
+lm_v3..lm_anclayer,  
+lm_v3..lm_palayer, 
 
 lm_v3.lm_fullOccurrenceset, 
 lm_v3.lm_fullmodel, lm_v3.lm_fullProjection, 
@@ -485,8 +485,8 @@ TO GROUP writer;
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- lm_atom returns only an a few object attributes
-DROP TYPE IF EXISTS lm3.lm_atom CASCADE;
-CREATE TYPE lm3.lm_atom AS (
+DROP TYPE IF EXISTS lm_v3..lm_atom CASCADE;
+CREATE TYPE lm_v3..lm_atom AS (
   id int,
   title varchar,
   epsgcode int,
@@ -496,8 +496,8 @@ CREATE TYPE lm3.lm_atom AS (
 
 -- ----------------------------------------------------------------------------
 -- lm_palayeridx OR lm_anclayeridx
-DROP TYPE IF EXISTS lm3.lm_layeridx CASCADE;
-CREATE TYPE lm3.lm_layeridx AS (
+DROP TYPE IF EXISTS lm_v3..lm_layeridx CASCADE;
+CREATE TYPE lm_v3..lm_layeridx AS (
    -- Layer
    layerid int,
    verify varchar,

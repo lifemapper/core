@@ -4,4 +4,5 @@
 
 \i @LMHOME@/LmDbServer/dbsetup/createMAL.sql
 \i @LMHOME@/LmDbServer/dbsetup/createSPECO.sql
+\i @LMHOME@/LmDbServer/dbsetup/createBorg.sql
 -- ----------------------------------------------------------------------------

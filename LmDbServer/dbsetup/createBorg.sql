@@ -6,11 +6,11 @@
 \c template1 admin
 
 -- ----------------------------------------------------------------------------
-CREATE DATABASE mal ENCODING='UTF8'
+CREATE DATABASE borg ENCODING='UTF8'
                     LC_COLLATE='en_US.UTF-8'
                     LC_CTYPE='en_US.UTF-8'
                     TEMPLATE=template1;
-\c mal
+\c borg
 -- ----------------------------------------------------------------------------
 
 -- Note: LM_SCHEMA = 'lm' is in LM.common.lmconstants
@@ -401,7 +401,7 @@ create table lm_v3.Boom
 );
 
 -- -------------------------------
-create table lm3.PAM
+create table lm_v3..PAM
 (
    pamId serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
@@ -414,7 +414,7 @@ create table lm3.PAM
 );
 
 -- -------------------------------
-create table lm3.GRIM
+create table lm_v3..GRIM
 (
    grimId serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
@@ -427,7 +427,7 @@ create table lm3.GRIM
 );
 
 -- -------------------------------
-create table lm3.BoomPALayer
+create table lm_v3..BoomPALayer
 (
    boomPALayerId  serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
@@ -441,7 +441,7 @@ create table lm3.BoomPALayer
 );
 
 -- -------------------------------
-create table lm3.BoomAncLayer
+create table lm_v3..BoomAncLayer
 (
    boomAncLayerId  serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
