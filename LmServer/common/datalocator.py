@@ -296,12 +296,45 @@ class EarlJr(LMObject):
                   /grandParentClassType/grandParentId/parentClassType/parentId
       @param interface: The format in which to return the results, 
       """
-      if parentMetadataUrl is not None:
-         url = '%s/%s/%s' % (parentMetadataUrl, serviceType, objectId)
-      else:
-         url = '%s/%s/%s/%s/%s' % (WEBSERVICES_ROOT, SERVICES_PREFIX, moduleType,
-                                      serviceType, objectId)
+      prefix = self.createWebServicePrefix()
+      postfix = self.createWebServicePostfix(serviceType, objectId, 
+                                             moduleType=moduleType,  
+                                             parentMetadataUrl=parentMetadataUrl)
+      url = '{}{}'.format(prefix, postfix)
       return url
+
+# ...............................................
+   def createWebServicePostfix(self, serviceType, objectId, moduleType=None,  
+                              parentMetadataUrl=None):
+      """
+      @summary Return the relative REST service url for data in the 
+               Lifemapper Archive for the given object and service (with 
+               leading '/').
+      @param moduleType: LM module for this service, i.e. 'sdm' or 'rad'
+      @param serviceType: LM service for this service, i.e. 'bucket' or 'model'
+      @param parentMetadataUrl: The nested structure of this object's parent objects.
+               The nested structure will begin with a '/', and take a form like: 
+                  /grandParentClassType/grandParentId/parentClassType/parentId
+      """
+      if parentMetadataUrl is not None:
+         relativeprefix = ''
+         prefix = self.createWebServicePrefix()
+         if parentMetadataUrl.startswith(prefix):
+            relativeprefix = parentMetadataUrl[len(prefix):]
+         urlpath = '%s/%s/%s' % (relativeprefix, serviceType, objectId)
+      else:
+         urlpath = '/{}/{}/{}'.format(moduleType, serviceType, objectId)
+      return urlpath
+
+# ...............................................
+   def createWebServicePrefix(self):
+      """
+      @summary Return the REST service url for Lifemapper web services (without 
+               trailing '/').
+      """
+      url = '{}/{}'.format(WEBSERVICES_ROOT, SERVICES_PREFIX)
+      return url
+
 
 # ...............................................
    def _getOWSParams(self, mapprefix, owsLayerKey, bbox):
