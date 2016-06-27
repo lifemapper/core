@@ -15,3 +15,8 @@
 \i @LMHOME@/LmDbServer/dbsetup/createSPECOExtras.sql
 \i @LMHOME@/LmDbServer/dbsetup/createSPECOLayerFns.sql
 -- ----------------------------------------------------------------------------
+
+\c borg
+-- ----------------------------------------------------------------------------
+\i @LMHOME@/LmDbServer/dbsetup/createBorgTypeViews.sql
+\i @LMHOME@/LmDbServer/dbsetup/createBorgFunctions.sql
