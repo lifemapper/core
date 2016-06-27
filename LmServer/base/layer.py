@@ -146,6 +146,10 @@ class _Layer(LMSpatialObject, ServiceObject):
       return self._layerUserId
    
 # ...............................................
+   def getValAttribute(self):
+      return self._valAttribute
+
+# ...............................................
    @property
    def dataFormat(self):
       return self._dataFormat
@@ -513,6 +517,7 @@ class Raster(_Layer):
       self.minVal = minVal
       self.maxVal = maxVal
       self.nodataVal = nodataVal
+      self._valAttribute = 'pixel'
       self.size = None
       self.srs = None
       self.geoTransform = None
@@ -582,6 +587,10 @@ class Raster(_Layer):
    @property
    def gdalType(self):
       return self._gdalType
+
+   @property
+   def ogrType(self):
+      return None
 
    def setDataDescription(self, gdalType, gdalFormat):
       """
@@ -1027,6 +1036,10 @@ class Vector(_Layer):
    @property
    def ogrType(self):
       return self._ogrType
+
+   @property
+   def gdalType(self):
+      return None
 # ...............................................
    def getFormatLongName(self):
       return self._dataFormat 
@@ -1198,10 +1211,6 @@ class Vector(_Layer):
                              % (valAttribute, self._dlocation))
       else:
          self._valAttribute = valAttribute
-         
-   def getValAttribute(self):
-      return self._valAttribute
-   
 
 # ...............................................
    def _setGeometryIndex(self):
