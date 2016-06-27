@@ -249,7 +249,6 @@ CREATE INDEX idx_lower_displayName on lm_v3.OccurrenceSet(lower(displayName));
 CREATE INDEX idx_pattern_lower_displayname on lm_v3.OccurrenceSet  (lower(displayname) varchar_pattern_ops );
 CREATE INDEX idx_queryCount ON lm_v3.OccurrenceSet(queryCount);
 CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 50));
-CREATE INDEX idx_occmodTime ON lm_v3.OccurrenceSet(modTime);
 CREATE INDEX idx_occUser ON lm_v3.OccurrenceSet(userId);
 CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
@@ -319,13 +318,13 @@ create table lm_v3.SDMProjection
    -- ** delete computeResourceId??
    computeResourceId int REFERENCES lm_v3.ComputeResource
 );  
-Select AddGeometryColumn('lm_v3', 'projection', 'geom', 4326, 'POLYGON', 2);
+Select AddGeometryColumn('lm_v3', 'sdmprojection', 'geom', 4326, 'POLYGON', 2);
 ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
 ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
 ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
 
-CREATE INDEX spidx_projection ON lm_v3.SDMProjection USING GIST ( geom );
-CREATE INDEX idx_projLastModified ON lm_v3.SDMProjection(statusModTime);
+CREATE INDEX spidx_sdmprojection ON lm_v3.SDMProjection USING GIST ( geom );
+CREATE INDEX idx_prjLastModified ON lm_v3.SDMProjection(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
 CREATE INDEX idx_prjSquid on lm_v3.SDMProjection(squid);
 
@@ -396,7 +395,7 @@ create table lm_v3.Boom
    attrTreeDlocation varchar(256),
    epsgcode int,
    description text,
-   modTime double precision
+   modTime double precision,
    UNIQUE (userId, name)
 );
 
