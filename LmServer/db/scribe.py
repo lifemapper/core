@@ -559,6 +559,7 @@ class Scribe(Peruser):
    def getOrInsertLayerTypeCode(self, envType):
       etypeid = None
       if isinstance(envType, EnvironmentalType):
+#          etypeid = self._borg.insertEnvironmentalType(envtype=envType)
          existingET = self._mal.getEnvironmentalType(envType.typeCode, 
                                           envType.getParametersUserId())
          if existingET is not None:

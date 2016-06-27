@@ -274,6 +274,7 @@ class Peruser(LMObject):
 
 # ...............................................
    def getLayerTypeCode(self, typecode=None, userid=None, typeid=None):
+#       etype = self._borg.getEnvironmentalType(typeid, typecode, userid)
       if typeid is not None:
          etype = self._mal.getEnvironmentalTypeById(typeid)
       elif typecode is not None and userid is not None:
@@ -918,20 +919,20 @@ class Peruser(LMObject):
       tupleLst = self._mal.getOccurrenceStats()
       return tupleLst
    
-# ...............................................
-   def countModeledSpecies(self, status, userid):
-      count = self._mal.countModeledSpecies(status, userid)
-      return count
+# # ...............................................
+#    def countModeledSpecies(self, status, userid):
+#       count = self._mal.countModeledSpecies(status, userid)
+#       return count
 
-# ...............................................
-   def getLatestModelTime(self, status):
-      time = self._mal.getLatestModelTime(status)
-      return time
-
-# ...............................................
-   def getLatestProjectionTime(self, status):
-      time = self._mal.getLatestProjectionTime(status)
-      return time
+# # ...............................................
+#    def getLatestModelTime(self, status):
+#       time = self._mal.getLatestModelTime(status)
+#       return time
+# 
+# # ...............................................
+#    def getLatestProjectionTime(self, status):
+#       time = self._mal.getLatestProjectionTime(status)
+#       return time
 
 # ...............................................
 # User

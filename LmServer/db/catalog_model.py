@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -2129,22 +2129,22 @@ class MAL(DbPostgresql):
       lyr = self._createProjection(row, idxs)
       return lyr
 
-# ...............................................
-   def getPointLayer(self, occSetId):
-      """
-      @summary Create a vector Point layer (for occurrenceSet or mapservice) 
-      @param occSetId: occurrenceSetId of the point set to add.
-      @return: OccurrenceLayer without points
-      """
-      row, idxs = self.executeSelectOneFunction('lm_getPointMaplayer', occSetId)
-      occ = self._createOccurrenceSet(row, idxs)
-      # Read to make sure the datasource is present and valid
-      if not occ.isValidDataset():
-         raise LMError(currargs='Error reading shapefile %s' 
-                       % str(occ.getDLocation()),
-                       logger=self.log)
-      return occ
-   
+# # ...............................................
+#    def getPointLayer(self, occSetId):
+#       """
+#       @summary Create a vector Point layer (for occurrenceSet or mapservice) 
+#       @param occSetId: occurrenceSetId of the point set to add.
+#       @return: OccurrenceLayer without points
+#       """
+#       row, idxs = self.executeSelectOneFunction('lm_getPointMaplayer', occSetId)
+#       occ = self._createOccurrenceSet(row, idxs)
+#       # Read to make sure the datasource is present and valid
+#       if not occ.isValidDataset():
+#          raise LMError(currargs='Error reading shapefile %s' 
+#                        % str(occ.getDLocation()),
+#                        logger=self.log)
+#       return occ
+#    
 # .............................................................................
    def listModels(self, firstRecNum, maxNum, usrid, displayName, 
                   beforetime, aftertime, epsg, status, completeStat, occsetid, 
@@ -2191,35 +2191,35 @@ class MAL(DbPostgresql):
                                                 algcode)
       return self._getCount(row)
 
-# .............................................................................
-   def countModeledSpecies(self, status, userid):
-      row, idxs = self.executeSelectOneFunction('lm_countModeledSpecies', status, userid)
-      return self._getCount(row)
-      
+# # .............................................................................
+#    def countModeledSpecies(self, status, userid):
+#       row, idxs = self.executeSelectOneFunction('lm_countModeledSpecies', status, userid)
+#       return self._getCount(row)
+#       
 # # .............................................................................
 #    def countJobs(self, status):
 #       row, idxs = self.executeSelectOneFunction('lm_countJobs', status)
 #       return self._getCount(row)
 
-# .............................................................................
-   def getLatestModelTime(self, status):
-      row, idxs = self.executeSelectOneFunction('lm_getLatestModelTime', status)
-      if row:
-         return row[0]
-      else:
-         self.log.warning('%s failed to return a model for status %d' % 
-                          (self.getLocation(), status))
-         return None
-
-# .............................................................................
-   def getLatestProjectionTime(self, status):
-      row, idxs = self.executeSelectOneFunction('lm_getLatestProjectionTime', status)
-      if row:
-         return row[0]
-      else:
-         self.log.warning('%s failed to return a projection for status %d' % 
-                          (self.getLocation(), status))
-         return None
+# # .............................................................................
+#    def getLatestModelTime(self, status):
+#       row, idxs = self.executeSelectOneFunction('lm_getLatestModelTime', status)
+#       if row:
+#          return row[0]
+#       else:
+#          self.log.warning('%s failed to return a model for status %d' % 
+#                           (self.getLocation(), status))
+#          return None
+# 
+# # .............................................................................
+#    def getLatestProjectionTime(self, status):
+#       row, idxs = self.executeSelectOneFunction('lm_getLatestProjectionTime', status)
+#       if row:
+#          return row[0]
+#       else:
+#          self.log.warning('%s failed to return a projection for status %d' % 
+#                           (self.getLocation(), status))
+#          return None
 
 # .............................................................................
    def returnStatisticValue(self, key):
