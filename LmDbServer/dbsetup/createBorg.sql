@@ -401,7 +401,7 @@ create table lm_v3.Boom
 );
 
 -- -------------------------------
-create table lm_v3..PAM
+create table lm_v3.PAM
 (
    pamId serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
@@ -414,7 +414,7 @@ create table lm_v3..PAM
 );
 
 -- -------------------------------
-create table lm_v3..GRIM
+create table lm_v3.GRIM
 (
    grimId serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
@@ -427,7 +427,7 @@ create table lm_v3..GRIM
 );
 
 -- -------------------------------
-create table lm_v3..BoomPALayer
+create table lm_v3.BoomPALayer
 (
    boomPALayerId  serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
@@ -441,7 +441,7 @@ create table lm_v3..BoomPALayer
 );
 
 -- -------------------------------
-create table lm_v3..BoomAncLayer
+create table lm_v3.BoomAncLayer
 (
    boomAncLayerId  serial UNIQUE PRIMARY KEY,
    boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
