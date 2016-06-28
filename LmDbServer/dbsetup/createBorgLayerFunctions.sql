@@ -105,7 +105,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_joinScenarioLayer(scenid int, lyrid int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int)
    RETURNS int AS
 $$
 DECLARE
@@ -115,22 +115,22 @@ DECLARE
    tmpcount3 int;
 BEGIN
    -- if layer is found
-   SELECT count(*) into tmpcount1 FROM lm3.scenario WHERE scenarioid = scenid;
+   SELECT count(*) into tmpcount1 FROM lm_v3.scenario WHERE scenarioid = scenid;
    IF tmpcount1 != 1 THEN
       RAISE EXCEPTION 'Scenario with id % does not exist or is not unique', scenid;
    END IF;
    
-   SELECT count(*) into tmpcount2 FROM lm3.layer WHERE layerid = lyrid;
+   SELECT count(*) into tmpcount2 FROM lm_v3.layer WHERE layerid = lyrid;
    IF tmpcount2 != 1 THEN
       RAISE EXCEPTION 'Layer with id % does not exist or is not unique', lyrid;
    END IF;
    
-   SELECT count(*) INTO tmpcount3 FROM lm3.ScenarioLayers
+   SELECT count(*) INTO tmpcount3 FROM lm_v3.ScenarioLayers
       WHERE scenarioId = scenid AND layerId = lyrid;
    IF tmpcount3 = 0 THEN      
       BEGIN
          -- get or insert scenario x layer entry
-         INSERT INTO lm3.ScenarioLayers (scenarioId, layerId) 
+         INSERT INTO lm_v3.ScenarioLayers (scenarioId, layerId) 
                      VALUES (scenid, lyrid);
          IF FOUND THEN
             success := 0;
@@ -268,7 +268,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getLayerTypeKeywordString(id int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_getLayerTypeKeywordString(id int)
    RETURNS varchar AS
 $$
 DECLARE
@@ -276,7 +276,7 @@ DECLARE
    keystr varchar := '';
 BEGIN
    FOR lyrkeyword in SELECT k.*
-                     FROM lm3.keyword k, lm3.layertypekeyword lk
+                     FROM lm_v3.keyword k, lm_v3.layertypekeyword lk
                      WHERE lk.layertypeid = id
                        AND k.keywordid = lk.keywordid
    LOOP
