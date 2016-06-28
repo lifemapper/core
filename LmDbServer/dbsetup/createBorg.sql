@@ -67,7 +67,7 @@ create table lm_v3.JobChain
 create table lm_v3.TaxonomySource
 (
    taxonomySourceId serial UNIQUE PRIMARY KEY,
-   url text,
+   url text UNIQUE,
    datasetIdentifier text UNIQUE,
    modTime double precision
 );
@@ -112,9 +112,9 @@ create table lm_v3.Keyword
 create table lm_v3.LayerType
 (
    layerTypeId serial UNIQUE PRIMARY KEY,
+   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    code varchar(30),
    title text,
-   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    description text,
    modTime double precision
 );
@@ -133,10 +133,10 @@ create table lm_v3.LayerTypeKeyword
 create table lm_v3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
-   verify varchar(64),
-   squid varchar(64),
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    taxonId int REFERENCES lm_v3.Taxon,
+   verify varchar(64),
+   squid varchar(64),
    name text,
    title text,
    author text,
@@ -177,6 +177,7 @@ create table lm_v3.Layer
  create table lm_v3.Scenario
  (
     scenarioId serial UNIQUE PRIMARY KEY,
+    userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
     scenarioCode varchar(30),
     metadataUrl text UNIQUE,
     title text,
@@ -186,10 +187,9 @@ create table lm_v3.Layer
     endDate double precision,
     units varchar(20),
     resolution double precision,
+    epsgcode int,
     bbox varchar(60),
     modTime double precision,
-    userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-    epsgcode int,
     UNIQUE (scenarioCode, userid)
  );
  Select AddGeometryColumn('lm_v3', 'scenario', 'geom', 4326, 'POLYGON', 2);

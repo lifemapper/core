@@ -1431,8 +1431,7 @@ class Scribe(Peruser):
 # ...............................................
    def insertUser(self, usr):
       """
-      @summary: Insert a user of the Lifemapper system.  Allows 
-            on-demand-modeling with user-submitted point data.
+      @summary: Insert a user of the Lifemapper system.  
       @param usr: LMUser object to insert
       @return: True on success, False on failure (i.e. userid is not unique)
       @note: since inserting the same record in both databases, userid is identical
@@ -1442,6 +1441,12 @@ class Scribe(Peruser):
          uid = existingUser.userid
       else:
          uid = self._mal.insertUser(usr)
+         
+      buid = None
+      borgUser = self._borg.findOrInsertUser(usr)
+      if borgUser is not None:
+         buid = borgUser.userid
+         
       return uid
 
 # ...............................................
@@ -1470,9 +1475,9 @@ class Scribe(Peruser):
 # Miscellaneous
 # ...............................................
    def insertTaxonomySource(self, taxSourceName, taxSourceUrl):
-      currtime = mx.DateTime.gmt().mjd
       taxSourceId = self._mal.insertTaxonSource(taxSourceName, taxSourceUrl, 
-                                                currtime)
+                                                mx.DateTime.gmt().mjd)
+      taxSource = self._borg.findOrInsertTaxonSource(taxSourceName. taxSourceUrl)
       return taxSourceId
 
 # ...............................................
@@ -1691,6 +1696,8 @@ class Scribe(Peruser):
 # ShapeGrid
 # ...............................................
    def insertShapeGrid(self, shpgrd, cutout=None):
+      updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
+      
       if shpgrd.getParametersId() is not None:
          existSG = self.getShapeGrid(shpgrd.getUserId(),shpid=shpgrd.getId())
       elif shpgrd.name is not None:

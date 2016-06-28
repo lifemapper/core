@@ -9,7 +9,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    verify,
    squid,
    userid,
-   taxonId,
    name,
    title,
    author,
@@ -39,7 +38,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    typetitle,
    typedescription,
    typemodtime) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.taxonId, l.name, l.title,
+      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
@@ -505,9 +504,9 @@ DROP TYPE IF EXISTS lm_v3.lm_scenarioAndKeywords CASCADE;
 CREATE TYPE lm_v3.lm_scenarioAndKeywords AS
 (
     scenarioId int,
+    userid varchar,
     scenarioCode varchar,
-    -- todo: change to metadataUrl varchar(256)
-    metadataUrl varchar,
+    metadataUrl text,
     title varchar,
     author varchar,
     description text,
@@ -517,7 +516,7 @@ CREATE TYPE lm_v3.lm_scenarioAndKeywords AS
     resolution double precision,
     epsgcode int,
     bbox varchar,
-    dateLastModified double precision,
+    modTime double precision,
     keywords varchar
    );
    
@@ -566,9 +565,9 @@ DROP TYPE IF EXISTS lm_v3.lm_layerTypeAndKeywords CASCADE;
 CREATE TYPE lm_v3.lm_layerTypeAndKeywords AS
 (
              layerTypeId int,
+             userid varchar,
              typecode varchar,
              typetitle varchar,
-             userid varchar,
              typedescription text,
              typemodtime double precision,
              keywords varchar
