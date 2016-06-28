@@ -347,7 +347,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertScenarioKeyword(scenid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_insertScenarioKeyword(scenid int,
                                                     kywd varchar)
    RETURNS int AS
 $$
@@ -358,22 +358,22 @@ DECLARE
    poly varchar;
 BEGIN
    -- insert keyword if it is not there 
-   SELECT k.keywordid INTO wdid FROM lm3.Keyword k WHERE k.keyword = kywd;
+   SELECT k.keywordid INTO wdid FROM lm_v3.Keyword k WHERE k.keyword = kywd;
    IF NOT FOUND THEN
-      INSERT INTO lm3.Keyword (keyword) VALUES (kywd);
+      INSERT INTO lm_v3.Keyword (keyword) VALUES (kywd);
       IF FOUND THEN
-         SELECT INTO wdid last_value FROM lm3.keyword_keywordid_seq;
+         SELECT INTO wdid last_value FROM lm_v3.keyword_keywordid_seq;
       END IF;
    END IF;
    
    IF FOUND THEN
       BEGIN
          SELECT sk.scenarioId INTO tmpid
-            FROM lm3.ScenarioKeywords sk
+            FROM lm_v3.ScenarioKeywords sk
             WHERE sk.scenarioId = scenid
               AND sk.keywordId = wdid;
          IF NOT FOUND THEN
-            INSERT INTO lm3.ScenarioKeywords (scenarioId, keywordId) VALUES (scenid, wdid);
+            INSERT INTO lm_v3.ScenarioKeywords (scenarioId, keywordId) VALUES (scenid, wdid);
             IF FOUND THEN
                success := 0;
             END IF;
@@ -391,7 +391,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- LmUser
 -- ----------------------------------------------------------------------------
 -- Insert a new Lifemapper User
-CREATE OR REPLACE FUNCTION lm3.lm_insertUser(usrid varchar, name1 varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_insertUser(usrid varchar, name1 varchar, 
                                          name2 varchar,
                                          inst varchar, addr1 varchar, 
                                          addr2 varchar, addr3 varchar,
@@ -404,10 +404,10 @@ DECLARE
    success int = -1;
    rec record;
 BEGIN
-   SELECT * into rec FROM lm3.LMUser
+   SELECT * into rec FROM lm_v3.LMUser
       WHERE userid = usrid;
    IF NOT FOUND THEN 
-      INSERT INTO lm3.LMUser
+      INSERT INTO lm_v3.LMUser
          (userId, firstname, lastname, institution, address1, address2, address3, phone,
           email, dateLastModified, password)
          VALUES 
@@ -425,7 +425,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- ShapeGrid
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertShapeGrid(lyrverify varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_insertShapeGrid(lyrverify varchar,
                                               usr varchar,
                                               csides int,
                                               csize double precision,
@@ -446,19 +446,19 @@ CREATE OR REPLACE FUNCTION lm3.lm_insertShapeGrid(lyrverify varchar,
                                               bboxstr varchar,
                                               bboxwkt varchar,
                                               murlprefix varchar)
-RETURNS lm3.lm_shapegrid AS
+RETURNS lm_v3.lm_shapegrid AS
 $$
 DECLARE
    lyrid int;
    shpid int;
-   rec lm3.lm_shapegrid%ROWTYPE;
+   rec lm_v3.lm_shapegrid%ROWTYPE;
 BEGIN
    SELECT shapegridid INTO shpid
-     FROM lm3.lm_shapegrid WHERE lyruserid = usr and layername = lyrname;
+     FROM lm_v3.lm_shapegrid WHERE lyruserid = usr and layername = lyrname;
    IF NOT FOUND THEN
       begin
          -- get or insert layer 
-         SELECT lm3.lm_insertLayer(lyrverify, null, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
+         SELECT lm_v3.lm_insertLayer(lyrverify, null, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
                                null, datafmt, epsg, mpunits, null, null, null, 
                                metaloc, modtime, modtime, bboxstr, bboxwkt, murlprefix)  
                 INTO lyrid;          
@@ -466,12 +466,12 @@ BEGIN
             RAISE EXCEPTION 'Unable to insert layer';
          END IF;
          
-         INSERT INTO lm3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
+         INSERT INTO lm_v3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
                                 idAttribute, xAttribute, yAttribute)
                        values (lyrid, csides, csize, vsz, idAttr, xAttr, yAttr);
    
          IF FOUND THEN
-            SELECT INTO shpid last_value FROM lm3.shapegrid_shapegridid_seq;
+            SELECT INTO shpid last_value FROM lm_v3.shapegrid_shapegridid_seq;
             RAISE NOTICE 'Inserted shapegrid into %', shpid;
          ELSE
             RAISE EXCEPTION 'Unable to insert shapegrid';
@@ -479,7 +479,7 @@ BEGIN
       end;
    END IF;
    
-   SELECT * INTO rec FROM lm3.lm_shapegrid WHERE shapegridid = shpid;    
+   SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE shapegridid = shpid;    
    
    RETURN rec;
 END;
@@ -487,7 +487,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
  
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertShapeGrid(lyrid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_insertShapeGrid(lyrid int,
                                               csides int,
                                               csize double precision,
                                               vsz int,
@@ -502,14 +502,14 @@ DECLARE
    shpid int = -1;
 BEGIN
    SELECT shapegridid INTO shpid
-     FROM lm3.lm_shapegrid WHERE layerid = lyrid;
+     FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
    IF NOT FOUND THEN
-      INSERT INTO lm3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
+      INSERT INTO lm_v3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
                      idAttribute, xAttribute, yAttribute, status, statusmodtime)
           values (lyrid, csides, csize, vsz, idAttr, xAttr, yAttr);
    
       IF FOUND THEN
-         SELECT INTO shpid last_value FROM lm3.shapegrid_shapegridid_seq;
+         SELECT INTO shpid last_value FROM lm_v3.shapegrid_shapegridid_seq;
          RAISE NOTICE 'Inserted shapegrid into %', shpid;
       ELSE
          RAISE EXCEPTION 'Unable to insert shapegrid';
@@ -523,7 +523,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- LAYER
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertLayer(lyrverify varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_insertLayer(lyrverify varchar,
                                           lyrsquid varchar,
                                           usr varchar,
                                           txid int,
@@ -561,7 +561,7 @@ DECLARE
 BEGIN
    -- get or insert layer 
    SELECT layerid INTO lyrid
-      FROM lm3.Layer
+      FROM lm_v3.Layer
       WHERE userId = usr
         AND layername = lyrname
         AND epsgcode = epsg;
@@ -570,7 +570,7 @@ BEGIN
       RAISE NOTICE 'User/Name/EPSG Layer % / % / % found with id %', 
                     usr, lyrname, epsg, lyrid;
    ELSE
-      INSERT INTO lm3.Layer (verify, squid, userId, taxonId, name, title, author, 
+      INSERT INTO lm_v3.Layer (verify, squid, userId, taxonId, name, title, author, 
                              description, dlocation, metalocation, gdalType, 
                              ogrType, isCategorical, dataFormat, epsgcode, 
                              mapunits, resolution, startDate, endDate, modTime, 
@@ -582,15 +582,15 @@ BEGIN
                  vunits, lyrtypeid);         
                   
       IF FOUND THEN
-         SELECT INTO lyrid last_value FROM lm3.layer_layerid_seq;
+         SELECT INTO lyrid last_value FROM lm_v3.layer_layerid_seq;
          RAISE NOTICE 'This layer inserted with id %', lyrid;
          idstr := cast(lyrid as varchar);
          murl := replace(murlprefix, '#id#', idstr);
          IF bboxwkt is NOT NULL THEN
-            UPDATE lm3.Layer SET (metadataurl, geom) 
+            UPDATE lm_v3.Layer SET (metadataurl, geom) 
                = (murl, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = lyrid;
          ELSE
-            UPDATE lm3.Layer SET metalocation = murl WHERE layerid = lyrid;
+            UPDATE lm_v3.Layer SET metalocation = murl WHERE layerid = lyrid;
          END IF;
       END IF; -- end if layer inserted
    END IF;  
@@ -600,7 +600,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_renameLayer(lyrid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_renameLayer(lyrid int,
                                           usr varchar,
                                           lyrname varchar,
                                           epsg int)
@@ -611,14 +611,14 @@ DECLARE
    total int = -1;
 BEGIN
    -- get or insert layer
-   SELECT count(*) INTO total FROM lm3.layer 
+   SELECT count(*) INTO total FROM lm_v3.layer 
           WHERE layerid = lyrid AND userid = usr;
    IF total = 1 THEN
-      SELECT count(*) INTO total FROM lm3.layer 
+      SELECT count(*) INTO total FROM lm_v3.layer 
              WHERE layername = lyrname AND userid = usr AND epsgcode = epsg; 
       IF total = 0 THEN 
          BEGIN
-            UPDATE lm3.Layer SET layername = lyrname
+            UPDATE lm_v3.Layer SET layername = lyrname
                WHERE layerid = lyrid AND userid = usr AND epsgcode = epsg;
             IF FOUND THEN
                success = 0;

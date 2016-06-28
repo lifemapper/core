@@ -449,18 +449,6 @@ create table lm_v3.BoomAncLayer
    UNIQUE (boomId, matrixIdx)
 );
 
--- -------------------------------
-create table lm_v3.JobChain
-(
-   jobchainId serial UNIQUE PRIMARY KEY,
-   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   dlocation text,
-   priority int,
-   progress int,
-   status int,
-   statusmodtime double precision,
-   datecreated double precision
-);
 
 -- ----------------------------------------------------------------------------
 
