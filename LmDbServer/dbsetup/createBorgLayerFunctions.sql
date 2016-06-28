@@ -323,7 +323,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
                                           vmax double precision,
                                           vunits varchar,
                                           lyrtypeid int,
-                                          murlprefix,
+                                          murlprefix varchar,
                                           ltype varchar,
                                           ltypetitle varchar,
                                           ltypedesc varchar,
@@ -389,7 +389,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lyrverify varchar,
                                           --vmax double precision,
                                           --vunits varchar,
                                           --lyrtypeid int,
-                                          murlprefix,
+                                          murlprefix varchar,
                                           csides int,
                                           csize double precision,
                                           vsz int,
@@ -453,20 +453,20 @@ DECLARE
    shpid int = -1;
    rec lm_v3.shapegrid%ROWTYPE;
 BEGIN
-   SELECT * INTO recsg FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
+   SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
    IF NOT FOUND THEN
       INSERT INTO lm_v3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
                      idAttribute, xAttribute, yAttribute, status, statusmodtime)
           values (lyrid, csides, csize, vsz, idAttr, xAttr, yAttr);
    
       IF FOUND THEN
-         SELECT * INTO recsg FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
+         SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
       ELSE
          RAISE EXCEPTION 'Unable to insert shapegrid';
       END IF;
    END IF;
    
-   RETURN recsg;
+   RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
  
