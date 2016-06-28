@@ -99,6 +99,15 @@ class LayerManager(object):
       @summary: Query the layers table for information about the layer
       @return: Status and a layer if it exists, or None
       """
+      
+      # Request TIFF
+      #  Seeded, retrieving, absent, stored
+      # Request ASCII
+      #  Seeded, retrieving, absent, stored, Tiff exists in some form
+      # Request MXE
+      #  Seeded, retrieving, absent, stored, Tiff exists in some form, ASCII exists in some form
+      
+      
       status = None
       lyr = None
       cmd = "SELECT {lyrIdAtt}, {fpAtt}, {fTypeAtt}, {statAtt}, {createAtt}, {touchAtt} FROM layers WHERE layerid = '{layerId}'".format(
@@ -125,15 +134,17 @@ class LayerManager(object):
                    LayerAttributes.CREATE_TIME: row[4],
                    LayerAttributes.TOUCH_TIME: row[5]
                   }
-            status = lyr[LayerAttributes.STATUS]
+            status = int(lyr[LayerAttributes.STATUS])
             if lyr[LayerAttributes.FILE_TYPE] == layerFormat:
                status = lyr[LayerAttributes.STATUS]
                break # We found what we wanted
-            elif lyr[LayerAttributes.FILE_TYPE] == LayerFormat.GTIFF:
+            elif lyr[LayerAttributes.FILE_TYPE] in [LayerFormat.ASCII, LayerFormat.GTIFF]:
                status = LayerStatus.TIFF_AVAILABLE
                lyr = None # Don't send back the wrong layer
             else:
-               # Could be ASCII Grid when we're looking for MXE, just move on
+               # Could be another format down the line or something else, print a message and move on
+               print("Format: %s available" % lyr[LayerAttributes.FILE_TYPE])
+               lyr = None
                pass
 
       return status, lyr
@@ -153,13 +164,15 @@ class LayerManager(object):
             # Wait for the ASCII to generate
             ascLyr = self._waitOnLayer(layerId, LayerFormat.ASCII)
             ascFn = ascLyr[LayerAttributes.FILE_PATH]
-         if ascStatus in [LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE]:
+         elif ascStatus in [LayerStatus.ABSENT, LayerStatus.TIFF_AVAILABLE]:
             # Convert to ASCII
             ascFn = self._getFilePath(layerId, LayerFormat.ASCII)
             self._insertLayer(layerId, LayerFormat.ASCII, ascFn, 
                              LayerStatus.RETRIEVING)
             convertTiffToAscii(lyr[LayerAttributes.FILE_PATH], ascFn)
             self._updateLayerStatus(layerId, LayerFormat.ASCII, LayerStatus.STORED)
+         elif ascStatus in [LayerStatus.STORED, LayerStatus.SEEDED]:
+            ascFn = ascLyr[LayerAttributes.FILE_PATH]
             
          # Now check to see if we need to create an MXE
          if layerFormat == LayerFormat.MXE:
@@ -168,7 +181,7 @@ class LayerManager(object):
             if mxeStatus == LayerStatus.RETRIEVING:
                mxeLyr = self._waitOnLayer(layerId, LayerFormat.MXE)
             else:
-               mxeFn = self._getFilePath(layerId, layerFormat)
+               mxeFn = self._getFilePath(layerId, LayerFormat.MXE)
                self._insertLayer(layerId, LayerFormat.MXE, mxeFn, LayerStatus.RETRIEVING)
                convertAsciisToMxes([(ascFn, mxeFn)])
                
