@@ -52,8 +52,8 @@ class DbPostgresql(_DbConn):
       @param host: full dns name of the database hosting server 
                    (i.e. 'lm2hydra.nhm.ku.edu')
       """
-      self.mapConnStr = "user=%s password=%s dbname=%s host=%s port=%d" % (user, 
-                                                    password, db, host, port)
+      self.mapConnStr =("user={} password={} dbname={} host={} port={}"
+                        .format(user, password, db, host, port))
       self.log = logger
       self.user = user
       self.password = password
@@ -77,7 +77,7 @@ class DbPostgresql(_DbConn):
                                        host=self.host, port=self.port, 
                                        database=self.db)
       if self.pconn is None:
-         raise LMError(currargs='Unable to open connection to %s' % self.db)
+         raise LMError(currargs='Unable to open connection to {}'.format(self.db))
 
 # ............................................................................
    def close(self):
@@ -96,7 +96,7 @@ class DbPostgresql(_DbConn):
       @param qry: string containing a stored function name and parameters
       @exception LMError: on error returned from the database.
       """
-      cmd = 'select * from %s;' % qry
+      cmd = 'select * from {};'.format(qry)
       try:
          rows, idxs = self._sendCommand(cmd)
          if rows:
@@ -118,9 +118,9 @@ class DbPostgresql(_DbConn):
                              following 'where' in a query
       @exception LMError: on error returned from the database.
       """
-      cmd = 'select %s from %s' % (cols, fromClause)
+      cmd = 'select {} from {}'.format(cols, fromClause)
       if whereEtcClause is not None and whereEtcClause != '':
-         cmd += ' where %s;'
+         cmd += ' where {};'.format(whereEtcClause)
       else:
          cmd += ';'
       try:
@@ -203,8 +203,8 @@ class DbPostgresql(_DbConn):
 #          self.log.error('Serialization exception on command %s' % 
 #                         str(self.lastCommands))
       else:
-         raise LMError(currargs='Exception on command %s' % 
-                       str(self.lastCommands), prevargs=e.args, doTrace=True)
+         raise LMError(currargs='Exception on command {}'.format(self.lastCommands), 
+                       prevargs=e.args, doTrace=True)
 
    # ............................................................................
    def executeModifyFunction(self, fnName, *fnArgs):
@@ -289,8 +289,8 @@ class DbPostgresql(_DbConn):
          if len(rows) == 1:
             retval = rows[0][0]
             if retval is None or retval == -1:
-               raise LMError(currargs='Error inserting record: %s' % 
-                       str(self.lastCommands))
+               raise LMError(currargs='Error inserting record: {}'
+                             .format(self.lastCommands))
             else:
                return retval
 
@@ -343,15 +343,15 @@ class DbPostgresql(_DbConn):
       @param fnArgs: A sequence of arguments to the given function
       @return: Returns list of rows and dictionary of indexes
       """
-      cmd = 'select * from %s.%s(%s);' % (LM_SCHEMA, fnName, self._formatArgs(fnArgs))
+      cmd = 'select * from {}.{}({});'.format(LM_SCHEMA, fnName, self._formatArgs(fnArgs))
       self.lastCommands = [cmd]
       try:
          rows, idxs = self._sendCommand(cmd)
       except LMError, e: 
          raise
       except Exception, e:
-         raise LMError(currargs='Exception on command %s' % 
-                       str(self.lastCommands), prevargs=e.args, doTrace=True)
+         raise LMError(currargs='Exception on command {}'
+                       .format(self.lastCommands), prevargs=e.args, doTrace=True)
 
       return rows, idxs
 
@@ -385,8 +385,8 @@ class DbPostgresql(_DbConn):
          except LMError, e: 
             raise
          except Exception, e:
-            raise LMError(currargs='Exception on command %s' % 
-                          str(self.lastCommands), prevargs=e.args, doTrace=True)
+            raise LMError(currargs='Exception on command {}'
+                          .format(self.lastCommands), prevargs=e.args, doTrace=True)
 
          cursor.close()
          return rows, idxs

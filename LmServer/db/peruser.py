@@ -30,18 +30,15 @@ import xml.etree.ElementTree as ET
 
 from LmCommon.common.lmconstants import (ENCODING, JobStatus, RandomizeMethods, 
                                          ProcessType)
-
 from LmServer.base.lmobj import LMError, LMObject
-
+from LmServer.db.catalog_borg import Borg
 from LmServer.db.catalog_model import MAL
 from LmServer.db.catalog_rad import RAD
 from LmServer.db.connect import HL_NAME
-
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import  DbUser, JobFamily, ReferenceType
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
                                  POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
-  
 from LmServer.sdm.sdmexperiment import SDMExperiment
 
 # .............................................................................
@@ -72,17 +69,17 @@ class Peruser(LMObject):
          dbHost = DB_HOSTNAME
          
       if dbUser not in HL_NAME.keys():
-         raise LMError('Unknown database user %s' % dbUser)
+         raise LMError('Unknown database user {}'.format(dbUser))
             
       self._mal = MAL(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
       self._rad = RAD(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
+      self._borg = Borg(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
                
 # ............................................................................
-   def _isOpen(self):
-      return self._mal.isOpen and self._rad.isOpen
+   @property
+   def isOpen(self):
+      return self._mal.isOpen and self._rad.isOpen and self._borg.isOpen
 
-   isOpen = property(_isOpen)
-      
 # .............................................................................
 # Public functions
 # .............................................................................
@@ -90,17 +87,25 @@ class Peruser(LMObject):
       try:
          self._mal.open()
       except Exception, e:
-         self.log.error('Failed to open MAL (user=%s dbname=%s host=%s port=%d): %s' 
-                        % (self._mal.user, self._mal.db, self._mal.host, 
-                           self._mal.port, str(e.args)))
+         self.log.error('Failed to open MAL (user={} dbname={} host={} port={}): {}' 
+                        .format(self._mal.user, self._mal.db, self._mal.host, 
+                           self._mal.port, e.args))
          return False
       
       try:
          self._rad.open()
       except Exception, e:
-         self.log.error('Failed to open RAD (user=%s dbname=%s host=%s port=%d): %s' 
-                        % (self._mal.user, self._mal.db, self._mal.host, 
-                           self._mal.port, str(e.args)))
+         self.log.error('Failed to open RAD (user={} dbname={} host={} port={}): {}' 
+                        .format(self._mal.user, self._mal.db, self._mal.host, 
+                           self._mal.port, e.args))
+         return False
+
+      try:
+         self._borg.open()
+      except Exception, e:
+         self.log.error('Failed to open Borg (user={} dbname={} host={} port={}): {}' 
+                        .format(self._borg.user, self._borg.db, self._borg.host, 
+                           self._borg.port, e.args))
          return False
 
       return True
@@ -109,6 +114,7 @@ class Peruser(LMObject):
    def closeConnections(self):
       self._mal.close()
       self._rad.close()
+      self._borg.close()
       
 # ...............................................
 # Algorithm
@@ -376,9 +382,9 @@ class Peruser(LMObject):
          except LMError, e:
             raise 
          except Exception, e:
-            raise LMError(currargs='Invalid map service for occset %s' 
-                          % str(occsetId),
-                          prevargs=e.args, lineno=self.getLineno())
+            raise LMError(currargs='Invalid map service for occset {}' 
+                         .format(occsetId), prevargs=e.args, 
+                         lineno=self.getLineno())
          
       # Scenario inherits from LayerSet
       elif scencode is not None:
@@ -386,14 +392,14 @@ class Peruser(LMObject):
          
       # Ancillary mapfiles are not tied to database entries, must exist!
       elif ancillary:
-         self.log.debug('Ancillary mapfile %s should exist!' % mapfilename)
+         self.log.debug('Ancillary mapfile {} should exist!'.format(mapfilename))
          return None
          
       elif usr is not None:
          mapSvc = self._mal.getUserMapservice(mapname, usr, epsg)
 
       else:
-         raise LMError(currargs='Invalid map prefix in mapname %s ' % mapname, 
+         raise LMError(currargs='Invalid map prefix in mapname {} '.format(mapname), 
                        lineno=self.getLineno())
       
       if mapSvc is not None:
@@ -1020,7 +1026,7 @@ class Peruser(LMObject):
                              ReferenceType.RandomPamSum):
                total += self._rad.countJobs(reftype, status, usr)
             else:
-               raise LMError('Unknown referenceType %s' % str(reftype))
+               raise LMError('Unknown referenceType {}'.format(reftype))
 
       return total
 
@@ -1042,7 +1048,7 @@ class Peruser(LMObject):
             elif ProcessType.isRAD(ptype):
                total += self._rad.countJobs(ptype, status, usr)
             else:
-               raise LMError('ProcessType %s is not implemented!' % str(ptype))
+               raise LMError('ProcessType {} is not implemented!'.format(ptype))
       return total
 
 # ...............................................
