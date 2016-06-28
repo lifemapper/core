@@ -326,8 +326,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
                                           murlprefix varchar,
                                           ltype varchar,
                                           ltypetitle varchar,
-                                          ltypedesc varchar,
-                                          mtime double precision)
+                                          ltypedesc varchar)
 RETURNS lm_v3.lm_envlayer AS
 $$
 DECLARE
@@ -397,7 +396,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lyrverify varchar,
                                           xAttr varchar,
                                           yAttr varchar,
                                           stat int,
-                                          stattime)
+                                          stattime double precision)
 RETURNS lm_v3.lm_shapegrid AS
 $$
 DECLARE
