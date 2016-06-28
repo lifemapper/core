@@ -65,7 +65,7 @@ class Borg(DbPostgresql):
                             password=dbKey, host=dbHost, port=dbPort)
       earl = EarlJr()
       self._relativeArchivePath = earl.createArchiveDataPath()
-      self._webservicePrefix = earl.createWebServicePrefix()()
+      self._webservicePrefix = earl.createWebServicePrefix()
             
 # ...............................................
    def _getRelativePath(self, dlocation=None, url=None):
