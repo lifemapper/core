@@ -111,6 +111,24 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       self._setCellMeasurements(size)
       
 # ...............................................
+   @classmethod
+   def initFromParts(cls, vector, cellsides, cellsize, 
+                     siteId='siteid', siteX='centerX', siteY='centerY', 
+                     size=None, shapegridId=None):
+      
+      shpGrid = ShapeGrid(vector.name, cellsides, cellsize, vector.mapUnits, 
+                          vector.epsgcode, vector.bbox, 
+                          dlocation=vector.getDLocation(), 
+                          ogrType=vector.ogrType, ogrFormat=vector.dataFormat,
+                          siteId=siteId, siteX=siteX, siteY=siteY, size=size, 
+                          userId=vector.getUserId(), layerId=vector.getId(), 
+                          shapegridId=shapegridId, verify=vector.verify,
+                          status=vector.status, 
+                          statusModTime=vector.statusModTime, 
+                          modTime=vector.modTime, metadataUrl=vector.metadataUrl)
+      return shpGrid
+
+# ...............................................
    def _createMapPrefix(self):
       """
       @summary: Construct the endpoint of a Lifemapper WMS URL for 
@@ -138,10 +156,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          raise LMError('Invalid cellshape. Only 4 (square) and 6 (hexagon) ' +
                        'sides are currently supported')
          
-   def _getCellsides(self):
+   @property
+   def cellsides(self):
       return self._cellsides
-   
-   cellsides = property(_getCellsides)
    
 # ...............................................
    def _setCellMeasurements(self, size):
@@ -150,10 +167,10 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          self._size = size
       else:
          self._size = self._getFeatureCount()
-               
-   def _getSize(self):
+        
+   @property       
+   def size(self):
       return self._size
-   size = property(_getSize)   
             
 # ...............................................
    def initSitesPresent(self):
