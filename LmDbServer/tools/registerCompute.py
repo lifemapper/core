@@ -47,7 +47,7 @@ def getOptionalVal(dict, key):
       return None
    
 # ...............................................
-def registerConfiguredCompute(scribe):
+def registerConfiguredCompute(scribe, currtime):
    try:
       if (COMPUTE_NAME != '' and COMPUTE_IP != '' and COMPUTE_CONTACT_USERID != ''):
          crContact = LMUser(COMPUTE_CONTACT_USERID, COMPUTE_CONTACT_EMAIL, '', 
@@ -68,7 +68,7 @@ def registerConfiguredCompute(scribe):
                     (COMPUTE_NAME, str(e)))
          
 # ...............................................
-def registerStandardComputes(scribe):
+def registerStandardComputes(scribe, currtime):
    try:
       for name, lmc in LM_COMPUTE_INSTANCES.iteritems():      
          crContact = LMUser(lmc['contactid'], 
@@ -103,10 +103,10 @@ if __name__ == '__main__':
    if success:
       try:
          # Register everything in computeMetadata
-         registerStandardComputes(scribe)
+         registerStandardComputes(scribe, currtime)
  
          # Register anything in configuration file (probably site.ini)
-         registerConfiguredCompute(scribe)
+         registerConfiguredCompute(scribe, currtime)
       except Exception, e:
          raise 
       finally:

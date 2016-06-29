@@ -59,7 +59,7 @@ DECLARE
    id int = -1;
    rec lm3.ComputeResource%ROWTYPE;
 BEGIN
-   SELECT computeresource INTO id FROM lm3.computeresource 
+   SELECT computeresourceid INTO id FROM lm3.computeresource 
       WHERE ipaddress = ip;
    IF NOT FOUND THEN
       BEGIN
