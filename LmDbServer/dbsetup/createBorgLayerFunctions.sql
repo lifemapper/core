@@ -86,26 +86,32 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_joinLayerTypeKeyword(typid int, kywd varchar
 $$
 DECLARE
    retval int := -1;
-   typid int;
    wdid int;
    total int;
 BEGIN
    -- insert keyword if it is not there 
    SELECT k.keywordid INTO wdid FROM lm_v3.Keyword k WHERE k.keyword = kywd;
+   RAISE NOTICE 'looked for keyword';
    IF NOT FOUND THEN
+      RAISE NOTICE 'not found';
       INSERT INTO lm_v3.Keyword (keyword) VALUES (kywd);
       IF FOUND THEN
+         RAISE NOTICE 'successfully inserted';
          SELECT INTO wdid last_value FROM lm_v3.keyword_keywordid_seq;
+         RAISE NOTICE 'keyword id %', wdid;
       END IF;
    END IF;
    -- if found or inserted, join
    IF FOUND THEN
       SELECT count(*) INTO total FROM lm_v3.LayerTypeKeyword 
          WHERE layerTypeId = typid AND keywordId = wdid;
+      RAISE NOTICE 'looking for join';
       IF total = 0 THEN
+         RAISE NOTICE 'not found';
          INSERT INTO lm_v3.LayerTypeKeyword (layerTypeId, keywordId) 
             VALUES (typid, wdid);
          IF FOUND THEN 
+            RAISE NOTICE 'join successful';
             retval := 0;
          END IF;
       ELSE
