@@ -33,8 +33,6 @@ from LmServer.base.atom import Atom
 from LmServer.base.db import _DbConn
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LM_SCHEMA
-from LmServer.db.catalog_borg import Borg
-
 
 # ............................................................................
 class DbPostgresql(_DbConn):
@@ -44,7 +42,8 @@ class DbPostgresql(_DbConn):
    @todo: Reference LmServer.base.DBConn documentation (how?)
    """    
 
-   def __init__(self, logger, db=None, user=None, password=None, host=None, port=None):
+   def __init__(self, logger, db=None, user=None, password=None, host=None, 
+                port=None, schema=LM_SCHEMA):
       """
       @summary Constructor for the DbPostgresql class
       @param db: database name
@@ -61,6 +60,7 @@ class DbPostgresql(_DbConn):
       self.host = host
       self.port = port
       self.db = db
+      self.schema = schema
       self.lastCommands = []
       self.pconn = None
       self.cursor = None
@@ -344,11 +344,7 @@ class DbPostgresql(_DbConn):
       @param fnArgs: A sequence of arguments to the given function
       @return: Returns list of rows and dictionary of indexes
       """
-      if isinstance(self, Borg):
-         schema = 'lm_v3'
-      else:
-         schema = LM_SCHEMA
-      cmd = 'select * from {}.{}({});'.format(schema, fnName, self._formatArgs(fnArgs))
+      cmd = 'select * from {}.{}({});'.format(self.schema, fnName, self._formatArgs(fnArgs))
       self.lastCommands = [cmd]
       try:
          rows, idxs = self._sendCommand(cmd)

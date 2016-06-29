@@ -62,7 +62,8 @@ class Borg(DbPostgresql):
       @param dbPort: port for database connection
       """
       DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser, 
-                            password=dbKey, host=dbHost, port=dbPort)
+                            password=dbKey, host=dbHost, port=dbPort,
+                            schema='lm_v3')
       earl = EarlJr()
       self._relativeArchivePath = earl.createArchiveDataPath()
       self._webservicePrefix = earl.createWebServicePrefix()
