@@ -393,15 +393,16 @@ class Borg(DbPostgresql):
       @param envtype: An EnvironmentalType or EnvironmentalLayer object
       """
       envtype.parametersModTime = mx.DateTime.utc().mjd
-      newOrExistingEnvType = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayerType',
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayerType',
                                                     envtype.getParametersUserId(),
                                                     envtype.getParametersId(),
                                                     envtype.typeCode,
                                                     envtype.typeTitle,
                                                     envtype.typeDescription,
                                                     envtype.parametersModTime)
+      newOrExistingEnvType = self._createLayerType(row, idxs)
       # Existing EnvType will return with keywords
-      if not newOrExistingEnvType.keywords:
+      if not newOrExistingEnvType.typeKeywords:
          newOrExistingEnvType.typeKeywords = envtype.typeKeywords
          for kw in newOrExistingEnvType.typeKeywords:
             success = self.executeInsertFunction('lm_joinLayerTypeKeyword', 
