@@ -16,7 +16,7 @@
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_insertAlgorithm(code varchar, 
                                                     aname varchar, 
-                                                    modtime double precision)
+                                                    mtime double precision)
    RETURNS lm_v3.algorithm AS
 $$
 DECLARE
@@ -24,8 +24,8 @@ DECLARE
 BEGIN
    SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
    IF NOT FOUND THEN
-      INSERT INTO lm_v3.Algorithm (algorithmcode, name, datelastmodified)
-         VALUES (code, aname, modtime);
+      INSERT INTO lm_v3.Algorithm (algorithmcode, name, modtime)
+         VALUES (code, aname, mtime);
       IF FOUND THEN
          SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
       END IF;
@@ -86,23 +86,28 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertCompute(cmpname varchar,
                                                 sigbits varchar,
                                                 domname text,
                                                 usr varchar,
-                                                createtime double precision)
-   RETURNS int AS
+                                                mtime double precision)
+   RETURNS lm_v3.ComputeResource AS
 $$
 DECLARE
    rec lm_v3.ComputeResource%ROWTYPE;
 BEGIN
-   SELECT * INTO rec FROM lm_v3.ComputeResource
-      WHERE ipaddress = crip AND ipsigbits = sigbits;
+   IF sigbits IS NULL THEN
+      SELECT * INTO rec FROM lm_v3.ComputeResource WHERE ipaddress = ip;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.ComputeResource
+         WHERE ipaddress = ip AND ipsigbits = sigbits;
+   END IF;
+      
    IF NOT FOUND THEN
       INSERT INTO lm_v3.ComputeResource 
-         (name, ipaddress, ipsigbits, fqdn, userId, datecreated, datelastmodified)
+         (name, ipaddress, ipsigbits, fqdn, userId, modtime)
       VALUES 
-         (cmpname, ip, sigbits, domname, usr, createtime, createtime);
+         (cmpname, ip, sigbits, domname, usr, mtime);
 
       IF FOUND THEN
          SELECT * INTO rec FROM lm_v3.ComputeResource 
-            WHERE ipaddress = crip AND ipsigbits = sigbits;
+            WHERE ipaddress = ip AND ipsigbits = sigbits;
       END IF;         
    END IF;  -- end if not found
    RETURN rec;
@@ -230,7 +235,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, name1 varcha
                                          fone varchar, emale varchar, 
                                          mtime double precision, 
                                          psswd varchar)
-   RETURNS int AS
+   RETURNS lm_v3.LMUser AS
 $$
 DECLARE
    success int = -1;

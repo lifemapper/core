@@ -562,7 +562,7 @@ class Scribe(Peruser):
       etypeid = None
       if isinstance(envType, EnvironmentalType):
          
-         etypeid_borg = self._borg.insertEnvironmentalType(envtype=envType)
+         newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
          
          existingET = self._mal.getEnvironmentalType(envType.typeCode, 
                                           envType.getParametersUserId())
@@ -1423,7 +1423,7 @@ class Scribe(Peruser):
       borgCR = self._borg.findOrInsertComputeResource(compResource)
 
       existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress,
-                              ipSignificantBits=compResource.ipSignificantBits)
+                                       ipSigBits=compResource.ipSignificantBits)
       if existingCR is None:
          usr = self._mal.getUser(crContact.getUserId())
          if usr is None:

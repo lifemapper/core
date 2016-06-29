@@ -2027,8 +2027,8 @@ class MAL(DbPostgresql):
       """
       currtime = mx.DateTime.utc().mjd
       crid = self.executeInsertFunction('lm_insertCompute', compResource.name, 
-                        compResource.ipAddress, compResource.ipSignificantBits, compResource.FQDN, 
-                        compResource.getUserId(), currtime)
+                        compResource.ipAddress, compResource.ipSignificantBits, 
+                        compResource.FQDN, compResource.getUserId(), currtime)
       
       compResource.setId(crid)
       return compResource

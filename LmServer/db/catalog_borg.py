@@ -80,6 +80,19 @@ class Borg(DbPostgresql):
       return relativePath
 
 # ...............................................
+   def _createUser(self, row, idxs):
+      usr = None
+      if row is not None:
+         usr = LMUser(row[idxs['userid']], row[idxs['email']], 
+                      row[idxs['password']], isEncrypted=True, 
+                      firstName=row[idxs['firstname']], lastName=row[idxs['lastname']], 
+                      institution=row[idxs['institution']], 
+                      addr1=row[idxs['address1']], addr2=row[idxs['address2']], 
+                      addr3=row[idxs['address3']], phone=row[idxs['phone']], 
+                      modTime=row[idxs['modtime']])
+      return usr
+   
+# ...............................................
    def _createComputeResource(self, row, idxs):
       cr = None 
       if row is not None:
@@ -381,8 +394,8 @@ class Borg(DbPostgresql):
       """
       envtype.parametersModTime = mx.DateTime.utc().mjd
       newOrExistingEnvType = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayerType',
-                                                    envtype.getParametersId(),
                                                     envtype.getParametersUserId(),
+                                                    envtype.getParametersId(),
                                                     envtype.typeCode,
                                                     envtype.typeTitle,
                                                     envtype.typeDescription,
@@ -503,11 +516,12 @@ class Borg(DbPostgresql):
       @return: True on success, False on failure (i.e. userid is not unique)
       """
       usr.modTime = mx.DateTime.utc().mjd
-      newOrExistingUsr = self.executeInsertFunction('lm_findOrInsertUser', 
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser', 
                               usr.userid, usr.firstName, usr.lastName, 
                               usr.institution, usr.address1, usr.address2, 
                               usr.address3, usr.phone, usr.email, usr.modTime, 
                               usr.getPassword())
+      newOrExistingUsr = self._createUser(row, idxs)
       return newOrExistingUsr
 
    # ...............................................

@@ -14,21 +14,20 @@
 -- ----------------------------------------------------------------------------
 -- LayerType (EnvLayer)
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findLayerType(id int, ltype varchar, usr varchar)
+CREATE OR REPLACE FUNCTION lm_v3.lm_findLayerType(ltypeid int, ltype varchar, usr varchar)
    RETURNS lm_v3.lm_layerTypeAndKeywords AS
 $$
 DECLARE
    rec lm_v3.lm_layerTypeAndKeywords%rowtype;
    keystr varchar;
 BEGIN
-   BEGIN
+   IF ltypeid IS NOT NULL THEN
       SELECT layerTypeId, userid, code, title, description, modTime 
-         INTO rec FROM lm_v3.LayerType WHERE layertypeid = id;
-      IF NOT FOUND THEN
-         SELECT layerTypeId, userid, code, title, description, modTime 
-            INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
-      END IF;      
-   END;
+         INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
+   ELSE
+      SELECT layerTypeId, userid, code, title, description, modTime 
+         INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
+   END IF;
 
    IF FOUND THEN
       SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(rec.layertypeid);
@@ -49,17 +48,31 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayerType(usr varchar,
    RETURNS lm_v3.lm_layerTypeAndKeywords AS
 $$
 DECLARE
-   typeid int = -1;
+   tid int = -1;
    rec lm_v3.lm_layerTypeAndKeywords%rowtype;
+   keystr varchar = '';
 BEGIN
-   SELECT lm_v3.lm_findLayerType(ltypeid, ltype, usr) INTO rec;
+   IF ltypeid IS NOT NULL THEN
+      SELECT layerTypeId, userid, code, title, description, modTime 
+         INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
+   ELSE
+      SELECT layerTypeId, userid, code, title, description, modTime 
+         INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
+   END IF;      
       
    IF NOT FOUND THEN
       INSERT INTO lm_v3.LayerType (code, title, userid, description, modTime) 
          VALUES (ltype, ltypetitle, usr, ltypedesc, mtime);
       IF FOUND THEN
-         SELECT INTO typeid last_value FROM lm_v3.layertype_layertypeid_seq;
-         SELECT lm_v3.lm_findLayerType(typeid, ltype, usr) INTO rec;
+         SELECT INTO tid last_value FROM lm_v3.layertype_layertypeid_seq;
+         rec.layerTypeId = tid;
+         rec.userid = usr;
+         rec.typecode = ltype;
+         rec.typetitle = ltypetitle;
+         rec.typedescription = ltypedesc;
+         rec.typemodtime = mtime;
+	      SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(tid);
+	      rec.keywords = keystr;
       END IF;
    END IF;
    
@@ -275,11 +288,13 @@ DECLARE
    lyrkeyword record;
    keystr varchar := '';
 BEGIN
+   RAISE NOTICE 'id = %', id;
    FOR lyrkeyword in SELECT k.*
                      FROM lm_v3.keyword k, lm_v3.layertypekeyword lk
                      WHERE lk.layertypeid = id
                        AND k.keywordid = lk.keywordid
    LOOP
+      RAISE NOTICE 'keystr = %', keystr;
       IF keystr = '' THEN
          keystr := lyrkeyword.keyword;
       ELSE
@@ -333,12 +348,12 @@ DECLARE
    lyrid int;
    shpid int;
    reclyr lm_v3.layer%ROWTYPE;
-   reclt lm_v3.layertype%ROWTYPE;
+   reclt lm_v3.lm_layerTypeAndKeywords%ROWTYPE;
    rec_envlyr lm_v3.lm_envlayer%ROWTYPE;
 BEGIN
    -- get or insert layertype 
    SELECT lm_v3.lm_findOrInsertLayerType(usr, lyrtypeid, ltype, ltypetitle, 
-       ltypedesc, mtime double precision) INTO reclt;
+       ltypedesc, mtime) INTO reclt;
    -- get or insert layer 
    SELECT lm_v3.lm_findOrInsertLayer(lyrverify, lyrsquid, usr, null, 
             lyrname, lyrtitle, lyrauthor, lyrdesc, dloc, mloc, vtype, rtype, 
