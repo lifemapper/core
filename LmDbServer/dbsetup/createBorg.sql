@@ -40,14 +40,14 @@ create table lm_v3.ComputeResource
 (
    computeResourceId serial UNIQUE PRIMARY KEY,
    name varchar(32) NOT NULL,
-   ipaddress varchar(16) UNIQUE NOT NULL,
-   ipmask varchar(2),
+   ipaddress varchar(16) NOT NULL,
+   ipsigbits varchar(2),
    fqdn varchar(100),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser,
    modtime double precision,
    lastheartbeat double precision,
    UNIQUE (name, userId),
-   UNIQUE (ipaddress, ipmask)
+   UNIQUE (ipaddress, ipsigbits)
 );
 
 -- -------------------------------

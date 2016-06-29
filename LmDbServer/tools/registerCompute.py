@@ -57,7 +57,7 @@ def registerConfiguredCompute(scribe):
                             addr1=COMPUTE_ADDR1, addr2=COMPUTE_ADDR2, 
                             addr3=COMPUTE_ADDR3, modTime=currtime)
          crMachine = LMComputeResource(COMPUTE_NAME, COMPUTE_IP, 
-                           COMPUTE_CONTACT_USERID, ipMask=COMPUTE_IP_MASK,
+                           COMPUTE_CONTACT_USERID, ipSignificantBits=COMPUTE_IP_MASK,
                            createTime=currtime, modTime=currtime, hbTime=currtime)
          scribe.log.info('  Inserting compute resource {} with contact {} ...'.format(
                               COMPUTE_NAME, COMPUTE_CONTACT_USERID))
@@ -83,7 +83,7 @@ def registerStandardComputes(scribe):
                             addr3=getOptionalVal(lmc,'addr3'), 
                             modTime=currtime)
          crMachine = LMComputeResource(name, lmc['ip'], lmc['contactid'], 
-                                       ipMask=getOptionalVal(lmc,'ipmask'), 
+                                       ipSignificantBits=getOptionalVal(lmc,'ipsigbits'), 
                                        createTime=currtime, 
                                        modTime=currtime, hbTime=currtime)
          scribe.log.info('  Inserting compute resource {} with contact {} ...'.format(

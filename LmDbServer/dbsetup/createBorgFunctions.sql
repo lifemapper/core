@@ -60,8 +60,54 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
--- Taxon
+-- COMPUTERESOURCE
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_getComputeRec(crip int, sigbits varchar)
+   RETURNS lm3.ComputeResource AS
+$$
+DECLARE
+   rec lm3.ComputeResource;
+BEGIN
+   begin
+      -- Get computeresource id for requesting resource.
+      SELECT * INTO STRICT rec FROM lm3.ComputeResource
+         WHERE ipaddress = crip AND ipsigbits = sigbits;
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'ComputeResource not found for IP %, mask %', crip, sigbits;
+   end;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_findOrInsertCompute(cmpname varchar,
+                                                ip varchar,
+                                                sigbits varchar,
+                                                domname text,
+                                                usr varchar,
+                                                createtime double precision)
+   RETURNS int AS
+$$
+DECLARE
+   rec lm3.ComputeResource%ROWTYPE;
+BEGIN
+   SELECT * INTO rec FROM lm3.ComputeResource
+      WHERE ipaddress = crip AND ipsigbits = sigbits;
+   IF NOT FOUND THEN
+      INSERT INTO lm3.ComputeResource 
+         (name, ipaddress, ipsigbits, fqdn, userId, datecreated, datelastmodified)
+      VALUES 
+         (cmpname, ip, sigbits, domname, usr, createtime, createtime);
+
+      IF FOUND THEN
+         SELECT * INTO rec FROM lm3.ComputeResource 
+            WHERE ipaddress = crip AND ipsigbits = sigbits;
+      END IF;         
+   END IF;  -- end if not found
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- OccurrenceSet

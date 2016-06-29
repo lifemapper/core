@@ -79,6 +79,20 @@ class Borg(DbPostgresql):
       return relativePath
 
 # ...............................................
+   def _createComputeResource(self, row, idxs):
+      cr = None 
+      if row is not None:
+         cr = LMComputeResource(self._getColumnValue(row, idxs, ['name']), 
+                                self._getColumnValue(row, idxs, ['ipaddress']), 
+                                self._getColumnValue(row, idxs, ['userid']), 
+                                ipSignificantBits=self._getColumnValue(row, idxs, ['ipsigbits']), 
+                                FQDN=self._getColumnValue(row, idxs, ['fqdn']), 
+                                dbId=self._getColumnValue(row, idxs, ['computeresourceid']), 
+                                modTime=self._getColumnValue(row, idxs, ['modtime']), 
+                                hbTime=self._getColumnValue(row, idxs, ['lastheartbeat']))
+      return cr
+
+# ...............................................
    def _createScenario(self, row, idxs):
       scen = None
       if row is not None:
@@ -461,6 +475,24 @@ class Borg(DbPostgresql):
             raise LMError(currargs='Failed to join layer {} to scenario {}'
                            .format(newOrExistingLyr.getId(), scenarioId))
       return newOrExistingLyr
+
+# ...............................................
+   def findOrInsertComputeResource(self, compResource):
+      """
+      @summary: Insert a compute resource of this Lifemapper system.  
+      @param usr: LMComputeResource object to insert
+      @return: True on success, False on failure (i.e. IPAddress is not unique)
+      """
+      compResource.modTime = mx.DateTime.utc().mjd
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertCompute', 
+                                        compResource.name, 
+                                        compResource.ipAddress, 
+                                        compResource.ipSignificantBits, 
+                                        compResource.FQDN, 
+                                        compResource.getUserId(), 
+                                        compResource.modTime)
+      newOrExistingCR = self._createComputeResource(row, idxs)
+      return newOrExistingCR
 
 # ...............................................
    def findOrInsertUser(self, usr):

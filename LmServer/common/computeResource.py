@@ -26,8 +26,9 @@ from LmServer.base.lmobj import LMObject
 # .............................................................................
 class LMComputeResource(LMObject):
    
-   def __init__(self, name, ipaddress, userId, ipMask=None, FQDN=None, 
-                dbId=None, createTime=None, modTime=None, hbTime=None):
+   def __init__(self, name, ipaddress, userId, ipSignificantBits=None, 
+                createTime=None, 
+                FQDN=None, dbId=None, modTime=None, hbTime=None):
       """
       @summary ComputeResource constructor
       @param modTime: Last modification time of this object (optional)
@@ -37,8 +38,9 @@ class LMComputeResource(LMObject):
       self._userId = userId
       self.name = name
       self.ipAddress = ipaddress
-      self.ipMask = ipMask
+      self.ipSignificantBits = ipSignificantBits
       self.FQDN = FQDN
+      # TODO: remove createTime
       self.createTime = createTime
       self.modTime = modTime
       self.lastHeartbeat = hbTime
@@ -97,20 +99,20 @@ class LMComputeResource(LMObject):
          return ''.join(["{0:08b}".format(int(octet)) for octet in ip.split('.')])
 
       # ...................................
-      def maskBinIp(binIP, mask):
+      def maskBinIp(binIP, sigbits):
          """
          @summary: Returns the number of binary digits from the IP address 
                       specified by the mask
          """
-         if mask is None or mask == '' or mask == 0:
-            mask = 32
+         if sigbits is None or sigbits == '' or sigbits == 0:
+            sigbits = 32
          else:
-            mask = int(mask)
-         return binIP[:mask]
+            sigbits = int(sigbits)
+         return binIP[:sigbits]
 
       binIpAddress = convertIPtoBinary(ipAddress)
       myMaskedIp = maskBinIp(convertIPtoBinary(self.ipAddress), 
-                             self.ipMask)
+                             self.ipSignificantBits)
       # Check that the provided IP address matches the masked IP address of the
       #    compute resource
       return binIpAddress.startswith(myMaskedIp)
