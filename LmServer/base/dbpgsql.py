@@ -33,6 +33,7 @@ from LmServer.base.atom import Atom
 from LmServer.base.db import _DbConn
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LM_SCHEMA
+from LmServer.db.catalog_borg import Borg
 
 
 # ............................................................................
@@ -343,7 +344,11 @@ class DbPostgresql(_DbConn):
       @param fnArgs: A sequence of arguments to the given function
       @return: Returns list of rows and dictionary of indexes
       """
-      cmd = 'select * from {}.{}({});'.format(LM_SCHEMA, fnName, self._formatArgs(fnArgs))
+      if isinstance(self, Borg):
+         schema = 'lm_v3'
+      else:
+         schema = LM_SCHEMA
+      cmd = 'select * from {}.{}({});'.format(schema, fnName, self._formatArgs(fnArgs))
       self.lastCommands = [cmd]
       try:
          rows, idxs = self._sendCommand(cmd)

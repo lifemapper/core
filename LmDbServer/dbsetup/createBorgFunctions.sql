@@ -62,15 +62,15 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- COMPUTERESOURCE
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_getComputeRec(crip int, sigbits varchar)
-   RETURNS lm3.ComputeResource AS
+CREATE OR REPLACE FUNCTION lm_v3.lm_getComputeRec(crip int, sigbits varchar)
+   RETURNS lm_v3.ComputeResource AS
 $$
 DECLARE
-   rec lm3.ComputeResource;
+   rec lm_v3.ComputeResource;
 BEGIN
    begin
       -- Get computeresource id for requesting resource.
-      SELECT * INTO STRICT rec FROM lm3.ComputeResource
+      SELECT * INTO STRICT rec FROM lm_v3.ComputeResource
          WHERE ipaddress = crip AND ipsigbits = sigbits;
       EXCEPTION
          WHEN NO_DATA_FOUND THEN
@@ -81,7 +81,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_findOrInsertCompute(cmpname varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertCompute(cmpname varchar,
                                                 ip varchar,
                                                 sigbits varchar,
                                                 domname text,
@@ -90,18 +90,18 @@ CREATE OR REPLACE FUNCTION lm3.lm_findOrInsertCompute(cmpname varchar,
    RETURNS int AS
 $$
 DECLARE
-   rec lm3.ComputeResource%ROWTYPE;
+   rec lm_v3.ComputeResource%ROWTYPE;
 BEGIN
-   SELECT * INTO rec FROM lm3.ComputeResource
+   SELECT * INTO rec FROM lm_v3.ComputeResource
       WHERE ipaddress = crip AND ipsigbits = sigbits;
    IF NOT FOUND THEN
-      INSERT INTO lm3.ComputeResource 
+      INSERT INTO lm_v3.ComputeResource 
          (name, ipaddress, ipsigbits, fqdn, userId, datecreated, datelastmodified)
       VALUES 
          (cmpname, ip, sigbits, domname, usr, createtime, createtime);
 
       IF FOUND THEN
-         SELECT * INTO rec FROM lm3.ComputeResource 
+         SELECT * INTO rec FROM lm_v3.ComputeResource 
             WHERE ipaddress = crip AND ipsigbits = sigbits;
       END IF;         
    END IF;  -- end if not found
