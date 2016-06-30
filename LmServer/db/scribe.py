@@ -1485,7 +1485,8 @@ class Scribe(Peruser):
       taxSourceId = self._mal.insertTaxonSource(taxSourceName, taxSourceUrl, 
                                                 mx.DateTime.gmt().mjd)
       if self._borg is not None:
-         taxSource = self._borg.findOrInsertTaxonSource(taxSourceName. taxSourceUrl)
+         taxSource = self._borg.findOrInsertTaxonSource(taxSourceName, 
+                                                        taxSourceUrl)
       return taxSourceId
 
 # ...............................................
