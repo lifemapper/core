@@ -55,15 +55,19 @@ BEGIN
    IF ltypeid IS NOT NULL THEN
       SELECT layerTypeId, userid, code, title, description, modTime 
          INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
+      RAISE NOTICE 'tried with ltypeid %', ltypeid;
    ELSE
       SELECT layerTypeId, userid, code, title, description, modTime 
          INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
+      RAISE NOTICE 'tried with type, usr';
    END IF;      
       
    IF NOT FOUND THEN
+      RAISE NOTICE 'not found';
       INSERT INTO lm_v3.LayerType (code, title, userid, description, modTime) 
          VALUES (ltype, ltypetitle, usr, ltypedesc, mtime);
       IF FOUND THEN
+         RAISE NOTICE 'successful insert';
          SELECT INTO tid last_value FROM lm_v3.layertype_layertypeid_seq;
          SELECT * FROM  lm_v3.lm_findLayerType(tid, null, null) INTO rec;
       END IF;
