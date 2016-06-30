@@ -476,13 +476,13 @@ class Borg(DbPostgresql):
          for kw in newOrExistingLyr.typeKeywords:
             successCode = self.executeInsertFunction('lm_joinLayerTypeKeyword',
                               newOrExistingLyr.getParametersId(), kw)
-            if not successCode:
+            if successCode != 0:
                self.log.debug('Failed to insert keyword {} for layertype {}'
                               .format(kw, newOrExistingLyr.getParametersId()))
       if scenarioId is not None:
          successCode = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
                                               newOrExistingLyr.getId()) 
-         if not successCode:
+         if successCode != 0:
             raise LMError(currargs='Failed to join layer {} to scenario {}'
                            .format(newOrExistingLyr.getId(), scenarioId))
       return newOrExistingLyr
