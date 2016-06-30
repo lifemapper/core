@@ -144,6 +144,19 @@ class Borg(DbPostgresql):
       return scen
 
 # ...............................................
+   def _createEnvironmentalLayer(self, row, idxs):
+      """
+      Create an EnvironmentalLayer from a lm_envlayer record in the MAL
+      """
+      envRst = None
+      if row is not None:
+         rst = self._createLayer(row, idxs)
+         if rst is not None:
+            etype = self._createLayerType(row, idxs)
+            envRst = EnvironmentalLayer.initFromParts(rst, etype)
+      return envRst
+
+# ...............................................
    def _createLayerType(self, row, idxs):
       """
       Create an _EnvironmentalType from a LayerType, lm_envlayer,
@@ -452,8 +465,7 @@ class Borg(DbPostgresql):
       lyr.modTime = mx.DateTime.utc().mjd
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
-      layertypeid = lyr.getParametersId()
-      self.log.debug('LayerTypeId = {}'.format(layertypeid))
+      self.log.debug('Borg LayerTypeId = {}'.format(lyr.getParametersId()))
       row, idxs = self.executeInsertAndSelectOneFunction(
                            'lm_findOrInsertEnvLayer', lyr.verify, lyr.squid,
                            lyr.getUserId(), lyr.name,
@@ -466,11 +478,11 @@ class Borg(DbPostgresql):
                            lyr.endDate, lyr.modTime, 
                            lyr.getCSVExtentString(), wkt, 
                            lyr.getValAttribute(), lyr.nodataVal, lyr.minVal, 
-                           lyr.maxVal, lyr.valUnits, layertypeid,
+                           lyr.maxVal, lyr.valUnits, lyr.getParametersId(),
                            self._getRelativePath(url=lyr.metadataUrl),
                            lyr.typeCode, lyr.typeTitle, lyr.typeDescription)
+      
       newOrExistingLyr = self._createEnvLayer(row, idxs)
-      newOrExistingLayertypeid = newOrExistingLyr.getParametersId()
       # if keywords are returned, layertype was existing
       if not newOrExistingLyr.typeKeywords:
          newOrExistingLyr.typeKeywords = lyr.typeKeywords

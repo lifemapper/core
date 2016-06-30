@@ -546,8 +546,11 @@ class Scribe(Peruser):
       updatedLyr = None
       if isinstance(lyr, EnvironmentalLayer):
          if lyr.isValidDataset():
+            self.log.debug('Scribe, LayerTypeId = {}'.format(lyr.getParametersId()))
             updatedLyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
             if self._borg is not None:
+               # clear out the param id from MAL
+               lyr.setParametersId(None)
                updatedLyr2 = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
          else:
             raise LMError(currargs='Invalid environmental layer: {}'

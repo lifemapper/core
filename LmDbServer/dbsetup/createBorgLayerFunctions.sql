@@ -283,7 +283,6 @@ DECLARE
    lyrkeyword record;
    keystr varchar := '';
 BEGIN
-   RAISE NOTICE 'id = %', ltid;
    FOR lyrkeyword in SELECT k.*
                      FROM lm_v3.keyword k, lm_v3.layertypekeyword lk
                      WHERE lk.layertypeid = ltid
@@ -346,8 +345,8 @@ DECLARE
    rec_envlyr lm_v3.lm_envlayer%ROWTYPE;
 BEGIN
    -- get or insert layertype 
-   SELECT * FROM lm_v3.lm_findOrInsertLayerType(usr, lyrtypeid, ltype, ltypetitle, 
-       ltypedesc, mtime) INTO reclt;
+   SELECT *  INTO reclt FROM lm_v3.lm_findOrInsertLayerType(usr, lyrtypeid, ltype, ltypetitle, 
+       ltypedesc, mtime);
    -- get or insert layer 
    SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrverify, lyrsquid, usr, null, 
             lyrname, lyrtitle, lyrauthor, lyrdesc, dloc, mloc, vtype, rtype, 
