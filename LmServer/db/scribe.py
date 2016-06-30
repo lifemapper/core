@@ -94,7 +94,8 @@ class Scribe(Peruser):
       @param alg: The algorithm to add
       """
       algid = self._mal.insertAlgorithm(alg)
-      algid = self._borg.insertAlgorithm(alg)
+      if self._borg is not None:
+         algid = self._borg.insertAlgorithm(alg)
       return algid
 
 # ...............................................
@@ -550,7 +551,8 @@ class Scribe(Peruser):
       if isinstance(lyr, EnvironmentalLayer):
          if lyr.isValidDataset():
             updatedLyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
-            updatedLyr2 = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
+            if self._borg is not None:
+               updatedLyr2 = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
          else:
             raise LMError(currargs='Invalid environmental layer: {}'
                                     .format(lyr.getDLocation()), 
@@ -561,8 +563,8 @@ class Scribe(Peruser):
    def getOrInsertLayerTypeCode(self, envType):
       etypeid = None
       if isinstance(envType, EnvironmentalType):
-         
-         newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
+         if self._borg is not None:
+            newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
          
          existingET = self._mal.getEnvironmentalType(envType.typeCode, 
                                           envType.getParametersUserId())
@@ -1380,7 +1382,8 @@ class Scribe(Peruser):
    def insertScenario(self, scen):
       lyrIds = []
       scenId = self._mal.insertScenario(scen)
-      updatedScen = self._borg.findOrInsertScenario(scen)
+      if self._borg is not None:
+         updatedScen = self._borg.findOrInsertScenario(scen)
       for lyr in scen.layers:
          updatedLyr = self.insertScenarioLayer(lyr, scenId)
          lyrIds.append(updatedLyr.getId())
@@ -1419,8 +1422,9 @@ class Scribe(Peruser):
       @param usr: LMComputeResource object to insert
       @return: True on success, False on failure (i.e. IPAddress is not unique)
       """
-      borgUser = self._borg.findOrInsertUser(crContact)
-      borgCR = self._borg.findOrInsertComputeResource(compResource)
+      if self._borg is not None:
+         borgUser = self._borg.findOrInsertUser(crContact)
+         borgCR = self._borg.findOrInsertComputeResource(compResource)
 
       existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress,
                                        ipSigBits=compResource.ipSignificantBits)
@@ -1445,10 +1449,11 @@ class Scribe(Peruser):
       else:
          uid = self._mal.insertUser(usr)
          
-      buid = None
-      borgUser = self._borg.findOrInsertUser(usr)
-      if borgUser is not None:
-         buid = borgUser.userid
+      if self._borg is not None:
+         buid = None
+         borgUser = self._borg.findOrInsertUser(usr)
+         if borgUser is not None:
+            buid = borgUser.userid
          
       return uid
 
@@ -1480,7 +1485,8 @@ class Scribe(Peruser):
    def insertTaxonomySource(self, taxSourceName, taxSourceUrl):
       taxSourceId = self._mal.insertTaxonSource(taxSourceName, taxSourceUrl, 
                                                 mx.DateTime.gmt().mjd)
-      taxSource = self._borg.findOrInsertTaxonSource(taxSourceName. taxSourceUrl)
+      if self._borg is not None:
+         taxSource = self._borg.findOrInsertTaxonSource(taxSourceName. taxSourceUrl)
       return taxSourceId
 
 # ...............................................
@@ -1699,7 +1705,8 @@ class Scribe(Peruser):
 # ShapeGrid
 # ...............................................
    def insertShapeGrid(self, shpgrd, cutout=None):
-      updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
+      if self._borg is not None:
+         updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
       
       if shpgrd.getParametersId() is not None:
          existSG = self.getShapeGrid(shpgrd.getUserId(),shpid=shpgrd.getId())

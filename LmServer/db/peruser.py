@@ -78,7 +78,12 @@ class Peruser(LMObject):
 # ............................................................................
    @property
    def isOpen(self):
-      return self._mal.isOpen and self._rad.isOpen and self._borg.isOpen
+      if self._borg is not None:
+         bOpen = self._borg.isOpen
+      else:
+         bOpen = True
+      return self._mal.isOpen and self._rad.isOpen and bOpen
+#       return self._mal.isOpen and self._rad.isOpen and self._borg.isOpen
 
 # .............................................................................
 # Public functions
@@ -106,7 +111,9 @@ class Peruser(LMObject):
          self.log.error('Failed to open Borg (user={} dbname={} host={} port={}): {}' 
                         .format(self._borg.user, self._borg.db, self._borg.host, 
                            self._borg.port, e.args))
-         return False
+         # TODO: Remove after debugging
+         self._borg = None
+#          return False
 
       return True
 
@@ -114,7 +121,8 @@ class Peruser(LMObject):
    def closeConnections(self):
       self._mal.close()
       self._rad.close()
-      self._borg.close()
+      if self._borg is not None:
+         self._borg.close()
       
 # ...............................................
 # Algorithm
@@ -280,7 +288,8 @@ class Peruser(LMObject):
 
 # ...............................................
    def getLayerTypeCode(self, typecode=None, userid=None, typeid=None):
-#       etype = self._borg.getEnvironmentalType(typeid, typecode, userid)
+      if self._borg is not None:
+         borgEtype = self._borg.getEnvironmentalType(typeid, typecode, userid)
       if typeid is not None:
          etype = self._mal.getEnvironmentalTypeById(typeid)
       elif typecode is not None and userid is not None:
