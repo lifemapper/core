@@ -107,6 +107,20 @@ class Borg(DbPostgresql):
       return cr
 
 # ...............................................
+   def _createAlgorithm(self, row, idxs):
+      """
+      Created only from a model, lm_fullModel, or lm_fullProjection 
+      """
+      code = self._getColumnValue(row, idxs, ['algorithmcode'])
+      name = self._getColumnValue(row, idxs, ['name'])
+      params = self._getColumnValue(row, idxs, ['algorithmparams'])
+      try:
+         alg = Algorithm(code, name=name, parameters=params)
+      except:
+         alg = None
+      return alg
+   
+# ...............................................
    def _createScenario(self, row, idxs):
       scen = None
       if row is not None:
@@ -246,38 +260,51 @@ class Borg(DbPostgresql):
                         size=self._getColumnValue(row,idxs,['vsize']), 
                         status=self._getColumnValue(row,idxs,['prjstatus', 
                                  'occstatus', 'shpstatus', 'status']), 
-                        statusmodtime=self._getColumnValue(row,idxs,
+                        statusModTime=self._getColumnValue(row,idxs,
                                  ['prjstatusmodtime', 'occstatusmodtime', 
                                   'shpstatusmodtime', 'statusmodtime']),
                         shapegridId=self._getColumnValue(row,idxs,['shapegridid']))
       return shg
-      
+
+# .............................................................................
+# Public functions
+# .............................................................................
 # ...............................................
-   def _findOrInsertShapeGridParams(self, shpgrd, cutout):
+   def findOrInsertAlgorithm(self, alg):
       """
-      @summary: Insert ShapeGrid parameters into the database
-      @param shpgrd: The ShapeGrid to insert
-      @postcondition: The database contains a new record with shpgrd 
-                   attributes.  The shpgrd has _dbId, _dlocation, _parametersId 
-                   and metadataUrl populated.
-      @note: findShapeGrids should be executed first to ensure that the
-             user and shapename combination are unique.
-      @raise LMError: on failure to insert or update the database record. 
+      @summary Inserts an Algorithm into the database
+      @param alg: The algorithm to add
+      @return: new or existing Algorithm
       """
-      shpgrdId = self.executeInsertFunction('lm_insertShapeGrid',
-                                             shpgrd.getLayerId(),
-                                             shpgrd.cellsides,
-                                             shpgrd.cellsize,
-                                             shpgrd.size,
-                                             shpgrd.siteId,
-                                             shpgrd.siteX, shpgrd.siteY,
-                                             shpgrd.status,
-                                             shpgrd.statusModTime)
-      shpgrd.setParametersId(shpgrdId)
-      return shpgrd
+      alg.modTime = mx.DateTime.utc().mjd
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm', 
+                                               alg.code, alg.name, alg.modTime)
+      algo = self._createAlgorithm(row, idxs)
+      return algo
 
 # ...............................................
-   def _findOrInsertBaseLayer(self, lyr):
+   def findOrInsertTaxonSource(self, taxonSourceName, taxonSourceUrl):
+      """
+      @summary Finds or inserts a Taxonomy Source record into the database
+      @param taxonSourceName: Name for Taxonomy Source
+      @param taxonSourceUrl: URL for Taxonomy Source
+      @return: record id for the new or existing Taxonomy Source 
+      """
+      taxSourceId = None
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxonSource', 
+                                               taxonSourceName, taxonSourceUrl, 
+                                               mx.DateTime.gmt().mjd)
+      if row is not None:
+         taxSourceId = self._getColumnValue(row,idxs,['taxonomysourceid'])
+      return taxSourceId
+   
+# ...............................................
+   def findOrInsertBaseLayer(self, lyr):
+      """
+      @summary Finds or inserts a Layer record into the database
+      @param lyr: Raster or Vector to insert
+      @return: new or existing Raster or Vector object 
+      """
       min = max = nodata = ltypeid = None
       if isinstance(lyr, EnvironmentalLayer):
          ltypeid = lyr.getParametersId()
@@ -287,7 +314,7 @@ class Borg(DbPostgresql):
          nodata = lyr.nodataVal
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
-      row, idxs = self.executeInsertFunction('lm_findOrInsertLayer', 
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer', 
                                          lyr.verify,
                                          lyr.squid,
                                          lyr.getLayerUserId(),
@@ -319,33 +346,12 @@ class Borg(DbPostgresql):
       updatedLyr = self._createLayer(row, idxs)
       return updatedLyr
 
-# .............................................................................
-# Public functions
-# .............................................................................
-# ...............................................
-   def insertAlgorithm(self, alg):
-      """
-      @summary Inserts an Algorithm into the database
-      @param alg: The algorithm to add
-      @note: lm_insertAlgorithm(varchar, varchar, double) returns an int
-      """
-      alg.modTime = mx.DateTime.utc().mjd
-      success = self.executeInsertFunction('lm_insertAlgorithm', alg.code, 
-                                           alg.name, alg.modTime)
-      return success
-
-# ...............................................
-   def findOrInsertTaxonSource(self, taxonSourceName, taxonSourceUrl):
-      taxSource = self.executeInsertFunction('lm_findOrInsertTaxonSource', 
-                                               taxonSourceName, taxonSourceUrl, 
-                                               mx.DateTime.gmt().mjd)
-      return taxSource
-
 # ...............................................
    def findOrInsertScenario(self, scen):
       """
       @summary Inserts all scenario layers into the database
       @param scen: The scenario to insert
+      @return: new or existing Scenario
       """
       scen.modTime = mx.DateTime.utc().mjd
       wkt = None
@@ -362,9 +368,9 @@ class Borg(DbPostgresql):
       if not newOrExistingScen.keywords:
          newOrExistingScen.addKeywords(scen.keywords)
          for kw in newOrExistingScen.keywords:
-            success = self.executeInsertFunction('lm_joinScenarioKeyword',
+            successCode = self.executeInsertFunction('lm_joinScenarioKeyword',
                                                 newOrExistingScen.getId(), kw)
-            if success != 0:
+            if successCode != 0:
                self.log.error('Failed to insert keyword {} for scenario {}'
                               .format(kw, newOrExistingScen.getId()))
       return newOrExistingScen
@@ -386,8 +392,9 @@ class Borg(DbPostgresql):
 # ...............................................
    def findOrInsertEnvironmentalType(self, envtype):
       """
-      @summary: Insert or find _EnvironmentalType values. Return the record id.
+      @summary: Insert or find _EnvironmentalType values.
       @param envtype: An EnvironmentalType or EnvironmentalLayer object
+      @return: new or existing EnvironmentalType
       """
       envtype.parametersModTime = mx.DateTime.utc().mjd
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayerType',
@@ -402,9 +409,9 @@ class Borg(DbPostgresql):
       if not newOrExistingEnvType.typeKeywords:
          newOrExistingEnvType.typeKeywords = envtype.typeKeywords
          for kw in newOrExistingEnvType.typeKeywords:
-            success = self.executeInsertFunction('lm_joinLayerTypeKeyword', 
+            successCode = self.executeInsertFunction('lm_joinLayerTypeKeyword', 
                                     newOrExistingEnvType.getParametersId(), kw)
-            if not success:
+            if successCode != 0:
                self.log.debug('Failed to insert keyword {} for layertype {}'
                               .format(kw, newOrExistingEnvType.getParametersId()))
 
@@ -414,13 +421,8 @@ class Borg(DbPostgresql):
    def findOrInsertShapeGrid(self, shpgrd, cutout):
       """
       @summary: Find or insert a ShapeGrid into the database
-      @param shpgrd: The ShapeGrid to insert
-      @postcondition: The database contains a new or existing records for 
-                   shapegrid and layer.  The shpgrd object has _dbId, _dlocation, 
-                   and metadataUrl populated.
-      @note: findShapeGrids should be executed first to ensure that the
-             user and shapename combination are unique.
-      @raise LMError: on failure to insert or update the database record. 
+      @param shpgrd: ShapeGrid to insert
+      @return: new or existing ShapeGrid.
       """
       if shpgrd.epsgcode == DEFAULT_EPSG:
          wkt = shpgrd.getWkt()
@@ -444,14 +446,8 @@ class Borg(DbPostgresql):
    def findOrInsertEnvLayer(self, lyr, scenarioId=None):
       """
       @summary Insert or find a layer's metadata in the MAL. 
-      @param envLayer: layer to update
-      @return: the updated or found EnvironmentalLayer
-      @note: layer title and layertype title are the same
-      @note: Layer should already have name, filename, and url populated.
-      @note: We are setting the layername to the layertype to ensure that they 
-             will be unique within a scenario
-      @note: lm_insertEnvLayer(...) returns int
-      @note lm_insertLayerTypeKeyword(...) returns int
+      @param lyr: layer to insert
+      @return: new or existing EnvironmentalLayer
       """
       lyr.modTime = mx.DateTime.utc().mjd
       if lyr.epsgcode == DEFAULT_EPSG:
@@ -476,15 +472,15 @@ class Borg(DbPostgresql):
       if not newOrExistingLyr.typeKeywords:
          newOrExistingLyr.typeKeywords = lyr.typeKeywords
          for kw in newOrExistingLyr.typeKeywords:
-            success = self.executeInsertFunction('lm_joinLayerTypeKeyword',
+            successCode = self.executeInsertFunction('lm_joinLayerTypeKeyword',
                               newOrExistingLyr.getParametersId(), kw)
-            if not success:
+            if not successCode:
                self.log.debug('Failed to insert keyword {} for layertype {}'
                               .format(kw, newOrExistingLyr.getParametersId()))
       if scenarioId is not None:
-         success = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
+         successCode = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
                                               newOrExistingLyr.getId()) 
-         if not success:
+         if not successCode:
             raise LMError(currargs='Failed to join layer {} to scenario {}'
                            .format(newOrExistingLyr.getId(), scenarioId))
       return newOrExistingLyr
@@ -494,7 +490,7 @@ class Borg(DbPostgresql):
       """
       @summary: Insert a compute resource of this Lifemapper system.  
       @param usr: LMComputeResource object to insert
-      @return: True on success, False on failure (i.e. IPAddress is not unique)
+      @return: new or existing ComputeResource
       """
       compResource.modTime = mx.DateTime.utc().mjd
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertCompute', 
@@ -512,7 +508,7 @@ class Borg(DbPostgresql):
       """
       @summary: Insert a user of the Lifemapper system. 
       @param usr: LMUser object to insert
-      @return: True on success, False on failure (i.e. userid is not unique)
+      @return: new or existing LMUser
       """
       usr.modTime = mx.DateTime.utc().mjd
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser', 

@@ -266,14 +266,13 @@ class DbPostgresql(_DbConn):
                row, returning the primary key on success, False on failure.
       @param fnName: stored function name
       @param *fnArgs: 0..n arguments to the stored function
-      @return: The primary key of the inserted record.
+      @return: Integer, either success code or primary key of the new record.
       @exception LMError: on error returned from the database.
 
       @summary Execute a stored function in the database which inserts a record 
-               in the database.  If the primary key of the record is a 
-               sequential auto-generated integer, return the primary key on 
-               successful insert or successful select of a matching record, 
-               -1 on failure.  If the primary key is not an integer, return 0 
+               in the database.  If the primary key of the record is an integer, 
+               return it on successful find or insert, -1 on failure.  If the 
+               primary key is not an integer (such as a join record), return 0 
                on success, -1 on failure.
       @param fnName: stored function name
       @param *fnArgs: 0..n arguments to the stored function

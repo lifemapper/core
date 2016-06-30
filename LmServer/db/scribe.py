@@ -91,7 +91,7 @@ class Scribe(Peruser):
       """
       algid = self._mal.insertAlgorithm(alg)
       if self._borg is not None:
-         algid = self._borg.insertAlgorithm(alg)
+         algo = self._borg.findOrInsertAlgorithm(alg)
       return algid
 
 # ...............................................
