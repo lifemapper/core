@@ -144,19 +144,6 @@ class Borg(DbPostgresql):
       return scen
 
 # ...............................................
-   def _createEnvironmentalLayer(self, row, idxs):
-      """
-      Create an EnvironmentalLayer from a lm_envlayer record in the MAL
-      """
-      envRst = None
-      if row is not None:
-         rst = self._createLayer(row, idxs)
-         if rst is not None:
-            etype = self._createLayerType(row, idxs)
-            envRst = EnvironmentalLayer.initFromParts(rst, etype)
-      return envRst
-
-# ...............................................
    def _createLayerType(self, row, idxs):
       """
       Create an _EnvironmentalType from a LayerType, lm_envlayer,
@@ -245,7 +232,7 @@ class Borg(DbPostgresql):
    
 
 # ...............................................
-   def _createEnvironmentalLayer(self, row, idxs):
+   def _createEnvLayer(self, row, idxs):
       """
       Create an EnvironmentalLayer from a lm_envlayer record in the MAL
       """
