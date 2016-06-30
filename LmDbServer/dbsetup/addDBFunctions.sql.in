@@ -20,3 +20,4 @@
 -- ----------------------------------------------------------------------------
 \i @LMHOME@/LmDbServer/dbsetup/createBorgTypeViews.sql
 \i @LMHOME@/LmDbServer/dbsetup/createBorgFunctions.sql
+\i @LMHOME@/LmDbServer/dbsetup/createBorgLayerFunctions.sql

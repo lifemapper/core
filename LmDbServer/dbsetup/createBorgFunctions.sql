@@ -1,6 +1,6 @@
 -- ----------------------------------------------------------------------------
 -- From APP_DIR
--- psql -U admin -d mal --file=LmDbServer/dbsetup/createBorgFunctions.sql
+-- psql -U admin -d borg --file=LmDbServer/dbsetup/createBorgFunctions.sql
 -- ----------------------------------------------------------------------------
 \c borg
 -- ----------------------------------------------------------------------------
@@ -15,27 +15,104 @@
 -- Algorithm
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_insertAlgorithm(code varchar, 
-                                                  aname varchar, 
-                                                  modtime double precision)
-   RETURNS int AS
+                                                    aname varchar, 
+                                                    mtime double precision)
+   RETURNS lm_v3.algorithm AS
 $$
 DECLARE
-   retval int = -1;
-   rec lm_v3.algorithm;
+   rec lm_v3.algorithm%rowtype;
 BEGIN
-   SELECT * INTO rec 
-      FROM lm_v3.algorithm
-      WHERE algorithmcode = code;
+   SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
    IF NOT FOUND THEN
-      INSERT INTO lm_v3.Algorithm (algorithmcode, name, datelastmodified)
-         VALUES (code, aname, modtime);
+      INSERT INTO lm_v3.Algorithm (algorithmcode, name, modtime)
+         VALUES (code, aname, mtime);
       IF FOUND THEN
-         retval = 0;
+         SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
       END IF;
    END IF;
-   RETURN retval;
+   RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;    
+
+
+-- ----------------------------------------------------------------------------
+-- TaxonomySource
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertTaxonSource(name varchar,
+                                         		             taxsrcurl varchar,
+                                                          mtime double precision)
+RETURNS lm_v3.TaxonomySource AS
+$$
+DECLARE
+   rec lm_v3.TaxonomySource%rowtype;
+BEGIN
+   SELECT * INTO rec FROM lm_v3.TaxonomySource
+      WHERE datasetIdentifier = name or url = taxsrcurl;
+   IF NOT FOUND THEN
+      INSERT INTO lm_v3.TaxonomySource 
+         (url, datasetIdentifier, modTime) VALUES (taxsrcurl, name, mtime);
+      IF FOUND THEN
+         SELECT INTO rec * FROM lm_v3.taxonomysource WHERE datasetIdentifier = name;
+      END IF;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- COMPUTERESOURCE
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getComputeRec(crip int, sigbits varchar)
+   RETURNS lm_v3.ComputeResource AS
+$$
+DECLARE
+   rec lm_v3.ComputeResource;
+BEGIN
+   begin
+      -- Get computeresource id for requesting resource.
+      SELECT * INTO STRICT rec FROM lm_v3.ComputeResource
+         WHERE ipaddress = crip AND ipsigbits = sigbits;
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'ComputeResource not found for IP %, mask %', crip, sigbits;
+   end;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertCompute(cmpname varchar,
+                                                ip varchar,
+                                                sigbits varchar,
+                                                domname text,
+                                                usr varchar,
+                                                mtime double precision)
+   RETURNS lm_v3.ComputeResource AS
+$$
+DECLARE
+   rec lm_v3.ComputeResource%ROWTYPE;
+BEGIN
+   IF sigbits IS NULL THEN
+      SELECT * INTO rec FROM lm_v3.ComputeResource WHERE ipaddress = ip;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.ComputeResource
+         WHERE ipaddress = ip AND ipsigbits = sigbits;
+   END IF;
+      
+   IF NOT FOUND THEN
+      INSERT INTO lm_v3.ComputeResource 
+         (name, ipaddress, ipsigbits, fqdn, userId, modtime)
+      VALUES 
+         (cmpname, ip, sigbits, domname, usr, mtime);
+
+      IF FOUND THEN
+         SELECT * INTO rec FROM lm_v3.ComputeResource 
+            WHERE ipaddress = ip AND ipsigbits = sigbits;
+      END IF;         
+   END IF;  -- end if not found
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- OccurrenceSet
@@ -54,250 +131,9 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- deleted lm_getLatestProjectionTime
 
 -- ----------------------------------------------------------------------------
--- LayerType (EnvLayer)
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getLayerType(usr varchar,
-                                               ltype varchar)
-   RETURNS lm_v3.lm_layerTypeAndKeywords AS
-$$
-DECLARE
-   rec lm_v3.lm_layerTypeAndKeywords%rowtype;
-   keystr varchar;
-BEGIN
-   BEGIN
-      SELECT layerTypeId, code, title, userid, description, modTime 
-      INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
-      
-      EXCEPTION
-         WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'LayerType % for % not found', usr, ltype;
-         WHEN TOO_MANY_ROWS THEN
-            RAISE EXCEPTION 'LayerType % for % not unique', usr, ltype;
-   END;
-   IF FOUND THEN
-      SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(rec.layertypeid);
-      rec.keywords = keystr;
-   END IF;
-   RETURN rec;
-END;
-$$  LANGUAGE 'plpgsql' STABLE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getLayerType(id int)
-   RETURNS lm_v3.lm_layerTypeAndKeywords AS
-$$
-DECLARE
-   rec lm_v3.lm_layerTypeAndKeywords%rowtype;
-   keystr varchar;
-BEGIN
-   BEGIN
-      SELECT layerTypeId, code, title, userid, description, modTime 
-      INTO rec FROM lm_v3.LayerType WHERE layertypeid = id;
-      
-      EXCEPTION
-         WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'LayerType % for % not found', usr, ltype;
-         WHEN TOO_MANY_ROWS THEN
-            RAISE EXCEPTION 'LayerType % for % not unique', usr, ltype;
-                 
-   END;
-   IF FOUND THEN
-      SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(rec.layertypeid);
-      rec.keywords = keystr;
-   END IF;
-   RETURN rec;
-END;
-$$  LANGUAGE 'plpgsql' STABLE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_insertLayerType(usr varchar,
-                                                  ltype varchar,
-                                                  ltypetitle varchar,
-                                                  ltypedesc varchar,
-                                                  mtime double precision)
-   RETURNS int AS
-$$
-DECLARE
-   typeid int;
-BEGIN
-   INSERT INTO lm_v3.LayerType (code, title, userid, description, modTime) 
-      VALUES (ltype, ltypetitle, usr, ltypedesc, mtime);
-   IF FOUND THEN
-      SELECT INTO typeid last_value FROM lm_v3.layertype_layertypeid_seq;
-   END IF;
-   
-   RETURN typeid;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_insertLayerTypeKeyword(typid int, kywd varchar)
-   RETURNS int AS
-$$
-DECLARE
-   retval int := -1;
-   typid int;
-   wdid int;
-   total int;
-BEGIN
-   -- insert keyword if it is not there 
-   SELECT k.keywordid INTO wdid FROM lm_v3.Keyword k WHERE k.keyword = kywd;
-   IF NOT FOUND THEN
-      INSERT INTO lm_v3.Keyword (keyword) VALUES (kywd);
-      IF FOUND THEN
-         SELECT INTO wdid last_value FROM lm_v3.keyword_keywordid_seq;
-      END IF;
-   END IF;
-   -- if found or inserted, join
-   IF FOUND THEN
-      SELECT count(*) INTO total FROM lm_v3.LayerTypeKeyword 
-         WHERE layerTypeId = typid AND keywordId = wdid;
-      IF total = 0 THEN
-         INSERT INTO lm_v3.LayerTypeKeyword (layerTypeId, keywordId) 
-            VALUES (typid, wdid);
-         IF FOUND THEN 
-            retval := 0;
-         END IF;
-      ELSE
-         retval := 0;
-      END IF;
-   END IF;
-   
-   RETURN retval;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_countTypeCodes(usrid varchar, 
-                                                 beforetime double precision, 
-                                                 aftertime double precision)
-   RETURNS int AS
-$$
-DECLARE
-   num int;
-   cmd varchar;
-   wherecls varchar;
-BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.LayerType ';
-   wherecls = ' WHERE userid =  ' || quote_literal(usrid) ;
-
-   -- filter by modified before given time
-   IF beforetime is not null THEN
-      wherecls = wherecls || ' AND dateLastModified <=  ' || quote_literal(beforetime);
-   END IF;
-
-   -- filter by modified after given time
-   IF aftertime is not null THEN
-      wherecls = wherecls || ' AND dateLastModified >=  ' || quote_literal(aftertime);
-   END IF;
-
-   cmd := cmd || wherecls;
-   RAISE NOTICE 'cmd = %', cmd;
-
-   EXECUTE cmd INTO num;
-   RETURN num;
-END;
-$$  LANGUAGE 'plpgsql' STABLE;
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_listTypeCodes(firstRecNum int, maxNum int, 
-                                                usrid varchar(20), 
-                                                beforetime double precision,
-                                                aftertime double precision)
-   RETURNS SETOF lm_v3.lm_atom AS
-$$
-DECLARE
-   rec lm_v3.lm_atom;
-   ltTitle varchar;
-   cmd varchar;
-   wherecls varchar;
-   limitcls varchar;
-   ordercls varchar;
-BEGIN
-   cmd = 'SELECT layerTypeId, code, description, datelastmodified, title
-               FROM lm_v3.LayerType ';
-   wherecls = ' WHERE userid =  ' || quote_literal(usrid) ;
-   ordercls = ' ORDER BY code ASC ';
-   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
-
-   -- filter by modified before given time
-   IF beforetime is not null THEN
-      wherecls = wherecls || ' AND dateLastModified <=  ' || quote_literal(beforetime);
-   END IF;
-
-   -- filter by modified after given time
-   IF aftertime is not null THEN
-      wherecls = wherecls || ' AND dateLastModified >=  ' || quote_literal(aftertime);
-   END IF;
-
-   cmd := cmd || wherecls || ordercls || limitcls;
-   RAISE NOTICE 'cmd = %', cmd;
-
-   FOR rec.id, rec.title, rec.description, rec.modtime, ltTitle in EXECUTE cmd
-      LOOP
-         IF ltTitle IS not null THEN
-            rec.title = rec.title || ': ' || ltTitle;
-         END IF;
-         RETURN NEXT rec;
-      END LOOP;
-   RETURN;
-END;
-$$  LANGUAGE 'plpgsql' STABLE;
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_listTypeCodeObjects(firstRecNum int, maxNum int, 
-                                                usrid varchar(20), 
-                                                beforetime double precision,
-                                                aftertime double precision)
-   RETURNS SETOF lm_v3.lm_layerTypeAndKeywords AS
-$$
-DECLARE
-   rec lm_v3.lm_layerTypeAndKeywords;
-   keystr varchar;
-   ltTitle varchar;
-   cmd varchar;
-   wherecls varchar;
-   limitcls varchar;
-   ordercls varchar;
-BEGIN
-   cmd = 'SELECT * FROM lm_v3.LayerType ';
-   wherecls = ' WHERE userid =  ' || quote_literal(usrid) ;
-   ordercls = ' ORDER BY code ASC ';
-   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
-
-   -- filter by modified before given time
-   IF beforetime is not null THEN
-      wherecls = wherecls || ' AND dateLastModified <=  ' || quote_literal(beforetime);
-   END IF;
-
-   -- filter by modified after given time
-   IF aftertime is not null THEN
-      wherecls = wherecls || ' AND dateLastModified >=  ' || quote_literal(aftertime);
-   END IF;
-
-   cmd := cmd || wherecls || ordercls || limitcls;
-   RAISE NOTICE 'cmd = %', cmd;
-
-   FOR rec in EXECUTE cmd
-      LOOP
-         SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(rec.layertypeid);
-         rec.keywords = keystr;
-         RETURN NEXT rec;
-      END LOOP;
-   RETURN;
-END;
-$$  LANGUAGE 'plpgsql' STABLE;
-
-
--- ----------------------------------------------------------------------------
--- EnvLayer
--- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
-
--- ----------------------------------------------------------------------------
 -- Scenario
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_insertScenario(code varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(code varchar, 
                                              ttl text, 
                                              authr text,
                                              dsc text,
@@ -311,15 +147,15 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_insertScenario(code varchar,
                                              bboxwkt varchar,
                                              modTime double precision,
                                              usr varchar)
-   RETURNS int AS
+   RETURNS lm_v3.Scenario AS
 $$
 DECLARE
    id int;
    idstr varchar;
    scenmetadataUrl varchar;
+   rec lm_v3.Scenario%rowtype;
 BEGIN
-   SELECT s.scenarioid INTO id
-     FROM lm_v3.Scenario s
+   SELECT * INTO rec FROM lm_v3.Scenario s 
       WHERE s.scenariocode = code and s.userid = usr;
    IF NOT FOUND THEN
       INSERT INTO lm_v3.Scenario 
@@ -339,15 +175,17 @@ BEGIN
                = (scenmetadataUrl, ST_GeomFromText(bboxwkt, epsg)) 
                WHERE scenarioId = id;
          END IF;          
+         SELECT * INTO rec FROM lm_v3.Scenario s 
+            WHERE s.scenariocode = code and s.userid = usr;
       END IF; -- end if inserted
    END IF;  -- end if not existing
    
-   RETURN id;
+   RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertScenarioKeyword(scenid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioKeyword(scenid int,
                                                     kywd varchar)
    RETURNS int AS
 $$
@@ -358,22 +196,22 @@ DECLARE
    poly varchar;
 BEGIN
    -- insert keyword if it is not there 
-   SELECT k.keywordid INTO wdid FROM lm3.Keyword k WHERE k.keyword = kywd;
+   SELECT k.keywordid INTO wdid FROM lm_v3.Keyword k WHERE k.keyword = kywd;
    IF NOT FOUND THEN
-      INSERT INTO lm3.Keyword (keyword) VALUES (kywd);
+      INSERT INTO lm_v3.Keyword (keyword) VALUES (kywd);
       IF FOUND THEN
-         SELECT INTO wdid last_value FROM lm3.keyword_keywordid_seq;
+         SELECT INTO wdid last_value FROM lm_v3.keyword_keywordid_seq;
       END IF;
    END IF;
    
    IF FOUND THEN
       BEGIN
          SELECT sk.scenarioId INTO tmpid
-            FROM lm3.ScenarioKeywords sk
+            FROM lm_v3.ScenarioKeywords sk
             WHERE sk.scenarioId = scenid
               AND sk.keywordId = wdid;
          IF NOT FOUND THEN
-            INSERT INTO lm3.ScenarioKeywords (scenarioId, keywordId) VALUES (scenid, wdid);
+            INSERT INTO lm_v3.ScenarioKeywords (scenarioId, keywordId) VALUES (scenid, wdid);
             IF FOUND THEN
                success := 0;
             END IF;
@@ -390,248 +228,47 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- LmUser
 -- ----------------------------------------------------------------------------
--- Insert a new Lifemapper User
-CREATE OR REPLACE FUNCTION lm3.lm_insertUser(usrid varchar, name1 varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, name1 varchar, 
                                          name2 varchar,
                                          inst varchar, addr1 varchar, 
                                          addr2 varchar, addr3 varchar,
                                          fone varchar, emale varchar, 
-                                         modTime double precision, 
+                                         mtime double precision, 
                                          psswd varchar)
-   RETURNS int AS
+   RETURNS lm_v3.LMUser AS
 $$
 DECLARE
    success int = -1;
-   rec record;
+   rec lm_v3.LMUser%rowtype;
 BEGIN
-   SELECT * into rec FROM lm3.LMUser
-      WHERE userid = usrid;
+   SELECT * into rec FROM lm_v3.LMUser WHERE lower(userid) = lower(usrid) 
+                                          OR lower(email) = lower(emale);
    IF NOT FOUND THEN 
-      INSERT INTO lm3.LMUser
+      INSERT INTO lm_v3.LMUser
          (userId, firstname, lastname, institution, address1, address2, address3, phone,
-          email, dateLastModified, password)
+          email, modTime, password)
          VALUES 
-         (usrid, name1, name2, inst, addr1, addr2, addr3, fone, emale, modTime, psswd);
+         (usrid, name1, name2, inst, addr1, addr2, addr3, fone, emale, mtime, psswd);
 
       IF FOUND THEN
-         success := 0;
+         SELECT INTO rec * FROM lm_v3.LMUser WHERE userid = usrid;
       END IF;
    END IF;
    
-   RETURN success;
+   RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE; 
 
 -- ----------------------------------------------------------------------------
--- ShapeGrid
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertShapeGrid(lyrverify varchar,
-                                              usr varchar,
-                                              csides int,
-                                              csize double precision,
-                                              vsz int,
-                                              idAttr varchar,
-                                              xAttr varchar,
-                                              yAttr varchar,
-                                              lyrname varchar,
-                                              lyrtitle varchar,
-                                              lyrdesc varchar,
-                                              dloc varchar,
-                                              vtype int,
-                                              datafmt varchar,
-                                              epsg int,
-                                              mpunits varchar,
-                                              metaloc varchar,
-                                              modtime double precision,
-                                              bboxstr varchar,
-                                              bboxwkt varchar,
-                                              murlprefix varchar)
-RETURNS lm3.lm_shapegrid AS
+CREATE OR REPLACE FUNCTION lm_v3.lm_findUser(usrid varchar, 
+                                           emale varchar)
+   RETURNS lm_v3.lmuser AS
 $$
 DECLARE
-   lyrid int;
-   shpid int;
-   rec lm3.lm_shapegrid%ROWTYPE;
+   rec lm_v3.lmuser%rowtype;
 BEGIN
-   SELECT shapegridid INTO shpid
-     FROM lm3.lm_shapegrid WHERE lyruserid = usr and layername = lyrname;
-   IF NOT FOUND THEN
-      begin
-         -- get or insert layer 
-         SELECT lm3.lm_insertLayer(lyrverify, null, usr, lyrname, lyrtitle, lyrdesc, dloc, vtype, 
-                               null, datafmt, epsg, mpunits, null, null, null, 
-                               metaloc, modtime, modtime, bboxstr, bboxwkt, murlprefix)  
-                INTO lyrid;          
-         IF lyrid = -1 THEN
-            RAISE EXCEPTION 'Unable to insert layer';
-         END IF;
-         
-         INSERT INTO lm3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
-                                idAttribute, xAttribute, yAttribute)
-                       values (lyrid, csides, csize, vsz, idAttr, xAttr, yAttr);
-   
-         IF FOUND THEN
-            SELECT INTO shpid last_value FROM lm3.shapegrid_shapegridid_seq;
-            RAISE NOTICE 'Inserted shapegrid into %', shpid;
-         ELSE
-            RAISE EXCEPTION 'Unable to insert shapegrid';
-         END IF;
-      end;
-   END IF;
-   
-   SELECT * INTO rec FROM lm3.lm_shapegrid WHERE shapegridid = shpid;    
-   
+   SELECT * into rec FROM lm_v3.LMUser WHERE lower(userid) = lower(usrid) 
+                                          OR lower(email) = lower(emale);
    RETURN rec;
 END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
- 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertShapeGrid(lyrid int,
-                                              csides int,
-                                              csize double precision,
-                                              vsz int,
-                                              idAttr varchar,
-                                              xAttr varchar,
-                                              yAttr varchar,
-                                              stat int,
-                                              stattime double precision)
-RETURNS int AS
-$$
-DECLARE
-   shpid int = -1;
-BEGIN
-   SELECT shapegridid INTO shpid
-     FROM lm3.lm_shapegrid WHERE layerid = lyrid;
-   IF NOT FOUND THEN
-      INSERT INTO lm3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
-                     idAttribute, xAttribute, yAttribute, status, statusmodtime)
-          values (lyrid, csides, csize, vsz, idAttr, xAttr, yAttr);
-   
-      IF FOUND THEN
-         SELECT INTO shpid last_value FROM lm3.shapegrid_shapegridid_seq;
-         RAISE NOTICE 'Inserted shapegrid into %', shpid;
-      ELSE
-         RAISE EXCEPTION 'Unable to insert shapegrid';
-      END IF;
-   END IF;
-   
-   RETURN shpid;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
- 
--- ----------------------------------------------------------------------------
--- LAYER
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertLayer(lyrverify varchar,
-                                          lyrsquid varchar,
-                                          usr varchar,
-                                          txid int,
-                                          lyrname varchar, 
-                                          lyrtitle varchar,
-                                          lyrauthor varchar,
-                                          lyrdesc varchar,
-                                          dloc varchar,
-                                          mloc varchar,
-                                          vtype int,
-                                          rtype int,
-                                          iscat int,
-                                          datafmt varchar,
-                                          epsg int,
-                                          munits varchar,
-                                          res double precision,
-                                          startdt double precision,
-                                          enddt double precision,
-                                          mtime double precision,
-                                          bboxstr varchar,
-                                          bboxwkt varchar,
-                                          vattr varchar, 
-                                          vnodata double precision,
-                                          vmin double precision,
-                                          vmax double precision,
-                                          vunits varchar,
-                                          lyrtypeid int,
-                                          murlprefix varchar)
-RETURNS int AS
-$$
-DECLARE
-   lyrid int = -1;
-   idstr varchar;
-   murl varchar;
-BEGIN
-   -- get or insert layer 
-   SELECT layerid INTO lyrid
-      FROM lm3.Layer
-      WHERE userId = usr
-        AND layername = lyrname
-        AND epsgcode = epsg;
-                
-   IF FOUND THEN
-      RAISE NOTICE 'User/Name/EPSG Layer % / % / % found with id %', 
-                    usr, lyrname, epsg, lyrid;
-   ELSE
-      INSERT INTO lm3.Layer (verify, squid, userId, taxonId, name, title, author, 
-                             description, dlocation, metalocation, gdalType, 
-                             ogrType, isCategorical, dataFormat, epsgcode, 
-                             mapunits, resolution, startDate, endDate, modTime, 
-                             bbox, valAttribute, nodataVal, minVal, maxVal, 
-                             valUnits, layerTypeId)
-         VALUES (lyrverify, lyrsquid, usr, txid, lyrname, lyrtitle, lyrauthor,
-                 lyrdesc, dloc, mloc, rtype, vtype, iscat, datafmt, epsg, munits, 
-                 res, startdt, enddt, mtime, bboxstr, vattr, vnodata, vmin, vmax,
-                 vunits, lyrtypeid);         
-                  
-      IF FOUND THEN
-         SELECT INTO lyrid last_value FROM lm3.layer_layerid_seq;
-         RAISE NOTICE 'This layer inserted with id %', lyrid;
-         idstr := cast(lyrid as varchar);
-         murl := replace(murlprefix, '#id#', idstr);
-         IF bboxwkt is NOT NULL THEN
-            UPDATE lm3.Layer SET (metadataurl, geom) 
-               = (murl, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = lyrid;
-         ELSE
-            UPDATE lm3.Layer SET metalocation = murl WHERE layerid = lyrid;
-         END IF;
-      END IF; -- end if layer inserted
-   END IF;  
-      
-   RETURN lyrid;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_renameLayer(lyrid int,
-                                          usr varchar,
-                                          lyrname varchar,
-                                          epsg int)
-RETURNS int AS
-$$
-DECLARE
-   success int = -1;
-   total int = -1;
-BEGIN
-   -- get or insert layer
-   SELECT count(*) INTO total FROM lm3.layer 
-          WHERE layerid = lyrid AND userid = usr;
-   IF total = 1 THEN
-      SELECT count(*) INTO total FROM lm3.layer 
-             WHERE layername = lyrname AND userid = usr AND epsgcode = epsg; 
-      IF total = 0 THEN 
-         BEGIN
-            UPDATE lm3.Layer SET layername = lyrname
-               WHERE layerid = lyrid AND userid = usr AND epsgcode = epsg;
-            IF FOUND THEN
-               success = 0;
-            END IF;   
-         END;   
-      ELSE
-         RAISE NOTICE 'Layer % found for User/EPSG %', lyrname, usr, epsg;
-      END IF;
-   ELSE
-      RAISE NOTICE 'User/Name/EPSG Layer % / %  found with id %', 
-                    usr, lyrname, epsg, existingid;
-   END IF;
-   RETURN success;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
+$$  LANGUAGE 'plpgsql' STABLE; 

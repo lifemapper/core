@@ -47,7 +47,7 @@ def getOptionalVal(dict, key):
       return None
    
 # ...............................................
-def registerConfiguredCompute(scribe):
+def registerConfiguredCompute(scribe, currtime):
    try:
       if (COMPUTE_NAME != '' and COMPUTE_IP != '' and COMPUTE_CONTACT_USERID != ''):
          crContact = LMUser(COMPUTE_CONTACT_USERID, COMPUTE_CONTACT_EMAIL, '', 
@@ -57,7 +57,7 @@ def registerConfiguredCompute(scribe):
                             addr1=COMPUTE_ADDR1, addr2=COMPUTE_ADDR2, 
                             addr3=COMPUTE_ADDR3, modTime=currtime)
          crMachine = LMComputeResource(COMPUTE_NAME, COMPUTE_IP, 
-                           COMPUTE_CONTACT_USERID, ipMask=COMPUTE_IP_MASK,
+                           COMPUTE_CONTACT_USERID, ipSignificantBits=COMPUTE_IP_MASK,
                            createTime=currtime, modTime=currtime, hbTime=currtime)
          scribe.log.info('  Inserting compute resource {} with contact {} ...'.format(
                               COMPUTE_NAME, COMPUTE_CONTACT_USERID))
@@ -68,7 +68,7 @@ def registerConfiguredCompute(scribe):
                     (COMPUTE_NAME, str(e)))
          
 # ...............................................
-def registerStandardComputes(scribe):
+def registerStandardComputes(scribe, currtime):
    try:
       for name, lmc in LM_COMPUTE_INSTANCES.iteritems():      
          crContact = LMUser(lmc['contactid'], 
@@ -83,7 +83,7 @@ def registerStandardComputes(scribe):
                             addr3=getOptionalVal(lmc,'addr3'), 
                             modTime=currtime)
          crMachine = LMComputeResource(name, lmc['ip'], lmc['contactid'], 
-                                       ipMask=getOptionalVal(lmc,'ipmask'), 
+                                       ipSignificantBits=getOptionalVal(lmc,'ipsigbits'), 
                                        createTime=currtime, 
                                        modTime=currtime, hbTime=currtime)
          scribe.log.info('  Inserting compute resource {} with contact {} ...'.format(
@@ -103,10 +103,10 @@ if __name__ == '__main__':
    if success:
       try:
          # Register everything in computeMetadata
-         registerStandardComputes(scribe)
+         registerStandardComputes(scribe, currtime)
  
          # Register anything in configuration file (probably site.ini)
-         registerConfiguredCompute(scribe)
+         registerConfiguredCompute(scribe, currtime)
       except Exception, e:
          raise 
       finally:

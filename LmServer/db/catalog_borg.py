@@ -38,10 +38,10 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.notifyJob import NotifyJob
+from LmServer.rad.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer
 from LmServer.sdm.occlayer import OccurrenceLayer
-from LmServer.sdm.sdmJob import SDMModelJob, SDMProjectionJob, SDMOccurrenceJob
 from LmServer.sdm.scenario import Scenario
 from LmServer.sdm.sdmmodel import SDMModel
 from LmServer.sdm.sdmprojection import SDMProjection
@@ -62,10 +62,11 @@ class Borg(DbPostgresql):
       @param dbPort: port for database connection
       """
       DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser, 
-                            password=dbKey, host=dbHost, port=dbPort)
+                            password=dbKey, host=dbHost, port=dbPort,
+                            schema='lm_v3')
       earl = EarlJr()
       self._relativeArchivePath = earl.createArchiveDataPath()
-      self._webservicePrefix = earl.createWebServicePrefix()()
+      self._webservicePrefix = earl.createWebServicePrefix()
             
 # ...............................................
    def _getRelativePath(self, dlocation=None, url=None):
@@ -78,6 +79,174 @@ class Borg(DbPostgresql):
             relativePath = url[len(self._webservicePrefix)]
       return relativePath
 
+# ...............................................
+   def _createUser(self, row, idxs):
+      usr = None
+      if row is not None:
+         usr = LMUser(row[idxs['userid']], row[idxs['email']], 
+                      row[idxs['password']], isEncrypted=True, 
+                      firstName=row[idxs['firstname']], lastName=row[idxs['lastname']], 
+                      institution=row[idxs['institution']], 
+                      addr1=row[idxs['address1']], addr2=row[idxs['address2']], 
+                      addr3=row[idxs['address3']], phone=row[idxs['phone']], 
+                      modTime=row[idxs['modtime']])
+      return usr
+   
+# ...............................................
+   def _createComputeResource(self, row, idxs):
+      cr = None 
+      if row is not None:
+         cr = LMComputeResource(self._getColumnValue(row, idxs, ['name']), 
+                                self._getColumnValue(row, idxs, ['ipaddress']), 
+                                self._getColumnValue(row, idxs, ['userid']), 
+                                ipSignificantBits=self._getColumnValue(row, idxs, ['ipsigbits']), 
+                                FQDN=self._getColumnValue(row, idxs, ['fqdn']), 
+                                dbId=self._getColumnValue(row, idxs, ['computeresourceid']), 
+                                modTime=self._getColumnValue(row, idxs, ['modtime']), 
+                                hbTime=self._getColumnValue(row, idxs, ['lastheartbeat']))
+      return cr
+
+# ...............................................
+   def _createScenario(self, row, idxs):
+      scen = None
+      if row is not None:
+         scen = Scenario(self._getColumnValue(row, idxs, ['scenariocode']), 
+                         title=self._getColumnValue(row, idxs, ['title']), 
+                         author=self._getColumnValue(row, idxs, ['author']), 
+                         description=self._getColumnValue(row, idxs, ['description']),
+                         metadataUrl=self._getColumnValue(row, idxs, ['metadataurl']), 
+                         dlocation=self._getColumnValue(row, idxs, ['dlocation']),
+                         startdt=self._getColumnValue(row, idxs, ['startdate']), 
+                         enddt=self._getColumnValue(row, idxs, ['enddate']),
+                         units=self._getColumnValue(row, idxs, ['units']), 
+                         res=self._getColumnValue(row, idxs, ['resolution']), 
+                         bbox=self._getColumnValue(row, idxs, ['bbox']), 
+                         modTime=self._getColumnValue(row, idxs, ['modtime']),
+                         epsgcode=self._getColumnValue(row, idxs, ['epsgcode']),
+                         scenarioid=self._getColumnValue(row, idxs, ['scenarioid']))
+         keystr = self._getColumnValue(row, idxs, ['keywords'])
+         if keystr is not None:
+            scen.keywords = keystr.split(',')
+      return scen
+
+# ...............................................
+   def _createLayerType(self, row, idxs):
+      """
+      Create an _EnvironmentalType from a LayerType, lm_envlayer,
+      lm_envlayerAndKeywords or lm_layerTypeAndKeywords record in the MAL
+      """
+      lyrType = None
+      keywordLst = []
+      if row is not None:
+         keystr = self._getColumnValue(row, idxs, ['keywords'])
+         if keystr is not None and len(keystr) > 0:
+            keywordLst = keystr.split(',')
+         code = self._getColumnValue(row, idxs, ['typecode', 'code'])
+         title = self._getColumnValue(row, idxs, ['typetitle', 'title'])
+         desc = self._getColumnValue(row, idxs, ['typedescription', 'description'])
+         modtime = self._getColumnValue(row, idxs, ['typemodtime', 'modtime'])
+         usr = self._getColumnValue(row, idxs, ['userid'])
+         ltid = self._getColumnValue(row, idxs, ['layertypeid'])
+                                                
+         lyrType = EnvironmentalType(code, title, desc, usr,
+                                     keywords=keywordLst,
+                                     modTime=modtime, 
+                                     environmentalTypeId=ltid)
+      return lyrType
+   
+# ...............................................
+   def _createLayer(self, row, idxs):
+      """
+      Create Raster or Vector layer from a Layer record in the MAL
+      """
+      lyr = None
+      if row is not None:
+         dbid = self._getColumnValue(row, idxs, 
+                  ['projectionid', 'occurrencesetid', 'layerid'])
+         usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
+         verify = self._getColumnValue(row, idxs, ['verify'])
+         squid = self._getColumnValue(row, idxs, ['squid'])
+         name = self._getColumnValue(row, idxs, ['name'])
+         title = self._getColumnValue(row, idxs, ['title'])
+         author = self._getColumnValue(row, idxs, ['author'])
+         desc = self._getColumnValue(row, idxs, ['description'])
+         dlocation = self._getColumnValue(row, idxs, ['dlocation'])
+         murl = self._getColumnValue(row, idxs, 
+                  ['prjmetadataurl', 'occmetadataurl', 'metadataurl'])
+         mlocation = self._getColumnValue(row, idxs, ['metalocation'])
+         vtype = self._getColumnValue(row, idxs, ['ogrtype'])
+         rtype = self._getColumnValue(row, idxs, ['gdaltype'])
+         iscat = self._getColumnValue(row, idxs, ['iscategorical'])
+         fformat = self._getColumnValue(row, idxs, ['dataformat'])
+         epsg = self._getColumnValue(row, idxs, ['epsgcode'])
+         munits = self._getColumnValue(row, idxs, ['mapunits'])
+         res = self._getColumnValue(row, idxs, ['resolution'])
+         sDate = self._getColumnValue(row, idxs, ['startdate'])
+         eDate = self._getColumnValue(row, idxs, ['enddate'])
+         dtmod = self._getColumnValue(row, idxs, 
+                  ['prjstatusmodtime', 'occstatusmodtime', 'datelastmodified', 
+                   'statusmodtime'])
+         bbox = self._getColumnValue(row, idxs, ['bbox'])
+         vattr = self._getColumnValue(row, idxs, ['valattribute'])
+         nodata = self._getColumnValue(row, idxs, ['nodataval'])
+         minval = self._getColumnValue(row, idxs, ['minval'])
+         maxval = self._getColumnValue(row, idxs, ['maxval'])
+         vunits = self._getColumnValue(row, idxs, ['valunits'])
+                     
+         if vtype is not None:
+            lyr = Vector(name=name, title=title, bbox=bbox, startDate=sDate, 
+                         verify=verify, squid=squid,
+                         endDate=eDate, mapunits=munits, resolution=res, 
+                         epsgcode=epsg, dlocation=dlocation, 
+                         metalocation=mlocation, valAttribute=vattr, 
+                         valUnits=vunits, isCategorical=iscat, 
+                         ogrType=vtype, ogrFormat=fformat, 
+                         author=author, description=desc, 
+                         svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
+                         modTime=dtmod, metadataUrl=murl) 
+         elif rtype is not None:
+            lyr = Raster(name=name, title=title, bbox=bbox, startDate=sDate, 
+                         verify=verify, squid=squid,
+                         endDate=eDate, mapunits=munits, resolution=res, 
+                         epsgcode=epsg, dlocation=dlocation, 
+                         metalocation=mlocation, minVal=minval, maxVal=maxval, 
+                         nodataVal=nodata, valUnits=vunits, isCategorical=iscat,
+                         gdalType=rtype, gdalFormat=fformat, author=author, 
+                         description=desc, svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
+                         modTime=dtmod, metadataUrl=murl)
+      return lyr
+   
+
+# ...............................................
+   def _createEnvironmentalLayer(self, row, idxs):
+      """
+      Create an EnvironmentalLayer from a lm_envlayer record in the MAL
+      """
+      envRst = None
+      if row is not None:
+         rst = self._createLayer(row, idxs)
+         if rst is not None:
+            etype = self._createLayerType(row, idxs)
+            envRst = EnvironmentalLayer.initFromParts(rst, etype)
+      return envRst
+
+
+# ...............................................
+   def _createShapeGrid(self, row, idxs):
+      """
+      @note: takes lm_shapegrid record
+      """
+      shg = None
+      if row is not None:
+         lyr = self._createLayer(row, idxs)
+         shg = ShapeGrid.initFromParts(lyr, 
+                        self._getColumnValue(row,idxs,['cellsides']), 
+                        self._getColumnValue(row,idxs,['cellsize']), 
+                        siteId='siteid', siteX='centerX', siteY='centerY', 
+                        size=self._getColumnValue(row,idxs,['vsize']), 
+                        shapegridId=self._getColumnValue(row,idxs,['shapegridid']))
+      return shg
+      
 # ...............................................
    def _findOrInsertShapeGridParams(self, shpgrd, cutout):
       """
@@ -113,7 +282,7 @@ class Borg(DbPostgresql):
          nodata = lyr.nodataVal
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
-      lyrid = self.executeInsertFunction('lm_insertLayer', 
+      row, idxs = self.executeInsertFunction('lm_findOrInsertLayer', 
                                          lyr.verify,
                                          lyr.squid,
                                          lyr.getLayerUserId(),
@@ -142,14 +311,15 @@ class Borg(DbPostgresql):
                                          ltypeid,
                                          self._getRelativePath(
                                              url=lyr.metadataUrl))
-      if lyrid != -1:
-         lyr.setLayerId(lyrid)
-         lyr.setId(lyrid)
-         lyr.resetMetadataUrl()
-         updatedLyr = lyr
-      else:
-         raise LMError(currargs='Error on adding Layer object (Command: %s)' % 
-                       str(self.lastCommands))
+      updatedLyr = self._createLayer(row, idxs)
+#       if lyrid != -1:
+#          lyr.setLayerId(lyrid)
+#          lyr.setId(lyrid)
+#          lyr.resetMetadataUrl()
+#          updatedLyr = lyr
+#       else:
+#          raise LMError(currargs='Error on adding Layer object (Command: %s)' % 
+#                        str(self.lastCommands))
       return updatedLyr
 
 # .............................................................................
@@ -168,6 +338,13 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
+   def findOrInsertTaxonSource(self, taxonSourceName, taxonSourceUrl):
+      taxSource = self.executeInsertFunction('lm_findOrInsertTaxonSource', 
+                                               taxonSourceName, taxonSourceUrl, 
+                                               mx.DateTime.gmt().mjd)
+      return taxSource
+
+# ...............................................
    def findOrInsertScenario(self, scen):
       """
       @summary Inserts all scenario layers into the database
@@ -177,21 +354,23 @@ class Borg(DbPostgresql):
       wkt = None
       if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
-      scenid = self.executeInsertFunction('lm_insertScenario', scen.name, 
-                                      scen.title, scen.author, scen.description,
-                                      self._getRelativePath(url=scen.metadataUrl),
-                                      scen.startDate, scen.endDate, 
-                                      scen.units, scen.resolution, scen.epsgcode,
-                                      scen.getCSVExtentString(), wkt, 
-                                      scen.modTime, scen.getUserId())
-      scen.setId(scenid)
-      for kw in scen.keywords:
-         successCode = self.executeInsertFunction('lm_insertScenarioKeyword',
-                                              scenid, kw)
-         if successCode != 0:
-            self.log.error('Failed to insert keyword %s for scenario %d' % 
-                           (kw, scenid))
-      return scen
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
+                           scen.name, scen.title, scen.author, scen.description,
+                           self._getRelativePath(url=scen.metadataUrl),
+                           scen.startDate, scen.endDate, scen.units, 
+                           scen.resolution, scen.epsgcode, 
+                           scen.getCSVExtentString(), wkt, 
+                           scen.modTime, scen.getUserId())
+      newOrExistingScen = self._createScenario(row, idxs)
+      if not newOrExistingScen.keywords:
+         newOrExistingScen.addKeywords(scen.keywords)
+         for kw in newOrExistingScen.keywords:
+            successCode = self.executeInsertFunction('lm_joinScenarioKeyword',
+                                                newOrExistingScen.getId(), kw)
+            if successCode != 0:
+               self.log.error('Failed to insert keyword %s for scenario %d' % 
+                              (kw, newOrExistingScen.getId()))
+      return newOrExistingScen
 
 # ...............................................
    def getEnvironmentalType(self, typeid, typecode, usrid):
@@ -213,34 +392,29 @@ class Borg(DbPostgresql):
       @summary: Insert or find _EnvironmentalType values. Return the record id.
       @param envtype: An EnvironmentalType or EnvironmentalLayer object
       """
-      found = False
-      # Find
-      updatedET = self.getEnvironmentalType(envtype.getParametersId(), 
-                                            envtype.typeCode, envtype.getUserId())
-      if updatedET is not None:
-         found = True
-         if isinstance(envtype, EnvironmentalLayer):
-            envtype.setLayerParam(updatedET)
-         else:
-            envtype = updatedET
-            
-      # or Insert
-      if not found:
-         envtype.parametersModTime = mx.DateTime.utc().mjd
-         etid = self.executeInsertFunction('lm_insertLayerType',
-                                            envtype.getParametersUserId(),
-                                            envtype.typeCode,
-                                            envtype.typeTitle,
-                                            envtype.typeDescription,
-                                            envtype.parametersModTime)
-         envtype.setParametersId(etid)
-         for kw in envtype.typeKeywords:
-            success = self.executeInsertFunction('lm_insertLayerTypeKeyword', 
-                                                 etid, kw)
-      return envtype
+      envtype.parametersModTime = mx.DateTime.utc().mjd
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayerType',
+                                                    envtype.getParametersUserId(),
+                                                    envtype.getParametersId(),
+                                                    envtype.typeCode,
+                                                    envtype.typeTitle,
+                                                    envtype.typeDescription,
+                                                    envtype.parametersModTime)
+      newOrExistingEnvType = self._createLayerType(row, idxs)
+      # Existing EnvType will return with keywords
+      if not newOrExistingEnvType.typeKeywords:
+         newOrExistingEnvType.typeKeywords = envtype.typeKeywords
+         for kw in newOrExistingEnvType.typeKeywords:
+            success = self.executeInsertFunction('lm_joinLayerTypeKeyword', 
+                                    newOrExistingEnvType.getParametersId(), kw)
+            if not success:
+               self.log.debug('Failed to insert keyword {} for layertype {}'
+                              .format(kw, newOrExistingEnvType.getParametersId()))
+
+      return newOrExistingEnvType
                              
 # ...............................................
-   def insertShapeGrid(self, shpgrd, cutout):
+   def findOrInsertShapeGrid(self, shpgrd, cutout):
       """
       @summary: Find or insert a ShapeGrid into the database
       @param shpgrd: The ShapeGrid to insert
@@ -251,10 +425,22 @@ class Borg(DbPostgresql):
              user and shapename combination are unique.
       @raise LMError: on failure to insert or update the database record. 
       """
-      shpgrd.modTime = mx.DateTime.utc().mjd
-      sgtmp = self._findOrInsertBaseLayer(shpgrd)
-      sg = self._findOrInsertShapeGridParams(sgtmp, cutout)
-      return sg
+      if shpgrd.epsgcode == DEFAULT_EPSG:
+         wkt = shpgrd.getWkt()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
+                           shpgrd.verify, shpgrd.getUserId(), shpgrd.name,
+                           shpgrd.title, shpgrd.author, shpgrd.description, 
+                           self._getRelativePath(dlocation=shpgrd.getDLocation()), 
+                           self._getRelativePath(dlocation=shpgrd.getMetaLocation()), 
+                           shpgrd.ogrType, shpgrd.dataFormat, shpgrd.epsgcode,
+                           shpgrd.mapUnits, shpgrd.resolution, shpgrd.modTime, 
+                           shpgrd.getCSVExtentString(), wkt, 
+                           self._getRelativePath(url=shpgrd.metadataUrl),
+                           shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
+                           shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
+                           shpgrd.status, shpgrd.statusModTime)
+      updatedShpgrd = self._createShapeGrid(row, idxs)
+      return updatedShpgrd
 
 # ...............................................
    def findOrInsertEnvLayer(self, lyr, scenarioId=None):
@@ -270,14 +456,84 @@ class Borg(DbPostgresql):
       @note lm_insertLayerTypeKeyword(...) returns int
       """
       lyr.modTime = mx.DateTime.utc().mjd
-      partialUpdatedLyr = self.findOrInsertEnvironmentalType(envlayer=lyr)
-      updatedLyr = self._findOrInsertBaseLayer(partialUpdatedLyr)
+      if lyr.epsgcode == DEFAULT_EPSG:
+         wkt = lyr.getWkt()
+      row, idxs = self.executeInsertAndSelectOneFunction(
+                           'lm_findOrInsertEnvLayer', lyr.verify, lyr.squid,
+                           lyr.getUserId(), lyr.name,
+                           lyr.title, lyr.author, lyr.description, 
+                           self._getRelativePath(dlocation=lyr.getDLocation()), 
+                           self._getRelativePath(dlocation=lyr.getMetaLocation()), 
+                           lyr.ogrType, lyr.gdalType, lyr.isCategorical, 
+                           lyr.dataFormat, lyr.epsgcode,
+                           lyr.mapUnits, lyr.resolution, lyr.startTime, 
+                           lyr.endTime, lyr.modTime, 
+                           lyr.getCSVExtentString(), wkt, 
+                           lyr.getValAttribute, lyr.nodataVal, lyr.minVal, 
+                           lyr.maxVal, lyr.valUnits, lyr.getParametersId(),
+                           self._getRelativePath(url=lyr.metadataUrl),
+                           lyr.typeCode, lyr.typeTitle, lyr.typeDescription)
+      newOrExistingLyr = self._createEnvLayer(row, idxs)
+      # if keywords are returned, layertype was existing
+      if not newOrExistingLyr.typeKeywords:
+         newOrExistingLyr.typeKeywords = lyr.typeKeywords
+         for kw in newOrExistingLyr.typeKeywords:
+            success = self.executeInsertFunction('lm_joinLayerTypeKeyword',
+                              newOrExistingLyr.getParametersId(), kw)
+            if not success:
+               self.log.debug('Failed to insert keyword {} for layertype {}'
+                              .format(kw, newOrExistingLyr.getParametersId()))
       if scenarioId is not None:
-         success = self.executeModifyFunction('lm_joinScenarioLayer', 
-                                              scenarioId, updatedLyr.getId())
+         success = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
+                                              newOrExistingLyr.getId()) 
          if not success:
-            raise LMError(currargs='Failure joining layer {} to scenario {}'
-                          .format(updatedLyr.getId(), scenarioId))
-      return lyr
+            raise LMError(currargs='Failed to join layer {} to scenario {}'
+                           .format(newOrExistingLyr.getId(), scenarioId))
+      return newOrExistingLyr
 
+# ...............................................
+   def findOrInsertComputeResource(self, compResource):
+      """
+      @summary: Insert a compute resource of this Lifemapper system.  
+      @param usr: LMComputeResource object to insert
+      @return: True on success, False on failure (i.e. IPAddress is not unique)
+      """
+      compResource.modTime = mx.DateTime.utc().mjd
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertCompute', 
+                                        compResource.name, 
+                                        compResource.ipAddress, 
+                                        compResource.ipSignificantBits, 
+                                        compResource.FQDN, 
+                                        compResource.getUserId(), 
+                                        compResource.modTime)
+      newOrExistingCR = self._createComputeResource(row, idxs)
+      return newOrExistingCR
+
+# ...............................................
+   def findOrInsertUser(self, usr):
+      """
+      @summary: Insert a user of the Lifemapper system. 
+      @param usr: LMUser object to insert
+      @return: True on success, False on failure (i.e. userid is not unique)
+      """
+      usr.modTime = mx.DateTime.utc().mjd
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertUser', 
+                              usr.userid, usr.firstName, usr.lastName, 
+                              usr.institution, usr.address1, usr.address2, 
+                              usr.address3, usr.phone, usr.email, usr.modTime, 
+                              usr.getPassword())
+      newOrExistingUsr = self._createUser(row, idxs)
+      return newOrExistingUsr
+
+   # ...............................................
+   def findUser(self, usrid, email):
+      """
+      @summary: find a user with either a matching userId or email address
+      @param usrid: the database primary key of the LMUser in the MAL
+      @param email: the email address of the LMUser in the MAL
+      @return: a LMUser object
+      """
+      row, idxs = self.executeSelectOneFunction('lm_findUser', usrid, email)
+      usr = self._createUser(row, idxs)
+      return usr
 

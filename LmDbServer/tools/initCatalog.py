@@ -44,8 +44,6 @@ from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer
 from LmServer.sdm.scenario import Scenario
 from LmServer.rad.shapegrid import ShapeGrid
 
-
-
 # ...............................................
 def addUsers(scribe):
    """
@@ -78,9 +76,9 @@ def addAlgorithms(scribe):
    return ids
 
 # ...............................................
-def addLayerTypes(scribe, layertypeData, usr): 
+def addLayerTypes(scribe, lyrtypeMeta, usr): 
    ids = [] 
-   for typecode, typeinfo in layertypeData.iteritems():
+   for typecode, typeinfo in lyrtypeMeta.iteritems():
       ltype = EnvironmentalType(typecode, typeinfo['title'], 
                                 typeinfo['description'], usr, 
                                 keywords=typeinfo['keywords'], 
@@ -140,7 +138,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    currtime = DT.gmt().mjd
    (starttime, endtime) = baseMeta['time']
    relativePath = os.path.join(pkgMeta['topdir'], baseMeta['directory'])
-
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
    rstType = lyrMeta['gdaltype']
    
@@ -186,7 +183,6 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
    layers = []
    rstType = None
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
-
    for ltype, ltvals in lyrtypeMeta.iteritems():
       if ltype not in staticLayers.keys():
          fname = _getbioFname(ltype, rptcode=rpt, tmcode=tm, 
@@ -225,10 +221,8 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
                    relativePath, scendesc, rpt, mdlvals, tm, tmvals):
    currtime = DT.gmt().mjd
    layers = []
-   
    scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
    rstType = lyrMeta['gdaltype']
-
    for ltype, ltvals in lyrtypeMeta.iteritems():
       if ltype not in staticLayers.keys():
          fname = _getbioFname(ltype, rptcode=rpt, mdlcode=mdlvals['shortcode'], tmcode=tm)
@@ -241,7 +235,6 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
             dloc = None
-
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
                   valUnits=ltvals['valunits'],
@@ -350,7 +343,6 @@ def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
          # Reset keywords
          scenkeywords = [k for k in meta.CLIMATE_KEYWORDS]
          scenkeywords.extend(tmvals['keywords'])
-
          # LM Scenario code, title, description
          scencode = _getbioName('%s-%s' % (mdlvals['code'], tm),
                                 pkgMeta['res'], suffix=pkgMeta['suffix'])
@@ -398,7 +390,6 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    unionScenarios[basescen.code] = basescen
    for k,v in futScenarios.iteritems():
       unionScenarios[k] = v
-      
    return unionScenarios, msgs
       
 
@@ -420,11 +411,9 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
    shpId = addIntersectGrid(scribe, lyrMeta['gridname'], lyrMeta['gridsides'], 
                      lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
                      pkgMeta['bbox'], usr)
-
    scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
    for msg in msgs:
       scribe.log.info(msg)
-    
    for scode, scen in scens.iteritems():
       scribe.log.info('Inserting scenario {}'.format(scode))
       scribe.insertScenario(scen)

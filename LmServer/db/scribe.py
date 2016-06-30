@@ -562,7 +562,7 @@ class Scribe(Peruser):
       etypeid = None
       if isinstance(envType, EnvironmentalType):
          
-         etypeid_borg = self._borg.insertEnvironmentalType(envtype=envType)
+         newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
          
          existingET = self._mal.getEnvironmentalType(envType.typeCode, 
                                           envType.getParametersUserId())
@@ -1419,8 +1419,11 @@ class Scribe(Peruser):
       @param usr: LMComputeResource object to insert
       @return: True on success, False on failure (i.e. IPAddress is not unique)
       """
+      borgUser = self._borg.findOrInsertUser(crContact)
+      borgCR = self._borg.findOrInsertComputeResource(compResource)
+
       existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress,
-                                                    ipMask=compResource.ipMask)
+                                       ipSigBits=compResource.ipSignificantBits)
       if existingCR is None:
          usr = self._mal.getUser(crContact.getUserId())
          if usr is None:
@@ -1431,8 +1434,7 @@ class Scribe(Peruser):
 # ...............................................
    def insertUser(self, usr):
       """
-      @summary: Insert a user of the Lifemapper system.  Allows 
-            on-demand-modeling with user-submitted point data.
+      @summary: Insert a user of the Lifemapper system.  
       @param usr: LMUser object to insert
       @return: True on success, False on failure (i.e. userid is not unique)
       @note: since inserting the same record in both databases, userid is identical
@@ -1442,6 +1444,12 @@ class Scribe(Peruser):
          uid = existingUser.userid
       else:
          uid = self._mal.insertUser(usr)
+         
+      buid = None
+      borgUser = self._borg.findOrInsertUser(usr)
+      if borgUser is not None:
+         buid = borgUser.userid
+         
       return uid
 
 # ...............................................
@@ -1470,9 +1478,9 @@ class Scribe(Peruser):
 # Miscellaneous
 # ...............................................
    def insertTaxonomySource(self, taxSourceName, taxSourceUrl):
-      currtime = mx.DateTime.gmt().mjd
       taxSourceId = self._mal.insertTaxonSource(taxSourceName, taxSourceUrl, 
-                                                currtime)
+                                                mx.DateTime.gmt().mjd)
+      taxSource = self._borg.findOrInsertTaxonSource(taxSourceName. taxSourceUrl)
       return taxSourceId
 
 # ...............................................
@@ -1691,6 +1699,8 @@ class Scribe(Peruser):
 # ShapeGrid
 # ...............................................
    def insertShapeGrid(self, shpgrd, cutout=None):
+      updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
+      
       if shpgrd.getParametersId() is not None:
          existSG = self.getShapeGrid(shpgrd.getUserId(),shpid=shpgrd.getId())
       elif shpgrd.name is not None:

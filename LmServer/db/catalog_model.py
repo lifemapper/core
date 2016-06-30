@@ -1998,11 +1998,11 @@ class MAL(DbPostgresql):
       return usr
 
 # ...............................................
-   def getComputeResourceByIP(self, ipAddr, ipMask=None):
+   def getComputeResourceByIP(self, ipAddr, ipSigBits=None):
       """
       """
       cr = None
-      row, idxs = self.executeSelectOneFunction('lm_getCompute', ipAddr, ipMask)
+      row, idxs = self.executeSelectOneFunction('lm_getCompute', ipAddr, ipSigBits)
       if row is not None:
          cr = self._createComputeResource(row, idxs)
       return cr
@@ -2027,8 +2027,8 @@ class MAL(DbPostgresql):
       """
       currtime = mx.DateTime.utc().mjd
       crid = self.executeInsertFunction('lm_insertCompute', compResource.name, 
-                        compResource.ipAddress, compResource.ipMask, compResource.FQDN, 
-                        compResource.getUserId(), currtime)
+                        compResource.ipAddress, compResource.ipSignificantBits, 
+                        compResource.FQDN, compResource.getUserId(), currtime)
       
       compResource.setId(crid)
       return compResource
@@ -2802,7 +2802,7 @@ class MAL(DbPostgresql):
          cr = LMComputeResource(self._getColumnValue(row, idxs, ['name']), 
                                 self._getColumnValue(row, idxs, ['ipaddress']), 
                                 self._getColumnValue(row, idxs, ['userid']), 
-                                ipMask=self._getColumnValue(row, idxs, ['ipmask']), 
+                                ipSignificantBits=self._getColumnValue(row, idxs, ['ipsigbits']), 
                                 FQDN=self._getColumnValue(row, idxs, ['fqdn']), 
                                 dbId=self._getColumnValue(row, idxs, ['computeresourceid']), 
                                 createTime=self._getColumnValue(row, idxs, ['datecreated']), 
