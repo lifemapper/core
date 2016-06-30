@@ -60,16 +60,12 @@ class Scribe(Peruser):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, logger, dbUser=DbUser.Pipeline, overrideDB=None):
+   def __init__(self, logger, dbUser=DbUser.Pipeline):
       """
       @summary Scribe constructor
       @param logger: Logger for informational, debugging, and error messages
-      @param overrideDB: optional parameter for overriding default database
-                         to connect to.  Only used when debugging data on 
-                         production or beta from development environment.  
-                         Expects the database hostname, options are HL_HOST, 
        """
-      Peruser.__init__(self, logger, dbUser=dbUser, overrideDB=overrideDB)
+      Peruser.__init__(self, logger, dbUser=dbUser)
 
 # .............................................................................
 # Public functions

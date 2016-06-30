@@ -69,7 +69,7 @@ class MapConstructor(LMObject):
       LMObject.__init__(self)
       self.owsreq = mapscript.OWSRequest()
       self.log = logger
-      self._peruser = Peruser(self.log, dbUser=DbUser.Map, overrideDB=overrideDB)
+      self._peruser = Peruser(self.log, dbUser=DbUser.Map)
       self.queryString = None
       self._mapFilename = None
       self.serviceType = None
