@@ -123,8 +123,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                           siteId=siteId, siteX=siteX, siteY=siteY, size=size, 
                           userId=vector.getUserId(), layerId=vector.getId(), 
                           shapegridId=shapegridId, verify=vector.verify,
-                          status=vector.status, 
-                          statusModTime=vector.statusModTime, 
+                          status=status, statusModTime=statusModTime, 
                           modTime=vector.modTime, metadataUrl=vector.metadataUrl)
       return shpGrid
 
@@ -315,7 +314,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if os.path.exists(self._dlocation):
          print "Shapegrid file already exists at: %s" % self._dlocation
          return 
-#         raise LMError("Shapegrid file already exists at: %s" % self._dlocation)
       
       self._readyFilename(self._dlocation, overwrite=overwrite)
 

@@ -76,7 +76,7 @@ class Borg(DbPostgresql):
             relativePath = dlocation[len(self._relativeArchivePath):]
       elif url is not None:
          if url.startswith(self._webservicePrefix):
-            relativePath = url[len(self._webservicePrefix)]
+            relativePath = url[len(self._webservicePrefix):]
       return relativePath
 
 # ...............................................
@@ -452,6 +452,8 @@ class Borg(DbPostgresql):
       lyr.modTime = mx.DateTime.utc().mjd
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
+      layertypeid = lyr.getParametersId()
+      self.log.debug('LayerTypeId = {}'.format(layertypeid))
       row, idxs = self.executeInsertAndSelectOneFunction(
                            'lm_findOrInsertEnvLayer', lyr.verify, lyr.squid,
                            lyr.getUserId(), lyr.name,
@@ -460,14 +462,15 @@ class Borg(DbPostgresql):
                            self._getRelativePath(dlocation=lyr.getMetaLocation()), 
                            lyr.ogrType, lyr.gdalType, lyr.isCategorical, 
                            lyr.dataFormat, lyr.epsgcode,
-                           lyr.mapUnits, lyr.resolution, lyr.startTime, 
-                           lyr.endTime, lyr.modTime, 
+                           lyr.mapUnits, lyr.resolution, lyr.startDate, 
+                           lyr.endDate, lyr.modTime, 
                            lyr.getCSVExtentString(), wkt, 
-                           lyr.getValAttribute, lyr.nodataVal, lyr.minVal, 
-                           lyr.maxVal, lyr.valUnits, lyr.getParametersId(),
+                           lyr.getValAttribute(), lyr.nodataVal, lyr.minVal, 
+                           lyr.maxVal, lyr.valUnits, layertypeid,
                            self._getRelativePath(url=lyr.metadataUrl),
                            lyr.typeCode, lyr.typeTitle, lyr.typeDescription)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
+      newOrExistingLayertypeid = newOrExistingLyr.getParametersId()
       # if keywords are returned, layertype was existing
       if not newOrExistingLyr.typeKeywords:
          newOrExistingLyr.typeKeywords = lyr.typeKeywords

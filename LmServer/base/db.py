@@ -155,8 +155,7 @@ class _DbConn(LMAbstractObject):
       elif isinstance(val, NoneType):
          dbVal = 'NULL'
       else:
-         raise LMError(currargs='DbConn._formatVal: unsupported type ' + str(type(val)),
-                       lineno=self.getLineno())
-                 
+         raise LMError(currargs='DbConn._formatVal: unsupported type {} for {}'
+                       .format(type(val), val), lineno=self.getLineno())
       return dbVal
 
