@@ -65,14 +65,7 @@ BEGIN
          VALUES (ltype, ltypetitle, usr, ltypedesc, mtime);
       IF FOUND THEN
          SELECT INTO tid last_value FROM lm_v3.layertype_layertypeid_seq;
-         rec.layerTypeId = tid;
-         rec.userid = usr;
-         rec.typecode = ltype;
-         rec.typetitle = ltypetitle;
-         rec.typedescription = ltypedesc;
-         rec.typemodtime = mtime;
-	      SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(tid);
-	      rec.keywords = keystr;
+         SELECT * FROM  lm_v3.lm_findLayerType(tid, null, null) INTO rec;
       END IF;
    END IF;
    
@@ -91,31 +84,24 @@ DECLARE
 BEGIN
    -- insert keyword if it is not there 
    SELECT k.keywordid INTO wdid FROM lm_v3.Keyword k WHERE k.keyword = kywd;
-   RAISE NOTICE 'looked for keyword';
    IF NOT FOUND THEN
-      RAISE NOTICE 'not found';
       INSERT INTO lm_v3.Keyword (keyword) VALUES (kywd);
       IF FOUND THEN
-         RAISE NOTICE 'successfully inserted';
          SELECT INTO wdid last_value FROM lm_v3.keyword_keywordid_seq;
-         RAISE NOTICE 'keyword id %', wdid;
       END IF;
    END IF;
    -- if found or inserted, join
    IF FOUND THEN
       SELECT count(*) INTO total FROM lm_v3.LayerTypeKeyword 
          WHERE layerTypeId = typid AND keywordId = wdid;
-      RAISE NOTICE 'looking for join';
-      IF total = 0 THEN
-         RAISE NOTICE 'not found';
+      IF total > 0 THEN
+         retval := 0;
+      ELSE
          INSERT INTO lm_v3.LayerTypeKeyword (layerTypeId, keywordId) 
             VALUES (typid, wdid);
          IF FOUND THEN 
-            RAISE NOTICE 'join successful';
             retval := 0;
          END IF;
-      ELSE
-         retval := 0;
       END IF;
    END IF;
    
@@ -156,7 +142,6 @@ BEGIN
          END IF;
       END;
    ELSE
-      RAISE NOTICE 'Scenario % and Layer % are already joined', scenid, lyrid;
       success := 0;
    END IF;
    
@@ -166,7 +151,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_countTypeCodes(usrid varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_countTypeCodes(usr varchar, 
                                                  beforetime double precision, 
                                                  aftertime double precision)
    RETURNS int AS
@@ -177,7 +162,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.LayerType ';
-   wherecls = ' WHERE userid =  ' || quote_literal(usrid) ;
+   wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
 
    -- filter by modified before given time
    IF beforetime is not null THEN
@@ -199,7 +184,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_listTypeCodes(firstRecNum int, maxNum int, 
-                                                usrid varchar(20), 
+                                                usr varchar(20), 
                                                 beforetime double precision,
                                                 aftertime double precision)
    RETURNS SETOF lm_v3.lm_atom AS
@@ -214,7 +199,7 @@ DECLARE
 BEGIN
    cmd = 'SELECT layerTypeId, code, description, datelastmodified, title
                FROM lm_v3.LayerType ';
-   wherecls = ' WHERE userid =  ' || quote_literal(usrid) ;
+   wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
    ordercls = ' ORDER BY code ASC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
@@ -244,7 +229,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_listTypeCodeObjects(firstRecNum int, maxNum int, 
-                                                usrid varchar(20), 
+                                                usr varchar(20), 
                                                 beforetime double precision,
                                                 aftertime double precision)
    RETURNS SETOF lm_v3.lm_layerTypeAndKeywords AS
@@ -259,7 +244,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.LayerType ';
-   wherecls = ' WHERE userid =  ' || quote_literal(usrid) ;
+   wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
    ordercls = ' ORDER BY code ASC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
@@ -287,20 +272,19 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getLayerTypeKeywordString(id int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_getLayerTypeKeywordString(ltid int)
    RETURNS varchar AS
 $$
 DECLARE
    lyrkeyword record;
    keystr varchar := '';
 BEGIN
-   RAISE NOTICE 'id = %', id;
+   RAISE NOTICE 'id = %', ltid;
    FOR lyrkeyword in SELECT k.*
                      FROM lm_v3.keyword k, lm_v3.layertypekeyword lk
-                     WHERE lk.layertypeid = id
+                     WHERE lk.layertypeid = ltid
                        AND k.keywordid = lk.keywordid
    LOOP
-      RAISE NOTICE 'keystr = %', keystr;
       IF keystr = '' THEN
          keystr := lyrkeyword.keyword;
       ELSE
@@ -358,10 +342,10 @@ DECLARE
    rec_envlyr lm_v3.lm_envlayer%ROWTYPE;
 BEGIN
    -- get or insert layertype 
-   SELECT lm_v3.lm_findOrInsertLayerType(usr, lyrtypeid, ltype, ltypetitle, 
+   SELECT * FROM lm_v3.lm_findOrInsertLayerType(usr, lyrtypeid, ltype, ltypetitle, 
        ltypedesc, mtime) INTO reclt;
    -- get or insert layer 
-   SELECT lm_v3.lm_findOrInsertLayer(lyrverify, lyrsquid, usr, null, 
+   SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrverify, lyrsquid, usr, null, 
             lyrname, lyrtitle, lyrauthor, lyrdesc, dloc, mloc, vtype, rtype, 
             iscat, datafmt, epsg, munits, res, startdt, enddt, mtime, bboxstr, 
             bboxwkt, vattr, vnodata, vmin, vmax, vunits, reclt.layertypeid, 
@@ -432,22 +416,23 @@ BEGIN
    IF NOT FOUND THEN
       begin
          -- get or insert layer 
-         SELECT lm_v3.lm_findOrInsertLayer(lyrverify, null, usr, null, 
+         SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrverify, null, usr, null, 
             lyrname, lyrtitle, lyrauthor, lyrdesc, dloc, mloc, vtype, null, 
             iscat, datafmt, epsg, munits, res, null, null, mtime, bboxstr, 
             bboxwkt, null, null, null, null, null, null, murlprefix) 
             INTO reclyr;
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to find or insert layer';
-         END IF;
-         
-         SELECT lm_v3.lm_findOrInsertShapeGridParams (reclyr.layerid, csides, 
-                csize, vsz, idAttr, xAttr, yAttr, stat, stattime) INTO recsgp;
-         IF FOUND THEN
-            SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
-               WHERE shapeGridId = recsgp.shapeGridId;
          ELSE
-            RAISE EXCEPTION 'Unable to insert shapegrid';
+            SELECT * FROM lm_v3.lm_findOrInsertShapeGridParams (reclyr.layerid, csides, 
+               csize, vsz, idAttr, xAttr, yAttr, stat, stattime) INTO recsgp;
+         
+            IF FOUND THEN
+               SELECT * FROM lm_v3.lm_shapegrid 
+                  WHERE shapeGridId = recsgp.shapeGridId INTO recshpgrd;
+            ELSE
+               RAISE EXCEPTION 'Unable to insert shapegridparams';
+            END IF;
          END IF;
       end;
    END IF;
@@ -477,10 +462,10 @@ BEGIN
    IF NOT FOUND THEN
       INSERT INTO lm_v3.ShapeGrid (layerId, cellsides, cellsize, vsize, 
                      idAttribute, xAttribute, yAttribute, status, statusmodtime)
-          values (lyrid, csides, csize, vsz, idAttr, xAttr, yAttr);
+        values (lyrid, csides, csize, vsz, idAttr, xAttr, yAttr, stat, stattime);
    
       IF FOUND THEN
-         SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
+         SELECT * INTO rec FROM lm_v3.shapegrid WHERE layerid = lyrid;
       ELSE
          RAISE EXCEPTION 'Unable to insert shapegrid';
       END IF;
@@ -551,7 +536,6 @@ BEGIN
                   
       IF FOUND THEN
          SELECT INTO lyrid last_value FROM lm_v3.layer_layerid_seq;
-         RAISE NOTICE 'This layer inserted with id %', lyrid;
          idstr := cast(lyrid as varchar);
          murl := replace(murlprefix, '#id#', idstr);
          IF bboxwkt is NOT NULL THEN

@@ -114,7 +114,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    @classmethod
    def initFromParts(cls, vector, cellsides, cellsize, 
                      siteId='siteid', siteX='centerX', siteY='centerY', 
-                     size=None, shapegridId=None):
+                     size=None, status=None, statusModTime=None, shapegridId=None):
       
       shpGrid = ShapeGrid(vector.name, cellsides, cellsize, vector.mapUnits, 
                           vector.epsgcode, vector.bbox, 

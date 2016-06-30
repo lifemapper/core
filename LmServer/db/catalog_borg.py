@@ -244,6 +244,11 @@ class Borg(DbPostgresql):
                         self._getColumnValue(row,idxs,['cellsize']), 
                         siteId='siteid', siteX='centerX', siteY='centerY', 
                         size=self._getColumnValue(row,idxs,['vsize']), 
+                        status=self._getColumnValue(row,idxs,['prjstatus', 
+                                 'occstatus', 'shpstatus', 'status']), 
+                        statusmodtime=self._getColumnValue(row,idxs,
+                                 ['prjstatusmodtime', 'occstatusmodtime', 
+                                  'shpstatusmodtime', 'statusmodtime']),
                         shapegridId=self._getColumnValue(row,idxs,['shapegridid']))
       return shg
       
@@ -312,14 +317,6 @@ class Borg(DbPostgresql):
                                          self._getRelativePath(
                                              url=lyr.metadataUrl))
       updatedLyr = self._createLayer(row, idxs)
-#       if lyrid != -1:
-#          lyr.setLayerId(lyrid)
-#          lyr.setId(lyrid)
-#          lyr.resetMetadataUrl()
-#          updatedLyr = lyr
-#       else:
-#          raise LMError(currargs='Error on adding Layer object (Command: %s)' % 
-#                        str(self.lastCommands))
       return updatedLyr
 
 # .............................................................................
@@ -365,11 +362,11 @@ class Borg(DbPostgresql):
       if not newOrExistingScen.keywords:
          newOrExistingScen.addKeywords(scen.keywords)
          for kw in newOrExistingScen.keywords:
-            successCode = self.executeInsertFunction('lm_joinScenarioKeyword',
+            success = self.executeInsertFunction('lm_joinScenarioKeyword',
                                                 newOrExistingScen.getId(), kw)
-            if successCode != 0:
-               self.log.error('Failed to insert keyword %s for scenario %d' % 
-                              (kw, newOrExistingScen.getId()))
+            if success != 0:
+               self.log.error('Failed to insert keyword {} for scenario {}'
+                              .format(kw, newOrExistingScen.getId()))
       return newOrExistingScen
 
 # ...............................................
