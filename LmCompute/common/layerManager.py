@@ -191,6 +191,9 @@ class LayerManager(object):
                   print "Failed to create MXE file:", mxeFn
                   raise LmException(JobStatus.IO_LAYER_WRITE_ERROR, 
                                     "Failed to convert layer to MXE")
+                  
+         convertedLyrstatus, convertedLayer = self._queryLayer(layerId, layerFormat)
+         return convertedLayer
          
       else:
          raise LmException(JobStatus.DB_LAYER_READ_ERROR,
