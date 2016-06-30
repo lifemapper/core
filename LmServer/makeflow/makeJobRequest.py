@@ -52,7 +52,7 @@ if __name__ == "__main__":
    jobId = args.jobId
    fn = args.f
    
-   scribe = Scribe(ScriptLogger)
+   scribe = Scribe(ScriptLogger("makeJobRequest"))
    scribe.openConnections()
    
    job = scribe.getJob(jobFam, jobId)
