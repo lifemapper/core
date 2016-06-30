@@ -304,6 +304,14 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- EnvLayer
 -- ----------------------------------------------------------------------------
+select * from lm_v3.lm_findOrInsertEnvLayer(NULL,NULL,E'bison',E'bio10-10min',
+E'Mean Temperature of Warmest Quarter, Worldclim 1.4, 10min',NULL,
+E'Mean Temperature of Warmest Quarter, WorldClim 1.4 elevation and bioclimatic variables computed from interpolated observation data collected between 1950 and 2000 (http://www.worldclim.org/), 5 min resolution',
+NULL,NULL,NULL,3,FALSE,E'GTiff',4326,E'dd',0.16667,1950,2000,57568.9775092,
+E'-180.00,-60.00,180.00,90.00',E'POLYGON((-180 -60,-180 90,180 90,180 -60,-180 -60))',
+E'pixel',-9999.0, -97.0, 380.0, E'degreesCelsiusTimes10', NULL, E'/sdm/layers/#id#',
+E'BIO10', E'Mean Temperature of Warmest Quarter', E'Mean Temperature of Warmest Quarter');
+
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
                                           lyrsquid varchar,
                                           usr varchar,
@@ -356,7 +364,7 @@ BEGIN
             murlprefix) INTO reclyr;
          
    IF FOUND THEN
-      SELECT * INTO rec_envlyr FROM lm_v3.lm_envayer 
+      SELECT * INTO rec_envlyr FROM lm_v3.lm_envlayer 
          WHERE layertypeid = reclt.layertypeid;
    ELSE
       RAISE EXCEPTION 'Unable to insert shapegrid';

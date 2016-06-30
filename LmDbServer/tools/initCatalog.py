@@ -502,3 +502,26 @@ if __name__ == '__main__':
    finally:
       scribe.closeConnections()
        
+"""
+from LmDbServer.tools.initCatalog import *
+from LmDbServer.tools.initCatalog import _getClimateMeta
+
+logger = ScriptLogger('testing')
+scribe = Scribe(logger)
+success = scribe.openConnections()
+
+pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
+
+usr = ARCHIVE_USER
+lyrtypeMeta = meta.LAYERTYPE_DATA
+scenPkgName = SCENARIO_PACKAGE
+scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+scode = 'WC-10min'
+scen = scens[scode]
+
+newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
+scenid = newOrExistingScen.getId()
+lyr = scen.layers[0]
+for lyr in scen.layers:
+   newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
+"""
