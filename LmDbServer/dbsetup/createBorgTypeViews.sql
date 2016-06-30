@@ -450,14 +450,17 @@ lm_v3.lm_envlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_anclayer,  
 lm_v3.lm_palayer, 
-
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP reader;
 
 GRANT SELECT ON TABLE 
-lm_v3.lm_envlayer, lm_v3.lm_occurrenceset,  
+lm_v3.lm_envlayer,
+lm_v3.lm_shapegrid,
+lm_v3.lm_anclayer,  
+lm_v3.lm_palayer, 
+lm_v3.lm_occurrenceset, 
 lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP writer;

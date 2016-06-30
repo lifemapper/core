@@ -328,7 +328,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
                                           mloc varchar,
                                           vtype int,
                                           rtype int,
-                                          iscat int,
+                                          iscat boolean,
                                           datafmt varchar,
                                           epsg int,
                                           munits varchar,
@@ -393,7 +393,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lyrverify varchar,
                                           mloc varchar,
                                           vtype int,
                                           --rtype int,
-                                          --iscat int,
+                                          iscat boolean,
                                           datafmt varchar,
                                           epsg int,
                                           munits varchar,
@@ -428,13 +428,13 @@ DECLARE
    recshpgrd lm_v3.lm_shapegrid%ROWTYPE;
 BEGIN
    SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
-      WHERE lyruserid = usr AND layername = lyrname AND epsgcode = epsg;
+      WHERE userid = usr AND name = lyrname AND epsgcode = epsg;
    IF NOT FOUND THEN
       begin
          -- get or insert layer 
          SELECT lm_v3.lm_findOrInsertLayer(lyrverify, null, usr, null, 
             lyrname, lyrtitle, lyrauthor, lyrdesc, dloc, mloc, vtype, null, 
-            null, datafmt, epsg, munits, res, null, null, mtime, bboxstr, 
+            iscat, datafmt, epsg, munits, res, null, null, mtime, bboxstr, 
             bboxwkt, null, null, null, null, null, null, murlprefix) 
             INTO reclyr;
          IF NOT FOUND THEN
@@ -505,7 +505,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayer(lyrverify varchar,
                                           mloc varchar,
                                           vtype int,
                                           rtype int,
-                                          iscat int,
+                                          iscat boolean,
                                           datafmt varchar,
                                           epsg int,
                                           munits varchar,
@@ -522,7 +522,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayer(lyrverify varchar,
                                           vunits varchar,
                                           lyrtypeid int,
                                           murlprefix varchar)
-RETURNS int AS
+RETURNS lm_v3.Layer AS
 $$
 DECLARE
    lyrid int = -1;
@@ -531,22 +531,19 @@ DECLARE
    rec lm_v3.Layer%rowtype;
 BEGIN
    -- get or insert layer 
-   SELECT * INTO rec
-      FROM lm_v3.Layer
-      WHERE userId = usr
-        AND layername = lyrname
-        AND epsgcode = epsg;
-                
+   SELECT * INTO rec FROM lm_v3.Layer WHERE userId = usr
+                                        AND name = lyrname
+                                        AND epsgcode = epsg;
    IF FOUND THEN
       RAISE NOTICE 'User/Name/EPSG Layer % / % / % found with id %', 
                     usr, lyrname, epsg, rec.layerid;
    ELSE
       INSERT INTO lm_v3.Layer (verify, squid, userId, taxonId, name, title, author, 
-                             description, dlocation, metalocation, gdalType, 
-                             ogrType, isCategorical, dataFormat, epsgcode, 
-                             mapunits, resolution, startDate, endDate, modTime, 
-                             bbox, valAttribute, nodataVal, minVal, maxVal, 
-                             valUnits, layerTypeId)
+                               description, dlocation, metalocation, gdalType, 
+                               ogrType, isCategorical, dataFormat, epsgcode, 
+                               mapunits, resolution, startDate, endDate, modTime, 
+                               bbox, valAttribute, nodataVal, minVal, maxVal, 
+                               valUnits, layerTypeId)
          VALUES (lyrverify, lyrsquid, usr, txid, lyrname, lyrtitle, lyrauthor,
                  lyrdesc, dloc, mloc, rtype, vtype, iscat, datafmt, epsg, munits, 
                  res, startdt, enddt, mtime, bboxstr, vattr, vnodata, vmin, vmax,
