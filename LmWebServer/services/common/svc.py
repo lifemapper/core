@@ -492,6 +492,34 @@ class svc(object):
                err = LMError(e, doTrace=True)
                return errorResponse(log, HTTPStatus.INTERNAL_SERVER_ERROR, err=err)
          else:
+            #TODO: Add a verification method or something
+            #TODO: Add constants for length
+            # Check inputs
+            if len(userId) > 20:
+               return errorResponse(log, HTTPStatus.BAD_REQUEST, 
+                           msg="User ID is too long (max length: 20)", 
+                           err=LMError("User ID is too long (max length: 20)"))
+            if len(fName) > 50:
+               return errorResponse(log, HTTPStatus.BAD_REQUEST, 
+                           msg="First name is too long (max length: 50)", 
+                           err=LMError("First name is too long (max length: 50)"))
+            if lName is not None and len(lName) > 50:
+               return errorResponse(log, HTTPStatus.BAD_REQUEST, 
+                           msg="Last name is too long (max length: 50)", 
+                           err=LMError("Last name is too long (max length: 50)"))
+            if phone is not None and len(phone) > 20:
+               return errorResponse(log, HTTPStatus.BAD_REQUEST, 
+                           msg="Phone is too long (max length: 20)", 
+                           err=LMError("Phone is too long (max length: 20)"))
+            if len(email) > 64:
+               return errorResponse(log, HTTPStatus.BAD_REQUEST, 
+                           msg="Email is too long (max length: 64)", 
+                           err=LMError("Email is too long (max length: 64)"))
+            if len(pword) > 32:
+               return errorResponse(log, HTTPStatus.BAD_REQUEST, 
+                           msg="Password is too long (max length: 32)", 
+                           err=LMError("Password is too long (max length: 32)"))
+            
             scribe = Scribe(log, dbUser=DbUser.WebService)
             scribe.openConnections()
             checkUser = scribe.findUser(userId, email)
