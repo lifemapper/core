@@ -74,12 +74,12 @@ def assembleUrls(logger, urls):
    if len(occs) > 0:
       BASEURLS['occ'] = "%s/services/sdm/occurrences/%s" % (WEBSERVICES_ROOT, occs[0].id)
       # Add map urls
-      occMap = "%s/services/sdm/projections/%s/ogc?%s&layers=occ_%s" % (
+      occMap = "%s/services/sdm/occurrences/%s/ogc?%s&layers=occ_%s" % (
                                                          WEBSERVICES_ROOT, 
                                                          occs[0].id, 
                                                          MAP_PARAMETERS, 
                                                          occs[0].id)
-      occBGMap = "%s/services/sdm/projections/%s/ogc?%s&layers=bmng,occ_%s" % (
+      occBGMap = "%s/services/sdm/occurrences/%s/ogc?%s&layers=bmng,occ_%s" % (
                                                          WEBSERVICES_ROOT, 
                                                          occs[0].id, 
                                                          MAP_PARAMETERS, 
