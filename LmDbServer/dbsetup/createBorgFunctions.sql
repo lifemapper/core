@@ -14,7 +14,7 @@
 -- ----------------------------------------------------------------------------
 -- Algorithm
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_insertAlgorithm(code varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertAlgorithm(code varchar, 
                                                     aname varchar, 
                                                     mtime double precision)
    RETURNS lm_v3.algorithm AS
@@ -145,7 +145,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(code varchar,
                                              epsg int,
                                              bndsstring varchar, 
                                              bboxwkt varchar,
-                                             modTime double precision,
+                                             mtime double precision,
                                              usr varchar)
    RETURNS lm_v3.Scenario AS
 $$
@@ -160,9 +160,9 @@ BEGIN
    IF NOT FOUND THEN
       INSERT INTO lm_v3.Scenario 
          (scenarioCode, title, author, description, startDate, endDate, units, 
-          resolution, bbox, dateLastModified, epsgcode, userid)
+          resolution, bbox, modtime, epsgcode, userid)
       VALUES (code, ttl, authr, dsc, startdt, enddt, unts, 
-              res, bndsstring, modTime, epsg, usr);
+              res, bndsstring, mtime, epsg, usr);
                        
       IF FOUND THEN
          SELECT INTO id last_value FROM lm_v3.scenario_scenarioid_seq;

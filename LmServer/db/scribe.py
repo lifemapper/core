@@ -60,16 +60,12 @@ class Scribe(Peruser):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, logger, dbUser=DbUser.Pipeline, overrideDB=None):
+   def __init__(self, logger, dbUser=DbUser.Pipeline):
       """
       @summary Scribe constructor
       @param logger: Logger for informational, debugging, and error messages
-      @param overrideDB: optional parameter for overriding default database
-                         to connect to.  Only used when debugging data on 
-                         production or beta from development environment.  
-                         Expects the database hostname, options are HL_HOST, 
        """
-      Peruser.__init__(self, logger, dbUser=dbUser, overrideDB=overrideDB)
+      Peruser.__init__(self, logger, dbUser=dbUser)
 
 # .............................................................................
 # Public functions
@@ -95,7 +91,7 @@ class Scribe(Peruser):
       """
       algid = self._mal.insertAlgorithm(alg)
       if self._borg is not None:
-         algid = self._borg.insertAlgorithm(alg)
+         algo = self._borg.findOrInsertAlgorithm(alg)
       return algid
 
 # ...............................................
@@ -550,8 +546,11 @@ class Scribe(Peruser):
       updatedLyr = None
       if isinstance(lyr, EnvironmentalLayer):
          if lyr.isValidDataset():
+            self.log.debug('Scribe, LayerTypeId = {}'.format(lyr.getParametersId()))
             updatedLyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
             if self._borg is not None:
+               # clear out the param id from MAL
+               lyr.setParametersId(None)
                updatedLyr2 = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
          else:
             raise LMError(currargs='Invalid environmental layer: {}'
@@ -1486,7 +1485,8 @@ class Scribe(Peruser):
       taxSourceId = self._mal.insertTaxonSource(taxSourceName, taxSourceUrl, 
                                                 mx.DateTime.gmt().mjd)
       if self._borg is not None:
-         taxSource = self._borg.findOrInsertTaxonSource(taxSourceName. taxSourceUrl)
+         taxSource = self._borg.findOrInsertTaxonSource(taxSourceName, 
+                                                        taxSourceUrl)
       return taxSourceId
 
 # ...............................................

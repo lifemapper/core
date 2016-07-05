@@ -51,13 +51,13 @@ def addUsers(scribe):
    """
    em = '%s@nowhere.com' % ARCHIVE_USER
    defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
-   scribe.log.info('  Inserting ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
+   scribe.log.info('  Insert ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
    usrid = scribe.insertUser(defaultUser)
 
    anonName = 'anon'
    anonEmail = '%s@nowhere.com' % anonName
    anonUser = LMUser(anonName, anonEmail, anonEmail, modTime=DT.gmt().mjd)
-   scribe.log.info('  Inserting anon {} ...'.format(anonName))
+   scribe.log.info('  Insert anon {} ...'.format(anonName))
    usrid2 = scribe.insertUser(anonUser)
 
    return [usrid, usrid2]
@@ -70,7 +70,7 @@ def addAlgorithms(scribe):
    ids = []
    for algcode, algdict in ALGORITHM_DATA.iteritems():
       alg = Algorithm(algcode, name=algdict['name'])
-      scribe.log.info('  Inserting algorithm {} ...'.format(algcode))
+      scribe.log.info('  Insert algorithm {} ...'.format(algcode))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
    return ids
@@ -83,7 +83,7 @@ def addLayerTypes(scribe, lyrtypeMeta, usr):
                                 typeinfo['description'], usr, 
                                 keywords=typeinfo['keywords'], 
                                 modTime=DT.gmt().mjd)
-      scribe.log.info('  Inserting or getting layertype {} ...'.format(ltype))
+      scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
       etypeid = scribe.getOrInsertLayerTypeCode(ltype)
       ids.append(etypeid)
    return ids
@@ -92,7 +92,7 @@ def addLayerTypes(scribe, lyrtypeMeta, usr):
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
    shp = ShapeGrid(gridname, cellsides, cellsize, mapunits, epsg, bbox, userId=usr)
    newshp = scribe.insertShapeGrid(shp)
-   scribe.log.info('Inserted, now building shapegrid {} ...'.format(gridname))
+   scribe.log.info('Inserted, build shapegrid {} ...'.format(gridname))
    newshp.buildShape()
    return newshp.getId()
    
@@ -415,7 +415,7 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
    for msg in msgs:
       scribe.log.info(msg)
    for scode, scen in scens.iteritems():
-      scribe.log.info('Inserting scenario {}'.format(scode))
+      scribe.log.info('Insert scenario {}'.format(scode))
       scribe.insertScenario(scen)
 
 # ...............................................
@@ -475,15 +475,15 @@ if __name__ == '__main__':
          logger.critical('Failed to open database')
          exit(0)
       
-      logger.info('  Inserting user {} metadata ...'.format(ARCHIVE_USER))
+      logger.info('  Insert user {} metadata ...'.format(ARCHIVE_USER))
       archiveUserId, anonUserId = addUsers(scribe)
       
       if metaType in ('algorithm', 'all'):
-         logger.info('  Inserting algorithm metadata ...')
+         logger.info('  Insert algorithm metadata ...')
          aIds = addAlgorithms(scribe)
 
       if metaType in ('climate', 'all'):
-         logger.info('  Inserting climate {} metadata ...'
+         logger.info('  Insert climate {} metadata ...'
                      .format(SCENARIO_PACKAGE))
          pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
          addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
@@ -492,7 +492,7 @@ if __name__ == '__main__':
       if metaType in ('taxonomy', 'all'):
          # Insert all taxonomic sources for now
          for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-            logger.info('  Inserting taxonomy {} metadata ...'
+            logger.info('  Insert taxonomy {} metadata ...'
                         .format(taxInfo['name']))
             taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
                                                       taxInfo['url'])      
@@ -502,3 +502,26 @@ if __name__ == '__main__':
    finally:
       scribe.closeConnections()
        
+"""
+from LmDbServer.tools.initCatalog import *
+from LmDbServer.tools.initCatalog import _getClimateMeta
+
+logger = ScriptLogger('testing')
+scribe = Scribe(logger)
+success = scribe.openConnections()
+
+pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
+
+usr = ARCHIVE_USER
+lyrtypeMeta = meta.LAYERTYPE_DATA
+scenPkgName = SCENARIO_PACKAGE
+scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
+scode = 'WC-10min'
+scen = scens[scode]
+
+newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
+scenid = newOrExistingScen.getId()
+lyr = scen.layers[0]
+for lyr in scen.layers:
+   newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
+"""

@@ -49,24 +49,16 @@ class Peruser(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, logger, dbUser=DbUser.Pipeline, overrideDB=None):
+   def __init__(self, logger, dbUser=DbUser.Pipeline):
       """
       @summary Peruser constructor
       @param logger: logger for info and error reporting 
-      @param overrideDB: optional parameter for overriding default database
-                         to connect to.  Only used when debugging data on 
-                         production or beta from development environment.  
-                         DB_HOSTNAME and CONNECTION_PORT are set in the 
-                         config.ini file (imported to lmconstants)
+      @param dbUser: optional database user for connection
       """
       LMObject.__init__(self)
       self.log = logger
       self.hostname = socket.gethostname().lower()
-      # override to connect to Production database for debugging 
-      if overrideDB is not None:
-         dbHost = overrideDB
-      else:
-         dbHost = DB_HOSTNAME
+      dbHost = DB_HOSTNAME
          
       if dbUser not in HL_NAME.keys():
          raise LMError('Unknown database user {}'.format(dbUser))

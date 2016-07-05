@@ -51,8 +51,6 @@ def assembleUrls(logger, urls):
    for key in INTERFACES:
       BASEURLS[key] = None
    peruser = Scribe(logger)
-# #    # debug
-#    peruser = Scribe(ConsoleLogger(), overrideDB='hera.nhm.ku.edu')
    peruser.openConnections()
       
    # experiment

@@ -85,13 +85,11 @@ class Algorithm(object):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, code, parameters={}, algorithmId=None, name=None):
+   def __init__(self, code, parameters={}, name=None):
       """
       @summary Constructor for the algorithm class.  Algorithm should be 
                initialized from the database upon construction.
       @param code: The algorithm code for openModeller
-      @param algorithmId: (optional) The algorithm id; used as the primary
-                           id for the ServiceObject
       @param parameters: Dictionary of Algorithm parameters
       @param name: (optional) The full algorithm name
       """

@@ -27,7 +27,7 @@
 import mx.DateTime 
 from LmServer.base.lmobj import LMObject
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import ID_PLACEHOLDER, RAD_MODULE
+from LmServer.common.lmconstants import ID_PLACEHOLDER
 
 # .............................................................................
 class ServiceObject(LMObject):
@@ -65,8 +65,8 @@ class ServiceObject(LMObject):
       self.serviceType = serviceType
       if serviceType is None:
          raise Exception('Object %s does not have serviceType' % str(type(self)))
-      if moduleType is None:
-         raise Exception('Object %s does not have moduleType' % str(type(self)))
+#       if moduleType is None:
+#          raise Exception('Object %s does not have moduleType' % str(type(self)))
       self.moduleType = moduleType
       
       
