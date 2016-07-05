@@ -452,7 +452,6 @@ class Borg(DbPostgresql):
       lyr.modTime = mx.DateTime.utc().mjd
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
-      self.log.debug('Borg LayerTypeId = {}'.format(lyr.getParametersId()))
       row, idxs = self.executeInsertAndSelectOneFunction(
                            'lm_findOrInsertEnvLayer', lyr.verify, lyr.squid,
                            lyr.getUserId(), lyr.name,
