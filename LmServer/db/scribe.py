@@ -548,7 +548,7 @@ class Scribe(Peruser):
          if lyr.isValidDataset():
             updatedLyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
             if self._borg is not None:
-               # clear out the param id from MAL
+               # clear out the param id from MAL, remove after switch
                lyr.setParametersId(None)
                updatedLyr2 = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
          else:

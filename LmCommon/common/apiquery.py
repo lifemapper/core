@@ -741,8 +741,8 @@ def testIdigbioTaxonIds(infname):
 # .............................................................................
 # .............................................................................
 if __name__ == '__main__':
-   bison = gbif = False
-   idigbio = True
+   idigbio = gbif = False
+   bison = True
    
    if bison:
       # ******************* BISON ********************************
@@ -760,7 +760,6 @@ if __name__ == '__main__':
    #    print len(tsnList)
           
       tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
-      tsnList = []
       response = {u'facet_counts': 
                   {u'facet_ranges': {}, 
                    u'facet_fields': {u'TSNs': tsnList}

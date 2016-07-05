@@ -31,14 +31,15 @@ import json
 import os
 from osgeo import ogr, osr
 import StringIO
-from types import ListType, TupleType, UnicodeType
+from types import ListType, TupleType, UnicodeType, StringType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
-      GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_FIELD, GBIF_OCCURRENCE_URL, 
+      GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_PREFIX, BISON_LINK_PREFIX,
       IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD, IDIGBIO_LINK_PREFIX,
-      IDIGBIO_LINK_FIELD, LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
-      SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+      LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
+      SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT,
+      GBIF_PROVIDER_FIELD, PROVIDER_NAME_FIELD, LINK_FIELD)
 from LmCompute.common.lmObj import LmException
 from LmCommon.common.unicode import fromUnicode, toUnicode
 
@@ -68,6 +69,7 @@ class ShapeShifter(object):
       self.rawdata = rawdata
       self.linkField = None
       self.linkUrl = None
+      self.computedProviderField = None
       self.op = None
       
       # All raw Occdata must contain ShortDWCNames.DECIMAL_LATITUDE and 
@@ -87,8 +89,11 @@ class ShapeShifter(object):
       elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          self.dataFields = GBIF_EXPORT_FIELDS
          self.idField = GBIF_ID_FIELD
-         self.linkField = GBIF_LINK_FIELD
-         self.linkUrl = GBIF_OCCURRENCE_URL
+         self.linkField = LINK_FIELD
+         self.linkUrl = GBIF_LINK_PREFIX
+         self.linkIdField = GBIF_ID_FIELD
+         self.providerKeyField = GBIF_PROVIDER_FIELD
+         self.computedProviderField = PROVIDER_NAME_FIELD
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
          self._reader = self._getCSVReader()
@@ -97,15 +102,20 @@ class ShapeShifter(object):
          self.dataFields = IDIGBIO_RETURN_FIELDS
          self.lookupFields = self._mapAPIResponseNames()
          self.idField = IDIGBIO_ID_FIELD
-         self.linkField = IDIGBIO_LINK_FIELD
+         self.linkField = LINK_FIELD
          self.linkUrl = IDIGBIO_LINK_PREFIX
+         self.linkIdField = IDIGBIO_ID_FIELD
+         self.computedProviderField = PROVIDER_NAME_FIELD
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
          self.lookupFields = self._mapAPIResponseNames()
-         self.idField = LM_ID_FIELD
+         self.linkField = LINK_FIELD
+         self.linkUrl = BISON_LINK_PREFIX
+         self.linkIdField = DWCNames.OCCURRENCE_ID['SHORT']
+         self.idField = LM_ID_FIELD  
          self.xField = self._lookupReverse(DWCNames.DECIMAL_LONGITUDE['SHORT'])
          self.yField = self._lookupReverse(DWCNames.DECIMAL_LATITUDE['SHORT'])
          
@@ -591,7 +601,16 @@ class ShapeShifter(object):
          if returnVal != 0:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                               'Failed to create field {}'.format(self.linkField))
-         
+            
+      # Add Provider field to GBIF/iDigBio data (for resolution from key or attribution)
+      if self.computedProviderField is not None:
+         fldDef = ogr.FieldDefn(self.computedProviderField, ogr.OFTString)
+         fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+         returnVal = newLyr.CreateField(fldDef)
+         if returnVal != 0:
+            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                              'Failed to create field {}'
+                              .format(self.computedProviderField))
       # Add id field to BISON data
       if self.processType == ProcessType.BISON_TAXA_OCCURRENCE:
          fldDef = ogr.FieldDefn(LM_ID_FIELD, ogr.OFTString)
@@ -624,9 +643,25 @@ class ShapeShifter(object):
 
          # Set linked Url field
          if self.linkField is not None:
-            pturl = '%s/%s' % (self.linkUrl, str(ptid))
-            feat.SetField(self.linkField, pturl)
+            try:
+               searchid = recDict[self.linkIdField]
+            except:
+               pass
+            else:
+               pturl = '{}{}'.format(self.linkUrl, str(searchid))
+               feat.SetField(self.linkField, pturl)
                      
+         # Set linked Url field
+         if self.computedProviderField is not None:
+            prov = ''
+            try:
+               prov = recDict[self.providerKeyField]
+            except:
+               pass
+            if not (isinstance(prov, StringType) or isinstance(prov, UnicodeType)):
+               prov = ''
+            feat.SetField(self.computedProviderField, prov)
+
          # Add values out of the line of data
          for name in recDict.keys():
             # Handles reverse lookup for BISON metadata
@@ -645,8 +680,8 @@ class ShapeShifter(object):
 # ...............................................
 if __name__ == '__main__':
    from LmCommon.common.apiquery import IdigbioAPI
-   outfilename = '/tmp/testidigpoints.shp'
-   subsetOutfilename = '/tmp/testidigpoints_sub.shp'
+   outfilename = '/tmp/testpoints.shp'
+   subsetOutfilename = '/tmp/testpoints_sub.shp'
    taxid = 2437967
    
    if os.path.exists(outfilename):
@@ -656,15 +691,25 @@ if __name__ == '__main__':
       for fname in fnames:
          print('Removing {}'.format(fname))
          os.remove(fname)
+         
+   testFname = '../tests/data/gbif_chunk.csv'      
+   f = open(testFname, 'r')
+   datachunk = f.read()
+   f.close()
 
-   occAPI = IdigbioAPI()
-   occList = occAPI.queryByGBIFTaxonId(taxid)
-   
-   count = len(occList)
-   
-   shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
-   shaper.writeOccurrences(outfilename, maxPoints=40, 
+   count = len(datachunk.split('\n'))
+   shaper = ShapeShifter(ProcessType.GBIF_TAXA_OCCURRENCE, datachunk, count)
+   shaper.writeOccurrences(outfilename, maxPoints=20, 
                            subsetfname=subsetOutfilename)
+
+#    occAPI = IdigbioAPI()
+#    occList = occAPI.queryByGBIFTaxonId(taxid)
+#    
+#    count = len(occList)
+#    
+#    shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
+#    shaper.writeOccurrences(outfilename, maxPoints=40, 
+#                            subsetfname=subsetOutfilename)
    
 """
 from LmCommon.common.createshape import ShapeShifter

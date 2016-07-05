@@ -688,9 +688,19 @@ class DWCNames:
    COUNTRY_CODE = {'FULL': 'countryCode', 'SHORT': 'ctrycode'}
    STATE_PROVINCE = {'FULL': 'stateprovince', 'SHORT': 'stprov'}
 
+
 # Bison
 BISON_COUNT_KEYS = ['response', 'numFound']
   
+PROVIDER_NAME_FIELD = 'provider'
+LINK_FIELD = 'point_url'
+# REQUIRED_AGGREGATOR_FIELDS = [DWCNames.CATALOG_NUMBER['SHORT'],
+#                               DWCNames.COLLECTION_CODE['SHORT'],
+#                               DWCNames.INSTITUTION_CODE['SHORT'],
+#                               PROVIDER_NAME_FIELD,
+#                               DWCNames.DECIMAL_LATITUDE['SHORT'],
+#                               DWCNames.DECIMAL_LONGITUDE['SHORT'],
+#                               LINK_FIELD]
 # ......................................................
 GBIF_TAXONKEY_FIELD = 'specieskey'
 GBIF_TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
@@ -789,7 +799,8 @@ GBIF_RESPONSE_NOMATCH_VALUE = 'NONE'
 # DWC translations in lmCompute/code/sdm/gbif/constants
 # We are adding the 2 fields: LM_WKT_FIELD and GBIF_LINK_FIELD
 GBIF_LINK_FIELD = 'gbifurl'
-GBIF_OCCURRENCE_URL = 'http://www.gbif.org/occurrence'
+# Ends in / to allow appending unique id
+GBIF_LINK_PREFIX = 'http://www.gbif.org/occurrence/'
 
 # .............................................................................
 # .                               BISON/ITIS constants                              .
@@ -798,6 +809,8 @@ GBIF_OCCURRENCE_URL = 'http://www.gbif.org/occurrence'
 # For parsing BISON Solr API response, updated Feb 2015
 # ......................................................
 BISON_OCCURRENCE_URL = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select'
+# Ends in : to allow appending unique id
+BISON_LINK_PREFIX = 'http://bisonapi.usgs.ornl.gov/solr/occurrences/select/?q=occurrenceID:'
 # For TSN query filtering on Binomial
 BISON_NAME_KEY = 'ITISscientificName'
 # For Occurrence query by TSN in hierarchy
@@ -837,11 +850,10 @@ BISON_RESPONSE_FIELDS = {
                         DWCNames.OCCURRENCE_ID['FULL']: 
                            (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
                         'ownerInstitutionCollectionCode': 
-                           (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
+                        (PROVIDER_NAME_FIELD, OFTString),
                         'pointPath': None,
                         'providedCounty': None,
                         'providedScientificName': None,
-                        'provider': ('provider', OFTString),
                         'providerID': None,
                         DWCNames.RECORDED_BY['FULL']: 
                            (DWCNames.RECORDED_BY['SHORT'], OFTString),
@@ -901,7 +913,8 @@ ITIS_SPECIES_KEY = 'Species'
 # .............................................................................
 # .                           iDigBio constants                               .
 # .............................................................................
-IDIGBIO_LINK_PREFIX = 'https://www.idigbio.org/portal/records'
+# Ends in / to allow appending unique id
+IDIGBIO_LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
 IDIGBIO_SEARCH_PREFIX = 'https://beta-search.idigbio.org/v2'
 IDIGBIO_SEARCH_POSTFIX ='search'
 IDIGBIO_OCCURRENCE_POSTFIX = 'records'
@@ -917,7 +930,7 @@ IDIGBIO_EXPORT_FIELDS = {0: (IDIGBIO_ID_FIELD, OFTString),
                          1: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
                          2: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
                          3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                         4: ('provider', OFTString)
+                         4: (PROVIDER_NAME_FIELD, OFTString)
                          }
 IDIGBIO_GBIFID_FIELD = 'taxonid'
 # Geopoint.lat and Geopoint.lon are modified on return to short names
