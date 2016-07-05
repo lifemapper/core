@@ -679,10 +679,10 @@ class ShapeShifter(object):
       
 # ...............................................
 if __name__ == '__main__':
-   from LmCommon.common.apiquery import IdigbioAPI
+   from LmCommon.common.apiquery import IdigbioAPI, BisonAPI
+   gbif = idigbio = bison = False
    outfilename = '/tmp/testpoints.shp'
    subsetOutfilename = '/tmp/testpoints_sub.shp'
-   taxid = 2437967
    
    if os.path.exists(outfilename):
       import glob
@@ -691,26 +691,33 @@ if __name__ == '__main__':
       for fname in fnames:
          print('Removing {}'.format(fname))
          os.remove(fname)
-         
-   testFname = '../tests/data/gbif_chunk.csv'      
-   f = open(testFname, 'r')
-   datachunk = f.read()
-   f.close()
-
-   count = len(datachunk.split('\n'))
-   shaper = ShapeShifter(ProcessType.GBIF_TAXA_OCCURRENCE, datachunk, count)
-   shaper.writeOccurrences(outfilename, maxPoints=20, 
-                           subsetfname=subsetOutfilename)
-
-#    occAPI = IdigbioAPI()
-#    occList = occAPI.queryByGBIFTaxonId(taxid)
-#    
-#    count = len(occList)
-#    
-#    shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
-#    shaper.writeOccurrences(outfilename, maxPoints=40, 
-#                            subsetfname=subsetOutfilename)
+   if gbif:
+      testFname = '/opt/lifemapper/LmCommon/tests/data/gbif_chunk.csv'      
+      f = open(testFname, 'r')
+      datachunk = f.read()
+      f.close()
    
+      count = len(datachunk.split('\n'))
+      shaper = ShapeShifter(ProcessType.GBIF_TAXA_OCCURRENCE, datachunk, count)
+      shaper.writeOccurrences(outfilename, maxPoints=20, 
+                              subsetfname=subsetOutfilename)
+
+   if idigbio:
+      taxid = 2437967
+      occAPI = IdigbioAPI()
+      occList = occAPI.queryByGBIFTaxonId(taxid)
+       
+      count = len(occList)
+       
+      shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
+      shaper.writeOccurrences(outfilename, maxPoints=40, 
+                              subsetfname=subsetOutfilename)
+      
+   if bison:
+      url = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select?q=decimalLongitude%3A%5B-125+TO+-66%5D+AND+decimalLatitude%3A%5B24+TO+50%5D+AND+hierarchy_homonym_string%3A%2A-103383-%2A+NOT+basisOfRecord%3Aliving+NOT+basisOfRecord%3Afossil'
+      occAPI = BisonAPI.initFromUrl(url)
+      occList = occAPI.getTSNOccurrences()
+      shaper = ShapeShifter(ProcessType.BISON_TAXA_OCCURRENCE, occList, len(occList))
 """
 from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.apiquery import IdigbioAPI

@@ -741,23 +741,22 @@ def testIdigbioTaxonIds(infname):
 # .............................................................................
 # .............................................................................
 if __name__ == '__main__':
-   idigbio = gbif = False
+   idigbio = gbif = bison = False
    bison = True
    
    if bison:
       # ******************* BISON ********************************
-      tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
-                          otherFilters=BISON_TSN_FILTERS)
-    
-      qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
-                  'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
-                  'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
-      otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
-                  'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
-      headers = {'Content-Type': 'application/json'}
-    
-   #    tsnList = tsnQuery.getBinomialTSNs()
-   #    print len(tsnList)
+#       tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
+#                           otherFilters=BISON_TSN_FILTERS)
+#     
+#       qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
+#                   'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
+#                   'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
+#       otherfilters = {'facet.mincount': 20, 'rows': 0, 'facet.field': 'TSNs', 
+#                   'facet': True, 'facet.limit': -1, 'wt': 'json', 'json.nl': 'arrarr'}
+#       headers = {'Content-Type': 'application/json'}
+#       tsnList = tsnQuery.getBinomialTSNs()
+#       print len(tsnList)
           
       tsnList = [[u'100637', 31], [u'100667', 45], [u'100674', 24]]
       response = {u'facet_counts': 
@@ -776,11 +775,16 @@ if __name__ == '__main__':
         
          newQ = {BISON_HIERARCHY_KEY: '*-{}-*'.format(tsn)}
          occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
-         print occAPI.url
+         thisurl = occAPI.url
          occList = occAPI.getTSNOccurrences()
          count = None if not occList else len(occList)
          print 'Received {} occurrences for TSN {}'.format(count, tsn)
-              
+
+         occAPI2 = BisonAPI.initFromUrl(thisurl)
+         occList2 = occAPI2.getTSNOccurrences()
+         count = None if not occList else len(occList)
+         print 'Received {} occurrences from url init'.format(count)
+         
          tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
                            otherFilters={'rows': 1})
          hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
@@ -798,32 +802,14 @@ if __name__ == '__main__':
       idigList =  testIdigbioTaxonIds(infname)
 
       # ******************* iDigBio ********************************
-      # Workflow: (a) retrieve all scientific names with Accepted GBIF TaxonId 
-      # in iDigBio, (b) keep only binomials, (c) for each binomial create a list  
-      # of other names to be included (usually subspecies and names with  
-      # authors), and (d) retrieve occurrences for each species.
-
       # Test GBIF TaxonIds from iDigBio list
-      # Input/Subset
       for currGbifTaxonId, currReportedCount, currName in idigList:
-         # direct query
-#          api = IdigbioAPI()
-#          occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
-#          url1 = api.url
          print currGbifTaxonId
+         # direct query
+         api = IdigbioAPI()
+         occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
+         url1 = api.url
          
-#          print("Retrieved {} records for gbif taxonid {}"
-#                .format(len(occList1), currGbifTaxonId))
-#          print("URL1 {} \nURL2 {}".format(url1, url2))
-  
-# baseurl = 'https://beta-search.idigbio.org/v2/search/records'
-# idigParams = {
-#             'fields': ['taxonid', 'kingdom', 'scientificname', 'uuid', 
-#                        'basisofrecord', 'canonicalname', 'geopoint'], 
-#              'no_attribution': True, 
-#              'limit': 10, 
-# #              'rq': {'taxonid': '4639168'}, 
-#             'rq': {'canonicalname': 'peromyscus maniculatus'}, 
-#             'rq': {'scientificname': 'peromyscus maniculatus'}, 
-#              'offset': 0}
-# headers = {'Content-Type': 'application/json'}
+         print("Retrieved {} records for gbif taxonid {}"
+               .format(len(occList1), currGbifTaxonId))
+
