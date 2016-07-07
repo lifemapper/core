@@ -657,7 +657,7 @@ def getLatLonForPoint(pt):
    wkt = None
    for att in OccurrenceFieldNames.GEOMETRY_WKT:
       try:
-         wkt = pt.__getattribute__(att)
+         wkt = pt._attrib[att]
          break
       except:
          pass
@@ -670,7 +670,7 @@ def getLatLonForPoint(pt):
       lat = None
       for att in OccurrenceFieldNames.LATITUDE:
          try:
-            lat = pt.__getattribute__(att)
+            lat = pt._attrib[att]
             break
          except:
             pass
@@ -678,7 +678,7 @@ def getLatLonForPoint(pt):
       lon = None
       for att in OccurrenceFieldNames.LONGITUDE:
          try:
-            lon = pt.__getattribute__(att)
+            lon = pt._attrib[att]
             break
          except:
             pass
