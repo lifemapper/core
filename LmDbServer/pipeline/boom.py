@@ -191,6 +191,37 @@ class _LMBoomer(LMObject):
       return linenum
                   
 # ...............................................
+   def _getNextLine(self, infile, csvreader=None):
+      success = False
+      line = None
+      while not infile.closed and not success:
+         try:
+            if csvreader is not None:
+               line = csvreader.next()
+            else:
+               line = infile.next()
+         except StopIteration, e:
+            self.log.debug('Finished file {} on line {}'
+                           .format(infile.name, self._linenum))
+            infile.close()
+            self._linenum = -9999
+            success = True
+         except OverflowError, e:
+            self._linenum += 1
+            self.log.debug( 'OverflowError on {} ({}), moving on'
+                            .format(self._linenum, e))
+         except Exception, e:
+            self._linenum += 1
+            self.log.debug('Exception reading line {} ({}), moving on'
+                           .format(self._linenum, e))
+         else:
+            self._linenum += 1
+            success = True
+            if line == '':
+               line = None
+      return line
+
+# ...............................................
    def saveNextStart(self):
       if self.nextStart is not None:
          try:
@@ -579,22 +610,16 @@ class BisonBoom(_LMBoomer):
       
 # ...............................................
    def _getTsnRec(self):
-      success = False
       tsn = tsnCount = None
-      while not self._tsnfile.closed and not success:
-         line = self._tsnfile.readline()
-         if line == '':
-            self._tsnfile.close()
-         else:
-            try:               
-               first, second = line.split(',')
-               # Returns TSN, TSNCount
-               tsn, tsnCount = (int(first), int(second))
-               self._linenum += 1
-               success = True
-            except Exception, e:
-               self.log.debug('Exception reading line {} ({})'
-                              .format(self._linenum, e))
+      line = self._getNextLine(self._tsnfile)
+      if line is not None:
+         try:               
+            first, second = line.split(',')
+            # Returns TSN, TSNCount
+            tsn, tsnCount = (int(first), int(second))
+         except Exception, e:
+            self.log.debug('Exception reading line {} ({})'
+                           .format(self._linenum, e))
       return tsn, tsnCount
 
 # ...............................................
@@ -933,33 +958,12 @@ class GBIFBoom(_LMBoomer):
          
 # ...............................................
    def _getCSVRecord(self, parse=True):
-      success = False
-      line = specieskey = None
-      while not self._dumpfile.closed and not success:
-         try:
-            line = self._csvreader.next()
-            self._linenum += 1
-            success = True
-            
-         except StopIteration, e:
-            self.log.debug('Finished file {} on line {}'
-                           .format(self._dumpfile.name, self._linenum))
-            self._dumpfile.close()
-            success = True
-            
-         except OverflowError, e:
-            self.log.debug( 'OverflowError on {} ({}), moving on'
-                            .format(self._linenum, e))
-            self._linenum += 1
-            
-         except Exception, e:
-            self.log.debug('Exception reading line {} ({}), moving on'
-                           .format(self._linenum, e))
-            self._linenum += 1
+      specieskey = None
+      line = self._getNextLine(self._dumpfile, csvreader=self._csvreader)
          
-         if line and parse:
-            # Post-parse, line is a dictionary
-            line, specieskey = self._parseCSVRecord(line)
+      if line and parse:
+         # Post-parse, line is a dictionary
+         line, specieskey = self._parseCSVRecord(line)
       return line, specieskey
 
 # ...............................................
@@ -1087,30 +1091,10 @@ class iDigBioBoom(_LMBoomer):
 # ...............................................
    def _getCurrTaxon(self):
       """
-      @summary: Returns currBinomial, currGbifTaxonId, currReportedCount 
+      @summary: Returns currGbifTaxonId, currReportedCount, currBinomial 
       """
-      currGbifTaxonId = None
-      currReportedCount = None
-      currName = None
-      success = False
-      while not success:
-         try:
-            line = self._idigFile.readline()
-         except Exception, e:
-            self._linenum += 1
-            if isinstance(e, OverflowError):
-               self.log.debug( 'OverflowError on {} ({}), moving on'.format(
-                                                self._linenum, e))
-            else:
-               self.log.debug('Exception reading line {} ({})'.format(
-                                                self._linenum, e))
-               success = True
-         else:
-            self._linenum += 1
-            success = True
-            if line == '':
-               line = None
-               self._linenum = -9999
+      currGbifTaxonId = currReportedCount = currName = None
+      line = self._getNextLine(self._idigFile)
          
       if line is not None:
          tempvals = line.strip().split()
