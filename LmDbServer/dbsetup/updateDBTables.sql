@@ -25,7 +25,6 @@ alter table lm3.ScientificName add column rank varchar(20);
 alter table lm3.ScientificName add column canonical text;
 
 alter table lm3.ComputeResource rename column ipmask TO ipsigbits;
-
 -- -------------------------------
 -- 5-20-2016
 -- -------------------------------
@@ -60,5 +59,3 @@ CREATE INDEX idx_lyrSquid on lm3.Layer(squid);
 -- ----------------------------------------------------------------------------
 \c borg
 -- -------------------------------
-
-alter table lm_v3.ComputeResource rename column ipmask TO ipsigbits;
