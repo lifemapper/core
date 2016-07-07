@@ -462,13 +462,20 @@ lm_v3.layertype, lm_v3.layertype_layertypeid_seq,
 lm_v3.layertypekeyword, 
 lm_v3.layer, lm_v3.layer_layerid_seq, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
-lm_v3.scenariokeywords, 
 lm_v3.scenariolayers,
-lm_v3.algorithm, 
+lm_v3.scenariokeywords, 
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
+lm_v3.algorithm, 
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
 lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
-lm_v3.boom, lm_v3.boom_boomid_seq
+lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
+lm_v3.ancillaryvalue, lm_v3.ancillaryvalue_ancillaryvalueid_seq,
+lm_v3.presenceabsence, lm_v3.presenceabsence_presenceabsenceid_seq,
+lm_v3.boom, lm_v3.boom_boomid_seq,
+lm_v3.pam, lm_v3.pam_pamid_seq,
+lm_v3.grim, lm_v3.grim_grimid_seq,
+lm_v3.boompalayer, lm_v3.boompalayer_boompalayerid_seq,
+lm_v3.boomanclayer, lm_v3.boomanclayer_boomanclayerid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
@@ -482,13 +489,20 @@ lm_v3.layertype,
 lm_v3.layertypekeyword, 
 lm_v3.layer, 
 lm_v3.scenario,
-lm_v3.scenariokeywords, 
 lm_v3.scenariolayers,
-lm_v3.algorithm, 
+lm_v3.scenariokeywords, 
 lm_v3.occurrenceset, 
+lm_v3.algorithm, 
 lm_v3.sdmmodel,  
 lm_v3.sdmprojection,
-lm_v3.boom
+lm_v3.shapegrid,
+lm_v3.ancillaryvalue,
+lm_v3.presenceabsence,
+lm_v3.boom,
+lm_v3.pam,
+lm_v3.grim,
+lm_v3.boompalayer,
+lm_v3.boomanclayer
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
@@ -503,7 +517,14 @@ lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,
 lm_v3.sdmprojection_sdmprojectionid_seq,
-lm_v3.boom_boomid_seq
+lm_v3.shapegrid_shapegridid_seq,
+lm_v3.ancillaryvalue_ancillaryvalueid_seq,
+lm_v3.presenceabsence_presenceabsenceid_seq,
+lm_v3.boom_boomid_seq,
+lm_v3.pam_pamid_seq,
+lm_v3.grim_grimid_seq,
+lm_v3.boompalayer_boompalayerid_seq,
+lm_v3.boomanclayer_boomanclayerid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------

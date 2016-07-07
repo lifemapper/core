@@ -111,4 +111,4 @@ class Troubleshooter(object):
 if __name__ == '__main__':
    cmdList = ['limbo', 'error']
    app = Troubleshooter(cmdList)
-   app.run()
+   app.run(cmdList)
