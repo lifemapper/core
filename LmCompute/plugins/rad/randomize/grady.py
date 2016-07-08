@@ -150,7 +150,7 @@ def gradyRandomize(mtx):
    while unfilledRows:
       possibleCols = []
       r = choice(unfilledRows)
-      possibleCols = np.where(mtx1[r,:] == 0)[0].tolist()
+      possibleCols = list(set(np.where(mtx1[r,:] == 0)[0].tolist()).intersection(set(unfilledCols)))
       
       if len(possibleCols) == 0:
          unfilledRows.remove(r)
