@@ -137,8 +137,8 @@ if __name__ == "__main__":
      
    secs = time.time()
    tuple = time.localtime(secs)
-   timestamp = ".{}".format(time.strftime("%Y%m%d-%H%M", tuple))
-   logger = ScriptLogger('archivist_{}'.format(timestamp))
+   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
+   logger = ScriptLogger('archivist.{}'.format(timestamp))
    idig = Archivist(BOOM_PID_FILE, log=logger)
      
    if len(sys.argv) == 2:
