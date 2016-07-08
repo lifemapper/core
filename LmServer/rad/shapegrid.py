@@ -303,7 +303,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 #       self._setBBox(minx, miny, maxx, maxy)
       
 # ...................................................
-   def buildShape(self, cutout=None, overwrite=True):
+   def buildShape(self, cutout=None, overwrite=False):
       """
       @summary: method to build the shapefile for the shapegrid object.
       Calculates the topology for each cell, square or hexagonal.
