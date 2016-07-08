@@ -135,7 +135,10 @@ if __name__ == "__main__":
       print("Run this script as `lmwriter`")
       sys.exit(2)
      
-   logger = ScriptLogger('archivist_{}'.format(pid))
+   secs = time.time()
+   tuple = time.localtime(secs)
+   timestamp = ".{}".format(time.strftime("%Y%m%d-%H%M", tuple))
+   logger = ScriptLogger('archivist_{}'.format(timestamp))
    idig = Archivist(BOOM_PID_FILE, log=logger)
      
    if len(sys.argv) == 2:
