@@ -29,6 +29,7 @@ ___________
 
    #. Delete or rename components 
    #. Add sym links to components in workspace code: Lm*, config
+   #. Replace installation variables in *.in files
    #. Follow instructions for updating LmServer installations:
       https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/Updating.rst
    #. Follow instructions for updating LmCompute installations:
