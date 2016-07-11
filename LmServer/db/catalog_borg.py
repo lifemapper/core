@@ -532,3 +532,15 @@ class Borg(DbPostgresql):
       usr = self._createUser(row, idxs)
       return usr
 
+# .............................................................................
+   def countJobchains(self, status, userId=None):      
+      """
+      @summary: Return the number of jobchains fitting the given filter conditions
+      @param status: include only jobs with this status
+      @param userId: (optional) include only jobs with this userid
+      @return: number of jobs fitting the given filter conditions
+      """
+      row, idxs = self.executeSelectOneFunction('lm_countJobChains', 
+                                                userId, status)
+      return self._getCount(row)
+

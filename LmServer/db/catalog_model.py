@@ -2373,6 +2373,18 @@ class MAL(DbPostgresql):
       return self._getCount(row)
 
 # .............................................................................
+   def countJobchains(self, status, userId=None):      
+      """
+      @summary: Return the number of jobchains fitting the given filter conditions
+      @param status: include only jobs with this status
+      @param userId: (optional) include only jobs with this userid
+      @return: number of jobs fitting the given filter conditions
+      """
+      row, idxs = self.executeSelectOneFunction('lm_countJobChains', 
+                                                userId, status)
+      return self._getCount(row)
+
+# .............................................................................
    def countLayers(self, userId, typecode, beforeTime, afterTime, epsg, 
                    isCategorical, scenarioId):
       """

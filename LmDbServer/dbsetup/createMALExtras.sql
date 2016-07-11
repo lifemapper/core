@@ -5572,6 +5572,27 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_countJobChains(usrid varchar(20), 
+    	                                           stat int)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   IF usrid IS null THEN
+      SELECT count(*) INTO num FROM lm3.jobchain WHERE status = stat;
+   ELSE
+      SELECT count(*) INTO num FROM lm3.jobchain WHERE status = stat 
+                                                   AND userid = usr;
+   END IF;
+
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
 -- TODO: Change to also use reqsoftware (LmCommon.common.lmconstants.ProcessType) 
 CREATE OR REPLACE FUNCTION lm3.lm_countOccJobs(usrid varchar(20), 
     	                                         stat int)

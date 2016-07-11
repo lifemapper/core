@@ -1053,6 +1053,23 @@ class Peruser(LMObject):
       return total
 
 # ...............................................
+   def countJobchains(self, status, userIdLst=[None]):
+      """
+      @summary: Return a count of model and projection jobs at given status.
+      @param procTypeLst: list of desired LmCommon.common.lmconstants.ProcessType 
+      @param status: list of desired LmCommon.common.lmconstants.JobStatus
+      @param userIdLst: list of desired userIds
+      """
+      total = 0
+      btotal = 0
+      if not userIdLst:
+         userIdLst = [None]
+      for usr in userIdLst:
+         total += self._mal.countJobs(status, usr)
+         btotal += self._borg.countJobs(status, usr)
+      return total
+
+# ...............................................
    def _getPreviousTime(self, day, hour, minute):
       if day == 0 and hour == 0 and minute == 0:
          return None
