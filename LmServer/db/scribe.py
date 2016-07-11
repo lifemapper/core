@@ -90,8 +90,6 @@ class Scribe(Peruser):
       @param alg: The algorithm to add
       """
       algid = self._mal.insertAlgorithm(alg)
-      if self._borg is not None:
-         algo = self._borg.findOrInsertAlgorithm(alg)
       return algid
 
 # ...............................................
@@ -535,7 +533,6 @@ class Scribe(Peruser):
          raise LMError(currargs='Wrong object type', lineno=self.getLineno())
       return updatedlyr
    
-
 # ...............................................
    def updateLayer(self, lyr):
       success = self._rad.updateLayer(lyr)
@@ -547,10 +544,6 @@ class Scribe(Peruser):
       if isinstance(lyr, EnvironmentalLayer):
          if lyr.isValidDataset():
             updatedLyr = self._mal.insertEnvLayer(lyr, scenarioId=scenarioid)
-            if self._borg is not None:
-               # clear out the param id from MAL, remove after switch
-               lyr.setParametersId(None)
-               updatedLyr2 = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
          else:
             raise LMError(currargs='Invalid environmental layer: {}'
                                     .format(lyr.getDLocation()), 
@@ -561,9 +554,6 @@ class Scribe(Peruser):
    def getOrInsertLayerTypeCode(self, envType):
       etypeid = None
       if isinstance(envType, EnvironmentalType):
-         if self._borg is not None:
-            newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
-         
          existingET = self._mal.getEnvironmentalType(envType.typeCode, 
                                           envType.getParametersUserId())
          if existingET is not None:
@@ -1380,8 +1370,6 @@ class Scribe(Peruser):
    def insertScenario(self, scen):
       lyrIds = []
       scenId = self._mal.insertScenario(scen)
-      if self._borg is not None:
-         updatedScen = self._borg.findOrInsertScenario(scen)
       for lyr in scen.layers:
          updatedLyr = self.insertScenarioLayer(lyr, scenId)
          lyrIds.append(updatedLyr.getId())
@@ -1420,10 +1408,6 @@ class Scribe(Peruser):
       @param usr: LMComputeResource object to insert
       @return: True on success, False on failure (i.e. IPAddress is not unique)
       """
-      if self._borg is not None:
-         borgUser = self._borg.findOrInsertUser(crContact)
-         borgCR = self._borg.findOrInsertComputeResource(compResource)
-
       existingCR = self._mal.getComputeResourceByIP(compResource.ipAddress,
                                        ipSigBits=compResource.ipSignificantBits)
       if existingCR is None:
@@ -1445,14 +1429,7 @@ class Scribe(Peruser):
       if existingUser is not None:
          uid = existingUser.userid
       else:
-         uid = self._mal.insertUser(usr)
-         
-      if self._borg is not None:
-         buid = None
-         borgUser = self._borg.findOrInsertUser(usr)
-         if borgUser is not None:
-            buid = borgUser.userid
-         
+         uid = self._mal.insertUser(usr)         
       return uid
 
 # ...............................................
@@ -1483,9 +1460,6 @@ class Scribe(Peruser):
    def insertTaxonomySource(self, taxSourceName, taxSourceUrl):
       taxSourceId = self._mal.insertTaxonSource(taxSourceName, taxSourceUrl, 
                                                 mx.DateTime.gmt().mjd)
-      if self._borg is not None:
-         taxSource = self._borg.findOrInsertTaxonSource(taxSourceName, 
-                                                        taxSourceUrl)
       return taxSourceId
 
 # ...............................................
@@ -1704,19 +1678,14 @@ class Scribe(Peruser):
 # ShapeGrid
 # ...............................................
    def insertShapeGrid(self, shpgrd, cutout=None):
-      if self._borg is not None:
-         updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
-      
       if shpgrd.getParametersId() is not None:
          existSG = self.getShapeGrid(shpgrd.getUserId(),shpid=shpgrd.getId())
       elif shpgrd.name is not None:
          existSG = self.getShapeGrid(shpgrd.getUserId(),shpname=shpgrd.name)
-
       if existSG is not None:
          self.log.warning('Using existing ShapeGrid {} for user {}'
                           .format(shpgrd.name, shpgrd.getUserId()))
          return existSG
-         
       else:
          newshpgrd = self._rad.insertShapeGrid(shpgrd, cutout)
          return newshpgrd

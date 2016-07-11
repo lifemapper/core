@@ -38,6 +38,7 @@ from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH, DATASOURCE
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
 from LmServer.sdm.scenario import Scenario
@@ -83,8 +84,11 @@ def addLayerTypes(scribe, lyrtypeMeta, usr):
                                 keywords=typeinfo['keywords'], 
                                 modTime=DT.gmt().mjd)
       scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
-      etypeid = scribe.getOrInsertLayerTypeCode(ltype)
-      ids.append(etypeid)
+      if isinstance(scribe, BorgScribe):
+         etype = scribe.insertLayerTypeCode(ltype)
+      else:
+         etypeid = scribe.getOrInsertLayerTypeCode(ltype)
+         ids.append(etypeid)
    return ids
 
 # ...............................................
@@ -467,12 +471,11 @@ if __name__ == '__main__':
    basename, ext = os.path.splitext(basefilename)
    try:
       logger = ScriptLogger(basename)
-      scribeNoBorg = Scribe(logger)
-      scribeNoBorg._borg = None
-      success = scribeNoBorg.openConnections()
+      scribe = Scribe(logger)
+      success = scribe.openConnections()
 
       logger = ScriptLogger(basename+'_borg')
-      scribeWithBorg = Scribe(logger)
+      scribeWithBorg = BorgScribe(logger)
       success = scribeWithBorg.openConnections()
 
       if not success: 
@@ -480,19 +483,19 @@ if __name__ == '__main__':
          exit(0)
       
       logger.info('  Insert user {} metadata ...'.format(ARCHIVE_USER))
-      archiveUserId, anonUserId = addUsers(scribeNoBorg)
+      archiveUserId, anonUserId = addUsers(scribe)
       archiveUserId, anonUserId = addUsers(scribeWithBorg)
       
       if metaType in ('algorithm', 'all'):
          logger.info('  Insert algorithm metadata ...')
-         aIds = addAlgorithms(scribeNoBorg)
+         aIds = addAlgorithms(scribe)
          aIds = addAlgorithms(scribeWithBorg)
 
       if metaType in ('climate', 'all'):
          logger.info('  Insert climate {} metadata ...'
                      .format(SCENARIO_PACKAGE))
          pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-         addScenarioPackageMetadata(scribeNoBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
+         addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                     meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
          addScenarioPackageMetadata(scribeWithBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                     meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
@@ -502,7 +505,7 @@ if __name__ == '__main__':
          for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
             logger.info('  Insert taxonomy {} metadata ...'
                         .format(taxInfo['name']))
-            taxSourceId = scribeNoBorg.insertTaxonomySource(taxInfo['name'],
+            taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
                                                       taxInfo['url'])      
             taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
                                                       taxInfo['url'])      
@@ -510,7 +513,7 @@ if __name__ == '__main__':
       logger.error(str(e))
       raise
    finally:
-      scribeNoBorg.closeConnections()
+      scribe.closeConnections()
       scribeWithBorg.closeConnections()
        
 """

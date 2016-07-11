@@ -1,7 +1,7 @@
 # coding=utf-8
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -65,17 +65,11 @@ class Peruser(LMObject):
             
       self._mal = MAL(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
       self._rad = RAD(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
-      self._borg = Borg(logger, dbHost, CONNECTION_PORT, dbUser, HL_NAME[dbUser])
                
 # ............................................................................
    @property
    def isOpen(self):
-      if self._borg is not None:
-         bOpen = self._borg.isOpen
-      else:
-         bOpen = True
-      return self._mal.isOpen and self._rad.isOpen and bOpen
-#       return self._mal.isOpen and self._rad.isOpen and self._borg.isOpen
+      return self._mal.isOpen and self._rad.isOpen
 
 # .............................................................................
 # Public functions
@@ -88,7 +82,6 @@ class Peruser(LMObject):
                         .format(self._mal.user, self._mal.db, self._mal.host, 
                            self._mal.port, e.args))
          return False
-      
       try:
          self._rad.open()
       except Exception, e:
@@ -96,25 +89,12 @@ class Peruser(LMObject):
                         .format(self._mal.user, self._mal.db, self._mal.host, 
                            self._mal.port, e.args))
          return False
-
-      try:
-         self._borg.open()
-      except Exception, e:
-         self.log.error('Failed to open Borg (user={} dbname={} host={} port={}): {}' 
-                        .format(self._borg.user, self._borg.db, self._borg.host, 
-                           self._borg.port, e.args))
-         # TODO: Remove after debugging
-         self._borg = None
-#          return False
-
       return True
 
 # ...............................................
    def closeConnections(self):
       self._mal.close()
       self._rad.close()
-      if self._borg is not None:
-         self._borg.close()
       
 # ...............................................
 # Algorithm
@@ -280,8 +260,6 @@ class Peruser(LMObject):
 
 # ...............................................
    def getLayerTypeCode(self, typecode=None, userid=None, typeid=None):
-      if self._borg is not None:
-         borgEtype = self._borg.getEnvironmentalType(typeid, typecode, userid)
       if typeid is not None:
          etype = self._mal.getEnvironmentalTypeById(typeid)
       elif typecode is not None and userid is not None:
@@ -1061,12 +1039,10 @@ class Peruser(LMObject):
       @param userIdLst: list of desired userIds
       """
       total = 0
-      btotal = 0
       if not userIdLst:
          userIdLst = [None]
       for usr in userIdLst:
          total += self._mal.countJobChains(status, usr)
-         btotal += self._borg.countJobChains(status, usr)
       return total
 
 # ...............................................
