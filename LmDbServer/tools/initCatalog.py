@@ -24,7 +24,6 @@
 import argparse
 import mx.DateTime as DT
 import os
-import sys
 
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
          DEFAULT_MAPUNITS)
@@ -124,7 +123,6 @@ def _getbioFname(lyrtype, rptcode=None, mdlcode=None, famcode=None,
          
       elif rptcode == 'CMIP5':
          basename = '%s%sbi%s' % (mdlcode, tmcode, bionum)
-      
    fname = basename+'.tif'
    return fname 
  
@@ -469,24 +467,34 @@ if __name__ == '__main__':
    basename, ext = os.path.splitext(basefilename)
    try:
       logger = ScriptLogger(basename)
-      scribe = Scribe(logger)
-      success = scribe.openConnections()
+      scribeNoBorg = Scribe(logger)
+      scribeNoBorg._borg = None
+      success = scribeNoBorg.openConnections()
+
+      logger = ScriptLogger(basename+'_borg')
+      scribeWithBorg = Scribe(logger)
+      success = scribeWithBorg.openConnections()
+
       if not success: 
          logger.critical('Failed to open database')
          exit(0)
       
       logger.info('  Insert user {} metadata ...'.format(ARCHIVE_USER))
-      archiveUserId, anonUserId = addUsers(scribe)
+      archiveUserId, anonUserId = addUsers(scribeNoBorg)
+      archiveUserId, anonUserId = addUsers(scribeWithBorg)
       
       if metaType in ('algorithm', 'all'):
          logger.info('  Insert algorithm metadata ...')
-         aIds = addAlgorithms(scribe)
+         aIds = addAlgorithms(scribeNoBorg)
+         aIds = addAlgorithms(scribeWithBorg)
 
       if metaType in ('climate', 'all'):
          logger.info('  Insert climate {} metadata ...'
                      .format(SCENARIO_PACKAGE))
          pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-         addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
+         addScenarioPackageMetadata(scribeNoBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
+                                    meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
+         addScenarioPackageMetadata(scribeWithBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                     meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
 
       if metaType in ('taxonomy', 'all'):
@@ -494,13 +502,16 @@ if __name__ == '__main__':
          for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
             logger.info('  Insert taxonomy {} metadata ...'
                         .format(taxInfo['name']))
-            taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
+            taxSourceId = scribeNoBorg.insertTaxonomySource(taxInfo['name'],
+                                                      taxInfo['url'])      
+            taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
                                                       taxInfo['url'])      
    except Exception, e:
       logger.error(str(e))
       raise
    finally:
-      scribe.closeConnections()
+      scribeNoBorg.closeConnections()
+      scribeWithBorg.closeConnections()
        
 """
 from LmDbServer.tools.initCatalog import *

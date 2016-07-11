@@ -119,39 +119,35 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int)
 $$
 DECLARE
    success int = -1;
-   tmpcount1 int;
-   tmpcount2 int;
-   tmpcount3 int;
+   temp int;
 BEGIN
    -- if layer is found
-   SELECT count(*) into tmpcount1 FROM lm_v3.scenario WHERE scenarioid = scenid;
-   IF tmpcount1 != 1 THEN
-      RAISE EXCEPTION 'Scenario with id % does not exist or is not unique', scenid;
+   SELECT count(*) INTO temp FROM lm_v3.scenario WHERE scenarioid = scenid;
+   IF temp < 1 THEN
+      RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
    END IF;
    
-   SELECT count(*) into tmpcount2 FROM lm_v3.layer WHERE layerid = lyrid;
-   IF tmpcount2 != 1 THEN
-      RAISE EXCEPTION 'Layer with id % does not exist or is not unique', lyrid;
+   SELECT count(*) INTO temp FROM lm_v3.layer WHERE layerid = lyrid;
+   IF temp < 1 THEN
+      RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
    END IF;
    
-   SELECT count(*) INTO tmpcount3 FROM lm_v3.ScenarioLayers
-      WHERE scenarioId = scenid AND layerId = lyrid;
-   IF tmpcount3 = 0 THEN      
-      BEGIN
-         -- get or insert scenario x layer entry
-         INSERT INTO lm_v3.ScenarioLayers (scenarioId, layerId) 
-                     VALUES (scenid, lyrid);
-         IF FOUND THEN
-            success := 0;
-         END IF;
-      END;
+   SELECT count(*) INTO temp FROM lm_v3.ScenarioLayers WHERE scenarioId = scenid AND layerId = lyrid;
+   IF temp < 1 THEN
+      -- get or insert scenario x layer entry
+      INSERT INTO lm_v3.ScenarioLayers (scenarioId, layerId) VALUES (scenid, lyrid);
+      IF FOUND THEN
+         success := 0;
+      END IF;
    ELSE
+      RAISE NOTICE 'Scenario % and Layer % are already joined', scenid, lyrid;
       success := 0;
    END IF;
    
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
 
 
 -- ----------------------------------------------------------------------------
