@@ -35,18 +35,18 @@ def _getHexHashValue(dlocation=None, content=None):
    @note: content is checked first, and if it exists, dlocation is ignored
    """
    hexhash = None
-   if content:
-      hashval = hashlib.sha256(content)
-      hexhash = hashval.hexdigest()
-
-   elif dlocation:
-      if os.path.exists(dlocation):
+   if content is None:
+      if dlocation and os.path.exists(dlocation):
          f = open(dlocation, 'r')
          content = f.read()
          f.close()
       else:
          print('Failed to hash missing file {}'.format(dlocation))
-         
+   if content is not None:
+      hashval = hashlib.sha256(content)
+      hexhash = hashval.hexdigest()
+   else:
+      print('Failed to hash empty content')
    return hexhash
 
 # .............................................................................
