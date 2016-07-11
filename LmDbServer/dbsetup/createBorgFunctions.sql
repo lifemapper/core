@@ -274,7 +274,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_countJobChains(usrid varchar(20), 
+CREATE OR REPLACE FUNCTION lm_v3.lm_countJobChains(usrid varchar(20), 
     	                                           stat int)
    RETURNS int AS
 $$
@@ -284,9 +284,9 @@ DECLARE
    wherecls varchar;
 BEGIN
    IF usrid IS null THEN
-      SELECT count(*) INTO num FROM lm3.jobchain WHERE status = stat;
+      SELECT count(*) INTO num FROM lm_v3.jobchain WHERE status = stat;
    ELSE
-      SELECT count(*) INTO num FROM lm3.jobchain WHERE status = stat 
+      SELECT count(*) INTO num FROM lm_v3.jobchain WHERE status = stat 
                                                    AND userid = usr;
    END IF;
 
