@@ -1053,7 +1053,7 @@ class Peruser(LMObject):
       return total
 
 # ...............................................
-   def countJobchains(self, status, userIdLst=[None]):
+   def countJobChains(self, status, userIdLst=[None]):
       """
       @summary: Return a count of model and projection jobs at given status.
       @param procTypeLst: list of desired LmCommon.common.lmconstants.ProcessType 
@@ -1065,8 +1065,8 @@ class Peruser(LMObject):
       if not userIdLst:
          userIdLst = [None]
       for usr in userIdLst:
-         total += self._mal.countJobs(status, usr)
-         btotal += self._borg.countJobs(status, usr)
+         total += self._mal.countJobChains(status, usr)
+         btotal += self._borg.countJobChains(status, usr)
       return total
 
 # ...............................................

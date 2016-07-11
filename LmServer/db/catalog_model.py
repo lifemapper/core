@@ -2373,7 +2373,7 @@ class MAL(DbPostgresql):
       return self._getCount(row)
 
 # .............................................................................
-   def countJobchains(self, status, userId=None):      
+   def countJobChains(self, status, userId=None):      
       """
       @summary: Return the number of jobchains fitting the given filter conditions
       @param status: include only jobs with this status
