@@ -98,13 +98,17 @@ class Troubleshooter(object):
       for cmd in commandList:
          cmd = cmd.lower()
          if cmd == 'limbo':
-               self._notifyOfStalledExperiments(self.checkJobTime, cmd,
-                                                startStatus=JobStatus.INITIALIZE, 
-                                                endStatus=JobStatus.COMPLETE)
+            self.log.debug("troubleshoot limbo is not ready for prime time")
+            self.log.info('Check for stalled jobs of all users')
+            self._notifyOfStalledExperiments(oldtime, cmd,
+                                             startStatus=JobStatus.INITIALIZE, 
+                                             endStatus=JobStatus.COMPLETE)
          elif cmd == 'error':
-               self._notifyOfStalledExperiments(oldtime, cmd,
-                                                startStatus=JobStatus.GENERAL_ERROR, 
-                                                ignoreUser=ARCHIVE_USER)
+            self.log.debug("troubleshoot error is not ready for prime time")
+            self.log.info('Check for error jobs of non-archive users')
+            self._notifyOfStalledExperiments(oldtime, cmd,
+                                             startStatus=JobStatus.GENERAL_ERROR, 
+                                             ignoreUser=ARCHIVE_USER)
 
 ### Main ###
 # ...............................................
