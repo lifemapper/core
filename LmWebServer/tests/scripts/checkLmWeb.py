@@ -54,7 +54,7 @@ def assembleUrls(logger, urls):
    peruser.openConnections()
       
    # experiment
-   exps = peruser.listModels(0, 1, status=JobStatus.COMPLETE)
+   exps = peruser.listModels(0, 1, status=JobStatus.COMPLETE, atom=False)
    if len(exps) > 0:
       BASEURLS['exp'] = "%s/services/sdm/experiments/%s" % (WEBSERVICES_ROOT, exps[0].id)
    
@@ -64,11 +64,8 @@ def assembleUrls(logger, urls):
       BASEURLS['lyr'] = "%s/services/sdm/layers/%s" % (WEBSERVICES_ROOT, lyrs[0].id)
    
    # occurrence set - Complete
-   try:
-      occs = peruser.listOccurrenceSets(0, 10, minOccurrenceCount=50, status=JobStatus.COMPLETE)
-   except:
-      # TODO: Old keyword param stat, delete this
-      occs = peruser.listOccurrenceSets(0, 10, minOccurrenceCount=50, stat=JobStatus.COMPLETE)      
+   occs = peruser.listOccurrenceSets(0, 10, minOccurrenceCount=50, 
+                                     status=JobStatus.COMPLETE, atom=False)
    if len(occs) > 0:
       BASEURLS['occ'] = "%s/services/sdm/occurrences/%s" % (WEBSERVICES_ROOT, occs[0].id)
       # Add map urls
@@ -86,7 +83,7 @@ def assembleUrls(logger, urls):
       urls.append(occBGMap)
       
    # projection
-   prjs = peruser.listProjections(0, 1, status=JobStatus.COMPLETE)
+   prjs = peruser.listProjections(0, 1, status=JobStatus.COMPLETE, atom=False)
    if len(prjs) > 0:
       BASEURLS['prj'] = "%s/services/sdm/projections/%s" % (WEBSERVICES_ROOT, prjs[0].id)
       
