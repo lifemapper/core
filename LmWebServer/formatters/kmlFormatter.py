@@ -663,7 +663,7 @@ def getLatLonForPoint(pt):
          pass
       
    if wkt is not None:
-      lon, lat, _ = ogr.CreateGeometryFromWkt(wkt).getPoint()
+      lon, lat, _ = ogr.CreateGeometryFromWkt(wkt).GetPoint()
       return lat, lon
    else:
       # Find lat and lon

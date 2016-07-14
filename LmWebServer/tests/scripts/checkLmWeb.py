@@ -56,63 +56,47 @@ def assembleUrls(logger, urls):
    # experiment
    exps = peruser.listModels(0, 1, status=JobStatus.COMPLETE)
    if len(exps) > 0:
-      BASEURLS['exp'] = "%s/services/sdm/experiments/%s" % (WEBSERVICES_ROOT, exps[0].id)
+      BASEURLS['exp'] = "{}/services/sdm/experiments/{}".format(WEBSERVICES_ROOT, exps[0].id)
    
    # layer
    lyrs = peruser.listLayers(0, 1)
    if len(lyrs) > 0:
-      BASEURLS['lyr'] = "%s/services/sdm/layers/%s" % (WEBSERVICES_ROOT, lyrs[0].id)
+      BASEURLS['lyr'] = "{}/services/sdm/layers/{}".format(WEBSERVICES_ROOT, lyrs[0].id)
    
    # occurrence set - Complete
-   try:
-      occs = peruser.listOccurrenceSets(0, 10, minOccurrenceCount=50, status=JobStatus.COMPLETE)
-   except:
-      # TODO: Old keyword param stat, delete this
-      occs = peruser.listOccurrenceSets(0, 10, minOccurrenceCount=50, stat=JobStatus.COMPLETE)      
+   occs = peruser.listOccurrenceSets(0, 10, minOccurrenceCount=50,status=JobStatus.COMPLETE)
    if len(occs) > 0:
-      BASEURLS['occ'] = "%s/services/sdm/occurrences/%s" % (WEBSERVICES_ROOT, occs[0].id)
+      BASEURLS['occ'] = "{}/services/sdm/occurrences/{}".format(WEBSERVICES_ROOT, occs[0].id)
       # Add map urls
-      occMap = "%s/services/sdm/occurrences/%s/ogc?%s&layers=occ_%s" % (
-                                                         WEBSERVICES_ROOT, 
-                                                         occs[0].id, 
-                                                         MAP_PARAMETERS, 
-                                                         occs[0].id)
-      occBGMap = "%s/services/sdm/occurrences/%s/ogc?%s&layers=bmng,occ_%s" % (
-                                                         WEBSERVICES_ROOT, 
-                                                         occs[0].id, 
-                                                         MAP_PARAMETERS, 
-                                                         occs[0].id)
+      occMap = "{}/services/sdm/occurrences/{}/ogc?{}&layers=occ_{}".format(
+               WEBSERVICES_ROOT, occs[0].id, MAP_PARAMETERS, occs[0].id)
+      occBGMap = "{}/services/sdm/occurrences/{}/ogc?{}&layers=bmng,occ_{}".format(
+               WEBSERVICES_ROOT, occs[0].id, MAP_PARAMETERS, occs[0].id)
       urls.append(occMap)
       urls.append(occBGMap)
       
    # projection
    prjs = peruser.listProjections(0, 1, status=JobStatus.COMPLETE)
    if len(prjs) > 0:
-      BASEURLS['prj'] = "%s/services/sdm/projections/%s" % (WEBSERVICES_ROOT, prjs[0].id)
+      BASEURLS['prj'] = "{}/services/sdm/projections/{}".format(WEBSERVICES_ROOT, prjs[0].id)
       
       # Add map urls
-      prjMap = "%s/services/sdm/projections/%s/ogc?%s&layers=prj_%s" % (
-                                                         WEBSERVICES_ROOT, 
-                                                         prjs[0].id, 
-                                                         MAP_PARAMETERS, 
-                                                         prjs[0].id)
-      prjBGMap = "%s/services/sdm/projections/%s/ogc?%s&layers=bmng,prj_%s" % (
-                                                         WEBSERVICES_ROOT, 
-                                                         prjs[0].id, 
-                                                         MAP_PARAMETERS, 
-                                                         prjs[0].id)
+      prjMap = "{}/services/sdm/projections/{}/ogc?{}&layers=prj_{}".format(
+               WEBSERVICES_ROOT, prjs[0].id, MAP_PARAMETERS, prjs[0].id)
+      prjBGMap = "{}/services/sdm/projections/{}/ogc?{}&layers=bmng,prj_{}".format(
+               WEBSERVICES_ROOT, prjs[0].id, MAP_PARAMETERS, prjs[0].id)
       urls.append(prjMap)
       urls.append(prjBGMap)
 
    # scenario
    scens = peruser.listScenarios(0, 1)
    if len(scens) > 0:
-      BASEURLS['scn'] = "%s/services/sdm/scenarios/%s" % (WEBSERVICES_ROOT, scens[0].id)
+      BASEURLS['scn'] = "{}/services/sdm/scenarios/{}".format(WEBSERVICES_ROOT, scens[0].id)
    
    for key, url in BASEURLS.iteritems():
       if url is not None:
          for iface in INTERFACES[key]:
-            urls.append("%s/%s" % (url, iface))
+            urls.append("{}/{}".format(url, iface))
    
    # type code
    peruser.closeConnections()
@@ -142,15 +126,15 @@ urls = [
         # Main site
         WEBSERVICES_ROOT, 
         # Check listing services
-        "%s/services/" % WEBSERVICES_ROOT,
-        "%s/services/sdm/" % WEBSERVICES_ROOT,
-        "%s/services/sdm/experiments" % WEBSERVICES_ROOT,
-        "%s/services/sdm/layers" % WEBSERVICES_ROOT,
-        "%s/services/sdm/projections" % WEBSERVICES_ROOT,
-        "%s/services/sdm/scenarios" % WEBSERVICES_ROOT,
-        "%s/services/rad/" % WEBSERVICES_ROOT,
-        "%s/services/rad/experiments" % WEBSERVICES_ROOT,
-        "%s/services/rad/layers" % WEBSERVICES_ROOT,
+        "{}/services/".format(WEBSERVICES_ROOT),
+        "{}/services/sdm/".format(WEBSERVICES_ROOT),
+        "{}/services/sdm/experiments".format(WEBSERVICES_ROOT),
+        "{}/services/sdm/layers".format(WEBSERVICES_ROOT),
+        "{}/services/sdm/projections".format(WEBSERVICES_ROOT),
+        "{}/services/sdm/scenarios".format(WEBSERVICES_ROOT),
+        "{}/services/rad/".format(WEBSERVICES_ROOT),
+        "{}/services/rad/experiments".format(WEBSERVICES_ROOT),
+        "{}/services/rad/layers".format(WEBSERVICES_ROOT),
         # Hint services
         "{0}/hint/species/ace?maxReturned=1000&format=json".format(WEBSERVICES_ROOT),
         ]
@@ -164,7 +148,7 @@ ctClmPrefix = '{0}/ogc?map=anc_ctclim&{1}&TRANSPARENT=true&styles='.format(WEBSE
 ctRadPrefix = '{0}/ogc?map=anc_ctRAD&{1}&styles='.format(WEBSERVICES_ROOT, ctParamStr)
 kuUrls = [
            # Species page
-           "%s/species/" % WEBSERVICES_ROOT,
+           "{}/species/".format(WEBSERVICES_ROOT),
            # Specify
            "{0}/ogc?MAP=anc_nasalocal.map&layers=bmnglowres&height=200&width=400&request=GetMap&service=WMS&bbox=-180.0,-90.0,180.0,90.0&srs=epsg:4326&format=image/gif&version=1.1.0&styles=".format(WEBSERVICES_ROOT)
            # Change Thinking
@@ -224,7 +208,7 @@ if __name__ == '__main__':
    for url in urls:
       code = checkUrl(logger, url)
       if code not in [200, 503]:
-         msg = " returned HTTP code: %s" % (str(code))
+         msg = " returned HTTP code: {}".format(code)
          logger.debug(msg)
          mesgs.append(url + msg)
    if len(mesgs) > 0:

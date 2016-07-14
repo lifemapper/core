@@ -24,7 +24,6 @@ CREATE INDEX idx_prjSquid on lm3.Projection(squid);
 alter table lm3.ScientificName add column rank varchar(20);
 alter table lm3.ScientificName add column canonical text;
 
-alter table lm3.ComputeResource rename column ipmask TO ipsigbits;
 -- -------------------------------
 -- 5-20-2016
 -- -------------------------------

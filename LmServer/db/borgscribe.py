@@ -68,12 +68,8 @@ class BorgScribe(LMObject):
 # ............................................................................
    @property
    def isOpen(self):
-      if self._borg is not None:
-         bOpen = self._borg.isOpen
-      else:
-         bOpen = True
-      return self._mal.isOpen and self._rad.isOpen and bOpen
-#       return self._mal.isOpen and self._rad.isOpen and self._borg.isOpen
+      bOpen = self._borg.isOpen
+      return bOpen
 
 # .............................................................................
 # Public functions
@@ -85,7 +81,6 @@ class BorgScribe(LMObject):
          self.log.error('Failed to open Borg (user={} dbname={} host={} port={}): {}' 
                         .format(self._borg.user, self._borg.db, self._borg.host, 
                            self._borg.port, e.args))
-         self._borg = None
          return False
       return True
 
