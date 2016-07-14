@@ -715,6 +715,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
           sdlLyr.getUserId() == ARCHIVE_USER and 
           sdlLyr.queryCount > POINT_COUNT_MAX):
          dlocation = sdlLyr.getDLocation(subset=True)
+         if not os.path.exists(dlocation):
+            dlocation = sdlLyr.getDLocation()
       else:
          dlocation = sdlLyr.getDLocation()
          
