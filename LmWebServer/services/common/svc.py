@@ -76,6 +76,16 @@ class svc(object):
    """
    # ....................................................
    @cherrypy.expose
+   def client(self, *vpath, **params):
+       """
+       @summary: Client service
+       """
+       virpath = list(vpath)
+       cherrypy.response.headers["Content-Type"] = "application/json"
+       return "{'status' : 0, 'message' : 'Up to date'}"
+       
+   # ....................................................
+   @cherrypy.expose
    def hint(self, *vpath, **params):
       """
       @summary: Gets species hint
