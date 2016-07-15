@@ -543,8 +543,12 @@ class BisonBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
-      self._tsnfile = None
-      
+      super(BisonBoom, self).__init__(userid, priority, algLst, 
+                                      mdlScen, prjScenLst, 
+                                      taxonSourceName=taxonSourceName, 
+                                      mdlMask=mdlMask, prjMask=prjMask, 
+                                      intersectGrid=intersectGrid, log=log)
+      self._tsnfile = None      
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
          
@@ -555,11 +559,6 @@ class BisonBoom(_LMBoomer):
          self._failGracefully(lmerr='Unable to open {}'.format(tsnfilename))
       
       self._linenum = 0
-      super(BisonBoom, self).__init__(userid, priority, algLst, 
-                                      mdlScen, prjScenLst, 
-                                      taxonSourceName=taxonSourceName, 
-                                      mdlMask=mdlMask, prjMask=prjMask, 
-                                      intersectGrid=intersectGrid, log=log)
       self._obsoleteTime = expDate
       
 # ...............................................
@@ -834,6 +833,10 @@ class GBIFBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, providerListFile=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+      super(GBIFBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+                                      taxonSourceName=taxonSourceName, 
+                                      mdlMask=mdlMask, prjMask=prjMask, 
+                                      intersectGrid=intersectGrid, log=log)               
       self._dumpfile = None
       try:
          self._dumpfile = open(occfilename, 'r')
@@ -847,10 +850,6 @@ class GBIFBoom(_LMBoomer):
          self._failGracefully(lmerr='Failed to init CSV reader with {}'.format(occfilename))
 
       self._linenum = 0
-      super(GBIFBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
-                                      taxonSourceName=taxonSourceName, 
-                                      mdlMask=mdlMask, prjMask=prjMask, 
-                                      intersectGrid=intersectGrid, log=log)               
       gbifFldNames = []
       idxs = GBIF_EXPORT_FIELDS.keys()
       idxs.sort()
@@ -1043,6 +1042,10 @@ class iDigBioBoom(_LMBoomer):
    def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+      super(iDigBioBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+                                        taxonSourceName=taxonSourceName, 
+                                        mdlMask=mdlMask, prjMask=prjMask, 
+                                        intersectGrid=intersectGrid, log=log)
       if taxonSourceName is None:
          self._failGracefully(lmerr='Missing taxonomic source')
          
@@ -1052,11 +1055,7 @@ class iDigBioBoom(_LMBoomer):
       except:
          raise LMError(currargs='Unable to open {}'.format(idigFname))
 
-      super(iDigBioBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
-                                        taxonSourceName=taxonSourceName, 
-                                        mdlMask=mdlMask, prjMask=prjMask, 
-                                        intersectGrid=intersectGrid, log=log)
-      self._obsoleteTime = expDate      
+      self._obsoleteTime = expDate
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None
