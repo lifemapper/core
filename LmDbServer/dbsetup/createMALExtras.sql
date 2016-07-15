@@ -6504,3 +6504,19 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_updateLayerHash(lyrid int,
+                                          		  hsh varchar)
+   RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   UPDATE lm3.Layer SET verify = hsh WHERE layerId = lyrid;
+   IF FOUND THEN
+      success := 0;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
