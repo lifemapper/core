@@ -2814,7 +2814,7 @@ class MAL(DbPostgresql):
          cr = LMComputeResource(self._getColumnValue(row, idxs, ['name']), 
                                 self._getColumnValue(row, idxs, ['ipaddress']), 
                                 self._getColumnValue(row, idxs, ['userid']), 
-                                ipSignificantBits=self._getColumnValue(row, idxs, ['ipsigbits']), 
+                                ipSignificantBits=self._getColumnValue(row, idxs, ['ipmask']), 
                                 FQDN=self._getColumnValue(row, idxs, ['fqdn']), 
                                 dbId=self._getColumnValue(row, idxs, ['computeresourceid']), 
                                 createTime=self._getColumnValue(row, idxs, ['datecreated']), 
