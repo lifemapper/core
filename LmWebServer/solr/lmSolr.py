@@ -209,9 +209,11 @@ def searchHintIndex(name, retFormat, numColumns, maxReturned):
    rDict = literal_eval(resp)
    
    oHits = rDict['response']['docs']
+   
+   # TODO: This needs to be taken out once the Solr index is corrected
    hits = []
    for hit in oHits:
-      if hit['displayName'].startswith(name):
+      if hit['displayName'].lower().startswith(name).lower():
          hits.append(hit)
 
    if retFormat.lower() == "json":
