@@ -130,7 +130,7 @@ def searchArchive(name):
              and this function could use quite a bit of bullet-proofing
    """
    url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true".format(
-                               server=SERVER, collection=COLLECTION, name=name)
+           server=SERVER, collection=COLLECTION, name=name).replace(' ', '%20')
    res = urllib2.urlopen(url)
    resp = res.read()
    rDict = literal_eval(resp)
@@ -203,7 +203,7 @@ def searchHintIndex(name, retFormat, numColumns, maxReturned):
              and this function could use quite a bit of bullet-proofing
    """
    url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true&sort=binomial+asc".format(
-                               server=SERVER, collection=HINT_COLLECTION, name=name)
+      server=SERVER, collection=HINT_COLLECTION, name=name).replace(' ', '%20')
    res = urllib2.urlopen(url)
    resp = res.read()
    rDict = literal_eval(resp)
