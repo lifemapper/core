@@ -202,7 +202,7 @@ def searchHintIndex(name, retFormat, numColumns, maxReturned):
    @todo: This is pretty brittle.  These constants should be read from config 
              and this function could use quite a bit of bullet-proofing
    """
-   url = "http://{server}{collection}/select?q=displayName%3A{name}*&wt=python&indent=true&sort=binomial+asc".format(
+   url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true&sort=binomial+asc".format(
                                server=SERVER, collection=HINT_COLLECTION, name=name)
    res = urllib2.urlopen(url)
    resp = res.read()
