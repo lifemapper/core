@@ -129,7 +129,7 @@ def searchArchive(name):
    @todo: This is pretty brittle.  These constants should be read from config 
              and this function could use quite a bit of bullet-proofing
    """
-   url = "http://{server}{collection}/select?q=displayName%3A{name}*&wt=python&indent=true".format(
+   url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true".format(
                                server=SERVER, collection=COLLECTION, name=name)
    res = urllib2.urlopen(url)
    resp = res.read()
