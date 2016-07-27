@@ -37,18 +37,31 @@
    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0" />
    
    <fieldType name="url" class="solr.StrField" sortMissingLast="true" />
+
+   <!-- Taxon name type -->
    <fieldType name="taxonname" class="solr.TextField" positionIncrementGap="100">
+      <!-- Index design -->
       <analyzer type="index">
-         <!-- <tokenizer class="solr.StandardTokenizerFactory" />-->
-         <!-- <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />-->
-         <tokenizer class="solr.EdgeNGramTokenizerFactory" minGramSize="3" maxGramSize="10" />
-         <filter class="solr.LowerCaseFilterFactory" />
+         <!-- First, filter out spaces and encoded spaces -->
+         <!--   The result: Abacidus atratus becomes Abacidusatratus -->
+         <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(\s*)" replacement="" />
+         <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(%20)" replacement="" />
+         <!-- Tokenize the taxon names using the lower case factory -->
+         <!-- Abacidusatratus becomes abacidusatratus -->
+         <tokenizer class="solr.LowerCaseTokenizerFactory" />
+         <!-- Filter the results by creating Grams from 3 characters to 20 -->
+         <!-- abacidusatratus becomes 'aba', 'abac', 'abaci', 'abacid' ... -->
+         <filter class="solr.EdgeNGramFilterFactory" minGramSize="3" maxGramSize="20" />
       </analyzer>
       <analyzer type="query">
-         <!-- <tokenizer class="solr.StandardTokenizerFactory" />-->
-         <!-- <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />-->
-         <tokenizer class="solr.EdgeNGramTokenizerFactory" minGramSize="3" maxGramSize="10" />
-         <filter class="solr.LowerCaseFilterFactory" />
+         <!-- Filter spaces and encoded spaces out of query string -->
+         <!-- 'Abc def' becomes 'Abcdef' -->
+         <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(\s*)" replacement="" />
+         <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(%20)" replacement="" />
+         <!-- Tokenize the query with lower case factory -->
+         <!-- 'Abc' becomes 'abc' -->
+         <!-- Looks for matches of tokenized query string -->
+         <tokenizer class="solr.LowerCaseTokenizerFactory" />
       </analyzer>
    </fieldType>
 

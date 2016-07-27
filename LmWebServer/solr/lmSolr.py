@@ -129,8 +129,8 @@ def searchArchive(name):
    @todo: This is pretty brittle.  These constants should be read from config 
              and this function could use quite a bit of bullet-proofing
    """
-   url = "http://{server}{collection}/select?q=displayName%3A{name}*&wt=python&indent=true".format(
-                               server=SERVER, collection=COLLECTION, name=name)
+   url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true".format(
+           server=SERVER, collection=COLLECTION, name=name).replace(' ', '%20')
    res = urllib2.urlopen(url)
    resp = res.read()
    rDict = literal_eval(resp)
@@ -202,18 +202,14 @@ def searchHintIndex(name, retFormat, numColumns, maxReturned):
    @todo: This is pretty brittle.  These constants should be read from config 
              and this function could use quite a bit of bullet-proofing
    """
-   url = "http://{server}{collection}/select?q=displayName%3A{name}*&wt=python&indent=true&sort=binomial+asc".format(
-                               server=SERVER, collection=HINT_COLLECTION, name=name)
+   url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true&sort=binomial+asc".format(
+      server=SERVER, collection=HINT_COLLECTION, name=name).replace(' ', '%20')
    res = urllib2.urlopen(url)
    resp = res.read()
    rDict = literal_eval(resp)
    
-   oHits = rDict['response']['docs']
-   hits = []
-   for hit in oHits:
-      if hit['displayName'].startswith(name):
-         hits.append(hit)
-
+   hits = rDict['response']['docs']
+   
    if retFormat.lower() == "json":
       ret = transformHintsForJson(hits, columns=numColumns)
    elif retFormat.lower() == "newjson":
