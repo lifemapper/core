@@ -61,9 +61,16 @@ class LmServerEnv(LmEnv):
                                                                     str(e)))
 
       try:
-         self.values['#%s_SDM_OCC_ID#' % prefix] = str(
-               self.scribe.listOccurrenceSets(0, 1, minOccurrenceCount=30, 
-                                              userId=userId)[0].id)
+         occAtom = self.scribe.listOccurrenceSets(0, 1, minOccurrenceCount=30, 
+                                                  userId=userId)[0]
+                        
+         self.values['#%s_SDM_OCC_ID#' % prefix] = str(occAtom.id)
+         self.values['#%s_SDM_HINT_SHORT#' % prefix] = str(occAtom.title)[:4]
+         self.values['#%s_SDM_HINT_GENUS#' % prefix] = str(occAtom.title.split(' ')[0])
+         self.values['#%s_SDM_HINT_TAXON1#' % prefix] = str(occAtom.title)
+         self.values['#%s_SDM_HINT_TAXON2#' % prefix] = str(occAtom.title.replace(' ', '%20'))
+         self.values['#%s_SDM_HINT_TAXON3#' % prefix] = str(occAtom.title.replace(' ', '+'))
+         
       except Exception, e:
          self.log.debug("Could not populate %s SDM occurrence set id: %s" % (
                                                               forUser, str(e)))

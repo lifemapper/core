@@ -828,7 +828,7 @@
 	
 	   <!-- Lifemapper Hint Services -->
 	   <!-- =================================================================== -->
-	   <!-- Lucene hints -->
+	   <!-- Solr Species hints -->
 	   <Request 
 	        url="#SERVER#/hint/species/ursus?format=json&amp;columns=1&amp;maxreturned=1000" 
 	        method="GET" credentials="False">
@@ -872,6 +872,226 @@
 	      </Response>
 	   </Request>
 	
+      <Request 
+           url="#SERVER#/hint/species/#PUB_SDM_HINT_SHORT#?format=json&amp;columns=1&amp;maxreturned=1000" 
+           method="GET" credentials="False">
+         <replaceString>#SERVER#</replaceString>
+         <replaceString>#PUB_SDM_HINT_SHORT#</replaceString>
+         <description>Test Lucene Hint Service</description>
+         <Response contentType="application/json">
+            <ResponseItem>
+               <itemType>object</itemType>
+               <SubItem>
+                  <name>columns</name>
+                  <itemType>array</itemType>
+                  <SubItem>
+                     <itemType>array</itemType>
+                     <SubItem>
+                        <itemType>object</itemType>
+                        <SubItem>
+                           <name>name</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <!-- This maps to id in the client library -->
+                           <name>occurrenceSet</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>downloadUrl</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numModels</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numPoints</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                     </SubItem>
+                  </SubItem>
+               </SubItem>
+            </ResponseItem>
+         </Response>
+      </Request>
+   
+      <Request 
+           url="#SERVER#/hint/species/#PUB_SDM_HINT_GENUS#?format=json&amp;columns=1&amp;maxreturned=1000" 
+           method="GET" credentials="False">
+         <replaceString>#SERVER#</replaceString>
+         <replaceString>#PUB_SDM_HINT_GENUS#</replaceString>
+         <description>Test Lucene Hint Service</description>
+         <Response contentType="application/json">
+            <ResponseItem>
+               <itemType>object</itemType>
+               <SubItem>
+                  <name>columns</name>
+                  <itemType>array</itemType>
+                  <SubItem>
+                     <itemType>array</itemType>
+                     <SubItem>
+                        <itemType>object</itemType>
+                        <SubItem>
+                           <name>name</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <!-- This maps to id in the client library -->
+                           <name>occurrenceSet</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>downloadUrl</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numModels</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numPoints</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                     </SubItem>
+                  </SubItem>
+               </SubItem>
+            </ResponseItem>
+         </Response>
+      </Request>
+   
+      <Request 
+           url="#SERVER#/hint/species/#PUB_SDM_HINT_TAXON1#?format=json&amp;columns=1&amp;maxreturned=1000" 
+           method="GET" credentials="False">
+         <replaceString>#SERVER#</replaceString>
+         <replaceString>#PUB_SDM_HINT_TAXON1#</replaceString>
+         <description>Test Lucene Hint Service</description>
+         <Response contentType="application/json">
+            <ResponseItem>
+               <itemType>object</itemType>
+               <SubItem>
+                  <name>columns</name>
+                  <itemType>array</itemType>
+                  <SubItem>
+                     <itemType>array</itemType>
+                     <SubItem>
+                        <itemType>object</itemType>
+                        <SubItem>
+                           <name>name</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <!-- This maps to id in the client library -->
+                           <name>occurrenceSet</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>downloadUrl</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numModels</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numPoints</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                     </SubItem>
+                  </SubItem>
+               </SubItem>
+            </ResponseItem>
+         </Response>
+      </Request>
+   
+      <Request 
+           url="#SERVER#/hint/species/#PUB_SDM_HINT_TAXON2#?format=json&amp;columns=1&amp;maxreturned=1000" 
+           method="GET" credentials="False">
+         <replaceString>#SERVER#</replaceString>
+         <replaceString>#PUB_SDM_HINT_TAXON2#</replaceString>
+         <description>Test Lucene Hint Service</description>
+         <Response contentType="application/json">
+            <ResponseItem>
+               <itemType>object</itemType>
+               <SubItem>
+                  <name>columns</name>
+                  <itemType>array</itemType>
+                  <SubItem>
+                     <itemType>array</itemType>
+                     <SubItem>
+                        <itemType>object</itemType>
+                        <SubItem>
+                           <name>name</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <!-- This maps to id in the client library -->
+                           <name>occurrenceSet</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>downloadUrl</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numModels</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numPoints</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                     </SubItem>
+                  </SubItem>
+               </SubItem>
+            </ResponseItem>
+         </Response>
+      </Request>
+   
+      <Request 
+           url="#SERVER#/hint/species/#PUB_SDM_HINT_TAXON3#?format=json&amp;columns=1&amp;maxreturned=1000" 
+           method="GET" credentials="False">
+         <replaceString>#SERVER#</replaceString>
+         <replaceString>#PUB_SDM_HINT_TAXON3#</replaceString>
+         <description>Test Lucene Hint Service</description>
+         <Response contentType="application/json">
+            <ResponseItem>
+               <itemType>object</itemType>
+               <SubItem>
+                  <name>columns</name>
+                  <itemType>array</itemType>
+                  <SubItem>
+                     <itemType>array</itemType>
+                     <SubItem>
+                        <itemType>object</itemType>
+                        <SubItem>
+                           <name>name</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <!-- This maps to id in the client library -->
+                           <name>occurrenceSet</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>downloadUrl</name>
+                           <itemType>string</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numModels</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                        <SubItem>
+                           <name>numPoints</name>
+                           <itemType>integer</itemType>
+                        </SubItem>
+                     </SubItem>
+                  </SubItem>
+               </SubItem>
+            </ResponseItem>
+         </Response>
+      </Request>
+   
 	   <!-- Solr hints -->
 	   <Request 
 	        url="#SERVER#/hint/archive/Car" 
