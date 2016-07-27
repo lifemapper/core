@@ -129,8 +129,10 @@ def searchArchive(name):
    @todo: This is pretty brittle.  These constants should be read from config 
              and this function could use quite a bit of bullet-proofing
    """
+   # Replaces pluses with spaces and then encode all spaces
+   modName = name.replace('+', ' ').replace(' ', '%2520')
    url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true".format(
-           server=SERVER, collection=COLLECTION, name=name).replace(' ', '%20')
+           server=SERVER, collection=COLLECTION, name=modName)
    res = urllib2.urlopen(url)
    resp = res.read()
    rDict = literal_eval(resp)
@@ -202,8 +204,10 @@ def searchHintIndex(name, retFormat, numColumns, maxReturned):
    @todo: This is pretty brittle.  These constants should be read from config 
              and this function could use quite a bit of bullet-proofing
    """
+   # Replaces pluses with spaces and then encode all spaces
+   modName = name.replace('+', ' ').replace(' ', '%2520')
    url = "http://{server}{collection}/select?q=displayName%3A{name}&wt=python&indent=true&sort=binomial+asc".format(
-      server=SERVER, collection=HINT_COLLECTION, name=name).replace(' ', '%20')
+      server=SERVER, collection=HINT_COLLECTION, name=modName)
    res = urllib2.urlopen(url)
    resp = res.read()
    rDict = literal_eval(resp)
