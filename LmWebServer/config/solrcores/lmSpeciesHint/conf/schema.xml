@@ -58,6 +58,7 @@
          <!-- 'Abc def' becomes 'Abcdef' -->
          <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(\s*)" replacement="" />
          <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(%20)" replacement="" />
+         <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(\+)" replacement="" />
          <!-- Tokenize the query with lower case factory -->
          <!-- 'Abc' becomes 'abc' -->
          <!-- Looks for matches of tokenized query string -->
