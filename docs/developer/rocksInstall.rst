@@ -68,7 +68,14 @@ Add public key to new virtual frontend for key-based authentication::
 Turn off password authentication by editing the values in /etc/ssh/sshd_config, 
 then restarting the sshd service::
 
-    ChallengeResponseAuthentication no
     PasswordAuthentication no
+    ChallengeResponseAuthentication no
     UsePAM no 
+    
+    service sshd restart
 
+Download, build, then install the security-updates roll into directory below. 
+Instructions at https://github.com/rocksclusters/security-updates ::
+
+    cd /state/partition1/site-roll/rocks/src/roll 
+    git clone https://github.com/rocksclusters/security-updates.git
