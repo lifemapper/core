@@ -145,7 +145,6 @@ Look for LmServer Errors
    Type "help" for help.
    mal=> select scenariocode, userid from scenario;
 
-
    
 Install nodes from Frontend
 ---------------------------
@@ -157,6 +156,10 @@ Install nodes from Frontend
 
       # rocks run host compute 'rpm -el lifemapper-lmcompute rocks-lmcompute'
 
+#. **(If new install) Add compute nodes to cluster**
+ 
+Follow insert-ethers procedure 
+   
 #. **Rebuild the compute nodes** ::  
 
    # rocks set host boot compute action=install

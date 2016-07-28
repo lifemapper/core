@@ -31,8 +31,12 @@ Update rolls
 #. **Update installation**, using **Install Lifemapper System** instructions at 
    `Install Lifemapper System`_for example::
 
+Connect development code on Frontend
+************************************
+
 #. Clone or update lifemapper workspace git repository ::  
 
+   # mkdir /state/partition1/workspace
    # cd /state/partition1/workspace
    # git clone https://github.com/lifemapper/core
 
@@ -76,6 +80,33 @@ Update rolls
    # ln -s /state/partition1/workspace/core/LmServer
    # ln -s /state/partition1/workspace/core/LmWebServer
    
+Connect development code on Frontend
+************************************
+
+#. Clone or update lifemapper workspace git repository ::  
+
+   # mkdir /state/partition1/workspace
+   # cd /state/partition1/workspace
+   # git clone https://github.com/lifemapper/core
+
+#. Copy files with replaced variables from installation to your git tree. 
+   Config files will be created in the non-linked config directory
+   correctly without intervention.  The maxent and lmMaxent executables will  
+   be installed into the rocks/bin directory without intervention.::
+      
+   # cd /opt/lifemapper
+   # find . -name "*.in"  | grep -v config | grep -v axent
+     ./LmCompute/tools/lmJobScript.in
+   # cp /opt/lifemapper/LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/
+
+#. Delete installed lifemapper component directories and symlink to your git tree ::  
+
+   # cd /opt/lifemapper
+   # rm -rf Lm*
+   # ln -s /state/partition1/workspace/core/LmBackend
+   # ln -s /state/partition1/workspace/core/LmCommon
+   # ln -s /state/partition1/workspace/core/LmCompute
+
    
 Troubleshooting
 ***************
