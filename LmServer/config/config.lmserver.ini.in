@@ -77,6 +77,75 @@ LM_LIB_PATH: @LMWEB@
 WEB_HOSTNAME:  @WEB_FQDN@
 CHERRYPY_CONFIG_FILE: @LMHOME@/config/cherrypy.conf
 
+; ...............................................
+[LmServer - Matt Daemon]
+; MattDaemon constants
+MATT_DAEMON_PID_FILE: @TEMPDIR@/mattDaemon.pid
+MAX_MAKEFLOWS: 5
+
+; Catalog Server constants
+CS_PID_FILE: @TEMPDIR@/catalog_server.pid
+CS_LOG_FILE: @LMHOME@/log/catalog_server.log
+CS_PORT: 9097
+CS_BIN: @LMHOME@/bin/catalog_server
+CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LOG_FILE) -O 100M 
+
+;Use: ./catalog_server [options]
+;where options are:
+; -b,--background                Run as a daemon.
+; -B,--pid-file=<file>           Write process identifier (PID) to file.
+; -d,--debug=<subsystem>         Enable debugging for this subsystem
+; -h,--help                      Show this help screen
+; -H,--history=<directory>       Record catalog history to this directory.
+; -I,--interface=<addr>          Listen only on this network interface.
+; -l,--lifetime=<secs>           Lifetime of data, in seconds (default is 1800)
+; -L,--update-log=<file>         Log new updates to this file.
+; -m,--max-jobs=<n>              Maximum number of child processes.  (default is 50)
+; -M,--server-size=<size>        Maximum size of a server to be believed.  (default is any)
+; -n,--name=<name>               Preferred host name of this server.
+; -o,--debug-file=<file>         Send debugging to this file. (can also be :stderr, :stdout, :syslog, or :journal)
+; -O,--debug-rotate-max=<bytes>  Rotate debug file once it reaches this size. (default 10M, 0 disables)
+; -p,--port=<port>               Port number to listen on (default is 9097)
+; -S,--single                    Single process mode; do not work on queries.
+; -T,--timeout=<time>            Maximum time to allow a query process to run.  (default is 60s)
+; -u,--update-host=<host>        Send status updates to this host. (default is catalog.cse.nd.edu)
+; -U,--update-interval=<time>    Send status updates at this interval. (default is 5m)
+; -v,--version                   Show version string
+; -Z,--port-file=<file>          Select port at random and write it to this file. (default: disabled)
+
+; Worker Factory constants
+WORKER_OPTIONS: -C @PUBLIC_FQDN@:%(CS_PORT)s -v PYTHONPATH=@LMHOME@
+WF_BIN: @LMHOME@/bin/work_queue_factory
+WF_OPTIONS: -M lifemapper* -T sge -w 2 -W 5 -E "%(WORKER_OPTIONS)s" -S @TEMPDIR@/wq-pool-$uid
+
+;Use: work_queue_factory [options]
+;where options are:
+; -M,--master-name=<project>     Project name of masters to serve, can be a regular expression.
+; -F,--foremen-name=<project>    Foremen to serve, can be a regular expression.
+; -T,--batch-type=<type>         Batch system type (required). One of: local, wq, condor, sge, torque, moab, slurm, chirp, amazon
+; -P,--password                  Password file for workers to authenticate to master.
+; -C,--config-file=<file>        Use configuration file <file>.
+; -w,--min-workers               Minimum workers running.  (default=5)
+; -W,--max-workers               Maximum workers running.  (default=100)
+; --tasks-per-worker             Average tasks per worker. (default=one task per core)
+; -t,--timeout=<time>            Workers abort after this amount of idle time. (default=300)
+; -E,--extra-options=<options>   Extra options that should be added to the worker.
+; --cores=<n>                    Set the number of cores requested per worker.
+; --gpus=<n>                     Set the number of GPUs requested per worker.
+; --memory=<mb>                  Set the amount of memory (in MB) requested per worker.
+; --disk=<mb>                    Set the amount of disk (in MB) requested per worker.
+; --autosize                     Automatically size a worker to an available slot (Condor only).
+; --condor-requirements          Manually set requirements for the workers as condor jobs. May be specified several times, with the expresions and-ed together (Condor only).
+; --factory-timeout              Exit after no master has been seen in <n> seconds.
+; -S,--scratch-dir               Use this scratch dir for temporary files. (default is /tmp/wq-pool-$uid)
+; -c,--capacity                  Use worker capacity reported by masters. 
+; -d,--debug=<subsystem>         Enable debugging for this subsystem.
+; --amazon-credentials           Specify path to Amazon credentials (for use with -T amazon)
+; --amazon-ami                   Specify amazon machine image (AMI). (for use with -T amazon)
+; -o,--debug-file=<file>         Send debugging to this file. (can also be :stderr, :stdout, :syslog, or :journal)
+; -h,--help                      Show this screen.
+
+
 ; .............................................................................
 ; LmClient
 ; .............................................................................
