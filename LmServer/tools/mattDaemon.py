@@ -224,7 +224,7 @@ if __name__ == "__main__":
 
    args = parser.parse_args()
 
-   mfDaemon = MattDaemon(MF_DAEMON_PID_FILE, log=MediatorLogger(pid))
+   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE, log=MediatorLogger(pid))
 
    if args.cmd.lower() == 'start':
       print "Start"
