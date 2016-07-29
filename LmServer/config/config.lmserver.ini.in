@@ -88,7 +88,7 @@ CS_PID_FILE: @TEMPDIR@/catalog_server.pid
 CS_LOG_FILE: @LMHOME@/log/catalog_server.log
 CS_PORT: 9097
 CS_BIN: @LMHOME@/bin/catalog_server
-CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LOG_FILE) -O 100M 
+CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LOG_FILE)s -O 100M -H @TEMPDIR@/catalog.history 
 
 ;Use: ./catalog_server [options]
 ;where options are:
@@ -114,7 +114,7 @@ CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LO
 ; -Z,--port-file=<file>          Select port at random and write it to this file. (default: disabled)
 
 ; Worker Factory constants
-WORKER_OPTIONS: -C @PUBLIC_FQDN@:%(CS_PORT)s -v PYTHONPATH=@LMHOME@
+WORKER_OPTIONS: -C @PUBLIC_FQDN@:%(CS_PORT)s
 WF_BIN: @LMHOME@/bin/work_queue_factory
 WF_OPTIONS: -M lifemapper* -T sge -w 2 -W 5 -E "%(WORKER_OPTIONS)s" -S @TEMPDIR@/wq-pool-$uid
 
