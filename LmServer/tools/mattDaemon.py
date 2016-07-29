@@ -47,9 +47,10 @@ import traceback
 from LmBackend.common.daemon import Daemon
 from LmCompute.common.log import MediatorLogger
 from LmServer.db.scribe import Scribe
-from LmServer.common.localconstants import ARCHIVE_USER
-
-MF_DAEMON_PID_FILE = "/share/lm/temp/matt-daemon.pid"
+from LmServer.common.localconstants import ARCHIVE_USER, CATALOG_SERVER_BIN, \
+       CATALOG_SERVER_OPTIONS, CATALOG_SERVER_PID_FILE, MAKEFLOW_BIN, \
+       MAKEFLOW_OPTIONS, MATT_DAEMON_PID_FILE, MAX_MAKEFLOWS, \
+       WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -100,9 +101,9 @@ class MattDaemon(Daemon):
             numRunning = self.getNumberOfRunningProcesses()
             
             #   Add mf processes for empty slots
-            for jid, mfDoc in self.getMakeflowDocs(self.maxMFs - numRunning):
-               cmd = self.mfCmd.format(mfBin=self.mfBin, mfDoc=mfDoc, 
-                                       mfName="lifemapper-{0}".format(jid))
+            for jid, mfDoc in self.getMakeflowDocs(MAX_MAKEFLOWS - numRunning):
+               cmd = self._getMakeflowCommand("lifemapper-{0}".format(jid), 
+                                              mfDoc)
                self.log.debug(cmd)
                self._mfPool.append([jid, Popen(cmd, shell=True)])
             # Sleep
@@ -173,15 +174,16 @@ class MattDaemon(Daemon):
       """
       @summary: Get the maximum number of Makeflow processes for pool
       """
+      # NOTE: 
+      self.mfCmd = "{mfBin} {mfOptions}"
       # TODO: Get this from a constant and / or argument
-      self.maxMFs = 1
       self.mfCmd = "{mfBin} -T wq -N {mfName} -t 600 -u 600 {mfDoc}"
-      # TODO: Get from constant
-      self.mfBin = "makeflow"
       self.sleepTime = 30
 
    # .............................
    def startCatalogServer(self):
+      cmd = "{csBin} {csOptions}".format(csBin=CATALOG_SERVER_BIN, 
+                                         csOptions=CATALOG_SERVER_OPTIONS)
       pass
    
    # .............................
@@ -190,18 +192,30 @@ class MattDaemon(Daemon):
    
    # .............................
    def startWorkerFactory(self):
-      pass
+      cmd = "{wfBin} {wfOptions}".format(wfBin=WORKER_FACTORY_BIN, 
+                                         wfOptions=WORKER_FACTORY_OPTIONS)
    
    # .............................
    def stopWorkerFactory(self):
       pass
    
+   # .............................
+   def _getMakeflowCommand(self, name, mfDocFn):
+      """
+      @summary: Assemble Makeflow command
+      @param name: The name of the Makeflow job
+      @param mfDocFn: The Makeflow file to run
+      """
+      mfCmd = "{mfBin} {mfOptions} -N {mfName} {mfDoc}".format(
+                           mfBin=MAKEFLOW_BIN, mfOptions=MAKEFLOW_OPTIONS, 
+                           mfName=name, mfDoc=mfDocFn)
+      return mfCmd
 
 # .............................................................................
 if __name__ == "__main__":
    
-   if os.path.exists(MF_DAEMON_PID_FILE):
-      pid = open(MF_DAEMON_PID_FILE).read().strip()
+   if os.path.exists(MATT_DAEMON_PID_FILE):
+      pid = open(MATT_DAEMON_PID_FILE).read().strip()
    else:
       pid = os.getpid()
    
