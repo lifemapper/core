@@ -174,10 +174,6 @@ class MattDaemon(Daemon):
       """
       @summary: Get the maximum number of Makeflow processes for pool
       """
-      # NOTE: 
-      self.mfCmd = "{mfBin} {mfOptions}"
-      # TODO: Get this from a constant and / or argument
-      self.mfCmd = "{mfBin} -T wq -N {mfName} -t 600 -u 600 {mfDoc}"
       self.sleepTime = 30
 
    # .............................
