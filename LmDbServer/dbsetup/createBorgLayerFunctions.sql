@@ -151,7 +151,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm_v3.lm_countTypeCodes(varchar, double precision, double precision);
 CREATE OR REPLACE FUNCTION lm_v3.lm_countTypeCodes(usr varchar, 
                                                  beforetime double precision, 
                                                  aftertime double precision)

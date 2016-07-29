@@ -139,17 +139,17 @@ if __name__ == "__main__":
    tuple = time.localtime(secs)
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
    logger = ScriptLogger('archivist.{}'.format(timestamp))
-   idig = Archivist(BOOM_PID_FILE, log=logger)
+   boomer = Archivist(BOOM_PID_FILE, log=logger)
      
    if len(sys.argv) == 2:
       if sys.argv[1].lower() == 'start':
-         idig.start()
+         boomer.start()
       elif sys.argv[1].lower() == 'stop':
-         idig.stop()
+         boomer.stop()
       elif sys.argv[1].lower() == 'restart':
-         idig.restart()
+         boomer.restart()
       elif sys.argv[1].lower() == 'status':
-         idig.status()
+         boomer.status()
       else:
          print("Unknown command: {}".format(sys.argv[1].lower()))
          sys.exit(2)

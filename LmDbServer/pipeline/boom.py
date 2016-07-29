@@ -94,13 +94,10 @@ class _LMBoomer(LMObject):
          self._scribe = Scribe(self.log)
          success = self._scribe.openConnections()
       except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs='Failed to open database', 
-                        prevargs=e.args)
-         self._failGracefully(lmerr=e)
+         raise LMError(currargs='Exception opening database', prevargs=e.args)
       else:
          if not success:
-            self._failGracefully(lmerr='Failed to open database')
+            raise LMError(currargs='Failed to open database')
             
       self.log.info('{} opened databases'.format(self.name))
       self._fillDefaultObjects(algLst, mdlScen, prjScenLst, mdlMask, prjMask, 
@@ -550,13 +547,13 @@ class BisonBoom(_LMBoomer):
                                       intersectGrid=intersectGrid, log=log)
       self._tsnfile = None      
       if taxonSourceName is None:
-         self._failGracefully(lmerr='Missing taxonomic source')
+         raise LMError(currargs='Missing taxonomic source')
          
       self._updateFile(tsnfilename, expDate)
       try:
          self._tsnfile = open(tsnfilename, 'r')
       except:
-         self._failGracefully(lmerr='Unable to open {}'.format(tsnfilename))
+         raise LMError(currargs='Unable to open {}'.format(tsnfilename))
       
       self._linenum = 0
       self._obsoleteTime = expDate
@@ -707,9 +704,7 @@ class UserBoom(_LMBoomer):
       try:
          self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
       except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         self._failGracefully(lmerr=e)
+         raise LMError(currargs=e.args)
          
       if self.occParser is not None:
          self._fieldNames = self.occParser.header
@@ -838,16 +833,15 @@ class GBIFBoom(_LMBoomer):
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       intersectGrid=intersectGrid, log=log)               
       self._dumpfile = None
+      csv.field_size_limit(sys.maxsize)
       try:
          self._dumpfile = open(occfilename, 'r')
       except:
-         self._failGracefully(lmerr='Failed to open {}'.format(occfilename))
-
-      csv.field_size_limit(sys.maxsize)
+         raise LMError(currargs='Failed to open {}'.format(occfilename))
       try:
          self._csvreader = csv.reader(self._dumpfile, delimiter='\t')
       except:
-         self._failGracefully(lmerr='Failed to init CSV reader with {}'.format(occfilename))
+         raise LMError(currargs='Failed to init CSV reader with {}'.format(occfilename))
 
       self._linenum = 0
       gbifFldNames = []
@@ -1047,7 +1041,7 @@ class iDigBioBoom(_LMBoomer):
                                         mdlMask=mdlMask, prjMask=prjMask, 
                                         intersectGrid=intersectGrid, log=log)
       if taxonSourceName is None:
-         self._failGracefully(lmerr='Missing taxonomic source')
+         raise LMError(currargs='Missing taxonomic source')
          
       try:
          self._idigFile = open(idigFname, 'r')
