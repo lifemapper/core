@@ -30,15 +30,14 @@
 
 
 """
-#TODO: Number of mfs constant
 #TODO: Find existing MFs
-#TODO: MF_DAEMON_PID_FILE
 #TODO: Logger
 #TODO: Something other than a list for pool?
 #TODO: What if document does not exist?
 
 import argparse
 import os
+import signal
 from subprocess import Popen
 import sys
 from time import sleep
@@ -68,6 +67,8 @@ class MattDaemon(Daemon):
       """
       # Makeflow pool
       self._mfPool = []
+      self.csProc = None
+      self.mfProc = None
       
       # Establish db connection
       self.scribe = Scribe(self.log)
@@ -94,6 +95,12 @@ class MattDaemon(Daemon):
          while self.keepRunning and os.path.exists(self.pidfile):
             
             #TODO: Check if catalog server and factory are running
+            # TODO: Should we attempt to restart these if they are stopped?
+            if self.csProc.poll() is not None:
+               raise Exception, "Catalog server has stopped"
+            
+            if self.wfProc.poll() is not None:
+               raise Exception, "Worker factory has stopped"
             
             
             
@@ -180,20 +187,21 @@ class MattDaemon(Daemon):
    def startCatalogServer(self):
       cmd = "{csBin} {csOptions}".format(csBin=CATALOG_SERVER_BIN, 
                                          csOptions=CATALOG_SERVER_OPTIONS)
-      pass
+      self.csProc = Popen(cmd, shell=True, preexec_fn=os.setsid)
    
    # .............................
    def stopCatalogServer(self):
-      pass
+      os.killpg(os.getpgid(self.csProc.pid), signal.SIGTERM)
    
    # .............................
    def startWorkerFactory(self):
       cmd = "{wfBin} {wfOptions}".format(wfBin=WORKER_FACTORY_BIN, 
                                          wfOptions=WORKER_FACTORY_OPTIONS)
+      self.wfProc = Popen(cmd, shell=True, preexec_fn=os.setsid)
    
    # .............................
    def stopWorkerFactory(self):
-      pass
+      os.killpg(os.getpgid(self.wfProc.pid), signal.SIGTERM)
    
    # .............................
    def _getMakeflowCommand(self, name, mfDocFn):
