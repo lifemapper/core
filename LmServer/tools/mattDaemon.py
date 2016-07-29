@@ -27,6 +27,8 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+
+
 """
 #TODO: Number of mfs constant
 #TODO: Find existing MFs
@@ -72,6 +74,12 @@ class MattDaemon(Daemon):
       
       # Read configuration
       self.readConfiguration()
+      
+      # Start catalog server
+      self.startCatalogServer()
+      
+      # Start worker factory
+      self.startWorkerFactory()
    
    # .............................
    def run(self):
@@ -81,7 +89,12 @@ class MattDaemon(Daemon):
       """
       try:
          self.log.info("Running")
+         
          while self.keepRunning and os.path.exists(self.pidfile):
+            
+            #TODO: Check if catalog server and factory are running
+            
+            
             
             # Check if there are any empty slots
             numRunning = self.getNumberOfRunningProcesses()
@@ -144,6 +157,15 @@ class MattDaemon(Daemon):
       self.log.debug("Shutdown signal caught!")
       self.scribe.closeConnections()
       
+      #TODO: Check that makeflows are stopped? or force shutdown
+      
+      # Stop worker factory
+      self.stopWorkerFactory()
+      
+      # Stop catalog server
+      self.stopCatalogServer()
+      
+      
       Daemon.onShutdown(self)
       
    # .............................
@@ -157,6 +179,23 @@ class MattDaemon(Daemon):
       # TODO: Get from constant
       self.mfBin = "makeflow"
       self.sleepTime = 30
+
+   # .............................
+   def startCatalogServer(self):
+      pass
+   
+   # .............................
+   def stopCatalogServer(self):
+      pass
+   
+   # .............................
+   def startWorkerFactory(self):
+      pass
+   
+   # .............................
+   def stopWorkerFactory(self):
+      pass
+   
 
 # .............................................................................
 if __name__ == "__main__":
