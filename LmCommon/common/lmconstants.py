@@ -693,7 +693,7 @@ class DWCNames:
 BISON_COUNT_KEYS = ['response', 'numFound']
   
 PROVIDER_NAME_FIELD = 'provider'
-LINK_FIELD = 'point_url'
+# LINK_FIELD = 'point_url'
 # REQUIRED_AGGREGATOR_FIELDS = [DWCNames.CATALOG_NUMBER['SHORT'],
 #                               DWCNames.COLLECTION_CODE['SHORT'],
 #                               DWCNames.INSTITUTION_CODE['SHORT'],
@@ -811,6 +811,7 @@ GBIF_LINK_PREFIX = 'http://www.gbif.org/occurrence/'
 BISON_OCCURRENCE_URL = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select'
 # Ends in : to allow appending unique id
 BISON_LINK_PREFIX = 'http://bisonapi.usgs.ornl.gov/solr/occurrences/select/?q=occurrenceID:'
+BISON_LINK_FIELD = 'bisonurl'
 # For TSN query filtering on Binomial
 BISON_NAME_KEY = 'ITISscientificName'
 # For Occurrence query by TSN in hierarchy

@@ -36,10 +36,11 @@ from types import ListType, TupleType, UnicodeType, StringType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (ENCODING, BISON_RESPONSE_FIELDS,
       GBIF_EXPORT_FIELDS, GBIF_ID_FIELD, GBIF_LINK_PREFIX, BISON_LINK_PREFIX,
-      IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD, IDIGBIO_LINK_PREFIX,
+      IDIGBIO_RETURN_FIELDS, IDIGBIO_ID_FIELD, IDIGBIO_LINK_PREFIX, 
       LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
       SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT,
-      GBIF_PROVIDER_FIELD, PROVIDER_NAME_FIELD, LINK_FIELD)
+      GBIF_PROVIDER_FIELD, PROVIDER_NAME_FIELD, 
+      GBIF_LINK_FIELD, IDIGBIO_LINK_FIELD, BISON_LINK_FIELD)
 from LmCompute.common.lmObj import LmException
 from LmCommon.common.unicode import fromUnicode, toUnicode
 
@@ -89,7 +90,7 @@ class ShapeShifter(object):
       elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
          self.dataFields = GBIF_EXPORT_FIELDS
          self.idField = GBIF_ID_FIELD
-         self.linkField = LINK_FIELD
+         self.linkField = GBIF_LINK_FIELD
          self.linkUrl = GBIF_LINK_PREFIX
          self.linkIdField = GBIF_ID_FIELD
          self.providerKeyField = GBIF_PROVIDER_FIELD
@@ -102,7 +103,7 @@ class ShapeShifter(object):
          self.dataFields = IDIGBIO_RETURN_FIELDS
          self.lookupFields = self._mapAPIResponseNames()
          self.idField = IDIGBIO_ID_FIELD
-         self.linkField = LINK_FIELD
+         self.linkField = IDIGBIO_LINK_FIELD
          self.linkUrl = IDIGBIO_LINK_PREFIX
          self.linkIdField = IDIGBIO_ID_FIELD
          self.computedProviderField = PROVIDER_NAME_FIELD
@@ -112,7 +113,7 @@ class ShapeShifter(object):
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
          self.dataFields = BISON_RESPONSE_FIELDS
          self.lookupFields = self._mapAPIResponseNames()
-         self.linkField = LINK_FIELD
+         self.linkField = BISON_LINK_FIELD
          self.linkUrl = BISON_LINK_PREFIX
          self.linkIdField = DWCNames.OCCURRENCE_ID['SHORT']
          self.idField = LM_ID_FIELD  
