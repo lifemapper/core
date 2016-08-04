@@ -150,8 +150,8 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       self._rawDLocation = rawDLocation
       self._subsetDLocation = None
       self.setId(occId)
-      if self.fromGbif:
-         self.setValAttribute(GBIF_LINK_FIELD)
+#       if self.fromGbif:
+#          self.setValAttribute(GBIF_LINK_FIELD)
                    
 # .............................................................................
 # Class and Static methods
