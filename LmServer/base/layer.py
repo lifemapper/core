@@ -1011,7 +1011,7 @@ class Vector(_Layer):
                       serviceType=serviceType, moduleType=moduleType)
       self.setDataDescription(ogrType, ogrFormat)
       self.setFeatures(features, featureAttributes)
-      self.setValAttribute(valAttribute)
+#       self.setValAttribute(valAttribute)
       
       if self._dlocation is not None and os.path.exists(self._dlocation):
          if ogrType is None or bbox is None:

@@ -201,7 +201,6 @@ class Borg(DbPostgresql):
                   ['prjstatusmodtime', 'occstatusmodtime', 'datelastmodified', 
                    'statusmodtime'])
          bbox = self._getColumnValue(row, idxs, ['bbox'])
-         vattr = self._getColumnValue(row, idxs, ['valattribute'])
          nodata = self._getColumnValue(row, idxs, ['nodataval'])
          minval = self._getColumnValue(row, idxs, ['minval'])
          maxval = self._getColumnValue(row, idxs, ['maxval'])
@@ -212,7 +211,7 @@ class Borg(DbPostgresql):
                          verify=verify, squid=squid,
                          endDate=eDate, mapunits=munits, resolution=res, 
                          epsgcode=epsg, dlocation=dlocation, 
-                         metalocation=mlocation, valAttribute=vattr, 
+                         metalocation=mlocation, 
                          valUnits=vunits, isCategorical=iscat, 
                          ogrType=vtype, ogrFormat=fformat, 
                          author=author, description=desc, 
@@ -337,7 +336,6 @@ class Borg(DbPostgresql):
                                          lyr.endDate,
                                          lyr.modTime,
                                          lyr.getCSVExtentString(), wkt,
-                                         lyr.getValAttribute(),
                                          nodata, min, max,
                                          lyr.valUnits,
                                          ltypeid,
@@ -461,9 +459,8 @@ class Borg(DbPostgresql):
                            lyr.ogrType, lyr.gdalType, lyr.isCategorical, 
                            lyr.dataFormat, lyr.epsgcode,
                            lyr.mapUnits, lyr.resolution, lyr.startDate, 
-                           lyr.endDate, lyr.modTime, 
-                           lyr.getCSVExtentString(), wkt, 
-                           lyr.getValAttribute(), lyr.nodataVal, lyr.minVal, 
+                           lyr.endDate, lyr.modTime, lyr.getCSVExtentString(), 
+                           wkt, lyr.nodataVal, lyr.minVal, 
                            lyr.maxVal, lyr.valUnits, lyr.getParametersId(),
                            self._getRelativePath(url=lyr.metadataUrl),
                            lyr.typeCode, lyr.typeTitle, lyr.typeDescription)
