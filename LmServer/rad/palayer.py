@@ -128,7 +128,7 @@ class PresenceAbsenceVector(_PresenceAbsence, Vector, ProcessObject):
                     identifier) and the value is a list of attribute values.  
                     The position of each value in the list corresponds to the 
                     key index in featureAttributes. 
-      @param valAttribute: Attribute to be classified when mapping this layer 
+      @param valAttribute: Attribute for mapping       
       @param modTime: time/date last modified
       @param description: description of the layer
       @param matrixIndex: Index of the position in presenceAbsence matrix for a 
@@ -152,6 +152,8 @@ class PresenceAbsenceVector(_PresenceAbsence, Vector, ProcessObject):
       @param lyrUserId: Id for the owner of the Layer with PresenceAbsenceValues 
                     defined on it.
       @param paLyrId: Unique (join) ID for the presenceAbsenceLayer in the experiment
+      @note: valAttribute was used for WFS and is disabled 
+      @note: valUnits, isCategorical describe the attrPresence field.
       """
 #       self._paLayerId = paLyrId
       _PresenceAbsence.__init__(self, matrixIndex, attrPresence, minPresence, 

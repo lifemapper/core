@@ -101,11 +101,9 @@ class AncillaryVector(_AncillaryValue, Raster, ProcessObject):
       @copydoc Vector::__init__
       @copydoc _AncillaryValue::__init__
       @param ancLyrId: Unique (join) ID for the ancillaryLayer in the experiment 
-      @note: valAttr, valUnits, isCategorical are used for mapping and may be 
-                      different than attrValue, which is used for intersect 
-                      calculations
-                      lyrId=None, lyrUserId=None,
-                createTime=None, modTime=None, metadataUrl=None
+      @note: valAttr was used for WFS and is disabled 
+      @note: attrValue is the name of the field to be used for intersect 
+             calculations.  valUnits, isCategorical describe the attrValue field.
       """
       _AncillaryValue.__init__(self, matrixIndex, attrValue, weightedMean, 
                                largestClass, minPercent, modTime, 
