@@ -568,7 +568,7 @@ class svc(object):
                   <br />
                   Welcome again to Lifemapper!<br />
                   <br />
-               """.format(fName=fromUnicdoe(toUnicode(fName)), 
+               """.format(fName=fromUnicode(toUnicode(fName)), 
                           userId=fromUnicode(toUnicode(userId)), 
                            pword=fromUnicode(toUnicode(pword)), 
                            website=fromUnicode(toUnicode(WEBSERVICES_ROOT)))
