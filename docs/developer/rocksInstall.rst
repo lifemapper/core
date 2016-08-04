@@ -15,7 +15,6 @@ Physical and Virtual clusters::
   * base 
   * ganglia
   * hpc
-  * java
   * kernel
   * os
   * python
