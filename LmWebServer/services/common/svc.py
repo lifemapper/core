@@ -36,7 +36,7 @@ from types import FileType
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, ENCODING
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
-from LmCommon.common.unicode import toUnicode
+from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
@@ -549,7 +549,7 @@ class svc(object):
                
                cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
                
-               welcomeMsg = toUnicode("""
+               welcomeMsg = """
                   <span class="signupWelcome">
                      Welcome to Lifemapper, {fName}!
                   </span>
@@ -568,11 +568,15 @@ class svc(object):
                   <br />
                   Welcome again to Lifemapper!<br />
                   <br />
-               """).format(fName=toUnicode(fName), userId=toUnicode(userId), 
-                           pword=toUnicode(pword), 
-                           website=toUnicode(WEBSERVICES_ROOT))
+               """.format(fName=fromUnicdoe(toUnicode(fName)), 
+                          userId=fromUnicode(toUnicode(userId)), 
+                           pword=fromUnicode(toUnicode(pword)), 
+                           website=fromUnicode(toUnicode(WEBSERVICES_ROOT)))
                return globalWebsite(
-                   toUnicode("Welcome {fName}!").format(fName=toUnicode(fName)),
+                   fromUnicode(toUnicode(
+                        "Welcome {fName}!".format(
+                              fName=fromUnicode(toUnicode(fName))
+                        ))),
                    welcomeMsg)
             else:
                scribe.closeConnections()
