@@ -15,4 +15,4 @@
 -- ----------------------------------------------------------------------------
 \c borg
 -- -------------------------------
-ALTER TABLE lm_v3.Layer DROP column IF EXISTS valAttribute;
+ALTER TABLE lm_v3.Layer DROP column IF EXISTS valAttribute CASCADE;

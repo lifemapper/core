@@ -299,14 +299,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- EnvLayer
 -- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
-lyrsquid varchar,usr varchar,lyrname varchar, lyrtitle varchar,lyrauthor varchar,
-lyrdesc varchar, dloc varchar,mloc varchar,vtype int,rtype int,iscat boolean,
-datafmt varchar,epsg int,munits varchar,res double precision,startdt double precision,
-enddt double precision,mtime double precision,bboxstr varchar,bboxwkt varchar,
-vattr varchar, vnodata double precision,vmin double precision,vmax double precision,
-vunits varchar,lyrtypeid int,murlprefix varchar,ltype varchar,ltypetitle varchar,
-ltypedesc varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
                                           lyrsquid varchar,
                                           usr varchar,
@@ -472,35 +464,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- LAYER
 -- ----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS lm_v3.lm_findOrInsertLayer(lyrverify varchar,
-                                          lyrsquid varchar,
-                                          usr varchar,
-                                          txid int,
-                                          lyrname varchar, 
-                                          lyrtitle varchar,
-                                          lyrauthor varchar,
-                                          lyrdesc varchar,
-                                          dloc varchar,
-                                          mloc varchar,
-                                          vtype int,
-                                          rtype int,
-                                          iscat boolean,
-                                          datafmt varchar,
-                                          epsg int,
-                                          munits varchar,
-                                          res double precision,
-                                          startdt double precision,
-                                          enddt double precision,
-                                          mtime double precision,
-                                          bboxstr varchar,
-                                          bboxwkt varchar,
-                                          vattr varchar, 
-                                          vnodata double precision,
-                                          vmin double precision,
-                                          vmax double precision,
-                                          vunits varchar,
-                                          lyrtypeid int,
-                                          murlprefix varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayer(lyrverify varchar,
                                           lyrsquid varchar,
                                           usr varchar,
