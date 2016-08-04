@@ -155,7 +155,6 @@ create table lm_v3.Layer
    endDate double precision,
    modTime double precision,
    bbox varchar(60),
-   valAttribute varchar(20),
    nodataVal double precision,
    minVal double precision,
    maxVal double precision,
