@@ -25,6 +25,7 @@
 from types import StringType, UnicodeType, IntType, \
                   LongType, FloatType, NoneType, BooleanType
 
+from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmServer.base.lmobj import LMError, LMAbstractObject
 
 # ............................................................................
@@ -140,7 +141,8 @@ class _DbConn(LMAbstractObject):
              should not encounter it in the current (or future) Lifemapper 
              configuration.
       """
-      if isinstance(val, StringType) or isinstance(val, UnicodeType):
+      if isinstance(val, basestring):
+         val = fromUnicode(toUnicode(val))
          val = val.replace('\'', "''")
          val = val.replace('\\', '\\\\')
          dbVal = "E'%s'" % (val)
