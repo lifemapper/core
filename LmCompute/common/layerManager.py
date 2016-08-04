@@ -437,16 +437,15 @@ class LayerManager(object):
                if not os.path.exists(mxeFn):
                   mxeTups.append((ascFn, mxeFn))
                # Set to insert into db if not present in db
-               mxeLayers.append(layerId)
+               mxeLayers.append((layerId, mxeFn))
             
          print "Done converting ASCIIs"
          # Only make MXEs if we make ASCIIs
          if makeMXEs:
             print "Seeding MXEs"
             convertAsciisToMxes(mxeTups)
-            for layerId in mxeLayers:
-               self._insertLayer(layerId, LayerFormat.MXE, 
-                                 self._getFilePath(layerId, LayerFormat.MXE), 
+            for layerId, mxeFn in mxeLayers:
+               self._insertLayer(layerId, LayerFormat.MXE, mxeFn, 
                                  LayerStatus.SEEDED)
             print "Done seeding MXEs"
          
