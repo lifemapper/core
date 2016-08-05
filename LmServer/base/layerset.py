@@ -538,14 +538,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       if dataspecs: 
          proj = self._createProjectionInfo(sdlLyr.epsgcode)
          
-         subsetFname = None
-#          if sdlLyr.getValAttribute() is not None:
-#             attMeta = ['wfs_featureid  \"%s\"' % sdlLyr.getValAttribute()]
-#          
-#          elif isinstance(sdlLyr, OccurrenceLayer) and sdlLyr.fromGbif:
-#             # TODO: Remove this after certain that valAttribute is always populated
-#             attMeta = ['wfs_featureid  \"%s\"' % GBIF_LINK_FIELD]
-                      
+         subsetFname = None                      
          meta = self._getLayerMetadata(sdlLyr, metalines=attMeta, 
                                        isVector=True)
          
