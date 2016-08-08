@@ -37,7 +37,7 @@ from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH, DATASOURCE
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
-from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
 from LmServer.sdm.scenario import Scenario
@@ -76,16 +76,16 @@ def addAlgorithms(scribe):
 
 # ...............................................
 def addLayerTypes(scribe, lyrtypeMeta, usr): 
-   ids = [] 
+   etypes = [] 
    for typecode, typeinfo in lyrtypeMeta.iteritems():
       ltype = EnvironmentalType(typecode, typeinfo['title'], 
                                 typeinfo['description'], usr, 
                                 keywords=typeinfo['keywords'], 
                                 modTime=DT.gmt().mjd)
       scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
-      etypeid = scribe.getOrInsertLayerTypeCode(ltype)
-      ids.append(etypeid)
-   return ids
+      etype = scribe.insertLayerTypeCode(ltype)
+      etypes.append(etype)
+   return etypes
 
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
@@ -466,26 +466,26 @@ if __name__ == '__main__':
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
    try:
-      logger = ScriptLogger(basename)
-      scribe = Scribe(logger)
-      success = scribe.openConnections()
+      logger = ScriptLogger(basename+'_borg')
+      scribeWithBorg = BorgScribe(logger)
+      success = scribeWithBorg.openConnections()
 
       if not success: 
          logger.critical('Failed to open database')
          exit(0)
       
       logger.info('  Insert user {} metadata ...'.format(ARCHIVE_USER))
-      archiveUserId, anonUserId = addUsers(scribe)
+      archiveUserId, anonUserId = addUsers(scribeWithBorg)
       
       if metaType in ('algorithm', 'all'):
          logger.info('  Insert algorithm metadata ...')
-         aIds = addAlgorithms(scribe)
+         aIds = addAlgorithms(scribeWithBorg)
 
       if metaType in ('climate', 'all'):
          logger.info('  Insert climate {} metadata ...'
                      .format(SCENARIO_PACKAGE))
          pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-         addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
+         addScenarioPackageMetadata(scribeWithBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                     meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
 
       if metaType in ('taxonomy', 'all'):
@@ -493,13 +493,13 @@ if __name__ == '__main__':
          for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
             logger.info('  Insert taxonomy {} metadata ...'
                         .format(taxInfo['name']))
-            taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
+            taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
                                                       taxInfo['url'])      
    except Exception, e:
       logger.error(str(e))
       raise
    finally:
-      scribe.closeConnections()
+      scribeWithBorg.closeConnections()
        
 """
 from LmDbServer.tools.initCatalog import *
