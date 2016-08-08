@@ -179,3 +179,27 @@ class BorgScribe(LMObject):
    def insertShapeGrid(self, shpgrd, cutout=None):
       updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
       return updatedShpgrd
+
+# ...............................................
+   def findTaxonSource(self, taxonSourceName):
+      txSourceId, url, moddate = self._mal.findTaxonSource(taxonSourceName)
+      return txSourceId, url, moddate
+   
+# ...............................................
+   def getScenario(self, code, matchingLayers=None):
+      """
+      @summary: Get and fill a scenario from its code or database id.  If 
+                matchingLayers is given, ensure that only layers with the same
+                type as layers in the matchingLayers are filled, and that the 
+                requested scenario layers are in the same order as those in 
+                the matchingLayers.
+      @param code: The code for the scenario to return
+      @return: Scenario object filled with Raster objects.
+      """
+      if isinstance(code, IntType):
+         scenario = self._mal.getScenarioById(code, matchingLayers)
+      elif isinstance(code, StringType) or isinstance(code, UnicodeType):
+         scenario = self._mal.getScenarioByCode(code, matchingLayers)
+
+      return scenario
+

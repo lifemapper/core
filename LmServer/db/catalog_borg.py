@@ -541,3 +541,42 @@ class Borg(DbPostgresql):
                                                 userId, status)
       return self._getCount(row)
 
+# ...............................................
+   def findTaxonSource(self, taxonSourceName):
+      txSourceId = url = createdate = moddate = None
+      if taxonSourceName is not None:
+         try:
+            row, idxs = self.executeSelectOneFunction('lm_findTaxonSource', 
+                                                      taxonSourceName)
+         except Exception, e:
+            if not isinstance(e, LMError):
+               e = LMError(currargs=e.args, lineno=self.getLineno())
+            raise e
+         if row is not None:
+            txSourceId = self._getColumnValue(row, idxs, ['taxonomysourceid'])
+            url = self._getColumnValue(row, idxs, ['url'])
+            moddate =  self._getColumnValue(row, idxs, ['modtime'])
+      return txSourceId, url, moddate
+   
+# .............................................................................
+   def getScenario(self, code=None, scenid=None):
+      """
+      @summary: Return a scenario by its db id or code, filling its layers.  
+      @param code: Code for the scenario to be fetched.
+      @param scenid: ScenarioId for the scenario to be fetched.
+      """
+      if code is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getScenarioByCode', code)
+      elif scenid is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getScenarioById', scenid)
+      else:
+         raise LMError(currargs='Must provide scenario code or id')
+      scen = self._createScenario(row, idxs)
+      if scen is not None:
+         rows, idxs = self.executeSelectManyFunction('lm_getLayersByScenarioId', 
+                                                     scen.getId())
+         for r in rows:
+            lyr = self._createEnvironmentalLayer(r, idxs)
+            scen.addLayer(lyr)
+      return scen
+                     
