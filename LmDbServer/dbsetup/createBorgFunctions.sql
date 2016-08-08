@@ -294,3 +294,23 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findTaxonSource(tsourcename varchar)
+RETURNS lm_v3.TaxonomySource AS
+$$
+DECLARE
+   rec lm_v3.TaxonomySource%ROWTYPE;
+BEGIN
+   begin
+      SELECT * INTO STRICT rec FROM lm_v3.TaxonomySource
+         WHERE datasetIdentifier = tsourcename;
+      
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'TaxonomySource % not found', tsourcename;
+         WHEN TOO_MANY_ROWS THEN
+            RAISE EXCEPTION 'TaxonomySource % not unique', tsourcename;
+      end;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
