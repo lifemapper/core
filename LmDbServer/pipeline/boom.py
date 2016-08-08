@@ -98,7 +98,7 @@ class _LMBoomer(LMObject):
       else:
          if not success:
             raise LMError(currargs='Failed to open database')
-            
+         
       self.log.info('{} opened databases'.format(self.name))
       self._fillDefaultObjects(algLst, mdlScen, prjScenLst, mdlMask, prjMask, 
                                intersectGrid, taxonSourceName)
@@ -464,16 +464,16 @@ class _LMBoomer(LMObject):
       # Reset existing if missing data, obsolete, or failed
       elif len(occs) == 1:
          tmpOcc = occs[0]
-         # waiting but raw data missing
+         # waiting but raw data missing (status = 0 or 1)
          if ((JobStatus.waiting(tmpOcc.status) 
               and tmpOcc.getRawDLocation() is None)
              or
-             # complete but obsolete
+             # complete but obsolete (statusmodtime < SPECIES_EXP)
              (tmpOcc.status == JobStatus.COMPLETE 
               and tmpOcc.statusModTime > 0 
               and tmpOcc.statusModTime < self._obsoleteTime)
              or 
-             # failed
+             # failed (status > 1000)
              JobStatus.failed(tmpOcc.status)):
             # Reset existing 
             occ = tmpOcc
