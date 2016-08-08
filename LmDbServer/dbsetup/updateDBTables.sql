@@ -13,6 +13,7 @@
 -- -------------------------------
 
 -- ----------------------------------------------------------------------------
-\c borg
+\c template1
 -- -------------------------------
-ALTER TABLE lm_v3.Layer DROP column IF EXISTS valAttribute CASCADE;
+DROP DATABASE borg IF EXISTS;
+\i /opt/lifemapper/LmDbServer/dbsetup/createBorg.sql

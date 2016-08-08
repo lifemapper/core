@@ -340,6 +340,14 @@ create table lm_v3.ShapeGrid
 );
 
 -- -------------------------------
+create table lm_v3.Tree
+(
+   treeId serial UNIQUE PRIMARY KEY,
+   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   treeDlocation varchar(256)
+);
+
+-- -------------------------------
 create table lm_v3.AncillaryValue
 (
    ancillaryValueId  serial UNIQUE PRIMARY KEY,
@@ -380,13 +388,14 @@ create table lm_v3.PresenceAbsence
 );
 
 -- -------------------------------
-create table lm_v3.Boom
+create table lm_v3.Bucket
 (
-   boomId serial UNIQUE PRIMARY KEY,
+   bucketId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
+   shapeGridId int NOT NULL REFERENCES lm_v3.ShapeGrid,
+   treeId REFERENCES lm_v3.Tree,
    attrMatrixDlocation varchar(256),
-   attrTreeDlocation varchar(256),
    epsgcode int,
    description text,
    modTime double precision,
@@ -394,57 +403,35 @@ create table lm_v3.Boom
 );
 
 -- -------------------------------
-create table lm_v3.PAM
+create table lm_v3.Matrix
 (
-   pamId serial UNIQUE PRIMARY KEY,
-   boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
-   shapeGridId int NOT NULL REFERENCES lm_v3.ShapeGrid,
-   slIndicesDlocation varchar(256),   
-   -- Uncompressed
-   pamDlocation varchar(256),
+   matrixId serial UNIQUE PRIMARY KEY,
+   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   matrixType int NOT NULL,
+   matrixDlocation varchar(256)
+   metaDlocation varchar(256),  
    status int,
    statusmodtime double precision
 );
 
 -- -------------------------------
-create table lm_v3.GRIM
+create table lm_v3.BucketPALayer
 (
-   grimId serial UNIQUE PRIMARY KEY,
-   boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
-   shapeGridId int NOT NULL REFERENCES lm_v3.ShapeGrid,
-   slIndicesDlocation varchar(256),   
-   -- Uncompressed 
-   grimDlocation varchar(256),
-   status int,
-   statusmodtime double precision
-);
-
--- -------------------------------
-create table lm_v3.BoomPALayer
-(
-   boomPALayerId  serial UNIQUE PRIMARY KEY,
-   boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
+   bucketPALayerId  serial UNIQUE PRIMARY KEY,
+   bucketId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    presenceAbsenceId int NOT NULL REFERENCES lm_v3.PresenceAbsence ON DELETE CASCADE,
-   name varchar(20),
-   -- initialized as -1
-   matrixIdx int NOT NULL,
-   UNIQUE (boomId, layerId, presenceAbsenceId),
-   UNIQUE (boomId, matrixIdx)
+   UNIQUE (bucketId, layerId, presenceAbsenceId)
 );
 
 -- -------------------------------
-create table lm_v3.BoomAncLayer
+create table lm_v3.BucketAncLayer
 (
-   boomAncLayerId  serial UNIQUE PRIMARY KEY,
-   boomId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
+   bucketAncLayerId  serial UNIQUE PRIMARY KEY,
+   bucketId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    ancillaryValueId int NOT NULL REFERENCES lm_v3.AncillaryValue ON DELETE CASCADE,
-   name varchar(20),
-   -- initialized as -1
-   matrixIdx int NOT NULL,
-   UNIQUE (boomId, layerId, ancillaryValueId),
-   UNIQUE (boomId, matrixIdx)
+   UNIQUE (bucketId, layerId, ancillaryValueId)
 );
 
 
@@ -470,11 +457,10 @@ lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
 lm_v3.ancillaryvalue, lm_v3.ancillaryvalue_ancillaryvalueid_seq,
 lm_v3.presenceabsence, lm_v3.presenceabsence_presenceabsenceid_seq,
-lm_v3.boom, lm_v3.boom_boomid_seq,
-lm_v3.pam, lm_v3.pam_pamid_seq,
-lm_v3.grim, lm_v3.grim_grimid_seq,
-lm_v3.boompalayer, lm_v3.boompalayer_boompalayerid_seq,
-lm_v3.boomanclayer, lm_v3.boomanclayer_boomanclayerid_seq
+lm_v3.bucket, lm_v3.bucket_bucketid_seq,
+lm_v3.matrix, lm_v3.matrix_matrixid_seq,
+lm_v3.bucketpalayer, lm_v3.bucketpalayer_bucketpalayerid_seq,
+lm_v3.bucketanclayer, lm_v3.bucketanclayer_bucketanclayerid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
@@ -497,11 +483,10 @@ lm_v3.sdmprojection,
 lm_v3.shapegrid,
 lm_v3.ancillaryvalue,
 lm_v3.presenceabsence,
-lm_v3.boom,
-lm_v3.pam,
-lm_v3.grim,
-lm_v3.boompalayer,
-lm_v3.boomanclayer
+lm_v3.bucket,
+lm_v3.matrix,
+lm_v3.bucketpalayer,
+lm_v3.bucketanclayer
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
@@ -519,11 +504,10 @@ lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid_shapegridid_seq,
 lm_v3.ancillaryvalue_ancillaryvalueid_seq,
 lm_v3.presenceabsence_presenceabsenceid_seq,
-lm_v3.boom_boomid_seq,
-lm_v3.pam_pamid_seq,
-lm_v3.grim_grimid_seq,
-lm_v3.boompalayer_boompalayerid_seq,
-lm_v3.boomanclayer_boomanclayerid_seq
+lm_v3.bucket_bucketid_seq,
+lm_v3.matrix_matrixid_seq,
+lm_v3.bucketpalayer_bucketpalayerid_seq,
+lm_v3.bucketanclayer_bucketanclayerid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------

@@ -141,11 +141,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
    minPercent,
    nameFilter,
    valueFilter,
-   -- BoomAncLayer.*
-   boomAncLayerId,
-   boomId,
-   boomAncLayerName,
-   matrixIdx
+   -- BucketAncLayer.*
+   bucketAncLayerId,
+   bucketId
 ) AS
       SELECT l.layerId, l.verify, l.squid, l.userid, l.taxonId, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
@@ -154,8 +152,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
              l.nodataVal, l.minVal, l.maxVal, l.valUnits,
              a.ancillaryValueId, a.nameValue, a.weightedMean, a.largestClass, 
              a.minPercent, a.nameFilter, a.valueFilter,
-             bal.boomAncLayerId, bal.boomId, bal.name, bal.matrixIdx
-      FROM lm_v3.Layer l, lm_v3.AncillaryValue a, lm_v3.BoomAncLayer bal
+             bal.bucketAncLayerId, bal.bucketId
+      FROM lm_v3.Layer l, lm_v3.AncillaryValue a, lm_v3.BucketAncLayer bal
       WHERE l.layerId = bal.layerId 
         AND bal.ancillaryValueId = a.ancillaryValueId;
         
@@ -203,11 +201,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
    minAbsence,
    maxAbsence,
    percentAbsence,
-   -- BoomPALayer.*
-   boomPALayerId,
-   boomId,
-   boomPALayerName,
-   matrixIdx
+   -- BucketPALayer.*
+   bucketPALayerId,
+   bucketId
 ) AS
       SELECT l.layerId, l.verify, l.squid, l.userid, l.taxonId, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
@@ -217,8 +213,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
              pa.presenceAbsenceId, pa.nameFilter, pa.valueFilter, pa.namePresence, 
              pa.minPresence, pa.maxPresence, pa.percentPresence, pa.nameAbsence, 
              pa.minAbsence, pa.maxAbsence, pa.percentAbsence,
-             bpal.boomPALayerId, bpal.boomId, bpal.name, bpal.matrixIdx
-      FROM lm_v3.Layer l, lm_v3.PresenceAbsence pa, lm_v3.BoomPALayer bpal
+             bpal.bucketPALayerId, bpal.bucketId
+      FROM lm_v3.Layer l, lm_v3.PresenceAbsence pa, lm_v3.BucketPALayer bpal
       WHERE l.layerId = bpal.layerId 
         AND bpal.presenceAbsenceId = pa.presenceAbsenceId;
         
@@ -491,10 +487,9 @@ CREATE TYPE lm_v3.lm_layeridx AS (
    layername varchar,
    metadataurl varchar,
    layerurl varchar,
-   -- ExperimentPALayer OR ExperimentAncLayer
-   paramid int,
-   matrixidx int, 
-   boomid int);
+   -- BucketPALayer OR BucketAncLayer
+   bucketlayerid int,
+   bucketid int);
 
 -- ----------------------------------------------------------------------------
 -- Type returning scenario with comma delimited list of keywords as string field

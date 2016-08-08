@@ -211,6 +211,22 @@ class ReferenceType:
             theseDeps.append(ReferenceType.topDownChain(dep))
          return (rtype, theseDeps)
 
+class MatrixType:
+   """ 
+   @summary: Constants to define the type of matrix
+   """
+   # Inputs
+   PAM = 1
+   GRIM = 2
+   BIOGEO_HYPOTHESES = 3
+   TREE = 4
+   # MCPA outputs
+   CORRELATION_1 = 101
+   CORRELATION_2 = 102
+   PVALUE_1 = 111
+   PVALUE_2 = 112
+   PVALUE_3 = 113
+   COEFFICIENT_VARIATION = 121
 
 from LmCommon.common.lmconstants import DWCNames
 class OccurrenceFieldNames:
