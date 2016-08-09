@@ -767,7 +767,7 @@ class UserBoom(_LMBoomer):
          return 0
       else:
          try:
-            return self.occParser.currRecnum+1
+            return self.occParser.currRecnum
          except:
             return 0
 
@@ -908,7 +908,7 @@ class GBIFBoom(_LMBoomer):
       if self.complete:
          return 0
       else:
-         return self._linenum+1
+         return self._linenum
 
 # ...............................................
    @property
