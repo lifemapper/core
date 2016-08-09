@@ -76,15 +76,14 @@ Install both rolls on Frontend
 #. **Check problem areas**:
 
    * Symlink from /share/lmserver/log to /opt/lifemapper/log
-   * existence of /var/lib/pgsql/9.1/data - if this directory already exists on 
-     a new install, delete it
-   * check /tmp/lm_build_solr_index.log - errors may occur b/c data is not yet 
-     initialized
+   * Contents of /var/lib/pgsql/9.1/data - if this directory exists and is 
+     populated when doing a clean install, delete it
 
 #. **Reboot front end** ::  
 
    # reboot
    
+
 Look for LmServer Errors
 ------------------------
 
