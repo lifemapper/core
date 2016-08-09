@@ -421,7 +421,7 @@ create table lm_v3.Matrix
 create table lm_v3.BucketPALayer
 (
    bucketPALayerId  serial UNIQUE PRIMARY KEY,
-   bucketId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
+   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    presenceAbsenceId int NOT NULL REFERENCES lm_v3.PresenceAbsence ON DELETE CASCADE,
    UNIQUE (bucketId, layerId, presenceAbsenceId)
