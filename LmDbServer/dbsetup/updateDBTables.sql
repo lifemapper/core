@@ -13,7 +13,5 @@
 -- -------------------------------
 
 -- ----------------------------------------------------------------------------
-\c template1
+\c borg
 -- -------------------------------
-DROP DATABASE borg IF EXISTS;
-\i /opt/lifemapper/LmDbServer/dbsetup/createBorg.sql
