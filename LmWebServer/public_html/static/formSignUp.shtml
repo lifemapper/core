@@ -125,7 +125,7 @@
       <br />
       <input name="tos" type="checkbox" /> 
       I have read and agree to the 
-      <a href="/tos.shtml" target="_blank">terms of service</a>.<br />
+      <a href="http://lifemapper.org/?page_id=1096" target="_blank">terms of service</a>.<br />
       <br />
       <input type="submit" id="signUpButton" value="Sign Up!" /><br />
    </form>
