@@ -804,7 +804,7 @@ class UserBoom(_LMBoomer):
          jobs = self._processInputSpecies(dataChunk, dataCount, taxonName)
          self._createMakeflow(jobs)
          self.log.info('Processed name {}, with {} records; next start {}'
-                       .format(taxonName, len(dataChunk), self.nextStart()))
+                       .format(taxonName, len(dataChunk), self.nextStart))
 
 # ...............................................
    def _simplifyName(self, longname):
@@ -962,7 +962,7 @@ class GBIFBoom(_LMBoomer):
          jobs = self._processChunk(speciesKey, dataCount, dataChunk)
          self._createMakeflow(jobs)
          self.log.info('Processed gbif key {} with {} records; next start {}'
-                       .format(speciesKey, len(dataChunk), self.nextStart()))
+                       .format(speciesKey, len(dataChunk), self.nextStart))
 
 # ...............................................
    def moveToStart(self):
@@ -1097,7 +1097,7 @@ class iDigBioBoom(_LMBoomer):
          jobs = self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
          self._createMakeflow(jobs)
          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
-                       .format(taxonKey, taxonName, taxonCount, self.nextStart()))
+                       .format(taxonKey, taxonName, taxonCount, self.nextStart))
 
 # ...............................................
    def close(self):
