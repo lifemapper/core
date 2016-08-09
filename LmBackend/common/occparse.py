@@ -62,7 +62,8 @@ class OccDataParser(object):
       self._sortIdx = None
       self._nameIdx = None
       
-      self.currLine = None      
+      self.currLine = None 
+      # record number of the chunk of current key     
       self.keyFirstRec = 0      
       self.currIsGoodEnough = True
       

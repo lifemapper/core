@@ -141,7 +141,7 @@ class _LMBoomer(LMObject):
 
 # ...............................................
    def _failGracefully(self, lmerr=None):
-      self.saveNextStart()
+      self.saveNextStart(fail=True)
       if lmerr is not None:
          logmsg = str(lmerr)
          if isinstance(lmerr, LMError):
@@ -219,15 +219,19 @@ class _LMBoomer(LMObject):
       return line
 
 # ...............................................
-   def saveNextStart(self):
-      if self.nextStart is not None:
+   def saveNextStart(self, fail=False):
+      if fail:
+         lineNum = self.thisStart()
+      else:
+         lineNum = self.nextStart()
+      if lineNum is not None:
          try:
             f = open(self.startFile, 'w')
-            f.write(str(self.nextStart))
+            f.write(str(lineNum))
             f.close()
          except:
-            self.log.error('Failed to write {} to chainer start file {}'
-                           .format(self.nextStart, self.startFile))
+            self.log.error('Failed to write next starting line {} to file {}'
+                           .format(lineNum, self.startFile))
    
 # ...............................................
    def _rollbackQueuedJobs(self):
@@ -408,6 +412,11 @@ class _LMBoomer(LMObject):
       self._raiseSubclassError()
    
 # ...............................................
+   @property
+   def thisStart(self):
+      self._raiseSubclassError()
+   
+# ...............................................
    def moveToStart(self):
       self._raiseSubclassError()
    
@@ -575,6 +584,14 @@ class BisonBoom(_LMBoomer):
 
 # ...............................................
    @property
+   def thisStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum
+
+# ...............................................
+   @property
    def complete(self):
       try:
          return self._tsnfile.closed
@@ -633,9 +650,9 @@ class BisonBoom(_LMBoomer):
       tsn, tsnCount = self._getTsnRec()
       if tsn is not None:
          jobs = self._processTsn(tsn, tsnCount)
+         self._createMakeflow(jobs)
          self.log.info('Processed tsn {}, with {} points; next start {}'
                        .format(tsn, tsnCount, self.nextStart))
-         self._createMakeflow(jobs)
 
 # ...............................................
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
@@ -734,12 +751,23 @@ class UserBoom(_LMBoomer):
        
 # ...............................................
    @property
-   def nextStart(self):
+   def thisStart(self):
       if self.complete:
          return 0
       else:
          try:
             return self.occParser.keyFirstRec
+         except:
+            return 0
+
+# ...............................................
+   @property
+   def nextStart(self):
+      if self.complete:
+         return 0
+      else:
+         try:
+            return self.occParser.currRecnum+1
          except:
             return 0
 
@@ -774,9 +802,9 @@ class UserBoom(_LMBoomer):
       dataChunk, dataCount, taxonName  = self._getChunk()
       if dataChunk:
          jobs = self._processInputSpecies(dataChunk, dataCount, taxonName)
-         self.log.info('Processed name {}, with {} records; next start {}'
-                       .format(taxonName, len(dataChunk), self.nextStart))
          self._createMakeflow(jobs)
+         self.log.info('Processed name {}, with {} records; next start {}'
+                       .format(taxonName, len(dataChunk), self.nextStart()))
 
 # ...............................................
    def _simplifyName(self, longname):
@@ -880,6 +908,14 @@ class GBIFBoom(_LMBoomer):
       if self.complete:
          return 0
       else:
+         return self._linenum+1
+
+# ...............................................
+   @property
+   def thisStart(self):
+      if self.complete:
+         return 0
+      else:
          return self._currKeyFirstRecnum
    
 # ...............................................
@@ -924,9 +960,9 @@ class GBIFBoom(_LMBoomer):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
          jobs = self._processChunk(speciesKey, dataCount, dataChunk)
-         self.log.info('Processed gbif key {} with {} records; next start {}'
-                       .format(speciesKey, len(dataChunk), self.nextStart))
          self._createMakeflow(jobs)
+         self.log.info('Processed gbif key {} with {} records; next start {}'
+                       .format(speciesKey, len(dataChunk), self.nextStart()))
 
 # ...............................................
    def moveToStart(self):
@@ -1060,6 +1096,8 @@ class iDigBioBoom(_LMBoomer):
       if taxonKey:
          jobs = self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
          self._createMakeflow(jobs)
+         self.log.info('Processed key/name {}/{}, with {} records; next start {}'
+                       .format(taxonKey, taxonName, taxonCount, self.nextStart()))
 
 # ...............................................
    def close(self):
@@ -1080,6 +1118,14 @@ class iDigBioBoom(_LMBoomer):
          return 0
       else:
          return self._linenum+1
+
+# ...............................................
+   @property
+   def thisStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum
 
 # ...............................................
    def _getCurrTaxon(self):
