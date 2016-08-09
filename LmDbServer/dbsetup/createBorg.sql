@@ -344,7 +344,10 @@ create table lm_v3.Tree
 (
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   treeDlocation varchar(256)
+   treeDlocation varchar(256),
+   hasBranchLengths boolean,
+   isUltrametric boolean,
+   isBinary boolean
 );
 
 -- -------------------------------
@@ -394,7 +397,7 @@ create table lm_v3.Bucket
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
    shapeGridId int NOT NULL REFERENCES lm_v3.ShapeGrid,
-   treeId REFERENCES lm_v3.Tree,
+   treeId int REFERENCES lm_v3.Tree,
    attrMatrixDlocation varchar(256),
    epsgcode int,
    description text,
@@ -408,7 +411,7 @@ create table lm_v3.Matrix
    matrixId serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixType int NOT NULL,
-   matrixDlocation varchar(256)
+   matrixDlocation varchar(256),
    metaDlocation varchar(256),  
    status int,
    statusmodtime double precision
@@ -428,7 +431,7 @@ create table lm_v3.BucketPALayer
 create table lm_v3.BucketAncLayer
 (
    bucketAncLayerId  serial UNIQUE PRIMARY KEY,
-   bucketId int NOT NULL REFERENCES lm_v3.Boom ON DELETE CASCADE,
+   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    ancillaryValueId int NOT NULL REFERENCES lm_v3.AncillaryValue ON DELETE CASCADE,
    UNIQUE (bucketId, layerId, ancillaryValueId)
