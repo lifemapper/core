@@ -221,9 +221,9 @@ class _LMBoomer(LMObject):
 # ...............................................
    def saveNextStart(self, fail=False):
       if fail:
-         lineNum = self.thisStart()
+         lineNum = self.thisStart
       else:
-         lineNum = self.nextStart()
+         lineNum = self.nextStart
       if lineNum is not None:
          try:
             f = open(self.startFile, 'w')
