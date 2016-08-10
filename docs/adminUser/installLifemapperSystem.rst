@@ -40,6 +40,7 @@ Install both rolls on Frontend
    # rocks add roll lifemapper-compute-6.2-0.x86_64.disk1.iso clean=1
    
 #. **(If update) Remove some rpms manually** 
+
    * You may remove source code rpms (lifemapper-lmserver and 
      lifemapper-compute) to avoid error messages about file conflicts in 
      shared code, but error messages about conflicting shared files from the 
@@ -113,6 +114,7 @@ Look for LmServer Errors
    each time.  All other logfiles have output appended to the end of an existing 
    logfile (from previous runs) and will be useful if the script must be re-run
    manually for testing:
+   
   * LmServer logfiles:
      * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
      * initLM.log
@@ -140,12 +142,14 @@ Change Data Defaults
    * Look at values in /opt/lifemapper/config/config.lmserver.ini
    * Update values to be modified in /opt/lifemapper/config/site.ini
    * Override any of the following (or other)variables by adding them to site.ini
+   
      * Default ARCHIVE_USER is kubi.
      * Default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU production
        installation, override this with the latest full data dump by downloading 
        the data from yeti into /share/lmserver/data/species/
      * Default SCENARIO_PACKAGE is 10min-past-present-future.  To change this, 
        override the variable SCENARIO_PACKAGE in site.ini, then 
+     
        * run `/opt/lifemapper/rocks/bin/updateArchiveInput` to download and 
          install the data (log output will be in /tmp/updateArchiveInput.log):
        * identify options for DEFAULT_MODEL_SCENARIO and 
@@ -153,8 +157,10 @@ Change Data Defaults
          in /share/lmserver/data/climate/<SCENARIO_PACKAGE>.csv
        * add the variables DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS in site.ini with appropriate values
+         
    * If you have modified ARCHIVE_USER or SCENARIOS, run the following (log 
      output will be in /tmp/fillDB.log):: 
+     
        # /opt/lifemapper/rocks/bin/fillDB
 
 
