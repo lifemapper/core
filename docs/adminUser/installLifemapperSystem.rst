@@ -42,16 +42,17 @@ Install both rolls on Frontend
    # rocks add roll lifemapper-compute-6.2-0.x86_64.disk1.iso clean=1
    
 #. **(If update) Remove some rpms manually** 
+   * You may remove source code rpms (lifemapper-lmserver and 
+     lifemapper-compute) to avoid error messages about file conflicts in 
+     shared code, but error messages about conflicting shared files from the 
+     first install of the source code rpm may be safely ignored. 
    
-   #. Do this just in case the rpm versions have not changed, to ensure that
-      scripts are run.  If the configuration (rocks-lifemapper, rocks-lmcompute) 
-      rpms are new, the larger version git tag will force the new rpm to be 
-      installed, **but if the rpm versions have not changed**, you must remove 
-      them to ensure that the installation scripts are run.  Even if the source 
-      code rpms (lifemapper-lmserver and lifemapper-compute) have changed, 
-      you can remove them to avoid error messages about file conflicts in 
-      shared code.::  
-
+   * In case the configuration rpm (rocks-lifemapper, rocks-lmcompute) versions 
+     have not changed, remove rpms to ensure that configuration scripts are run.  
+     If these rpms  are new, the larger version git tag will force the new 
+     rpm to be installed, **but if the rpm versions have not changed**, you 
+     must remove them to ensure that the installation scripts are run.::
+      
       # rpm -el rocks-lifemapper rocks-lmcompute
 
 #. **Create distribution**::
@@ -73,9 +74,14 @@ Install both rolls on Frontend
       bash add-server.sh > add-server.out 2>&1;
       bash add-compute.sh > add-compute.out 2>&1)
     
+#. **To change defaults**, such as DATASOURCE, ARCHIVE_USER, compute parameters,
+   create the configuration file site.ini (in /opt/lifemapper/config/) 
+   prior to reboot.  Two example files are present in that same directory 
+
 #. **Check problem areas**:
 
-   * Symlink from /share/lmserver/log to /opt/lifemapper/log
+   * Symlink /opt/lifemapper/log pointing to directory /share/lmserver/log 
+     (make sure there is not a recursive link under this) 
    * Contents of /var/lib/pgsql/9.1/data - if this directory exists and is 
      populated when doing a clean install, delete it
 
@@ -83,18 +89,21 @@ Install both rolls on Frontend
 
    # reboot
    
+Change Data Defaults
+--------------------
 
+#. **To change defaults after reboot**, such as DATASOURCE, ARCHIVE_USER, 
+   compute parameters, create the configuration file 
+   /opt/lifemapper/config/site.ini.  If you have changed the ARCHIVE_USER or
+   SCENARIO variables, run the fillDB script to populate the database with the 
+   new values.
+
+   # vim /opt/lifemapper/config/site.ini
+   # /opt/lifemapper/rocks/bin/fillDB
+   
+   
 Look for LmServer Errors
 ------------------------
-
-#. **FIXME** (Added to lm-species-data rpm) Install the default dataset 
-   (gbif_subset) for the default user (GBIF)::
-   
-   # cd /share/lmserver/data/species/
-   # wget http://yeti.lifemapper.org/dl/gbif_subset.tar.gz
-   # tar -xzvf gbif_subset.tar.gz 
-   # chown root:lmwriter gbif_subset.txt
-   # rm -f gbif_subset.tar.gz
    
 #. **Check log files** After the frontend boots up, check the success of 
    initialization commands in log files in /tmp (these may complete up to 5
