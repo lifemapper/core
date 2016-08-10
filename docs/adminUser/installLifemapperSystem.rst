@@ -87,18 +87,21 @@ Install both rolls on Frontend
 
    # reboot
    
-Change Data Defaults
---------------------
+Install nodes from Frontend
+---------------------------
 
-#. **To change defaults after reboot**, such as DATASOURCE, ARCHIVE_USER, 
-   compute parameters, create the configuration file 
-   /opt/lifemapper/config/site.ini.  If you have changed the ARCHIVE_USER or
-   SCENARIO variables, run the fillDB script to populate the database with the 
-   new values.
-
-   # vim /opt/lifemapper/config/site.ini
-   # /opt/lifemapper/rocks/bin/fillDB
+#. **(If update) Remove some compute-node rpms manually** 
    
+   #. Do this just in case the rpm versions have not changed, to ensure that
+      scripts are run.::  
+
+      # rocks run host compute 'rpm -el lifemapper-lmcompute rocks-lmcompute'
+    
+#. **Rebuild the compute nodes** ::  
+
+   # rocks set host boot compute action=install
+   # rocks run host compute reboot 
+
    
 Look for LmServer Errors
 ------------------------
@@ -121,6 +124,17 @@ Look for LmServer Errors
      * installComputeCronJobs.log
      * seedData.log
      
+#. **Test database contents** ::  
+
+   # export PGPASSWORD=`grep sdlapp /opt/lifemapper/rocks/etc/users | awk '{print $2}'`
+   # psql -U sdlapp -d mal
+   psql (9.1.22)
+   Type "help" for help.
+   mal=> select scenariocode, userid from scenario;
+
+Change Data Defaults
+--------------------
+
 #. **Check default archive values (DATASOURCE, ARCHIVE_USER, OCCURRENCE_FILENAME ...)** :  
 
    * Look at values in /opt/lifemapper/config/config.lmserver.ini
@@ -143,30 +157,5 @@ Look for LmServer Errors
      output will be in /tmp/fillDB.log):: 
        # /opt/lifemapper/rocks/bin/fillDB
 
-#. **Test database contents** ::  
-
-   # export PGPASSWORD=`grep sdlapp /opt/lifemapper/rocks/etc/users | awk '{print $2}'`
-   # psql -U sdlapp -d mal
-   psql (9.1.22)
-   Type "help" for help.
-   mal=> select scenariocode, userid from scenario;
 
    
-Install nodes from Frontend
----------------------------
-
-#. **(If update) Remove some compute-node rpms manually** 
-   
-   #. Do this just in case the rpm versions have not changed, to ensure that
-      scripts are run.::  
-
-      # rocks run host compute 'rpm -el lifemapper-lmcompute rocks-lmcompute'
-
-#. **(If new install) Add compute nodes to cluster**
- 
-Follow insert-ethers procedure 
-   
-#. **Rebuild the compute nodes** ::  
-
-   # rocks set host boot compute action=install
-   # rocks run host compute reboot 
