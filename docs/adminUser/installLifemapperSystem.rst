@@ -65,13 +65,6 @@ Install both rolls on Frontend
    # rocks run roll lifemapper-compute > add-compute.sh 
    # bash add-server.sh > add-server.out 2>&1
    # bash add-compute.sh > add-compute.out 2>&1
-   
-   or 
-   
-   # (rocks run roll lifemapper-server > add-server.sh; 
-      rocks run roll lifemapper-compute > add-compute.sh;
-      bash add-server.sh > add-server.out 2>&1;
-      bash add-compute.sh > add-compute.out 2>&1)
     
 #. **To change defaults**, such as DATASOURCE, ARCHIVE_USER, compute parameters,
    create the configuration file site.ini (in /opt/lifemapper/config/) 
@@ -113,14 +106,14 @@ Look for LmServer Errors
    the output from all reinstall-reboot-triggered scripts and are created fresh 
    each time.  All other logfiles have output appended to the end of an existing 
    logfile (from previous runs) and will be useful if the script must be re-run
-   manually for testing:
+   manually for testing.
    
-  * LmServer logfiles:
+  * LmServer logfiles
      * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
      * initLM.log
      * installServerCronJobs.log
      * initDbserver.log (only if new db)
-  * LmCompute logfiles:
+  * LmCompute logfiles
      * post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
      * initLMcompute.log 
      * installComputeCronJobs.log
