@@ -11,8 +11,6 @@ For systems with both the LmCompute and LmServer rolls installed, you will want
 to update the LmCompute roll and LmServer rpms (lifemapper-lmserver, rocks-lifemapper) 
 without losing data.
 
-.. contents::  
-
 (If update) Stop processes
 --------------------------
 
