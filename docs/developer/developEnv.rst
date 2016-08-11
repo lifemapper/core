@@ -32,33 +32,26 @@ Connect development code on Frontend
 
       # /opt/lifemapper/rocks/bin/confDbconnect
    
-#. Copy files with replaced variables from installation to your git tree. 
+#. Recreate files with replaced variables in your git tree. 
    Config files will be created in the non-linked config directory
    correctly without intervention.  The maxent and lmMaxent executables will  
    be installed into the rocks/bin directory without intervention.::
       
-   # cd /opt/lifemapper
+   # cd /state/partition1/workspace/core
    # find . -name "*.in"  | grep -v config | grep -v axent
      ./LmCompute/tools/lmJobScript.in
      ./LmDbServer/dbsetup/addDBFunctions.sql.in
      ./LmDbServer/dbsetup/defineDBTables.sql.in
-   # cp /opt/lifemapper/<*.in file without .in> /state/partition1/workspace/core/
+   # sed -e 's%@LMHOME@%/opt/lifemapper%g' LmDbServer/dbsetup/addDBFunctions.sql.in > LmDbServer/dbsetup/addDBFunctions.sql
       
-   #. If you forget to copy updated files, fix them manually, similarly to the sed
-      command below::  
-
-      # cd /state/partition1/workspace/core
-      # sed -e 's%@LMHOME@%/opt/lifemapper%g' LmDbServer/dbsetup/addDBFunctions.sql.in > LmDbServer/dbsetup/addDBFunctions.sql
-    
 #. If there are new changes to the config files, not included in the 
    installed rpm, modify those in the /opt/lifemapper/config/ directory
 
-#. Move installed lifemapper component directories to a new directory and 
-   symlink to your git repository ::  
+#. Delete installed lifemapper component directories then symlink to your git 
+   repository ::  
 
    # cd /opt/lifemapper
-   # mkdir installed_1.1.5.lw
-   # mv Lm* installed_1.1.5.lw/
+   # rm -rf Lm* 
    # ln -s /state/partition1/workspace/core/LmBackend
    # ln -s /state/partition1/workspace/core/LmCommon
    # ln -s /state/partition1/workspace/core/LmCompute
@@ -67,8 +60,8 @@ Connect development code on Frontend
    # ln -s /state/partition1/workspace/core/LmServer
    # ln -s /state/partition1/workspace/core/LmWebServer
    
-Connect development code on Frontend
-************************************
+Connect development code on Nodes
+*********************************
 
 #. Clone or update lifemapper workspace git repository ::  
 
@@ -76,7 +69,7 @@ Connect development code on Frontend
    # cd /state/partition1/workspace
    # git clone https://github.com/lifemapper/core
 
-#. Copy files with replaced variables from installation to your git tree. 
+#. Recreate files with replaced variables in your git tree. 
    Config files will be created in the non-linked config directory
    correctly without intervention.  The maxent and lmMaxent executables will  
    be installed into the rocks/bin directory without intervention.::
@@ -84,7 +77,7 @@ Connect development code on Frontend
    # cd /opt/lifemapper
    # find . -name "*.in"  | grep -v config | grep -v axent
      ./LmCompute/tools/lmJobScript.in
-   # cp /opt/lifemapper/LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/
+   # sed -e 's%@LMHOME@%/opt/lifemapper%g' LmCompute/tools/lmJobScript.in > LmCompute/tools/lmJobScript
 
 #. Delete installed lifemapper component directories and symlink to your git tree ::  
 
@@ -127,11 +120,7 @@ Add/change Server input data/user
 
      # $PYTHON /opt/lifemapper/rocks/bin/fillDB 
 
-   **TODO:** Move to lm command **lm init data**
-
 #. **Start the archivist**  as ``lmserver`` to initialize new jobs for the new species data.::
 
      % $PYTHON /opt/lifemapper/LmDbServer/pipeline/archivist.py start
    
-   **TODO:** Move to command **lm start archivist**
-

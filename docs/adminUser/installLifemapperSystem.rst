@@ -18,13 +18,9 @@ without losing data.
 
      % $PYTHON /opt/lifemapper/LmDbServer/pipeline/archivist.py stop
 
-   **TODO:** Move to command **lm stop archivist** 
-     
 #. **Stop the jobMediator** as lmwriter::
 
      lmwriter$ $PYTHON /opt/lifemapper/LmCompute/tools/jobMediator.py stop
-
-   **TODO:** Move to command **lm stop jobs** 
 
 Install both rolls on Frontend
 ------------------------------
@@ -81,6 +77,14 @@ Install both rolls on Frontend
 
    # reboot
    
+Add compute input layers to the Frontend
+----------------------------------------
+
+#. Seed the data on the frontend::
+
+   # /opt/lifemapper/rocks/bin/seedData
+   
+
 Install nodes from Frontend
 ---------------------------
 
@@ -89,7 +93,7 @@ Install nodes from Frontend
    #. Do this just in case the rpm versions have not changed, to ensure that
       scripts are run.::  
 
-      # rocks run host compute 'rpm -el lifemapper-lmcompute rocks-lmcompute'
+      # rocks run host compute 'rpm -el rocks-lmcompute'
     
 #. **Rebuild the compute nodes** ::  
 
