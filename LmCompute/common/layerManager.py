@@ -627,7 +627,7 @@ def convertAsciisToMxes(fnTups):
    # Sym link all of the ASCII grids in the input directory
    for asciiFn, _ in fnTups:
       baseName = os.path.basename(asciiFn)
-      os.symlink(asciiFn, os.path.join(inDir, baseName))
+      shutil.copy(asciiFn, os.path.join(inDir, baseName))
       
    # Run Maxent converter
    meConvertCmd = "{javaCmd} {meCmd} {convertTool} -t {inDir} asc {outDir} mxe".format(
