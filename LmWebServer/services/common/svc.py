@@ -40,9 +40,9 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
-from LmServer.common.lmconstants import (DbUser, LOG_PATH, SESSION_PATH, 
+from LmServer.common.lmconstants import (DbUser, SESSION_PATH, 
                                          WEB_PATH)
-from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
+from LmServer.common.localconstants import (APP_PATH, LOG_PATH, ARCHIVE_USER, 
                                             WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
@@ -786,7 +786,7 @@ def customLogs(app):
    log.error_file = ""
    log.access_file = ""
    
-   efname = os.path.join(APP_PATH, LOG_PATH, "cherrypyErrors.log")
+   efname = os.path.join(LOG_PATH, "cherrypyErrors.log")
    
    h = handlers.RotatingFileHandler(efname, 'a', LOGFILE_MAX_BYTES, 
                                     LOGFILE_BACKUP_COUNT)
@@ -794,7 +794,7 @@ def customLogs(app):
    h.setFormatter(cherrypy._cplogging.logfmt)
    log.error_log.addHandler(h)
 
-   afname = os.path.join(APP_PATH, LOG_PATH, "cherrypyAccess.log")
+   afname = os.path.join(LOG_PATH, "cherrypyAccess.log")
    h = handlers.RotatingFileHandler(afname, 'a', LOGFILE_MAX_BYTES,
                                     LOGFILE_BACKUP_COUNT)
    h.setLevel(DEBUG)

@@ -629,6 +629,7 @@ def convertAsciisToMxes(fnTups):
       baseName = os.path.basename(asciiFn)
       os.symlink(asciiFn, os.path.join(inDir, baseName))
       
+      
    # Run Maxent converter
    meConvertCmd = "{javaCmd} {meCmd} {convertTool} -t {inDir} asc {outDir} mxe".format(
                      javaCmd=CONVERT_JAVA_CMD, meCmd=ME_CMD, 
@@ -649,7 +650,7 @@ def convertAsciisToMxes(fnTups):
          baseName = os.path.basename(asciiFn)
          tmpMxeFn = os.path.join(outDir, 
                      '%s%s' % (os.path.splitext(baseName)[0], OutputFormat.MXE))
-         os.rename(tmpMxeFn, mxeFn)
+         shutil.copy(tmpMxeFn, mxeFn)
       except Exception, e:
          print "Failed to rename layer: %s -> %s" % (tmpMxeFn, mxeFn)
          print str(e)

@@ -15,6 +15,7 @@ DATA_PATH: @DATADIR_SERVER@
 UPLOAD_PATH: @DATADIR_SERVER@/tmpUpload
 TEMP_PATH: @TEMPDIR@
 MAPSERVER_ROOT: http://@PUBLIC_FQDN@
+LOG_PATH: @LMSCRATCHDISK@/log
 
 ; ...............................................
 [LmServer - registeredcompute]

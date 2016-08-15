@@ -70,8 +70,8 @@ Install both rolls on Frontend
 
    * Symlink /opt/lifemapper/log pointing to directory /share/lmserver/log 
      (make sure there is not a recursive link under this) 
-   * Contents of /var/lib/pgsql/9.1/data - if this directory exists and is 
-     populated when doing a clean install, delete it
+   * Contents of /var/lib/pgsql/9.1/data - if this directory is populated
+     immediately after a clean install (before reboot), delete it
 
 #. **Reboot front end** ::  
 
