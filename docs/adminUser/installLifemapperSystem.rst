@@ -101,8 +101,8 @@ Install nodes from Frontend
    # rocks run host compute reboot 
 
    
-Look for LmServer Errors
-------------------------
+Look for Errors
+---------------
    
 #. **Check log files** After the frontend boots up, check the success of 
    initialization commands in log files in /tmp (these may complete up to 5
@@ -112,16 +112,25 @@ Look for LmServer Errors
    logfile (from previous runs) and will be useful if the script must be re-run
    manually for testing.
    
-  * LmServer logfiles
-     * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
-     * initLM.log
-     * installServerCronJobs.log
-     * initDbserver.log (only if new db)
-  * LmCompute logfiles
-     * post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
-     * initLMcompute.log 
-     * installComputeCronJobs.log
-     * seedData.log
+LmCompute
+~~~~~~~~~
+
+#. Check LmCompute logfiles
+
+  * post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
+  * initLMcompute.log 
+  * installComputeCronJobs.log
+  * seedData.log (seedData must be run manually by user after reboot)
+
+LmServer
+~~~~~~~~
+
+#. Check LmServer logfiles
+  * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
+  * initLM.log
+  * installServerCronJobs.log
+  * initDbserver.log (only if new db)
+
      
 #. **Test database contents** ::  
 
