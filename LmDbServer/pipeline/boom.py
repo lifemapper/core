@@ -40,10 +40,9 @@ from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, LOG_PATH, 
-                                         wkbPoint)
+from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint)
 from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
-                                            APP_PATH)
+                                            LOG_PATH)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
@@ -79,8 +78,7 @@ class _LMBoomer(LMObject):
          self.name = self.__class__.__name__.lower()
       else:
          self.name = '{}_{}'.format(self.__class__.__name__.lower(), userid)
-      self.startFile = os.path.join(APP_PATH, LOG_PATH, 
-                                    'start.{}.txt'.format(self.name))
+      self.startFile = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name))
       if log is None:
          log = ScriptLogger(self.name)
       self.log = log

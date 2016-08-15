@@ -54,8 +54,8 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import DEFAULT_EPSG, JobStatus, OutputFormat,\
-   OFTString
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat,
+                                         OFTString)
 from LmServer.common.localconstants import APP_PATH
 
 LM_SCHEMA = 'lm3'
@@ -457,7 +457,6 @@ CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +
                                      '           OUTLINECOLOR 0 0 0\n' +
                                      '           COLOR 190 16 32\n'}
 # Relative paths
-LOG_PATH = 'log'
 USER_LOG_PATH = 'users'
 ERROR_LOG_PATH = 'errors'
 POINT_PATH = 'points'
