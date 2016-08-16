@@ -15,3 +15,5 @@
 -- ----------------------------------------------------------------------------
 \c borg
 -- -------------------------------
+ALTER TABLE Taxon ADD COLUMN userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE;
+ALTER TABLE Taxon ADD CONSTRAINT taxon_userid_squid_key UNIQUE (userid, squid);

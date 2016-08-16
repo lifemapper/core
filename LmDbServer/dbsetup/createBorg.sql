@@ -78,8 +78,9 @@ create table lm_v3.Taxon
 	-- ** MAL scientificNameId
    taxonId serial UNIQUE PRIMARY KEY,
    taxonomySourceId int REFERENCES lm_v3.TaxonomySource,
+   userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    taxonomyKey int,
-   squid varchar(64),
+   squid varchar(64) NOT NULL,
    kingdom text,
    phylum text,
    tx_class  text,
@@ -94,7 +95,10 @@ create table lm_v3.Taxon
    keyHierarchy text,
    lastcount int,
    modTime double precision,
-   UNIQUE (taxonomySourceId, taxonomyKey)
+   -- Species-thread/squid using taxonomy provider
+   UNIQUE (taxonomySourceId, taxonomyKey),
+   -- Unhinged species-thread/squid for users 
+   UNIQUE (userid, squid)
 );
 CREATE INDEX idx_lower_canonical on lm_v3.Taxon(lower(canonical));
 CREATE INDEX idx_lower_sciname on lm_v3.Taxon(lower(sciname));

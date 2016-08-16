@@ -344,6 +344,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    statusmodtime,
    -- Taxon.*
    taxonomySourceId,
+   taxuserid,
    taxonomyKey,
    taxsquid,
    kingdom,
@@ -368,7 +369,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.displayName, 
           o.taxonId, o.primaryEnv, o.metadataUrl, o.dlocation, o.rawDlocation,
           o.queryCount, o.bbox, o.epsgcode, o.status, o.statusmodtime, 
-          t.taxonomySourceId, t.taxonomyKey, t.squid, t.kingdom, t.phylum, t.tx_class,
+          t.taxonomySourceId, t.userid, t.taxonomyKey, t.squid, t.kingdom, t.phylum, t.tx_class,
           t.tx_order, t.family, t.genus, t.rank, t.canonical, t.sciname, 
           t.genuskey, t.specieskey, t.keyHierarchy, t.lastcount, t.modtime,
           ts.url, ts.datasetIdentifier, ts.modtime
