@@ -38,7 +38,7 @@ STORE_METRICS: True
 ;;;; The "STORE_LOG_FILES" parameter indicates if logs should be shipped to a long
 ;;;;    term storage location instead of kept with the rest of the job output
 STORE_LOG_FILES: False
-LOG_STORAGE_LOCATION: @LMSCRATCHDISK@/log
+LOG_STORAGE_LOCATION: @LMDISK@/log
 
 ; ...............................................
 [LmCompute - plugins - maxent]
@@ -72,7 +72,7 @@ OM_VERSION: 1.5.0
 SLEEP_TIME: 30
 HOLD_JOB_DIR: @LMDISK@/holdJobs/
 INACTIVE_TIME: 600
-PID_FILE: @LMSCRATCH@/temp/lm-job-submitter.pid
+PID_FILE: @LMSCRATCHDISK@/temp/lm-job-submitter.pid
 
 ; ...............................................
 [LmCompute - Job Submitter]
@@ -81,7 +81,7 @@ PID_FILE: @LMSCRATCH@/temp/lm-job-submitter.pid
 JOB_SUBMITTER_TYPE: @JOB_SUBMITTER_TYPE@
 CAPACITY: @JOB_CAPACITY@
 JOB_SCRIPT : @LMHOME@/bin/lmJobScript
-LOG_PATH : @LMSCRATCH@/log
+LOG_PATH : @LMDISK@/log
 
 LOCAL_SUBMIT_COMMAND: @PYBIN@ @LMHOME@/LmCompute/jobs/runners/factory.py  #JOB_FILE#
 QSTAT: /opt/gridengine/bin/linux-x64/qstat 
