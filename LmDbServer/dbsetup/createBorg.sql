@@ -36,6 +36,15 @@ create table lm_v3.LMUser
 );
 
 -- -------------------------------
+create table lm_v3.TaxonomySource
+(
+   taxonomySourceId serial UNIQUE PRIMARY KEY,
+   url text UNIQUE,
+   datasetIdentifier text UNIQUE,
+   modTime double precision
+);
+
+-- -------------------------------
 create table lm_v3.ComputeResource
 (
    computeResourceId serial UNIQUE PRIMARY KEY,
@@ -59,16 +68,6 @@ create table lm_v3.JobChain
    progress int,
    status int,
    statusmodtime double precision
-);
-
-
--- -------------------------------
-create table lm_v3.TaxonomySource
-(
-   taxonomySourceId serial UNIQUE PRIMARY KEY,
-   url text UNIQUE,
-   datasetIdentifier text UNIQUE,
-   modTime double precision
 );
 
 -- -------------------------------
@@ -100,6 +99,7 @@ create table lm_v3.Taxon
    -- Unhinged species-thread/squid for users 
    UNIQUE (userid, squid)
 );
+CREATE INDEX taxon_squid on lm_v3.Taxon(squid);
 CREATE INDEX idx_lower_canonical on lm_v3.Taxon(lower(canonical));
 CREATE INDEX idx_lower_sciname on lm_v3.Taxon(lower(sciname));
 CREATE INDEX idx_lower_genus on lm_v3.Taxon(lower(genus));
@@ -222,6 +222,7 @@ create table lm_v3.ScenarioKeywords
 create table lm_v3.OccurrenceSet
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
+   taxonId int NOT NULL REFERENCES lm_v3.Taxon,
    verify varchar(64),
    squid varchar(64),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
@@ -300,6 +301,7 @@ CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
 create table lm_v3.SDMProjection
 (
    sdmprojectionId serial UNIQUE PRIMARY KEY,
+   taxonId int NOT NULL REFERENCES lm_v3.Taxon,
    verify varchar(64),
    squid varchar(64),
    metadataUrl text UNIQUE,
@@ -402,7 +404,6 @@ create table lm_v3.Bucket
    name varchar(100) NOT NULL,
    shapeGridId int NOT NULL REFERENCES lm_v3.ShapeGrid,
    treeId int REFERENCES lm_v3.Tree,
-   attrMatrixDlocation varchar(256),
    epsgcode int,
    description text,
    modTime double precision,
@@ -413,12 +414,18 @@ create table lm_v3.Bucket
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
-   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixType int NOT NULL,
    matrixDlocation varchar(256),
    metaDlocation varchar(256),  
    status int,
    statusmodtime double precision
+);
+
+-- -------------------------------
+create table lm_v3.BucketMatrix
+(
+   matrixId NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
+   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE
 );
 
 -- -------------------------------

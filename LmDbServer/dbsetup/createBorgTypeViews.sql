@@ -6,6 +6,7 @@ DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    -- Layer.* 
    layerId,
+   taxonId,
    verify,
    squid,
    userid,
@@ -37,7 +38,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    typetitle,
    typedescription,
    typemodtime) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
+      SELECT l.layerId, l.taxonid, l.verify, l.squid, l.userid, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
@@ -55,9 +56,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    -- Layer.* 
    layerId,
    verify,
-   squid,
    userid,
-   taxonId,
    name,
    title,
    author,
@@ -91,7 +90,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    status,
    statusmodtime
 ) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.taxonId, l.name, l.title,
+      SELECT l.layerId, l.verify, l.userid, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, 
@@ -110,7 +109,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
    verify,
    squid,
    userid,
-   taxonId,
    name,
    title,
    author,
@@ -145,7 +143,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
    bucketAncLayerId,
    bucketId
 ) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.taxonId, l.name, l.title,
+      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
@@ -166,7 +164,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
    verify,
    squid,
    userid,
-   taxonId,
    name,
    title,
    author,
@@ -205,7 +202,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
    bucketPALayerId,
    bucketId
 ) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.taxonId, l.name, l.title,
+      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
@@ -241,7 +238,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmmodel (
    verify,
    squid,
    displayName,
-   taxonId,
    primaryEnv,
    occmetadataUrl,
    occdlocation,
@@ -255,7 +251,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmmodel (
       SELECT m.sdmmodelId, m.userId, m.name, m.description, m.occurrenceSetId, 
       m.scenarioCode, m.maskId, m.status, m.statusModTime, m.priority, 
       m.dlocation, m.email, m.algorithmParams, m.algorithmCode, 
-      o.verify, o.squid, o.displayName, o.taxonId, o.primaryEnv, o.metadataUrl, 
+      o.verify, o.squid, o.displayName, o.primaryEnv, o.metadataUrl, 
       o.dlocation, o.rawDlocation, o.queryCount, o.bbox, o.epsgcode, 
       o.status, o.statusmodtime
       FROM lm_v3.sdmmodel m, lm_v3.occurrenceSet o
@@ -272,7 +268,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    prjsquid,
    prjmetadataUrl,
    prjmetalocation,
-   prjtaxonId,
    sdmmodelid,
    scenarioCode,
    prjmaskId,
@@ -310,7 +305,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    occstatusmodtime
    ) AS
       SELECT p.sdmprojectionId, p.verify, p.squid, p.metadataUrl, p.metalocation, 
-             p.taxonId, p.sdmmodelid, p.scenarioCode, p.maskId,
+             p.sdmmodelid, p.scenarioCode, p.maskId,
              p.status, p.statusModTime, p.units, p.resolution, p.epsgcode, 
              p.bbox, p.dlocation, p.dataType, 
              m.userId, m.name, m.description, m.occurrenceSetId, m.scenarioCode, 
@@ -332,7 +327,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    squid,
    userId,
    displayName,
-   taxonId,
    primaryEnv,
    metadataUrl,
    dlocation,
@@ -367,7 +361,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    taxsrcmodtime
    ) AS
    SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.displayName, 
-          o.taxonId, o.primaryEnv, o.metadataUrl, o.dlocation, o.rawDlocation,
+          o.primaryEnv, o.metadataUrl, o.dlocation, o.rawDlocation,
           o.queryCount, o.bbox, o.epsgcode, o.status, o.statusmodtime, 
           t.taxonomySourceId, t.userid, t.taxonomyKey, t.squid, t.kingdom, t.phylum, t.tx_class,
           t.tx_order, t.family, t.genus, t.rank, t.canonical, t.sciname, 
@@ -482,12 +476,12 @@ DROP TYPE IF EXISTS lm_v3.lm_layeridx CASCADE;
 CREATE TYPE lm_v3.lm_layeridx AS (
    -- Layer
    layerid int,
+   taxonId int,
    verify varchar,
    squid varchar,
    lyruserid varchar,
    layername varchar,
    metadataurl varchar,
-   layerurl varchar,
    -- BucketPALayer OR BucketAncLayer
    bucketlayerid int,
    bucketid int);

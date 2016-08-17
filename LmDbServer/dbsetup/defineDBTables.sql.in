@@ -4,5 +4,7 @@
 
 \i @LMHOME@/LmDbServer/dbsetup/createMAL.sql
 \i @LMHOME@/LmDbServer/dbsetup/createSPECO.sql
-\i @LMHOME@/LmDbServer/dbsetup/createBorg.sql
+
+-- TODO: reinstate this after testing
+-- \i @LMHOME@/LmDbServer/dbsetup/createBorg.sql
 -- ----------------------------------------------------------------------------
