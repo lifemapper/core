@@ -701,6 +701,7 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=4):
    if headerPrecision is not None:
       output = [] # Lines to output back to file
       cont = True
+      ndLine = None
       
       with open(asciiFn, 'r') as ascIn:
          for line in ascIn:
@@ -728,7 +729,8 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=4):
                   output.append(xllLine)
                   output.append(yllLine)
                   output.append(cellsizeLine)
-                  output.append(ndLine)
+                  if ndLine is not None:
+                     output.append(ndLine)
                   output.append(line)
             else:
                output.append(line)

@@ -34,7 +34,8 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
-                  DEFAULT_PROJECTION_FORMAT, JobFamily, DB_STORE, ReferenceType)
+                  DEFAULT_PROJECTION_FORMAT, JobFamily, DB_STORE, ReferenceType,
+                  LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.notifyJob import NotifyJob
@@ -63,7 +64,7 @@ class Borg(DbPostgresql):
       """
       DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser, 
                             password=dbKey, host=dbHost, port=dbPort,
-                            schema='lm_v3')
+                            schema=LM_SCHEMA_BORG)
       earl = EarlJr()
       self._relativeArchivePath = earl.createArchiveDataPath()
       self._webservicePrefix = earl.createWebServicePrefix()

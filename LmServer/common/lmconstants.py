@@ -59,6 +59,7 @@ from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat,
 from LmServer.common.localconstants import APP_PATH
 
 LM_SCHEMA = 'lm3'
+LM_SCHEMA_BORG = 'lm_v3'
 SALT = "4303e8f7129243fd42a57bcc18a19f5b"
 
 # MAL, RAD, gbifCache database names

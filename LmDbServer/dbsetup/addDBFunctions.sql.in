@@ -16,8 +16,9 @@
 \i @LMHOME@/LmDbServer/dbsetup/createSPECOLayerFns.sql
 -- ----------------------------------------------------------------------------
 
-\c borg
+-- TODO: reinstate this after testing
+-- \c borg
 -- ----------------------------------------------------------------------------
-\i @LMHOME@/LmDbServer/dbsetup/createBorgTypeViews.sql
-\i @LMHOME@/LmDbServer/dbsetup/createBorgFunctions.sql
-\i @LMHOME@/LmDbServer/dbsetup/createBorgLayerFunctions.sql
+-- \i @LMHOME@/LmDbServer/dbsetup/createBorgTypeViews.sql
+-- \i @LMHOME@/LmDbServer/dbsetup/createBorgFunctions.sql
+-- \i @LMHOME@/LmDbServer/dbsetup/createBorgLayerFunctions.sql
