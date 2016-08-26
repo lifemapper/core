@@ -65,6 +65,8 @@ USER_OCCURRENCE_META: @SPECIES_DATA@.meta
 ;; SCENARIO_PACKAGE are listed in @LMHOME@/LmDbServer/tools/bioclimMeta.py
 DEFAULT_MODEL_SCENARIO: WC-10min
 DEFAULT_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
+;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE_SEED
+;; in the [LmCompute - environment] section should match SCENARIO_PACKAGE here
 SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
 
 ; ...............................................

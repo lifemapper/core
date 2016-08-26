@@ -26,6 +26,8 @@ SAMPLE_DATA_PATH: @LMDISK@/tests/data
 TEMPORARY_FILE_PATH: @LMSCRATCHDISK@/temp
 INPUT_LAYER_DIR: @INPUT_LAYER_DIR@
 INPUT_LAYER_DB: @INPUT_LAYER_DB@
+;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in the
+;; [LmServer - pipeline] section should match SCENARIO_PACKAGE_SEED here
 SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
 
 ; ...............................................

@@ -31,6 +31,7 @@ Public Interface: assigned by Greg for MAC address
 Private Interface:  (notyeti VMs: available internal 192.168.202.x on notyeti)
 Gateway:  129.237.201.254
 DNS:  129.237.133.1
+NTP server:  time.ku.edu
 Auto-Partitioning
 
 Update Python Roll
@@ -51,6 +52,12 @@ Update Python Roll
 Enable www access
 ~~~~~~~~~~~~~~~~~
 Follow procedure at http://yeti.lifemapper.org/roll-documentation/base/6.2/enable-www.html
+
+Insert compute nodes
+~~~~~~~~~~~~~~~~~~~~
+Start insert-ethers process on the Frontend, then start each node.  Wait until 
+each node has been recognized ( ) and accepted (*) in the insert-ethers
+window before starting the next node.
 
 **************************
 All KU-Lifemapper Clusters
@@ -88,4 +95,4 @@ the first time, install the ku_security_updates script into the /etc/cron.daily/
 directory. Download and install the script ::
 
     wget https://raw.githubusercontent.com/lifemapper/kuprod/master/src/kuprod/ku_security_updates
-    install 700 ku_security_updates /etc/cron.daily/
+    install --mode=700 ku_security_updates /etc/cron.daily/

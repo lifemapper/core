@@ -1,5 +1,5 @@
 
-.. hightlight:: rest
+.. highlight:: rest
 
 Install or Update a Lifemapper Server/Compute installation
 ==========================================================
@@ -22,21 +22,25 @@ without losing data.
 
      lmwriter$ $PYTHON /opt/lifemapper/LmCompute/tools/jobMediator.py stop
 
+#. **Caution** If want to completely wipe out existing install::
+
+   # wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/kutest/cleanRoll.sh -O cleanServerRoll.sh
+   # wget https://raw.githubusercontent.com/pragmagrid/lifemapper-compute/kutest/cleanRoll.sh -O cleanComputeRoll.sh
+
 Install both rolls on Frontend
 ------------------------------
 
-#. **Copy new LmServer and LmCompute rolls to server**, for example::
+#. **Download** new LmServer and LmCompute rolls to server, then validate 
+   checksums::
 
-   # scp lifemapper-compute-6.2-0.x86_64.disk1.iso  server.lifemapper.org:
-   # scp lifemapper-server-6.2-0.x86_64.disk1.iso server.lifemapper.org:
-
-#. **Add a new roll and rpms**, ensuring that old rpms/files are replaced::
-
-   # rocks add roll lifemapper-server-6.2-0.x86_64.disk1.iso clean=1
-   # rocks add roll lifemapper-compute-6.2-0.x86_64.disk1.iso clean=1
+   # cd /state/partition1/apps/
+   # wget http://lifemapper.org/dl/lifemapper*.*
+   # sha256sum lifemapper*.iso
+   # cat lifemapper*.sha
    
-#. **(If update) Remove some rpms manually** 
 
+Update existing (maintains data)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    * You may remove source code rpms (lifemapper-lmserver and 
      lifemapper-compute) to avoid error messages about file conflicts in 
      shared code, but error messages about conflicting shared files from the 
@@ -50,6 +54,16 @@ Install both rolls on Frontend
       
       # rpm -el rocks-lifemapper rocks-lmcompute
 
+New install (destroys data)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   * If you do not need to save the existing data files and database records, 
+     run the cleanRoll scripts for each roll. 
+   
+#. **Add a new roll and rpms**, ensuring that old rpms/files are replaced::
+
+   # rocks add roll lifemapper-server-6.2-0.x86_64.disk1.iso clean=1
+   # rocks add roll lifemapper-compute-6.2-0.x86_64.disk1.iso clean=1
+   
 #. **Create distribution**::
 
    # rocks enable roll lifemapper-compute lifemapper-server
@@ -57,10 +71,10 @@ Install both rolls on Frontend
 
 #. **Create and run LmServer/LmCompute scripts**::
 
-   # rocks run roll lifemapper-server > add-server.sh 
-   # rocks run roll lifemapper-compute > add-compute.sh 
-   # bash add-server.sh > add-server.out 2>&1
-   # bash add-compute.sh > add-compute.out 2>&1
+   # (rocks run roll lifemapper-server > add-server.sh; 
+      rocks run roll lifemapper-compute > add-compute.sh;
+      bash add-server.sh > add-server.out 2>&1;
+      bash add-compute.sh > add-compute.out 2>&1)
     
 #. **To change defaults**, such as DATASOURCE, ARCHIVE_USER, compute parameters,
    create the configuration file site.ini (in /opt/lifemapper/config/) 
@@ -75,6 +89,29 @@ Install both rolls on Frontend
 
    # reboot
    
+To change SCENARIO_PACKAGE and/or ARCHIVE_USER after reboot
+-----------------------------------------------------------
+
+#. Create a config/site.ini file from config/site.in.lm*.example files
+
+   #. If you updated the SCENARIO_PACKAGE:
+   
+      #. Create a [ LmCompute - environment ] section containing  
+         the variable SCENARIO_PACKAGE_SEED with the same value
+
+      #. Run the following to catalog LmServer metadata ::
+   
+         # rocks/bin/updateArchiveInput
+
+      #. Run the following to create and catalog LmCompute data layers ::
+   
+         # rocks/bin/updateArchiveInput
+
+   #. If you did **NOT** update the SCENARIO_PACKAGE, run the following to 
+      catalog metadata for the new ARCHIVE_USER:
+
+         # rocks/bin/fillDB
+
 Add compute input layers to the Frontend
 ----------------------------------------
 

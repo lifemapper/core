@@ -16,6 +16,8 @@ LOCAL_MACHINE_ID:
 
 ; ...............................................
 ;; [LmCompute - environment]
+;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in the
+;; [LmServer - pipeline] section should match SCENARIO_PACKAGE_SEED here
 ;; SCENARIO_PACKAGE_SEED: 30sec-present-future-SEA
 
 ; ...............................................
