@@ -133,6 +133,7 @@ create table lm_v3.LayerTypeKeyword
 
 -- -------------------------------
 -- Note: Enforce unique userid/name pairs (in code) for display layers only
+-- Could be phantom layer with taxonId and/or squid
 create table lm_v3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
@@ -331,6 +332,21 @@ CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
 CREATE INDEX idx_prjSquid on lm_v3.SDMProjection(squid);
 
 -- -------------------------------
+create table lm_v3.Process
+(
+   processId serial UNIQUE PRIMARY KEY,
+   processType int NOT NULL,
+   isSinglespecies boolean NOT NULL,
+   referenceId int NOT NULL,
+   userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   inputs text,
+   dlocation text,
+   status int,
+   statusmodtime double precision
+);
+
+-- -------------------------------
+-- Could be phantom layer with siteIds x,y in vector
 create table lm_v3.ShapeGrid
 (
    shapeGridId serial UNIQUE PRIMARY KEY,
@@ -415,36 +431,43 @@ create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
    matrixType int NOT NULL,
+   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixDlocation varchar(256),
    metaDlocation varchar(256),  
    status int,
    statusmodtime double precision
 );
 
--- -------------------------------
-create table lm_v3.BucketMatrix
-(
-   matrixId NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
-   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE
-);
 
 -- -------------------------------
-create table lm_v3.BucketPALayer
+-- aka PAV, PAM Vector 
+create table lm_v3.BucketPALayer 
 (
    bucketPALayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   
+   -- layerId and presenceAbsenceId could be just phantom layer with taxonId or squid?
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    presenceAbsenceId int NOT NULL REFERENCES lm_v3.PresenceAbsence ON DELETE CASCADE,
+      
+   status int,
+   statusmodtime double precision,
    UNIQUE (bucketId, layerId, presenceAbsenceId)
 );
 
 -- -------------------------------
+-- aka GRIM Vector
 create table lm_v3.BucketAncLayer
 (
    bucketAncLayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   
+   -- layerId and ancillaryValueId could be just phantom layer?
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    ancillaryValueId int NOT NULL REFERENCES lm_v3.AncillaryValue ON DELETE CASCADE,
+   
+   status int,
+   statusmodtime double precision,
    UNIQUE (bucketId, layerId, ancillaryValueId)
 );
 
