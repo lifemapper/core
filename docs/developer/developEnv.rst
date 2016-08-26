@@ -65,27 +65,32 @@ Connect development code on Nodes
 
 #. Clone or update lifemapper workspace git repository ::  
 
-   # mkdir /state/partition1/workspace
-   # cd /state/partition1/workspace
-   # git clone https://github.com/lifemapper/core
+   # rocks run host compute "(cd /state/partition1/; mkdir workspace; git clone http://github.com/lifemapper/core)"
 
 #. Recreate files with replaced variables in your git tree. 
    Config files will be created in the non-linked config directory
    correctly without intervention.  The maxent and lmMaxent executables will  
    be installed into the rocks/bin directory without intervention.::
       
-   # cd /opt/lifemapper
-   # find . -name "*.in"  | grep -v config | grep -v axent
-     ./LmCompute/tools/lmJobScript.in
-   # sed -e 's%@LMHOME@%/opt/lifemapper%g' LmCompute/tools/lmJobScript.in > LmCompute/tools/lmJobScript
-
+   # rocks run host compute "(cd /state/partition1/workspace/core/; sed -e 's%@LMHOME@%/opt/lifemapper%g' LmCompute/tools/lmJobScript.in > LmCompute/tools/lmJobScript)"
+ 
 #. Delete installed lifemapper component directories and symlink to your git tree ::  
 
-   # cd /opt/lifemapper
-   # rm -rf Lm*
-   # ln -s /state/partition1/workspace/core/LmBackend
-   # ln -s /state/partition1/workspace/core/LmCommon
-   # ln -s /state/partition1/workspace/core/LmCompute
+   #  rocks run host compute "(cd /opt/lifemapper; rm -rf Lm*)"
+   #  rocks run host compute "(cd /opt/lifemapper; ln -s /state/partition1/workspace/core/LmBackend)"
+   #  rocks run host compute "(cd /opt/lifemapper; ln -s /state/partition1/workspace/core/LmCommon)"
+   #  rocks run host compute "(cd /opt/lifemapper; ln -s /state/partition1/workspace/core/LmCompute)"
+
+Sync development code
+*********************
+
+#. To sync frontend with github::
+
+   # cd /state/partition1/workspace/core/; git pull
+   
+#. To sync nodes with github::
+
+   # rocks run host compute "(cd /state/partition1/workspace/core/; git pull)"
 
    
 Troubleshooting
