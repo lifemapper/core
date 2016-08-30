@@ -118,22 +118,28 @@ class JobStage:
 
 class JobStatus:
    """ 
-   @summary: Constants to define the status of a job
+   @summary: Constants to define the status of a job.
+   @note: 0 - Not ready
+   @note: 1 - Ready but not started
+   @note: Greater than 1 but less than 300 - Running
+   @note: 300 - Completed
+   @note: 1000 or greater - Error
    """
-   # Pull / Push job statuses.  Replaces older statuses
-   GENERAL = 0
-   INITIALIZE = 1
-   PULL_REQUESTED = 90
-   PULL_COMPLETE = 100
-   ACQUIRING_INPUTS = 105
-   COMPUTE_INITIALIZED = 110
-   RUNNING = 120
-   COMPUTED = 130
-   PUSH_REQUESTED = 140
-   PUSHED = 150
+   GENERAL = 0  ## Not ready
+   INITIALIZE = 1 ## Ready to run
+   PULL_REQUESTED = 90 ## Pull requested from job server
+   PULL_COMPLETE = 100 ## Pulled from job server to compute
+   ACQUIRING_INPUTS = 105 ## Acquiring inputs for computation
+   COMPUTE_INITIALIZED = 110 ## Initialized for compute
+   RUNNING = 120 ## LmCompute is working on it
+   COMPUTED = 130 ## Finished computation
+   PUSH_REQUESTED = 140 ## Waiting to push results back to server
+   PUSHED = 150 ## Results pushed to server
    PUSH_COMPLETE = 200
-#    NOTIFY_READY = 210
-   COMPLETE = 300
+
+   #NOTIFY_READY = 210
+
+   COMPLETE = 300 ## Results computed and available
    
    # ==========================================================================   
    # =                             General Errors                             =
@@ -141,11 +147,11 @@ class JobStatus:
    # Not found in database, could be prior to insertion
    NOT_FOUND = 404
 
-   GENERAL_ERROR = 1000
-   UNKNOWN_ERROR = 1001
+   GENERAL_ERROR = 1000 ## Any status greater than this is an error
+   UNKNOWN_ERROR = 1001 ## Unknown error occurred
    DEPENDENCY_ERROR = 1002
    UNKNOWN_CLUSTER_ERROR = 1003
-   PUSH_FAILED = 1100
+   PUSH_FAILED = 1100 ## Failed to push results to server
    
    # Remote kill status.  This happens when something signals a stop
    REMOTE_KILL = 1150
