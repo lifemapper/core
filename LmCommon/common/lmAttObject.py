@@ -83,6 +83,46 @@ class LmAttObj(object):
       @param value: The new value for the attribute
       """
       self._attrib[name] = value
+      
+   # ......................................
+   def __dir__(self):
+      """
+      @summary: Override dir() method to pick up attributes in _attrib
+      """
+      def get_attrs(obj):
+         import types
+         if not hasattr(obj, '__dict__'):
+            return []  # slots only
+         if not isinstance(obj.__dict__, (dict, types.DictProxyType)):
+            raise TypeError("%s.__dict__ is not a dictionary"
+                                 "" % obj.__name__)
+         return obj.__dict__.keys()
+
+      def dir2(obj):
+         attrs = set()
+         if not hasattr(obj, '__bases__'):
+             # obj is an instance
+             if not hasattr(obj, '__class__'):
+                 # slots
+                 return sorted(get_attrs(obj))
+             klass = obj.__class__
+             attrs.update(get_attrs(klass))
+         else:
+             # obj is a class
+             klass = obj
+         
+         for cls in klass.__bases__:
+             attrs.update(get_attrs(cls))
+             attrs.update(dir2(cls))
+         attrs.update(get_attrs(obj))
+         try:
+            attrs.update(obj.getAttributes().keys())
+         except Exception, e:
+            pass
+         return list(attrs)
+
+      return dir2(self)
+   
 
 # .............................................................................
 class LmAttList(list, LmAttObj):
