@@ -950,12 +950,15 @@ class RADIntersectJobData(_JobData):
 
       for lyr in layerset.layers:
          lyrVals = {'dlocation': lyr.getDLocation()}
-         try:
-            lyrVals['isRaster'] = lyr.gdalType is not None
+         #try:
+         # CJG - 9/8/16 - This was not throwing an exception and thus always getting bad layer urls for shapefiles
+         if lyr.gdalType is not None:
+            lyrVals['isRaster'] = True #lyr.gdalType is not None
             lyrVals['resolution'] = lyr.resolution
             lyrVals['identifier'] = lyr.verify
             lyrVals['layerUrl'] = "%s/GTiff" % lyr.metadataUrl
-         except:
+         #except:
+         else:
             lyrVals['isRaster'] = False
             lyrVals['identifier'] = lyr.verify
             lyrVals['layerUrl'] = "%s/shapefile" % lyr.metadataUrl
