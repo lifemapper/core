@@ -246,7 +246,7 @@ class CalculateRunner(PythonRunner):
       print self.job.matrix.url
       lyrMgr = LayerManager(self.env.getJobDataPath())
        
-      sgLayerId = self.job.shapegrid.layerId
+      sgLayerId = self.job.shapegrid.identifier
       sgUrl = self.job.shapegrid.shapegridUrl
       
       self.shapegrid = {
