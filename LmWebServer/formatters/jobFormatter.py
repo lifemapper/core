@@ -302,7 +302,7 @@ class JobFormatter(Formatter):
             lyr = self.obj.dataObj['layerset'][lyrKey]
             lyrEl = SubElement(layerSet, "layer")
             SubElement(lyrEl, "index", value=lyrKey)
-            SubElement(lyrEl, "identifier", value=lyr.verify)
+            SubElement(lyrEl, "identifier", value=lyr['identifier'])
             SubElement(lyrEl, "url", value=lyr['layerUrl'])
             SubElement(lyrEl, "isRaster", value=str(lyr['isRaster']))
             try:
