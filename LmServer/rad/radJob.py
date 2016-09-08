@@ -944,7 +944,7 @@ class RADIntersectJobData(_JobData):
       shapegridVals = {
                        'dlocation': shapegrid.getDLocation(),
                        'localIdIdx': shapegrid.getLocalIdIndex(),
-                       'identifier': shaepgrid.verify,
+                       'identifier': shapegrid.verify,
                        'shapegridUrl' : "%s/shapefile" % shapegrid.metadataUrl
                       }
 
