@@ -297,6 +297,7 @@ class JobFormatter(Formatter):
          sgUrl = self.obj.dataObj['shapegrid']['shapegridUrl']
          SubElement(sg, "url", value=sgUrl)
          SubElement(sg, "localIdIndex", value=self.obj.dataObj['shapegrid']['localIdIdx'])
+         SubElement(sg, "identifier", value=self.obj.dataObj['shapegrid']['identifier'])
          layerSet = SubElement(tree, "layerSet")
          for lyrKey in self.obj.dataObj['layerset'].keys():
             lyr = self.obj.dataObj['layerset'][lyrKey]
