@@ -1832,6 +1832,7 @@ class Vector(_Layer):
          for zfname in zfnames:
             if zfname.endswith(OutputFormat.SHAPE):
                pth, basefilename = os.path.split(zfname)
+               pth = UPLOAD_PATH
                basename, dext = os.path.splitext(basefilename)
                newfnamewoext = os.path.join(pth, basename)
                outfname = os.path.join(UPLOAD_PATH, basefilename)
