@@ -316,7 +316,9 @@ class LayerManager(object):
             content.seek(0)
             with zipfile.ZipFile(content, allowZip64=True) as z:
                for name in z.namelist():
+                  outName = '%s%s' % (layerId, os.path.splitext(name)[1])
                   z.extract(name, outDir)
+                  os.rename(os.path.join(outDir, name), os.path.join(outDir, outName))
          else:
             with open(lyrPath, 'w') as outF:
                outF.write(lyrCnt)
