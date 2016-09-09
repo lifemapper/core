@@ -33,8 +33,9 @@ import glob
 import os
 from tempfile import NamedTemporaryFile
 
+from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.base.layer import Raster
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LmHTTPError
 
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse
 
@@ -80,7 +81,8 @@ class AsciiGridFormatter(Formatter):
             
             #os.remove(tmpFn)
       else:
-         raise LMError("Can't return file for %s type" % str(self.obj.__class__))
+         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, 
+                     "Can't return file for %s type" % str(self.obj.__class__))
 
       return FormatterResponse(content, contentType=contentType, filename=fn,
                                otherHeaders=headers)

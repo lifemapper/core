@@ -35,7 +35,7 @@ from LmCommon.common.lmconstants import HTTPStatus, OutputFormat
 from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmServer.base.layer import Raster, Vector
-from LmServer.base.lmobj import LMError, LmHTTPError
+from LmServer.base.lmobj import LmHTTPError
 from LmServer.rad.radbucket import RADBucket
 from LmServer.rad.radexperiment import RADExperiment
 from LmServer.sdm.sdmexperiment import SDMExperiment
@@ -155,7 +155,8 @@ class FileFormatter(Formatter):
             content = open(self.obj._dlocation)
             headers = {"Content-Disposition" : 'attachment; filename="%s"' % basename}
       else:
-         raise LMError("Can't return file for %s type" % str(self.obj.__class__))
+         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                     "Can't return file for %s type" % str(self.obj.__class__))
       
       return FormatterResponse(content, contentType=contentType, filename=fixFilename(basename),
                                otherHeaders=headers)

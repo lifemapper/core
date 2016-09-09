@@ -29,12 +29,12 @@
 """
 from types import ListType, NoneType
 
-from LmCommon.common.lmconstants import LM_NAMESPACE, LM_NS_PREFIX
+from LmCommon.common.lmconstants import HTTPStatus, LM_NAMESPACE, LM_NS_PREFIX
 from LmCommon.common.lmXml import Element, register_namespace, \
                                   setDefaultNamespace, SubElement, tostring
 
 from LmServer.base.atom import Atom
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LmHTTPError
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.base.utilities import (escapeString, formatTimeAtom, 
                                      ObjectAttributeIterator)
@@ -69,7 +69,8 @@ class AtomFormatter(Formatter):
       elif isinstance(self.obj, ServiceObject):
          fn = "%s%satom.xml" % (name, self.obj.getId())
       else:
-         raise LMError("Cannot convert %s object to an Atom feed" % str(self.obj.__class__))
+         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+          "Cannot convert %s object to an Atom feed" % str(self.obj.__class__))
 
       url = self.url
       if url.endswith('/'):

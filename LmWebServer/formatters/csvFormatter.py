@@ -30,8 +30,8 @@
 import csv
 from StringIO import StringIO
 
-from LmCommon.common.lmconstants import ENCODING
-from LmServer.base.lmobj import LMError
+from LmCommon.common.lmconstants import ENCODING, HTTPStatus
+from LmServer.base.lmobj import LmHTTPError
 from LmServer.rad.radbucket import RADBucket
 from LmServer.rad.pamvim import PamSum
 from LmServer.sdm.occlayer import OccurrenceLayer
@@ -188,7 +188,8 @@ class CsvFormatter(Formatter):
          csvStringIO.seek(0)
          ret = csvStringIO.getvalue()
       else:
-         raise LMError("Not sure how to format %s to CSV" % str(self.obj.__class__))
+         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                  "Not sure how to format %s to CSV" % str(self.obj.__class__))
       try:
          name = self.obj.serviceType[:-1]
       except:

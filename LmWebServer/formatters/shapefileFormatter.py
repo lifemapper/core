@@ -33,15 +33,15 @@ from StringIO import StringIO
 import uuid
 import zipfile
 
+from LmCommon.common.lmconstants import HTTPStatus, SHAPEFILE_EXTENSIONS
 from LmServer.base.layer import Vector
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LmHTTPError
 from LmServer.rad.pamvim import PamSum
 from LmServer.rad.radbucket import RADBucket
 from LmServer.rad.shapegrid import ShapeGrid
 from LmServer.sdm.occlayer import OccurrenceLayer
 
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse
-from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS
 
 # .............................................................................
 class ShapefileFormatter(Formatter):
@@ -108,7 +108,8 @@ class ShapefileFormatter(Formatter):
          resp = ''.join(tgStream.readlines())
          tgStream.close()
       else:
-         raise LMError("Can't return shapefile interface for %s" % self.obj.__class__)
+         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, 
+                "Can't return shapefile interface for %s" % self.obj.__class__)
       
       ct = "application/x-gzip"
       fn = "response.zip"

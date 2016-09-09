@@ -30,10 +30,10 @@
 from osgeo import ogr
 from LmCommon.common.lmXml import (CDATA, Element, register_namespace, 
                                   setDefaultNamespace, SubElement, tostring)
-from LmCommon.common.lmconstants import ENCODING
+from LmCommon.common.lmconstants import ENCODING, HTTPStatus
 
 from LmServer.base.layer import Raster
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LmHTTPError
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.base.utilities import escapeString, formatTimeHuman
 from LmServer.common.datalocator import EarlJr
@@ -61,7 +61,8 @@ class KmlFormatter(Formatter):
       @rtype: FormatterResponse
       """
       if not isinstance(self.obj, ServiceObject):
-         raise LMError("Can't format %s object as KML" % str(self.obj.__class__))
+         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, 
+                     "Can't format %s object as KML" % str(self.obj.__class__))
       kml = getKml(self.obj)
       try:
          name = self.obj.serviceType[:-1]

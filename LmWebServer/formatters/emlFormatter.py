@@ -27,8 +27,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.base.layer import Raster, Vector
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LmHTTPError
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.rad.radbucket import RADBucket
 from LmServer.rad.radexperiment import RADExperiment
@@ -94,7 +95,8 @@ class EmlFormatter(Formatter):
       elif isinstance(self.obj, RADExperiment):
          cnt = buildRadExperimentPackage(self.obj)
       else:
-         raise LMError("EML not available for %s" % self.obj.__class__)
+         raise LmHTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                          "EML not available for %s" % self.obj.__class__)
 
       try:
          name = self.obj.serviceType[:-1]
