@@ -27,6 +27,7 @@
           02110-1301, USA.
 """
 import argparse
+import datetime
 from hashlib import md5
 import logging
 from logging.handlers import RotatingFileHandler
@@ -147,7 +148,7 @@ class JobRunner(object):
       # Set up the log after the word directory is created
       self._initializeLog()
    
-      self.log.debug("Job start time: %s" % self.startTime)
+      self.log.debug("Job start time: %s" % str(datetime.datetime.now()))
       self.log.debug("-------------------------------------------------------")
       self.log.debug("Job Id: %s" % self.job.jobId)
       self.log.debug("User Id: %s" % self.job.userId)
@@ -250,9 +251,27 @@ class JobRunner(object):
                    overwritten in subclasses unless a different behavior is 
                    needed for some reason
       """
+      # Initialization time
+      initTime = datetime.datetime.now()
       self._initializeJob()
+      # Job start time
+      startTime = datetime.datetime.now()
       self._doWork()
+      # job end time
+      endTime = datetime.datetime.now()
       self._finishJob()
+      # Finalize time
+      finalizeTime = datetime.datetime.now()
       self._cleanUp()
+      # Clean up time
+      cleanupTime = datetime.datetime.now()
+
+      self.metrics['init clock'] = str(initTime)
+      self.metrics['init time'] = str(startTime - initTime)
+      self.metrics['run time'] = str(endTime - startTime)
+      self.metrics['finalize time'] = str(finalizeTime - endTime)
+      self.metrics['cleanup time'] = str(cleanupTime - finalizeTime)
+      self.metrics['elapsed time'] = str(cleanupTime - initTime)
+      self.metrics['end clock'] = str(cleanupTime)
       self._writeMetrics()
       
