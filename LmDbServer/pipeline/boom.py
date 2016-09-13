@@ -1092,7 +1092,7 @@ class iDigBioBoom(_LMBoomer):
    def chainOne(self):
       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
       if taxonKey:
-         jobs = self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
+         jobs = self._processInputGBIFTaxonId(taxonKey, taxonCount)
          self._createMakeflow(jobs)
          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
                        .format(taxonKey, taxonName, taxonCount, self.nextStart))
@@ -1189,7 +1189,7 @@ class iDigBioBoom(_LMBoomer):
       return str(taxonSourceKeyVal)
          
 # ...............................................
-   def _processInputGBIFTaxonId(self, taxonName, taxonKey, taxonCount):
+   def _processInputGBIFTaxonId(self, taxonKey, taxonCount):
       jobs = []
       if taxonKey is not None:
          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
