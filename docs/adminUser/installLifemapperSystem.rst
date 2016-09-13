@@ -41,6 +41,7 @@ Install both rolls on Frontend
 
 Update existing (maintains data)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
    * You may remove source code rpms (lifemapper-lmserver and 
      lifemapper-compute) to avoid error messages about file conflicts in 
      shared code, but error messages about conflicting shared files from the 
@@ -56,8 +57,9 @@ Update existing (maintains data)
 
 New install (destroys data)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   * If you do not need to save the existing data files and database records, 
-     run the cleanRoll scripts for each roll. 
+
+    If you do not need to save the existing data files and database records, 
+    run the cleanRoll scripts for each roll. 
    
 #. **Add a new roll and rpms**, ensuring that old rpms/files are replaced::
 
@@ -71,10 +73,10 @@ New install (destroys data)
 
 #. **Create and run LmServer/LmCompute scripts**::
 
-   # (rocks run roll lifemapper-server > add-server.sh; 
-      rocks run roll lifemapper-compute > add-compute.sh;
-      bash add-server.sh > add-server.out 2>&1;
-      bash add-compute.sh > add-compute.out 2>&1)
+    # rocks run roll lifemapper-server > add-server.sh; 
+    # rocks run roll lifemapper-compute > add-compute.sh;
+    # bash add-server.sh > add-server.out 2>&1;
+    # bash add-compute.sh > add-compute.out 2>&1)
     
 #. **To change defaults**, such as DATASOURCE, ARCHIVE_USER, compute parameters,
    create the configuration file site.ini (in /opt/lifemapper/config/) 
@@ -108,7 +110,7 @@ To change SCENARIO_PACKAGE and/or ARCHIVE_USER after reboot
          # rocks/bin/updateArchiveInput
 
    #. If you did **NOT** update the SCENARIO_PACKAGE, run the following to 
-      catalog metadata for the new ARCHIVE_USER:
+      catalog metadata for the new ARCHIVE_USER::
 
          # rocks/bin/fillDB
 
@@ -152,19 +154,20 @@ LmCompute
 
 #. Check LmCompute logfiles
 
-  * post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
-  * initLMcompute.log 
-  * installComputeCronJobs.log
-  * seedData.log (seedData must be run manually by user after reboot)
+    * post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
+    * initLMcompute.log 
+    * installComputeCronJobs.log
+    * seedData.log (seedData must be run manually by user after reboot)
 
 LmServer
 ~~~~~~~~
 
 #. Check LmServer logfiles
-  * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
-  * initLM.log
-  * installServerCronJobs.log
-  * initDbserver.log (only if new db)
+
+    * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
+    * initLM.log
+    * installServerCronJobs.log
+    * initDbserver.log (only if new db)
 
      
 #. **Test database contents** ::  
@@ -182,17 +185,21 @@ Change Data Defaults
 
    * Look at values in /opt/lifemapper/config/config.lmserver.ini
    * Update values to be modified in /opt/lifemapper/config/site.ini
-   * Override any of the following (or other)variables by adding them to site.ini
+   * Override any of the following (or other) variables by adding them to 
+     site.ini and downloading climate data if necessary.
    
      * Default ARCHIVE_USER is kubi.
      * Default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU production
        installation, override this with the latest full data dump by downloading 
        the data from yeti into /share/lmserver/data/species/
+     * Default species file of "Accepted" GBIF Taxon Ids for iDigBio occurrences
+       is IDIG_FILENAME with a value of idig_gbifids.txt.  Download the file 
+       from yeti into /share/lmserver/data/species.
      * Default SCENARIO_PACKAGE is 10min-past-present-future.  To change this, 
        override the variable SCENARIO_PACKAGE in site.ini, then 
      
-       * run `/opt/lifemapper/rocks/bin/updateArchiveInput` to download and 
-         install the data (log output will be in /tmp/updateArchiveInput.log):
+       * run `/opt/lifemapper/rocks/bin/getClimateData` to download  
+         the data (log output will be in /tmp/getClimateData.log):
        * identify options for DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS by looking at the metadata newly installed  
          in /share/lmserver/data/climate/<SCENARIO_PACKAGE>.csv
