@@ -73,10 +73,10 @@ New install (destroys data)
 
 #. **Create and run LmServer/LmCompute scripts**::
 
-    # rocks run roll lifemapper-server > add-server.sh; 
-    # rocks run roll lifemapper-compute > add-compute.sh;
-    # bash add-server.sh > add-server.out 2>&1;
-    # bash add-compute.sh > add-compute.out 2>&1)
+    # rocks run roll lifemapper-server > add-server.sh
+    # rocks run roll lifemapper-compute > add-compute.sh
+    # bash add-server.sh > add-server.out 2>&1
+    # bash add-compute.sh > add-compute.out 2>&1
     
 #. **To change defaults**, such as DATASOURCE, ARCHIVE_USER, compute parameters,
    create the configuration file site.ini (in /opt/lifemapper/config/) 

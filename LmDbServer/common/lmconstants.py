@@ -25,7 +25,7 @@ import os.path
 
 from LmBackend.common.lmconstants import PID_PATH
 from LmServer.common.lmconstants import SPECIES_DATA_PATH
-from LmServer.common.localconstants import DATA_PATH, LOG_PATH
+from LmServer.common.localconstants import DATA_PATH
 from LmDbServer.common.localconstants import (TAXONOMY_FILENAME, 
      OCCURRENCE_FILENAME, PROVIDER_FILENAME, TSN_FILENAME , IDIG_FILENAME, 
      USER_OCCURRENCE_CSV_FILENAME, USER_OCCURRENCE_META_FILENAME)                 
