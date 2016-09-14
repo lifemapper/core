@@ -244,7 +244,7 @@ class OccurrenceFieldNames:
 # TODO: See how many of these are still in use.  They should probably be 
 #          constants in LmWebServer if they are still needed
 IMAGE_PATH = 'image'
-SESSION_PATH = 'sessions'
+SESSION_DIR = 'sessions'
 MAP_PATH = 'maps'
 USER_DATA_PATH = 'fixme'
 
