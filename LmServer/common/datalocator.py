@@ -28,10 +28,10 @@ from LmCommon.common.lmconstants import OutputFormat
 
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, ARCHIVE_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
-from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_PATH,
+from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
    LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
-   DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_PATH,   MODEL_PATH, USER_LAYER_PATH, 
+   DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, MODEL_PATH, USER_LAYER_PATH, 
    MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY, 
    RAD_EXPERIMENT_DIR_PREFIX)
 from LmServer.base.lmobj import LMError, LMObject
@@ -97,7 +97,7 @@ class EarlJr(LMObject):
       """
       @note: /DATA_PATH/ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
-             /DATA_PATH/ARCHIVE_PATH/userId/MAP_PATH/
+             /DATA_PATH/ARCHIVE_PATH/userId/MAP_DIR/
                  contains maps
              /DATA_PATH/ARCHIVE_PATH/userId/<epsg>/USER_LAYER_PATH/
                  contains user layers common to epsg 
@@ -121,7 +121,7 @@ class EarlJr(LMObject):
          pth = os.path.join(basepath, *dirparts)
 
       elif isMaps:
-         pth = os.path.join(basepath, MAP_PATH)
+         pth = os.path.join(basepath, MAP_DIR)
                
       elif epsg is not None:    
          pthparts = [basepath, str(epsg)]
@@ -518,7 +518,7 @@ class EarlJr(LMObject):
 
 # ...............................................
    def _createStaticMapPath(self):
-      pth = os.path.join(APP_PATH, WEB_PATH, MAP_PATH)
+      pth = os.path.join(APP_PATH, WEB_DIR, MAP_DIR)
       return pth
 
 # ...............................................
@@ -532,7 +532,7 @@ class EarlJr(LMObject):
             occsetId = int(''.join(parts))
          except:
             pass
-      elif rem[0] == MAP_PATH:
+      elif rem[0] == MAP_DIR:
          isMaps = True
       else:
          # Everything else begins with epsgcode (returned as string)
