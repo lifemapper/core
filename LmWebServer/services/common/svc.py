@@ -53,7 +53,7 @@ from LmServer.base.utilities import escapeString, getFileContents, \
 
 from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, 
                                             HTTP_ERRORS,  
-                                            STATIC_PATH)
+                                            STATIC_DIR)
 from LmWebServer.common.localconstants import CP_CONFIG_FILE, LM_LIB_PATH
 from LmWebServer.formatters.formatterFactory import FormatterFactory
 from LmWebServer.services.common.authentication import checkUserLogin
