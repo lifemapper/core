@@ -249,8 +249,8 @@ MAP_DIR = 'maps'
 USER_DATA_PATH = 'fixme'
 
 # Mapfile symbolizations
-WEB_MODULES_PATH = 'LmWebServer'
-WEB_DIR = os.path.join(WEB_MODULES_PATH, 'public_html')
+WEB_MODULES_DIR = 'LmWebServer'
+WEB_DIR = os.path.join(WEB_MODULES_DIR, 'public_html')
 PROJ_LIB = os.path.join(APP_PATH, 'share/proj/')
 SYMBOL_FILENAME = os.path.join(APP_PATH, WEB_DIR, MAP_DIR, 'symbols.txt')
 DEFAULT_POINT_COLOR = 'ff7f00'
