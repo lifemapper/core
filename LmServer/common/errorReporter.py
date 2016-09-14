@@ -34,7 +34,7 @@ except:
    
 import traceback
 
-from LmServer.common.lmconstants import ERROR_LOG_PATH
+from LmServer.common.lmconstants import ERROR_LOG_DIR
 from LmServer.common.localconstants import TROUBLESHOOTERS, LOG_PATH
 from LmServer.notifications.email import EmailNotifier
 
@@ -47,7 +47,7 @@ def reportError(err, cpRequest, cpResponse):
                 parties indicating that a new error has occurred.
    """
    # Check for existance of error directory?
-   eDir = os.path.join(LOG_PATH, ERROR_LOG_PATH)
+   eDir = os.path.join(LOG_PATH, ERROR_LOG_DIR)
    if not os.path.exists(eDir):
       os.mkdir(eDir)
    

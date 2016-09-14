@@ -31,7 +31,7 @@ from LmServer.common.localconstants import (APP_PATH, DATA_PATH, ARCHIVE_USER,
 from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
    LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
-   DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, MODEL_PATH, USER_LAYER_PATH, 
+   DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, MODEL_DIR, USER_LAYER_DIR, 
    MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY, 
    RAD_EXPERIMENT_DIR_PREFIX)
 from LmServer.base.lmobj import LMError, LMObject
@@ -88,7 +88,7 @@ class EarlJr(LMObject):
    
 # ...............................................
    def createArchiveDataPath(self):
-      return os.path.join(DATA_PATH, MODEL_PATH) 
+      return os.path.join(DATA_PATH, MODEL_DIR) 
 
 # ...............................................
    def createDataPath(self, usr, occsetId=None, epsg=None, 
@@ -99,7 +99,7 @@ class EarlJr(LMObject):
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
              /DATA_PATH/ARCHIVE_PATH/userId/MAP_DIR/
                  contains maps
-             /DATA_PATH/ARCHIVE_PATH/userId/<epsg>/USER_LAYER_PATH/
+             /DATA_PATH/ARCHIVE_PATH/userId/<epsg>/USER_LAYER_DIR/
                  contains user layers common to epsg 
              /DATA_PATH/ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/
                  contains computed data for RAD experiment xxx
@@ -126,7 +126,7 @@ class EarlJr(LMObject):
       elif epsg is not None:    
          pthparts = [basepath, str(epsg)]
          if isLayers:
-            pthparts.append(USER_LAYER_PATH)
+            pthparts.append(USER_LAYER_DIR)
          elif radexpId is not None:
             pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(radexpId))
             if bucketId is not None:
@@ -539,7 +539,7 @@ class EarlJr(LMObject):
          epsg = rem[0]
          rem = rem[1:]
          if len(rem) >= 1:
-            if rem[0] == USER_LAYER_PATH:
+            if rem[0] == USER_LAYER_DIR:
                isLayers = True
             elif rem[0].startswith(RAD_EXPERIMENT_DIR_PREFIX):
                dirname = rem[0]
@@ -560,22 +560,22 @@ class EarlJr(LMObject):
       @todo: UNFINISHED?
       @summary Return the relevant information from an absolute path to 
                LM-stored input/output data
-      @note: /DATA_PATH/MODEL_PATH/userId/xxx/xxx/xxx/xxx
+      @note: /DATA_PATH/MODEL_DIR/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
-             /DATA_PATH/MODEL_PATH/userId/maps/
+             /DATA_PATH/MODEL_DIR/userId/maps/
                  contains all non-SDM mapfiles 
-             /DATA_PATH/MODEL_PATH/userId/epsg/Layers/
+             /DATA_PATH/MODEL_DIR/userId/epsg/Layers/
                  contains layers sharing epsg code
-             /DATA_PATH/MODEL_PATH/userId/epsg/RADxxx 
+             /DATA_PATH/MODEL_DIR/userId/epsg/RADxxx 
                  contains experiment level data (layer indexes, tree files, etc)
-             /DATA_PATH/MODEL_PATH/userId/epsg/RADxxx/bucketId
+             /DATA_PATH/MODEL_DIR/userId/epsg/RADxxx/bucketId
                  contains bucket level data (pam, statistics, etc)
       """
       usr = occsetId = epsg = radId = bckId = None
       isLayers = isMaps = False
 
       ancPth = self._createStaticMapPath()
-      sdmPth = os.path.join(DATA_PATH, MODEL_PATH)
+      sdmPth = os.path.join(DATA_PATH, MODEL_DIR)
       
       if fullpath.startswith(ancPth):
          pass

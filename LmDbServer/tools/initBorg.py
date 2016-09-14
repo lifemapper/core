@@ -33,7 +33,7 @@ from LmDbServer.common.localconstants import (SCENARIO_PACKAGE,
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
 import LmDbServer.tools.bioclimMeta as meta
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
+from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_DIR
 from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH, DATASOURCE
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
@@ -136,7 +136,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    currtime = DT.gmt().mjd
    (starttime, endtime) = baseMeta['time']
    relativePath = os.path.join(pkgMeta['topdir'], baseMeta['directory'])
-   scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
+   scenpth = os.path.join(DATA_PATH, ENV_DATA_DIR, relativePath)
    rstType = lyrMeta['gdaltype']
    
    for ltype, ltvals in lyrtypeMeta.iteritems():
@@ -180,7 +180,7 @@ def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativeP
    currtime = DT.gmt().mjd
    layers = []
    rstType = None
-   scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
+   scenpth = os.path.join(DATA_PATH, ENV_DATA_DIR, relativePath)
    for ltype, ltvals in lyrtypeMeta.iteritems():
       if ltype not in staticLayers.keys():
          fname = _getbioFname(ltype, rptcode=rpt, tmcode=tm, 
@@ -219,7 +219,7 @@ def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
                    relativePath, scendesc, rpt, mdlvals, tm, tmvals):
    currtime = DT.gmt().mjd
    layers = []
-   scenpth = os.path.join(DATA_PATH, ENV_DATA_PATH, relativePath)
+   scenpth = os.path.join(DATA_PATH, ENV_DATA_DIR, relativePath)
    rstType = lyrMeta['gdaltype']
    for ltype, ltvals in lyrtypeMeta.iteritems():
       if ltype not in staticLayers.keys():
@@ -435,7 +435,7 @@ def _getClimateMeta(scenPkg):
 def _importClimatePackageMetadata():
    # Override the above imports if scenario metadata file exists
    metabasename = SCENARIO_PACKAGE+'.py'
-   metafname = os.path.join(DATA_PATH, ENV_DATA_PATH, metabasename)
+   metafname = os.path.join(DATA_PATH, ENV_DATA_DIR, metabasename)
    # TODO: change on update python from 2.7 to 3.3+  
    try:
       import imp

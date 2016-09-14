@@ -243,10 +243,9 @@ class OccurrenceFieldNames:
 # Web directories
 # TODO: See how many of these are still in use.  They should probably be 
 #          constants in LmWebServer if they are still needed
-IMAGE_PATH = 'image'
+IMAGE_DIR = 'image'
 SESSION_DIR = 'sessions'
 MAP_DIR = 'maps'
-USER_DATA_PATH = 'fixme'
 
 # Mapfile symbolizations
 WEB_MODULES_DIR = 'LmWebServer'
@@ -411,23 +410,6 @@ class FileFix:
                 LMFileType.SPLOTCH_PAM: OutputFormat.NUMPY,
                 LMFileType.SPLOTCH_SITES: OutputFormat.PICKLE
    }
-# SDM prefixes
-# ENM filename info
-# MODEL_REQUEST_PREFIX = 'modReq'
-# PROJECTION_REQUEST_PREFIX = 'projReq'
-# PROJ_PREFIX = 'prj_'
-
-# RAD prefixes
-# USER_RAD_PATH_PREFIX = 'rad'
-
-# # TODO: Delete these when finished moving to EarlJr
-# PRESENCE_INDEX_PREFIX = 'indices'
-# LAYER_INDEX_PREFIX = 'lyridx_'
-# SHAPEGRID_PREFIX = 'shpgrid_'
-# ATTR_MATRIX_PREFIX = 'attrMtx_'
-# ATTR_TREE_PREFIX = 'attrTree_'
-# PAM_PREFIX = 'pam_'
-# GRIM_PREFIX = 'grim_'
    
 NAME_SEPARATOR = '_'
    
@@ -458,14 +440,13 @@ CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +
                                      '           OUTLINECOLOR 0 0 0\n' +
                                      '           COLOR 190 16 32\n'}
 # Relative paths
-USER_LOG_PATH = 'users'
-ERROR_LOG_PATH = 'errors'
-POINT_PATH = 'points'
+USER_LOG_DIR = 'users'
+ERROR_LOG_DIR = 'errors'
 # These and 'species' are all subdirectories of DATA_PATH, in config.ini
-MODEL_PATH = 'archive'
-ENV_DATA_PATH = 'climate'
-SPECIES_DATA_PATH = 'species'
-USER_LAYER_PATH = 'Layers'
+MODEL_DIR = 'archive'
+ENV_DATA_DIR = 'climate'
+SPECIES_DATA_DIR = 'species'
+USER_LAYER_DIR = 'Layers'
 
 # Depth of path for archive SDM experiment data - this is the number of levels 
 # that the occurrencesetid associated with a model and its projections 
