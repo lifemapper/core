@@ -2,14 +2,14 @@
 @summary: Module containing the job runners for Maximum Entropy models and 
              projections
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @note: Commands are for maxent library version 3.3.3e
 @note: Commands may be backwards compatible
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -39,7 +39,9 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmCompute.common.layerManager import (convertAndModifyAsciiToTiff, 
                                            LayerManager)
+from LmCompute.common.localconstants import BIN_PATH, JOB_DATA_PATH
 from LmCompute.common.lmconstants import LayerFormat
+from LmCompute.common.lmObj import LmException
 
 from LmCompute.jobs.runners.applicationRunner import ApplicationRunner
 
@@ -62,11 +64,10 @@ class MEModelRunner(ApplicationRunner):
       
       @note: MaxEnt version 3.3.3e
       """
-      baseCmd = "{1} {2} {3}".format(self.env.getApplicationPath(), 
-                                           JAVA_CMD, ME_CMD, MDL_TOOL)
+      baseCmd = "{1} {2} {3}".format(BIN_PATH, JAVA_CMD, ME_CMD, MDL_TOOL)
       samples = "-s {0}".format(self.samplesFile)
       envParams = "-e {0}".format(self.jobLayerDir)
-      outputParams = "-o {0}".format(self.outputPath)
+      outputParams = "-o {0}".format(self.workDir)
       algoOptions = getAlgorithmOptions(self.job.algorithm)
       options = "nowarnings nocache autorun -z"
       # Application path, me command, model tool
@@ -74,21 +75,12 @@ class MEModelRunner(ApplicationRunner):
                                             outputParams, algoOptions, options)
       if not os.path.exists(ME_CMD):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
-         self._update()
+         raise LmException(JobStatus.LM_APPLICATION_NOT_FOUND, "Could not find: %s" % ME_CMD)
 
-      print cmd
       self.log.debug(cmd)
       
       return cmd
    
-   # ...................................
-   def _checkApplication(self):
-      """
-      @summary: Checks the MaxEnt output files to get the progress and 
-                   status of the running model.
-      """
-      self.stderr = self.subprocess.stderr.read()
-
    # ...................................
    def _checkStdErr(self):
       try:
@@ -106,7 +98,6 @@ class MEModelRunner(ApplicationRunner):
             self.status = JobStatus.ME_POINTS_ERROR
       except Exception, e: # Might happen if there is no stderr 
          pass
-            
    
    # ...................................
    def _checkOutput(self):
@@ -121,7 +112,7 @@ class MEModelRunner(ApplicationRunner):
          fnParts = os.path.splitext(self.lambdasFile)
          multiLambdasFile = ''.join([fnParts[0], '_0', fnParts[1]])
          if not os.path.exists(multiLambdasFile):
-            errfname = os.path.join(self.outputPath, 'maxent.log')
+            errfname = os.path.join(self.workDir, 'maxent.log')
             # Initialize error status
             self.status = JobStatus.ME_GENERAL_ERROR
             # Check stderr for error first, we may end up updating with 
@@ -165,19 +156,19 @@ class MEModelRunner(ApplicationRunner):
       #self.metrics['numPoints'] = len(self.job.points.point)
       #self.matrics['numLayers'] = len(self.job.layers.layer)
       
-      self.dataDir = self.env.getJobDataPath()
-      self.jobLayerDir = os.path.join(self.outputPath, 'layers')
-      self.samplesFile = os.path.join(self.outputPath, 'samples.csv')
+      self.dataDir = JOB_DATA_PATH
+      self.jobLayerDir = os.path.join(self.workDir, 'layers')
+      self.samplesFile = os.path.join(self.workDir, 'samples.csv')
 
       # Fix for species names with author strings
       self.spName = self.job.points.displayName.replace(',', '_').replace('(', '_').replace(')', '_')
       lambdaSpName = toUnicode(self.spName).replace(toUnicode(' '), toUnicode('_'))
       
-      self.lambdasFile = os.path.join(toUnicode(self.outputPath), 
+      self.lambdasFile = os.path.join(toUnicode(self.workDir), 
                                       toUnicode(toUnicode('{0}.lambdas'
                                                        ).format(lambdaSpName)))
 
-      #self.lambdasFile = os.path.join(self.outputPath, '{0}.lambdas'.format(
+      #self.lambdasFile = os.path.join(self.workDir, '{0}.lambdas'.format(
       #                          self.spName.replace(' ', '_')))
       
       if not os.path.exists(self.jobLayerDir):
@@ -216,76 +207,27 @@ class MEModelRunner(ApplicationRunner):
       self._writePoints()
       
    # .......................................
-   def _push(self):
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: Move entire model package?
       """
-      self.log.debug("Ready to push results")
-      if self.status < JobStatus.GENERAL_ERROR:
-         
+      # Options to keep:
+      #  self.modelLogFile
+      #  self.modelRequestFile
+      #  metrics
+      #  Maxent package of outputs
+      
+      if self.outDir is not None:
          # CJG - 06/22/2015
          #   If a Maxent model has multiple lambdas files, don't push one back
          #      as the "ruleset" for the whole model.  Rather, just add them
          #      all to the package and we won't allow projections for these
          #      experiments
-         pushPackage = True # Change to false if failed to push model
+         shutil.move(self.lambdasFile, self.outDir)
          
-         if os.path.exists(self.lambdasFile):
-            component = "model"
-            contentType = "text/plain"
-            with open(self.lambdasFile) as f:
-               content = f.read()
-            self.status = JobStatus.PUSH_REQUESTED
-            self._update()
-            try:
-               self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                             contentType, component)
-            except Exception, e: # Package existed and failed to push
-               print(str(e))
-               try:
-                  self.log.debug(str(e))
-               except Exception, e: # Log not initialized
-                  print(str(e))
-               self.status = JobStatus.PUSH_FAILED
-               self._update()
-               pushPackage = False
-               
-         try:
-            self._pushPackage()
-         except Exception, e:
-            print(str(e))
-            self.log.debug("Failed to push package: %s" % str(e))
-            self.status = JobStatus.PUSH_FAILED
-            self._update()
-      else:
-         component = "error"
-         content = None
-   
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Pushes the entire package back to the job server
-      @note: Does not push back layers directory
-      """
-      component = "package"
-      contentType = "application/zip"
-      
-      outStream = StringIO()
-      zf = zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED,
-                              allowZip64=True)
-      for base, _, files in os.walk(self.outputPath):
-         if base.find('layers') == -1:
-            for f in files:
-               zf.write(os.path.join(base, f), 
-                           os.path.relpath(os.path.join(base, f), 
-                                           self.outputPath))
-      zf.writestr("metrics.txt", self._getMetricsAsStringIO().getvalue())
-      zf.close()      
-      outStream.seek(0)
-      content = outStream.getvalue()
-      self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, contentType,
-                                                                     component)
-   
    # ...................................
    def _writePoints(self):
       """
@@ -322,9 +264,8 @@ directory containing grids for all the predictor variables described in the
 optional args can contain any flags understood by Maxent -- for example, a 
 "grd" flag would make the output grid of density.Project be in .grd format.
       """
-      baseCmd = "{1} {2} {3}".format(self.env.getApplicationPath(), 
-                                           JAVA_CMD, ME_CMD, PRJ_TOOL)
-      outFile = os.path.join(self.outputPath, 'output.asc')
+      baseCmd = "{1} {2} {3}".format(BIN_PATH, JAVA_CMD, ME_CMD, PRJ_TOOL)
+      outFile = os.path.join(self.workDir, 'output.asc')
 
       algoOptions = getAlgorithmOptions(self.job.algorithm)
       args = "nowarnings nocache autorun -z"
@@ -333,22 +274,14 @@ optional args can contain any flags understood by Maxent -- for example, a
       cmd = "{0} {1} {2} {3} {4} {5}".format(baseCmd, self.lambdasFile, 
                                                self.jobLayerDir, outFile, 
                                                algoOptions, args)
-      print cmd
       self.log.debug(cmd)
       
       if not os.path.exists(ME_CMD):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
-         self._update()
+         raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND, 
+                           "Could not find: %s" % ME_CMD)
       return cmd
    
-   # .......................................
-   def _checkApplication(self):
-      """
-      @summary: Checks the openModeller output files to get the progress and 
-                   status of the running projection.
-      """
-      pass
-      
    # .......................................
    def _checkOutput(self):
       """
@@ -357,7 +290,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       self.log.debug("Checking output")
       # If an output raster does not exist, an error occurred
       if not os.path.exists(self.outputFile):
-         errfname = os.path.join(self.outputPath, 'maxent.log')
+         errfname = os.path.join(self.workDir, 'maxent.log')
          if os.path.exists(errfname):
             with open(errfname) as f:
                logContent = f.read()
@@ -391,10 +324,10 @@ optional args can contain any flags understood by Maxent -- for example, a
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
 
-      self.dataDir = self.env.getJobDataPath()
-      self.jobLayerDir = os.path.join(self.outputPath, 'layers')
-      self.lambdasFile = os.path.join(self.outputPath, 'input.lambdas')
-      self.outputFile = os.path.join(self.outputPath, 'output.asc')
+      self.dataDir = JOB_DATA_PATH
+      self.jobLayerDir = os.path.join(self.workDir, 'layers')
+      self.lambdasFile = os.path.join(self.workDir, 'input.lambdas')
+      self.outputFile = os.path.join(self.workDir, 'output.asc')
 
       if not os.path.exists(self.jobLayerDir):
          os.makedirs(self.jobLayerDir)
@@ -442,7 +375,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       #   for fn in zf.namelist():
       #      if fn.find("_omission.csv") >= 0:
       #         # Extract the file if found
-      #         omissionFn = os.path.join(self.outputPath, 'input_omission.csv')
+      #         omissionFn = os.path.join(self.workDir, 'input_omission.csv')
       #         omissionContents = zf.read(fn)
       #         with open(omissionFn, 'w') as oF:
       #            oF.write(omissionContents)
@@ -489,16 +422,21 @@ optional args can contain any flags understood by Maxent -- for example, a
       self.log.debug("Ready to compute")
 
    # .......................................
-   def _push(self):
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: Move entire package?
       """
-      self.log.debug("Ready to push results")
+      # Options to keep:
+      #  projection LogFile
+      #  proj req file
+      #  metrics
+      #  Maxent package of outputs
       
-      component = "projection"
-      contentType = "image/tiff"
-      outFn = os.path.join(os.path.split(self.outputFile)[0], 'out.tif')
-      
+      #TODO: Move these to their own post-processing scripts
+      outFn = os.path.join(self.workDir, '%s.tif' % self.jobName)
       # Look to see if the layer should be scaled
       try: # Will fail if scale element does not exist and will use plain convert
          scaleDataType = self.job.postProcessing.scale.dataType
@@ -523,50 +461,14 @@ optional args can contain any flags understood by Maxent -- for example, a
          except:
             convertAndModifyAsciiToTiff(self.outputFile, outFn)
       
-      #scaleAndConvertLayer(self.outputFile, outFn, lyrMin=0.0, lyrMax=1.0)
-      #content = open(self.outputFile).read()
-      with open(outFn) as f:
-         content = f.read()
-      self._update()
-
-      try:
-         self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                                                        contentType, component)
-         try:
-            self._pushPackage()
-         except:
-            pass
-      except Exception, e:
-         try:
-            self.log.debug(str(e))
-         except: # Log not initialized
-            pass
-         self.status = JobStatus.PUSH_FAILED
-         self._update()
-
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Pushes the entire package back to the job server
-      @note: Does not push back layers directory
-      """
-      component = "package"
-      contentType = "application/zip"
       
-      outStream = StringIO()
-      zf = zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED,
-                              allowZip64=True)
-      
-      zf.write(self.lambdasFile, os.path.split(self.lambdasFile)[1])
-      zf.write(self.jobLogFile, os.path.split(self.jobLogFile)[1])
-      zf.writestr("metrics.txt", self._getMetricsAsStringIO().getvalue())
-      print(str(self.metrics))
-
-      zf.close()      
-      outStream.seek(0)
-      content = outStream.getvalue()      
-      self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, contentType, 
-                                                                     component)
+      if self.outDir is not None:
+         # CJG - 06/22/2015
+         #   If a Maxent model has multiple lambdas files, don't push one back
+         #      as the "ruleset" for the whole model.  Rather, just add them
+         #      all to the package and we won't allow projections for these
+         #      experiments
+         shutil.move(outFn, self.outDir)
 
 # .................................
 def getAlgorithmOptions(algo):
@@ -619,12 +521,12 @@ def handleLayers(layers, env, dataDir, jobLayerDir, mask=(None, None)):
       lyrs.append(lyrMgr.getLayerFilename(layerId, LayerFormat.MXE, layerUrl))
       
    for i in range(len(lyrs)):
-      env.createLink("{0}/layer{1}{2}".format(
-                              jobLayerDir, i, OutputFormat.MXE), lyrs[i])
+      os.symlink("{0}/layer{1}{2}".format(jobLayerDir, i, OutputFormat.MXE), 
+                 lyrs[i])
    
    if mask[0] is not None:
       mskLyr = lyrMgr.getLayerFilename(mask[0], LayerFormat.MXE, mask[1])
-      env.createLink("{0}/mask{1}".format(jobLayerDir, OutputFormat.MXE), 
+      os.symlink("{0}/mask{1}".format(jobLayerDir, OutputFormat.MXE), 
                      mskLyr)
       
    lyrMgr.close()
