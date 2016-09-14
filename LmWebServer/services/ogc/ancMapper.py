@@ -33,7 +33,7 @@ from LmCommon.common.lmconstants import HTTPStatus, OutputFormat
 from LmServer.base.lmobj import LmHTTPError, LMError, LMObject
 from LmServer.common.colorpalette import colorPalette
 from LmServer.common.lmconstants import (LINE_SIZE, LINE_SYMBOL, POINT_SIZE, 
-                              POINT_SYMBOL, POLYGON_SIZE, WEB_DIR, MAP_PATH)
+                              POINT_SYMBOL, POLYGON_SIZE, WEB_DIR, MAP_DIR)
 from LmServer.common.localconstants import APP_PATH
 
 PALETTES = ('gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia', 'aqua',
@@ -160,7 +160,7 @@ class MapConstructor2(LMObject):
       if mapname is not None:
          if not mapname.endswith(OutputFormat.MAP):
             mapname = mapname+OutputFormat.MAP
-         mapFilename = os.path.join(APP_PATH, WEB_DIR, MAP_PATH, mapname)
+         mapFilename = os.path.join(APP_PATH, WEB_DIR, MAP_DIR, mapname)
          self._appendToQuery('map', mapname)
       else:
          mapFilename = None
