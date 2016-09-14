@@ -36,7 +36,7 @@ from LmCommon.common.lmXml import deserialize, fromstring
 from LmCompute.environment.environmentMethods import _EnvironmentMethods
 from LmCompute.common.layerManager import LayerManager
 from LmCompute.common.localconstants import (BIN_PATH, JOB_DATA_PATH, 
-         JOB_OUTPUT_PATH, PLUGINS_DIR, PYTHON_CMD, SAMPLE_JOBS_PATH, 
+         JOB_OUTPUT_PATH, PLUGINS_PATH, PYTHON_CMD, SAMPLE_JOBS_PATH, 
          SAMPLE_LAYERS_PATH, TEMPORARY_FILE_PATH, 
          INPUT_LAYER_DIR, INPUT_LAYER_DB)
 
@@ -135,7 +135,7 @@ class TestEnv(_EnvironmentMethods):
       @return: The base path for Lifemapper compute plugins
       @rtype: String
       """
-      return PLUGINS_DIR
+      return PLUGINS_PATH
    
    # ..................................
    def getPythonCmd(self):

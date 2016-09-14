@@ -42,11 +42,11 @@ _JOB_RETRIEVERS_SECTION = "LmCompute - Job Retrievers"
    
 
 # Environment variables
-PLUGINS_DIR = _cfg.get(_ENV_SECTION, 'PLUGINS_DIR')
+PLUGINS_PATH = _cfg.get(_ENV_SECTION, 'PLUGINS_PATH')
 BIN_PATH = _cfg.get(_ENV_SECTION, 'BIN_PATH')
 JOB_DATA_PATH = _cfg.get(_ENV_SECTION, 'JOB_DATA_PATH')
 JOB_OUTPUT_PATH = _cfg.get(_ENV_SECTION, 'JOB_OUTPUT_PATH')
-JOB_REQUEST_DIR = _cfg.get(_ENV_SECTION, "JOB_REQUEST_DIR")
+JOB_REQUEST_PATH = _cfg.get(_ENV_SECTION, "JOB_REQUEST_PATH")
 
 TEMPORARY_FILE_PATH = _cfg.get(_ENV_SECTION, 'TEMPORARY_FILE_PATH')
 SAMPLE_LAYERS_PATH = _cfg.get(_ENV_SECTION, 'SAMPLE_LAYERS_PATH')
@@ -74,17 +74,18 @@ LOG_LOCATION = _cfg.get(_OPTIONS_SECTION, 'LOG_STORAGE_LOCATION')
 
 # Metrics
 STORE_METRICS = _cfg.getboolean(_METRICS_SECTION, 'STORE_METRICS')
-METRICS_LOCATION = _cfg.get(_METRICS_SECTION, 'METRICS_STORAGE_DIRECTORY')
+METRICS_PATH = _cfg.get(_METRICS_SECTION, 'METRICS_STORAGE_PATH')
 
 # Job pusher
-PUSH_JOBS_DIR = _cfg.get(_JOB_PUSHER_SECTION, 'PUSH_JOBS_DIR')
+PUSH_JOBS_PATH = _cfg.get(_JOB_PUSHER_SECTION, 'PUSH_JOBS_PATH')
 LOCKFILE_NAME = _cfg.get(_JOB_PUSHER_SECTION, 'LOCKFILE_NAME')
 METAFILE_NAME = _cfg.get(_JOB_PUSHER_SECTION, 'METAFILE_NAME')
 
 # Job mediator Constants
 JOB_MEDIATOR_PID_FILE = _cfg.get(_MEDIATOR_SECTION, 'PID_FILE')
 JM_SLEEP_TIME = _cfg.getint(_MEDIATOR_SECTION, 'SLEEP_TIME')
-JM_HOLD_DIRECTORY = _cfg.get(_MEDIATOR_SECTION, 'HOLD_JOB_DIR')
+# TODO: Remove JM_HOLD_PATH? This is unused
+JM_HOLD_PATH = _cfg.get(_MEDIATOR_SECTION, 'HOLD_JOB_PATH')
 JM_INACTIVE_TIME = _cfg.getint(_MEDIATOR_SECTION, 'INACTIVE_TIME')
 
 # Job submitter
@@ -117,6 +118,8 @@ for retKey in _retrieverKeys:
       
    retrieverType = _cfg.get(retSec, 'RETRIEVER_TYPE')
       
+   # TODO: CJ: directory option and JOB_DIR is not in the default config.lmcompute.ini
+   #       If it is added, it should be JOB_PATH
    if retrieverType.lower() == 'directory':
       from LmCompute.jobs.retrievers.directoryJobRetriever import DirectoryRetriever
       jobDir = _cfg.get(retSec, 'JOB_DIR')
@@ -126,7 +129,7 @@ for retKey in _retrieverKeys:
                                 "jobDirectory" : jobDir
                                }
    elif retrieverType.lower() == 'server':
-      jobDir = os.path.join(JM_HOLD_DIRECTORY, retKey)
+      jobDir = os.path.join(JM_HOLD_PATH, retKey)
       jobServer = _cfg.get(retSec, 'JOB_SERVER')
       numToPull = _cfg.getint(retSec, 'NUM_TO_PULL')
       threshold = _cfg.getint(retSec, 'PULL_THRESHOLD')

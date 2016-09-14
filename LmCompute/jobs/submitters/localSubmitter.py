@@ -30,7 +30,7 @@ import os
 import traceback
 from LmCommon.common.lmXml import deserialize, parse
 
-from LmCompute.common.localconstants import JOB_REQUEST_DIR
+from LmCompute.common.localconstants import JOB_REQUEST_PATH
 from LmCompute.jobs.submitters.base import JobSubmitter
 
 from LmBackend.common.subprocessManager import SubprocessManager
@@ -72,7 +72,7 @@ class LocalSubmitter(JobSubmitter):
             print(xmlFn)
             el = parse(xmlFn).getroot()
             j = deserialize(el)
-            fn = os.path.join(JOB_REQUEST_DIR, "%s-%s.xml" % (j.processType, j.jobId))
+            fn = os.path.join(JOB_REQUEST_PATH, "%s-%s.xml" % (j.processType, j.jobId))
          
             # Move file
             os.rename(xmlFn, fn)

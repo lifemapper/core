@@ -33,8 +33,8 @@
 import os
 from uuid import uuid4
 
-from LmCompute.common.localconstants import LOCKFILE_NAME, METAFILE_NAME, \
-                                            PUSH_JOBS_DIR
+from LmCompute.common.localconstants import (LOCKFILE_NAME, METAFILE_NAME, 
+                                             PUSH_JOBS_PATH)
 from LmCompute.environment.localEnv import LocalEnv
 
 # .............................................................................
@@ -51,7 +51,7 @@ class ControlledPushEnv(LocalEnv):
                    by an outside script
       """
       escapedServerDir = self.cl.jobServer.replace('http://', '').replace('https://', '').replace('/', '_').replace('?', '')
-      return os.path.join(PUSH_JOBS_DIR, escapedServerDir, '%s-%s' % (jobType, jobId))
+      return os.path.join(PUSH_JOBS_PATH, escapedServerDir, '%s-%s' % (jobType, jobId))
 
    # ..................................
    def _getLockfilePath(self, jobType, jobId):

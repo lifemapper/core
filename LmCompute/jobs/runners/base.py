@@ -35,7 +35,7 @@ from LmCommon.common.lmconstants import JobStatus
 
 from LmCompute.common.localconstants import (ADMIN_EMAIL, ADMIN_NAME, 
                         INSTITUTION_NAME, LOCAL_MACHINE_ID, LOG_LOCATION, 
-                        STORE_LOGS, METRICS_LOCATION, STORE_METRICS)
+                        STORE_LOGS, METRICS_PATH, STORE_METRICS)
 
 from LmBackend.common.systemMetadata import getSystemConfigurationDictionary
 
@@ -188,7 +188,7 @@ class JobRunner(object):
       @summary: Writes out the metrics of the job
       """
       if STORE_METRICS:
-         fn = os.path.join(METRICS_LOCATION,
+         fn = os.path.join(METRICS_PATH,
                            "job-%s-%s.metrics" % (jobType, jobId))
          if len(self.metrics.keys()) > 0:
             with open(fn, 'w') as outFile:

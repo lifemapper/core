@@ -18,8 +18,12 @@ BIN_PATH: @LMHOME@/bin/
 APP_PATH: @LMHOME@/bin/
 JOB_DATA_PATH: @LMDISK@/data/
 JOB_OUTPUT_PATH: @LMSCRATCHDISK@/job/
-JOB_REQUEST_DIR: @LMDISK@/jobRequests/
-PLUGINS_DIR: @LMHOME@/LmCompute/plugins
+
+;; JOB_REQUEST_DIR: @LMDISK@/jobRequests/
+;; PLUGINS_DIR: @LMHOME@/LmCompute/plugins
+JOB_REQUEST_PATH: @LMDISK@/jobRequests/
+PLUGINS_PATH: @LMHOME@/LmCompute/plugins
+
 SAMPLE_JOBS_PATH: @LMDISK@/tests/config/sampleJobs
 SAMPLE_LAYERS_PATH: @LMDISK@/tests/data/layers/testLayers.txt
 SAMPLE_DATA_PATH: @LMDISK@/tests/data
@@ -32,7 +36,8 @@ SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
 
 ; ...............................................
 [LmCompute - metrics]
-METRICS_STORAGE_DIRECTORY: @LMDISK@/metrics
+;; METRICS_STORAGE_DIRECTORY: @LMDISK@/metrics
+METRICS_STORAGE_PATH: @LMDISK@/metrics
 STORE_METRICS: True
 
 ; ...............................................
@@ -72,7 +77,9 @@ OM_VERSION: 1.5.0
 ; ...............................................
 [LmCompute - Job Mediator]
 SLEEP_TIME: 30
-HOLD_JOB_DIR: @LMDISK@/holdJobs/
+;; TODO: Remove HOLD_JOB_PATH and JM_HOLD_PATH? This is unused
+;; HOLD_JOB_DIR: @LMDISK@/holdJobs/
+HOLD_JOB_PATH: @LMDISK@/holdJobs/
 INACTIVE_TIME: 600
 PID_FILE: @LMSCRATCHDISK@/temp/lm-job-submitter.pid
 
@@ -93,7 +100,8 @@ NUM_JOBS_COMMAND: %(QSTAT)s -u lmwriter | wc -l
 
 ; ...............................................
 [LmCompute - Job Pusher]
-PUSH_JOBS_DIR: @LMDISK@/pushJobs/
+;; PUSH_JOBS_DIR: @LMDISK@/pushJobs/
+PUSH_JOBS_PATH: @LMDISK@/pushJobs/
 LOCKFILE_NAME: lockfile
 METAFILE_NAME: meta
 

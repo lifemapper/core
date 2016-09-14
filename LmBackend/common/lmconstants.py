@@ -24,3 +24,4 @@
           02110-1301, USA.
 """
 
+PID_PATH = '/var/run/lifemapper/'
