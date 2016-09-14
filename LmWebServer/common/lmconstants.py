@@ -739,7 +739,6 @@ KML_NS_PREFIX = None
 
 # Service path constants (some of these are still in LmServer.common.lmconstants
 STATIC_DIR = 'static'
-LUCENE_PATH = 'lucene'
 
 
 # Projections scaling constants.  Used for mapping of archive projections
