@@ -69,51 +69,6 @@ OM_MODEL_CMD: om_model
 OM_PROJECT_CMD: om_project
 OM_VERSION: 1.5.0
 
-; ...............................................
-[LmCompute - Job Mediator]
-SLEEP_TIME: 30
-HOLD_JOB_DIR: @LMDISK@/holdJobs/
-INACTIVE_TIME: 600
-PID_FILE: @LMSCRATCHDISK@/temp/lm-job-submitter.pid
-
-; ...............................................
-[LmCompute - Job Submitter]
-;;;; Options are local | cluster, 
-;;;; configured by roll in lifemapper-compute/src/version.mk
-JOB_SUBMITTER_TYPE: @JOB_SUBMITTER_TYPE@
-CAPACITY: @JOB_CAPACITY@
-JOB_SCRIPT : @LMHOME@/bin/lmJobScript
-LOG_PATH : @LMDISK@/logs
-
-LOCAL_SUBMIT_COMMAND: @PYBIN@ @LMHOME@/LmCompute/jobs/runners/factory.py  #JOB_FILE#
-QSTAT: /opt/gridengine/bin/linux-x64/qstat 
-QSUB: /opt/gridengine/bin/linux-x64/qsub
-SGE_SUBMIT_COMMAND: %(QSUB)s -S /bin/bash -l s_rt=#WALLTIME# -N #JOB_NAME# -o %(LOG_PATH)s -j y -v jobXml='#JOB_FILE#' %(JOB_SCRIPT)s
-NUM_JOBS_COMMAND: %(QSTAT)s -u lmwriter | wc -l
-
-; ...............................................
-[LmCompute - Job Pusher]
-PUSH_JOBS_DIR: @LMDISK@/pushJobs/
-LOCKFILE_NAME: lockfile
-METAFILE_NAME: meta
-
-; ...............................................
-[LmCompute - Job Retrievers]
-;;;; Note: JOB_RETRIEVER_KEYS can point to many job retrievers, ex:
-;;;; JOB_RETRIEVER_KEYS: sporksJobServer, lifemapperJobServer, dir1
-;;;; Each value corresponds to a configuration section
-JOB_RETRIEVER_KEYS: lifemapperJobServer
-
-; ...............lifemapperJobServer.................
-[LmCompute - Job Retrievers - lifemapperJobServer]
-RETRIEVER_TYPE: server
-JOB_SERVER: http://@WEB_FQDN@/jobs
-PULL_THRESHOLD: 50
-NUM_TO_PULL: 50
-;;;; Optional parameters.  Use if needed
-;;;; JOB_TYPES: 405,410
-;;;; USERS: pragma
-
 ; .............................................................................
 ; LmClient
 ; .............................................................................
