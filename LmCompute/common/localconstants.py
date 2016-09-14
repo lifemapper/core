@@ -120,6 +120,7 @@ for retKey in _retrieverKeys:
       
    # TODO: CJ: directory option and JOB_DIR is not in the default config.lmcompute.ini
    #       If it is added, it should be JOB_PATH
+   #  CJG 9/14/16: This will go away soon.  Won't fix
    if retrieverType.lower() == 'directory':
       from LmCompute.jobs.retrievers.directoryJobRetriever import DirectoryRetriever
       jobDir = _cfg.get(retSec, 'JOB_DIR')
