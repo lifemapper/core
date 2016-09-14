@@ -1,11 +1,11 @@
 """
 @summary: Module containing Lifemapper constants for openModeller SDM jobs
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,

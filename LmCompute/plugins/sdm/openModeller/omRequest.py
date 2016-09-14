@@ -2,13 +2,13 @@
 @summary: Module used to create openModeller requests
 @author: CJ Grady
 @contact: cjgrady@ku.edu
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 @note: For openModeller version 1.3.0
 @note: Possibly backwards compatible
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,

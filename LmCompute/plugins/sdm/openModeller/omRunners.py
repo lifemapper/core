@@ -34,6 +34,8 @@ import os
 from subprocess import Popen, PIPE
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCompute.common.lmObj import LmException
+from LmCompute.common.localconstants import BIN_PATH, JOB_DATA_PATH
 from LmCompute.jobs.runners.applicationRunner import ApplicationRunner
 from LmCompute.plugins.sdm.openModeller.localconstants import \
                                           DEFAULT_LOG_LEVEL, OM_MODEL_CMD, \
@@ -64,13 +66,13 @@ class OMModelRunner(ApplicationRunner):
          --prog-file <args>        File to store model creation progress
       """
       cmd = "%s%s -r %s -m %s --log-level %s --log-file %s " % \
-               (self.env.getApplicationPath(), OM_MODEL_CMD, 
+               (BIN_PATH, OM_MODEL_CMD, 
                 self.modelRequestFile, self.modelResultFile,
                 self.modelLogLevel, self.modelLogFile)
 
       if not os.path.exists(OM_MODEL_CMD):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
-         self._update()
+         raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % OM_MODEL_CMD)
 
       return cmd
    
@@ -109,8 +111,6 @@ class OMModelRunner(ApplicationRunner):
 
       self.modelLogLevel = DEFAULT_LOG_LEVEL
       
-      self.status = JobStatus.ACQUIRING_INPUTS
-      self._update()
       self.log.debug("Acquiring inputs")
       # Generate a model request file and write it to the file system
       req = OmModelRequest(self.job, self.workDir)
@@ -166,61 +166,21 @@ class OMModelRunner(ApplicationRunner):
       return status
    
    # .......................................
-   def _push(self):
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: Move entire model package?
       """
-      if self.status < JobStatus.GENERAL_ERROR:
-         self.status = JobStatus.PUSH_REQUESTED
-         component = "model"
-         contentType = "application/xml"
-         content = open(self.modelResultFile).read()
-         self.log.debug("\n\n-------------\nModel Results\n-------------\n\n")
-         self.log.debug(content)
-         self._update()
-         try:
-            self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                                                        contentType, component)
-            try:
-               self._pushPackage()
-            except:
-               pass
-         except Exception, e:
-            try:
-               self.log.debug(str(e))
-            except: # Log not initialized
-               pass
-            self.status = JobStatus.PUSH_FAILED
-            self._update()
-      else:
-         component = "error"
-         content = None
-
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Pushes the entire package back to the job server
-      @note: Does not push back layers directory
-      """
-      from StringIO import StringIO
-      import zipfile
-
-      component = "package"
-      contentType = "application/zip"
+      # Options to keep:
+      #  self.modelLogFile
+      #  self.modelRequestFile
+      #  metrics
       
-      outStream = StringIO()
-      zf = zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED,
-                              allowZip64=True)
-      zf.write(self.modelLogFile, os.path.split(self.modelLogFile)[1])
-      zf.write(self.modelResultFile, os.path.split(self.modelResultFile)[1])
-      zf.write(self.modelRequestFile, os.path.split(self.modelRequestFile)[1])
-      zf.write(self.jobLogFile, os.path.split(self.jobLogFile)[1])
-      zf.writestr("metrics.txt", self._getMetricsAsStringIO().getvalue())
-      zf.close()      
-      outStream.seek(0)
-      content = outStream.getvalue()      
-      self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, contentType, 
-                                                                     component)
+      if self.outDir is not None:
+         shutil.move(self.modelResultFile, self.outDir)
+      
    
 # .............................................................................
 class OMProjectionRunner(ApplicationRunner):
@@ -249,27 +209,17 @@ class OMProjectionRunner(ApplicationRunner):
         --stat-file <args>       File to store projection statistics
       """
       cmd = "%s%s -r %s -m %s --log-level %s --log-file %s --prog-file %s --stat-file %s" % \
-            (self.env.getApplicationPath(), OM_PROJECT_CMD, 
+            (BIN_PATH, OM_PROJECT_CMD, 
              self.projRequestFile, self.projResultFile,
              self.projLogLevel, self.projLogFile, self.projProgressFile,
              self.projStatFile)
       
       if not os.path.exists(OM_PROJECT_CMD):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
-         self._update()
+         raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % OM_PROJECT_CMD)
 
       return cmd
    
-   # .......................................
-   def _checkApplication(self):
-      """
-      @summary: Checks the openModeller output files to get the progress and 
-                   status of the running projection.
-      """
-      f = open(self.projProgressFile)
-      self.progress = int(''.join(f.readlines()))
-      f.close()
-      
    # .......................................
    def _checkOutput(self):
       """
@@ -321,12 +271,9 @@ class OMProjectionRunner(ApplicationRunner):
       self.projStatFile = "%s/projStats-%s.txt" % (self.outputPath, 
                                                                 self.job.jobId)
       
-      
-      self.status = JobStatus.ACQUIRING_INPUTS
-      self._update()
       self.log.debug("Acquiring inputs")
       # Generate a projection request file and write it to the file system
-      req = OmProjectionRequest(self.job, self.env.getJobDataPath())
+      req = OmProjectionRequest(self.job, JOB_DATA_PATH)
       reqFile = open(self.projRequestFile, "w")
       cnt = req.generate()
       self.log.debug("Inputs acquired")
@@ -339,66 +286,19 @@ class OMProjectionRunner(ApplicationRunner):
       reqFile.close()
 
    # .......................................
-   def _push(self):
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: Move entire projection package?
       """
-      if self.status < JobStatus.GENERAL_ERROR:
-         self.status = JobStatus.PUSH_REQUESTED
-         component = "projection"
-         contentType = "image/tiff"
-         content = open(self.projResultFile).read()
-         self._update()
-         try:
-            self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                                                        contentType, component)
-            try:
-               self._pushPackage()
-            except IOError, ioe:
-               print(str(ioe))
-               print("Log file (%s) exist? %s" % (self.projLogFile, os.path.exists(self.projLogFile)))
-               print("Request file (%s) exist? %s" % (self.projRequestFile, os.path.exists(self.projRequestFile)))
-               print("Statistics file (%s) exist? %s" % (self.projStatFile, os.path.exists(self.projStatFile)))
-               print("Job log file (%s) exist? %s" % (self.jobLogFile, os.path.exists(self.jobLogFile)))
-            except Exception, e:
-               print("Exception while trying to post package:")
-               print(str(e))
-         except Exception, e:
-            try:
-               self.log.debug(str(e))
-            except: # Log not initialized
-               pass
-            self.status = JobStatus.PUSH_FAILED
-            self._update()
-      else:
-         component = "error"
-         content = None
-
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Pushes the entire package back to the job server
-      @note: Does not push back layers directory
-      """
-      from StringIO import StringIO
-      import zipfile
-
-      component = "package"
-      contentType = "application/zip"
+      # Options to keep:
+      #  self.projLogFile
+      #  self.projRequestFile
+      #  self.projStatFile
+      #  metrics
       
-      outStream = StringIO()
-      zf = zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED,
-                              allowZip64=True)
+      if self.outDir is not None:
+         shutil.move(self.projResultFile, self.outDir)
       
-      zf.write(self.projLogFile, os.path.split(self.projLogFile)[1])
-      zf.write(self.projRequestFile, os.path.split(self.projRequestFile)[1])
-      zf.write(self.projStatFile, os.path.split(self.projStatFile)[1])
-      zf.write(self.jobLogFile, os.path.split(self.jobLogFile)[1])
-      zf.writestr("metrics.txt", self._getMetricsAsStringIO().getvalue())
-      print(self.metrics)
-
-      zf.close()      
-      outStream.seek(0)
-      content = outStream.getvalue()      
-      self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, contentType, 
-                                                                     component)
