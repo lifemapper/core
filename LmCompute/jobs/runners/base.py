@@ -35,8 +35,10 @@ import os
 import signal
 import sys
 
+from LmCommon.common.lmconstants import JobStatus
 from LmCommon.common.lmXml import deserialize, parse
 
+from LmCompute.common.lmObj import LmException
 from LmCompute.common.localconstants import (ADMIN_EMAIL, ADMIN_NAME, 
                         INSTITUTION_NAME, LOCAL_MACHINE_ID)
 
@@ -58,7 +60,7 @@ class JobRunner(object):
    
    # ..................................
    def __init__(self, jobXmlFn, jobName=None, outDir=None, workDir=None, 
-                      metricsFn=None, logFn=None, logLevel=None):
+                      metricsFn=None, logFn=None, logLevel=None, statusFn=None):
       """
       @summary: Constructor for base class, should be called by subclasses or
                    inherited
@@ -76,6 +78,7 @@ class JobRunner(object):
                        not an absolute path, it will be relative to the work
                        directory.  If None, only log to console
       @param logLevel: (optional) What level to write the logs
+      @param statusFn: (optional) If not None, write final status of job here
       """
       self.metrics = {}
       self.jobXmlFn = jobXmlFn
@@ -104,6 +107,9 @@ class JobRunner(object):
          self.logFn = os.path.join(self.logFn, 'jobLog.log')
       self.logFn = logFn
       self.logLevel = logLevel
+      
+      self.statusFn = statusFn
+      self.status = JobStatus.GENERAL
       
       signal.signal(signal.SIGTERM, self._receiveStopSignal) # Stop signal
    
@@ -265,10 +271,18 @@ class JobRunner(object):
       self._initializeJob()
       # Job start time
       startTime = datetime.datetime.now()
-      self._doWork()
+      try:
+         self._doWork()
+      except LmException, lme:
+         self.status = lme.code
+         print lme.msg
+      except Exception, e:
+         if self.status < JobStatus.GENERAL_ERROR:
+            self.status = JobStatus.GENERAL_ERROR
       # job end time
       endTime = datetime.datetime.now()
-      self._finishJob()
+      if self.status < JobStatus.GENERAL_ERROR:
+         self._finishJob()
       # Finalize time
       finalizeTime = datetime.datetime.now()
       self._cleanUp()
@@ -283,4 +297,9 @@ class JobRunner(object):
       self.metrics['elapsed time'] = str(cleanupTime - initTime)
       self.metrics['end clock'] = str(cleanupTime)
       self._writeMetrics()
+      
+      if self.statusFn is not None:
+         with open(self.statusFn, 'w') as statusOut:
+            statusOut.write(self.status)
+            
       
