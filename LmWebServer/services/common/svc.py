@@ -41,7 +41,7 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
 from LmServer.common.lmconstants import (DbUser, SESSION_DIR, 
-                                         WEB_PATH)
+                                         WEB_DIR)
 from LmServer.common.localconstants import (APP_PATH, LOG_PATH, ARCHIVE_USER, 
                                             WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
@@ -67,7 +67,7 @@ from LmWebServer.solr.lmSolr import searchArchive, searchHintIndex
 SESSION_KEY = '_cp_username'
 REFERER_KEY = 'lm_referer'
 SESSION_PATH = os.path.join(LM_LIB_PATH, SESSION_DIR)
-STATIC_PATH = os.path.join(APP_PATH, WEB_PATH, STATIC_DIR)
+STATIC_PATH = os.path.join(APP_PATH, WEB_DIR, STATIC_DIR)
 
 # .............................................................................
 class svc(object):

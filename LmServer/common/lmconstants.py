@@ -250,9 +250,9 @@ USER_DATA_PATH = 'fixme'
 
 # Mapfile symbolizations
 WEB_MODULES_PATH = 'LmWebServer'
-WEB_PATH = os.path.join(WEB_MODULES_PATH, 'public_html')
+WEB_DIR = os.path.join(WEB_MODULES_PATH, 'public_html')
 PROJ_LIB = os.path.join(APP_PATH, 'share/proj/')
-SYMBOL_FILENAME = os.path.join(APP_PATH, WEB_PATH, MAP_PATH, 'symbols.txt')
+SYMBOL_FILENAME = os.path.join(APP_PATH, WEB_DIR, MAP_PATH, 'symbols.txt')
 DEFAULT_POINT_COLOR = 'ff7f00'
 DEFAULT_LINE_COLOR = 'ffffff'
 DEFAULT_PROJECTION_PALETTE = 'red'

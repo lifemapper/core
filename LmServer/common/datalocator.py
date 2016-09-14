@@ -28,7 +28,7 @@ from LmCommon.common.lmconstants import OutputFormat
 
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, ARCHIVE_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
-from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_PATH,
+from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
    LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
    DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_PATH,   MODEL_PATH, USER_LAYER_PATH, 
@@ -518,7 +518,7 @@ class EarlJr(LMObject):
 
 # ...............................................
    def _createStaticMapPath(self):
-      pth = os.path.join(APP_PATH, WEB_PATH, MAP_PATH)
+      pth = os.path.join(APP_PATH, WEB_DIR, MAP_PATH)
       return pth
 
 # ...............................................
