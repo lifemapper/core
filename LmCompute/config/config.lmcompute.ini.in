@@ -31,18 +31,6 @@ INPUT_LAYER_DB: @INPUT_LAYER_DB@
 SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
 
 ; ...............................................
-[LmCompute - metrics]
-METRICS_STORAGE_DIRECTORY: @LMDISK@/metrics
-STORE_METRICS: True
-
-; ...............................................
-[LmCompute - options]
-;;;; The "STORE_LOG_FILES" parameter indicates if logs should be shipped to a long
-;;;;    term storage location instead of kept with the rest of the job output
-STORE_LOG_FILES: False
-LOG_STORAGE_LOCATION: @LMDISK@/logs
-
-; ...............................................
 [LmCompute - plugins - maxent]
 JAVA_MAX_MEM_OPTION = 2g
 JAVA_INIT_MEM_OPTION = 2g
