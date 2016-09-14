@@ -23,6 +23,7 @@
 """
 import os.path 
 
+from LmBackend.common.lmconstants import PID_PATH
 from LmServer.common.lmconstants import SPECIES_DATA_PATH
 from LmServer.common.localconstants import DATA_PATH, LOG_PATH
 from LmDbServer.common.localconstants import (TAXONOMY_FILENAME, 
@@ -31,7 +32,7 @@ from LmDbServer.common.localconstants import (TAXONOMY_FILENAME,
 
 # ............................................................................
 
-BOOM_PID_FILE = os.path.join(LOG_PATH, 'lmboom.pid')
+BOOM_PID_FILE = os.path.join(PID_PATH, 'lmboom.pid')
 GBIF_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
                              OCCURRENCE_FILENAME)
 TAXONOMY_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
