@@ -29,7 +29,7 @@
           02110-1301, USA.
 """
 import argparse
-from LmCompute.plugins.sdm.openModeller.omRunners import OMProjectionRunner
+from LmCompute.plugins.single.openModeller.omRunners import OMProjectionRunner
 
 # .............................................................................
 if __name__ == "__main__":
