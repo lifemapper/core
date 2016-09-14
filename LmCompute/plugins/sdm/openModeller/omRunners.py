@@ -2,14 +2,14 @@
 @summary: Module containing the job runners for openModeller models and 
              projections
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @note: Commands are for openModeller library version 1.3.0
 @note: Commands may be backwards compatible
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -63,26 +63,16 @@ class OMModelRunner(ApplicationRunner):
          --log-file <args>         Log file
          --prog-file <args>        File to store model creation progress
       """
-      cmd = "%s%s -r %s -m %s --log-level %s --log-file %s --prog-file %s" % \
+      cmd = "%s%s -r %s -m %s --log-level %s --log-file %s " % \
                (self.env.getApplicationPath(), OM_MODEL_CMD, 
                 self.modelRequestFile, self.modelResultFile,
-                self.modelLogLevel, self.modelLogFile, self.modelProgressFile)
+                self.modelLogLevel, self.modelLogFile)
 
       if not os.path.exists(OM_MODEL_CMD):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
          self._update()
 
       return cmd
-   
-   # ...................................
-   def _checkApplication(self):
-      """
-      @summary: Checks the openModeller output files to get the progress and 
-                   status of the running model.
-      """
-      f = open(self.modelProgressFile)
-      self.progress = int(''.join(f.readlines()))
-      f.close()
    
    # ...................................
    def _checkOutput(self):
@@ -107,13 +97,12 @@ class OMModelRunner(ApplicationRunner):
       self.metrics['algorithm'] = self.job.algorithm.code
       self.metrics['numPoints'] = len(self.job.points.point)
 
-
-      self.modelLogFile = "%s/modLog-%s.log" % (self.outputPath, self.job.jobId)
-      self.modelProgressFile = "%s/modProg-%s.txt" % (self.outputPath, 
-                                                      self.job.jobId)
-      self.modelRequestFile = "%s/modReq-%s.xml" % (self.outputPath, 
-                                                    self.job.jobId)
-      self.modelResultFile = "%s/mod-%s.xml" % (self.outputPath, self.job.jobId)
+      self.modelLogFile = os.path.join(self.workDir, 'modLog-{0}.log'.format(
+                                                                 self.jobName))
+      self.modelRequestFile = os.path.join(self.workDir, 
+                                         'modReq-{0}.xml'.format(self.jobName))
+      self.modelResultFile = os.path.join(self.workDir, 'mod-{0}.xml'.format(
+                                                                 self.jobName))
 
       self.log.debug("openModeller Version: %s" % OM_VERSION)
       self.log.debug("-------------------------------------------------------")
@@ -124,7 +113,7 @@ class OMModelRunner(ApplicationRunner):
       self._update()
       self.log.debug("Acquiring inputs")
       # Generate a model request file and write it to the file system
-      req = OmModelRequest(self.job, self.env.getJobDataPath())
+      req = OmModelRequest(self.job, self.workDir)
       reqFile = open(self.modelRequestFile, "w")
       cnt = req.generate()
       self.log.debug("Inputs acquired")

@@ -186,6 +186,8 @@ class JobRunner(object):
       except:
          pass
       
+      self._processJobInput()
+      
    # ..................................
    def _initializeLog(self):
       """
@@ -215,6 +217,13 @@ class JobRunner(object):
          formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
          fileLogHandler.setFormatter(formatter)
          self.log.addHandler(fileLogHandler)
+   
+   # .............................
+   def _processJobInput(self):
+      """
+      @summary: Process the job inputs and set up anything necessary
+      """
+      pass
    
    # .............................
    def _receiveStopSignal(self, sigNum, stack):
