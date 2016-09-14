@@ -52,7 +52,7 @@ from LmCompute.common.lmconstants import (LayerAttributes,
 from LmCompute.common.localconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DIR,
                                              INPUT_LAYER_DB)
 from LmCompute.common.lmObj import LmException
-from LmCompute.plugins.sdm.maxent.localconstants import (CONVERT_JAVA_CMD, 
+from LmCompute.plugins.single.maxent.localconstants import (CONVERT_JAVA_CMD, 
                                                          ME_CMD, CONVERT_TOOL)
 
 TIMEOUT = 600
