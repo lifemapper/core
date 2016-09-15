@@ -1,11 +1,11 @@
 """
-@summary: Module containing GBIF process runners
+@summary: Module containing iDigBio process runners
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -38,13 +38,10 @@ from LmCommon.common.lmconstants import JobStatus, ProcessType, \
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
 from LmCompute.plugins.sdm.idigbio.idigbio import parseIDigData
 
-SLEEP_TIME = 600 # Ten minutes
-
 # .............................................................................
 class IDIGBIORetrieverRunner(PythonRunner):
    """
-   @summary: Process runner to retrieve occurrence data from GBIF from a 
-                download key
+   @summary: Process runner to retrieve occurrence data from iDigBio API
    """
    PROCESS_TYPE = ProcessType.IDIGBIO_TAXA_OCCURRENCE
 
@@ -62,7 +59,7 @@ class IDIGBIORetrieverRunner(PythonRunner):
       # Write and optionally subset points
       try:
          self.shapefileLocation, self.subsetLocation = parseIDigData(
-                  self.taxonKey, self.outputPath, self.env, self.maxPoints)
+                  self.taxonKey, self.outputPath, self.maxPoints, self.jobName)
       except urllib2.HTTPError, e:
          # The HTTP_GENERAL_ERROR status is 4000, each of the HTTP error codes
          #   corresponds to 4000 + the HTTP error code
@@ -78,52 +75,29 @@ class IDIGBIORetrieverRunner(PythonRunner):
       else:
          return []
       
-   # ...................................
-   def _wait(self):
-      sleep(SLEEP_TIME)
+   # .......................................
+   def _finishJob(self):
+      """
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
+      """
+      # Options to keep:
+      #  metrics
       
-   # ...................................
-   def _push(self):
-      """
-      @summary: Pushes the results of the job to the job server
-      """
-      self._pushPackage()
-   
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Assembles and pushes the GBIF data package
-      """
-      contentType = "application/zip"
-      component = "package"
-      
-      outStream = StringIO()
-      
-      with zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED,
-                              allowZip64=True) as zf:
+      if self.outDir is not None:
          # Main shapefile
          for f in self._getFiles(self.shapefileLocation):
             ext = os.path.splitext(f)[1]
             if ext in SHAPEFILE_EXTENSIONS:
-               zf.write(f, 'points-%s%s' % (self.job.jobId, ext))
+               shutil.move(f, self.outDir)
          
+         # Subset
          if self.subsetLocation is not None:
             for f in self._getFiles(self.subsetLocation):
                ext = os.path.splitext(f)[1]
                if ext in SHAPEFILE_EXTENSIONS:
-                  zf.write(f, 'subset-%s%s' % (self.job.jobId, ext))
-      outStream.seek(0)
-      content = outStream.getvalue()
-      self._update()
-      
-      try:
-         self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                          contentType, component)
-      except Exception, e:
-         try:
-            self.log.debug(str(e))
-         except:
-            pass
-         self.status = JobStatus.PUSH_FAILED
-         self._update()
+                  shutil.move(f, self.outDir)
+         
    

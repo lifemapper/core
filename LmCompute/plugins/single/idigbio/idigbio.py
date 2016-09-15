@@ -1,11 +1,11 @@
 """
-@summary: Module containing GBIF functions
+@summary: Module containing iDigBio functions
 @author: Aimee Stewart
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -38,7 +38,7 @@ from LmCommon.common.lmconstants import OutputFormat, ProcessType
 
 
 # .............................................................................
-def parseIDigData(taxonKey, basePath, env, maxPoints):
+def parseIDigData(taxonKey, basePath, maxPoints, jobName):
    """
    @summary: Receives an iDigBio url, pulls in the data, and returns a shapefile
    @param taxonKey: The GBIF taxonID (in iDigBio) for which to pull data
@@ -49,7 +49,8 @@ def parseIDigData(taxonKey, basePath, env, maxPoints):
    @return: The name of the file(s) where the data is stored (.shp extension)
    @rtype: String and String/None
    """
-   outfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
+   outfilename = os.path.join(basePath, "{baseName}{ext}".format(
+                                    baseName=jobName, ext=OutputFormat.SHAPE))
    subsetOutfilename = None
 
    occAPI = IdigbioAPI()
@@ -57,7 +58,9 @@ def parseIDigData(taxonKey, basePath, env, maxPoints):
       
    count = len(occList)
    if count > maxPoints:
-      subsetOutfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
+      subsetOutfilename = os.path.join(basePath, 
+                                 "{baseName}_subset{ext}".format(
+                                     baseName=jobName, ext=OutputFormat.SHAPE))
    
    shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
    shaper.writeOccurrences(outfilename, maxPoints=maxPoints, 
