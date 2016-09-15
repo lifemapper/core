@@ -18,6 +18,8 @@ BIN_PATH: @LMHOME@/bin/
 APP_PATH: @LMHOME@/bin/
 JOB_DATA_PATH: @LMDISK@/data/
 JOB_OUTPUT_PATH: @LMSCRATCHDISK@/job/
+;; This variable is identical in config.lmserver.ini
+SHARED_DATA_PATH: @DATADIR_SHARED@
 
 ;; JOB_REQUEST_DIR: @LMDISK@/jobRequests/
 ;; PLUGINS_DIR: @LMHOME@/LmCompute/plugins
