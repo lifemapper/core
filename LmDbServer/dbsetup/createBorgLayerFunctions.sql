@@ -15,24 +15,18 @@
 -- LayerType (EnvLayer)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findLayerType(ltypeid int, ltype varchar, usr varchar)
-   RETURNS lm_v3.lm_layerTypeAndKeywords AS
+   RETURNS lm_v3.lm_layerType AS
 $$
 DECLARE
-   rec lm_v3.lm_layerTypeAndKeywords%rowtype;
+   rec lm_v3.LayerType%rowtype;
    keystr varchar;
 BEGIN
    IF ltypeid IS NOT NULL THEN
-      SELECT layerTypeId, userid, code, title, description, modTime 
-         INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
+      SELECT * INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
    ELSE
-      SELECT layerTypeId, userid, code, title, description, modTime 
-         INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
+      SELECT * INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
    END IF;
 
-   IF FOUND THEN
-      SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(rec.layertypeid);
-      rec.keywords = keystr;
-   END IF;
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' STABLE; 
@@ -44,28 +38,28 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayerType(usr varchar,
                                                   ltype varchar,
                                                   ltypetitle varchar,
                                                   ltypedesc varchar,
+                                                  ltypekws varchar,
                                                   mtime double precision)
-   RETURNS lm_v3.lm_layerTypeAndKeywords AS
+   RETURNS lm_v3.LayerType AS
 $$
 DECLARE
    tid int = -1;
-   rec lm_v3.lm_layerTypeAndKeywords%rowtype;
+   rec lm_v3.LayerType%rowtype;
    keystr varchar = '';
 BEGIN
    IF ltypeid IS NOT NULL THEN
-      SELECT layerTypeId, userid, code, title, description, modTime 
-         INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
+      SELECT * INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
       RAISE NOTICE 'tried with ltypeid %', ltypeid;
    ELSE
-      SELECT layerTypeId, userid, code, title, description, modTime 
-         INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
+      SELECT * INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
       RAISE NOTICE 'tried with type, usr';
    END IF;      
       
    IF NOT FOUND THEN
       RAISE NOTICE 'not found';
-      INSERT INTO lm_v3.LayerType (code, title, userid, description, modTime) 
-         VALUES (ltype, ltypetitle, usr, ltypedesc, mtime);
+      INSERT INTO lm_v3.LayerType 
+        (code, title, userid, description, keywords, modTime) VALUES 
+        (ltype, ltypetitle, usr, ltypedesc, ltypekws, mtime);
       IF FOUND THEN
          RAISE NOTICE 'successful insert';
          SELECT INTO tid last_value FROM lm_v3.layertype_layertypeid_seq;
@@ -76,42 +70,6 @@ BEGIN
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinLayerTypeKeyword(typid int, kywd varchar)
-   RETURNS int AS
-$$
-DECLARE
-   retval int := -1;
-   wdid int;
-   total int;
-BEGIN
-   -- insert keyword if it is not there 
-   SELECT k.keywordid INTO wdid FROM lm_v3.Keyword k WHERE k.keyword = kywd;
-   IF NOT FOUND THEN
-      INSERT INTO lm_v3.Keyword (keyword) VALUES (kywd);
-      IF FOUND THEN
-         SELECT INTO wdid last_value FROM lm_v3.keyword_keywordid_seq;
-      END IF;
-   END IF;
-   -- if found or inserted, join
-   IF FOUND THEN
-      SELECT count(*) INTO total FROM lm_v3.LayerTypeKeyword 
-         WHERE layerTypeId = typid AND keywordId = wdid;
-      IF total > 0 THEN
-         retval := 0;
-      ELSE
-         INSERT INTO lm_v3.LayerTypeKeyword (layerTypeId, keywordId) 
-            VALUES (typid, wdid);
-         IF FOUND THEN 
-            retval := 0;
-         END IF;
-      END IF;
-   END IF;
-   
-   RETURN retval;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int)
