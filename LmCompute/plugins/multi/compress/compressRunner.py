@@ -1,11 +1,11 @@
 """
 @summary: Module containing process runners to perform RAD compressions
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -28,6 +28,7 @@
 """
 import numpy
 import os
+import pickle
 from StringIO import StringIO
 import zipfile
 #from LmCompute.common.layerManager import getAndStoreShapefile, LayerManager
@@ -47,71 +48,37 @@ class CompressRunner(PythonRunner):
    PROCESS_TYPE = ProcessType.RAD_COMPRESS
    
    # .......................................
-   def _push(self):
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
       """
-      if self.status < JobStatus.GENERAL_ERROR:
-         self.status = JobStatus.COMPLETE
-
-         component = "package"
-         contentType = "application/zip"
-         
-         # Write matrix to temporary file
-         self.outputMatrxFN = self.env.getTemporaryFilename(OutputFormat.NUMPY)
-         print "Writing randomized matrix to:", self.outputMatrxFN 
-         numpy.save(self.outputMatrxFN, self.compressedMatrix)
-
-         # Sites present XML document
-         spEl = Element("sitesPresent")
-         for key in self.sitesPresentMod.keys():
-            SubElement(spEl, 'site', value=str(self.sitesPresentMod[key]),
-                       attrib={'id': str(key)})
-         
-         # Layers present XML document
-         lyrEl = Element('layersPresent')
-         for key in self.layersPresentMod.keys():
-            SubElement(lyrEl, 'layer', value=str(self.layersPresentMod[key]),
-                       attrib={'id': str(key)})
-
-         # Initialize zip file
-         outStream = StringIO()
-         with zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED, 
-                                 allowZip64=True) as zf:
-            # Write log file
-            zf.write(self.jobLogFile, os.path.split(self.jobLogFile)[1])
-            
-            # Write XML files
-            sitesPresXmlString = StringIO(tostring(spEl))
-            sitesPresXmlString.seek(0)
-            zf.writestr("sitesPresent.xml", sitesPresXmlString.getvalue())
-
-            lyrsPresXmlString = StringIO(tostring(lyrEl))
-            lyrsPresXmlString.seek(0)
-            zf.writestr("layersPresent.xml", lyrsPresXmlString.getvalue())
-
-            # Write Matrix
-            zf.write(self.outputMatrxFN, 'pam.npy')
-            
-
-         outStream.seek(0)
-         content = outStream.getvalue()
-         
-
-         self._update()
-         try:
-            self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                                contentType, component)
-         except Exception, e:
-            try:
-               self.log.debug(str(e))
-            except: # Log not initialized
-               pass
-            self.status = JobStatus.PUSH_FAILED
-            self._update()
+      # Options to keep:
+      #  metrics
+      
+      if self.outDir is not None:
+         writeDir = self.outDir
       else:
-         component = "error"
-         content = None
+         writeDir = self.workDir
+
+      # Write compressed matrix         
+      self.outputMatrixFN = os.path.join(writeDir, "{jobName}{ext}".format(
+               jobName=self.jobName, ext=OutputFormat.NUMPY))
+      
+      print "Writing compressed matrix to:", self.outputMatrxFN 
+      numpy.save(self.outputMatrxFN, self.compressedMatrix)
+
+      # Write sites present dictionary as pickle
+      spPklFn = os.path.join(writeDir, "{jobName}-sitesPresent{ext}".format(
+         jobName=self.jobName, ext=OutputFormat.PICKLE))
+      pickle.dump(self.sitesPresentMod, spPklFn)
+
+      # Write layers present dictionary as pickle
+      lpPklFn = os.path.join(writeDir, "{jobName}-layersPresent{ext}".format(
+         jobName=self.jobName, ext=OutputFormat.PICKLE))
+      pickle.dump(self.layersPresentMod, lpPklFn)
 
    # ...................................
    def _doWork(self):
