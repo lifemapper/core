@@ -1,12 +1,12 @@
 """
 @summary: This module does the work of pulling down information from an URL 
              and parsing it
-@author: 
-@version: 
+@author: Aimee Stewart and CJ Grady
+@version: 4.0.0
 @status: alpha
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -27,12 +27,14 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+
 from LmCommon.common.apiquery import BisonAPI
 from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import OutputFormat, ProcessType
 
 # .............................................................................
-def createBisonShapefileFromUrl(url, basePath, env, maxPoints):
+def createBisonShapefileFromUrl(url, basePath, maxPoints, jobName):
    """
    @summary: Receives a BISON url, pulls in the data, and returns a shapefile
    @param url: The url to pull data from
@@ -43,10 +45,8 @@ def createBisonShapefileFromUrl(url, basePath, env, maxPoints):
    @return: The name of the file(s) where the data is stored (.shp extension)
    @rtype: String and String/None
    """
-   try:
-      outfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
-   except:
-      outfilename = '/tmp/testpoints.shp'
+   outfilename = os.path.join(basePath, "{baseName}{ext}".format(
+                                    baseName=jobName, ext=OutputFormat.SHAPE))
    subsetOutfilename = None
    
    occAPI = BisonAPI.initFromUrl(url)
@@ -54,10 +54,9 @@ def createBisonShapefileFromUrl(url, basePath, env, maxPoints):
    
    count = len(occList)
    if count > maxPoints:
-      try:
-         subsetOutfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
-      except:
-         subsetOutfilename = '/tmp/testsubset.shp'
+      subsetOutfilename = os.path.join(basePath, 
+                                 "{baseName}_subset{ext}".format(
+                                     baseName=jobName, ext=OutputFormat.SHAPE))
 
    shaper = ShapeShifter(ProcessType.BISON_TAXA_OCCURRENCE, occList, count)
    shaper.writeOccurrences(outfilename, maxPoints=maxPoints, 
@@ -75,7 +74,5 @@ if __name__ == '__main__':
    tsn = 31787
    occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-*' % tsn}, 
                      otherFilters={'rows': 400})
-   createBisonShapefileFromUrl(occAPI.url, '/tmp', None, 100)
+   createBisonShapefileFromUrl(occAPI.url, '/tmp', 100, tsn)
    
-
-

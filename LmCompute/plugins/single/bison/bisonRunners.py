@@ -1,11 +1,11 @@
 """
 @summary: Module containing Bison job runner hooks
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -29,6 +29,7 @@
 import glob
 import os
 from StringIO import StringIO
+from urllib import urlencode
 import urllib2
 import zipfile
 
@@ -36,8 +37,7 @@ from LmCommon.common.lmconstants import BISON_FILTERS, BISON_OCC_FILTERS, \
                                    JobStatus, ProcessType, SHAPEFILE_EXTENSIONS
 
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
-
-from LmCompute.plugins.sdm.bison.bison import createBisonShapefileFromUrl
+from LmCompute.plugins.single.bison.bison import createBisonShapefileFromUrl
 
 # .............................................................................
 class BisonRetrieverRunner(PythonRunner):
@@ -53,7 +53,6 @@ class BisonRetrieverRunner(PythonRunner):
       
       # TODO: Remove testing URL below; fix parsing of URL string in 
       #       LmCompute.environment.testEnv  TestEnv.requestJob
-      from urllib import urlencode
       moreFilters = BISON_OCC_FILTERS.copy()
       for k,v in BISON_FILTERS.iteritems():
          moreFilters[k] = v
@@ -70,8 +69,8 @@ class BisonRetrieverRunner(PythonRunner):
       # Write and optionally subset points
       try:
          self.shapefileLocation, self.subsetLocation = \
-            createBisonShapefileFromUrl(self.pointsUrl, self.outputPath, 
-                                        self.env, self.maxPoints)
+            createBisonShapefileFromUrl(self.pointsUrl, self.workDir, 
+                                        self.maxPoints, self.jobName)
       except urllib2.HTTPError, e:
          # The HTTP_GENERAL_ERROR status is 4000, each of the HTTP error codes
          #   corresponds to 4000 + the HTTP error code
@@ -87,51 +86,29 @@ class BisonRetrieverRunner(PythonRunner):
       else:
          return []
       
-   # ...................................
-   def _push(self):
+   # .......................................
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
       """
-      self._pushPackage()
-      #self._pushShapefile("shapefile", self._getFiles(self.shapefileLocation))
-      #if self.subsetLocation is not None:
-      #   self._pushShapefile("subset", self._getFiles(self.subsetLocation))
-   
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Assembles and pushes the BISON data package
-      """
-      contentType = "application/zip"
-      component = "package"
+      # Options to keep:
+      #  metrics
       
-      outStream = StringIO()
-      
-      with zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED, 
-                              allowZip64=True) as zf:
+      if self.outDir is not None:
          # Main shapefile
          for f in self._getFiles(self.shapefileLocation):
             ext = os.path.splitext(f)[1]
             if ext in SHAPEFILE_EXTENSIONS:
-               zf.write(f, 'points-%s%s' % (self.job.jobId, ext))
+               shutil.move(f, self.outDir)
          
+         # Subset
          if self.subsetLocation is not None:
             for f in self._getFiles(self.subsetLocation):
                ext = os.path.splitext(f)[1]
                if ext in SHAPEFILE_EXTENSIONS:
-                  zf.write(f, 'subset-%s%s' % (self.job.jobId, ext))
-      outStream.seek(0)
-      content = outStream.getvalue()
-      self._update()
-      
-      try:
-         self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                          contentType, component)
-      except Exception, e:
-         try:
-            self.log.debug(str(e))
-         except:
-            pass
-         self.status = JobStatus.PUSH_FAILED
-         self._update()
+                  shutil.move(f, self.outDir)
+         
       
