@@ -1,11 +1,11 @@
 """
 @summary: Module containing GBIF process runners
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -37,9 +37,7 @@ from LmCommon.common.lmconstants import JobStatus, ProcessType, \
 
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
 
-from LmCompute.plugins.sdm.gbif.gbif import parseGBIFData
-
-SLEEP_TIME = 600 # Ten minutes
+from LmCompute.plugins.single.gbif.gbif import parseGBIFData
 
 # .............................................................................
 class GBIFRetrieverRunner(PythonRunner):
@@ -67,8 +65,8 @@ class GBIFRetrieverRunner(PythonRunner):
       self.shapefileLocation, self.subsetLocation = parseGBIFData(self.count, 
                                                                self.csvInputBlob, 
                                                                self.outputPath, 
-                                                               self.env,
-                                                               self.maxPoints)
+                                                               self.maxPoints,
+                                                               self.jobName)
       
    # ...................................
    def _getFiles(self, shapefileName):
@@ -77,82 +75,28 @@ class GBIFRetrieverRunner(PythonRunner):
       else:
          return []
       
-   # ...................................
-   def _wait(self):
-      sleep(SLEEP_TIME)
+   # .......................................
+   def _finishJob(self):
+      """
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
+      """
+      # Options to keep:
+      #  metrics
       
-   # ...................................
-   def _push(self):
-      """
-      @summary: Pushes the results of the job to the job server
-      """
-      self._pushPackage()
-      #self._pushShapefile("shapefile", self._getFiles(self.shapefileLocation))
-      #if self.subsetLocation is not None:
-      #   self._pushShapefile("subset", self._getFiles(self.subsetLocation))
-   
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Assembles and pushes the GBIF data package
-      """
-      contentType = "application/zip"
-      component = "package"
-      
-      outStream = StringIO()
-      
-      with zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED,
-                              allowZip64=True) as zf:
+      if self.outDir is not None:
          # Main shapefile
          for f in self._getFiles(self.shapefileLocation):
             ext = os.path.splitext(f)[1]
             if ext in SHAPEFILE_EXTENSIONS:
-               zf.write(f, 'points-%s%s' % (self.job.jobId, ext))
+               shutil.move(f, self.outDir)
          
+         # Subset
          if self.subsetLocation is not None:
             for f in self._getFiles(self.subsetLocation):
                ext = os.path.splitext(f)[1]
                if ext in SHAPEFILE_EXTENSIONS:
-                  zf.write(f, 'subset-%s%s' % (self.job.jobId, ext))
-      outStream.seek(0)
-      content = outStream.getvalue()
-      self._update()
-      
-      try:
-         self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                          contentType, component)
-      except Exception, e:
-         try:
-            self.log.debug(str(e))
-         except:
-            pass
-         self.status = JobStatus.PUSH_FAILED
-         self._update()
-   
-#    # ...................................
-#    def _pushShapefile(self, component, fileList):
-#       """
-#       @summary: Performs the push for a shapefile
-#       """
-#       contentType = "application/zip"
-#       # Read shapefile into StringIO object
-#       outStream = StringIO()
-#       with zipfile.ZipFile(outStream, 'w') as zf:
-#          # Determine all files to include
-#          for f in fileList:
-#             if os.path.splitext(f)[1] in SHAPEFILE_EXTENSIONS:
-#                zf.write(f, os.path.basename(f))
-#       # Post shapefile
-#       outStream.seek(0)
-#       content = outStream.getvalue()
-#       self._update()
-#       try:
-#          self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-#                           contentType, component)
-#       except Exception, e:
-#          try:
-#             self.log.debug(str(e))
-#          except:
-#             pass
-#          self.status = JobStatus.PUSH_FAILED
-#          self._update()
+                  shutil.move(f, self.outDir)
+         

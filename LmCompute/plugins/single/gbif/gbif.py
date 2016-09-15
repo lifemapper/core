@@ -1,11 +1,11 @@
 """
 @summary: Module containing GBIF functions
 @author: Aimee Stewart
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -40,7 +40,7 @@ from LmCompute.common.lmObj import LmException
 
 
 # .............................................................................
-def parseGBIFData(count, csvInputBlob, basePath, env, maxPoints):
+def parseGBIFData(count, csvInputBlob, basePath, maxPoints, jobName):
    """
    @summary: Parses a CSV-format GBIF data set and saves it to a shapefile in the 
                 specified location
@@ -53,12 +53,15 @@ def parseGBIFData(count, csvInputBlob, basePath, env, maxPoints):
    if csvInputBlob is None or len(csvInputBlob.strip()) == 0:
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The CSV provided was empty")
-   outfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
+   outfilename = os.path.join(basePath, "{baseName}{ext}".format(
+                                    baseName=jobName, ext=OutputFormat.SHAPE))
    subsetOutfilename = None
    subsetIndices = None
    
    if count > maxPoints:
-      subsetOutfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
+      subsetOutfilename = os.path.join(basePath, 
+                                 "{baseName}_subset{ext}".format(
+                                     baseName=jobName, ext=OutputFormat.SHAPE))
    
    shaper = ShapeShifter(ProcessType.GBIF_TAXA_OCCURRENCE, csvInputBlob, count)
    shaper.writeOccurrences(outfilename, maxPoints=maxPoints, 
