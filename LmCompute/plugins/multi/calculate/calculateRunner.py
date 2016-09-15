@@ -1,7 +1,7 @@
 """
 @summary: Module containing process runners to perform RAD calculations
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
@@ -33,43 +33,44 @@ import os
 from StringIO import StringIO
 import zipfile
  
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, OutputFormat, ProcessType
 from LmCommon.common.lmXml import Element, SubElement, tostring
 
 from LmCompute.common.layerManager import LayerManager
 from LmCompute.common.lmconstants import LayerFormat
+from LmCompute.common.localconstants import JOB_DATA_PATH
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
-from LmCompute.plugins.rad.calculate.calculate import calculate
-from LmCompute.plugins.rad.common.matrixTools import getNumpyMatrixFromCSV
+from LmCompute.plugins.multi.calculate.calculate import calculate
+from LmCompute.plugins.multi.common.matrixTools import getNumpyMatrixFromCSV
 
-SCHLUTER_KEY = 'Schluter'
-COMP_COV = 'Sites-CompositionCovariance'
-RANGE_COV = 'Species-RangesCovariance'
+#SCHLUTER_KEY = 'Schluter'
+#COMP_COV = 'Sites-CompositionCovariance'
+#RANGE_COV = 'Species-RangesCovariance'
 
-DIVERSITY_KEY = 'diversity'
-LADD_BETA = 'LAdditiveBeta'
-LEGENDRE_BETA = 'LegendreBeta'
-WHITTAKERS_BETA = 'WhittakersBeta'
+#DIVERSITY_KEY = 'diversity'
+#LADD_BETA = 'LAdditiveBeta'
+#LEGENDRE_BETA = 'LegendreBeta'
+#WHITTAKERS_BETA = 'WhittakersBeta'
 
-MATRICES_KEY = 'matrices'
-SIGMA_SITES = 'SigmaSites'
-SIGMA_SPECIES = 'SigmaSpecies'
+#MATRICES_KEY = 'matrices'
+#SIGMA_SITES = 'SigmaSites'
+#SIGMA_SPECIES = 'SigmaSpecies'
 
-SITES_KEY = 'sites'
-MEAN_PROP_RANGE_SIZE = 'MeanProportionalRangeSize'
-PER_SITE_RANGE_SIZE = 'Per-siteRangeSizeofaLocality'
-PROP_SPECIES_DIVERSITY = 'ProportionalSpeciesDiversity'
-SPECIES_RICHNESS = 'speciesRichness-perSite'
+#SITES_KEY = 'sites'
+#MEAN_PROP_RANGE_SIZE = 'MeanProportionalRangeSize'
+#PER_SITE_RANGE_SIZE = 'Per-siteRangeSizeofaLocality'
+#PROP_SPECIES_DIVERSITY = 'ProportionalSpeciesDiversity'
+#SPECIES_RICHNESS = 'speciesRichness-perSite'
 # Tree stats
-MNTD = 'MNTD'
-PEARSON_TD_SS = 'PearsonsOfTDandSitesShared'
-AVG_TD = 'AverageTaxonDistance'
+#MNTD = 'MNTD'
+#PEARSON_TD_SS = 'PearsonsOfTDandSitesShared'
+#AVG_TD = 'AverageTaxonDistance'
 
-SPECIES_KEY = 'species'
-MEAN_PROP_SPECIES_DIVERSITY = 'MeanProportionalSpeciesDiversity'
-PROP_RANGE_SIZE = 'ProportionalRangeSize'
-RANGE_RICHNESS_SPECIES = 'Range-richnessofaSpecies'
-RANGE_SIZE_PER_SPECIES = 'RangeSize-perSpecies'
+#SPECIES_KEY = 'species'
+#MEAN_PROP_SPECIES_DIVERSITY = 'MeanProportionalSpeciesDiversity'
+#PROP_RANGE_SIZE = 'ProportionalRangeSize'
+#RANGE_RICHNESS_SPECIES = 'Range-richnessofaSpecies'
+#RANGE_SIZE_PER_SPECIES = 'RangeSize-perSpecies'
 
 # .............................................................................
 def getStatisticArrayOrNone(value):
@@ -90,115 +91,32 @@ class CalculateRunner(PythonRunner):
    PROCESS_TYPE = ProcessType.RAD_CALCULATE
    
    # ...................................
-   def _getFiles(self, shapefileName):
-      if shapefileName is not None:
-         return glob.iglob('%s*' % os.path.splitext(shapefileName)[0])
-      else:
-         return []
+   #def _getFiles(self, shapefileName):
+   #   if shapefileName is not None:
+   #      return glob.iglob('%s*' % os.path.splitext(shapefileName)[0])
+   #   else:
+   #      return []
 
    # .......................................
-   def _push(self):
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
       """
-      #raise Exception, "_push Not implemented"
-      if self.status < JobStatus.GENERAL_ERROR:
-         self.status = JobStatus.COMPLETE
-         component = "package"
-         contentType = "application/octet-stream"
+      # Options to keep:
+      #  metrics
+      
+      if self.outDir is not None:
+         fn = os.path.join(self.outDir, "{jobName}{ext}".format(
+            jobName=self.jobName, ext=OutputFormat.PICKLE))
+      else:
+         fn = os.path.join(self.workDir, "{jobName}{ext}".format(
+            jobName=self.jobName, ext=OutputFormat.PICKLE))
          
-         el = Element('statistics')
-         schluterEl = SubElement(el, 'Schluter')
-         if self.summaryData[SCHLUTER_KEY][COMP_COV] is not None:
-            SubElement(schluterEl, COMP_COV, 
-                       value=self.summaryData[SCHLUTER_KEY][COMP_COV])
+      pickle.dump(self.summaryData, fn)
          
-         if self.summaryData[SCHLUTER_KEY][RANGE_COV] is not None:
-            SubElement(schluterEl, RANGE_COV, 
-                       value=self.summaryData[SCHLUTER_KEY][RANGE_COV])
-         
-         divEl = SubElement(el, 'diversity')
-         SubElement(divEl, LADD_BETA, 
-                    value=self.summaryData[DIVERSITY_KEY][LADD_BETA])
-         SubElement(divEl, LEGENDRE_BETA, 
-                    value=self.summaryData[DIVERSITY_KEY][LEGENDRE_BETA])
-         SubElement(divEl, WHITTAKERS_BETA,
-                    value=self.summaryData[DIVERSITY_KEY][WHITTAKERS_BETA])
-         
-         print(self.summaryData)
-         # Initialize zip file
-         outStream = StringIO()
-         with zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED, 
-                                 allowZip64=True) as zf:
-            xmlString = StringIO(tostring(el))
-            xmlString.seek(0)
-            zf.writestr('statistics.xml', xmlString.getvalue())
-            
-            sigmaSitesVal = getStatisticArrayOrNone(
-                                   self.summaryData[MATRICES_KEY][SIGMA_SITES])
-            sigmaSpeciesVal = getStatisticArrayOrNone(
-                                 self.summaryData[MATRICES_KEY][SIGMA_SPECIES])
-            meanPropRangeSize = getStatisticArrayOrNone(
-                             self.summaryData[SITES_KEY][MEAN_PROP_RANGE_SIZE])
-            perSiteRangeSize = getStatisticArrayOrNone(
-                              self.summaryData[SITES_KEY][PER_SITE_RANGE_SIZE])
-            propSpecDiv = getStatisticArrayOrNone(
-                           self.summaryData[SITES_KEY][PROP_SPECIES_DIVERSITY])
-            specRich = getStatisticArrayOrNone(
-                                 self.summaryData[SITES_KEY][SPECIES_RICHNESS])
-            meanPropSpecDiv = getStatisticArrayOrNone(
-                    self.summaryData[SPECIES_KEY][MEAN_PROP_SPECIES_DIVERSITY])
-            propRangeSize = getStatisticArrayOrNone(
-                                self.summaryData[SPECIES_KEY][PROP_RANGE_SIZE])
-            rangeRich = getStatisticArrayOrNone(
-                         self.summaryData[SPECIES_KEY][RANGE_RICHNESS_SPECIES])
-            rangeSize = getStatisticArrayOrNone(
-                         self.summaryData[SPECIES_KEY][RANGE_SIZE_PER_SPECIES])
-            
-            # Trees
-            pearsonTdSs = getStatisticArrayOrNone(
-                         self.summaryData[SITES_KEY][PEARSON_TD_SS])
-            avgTd = getStatisticArrayOrNone(
-                         self.summaryData[SITES_KEY][AVG_TD])
-            mntd = getStatisticArrayOrNone(
-                         self.summaryData[SITES_KEY][MNTD])
-
-            if sigmaSitesVal is not None:
-               zf.writestr('%s.npy' % SIGMA_SITES, sigmaSitesVal)
-            if sigmaSpeciesVal is not None:
-               zf.writestr('%s.npy' % SIGMA_SPECIES, sigmaSpeciesVal)
-            if meanPropRangeSize is not None:
-               zf.writestr('%s.npy' % MEAN_PROP_RANGE_SIZE, meanPropRangeSize)
-            if perSiteRangeSize is not None:
-               zf.writestr('%s.npy' % PER_SITE_RANGE_SIZE, perSiteRangeSize)
-            if propSpecDiv is not None:
-               zf.writestr('%s.npy' % PROP_SPECIES_DIVERSITY, propSpecDiv)
-            if specRich is not None:
-               zf.writestr('%s.npy' % SPECIES_RICHNESS, specRich)
-            if meanPropSpecDiv is not None:
-               zf.writestr('%s.npy' % MEAN_PROP_SPECIES_DIVERSITY, 
-                                                               meanPropSpecDiv)
-            if propRangeSize is not None:
-               zf.writestr('%s.npy' % PROP_RANGE_SIZE, propRangeSize)
-            if rangeRich is not None:
-               zf.writestr('%s.npy' % RANGE_RICHNESS_SPECIES, rangeRich)
-            if rangeSize is not None:
-               zf.writestr('%s.npy' % RANGE_SIZE_PER_SPECIES, rangeSize)
-               
-            # Add tree stats
-            if pearsonTdSs is not None:
-               print("Adding pearsons!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-               zf.writestr('%s.npy' % PEARSON_TD_SS, pearsonTdSs)
-            else:
-               print("Pearsons was None")
-            if avgTd is not None:
-               zf.writestr('%s.npy' % AVG_TD, avgTd)
-            if mntd is not None:
-               zf.writestr('%s.npy' % MNTD, mntd)
-               
-
-            # Write log file
-            zf.write(self.jobLogFile, os.path.split(self.jobLogFile)[1])
 
 #TODO: Add this back in!
 #             # Need to write shapegrid
@@ -213,25 +131,6 @@ class CalculateRunner(PythonRunner):
 #                raise Exception ("Failed to write statistics shapefile")
 
 
-         outStream.seek(0)
-         content = outStream.getvalue()
-         
-         self._update()
-         try:
-            self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                                contentType, component)
-         except Exception, e:
-            try:
-               self.log.debug(str(e))
-            except: # Log not initialized
-               pass
-            self.status = JobStatus.PUSH_FAILED
-            self._update()
-      else:
-         self._update()
-         component = "error"
-         content = None
-
    # ...................................
    def _doWork(self):
       self.status, self.summaryData = calculate(self.matrix, 
@@ -244,7 +143,7 @@ class CalculateRunner(PythonRunner):
    def _processJobInput(self):
       self.log.debug("Start of process job input")
       print self.job.matrix.url
-      lyrMgr = LayerManager(self.env.getJobDataPath())
+      lyrMgr = LayerManager(JOB_DATA_PATH)
        
       sgLayerId = self.job.shapegrid.identifier
       sgUrl = self.job.shapegrid.shapegridUrl
