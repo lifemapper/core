@@ -1,11 +1,11 @@
 """
 @summary: Module containing GBIF functions
 @author: Aimee Stewart
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -39,13 +39,14 @@ from LmCompute.common.lmObj import LmException
 # .............................................................................
 
 # .............................................................................
-def parseCSVData(log, count, csvInputBlob, metadata, basePath, env, maxPoints):
+def parseCSVData(log, count, csvInputBlob, metadata, basePath, maxPoints, jobName):
    """
    @summary: Parses a CSV-format data set and saves it to a shapefile in the 
                 specified location
    @param csvInputBlob: A string of CSV data
    @param basePath: A directory where the shapefile should be stored
    @param maxPoints: The maximum number of points to include if subsetting
+   @param jobName: The name of this job.  Will be used for file names
    @return: The name of the file where the data is stored (.shp extension)
    @rtype: String
    """
@@ -53,19 +54,17 @@ def parseCSVData(log, count, csvInputBlob, metadata, basePath, env, maxPoints):
    if csvInputBlob is None or len(csvInputBlob.strip()) <= 1:
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The CSV provided was empty")
-   if env is not None:
-      outfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
-   else:
-      outfilename = os.path.join(basePath, 'testocc.shp')
-      
+
+   outfilename = os.path.join(basePath, "{baseName}{ext}".format(
+                                    baseName=jobName, ext=OutputFormat.SHAPE))
+   
    subsetOutfilename = None
    subsetIndices = None
    
    if count > maxPoints:
-      if env is not None:
-         subsetOutfilename = env.getTemporaryFilename(OutputFormat.SHAPE, base=basePath)
-      else:
-         subsetOutfilename = os.path.join(basePath, 'subset_testocc.shp')
+      subsetOutfilename = os.path.join(basePath, 
+                                 "{baseName}_subset{ext}".format(
+                                     baseName=jobName, ext=OutputFormat.SHAPE))
          
    shaper = ShapeShifter(ProcessType.USER_TAXA_OCCURRENCE, csvInputBlob, count, 
                          logger=log, metadata=metadata)
@@ -76,7 +75,7 @@ def parseCSVData(log, count, csvInputBlob, metadata, basePath, env, maxPoints):
 
 # ...............................................
 if __name__ == '__main__':
-   from LmCompute.common.log import RetrieverLogger
+   from LmCompute.common.log import LmComputeLogger
    PRAGMA_META = {'gbifid': ('gbifid', 'integer', 'id'),
                  'datasetkey': ('datasetkey', 'string'), 
                  'occurrenceid': ('occurid', 'string'),
@@ -133,7 +132,8 @@ if __name__ == '__main__':
    # data must have a header
    count = len(csvblob) - 1
    
-   log = RetrieverLogger('csvocc')
-   fname, tmp = parseCSVData(log, count, csvblob, PRAGMA_META, basepth, env, 
-                             maxPoints)
+   log = LmComputeLogger('csvocc')
+   fname, tmp = parseCSVData(log, count, csvblob, PRAGMA_META, basepth, 
+                             maxPoints, 'testPoints')
    print fname, tmp
+   
