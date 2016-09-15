@@ -1,7 +1,7 @@
 """
 @summary: Module containing process runners to perform RAD randomizations
 @author: CJ Grady
-@version: 3.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
@@ -28,15 +28,17 @@
 """
 import numpy
 import os
+import shutil
 
 from LmCommon.common.lmconstants import JobStatus, OutputFormat, ProcessType
 
 from LmCompute.common.layerManager import LayerManager
 from LmCompute.common.lmconstants import LayerFormat
+from LmCompute.common.localconstants import JOB_DATA_PATH
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
-from LmCompute.plugins.rad.common.matrixTools import getNumpyMatrixFromCSV
-from LmCompute.plugins.rad.randomize.randomize import splotch, swap
-from LmCompute.plugins.rad.randomize.grady import gradyRandomize
+from LmCompute.plugins.multi.common.matrixTools import getNumpyMatrixFromCSV
+from LmCompute.plugins.multi.randomize.randomize import splotch, swap
+from LmCompute.plugins.multi.randomize.grady import gradyRandomize
 
 # .............................................................................
 class _RandomizeRunner(PythonRunner):
@@ -46,37 +48,30 @@ class _RandomizeRunner(PythonRunner):
    PROCESS_TYPE = None
    
    # .......................................
-   def _push(self):
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
       """
-      if self.status < JobStatus.GENERAL_ERROR:
-         self.status = JobStatus.COMPLETE
-         component = "matrix"
-         contentType = "application/octet-stream"
-         
-         self.outputMatrxFN = self.env.getTemporaryFilename(OutputFormat.NUMPY)
-         print "Writing randomized matrix to:", self.outputMatrxFN 
-         # Save to temporary file
-         numpy.save(self.outputMatrxFN, self.randomMatrix)
-         
-         content = open(self.outputMatrxFN, 'rb').read()
-         
-         self._update()
-         try:
-            self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                                contentType, component)
-         except Exception, e:
-            try:
-               self.log.debug(str(e))
-            except: # Log not initialized
-               pass
-            self.status = JobStatus.PUSH_FAILED
-            self._update()
+      # Options to keep:
+      #  metrics
+      
+      if self.outDir is not None:
+         self.outputMatrixFN = os.path.join(self.outDir, 
+                                            "{jobName}{ext}".format(
+                                               jobName=self.jobName, 
+                                               OutputFormat.NUMPY))
       else:
-         component = "error"
-         content = None
-
+         self.outputMatrixFN = os.path.join(self.workDir, 
+                                            "{jobName}{ext}".format(
+                                               jobName=self.jobName, 
+                                               OutputFormat.NUMPY))
+         
+      print "Writing randomized matrix to:", self.outputMatrxFN 
+      numpy.save(self.outputMatrxFN, self.randomMatrix)
+         
 # .............................................................................
 class RandomizeGradyRunner(_RandomizeRunner):
    """
@@ -116,7 +111,7 @@ class RandomizeSplotchRunner(_RandomizeRunner):
       self.log.debug("Start of process job input")
       print self.job.matrix.url
        
-      lyrMgr = LayerManager(self.env.getJobDataPath())
+      lyrMgr = LayerManager(JOB_DATA_PATH)
       sgLayerId = self.job.shapegrid.identifier
       sgUrl = self.job.shapegrid.shapegridUrl
       
