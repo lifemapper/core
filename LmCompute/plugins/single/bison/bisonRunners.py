@@ -28,6 +28,7 @@
 """
 import glob
 import os
+import shutil
 from StringIO import StringIO
 from urllib import urlencode
 import urllib2

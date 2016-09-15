@@ -28,6 +28,7 @@
 """
 import glob
 import os
+import shutil
 from StringIO import StringIO
 from time import sleep
 import zipfile
