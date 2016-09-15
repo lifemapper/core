@@ -1,11 +1,11 @@
 """
 @summary: Module containing build shapegrid process runner
 @author: CJ Grady
-@version: 1.0.0
+@version: 4.0.0
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -35,7 +35,7 @@ from LmCommon.common.lmconstants import JobStatus, ProcessType, \
                                         SHAPEFILE_EXTENSIONS
 
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
-from LmCompute.plugins.rad.buildShapegrid.radBuildShapegrid import buildShapegrid
+from LmCompute.plugins.multi.buildShapegrid.radBuildShapegrid import buildShapegrid
 
 # .............................................................................
 class BuildShapegridRunner(PythonRunner):
@@ -79,7 +79,7 @@ class BuildShapegridRunner(PythonRunner):
    def _doWork(self):
       # Build the shapegrid
       self.shapegridLocation, self.status = buildShapegrid(
-                                                   self.env,
+                                                   self.workDir,
                                                    self.minX,
                                                    self.minY,
                                                    self.maxX,
@@ -90,8 +90,7 @@ class BuildShapegridRunner(PythonRunner):
                                                    siteId=self.siteId,
                                                    siteX=self.siteX,
                                                    siteY=self.siteY,
-                                                   cutoutWKT=self.cutoutWKT,
-                                                   outputDir=self.outputPath)
+                                                   cutoutWKT=self.cutoutWKT)
       
    # ...................................
    def _getFiles(self, shapefileName):
@@ -100,43 +99,22 @@ class BuildShapegridRunner(PythonRunner):
       else:
          return []
       
-   # ...................................
-   def _push(self):
+   # .......................................
+   def _finishJob(self):
       """
-      @summary: Pushes the results of the job to the job server
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
       """
-      self._pushPackage()
-   
-   # ...................................
-   def _pushPackage(self):
-      """
-      @summary: Assembles and pushes the shapegrid data package
-      """
-      contentType = "application/zip"
-      component = "package"
+      # Options to keep:
+      #  metrics
       
-      outStream = StringIO()
-      
-      with zipfile.ZipFile(outStream, 'w', compression=zipfile.ZIP_DEFLATED,
-                              allowZip64=True) as zf:
-         # Add files for shapegrid
+      if self.outDir is not None:
+         # Write shapegrid to output location
          for f in self._getFiles(self.shapegridLocation):
             ext = os.path.splitext(f)[1]
             if ext in SHAPEFILE_EXTENSIONS:
-               zf.write(f, 'shapegrid-%s%s' % (self.job.jobId, ext))
+               shutil.move(f, os.path.join(self.outDir, "{name}{ext}".format(
+                                                  name=self.jobName, ext=ext)))
          
-      outStream.seek(0)
-      content = outStream.getvalue()
-      self._update()
-      
-      try:
-         self.env.postJob(self.PROCESS_TYPE, self.job.jobId, content, 
-                          contentType, component)
-      except Exception, e:
-         try:
-            self.log.debug(str(e))
-         except:
-            pass
-         self.status = JobStatus.PUSH_FAILED
-         self._update()
-   

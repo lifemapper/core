@@ -1,7 +1,9 @@
 """
 @summary: Module containing methods to build a shapegrid
+@author: Jeff Cavner ; modified by CJ Grady
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@version: 4.0.0
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
  
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -35,11 +37,12 @@ from LmCompute.common.lmObj import LmException
 SQRT_3 = math.sqrt(3)
 
 # .............................................................................
-def buildShapegrid(env, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides, 
+def buildShapegrid(workDir, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides, 
                    siteId='siteid', siteX='centerX', siteY='siteY', 
-                   cutoutWKT=None, outputDir=None):
+                   cutoutWKT=None):
    """
    @summary: This function builds a shapegrid from the provided parameters
+   @param workDir: A directory to use for performing work
    @param env: Environment methods that can be used by this function
    @param minX: The minimum value for X
    @param minY: The maximum value for Y
@@ -53,10 +56,8 @@ def buildShapegrid(env, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
    @param siteX: The name of the X field for the shapefile
    @param siteY: The name of the Y field for the shapefile
    @param cutout: (optional) WKT for an area of the shapegrid to be cutout
-   @param outputDir: A directory where files can be stored for this function
    """
-   # Get a temporary file location
-   shapePath = env.getTemporaryFilename(OutputFormat.SHAPE, base=outputDir)
+   shapePath = os.path.join(workDir, "shape{ext}".format(ext=OutputFormat.SHAPE))
    
    # Just in case we decide that these can vary at some point
    xRes = cellSize
@@ -159,7 +160,7 @@ def buildShapegrid(env, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
    ds.Destroy()
                   
    if cutoutWKT is not None:
-      cutoutPath = env.getTemporaryFilename(OutputFormat.SHAPE, base=outputDir)
+      cutoutPath = os.path.join(workDir, "cutout{ext}".format(ext=OutputFormat.SHAPE))
       status = cutout(shapePath, cutoutPath, cutoutWKT, epsgCode, siteId)
       return cutoutPath, status
    else:
