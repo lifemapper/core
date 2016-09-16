@@ -39,14 +39,13 @@ Install both rolls on Frontend
    # cat lifemapper*.sha
    
 
-Update existing (maintains data)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Update existing (maintains FE data)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    * You may remove source code rpms (lifemapper-lmserver and 
      lifemapper-compute) to avoid error messages about file conflicts in 
      shared code, but error messages about conflicting shared files from the 
      first install of the source code rpm may be safely ignored. 
-   
    * In case the configuration rpm (rocks-lifemapper, rocks-lmcompute) versions 
      have not changed, remove rpms to ensure that configuration scripts are run.  
      If these rpms  are new, the larger version git tag will force the new 
@@ -148,6 +147,7 @@ Look for Errors
    each time.  All other logfiles have output appended to the end of an existing 
    logfile (from previous runs) and will be useful if the script must be re-run
    manually for testing.
+#. **Clean compute nodes**  
    
 LmCompute
 ~~~~~~~~~
