@@ -2,7 +2,7 @@
 @summary: Module containing common Lifemapper constants
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -31,6 +31,11 @@ except:
    OFTString = 4
    OFTBinary = 8
    
+# .............................................................................
+# .    Directories shared between LmCompute and LmServer                              .
+# .............................................................................
+ENV_LAYER_DIR = 'layers'
+
 # .............................................................................
 # .                               File constants                              .
 # .............................................................................

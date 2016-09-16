@@ -30,15 +30,15 @@ import os
 from random import choice
 import uuid
 
-from LmCommon.common.lmconstants import ProcessType
+from LmCommon.common.lmconstants import ProcessType, ENV_LAYER_DIR
 from LmCommon.common.lmXml import deserialize, fromstring
 
 from LmCompute.environment.environmentMethods import _EnvironmentMethods
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.localconstants import (BIN_PATH, JOB_DATA_PATH, 
+from LmCompute.common.lmconstants import INPUT_LAYER_DB
+from LmCompute.common.localconstants import (BIN_PATH, SHARED_DATA_PATH,
          JOB_OUTPUT_PATH, PLUGINS_PATH, PYTHON_CMD, SAMPLE_JOBS_PATH, 
-         SAMPLE_LAYERS_PATH, TEMPORARY_FILE_PATH, 
-         INPUT_LAYER_DIR, INPUT_LAYER_DB)
+         SAMPLE_LAYERS_PATH, TEMPORARY_FILE_PATH)
 
 # Create a constant to save space
 VALID_TYPES = [ProcessType.OM_MODEL,
@@ -68,7 +68,7 @@ class TestEnv(_EnvironmentMethods):
       
    def _initialize(self):
       # check for existing INPUT_LAYER_DB
-      lyrBasePath = os.path.join(self.getJobDataPath(), INPUT_LAYER_DIR)
+      lyrBasePath = os.path.join(self.getJobDataPath(), ENV_LAYER_DIR)
       dbFile = os.path.join(lyrBasePath, INPUT_LAYER_DB)
 
       # if it doesn't exist, seed layers
@@ -117,7 +117,7 @@ class TestEnv(_EnvironmentMethods):
       @return: The base path for job input data in this environment
       @rtype: String
       """
-      return JOB_DATA_PATH
+      return SHARED_DATA_PATH
    
    # ..................................
    def getJobOutputPath(self):

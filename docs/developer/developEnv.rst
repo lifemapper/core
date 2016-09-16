@@ -42,7 +42,7 @@ Connect development code on Frontend
      ./LmCompute/tools/lmJobScript.in
      ./LmDbServer/dbsetup/addDBFunctions.sql.in
      ./LmDbServer/dbsetup/defineDBTables.sql.in
-   # cp -p LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/
+   # cp -p LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/lmJobScript
    # cp -p LmDbServer/dbsetup/addDBFunctions.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
    # cp -p LmDbServer/dbsetup/defineDBTables.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
 

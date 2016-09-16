@@ -19,7 +19,7 @@ APP_PATH: @LMHOME@/bin/
 JOB_DATA_PATH: @LMDISK@/data/
 JOB_OUTPUT_PATH: @LMSCRATCHDISK@/job/
 ;; This variable is identical in config.lmserver.ini
-SHARED_DATA_PATH: @DATADIR_SHARED@
+SHARED_DATA_PATH: @DATADIR_SHARED@/data
 
 ;; JOB_REQUEST_DIR: @LMDISK@/jobRequests/
 ;; PLUGINS_DIR: @LMHOME@/LmCompute/plugins
@@ -30,8 +30,6 @@ SAMPLE_JOBS_PATH: @LMDISK@/tests/config/sampleJobs
 SAMPLE_LAYERS_PATH: @LMDISK@/tests/data/layers/testLayers.txt
 SAMPLE_DATA_PATH: @LMDISK@/tests/data
 TEMPORARY_FILE_PATH: @LMSCRATCHDISK@/temp
-INPUT_LAYER_DIR: @INPUT_LAYER_DIR@
-INPUT_LAYER_DB: @INPUT_LAYER_DB@
 ;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in the
 ;; [LmServer - pipeline] section should match SCENARIO_PACKAGE_SEED here
 SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
