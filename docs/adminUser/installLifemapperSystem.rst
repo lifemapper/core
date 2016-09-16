@@ -72,10 +72,10 @@ New install (destroys data)
 
 #. **Create and run LmServer/LmCompute scripts**::
 
-    # rocks run roll lifemapper-server > add-server.sh; 
-    # rocks run roll lifemapper-compute > add-compute.sh;
-    # bash add-server.sh > add-server.out 2>&1;
-    # bash add-compute.sh > add-compute.out 2>&1)
+    # rocks run roll lifemapper-server > add-server.sh
+    # rocks run roll lifemapper-compute > add-compute.sh
+    # bash add-server.sh > add-server.out 2>&1
+    # bash add-compute.sh > add-compute.out 2>&1
     
 #. **To change defaults**, such as DATASOURCE, ARCHIVE_USER, compute parameters,
    create the configuration file site.ini (in /opt/lifemapper/config/) 
@@ -90,36 +90,36 @@ New install (destroys data)
 
    # reboot
    
+Add compute input layers to the Frontend
+----------------------------------------
+
+#. Seed the data on the frontend ::
+
+   # /opt/lifemapper/rocks/bin/seedData
+   
 To change SCENARIO_PACKAGE and/or ARCHIVE_USER after reboot
 -----------------------------------------------------------
 
 #. Create a config/site.ini file from config/site.in.lm*.example files
 
-   #. If you updated the SCENARIO_PACKAGE:
+   #. If you updated the SCENARIO_PACKAGE (with or without ARCHIVE_USER):
    
       #. Create a [ LmCompute - environment ] section containing  
          the variable SCENARIO_PACKAGE_SEED with the same value
 
-      #. Run the following to catalog LmServer metadata ::
+      #. Run the following to download, then catalog LmServer metadata ::
    
-         # rocks/bin/updateArchiveInput
-
-      #. Run the following to create and catalog LmCompute data layers ::
-   
-         # rocks/bin/updateArchiveInput
-
-   #. If you did **NOT** update the SCENARIO_PACKAGE, run the following to 
-      catalog metadata for the new ARCHIVE_USER::
-
+         # rocks/bin/getClimateData
          # rocks/bin/fillDB
 
-Add compute input layers to the Frontend
-----------------------------------------
-
-#. Seed the data on the frontend::
-
-   # /opt/lifemapper/rocks/bin/seedData
+      #. Run the following to catalog LmCompute data layers ::
    
+         # rocks/bin/seedData
+
+   #. If you updated ARCHIVE_USER (without updating SCENARIO_PACKAGE), 
+      run only the following to catalog metadata for the new ARCHIVE_USER::
+
+         # rocks/bin/fillDB
 
 Install nodes from Frontend
 ---------------------------

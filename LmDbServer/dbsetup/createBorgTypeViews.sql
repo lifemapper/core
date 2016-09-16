@@ -6,10 +6,9 @@ DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    -- Layer.* 
    layerId,
-   taxonId,
-   verify,
-   squid,
    userid,
+   squid,
+   verify,
    name,
    title,
    author,
@@ -32,19 +31,21 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    minVal,
    maxVal,
    valUnits,
+   lyrkeywords,
    layerTypeId,
    -- LayerType
    typecode,
    typetitle,
    typedescription,
+   typekeywords,
    typemodtime) AS
-      SELECT l.layerId, l.taxonid, l.verify, l.squid, l.userid, l.name, l.title,
+      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
-             l.nodataVal, l.minVal, l.maxVal, l.valUnits, 
+             l.nodataVal, l.minVal, l.maxVal, l.valUnits, l.keywrds,
              l.layerTypeId, 
-             lt.code, lt.title, lt.description, lt.modtime
+             lt.code, lt.title, lt.description, lt.keywrds, lt.modtime
         FROM lm_v3.layer l, lm_v3.layertype lt
         WHERE l.layertypeid = lt.layertypeid
         ORDER BY l.layertypeid ASC;
@@ -55,8 +56,9 @@ DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    -- Layer.* 
    layerId,
-   verify,
    userid,
+   squid,
+   verify,
    name,
    title,
    author,
@@ -79,6 +81,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    minVal,
    maxVal,
    valUnits,
+   lyrkeywords,
    -- ShapeGrid.*
    shapeGridId,
    cellsides,
@@ -90,11 +93,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    status,
    statusmodtime
 ) AS
-      SELECT l.layerId, l.verify, l.userid, l.name, l.title,
+      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, 
              l.modtime, l.bbox, l.nodataVal, l.minVal, l.maxVal, l.valUnits,
+             l.keywords,
              sg.shapeGridId, sg.cellsides, sg.cellsize, sg.vsize, sg.idAttribute,
              sg.xAttribute, sg.yAttribute, sg.status, sg.statusmodtime
         FROM lm_v3.layer l, lm_v3.shapegrid sg
@@ -104,11 +108,16 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
 -- lm_anclayer
 DROP VIEW IF EXISTS lm_v3.lm_anclayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
+   -- BucketAncLayer.*
+   bucketAncLayerId,
+   bucketId, 
+   matrixId,
+   squid,
+   -- Bucket
+   userId,
    -- Layer.* 
    layerId,
    verify,
-   squid,
-   userid,
    name,
    title,
    author,
@@ -131,6 +140,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
    minVal,
    maxVal,
    valUnits,
+   lyrkeywords,
    -- AncillaryValue.*
    ancillaryValueId,
    nameValue,
@@ -138,32 +148,36 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
    largestClass,
    minPercent,
    nameFilter,
-   valueFilter,
-   -- BucketAncLayer.*
-   bucketAncLayerId,
-   bucketId
+   valueFilter
 ) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
+      SELECT bal.bucketAncLayerId, bal.bucketId, bal.matrixId, bal.squid,
+             b.userid,
+             l.layerId, l.verify, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
-             l.nodataVal, l.minVal, l.maxVal, l.valUnits,
+             l.nodataVal, l.minVal, l.maxVal, l.valUnits, l.keywords,
              a.ancillaryValueId, a.nameValue, a.weightedMean, a.largestClass, 
-             a.minPercent, a.nameFilter, a.valueFilter,
-             bal.bucketAncLayerId, bal.bucketId
-      FROM lm_v3.Layer l, lm_v3.AncillaryValue a, lm_v3.BucketAncLayer bal
-      WHERE l.layerId = bal.layerId 
+             a.minPercent, a.nameFilter, a.valueFilter
+      FROM lm_v3.BucketAncLayer bal, lm_v3.Bucket b
+      LEFT JOIN lm_v3.Layer l, lm_v3.AncillaryValue a 
+      ON l.layerId = bal.layerId 
         AND bal.ancillaryValueId = a.ancillaryValueId;
         
 -- ----------------------------------------------------------------------------
 -- lm_palayer
 DROP VIEW IF EXISTS lm_v3.lm_palayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_palayer (
+   -- BucketPALayer
+   bucketPALayerId,
+   bucketId, 
+   matrixId,
+   squid,
+   -- Bucket
+   userId,
    -- Layer.* 
    layerId,
    verify,
-   squid,
-   userid,
    name,
    title,
    author,
@@ -186,6 +200,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
    minVal,
    maxVal,
    valUnits,
+   lyrkeywords,
    -- PresenceAbsence.*
    presenceAbsenceId,
    nameFilter,
@@ -197,22 +212,22 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
    nameAbsence,
    minAbsence,
    maxAbsence,
-   percentAbsence,
-   -- BucketPALayer.*
-   bucketPALayerId,
-   bucketId
+   percentAbsence
 ) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
+      SELECT bpal.bucketPALayerId, bpal.bucketId, bpal.matrixId, bpal.squid,
+             b.userid,
+             l.layerId, l.verify, l.name, l.title,
              l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
              l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
              l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
-             l.nodataVal, l.minVal, l.maxVal, l.valUnits,
+             l.nodataVal, l.minVal, l.maxVal, l.valUnits, l.keywords,
              pa.presenceAbsenceId, pa.nameFilter, pa.valueFilter, pa.namePresence, 
              pa.minPresence, pa.maxPresence, pa.percentPresence, pa.nameAbsence, 
              pa.minAbsence, pa.maxAbsence, pa.percentAbsence,
-             bpal.bucketPALayerId, bpal.bucketId
-      FROM lm_v3.Layer l, lm_v3.PresenceAbsence pa, lm_v3.BucketPALayer bpal
-      WHERE l.layerId = bpal.layerId 
+             
+      FROM lm_v3.BucketPALayer bpal, lm_v3.Bucket b
+      LEFT JOIN lm_v3.Layer l, lm_v3.PresenceAbsence pa
+      ON l.layerId = bpal.layerId 
         AND bpal.presenceAbsenceId = pa.presenceAbsenceId;
         
 

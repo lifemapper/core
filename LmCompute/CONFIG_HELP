@@ -23,7 +23,7 @@ in the configuration file.
 
 2. The [LmCompute - environment] section
 ============================
-   PLUGINS_DIR - The location of the plugins folder [/var/lm/LmCompute/plugins] 
+   PLUGINS_PATH - The location of the plugins folder [/var/lm/LmCompute/plugins] 
    APP_PATH - The location of your application executables [/var/lm/apps/]
    JOB_DATA_PATH - Where to store input data [/var/lm/data/] 
    JOB_OUTPUT_PATH - Where to store job files [/var/lm/jobs/] 
@@ -66,5 +66,5 @@ in the configuration file.
 ========================
      STORE_METRICS - A boolean value indicating if metrics should be collected 
                         [True]
-     METRICS_STORAGE_DIRECTORY - The location to store metrics files 
+     METRICS_STORAGE_PATH - The location to store metrics files 
                                     [/var/lm/metrics]

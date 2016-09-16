@@ -8,8 +8,8 @@
 """
 import sys
 
-from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD,\
-   JOB_OUTPUT_PATH
+from LmCompute.common.localconstants import (JOB_REQUEST_PATH, PYTHON_CMD,
+                                             JOB_OUTPUT_PATH)
 
 # NOTE: Fill these in from constants
 
@@ -25,7 +25,7 @@ PYTHON={python}
 RUNNER={runnerFactory}
 REQ_FILL={reqFill}
 OUT_DIR={outDir}/completed
-""".format(reqDir=JOB_REQUEST_DIR, python=PYTHON_CMD, runnerFactory=JOB_RUNNER_FACTORY,
+""".format(reqDir=JOB_REQUEST_PATH, python=PYTHON_CMD, runnerFactory=JOB_RUNNER_FACTORY,
            reqFill=REQUEST_FILL_SCRIPT, outDir=JOB_OUTPUT_PATH)
 
 # .............................................................................

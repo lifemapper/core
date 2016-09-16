@@ -67,7 +67,7 @@ MONTHS = {
           'Dec' : 12
          }
 
-LOG_DIR = "/var/log/apache2/"
+LOG_PATH = "/var/log/apache2/"
 
 DAY_INTERVAL = "day"
 WEEK_INTERVAL = "week"
@@ -406,7 +406,7 @@ if __name__ == "__main__":
    print "(%s-%s-%s) - (%s-%s-%s)" % (st.year, st.month, st.day, et.year, et.month, et.day)
 
    # Parse directory for log files to check
-   for fn in glob.glob(os.path.join(LOG_DIR, "access*")):
+   for fn in glob.glob(os.path.join(LOG_PATH, "access*")):
       print "Looking at:", fn
       t = time.localtime(os.stat(fn).st_mtime)
       mt = datetime.datetime(t.tm_year, t.tm_mon, t.tm_mday)

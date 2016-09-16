@@ -31,7 +31,7 @@ import uuid
 
 from LmCompute.environment.environmentMethods import _EnvironmentMethods
 from LmCompute.common.localconstants import BIN_PATH, JOB_DATA_PATH, \
-                                    JOB_OUTPUT_PATH, PLUGINS_DIR, PYTHON_CMD, \
+                                    JOB_OUTPUT_PATH, PLUGINS_PATH, PYTHON_CMD, \
                                     TEMPORARY_FILE_PATH
 
 # .............................................................................
@@ -98,7 +98,7 @@ class XsedeEnv(_EnvironmentMethods):
       @return: The base path for Lifemapper compute plugins
       @rtype: String
       """
-      return PLUGINS_DIR
+      return PLUGINS_PATH
    
    # ..................................
    def getPythonCmd(self):

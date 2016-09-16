@@ -36,13 +36,12 @@ import os
 
 from LmCommon.common.lmconstants import JobStatus
 
-from LmCompute.common.localconstants import JOB_REQUEST_DIR, PYTHON_CMD
+from LmCompute.common.localconstants import JOB_REQUEST_PATH, PYTHON_CMD
 
 from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
 from LmServer.common.localconstants import APP_PATH
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
-from types import TupleType, ListType
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
 BUILD_JOB_REQUEST_CMD = "LOCAL $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
@@ -91,7 +90,7 @@ class LMMakeflowDocument(LMObject):
       self.headers.append("RUNNER={factoryPath}".format(
                                        factoryPath=os.path.join(APP_PATH, 
                                          "LmCompute/jobs/runners/factory.py")))
-      self.headers.append("JOB_REQUESTS={jrDir}".format(jrDir=JOB_REQUEST_DIR))
+      self.headers.append("JOB_REQUESTS={jrDir}".format(jrDir=JOB_REQUEST_PATH))
       self.headers.append("MAKE_JOB_REQUEST={jrScript}".format(
                                  jrScript=os.path.join(APP_PATH, 
                                       "LmServer/makeflow/makeJobRequest.py")))

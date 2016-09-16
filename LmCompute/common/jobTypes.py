@@ -26,7 +26,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCompute.common.localconstants import PLUGINS_DIR
+from LmCompute.common.localconstants import PLUGINS_PATH
 # ============================================================================
 # =                                 Job Types                                =
 # ============================================================================
@@ -39,7 +39,7 @@ def getJobTypes():
    pluginsNS = 'LmCompute.plugins'
    jobTypes = {}
    jobImports = []
-   for f in os.listdir(PLUGINS_DIR):
+   for f in os.listdir(PLUGINS_PATH):
       try:
          m = __import__('{pluginsNS}.{plugin}'.format(pluginsNS=pluginsNS, 
                                              plugin=f), fromlist='jobTypes')

@@ -27,8 +27,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import os
-from LmCompute.common.localconstants import JM_HOLD_DIRECTORY, JOB_RETRIEVERS
+from LmCompute.common.localconstants import JOB_RETRIEVERS
 from LmCompute.jobs.retrievers.directoryJobRetriever import DirectoryRetriever
 from LmCompute.jobs.retrievers.serverJobRetriever import ServerRetriever
 
@@ -40,10 +39,11 @@ def getJobRetrieversDictFromConfig():
    """
    retrievers = {}
    for retKey, retDict in JOB_RETRIEVERS.iteritems():
-      if retDict["retrieverType"].lower() == "directory":
+      retrieverType = retDict["retrieverType"].lower()
+      if retrieverType == "directory":
          retriever = DirectoryRetriever(retDict["jobDirectory"])
          retrievers[retKey] = retriever
-      elif retDict["retrieverType"].lower() == "server":
+      elif retrieverType == "server":
          retriever = ServerRetriever(retDict["jobDirectory"], 
                                      retDict["jobServer"], 
                                      retDict["numToPull"], 
