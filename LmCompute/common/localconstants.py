@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -47,15 +47,12 @@ BIN_PATH = _cfg.get(_ENV_SECTION, 'BIN_PATH')
 JOB_DATA_PATH = _cfg.get(_ENV_SECTION, 'JOB_DATA_PATH')
 JOB_OUTPUT_PATH = _cfg.get(_ENV_SECTION, 'JOB_OUTPUT_PATH')
 JOB_REQUEST_PATH = _cfg.get(_ENV_SECTION, "JOB_REQUEST_PATH")
+SHARED_DATA_PATH = _cfg.get(_ENV_SECTION, "SHARED_DATA_PATH")
 
 TEMPORARY_FILE_PATH = _cfg.get(_ENV_SECTION, 'TEMPORARY_FILE_PATH')
 SAMPLE_LAYERS_PATH = _cfg.get(_ENV_SECTION, 'SAMPLE_LAYERS_PATH')
 SAMPLE_JOBS_PATH = _cfg.get(_ENV_SECTION, 'SAMPLE_JOBS_PATH')
 SAMPLE_DATA_PATH = _cfg.get(_ENV_SECTION, 'SAMPLE_DATA_PATH')
-
-INPUT_LAYER_DIR = _cfg.get(_ENV_SECTION, 'INPUT_LAYER_DIR')
-INPUT_LAYER_DB = _cfg.get(_ENV_SECTION, 'INPUT_LAYER_DB')
-
 
 # Commands
 GDALINFO_CMD = _cfg.get(_CMDS_SECTION, 'GDALINFO_CMD')

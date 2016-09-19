@@ -147,7 +147,7 @@ class APIQuery(object):
       for k, v in ofDict.iteritems():
          if isinstance(v, BooleanType):
             v = str(v).lower()
-         ofDict[k] = unicode(v).encode('utf-8')               
+         ofDict[k] = unicode(v).encode('utf-8')         
       filterString = urllib.urlencode(ofDict)
       return filterString
       
@@ -255,14 +255,18 @@ class APIQuery(object):
          raise Exception('Failed on URL {}, code = {}, reason = {} ({})'
                          .format(self.url, retcode, reason, str(e)))
        
-      try:
-         if outputType == 'json':
-            self.output = response.json()
-         else:
-            self.output = response.content
-      except Exception, e:
-         raise Exception('Failed to interpret output of URL {} ({})'
-               .format(self.url, str(e)))
+      if response.status_code == 200:
+         try:
+            if outputType == 'json':
+               self.output = response.json()
+            else:
+               self.output = response.content
+         except Exception, e:
+            raise Exception('Failed to interpret output of URL {} ({})'
+                  .format(self.url, str(e)))
+      else:
+         raise Exception('Failed on URL {}, code = {}, reason = {}'
+                         .format(self.url, response.status_code, response.reason))
 
 # ...............................................
    def queryByPost(self, outputType='json'):
@@ -769,22 +773,23 @@ if __name__ == '__main__':
       occAPI = None
       taxAPI = None
           
+#       tsnList = BisonAPI.getTsnListForBinomials()
       for tsnPair in tsnList:
          tsn = int(tsnPair[0])
          count = int(tsnPair[1])
-        
+                 
          newQ = {BISON_HIERARCHY_KEY: '*-{}-*'.format(tsn)}
          occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
          thisurl = occAPI.url
          occList = occAPI.getTSNOccurrences()
          count = None if not occList else len(occList)
          print 'Received {} occurrences for TSN {}'.format(count, tsn)
-
+ 
          occAPI2 = BisonAPI.initFromUrl(thisurl)
          occList2 = occAPI2.getTSNOccurrences()
-         count = None if not occList else len(occList)
+         count = None if not occList2 else len(occList2)
          print 'Received {} occurrences from url init'.format(count)
-         
+          
          tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
                            otherFilters={'rows': 1})
          hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
@@ -812,4 +817,3 @@ if __name__ == '__main__':
          
          print("Retrieved {} records for gbif taxonid {}"
                .format(len(occList1), currGbifTaxonId))
-

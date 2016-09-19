@@ -442,9 +442,10 @@ CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +
 # Relative paths
 USER_LOG_DIR = 'users'
 ERROR_LOG_DIR = 'errors'
-# These and 'species' are all subdirectories of DATA_PATH, in config.ini
+# Subdirectory of shared data directory (shared if lifemapper-compute is also installed)
+ENV_DATA_DIR = 'layers'
+# These are all subdirectories of DATA_PATH, in config.ini
 MODEL_DIR = 'archive'
-ENV_DATA_DIR = 'climate'
 SPECIES_DATA_DIR = 'species'
 USER_LAYER_DIR = 'Layers'
 
