@@ -40,8 +40,8 @@ from LmCommon.common.lmconstants import (JobStatus, ProcessType, Instances,
                                          DEFAULT_MAPUNITS, DEFAULT_EPSG)
 
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.common.lmconstants import JobFamily
-from LmServer.common.localconstants import DATA_PATH, WEBSERVICES_ROOT
+from LmServer.common.lmconstants import JobFamily, TEST_DATA_PATH
+from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmServer.common.log import ThreadLogger
 from LmServer.db.scribe import Scribe
 from LmServer.sdm.envlayer import EnvironmentalLayer
@@ -52,8 +52,6 @@ from LmWebServer.services.common.userdata import DataPoster
 
 # Note: not using constant (LM_JOB_SERVER) because it is part of LmCompute
 JOB_SERVER_ROOT = "{0}/jobs".format(WEBSERVICES_ROOT) 
-TEST_DATA_DIR = os.path.join(DATA_PATH, 'test') # TODO: Put this with the rest of the tests when the 
-#                              testing directory structure is developed
 # .............................................................................
 def _getJob(jobType, user):
    """
@@ -181,7 +179,7 @@ def insertTestJobChain(scribe, userId):
    
    dp = DataPoster(userId, scribe.log)
    
-   body = open(os.path.abspath(os.path.join(TEST_DATA_DIR, 'testPoints.zip')), 'rb').read()
+   body = open(os.path.abspath(os.path.join(TEST_DATA_PATH, 'testPoints.zip')), 'rb').read()
    
    parameters = {
                  "pointsType" : "shapefile",
@@ -193,7 +191,7 @@ def insertTestJobChain(scribe, userId):
    
    occ = dp.postSDMOccurrenceSet(parameters, body)
    
-   rawFn = os.path.abspath(os.path.join(TEST_DATA_DIR, 'testPoints.csv'))
+   rawFn = os.path.abspath(os.path.join(TEST_DATA_PATH, 'testPoints.csv'))
    
    occ.setRawDLocation(os.path.abspath(rawFn), gmt().mjd)
    occ.updateStatus(JobStatus.INITIALIZE)
@@ -240,19 +238,19 @@ def insertTestJobChain(scribe, userId):
                                 epsgcode=DEFAULT_EPSG, 
                                 layerType='type4', userId=userId)
       # Write layer data
-      with open(os.path.join(TEST_DATA_DIR, 'testLayer1.tif')) as f1:
+      with open(os.path.join(TEST_DATA_PATH, 'testLayer1.tif')) as f1:
          lyr1Cnt = f1.read()
       lyr1.writeLayer(srcData=lyr1Cnt)
       
-      with open(os.path.join(TEST_DATA_DIR, 'testLayer2.tif')) as f2:
+      with open(os.path.join(TEST_DATA_PATH, 'testLayer2.tif')) as f2:
          lyr2Cnt = f2.read()
       lyr2.writeLayer(srcData=lyr2Cnt)
       
-      with open(os.path.join(TEST_DATA_DIR, 'testLayer3.tif')) as f3:
+      with open(os.path.join(TEST_DATA_PATH, 'testLayer3.tif')) as f3:
          lyr3Cnt = f3.read()
       lyr3.writeLayer(srcData=lyr3Cnt)
       
-      with open(os.path.join(TEST_DATA_DIR, 'testLayer4.tif')) as f4:
+      with open(os.path.join(TEST_DATA_PATH, 'testLayer4.tif')) as f4:
          lyr4Cnt = f4.read()
       lyr4.writeLayer(srcData=lyr4Cnt)
       
@@ -370,7 +368,7 @@ def testOccurrenceSetJob(occJobId, userId):
    """
    @summary: Pseudo-tests for occurrence set jobs
    """
-   content = open(os.path.join(TEST_DATA_DIR, 'testPoints.zip'), 'rb').read()
+   content = open(os.path.join(TEST_DATA_PATH, 'testPoints.zip'), 'rb').read()
    _testJob(ProcessType.GBIF_TAXA_OCCURRENCE, occJobId, userId, content, "package", "application/zip")
    
 # .............................................................................
@@ -378,7 +376,7 @@ def testProjectionJob(prjJobType, prjJobId, userId):
    """
    @summary: Pseudo-tests for projection jobs
    """
-   postContent = open(os.path.join(TEST_DATA_DIR, 'testPrj.tif'), 'rb').read()
+   postContent = open(os.path.join(TEST_DATA_PATH, 'testPrj.tif'), 'rb').read()
    postComponent = "projection"
    postContentType = "image/tiff"
    _testJob(prjJobType, prjJobId, userId, postContent, postComponent, postContentType)

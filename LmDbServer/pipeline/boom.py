@@ -40,9 +40,9 @@ from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
-                                            LOG_PATH)
+from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
+                                         LOG_PATH)
+from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument

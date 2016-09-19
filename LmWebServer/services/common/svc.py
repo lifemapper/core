@@ -40,16 +40,16 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
-from LmServer.common.lmconstants import (DbUser, SESSION_DIR, 
+from LmServer.common.lmconstants import (DbUser, LOG_PATH, SESSION_DIR, 
                                          WEB_DIR)
-from LmServer.common.localconstants import (APP_PATH, LOG_PATH, ARCHIVE_USER, 
+from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
                                             WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
                                  UserLogger)
 from LmServer.db.scribe import Scribe
-from LmServer.base.utilities import escapeString, getFileContents, \
-                                            getUrlParameter
+from LmServer.base.utilities import (escapeString, getFileContents,
+                                     getUrlParameter)
 
 from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, 
                                             HTTP_ERRORS,  
