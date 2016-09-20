@@ -31,9 +31,10 @@ import uuid
 
 from LmCompute.environment.environmentMethods import _EnvironmentMethods
 from LmCompute.common.jobClient import LmJobClient
-from LmCompute.common.localconstants import (BIN_PATH, JOB_DATA_PATH, \
-                                    JOB_OUTPUT_PATH, PLUGINS_PATH, PYTHON_CMD, \
-                                    TEMPORARY_FILE_PATH)
+from LmCompute.common.localconstants import (SHARED_DATA_PATH, PYTHON_CMD, 
+                                             PLUGINS_PATH)
+from LmCompute.common.lmconstants import (BIN_PATH, WORKSPACE_PATH,
+                                          TEMPORARY_FILE_PATH)
 
 # .............................................................................
 class LocalEnv(_EnvironmentMethods):
@@ -83,7 +84,7 @@ class LocalEnv(_EnvironmentMethods):
       @return: The base path for job input data in this environment
       @rtype: String
       """
-      return JOB_DATA_PATH
+      return SHARED_DATA_PATH
    
    # ..................................
    def getJobOutputPath(self):
@@ -92,7 +93,7 @@ class LocalEnv(_EnvironmentMethods):
       @return: The base path for job output data in this environment
       @rtype: String
       """
-      return JOB_OUTPUT_PATH
+      return WORKSPACE_PATH
    
    # ..................................
    def getPluginsPath(self):

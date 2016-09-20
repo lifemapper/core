@@ -35,10 +35,10 @@ from LmCommon.common.lmXml import deserialize, fromstring
 
 from LmCompute.environment.environmentMethods import _EnvironmentMethods
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.lmconstants import INPUT_LAYER_DB
-from LmCompute.common.localconstants import (BIN_PATH, SHARED_DATA_PATH,
-         JOB_OUTPUT_PATH, PLUGINS_PATH, PYTHON_CMD, SAMPLE_JOBS_PATH, 
-         SAMPLE_LAYERS_PATH, TEMPORARY_FILE_PATH)
+from LmCompute.common.lmconstants import (BIN_PATH, INPUT_LAYER_DB, 
+      WORKSPACE_PATH, SAMPLE_JOBS_PATH, SAMPLE_LAYERS_PATH, TEMPORARY_FILE_PATH)
+from LmCompute.common.localconstants import (SHARED_DATA_PATH, PLUGINS_PATH, 
+                                             PYTHON_CMD)
 
 # Create a constant to save space
 VALID_TYPES = [ProcessType.OM_MODEL,
@@ -126,7 +126,7 @@ class TestEnv(_EnvironmentMethods):
       @return: The base path for job output data in this environment
       @rtype: String
       """
-      return JOB_OUTPUT_PATH
+      return WORKSPACE_PATH
    
    # ..................................
    def getPluginsPath(self):

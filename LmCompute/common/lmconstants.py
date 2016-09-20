@@ -26,10 +26,36 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+from LmCompute.common.localconstants import (LM_PATH, LM_DISK, SCRATCH_PATH)
 # ============================================================================
 # =                             Client Constants                             =
 # ============================================================================
 CLIENT_VERSION = "3.0.0"
+
+# ============================================================================
+# =                             Paths/Directories                              =
+# ============================================================================
+BIN_PATH = os.path.join(LM_PATH, 'bin')
+ME_CMD = os.path.join(LM_PATH, 'LmCompute/apps/maxent.jar')
+
+# JOB_OUTPUT_PATH --> WORKSPACE_PATH
+WORKSPACE_PATH = os.path.join(SCRATCH_PATH, 'work')
+TEMPORARY_FILE_PATH = os.path.join(SCRATCH_PATH, 'temp')
+
+SAMPLE_JOBS_PATH = os.path.join(LM_DISK, 'tests/config/sampleJobs')
+SAMPLE_LAYERS_PATH = os.path.join(LM_DISK, 'tests/data/layers/testLayers.txt')
+SAMPLE_DATA_PATH = os.path.join(LM_DISK, 'tests/data')
+METRICS_STORAGE_PATH = os.path.join(LM_DISK, 'metrics')
+COMPUTE_LOG_PATH = os.path.join(LM_DISK, 'logs')
+
+# ============================================================================
+# =                             Commands                                     =
+# ============================================================================
+MDL_TOOL = 'density.MaxEnt'
+PRJ_TOOL = 'density.Project'
+CONVERT_TOOL ='density.Convert'
+ME_VERSION = '3.3.3k'
 
 # ============================================================================
 # =                             Layer Constants                              =

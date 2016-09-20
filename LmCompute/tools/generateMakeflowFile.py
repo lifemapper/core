@@ -7,9 +7,8 @@
           subsequent versions
 """
 import sys
-
-from LmCompute.common.localconstants import (JOB_REQUEST_PATH, PYTHON_CMD,
-                                             JOB_OUTPUT_PATH)
+from LmCompute.common.lmconstants import WORKSPACE_PATH
+from LmCompute.common.localconstants import (JOB_REQUEST_PATH, PYTHON_CMD)
 
 # NOTE: Fill these in from constants
 
@@ -26,7 +25,7 @@ RUNNER={runnerFactory}
 REQ_FILL={reqFill}
 OUT_DIR={outDir}/completed
 """.format(reqDir=JOB_REQUEST_PATH, python=PYTHON_CMD, runnerFactory=JOB_RUNNER_FACTORY,
-           reqFill=REQUEST_FILL_SCRIPT, outDir=JOB_OUTPUT_PATH)
+           reqFill=REQUEST_FILL_SCRIPT, outDir=WORKSPACE_PATH)
 
 # .............................................................................
 def getProjectionsFromFile(prjFn):

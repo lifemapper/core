@@ -46,13 +46,11 @@ import zipfile
 from LmCommon.common.lmconstants import (JobStatus, OutputFormat,
                                          SHAPEFILE_EXTENSIONS, ENV_LAYER_DIR)
 from LmCommon.common.verify import verifyHash
-from LmCompute.common.lmconstants import (INPUT_LAYER_DB, LayerAttributes, 
-                                          LayerFormat, LayerStatus, 
-                                          RETRIEVED_LAYER_DIR, SchemaMetadata)
-from LmCompute.common.localconstants import TEMPORARY_FILE_PATH
+from LmCompute.common.lmconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DB, 
+         LayerAttributes, LayerFormat, LayerStatus, RETRIEVED_LAYER_DIR, 
+         SchemaMetadata, ME_CMD, CONVERT_TOOL)
+from LmCompute.common.localconstants import CONVERT_JAVA_CMD
 from LmCompute.common.lmObj import LmException
-from LmCompute.plugins.sdm.maxent.localconstants import (CONVERT_JAVA_CMD, 
-                                                         ME_CMD, CONVERT_TOOL)
 
 TIMEOUT = 600
 WAIT_SECONDS = 30

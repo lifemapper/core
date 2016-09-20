@@ -31,7 +31,7 @@ import argparse
 from mx.DateTime import gmt
 
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.localconstants import JOB_DATA_PATH
+from LmCompute.common.localconstants import SHARED_DATA_PATH
 
 # .............................................................................
 if __name__ == "__main__":
@@ -44,7 +44,7 @@ if __name__ == "__main__":
    
    args = parser.parse_args()
    
-   lm = LayerManager(JOB_DATA_PATH)
+   lm = LayerManager(SHARED_DATA_PATH)
    lm.purgeLayers(gmt().mjd - args.daysOld)
    lm.close()
    
