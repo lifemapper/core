@@ -34,8 +34,8 @@ import os
 import sys
 import time
 
-from LmWebServer.scripts.metrics.reportMetrics import getDailyMessage, \
-                         getWeeklyMessage, getMonthlyMessage, reportIPaddresses
+from LmWebServer.scripts.metrics.reportMetrics import (getDailyMessage,
+                         getWeeklyMessage, getMonthlyMessage, reportIPaddresses)
 
 NUM_DAYS = {
             1 : 31,
@@ -67,7 +67,7 @@ MONTHS = {
           'Dec' : 12
          }
 
-LOG_PATH = "/var/log/apache2/"
+APACHE_LOG_PATH = "/var/log/apache2/"
 
 DAY_INTERVAL = "day"
 WEEK_INTERVAL = "week"
@@ -406,7 +406,7 @@ if __name__ == "__main__":
    print "(%s-%s-%s) - (%s-%s-%s)" % (st.year, st.month, st.day, et.year, et.month, et.day)
 
    # Parse directory for log files to check
-   for fn in glob.glob(os.path.join(LOG_PATH, "access*")):
+   for fn in glob.glob(os.path.join(APACHE_LOG_PATH, "access*")):
       print "Looking at:", fn
       t = time.localtime(os.stat(fn).st_mtime)
       mt = datetime.datetime(t.tm_year, t.tm_mon, t.tm_mday)

@@ -41,10 +41,10 @@ from LmCommon.common.verify import computeHash, verifyHash
 from LmServer.base.lmobj import LMError, LMObject, LMSpatialObject
 from LmServer.base.serviceobject import ServiceObject
 
-from LmServer.common.lmconstants import (OccurrenceFieldNames, OutputFormat, 
+from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
             GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
-            LMServiceType)
-from LmServer.common.localconstants import UPLOAD_PATH, APP_PATH
+            OutputFormat, LMServiceType)
+from LmServer.common.localconstants import APP_PATH
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):

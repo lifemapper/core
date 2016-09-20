@@ -389,7 +389,7 @@ def getUsersToBackup(backupChoice, dbuser, dbname, dbschema,
 def dumpFileData(outpath, basefname, datapath, backupusers):
    readmeLines = []
    pwd = os.curdir
-   # Backup, compress requested DATA_PATH/MODEL_DIR/<user> directories
+   # Backup, compress requested ARCHIVE_PATH/<user> directories
    os.chdir(datapath)
    for entry in os.listdir(datapath):
       if entry in backupusers:
@@ -398,7 +398,7 @@ def dumpFileData(outpath, basefname, datapath, backupusers):
             '   The following files contain the file data for Lifemapper data for users: ',
             str(backupusers),
             '   In the target Lifemapper installation, file data should be moved into the ',
-            '   DATA_PATH/MODEL_DIR directory; these data came from the',
+            '   ARCHIVE_PATH directory; these data came from the',
             '   {} directory in the origin Lifemapper installation on {}'.format(datapath, getTimestamp(dateonly=True)),
             '',
             '   If the existing data archive contains a matching username, data could',
@@ -467,7 +467,7 @@ def backupDBAndData(backupChoice, outpath, dbschema, dbname,
                                        dbcmd, tableDependencies)
    helpLines.extend(tableHelp)
 
-   # Compress user data in DATA_PATH/MODEL_DIR/<user>  
+   # Compress user data in ARCHIVE_PATH/<user>  
    if backupChoice != ARCHIVE_USER:
       tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
    helpLines.extend(tarballHelp)

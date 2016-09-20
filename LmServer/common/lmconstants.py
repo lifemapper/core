@@ -54,9 +54,29 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat,
-                                         OFTString)
-from LmServer.common.localconstants import APP_PATH
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat)
+from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
+                                            SCRATCH_PATH)
+
+# Relative paths
+USER_LAYER_DIR = 'Layers'
+# On shared data directory (shared if lifemapper-compute is also installed)
+ENV_DATA_PATH = os.path.join(SHARED_DATA_PATH,'layers')
+ARCHIVE_PATH = os.path.join(SHARED_DATA_PATH,'archive')
+# On lmserver data directory
+SPECIES_DATA_PATH = os.path.join(DATA_PATH, 'species')
+TEST_DATA_PATH = os.path.join(DATA_PATH, 'test') 
+IMAGE_PATH = os.path.join(DATA_PATH, 'image')
+UPLOAD_PATH = os.path.join(DATA_PATH, 'tmpUpload')
+# On scratch disk
+LOG_PATH = os.path.join(SCRATCH_PATH, 'log')
+USER_LOG_PATH = os.path.join(LOG_PATH, 'users')
+ERROR_LOG_PATH = os.path.join(LOG_PATH, 'errors')
+
+# Depth of path for archive SDM experiment data - this is the number of levels 
+# that the occurrencesetid associated with a model and its projections 
+# is split into i.e. occurrencesetid = 123456789 --> path 000/123/456/789/
+MODEL_DEPTH = 4
 
 LM_SCHEMA = 'lm3'
 LM_SCHEMA_BORG = 'lm_v3'
@@ -243,7 +263,6 @@ class OccurrenceFieldNames:
 # Web directories
 # TODO: See how many of these are still in use.  They should probably be 
 #          constants in LmWebServer if they are still needed
-IMAGE_DIR = 'image'
 SESSION_DIR = 'sessions'
 MAP_DIR = 'maps'
 
@@ -439,23 +458,6 @@ CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +
                                      '           WIDTH 0.91\n' +
                                      '           OUTLINECOLOR 0 0 0\n' +
                                      '           COLOR 190 16 32\n'}
-# Relative paths
-USER_LOG_DIR = 'users'
-ERROR_LOG_DIR = 'errors'
-# Subdirectory of shared data directory (shared if lifemapper-compute is also installed)
-ENV_DATA_DIR = 'layers'
-# These are all subdirectories of DATA_PATH, in config.ini
-MODEL_DIR = 'archive'
-SPECIES_DATA_DIR = 'species'
-USER_LAYER_DIR = 'Layers'
-
-# Depth of path for archive SDM experiment data - this is the number of levels 
-# that the occurrencesetid associated with a model and its projections 
-# is split into i.e. occurrencesetid = 123456789 --> path 000/123/456/789/
-MODEL_DEPTH = 4
-
-
-
 
 # .............................................................................
 # List of error statuses that can be recovered

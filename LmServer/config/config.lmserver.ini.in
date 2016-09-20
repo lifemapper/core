@@ -12,12 +12,11 @@ SMTP_SENDER: no-reply-lifemapper@@PUBLIC_FQDN@
 DATASOURCE: GBIF
 APP_PATH: @LMHOME@
 DATA_PATH: @DATADIR_SERVER@
+SCRATCH_PATH: @LMSCRATCHDISK@
 ;; This variable is identical in config.lmcompute.ini
-SHARED_DATA_PATH: @DATADIR_SHARED@/data
-UPLOAD_PATH: @DATADIR_SERVER@/tmpUpload
+SHARED_DATA_PATH: @DATADIR_SHARED@
 TEMP_PATH: @TEMPDIR@
 MAPSERVER_ROOT: http://@PUBLIC_FQDN@
-LOG_PATH: @LMSCRATCHDISK@/log
 
 ; ...............................................
 [LmServer - registeredcompute]

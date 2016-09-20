@@ -79,6 +79,9 @@ New install (destroys data)
     # bash add-server.sh > add-server.out 2>&1
     # bash add-compute.sh > add-compute.out 2>&1
     
+To change SCENARIO_PACKAGE and/or ARCHIVE_USER before reboot
+------------------------------------------------------------
+
 #. **To change defaults**, for either lifemapper-compute or lifemapper-server,
    such as DATASOURCE, ARCHIVE_USER, compute parameters,
    create the configuration file site.ini (in /opt/lifemapper/config/) 
@@ -96,10 +99,8 @@ New install (destroys data)
    
          # rocks/bin/getClimateData
 
-#. **Check problem areas**:
-
-   * Contents of /var/lib/pgsql/9.1/data - if this directory is populated
-     immediately after a clean install (before reboot), delete it
+Finish install
+--------------
 
 #. **Reboot front end** ::  
 
