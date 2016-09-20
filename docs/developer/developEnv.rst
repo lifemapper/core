@@ -11,8 +11,8 @@ Introduction
 ************
 To test and debug and test code not yet tagged, use a cluster with both 
 LmCompute and LmServer installed (see **Install Lifemapper System** 
-instructions at `Install Lifemapper System`_), then connect code checked out 
-from the git repository.
+instructions at `Install Lifemapper System`_).  **Before rebooting**, connect 
+code checked out from the git repository.
 
 Connect development code on Frontend
 ************************************
@@ -67,6 +67,16 @@ Connect development code on Frontend
    # ln -s /state/partition1/workspace/core/LmServer
    # ln -s /state/partition1/workspace/core/LmWebServer
    
+Complete Frontend installation
+******************************
+
+#. **Reboot front end** ::  
+
+   # reboot
+   
+#. Install nodes from Frontend (`Install Lifemapper System`_)
+
+
 Connect development code on Nodes
 *********************************
 
