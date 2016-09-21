@@ -10,45 +10,43 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    squid,
    verify,
    name,
-   title,
-   author,
-   description,
    dlocation,
    metadataUrl,
-   metalocation,
+   metadata,
+   dataFormat,
    gdalType,
    ogrType,
-   isCategorical,
-   dataFormat,
-   epsgcode,
-   mapunits,
-   resolution,
-   startDate,
-   endDate,
-   modTime,
-   bbox,
+   valUnits,
    nodataVal,
    minVal,
    maxVal,
-   valUnits,
-   lyrkeywords,
-   layerTypeId,
+   epsgcode,
+   mapunits,
+   resolution,
+   modTime,
+   bbox,
+   keywords text,
+   -- EnvironmentalLayer
+   environmentalLayerId,
+   startDate,
+   endDate,
    -- LayerType
+   layerTypeId,
    typecode,
    typetitle,
    typedescription,
-   typekeywords,
-   typemodtime) AS
-      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.title,
-             l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
-             l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
-             l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
-             l.nodataVal, l.minVal, l.maxVal, l.valUnits, l.keywrds,
-             l.layerTypeId, 
-             lt.code, lt.title, lt.description, lt.keywrds, lt.modtime
-        FROM lm_v3.layer l, lm_v3.layertype lt
-        WHERE l.layertypeid = lt.layertypeid
-        ORDER BY l.layertypeid ASC;
+   typekeywords
+) AS
+      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
+             l.metadataUrl, l.metadata, l.dataFormat,
+             l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
+             el.environmentalLayerId, el.startDate, el.endDate,
+             lt.layerTypeId, lt.code, lt.title, lt.description, lt.keywords
+        FROM lm_v3.layer l, lm_v3.EnvironmentalLayer el, lm_v3.layertype lt
+        WHERE l.layerid = el.layerid
+          AND el.layertypeid = lt.layertypeid
+        ORDER BY l.layerid ASC;
 
 -- ----------------------------------------------------------------------------
 -- lm_shapegrid

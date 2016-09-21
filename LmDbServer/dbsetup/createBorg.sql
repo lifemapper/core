@@ -71,7 +71,6 @@ create table lm_v3.JobChain
 );
 
 -- -------------------------------
--- aka ** MAL ScientificName
 create table lm_v3.Taxon
 (
    taxonId serial UNIQUE PRIMARY KEY,
@@ -128,22 +127,27 @@ create table lm_v3.Layer
    name text,
    dlocation text,
    metadataUrl text UNIQUE,
+
    -- JSON or JSON with filepath, title, author, description
    metadata text,
-   gdalType int,
-   ogrType int,
-   isCategorical boolean,
+
    -- GDAL/OGR codes indicating driver to use when writing files
    dataFormat varchar(32),
+   gdalType int,
+   ogrType int,
+   
+   -- valunits=categorical if non-scalar
+   valUnits varchar(60),
+   nodataVal double precision,
+   minVal double precision,
+   maxVal double precision,
+
    epsgcode int,
    mapunits varchar(20),
    resolution double precision,
    modTime double precision,
    bbox varchar(60),
-   nodataVal double precision,
-   minVal double precision,
-   maxVal double precision,
-   valUnits varchar(60),
+   
    keywords text,
    UNIQUE (userid, name, epsgcode)
 );
@@ -160,7 +164,8 @@ create table lm_v3.Layer
 -- Note: Enforce unique userid/name pairs (in code) for display layers only
 create table lm_v3.EnvironmentalLayer
 (
-   layerId serial UNIQUE PRIMARY KEY,
+   environmentalLayerId serial UNIQUE PRIMARY KEY,
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    startDate double precision,
    endDate double precision,
    layerTypeId int REFERENCES lm_v3.LayerType,
@@ -243,9 +248,10 @@ ALTER TABLE lm_v3.OccurrenceSet ADD CONSTRAINT enforce_dims_geompts CHECK (st_nd
 CREATE INDEX idx_lower_displayName on lm_v3.OccurrenceSet(lower(displayName));
 CREATE INDEX idx_pattern_lower_displayname on lm_v3.OccurrenceSet  (lower(displayname) varchar_pattern_ops );
 CREATE INDEX idx_queryCount ON lm_v3.OccurrenceSet(queryCount);
-CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 50));
-CREATE INDEX idx_occUser ON lm_v3.OccurrenceSet(userId);
+CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 30));
+CREATE INDEX idx_occUserId ON lm_v3.OccurrenceSet(userId);
 CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
+CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
 
@@ -267,8 +273,6 @@ create table lm_v3.SDMModel
 (
    sdmmodelid serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   name text NOT NULL,
-   description text,
    occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    scenarioCode varchar(30),
@@ -281,8 +285,8 @@ create table lm_v3.SDMModel
    algorithmParams text,
    algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode)
 );
-CREATE INDEX idx_mdlLastModified ON lm_v3.SDMModel(statusModTime);
-CREATE INDEX idx_modelUser ON lm_v3.SDMModel(userId);
+CREATE INDEX idx_mdlStatusModTime ON lm_v3.SDMModel(statusModTime);
+CREATE INDEX idx_mdlUserId ON lm_v3.SDMModel(userId);
 CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
 
 -- -------------------------------
@@ -291,14 +295,14 @@ CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
 create table lm_v3.SDMProjection
 (
    sdmprojectionId serial UNIQUE PRIMARY KEY,
-   layerid NOT NULL REFERENCES lm_v3.Layer,
+   layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    sdmmodelid int REFERENCES lm_v3.SDMModel ON DELETE CASCADE,
-   scenarioCode varchar(30) REFERENCES lm_v3.Scenario ON DELETE CASCADE,
+   scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    maskId int REFERENCES lm_v3.Layer,
    status int,
    statusModTime double precision
 );  
-CREATE INDEX idx_prjLastModified ON lm_v3.SDMProjection(statusModTime);
+CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProjection(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
 
 -- -------------------------------
