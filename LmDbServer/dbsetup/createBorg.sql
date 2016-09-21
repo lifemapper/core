@@ -4,7 +4,6 @@
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 \c template1 admin
-
 -- ----------------------------------------------------------------------------
 CREATE DATABASE borg ENCODING='UTF8'
                     LC_COLLATE='en_US.UTF-8'
@@ -45,6 +44,8 @@ create table lm_v3.TaxonomySource
 );
 
 -- -------------------------------
+-- REMOVE THIS
+-- -------------------------------
 create table lm_v3.ComputeResource
 (
    computeResourceId serial UNIQUE PRIMARY KEY,
@@ -65,7 +66,6 @@ create table lm_v3.JobChain
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    dlocation text,
    priority int,
-   progress int,
    status int,
    statusmodtime double precision
 );
@@ -126,12 +126,10 @@ create table lm_v3.Layer
    squid varchar(64) REFERENCES lm_v3.Taxon,
    verify varchar(64),
    name text,
-   title text,
-   author text,
-   description text,
    dlocation text,
    metadataUrl text UNIQUE,
-   metalocation text,
+   -- JSON or JSON with filepath, title, author, description
+   metadata text,
    gdalType int,
    ogrType int,
    isCategorical boolean,
@@ -140,8 +138,6 @@ create table lm_v3.Layer
    epsgcode int,
    mapunits varchar(20),
    resolution double precision,
-   startDate double precision,
-   endDate double precision,
    modTime double precision,
    bbox varchar(60),
    nodataVal double precision,
@@ -149,6 +145,24 @@ create table lm_v3.Layer
    maxVal double precision,
    valUnits varchar(60),
    keywords text,
+   UNIQUE (userid, name, epsgcode)
+);
+ Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
+ ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT unique_usr_name CHECK (st_ndims(geom) = 2);
+ CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
+ CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
+ CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
+
+-- -------------------------------
+-- Note: Enforce unique userid/name pairs (in code) for display layers only
+create table lm_v3.EnvironmentalLayer
+(
+   layerId serial UNIQUE PRIMARY KEY,
+   startDate double precision,
+   endDate double precision,
    layerTypeId int REFERENCES lm_v3.LayerType,
    UNIQUE (userid, name, epsgcode)
 );
@@ -195,7 +209,6 @@ create table lm_v3.ScenarioLayers
    layerId int REFERENCES lm_v3.Layer MATCH FULL ON DELETE CASCADE,
    PRIMARY KEY (scenarioId, layerId)
 );
-
 
 -- -------------------------------
 create table lm_v3.OccurrenceSet
@@ -278,49 +291,33 @@ CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
 create table lm_v3.SDMProjection
 (
    sdmprojectionId serial UNIQUE PRIMARY KEY,
-   squid varchar(64) REFERENCES lm_v3.Taxon,
-   verify varchar(64),
-   metadataUrl text UNIQUE,
-   metalocation text,
+   layerid NOT NULL REFERENCES lm_v3.Layer,
    sdmmodelid int REFERENCES lm_v3.SDMModel ON DELETE CASCADE,
-   scenarioCode varchar(30),
-   scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
+   scenarioCode varchar(30) REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    maskId int REFERENCES lm_v3.Layer,
    status int,
-   statusModTime double precision,
-   units varchar(20),
-   resolution double precision,
-   epsgcode int,
-   bbox varchar(60),
-   dlocation text,
-   dataType int
+   statusModTime double precision
 );  
-Select AddGeometryColumn('lm_v3', 'sdmprojection', 'geom', 4326, 'POLYGON', 2);
-ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
-ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
-ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
-
-CREATE INDEX spidx_sdmprojection ON lm_v3.SDMProjection USING GIST ( geom );
 CREATE INDEX idx_prjLastModified ON lm_v3.SDMProjection(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
-CREATE INDEX idx_prjSquid on lm_v3.SDMProjection(squid);
 
 -- -------------------------------
 create table lm_v3.Process
 (
    processId serial UNIQUE PRIMARY KEY,
    processType int NOT NULL,
-   isSinglespecies boolean NOT NULL,
+   referenceType int NOT NULL,
    referenceId int NOT NULL,
    userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   isSinglespecies boolean NOT NULL,
    inputs text,
+   outputs text,
    dlocation text,
    status int,
    statusmodtime double precision
 );
 
 -- -------------------------------
--- Could be phantom layer with siteIds x,y in vector
 create table lm_v3.ShapeGrid
 (
    shapeGridId serial UNIQUE PRIMARY KEY,
@@ -407,7 +404,8 @@ create table lm_v3.Matrix
    matrixType int NOT NULL,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixDlocation varchar(256),
-   metaDlocation varchar(256),  
+   -- JSON
+   metadata text,  
    status int,
    statusmodtime double precision
 );
