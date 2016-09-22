@@ -223,7 +223,6 @@ create table lm_v3.OccurrenceSet
    verify varchar(64),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    displayName text,
-   primaryEnv int,
    metadataUrl text UNIQUE,
    dlocation text,
    rawDlocation text,
@@ -279,7 +278,6 @@ create table lm_v3.SDMModel
    maskId int REFERENCES lm_v3.Layer,
    status int,
    statusModTime double precision,
-   priority int,
    dlocation text,
    email varchar(64), 
    algorithmParams text,
@@ -298,6 +296,7 @@ create table lm_v3.SDMProjection
    layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    sdmmodelid int REFERENCES lm_v3.SDMModel ON DELETE CASCADE,
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
+   scenarioCode varchar(30),
    maskId int REFERENCES lm_v3.Layer,
    status int,
    statusModTime double precision
@@ -376,15 +375,8 @@ create table lm_v3.PresenceAbsence
    minPresence double precision,
    maxPresence double precision,
    percentPresence int,
-   -- Name of the field containing the value for absence
-   nameAbsence varchar(20),
-   minAbsence double precision,
-   maxAbsence double precision,
-   percentAbsence int, 
-   UNIQUE(userId, namePresence, minPresence, maxPresence, percentPresence, 
-                  nameAbsence, minAbsence, maxAbsence, percentAbsence),
-   CHECK (percentPresence >= 0 AND percentPresence <= 100),
-   CHECK (percentAbsence >= 0 AND percentAbsence <= 100)
+   UNIQUE(userId, namePresence, minPresence, maxPresence, percentPresence),
+   CHECK (percentPresence >= 0 AND percentPresence <= 100)
 );
 
 -- -------------------------------
@@ -421,7 +413,7 @@ create table lm_v3.BucketPALayer
 (
    bucketPALayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
-   matrixId int NOT NULL,
+   matrixIndex int NOT NULL,
    squid varchar(64) REFERENCES lm_v3.Taxon,
    
    -- layerId and presenceAbsenceId could be empty, just squid
@@ -440,7 +432,9 @@ create table lm_v3.BucketAncLayer
 (
    bucketAncLayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
-   matrixId int NOT NULL,
+   matrixIndex int NOT NULL,
+   -- some user-unique identifier to track data meaning/metadata
+   ident varchar(64),
    
    -- layerId and ancillaryValueId could be empty
    layerId int REFERENCES lm_v3.Layer,
