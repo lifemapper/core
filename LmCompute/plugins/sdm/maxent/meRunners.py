@@ -39,12 +39,11 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmCompute.common.layerManager import (convertAndModifyAsciiToTiff, 
                                            LayerManager)
-from LmCompute.common.lmconstants import LayerFormat, ME_CMD
-
+from LmCompute.common.lmconstants import (LayerFormat, ME_CMD, MDL_TOOL, 
+                                          PRJ_TOOL, ME_VERSION)
+from LmCompute.common.localconstants import JAVA_CMD 
 from LmCompute.jobs.runners.applicationRunner import ApplicationRunner
-
-from LmCompute.plugins.sdm.maxent.constants import PARAMETERS, MDL_TOOL, PRJ_TOOL
-from LmCompute.plugins.sdm.maxent.localconstants import JAVA_CMD, ME_VERSION
+from LmCompute.plugins.sdm.maxent.constants import PARAMETERS
 
 # .............................................................................
 class MEModelRunner(ApplicationRunner):
