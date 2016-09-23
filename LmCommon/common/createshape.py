@@ -289,8 +289,12 @@ class ShapeShifter(object):
                goodData = False
             else:  
                featCount = slyr.GetFeatureCount()
-      if not goodData or featCount == 0:
-         print('Bad or empty data at {}'.format(dlocation))
+      if not goodData: 
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Failed to create shapefile {}'.format(dlocation))
+      elif featCount == 0:
+         raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
+                           'Failed to create shapefile {}'.format(dlocation))
       return goodData, featCount
 
    # .............................................................................
@@ -356,12 +360,6 @@ class ShapeShifter(object):
                     subsetFname=None, subsetCount=None):
       # Test output data
       goodData, featCount = self.testShapefile(outFname)
-      if not goodData: 
-         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                           'Failed to create shapefile {}'.format(outFname))
-      elif featCount == 0:
-         raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
-                           'Failed to create shapefile {}'.format(outFname))
 
       # Write metadata as JSON
       basename, ext = os.path.splitext(outFname)
