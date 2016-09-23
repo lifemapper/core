@@ -20,22 +20,13 @@ SCRATCH_PATH: @LMSCRATCHDISK@
 ;; This variable is identical in config.lmserver.ini
 SHARED_DATA_PATH: @DATADIR_SHARED@
 
-;** BIN_PATH: @LMHOME@/bin/
-;** APP_PATH: @LMHOME@/bin/
-;** change to SHARED_DATA_PATH
-;** JOB_DATA_PATH: @LMDISK@/data/
-;** change to WORKSPACE_PATH and change location from /job
-;** JOB_OUTPUT_PATH: @LMSCRATCHDISK@/work
-
 ;;**!!! JOB_REQUEST_PATH and PLUGINS_PATH go away
 JOB_REQUEST_PATH: @LMDISK@/jobRequests/
 PLUGINS_PATH: @LMHOME@/LmCompute/plugins
 
-;;**!!! CJ look at these:
-;** SAMPLE_JOBS_PATH: @LMDISK@/tests/config/sampleJobs
-;** SAMPLE_LAYERS_PATH: @LMDISK@/tests/data/layers/testLayers.txt
-;** SAMPLE_DATA_PATH: @LMDISK@/tests/data
-;** TEMPORARY_FILE_PATH: @LMSCRATCHDISK@/temp
+;;**!!! CJ look at these: 
+;;**    SAMPLE_JOBS_PATH, SAMPLE_LAYERS_PATH, SAMPLE_DATA_PATH, TEMPORARY_FILE_PATH
+
 ;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE in the
 ;; [LmServer - pipeline] section should match SCENARIO_PACKAGE_SEED here
 SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
@@ -43,7 +34,6 @@ SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
 ;;**!!! Section goes away
 ; ...............................................
 [LmCompute - metrics]
-;** METRICS_STORAGE_PATH: @LMDISK@/metrics
 STORE_METRICS: True
 
 ; ...............................................
@@ -51,35 +41,16 @@ STORE_METRICS: True
 ;;;; The "STORE_LOG_FILES" parameter indicates if logs should be shipped to a long
 ;;;;    term storage location instead of kept with the rest of the job output
 STORE_LOG_FILES: False
-;** LOG_STORAGE_LOCATION --> COMPUTE_LOG_PATH
-;** LOG_STORAGE_LOCATION: @LMDISK@/logs
 
 ; ...............................................
 [LmCompute - plugins - maxent]
 JAVA_MAX_MEM_OPTION = 2g
 JAVA_INIT_MEM_OPTION = 2g
-JAVA_SYSTEM_ROOT = @LMDISK@/.java
-JAVA_USER_ROOT = %(JAVA_SYSTEM_ROOT)s/.userPrefs
 JAVA_EXE: @JAVABIN@
-JAVA_CMD: %(JAVA_EXE)s -Xms%(JAVA_INIT_MEM_OPTION)s -Xmx%(JAVA_MAX_MEM_OPTION)s -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT)s -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT)s -cp
-;** ME_CMD: @LMHOME@/LmCompute/apps/maxent.jar
-;** MDL_TOOL: density.MaxEnt
-;** PRJ_TOOL: density.Project
-;** ME_VERSION: 3.3.3k
-;** CONVERT_TOOL: density.Convert
 
 ; For converting ASCIIs to MXEs
 CONVERT_JAVA_MAX_MEM_OPTION = 512m
 CONVERT_JAVA_INIT_MEM_OPTION = 512m
-CONVERT_JAVA_CMD: %(JAVA_EXE)s -Xms%(CONVERT_JAVA_INIT_MEM_OPTION)s -Xmx%(CONVERT_JAVA_MAX_MEM_OPTION)s -Djava.util.prefs.systemRoot=%(JAVA_SYSTEM_ROOT)s -Djava.util.prefs.userRoot=%(JAVA_USER_ROOT)s -cp
-
-; ...............................................
-[LmCompute - plugins - openModeller]
-;** DEFAULT_FILE_TYPE: GreyTiff100
-;** DEFAULT_LOG_LEVEL: debug
-;** OM_MODEL_CMD: om_model
-;** OM_PROJECT_CMD: om_project
-;** OM_VERSION: 1.5.0
 
 ;;**!!! Section goes away
 ; ...............................................
