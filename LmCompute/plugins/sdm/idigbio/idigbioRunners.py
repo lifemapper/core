@@ -63,6 +63,8 @@ class IDIGBIORetrieverRunner(PythonRunner):
       try:
          self.shapefileLocation, self.subsetLocation = parseIDigData(
                   self.taxonKey, self.outputPath, self.env, self.maxPoints)
+      except LmException, e:
+         self.status = e.code
       except urllib2.HTTPError, e:
          # The HTTP_GENERAL_ERROR status is 4000, each of the HTTP error codes
          #   corresponds to 4000 + the HTTP error code
