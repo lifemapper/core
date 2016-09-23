@@ -115,6 +115,31 @@ class IntersectRunner(PythonRunner):
                                            self.env, outputDir=self.outputPath)
    
    # .......................................
+   # .......................................
+   def _finishJob(self):
+      """
+      @summary: Move outputs we want to keep to the specified location
+      @todo: Determine if anything else should be moved
+      @todo: Should we take a name parameter?
+      @todo: What should file names be?
+      """
+      # Options to keep:
+      #  metrics
+      
+      if self.outDir is not None:
+         # Main shapefile
+         for f in self._getFiles(self.shapefileLocation):
+            ext = os.path.splitext(f)[1]
+            if ext in SHAPEFILE_EXTENSIONS:
+               shutil.move(f, self.outDir)
+         
+         # Subset
+         if self.subsetLocation is not None:
+            for f in self._getFiles(self.subsetLocation):
+               ext = os.path.splitext(f)[1]
+               if ext in SHAPEFILE_EXTENSIONS:
+                  shutil.move(f, self.outDir)
+         
    def _push(self):
       """
       @summary: Pushes the results of the job to the job server

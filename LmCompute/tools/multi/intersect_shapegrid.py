@@ -1,7 +1,6 @@
 #!/bin/bash
 """
-@summary: This script randomizes a PAM using the parallel Grady method while
-            maintaining marginal totals
+@summary: This script intersects a shapegrid and a raster layer and returns a PAV
 @author: CJ Grady
 @version: 4.0.0
 @status: beta
@@ -37,7 +36,7 @@ if __name__ == "__main__":
    
    # Set up the argument parser
    parser = argparse.ArgumentParser(
-      description="This script randomizes a PAM using the parallel Grady method while maintaining marginal totals") 
+      description="This script intersects a shapegrid and a raster layer and returns a PAV") 
    
    parser.add_argument('-n', '--job_name', dest='jobName', type=str,
                                help="Use this as the name of the job (for logging and work directory creation).  If omitted, one will be generated")
