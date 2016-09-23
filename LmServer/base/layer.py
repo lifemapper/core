@@ -2270,6 +2270,7 @@ class Vector(_Layer):
                 featureAttributes and features dictionaries.
       @todo: remove featureLimit, read subsetDLocation if there is a limit 
       """
+      newBBox = None
       if dlocation is None:
          dlocation = self._dlocation
       if os.path.exists(dlocation):
