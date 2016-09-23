@@ -46,10 +46,10 @@ import traceback
 from LmBackend.common.daemon import Daemon
 from LmCompute.common.log import MediatorLogger
 from LmServer.db.scribe import Scribe
-from LmServer.common.localconstants import ARCHIVE_USER, CATALOG_SERVER_BIN, \
-       CATALOG_SERVER_OPTIONS, CATALOG_SERVER_PID_FILE, MAKEFLOW_BIN, \
-       MAKEFLOW_OPTIONS, MATT_DAEMON_PID_FILE, MAX_MAKEFLOWS, \
-       WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS
+from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
+                                    MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
+from LmServer.common.localconstants import (ARCHIVE_USER, CATALOG_SERVER_OPTIONS, 
+                  MAKEFLOW_OPTIONS, MAX_MAKEFLOWS, WORKER_FACTORY_OPTIONS)
 
 # .............................................................................
 class MattDaemon(Daemon):

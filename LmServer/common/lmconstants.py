@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 import inspect
+from LmCompute.common.lmconstants import BIN_PATH
 try:
    from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
                         GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
@@ -56,8 +57,9 @@ from types import IntType, FloatType
 
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
-                                            SCRATCH_PATH)
+                                            SCRATCH_PATH, TEMP_PATH, PUBLIC_FQDN)
 
+BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths
 USER_LAYER_DIR = 'Layers'
 # On shared data directory (shared if lifemapper-compute is also installed)
@@ -72,6 +74,14 @@ UPLOAD_PATH = os.path.join(DATA_PATH, 'tmpUpload')
 LOG_PATH = os.path.join(SCRATCH_PATH, 'log')
 USER_LOG_PATH = os.path.join(LOG_PATH, 'users')
 ERROR_LOG_PATH = os.path.join(LOG_PATH, 'errors')
+
+CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH,'config', 'cherrypy.conf')
+MATT_DAEMON_PID_FILE = os.path.join(TEMP_PATH, 'mattDaemon.pid')
+
+# CC Tools constants
+CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
+WORKER_FACTORY_BIN = os.path.join(BIN_PATH, 'work_queue_factory')
+MAKEFLOW_BIN = os.path.join(BIN_PATH, 'makeflow')
 
 # Depth of path for archive SDM experiment data - this is the number of levels 
 # that the occurrencesetid associated with a model and its projections 
