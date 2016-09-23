@@ -27,7 +27,9 @@
           02110-1301, USA.
 """
 import os
-from LmCompute.common.localconstants import (LM_PATH, LM_DISK, SCRATCH_PATH)
+from LmCompute.common.localconstants import (LM_PATH, LM_DISK, SCRATCH_PATH, 
+                     JAVA_EXE, JAVA_INIT_MEM_OPTION, JAVA_MAX_MEM_OPTION,
+                     CONVERT_JAVA_INIT_MEM_OPTION, CONVERT_JAVA_MAX_MEM_OPTION)
 # ============================================================================
 # =                             Client Constants                             =
 # ============================================================================
@@ -48,6 +50,16 @@ SAMPLE_LAYERS_PATH = os.path.join(LM_DISK, 'tests/data/layers/testLayers.txt')
 SAMPLE_DATA_PATH = os.path.join(LM_DISK, 'tests/data')
 METRICS_STORAGE_PATH = os.path.join(LM_DISK, 'metrics')
 COMPUTE_LOG_PATH = os.path.join(LM_DISK, 'logs')
+
+JAVA_SYSTEM_ROOT = os.path.join(LM_DISK, '.java')
+JAVA_USER_ROOT = os.path.join(JAVA_SYSTEM_ROOT, '.userPrefs')
+JAVA_CMD = '{} -Xms{} -Xmx{} -Djava.util.prefs.systemRoot={} -Djava.util.prefs.userRoot={} -cp'.format(
+           JAVA_EXE, JAVA_INIT_MEM_OPTION, JAVA_MAX_MEM_OPTION, JAVA_SYSTEM_ROOT,
+           JAVA_USER_ROOT)
+CONVERT_JAVA_CMD = '{} -Xms{} -Xmx{} -Djava.util.prefs.systemRoot={} -Djava.util.prefs.userRoot={} -cp'.format(
+                    JAVA_EXE, CONVERT_JAVA_INIT_MEM_OPTION, 
+                    CONVERT_JAVA_MAX_MEM_OPTION, JAVA_SYSTEM_ROOT, JAVA_USER_ROOT)
+
 
 # ============================================================================
 # =                             Commands                                     =

@@ -48,8 +48,7 @@ from LmCommon.common.lmconstants import (JobStatus, OutputFormat,
 from LmCommon.common.verify import verifyHash
 from LmCompute.common.lmconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DB, 
          LayerAttributes, LayerFormat, LayerStatus, RETRIEVED_LAYER_DIR, 
-         SchemaMetadata, ME_CMD, CONVERT_TOOL)
-from LmCompute.common.localconstants import CONVERT_JAVA_CMD
+         SchemaMetadata, ME_CMD, CONVERT_TOOL, CONVERT_JAVA_CMD)
 from LmCompute.common.lmObj import LmException
 
 TIMEOUT = 600
