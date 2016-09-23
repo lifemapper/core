@@ -280,6 +280,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
          self.setDLocation()
          self.setLocalMapFilename()
          self._setMapPrefix()
+         self.resetMetadataUrl()
 
 # ...............................................
    def getAbsolutePath(self):
