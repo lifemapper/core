@@ -2272,13 +2272,13 @@ class Vector(_Layer):
       """
       if dlocation is None:
          dlocation = self._dlocation
-      if self._dataFormat == DEFAULT_OGR_FORMAT:
-         thisBBox = self.readOGRData(dlocation, self._dataFormat, 
-                                     featureLimit=featureLimit)
-      elif self._dataFormat == 'CSV':
-         thisBBox = self.readCSVPoints(dlocation, featureLimit=featureLimit)
-      
-      newBBox = self._transformBBox(origBBox=thisBBox)
+      if os.path.exists(dlocation):
+         if self._dataFormat == DEFAULT_OGR_FORMAT:
+            thisBBox = self.readOGRData(dlocation, self._dataFormat, 
+                                        featureLimit=featureLimit)
+         elif self._dataFormat == 'CSV':
+            thisBBox = self.readCSVPoints(dlocation, featureLimit=featureLimit)
+         newBBox = self._transformBBox(origBBox=thisBBox)
       
       return newBBox
    
