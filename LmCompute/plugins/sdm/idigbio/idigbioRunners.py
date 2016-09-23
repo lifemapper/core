@@ -36,6 +36,7 @@ import zipfile
 from LmCommon.common.lmconstants import JobStatus, ProcessType, \
                                         SHAPEFILE_EXTENSIONS
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
+from LmCompute.common.lmObj import LmException
 from LmCompute.plugins.sdm.idigbio.idigbio import parseIDigData
 
 SLEEP_TIME = 600 # Ten minutes
