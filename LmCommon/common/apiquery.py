@@ -302,6 +302,8 @@ class APIQuery(object):
             raise Exception('Failed to interpret output of URL {}, content = {}; ({})'
                             .format(self.baseurl, response.content, str(e)))
       else:
+         print 'Raising exception for baseurl {} and query {}'.format(
+                                                   self.baseurl, queryAsString)
          response.raise_for_status()
 
 # .............................................................................
@@ -804,18 +806,25 @@ if __name__ == '__main__':
          
    if idigbio:
       infname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
-      idigList =  testIdigbioTaxonIds(infname)
+#       idigList =  testIdigbioTaxonIds(infname)
 
       # ******************* iDigBio ********************************
       # Test GBIF TaxonIds from iDigBio list
       idigList = [(4990907, 65932, 'megascelis subtilis'), 
-                  (5171118, 50533, 'gea argiopides')]
+                  (5171118, 50533, 'gea argiopides'), 
+                  (2437967, 129988, 'peromyscus maniculatus'),
+                  (4990907, 65932, 'megascelis subtilis'),
+                  (5158206, 63971, 'urana')]
       for currGbifTaxonId, currReportedCount, currName in idigList:
          print currGbifTaxonId
          # direct query
          api = IdigbioAPI()
          occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
          url1 = api.url
+         print api.url
+         print api.baseurl
+         print api._otherFilters
+         print api._qFilters
          
          print("Retrieved {} records for gbif taxonid {}"
                .format(len(occList1), currGbifTaxonId))
