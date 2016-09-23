@@ -58,8 +58,7 @@ class MEModelRunner(ApplicationRunner):
       
       @note: MaxEnt version 3.3.3e
       """
-      baseCmd = "{1} {2} {3}".format(self.env.getApplicationPath(), 
-                                           JAVA_CMD, ME_CMD, MDL_TOOL)
+      baseCmd = "{0} {1} {2}".format(JAVA_CMD, ME_CMD, MDL_TOOL)
       samples = "-s {0}".format(self.samplesFile)
       envParams = "-e {0}".format(self.jobLayerDir)
       outputParams = "-o {0}".format(self.outputPath)
@@ -318,8 +317,7 @@ directory containing grids for all the predictor variables described in the
 optional args can contain any flags understood by Maxent -- for example, a 
 "grd" flag would make the output grid of density.Project be in .grd format.
       """
-      baseCmd = "{1} {2} {3}".format(self.env.getApplicationPath(), 
-                                           JAVA_CMD, ME_CMD, PRJ_TOOL)
+      baseCmd = "{0} {1} {2}".format(JAVA_CMD, ME_CMD, PRJ_TOOL)
       outFile = os.path.join(self.outputPath, 'output.asc')
 
       algoOptions = getAlgorithmOptions(self.job.algorithm)
