@@ -59,7 +59,7 @@ JAVA_CMD = '{} -Xms{} -Xmx{} -Djava.util.prefs.systemRoot={} -Djava.util.prefs.u
 CONVERT_JAVA_CMD = '{} -Xms{} -Xmx{} -Djava.util.prefs.systemRoot={} -Djava.util.prefs.userRoot={} -cp'.format(
                     JAVA_EXE, CONVERT_JAVA_INIT_MEM_OPTION, 
                     CONVERT_JAVA_MAX_MEM_OPTION, JAVA_SYSTEM_ROOT, JAVA_USER_ROOT)
-
+GDALINFO_CMD = os.path.join(BIN_PATH, 'gdalinfo')
 
 # ============================================================================
 # =                             Commands                                     =
