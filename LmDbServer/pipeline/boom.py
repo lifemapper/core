@@ -434,6 +434,7 @@ class _LMBoomer(LMObject):
       """
       currtime = dt.gmt().mjd
       occ = occs = None
+      ignore = False
       # Find existing
       try:
          if isinstance(sciname, ScientificName):
@@ -488,20 +489,21 @@ class _LMBoomer(LMObject):
             self.log.info('Updating occset {} ({})'
                           .format(tmpOcc.getId(), taxonName))
          else:
+            ignore = True
             self.log.debug('Ignoring occset {} ({}) is up to date'
                            .format(tmpOcc.getId(), taxonName))
       else:
          raise LMError(currargs='Too many ({}) occsets for {}'
                        .format(len(occs), taxonName))
 
-      # Set raw data
-      if occ:
+      # Set raw data and update status
+      if occ and not ignore:
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
                                      data=data)
-         if rdloc:
-            occ.setRawDLocation(rdloc, currtime)
-         else:
+         if not rdloc:
             raise LMError(currargs='Unable to set raw data location')
+         occ.setRawDLocation(rdloc, currtime)
+         self._scribe.updateOccset(occ)
       
       return occ
    

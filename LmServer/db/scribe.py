@@ -1711,6 +1711,9 @@ class Scribe(Peruser):
    def initSDMOccJob(self, usr, occ, occJobProcessType, modtime,  
                      priority=Priority.NORMAL): 
       occJob = self.getJobOfType(JobFamily.SDM, occ)
+      if occJob is not None and JobStatus.failed(occJob.status):
+         self._mal.deleteJob(occJob)
+         occJob = None
       if occJob is None:
 #          try:
          if occ.status != JobStatus.INITIALIZE:
@@ -1736,7 +1739,7 @@ class Scribe(Peruser):
                              algCode=alg.code, atom=False)
       # TODO: Add scenario filter to listModels and listProjections
       for mdl in mdls:
-         if mdl.scenarioCode == mdlScen.code:
+         if mdl.scenarioCode == mdlScen.code: 
             rightModels.append(mdl)
       if not rightModels:
          morejobs = self.initSDMModelProjectionJobs(occ, mdlScen, 
