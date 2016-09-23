@@ -31,8 +31,7 @@ import os
 from LmCommon.common.lmconstants import OutputFormat
 from LmCommon.common.log import LmLogger
 
-from LmServer.common.lmconstants import USER_LOG_PATH
-from LmServer.common.localconstants import LOG_PATH
+from LmServer.common.lmconstants import LOG_PATH, USER_LOG_PATH
 
 # .............................................................................
 class LmServerLogger(LmLogger):
@@ -157,13 +156,9 @@ class UserLogger(LmPublicLogger):
    @summary: The user logger logs information about a specific user's activities
    """
    def __init__(self, userId, level=logging.DEBUG):
-      userLogDir = os.path.join(LOG_PATH, USER_LOG_PATH)
-      if not os.path.exists(userLogDir):
-         os.mkdir(userLogDir)
-      
       LmPublicLogger.__init__(self, level=level)
             
       name = "user.%s" % userId
       # Add user log file
-      fn = os.path.join(userLogDir, '%s%s' % (name, OutputFormat.LOG))
+      fn = os.path.join(USER_LOG_PATH, '%s%s' % (name, OutputFormat.LOG))
       self._addFileHandler(fn)

@@ -33,11 +33,13 @@ from time import sleep
 
 from LmClient.lmClientLib import LMClient
 from LmCommon.common.lmconstants import JobStage, JobStatus
-from LmServer.common.localconstants import APP_PATH, TROUBLESHOOTERS
+from LmServer.common.lmconstants import TEST_DATA_PATH
+from LmServer.common.localconstants import TROUBLESHOOTERS
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.scribe import Scribe
 
-SAMPLE_DATA_DIR = os.path.join(APP_PATH, "test", "sampleData")
+# TODO:  CJ:  change to TEST_DATA_PATH
+# SAMPLE_DATA_PATH = os.path.join(APP_PATH, "test", "sampleData")
 SLEEP_INTERVAL = 30
 MAX_INTERSECT_TIME = 3600
 MAX_RANDOMIZE_TIME = 3600
@@ -67,23 +69,23 @@ def testExperiment():
    print "Posting layers"
    # layer 1 - sdm layer > .5
    lyr1Name = "Gulo gulo %s" % gmt().mjd
-   lyr1Fn = os.path.join(SAMPLE_DATA_DIR, "Gulo gulo Projection 2512508.tif")
+   lyr1Fn = os.path.join(TEST_DATA_PATH, "Gulo gulo Projection 2512508.tif")
    
    # layer 2 - some other raster
    lyr2Name = "Rana areolata %s" % gmt().mjd
-   lyr2Fn = os.path.join(SAMPLE_DATA_DIR, "Rana areolata Projection 2515034.tif")
+   lyr2Fn = os.path.join(TEST_DATA_PATH, "Rana areolata Projection 2515034.tif")
    
    # layer 4 - vector layer 1-2
    lyr4Name = "Peromyscus maniculatus %s" % gmt().mjd
-   lyr4Fn = os.path.join(SAMPLE_DATA_DIR, "Peromyscus_maniculatus.shp")
+   lyr4Fn = os.path.join(TEST_DATA_PATH, "Peromyscus_maniculatus.shp")
    
    # layer 5 - vector layer
    lyr5Name = "Procyon lotor %s" % gmt().mjd
-   lyr5Fn = os.path.join(SAMPLE_DATA_DIR, "Procyon_lotor.shp")
+   lyr5Fn = os.path.join(TEST_DATA_PATH, "Procyon_lotor.shp")
    
    # layer 6 - vector layer
    lyr6Name = "Tamiasciurus hudsonicus %s" % gmt().mjd
-   lyr6Fn = os.path.join(SAMPLE_DATA_DIR, "Tamiasciurus_hudsonicus.shp")
+   lyr6Fn = os.path.join(TEST_DATA_PATH, "Tamiasciurus_hudsonicus.shp")
    
    # Post layers
    lyr1Resp = cl.rad.postRaster(lyr1Name, filename=lyr1Fn, epsgCode=epsgCode, dataFormat='AAIGrid')

@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 import inspect
+from LmCompute.common.lmconstants import BIN_PATH
 try:
    from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
                         GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
@@ -54,9 +55,38 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat,
-                                         OFTString)
-from LmServer.common.localconstants import APP_PATH
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat)
+from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
+                                            SCRATCH_PATH, TEMP_PATH, PUBLIC_FQDN)
+
+BIN_PATH = os.path.join(APP_PATH, 'bin')
+# Relative paths
+USER_LAYER_DIR = 'Layers'
+# On shared data directory (shared if lifemapper-compute is also installed)
+ENV_DATA_PATH = os.path.join(SHARED_DATA_PATH,'layers')
+ARCHIVE_PATH = os.path.join(SHARED_DATA_PATH,'archive')
+# On lmserver data directory
+SPECIES_DATA_PATH = os.path.join(DATA_PATH, 'species')
+TEST_DATA_PATH = os.path.join(DATA_PATH, 'test') 
+IMAGE_PATH = os.path.join(DATA_PATH, 'image')
+UPLOAD_PATH = os.path.join(DATA_PATH, 'tmpUpload')
+# On scratch disk
+LOG_PATH = os.path.join(SCRATCH_PATH, 'log')
+USER_LOG_PATH = os.path.join(LOG_PATH, 'users')
+ERROR_LOG_PATH = os.path.join(LOG_PATH, 'errors')
+
+CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH,'config', 'cherrypy.conf')
+MATT_DAEMON_PID_FILE = os.path.join(TEMP_PATH, 'mattDaemon.pid')
+
+# CC Tools constants
+CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
+WORKER_FACTORY_BIN = os.path.join(BIN_PATH, 'work_queue_factory')
+MAKEFLOW_BIN = os.path.join(BIN_PATH, 'makeflow')
+
+# Depth of path for archive SDM experiment data - this is the number of levels 
+# that the occurrencesetid associated with a model and its projections 
+# is split into i.e. occurrencesetid = 123456789 --> path 000/123/456/789/
+MODEL_DEPTH = 4
 
 LM_SCHEMA = 'lm3'
 LM_SCHEMA_BORG = 'lm_v3'
@@ -243,16 +273,14 @@ class OccurrenceFieldNames:
 # Web directories
 # TODO: See how many of these are still in use.  They should probably be 
 #          constants in LmWebServer if they are still needed
-IMAGE_PATH = 'image'
-SESSION_PATH = 'sessions'
-MAP_PATH = 'maps'
-USER_DATA_PATH = 'fixme'
+SESSION_DIR = 'sessions'
+MAP_DIR = 'maps'
 
 # Mapfile symbolizations
-WEB_MODULES_PATH = 'LmWebServer'
-WEB_PATH = os.path.join(WEB_MODULES_PATH, 'public_html')
+WEB_MODULES_DIR = 'LmWebServer'
+WEB_DIR = os.path.join(WEB_MODULES_DIR, 'public_html')
 PROJ_LIB = os.path.join(APP_PATH, 'share/proj/')
-SYMBOL_FILENAME = os.path.join(APP_PATH, WEB_PATH, MAP_PATH, 'symbols.txt')
+SYMBOL_FILENAME = os.path.join(APP_PATH, WEB_DIR, MAP_DIR, 'symbols.txt')
 DEFAULT_POINT_COLOR = 'ff7f00'
 DEFAULT_LINE_COLOR = 'ffffff'
 DEFAULT_PROJECTION_PALETTE = 'red'
@@ -411,23 +439,6 @@ class FileFix:
                 LMFileType.SPLOTCH_PAM: OutputFormat.NUMPY,
                 LMFileType.SPLOTCH_SITES: OutputFormat.PICKLE
    }
-# SDM prefixes
-# ENM filename info
-# MODEL_REQUEST_PREFIX = 'modReq'
-# PROJECTION_REQUEST_PREFIX = 'projReq'
-# PROJ_PREFIX = 'prj_'
-
-# RAD prefixes
-# USER_RAD_PATH_PREFIX = 'rad'
-
-# # TODO: Delete these when finished moving to EarlJr
-# PRESENCE_INDEX_PREFIX = 'indices'
-# LAYER_INDEX_PREFIX = 'lyridx_'
-# SHAPEGRID_PREFIX = 'shpgrid_'
-# ATTR_MATRIX_PREFIX = 'attrMtx_'
-# ATTR_TREE_PREFIX = 'attrTree_'
-# PAM_PREFIX = 'pam_'
-# GRIM_PREFIX = 'grim_'
    
 NAME_SEPARATOR = '_'
    
@@ -457,23 +468,6 @@ CT_SPECIES_LAYER_STYLES  = {'blue':  '           SYMBOL \'hatch\'\n' +
                                      '           WIDTH 0.91\n' +
                                      '           OUTLINECOLOR 0 0 0\n' +
                                      '           COLOR 190 16 32\n'}
-# Relative paths
-USER_LOG_PATH = 'users'
-ERROR_LOG_PATH = 'errors'
-POINT_PATH = 'points'
-# These and 'species' are all subdirectories of DATA_PATH, in config.ini
-MODEL_PATH = 'archive'
-ENV_DATA_PATH = 'climate'
-SPECIES_DATA_PATH = 'species'
-USER_LAYER_PATH = 'Layers'
-
-# Depth of path for archive SDM experiment data - this is the number of levels 
-# that the occurrencesetid associated with a model and its projections 
-# is split into i.e. occurrencesetid = 123456789 --> path 000/123/456/789/
-MODEL_DEPTH = 4
-
-
-
 
 # .............................................................................
 # List of error statuses that can be recovered

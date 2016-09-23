@@ -23,30 +23,23 @@
 """
 import os.path 
 
+from LmBackend.common.lmconstants import PID_PATH
 from LmServer.common.lmconstants import SPECIES_DATA_PATH
-from LmServer.common.localconstants import DATA_PATH, LOG_PATH
 from LmDbServer.common.localconstants import (TAXONOMY_FILENAME, 
      OCCURRENCE_FILENAME, PROVIDER_FILENAME, TSN_FILENAME , IDIG_FILENAME, 
      USER_OCCURRENCE_CSV_FILENAME, USER_OCCURRENCE_META_FILENAME)                 
 
 # ............................................................................
 
-BOOM_PID_FILE = os.path.join(LOG_PATH, 'lmboom.pid')
-GBIF_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                             OCCURRENCE_FILENAME)
-TAXONOMY_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                  TAXONOMY_FILENAME)
-PROVIDER_DUMP_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                  PROVIDER_FILENAME)
-BISON_TSN_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                              TSN_FILENAME)
-IDIGBIO_FILE = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                     IDIG_FILENAME)
+BOOM_PID_FILE = os.path.join(PID_PATH, 'lmboom.pid')
+GBIF_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, OCCURRENCE_FILENAME)
+TAXONOMY_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, TAXONOMY_FILENAME)
+PROVIDER_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, PROVIDER_FILENAME)
+BISON_TSN_FILE = os.path.join(SPECIES_DATA_PATH, TSN_FILENAME)
+IDIGBIO_FILE = os.path.join(SPECIES_DATA_PATH, IDIG_FILENAME)
 
-USER_OCCURRENCE_CSV = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                   USER_OCCURRENCE_CSV_FILENAME)
-USER_OCCURRENCE_META = os.path.join(DATA_PATH, SPECIES_DATA_PATH, 
-                                    USER_OCCURRENCE_META_FILENAME)
+USER_OCCURRENCE_CSV = os.path.join(SPECIES_DATA_PATH, USER_OCCURRENCE_CSV_FILENAME)
+USER_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH, USER_OCCURRENCE_META_FILENAME)
 
 # Key must match DATASOURCE in config/config.ini
 TAXONOMIC_SOURCE = {

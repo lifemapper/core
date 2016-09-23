@@ -39,16 +39,13 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmCompute.common.layerManager import (convertAndModifyAsciiToTiff, 
                                            LayerManager)
-from LmCompute.common.localconstants import BIN_PATH, JOB_DATA_PATH
-from LmCompute.common.lmconstants import LayerFormat
+from LmCompute.common.localconstants import SHARED_DATA_PATH
 from LmCompute.common.lmObj import LmException
 
+from LmCompute.common.lmconstants import (LayerFormat, ME_CMD, MDL_TOOL, 
+                                          PRJ_TOOL, ME_VERSION, JAVA_CMD)
 from LmCompute.jobs.runners.applicationRunner import ApplicationRunner
-
 from LmCompute.plugins.sdm.maxent.constants import PARAMETERS
-from LmCompute.plugins.sdm.maxent.localconstants import JAVA_CMD, MDL_TOOL, \
-                                                        ME_CMD, ME_VERSION, \
-                                                        PRJ_TOOL
 
 # .............................................................................
 class MEModelRunner(ApplicationRunner):
@@ -64,7 +61,7 @@ class MEModelRunner(ApplicationRunner):
       
       @note: MaxEnt version 3.3.3e
       """
-      baseCmd = "{1} {2} {3}".format(BIN_PATH, JAVA_CMD, ME_CMD, MDL_TOOL)
+      baseCmd = "{0} {1} {2}".format(JAVA_CMD, ME_CMD, MDL_TOOL)
       samples = "-s {0}".format(self.samplesFile)
       envParams = "-e {0}".format(self.jobLayerDir)
       outputParams = "-o {0}".format(self.workDir)
@@ -156,7 +153,7 @@ class MEModelRunner(ApplicationRunner):
       #self.metrics['numPoints'] = len(self.job.points.point)
       #self.matrics['numLayers'] = len(self.job.layers.layer)
       
-      self.dataDir = JOB_DATA_PATH
+      self.dataDir = SHARED_DATA_PATH
       self.jobLayerDir = os.path.join(self.workDir, 'layers')
       self.samplesFile = os.path.join(self.workDir, 'samples.csv')
 
@@ -264,7 +261,7 @@ directory containing grids for all the predictor variables described in the
 optional args can contain any flags understood by Maxent -- for example, a 
 "grd" flag would make the output grid of density.Project be in .grd format.
       """
-      baseCmd = "{1} {2} {3}".format(BIN_PATH, JAVA_CMD, ME_CMD, PRJ_TOOL)
+      baseCmd = "{0} {1} {2}".format(JAVA_CMD, ME_CMD, PRJ_TOOL)
       outFile = os.path.join(self.workDir, 'output.asc')
 
       algoOptions = getAlgorithmOptions(self.job.algorithm)
@@ -324,7 +321,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       self.metrics['algorithm'] = 'MAXENT'
       self.metrics['processType'] = self.PROCESS_TYPE
 
-      self.dataDir = JOB_DATA_PATH
+      self.dataDir = SHARED_DATA_PATH
       self.jobLayerDir = os.path.join(self.workDir, 'layers')
       self.lambdasFile = os.path.join(self.workDir, 'input.lambdas')
       self.outputFile = os.path.join(self.workDir, 'output.asc')

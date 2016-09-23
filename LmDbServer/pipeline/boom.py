@@ -40,9 +40,9 @@ from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
-                                            LOG_PATH)
+from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
+                                         LOG_PATH)
+from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
@@ -434,6 +434,7 @@ class _LMBoomer(LMObject):
       """
       currtime = dt.gmt().mjd
       occ = occs = None
+      ignore = False
       # Find existing
       try:
          if isinstance(sciname, ScientificName):
@@ -488,20 +489,21 @@ class _LMBoomer(LMObject):
             self.log.info('Updating occset {} ({})'
                           .format(tmpOcc.getId(), taxonName))
          else:
+            ignore = True
             self.log.debug('Ignoring occset {} ({}) is up to date'
                            .format(tmpOcc.getId(), taxonName))
       else:
          raise LMError(currargs='Too many ({}) occsets for {}'
                        .format(len(occs), taxonName))
 
-      # Set raw data
-      if occ:
+      # Set raw data and update status
+      if occ and not ignore:
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
                                      data=data)
-         if rdloc:
-            occ.setRawDLocation(rdloc, currtime)
-         else:
+         if not rdloc:
             raise LMError(currargs='Unable to set raw data location')
+         occ.setRawDLocation(rdloc, currtime)
+         self._scribe.updateOccset(occ)
       
       return occ
    
@@ -1092,7 +1094,7 @@ class iDigBioBoom(_LMBoomer):
    def chainOne(self):
       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
       if taxonKey:
-         jobs = self._processInputGBIFTaxonId(taxonName, taxonKey, taxonCount)
+         jobs = self._processInputGBIFTaxonId(taxonKey, taxonCount)
          self._createMakeflow(jobs)
          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
                        .format(taxonKey, taxonName, taxonCount, self.nextStart))
@@ -1189,7 +1191,7 @@ class iDigBioBoom(_LMBoomer):
       return str(taxonSourceKeyVal)
          
 # ...............................................
-   def _processInputGBIFTaxonId(self, taxonName, taxonKey, taxonCount):
+   def _processInputGBIFTaxonId(self, taxonKey, taxonCount):
       jobs = []
       if taxonKey is not None:
          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)

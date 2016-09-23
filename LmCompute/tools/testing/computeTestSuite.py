@@ -32,7 +32,7 @@ from LmCompute.tools.testing.computeTest import LMComputeTestBuilder
 
 from LmBackend.common.urllib2mock import (addUrlMappingFromFile, 
                                           installMockOpener)
-from LmCompute.common.localconstants import SAMPLE_DATA_PATH
+from LmCompute.common.lmconstants import SAMPLE_DATA_PATH
 
 MOCK_URLS_FN = os.path.join(SAMPLE_DATA_PATH, "jobData.csv")
 

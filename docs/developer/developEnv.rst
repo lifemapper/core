@@ -11,8 +11,8 @@ Introduction
 ************
 To test and debug and test code not yet tagged, use a cluster with both 
 LmCompute and LmServer installed (see **Install Lifemapper System** 
-instructions at `Install Lifemapper System`_), then connect code checked out 
-from the git repository.
+instructions at `Install Lifemapper System`_).  **Before rebooting**, connect 
+code checked out from the git repository.
 
 Connect development code on Frontend
 ************************************
@@ -23,25 +23,32 @@ Connect development code on Frontend
    # cd /state/partition1/workspace
    # git clone https://github.com/lifemapper/core
 
-#. Copy database connection file to git tree::
+#. Copy or recreate database connection file to git tree::
       
    # cd /opt/lifemapper
    # cp -p LmServer/db/connect.py /state/partition1/workspace/core/LmServer/db/
 
-   #. If you forget to copy connection file, create it manually with::  
-
+  OR:: 
+  
       # /opt/lifemapper/rocks/bin/confDbconnect
    
-#. Recreate files with replaced variables in your git tree. 
+#. Copy or Recreate files with replaced variables in your git tree. 
    Config files will be created in the non-linked config directory
    correctly without intervention.  The maxent and lmMaxent executables will  
    be installed into the rocks/bin directory without intervention.::
       
-   # cd /state/partition1/workspace/core
+   # cd /opt/lifemapper
    # find . -name "*.in"  | grep -v config | grep -v axent
      ./LmCompute/tools/lmJobScript.in
      ./LmDbServer/dbsetup/addDBFunctions.sql.in
      ./LmDbServer/dbsetup/defineDBTables.sql.in
+   # cp -p LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/lmJobScript
+   # cp -p LmDbServer/dbsetup/addDBFunctions.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
+   # cp -p LmDbServer/dbsetup/defineDBTables.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
+
+  OR:: 
+
+   # cd /state/partition1/workspace/core
    # sed -e 's%@LMHOME@%/opt/lifemapper%g' LmDbServer/dbsetup/addDBFunctions.sql.in > LmDbServer/dbsetup/addDBFunctions.sql
       
 #. If there are new changes to the config files, not included in the 
@@ -60,6 +67,16 @@ Connect development code on Frontend
    # ln -s /state/partition1/workspace/core/LmServer
    # ln -s /state/partition1/workspace/core/LmWebServer
    
+Complete Frontend installation
+******************************
+
+#. **Reboot front end** ::  
+
+   # reboot
+   
+#. Install nodes from Frontend (`Install Lifemapper System`_)
+
+
 Connect development code on Nodes
 *********************************
 

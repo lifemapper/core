@@ -738,8 +738,7 @@ KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 KML_NS_PREFIX = None
 
 # Service path constants (some of these are still in LmServer.common.lmconstants
-STATIC_PATH = 'static'
-LUCENE_PATH = 'lucene'
+STATIC_DIR = 'static'
 
 
 # Projections scaling constants.  Used for mapping of archive projections

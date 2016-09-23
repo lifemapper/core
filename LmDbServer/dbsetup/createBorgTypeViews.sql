@@ -6,48 +6,47 @@ DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    -- Layer.* 
    layerId,
-   taxonId,
-   verify,
-   squid,
    userid,
+   squid,
+   verify,
    name,
-   title,
-   author,
-   description,
    dlocation,
    metadataUrl,
-   metalocation,
+   metadata,
+   dataFormat,
    gdalType,
    ogrType,
-   isCategorical,
-   dataFormat,
-   epsgcode,
-   mapunits,
-   resolution,
-   startDate,
-   endDate,
-   modTime,
-   bbox,
+   valUnits,
    nodataVal,
    minVal,
    maxVal,
-   valUnits,
-   layerTypeId,
+   epsgcode,
+   mapunits,
+   resolution,
+   modTime,
+   bbox,
+   keywords,
+   -- EnvironmentalLayer
+   environmentalLayerId,
+   startDate,
+   endDate,
    -- LayerType
+   layerTypeId,
    typecode,
    typetitle,
    typedescription,
-   typemodtime) AS
-      SELECT l.layerId, l.taxonid, l.verify, l.squid, l.userid, l.name, l.title,
-             l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
-             l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
-             l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
-             l.nodataVal, l.minVal, l.maxVal, l.valUnits, 
-             l.layerTypeId, 
-             lt.code, lt.title, lt.description, lt.modtime
-        FROM lm_v3.layer l, lm_v3.layertype lt
-        WHERE l.layertypeid = lt.layertypeid
-        ORDER BY l.layertypeid ASC;
+   typekeywords
+) AS
+      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
+             l.metadataUrl, l.metadata, l.dataFormat,
+             l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
+             el.environmentalLayerId, el.startDate, el.endDate,
+             lt.layerTypeId, lt.code, lt.title, lt.description, lt.keywords
+        FROM lm_v3.layer l, lm_v3.EnvironmentalLayer el, lm_v3.layertype lt
+        WHERE l.layerid = el.layerid
+          AND el.layertypeid = lt.layertypeid
+        ORDER BY l.layerid ASC;
 
 -- ----------------------------------------------------------------------------
 -- lm_shapegrid
@@ -55,30 +54,26 @@ DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    -- Layer.* 
    layerId,
-   verify,
    userid,
+   squid,
+   verify,
    name,
-   title,
-   author,
-   description,
    dlocation,
    metadataUrl,
-   metalocation,
+   metadata,
+   dataFormat,
    gdalType,
    ogrType,
-   isCategorical,
-   dataFormat,
-   epsgcode,
-   mapunits,
-   resolution,
-   startDate,
-   endDate,
-   modTime,
-   bbox,
+   valUnits,
    nodataVal,
    minVal,
    maxVal,
-   valUnits,
+   epsgcode,
+   mapunits,
+   resolution,
+   modTime,
+   bbox,
+   keywords,
    -- ShapeGrid.*
    shapeGridId,
    cellsides,
@@ -90,11 +85,10 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    status,
    statusmodtime
 ) AS
-      SELECT l.layerId, l.verify, l.userid, l.name, l.title,
-             l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
-             l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
-             l.mapunits, l.resolution, l.startDate, l.endDate, 
-             l.modtime, l.bbox, l.nodataVal, l.minVal, l.maxVal, l.valUnits,
+      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
+             l.metadataUrl, l.metadata, l.dataFormat,
+             l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
              sg.shapeGridId, sg.cellsides, sg.cellsize, sg.vsize, sg.idAttribute,
              sg.xAttribute, sg.yAttribute, sg.status, sg.statusmodtime
         FROM lm_v3.layer l, lm_v3.shapegrid sg
@@ -104,33 +98,36 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
 -- lm_anclayer
 DROP VIEW IF EXISTS lm_v3.lm_anclayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
+   -- BucketAncLayer.*
+   bucketAncLayerId,
+   bucketId, 
+   matrixIndex,
+   ident,
+   status,
+   statusmodtime,
+   -- Bucket
+   userId,
    -- Layer.* 
    layerId,
-   verify,
    squid,
-   userid,
+   verify,
    name,
-   title,
-   author,
-   description,
    dlocation,
    metadataUrl,
-   metalocation,
+   metadata,
+   dataFormat,
    gdalType,
    ogrType,
-   isCategorical,
-   dataFormat,
-   epsgcode,
-   mapunits,
-   resolution,
-   startDate,
-   endDate,
-   modTime,
-   bbox,
+   valUnits,
    nodataVal,
    minVal,
    maxVal,
-   valUnits,
+   epsgcode,
+   mapunits,
+   resolution,
+   modTime,
+   bbox,
+   keywords,
    -- AncillaryValue.*
    ancillaryValueId,
    nameValue,
@@ -138,54 +135,57 @@ CREATE OR REPLACE VIEW lm_v3.lm_anclayer (
    largestClass,
    minPercent,
    nameFilter,
-   valueFilter,
-   -- BucketAncLayer.*
-   bucketAncLayerId,
-   bucketId
+   valueFilter
 ) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
-             l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
-             l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
-             l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
-             l.nodataVal, l.minVal, l.maxVal, l.valUnits,
+   SELECT bal.bucketAncLayerId, bal.bucketId, bal.matrixIndex, bal.ident,
+             bal.status, bal.statusmodtime,
+             b.userid, 
+             l.layerId, l.squid, l.verify, l.name, l.dlocation,
+             l.metadataUrl, l.metadata, l.dataFormat,
+             l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
              a.ancillaryValueId, a.nameValue, a.weightedMean, a.largestClass, 
-             a.minPercent, a.nameFilter, a.valueFilter,
-             bal.bucketAncLayerId, bal.bucketId
-      FROM lm_v3.Layer l, lm_v3.AncillaryValue a, lm_v3.BucketAncLayer bal
-      WHERE l.layerId = bal.layerId 
+             a.minPercent, a.nameFilter, a.valueFilter
+      FROM lm_v3.BucketAncLayer bal, lm_v3.Bucket b
+      LEFT JOIN lm_v3.Layer l, lm_v3.AncillaryValue a 
+      ON bal.bucketid = b.bucketid
+        AND bal.layerId = l.layerId
         AND bal.ancillaryValueId = a.ancillaryValueId;
         
 -- ----------------------------------------------------------------------------
 -- lm_palayer
 DROP VIEW IF EXISTS lm_v3.lm_palayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_palayer (
+   -- BucketPALayer
+   bucketPALayerId,
+   bucketId, 
+   matrixIndex,
+   squid,
+   status,
+   statusmodtime,
+   -- Bucket
+   userId,
    -- Layer.* 
    layerId,
-   verify,
    squid,
-   userid,
+   verify,
    name,
-   title,
-   author,
-   description,
    dlocation,
    metadataUrl,
-   metalocation,
+   metadata,
+   dataFormat,
    gdalType,
    ogrType,
-   isCategorical,
-   dataFormat,
-   epsgcode,
-   mapunits,
-   resolution,
-   startDate,
-   endDate,
-   modTime,
-   bbox,
+   valUnits,
    nodataVal,
    minVal,
    maxVal,
-   valUnits,
+   epsgcode,
+   mapunits,
+   resolution,
+   modTime,
+   bbox,
+   keywords,
    -- PresenceAbsence.*
    presenceAbsenceId,
    nameFilter,
@@ -193,26 +193,21 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
    namePresence,
    minPresence,
    maxPresence,
-   percentPresence,
-   nameAbsence,
-   minAbsence,
-   maxAbsence,
-   percentAbsence,
-   -- BucketPALayer.*
-   bucketPALayerId,
-   bucketId
+   percentPresence
 ) AS
-      SELECT l.layerId, l.verify, l.squid, l.userid, l.name, l.title,
-             l.author, l.description, l.dlocation, l.metadataUrl, l.metalocation,
-             l.gdalType, l.ogrType, l.isCategorical, l.dataFormat, l.epsgcode,
-             l.mapunits, l.resolution, l.startDate, l.endDate, l.modTime, l.bbox, 
-             l.nodataVal, l.minVal, l.maxVal, l.valUnits,
+      SELECT bpal.bucketPALayerId, bpal.bucketId, bpal.matrixIndex, bpal.squid,
+             bpal.status, bpal.statusModTime,
+             b.userid, 
+             l.layerId, l.squid, l.verify, l.name, l.dlocation,
+             l.metadataUrl, l.metadata, l.dataFormat,
+             l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
              pa.presenceAbsenceId, pa.nameFilter, pa.valueFilter, pa.namePresence, 
-             pa.minPresence, pa.maxPresence, pa.percentPresence, pa.nameAbsence, 
-             pa.minAbsence, pa.maxAbsence, pa.percentAbsence,
-             bpal.bucketPALayerId, bpal.bucketId
-      FROM lm_v3.Layer l, lm_v3.PresenceAbsence pa, lm_v3.BucketPALayer bpal
-      WHERE l.layerId = bpal.layerId 
+             pa.minPresence, pa.maxPresence, pa.percentPresence
+      FROM lm_v3.BucketPALayer bpal, lm_v3.Bucket b
+      LEFT JOIN lm_v3.Layer l, lm_v3.PresenceAbsence pa
+      ON bpal.bucketid = b.bucketid
+        AND bpal.layerId = l.layerId
         AND bpal.presenceAbsenceId = pa.presenceAbsenceId;
         
 
@@ -220,38 +215,36 @@ CREATE OR REPLACE VIEW lm_v3.lm_palayer (
 DROP VIEW IF EXISTS lm_v3.lm_sdmmodel CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmmodel (
   -- model.*
-   sdmmodelId,
-   userId,
-   name,
-   description,
+   sdmmodelid,
+   mdluserId,
    occurrenceSetId,
-   scenarioCode,
-   maskId,
+   mdlscenarioId,
+   mdlscenarioCode,
+   mdlmaskId,
    mdlstatus,
    mdlstatusModTime,
-   priority,
    mdldlocation,
    email, 
    algorithmParams,
    algorithmCode,
    -- OccurrenceSet
-   verify,
    squid,
+   verify,
    displayName,
    primaryEnv,
    occmetadataUrl,
    occdlocation,
    rawDlocation,
    queryCount,
-   bbox,
+   occbbox,
    epsgcode,
    occstatus,
    occstatusmodtime
 ) AS
-      SELECT m.sdmmodelId, m.userId, m.name, m.description, m.occurrenceSetId, 
-      m.scenarioCode, m.maskId, m.status, m.statusModTime, m.priority, 
+      SELECT m.sdmmodelId, m.userId, m.occurrenceSetId, 
+      m.scenarioId, m.scenarioCode, m.maskId, m.status, m.statusModTime, 
       m.dlocation, m.email, m.algorithmParams, m.algorithmCode, 
-      o.verify, o.squid, o.displayName, o.primaryEnv, o.metadataUrl, 
+      o.squid, o.verify, o.displayName, o.primaryEnv, o.metadataUrl, 
       o.dlocation, o.rawDlocation, o.queryCount, o.bbox, o.epsgcode, 
       o.status, o.statusmodtime
       FROM lm_v3.sdmmodel m, lm_v3.occurrenceSet o
@@ -264,39 +257,50 @@ DROP VIEW IF EXISTS lm_v3.lm_sdmprojection CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    -- projection.*
    sdmprojectionId,
-   prjverify,
-   prjsquid,
-   prjmetadataUrl,
-   prjmetalocation,
+   layerid,
    sdmmodelid,
-   scenarioCode,
+   prjscenarioId,
+   prjscenarioCode,
    prjmaskId,
    prjstatus,
-   prjstatusModTime,
-   units,
-   resolution,
-   epsgcode,
-   prjbbox,
-   prjdlocation,
-   dataType,
-   -- SDMModel
-   userId,
+   prjstatusModTime
+
+   -- Layer.* 
+   layerId,
+   userid,
+   squid,
+   verify,
    name,
-   description,
+   prjdlocation,
+   prjmetadataUrl,
+   prjmetadata,
+   prjdataFormat,
+   prjgdalType,
+   valUnits,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   prjbbox,
+   prjkeywords,
+   
+   -- SDMModel
    occurrenceSetId,
+   mdlscenarioId,
    mdlscenarioCode,
    mdlmaskId,
    mdlstatus,
    mdlstatusModTime,
-   priority,
    mdldlocation,
    email, 
    algorithmParams,
    algorithmCode,
+
    -- occurrenceSet
    occverify,
    displayName,
-   primaryEnv,
    occmetadataUrl,
    occdlocation,
    queryCount,
@@ -304,30 +308,32 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    occstatus,
    occstatusmodtime
    ) AS
-      SELECT p.sdmprojectionId, p.verify, p.squid, p.metadataUrl, p.metalocation, 
-             p.sdmmodelid, p.scenarioCode, p.maskId,
-             p.status, p.statusModTime, p.units, p.resolution, p.epsgcode, 
-             p.bbox, p.dlocation, p.dataType, 
-             m.userId, m.name, m.description, m.occurrenceSetId, m.scenarioCode, 
-             m.maskId, m.status, m.statusModTime, m.priority, 
-             m.dlocation, m.email, m.algorithmParams, m.algorithmCode, 
-             o.verify, o.squid, o.displayName, o.primaryEnv,
-             o.metadataUrl, o.dlocation, o.queryCount, o.bbox, o.status, o.statusmodtime
-      FROM lm_v3.sdmprojection p, lm_v3.sdmmodel m, lm_v3.occurrenceSet o
-      WHERE p.sdmmodelid = m.sdmmodelid 
+      SELECT p.sdmprojectionId, p.layerid, p.sdmmodelid, p.prjscenarioId, p.prjscenarioCode,
+             p.prjmaskId, p.prjstatus, p.prjstatusModTime,
+             l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation, 
+             l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.valUnits, 
+             l.nodataVal, l.minVal, l.maxVal, l.epsgcode, l.mapunits, 
+             l.resolution, l.bbox, l.keywords,
+             m.occurrenceSetId, m.scenarioCode,  m.scenarioId, m.scenarioCode,
+             m.maskId, m.status, m.statusModTime, m.dlocation, m.email,  
+             m.algorithmParams, m.algorithmCode
+             o.verify, o.displayName, o.metadataUrl, o.dlocation, o.queryCount, 
+             o.bbox, o.status, o.statusmodtime
+      FROM lm_v3.sdmprojection p, lm_v3.layer l, lm_v3.sdmmodel m, lm_v3.occurrenceSet o
+      WHERE p.layerid = l.layerid
+        AND p.sdmmodelid = m.sdmmodelid 
         AND m.occurrencesetid = o.occurrencesetid;
 
        
 -- ----------------------------------------------------------------------------
 DROP VIEW IF EXISTS lm_v3.lm_Occurrenceset CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
-   -- occurrenceset.* (without geom, geompts)
+   -- occurrenceset.*
    occurrenceSetId,
-   verify,
    squid,
+   verify,
    userId,
    displayName,
-   primaryEnv,
    metadataUrl,
    dlocation,
    rawDlocation,
@@ -335,12 +341,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    bbox,
    epsgcode,
    status,
-   statusmodtime,
-   -- Taxon.*
+   statusmodtime
+   -- Taxon
+   taxonId,
    taxonomySourceId,
-   taxuserid,
    taxonomyKey,
-   taxsquid,
    kingdom,
    phylum,
    tx_class,
@@ -354,21 +359,21 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    specieskey,
    keyHierarchy,
    lastcount,
-   taxmodtime, 
+   taxmodTime,
    -- TaxonomySource.*
    url,
    datasetIdentifier,
-   taxsrcmodtime
    ) AS
    SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.displayName, 
           o.primaryEnv, o.metadataUrl, o.dlocation, o.rawDlocation,
           o.queryCount, o.bbox, o.epsgcode, o.status, o.statusmodtime, 
-          t.taxonomySourceId, t.userid, t.taxonomyKey, t.squid, t.kingdom, t.phylum, t.tx_class,
-          t.tx_order, t.family, t.genus, t.rank, t.canonical, t.sciname, 
-          t.genuskey, t.specieskey, t.keyHierarchy, t.lastcount, t.modtime,
-          ts.url, ts.datasetIdentifier, ts.modtime
+          t.taxonId, t.taxonomySourceId, t.taxonomyKey, t.kingdom, t.phylum, 
+          t.tx_class, t.tx_order, t.family, t.genus, t.rank, 
+          t.canonical, t.sciname,  t.genuskey, t.specieskey, t.keyHierarchy, 
+          t.lastcount, t.modtime,
+          ts.url, ts.datasetIdentifier
    FROM lm_v3.occurrenceset o, lm_v3.taxon t, lm_v3.taxonomysource ts
-   WHERE o.taxonid = t.taxonid 
+   WHERE o.squid = t.squid 
      AND t.taxonomysourceid = ts.taxonomysourceid;
 
         
@@ -476,91 +481,17 @@ DROP TYPE IF EXISTS lm_v3.lm_layeridx CASCADE;
 CREATE TYPE lm_v3.lm_layeridx AS (
    -- Layer
    layerid int,
-   taxonId int,
-   verify varchar,
+   userid varchar,
    squid varchar,
-   lyruserid varchar,
-   layername varchar,
+   verify varchar,
+   name varchar,
+   dlocation varchar,
    metadataurl varchar,
    -- BucketPALayer OR BucketAncLayer
-   bucketlayerid int,
-   bucketid int);
-
--- ----------------------------------------------------------------------------
--- Type returning scenario with comma delimited list of keywords as string field
-DROP TYPE IF EXISTS lm_v3.lm_scenarioAndKeywords CASCADE;
-CREATE TYPE lm_v3.lm_scenarioAndKeywords AS
-(
-    scenarioId int,
-    userid varchar,
-    scenarioCode varchar,
-    metadataUrl text,
-    title varchar,
-    author varchar,
-    description text,
-    startDate double precision,
-    endDate double precision,
-    units varchar,
-    resolution double precision,
-    epsgcode int,
-    bbox varchar,
-    modTime double precision,
-    keywords varchar
-   );
+   bktpanclayerid int,
+   bucketid int,
+   matrixIndex int);
    
--- ----------------------------------------------------------------------------
--- lm_envlayer
-DROP TYPE IF EXISTS lm_v3.lm_envlayerAndKeywords CASCADE;
-CREATE TYPE lm_v3.lm_envlayerAndKeywords AS
-(
-             -- lm_envlayer.* + layertype keywords 
-             layerId int,
-             verify varchar,
-             userid varchar,
-             name varchar,
-             title varchar,
-             author varchar,
-             description text,
-             dlocation varchar,
-             metadataUrl varchar,
-             metalocation varchar,
-             gdalType int,
-             ogrType int,
-             isCategorical boolean,
-             dataFormat varchar,
-             epsgcode int,
-             mapunits varchar,
-             resolution double precision,
-             startDate double precision,
-             endDate double precision,
-             modTime double precision,
-             bbox varchar,
-             nodataVal double precision,
-             minVal double precision,
-             maxVal double precision,
-             valUnits varchar,
-             layerTypeId int,
-             typecode varchar,
-             typetitle varchar,
-             typedescription text,
-             typemodtime double precision,
-             keywords varchar
-);
-
--- ----------------------------------------------------------------------------
-DROP TYPE IF EXISTS lm_v3.lm_layerTypeAndKeywords CASCADE;
-CREATE TYPE lm_v3.lm_layerTypeAndKeywords AS
-(
-             layerTypeId int,
-             userid varchar,
-             typecode varchar,
-             typetitle varchar,
-             typedescription text,
-             typemodtime double precision,
-             keywords varchar
-);
-
-
 -- ----------------------------------------------------------------------------
 DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
 CREATE TYPE lm_v3.lm_occStats AS

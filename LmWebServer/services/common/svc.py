@@ -40,20 +40,20 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
-from LmServer.common.lmconstants import (DbUser, SESSION_PATH, 
-                                         WEB_PATH)
-from LmServer.common.localconstants import (APP_PATH, LOG_PATH, ARCHIVE_USER, 
+from LmServer.common.lmconstants import (DbUser, LOG_PATH, SESSION_DIR, 
+                                         WEB_DIR)
+from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
                                             WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
                                  UserLogger)
 from LmServer.db.scribe import Scribe
-from LmServer.base.utilities import escapeString, getFileContents, \
-                                            getUrlParameter
+from LmServer.base.utilities import (escapeString, getFileContents,
+                                     getUrlParameter)
 
 from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, 
                                             HTTP_ERRORS,  
-                                            STATIC_PATH)
+                                            STATIC_DIR)
 from LmWebServer.common.localconstants import CP_CONFIG_FILE, LM_LIB_PATH
 from LmWebServer.formatters.formatterFactory import FormatterFactory
 from LmWebServer.services.common.authentication import checkUserLogin
@@ -66,8 +66,8 @@ from LmWebServer.solr.lmSolr import searchArchive, searchHintIndex
 # Constants for CherryPy application
 SESSION_KEY = '_cp_username'
 REFERER_KEY = 'lm_referer'
-SESSION_DIR = os.path.join(LM_LIB_PATH, SESSION_PATH)
-STATIC_DIR = os.path.join(APP_PATH, WEB_PATH, STATIC_PATH)
+SESSION_PATH = os.path.join(LM_LIB_PATH, SESSION_DIR)
+STATIC_PATH = os.path.join(APP_PATH, WEB_DIR, STATIC_DIR)
 
 # .............................................................................
 class svc(object):
@@ -302,7 +302,7 @@ class svc(object):
                virpath.append("formLogin.shtml")
       
             try:
-               retFile = getFileContents(os.path.join(STATIC_DIR, *virpath))
+               retFile = getFileContents(os.path.join(STATIC_PATH, *virpath))
             except Exception, e:
                err = LMError(e, doTrace=True)
                return errorResponse(log, HTTPStatus.NOT_FOUND, url='/'.join((virpath)), err=err)
@@ -325,7 +325,7 @@ class svc(object):
          log = LmPublicLogger()
          log.debug("Failed login for user: %s" % (str(username)))
          try:
-            retFile = getFileContents(os.path.join(STATIC_DIR, "failedLogin.shtml"))
+            retFile = getFileContents(os.path.join(STATIC_PATH, "failedLogin.shtml"))
       
             return errorResponse(log, HTTPStatus.UNAUTHORIZED)
          except Exception, e:
@@ -491,7 +491,7 @@ class svc(object):
             try:
                virpath.append("formSignUp.shtml")
                try:
-                  retFile = getFileContents(os.path.join(STATIC_DIR, *virpath))
+                  retFile = getFileContents(os.path.join(STATIC_PATH, *virpath))
                except Exception, e:
                   err = LMError(e, doTrace=True)
                   return errorResponse(log, HTTPStatus.NOT_FOUND, url='/'.join(virpath), err=err)

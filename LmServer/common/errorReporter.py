@@ -35,7 +35,7 @@ except:
 import traceback
 
 from LmServer.common.lmconstants import ERROR_LOG_PATH
-from LmServer.common.localconstants import TROUBLESHOOTERS, LOG_PATH
+from LmServer.common.localconstants import TROUBLESHOOTERS
 from LmServer.notifications.email import EmailNotifier
 
 # .............................................................................
@@ -46,11 +46,6 @@ def reportError(err, cpRequest, cpResponse):
                 the file system and send out an email to the appropriate 
                 parties indicating that a new error has occurred.
    """
-   # Check for existance of error directory?
-   eDir = os.path.join(LOG_PATH, ERROR_LOG_PATH)
-   if not os.path.exists(eDir):
-      os.mkdir(eDir)
-   
    # Build something that is hashable
    try:
       tb = err.getTraceback()
@@ -59,7 +54,7 @@ def reportError(err, cpRequest, cpResponse):
    
    # Generate file name
    fn = getErrorHash(err, tb)
-   fullFn = os.path.join(eDir, "%s.pkl" % fn)
+   fullFn = os.path.join(ERROR_LOG_PATH, "%s.pkl" % fn)
    
    # Look to see if file exists
    if not os.path.exists(fullFn):

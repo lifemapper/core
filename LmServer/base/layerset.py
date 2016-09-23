@@ -39,7 +39,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, LMServiceType,
          DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
          CT_SPECIES_KEYWORD, PROJ_LIB)
-from LmServer.common.localconstants import ARCHIVE_USER, DATA_PATH, POINT_COUNT_MAX
+from LmServer.common.localconstants import ARCHIVE_USER, POINT_COUNT_MAX
 from LmServer.common.lmconstants import CT_USER
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.sdmprojection import SDMProjection
@@ -608,7 +608,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
      
 # ...............................................
    def _createBlueMarbleLayer(self):
-      fname = os.path.join(DATA_PATH, IMAGE_PATH, BLUE_MARBLE_IMAGE)
+      fname = os.path.join(IMAGE_PATH, BLUE_MARBLE_IMAGE)
       lyr = ''
       lyr = '\n'.join([lyr, '   LAYER'])
       lyr = '\n'.join([lyr, '      NAME  bmng'])

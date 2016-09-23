@@ -27,3 +27,8 @@
           02110-1301, USA.
 """
 FILE_TYPES = ["FloatingHFA", "FloatingTiff", "GreyTiff"]
+DEFAULT_FILE_TYPE = 'GreyTiff100'
+DEFAULT_LOG_LEVEL = 'debug'
+OM_MODEL_CMD = 'om_model'
+OM_PROJECT_CMD = 'om_project'
+OM_VERSION = '1.5.0'

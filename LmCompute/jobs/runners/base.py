@@ -302,4 +302,3 @@ class JobRunner(object):
          with open(self.statusFn, 'w') as statusOut:
             statusOut.write(self.status)
             
-      

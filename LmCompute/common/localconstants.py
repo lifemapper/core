@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -36,20 +36,19 @@ _CONTACT_SECTION = 'LmCompute - contact'
 _OPTIONS_SECTION = 'LmCompute - options'
 _METRICS_SECTION = 'LmCompute - metrics'
    
-
 # Environment variables
-PLUGINS_DIR = _cfg.get(_ENV_SECTION, 'PLUGINS_DIR')
-BIN_PATH = _cfg.get(_ENV_SECTION, 'BIN_PATH')
-JOB_DATA_PATH = _cfg.get(_ENV_SECTION, 'JOB_DATA_PATH')
+LM_PATH = _cfg.get(_ENV_SECTION, 'LM_PATH')
+LM_DISK = _cfg.get(_ENV_SECTION, 'LM_DISK')
+SCRATCH_PATH = _cfg.get(_ENV_SECTION, 'SCRATCH_PATH')
+SHARED_DATA_PATH = _cfg.get(_ENV_SECTION, 'SHARED_DATA_PATH')
 
-TEMPORARY_FILE_PATH = _cfg.get(_ENV_SECTION, 'TEMPORARY_FILE_PATH')
-SAMPLE_LAYERS_PATH = _cfg.get(_ENV_SECTION, 'SAMPLE_LAYERS_PATH')
-SAMPLE_JOBS_PATH = _cfg.get(_ENV_SECTION, 'SAMPLE_JOBS_PATH')
-SAMPLE_DATA_PATH = _cfg.get(_ENV_SECTION, 'SAMPLE_DATA_PATH')
+JAVA_INIT_MEM_OPTION = _cfg.get(_ENV_SECTION, 'JAVA_INIT_MEM_OPTION')
+JAVA_MAX_MEM_OPTION = _cfg.get(_ENV_SECTION, 'JAVA_MAX_MEM_OPTION')
+CONVERT_JAVA_INIT_MEM_OPTION = _cfg.get(_ENV_SECTION, 'CONVERT_JAVA_INIT_MEM_OPTION')
+CONVERT_JAVA_MAX_MEM_OPTION = _cfg.get(_ENV_SECTION, 'CONVERT_JAVA_MAX_MEM_OPTION')
 
-INPUT_LAYER_DIR = _cfg.get(_ENV_SECTION, 'INPUT_LAYER_DIR')
-INPUT_LAYER_DB = _cfg.get(_ENV_SECTION, 'INPUT_LAYER_DB')
-
+PLUGINS_PATH = _cfg.get(_ENV_SECTION, 'PLUGINS_PATH')
+JOB_REQUEST_PATH = _cfg.get(_ENV_SECTION, "JOB_REQUEST_PATH")
 
 # Commands
 GDALINFO_CMD = _cfg.get(_CMDS_SECTION, 'GDALINFO_CMD')
@@ -60,4 +59,3 @@ INSTITUTION_NAME = _cfg.get(_CONTACT_SECTION, 'INSTITUTION_NAME')
 ADMIN_NAME = _cfg.get(_CONTACT_SECTION, 'ADMIN_NAME')
 ADMIN_EMAIL = _cfg.get(_CONTACT_SECTION, 'ADMIN_EMAIL')
 LOCAL_MACHINE_ID = _cfg.get(_CONTACT_SECTION, 'LOCAL_MACHINE_ID')
-

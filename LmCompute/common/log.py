@@ -30,7 +30,7 @@ import os
 
 from LmCommon.common.log import LmLogger
 
-from LmCompute.common.localconstants import LOG_LOCATION
+from LmCompute.common.lmconstants import COMPUTE_LOG_PATH
 
 # .............................................................................
 class LmComputeLogger(LmLogger):
@@ -50,7 +50,7 @@ class LmComputeLogger(LmLogger):
       if addConsole:
          self._addConsoleHandler()
       if addFile:
-         fn = os.path.join(LOG_LOCATION, '%s.log' % (name))
+         fn = os.path.join(COMPUTE_LOG_PATH, '%s.log' % (name))
          self._addFileHandler(fn)
 
 # .............................................................................

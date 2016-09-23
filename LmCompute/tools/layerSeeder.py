@@ -30,14 +30,15 @@
 import argparse
 import os
 
+from LmCommon.common.lmconstants import ENV_LAYER_DIR
 from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.localconstants import (JOB_DATA_PATH, INPUT_LAYER_DIR, 
-                                             INPUT_LAYER_DB)
-from LmCompute.common.lmconstants import LayerAttributes, SchemaMetadata
+from LmCompute.common.lmconstants import INPUT_LAYER_DB
+from LmCompute.common.localconstants import SHARED_DATA_PATH
+from LmCompute.common.lmconstants import SchemaMetadata
 
-SEED_DIR = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR)
+SEED_PATH = os.path.join(SHARED_DATA_PATH, ENV_LAYER_DIR)
 
-def processFile(fn, seedDir=SEED_DIR):
+def processFile(fn, seedDir=SEED_PATH):
    lyrs = []
    with open(fn) as f:
       for line in f:
@@ -57,7 +58,7 @@ if __name__ == "__main__":
                        help="Generate and seed MXE files (default 1 - yes)")
    parser.add_argument('-d', '--seedDir', 
                        help="Use this directory as the base for seeded layers", 
-                       default=SEED_DIR)
+                       default=SEED_PATH)
    parser.add_argument('scnPkgCsvFn', 
                        help="Scenario package CSV with (identifier, relative path) pairs",
                        nargs="*")
@@ -74,8 +75,8 @@ if __name__ == "__main__":
       raise Exception("The specified layer directory does not exist: {}"
                       .format(seedDir))
          
-   lm = LayerManager(JOB_DATA_PATH)
-   dbfname = os.path.join(JOB_DATA_PATH, INPUT_LAYER_DIR, INPUT_LAYER_DB)
+   lm = LayerManager(SHARED_DATA_PATH)
+   dbfname = os.path.join(SEED_PATH, INPUT_LAYER_DB)
    if os.path.exists(dbfname):
       meta = lm.getDbMetadata()
       version = meta[SchemaMetadata.VERSION_ATTRIBUTE]
@@ -86,7 +87,7 @@ if __name__ == "__main__":
             raise Exception('Unable to delete obsolete {}; ({})'
                             .format(dbfname, e))
          else:
-            lm = LayerManager(JOB_DATA_PATH)
+            lm = LayerManager(SHARED_DATA_PATH)
    
    for fn in args.scnPkgCsvFn:
       if os.path.exists(fn):

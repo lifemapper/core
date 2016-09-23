@@ -2,7 +2,7 @@
 @summary: Module containing common Lifemapper constants
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -31,6 +31,11 @@ except:
    OFTString = 4
    OFTBinary = 8
    
+# .............................................................................
+# .    Directories shared between LmCompute and LmServer                              .
+# .............................................................................
+ENV_LAYER_DIR = 'layers'
+
 # .............................................................................
 # .                               File constants                              .
 # .............................................................................
@@ -814,9 +819,9 @@ GBIF_LINK_PREFIX = 'http://www.gbif.org/occurrence/'
 # ......................................................
 # For parsing BISON Solr API response, updated Feb 2015
 # ......................................................
-BISON_OCCURRENCE_URL = 'http://bison.usgs.ornl.gov/solrproduction/occurrences/select'
+BISON_OCCURRENCE_URL = 'https://bison.usgs.gov/solr/occurrences/select'
 # Ends in : to allow appending unique id
-BISON_LINK_PREFIX = 'http://bisonapi.usgs.ornl.gov/solr/occurrences/select/?q=occurrenceID:'
+BISON_LINK_PREFIX = 'https://bison.usgs.gov/solr/occurrences/select/?q=occurrenceID:'
 BISON_LINK_FIELD = 'bisonurl'
 # For TSN query filtering on Binomial
 BISON_NAME_KEY = 'ITISscientificName'

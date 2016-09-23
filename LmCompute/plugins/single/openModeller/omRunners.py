@@ -31,17 +31,17 @@
           02110-1301, USA.
 """
 import os
-from subprocess import Popen, PIPE
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.localconstants import BIN_PATH, JOB_DATA_PATH
 from LmCompute.jobs.runners.applicationRunner import ApplicationRunner
-from LmCompute.plugins.sdm.openModeller.localconstants import \
-                                          DEFAULT_LOG_LEVEL, OM_MODEL_CMD, \
-                                          OM_PROJECT_CMD, OM_VERSION
-from LmCompute.plugins.sdm.openModeller.omRequest import OmModelRequest, \
-                                                            OmProjectionRequest
+from LmCompute.common.lmconstants import BIN_PATH
+from LmCompute.plugins.sdm.openModeller.constants import (OM_VERSION,
+                                          DEFAULT_LOG_LEVEL, OM_MODEL_CMD, 
+                                          OM_PROJECT_CMD)
+from LmCompute.plugins.sdm.openModeller.omRequest import (OmModelRequest, 
+                                                          OmProjectionRequest)
 
 # .............................................................................
 class OMModelRunner(ApplicationRunner):
@@ -65,13 +65,13 @@ class OMModelRunner(ApplicationRunner):
          --log-file <args>         Log file
          --prog-file <args>        File to store model creation progress
       """
-      mdlCmd = os.path.join(BIN_PATH, OM_MODEL_CMD)
+      mdlBinary = os.path.join(BIN_PATH, OM_MODEL_CMD)
       cmd = "%s -r %s -m %s --log-level %s --log-file %s " % \
                (mdlCmd, 
                 self.modelRequestFile, self.modelResultFile,
                 self.modelLogLevel, self.modelLogFile)
 
-      if not os.path.exists(mdlCmd):
+      if not os.path.exists(mdlBinary):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
          raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % mdlCmd)
 
@@ -209,14 +209,12 @@ class OMProjectionRunner(ApplicationRunner):
         --prog-file <args>       File to store projection progress
         --stat-file <args>       File to store projection statistics
       """
-      prjCmd = os.path.join(BIN_PATH, OM_PROJECT_CMD)
-      cmd = "%s -r %s -m %s --log-level %s --log-file %s --prog-file %s --stat-file %s" % \
-            (prjCmd, 
-             self.projRequestFile, self.projResultFile,
-             self.projLogLevel, self.projLogFile, self.projProgressFile,
-             self.projStatFile)
+      prjBinary = os.path.join(BIN_PATH, OM_PROJECT_CMD)
+      cmd = "%s -r %s -m %s --log-level %s --log-file %s --stat-file %s" % \
+            (prjBinary, self.projRequestFile, self.projResultFile,
+             self.projLogLevel, self.projLogFile, self.projStatFile)
       
-      if not os.path.exists(prjCmd):
+      if not os.path.exists(prjBinary):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
          raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % prjCmd)
 

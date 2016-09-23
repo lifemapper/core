@@ -44,16 +44,12 @@ import urllib2
 import zipfile
 
 from LmCommon.common.lmconstants import (JobStatus, OutputFormat,
-                                         SHAPEFILE_EXTENSIONS)
+                                         SHAPEFILE_EXTENSIONS, ENV_LAYER_DIR)
 from LmCommon.common.verify import verifyHash
-from LmCompute.common.lmconstants import (LayerAttributes, 
-                                          LayerFormat, LayerStatus, 
-                                          RETRIEVED_LAYER_DIR, SchemaMetadata)
-from LmCompute.common.localconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DIR,
-                                             INPUT_LAYER_DB)
+from LmCompute.common.lmconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DB, 
+         LayerAttributes, LayerFormat, LayerStatus, RETRIEVED_LAYER_DIR, 
+         SchemaMetadata, ME_CMD, CONVERT_TOOL, CONVERT_JAVA_CMD)
 from LmCompute.common.lmObj import LmException
-from LmCompute.plugins.single.maxent.localconstants import (CONVERT_JAVA_CMD, 
-                                                         ME_CMD, CONVERT_TOOL)
 
 TIMEOUT = 600
 WAIT_SECONDS = 30
@@ -65,8 +61,8 @@ class LayerManager(object):
    """
    # .................................
    def __init__(self, dataDir):
-      dbFile = os.path.join(dataDir, INPUT_LAYER_DIR, INPUT_LAYER_DB)
-      self.lyrBasePath = os.path.join(dataDir, INPUT_LAYER_DIR)
+      dbFile = os.path.join(dataDir, ENV_LAYER_DIR, INPUT_LAYER_DB)
+      self.lyrBasePath = os.path.join(dataDir, ENV_LAYER_DIR)
       createDb = False
       if not os.path.exists(dbFile):
          createDb = True

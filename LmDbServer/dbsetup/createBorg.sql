@@ -4,7 +4,6 @@
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 \c template1 admin
-
 -- ----------------------------------------------------------------------------
 CREATE DATABASE borg ENCODING='UTF8'
                     LC_COLLATE='en_US.UTF-8'
@@ -45,6 +44,8 @@ create table lm_v3.TaxonomySource
 );
 
 -- -------------------------------
+-- REMOVE THIS
+-- -------------------------------
 create table lm_v3.ComputeResource
 (
    computeResourceId serial UNIQUE PRIMARY KEY,
@@ -65,21 +66,19 @@ create table lm_v3.JobChain
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    dlocation text,
    priority int,
-   progress int,
    status int,
    statusmodtime double precision
 );
 
 -- -------------------------------
--- aka ** MAL ScientificName
 create table lm_v3.Taxon
 (
-	-- ** MAL scientificNameId
    taxonId serial UNIQUE PRIMARY KEY,
    taxonomySourceId int REFERENCES lm_v3.TaxonomySource,
    userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    taxonomyKey int,
-   squid varchar(64) NOT NULL,
+   -- hash of userid/sciname or taxonomySourceId/taxonomyKey
+   squid varchar(64) NOT NULL UNIQUE,
    kingdom text,
    phylum text,
    tx_class  text,
@@ -97,19 +96,12 @@ create table lm_v3.Taxon
    -- Species-thread/squid using taxonomy provider
    UNIQUE (taxonomySourceId, taxonomyKey),
    -- Unhinged species-thread/squid for users 
-   UNIQUE (userid, squid)
+   UNIQUE (userid, sciname)
 );
 CREATE INDEX taxon_squid on lm_v3.Taxon(squid);
 CREATE INDEX idx_lower_canonical on lm_v3.Taxon(lower(canonical));
 CREATE INDEX idx_lower_sciname on lm_v3.Taxon(lower(sciname));
 CREATE INDEX idx_lower_genus on lm_v3.Taxon(lower(genus));
-
--- -------------------------------
-create table lm_v3.Keyword
-(
-   keywordId serial UNIQUE PRIMARY KEY,
-   keyword text UNIQUE
-);
 
 -- -------------------------------
 create table lm_v3.LayerType
@@ -119,51 +111,63 @@ create table lm_v3.LayerType
    code varchar(30),
    title text,
    description text,
+   keywords text,
    modTime double precision
 );
 ALTER TABLE lm_v3.LayerType ADD CONSTRAINT unique_layertype UNIQUE (userid, code);
 
 -- -------------------------------
-create table lm_v3.LayerTypeKeyword
-(
-   layerTypeId int REFERENCES lm_v3.LayerType MATCH FULL ON DELETE CASCADE,
-   keywordId int REFERENCES lm_v3.Keyword MATCH FULL ON DELETE CASCADE,
-   PRIMARY KEY (layerTypeId, keywordId)
-);
-
--- -------------------------------
 -- Note: Enforce unique userid/name pairs (in code) for display layers only
--- Could be phantom layer with taxonId and/or squid
 create table lm_v3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   taxonId int REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon,
    verify varchar(64),
-   squid varchar(64),
    name text,
-   title text,
-   author text,
-   description text,
    dlocation text,
    metadataUrl text UNIQUE,
-   metalocation text,
-   gdalType int,
-   ogrType int,
-   isCategorical boolean,
+
+   -- JSON or JSON with filepath, title, author, description
+   metadata text,
+
    -- GDAL/OGR codes indicating driver to use when writing files
    dataFormat varchar(32),
-   epsgcode int,
-   mapunits varchar(20),
-   resolution double precision,
-   startDate double precision,
-   endDate double precision,
-   modTime double precision,
-   bbox varchar(60),
+   gdalType int,
+   ogrType int,
+   
+   -- valunits=categorical if non-scalar
+   valUnits varchar(60),
    nodataVal double precision,
    minVal double precision,
    maxVal double precision,
-   valUnits varchar(60),
+
+   epsgcode int,
+   mapunits varchar(20),
+   resolution double precision,
+   modTime double precision,
+   bbox varchar(60),
+   
+   keywords text,
+   UNIQUE (userid, name, epsgcode)
+);
+ Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
+ ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+ ALTER TABLE lm_v3.layer ADD CONSTRAINT unique_usr_name CHECK (st_ndims(geom) = 2);
+ CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
+ CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
+ CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
+
+-- -------------------------------
+-- Note: Enforce unique userid/name pairs (in code) for display layers only
+create table lm_v3.EnvironmentalLayer
+(
+   environmentalLayerId serial UNIQUE PRIMARY KEY,
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   startDate double precision,
+   endDate double precision,
    layerTypeId int REFERENCES lm_v3.LayerType,
    UNIQUE (userid, name, epsgcode)
 );
@@ -192,6 +196,7 @@ create table lm_v3.Layer
     resolution double precision,
     epsgcode int,
     bbox varchar(60),
+    keywords text,
     modTime double precision,
     UNIQUE (scenarioCode, userid)
  );
@@ -210,26 +215,14 @@ create table lm_v3.ScenarioLayers
    PRIMARY KEY (scenarioId, layerId)
 );
 
-
--- -------------------------------
-create table lm_v3.ScenarioKeywords
-(
-   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   keywordId int REFERENCES lm_v3.Keyword MATCH FULL ON DELETE CASCADE,
-   PRIMARY KEY (scenarioId, keywordId)
-);
-
 -- -------------------------------
 create table lm_v3.OccurrenceSet
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
-   taxonId int NOT NULL REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon,
    verify varchar(64),
-   squid varchar(64),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    displayName text,
-   taxonId int REFERENCES lm_v3.Taxon,
-   primaryEnv int,
    metadataUrl text UNIQUE,
    dlocation text,
    rawDlocation text,
@@ -254,9 +247,10 @@ ALTER TABLE lm_v3.OccurrenceSet ADD CONSTRAINT enforce_dims_geompts CHECK (st_nd
 CREATE INDEX idx_lower_displayName on lm_v3.OccurrenceSet(lower(displayName));
 CREATE INDEX idx_pattern_lower_displayname on lm_v3.OccurrenceSet  (lower(displayname) varchar_pattern_ops );
 CREATE INDEX idx_queryCount ON lm_v3.OccurrenceSet(queryCount);
-CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 50));
-CREATE INDEX idx_occUser ON lm_v3.OccurrenceSet(userId);
+CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 30));
+CREATE INDEX idx_occUserId ON lm_v3.OccurrenceSet(userId);
 CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
+CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
 
@@ -278,22 +272,19 @@ create table lm_v3.SDMModel
 (
    sdmmodelid serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   name text NOT NULL,
-   description text,
    occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    scenarioCode varchar(30),
    maskId int REFERENCES lm_v3.Layer,
    status int,
    statusModTime double precision,
-   priority int,
    dlocation text,
    email varchar(64), 
    algorithmParams text,
    algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode)
 );
-CREATE INDEX idx_mdlLastModified ON lm_v3.SDMModel(statusModTime);
-CREATE INDEX idx_modelUser ON lm_v3.SDMModel(userId);
+CREATE INDEX idx_mdlStatusModTime ON lm_v3.SDMModel(statusModTime);
+CREATE INDEX idx_mdlUserId ON lm_v3.SDMModel(userId);
 CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
 
 -- -------------------------------
@@ -302,51 +293,34 @@ CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
 create table lm_v3.SDMProjection
 (
    sdmprojectionId serial UNIQUE PRIMARY KEY,
-   taxonId int NOT NULL REFERENCES lm_v3.Taxon,
-   verify varchar(64),
-   squid varchar(64),
-   metadataUrl text UNIQUE,
-   metalocation text,
-   taxonId int REFERENCES lm_v3.Taxon,
+   layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    sdmmodelid int REFERENCES lm_v3.SDMModel ON DELETE CASCADE,
-   scenarioCode varchar(30),
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
+   scenarioCode varchar(30),
    maskId int REFERENCES lm_v3.Layer,
    status int,
-   statusModTime double precision,
-   units varchar(20),
-   resolution double precision,
-   epsgcode int,
-   bbox varchar(60),
-   dlocation text,
-   dataType int
+   statusModTime double precision
 );  
-Select AddGeometryColumn('lm_v3', 'sdmprojection', 'geom', 4326, 'POLYGON', 2);
-ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
-ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
-ALTER TABLE lm_v3.SDMProjection ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
-
-CREATE INDEX spidx_sdmprojection ON lm_v3.SDMProjection USING GIST ( geom );
-CREATE INDEX idx_prjLastModified ON lm_v3.SDMProjection(statusModTime);
+CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProjection(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
-CREATE INDEX idx_prjSquid on lm_v3.SDMProjection(squid);
 
 -- -------------------------------
 create table lm_v3.Process
 (
    processId serial UNIQUE PRIMARY KEY,
    processType int NOT NULL,
-   isSinglespecies boolean NOT NULL,
+   referenceType int NOT NULL,
    referenceId int NOT NULL,
    userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   isSinglespecies boolean NOT NULL,
    inputs text,
+   outputs text,
    dlocation text,
    status int,
    statusmodtime double precision
 );
 
 -- -------------------------------
--- Could be phantom layer with siteIds x,y in vector
 create table lm_v3.ShapeGrid
 (
    shapeGridId serial UNIQUE PRIMARY KEY,
@@ -401,15 +375,8 @@ create table lm_v3.PresenceAbsence
    minPresence double precision,
    maxPresence double precision,
    percentPresence int,
-   -- Name of the field containing the value for absence
-   nameAbsence varchar(20),
-   minAbsence double precision,
-   maxAbsence double precision,
-   percentAbsence int, 
-   UNIQUE(userId, namePresence, minPresence, maxPresence, percentPresence, 
-                  nameAbsence, minAbsence, maxAbsence, percentAbsence),
-   CHECK (percentPresence >= 0 AND percentPresence <= 100),
-   CHECK (percentAbsence >= 0 AND percentAbsence <= 100)
+   UNIQUE(userId, namePresence, minPresence, maxPresence, percentPresence),
+   CHECK (percentPresence >= 0 AND percentPresence <= 100)
 );
 
 -- -------------------------------
@@ -418,7 +385,7 @@ create table lm_v3.Bucket
    bucketId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
-   shapeGridId int NOT NULL REFERENCES lm_v3.ShapeGrid,
+   shapeGridId int REFERENCES lm_v3.ShapeGrid,
    treeId int REFERENCES lm_v3.Tree,
    epsgcode int,
    description text,
@@ -433,7 +400,8 @@ create table lm_v3.Matrix
    matrixType int NOT NULL,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixDlocation varchar(256),
-   metaDlocation varchar(256),  
+   -- JSON
+   metadata text,  
    status int,
    statusmodtime double precision
 );
@@ -445,13 +413,16 @@ create table lm_v3.BucketPALayer
 (
    bucketPALayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   matrixIndex int NOT NULL,
+   squid varchar(64) REFERENCES lm_v3.Taxon,
    
-   -- layerId and presenceAbsenceId could be just phantom layer with taxonId or squid?
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   presenceAbsenceId int NOT NULL REFERENCES lm_v3.PresenceAbsence ON DELETE CASCADE,
+   -- layerId and presenceAbsenceId could be empty, just squid
+   layerId int REFERENCES lm_v3.Layer,
+   presenceAbsenceId int REFERENCES lm_v3.PresenceAbsence,
       
    status int,
    statusmodtime double precision,
+   UNIQUE (bucketId, matrixId),
    UNIQUE (bucketId, layerId, presenceAbsenceId)
 );
 
@@ -461,13 +432,17 @@ create table lm_v3.BucketAncLayer
 (
    bucketAncLayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   matrixIndex int NOT NULL,
+   -- some user-unique identifier to track data meaning/metadata
+   ident varchar(64),
    
-   -- layerId and ancillaryValueId could be just phantom layer?
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   ancillaryValueId int NOT NULL REFERENCES lm_v3.AncillaryValue ON DELETE CASCADE,
+   -- layerId and ancillaryValueId could be empty
+   layerId int REFERENCES lm_v3.Layer,
+   ancillaryValueId int REFERENCES lm_v3.AncillaryValue,
    
    status int,
    statusmodtime double precision,
+   UNIQUE (bucketId, matrixId),
    UNIQUE (bucketId, layerId, ancillaryValueId)
 );
 
@@ -480,13 +455,10 @@ lm_v3.computeresource, lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain, lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
-lm_v3.keyword, lm_v3.keyword_keywordid_seq, 
 lm_v3.layertype, lm_v3.layertype_layertypeid_seq,
-lm_v3.layertypekeyword, 
 lm_v3.layer, lm_v3.layer_layerid_seq, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayers,
-lm_v3.scenariokeywords, 
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
@@ -508,11 +480,9 @@ lm_v3.taxonomysource,
 lm_v3.taxon,
 lm_v3.keyword,
 lm_v3.layertype,
-lm_v3.layertypekeyword, 
 lm_v3.layer, 
 lm_v3.scenario,
 lm_v3.scenariolayers,
-lm_v3.scenariokeywords, 
 lm_v3.occurrenceset, 
 lm_v3.algorithm, 
 lm_v3.sdmmodel,  
@@ -531,7 +501,6 @@ lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
-lm_v3.keyword_keywordid_seq,
 lm_v3.layertype_layertypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.scenario_scenarioid_seq,

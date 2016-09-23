@@ -31,13 +31,12 @@
 """
 from types import ListType
 
-from LmCommon.common.lmXml import Element, SubElement, fromstring, \
-                                        tostring
+from LmCommon.common.lmXml import (Element, SubElement, fromstring, 
+                                   tostring)
 
 from LmCompute.common.layerManager import LayerManager
-
-from LmCompute.plugins.sdm.openModeller.localconstants import DEFAULT_FILE_TYPE
 from LmCompute.common.lmconstants import LayerFormat
+from LmCompute.plugins.sdm.openModeller.constants import DEFAULT_FILE_TYPE 
 
 # .............................................................................
 class OmRequest(object):
