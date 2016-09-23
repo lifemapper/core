@@ -34,6 +34,7 @@ import os
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.jobs.runners.applicationRunner import ApplicationRunner
+from LmCompute.common.lmconstants import BIN_PATH
 from LmCompute.plugins.sdm.openModeller.constants import (OM_VERSION,
                                           DEFAULT_LOG_LEVEL, OM_MODEL_CMD, 
                                           OM_PROJECT_CMD)
@@ -62,7 +63,7 @@ class OMModelRunner(ApplicationRunner):
          --log-file <args>         Log file
          --prog-file <args>        File to store model creation progress
       """
-      mdlBinary = os.path.join(self.env.getApplicationPath(), OM_MODEL_CMD)
+      mdlBinary = os.path.join(BIN_PATH, OM_MODEL_CMD)
       cmd = "%s -r %s -m %s --log-level %s --log-file %s --prog-file %s" % \
                (mdlBinary, self.modelRequestFile, self.modelResultFile,
                 self.modelLogLevel, self.modelLogFile, self.modelProgressFile)
@@ -258,7 +259,7 @@ class OMProjectionRunner(ApplicationRunner):
         --prog-file <args>       File to store projection progress
         --stat-file <args>       File to store projection statistics
       """
-      prjBinary = os.path.join(self.env.getApplicationPath(), OM_PROJECT_CMD)
+      prjBinary = os.path.join(BIN_PATH, OM_PROJECT_CMD)
       cmd = "%s -r %s -m %s --log-level %s --log-file %s --prog-file %s --stat-file %s" % \
             (prjBinary, self.projRequestFile, self.projResultFile,
              self.projLogLevel, self.projLogFile, self.projProgressFile,
