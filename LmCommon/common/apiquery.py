@@ -279,6 +279,7 @@ class APIQuery(object):
                                   headers=self.headers)
       except Exception, e:
          try:
+#             response.raise_for_status()
             retcode = response.status_code
             reason = response.reason
          except:
@@ -299,10 +300,9 @@ class APIQuery(object):
                self.output = None   
          except Exception, e:
             raise Exception('Failed to interpret output of URL {}, content = {}; ({})'
-                            .format(self.url, response.content, str(e)))
+                            .format(self.baseurl, response.content, str(e)))
       else:
-         print('Failed query: {}'.format(response.content))
-         self.output = None      
+         response.raise_for_status()
 
 # .............................................................................
 class BisonAPI(APIQuery):
@@ -746,7 +746,7 @@ def testIdigbioTaxonIds(infname):
 # .............................................................................
 if __name__ == '__main__':
    idigbio = gbif = bison = False
-   bison = True
+   idigbio = True
    
    if bison:
       # ******************* BISON ********************************
@@ -808,6 +808,8 @@ if __name__ == '__main__':
 
       # ******************* iDigBio ********************************
       # Test GBIF TaxonIds from iDigBio list
+      idigList = [(4990907, 65932, 'megascelis subtilis'), 
+                  (5171118, 50533, 'gea argiopides')]
       for currGbifTaxonId, currReportedCount, currName in idigList:
          print currGbifTaxonId
          # direct query
