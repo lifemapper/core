@@ -52,6 +52,7 @@ COMPUTE_LOG_PATH = os.path.join(LM_DISK, 'logs')
 # ============================================================================
 # =                             Commands                                     =
 # ============================================================================
+# Maxent
 MDL_TOOL = 'density.MaxEnt'
 PRJ_TOOL = 'density.Project'
 CONVERT_TOOL ='density.Convert'

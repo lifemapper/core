@@ -75,11 +75,11 @@ CONVERT_JAVA_CMD: %(JAVA_EXE)s -Xms%(CONVERT_JAVA_INIT_MEM_OPTION)s -Xmx%(CONVER
 
 ; ...............................................
 [LmCompute - plugins - openModeller]
-DEFAULT_FILE_TYPE: GreyTiff100
-DEFAULT_LOG_LEVEL: debug
-OM_MODEL_CMD: om_model
-OM_PROJECT_CMD: om_project
-OM_VERSION: 1.5.0
+;** DEFAULT_FILE_TYPE: GreyTiff100
+;** DEFAULT_LOG_LEVEL: debug
+;** OM_MODEL_CMD: om_model
+;** OM_PROJECT_CMD: om_project
+;** OM_VERSION: 1.5.0
 
 ;;**!!! Section goes away
 ; ...............................................
