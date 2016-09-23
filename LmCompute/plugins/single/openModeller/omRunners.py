@@ -65,14 +65,15 @@ class OMModelRunner(ApplicationRunner):
          --log-file <args>         Log file
          --prog-file <args>        File to store model creation progress
       """
-      cmd = "%s%s -r %s -m %s --log-level %s --log-file %s " % \
-               (BIN_PATH, OM_MODEL_CMD, 
+      mdlCmd = os.path.join(BIN_PATH, OM_MODEL_CMD)
+      cmd = "%s -r %s -m %s --log-level %s --log-file %s " % \
+               (mdlCmd, 
                 self.modelRequestFile, self.modelResultFile,
                 self.modelLogLevel, self.modelLogFile)
 
-      if not os.path.exists(OM_MODEL_CMD):
+      if not os.path.exists(mdlCmd):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
-         raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % OM_MODEL_CMD)
+         raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % mdlCmd)
 
       return cmd
    
@@ -208,15 +209,16 @@ class OMProjectionRunner(ApplicationRunner):
         --prog-file <args>       File to store projection progress
         --stat-file <args>       File to store projection statistics
       """
-      cmd = "%s%s -r %s -m %s --log-level %s --log-file %s --prog-file %s --stat-file %s" % \
-            (BIN_PATH, OM_PROJECT_CMD, 
+      prjCmd = os.path.join(BIN_PATH, OM_PROJECT_CMD)
+      cmd = "%s -r %s -m %s --log-level %s --log-file %s --prog-file %s --stat-file %s" % \
+            (prjCmd, 
              self.projRequestFile, self.projResultFile,
              self.projLogLevel, self.projLogFile, self.projProgressFile,
              self.projStatFile)
       
-      if not os.path.exists(OM_PROJECT_CMD):
+      if not os.path.exists(prjCmd):
          self.status = JobStatus.LM_JOB_APPLICATION_NOT_FOUND
-         raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % OM_PROJECT_CMD)
+         raise LmException(JobStatus.LM_JOB_APPLICATION_NOT_FOUND,  "%s not found" % prjCmd)
 
       return cmd
    
