@@ -57,7 +57,6 @@ PLUGINS_PATH = _cfg.get(_ENV_SECTION, 'PLUGINS_PATH')
 JOB_REQUEST_PATH = _cfg.get(_ENV_SECTION, "JOB_REQUEST_PATH")
 
 # Commands
-GDALINFO_CMD = _cfg.get(_CMDS_SECTION, 'GDALINFO_CMD')
 PYTHON_CMD = _cfg.get(_CMDS_SECTION, 'PYTHON_CMD')
 
 # Contact information
