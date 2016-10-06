@@ -9,6 +9,7 @@ import json
 from osgeo import ogr,gdal
 
 
+
 ogr.UseExceptions()
 
 class BioGeo():
@@ -18,6 +19,7 @@ class BioGeo():
       @summary: contructor for all biogeo encoding
       @note: EventField only for non-collections
       """
+      self.encMtx = False
       self.contrastColl = False  # list of ogr data sources
       self.eventField = EventField
       fieldName = sPSet = commonSet = True 
@@ -30,7 +32,7 @@ class BioGeo():
                raise Exception, "incorrect event field"
             sPSet = self._setSinglePathValues(EventField, contrastsdLoc)
             commonSet = self._setCommon(intersectionLyrDLoc)
-            self._setMutuallyExclusive(contrastsdLoc, EventField)
+            self._setMutuallyExclusive(self.contrastsDs, EventField)
          else:
             raise ValueError('shapefile or EventField missing')
       except Exception, e:
@@ -50,8 +52,8 @@ class BioGeo():
                if not self._eachTwo():
                   self.contrastColl = False
                   raise Exception, "more then two features in .."
-               if not self._checkEventFieldName():  # does a contrast collection need an EventField?
-                  self.contrastColl = False
+               #if not self._checkEventFieldName():  # does a contrast collection need an EventField?
+                  #self.contrastColl = False
                   raise Exception, "incorrect event field"
                if os.path.exists(intersectionLyrDLoc):
                   self._setCommon(intersectionLyrDLoc)
@@ -68,7 +70,7 @@ class BioGeo():
                            raise Exception, "incorrect event field"
                         self._setSinglePathValues(EventField, contrastsdLoc[0])
                         self._setCommon(intersectionLyrDLoc)
-                        self._setMutuallyExclusive(contrastsdLoc, EventField)
+                        self._setMutuallyExclusive(self.contrastsDs, EventField)
                      else:
                         raise ValueError('shapefile missing')
                   else:
@@ -82,12 +84,12 @@ class BioGeo():
    def buildContrasts(self):
       if not self.contrastColl:
          if self._mutuallyEx:
-            pass
+            encMtx = self._buildFromExclusive()
          else:
-            pass
+            encMtx = self._buildFromTwoFeatureSetOrSingleMerged(False)
       else:
-         pass
-
+         encMtx = self._buildFromTwoFeatureSetOrSingleMerged(True)
+      return encMtx
 # ........................................................................
    def _setMutuallyExclusive(self,ds,eventFieldName):
       """
@@ -247,70 +249,63 @@ class BioGeo():
             
       return refD
 # ........................................................................   
-   def buildFromExclusive(self):
+   def _buildFromExclusive(self):
       """
       @summary: builds from one shapefile where feature is exclusive (no overlap)
       this doesn't use area, could be a problem if site intersects more then one event
       @note: TEST THIS WITH /home/jcavner/TASHI_PAM/Test!!
-      @note: have to disallow this method for merged data.
+      @note: have to disallow this method for merged data. # TEST THIS WITH /home/jcavner/TASHI_PAM/Test!!
       """
-      
-      mds = self.contrastsDs
-      meConstrastLyr = mds.GetLayer(0) 
-      
-      gds = self.intersectionDs
-      gLyr = gds.GetLayer(0)
-      siteCount = gLyr.GetFeatureCount()
-      sortedSites = self.sortedSites
-      
-      positions = self.positions
-      contrastMtx = np.zeros((siteCount,len(positions)), dtype=np.int)
-      
-      
-      for i,site in enumerate(sortedSites):
-      #while siteFeature is not None:   
-         siteGeom = site[1].GetGeometryRef()
-         #siteGeom = siteFeature.GetGeometryRef()
+      try:
+         mds = self.contrastsDs
+         meConstrastLyr = mds.GetLayer(0) 
          
-         meConstrastLyr.ResetReading()
-         contrastFeature = meConstrastLyr.GetNextFeature()
-         while contrastFeature is not None:        
-            eventGeom = contrastFeature.GetGeometryRef()
+         gds = self.intersectionDs
+         gLyr = gds.GetLayer(0)
+         siteCount = gLyr.GetFeatureCount()
+         sortedSites = self.sortedSites
+         
+         positions = self.positions
+         contrastMtx = np.zeros((siteCount,len(positions)), dtype=np.int)
+         
+         
+         for i,site in enumerate(sortedSites):
+         #while siteFeature is not None:   
+            siteGeom = site[1].GetGeometryRef()
+            #siteGeom = siteFeature.GetGeometryRef()
             
-            eventNameIdx = contrastFeature.GetFieldIndex(self.eventField)
-            eventName = contrastFeature.GetFieldAsString(eventNameIdx)
-            
-            if eventName in positions:
-               colPos = positions[eventName] # columns are contrasts
-               if siteGeom.Intersect(eventGeom):
-                  contrastMtx[i][colPos] = 1  
-               else:
-                  contrastMtx[i][colPos] = -1      
+            meConstrastLyr.ResetReading()
             contrastFeature = meConstrastLyr.GetNextFeature()
-            
-         negOnes = np.where(contrastMtx[i] == -1)[0]  #site not in any event
-         if len(negOnes) == len(positions):
-            contrastMtx[i] = np.zeros(len(positions), dtype=np.int)
-         # What if site intersects all events!! might neeed area
-         # but then wouldn't work with centroids
-      # TEST THIS WITH /home/jcavner/TASHI_PAM/Test!!
-      return contrastMtx
-# ........................................................................
-   def buildFromCollection(self):
-      
-      evenPos = self.positions  # this is different for coll ?  names of shps? 
-      gds = self.intersectionDs
-      gLyr = gds.GetLayer(0)
-      numRow = gLyr.GetFeatureCount()   
-      numCol = len(self.contrastColl)
-      # init Contrasts mtx
-      contrastsMtx = np.zeros((numRow,numCol),dtype=np.int)
-      sortedSites = self.sortedSites       
+            while contrastFeature is not None:        
+               eventGeom = contrastFeature.GetGeometryRef()
+               
+               eventNameIdx = contrastFeature.GetFieldIndex(self.eventField)
+               eventName = contrastFeature.GetFieldAsString(eventNameIdx)
+               
+               if eventName in positions:
+                  colPos = positions[eventName] # columns are contrasts
+                  if siteGeom.Intersect(eventGeom):
+                     contrastMtx[i][colPos] = 1  
+                  else:
+                     contrastMtx[i][colPos] = -1      
+               contrastFeature = meConstrastLyr.GetNextFeature()
+               
+            negOnes = np.where(contrastMtx[i] == -1)[0]  #site not in any event
+            if len(negOnes) == len(positions):
+               contrastMtx[i] = np.zeros(len(positions), dtype=np.int)
+            # What if site intersects all events!! might neeed area
+            # but then wouldn't work with centroids
+      except Exception, e:
+         contrastMtx = False
+         
+      self.encMtx = contrastMtx
+     
 # ........................................................................         
-   def buildFromMergedShp(self, fromCollection=False):
+   def _buildFromTwoFeatureSetOrSingleMerged(self, fromCollection):
       """
       @summary: builds from shapefile that inclues all the contrasts.
       This uses area so will only work with a shapegrid (cells)
+      @param fromCollection: bool
       @todo: make so it can also centroid (X,Y)
       """
       if not fromCollection:
@@ -331,51 +326,58 @@ class BioGeo():
          except:
             False
       if contrastData:
-         eventPos =  self.positions
+         try:
+            eventPos =  self.positions
+            
+            gds = self.intersectionDs
+            gLyr = gds.GetLayer(0)
+            #
+            numRow = gLyr.GetFeatureCount()
+            numCol = len(contrastData)
+            # init Contrasts mtx
+            contrastsMtx = np.zeros((numRow,numCol),dtype=np.int)
+            sortedSites = self.sortedSites
+            #
+            for contrast in contrastData:  
+               event = contrast[0]
+               if event in eventPos:
+                  colPos = eventPos[event]
+                  for i, site in enumerate(sortedSites):   
+                     siteGeom = site[1].GetGeometryRef()
+                     A1 = 0.0
+                     A2 = 0.0
+                     if siteGeom.Intersect(contrast[1].GetGeometryRef()):
+                        intersection = siteGeom.Intersection(contrast[1].GetGeometryRef())
+                        A1 = intersection.GetArea()
+                        contrastsMtx[i][colPos] = -1
+                     if siteGeom.Intersect(contrast[2].GetGeometryRef()):
+                        if A1 > 0.0:
+                           intersection = siteGeom.Intersection(contrast[2].GetGeometryRef())
+                           A2 = intersection.GetArea()
+                           if A2 > A1:
+                              contrastsMtx[i][colPos] = 1     
+                        else:
+                           contrastsMtx[i][colPos] = 1
+               else:
+                  break
+         except Exception, e:
+            contrastsMtx = False
+            print str(e)
          
-         gds = self.intersectionDs
-         gLyr = gds.GetLayer(0)
-         #
-         numRow = gLyr.GetFeatureCount()
-         numCol = len(contrastData)
-         # init Contrasts mtx
-         contrastsMtx = np.zeros((numRow,numCol),dtype=np.int)
-         sortedSites = self.sortedSites
-         #
-         for contrast in contrastData:  
-            event = contrast[0]
-            if event in eventPos:
-               colPos = eventPos[event]
-               for i, site in enumerate(sortedSites):   
-                  siteGeom = site[1].GetGeometryRef()
-                  A1 = 0.0
-                  A2 = 0.0
-                  if siteGeom.Intersect(contrast[1].GetGeometryRef()):
-                     intersection = siteGeom.Intersection(contrast[1].GetGeometryRef())
-                     A1 = intersection.GetArea()
-                     contrastsMtx[i][colPos] = -1
-                  if siteGeom.Intersect(contrast[2].GetGeometryRef()):
-                     if A1 > 0.0:
-                        intersection = siteGeom.Intersection(contrast[2].GetGeometryRef())
-                        A2 = intersection.GetArea()
-                        if A2 > A1:
-                           contrastsMtx[i][colPos] = 1     
-                     else:
-                        contrastsMtx[i][colPos] = 1
-            else:
-               break
       else:
-         #raise Exception, "method not available for this data type"
          contrastsMtx = False
-      return contrastsMtx
+      self.encMtx = contrastsMtx
 # ........................................................................   
-   def writeBioGeoMtx(self,mtx,dLoc):
+   def writeBioGeoMtx(self,dLoc):
       
-      wrote = True
-      try:
-         np.save(dLoc,mtx)
-      except Exception,e:
-         wrote = False
+      wrote = False
+      if not isinstance(self.encMtx, bool):
+         try:
+            np.save(dLoc,self.encMtx)
+         except Exception,e:
+            print str(e)
+         else:
+            wrote = True
       return wrote
 # ........................................................................      
 
@@ -387,10 +389,15 @@ class PhyloEncoding():
       
       self.treeDict = treeDict
       self.PAM = PAM
-   
+      if not self._checkMtxIdx():
+         raise Exception, "PAM sps dimension doesn't match number of mtxIdx"
    
    @classmethod
    def fromFile(cls,TreedLoc,PAMdLoc):
+      """
+      @param TreedLoc: location of tree json
+      @param PAMdLoc: locat of PAM .npy file
+      """
       if os.path.exists(TreedLoc) and os.path.exists(PAMdLoc):
          try:
             with open(TreedLoc,'r') as f:
@@ -402,7 +409,22 @@ class PhyloEncoding():
             return cls(json.loads(jsonstr),pam)       
       else:
          return None
-   
+   #...................................................   
+   def _checkMtxIdx(self):
+      
+      colCnt = self.PAM.shape[1]
+      tips = []
+      mx = []
+      def findMtxTips(clade):
+         if "children" in clade:
+            for child in clade["children"]:
+               findMtxTips(child)
+         else:
+            tips.append(clade['pathId'])
+            if 'mx' in clade:
+               mx.append(int(clade['mx']))
+      findMtxTips(self.treeDict)
+      return len(mx) == colCnt
    # ........................................
    def makeP(self,branchLengths):
       """
@@ -718,53 +740,35 @@ if __name__ == "__main__":
    
    
    #### Test BioGeo ####
-   ## Contrasts shape and info
-   base = "/home/jcavner/TASHI_PAM/GoodContrasts"
-   shpName = "MergedContrasts_Florida.shp"
-   #
-   Mergeddloc = os.path.join(base,shpName)
-   
-   Mergeddloc = '/home/jcavner/TASHI_PAM/Test/PAIC.shp'
-   
-   EventField = "PAIC"
-   #
+  
+   # Tashi
+   #Contrastsdloc = '/home/jcavner/TASHI_PAM/Test/PAIC.shp'
+   #EventField = "PAIC"
+   # GridDloc = '/home/jcavner/TASHI_PAM/Test/Grid_5km.shp'
    #########################
-   ## Grid shape
-   #
+   # Charolette
+   # Merged
+   # intersect grid
    GridDloc = "/home/jcavner/BiogeographyMtx_Inputs/Florida/TenthDegree_Grid_FL-2462.shp"
-   #
    
-   GridDloc = '/home/jcavner/TASHI_PAM/Test/Grid_5km.shp'
+   Contrastsdloc ="/home/jcavner/BiogeographyMtx_Inputs/Florida/GoodContrasts/MergedContrasts_Florida.shp"
+   #contrastsdLoc, intersectionLyrDLoc, EventField=False
+   merged = BioGeo(Contrastsdloc,GridDloc,EventField="event")
    
-   myObj = BioGeo(Mergeddloc,GridDloc,EventField)
-   #mtx = myObj.buildFromMergedShp()  
-   #print "MTX ",mtx
-   mtx = myObj.buildFromExclusive()
-   print myObj.positions  # does exist for mutually exclusive
+   base = "/home/jcavner/BiogeographyMtx_Inputs/Florida/GoodContrasts"
+   shpList = ["ApalachicolaRiver.shp","GulfAtlantic.shp","Pliocene.shp"]
+   pathList = []
+   for shp in shpList:
+      fn = os.path.join(base,shp)
+      pathList.append(fn)
    
-   #cPickle.dump(refD, open("/home/jcavner/BiogeographyMtx_Inputs/Florida/pos.pkl",'w'))
-   #cPickle.dump(refD, open("/home/jcavner/pos.pkl",'w'))
+   collection = BioGeo(pathList,GridDloc)
    
-   sP = "/home/jcavner/BiogeographyMtx_Inputs/Florida/output.npy"
-   sP = "/home/jcavner/testy.npy"
+   merged.buildContrasts()
+   merged.writeBioGeoMtx("/home/jcavner/testBioGeoEncoding/mergedFA.npy")
    
-   #if myObj.writeBioGeoMtx(mtx, sP ):
-   #   print "saved mtx"
-   #else:
-   #   print "did not write"
-   
-   #   Test Multiple Shp Files
-   
-   #base = "/home/jcavner/BiogeographyMtx_Inputs/Florida/GoodContrasts"
-   #shpList = ["GulfAtlantic.shp","MergedContrasts_Florida.shp","Pliocene.shp","ApalachicolaRiver.shp"]
-   #shpList = ["/"]
-   #pathList = []
-   #for shp in shpList:
-   #   fn = os.path.join(base,shp)
-   #   pathList.append(fn)
-   #   
-   #testInst = BioGeo(pathList,GridDloc,"Event")
-   #testInst.eachTwo()
+   collection.buildContrasts()
+   collection.writeBioGeoMtx("/home/jcavner/testBioGeoEncoding/collectionFA.npy")
    
    
    #################  end BioGeo  ######################## 
@@ -809,5 +813,4 @@ if __name__ == "__main__":
    #
    #P, I, internal = treeEncodeObj.makeP(True)
    #print P
-   
    

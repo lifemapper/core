@@ -12,14 +12,17 @@ from random import randint
 
 class LMtree():
    
-   NO_BRANCH_LEN = 0
-   MISSING_BRANCH_LEN = 1
+   NO_BRANCH_LEN = 0  # missing all branch lengths
+   MISSING_BRANCH_LEN = 1 # missing some branch lengths
    HAS_BRANCH_LEN = 2
    JSON_EXT = ".json"
    NHX_EXT = [".nhx",".tre"]
    
    
    def __init__(self,treeDict):
+      """
+      @note: what happens if mtxIdx (mx) in tree?
+      """
       
       self.tree = treeDict
       self._polytomy = False
@@ -31,6 +34,7 @@ class LMtree():
       self.labels = False
       self.whichNPoly = []
       self._tipNames = []
+      self._tipNamesWithMX = []
       self.getTreeInfo(self.tree)
       
    @classmethod
@@ -101,7 +105,10 @@ class LMtree():
             else:
                lengths[int(clade["pathId"])] = float(clade["length"]) 
             tipPaths[clade["pathId"]] = ([int(x) for x in clade["path"].split(',')],clade["name"])
-            self._tipNames.append(clade["name"])  
+            self._tipNames.append(clade["name"]) 
+            if 'mx' in clade:
+               self._tipNamesWithMX.append(clade["name"])
+      #...................................................
       recurseClade(clade)
       self.tipPaths = tipPaths
       self.internalPaths = internalPaths
@@ -111,14 +118,32 @@ class LMtree():
       self.labels = np.array([self.tipPaths[str(li)][1] for li in self.labelIds])
       self._subTrees = subTrees
       #return tipPaths, lengths, subTrees
-   
+#...................................................   
+   def findDropTipsDelMtx(self,dropTips):
+      """
+      @summary: find tips by name to drop and if there is a mx for tip removes all mx
+      """     
+      def takeOutMtx(clade):
+         if "children" in clade:
+            clade.pop('mx', None)
+            for child in clade["children"]:
+               takeOutMtx(child)
+         else:
+            clade.pop('mx', None)
+      #...................................................
+      for n in dropTips:
+         if n in self.tipNamesWithMX:
+            takeOutMtx(self.tree)
+            break
+               
+#...................................................   
    def dropTips(self, tips ):
       """
       @summary: dropt tips from current tree returns new tree
       @param tips: list or array of tip (label) names to be removed
       @return: new tree obj
       """
-      
+      self.findDropTipsDelMtx(tips)
       if len(tips) < len(self.labelIds) - 1:
          edge = self._getEdges()
          nTips = len(self.labels) #Ntip
@@ -193,7 +218,7 @@ class LMtree():
       else:
          raise ValueError('Cannot remove all tips from a tree, or leave single tip')
       
-         
+#...................................................         
    def _getEdges(self):
       """
       @summary: makes a (2 * No. internal Nodes) x 2 matrix representation of the tree 
@@ -216,7 +241,7 @@ class LMtree():
       edge = np.array(edge_ll)
       
       return edge
-   
+#...................................................   
    def _truncate(self,f, n):
       """
       @summary: Truncates/pads a float f to n decimal places without rounding
@@ -227,8 +252,8 @@ class LMtree():
          return '{0:.{1}f}'.format(f, n)
       i, p, d = s.partition('.')
       return '.'.join([i, (d+'0'*n)[:n]])
-   
-   
+
+#...................................................   
    def checkUltraMetric(self):
       """
       @summary: check to see if tree is ultrametric, all the way to the root
@@ -256,6 +281,10 @@ class LMtree():
    @property
    def tipNames(self):
       return self._tipNames
+   
+   @property
+   def tipNamesWithMX(self):
+      return self._tipNamesWithMX
    
    @property
    def polytomies(self):
@@ -299,7 +328,7 @@ class LMtree():
             return self.MISSING_BRANCH_LEN
    
 # .........................................................................   
-   def makePaths(self, tree):
+   def makePaths(self, tree, takeOutBranches=False):
       """
       @summary: makes paths by recursing tree and appending parent to new pathId
       """
@@ -320,7 +349,16 @@ class LMtree():
             clade['path'] = clade['path'] + parent
             clade['pathId'] = str(p['c'])
             #clade['name'] = str(p['c'])  #take this out for real
-            
+      # ................................
+      def takeOutBr(clade):
+         
+         if "children" in clade:
+            clade.pop('length', None)
+            for child in clade["children"]:
+               takeOutBr(child)
+         else:
+            clade.pop('length', None)
+      # ................................      
       def takeOutStrPaths(clade):
          
          if "children" in clade:
@@ -331,10 +369,13 @@ class LMtree():
          else:
             clade["path"] = []
             clade["pathId"] = ''
-      
+      # ................................
       takeOutStrPaths(tree)    
       
       recursePaths(tree,[])
+      
+      if takeOutBranches:
+         takeOutBr(tree)
       
       def stringifyPaths(clade):
          if "children" in clade:
@@ -550,8 +591,12 @@ class LMtree():
             else:
                pass    
          newTree = self.tree.copy()
-         replaceInTree(newTree)  
-         self.makePaths(newTree)
+         replaceInTree(newTree) 
+         if self.branchLengths == self.NO_BRANCH_LEN:
+            takeOutBr = True
+         else: 
+            takeOutBr = False
+         self.makePaths(newTree,takeOutBranches=takeOutBr)
             
          return LMtree(newTree)
       
@@ -613,17 +658,25 @@ if __name__ == "__main__":
    
    p = "/home/jcavner/Charolettes_Data/Trees/RAxML_bestTree.12.15.14.1548tax.ultrametric.tre"
    
-   p = "/home/jcavner/PhyloXM_Examples/test_poly.json"
+   p = "/home/jcavner/PhyloXM_Examples/test_polyWithoutLengths.json"
    
    to = LMtree.fromFile(p)
+   
+   print to.polyPos
+   
+   newTree = to.resolvePoly()
+   
+   newTree.writeTree("/home/jcavner/PhyloXM_Examples/resolvedPolyWithoutBranchLen.json")
+   #treeDir = "/home/jcavner/PhyloXM_Examples/"
+   #with open(os.path.join(treeDir,'resolvedPolyWithoutBranchLen.json'),'w') as f:
+   #   f.write(json.dumps(newTree,sort_keys=True, indent=4))
+   
+   
+   #newTree.writeTree("/home/jcavner/PhyloXM_Examples/resolvedPolyWithoutBranchLen.json")
    
    #print "first tips ", to.tipCount
    #print "first internal ",to.internalCount
    #print
-   
-   #treeDir = "/home/jcavner/PhyloXM_Examples/"
-   #with open(os.path.join(treeDir,'Charolettetree_withPoly_2.json'),'w') as f:
-   #   f.write(json.dumps(to.tree,sort_keys=True, indent=4))
    
    #rt = to.rTree(125)
    #to.makePaths(to.tree)
@@ -640,8 +693,8 @@ if __name__ == "__main__":
    #edges = to._getEdges()
    #tree = to._makeCladeFromEdges(edges,lengths=True)
    
-   p_t = to.dropTips(['B','D','H','I','J','K']) # 'A','C','D' # 'B','D'
-   p_t.writeTree("/home/jcavner/PhyloXM_Examples/test_drop.json")
+   #p_t = to.dropTips(['B','D','H','I','J','K']) # 'A','C','D' # 'B','D'
+   #p_t.writeTree("/home/jcavner/PhyloXM_Examples/test_drop.json")
    
    #treeDir = "/home/jcavner/PhyloXM_Examples/"
    #with open(os.path.join(treeDir,'tree_fromEdges.json'),'w') as f:
