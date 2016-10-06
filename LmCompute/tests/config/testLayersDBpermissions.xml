@@ -1,0 +1,16 @@
+<lmTest>
+   <testType>system</testType>
+   <name>Test layers.db file permissions</name>
+   <description>
+      This test checks that the layers.db file has correct permissions so that
+      it can be accessed from the nodes.  It should not have setuid / setgid
+      permission ('s' or 'S')
+   </description>
+   <testLevel>1</testLevel>
+   <!-- TODO: Use env variable or populate this on roll build -->
+   <command>
+      stat -c "%a" /share/lm/data/layers/layers.db | awk '{if (length($1)==4) {$V=substr($1, 1, 1); if (($V==2) || ($V==3) || ($V==6) || ($V==7)) {exit 2} else {exit 1}} else {exit 1}}'
+   </command>
+   <passMsg>Layers.db file has correct permissions</passMsg>
+   <failMsg>Layers.db has setgid bit set</failMsg>
+</lmTest>
