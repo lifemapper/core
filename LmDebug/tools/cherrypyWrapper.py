@@ -37,7 +37,7 @@ from urlparse import urlparse
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmCommon.common.singleton import singleton
 from LmWebServer.services.common.svc import svc 
-from LmWebServer.common.localconstants import CP_CONFIG_FILE
+from LmServer.common.lmconstants import CP_CONFIG_FILE
 
 
 LOCAL_IP = '127.0.0.1'
