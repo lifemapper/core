@@ -25,9 +25,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 
-@note: Inputs could be objects or job objects
 @todo: Many functions can take a subworkflow or a pre-existing object, handle that
-@note: Start by using job objects
 @note: Let job server handle object updates for now
 @todo: Job request dir and python command constants need to move out of compute
 @todo:   Or, use $PYTHON if that works and job requests will be generated in workspace
@@ -44,13 +42,17 @@ from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
 # TODO: Okay that this in server?
 from LmServer.common.localconstants import APP_PATH
+from LmServer.makefow.makeJobCommand import (makeBisonOccurrenceSetCommand,
+                                             makeMaxentSdmModelCommand,
+                                             makeMaxentSdmProjectionCommand,
+                                             makeOmSdmModelCommand,
+                                             makeOmSdmProjectionCommand)
+
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
 BUILD_JOB_REQUEST_CMD = "LOCAL $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
 LM_JOB_RUNNER_CMD = "$PYTHON $RUNNER {jrFn}"
-SINGLE_SPECIES_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/single')
-MULTI_SPECIES_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/multi')
 UPDATE_DB_CMD = "$PYTHON $UPDATE_DB_SCRIPT {processType} {objId} {status}"
 
 # .............................................................................
@@ -124,7 +126,6 @@ class LMMakeflowDocument(LMObject):
                self.buildProjection(item)
             else:
                raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
-         
          
    # ...........................
    def addBisonOccurrenceSet(self, occ):
