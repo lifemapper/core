@@ -695,7 +695,7 @@ class IdigbioAPI(APIQuery):
 
 # ...............................................
 # ...............................................
-def testIdigbioTaxonIds(infname):
+def testIdigbioTaxonIds(testcount, infname):
    import os
 #    statii = {}
    # Output
@@ -710,7 +710,7 @@ def testIdigbioTaxonIds(infname):
    idigList = []
    with open(infname, 'r') as inf:
 #          with line in file:
-      for i in range(10):
+      for i in range(testcount):
          line = inf.readline()
          vals = []
          if line is not None:
@@ -805,26 +805,23 @@ if __name__ == '__main__':
       print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
          
    if idigbio:
-      infname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
-#       idigList =  testIdigbioTaxonIds(infname)
+      infname = '/tank/data/input/idigbio/taxon_ids.txt'
+      testcount = 20
+      idigList =  testIdigbioTaxonIds(testcount, infname)
 
       # ******************* iDigBio ********************************
-      # Test GBIF TaxonIds from iDigBio list
-      idigList = [(4990907, 65932, 'megascelis subtilis'), 
-                  (5171118, 50533, 'gea argiopides'), 
-                  (2437967, 129988, 'peromyscus maniculatus'),
-                  (4990907, 65932, 'megascelis subtilis'),
-                  (5158206, 63971, 'urana')]
+#       idigList = [(4990907, 65932, 'megascelis subtilis'), 
+#                   (5171118, 50533, 'gea argiopides'), 
+#                   (2437967, 129988, 'peromyscus maniculatus'),
+#                   (4990907, 65932, 'megascelis subtilis'),
+#                   (5158206, 63971, 'urana')]
       for currGbifTaxonId, currReportedCount, currName in idigList:
-         print currGbifTaxonId
          # direct query
          api = IdigbioAPI()
          occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
-         url1 = api.url
-         print api.url
          print api.baseurl
          print api._otherFilters
          print api._qFilters
-         
          print("Retrieved {} records for gbif taxonid {}"
                .format(len(occList1), currGbifTaxonId))
+         print
