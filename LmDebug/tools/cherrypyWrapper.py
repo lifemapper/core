@@ -37,7 +37,7 @@ from urlparse import urlparse
 from LmServer.common.localconstants import WEBSERVICES_ROOT
 from LmCommon.common.singleton import singleton
 from LmWebServer.services.common.svc import svc 
-from LmServer.common.lmconstants import CP_CONFIG_FILE
+from LmServer.common.lmconstants import CHERRYPY_CONFIG_FILE
 
 
 LOCAL_IP = '127.0.0.1'
@@ -54,8 +54,8 @@ class AppWrapper(object):
    """
    # ..............................
    def __init__(self):
-      cherrypy.config.update(CP_CONFIG_FILE)
-      self.app = cherrypy.Application(svc(), config=CP_CONFIG_FILE)
+      cherrypy.config.update(CHERRYPY_CONFIG_FILE)
+      self.app = cherrypy.Application(svc(), config=CHERRYPY_CONFIG_FILE)
       
 # .............................................................................
 def getApp():
