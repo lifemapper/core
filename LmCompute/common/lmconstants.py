@@ -44,12 +44,12 @@ ME_CMD = os.path.join(LM_PATH, 'LmCompute/apps/maxent.jar')
 # JOB_OUTPUT_PATH --> WORKSPACE_PATH
 WORKSPACE_PATH = os.path.join(SCRATCH_PATH, 'work')
 TEMPORARY_FILE_PATH = os.path.join(SCRATCH_PATH, 'temp')
+COMPUTE_LOG_PATH = os.path.join(SCRATCH_PATH, 'log')
 
 SAMPLE_JOBS_PATH = os.path.join(LM_DISK, 'tests/config/sampleJobs')
 SAMPLE_LAYERS_PATH = os.path.join(LM_DISK, 'tests/data/layers/testLayers.txt')
 SAMPLE_DATA_PATH = os.path.join(LM_DISK, 'tests/data')
 METRICS_STORAGE_PATH = os.path.join(LM_DISK, 'metrics')
-COMPUTE_LOG_PATH = os.path.join(LM_DISK, 'logs')
 
 JAVA_SYSTEM_ROOT = os.path.join(LM_DISK, '.java')
 JAVA_USER_ROOT = os.path.join(JAVA_SYSTEM_ROOT, '.userPrefs')
