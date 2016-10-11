@@ -59,12 +59,11 @@ class JobRunner(object):
    processType = ''
    
    # ..................................
-   def __init__(self, jobXmlFn, jobName=None, outDir=None, workDir=None, 
+   def __init__(self, jobName=None, outDir=None, workDir=None, 
                       metricsFn=None, logFn=None, logLevel=None, statusFn=None):
       """
       @summary: Constructor for base class, should be called by subclasses or
                    inherited
-      @param jobXmlFn: A file name of an XML file with job parameters
       @param jobName: (optional) The name of the job (used for work directory 
                                     and logging
       @param outDir: (optional) A directory where outputs should be written.  
@@ -81,7 +80,6 @@ class JobRunner(object):
       @param statusFn: (optional) If not None, write final status of job here
       """
       self.metrics = {}
-      self.jobXmlFn = jobXmlFn
       
       # If job name is None, generate one
       if jobName is not None:
