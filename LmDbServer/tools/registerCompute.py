@@ -33,7 +33,7 @@ from LmDbServer.tools.computeMeta import LM_COMPUTE_INSTANCES
 
 from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
-from LmServer.common.log import DebugLogger
+from LmServer.common.log import ConsoleLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe
 
@@ -96,7 +96,7 @@ def registerStandardComputes(scribe, currtime):
    
 # ...............................................
 if __name__ == '__main__':  
-   logger = DebugLogger()
+   logger = ConsoleLogger()
    currtime = DT.gmt().mjd
    scribe = Scribe(logger)
    success = scribe.openConnections()

@@ -1,7 +1,0 @@
-; .............................................................................
-; Lifemapper configuration file for site-specific parameters 
-; This file must be renamed or appended to site.ini, and installed in  
-;   @LMHOME@/config to override variables in LIFEMAPPER_COMPUTE_CONFIG_FILE
-;   and LIFEMAPPER_SERVER_CONFIG_FILE
-; NOTE: For list variables, separate with commas, no additional spaces, one line
-; .............................................................................
