@@ -34,19 +34,18 @@ from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import OutputFormat, ProcessType
 
 # .............................................................................
-def createBisonShapefileFromUrl(url, basePath, maxPoints, jobName):
+def createBisonShapefileFromUrl(url, basePath, maxPoints, outName):
    """
    @summary: Receives a BISON url, pulls in the data, and returns a shapefile
    @param url: The url to pull data from
    @param basePath: A directory where the shapefile should be stored
-   @param env: An EnvironmentMethods class that can be used to get locations in 
-                  the environment
    @param maxPoints: The maximum number of points to include if subsetting
+   @param outName: The name to use for the shapefiles
    @return: The name of the file(s) where the data is stored (.shp extension)
    @rtype: String and String/None
    """
    outfilename = os.path.join(basePath, "{baseName}{ext}".format(
-                                    baseName=jobName, ext=OutputFormat.SHAPE))
+                                    baseName=outName, ext=OutputFormat.SHAPE))
    subsetOutfilename = None
    
    occAPI = BisonAPI.initFromUrl(url)
@@ -56,7 +55,7 @@ def createBisonShapefileFromUrl(url, basePath, maxPoints, jobName):
    if count > maxPoints:
       subsetOutfilename = os.path.join(basePath, 
                                  "{baseName}_subset{ext}".format(
-                                     baseName=jobName, ext=OutputFormat.SHAPE))
+                                     baseName=outName, ext=OutputFormat.SHAPE))
 
    shaper = ShapeShifter(ProcessType.BISON_TAXA_OCCURRENCE, occList, count)
    shaper.writeOccurrences(outfilename, maxPoints=maxPoints, 
