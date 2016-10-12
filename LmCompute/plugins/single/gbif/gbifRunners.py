@@ -36,6 +36,7 @@ import zipfile
 from LmCommon.common.lmconstants import JobStatus, ProcessType, \
                                         SHAPEFILE_EXTENSIONS
 
+from LmCompute.common.lmObj import LmException
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
 
 from LmCompute.plugins.single.gbif.gbif import parseGBIFData
@@ -49,10 +50,36 @@ class GBIFRetrieverRunner(PythonRunner):
    PROCESS_TYPE = ProcessType.GBIF_TAXA_OCCURRENCE
 
    # ...................................
+   def __init__(self, pointsCsvFn, count, maxPoints, jobName=None, outName=None, 
+                      outDir=None, workDir=None, metricsFn=None, logFn=None, 
+                      logLevel=None, statusFn=None):
+      """
+      @summary: Constructor for GBIF points processing
+      @param pointsCsvFn: A path to a CSV file with raw points
+      @param count: The reported count for the raw csv file
+      @param maxPoints: The maximum number of points to include before subsetting
+      @param outName: (optional) This will be used to name the output shapefiles
+      """
+      if os.path.exists(pointsCsvFn):
+         with open(pointsCsvFn) as inF:
+            self.csvInputBlob = inF.read()
+      else:
+         raise LmException(JobStatus.IO_NOT_FOUND, 
+                           "Could not open raw CSV: {0}".format(pointsCsvFn))
+      
+      self.count = count
+      self.maxPoints = maxPoints
+      PythonRunner.__init__(self, jobName=jobName, outDir=outDir, 
+                            workDir=workDir, metricsFn=metricsFn, logFn=logFn,
+                            logLevel=logLevel, statusFn=statusFn)
+      if outName is None:
+         self.outName = self.jobName
+      else:
+         self.outName = outName
+
+   # ...................................
    def _processJobInput(self):
       # Get the job inputs
-      self.maxPoints = int(self.job.maxPoints)
-      self.csvInputBlob = self.job.points
       self.count = int(self.job.count)
       if self.count < 0:
          self.count = len(self.csvInputBlob.split('\n'))
@@ -67,7 +94,7 @@ class GBIFRetrieverRunner(PythonRunner):
                                                                self.csvInputBlob, 
                                                                self.outputPath, 
                                                                self.maxPoints,
-                                                               self.jobName)
+                                                               self.outName)
       
    # ...................................
    def _getFiles(self, shapefileName):
@@ -81,8 +108,6 @@ class GBIFRetrieverRunner(PythonRunner):
       """
       @summary: Move outputs we want to keep to the specified location
       @todo: Determine if anything else should be moved
-      @todo: Should we take a name parameter?
-      @todo: What should file names be?
       """
       # Options to keep:
       #  metrics
