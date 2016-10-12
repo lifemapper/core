@@ -1808,7 +1808,6 @@ BEGIN
             SELECT INTO id last_value FROM lm3.occurrenceset_occurrencesetid_seq;
             idstr = cast(id as varchar);
             occmetadataUrl := replace(metadataUrlprefix, '#id#', idstr);
-            -- occmetadataUrl := metadataUrlprefix || '?map=data_' || idstr || '&layers=occ_' || idstr;
             UPDATE lm3.OccurrenceSet SET metadataUrl = occmetadataUrl WHERE occurrenceSetId = id;
          END IF;
          

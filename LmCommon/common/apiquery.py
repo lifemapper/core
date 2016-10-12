@@ -279,6 +279,7 @@ class APIQuery(object):
                                   headers=self.headers)
       except Exception, e:
          try:
+#             response.raise_for_status()
             retcode = response.status_code
             reason = response.reason
          except:
@@ -299,10 +300,11 @@ class APIQuery(object):
                self.output = None   
          except Exception, e:
             raise Exception('Failed to interpret output of URL {}, content = {}; ({})'
-                            .format(self.url, response.content, str(e)))
+                            .format(self.baseurl, response.content, str(e)))
       else:
-         print('Failed query: {}'.format(response.content))
-         self.output = None      
+         print 'Raising exception for baseurl {} and query {}'.format(
+                                                   self.baseurl, queryAsString)
+         response.raise_for_status()
 
 # .............................................................................
 class BisonAPI(APIQuery):
@@ -746,7 +748,7 @@ def testIdigbioTaxonIds(infname):
 # .............................................................................
 if __name__ == '__main__':
    idigbio = gbif = bison = False
-   bison = True
+   idigbio = True
    
    if bison:
       # ******************* BISON ********************************
@@ -804,16 +806,25 @@ if __name__ == '__main__':
          
    if idigbio:
       infname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
-      idigList =  testIdigbioTaxonIds(infname)
+#       idigList =  testIdigbioTaxonIds(infname)
 
       # ******************* iDigBio ********************************
       # Test GBIF TaxonIds from iDigBio list
+      idigList = [(4990907, 65932, 'megascelis subtilis'), 
+                  (5171118, 50533, 'gea argiopides'), 
+                  (2437967, 129988, 'peromyscus maniculatus'),
+                  (4990907, 65932, 'megascelis subtilis'),
+                  (5158206, 63971, 'urana')]
       for currGbifTaxonId, currReportedCount, currName in idigList:
          print currGbifTaxonId
          # direct query
          api = IdigbioAPI()
          occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
          url1 = api.url
+         print api.url
+         print api.baseurl
+         print api._otherFilters
+         print api._qFilters
          
          print("Retrieved {} records for gbif taxonid {}"
                .format(len(occList1), currGbifTaxonId))

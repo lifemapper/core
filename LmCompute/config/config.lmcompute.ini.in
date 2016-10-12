@@ -9,7 +9,6 @@ LOCAL_MACHINE_ID:
 
 ; ...............................................
 [LmCompute - commands]
-GDALINFO_CMD: @PKGROOT@/bin/gdalinfo
 PYTHON_CMD: @PYBIN@
   
 ; ...............................................
@@ -32,13 +31,13 @@ PLUGINS_PATH: @LMHOME@/LmCompute/plugins
 SCENARIO_PACKAGE_SEED: @SCENARIO_PACKAGE_SEED@
 
 [LmCompute - plugins - maxent]
-JAVA_MAX_MEM_OPTION = 2g
-JAVA_INIT_MEM_OPTION = 2g
+JAVA_MAX_MEM_OPTION: 2g
+JAVA_INIT_MEM_OPTION: 2g
 JAVA_EXE: @JAVABIN@
 
 ; For converting ASCIIs to MXEs
-CONVERT_JAVA_MAX_MEM_OPTION = 512m
-CONVERT_JAVA_INIT_MEM_OPTION = 512m
+CONVERT_JAVA_MAX_MEM_OPTION: 512m
+CONVERT_JAVA_INIT_MEM_OPTION: 512m
 
 ; .............................................................................
 ; LmClient

@@ -22,7 +22,6 @@
           02110-1301, USA.
 """
 import inspect
-from LmCompute.common.lmconstants import BIN_PATH
 try:
    from osgeo.gdalconst import (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
                         GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 

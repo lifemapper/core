@@ -37,6 +37,7 @@ import zipfile
 from LmCommon.common.lmconstants import JobStatus, ProcessType, \
                                         SHAPEFILE_EXTENSIONS
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
+from LmCompute.common.lmObj import LmException
 from LmCompute.plugins.sdm.idigbio.idigbio import parseIDigData
 
 # .............................................................................
@@ -61,6 +62,8 @@ class IDIGBIORetrieverRunner(PythonRunner):
       try:
          self.shapefileLocation, self.subsetLocation = parseIDigData(
                   self.taxonKey, self.outputPath, self.maxPoints, self.jobName)
+      except LmException, e:
+         self.status = e.code
       except urllib2.HTTPError, e:
          # The HTTP_GENERAL_ERROR status is 4000, each of the HTTP error codes
          #   corresponds to 4000 + the HTTP error code
