@@ -35,6 +35,7 @@ from StringIO import StringIO
 import zipfile
 
 from LmCommon.common.lmconstants import JobStatus, ProcessType, OutputFormat
+from LmCommon.common.lmXml import deserialize, fromstring
 from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmCompute.common.layerManager import (convertAndModifyAsciiToTiff, 
@@ -53,6 +54,19 @@ class MEModelRunner(ApplicationRunner):
    @summary: MaxEnt model job runner
    """
    PROCESS_TYPE = ProcessType.ATT_MODEL
+   # ...................................
+   def __init__(self, jobXml, jobName=None, outDir=None, workDir=None, 
+                      metricsFn=None, logFn=None, logLevel=None, statusFn=None):
+      """
+      @summary: Constructor for ME model
+      @param jobXml: A XML job configuration document
+      """
+      self.job = deserialize(fromstring(open(jobXmlFn).read()))
+      ApplicationRunner.__init__(self, jobName=jobName, outDir=outDir, 
+                                 workDir=workDir, metricsFn=metricsFn,
+                                 logFn=logFn, logLevel=logLevel, 
+                                 statusFn=statusFn)
+      
    # ...................................
    def _buildCommand(self):
       """
@@ -197,7 +211,7 @@ class MEModelRunner(ApplicationRunner):
       self.status = JobStatus.ACQUIRING_INPUTS
       self._update()
 
-      handleLayers(layers, self.env, self.dataDir, self.jobLayerDir, mask=mask)
+      handleLayers(layers, self.dataDir, self.jobLayerDir, mask=mask)
       self.log.debug("Inputs acquired...")
 
       # Points
@@ -248,6 +262,19 @@ class MEProjectionRunner(ApplicationRunner):
    @summary: openModeller projection job runner
    """
    PROCESS_TYPE = ProcessType.ATT_PROJECT
+   # ...................................
+   def __init__(self, jobXml, jobName=None, outDir=None, workDir=None, 
+                      metricsFn=None, logFn=None, logLevel=None, statusFn=None):
+      """
+      @summary: Constructor for ME projection
+      @param jobXml: A XML job configuration document
+      """
+      self.job = deserialize(fromstring(open(jobXmlFn).read()))
+      ApplicationRunner.__init__(self, jobName=jobName, outDir=outDir, 
+                                 workDir=workDir, metricsFn=metricsFn,
+                                 logFn=logFn, logLevel=logLevel, 
+                                 statusFn=statusFn)
+      
    # .......................................
    def _buildCommand(self):
       """
@@ -355,8 +382,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       self.status = JobStatus.ACQUIRING_INPUTS
       self._update()
       
-      handleLayers(layers, self.env, self.dataDir, self.jobLayerDir, mask=mask)
-      #handleLayers(self.job.layers, self.env, self.dataDir, self.jobLayerDir)
+      handleLayers(layers, self.dataDir, self.jobLayerDir, mask=mask)
       
       
       ## Get omission file from package
@@ -498,7 +524,7 @@ def processParameter(param, value):
       return None
 
 # .................................
-def handleLayers(layers, env, dataDir, jobLayerDir, mask=(None, None)):
+def handleLayers(layers, dataDir, jobLayerDir, mask=(None, None)):
    """
    @summary: Iterates through the list of layer urls and stores them on the 
                 file system if they are not there yet.  Then creates links
@@ -506,7 +532,6 @@ def handleLayers(layers, env, dataDir, jobLayerDir, mask=(None, None)):
                 long term on the machine but still used per job.
    @param layers: A list of tuples of the form layer id, layer url
    @param layerUrls: List of layer urls
-   @param env: The environment to operate in
    @param dataDir: Directory to store layers
    @param jobLayerDir: The layer directory of the job
    @param mask: (optional) Mask layer to be added if provided (layer id, layer url)
