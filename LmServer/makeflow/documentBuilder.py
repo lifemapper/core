@@ -30,7 +30,7 @@
 @todo: Job request dir and python command constants need to move out of compute
 @todo:   Or, use $PYTHON if that works and job requests will be generated in workspace
 @todo: Should we tell dependencies to compute if needed?
-
+@todo: remove status files
 """
 import os
 
@@ -43,6 +43,8 @@ from LmServer.common.lmconstants import JobFamily
 # TODO: Okay that this in server?
 from LmServer.common.localconstants import APP_PATH
 from LmServer.makefow.makeJobCommand import (makeBisonOccurrenceSetCommand,
+                                             makeGbifOccurrenceSetCommand,
+                                             makeIdigbioOccurrenceSetCommand,
                                              makeMaxentSdmModelCommand,
                                              makeMaxentSdmProjectionCommand,
                                              makeOmSdmModelCommand,
