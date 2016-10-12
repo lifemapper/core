@@ -236,9 +236,12 @@ class ShapeShifter(object):
          # Loop through records
          recDict = self._getRecord()
          while recDict:
-            self._createFillFeat(lyrDef, recDict, newLyr)
-            if subsetDs is not None and self._currRecum in subsetIndices:
-               self._createFillFeat(lyrDef, recDict, subsetLyr)
+            try:
+               self._createFillFeat(lyrDef, recDict, newLyr)
+               if subsetDs is not None and self._currRecum in subsetIndices:
+                  self._createFillFeat(lyrDef, recDict, subsetLyr)
+            except Exception, e:
+               print('Failed to create record ({})'.format(fromUnicode(toUnicode(e))))
             recDict = self._getRecord()
                               
          # Return metadata
@@ -260,8 +263,12 @@ class ShapeShifter(object):
             self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
       except Exception, e:
-         print('Unable to read or write data ({})'.format(fromUnicode(toUnicode(e))))
-         raise e
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                           'Unable to read or write data ({})'
+                           .format(fromUnicode(toUnicode(e))))
+      
+      self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount,
+                        subsetFname=subsetfname, subsetCount=sfcount)
    #    try:
    #       shpTreeCmd = os.path.join(appPath, "shptree")
    #       retcode = subprocess.call([shpTreeCmd, "%s" % outfname])
@@ -329,9 +336,12 @@ class ShapeShifter(object):
          # Loop through records
          recDict = self._getRecord()
          while recDict is not None:
-            self._createFillFeat(lyrDef, recDict, newLyr)
-            if subsetDs is not None and self._currRecum in subsetIndices:
-               self._createFillFeat(lyrDef, recDict, subsetLyr)
+            try:
+               self._createFillFeat(lyrDef, recDict, newLyr)
+               if subsetDs is not None and self._currRecum in subsetIndices:
+                  self._createFillFeat(lyrDef, recDict, subsetLyr)
+            except Exception, e:
+               print('Failed to create record ({})'.format(fromUnicode(toUnicode(e))))
             recDict = self._getRecord()
                               
          # Return metadata
@@ -455,22 +465,27 @@ class ShapeShifter(object):
       success = False
       while not success and len(self.rawdata) > 0: 
          try:
-            recDict = self.rawdata.pop()
+            tmpDict = self.rawdata.pop()
          except:
+            # End of data
             success = True
          else:
             try:
-               float(recDict[self.xField])
-               float(recDict[self.yField])
+               float(tmpDict[self.xField])
+               float(tmpDict[self.yField])
             except OverflowError, e:
                print('OverflowError ({}), moving on'.format(fromUnicode(toUnicode(e))))
             except ValueError, e:
-               print('Ignoring invalid lat {}, long {} data'
-                     .format(recDict[self.xField], recDict[self.yField]))
+               print('Ignoring invalid data: lat {}, long {}'
+                     .format(tmpDict[self.xField], tmpDict[self.yField]))
+            except KeyError, e:
+               print('Missing fields: lat {}, long {}'
+                     .format(self.xField, self.yField))
             except Exception, e:
                print('Exception ({})'.format(fromUnicode(toUnicode(e))))
             else:
                success = True
+               recDict = tmpDict
       return recDict
    
    # ...............................................
