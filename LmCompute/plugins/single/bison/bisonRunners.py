@@ -48,19 +48,34 @@ class BisonRetrieverRunner(PythonRunner):
    PROCESS_TYPE = ProcessType.BISON_TAXA_OCCURRENCE
 
    # ...................................
+   def __init__(self, pointsUrl, maxPoints, jobName=None, outName=None, 
+                      outDir=None, workDir=None, metricsFn=None, logFn=None, 
+                      logLevel=None, statusFn=None):
+      """
+      @summary: Constructor for Bison points retrieval
+      @param pointsUrl: The URL fed to API query to retrieve points from BISON
+      @param maxPoints: The maximum number of points to include before subsetting
+      @param outName: (optional) This will be used to name the output shapefiles
+      """
+      self.pointsUrl = pointsUrl
+      self.maxPoints = maxPoints
+      PythonRunner.__init__(self, jobName=jobName, outDir=outDir, 
+                            workDir=workDir, metricsFn=metricsFn, logFn=logFn,
+                            logLevel=logLevel, statusFn=statusFn)
+      if outName is None:
+         self.outName = self.jobName
+      else:
+         self.outName = outName
+
+   # ...................................
    def _processJobInput(self):
-      # Get the job inputs
-      self.pointsUrl = self.job.pointsUrl
       
-      # TODO: Remove testing URL below; fix parsing of URL string in 
-      #       LmCompute.environment.testEnv  TestEnv.requestJob
       moreFilters = BISON_OCC_FILTERS.copy()
       for k,v in BISON_FILTERS.iteritems():
          moreFilters[k] = v
       moreUrl = urlencode(moreFilters)
-      self.pointsUrl = '&'.join([self.job.pointsUrl, moreUrl])
+      self.pointsUrl = '&'.join([self.pointsUrl, moreUrl])
 
-      self.maxPoints = int(self.job.maxPoints)
       # Set job outputs
       self.shapefileLocation = None 
       self.subsetLocation = None
@@ -71,7 +86,7 @@ class BisonRetrieverRunner(PythonRunner):
       try:
          self.shapefileLocation, self.subsetLocation = \
             createBisonShapefileFromUrl(self.pointsUrl, self.workDir, 
-                                        self.maxPoints, self.jobName)
+                                        self.maxPoints, self.outName)
       except urllib2.HTTPError, e:
          # The HTTP_GENERAL_ERROR status is 4000, each of the HTTP error codes
          #   corresponds to 4000 + the HTTP error code
@@ -92,8 +107,6 @@ class BisonRetrieverRunner(PythonRunner):
       """
       @summary: Move outputs we want to keep to the specified location
       @todo: Determine if anything else should be moved
-      @todo: Should we take a name parameter?
-      @todo: What should file names be?
       """
       # Options to keep:
       #  metrics
