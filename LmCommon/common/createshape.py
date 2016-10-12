@@ -463,6 +463,7 @@ class ShapeShifter(object):
       """
       recDict = None
       success = False
+      badRecCount = 0
       while not success and len(self.rawdata) > 0: 
          try:
             tmpDict = self.rawdata.pop()
@@ -473,19 +474,13 @@ class ShapeShifter(object):
             try:
                float(tmpDict[self.xField])
                float(tmpDict[self.yField])
-            except OverflowError, e:
-               print('OverflowError ({}), moving on'.format(fromUnicode(toUnicode(e))))
-            except ValueError, e:
-               print('Ignoring invalid data: lat {}, long {}'
-                     .format(tmpDict[self.xField], tmpDict[self.yField]))
-            except KeyError, e:
-               print('Missing fields: lat {}, long {}'
-                     .format(self.xField, self.yField))
             except Exception, e:
-               print('Exception ({})'.format(fromUnicode(toUnicode(e))))
+               badRecCount += 1
             else:
                success = True
                recDict = tmpDict
+      if recDict and badRecCount > 0:
+         print('Skipped over {} bad records'.format(badRecCount))
       return recDict
    
    # ...............................................
