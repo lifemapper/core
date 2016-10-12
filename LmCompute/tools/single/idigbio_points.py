@@ -56,12 +56,15 @@ if __name__ == "__main__":
    parser.add_argument('--cleanup', type=bool, dest='cleanUp', 
                                help="Clean up outputs or not", 
                                choices=[True, False])
-   parser.add_argument('jobXml', type=str, 
-                               help="Job configuration information XML file")
+   parser.add_argument('taxonKey', type=str, help="The taxon key to use for API Query")
+   parser.add_argument('maxPoints', type=int, help="The maximum number of points before subsetting")
+   # TODO: This can be optional, but we'll probably always use it
+   parser.add_argument('outName', type=str, help="Name to use when naming output shapefiles")
    
    args = parser.parse_args()
    
-   job = IDIGBIORetrieverRunner(args.jobXml, jobName=args.jobName, 
+   job = IDIGBIORetrieverRunner(args.taxonKey, args.maxPoints, 
+               outName=args.outName, jobName=args.jobName, 
                outDir=args.outDir, workDir=args.workDir, 
                metricsFn=args.metricsFn, logFn=args.logFn, 
                logLevel=args.logLevel, statusFn=args.statusFn)
