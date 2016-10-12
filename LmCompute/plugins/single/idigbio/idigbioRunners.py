@@ -48,10 +48,27 @@ class IDIGBIORetrieverRunner(PythonRunner):
    PROCESS_TYPE = ProcessType.IDIGBIO_TAXA_OCCURRENCE
 
    # ...................................
+   def __init__(self, taxonKey, maxPoints, jobName=None, outName=None, 
+                      outDir=None, workDir=None, metricsFn=None, logFn=None, 
+                      logLevel=None, statusFn=None):
+      """
+      @summary: Constructor for Bison points retrieval
+      @param taxonKey: The taxon key to use for querying the idigbio api
+      @param maxPoints: The maximum number of points to include before subsetting
+      @param outName: (optional) This will be used to name the output shapefiles
+      """
+      self.taxonKey = taxonKey
+      self.maxPoints = maxPoints
+      PythonRunner.__init__(self, jobName=jobName, outDir=outDir, 
+                            workDir=workDir, metricsFn=metricsFn, logFn=logFn,
+                            logLevel=logLevel, statusFn=statusFn)
+      if outName is None:
+         self.outName = self.jobName
+      else:
+         self.outName = outName
+
+   # ...................................
    def _processJobInput(self):
-      # Get the job inputs
-      self.taxonKey = self.job.taxonKey
-      self.maxPoints = int(self.job.maxPoints)
       # Set job outputs
       self.shapefileLocation = None 
       self.subsetLocation = None
