@@ -40,7 +40,7 @@ from LmCompute.common.lmObj import LmException
 
 
 # .............................................................................
-def parseGBIFData(count, csvInputBlob, basePath, maxPoints, jobName):
+def parseGBIFData(count, csvInputBlob, basePath, maxPoints, outName):
    """
    @summary: Parses a CSV-format GBIF data set and saves it to a shapefile in the 
                 specified location
@@ -54,14 +54,14 @@ def parseGBIFData(count, csvInputBlob, basePath, maxPoints, jobName):
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The CSV provided was empty")
    outfilename = os.path.join(basePath, "{baseName}{ext}".format(
-                                    baseName=jobName, ext=OutputFormat.SHAPE))
+                                    baseName=outName, ext=OutputFormat.SHAPE))
    subsetOutfilename = None
    subsetIndices = None
    
    if count > maxPoints:
       subsetOutfilename = os.path.join(basePath, 
                                  "{baseName}_subset{ext}".format(
-                                     baseName=jobName, ext=OutputFormat.SHAPE))
+                                     baseName=outName, ext=OutputFormat.SHAPE))
    
    shaper = ShapeShifter(ProcessType.GBIF_TAXA_OCCURRENCE, csvInputBlob, count)
    shaper.writeOccurrences(outfilename, maxPoints=maxPoints, 
