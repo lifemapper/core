@@ -250,7 +250,7 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset {}'.format(outfname))
+         print('Closed/wrote []-feature dataset {}'.format(fcount, outfname))
          basename, ext = os.path.splitext(outfname)
          self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
                              fcount, minX, minY, maxX, maxY)
@@ -258,7 +258,7 @@ class ShapeShifter(object):
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print('Closed/wrote dataset {}'.format(subsetfname))
+            print('Closed/wrote {}-feature dataset {}'.format(sfcount, subsetfname))
             basename, ext = os.path.splitext(subsetfname)
             self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
@@ -350,12 +350,12 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset {}'.format(outfname))
+         print('Closed/wrote {}-feature dataset {}'.format(fcount, outfname))
                            
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print('Closed/wrote dataset {}'.format(subsetfname))
+            print('Closed/wrote {}-feature dataset {}'.format(sfcount, subsetfname))
             
       except Exception, e:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
