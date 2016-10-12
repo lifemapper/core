@@ -56,12 +56,17 @@ if __name__ == "__main__":
    parser.add_argument('--cleanup', type=bool, dest='cleanUp', 
                                help="Clean up outputs or not", 
                                choices=[True, False])
-   parser.add_argument('jobXml', type=str, 
-                               help="Job configuration information XML file")
+
+   parser.add_argument('pointsCsvFn', type=str, help="A path to a CSV file with raw GBIF points")
+   parser.add_argument('count', type=int, help="A reported count of entries in the CSV file")
+   parser.add_argument('maxPoints', type=int, help="The maximum number of points before subsetting")
+   # TODO: This can be optional, but we'll probably always use it
+   parser.add_argument('outName', type=str, help="Name to use when naming output shapefiles")
    
    args = parser.parse_args()
    
-   job = GBIFRetrieverRunner(args.jobXml, jobName=args.jobName, 
+   job = GBIFRetrieverRunner(args.pointsCsvFn, args.count, args.maxPoints, 
+               jobName=args.jobName, outName=args.outName, 
                outDir=args.outDir, workDir=args.workDir, 
                metricsFn=args.metricsFn, logFn=args.logFn, 
                logLevel=args.logLevel, statusFn=args.statusFn)
