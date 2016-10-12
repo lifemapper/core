@@ -38,7 +38,7 @@ from LmCommon.common.lmconstants import OutputFormat, ProcessType
 
 
 # .............................................................................
-def parseIDigData(taxonKey, basePath, maxPoints, jobName):
+def parseIDigData(taxonKey, basePath, maxPoints, outName):
    """
    @summary: Receives an iDigBio url, pulls in the data, and returns a shapefile
    @param taxonKey: The GBIF taxonID (in iDigBio) for which to pull data
@@ -50,7 +50,7 @@ def parseIDigData(taxonKey, basePath, maxPoints, jobName):
    @rtype: String and String/None
    """
    outfilename = os.path.join(basePath, "{baseName}{ext}".format(
-                                    baseName=jobName, ext=OutputFormat.SHAPE))
+                                    baseName=outName, ext=OutputFormat.SHAPE))
    subsetOutfilename = None
 
    occAPI = IdigbioAPI()
@@ -60,7 +60,7 @@ def parseIDigData(taxonKey, basePath, maxPoints, jobName):
    if count > maxPoints:
       subsetOutfilename = os.path.join(basePath, 
                                  "{baseName}_subset{ext}".format(
-                                     baseName=jobName, ext=OutputFormat.SHAPE))
+                                     baseName=outName, ext=OutputFormat.SHAPE))
    
    shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
    shaper.writeOccurrences(outfilename, maxPoints=maxPoints, 
