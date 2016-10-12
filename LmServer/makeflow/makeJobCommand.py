@@ -117,6 +117,38 @@ def makeGbifOccurrenceSetCommand(occ):
 
 # .............................................................................
 def makeIdigbioOccurrenceSetCommand(occ):
+   """
+   @summary: Generate command to fill an iDigBio occurrence set
+   """
+   # NOTE: This may need to change to something else in the future, but for now,
+   #          we'll save a step and have the outputs written to their final 
+   #          location
+   outDir = os.path.dirname(occ.createLocalDLocation())
+   occStatusFn = "{0}-{1}.status".format(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occ.getId())
+   
+   options = {
+      "-n" : "{0}-{1}".format(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occ.getId()),
+      "-o" : outDir,
+      "-w" : WORK_DIR,
+      "-l" : "idigbioPoints-{0}.log".format(occ.getId()),
+      "-s" : occStatusFn,
+   }
+
+   # Join arguments
+   args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+   
+   taxonKey = occ.getRawDLocation()
+   maxPoints = POINT_COUNT_MAX
+   outName = os.path.basename(occ.createLocalDLocation()).replace('.shp', '')
+
+   occCmd = "{python} {jobRunner} {taxonKey} {maxPoints} {outName} {options}".format(
+      python="$PYTHON",
+      jobRunner=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, "idigbio_points.py"),
+      taxonKey=taxonKey,
+      maxPoints=maxPoints,
+      outName=outName,
+      options=args)
+   
    return occCmd, occStatusFn
 
 # .............................................................................
