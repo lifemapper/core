@@ -79,26 +79,6 @@ New install (destroys data)
     # bash add-server.sh > add-server.out 2>&1
     # bash add-compute.sh > add-compute.out 2>&1
     
-To change SCENARIO_PACKAGE and/or ARCHIVE_USER before reboot
-------------------------------------------------------------
-
-#. **To change defaults**, for either lifemapper-compute or lifemapper-server,
-   such as DATASOURCE, ARCHIVE_USER, compute parameters,
-   create the configuration file site.ini (in /opt/lifemapper/config/) 
-   prior to reboot.  Two example files are present in that same directory.
-   Variables to override for both rolls should be placed in the site.ini file.
-   If you change the SCENARIO_PACKAGE variable for LmServer, make sure to
-   also change the SCENARIO_PACKAGE_SEED variable for LmCompute.
-
-   #. If you updated the SCENARIO_PACKAGE (with or without ARCHIVE_USER):
-   
-      #. Create a [ LmCompute - environment ] section containing  
-         the variable SCENARIO_PACKAGE_SEED with the same value
-
-      #. Run the following to download, then catalog LmServer metadata ::
-   
-         # rocks/bin/getClimateData
-
 Finish install
 --------------
 
@@ -106,38 +86,53 @@ Finish install
 
    # reboot
    
-Add compute input layers to the Frontend
-----------------------------------------
+(OPT) To change defaults
+------------------------
 
-#. Seed the data for LmCompute on the frontend ::
+#. **To change defaults**, for either lifemapper-compute or lifemapper-server,
+   such as DATASOURCE, ARCHIVE_USER, compute parameters,
 
-   # /opt/lifemapper/rocks/bin/seedData
+   #. create the configuration file site.ini (in /opt/lifemapper/config/) 
+      prior to reboot.  Two example files are present in that same directory.
+      Variables to override for both rolls should be placed in the site.ini file.
+      
+   #. If you wish to change the SCENARIO_PACKAGE (and corresponding 
+      DEFAULT_SCENARIO) variables for LmServer, you must do this after the 
+      installation is complete (after reboot).
+
+   #. If you updated the SCENARIO_PACKAGE 
    
-To change SCENARIO_PACKAGE and/or ARCHIVE_USER after reboot
------------------------------------------------------------
+      #. Create a [ LmCompute - environment ] section containing  
+         the variable SCENARIO_PACKAGE_SEED with the same value
 
-#. Follow the **To change defaults** instructions under **New Install**
-
-   #. If you updated the SCENARIO_PACKAGE or ARCHIVE_USER:
-
-      #. Run the following to catalog LmServer metadata ::
+      #. Run the following to download data ::
    
-         # rocks/bin/fillDB
+         # rocks/bin/getClimateData
 
-   #. If you updated the SCENARIO_PACKAGE:
-
-      #. Seed the data for LmCompute on the frontend ::
+      #. Run the following to convert and catalog data for LmCompute ::
 
          # /opt/lifemapper/rocks/bin/seedData
 
+   #. If you updated the SCENARIO_PACKAGE or the ARCHIVE_USER
+   
+      #. Run the following to catalog metadata for LmServer::
+   
+         # rocks/bin/fillDB
+         
+
+Add compute input layers to the Frontend
+----------------------------------------
+
+#. Seed the data for LmCompute on the frontend (if not done in optional step
+   above) ::
+
+   # /opt/lifemapper/rocks/bin/seedData
 
 Install nodes from Frontend
 ---------------------------
 
-#. **(If update) Remove some compute-node rpms manually** 
-   
-   #. Do this just in case the rpm versions have not changed, to ensure that
-      scripts are run.::  
+#. **(Optional)** When updating an existing installation, remove unchanged 
+   compute-node rpms manually to ensure that scripts are run.::  
 
       # rocks run host compute 'rpm -el rocks-lmcompute'
     
@@ -154,9 +149,9 @@ Look for Errors
    initialization commands in log files in /tmp (these may complete up to 5
    minutes after reboot).  The post-99-lifemapper-lm*.log files contain all
    the output from all reinstall-reboot-triggered scripts and are created fresh 
-   each time.  All other logfiles have output appended to the end of an existing 
-   logfile (from previous runs) and will be useful if the script must be re-run
-   manually for testing.
+   each time.  All other logfiles are in /state/partition1/lmscratch/log 
+   and may be output appended to the end of an existing logfile (from previous 
+   runs) and will be useful if the script must be re-run manually for testing.
 #. **Clean compute nodes**  
    
 LmCompute
@@ -164,7 +159,7 @@ LmCompute
 
 #. Check LmCompute logfiles
 
-    * post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
+    * /tmp/post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
     * initLMcompute.log 
     * installComputeCronJobs.log
     * seedData.log (seedData must be run manually by user after reboot)
@@ -174,7 +169,7 @@ LmServer
 
 #. Check LmServer logfiles
 
-    * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
+    * /tmp/post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
     * initLM.log
     * installServerCronJobs.log
     * initDbserver.log (only if new db)
