@@ -690,7 +690,9 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=4):
    # Use GDAL to generate ASCII Grid 
    drv = gdal.GetDriverByName('AAIGrid')
    ds_in = gdal.Open(tiffFn)
-   ds_out = drv.CreateCopy(asciiFn, ds_in)
+   options = ['FORCE_CELLSIZE=True']
+   ds_out = drv.CreateCopy(asciiFn, ds_in, 0, options)
+   #ds_out = drv.CreateCopy(asciiFn, ds_in)
    ds_in = None
    ds_out = None   
    
