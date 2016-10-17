@@ -690,6 +690,11 @@ def convertTiffToAscii(tiffFn, asciiFn, headerPrecision=4):
    # Use GDAL to generate ASCII Grid 
    drv = gdal.GetDriverByName('AAIGrid')
    ds_in = gdal.Open(tiffFn)
+
+   # MXE creation fails if we don't have a NODATA value, so add one if missing
+   if ds_in.GetRasterBand(1).GetNoDataValue() is None:
+      ds_in.GetRasterBand(1).SetNoDataValue(-999)
+
    options = ['FORCE_CELLSIZE=True']
    ds_out = drv.CreateCopy(asciiFn, ds_in, 0, options)
    #ds_out = drv.CreateCopy(asciiFn, ds_in)
