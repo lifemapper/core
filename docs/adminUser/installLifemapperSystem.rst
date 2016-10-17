@@ -102,18 +102,22 @@ Finish install
 
    #. If you updated the SCENARIO_PACKAGE 
    
-      #. Create a [ LmCompute - environment ] section containing  
+      1. Create a [ LmCompute - environment ] section containing  
          the variable SCENARIO_PACKAGE_SEED with the same value
 
-      #. Run the following to download data ::
+      2. Run the following to download data ::
    
          # rocks/bin/getClimateData
 
-      #. Run the following to convert and catalog data for LmCompute ::
+      3. Run the following to catalog metadata for LmServer::
+   
+         # rocks/bin/fillDB
+
+      4. Run the following to convert and catalog data for LmCompute ::
 
          # /opt/lifemapper/rocks/bin/seedData
 
-   #. If you updated the SCENARIO_PACKAGE or the ARCHIVE_USER
+   #. If you ONLY updated the ARCHIVE_USER
    
       #. Run the following to catalog metadata for LmServer::
    
@@ -201,20 +205,14 @@ Change Data Defaults
        is IDIG_FILENAME with a value of idig_gbifids.txt.  Download the file 
        from yeti into /share/lmserver/data/species.
      * Default SCENARIO_PACKAGE is 10min-past-present-future.  To change this, 
-       override the variable SCENARIO_PACKAGE in site.ini, then 
+       override the variable SCENARIO_PACKAGE (for LmServer) and 
+       SCENARIO_PACKAGE_SEED (for LmCompute).
      
-       * run `/opt/lifemapper/rocks/bin/getClimateData` to download  
-         the data (log output will be in /tmp/getClimateData.log):
        * identify options for DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS by looking at the metadata newly installed  
          in /share/lmserver/data/climate/<SCENARIO_PACKAGE>.csv
        * add the variables DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS in site.ini with appropriate values
          
-   * If you have modified ARCHIVE_USER or SCENARIOS, run the following (log 
-     output will be in /tmp/fillDB.log):: 
-     
-       # /opt/lifemapper/rocks/bin/fillDB
-
-
+  then follow the instructions in **(OPT) To change defaults** above.
    
