@@ -78,6 +78,26 @@ class InputDataType:
    
    USER_PRESENCE_ABSENCE = 11
    USER_ANCILLARY = 12
+   
+class MatrixType:
+   """ 
+   @summary: Constants to define the type of matrix
+   """
+   # Inputs
+   PAM = 1
+   GRIM = 2
+   BIOGEO_HYPOTHESES = 3
+   # may be replaced by attribute in Bucket-Tree object
+   TREE = 4
+   # MCPA outputs
+   ENVIRONMENTAL_CORRELATION = 101
+   ENVIRONMENTAL_PVALUE = 102
+   ENVIRONMENTAL_R2 = 103
+   ENVIRONMENTAL_R2_PVALUE = 104
+   BIOGEOGRAPHIC_ENVIRONMENTAL_CORRELATION = 121
+   BIOGEOGRAPHIC_ENVIRONMENTAL_PVALUE = 122
+   BIOGEOGRAPHIC_ENVIRONMENTAL_R2 = 123
+   BIOGEOGRAPHIC_ENVIRONMENTAL_R2_PVALUE = 124
 
 class JobStage:
    """ 
