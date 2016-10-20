@@ -124,14 +124,6 @@ Finish install
          # rocks/bin/fillDB
          
 
-Add compute input layers to the Frontend
-----------------------------------------
-
-#. Seed the data for LmCompute on the frontend (if not done in optional step
-   above) ::
-
-   # /opt/lifemapper/rocks/bin/seedData
-
 Install nodes from Frontend
 ---------------------------
 
@@ -144,6 +136,14 @@ Install nodes from Frontend
 
    # rocks set host boot compute action=install
    # rocks run host compute reboot 
+
+Add compute input layers to the Frontend
+----------------------------------------
+
+#. Seed the data for LmCompute on the frontend (if not done in optional step
+   above) ::
+
+   # /opt/lifemapper/rocks/bin/seedData
 
    
 Look for Errors
