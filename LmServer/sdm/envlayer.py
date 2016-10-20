@@ -31,11 +31,9 @@ from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileTy
 # .........................................................................
 class EnvironmentalType(_LayerParameters, ServiceObject):
 # .............................................................................
-   """
-   """ 
-# .............................................................................
-   def __init__(self, envType, title, description, userId, keywords=None, modTime=None, 
-                environmentalTypeId=None):
+   def __init__(self, envType, title, description, userId, 
+                gcmCode=None, altpredCode=None, dateCode=None, 
+                keywords=None, modTime=None, environmentalTypeId=None):
       """
       @summary Initialize the _PresenceAbsence class instance
       @param envType: Code for the environmentalLayerType to be used when  
@@ -54,6 +52,9 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
                              moduleType=LMServiceModule.SDM)
       #  typeCode <-- layerType
       self.typeCode = envType
+      self.gcmCode = gcmCode
+      self.altpredCode = altpredCode
+      self.dateCode = dateCode
       self.typeTitle = title
       self.typeDescription = description
       self._setTypeKeywords(keywords)
@@ -101,6 +102,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                 keywords=None, description=None, isDiscreteData=False,
                 layerType=None, layerTypeId=None, layerTypeTitle=None, 
                 layerTypeDescription=None, layerTypeModTime=None,
+                gcmCode=None, altpredCode=None, dateCode=None,
                 userId=ARCHIVE_USER, layerId=None, 
                 createTime=None, modTime=None, metadataUrl=None ):
       """
@@ -118,6 +120,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
          raise LMError(currargs='EnvironmentalLayer.name is required')
       EnvironmentalType.__init__(self, layerType, layerTypeTitle, 
                                  layerTypeDescription, userId, 
+                                 gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
                                  keywords=keywords,
                                  modTime=layerTypeModTime, 
                                  environmentalTypeId=layerTypeId)
@@ -160,6 +163,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                         layerTypeId=envType.getParametersId(), 
                         layerTypeTitle=envType.typeTitle, 
                         layerTypeDescription=envType.typeDescription, 
+                        gcmCode=envType.gcmCode, altpredCode=envType.altpredCode, dateCode=envType.dateCode,
                         keywords=envType.typeKeywords,
                         layerTypeModTime=envType.parametersModTime,
                         userId=raster.getUserId(), layerId=raster.getId(),
