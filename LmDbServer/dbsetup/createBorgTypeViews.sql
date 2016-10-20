@@ -28,11 +28,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    keywords,
    -- EnvironmentalLayer
    environmentalLayerId,
-   startDate,
-   endDate,
-   -- LayerType
-   layerTypeId,
-   typecode,
+   -- environmentalType
+   environmentalTypeId,
+   envCode,
+   gcmcode,
+   altpredCode,
+   dateCode,
    typetitle,
    typedescription,
    typekeywords
@@ -41,11 +42,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
              l.metadataUrl, l.metadata, l.dataFormat,
              l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
-             el.environmentalLayerId, el.startDate, el.endDate,
-             lt.layerTypeId, lt.code, lt.title, lt.description, lt.keywords
-        FROM lm_v3.layer l, lm_v3.EnvironmentalLayer el, lm_v3.layertype lt
+             el.environmentalLayerId, 
+             lt.environmentalTypeId, lt.envCode, lt.gcmcode, lt.altpredCode, lt.dateCode, 
+             lt.title, lt.description, lt.keywords
+        FROM lm_v3.layer l, lm_v3.EnvironmentalLayer el, lm_v3.EnvironmentalType lt
         WHERE l.layerid = el.layerid
-          AND el.layertypeid = lt.layertypeid
+          AND el.environmentalTypeid = lt.environmentalTypeid
         ORDER BY l.layerid ASC;
 
 -- ----------------------------------------------------------------------------

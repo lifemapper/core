@@ -44,22 +44,6 @@ create table lm_v3.TaxonomySource
 );
 
 -- -------------------------------
--- REMOVE THIS
--- -------------------------------
-create table lm_v3.ComputeResource
-(
-   computeResourceId serial UNIQUE PRIMARY KEY,
-   name varchar(32) NOT NULL,
-   ipaddress varchar(16) UNIQUE NOT NULL,
-   ipsigbits varchar(2),
-   fqdn varchar(100),
-   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser,
-   modtime double precision,
-   lastheartbeat double precision,
-   UNIQUE (name, userId)
-);
-
--- -------------------------------
 create table lm_v3.JobChain
 (
    jobchainId serial UNIQUE PRIMARY KEY,
@@ -104,17 +88,27 @@ CREATE INDEX idx_lower_sciname on lm_v3.Taxon(lower(sciname));
 CREATE INDEX idx_lower_genus on lm_v3.Taxon(lower(genus));
 
 -- -------------------------------
-create table lm_v3.LayerType
+create table lm_v3.EnvironmentalType
 (
-   layerTypeId serial UNIQUE PRIMARY KEY,
+   environmentalTypeId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   code varchar(30),
+   
+   -- type of data (elevation, bioclimatic variable types , etc)
+   envCode varchar(20),
+   -- Global Climate Model
+   gcmCode varchar(20),
+   -- Representative Concentration Pathways (AR5+) or Scenario Family (AR4 and earlier) 
+   altpredCode varchar(20),
+   -- Environmental conditions for date (past = mid, lgm; current = 1950-2000, AR5 = 2050, 2070)
+   dateCode varchar(20),
+   
    title text,
    description text,
    keywords text,
    modTime double precision
 );
-ALTER TABLE lm_v3.LayerType ADD CONSTRAINT unique_layertype UNIQUE (userid, code);
+ALTER TABLE lm_v3.EnvironmentalType ADD CONSTRAINT unique_environmentalType 
+   UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode);
 
 -- -------------------------------
 -- Note: Enforce unique userid/name pairs (in code) for display layers only
@@ -166,9 +160,7 @@ create table lm_v3.EnvironmentalLayer
 (
    environmentalLayerId serial UNIQUE PRIMARY KEY,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   startDate double precision,
-   endDate double precision,
-   layerTypeId int REFERENCES lm_v3.LayerType,
+   environmentalTypeId int REFERENCES lm_v3.EnvironmentalType,
    UNIQUE (userid, name, epsgcode)
 );
  Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
@@ -190,8 +182,12 @@ create table lm_v3.EnvironmentalLayer
     title text,
     author text,
     description text,
-    startDate double precision,
-    endDate double precision,
+    
+    -- Codes for GCM, RCP, past/current/projected Date
+    gcmCode varchar(20),
+    altpredCode varchar(20),
+    dateCode varchar(20),
+    
     units varchar(20),
     resolution double precision,
     epsgcode int,
@@ -336,14 +332,15 @@ create table lm_v3.ShapeGrid
 );
 
 -- -------------------------------
-create table lm_v3.Tree
+-- original Tree, in user space
+create table lm_v3.Tree 
 (
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   -- original (Newick or JSON)
    treeDlocation varchar(256),
    hasBranchLengths boolean,
-   isUltrametric boolean,
-   isBinary boolean
+   isUltrametric boolean
 );
 
 -- -------------------------------
@@ -394,9 +391,11 @@ create table lm_v3.Bucket
 );
 
 -- -------------------------------
+-- In Bucket space: PAM, GRIM, BioGeoMtx, 8 MCPA outputs
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
+   -- Constants in LmCommon.common.lmconstants.MatrixType
    matrixType int NOT NULL,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixDlocation varchar(256),
@@ -406,6 +405,26 @@ create table lm_v3.Matrix
    statusmodtime double precision
 );
 
+-- -------------------------------
+create table lm_v3.BucketTree 
+(
+   bucketTreeId serial UNIQUE PRIMARY KEY,
+   treeId NOT NULL REFERENCES lm_v3.Tree ON DELETE CASCADE,
+   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   isPruned boolean,
+   isBinary boolean,
+   
+   -- TODO: Names?!
+   -- JSON, with PAM_MtxIds, used for display, input for RAD, MCPA
+   treePamLinkDlocation varchar(256),
+   -- Encoded Tree Matrix, used in MCPA calcs, can be used with multiple BioGeoHypotheses
+   treeEncodedMatrixDlocation varchar(256),
+   -- TreeCorrelationLink, JSON, used for display
+   treeCorrLinkDlocation varchar(256),
+
+   status int,
+   statusmodtime double precision
+);
 
 -- -------------------------------
 -- aka PAV, PAM Vector 
@@ -455,7 +474,7 @@ lm_v3.computeresource, lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain, lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
-lm_v3.layertype, lm_v3.layertype_layertypeid_seq,
+lm_v3.environmentalType, lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer, lm_v3.layer_layerid_seq, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayers,
@@ -468,6 +487,7 @@ lm_v3.ancillaryvalue, lm_v3.ancillaryvalue_ancillaryvalueid_seq,
 lm_v3.presenceabsence, lm_v3.presenceabsence_presenceabsenceid_seq,
 lm_v3.bucket, lm_v3.bucket_bucketid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
+lm_v3.buckettree, lm_v3.buckettree_buckettreeid_seq,
 lm_v3.bucketpalayer, lm_v3.bucketpalayer_bucketpalayerid_seq,
 lm_v3.bucketanclayer, lm_v3.bucketanclayer_bucketanclayerid_seq
 TO GROUP reader;
@@ -479,7 +499,7 @@ lm_v3.jobchain,
 lm_v3.taxonomysource,
 lm_v3.taxon,
 lm_v3.keyword,
-lm_v3.layertype,
+lm_v3.environmentalType,
 lm_v3.layer, 
 lm_v3.scenario,
 lm_v3.scenariolayers,
@@ -491,6 +511,7 @@ lm_v3.shapegrid,
 lm_v3.ancillaryvalue,
 lm_v3.presenceabsence,
 lm_v3.bucket,
+lm_v3.buckettree,
 lm_v3.matrix,
 lm_v3.bucketpalayer,
 lm_v3.bucketanclayer
@@ -501,7 +522,7 @@ lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
-lm_v3.layertype_layertypeid_seq,
+lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
@@ -511,6 +532,7 @@ lm_v3.shapegrid_shapegridid_seq,
 lm_v3.ancillaryvalue_ancillaryvalueid_seq,
 lm_v3.presenceabsence_presenceabsenceid_seq,
 lm_v3.bucket_bucketid_seq,
+lm_v3.buckettree_buckettreeid_seq,
 lm_v3.matrix_matrixid_seq,
 lm_v3.bucketpalayer_bucketpalayerid_seq,
 lm_v3.bucketanclayer_bucketanclayerid_seq
