@@ -663,4 +663,4 @@ LAYERTYPE_META = {
       'keywords': ('spatial','distance'),
       'files': {'spat.svd.pc3': ['observed', 'AR5']}
    } 
-}}
+}
