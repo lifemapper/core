@@ -753,7 +753,7 @@ class Raster(_Layer):
          
          # Copy from input file using GDAL (no test necessary later)
          if srcFile is not None:
-            self.copyData(srcFile)
+            self.copyData(srcFile, targetDataLocation=outFile)
             
          # Copy from input stream
          elif srcData is not None:
@@ -764,6 +764,8 @@ class Raster(_Layer):
             except Exception, e:
                raise LMError(currargs='Error writing data to raster %s (%s)' 
                              % (outFile, str(e)))
+            else:
+               self.setDLocation(dlocation=outFile)
             # Test input with GDAL
             try:
                self.populateStats()
@@ -777,7 +779,7 @@ class Raster(_Layer):
                           % self._dlocation)
       else:
          raise LMError(['Must setDLocation before writing file'])
-      self.setDLocation(dlocation=outFile)
+      
 
 # .............................................
    def _copyGDALData(self, bandnum, infname, outfname, format='GTiff', kwargs={}):
