@@ -161,16 +161,8 @@ create table lm_v3.EnvironmentalLayer
    environmentalLayerId serial UNIQUE PRIMARY KEY,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    environmentalTypeId int REFERENCES lm_v3.EnvironmentalType,
-   UNIQUE (userid, name, epsgcode)
+   UNIQUE (environmentalLayerId, layerId, environmentalTypeId)
 );
- Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
- ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
- ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
- ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
- ALTER TABLE lm_v3.layer ADD CONSTRAINT unique_usr_name CHECK (st_ndims(geom) = 2);
- CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
- CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
- CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
 
 -- -------------------------------
  create table lm_v3.Scenario
@@ -409,7 +401,7 @@ create table lm_v3.Matrix
 create table lm_v3.BucketTree 
 (
    bucketTreeId serial UNIQUE PRIMARY KEY,
-   treeId NOT NULL REFERENCES lm_v3.Tree ON DELETE CASCADE,
+   treeId int NOT NULL REFERENCES lm_v3.Tree ON DELETE CASCADE,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    isPruned boolean,
    isBinary boolean,
@@ -496,7 +488,6 @@ lm_v3.lmuser,
 lm_v3.jobchain,
 lm_v3.taxonomysource,
 lm_v3.taxon,
-lm_v3.keyword,
 lm_v3.environmentalType,
 lm_v3.layer, 
 lm_v3.scenario,
