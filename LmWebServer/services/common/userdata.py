@@ -728,7 +728,7 @@ class DataPoster(object):
          layerUrl = getUrlParameter("layerUrl", parameters)
          isRaster = getUrlParameter("raster", parameters)
          isVector = getUrlParameter("vector", parameters)
-         dataFormat = getUrlParameter("dataFormat", parameters)
+         dataFormat = str(getUrlParameter("dataFormat", parameters))
          valueAttribute = getUrlParameter("valueAttribute", parameters)
          
          if body is not None and len(body.strip()) > 1:
