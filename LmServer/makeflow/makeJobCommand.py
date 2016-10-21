@@ -32,8 +32,6 @@ from LmServer.common.localconstants import POINT_COUNT_MAX
 SINGLE_SPECIES_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/single')
 MULTI_SPECIES_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/multi')
 
-WORK_DIR = ''
-
 # .............................................................................
 #class CommandBuilder(object):
 #   """
@@ -55,7 +53,6 @@ def makeBisonOccurrenceSetCommand(occ):
    options = {
       "-n" : "{0}-{1}".format(ProcessType.BISON_TAXA_OCCURRENCE, occ.getId()),
       "-o" : outDir,
-      "-w" : WORK_DIR,
       "-l" : "bisonPoints-{0}.log".format(occ.getId()),
       "-s" : occStatusFn,
    }
@@ -91,7 +88,6 @@ def makeGbifOccurrenceSetCommand(occ):
    options = {
       "-n" : "{0}-{1}".format(ProcessType.GBIF_TAXA_OCCURRENCE, occ.getId()),
       "-o" : outDir,
-      "-w" : WORK_DIR,
       "-l" : "gbifPoints-{0}.log".format(occ.getId()),
       "-s" : occStatusFn,
    }
@@ -129,7 +125,6 @@ def makeIdigbioOccurrenceSetCommand(occ):
    options = {
       "-n" : "{0}-{1}".format(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occ.getId()),
       "-o" : outDir,
-      "-w" : WORK_DIR,
       "-l" : "idigbioPoints-{0}.log".format(occ.getId()),
       "-s" : occStatusFn,
    }
