@@ -673,7 +673,7 @@ def getUserName():
    temp = None
    
    try:
-      if os.path.isfile(os.path.join(SESSION_DIR, 'session-%s' % cherrypy.session.id)):
+      if os.path.isfile(os.path.join(SESSION_PATH, 'session-%s' % cherrypy.session.id)):
          temp = cherrypy.session.get(SESSION_KEY)
    except Exception, e:
       log.debug(' '.join(("Exception in getUserName:", str(e))))
