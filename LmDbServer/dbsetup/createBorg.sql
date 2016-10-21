@@ -116,7 +116,7 @@ create table lm_v3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   squid varchar(64) REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    verify varchar(64),
    name text,
    dlocation text,
@@ -215,7 +215,7 @@ create table lm_v3.ScenarioLayers
 create table lm_v3.OccurrenceSet
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
-   squid varchar(64) REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    verify varchar(64),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    displayName text,
@@ -433,7 +433,7 @@ create table lm_v3.BucketPALayer
    bucketPALayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixIndex int NOT NULL,
-   squid varchar(64) REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    
    -- layerId and presenceAbsenceId could be empty, just squid
    layerId int REFERENCES lm_v3.Layer,
@@ -441,7 +441,7 @@ create table lm_v3.BucketPALayer
       
    status int,
    statusmodtime double precision,
-   UNIQUE (bucketId, matrixId),
+   UNIQUE (bucketId, matrixIndex),
    UNIQUE (bucketId, layerId, presenceAbsenceId)
 );
 
@@ -461,7 +461,7 @@ create table lm_v3.BucketAncLayer
    
    status int,
    statusmodtime double precision,
-   UNIQUE (bucketId, matrixId),
+   UNIQUE (bucketId, matrixIndex),
    UNIQUE (bucketId, layerId, ancillaryValueId)
 );
 
@@ -470,7 +470,6 @@ create table lm_v3.BucketAncLayer
 
 GRANT SELECT ON TABLE 
 lm_v3.lmuser, 
-lm_v3.computeresource, lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain, lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
@@ -494,7 +493,6 @@ TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
 lm_v3.lmuser, 
-lm_v3.computeresource, 
 lm_v3.jobchain,
 lm_v3.taxonomysource,
 lm_v3.taxon,
@@ -518,7 +516,6 @@ lm_v3.bucketanclayer
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
-lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
