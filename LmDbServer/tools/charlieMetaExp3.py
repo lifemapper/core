@@ -44,7 +44,7 @@ EPSG = 2163
 MAPUNITS = 'dd' 
 # Decimal degrees for EPSG 2163
 # @TODO: values in meters!?
-RESOLUTIONS = {'10min': 0.16667, '5min': 0.083333, '30sec': 0.0083333}
+RESOLUTIONS = {'1km': 1000}
 ENV_KEYWORDS = ['bioclimatic variables', 'climate', 'elevation', 'soil', 
                     'spatial distance']
 

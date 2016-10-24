@@ -132,7 +132,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                              suffix=pkgMeta['suffix'], isTitle=True)
       dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
       if not os.path.exists(dloc):
-         raise LMError('Missing local data %s' % dloc)
+         print('Missing local data %s' % dloc)
       envlyr = EnvironmentalLayer(lyrname, 
                title=lyrtitle, 
                valUnits=ltmeta['valunits'],
@@ -162,12 +162,12 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
       isStatic = True
       relFname = ltfiles.keys()[0]
       if obsOrPred in ltfiles[relFname]:
-         return relFname
+         return relFname, isStatic
    else:
       for relFname, kList in ltmeta['files'].iteritems():
-         if obsOrPred in kList: 
-            if (gcm in kList and tm in kList 
-                  and (altPred is None or altPred in kList)):
+         if obsOrPred in kList:
+            if (gcm is not None and (gcm in kList and tm in kList and
+                                     (altPred is None or altPred in kList))):
                return relFname, isStatic
    print('Failed to find layertype {} for {}, gcm {}, altpred {}, time {}'
          .format(ltmeta['title'], obsOrPred, gcm, altPred, tm))
@@ -234,9 +234,8 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    tmcode = baseMeta['times'][tm]['shortcode']
    basekeywords = [k for k in META.ENV_KEYWORDS]
    basekeywords.extend(baseMeta['keywords'])
-   tmvals = baseMeta['times'][0]
-   scencode = _getbioName(obsKey, tmcode, pkgMeta['res'], gcm=None, altpred=None, 
-                          suffix=pkgMeta['suffix'], isTitle=False)
+   
+   scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
    lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, 
                                            lyrtypeMeta)
    scen = Scenario(scencode, 
@@ -433,11 +432,11 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-from LmDbServer.tools.initCatalog import *
-from LmDbServer.tools.initCatalog import _getClimateMeta
+from LmDbServer.tools.initBorg import *
+from LmDbServer.tools.initBorg import _getClimateMeta, _getbioName, _getBaselineLayers
 
 logger = ScriptLogger('testing')
-scribe = Scribe(logger)
+scribe = BorgScribe(logger)
 success = scribe.openConnections()
 
 pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
