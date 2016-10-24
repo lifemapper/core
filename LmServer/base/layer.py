@@ -1011,6 +1011,7 @@ class Vector(_Layer):
                       svcObjId=svcObjId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=serviceType, moduleType=moduleType)
+      self.setValAttribute(valAttribute)
       self.setDataDescription(ogrType, ogrFormat)
       self.setFeatures(features, featureAttributes)
        

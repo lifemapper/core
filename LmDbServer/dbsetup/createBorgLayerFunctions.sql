@@ -14,17 +14,24 @@
 -- ----------------------------------------------------------------------------
 -- LayerType (EnvLayer)
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findLayerType(ltypeid int, ltype varchar, usr varchar)
-   RETURNS lm_v3.lm_layerType AS
+CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvironmentalType(etypeid int, 
+                                                          usr varchar, 
+                                                          ecode varchar, 
+                                                          gcode varchar, 
+                                                          apcode varchar, 
+                                                          dtcode varchar)
+   RETURNS lm_v3.EnvironmentalType AS
 $$
 DECLARE
-   rec lm_v3.LayerType%rowtype;
+   rec lm_v3.EnvironmentalType%rowtype;
    keystr varchar;
 BEGIN
-   IF ltypeid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
+   IF etypeid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.EnvironmentalType WHERE EnvironmentalTypeid = etypeid;
    ELSE
-      SELECT * INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
+      SELECT * INTO rec FROM lm_v3.EnvironmentalType 
+         WHERE userid = usr AND envcode = ecode AND gcmcode = gcode 
+           AND altpredcode = apcode AND datecode = dtcode;
    END IF;
 
    RETURN rec;
@@ -32,38 +39,35 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
--- Returns existing layerType with keywords, or newly inserted without
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayerType(usr varchar,
-                                                  ltypeid int,
-                                                  ltype varchar,
-                                                  ltypetitle varchar,
-                                                  ltypedesc varchar,
-                                                  ltypekws varchar,
-                                                  mtime double precision)
-   RETURNS lm_v3.LayerType AS
+-- Returns existing EnvironmentalType with keywords, or newly inserted without
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvironmentalType(etypeid int, 
+                                                                  usr varchar, 
+                                                                  ecode varchar, 
+                                                                  gcode varchar, 
+                                                                  apcode varchar, 
+                                                                  dtcode varchar,
+                                                                  ettitle varchar,
+                                                                  etdesc varchar,
+                                                                  etkeywords varchar,
+                                                                  mtime double precision)
+   RETURNS lm_v3.EnvironmentalType AS
 $$
 DECLARE
    tid int = -1;
-   rec lm_v3.LayerType%rowtype;
+   rec lm_v3.EnvironmentalType%rowtype;
    keystr varchar = '';
 BEGIN
-   IF ltypeid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.LayerType WHERE layertypeid = ltypeid;
-      RAISE NOTICE 'tried with ltypeid %', ltypeid;
-   ELSE
-      SELECT * INTO rec FROM lm_v3.LayerType WHERE code = ltype and userid = usr;
-      RAISE NOTICE 'tried with type, usr';
-   END IF;      
-      
+   SELECT * INTO rec FROM 
+      lm_v3.lm_findEnvironmentalType(usr, ecode, gcode, apcode, dtcode);
    IF NOT FOUND THEN
-      RAISE NOTICE 'not found';
-      INSERT INTO lm_v3.LayerType 
-        (code, title, userid, description, keywords, modTime) VALUES 
-        (ltype, ltypetitle, usr, ltypedesc, ltypekws, mtime);
+      INSERT INTO lm_v3.EnvironmentalType (userid, envCode, gcmCode, altpredCode, 
+                                dateCode, title, description, keywords, modTime) 
+      VALUES (usr, ecode, gcode, apcode, 
+                                dtcode, ettitle, etdesc, etkeywords, mtime);
       IF FOUND THEN
          RAISE NOTICE 'successful insert';
-         SELECT INTO tid last_value FROM lm_v3.layertype_layertypeid_seq;
-         SELECT * FROM  lm_v3.lm_findLayerType(tid, null, null) INTO rec;
+         SELECT INTO tid last_value FROM lm_v3.EnvironmentalType_EnvironmentalTypeid_seq;
+         SELECT * FROM  lm_v3.lm_findEnvironmentalType(tid, null, null) INTO rec;
       END IF;
    END IF;
    
@@ -119,7 +123,7 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.LayerType ';
+   cmd = 'SELECT count(*) FROM lm_v3.EnvironmentalType ';
    wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
 
    -- filter by modified before given time
@@ -155,8 +159,8 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT layerTypeId, code, description, datelastmodified, title
-               FROM lm_v3.LayerType ';
+   cmd = 'SELECT EnvironmentalTypeId, code, description, datelastmodified, title
+               FROM lm_v3.EnvironmentalType ';
    wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
    ordercls = ' ORDER BY code ASC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
@@ -190,10 +194,10 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listTypeCodeObjects(firstRecNum int, maxNum 
                                                 usr varchar(20), 
                                                 beforetime double precision,
                                                 aftertime double precision)
-   RETURNS SETOF lm_v3.lm_layerTypeAndKeywords AS
+   RETURNS SETOF lm_v3.lm_EnvironmentalTypeAndKeywords AS
 $$
 DECLARE
-   rec lm_v3.lm_layerTypeAndKeywords;
+   rec lm_v3.lm_EnvironmentalTypeAndKeywords;
    keystr varchar;
    ltTitle varchar;
    cmd varchar;
@@ -201,7 +205,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.LayerType ';
+   cmd = 'SELECT * FROM lm_v3.EnvironmentalType ';
    wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
    ordercls = ' ORDER BY code ASC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
@@ -221,36 +225,13 @@ BEGIN
 
    FOR rec in EXECUTE cmd
       LOOP
-         SELECT INTO keystr lm_v3.lm_getLayerTypeKeywordString(rec.layertypeid);
+         SELECT INTO keystr lm_v3.lm_getEnvironmentalTypeKeywordString(rec.EnvironmentalTypeid);
          rec.keywords = keystr;
          RETURN NEXT rec;
       END LOOP;
    RETURN;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getLayerTypeKeywordString(ltid int)
-   RETURNS varchar AS
-$$
-DECLARE
-   lyrkeyword record;
-   keystr varchar := '';
-BEGIN
-   FOR lyrkeyword in SELECT k.*
-                     FROM lm_v3.keyword k, lm_v3.layertypekeyword lk
-                     WHERE lk.layertypeid = ltid
-                       AND k.keywordid = lk.keywordid
-   LOOP
-      IF keystr = '' THEN
-         keystr := lyrkeyword.keyword;
-      ELSE
-         keystr := keystr || ',' || lyrkeyword.keyword;
-      END IF;
-   END LOOP;
-   RETURN keystr;
-END;
-$$  LANGUAGE 'plpgsql' STABLE;    
 
 
 
