@@ -150,7 +150,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    prjstatusModTime,
 
    -- Layer.* 
-   layerId,
    userid,
    squid,
    verify,
@@ -192,9 +191,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    occstatus,
    occstatusmodtime
    ) AS
-      SELECT p.sdmprojectionId, p.layerid, p.sdmmodelid, p.prjscenarioId, p.prjscenarioCode,
-             p.prjmaskId, p.prjstatus, p.prjstatusModTime,
-             l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation, 
+      SELECT p.sdmprojectionId, p.layerid, p.sdmmodelid, p.scenarioId, p.scenarioCode,
+             p.maskId, p.status, p.statusModTime,
+             l.userid, l.squid, l.verify, l.name, l.dlocation, 
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.valUnits, 
              l.nodataVal, l.minVal, l.maxVal, l.epsgcode, l.mapunits, 
              l.resolution, l.bbox, l.keywords,
@@ -246,10 +245,10 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    taxmodTime,
    -- TaxonomySource.*
    url,
-   datasetIdentifier,
+   datasetIdentifier
    ) AS
    SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.displayName, 
-          o.primaryEnv, o.metadataUrl, o.dlocation, o.rawDlocation,
+          o.metadataUrl, o.dlocation, o.rawDlocation,
           o.queryCount, o.bbox, o.epsgcode, o.status, o.statusmodtime, 
           t.taxonId, t.taxonomySourceId, t.taxonomyKey, t.kingdom, t.phylum, 
           t.tx_class, t.tx_order, t.family, t.genus, t.rank, 
@@ -375,46 +374,46 @@ CREATE TYPE lm_v3.lm_layeridx AS (
 -- ----------------------------------------------------------------------------
 -- lm_bucketlayer
 DROP TYPE IF EXISTS lm_v3.lm_bucketintersectlayer CASCADE;
-CREATE TYPE lm_v3.lm_bucketintersectlayer (
+CREATE TYPE lm_v3.lm_bucketintersectlayer AS
+(
    -- BucketLayer.*
-   bucketLayerId,
-   bucketId, 
-   matrixId,
-   matrixIndex,
-   squid,
-   ident,
-   status,
-   statusmodtime,
+   bucketLayerId int,
+   bucketId int, 
+   matrixId int,
+   matrixIndex int,
+   squid varchar,
+   ident varchar,
+   status int,
+   statusmodtime double precision,
    -- Bucket
-   userId,
+   userId varchar,
    -- Layer.* 
-   layerId,
-   squid,
-   verify,
-   name,
-   dlocation,
-   metadataUrl,
-   metadata,
-   dataFormat,
-   gdalType,
-   ogrType,
-   valUnits,
-   nodataVal,
-   minVal,
-   maxVal,
-   epsgcode,
-   mapunits,
-   resolution,
-   modTime,
-   bbox,
-   keywords,
+   layerId int,
+   verify varchar,
+   name text,
+   dlocation text,
+   metadataUrl text,
+   metadata text,
+   dataFormat varchar,
+   gdalType int,
+   ogrType int,
+   valUnits varchar,
+   nodataVal double precision,
+   minVal double precision,
+   maxVal double precision,
+   epsgcode int,
+   mapunits varchar,
+   resolution double precision,
+   modTime double precision,
+   bbox varchar,
+   keywords text,
    -- IntersectParam
-   intersectParamId,
-   filterString,
-   nameValue,
-   minPercent,
-   weightedMean,
-   largestClass,
+   intersectParamId int,
+   filterString text,
+   nameValue varchar,
+   minPercent int,
+   weightedMean boolean,
+   largestClass boolean,
    minPresence double precision,
    maxPresence double precision
 ); 

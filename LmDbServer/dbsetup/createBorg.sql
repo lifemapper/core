@@ -330,7 +330,7 @@ create table lm_v3.Tree
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    -- original (Newick or JSON)
-   treeDlocation varchar(256),
+   treeDlocation text,
    hasBranchLengths boolean,
    isUltrametric boolean
 );
@@ -341,7 +341,7 @@ create table lm_v3.IntersectParam
    intersectParamId  serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    -- Query string for filtering records, applicable only to data with multiple layers 
-   filterString varchar(256),
+   filterString text,
    -- Name of the field containing the value for calculations
    nameValue varchar(20),
    minPercent int,
@@ -377,7 +377,7 @@ create table lm_v3.Matrix
    -- Constants in LmCommon.common.lmconstants.MatrixType
    matrixType int NOT NULL,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
-   matrixDlocation varchar(256),
+   matrixDlocation text,
    -- JSON
    metadata text,  
    status int,
@@ -395,11 +395,11 @@ create table lm_v3.BucketTree
    
    -- TODO: Names?!
    -- JSON, with PAM_MtxIds, used for display, input for RAD, MCPA
-   treePamLinkDlocation varchar(256),
+   treePamLinkDlocation text,
    -- Encoded Tree Matrix, used in MCPA calcs, can be used with multiple BioGeoHypotheses
-   treeEncodedMatrixDlocation varchar(256),
+   treeEncodedMatrixDlocation text,
    -- TreeCorrelationLink, JSON, used for display
-   treeCorrLinkDlocation varchar(256),
+   treeCorrLinkDlocation text,
 
    status int,
    statusmodtime double precision
