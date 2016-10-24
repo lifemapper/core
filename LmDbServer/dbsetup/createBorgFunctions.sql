@@ -24,11 +24,13 @@ DECLARE
 BEGIN
    SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
    IF NOT FOUND THEN
-      INSERT INTO lm_v3.Algorithm (algorithmcode, name, modtime)
-         VALUES (code, aname, mtime);
-      IF FOUND THEN
-         SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
-      END IF;
+      begin
+         INSERT INTO lm_v3.Algorithm (algorithmcode, name, modtime)
+            VALUES (code, aname, mtime);
+         IF FOUND THEN
+            SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
+         END IF;
+      end;
    END IF;
    RETURN rec;
 END;

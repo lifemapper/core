@@ -50,7 +50,7 @@ def addUsers(scribe):
    """
    @summary Adds algorithms to the database from the algorithm dictionary
    """
-   em = '%s@nowhere.com' % ARCHIVE_USER
+   em = '{}@nowhere.com'.format(ARCHIVE_USER)
    defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
    scribe.log.info('  Insert ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
    usrid = scribe.insertUser(defaultUser)
@@ -96,17 +96,6 @@ def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox
    scribe.log.info('Inserted, build shapegrid {} ...'.format(gridname))
    newshp.buildShape()
    return newshp.getId()
-   
-# ...............................................
-def _getbioName(basename, res, suffix=None, isTitle=False):
-   sep = '-'
-   if isTitle:
-      sep = ', '
-   name = sep.join((basename, res))
-   if suffix:
-      name = sep.join((name, suffix)) 
-   return name
-
    
 # ...............................................
 def _getbioName(obsOrPred, res, 
@@ -398,7 +387,7 @@ if __name__ == '__main__':
    args = parser.parse_args()
    metaType = args.metadata
 
-   _importClimatePackageMetadata()
+#    _importClimatePackageMetadata()
 
    try:
       taxSource = TAXONOMIC_SOURCE[DATASOURCE] 

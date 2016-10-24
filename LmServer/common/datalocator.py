@@ -106,20 +106,20 @@ class EarlJr(LMObject):
           (not isMaps and (epsg is None and occsetId is None))):
          raise LMError('createDataPath requires userId and (maps xor occurrenceSetId xor EPSG)')
 
-      basepath = os.path.join(ARCHIVE_PATH, usr)
+      pth = os.path.join(ARCHIVE_PATH, usr)
       
       # OccurrenceSet overrides basic maps
       if occsetId is not None:
          dirparts = self._parseSDMId(str(occsetId), [])
          for i in range(MODEL_DEPTH - len(dirparts)):
             dirparts.insert(0, '000')
-         pth = os.path.join(basepath, *dirparts)
+         pth = os.path.join(pth, *dirparts)
 
       elif isMaps:
-         pth = os.path.join(basepath, MAP_DIR)
+         pth = os.path.join(pth, MAP_DIR)
                
       elif epsg is not None:    
-         pthparts = [basepath, str(epsg)]
+         pthparts = [pth, str(epsg)]
          if isLayers:
             pthparts.append(USER_LAYER_DIR)
          elif radexpId is not None:
