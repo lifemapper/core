@@ -95,121 +95,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
              sg.xAttribute, sg.yAttribute, sg.status, sg.statusmodtime
         FROM lm_v3.layer l, lm_v3.shapegrid sg
         WHERE l.layerid = sg.layerid;
-
--- ----------------------------------------------------------------------------
--- lm_anclayer
-DROP VIEW IF EXISTS lm_v3.lm_bucketanclayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_bucketanclayer (
-   -- BucketAncLayer.*
-   bucketAncLayerId,
-   bucketId, 
-   matrixIndex,
-   ident,
-   status,
-   statusmodtime,
-   -- Bucket
-   userId,
-   -- Layer.* 
-   layerId,
-   squid,
-   verify,
-   name,
-   dlocation,
-   metadataUrl,
-   metadata,
-   dataFormat,
-   gdalType,
-   ogrType,
-   valUnits,
-   nodataVal,
-   minVal,
-   maxVal,
-   epsgcode,
-   mapunits,
-   resolution,
-   modTime,
-   bbox,
-   keywords,
-   -- AncillaryValue.*
-   ancillaryValueId,
-   nameValue,
-   weightedMean,
-   largestClass,
-   minPercent,
-   nameFilter,
-   valueFilter
-) AS
-   SELECT bal.bucketAncLayerId, bal.bucketId, bal.matrixIndex, bal.ident,
-             bal.status, bal.statusmodtime,
-             b.userid, 
-             l.layerId, l.squid, l.verify, l.name, l.dlocation,
-             l.metadataUrl, l.metadata, l.dataFormat,
-             l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
-             l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
-             a.ancillaryValueId, a.nameValue, a.weightedMean, a.largestClass, 
-             a.minPercent, a.nameFilter, a.valueFilter
-      FROM lm_v3.BucketAncLayer bal, lm_v3.Bucket b
-      LEFT JOIN lm_v3.Layer l, lm_v3.AncillaryValue a 
-      ON bal.bucketid = b.bucketid
-        AND bal.layerId = l.layerId
-        AND bal.ancillaryValueId = a.ancillaryValueId;
-        
-
-DROP VIEW IF EXISTS lm_v3.lm_bucketanclayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_bucketanclayer (
-   -- BucketAncLayer.*
-   bucketAncLayerId,
-   bucketId, 
-   matrixIndex,
-   ident,
-   status,
-   statusmodtime,
-   -- Bucket
-   userId,
-   -- Layer.* 
-   layerId,
-   squid,
-   verify,
-   name,
-   dlocation,
-   metadataUrl,
-   metadata,
-   dataFormat,
-   gdalType,
-   ogrType,
-   valUnits,
-   nodataVal,
-   minVal,
-   maxVal,
-   epsgcode,
-   mapunits,
-   resolution,
-   modTime,
-   bbox,
-   keywords,
-   -- AncillaryValue.*
-   ancillaryValueId,
-   nameValue,
-   weightedMean,
-   largestClass,
-   minPercent,
-   nameFilter,
-   valueFilter
-) AS
-   SELECT bal.bucketAncLayerId, bal.bucketId, bal.matrixIndex, bal.ident,
-             bal.status, bal.statusmodtime,
-             b.userid, 
-             l.layerId, l.squid, l.verify, l.name, l.dlocation,
-             l.metadataUrl, l.metadata, l.dataFormat,
-             l.gdalType, l.ogrType, l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
-             l.epsgcode, l.mapunits, l.resolution, l.modTime, l.bbox, l.keywords,
-             a.ancillaryValueId, a.nameValue, a.weightedMean, a.largestClass, 
-             a.minPercent, a.nameFilter, a.valueFilter
-      FROM lm_v3.BucketAncLayer bal, lm_v3.Bucket b
-      LEFT JOIN lm_v3.Layer l, lm_v3.AncillaryValue a 
-      ON bal.bucketid = b.bucketid
-        AND bal.layerId = l.layerId
-        AND bal.ancillaryValueId = a.ancillaryValueId;
         
 -- ----------------------------------------------------------------------------
 -- lm_palayer
@@ -550,6 +435,54 @@ CREATE TYPE lm_v3.lm_layeridx AS (
    bucketid int,
    matrixIndex int);
    
+-- ----------------------------------------------------------------------------
+-- lm_bucketlayer
+DROP TYPE IF EXISTS lm_v3.lm_bucketintersectlayer CASCADE;
+CREATE OR REPLACE TYPE lm_v3.lm_bucketintersectlayer (
+   -- BucketLayer.*
+   bucketLayerId,
+   bucketId, 
+   matrixId,
+   matrixIndex,
+   squid,
+   ident,
+   status,
+   statusmodtime,
+   -- Bucket
+   userId,
+   -- Layer.* 
+   layerId,
+   squid,
+   verify,
+   name,
+   dlocation,
+   metadataUrl,
+   metadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   modTime,
+   bbox,
+   keywords,
+   -- IntersectParams
+   intersectParamId,
+   filterString,
+   nameValue,
+   minPercent,
+   weightedMean,
+   largestClass,
+   minPresence double precision,
+   maxPresence double precision,
+); 
+
+        
 -- ----------------------------------------------------------------------------
 DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
 CREATE TYPE lm_v3.lm_occStats AS

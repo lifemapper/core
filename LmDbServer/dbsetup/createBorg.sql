@@ -336,37 +336,25 @@ create table lm_v3.Tree
 );
 
 -- -------------------------------
-create table lm_v3.AncillaryValue
+create table lm_v3.IntersectParam
 (
-   ancillaryValueId  serial UNIQUE PRIMARY KEY,
+   intersectParamsId  serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   -- Query string for filtering records, applicable only to data with multiple layers 
+   filterString varchar(256),
    -- Name of the field containing the value for calculations
    nameValue varchar(20),
+   minPercent int,
    weightedMean boolean,
    largestClass boolean,
-   minPercent int,
-   nameFilter varchar(20),
-   valueFilter varchar(20),
-   UNIQUE (userId, nameValue, weightedMean, largestClass, minPercent),
+   minPresence double precision,
+   maxPresence double precision,
+   UNIQUE (userId, nameValue, minPercent, weightedMean, largestClass),
+   UNIQUE (userId, nameValue, minPercent, minPresence, maxPresence),
+   CHECK (percentPresence >= 0 AND percentPresence <= 100)
    CHECK (minPercent >= 0 AND minPercent <= 100)
 );
 
--- -------------------------------
-create table lm_v3.PresenceAbsence
-(
-   presenceAbsenceId  serial UNIQUE PRIMARY KEY,
-   userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   -- Fieldname/value for filtering records, applicable only to multi-species files 
-   nameFilter varchar(20),
-   valueFilter varchar(50),
-   -- Name of the field containing the value for presence
-   namePresence varchar(20),
-   minPresence double precision,
-   maxPresence double precision,
-   percentPresence int,
-   UNIQUE(userId, namePresence, minPresence, maxPresence, percentPresence),
-   CHECK (percentPresence >= 0 AND percentPresence <= 100)
-);
 
 -- -------------------------------
 create table lm_v3.Bucket
@@ -419,44 +407,25 @@ create table lm_v3.BucketTree
 );
 
 -- -------------------------------
--- aka PAV, PAM Vector 
-create table lm_v3.BucketPALayer 
+-- aka PAV, PAM Vector or GRIM Vector
+create table lm_v3.BucketLayer 
 (
-   bucketPALayerId  serial UNIQUE PRIMARY KEY,
+   bucketLayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int NOT NULL,
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
+   ident varchar(64),
    
-   -- layerId and presenceAbsenceId could be empty, just squid
+   -- layerId and intersectParamsId could be empty, just squid or ident
    layerId int REFERENCES lm_v3.Layer,
-   presenceAbsenceId int REFERENCES lm_v3.PresenceAbsence,
+   intersectParamsId int REFERENCES lm_v3.IntersectParams,
       
    status int,
    statusmodtime double precision,
    UNIQUE (bucketId, matrixIndex),
-   UNIQUE (bucketId, layerId, presenceAbsenceId)
+   UNIQUE (bucketId, layerId, intersectParamsId)
 );
-
--- -------------------------------
--- aka GRIM Vector
-create table lm_v3.BucketAncLayer
-(
-   bucketAncLayerId  serial UNIQUE PRIMARY KEY,
-   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
-   matrixIndex int NOT NULL,
-   -- some user-unique identifier to track data meaning/metadata
-   ident varchar(64),
-   
-   -- layerId and ancillaryValueId could be empty
-   layerId int REFERENCES lm_v3.Layer,
-   ancillaryValueId int REFERENCES lm_v3.AncillaryValue,
-   
-   status int,
-   statusmodtime double precision,
-   UNIQUE (bucketId, matrixIndex),
-   UNIQUE (bucketId, layerId, ancillaryValueId)
-);
-
 
 -- ----------------------------------------------------------------------------
 
@@ -474,13 +443,11 @@ lm_v3.algorithm,
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
 lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
-lm_v3.ancillaryvalue, lm_v3.ancillaryvalue_ancillaryvalueid_seq,
-lm_v3.presenceabsence, lm_v3.presenceabsence_presenceabsenceid_seq,
+lm_v3.intersectparam, lm_v3.intersectparam_intersectparamid_seq,
 lm_v3.bucket, lm_v3.bucket_bucketid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.buckettree, lm_v3.buckettree_buckettreeid_seq,
-lm_v3.bucketpalayer, lm_v3.bucketpalayer_bucketpalayerid_seq,
-lm_v3.bucketanclayer, lm_v3.bucketanclayer_bucketanclayerid_seq
+lm_v3.bucketlayer, lm_v3.bucketlayer_bucketlayerid_seq,
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
@@ -497,13 +464,11 @@ lm_v3.algorithm,
 lm_v3.sdmmodel,  
 lm_v3.sdmprojection,
 lm_v3.shapegrid,
-lm_v3.ancillaryvalue,
-lm_v3.presenceabsence,
+lm_v3.intersectparam,
 lm_v3.bucket,
 lm_v3.buckettree,
 lm_v3.matrix,
-lm_v3.bucketpalayer,
-lm_v3.bucketanclayer
+lm_v3.bucketlayer,
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
@@ -517,13 +482,11 @@ lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,
 lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid_shapegridid_seq,
-lm_v3.ancillaryvalue_ancillaryvalueid_seq,
-lm_v3.presenceabsence_presenceabsenceid_seq,
+lm_v3.intersectparam_intersectparamid_seq,
 lm_v3.bucket_bucketid_seq,
 lm_v3.buckettree_buckettreeid_seq,
 lm_v3.matrix_matrixid_seq,
-lm_v3.bucketpalayer_bucketpalayerid_seq,
-lm_v3.bucketanclayer_bucketanclayerid_seq
+lm_v3.bucketlayer_bucketlayerid_seq,
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------
