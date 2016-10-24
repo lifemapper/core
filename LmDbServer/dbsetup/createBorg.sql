@@ -338,7 +338,7 @@ create table lm_v3.Tree
 -- -------------------------------
 create table lm_v3.IntersectParam
 (
-   intersectParamsId  serial UNIQUE PRIMARY KEY,
+   intersectParamId  serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    -- Query string for filtering records, applicable only to data with multiple layers 
    filterString varchar(256),
@@ -351,7 +351,6 @@ create table lm_v3.IntersectParam
    maxPresence double precision,
    UNIQUE (userId, nameValue, minPercent, weightedMean, largestClass),
    UNIQUE (userId, nameValue, minPercent, minPresence, maxPresence),
-   CHECK (percentPresence >= 0 AND percentPresence <= 100)
    CHECK (minPercent >= 0 AND minPercent <= 100)
 );
 
@@ -417,14 +416,14 @@ create table lm_v3.BucketLayer
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    ident varchar(64),
    
-   -- layerId and intersectParamsId could be empty, just squid or ident
+   -- layerId and intersectParamId could be empty, just squid or ident
    layerId int REFERENCES lm_v3.Layer,
-   intersectParamsId int REFERENCES lm_v3.IntersectParams,
+   intersectParamId int REFERENCES lm_v3.IntersectParam,
       
    status int,
    statusmodtime double precision,
    UNIQUE (bucketId, matrixIndex),
-   UNIQUE (bucketId, layerId, intersectParamsId)
+   UNIQUE (bucketId, layerId, intersectParamId)
 );
 
 -- ----------------------------------------------------------------------------
@@ -447,7 +446,7 @@ lm_v3.intersectparam, lm_v3.intersectparam_intersectparamid_seq,
 lm_v3.bucket, lm_v3.bucket_bucketid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.buckettree, lm_v3.buckettree_buckettreeid_seq,
-lm_v3.bucketlayer, lm_v3.bucketlayer_bucketlayerid_seq,
+lm_v3.bucketlayer, lm_v3.bucketlayer_bucketlayerid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
@@ -468,7 +467,7 @@ lm_v3.intersectparam,
 lm_v3.bucket,
 lm_v3.buckettree,
 lm_v3.matrix,
-lm_v3.bucketlayer,
+lm_v3.bucketlayer
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
@@ -486,7 +485,7 @@ lm_v3.intersectparam_intersectparamid_seq,
 lm_v3.bucket_bucketid_seq,
 lm_v3.buckettree_buckettreeid_seq,
 lm_v3.matrix_matrixid_seq,
-lm_v3.bucketlayer_bucketlayerid_seq,
+lm_v3.bucketlayer_bucketlayerid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------

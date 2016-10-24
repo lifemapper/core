@@ -430,8 +430,8 @@ CREATE TYPE lm_v3.lm_layeridx AS (
    name varchar,
    dlocation varchar,
    metadataurl varchar,
-   -- BucketPALayer OR BucketAncLayer
-   bktpanclayerid int,
+   -- BucketLayer
+   bktlayerid int,
    bucketid int,
    matrixIndex int);
    
@@ -471,7 +471,7 @@ CREATE OR REPLACE TYPE lm_v3.lm_bucketintersectlayer (
    modTime,
    bbox,
    keywords,
-   -- IntersectParams
+   -- IntersectParam
    intersectParamId,
    filterString,
    nameValue,
@@ -479,7 +479,7 @@ CREATE OR REPLACE TYPE lm_v3.lm_bucketintersectlayer (
    weightedMean,
    largestClass,
    minPresence double precision,
-   maxPresence double precision,
+   maxPresence double precision
 ); 
 
         
