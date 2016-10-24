@@ -357,7 +357,7 @@ class AddPALayerProcess(WPSService):
                               resolution=baseLyr.resolution, 
                               keywords=baseLyr.keywords, epsgcode=baseLyr.epsgcode,  
                               ogrType=baseLyr.ogrType, dataFormat=baseLyr.dataFormat,  
-                              valAttribute=baseLyr.getValAttribute(), 
+                              #valAttribute=baseLyr.getValAttribute(), 
                               description=baseLyr.description, 
                               attrPresence=attrPresence, minPresence=minPresence, 
                               maxPresence=maxPresence, 
