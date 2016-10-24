@@ -25,13 +25,15 @@ import argparse
 import mx.DateTime as DT
 import os
 
+# TODO: These should be included in the package of data
+import LmDbServer.tools.charlieMetaExp3 as META
+
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
          DEFAULT_MAPUNITS)
 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
-import LmDbServer.tools.bioclimMeta as meta
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
@@ -105,26 +107,22 @@ def _getbioName(basename, res, suffix=None, isTitle=False):
       name = sep.join((name, suffix)) 
    return name
 
+   
 # ...............................................
-def _getbioFname(lyrtype, rptcode=None, mdlcode=None, famcode=None, 
-                 tmcode=None):
-   ltcode = lyrtype.lower()
-   beg = 'bio'
-   elevation = 'alt'
-   if ltcode == elevation:
-      basename = ltcode
-   else:
-      bionum = ltcode[len(beg):]
-      if rptcode.startswith('WC'):
-         basename = '%s%d' % (beg, int(bionum))
-         
-      elif rptcode == 'AR5':
-         basename = '%s%sbi%s%s' % (mdlcode, famcode, tmcode[2:], bionum)
-         
-      elif rptcode == 'CMIP5':
-         basename = '%s%sbi%s' % (mdlcode, tmcode, bionum)
-   fname = basename+'.tif'
-   return fname 
+def _getbioName(obsOrPred, res, 
+                gcm=None, tm=None, altpred=None, 
+                lyrtype=None, 
+                suffix=None, isTitle=False):
+   sep = '-'
+   if isTitle: 
+      sep = ', '
+   name = obsOrPred
+   if lyrtype is not None:
+      name = sep.join((lyrtype, name))
+   for descriptor in (gcm, altpred, tm, res, suffix):
+      if descriptor is not None:
+         name = sep.join((name, descriptor))
+   return name
  
 # ...............................................
 def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
@@ -134,144 +132,128 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    layers = []
    staticLayers = {}
    currtime = DT.gmt().mjd
-   (starttime, endtime) = baseMeta['time']
-   relativePath = os.path.join(pkgMeta['topdir'], baseMeta['directory'])
-   scenpth = os.path.join(ENV_DATA_PATH, relativePath)
    rstType = lyrMeta['gdaltype']
    
-   for ltype, ltvals in lyrtypeMeta.iteritems():
-      fname = _getbioFname(ltype, rptcode=pkgMeta['present'])
-      lyrname = _getbioName(os.path.splitext(fname)[0], pkgMeta['res'], suffix=pkgMeta['suffix'])
-      lyrtitle = _getbioName('%s, %s' % (ltvals['title'], baseMeta['title']),
-                             pkgMeta['res'], suffix=pkgMeta['suffix'],
-                             isTitle=True)
-      dloc = os.path.join(scenpth, fname)
+   for ltype, ltmeta in lyrtypeMeta.iteritems():
+      relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
+                                        gcm=None, tm=None, altPred=None)
+      lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
+                            suffix=pkgMeta['suffix'])
+      lyrtitle = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
+                             suffix=pkgMeta['suffix'], isTitle=True)
+      dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
       if not os.path.exists(dloc):
          raise LMError('Missing local data %s' % dloc)
       envlyr = EnvironmentalLayer(lyrname, 
-                title=lyrtitle, 
-                valUnits=ltvals['valunits'], 
-                dlocation=dloc, 
-                bbox=pkgMeta['bbox'],
-                gdalFormat=lyrMeta['gdalformat'], 
-                gdalType=rstType,
-                startDate=starttime, endDate=endtime, 
-                mapunits=lyrMeta['mapunits'], 
-                resolution=lyrMeta['resolution'], 
-                epsgcode=lyrMeta['epsg'], 
-                keywords=ltvals['keywords'], 
-                description='%s, %s' % (ltvals['description'], 
-                                        baseMeta['description']), 
-                layerType=ltype, 
-                layerTypeTitle=ltvals['title'], 
-                layerTypeDescription=ltvals['description'], 
-                userId=usr, createTime=currtime, modTime=currtime)
+               title=lyrtitle, 
+               valUnits=ltmeta['valunits'],
+               dlocation=dloc, 
+               bbox=pkgMeta['bbox'], 
+               gdalFormat=lyrMeta['gdalformat'], 
+               gdalType=rstType,
+               author=None, 
+               mapunits=lyrMeta['mapunits'], 
+               resolution=lyrMeta['resolution'], 
+               epsgcode=lyrMeta['epsg'], 
+               keywords=ltmeta['keywords'], 
+               description=lyrtitle, 
+               layerType=ltype, layerTypeTitle=ltmeta['title'], 
+               layerTypeDescription=ltmeta['description'], 
+               userId=usr, createTime=currtime, modTime=currtime)
       layers.append(envlyr)
-      if ltype in baseMeta['staticLayerTypes']:
+      if isStatic:
          staticLayers[ltype] = envlyr
    return layers, staticLayers
 
 # ...............................................
-def _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, relativePath, scendesc, 
-                     rpt, mdlvals, sfam, sfamvals, tm, tmvals):
+def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
+   isStatic = False
+   ltfiles = ltmeta['files']
+   if len(ltfiles) == 1:
+      isStatic = True
+      relFname = ltfiles.keys()[0]
+      if obsOrPred in ltfiles[relFname]:
+         return relFname
+   else:
+      for relFname, kList in ltmeta['files'].iteritems():
+         if obsOrPred in kList: 
+            if (gcm in kList and tm in kList 
+                  and (altPred is None or altPred in kList)):
+               return relFname, isStatic
+   print('Failed to find layertype {} for {}, gcm {}, altpred {}, time {}'
+         .format(ltmeta['title'], obsOrPred, gcm, altPred, tm))
+   return None, None
+      
+# ...............................................
+def _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
+                        obsOrPredRpt, tm, gcm=None, altpred=None):
    """
    @summary Assembles layer metadata for a single layerset
    """
    currtime = DT.gmt().mjd
    layers = []
    rstType = None
-   scenpth = os.path.join(ENV_DATA_PATH, relativePath)
-   for ltype, ltvals in lyrtypeMeta.iteritems():
-      if ltype not in staticLayers.keys():
-         fname = _getbioFname(ltype, rptcode=rpt, tmcode=tm, 
-                  famcode=sfamvals['shortcode'], mdlcode=mdlvals['shortcode'])
-         lyrname = _getbioName(os.path.splitext(fname)[0], pkgMeta['res'], suffix=pkgMeta['suffix'])
-         lyrtitle = _getbioName('%s, IPCC %s %s, %s' % 
-                                (ltvals['title'], rpt, sfam, tm), 
-                                pkgMeta['res'], suffix=pkgMeta['suffix'], isTitle=True)
-         dloc = os.path.join(scenpth, fname)
+   layertypes = pkgMeta['layertypes']
+   for ltype in layertypes:
+      ltmeta = lyrtypeMeta[ltype]
+      relfname, isStatic = _findFileFor(ltmeta, obsOrPredRpt, 
+                                        gcm=gcm, tm=tm, altpred=altpred)
+      if not isStatic:
+         lyrname = _getbioName(obsOrPredRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
+                               altpred=altpred, lyrtype=ltype, 
+                               suffix=pkgMeta['suffix'], isTitle=False)
+         lyrtitle = _getbioName(obsOrPredRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
+                                altpred=altpred, lyrtype=ltype, 
+                                suffix=pkgMeta['suffix'], isTitle=True)
+         dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
             dloc = None
          envlyr = EnvironmentalLayer(lyrname, 
                   title=lyrtitle, 
-                  valUnits=ltvals['valunits'],
+                  valUnits=ltmeta['valunits'],
                   dlocation=dloc, 
                   bbox=pkgMeta['bbox'], 
                   gdalFormat=lyrMeta['gdalformat'], 
                   gdalType=rstType,
-                  author=mdlvals['author'], 
-                  startDate=tmvals['startdate'], 
-                  endDate=tmvals['enddate'], 
+                  author=None, 
                   mapunits=lyrMeta['mapunits'], 
                   resolution=lyrMeta['resolution'], 
                   epsgcode=lyrMeta['epsg'], 
-                  keywords=ltvals['keywords'], 
-                  description='%s, %s' % (ltvals['description'], scendesc), 
-                  layerType=ltype, layerTypeTitle=ltvals['title'], 
-                  layerTypeDescription=ltvals['description'], 
+                  keywords=ltmeta['keywords'], 
+                  description=lyrtitle, 
+                  layerType=ltype, layerTypeTitle=ltmeta['title'], 
+                  layerTypeDescription=ltmeta['description'], 
+                  gcmCode=gcm, rcpCode=altpred, dateCode=tm,
                   userId=usr, createTime=currtime, modTime=currtime)
-         layers.append(envlyr)
+      else:
+         # Use the observed data
+         envlyr = staticLayers[ltype]
+
+      layers.append(envlyr)
    return layers
-      
-# ...............................................
-def _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers, 
-                   relativePath, scendesc, rpt, mdlvals, tm, tmvals):
-   currtime = DT.gmt().mjd
-   layers = []
-   scenpth = os.path.join(ENV_DATA_PATH, relativePath)
-   rstType = lyrMeta['gdaltype']
-   for ltype, ltvals in lyrtypeMeta.iteritems():
-      if ltype not in staticLayers.keys():
-         fname = _getbioFname(ltype, rptcode=rpt, mdlcode=mdlvals['shortcode'], tmcode=tm)
-         lyrname = _getbioName(os.path.splitext(fname)[0], pkgMeta['res'], 
-                               suffix=pkgMeta['suffix'])
-         lyrtitle = _getbioName('%s, %s' % (ltvals['title'], tmvals['name']),
-                                pkgMeta['res'], suffix=pkgMeta['suffix'], 
-                                isTitle=True)
-         dloc = os.path.join(scenpth, fname)
-         if not os.path.exists(dloc):
-            print('Missing local data %s' % dloc)
-            dloc = None
-         envlyr = EnvironmentalLayer(lyrname, 
-                  title=lyrtitle, 
-                  valUnits=ltvals['valunits'],
-                  dlocation=dloc, 
-                  bbox=pkgMeta['bbox'],
-                  gdalFormat=lyrMeta['gdalformat'], 
-                  gdalType=rstType,
-                  author=mdlvals['author'], 
-                  mapunits=lyrMeta['mapunits'], 
-                  resolution=lyrMeta['resolution'], 
-                  epsgcode=lyrMeta['epsg'], 
-                  keywords=ltvals['keywords'], 
-                  description='%s, %s' % (ltvals['description'], scendesc), 
-                  layerType=ltype, 
-                  layerTypeTitle=ltvals['title'], 
-                  layerTypeDescription=ltvals['description'], 
-                  userId=usr, createTime=currtime, modTime=currtime)
-         layers.append(envlyr)
-   return layers
+
 
 # ...............................................
 def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    """
    @summary Assemble Worldclim/bioclim scenario
    """
-   baseMeta = meta.BASELINE_DATA[pkgMeta['present']]
-   basekeywords = [k for k in meta.CLIMATE_KEYWORDS]
+   obsKey = pkgMeta['baseline']
+   baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
+   tm = baseMeta['times'].keys()[0]
+   tmcode = baseMeta['times'][tm]['shortcode']
+   basekeywords = [k for k in META.ENV_KEYWORDS]
    basekeywords.extend(baseMeta['keywords'])
-   (starttime, endtime) = baseMeta['time']
-   scencode = _getbioName(pkgMeta['present'], pkgMeta['res'], 
-                          suffix=pkgMeta['suffix'])
-   lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, 
-                                                baseMeta, lyrMeta, lyrtypeMeta)
+   tmvals = baseMeta['times'][0]
+   scencode = _getbioName(obsKey, tmcode, pkgMeta['res'], gcm=None, altpred=None, 
+                          suffix=pkgMeta['suffix'], isTitle=False)
+   lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, 
+                                           lyrtypeMeta)
    scen = Scenario(scencode, 
             title=baseMeta['title'], 
             author=baseMeta['author'], 
             description=baseMeta['description'], 
-            startdt=DT.DateTime(starttime).mjd, 
-            enddt=DT.DateTime(endtime).mjd, 
             units=lyrMeta['mapunits'], 
             res=lyrMeta['resolution'], 
             bbox=pkgMeta['bbox'], 
@@ -280,43 +262,49 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    return scen, staticLayers
 
 # ...............................................
-def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
+def createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
    """
    @summary Assemble predicted future scenarios defined by IPCC report
    """
-   futScenarios = {}
-   futScens = pkgMeta['future']
-   for rpt in futScens.keys():
-      for (sfam, tm) in futScens[rpt]:
-         mdlvals = meta.REPORTS[rpt]['model']
-         sfamvals = meta.REPORTS[rpt]['scenarios'][sfam]
-         tmvals = meta.TIME_PERIODS[tm]
+   predScenarios = {}
+   predScens = pkgMeta['predicted']
+   for predRpt in predScens.keys():
+      for modelDef in predScens[predRpt]:
+         gcm = modelDef[0]
+         tm = modelDef[1]
+         try:
+            altpred = modelDef[2]
+         except:
+            altvals = {}
+         else:
+            altvals = META.OBSERVED_PREDICTED_META[predRpt]['alternatePredictions'][altpred]
+            altShortcode = altvals['shortcode']
+         mdlvals = META.OBSERVED_PREDICTED_META[predRpt]['models'][gcm]
+         tmvals = META.OBSERVED_PREDICTED_META[predRpt]['times'][tm]
+
          # Reset keywords
-         scenkeywords = [k for k in meta.CLIMATE_KEYWORDS]
-         for vals in (mdlvals, sfamvals, tmvals):
+         scenkeywords = [k for k in META.ENV_KEYWORDS]
+         scenkeywords.extend(META.OBSERVED_PREDICTED_META[predRpt]['keywords'])
+         for vals in (mdlvals, tmvals, altvals):
             try:
                scenkeywords.extend(vals['keywords'])
             except:
                pass
+
          # LM Scenario code, title, description
-         scencode = _getbioName('%s-%s-%s' % (mdlvals['code'], sfam, tm), 
-                                pkgMeta['res'], suffix=pkgMeta['suffix'])
-         scentitle = _getbioName('%s, IPCC %s %s, %s' % 
-                                 (mdlvals['code'], rpt, sfam, tmvals['name']),
-                                 pkgMeta['res'], suffix=pkgMeta['suffix'],
+         scencode = _getbioName(predRpt, tmvals['shortcode'], pkgMeta['res'], 
+                                gcm=mdlvals['shortcode'], altpred=altShortcode, 
+                                suffix=pkgMeta['suffix'], isTitle=False)
+         scentitle = _getbioName(META.OBSERVED_PREDICTED_META[predRpt]['name'], 
+                                 tm, pkgMeta['res'], gcm=mdlvals['name'], 
+                                 altpred=altpred, suffix=pkgMeta['suffix'], 
                                  isTitle=True)
-         scendesc =  ' '.join(
-            ('Predicted %s climate calculated from' % (tmvals['name']),
-             'change modeled by %s, %s for the %s, Scenario %s' 
-               % (mdlvals['name'], mdlvals['author'], meta.REPORTS[rpt]['name'], sfam),
-             'plus Worldclim 1.4 observed mean climate'))
-         # Relative path to data
-         relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], 
-                                     tm, sfam)            
-         lyrs = _getFutureLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
-                                 staticLayers, relativePath, scendesc, rpt, 
-                                 mdlvals, sfam, sfamvals, tm, tmvals)
-         lyrs.extend(stlyr for stlyr in staticLayers.values())
+         scendesc =  ' '.join(('Predicted climate calculated from',
+             '{} and Worldclim 1.4 observed mean climate,'.format(scentitle),
+             'plus static layers such as elevation and soils' ))
+         lyrs = _getPredictedLayers(usr, scentitle, pkgMeta, lyrMeta, 
+                                    lyrtypeMeta, staticLayers, predRpt, gcm, tm, 
+                                    altpred=altpred)
          scen = Scenario(scencode, title=scentitle, author=mdlvals['author'], 
                          description=scendesc, 
                          startdt=tmvals['startdate'], enddt=tmvals['enddate'], 
@@ -324,47 +312,8 @@ def createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                          bbox=pkgMeta['bbox'], modTime=DT.gmt().mjd, 
                          keywords=scenkeywords, epsgcode=lyrMeta['epsg'],
                          layers=lyrs, userId=usr)
-         futScenarios[scencode] = scen
-   return futScenarios
-
-# ...............................................
-def createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
-   """
-   @summary Assemble predicted past scenarios defined by CMIP5
-   """
-   pastScenarios = {}
-   pastScens = pkgMeta['past']
-   for rpt in pastScens.keys():
-      for tm in pastScens[rpt]:
-         mdlvals = meta.REPORTS[rpt]['model']
-         tmvals = meta.TIME_PERIODS[tm]
-         # Reset keywords
-         scenkeywords = [k for k in meta.CLIMATE_KEYWORDS]
-         scenkeywords.extend(tmvals['keywords'])
-         # LM Scenario code, title, description
-         scencode = _getbioName('%s-%s' % (mdlvals['code'], tm),
-                                pkgMeta['res'], suffix=pkgMeta['suffix'])
-         scentitle = _getbioName('%s, %s, %s' % (mdlvals['code'], tmvals['name'], rpt),
-                                 pkgMeta['res'], suffix=pkgMeta['suffix'],
-                                 isTitle=True)
-         scendesc =  ' '.join(
-            ('Predicted %s climate calculated from' % (tmvals['name'].lower()),
-             'change modeled by %s, %s for %s' 
-               % (mdlvals['name'], mdlvals['author'], meta.REPORTS[rpt]['name']),
-             'plus Worldclim 1.4 observed mean climate'))
-         # Relative path to data
-         relativePath = os.path.join(pkgMeta['topdir'], mdlvals['code'], tm)            
-         lyrs = _getPastLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
-                               staticLayers, relativePath, scendesc, 
-                               rpt, mdlvals, tm, tmvals)
-         scen = Scenario(scencode, title=scentitle, author=mdlvals['author'], 
-                         description=scendesc, 
-                         units=lyrMeta['mapunits'], res=lyrMeta['resolution'], 
-                         bbox=pkgMeta['bbox'], modTime=DT.gmt().mjd, 
-                         keywords=scenkeywords, 
-                         epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
-         pastScenarios[scen.code] = scen
-   return pastScenarios
+         predScenarios[scencode] = scen
+   return predScenarios
 
 # ...............................................
 def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
@@ -376,21 +325,14 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    basescen, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, 
                                                    lyrtypeMeta)
    msgs.append('Created base scenario')
-   # Past
-   unionScenarios = createPastScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
-                                        staticLayers)
-   msgs.append('Created past scenarios')
-   # Future
-   futScenarios = createFutureScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
-                                        staticLayers)
-   msgs.append('Created future scenarios')
+   # Predicted Past and Future
+   unionScenarios = createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+                                             staticLayers)
+   msgs.append('Created predicted scenarios')
    # Join all sets and dictionaries
    unionScenarios[basescen.code] = basescen
-   for k,v in futScenarios.iteritems():
-      unionScenarios[k] = v
    return unionScenarios, msgs
       
-
 # ...............................................
 def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenPkgName):
    """
@@ -418,13 +360,13 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
 
 # ...............................................
 def _getClimateMeta(scenPkg):
-   pkgMeta = meta.CLIMATE_PACKAGES[scenPkg]
+   pkgMeta = META.CLIMATE_PACKAGES[scenPkg]
    lyrMeta = {'epsg': DEFAULT_EPSG, 
               'topdir': pkgMeta['topdir'],
               'mapunits': DEFAULT_MAPUNITS, 
-              'resolution': meta.RESOLUTIONS[pkgMeta['res']], 
-              'gdaltype': meta.ENVLYR_GDALTYPE, 
-              'gdalformat': meta.ENVLYR_GDALFORMAT,
+              'resolution': META.RESOLUTIONS[pkgMeta['res']], 
+              'gdaltype': META.ENVLYR_GDALTYPE, 
+              'gdalformat': META.ENVLYR_GDALFORMAT,
 #               'remoteurl': REMOTE_DATA_URL,
               'gridname': DEFAULT_GRID_NAME, 
               'gridsides': 4, 
@@ -486,7 +428,7 @@ if __name__ == '__main__':
                      .format(SCENARIO_PACKAGE))
          pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
          addScenarioPackageMetadata(scribeWithBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
-                                    meta.LAYERTYPE_DATA, SCENARIO_PACKAGE)
+                                    META.LAYERTYPE_META, SCENARIO_PACKAGE)
 
       if metaType in ('taxonomy', 'all'):
          # Insert all taxonomic sources for now
@@ -512,7 +454,7 @@ success = scribe.openConnections()
 pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
 
 usr = ARCHIVE_USER
-lyrtypeMeta = meta.LAYERTYPE_DATA
+lyrtypeMeta = META.LAYERTYPE_META
 scenPkgName = SCENARIO_PACKAGE
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'WC-10min'
