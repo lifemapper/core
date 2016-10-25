@@ -434,7 +434,35 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-from LmDbServer.tools.initBorg im
+import argparse
+import mx.DateTime
+import os
+
+# TODO: These should be included in the package of data
+import LmDbServer.tools.charlieMetaExp3 as META
+
+from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
+         DEFAULT_MAPUNITS)
+
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
+         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
+from LmServer.base.lmobj import LMError
+from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
+from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
+from LmServer.common.log import ScriptLogger
+from LmServer.common.lmuser import LMUser
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.sdm.algorithm import Algorithm
+from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
+from LmServer.sdm.scenario import Scenario
+from LmServer.rad.shapegrid import ShapeGrid
+
+CURRTIME = mx.DateTime.gmt().mjd
+
+from LmDbServer.tools.initBorg import *
+from LmDbServer.tools.initBorg import (_getBaselineLayers, _getClimateMeta, 
+                                      _getbioName, _findFileFor)
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
@@ -444,10 +472,20 @@ pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
 usr = ARCHIVE_USER
 lyrtypeMeta = META.LAYERTYPE_META
 scenPkgName = SCENARIO_PACKAGE
-obsKey = pkgMeta['baseline']
+obsOrPredRpt = pkgMeta['baseline']
 baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
 tm = baseMeta['times'].keys()[0]
 tmcode = baseMeta['times'][tm]['shortcode']
+
+for ltype, ltmeta in lyrtypeMeta.iteritems():
+   ltmeta = lyrtypeMeta[ltype]
+   relfname, isStatic = _findFileFor(ltmeta, obsOrPredRpt, 
+                                        gcm=None, tm=None, altPred=None)
+   print relfname
+   lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
+                         suffix=pkgMeta['suffix'])
+   lyrtitle = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
+                          suffix=pkgMeta['suffix'], isTitle=True)
 
 lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, 
                                            lyrtypeMeta)
