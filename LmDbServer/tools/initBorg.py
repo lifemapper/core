@@ -22,7 +22,7 @@
           02110-1301, USA.
 """
 import argparse
-import mx.DateTime as DT
+import mx.DateTime
 import os
 
 # TODO: These should be included in the package of data
@@ -45,19 +45,21 @@ from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer
 from LmServer.sdm.scenario import Scenario
 from LmServer.rad.shapegrid import ShapeGrid
 
+CURRTIME = mx.DateTime.gmt().mjd
+# CURRTIME = 57686
 # ...............................................
 def addUsers(scribe):
    """
    @summary Adds algorithms to the database from the algorithm dictionary
    """
    em = '{}@nowhere.com'.format(ARCHIVE_USER)
-   defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
+   defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=CURRTIME)
    scribe.log.info('  Insert ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
    usrid = scribe.insertUser(defaultUser)
 
    anonName = 'anon'
    anonEmail = '%s@nowhere.com' % anonName
-   anonUser = LMUser(anonName, anonEmail, anonEmail, modTime=DT.gmt().mjd)
+   anonUser = LMUser(anonName, anonEmail, anonEmail, modTime=CURRTIME)
    scribe.log.info('  Insert anon {} ...'.format(anonName))
    usrid2 = scribe.insertUser(anonUser)
 
@@ -83,7 +85,7 @@ def addLayerTypes(scribe, lyrtypeMeta, usr):
       ltype = EnvironmentalType(typecode, typeinfo['title'], 
                                 typeinfo['description'], usr, 
                                 keywords=typeinfo['keywords'], 
-                                modTime=DT.gmt().mjd)
+                                modTime=CURRTIME)
       scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
       etype = scribe.insertLayerTypeCode(ltype)
       etypes.append(etype)
@@ -120,7 +122,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   currtime = DT.gmt().mjd
    rstType = lyrMeta['gdaltype']
    
    for ltype, ltmeta in lyrtypeMeta.iteritems():
@@ -148,7 +149,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                description=lyrtitle, 
                layerType=ltype, layerTypeTitle=ltmeta['title'], 
                layerTypeDescription=ltmeta['description'], 
-               userId=usr, createTime=currtime, modTime=currtime)
+               userId=usr, createTime=CURRTIME, modTime=CURRTIME)
       layers.append(envlyr)
       if isStatic:
          staticLayers[ltype] = envlyr
@@ -166,8 +167,10 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
    else:
       for relFname, kList in ltmeta['files'].iteritems():
          if obsOrPred in kList:
-            if (gcm is not None and (gcm in kList and tm in kList and
-                                     (altPred is None or altPred in kList))):
+            if gcm == None and tm == None and altPred == None:
+               return relFname, isStatic
+            elif (gcm in kList and tm in kList and
+                  (altPred is None or altPred in kList)):
                return relFname, isStatic
    print('Failed to find layertype {} for {}, gcm {}, altpred {}, time {}'
          .format(ltmeta['title'], obsOrPred, gcm, altPred, tm))
@@ -179,7 +182,6 @@ def _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
    """
    @summary Assembles layer metadata for a single layerset
    """
-   currtime = DT.gmt().mjd
    layers = []
    rstType = None
    layertypes = pkgMeta['layertypes']
@@ -214,7 +216,7 @@ def _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
                   layerType=ltype, layerTypeTitle=ltmeta['title'], 
                   layerTypeDescription=ltmeta['description'], 
                   gcmCode=gcm, rcpCode=altpred, dateCode=tm,
-                  userId=usr, createTime=currtime, modTime=currtime)
+                  userId=usr, createTime=CURRTIME, modTime=CURRTIME)
       else:
          # Use the observed data
          envlyr = staticLayers[ltype]
@@ -245,7 +247,7 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
             units=lyrMeta['mapunits'], 
             res=lyrMeta['resolution'], 
             bbox=pkgMeta['bbox'], 
-            modTime=DT.gmt().mjd, keywords=basekeywords, 
+            modTime=CURRTIME, keywords=basekeywords, 
             epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
    return scen, staticLayers
 
@@ -297,7 +299,7 @@ def createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                          description=scendesc, 
                          startdt=tmvals['startdate'], enddt=tmvals['enddate'], 
                          units=lyrMeta['mapunits'], res=lyrMeta['resolution'], 
-                         bbox=pkgMeta['bbox'], modTime=DT.gmt().mjd, 
+                         bbox=pkgMeta['bbox'], modTime=CURRTIME, 
                          keywords=scenkeywords, epsgcode=lyrMeta['epsg'],
                          layers=lyrs, userId=usr)
          predScenarios[scencode] = scen
@@ -432,9 +434,7 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-from LmDbServer.tools.initBorg import *
-from LmDbServer.tools.initBorg import _getClimateMeta, _getbioName, _getBaselineLayers
-
+from LmDbServer.tools.initBorg im
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
@@ -444,6 +444,14 @@ pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
 usr = ARCHIVE_USER
 lyrtypeMeta = META.LAYERTYPE_META
 scenPkgName = SCENARIO_PACKAGE
+obsKey = pkgMeta['baseline']
+baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
+tm = baseMeta['times'].keys()[0]
+tmcode = baseMeta['times'][tm]['shortcode']
+
+lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, 
+                                           lyrtypeMeta)
+
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'WC-10min'
 scen = scens[scode]
