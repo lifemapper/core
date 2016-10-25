@@ -40,8 +40,8 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
-from LmServer.common.lmconstants import (DbUser, LOG_PATH, SESSION_DIR, 
-                                         WEB_DIR)
+from LmServer.common.lmconstants import (DbUser, LOG_PATH, SESSION_DIR, WEB_DIR,
+                                         CHERRYPY_CONFIG_FILE)
 from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
                                             WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
@@ -51,10 +51,9 @@ from LmServer.db.scribe import Scribe
 from LmServer.base.utilities import (escapeString, getFileContents,
                                      getUrlParameter)
 
-from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, 
-                                            HTTP_ERRORS,  
+from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, HTTP_ERRORS, 
                                             STATIC_DIR)
-from LmWebServer.common.localconstants import CP_CONFIG_FILE, LM_LIB_PATH
+from LmWebServer.common.localconstants import LM_LIB_PATH
 from LmWebServer.formatters.formatterFactory import FormatterFactory
 from LmWebServer.services.common.authentication import checkUserLogin
 from LmWebServer.services.common.group import LMServiceGroup
@@ -77,12 +76,12 @@ class svc(object):
    # ....................................................
    @cherrypy.expose
    def client(self, *vpath, **params):
-       """
-       @summary: Client service
-       """
-       virpath = list(vpath)
-       cherrypy.response.headers["Content-Type"] = "application/json"
-       return "{'status' : 0, 'message' : 'Up to date'}"
+      """
+      @summary: Client service
+      """
+      virpath = list(vpath)
+      cherrypy.response.headers["Content-Type"] = "application/json"
+      return "{'status' : 0, 'message' : 'Up to date'}"
        
    # ....................................................
    @cherrypy.expose
@@ -674,7 +673,7 @@ def getUserName():
    temp = None
    
    try:
-      if os.path.isfile(os.path.join(SESSION_DIR, 'session-%s' % cherrypy.session.id)):
+      if os.path.isfile(os.path.join(SESSION_PATH, 'session-%s' % cherrypy.session.id)):
          temp = cherrypy.session.get(SESSION_KEY)
    except Exception, e:
       log.debug(' '.join(("Exception in getUserName:", str(e))))
@@ -822,7 +821,7 @@ def CORS():
 # Tell CherryPy to add headers needed for CORS
 cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
-cherrypy.config.update(CP_CONFIG_FILE)
-application = cherrypy.Application(svc(), script_name=None, config=CP_CONFIG_FILE)
+cherrypy.config.update(CHERRYPY_CONFIG_FILE)
+application = cherrypy.Application(svc(), script_name=None, config=CHERRYPY_CONFIG_FILE)
 
 customLogs(application)

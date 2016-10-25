@@ -83,52 +83,37 @@ TIME_PERIODS = {
                 
 }
 
-REPORTS = {
+# (previously REPORTS)
+PREDICTED_DATA = {
+   # Predicted future (IPCC) or past (CMIP) report code
+   # Used for naming scenario code and relative paths.
+   # All models may be paired with any scenarios
+   # Top relative directory, under under CLIMATE_PACKAGE top dir
    # Past
    'CMIP5': {'name': 'Coupled Model Intercomparison Project Phase 5',              
-             'model': {'code': 'CCSM4',
-                       'name': 'Community Climate System Model, 4.0',
-                       'shortcode': 'cc',
-                       'author': 'National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/'},
-           'scenarios': None },
+             'models': {'CCSM4':
+                        {'name': 'Community Climate System Model, 4.0',
+                         'shortcode': 'cc',
+                         'author': 'National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/'
+                         }},
+             'scenarios': None },
    # Future
-   # IPCC report code; In scenario code and dir structure.  Top relative directory, under under CLIMATE_PACKAGE top dir,  
-   # above RCPs 
-   'AR5': { 
-      # Name of climate report
-      'name': 'IPCC Fifth Assessment Report (2013)', 
-      'model': {
-         # Code used for this GCM model in scenario code and dir structure
-         'code': 'CCSM4', 
-         # Name of this GCM model
-         'name': 'Community Climate System Model, 4.0',
-         # Short code for GCM model, for filenames 
-         'shortcode': 'cc', 
-         'author': 'National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/' # Author of climate model
-      },
-      'scenarios': 
-      {
-         # Representative Concentration Pathways code, 
-         # used in scenario code and dir structure
-         'RCP4.5': { 
-            # Scenario key
-            'shortcode': '45',
-            'keywords': [
-                         'radiative forcing +4.5', 
-                         'likely temperature increase 1.1-2.6 C',
-                        ]
-         },
-         'RCP8.5': { 
-            'shortcode': '85',
-            'keywords': [
-                         'radiative forcing +8.5', 
-                         'likely temperature increase 2.6-4.8 C',
-                         'likely sea level increase 0.45-0.82 m'
-                        ] 
-         } 
-      } 
-   } 
-}
+   'AR5': {'name': 'IPCC Fifth Assessment Report (2014)', 
+           'models': {'CCSM4': {'name': 'Community Climate System Model, 4.0',
+                                # Short code for GCM model, for filenames 
+                                'shortcode': 'cc', 
+                                'author': 'National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/' }
+                      },
+           'scenarios': {# Representative Concentration Pathways code, 
+                         'RCP4.5': {'shortcode': '45',
+                                    'keywords': ['radiative forcing +4.5', 
+                                                 'likely temperature increase 1.1-2.6 C']},
+                         'RCP8.5': {'shortcode': '85',
+                                    'keywords': ['radiative forcing +8.5', 
+                                                 'likely temperature increase 2.6-4.8 C',
+                                                 'likely sea level increase 0.45-0.82 m']} 
+                         }
+           }}
 
 # Lifemapper-packaged data, produced by Worldclim, www.worldclim.org 
 # Example: 10 minute, global data, baseline, past, future
@@ -159,10 +144,10 @@ CLIMATE_PACKAGES = {
          # References key in REPORTS
          # {REPORT: [(RCP, Time), (RCP, Time) ...]} 
          'AR5': [
-                 ('RCP4.5', '2050'), 
-                 ('RCP4.5', '2070'),
-                 ('RCP8.5', '2050'), 
-                 ('RCP8.5', '2070')
+                 ('CCSM4', 'RCP4.5', '2050'), 
+                 ('CCSM4', 'RCP4.5', '2070'),
+                 ('CCSM4', 'RCP8.5', '2050'), 
+                 ('CCSM4', 'RCP8.5', '2070')
                 ]
                  },
       # Append to all scenario codes if needed for identification  

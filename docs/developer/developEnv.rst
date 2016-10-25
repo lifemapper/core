@@ -11,7 +11,7 @@ Introduction
 ************
 To test and debug and test code not yet tagged, use a cluster with both 
 LmCompute and LmServer installed (see **Install Lifemapper System** 
-instructions at `Install Lifemapper System`_).  **Before rebooting**, connect 
+instructions at `Install Lifemapper System`_).  After install connect 
 code checked out from the git repository.
 
 Connect development code on Frontend
@@ -30,7 +30,7 @@ Connect development code on Frontend
 
   OR:: 
   
-      # /opt/lifemapper/rocks/bin/confDbconnect
+   # /opt/lifemapper/rocks/bin/confDbconnect
    
 #. Copy or Recreate files with replaced variables in your git tree. 
    Config files will be created in the non-linked config directory
@@ -50,7 +50,8 @@ Connect development code on Frontend
 
    # cd /state/partition1/workspace/core
    # sed -e 's%@LMHOME@%/opt/lifemapper%g' LmDbServer/dbsetup/addDBFunctions.sql.in > LmDbServer/dbsetup/addDBFunctions.sql
-      
+   etc 
+     
 #. If there are new changes to the config files, not included in the 
    installed rpm, modify those in the /opt/lifemapper/config/ directory
 
@@ -84,12 +85,18 @@ Connect development code on Nodes
 
    # rocks run host compute "(cd /state/partition1/; mkdir workspace; git clone http://github.com/lifemapper/core)"
 
-#. Recreate files with replaced variables in your git tree. 
+#. Copy files with replaced variables into your git tree. 
    Config files will be created in the non-linked config directory
    correctly without intervention.  The maxent and lmMaxent executables will  
    be installed into the rocks/bin directory without intervention.::
       
-   # rocks run host compute "(cd /state/partition1/workspace/core/; sed -e 's%@LMHOME@%/opt/lifemapper%g' LmCompute/tools/lmJobScript.in > LmCompute/tools/lmJobScript)"
+   # rocks run host compute "(cd /opt/lifemapper; \
+     cp LmCompute/tools/lmJobScript /state/partition1/workspace/coreLmCompute/tools/lmJobScript)"
+ 
+#. **Or** recreate files with replaced variables in your git tree.::
+      
+   # rocks run host compute "(cd /state/partition1/workspace/core/; \
+     sed -e 's%@LMHOME@%/opt/lifemapper%g' LmCompute/tools/lmJobScript.in > LmCompute/tools/lmJobScript)"
  
 #. Delete installed lifemapper component directories and symlink to your git tree ::  
 
@@ -132,17 +139,6 @@ If you are installing on a new machine, you will
 Add/change Server input data/user
 *********************************
 
-#. Change the archive user  as ``root`` 
+#. Change the archive user  as ``root``.  Follow instructions at 
+   (`Install Lifemapper System`_) **To change defaults**
 
-   Add ARCHIVE_USER to the [LmCommon - common] section of site.ini file.  
-   
-   The ARCHIVE_USER must own all occurrence and scenario records; so you must 
-   insert new or re-insert existing climate data as this user.  The user will 
-   be added automatically when running this script :: 
-
-     # $PYTHON /opt/lifemapper/rocks/bin/fillDB 
-
-#. **Start the archivist**  as ``lmserver`` to initialize new jobs for the new species data.::
-
-     % $PYTHON /opt/lifemapper/LmDbServer/pipeline/archivist.py start
-   

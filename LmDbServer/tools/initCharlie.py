@@ -28,9 +28,6 @@ import os
 # TODO: These should be included in the package of data
 import LmDbServer.tools.charlieMetaExp3 as META
 
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
-         DEFAULT_MAPUNITS)
-
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
@@ -39,7 +36,7 @@ from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.scribe import Scribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
 from LmServer.sdm.scenario import Scenario
@@ -50,7 +47,7 @@ def addUsers(scribe):
    """
    @summary Adds algorithms to the database from the algorithm dictionary
    """
-   em = '{}@nowhere.com'.format(ARCHIVE_USER)
+   em = '%s@nowhere.com' % ARCHIVE_USER
    defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
    scribe.log.info('  Insert ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
    usrid = scribe.insertUser(defaultUser)
@@ -78,16 +75,16 @@ def addAlgorithms(scribe):
 
 # ...............................................
 def addLayerTypes(scribe, lyrtypeMeta, usr): 
-   etypes = [] 
+   ids = [] 
    for typecode, typeinfo in lyrtypeMeta.iteritems():
       ltype = EnvironmentalType(typecode, typeinfo['title'], 
                                 typeinfo['description'], usr, 
                                 keywords=typeinfo['keywords'], 
                                 modTime=DT.gmt().mjd)
       scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
-      etype = scribe.insertLayerTypeCode(ltype)
-      etypes.append(etype)
-   return etypes
+      etypeid = scribe.getOrInsertLayerTypeCode(ltype)
+      ids.append(etypeid)
+   return ids
 
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
@@ -132,7 +129,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                              suffix=pkgMeta['suffix'], isTitle=True)
       dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
       if not os.path.exists(dloc):
-         print('Missing local data %s' % dloc)
+         raise LMError('Missing local data %s' % dloc)
       envlyr = EnvironmentalLayer(lyrname, 
                title=lyrtitle, 
                valUnits=ltmeta['valunits'],
@@ -162,12 +159,12 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
       isStatic = True
       relFname = ltfiles.keys()[0]
       if obsOrPred in ltfiles[relFname]:
-         return relFname, isStatic
+         return relFname
    else:
       for relFname, kList in ltmeta['files'].iteritems():
-         if obsOrPred in kList:
-            if (gcm is not None and (gcm in kList and tm in kList and
-                                     (altPred is None or altPred in kList))):
+         if obsOrPred in kList: 
+            if (gcm in kList and tm in kList 
+                  and (altPred is None or altPred in kList)):
                return relFname, isStatic
    print('Failed to find layertype {} for {}, gcm {}, altpred {}, time {}'
          .format(ltmeta['title'], obsOrPred, gcm, altPred, tm))
@@ -222,7 +219,6 @@ def _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
       layers.append(envlyr)
    return layers
 
-
 # ...............................................
 def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    """
@@ -234,8 +230,9 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    tmcode = baseMeta['times'][tm]['shortcode']
    basekeywords = [k for k in META.ENV_KEYWORDS]
    basekeywords.extend(baseMeta['keywords'])
-   
-   scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
+   tmvals = baseMeta['times'][0]
+   scencode = _getbioName(obsKey, tmcode, pkgMeta['res'], gcm=None, altpred=None, 
+                          suffix=pkgMeta['suffix'], isTitle=False)
    lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, 
                                            lyrtypeMeta)
    scen = Scenario(scencode, 
@@ -321,6 +318,7 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    unionScenarios[basescen.code] = basescen
    return unionScenarios, msgs
       
+
 # ...............................................
 def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenPkgName):
    """
@@ -349,9 +347,9 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
 # ...............................................
 def _getClimateMeta(scenPkg):
    pkgMeta = META.CLIMATE_PACKAGES[scenPkg]
-   lyrMeta = {'epsg': DEFAULT_EPSG, 
+   lyrMeta = {'epsg': META.EPSG, 
               'topdir': pkgMeta['topdir'],
-              'mapunits': DEFAULT_MAPUNITS, 
+              'mapunits': META.MAPUNITS, 
               'resolution': META.RESOLUTIONS[pkgMeta['res']], 
               'gdaltype': META.ENVLYR_GDALTYPE, 
               'gdalformat': META.ENVLYR_GDALFORMAT,
@@ -361,18 +359,18 @@ def _getClimateMeta(scenPkg):
               'gridsize': DEFAULT_GRID_CELLSIZE}
    return pkgMeta, lyrMeta
 
-# ...............................................
-def _importClimatePackageMetadata():
-   # Override the above imports if scenario metadata file exists
-   metabasename = SCENARIO_PACKAGE+'.py'
-   metafname = os.path.join(ENV_DATA_PATH, metabasename)
-   # TODO: change on update python from 2.7 to 3.3+  
-   try:
-      import imp
-      meta = imp.load_source('currentmetadata', metafname)
-   except Exception, e:
-      raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                    .format(metafname, e))
+# # ...............................................
+# def _importClimatePackageMetadata():
+#    # Override the above imports if scenario metadata file exists
+#    metabasename = SCENARIO_PACKAGE+'.py'
+#    metafname = os.path.join(ENV_DATA_PATH, metabasename)
+#    # TODO: change on update python from 2.7 to 3.3+  
+#    try:
+#       import imp
+#       META = imp.load_source('currentmetadata', metafname)
+#    except Exception, e:
+#       raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+#                     .format(metafname, e))
 
 # ...............................................
 if __name__ == '__main__':
@@ -386,6 +384,7 @@ if __name__ == '__main__':
    args = parser.parse_args()
    metaType = args.metadata
 
+#    # imports into a global variable/dictionary 'META'
 #    _importClimatePackageMetadata()
 
    try:
@@ -396,26 +395,26 @@ if __name__ == '__main__':
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
    try:
-      logger = ScriptLogger(basename+'_borg')
-      scribeWithBorg = BorgScribe(logger)
-      success = scribeWithBorg.openConnections()
+      logger = ScriptLogger(basename)
+      scribe = Scribe(logger)
+      success = scribe.openConnections()
 
       if not success: 
          logger.critical('Failed to open database')
          exit(0)
       
       logger.info('  Insert user {} metadata ...'.format(ARCHIVE_USER))
-      archiveUserId, anonUserId = addUsers(scribeWithBorg)
+      archiveUserId, anonUserId = addUsers(scribe)
       
       if metaType in ('algorithm', 'all'):
          logger.info('  Insert algorithm metadata ...')
-         aIds = addAlgorithms(scribeWithBorg)
+         aIds = addAlgorithms(scribe)
 
       if metaType in ('climate', 'all'):
          logger.info('  Insert climate {} metadata ...'
                      .format(SCENARIO_PACKAGE))
          pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-         addScenarioPackageMetadata(scribeWithBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
+         addScenarioPackageMetadata(scribe, ARCHIVE_USER, pkgMeta, lyrMeta, 
                                     META.LAYERTYPE_META, SCENARIO_PACKAGE)
 
       if metaType in ('taxonomy', 'all'):
@@ -423,26 +422,26 @@ if __name__ == '__main__':
          for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
             logger.info('  Insert taxonomy {} metadata ...'
                         .format(taxInfo['name']))
-            taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
+            taxSourceId = scribe.insertTaxonomySource(taxInfo['name'],
                                                       taxInfo['url'])      
    except Exception, e:
       logger.error(str(e))
       raise
    finally:
-      scribeWithBorg.closeConnections()
+      scribe.closeConnections()
        
 """
-from LmDbServer.tools.initBorg import *
-from LmDbServer.tools.initBorg import _getClimateMeta, _getbioName, _getBaselineLayers
+from LmDbServer.tools.initCatalog import *
+from LmDbServer.tools.initCatalog import _getClimateMeta
 
 logger = ScriptLogger('testing')
-scribe = BorgScribe(logger)
+scribe = Scribe(logger)
 success = scribe.openConnections()
 
 pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
 
 usr = ARCHIVE_USER
-lyrtypeMeta = META.LAYERTYPE_META
+lyrtypeMeta = META.LAYERTYPE_DATA
 scenPkgName = SCENARIO_PACKAGE
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'WC-10min'

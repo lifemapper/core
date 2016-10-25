@@ -33,9 +33,9 @@ from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
-                  DEFAULT_PROJECTION_FORMAT, JobFamily, DB_STORE, ReferenceType,
-                  LM_SCHEMA_BORG)
+from LmServer.common.lmconstants import (ALGORITHM_DATA, ARCHIVE_PATH, 
+                  LMServiceModule, DEFAULT_PROJECTION_FORMAT, JobFamily, 
+                  DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.notifyJob import NotifyJob
@@ -66,15 +66,14 @@ class Borg(DbPostgresql):
                             password=dbKey, host=dbHost, port=dbPort,
                             schema=LM_SCHEMA_BORG)
       earl = EarlJr()
-      self._relativeArchivePath = earl.createArchiveDataPath()
       self._webservicePrefix = earl.createWebServicePrefix()
             
 # ...............................................
    def _getRelativePath(self, dlocation=None, url=None):
       relativePath = None
       if dlocation is not None:
-         if dlocation.startswith(self._relativeArchivePath):
-            relativePath = dlocation[len(self._relativeArchivePath):]
+         if dlocation.startswith(ARCHIVE_PATH):
+            relativePath = dlocation[len(ARCHIVE_PATH):]
       elif url is not None:
          if url.startswith(self._webservicePrefix):
             relativePath = url[len(self._webservicePrefix):]

@@ -79,26 +79,6 @@ New install (destroys data)
     # bash add-server.sh > add-server.out 2>&1
     # bash add-compute.sh > add-compute.out 2>&1
     
-To change SCENARIO_PACKAGE and/or ARCHIVE_USER before reboot
-------------------------------------------------------------
-
-#. **To change defaults**, for either lifemapper-compute or lifemapper-server,
-   such as DATASOURCE, ARCHIVE_USER, compute parameters,
-   create the configuration file site.ini (in /opt/lifemapper/config/) 
-   prior to reboot.  Two example files are present in that same directory.
-   Variables to override for both rolls should be placed in the site.ini file.
-   If you change the SCENARIO_PACKAGE variable for LmServer, make sure to
-   also change the SCENARIO_PACKAGE_SEED variable for LmCompute.
-
-   #. If you updated the SCENARIO_PACKAGE (with or without ARCHIVE_USER):
-   
-      #. Create a [ LmCompute - environment ] section containing  
-         the variable SCENARIO_PACKAGE_SEED with the same value
-
-      #. Run the following to download, then catalog LmServer metadata ::
-   
-         # rocks/bin/getClimateData
-
 Finish install
 --------------
 
@@ -106,38 +86,49 @@ Finish install
 
    # reboot
    
-Add compute input layers to the Frontend
-----------------------------------------
+(OPT) To change defaults
+------------------------
 
-#. Seed the data for LmCompute on the frontend ::
+#. **To change defaults**, for either lifemapper-compute or lifemapper-server,
+   such as DATASOURCE, ARCHIVE_USER, compute parameters,
 
-   # /opt/lifemapper/rocks/bin/seedData
+   #. create the configuration file site.ini (in /opt/lifemapper/config/) 
+      prior to reboot.  Two example files are present in that same directory.
+      Variables to override for both rolls should be placed in the site.ini file.
+      
+   #. If you wish to change the SCENARIO_PACKAGE (and corresponding 
+      DEFAULT_SCENARIO) variables for LmServer, you must do this after the 
+      installation is complete (after reboot).
+
+   #. If you updated the SCENARIO_PACKAGE 
    
-To change SCENARIO_PACKAGE and/or ARCHIVE_USER after reboot
------------------------------------------------------------
+      1. Create a [ LmCompute - environment ] section containing  
+         the variable SCENARIO_PACKAGE_SEED with the same value
 
-#. Follow the **To change defaults** instructions under **New Install**
+      2. Run the following to download data ::
+   
+         # rocks/bin/getClimateData
 
-   #. If you updated the SCENARIO_PACKAGE or ARCHIVE_USER:
-
-      #. Run the following to catalog LmServer metadata ::
+      3. Run the following to catalog metadata for LmServer::
    
          # rocks/bin/fillDB
 
-   #. If you updated the SCENARIO_PACKAGE:
-
-      #. Seed the data for LmCompute on the frontend ::
+      4. Run the following to convert and catalog data for LmCompute ::
 
          # /opt/lifemapper/rocks/bin/seedData
 
+   #. If you ONLY updated the ARCHIVE_USER
+   
+      #. Run the following to catalog metadata for LmServer::
+   
+         # rocks/bin/fillDB
+         
 
 Install nodes from Frontend
 ---------------------------
 
-#. **(If update) Remove some compute-node rpms manually** 
-   
-   #. Do this just in case the rpm versions have not changed, to ensure that
-      scripts are run.::  
+#. **(Optional)** When updating an existing installation, remove unchanged 
+   compute-node rpms manually to ensure that scripts are run.::  
 
       # rocks run host compute 'rpm -el rocks-lmcompute'
     
@@ -145,6 +136,14 @@ Install nodes from Frontend
 
    # rocks set host boot compute action=install
    # rocks run host compute reboot 
+
+Add compute input layers to the Frontend
+----------------------------------------
+
+#. Seed the data for LmCompute on the frontend (if not done in optional step
+   above) ::
+
+   # /opt/lifemapper/rocks/bin/seedData
 
    
 Look for Errors
@@ -154,9 +153,9 @@ Look for Errors
    initialization commands in log files in /tmp (these may complete up to 5
    minutes after reboot).  The post-99-lifemapper-lm*.log files contain all
    the output from all reinstall-reboot-triggered scripts and are created fresh 
-   each time.  All other logfiles have output appended to the end of an existing 
-   logfile (from previous runs) and will be useful if the script must be re-run
-   manually for testing.
+   each time.  All other logfiles are in /state/partition1/lmscratch/log 
+   and may be output appended to the end of an existing logfile (from previous 
+   runs) and will be useful if the script must be re-run manually for testing.
 #. **Clean compute nodes**  
    
 LmCompute
@@ -164,7 +163,7 @@ LmCompute
 
 #. Check LmCompute logfiles
 
-    * post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
+    * /tmp/post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
     * initLMcompute.log 
     * installComputeCronJobs.log
     * seedData.log (seedData must be run manually by user after reboot)
@@ -174,7 +173,7 @@ LmServer
 
 #. Check LmServer logfiles
 
-    * post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
+    * /tmp/post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
     * initLM.log
     * installServerCronJobs.log
     * initDbserver.log (only if new db)
@@ -206,20 +205,14 @@ Change Data Defaults
        is IDIG_FILENAME with a value of idig_gbifids.txt.  Download the file 
        from yeti into /share/lmserver/data/species.
      * Default SCENARIO_PACKAGE is 10min-past-present-future.  To change this, 
-       override the variable SCENARIO_PACKAGE in site.ini, then 
+       override the variable SCENARIO_PACKAGE (for LmServer) and 
+       SCENARIO_PACKAGE_SEED (for LmCompute).
      
-       * run `/opt/lifemapper/rocks/bin/getClimateData` to download  
-         the data (log output will be in /tmp/getClimateData.log):
        * identify options for DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS by looking at the metadata newly installed  
          in /share/lmserver/data/climate/<SCENARIO_PACKAGE>.csv
        * add the variables DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS in site.ini with appropriate values
          
-   * If you have modified ARCHIVE_USER or SCENARIOS, run the following (log 
-     output will be in /tmp/fillDB.log):: 
-     
-       # /opt/lifemapper/rocks/bin/fillDB
-
-
+  then follow the instructions in **(OPT) To change defaults** above.
    

@@ -113,7 +113,7 @@ class RandomizeSplotchRunner(_RandomizeRunner):
        
       lyrMgr = LayerManager(JOB_DATA_PATH)
       sgLayerId = self.job.shapegrid.identifier
-      sgUrl = self.job.shapegrid.shapegridUrl
+      sgUrl = self.job.shapegrid.url
       
       self.shapegrid = {
                    'dlocation' : lyrMgr.getLayerFilename(sgLayerId, 

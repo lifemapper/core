@@ -44,22 +44,6 @@ create table lm_v3.TaxonomySource
 );
 
 -- -------------------------------
--- REMOVE THIS
--- -------------------------------
-create table lm_v3.ComputeResource
-(
-   computeResourceId serial UNIQUE PRIMARY KEY,
-   name varchar(32) NOT NULL,
-   ipaddress varchar(16) UNIQUE NOT NULL,
-   ipsigbits varchar(2),
-   fqdn varchar(100),
-   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser,
-   modtime double precision,
-   lastheartbeat double precision,
-   UNIQUE (name, userId)
-);
-
--- -------------------------------
 create table lm_v3.JobChain
 (
    jobchainId serial UNIQUE PRIMARY KEY,
@@ -104,17 +88,27 @@ CREATE INDEX idx_lower_sciname on lm_v3.Taxon(lower(sciname));
 CREATE INDEX idx_lower_genus on lm_v3.Taxon(lower(genus));
 
 -- -------------------------------
-create table lm_v3.LayerType
+create table lm_v3.EnvironmentalType
 (
-   layerTypeId serial UNIQUE PRIMARY KEY,
+   environmentalTypeId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   code varchar(30),
+   
+   -- type of data (elevation, bioclimatic variable types , etc)
+   envCode varchar(20),
+   -- Global Climate Model
+   gcmCode varchar(20),
+   -- Representative Concentration Pathways (AR5+) or Scenario Family (AR4 and earlier) 
+   altpredCode varchar(20),
+   -- Environmental conditions for date (past = mid, lgm; current = 1950-2000, AR5 = 2050, 2070)
+   dateCode varchar(20),
+   
    title text,
    description text,
    keywords text,
    modTime double precision
 );
-ALTER TABLE lm_v3.LayerType ADD CONSTRAINT unique_layertype UNIQUE (userid, code);
+ALTER TABLE lm_v3.EnvironmentalType ADD CONSTRAINT unique_environmentalType 
+   UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode);
 
 -- -------------------------------
 -- Note: Enforce unique userid/name pairs (in code) for display layers only
@@ -122,7 +116,7 @@ create table lm_v3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   squid varchar(64) REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    verify varchar(64),
    name text,
    dlocation text,
@@ -166,19 +160,9 @@ create table lm_v3.EnvironmentalLayer
 (
    environmentalLayerId serial UNIQUE PRIMARY KEY,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   startDate double precision,
-   endDate double precision,
-   layerTypeId int REFERENCES lm_v3.LayerType,
-   UNIQUE (userid, name, epsgcode)
+   environmentalTypeId int REFERENCES lm_v3.EnvironmentalType,
+   UNIQUE (environmentalLayerId, layerId, environmentalTypeId)
 );
- Select AddGeometryColumn('lm_v3', 'layer', 'geom', 4326, 'POLYGON', 2);
- ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
- ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
- ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
- ALTER TABLE lm_v3.layer ADD CONSTRAINT unique_usr_name CHECK (st_ndims(geom) = 2);
- CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
- CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
- CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
 
 -- -------------------------------
  create table lm_v3.Scenario
@@ -190,8 +174,12 @@ create table lm_v3.EnvironmentalLayer
     title text,
     author text,
     description text,
-    startDate double precision,
-    endDate double precision,
+    
+    -- Codes for GCM, RCP, past/current/projected Date
+    gcmCode varchar(20),
+    altpredCode varchar(20),
+    dateCode varchar(20),
+    
     units varchar(20),
     resolution double precision,
     epsgcode int,
@@ -219,7 +207,7 @@ create table lm_v3.ScenarioLayers
 create table lm_v3.OccurrenceSet
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
-   squid varchar(64) REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    verify varchar(64),
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    displayName text,
@@ -336,48 +324,36 @@ create table lm_v3.ShapeGrid
 );
 
 -- -------------------------------
-create table lm_v3.Tree
+-- original Tree, in user space
+create table lm_v3.Tree 
 (
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   treeDlocation varchar(256),
+   -- original (Newick or JSON)
+   treeDlocation text,
    hasBranchLengths boolean,
-   isUltrametric boolean,
-   isBinary boolean
+   isUltrametric boolean
 );
 
 -- -------------------------------
-create table lm_v3.AncillaryValue
+create table lm_v3.IntersectParam
 (
-   ancillaryValueId  serial UNIQUE PRIMARY KEY,
+   intersectParamId  serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   -- Query string for filtering records, applicable only to data with multiple layers 
+   filterString text,
    -- Name of the field containing the value for calculations
    nameValue varchar(20),
+   minPercent int,
    weightedMean boolean,
    largestClass boolean,
-   minPercent int,
-   nameFilter varchar(20),
-   valueFilter varchar(20),
-   UNIQUE (userId, nameValue, weightedMean, largestClass, minPercent),
+   minPresence double precision,
+   maxPresence double precision,
+   UNIQUE (userId, nameValue, minPercent, weightedMean, largestClass),
+   UNIQUE (userId, nameValue, minPercent, minPresence, maxPresence),
    CHECK (minPercent >= 0 AND minPercent <= 100)
 );
 
--- -------------------------------
-create table lm_v3.PresenceAbsence
-(
-   presenceAbsenceId  serial UNIQUE PRIMARY KEY,
-   userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   -- Fieldname/value for filtering records, applicable only to multi-species files 
-   nameFilter varchar(20),
-   valueFilter varchar(50),
-   -- Name of the field containing the value for presence
-   namePresence varchar(20),
-   minPresence double precision,
-   maxPresence double precision,
-   percentPresence int,
-   UNIQUE(userId, namePresence, minPresence, maxPresence, percentPresence),
-   CHECK (percentPresence >= 0 AND percentPresence <= 100)
-);
 
 -- -------------------------------
 create table lm_v3.Bucket
@@ -394,68 +370,70 @@ create table lm_v3.Bucket
 );
 
 -- -------------------------------
+-- In Bucket space: PAM, GRIM, BioGeoMtx, 8 MCPA outputs
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
+   -- Constants in LmCommon.common.lmconstants.MatrixType
    matrixType int NOT NULL,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
-   matrixDlocation varchar(256),
+   matrixDlocation text,
    -- JSON
    metadata text,  
    status int,
    statusmodtime double precision
 );
 
+-- -------------------------------
+create table lm_v3.BucketTree 
+(
+   bucketTreeId serial UNIQUE PRIMARY KEY,
+   treeId int NOT NULL REFERENCES lm_v3.Tree ON DELETE CASCADE,
+   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   isPruned boolean,
+   isBinary boolean,
+   
+   -- TODO: Names?!
+   -- JSON, with PAM_MtxIds, used for display, input for RAD, MCPA
+   treePamLinkDlocation text,
+   -- Encoded Tree Matrix, used in MCPA calcs, can be used with multiple BioGeoHypotheses
+   treeEncodedMatrixDlocation text,
+   -- TreeCorrelationLink, JSON, used for display
+   treeCorrLinkDlocation text,
+
+   status int,
+   statusmodtime double precision
+);
 
 -- -------------------------------
--- aka PAV, PAM Vector 
-create table lm_v3.BucketPALayer 
+-- aka PAV, PAM Vector or GRIM Vector
+create table lm_v3.BucketLayer 
 (
-   bucketPALayerId  serial UNIQUE PRIMARY KEY,
+   bucketLayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int NOT NULL,
-   squid varchar(64) REFERENCES lm_v3.Taxon,
+   squid varchar(64) REFERENCES lm_v3.Taxon(squid),
+   ident varchar(64),
    
-   -- layerId and presenceAbsenceId could be empty, just squid
+   -- layerId and intersectParamId could be empty, just squid or ident
    layerId int REFERENCES lm_v3.Layer,
-   presenceAbsenceId int REFERENCES lm_v3.PresenceAbsence,
+   intersectParamId int REFERENCES lm_v3.IntersectParam,
       
    status int,
    statusmodtime double precision,
-   UNIQUE (bucketId, matrixId),
-   UNIQUE (bucketId, layerId, presenceAbsenceId)
+   UNIQUE (bucketId, matrixIndex),
+   UNIQUE (bucketId, layerId, intersectParamId)
 );
-
--- -------------------------------
--- aka GRIM Vector
-create table lm_v3.BucketAncLayer
-(
-   bucketAncLayerId  serial UNIQUE PRIMARY KEY,
-   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
-   matrixIndex int NOT NULL,
-   -- some user-unique identifier to track data meaning/metadata
-   ident varchar(64),
-   
-   -- layerId and ancillaryValueId could be empty
-   layerId int REFERENCES lm_v3.Layer,
-   ancillaryValueId int REFERENCES lm_v3.AncillaryValue,
-   
-   status int,
-   statusmodtime double precision,
-   UNIQUE (bucketId, matrixId),
-   UNIQUE (bucketId, layerId, ancillaryValueId)
-);
-
 
 -- ----------------------------------------------------------------------------
 
 GRANT SELECT ON TABLE 
 lm_v3.lmuser, 
-lm_v3.computeresource, lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain, lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
-lm_v3.layertype, lm_v3.layertype_layertypeid_seq,
+lm_v3.environmentalType, lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer, lm_v3.layer_layerid_seq, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayers,
@@ -464,22 +442,19 @@ lm_v3.algorithm,
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
 lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
-lm_v3.ancillaryvalue, lm_v3.ancillaryvalue_ancillaryvalueid_seq,
-lm_v3.presenceabsence, lm_v3.presenceabsence_presenceabsenceid_seq,
+lm_v3.intersectparam, lm_v3.intersectparam_intersectparamid_seq,
 lm_v3.bucket, lm_v3.bucket_bucketid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
-lm_v3.bucketpalayer, lm_v3.bucketpalayer_bucketpalayerid_seq,
-lm_v3.bucketanclayer, lm_v3.bucketanclayer_bucketanclayerid_seq
+lm_v3.buckettree, lm_v3.buckettree_buckettreeid_seq,
+lm_v3.bucketlayer, lm_v3.bucketlayer_bucketlayerid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
 lm_v3.lmuser, 
-lm_v3.computeresource, 
 lm_v3.jobchain,
 lm_v3.taxonomysource,
 lm_v3.taxon,
-lm_v3.keyword,
-lm_v3.layertype,
+lm_v3.environmentalType,
 lm_v3.layer, 
 lm_v3.scenario,
 lm_v3.scenariolayers,
@@ -488,32 +463,29 @@ lm_v3.algorithm,
 lm_v3.sdmmodel,  
 lm_v3.sdmprojection,
 lm_v3.shapegrid,
-lm_v3.ancillaryvalue,
-lm_v3.presenceabsence,
+lm_v3.intersectparam,
 lm_v3.bucket,
+lm_v3.buckettree,
 lm_v3.matrix,
-lm_v3.bucketpalayer,
-lm_v3.bucketanclayer
+lm_v3.bucketlayer
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
-lm_v3.computeresource_computeresourceid_seq,
 lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
-lm_v3.layertype_layertypeid_seq,
+lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,
 lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid_shapegridid_seq,
-lm_v3.ancillaryvalue_ancillaryvalueid_seq,
-lm_v3.presenceabsence_presenceabsenceid_seq,
+lm_v3.intersectparam_intersectparamid_seq,
 lm_v3.bucket_bucketid_seq,
+lm_v3.buckettree_buckettreeid_seq,
 lm_v3.matrix_matrixid_seq,
-lm_v3.bucketpalayer_bucketpalayerid_seq,
-lm_v3.bucketanclayer_bucketanclayerid_seq
+lm_v3.bucketlayer_bucketlayerid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------

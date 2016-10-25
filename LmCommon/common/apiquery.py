@@ -202,47 +202,11 @@ class APIQuery(object):
       return qval
 
 # ...............................................
-   def queryOld(self):
-      """
-      @summary: Queries the API and sets 'output' attribute to a JSON object 
-      """
-#       # or ...
-#       response = urllib2.urlopen(fullUrl.decode('utf-8'))
-      data = retcode = None       
-      req = urllib2.Request(self.url, None, self.headers)
-#       if self._qFilters:
-#          # All q and other filters are on url
-#          req = urllib2.Request(self.url, None, self.headers)
-#       else:
-#          if self._otherFilters:
-#             data = urllib.urlencode(self._otherFilters)
-#          # Any filters are in data
-#          req = urllib2.Request(self.baseurl, data, self.headers)
-      try:
-         response = urllib2.urlopen(req)
-         retcode = response.getcode()
-      except Exception, e:
-         if retcode is None:
-            retcode = HTTPStatus.INTERNAL_SERVER_ERROR
-         raise Exception('Failed on URL {}; ({})'.format(self.url, str(e)))
-      else:
-         try:
-            output = response.read()
-         except Exception, e:
-            raise Exception('Failed to read output of URL {}; ({})'.format(
-                              self.url, str(e)))
-          
-      try:
-         self.output = json.loads(output)
-      except Exception, e:
-         raise Exception('Failed to interpret output of URL {}; ({})'.format(
-                           self.url, str(e)))
-
-# ...............................................
    def queryByGet(self, outputType='json'):
       """
       @summary: Queries the API and sets 'output' attribute to a JSON object 
       """
+      self.output = None
       data = retcode = None
       try:
          response = requests.get(self.url, headers=self.headers)
@@ -252,8 +216,8 @@ class APIQuery(object):
             reason = response.reason
          except:
             reason = 'Unknown Error'
-         raise Exception('Failed on URL {}, code = {}, reason = {} ({})'
-                         .format(self.url, retcode, reason, str(e)))
+         print('Failed on URL {}, code = {}, reason = {} ({})'
+               .format(self.url, retcode, reason, str(e)))
        
       if response.status_code == 200:
          try:
@@ -262,14 +226,15 @@ class APIQuery(object):
             else:
                self.output = response.content
          except Exception, e:
-            raise Exception('Failed to interpret output of URL {} ({})'
+            print('Failed to interpret output of URL {} ({})'
                   .format(self.url, str(e)))
       else:
-         raise Exception('Failed on URL {}, code = {}, reason = {}'
-                         .format(self.url, response.status_code, response.reason))
+         print('Failed on URL {}, code = {}, reason = {}'
+               .format(self.url, response.status_code, response.reason))
 
 # ...............................................
    def queryByPost(self, outputType='json'):
+      self.output = None
       allParams = self._otherFilters.copy()
       allParams[self._qKey] = self._qFilters
       queryAsString = json.dumps(allParams)
@@ -279,13 +244,12 @@ class APIQuery(object):
                                   headers=self.headers)
       except Exception, e:
          try:
-#             response.raise_for_status()
             retcode = response.status_code
             reason = response.reason
          except:
             retcode = HTTPStatus.INTERNAL_SERVER_ERROR
             reason = 'Unknown Error'
-         raise Exception('Failed on URL {}, code = {}, reason = {} ({})'.format(
+         print('Failed on URL {}, code = {}, reason = {} ({})'.format(
                            self.url, retcode, reason, str(e)))
       
       if response.ok:
@@ -296,15 +260,19 @@ class APIQuery(object):
                output = response.text
                self.output = ET.fromstring(output)
             else:
-               print 'Unrecognized output type {}'.format(outputType)
-               self.output = None   
+               print('Unrecognized output type {}'.format(outputType))
          except Exception, e:
-            raise Exception('Failed to interpret output of URL {}, content = {}; ({})'
-                            .format(self.baseurl, response.content, str(e)))
+            print('Failed to interpret output of URL {}, content = {}; ({})'
+                  .format(self.baseurl, response.content, str(e)))
       else:
-         print 'Raising exception for baseurl {} and query {}'.format(
-                                                   self.baseurl, queryAsString)
-         response.raise_for_status()
+         try:
+            retcode = response.status_code
+            reason = response.reason
+         except:
+            retcode = HTTPStatus.INTERNAL_SERVER_ERROR
+            reason = 'Unknown Error'
+         print('Failed ({}: {}) for baseurl {} and query {}'
+               .format(retcode, reason, self.baseurl, queryAsString))
 
 # .............................................................................
 class BisonAPI(APIQuery):
@@ -357,7 +325,7 @@ class BisonAPI(APIQuery):
             for key in keylst:
                thisdict = thisdict[key]
          except Exception, e:
-            raise Exception('Invalid keylist for output ({})'.format(keylst))
+            raise Exception('Problem with key {} in output'.format(key))
       else:
          raise Exception('Invalid output type ({})'.format(type(thisdict)))
       return thisdict
@@ -695,7 +663,7 @@ class IdigbioAPI(APIQuery):
 
 # ...............................................
 # ...............................................
-def testIdigbioTaxonIds(infname):
+def testIdigbioTaxonIds(testcount, infname):
    import os
 #    statii = {}
    # Output
@@ -710,7 +678,7 @@ def testIdigbioTaxonIds(infname):
    idigList = []
    with open(infname, 'r') as inf:
 #          with line in file:
-      for i in range(10):
+      for i in range(testcount):
          line = inf.readline()
          vals = []
          if line is not None:
@@ -805,26 +773,35 @@ if __name__ == '__main__':
       print 'GBIF Taxonomy for {} = {}'.format(taxonid, output)
          
    if idigbio:
-      infname = '/tank/data/testcode/iDigBio/taxon_ids.txt'
-#       idigList =  testIdigbioTaxonIds(infname)
+      infname = '/tank/data/input/idigbio/taxon_ids.txt'
+      testcount = 20
+#       idigList =  testIdigbioTaxonIds(testcount, infname)
 
       # ******************* iDigBio ********************************
-      # Test GBIF TaxonIds from iDigBio list
-      idigList = [(4990907, 65932, 'megascelis subtilis'), 
-                  (5171118, 50533, 'gea argiopides'), 
+      idigList = [
+#                   (4990907, 65932, 'megascelis subtilis'), 
+#                   (5171118, 50533, 'gea argiopides'), 
                   (2437967, 129988, 'peromyscus maniculatus'),
                   (4990907, 65932, 'megascelis subtilis'),
-                  (5158206, 63971, 'urana')]
+                  (5158206, 63971, 'urana'),
+                  (2438635, 0, ''), 
+                  (2394563, 0, ''), 
+                  (2360481, 0, ''),
+                  (5231132, 0, ''),
+                  (2350580, 0, ''),
+                  (2361357, 0, '')]
       for currGbifTaxonId, currReportedCount, currName in idigList:
-         print currGbifTaxonId
          # direct query
          api = IdigbioAPI()
-         occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
-         url1 = api.url
-         print api.url
-         print api.baseurl
-         print api._otherFilters
-         print api._qFilters
-         
-         print("Retrieved {} records for gbif taxonid {}"
-               .format(len(occList1), currGbifTaxonId))
+         try:
+            occList1 = api.queryByGBIFTaxonId(currGbifTaxonId)
+         except:
+            print 'Failed on {}'.format(currGbifTaxonId)
+         else:
+            print("Retrieved {} records for gbif taxonid {}"
+                  .format(len(occList1), currGbifTaxonId))
+            
+         print '   ', api.baseurl
+         print '   ', api._otherFilters
+         print '   ', api._qFilters
+         print

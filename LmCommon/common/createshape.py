@@ -236,9 +236,12 @@ class ShapeShifter(object):
          # Loop through records
          recDict = self._getRecord()
          while recDict:
-            self._createFillFeat(lyrDef, recDict, newLyr)
-            if subsetDs is not None and self._currRecum in subsetIndices:
-               self._createFillFeat(lyrDef, recDict, subsetLyr)
+            try:
+               self._createFillFeat(lyrDef, recDict, newLyr)
+               if subsetDs is not None and self._currRecum in subsetIndices:
+                  self._createFillFeat(lyrDef, recDict, subsetLyr)
+            except Exception, e:
+               print('Failed to create record ({})'.format(fromUnicode(toUnicode(e))))
             recDict = self._getRecord()
                               
          # Return metadata
@@ -247,7 +250,7 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset {}'.format(outfname))
+         print('Closed/wrote []-feature dataset {}'.format(fcount, outfname))
          basename, ext = os.path.splitext(outfname)
          self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
                              fcount, minX, minY, maxX, maxY)
@@ -255,13 +258,17 @@ class ShapeShifter(object):
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print('Closed/wrote dataset {}'.format(subsetfname))
+            print('Closed/wrote {}-feature dataset {}'.format(sfcount, subsetfname))
             basename, ext = os.path.splitext(subsetfname)
             self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
                                 sfcount, minX, minY, maxX, maxY)
       except Exception, e:
-         print('Unable to read or write data ({})'.format(fromUnicode(toUnicode(e))))
-         raise e
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                           'Unable to read or write data ({})'
+                           .format(fromUnicode(toUnicode(e))))
+      
+      self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount,
+                        subsetFname=subsetfname, subsetCount=sfcount)
    #    try:
    #       shpTreeCmd = os.path.join(appPath, "shptree")
    #       retcode = subprocess.call([shpTreeCmd, "%s" % outfname])
@@ -329,9 +336,12 @@ class ShapeShifter(object):
          # Loop through records
          recDict = self._getRecord()
          while recDict is not None:
-            self._createFillFeat(lyrDef, recDict, newLyr)
-            if subsetDs is not None and self._currRecum in subsetIndices:
-               self._createFillFeat(lyrDef, recDict, subsetLyr)
+            try:
+               self._createFillFeat(lyrDef, recDict, newLyr)
+               if subsetDs is not None and self._currRecum in subsetIndices:
+                  self._createFillFeat(lyrDef, recDict, subsetLyr)
+            except Exception, e:
+               print('Failed to create record ({})'.format(fromUnicode(toUnicode(e))))
             recDict = self._getRecord()
                               
          # Return metadata
@@ -340,12 +350,12 @@ class ShapeShifter(object):
          fcount = newLyr.GetFeatureCount()
          # Close dataset and flush to disk
          newDs.Destroy()
-         print('Closed/wrote dataset {}'.format(outfname))
+         print('Closed/wrote {}-feature dataset {}'.format(fcount, outfname))
                            
          if subsetDs is not None:
             sfcount = subsetLyr.GetFeatureCount()
             subsetDs.Destroy()
-            print('Closed/wrote dataset {}'.format(subsetfname))
+            print('Closed/wrote {}-feature dataset {}'.format(sfcount, subsetfname))
             
       except Exception, e:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
@@ -453,82 +463,88 @@ class ShapeShifter(object):
       """
       recDict = None
       success = False
+      badRecCount = 0
       while not success and len(self.rawdata) > 0: 
          try:
-            recDict = self.rawdata.pop()
+            tmpDict = self.rawdata.pop()
          except:
+            # End of data
             success = True
          else:
             try:
-               float(recDict[self.xField])
-               float(recDict[self.yField])
-            except OverflowError, e:
-               print('OverflowError ({}), moving on'.format(fromUnicode(toUnicode(e))))
-            except ValueError, e:
-               print('Ignoring invalid lat {}, long {} data'
-                     .format(recDict[self.xField], recDict[self.yField]))
+               float(tmpDict[self.xField])
+               float(tmpDict[self.yField])
             except Exception, e:
-               print('Exception ({})'.format(fromUnicode(toUnicode(e))))
+               badRecCount += 1
             else:
                success = True
+               recDict = tmpDict
+      if badRecCount > 0:
+         print('Skipped over {} bad records'.format(badRecCount))
       return recDict
    
    # ...............................................
    def _getUserCSVRec(self):
       success = False
-      recDict = {}
+      tmpDict = {}
+      recDict = None
+      badRecCount = 0
       # skip bad lines
       while not success and not self.op.eof():
          try:
             self.op.pullNextValidRec()
             if not self.op.eof():
                # ignore records without valid lat/long; all occ jobs contain these fields
-               recDict[self.op.xFieldName] = float(self.op.xValue)
-               recDict[self.op.yFieldName] = float(self.op.yValue)
+               tmpDict[self.op.xFieldName] = float(self.op.xValue)
+               tmpDict[self.op.yFieldName] = float(self.op.yValue)
                success = True
+         except StopIteration, e:
+            success = True
          except OverflowError, e:
-            print('OverflowError on %d (%s), moving on' % (self._currRecum, fromUnicode(toUnicode(e))))
+            badRecCount += 1
          except ValueError, e:
-            print('Ignoring invalid lat {}, long {} data'.format(self.op.xValue, 
-                                                                 self.op.yValue))
+            badRecCount += 1
          except Exception, e:
+            badRecCount += 1
             print('Exception reading line {} ({})'.format(self.op.currRecnum, 
                                                      fromUnicode(toUnicode(e))))
-         except StopIteration, e:
-            pass
-         
-         if success:
-            for i in range(len(self.op.fieldNames)):
-               recDict[self.op.fieldNames[i]] = self.op.currLine[i]
+      if success:
+         for i in range(len(self.op.fieldNames)):
+            tmpDict[self.op.fieldNames[i]] = self.op.currLine[i]
+         recDict = tmpDict
+      if badRecCount > 0:
+         print('Skipped over {} bad records'.format(badRecCount))
       return recDict
 
    # ...............................................
    def _getCSVRec(self):
       success = False
       recDict = None
+      badRecCount = 0
       # skip bad lines
       while not success:
          try:
-            recDict = self._reader.next()
+            tmpDict = self._reader.next()
             # ignore records without valid lat/long; all occ jobs contain these fields
-            recDict[DWCNames.DECIMAL_LATITUDE['SHORT']] = \
-                  float(recDict[DWCNames.DECIMAL_LATITUDE['SHORT']])
-            recDict[DWCNames.DECIMAL_LONGITUDE['SHORT']] = \
-                  float(recDict[DWCNames.DECIMAL_LONGITUDE['SHORT']])
+            tmpDict[DWCNames.DECIMAL_LATITUDE['SHORT']] = \
+                  float(tmpDict[DWCNames.DECIMAL_LATITUDE['SHORT']])
+            tmpDict[DWCNames.DECIMAL_LONGITUDE['SHORT']] = \
+                  float(tmpDict[DWCNames.DECIMAL_LONGITUDE['SHORT']])
             success = True
-         except OverflowError, e:
-            print('OverflowError on {} ({}), moving on'
-                  .format(self._currRecum, fromUnicode(toUnicode(e))))
-         except ValueError, e:
-            print('Ignoring invalid lat {}, long {} data'
-                  .format(recDict[DWCNames.DECIMAL_LATITUDE]['SHORT'],
-                     recDict[DWCNames.DECIMAL_LONGITUDE]['SHORT']))
+            recDict = tmpDict
          except StopIteration, e:
             success = True
+         except OverflowError, e:
+            badRecCount += 1
+         except ValueError, e:
+            badRecCount += 1
          except Exception, e:
-            print('Exception reading line %d (%s)' 
-                  % (self._currRecum, fromUnicode(toUnicode(e))))
-            success = True
+            print('Exception reading line {} ({})'.format(self._currRecum, 
+                                             fromUnicode(toUnicode(e))))
+            badRecCount += 1
+#             success = True
+      if badRecCount > 0:
+         print('Skipped over {} bad records'.format(badRecCount))
       return recDict
 
    # ...............................................
