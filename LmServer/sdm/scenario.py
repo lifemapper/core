@@ -39,18 +39,18 @@ class Scenario(MapLayerSet):
 
    # ...............................................       
    def __init__(self, code, title=None, author=None, description=None,
-                metadataUrl=None, dlocation=None, startdt=None, enddt=None, 
+                metadataUrl=None, dlocation=None,
+                # TODO: Remove startdt, enddt
+                startdt=None, enddt=None, 
+                # new
                 units=None, res=None, 
+                gcmCode=None, altpredCode=None, dateCode=None,
                 bbox=None, modTime=None, keywords=None, epsgcode=None,
                 layers=None, userId=ARCHIVE_USER, scenarioid=None):
       """
       @summary Constructor for the scenario class 
       @param code: The code for this set of layers
       @param metadataUrl: Lifemapper metadataUrl of this set of layers
-      @param startdt: Beginning of time period for this dataset in modified 
-                      julian date format
-      @param enddt: Beginning of time period for this dataset in modified 
-                      julian date format
       @param units: units of measurement for pixel size
       @param res: size of each side of a pixel (assumes square pixels)
       @param bbox: (optional) a length 4 tuple of (minX, minY, maxX, maxY)
@@ -71,11 +71,18 @@ class Scenario(MapLayerSet):
                            serviceType=LMServiceType.SCENARIOS, moduleType=LMServiceModule.SDM)      
       # Public attributes
       self.author = author
-      self.description = description      
-      self.code = self.name
+      self.description = description  
+      # aka MapLayerSet.name    
+      self.code = code
+      # obsolete
       self.startDate = startdt
       self.endDate = enddt
+      
       self.modTime = modTime
+      # new
+      self.gcmCode=None
+      self.altpredCode=None
+      self.dateCode=None
       
       # Private attributes
       self._scenarioId = scenarioid
