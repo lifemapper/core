@@ -53,7 +53,7 @@ class IntersectRunner(PythonRunner):
       
       self.log.debug("Layer manager has been initialized")
       sgLayerId = self.job.shapegrid.identifier
-      sgUrl = self.job.shapegrid.shapegridUrl
+      sgUrl = self.job.shapegrid.url
       
       self.shapegrid = {
                         #TODO: Make sure this works correctly
