@@ -356,6 +356,8 @@ def serialize(obj, parent=None):
          attrib[k] = v
    try:
       atts = obj.getAttributes()
+      # Filter these out of the dir determined attributes (duplicated and these shouldn't be tags)
+      objAttribs = [a for a in objAttribs if a not in atts]
       for key in atts.keys():
          if isinstance(atts[key], (IntType, StringType, FloatType, UnicodeType)):
             attrib[key] = str(atts[key])
