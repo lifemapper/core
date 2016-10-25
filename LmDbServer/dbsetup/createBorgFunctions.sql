@@ -81,20 +81,22 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- Scenario
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(code varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
+                                             code varchar, 
                                              ttl text, 
                                              authr text,
                                              dsc text,
                                              metadataUrlprefix text,
-                                             startdt double precision,
-                                             enddt double precision,
+                                             gcm varchar,
+                                             altpred varchar,
+                                             tm varchar,
                                              unts varchar,
                                              res double precision,
                                              epsg int,
                                              bndsstring varchar, 
                                              bboxwkt varchar,
-                                             mtime double precision,
-                                             usr varchar)
+                                             kwds text,
+                                             mtime double precision)
    RETURNS lm_v3.Scenario AS
 $$
 DECLARE
@@ -107,10 +109,11 @@ BEGIN
       WHERE s.scenariocode = code and s.userid = usr;
    IF NOT FOUND THEN
       INSERT INTO lm_v3.Scenario 
-         (scenarioCode, title, author, description, startDate, endDate, units, 
-          resolution, bbox, modtime, epsgcode, userid)
-      VALUES (code, ttl, authr, dsc, startdt, enddt, unts, 
-              res, bndsstring, mtime, epsg, usr);
+         (userid, scenarioCode, title, author, description, gcmCode, altpredCode, 
+         dateCode, units, resolution, epsgcode, bbox, keywords, modTime)
+         VALUES 
+         (usr, code, ttl, authr, dsc, metadataUrlprefix, gcm, altpred, 
+          tm, unts, res, epsg, bndsstring, kwds, mtime);
                        
       IF FOUND THEN
          SELECT INTO id last_value FROM lm_v3.scenario_scenarioid_seq;

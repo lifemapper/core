@@ -356,12 +356,11 @@ class Borg(DbPostgresql):
       if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
-                           scen.name, scen.title, scen.author, scen.description,
-                           self._getRelativePath(url=scen.metadataUrl),
-                           scen.startDate, scen.endDate, scen.units, 
-                           scen.resolution, scen.epsgcode, 
-                           scen.getCSVExtentString(), wkt, 
-                           scen.modTime, scen.getUserId())
+                           scen.getUserId(), scen.code, scen.title, scen.author, 
+                           scen.description, self._getRelativePath(url=scen.metadataUrl),
+                           scen.gcmCode, scen.altpredCode, scen.dateCode, scen.units, 
+                           scen.resolution, scen.epsgcode, scen.getCSVExtentString(), 
+                           wkt, ', '.join(scen.keywords), scen.modTime)
       newOrExistingScen = self._createScenario(row, idxs)
       if not newOrExistingScen.keywords:
          newOrExistingScen.addKeywords(scen.keywords)
