@@ -120,7 +120,7 @@ create table lm_v3.Layer
    dlocation text,
    metadataUrl text UNIQUE,
 
-   -- JSON with title, author, description
+   -- JSON with title, author, description, valAttribute if vector data
    metadata text,
 
    -- GDAL/OGR codes indicating driver to use when writing files
@@ -385,9 +385,9 @@ create table lm_v3.BucketTree
 
 -- -------------------------------
 -- aka PAV, PAM Vector or GRIM Vector
-create table lm_v3.BucketLayer 
+create table lm_v3.MatrixLayer 
 (
-   bucketLayerId  serial UNIQUE PRIMARY KEY,
+   matrixLayerId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
 
    -- layerId could be empty, just squid or ident
@@ -428,7 +428,7 @@ lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
 lm_v3.bucket, lm_v3.bucket_bucketid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.buckettree, lm_v3.buckettree_buckettreeid_seq,
-lm_v3.bucketlayer, lm_v3.bucketlayer_bucketlayerid_seq
+lm_v3.matrixlayer, lm_v3.matrixlayer_matrixlayerid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
@@ -448,7 +448,7 @@ lm_v3.shapegrid,
 lm_v3.bucket,
 lm_v3.buckettree,
 lm_v3.matrix,
-lm_v3.bucketlayer
+lm_v3.matrixlayer
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
@@ -465,7 +465,7 @@ lm_v3.shapegrid_shapegridid_seq,
 lm_v3.bucket_bucketid_seq,
 lm_v3.buckettree_buckettreeid_seq,
 lm_v3.matrix_matrixid_seq,
-lm_v3.bucketlayer_bucketlayerid_seq
+lm_v3.matrixlayer_matrixlayerid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------

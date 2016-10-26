@@ -28,15 +28,12 @@ import socket
 from types import StringType, UnicodeType, IntType
 import xml.etree.ElementTree as ET 
 
-from LmCommon.common.lmconstants import (ENCODING, JobStatus, RandomizeMethods, 
-                                         ProcessType)
+from LmCommon.common.lmconstants import (ENCODING, JobStatus, ProcessType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
-from LmServer.db.catalog_model import MAL
-from LmServer.db.catalog_rad import RAD
 from LmServer.db.connect import HL_NAME
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import  DbUser, JobFamily, ReferenceType
+from LmServer.common.lmconstants import  DbUser, ReferenceType
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
                                  POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
 from LmServer.sdm.envlayer import EnvironmentalLayer, EnvironmentalType
