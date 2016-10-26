@@ -92,11 +92,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
              sg.xAttribute, sg.yAttribute, sg.status, sg.statusmodtime
         FROM lm_v3.layer l, lm_v3.shapegrid sg
         WHERE l.layerid = sg.layerid;
-        
+
 -- ----------------------------------------------------------------------------
--- lm_fullbucketlayer
-DROP VIEW IF EXISTS lm_v3.lm_fullbucketlayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_fullbucketlayer AS
+-- lm_fullmatrixlayer
+DROP VIEW IF EXISTS lm_v3.lm_fullmatrixlayer CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_fullmatrixlayer AS
 (
    -- Layer.* 
    layerId,
@@ -120,8 +120,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullbucketlayer AS
    bbox,
    lyrmodtime,
 
-   -- BucketLayer.*
-   bucketLayerId,
+   -- MatrixLayer.*
+   matrixLayerId,
    bucketId, 
    blsquid,
    blident,
@@ -136,10 +136,10 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullbucketlayer AS
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             bl.bucketLayerId, bl.bucketId, bl.squid, bl.ident, bl.matrixId, 
+             bl.matrixLayerId, bl.bucketId, bl.squid, bl.ident, bl.matrixId, 
              bl.matrixIndex, bl.intersectParams, bl.metadata, 
              bl.status, bl.statusmodtime
-        FROM lm_v3.layer l, lm_v3.BucketLayer bl
+        FROM lm_v3.layer l, lm_v3.MatrixLayer bl
         WHERE l.layerid = bl.layerid;
 
 -- ----------------------------------------------------------------------------
@@ -372,6 +372,7 @@ GRANT SELECT ON TABLE
 lm_v3.lm_envlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
+lm_v3.lm_fullmatrixlayer,
 lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP reader;
@@ -380,6 +381,7 @@ GRANT SELECT ON TABLE
 lm_v3.lm_envlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
+lm_v3.lm_fullmatrixlayer,
 lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP writer;
@@ -401,26 +403,7 @@ CREATE TYPE lm_v3.lm_atom AS (
   epsgcode int,
   description text,
   modtime double precision
-  );
-
--- ----------------------------------------------------------------------------
--- TODO: Rm? maybe just BucketLayer, only adds name, dlocation, metaurl
--- lm_palayeridx OR lm_anclayeridx
-DROP TYPE IF EXISTS lm_v3.lm_layeridx CASCADE;
-CREATE TYPE lm_v3.lm_layeridx AS (
-   -- Layer
-   layerid int,
-   userid varchar,
-   squid varchar,
-   verify varchar,
-   name varchar,
-   dlocation varchar,
-   metadataurl varchar,
-   -- BucketLayer
-   bucketLayerId int,
-   bucketid int,
-   matrixIndex int);
-   
+  );   
         
 -- ----------------------------------------------------------------------------
 DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;
