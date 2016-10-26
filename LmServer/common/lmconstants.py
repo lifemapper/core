@@ -486,6 +486,7 @@ class JobFamily:
 # Corresponds to LmCommon individual constants MODELS_SERVICE, LAYERS_SERVICE, etc
 class LMServiceType:
    BUCKETS = 'buckets'
+   TREES = 'trees'
    EXPERIMENTS = 'experiments'
    RAD_EXPERIMENTS = 'experiments'
    SDM_EXPERIMENTS = 'experiments'
