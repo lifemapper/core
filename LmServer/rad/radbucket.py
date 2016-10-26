@@ -49,7 +49,8 @@ class RADBucket(ServiceObject, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, shapegrid, epsgcode=None, keywords=None, 
+   def __init__(self, shapegrid, metadata={},
+                epsgcode=None, keywords=None, 
                 fullPam=None, fullGrim=None, pamSum=None, randomPamSums=[],
                 pamFname=None, grimFname=None, 
                 compressedPamFname=None, sumFname=None,
@@ -106,6 +107,7 @@ class RADBucket(ServiceObject, ProcessObject):
       self._bucketPath = None
       self._pamSum = None
       self._randomPamSums = []
+      self.loadMetadata(metadata)
 #       self._experimentId = expId
 
       self._epsg = None
@@ -248,6 +250,28 @@ class RADBucket(ServiceObject, ProcessObject):
 # ...............................................
 #    def getExperimentId(self):
 #       return self.parentId
+
+# ...............................................
+   def addMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.metadata[key] = val
+         
+# ...............................................
+   def dumpMetadata(self):
+      import json
+      metastring = None
+      if self.metadata:
+         metastring = json.dumps(self.metadata)
+      return metastring
+
+# ...............................................
+   def loadMetadata(self, meta):
+      import json
+      if isinstance(meta, dict): 
+         self.addMetadata(meta)
+      else:
+         self.metadata = json.loads(meta)
+
    
    @property
    def experimentId(self):

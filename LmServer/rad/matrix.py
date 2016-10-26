@@ -27,8 +27,9 @@ import numpy
 import os
 from types import BooleanType
 
-from LmCommon.common.lmconstants import OFTInteger, OFTReal, OFTBinary
+from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, MatrixType)
 from LmServer.base.lmobj import LMObject, LMError
+from LmServer.base.serviceobject import ProcessObject
 
 
 # .............................................................................
@@ -39,13 +40,16 @@ class Matrix(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, matrix, dlocation=None, isCompressed=False, 
+   def __init__(self, matrix, matrixType=MatrixType.PAM, metadata={},
+                dlocation=None, isCompressed=False, 
                 randomParameters={}):
       """
       @param matrix: numpy array
       @param dlocation: file location of the array
       """
       self._matrix = matrix
+      self.matrixType = matrixType
+      self.loadMetadata(metadata)
       self._dlocation = dlocation
       self._setIsCompressed(isCompressed)
       self._randomParameters = randomParameters
@@ -76,6 +80,25 @@ class Matrix(LMObject):
       else:
          return None
    
+# ...............................................
+   def addMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.metadata[key] = val
+         
+   def dumpMetadata(self):
+      import json
+      metastring = None
+      if self.metadata:
+         metastring = json.dumps(self.metadata)
+      return metastring
+
+   def loadMetadata(self, meta):
+      import json
+      if isinstance(meta, dict): 
+         self.addMetadata(meta)
+      else:
+         self.metadata = json.loads(meta)
+
 # .............................................................................
    def readData(self, filename=None):
       # filename overrides dlocation

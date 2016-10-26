@@ -33,7 +33,8 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
 # .............................................................................
    def __init__(self, envType, title, description, userId, 
                 gcmCode=None, altpredCode=None, dateCode=None, 
-                keywords=None, modTime=None, environmentalTypeId=None):
+                keywords=None, 
+                metadata={}, modTime=None, environmentalTypeId=None):
       """
       @summary Initialize the _PresenceAbsence class instance
       @param envType: Code for the environmentalLayerType to be used when  
@@ -55,6 +56,8 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
       self.dateCode = dateCode
+      self.loadMetadata(metadata)
+      # Move to self.metadata dictionary
       self.typeTitle = title
       self.typeDescription = description
       self._setTypeKeywords(keywords)
@@ -86,6 +89,26 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       
    typeKeywords = property(_getTypeKeywords, _setTypeKeywords)
       
+# ...............................................
+   def addEnvMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.envmetadata[key] = val
+         
+# ...............................................
+   def dumpEnvMetadata(self):
+      import json
+      metastring = None
+      if self.envmetadata:
+         metastring = json.dumps(self.envmetadata)
+      return metastring
+
+# ...............................................
+   def loadEnvMetadata(self, meta):
+      import json
+      if isinstance(meta, dict): 
+         self.addMetadata(meta)
+      else:
+         self.envmetadata = json.loads(meta)
 
 # .........................................................................
 class EnvironmentalLayer(EnvironmentalType, Raster):
@@ -197,6 +220,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
       self._keywords.add(keyword)
       
    keywords = property(_getKeywords, _setKeywords)
+
 
 # ...............................................
 # other methods

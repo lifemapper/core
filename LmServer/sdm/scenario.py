@@ -38,10 +38,11 @@ class Scenario(MapLayerSet):
 # .............................................................................
 
    # ...............................................       
-   def __init__(self, code, title=None, author=None, description=None,
+   def __init__(self, code, metadata={},
                 metadataUrl=None, dlocation=None,
-                # TODO: Remove startdt, enddt
+                # TODO: Remove
                 startdt=None, enddt=None, 
+                title=None, author=None, description=None,
                 # new
                 units=None, res=None, 
                 gcmCode=None, altpredCode=None, dateCode=None,
@@ -65,15 +66,16 @@ class Scenario(MapLayerSet):
       self._layers = []
       # layers are set not set in LayerSet or Layerset - done here to check
       # that each layer is an EnvironmentalLayer
-      MapLayerSet.__init__(self, code, title=title, url=metadataUrl, 
+      MapLayerSet.__init__(self, code, 
+                           title=title, url=metadataUrl, 
                            dlocation=dlocation, keywords=keywords, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
                            serviceType=LMServiceType.SCENARIOS, moduleType=LMServiceModule.SDM)      
-      # Public attributes
-      self.author = author
-      self.description = description  
       # aka MapLayerSet.name    
       self.code = code
+      # Move to self.metadata
+      self.author = author
+      self.description = description  
       # obsolete
       self.startDate = startdt
       self.endDate = enddt
@@ -83,6 +85,7 @@ class Scenario(MapLayerSet):
       self.gcmCode=None
       self.altpredCode=None
       self.dateCode=None
+      self.loadMetadata(metadata)
       
       # Private attributes
       self._scenarioId = scenarioid
@@ -116,6 +119,26 @@ class Scenario(MapLayerSet):
          for lyr in lyrs:
             self.addLayer(lyr) 
          self._bbox = MapLayerSet._getIntersectBounds(self)
+# ...............................................
+   def addMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.metadata[key] = val
+         
+# ...............................................
+   def dumpMetadata(self):
+      import json
+      metastring = None
+      if self.metadata:
+         metastring = json.dumps(self.metadata)
+      return metastring
+
+# ...............................................
+   def loadMetadata(self, meta):
+      import json
+      if isinstance(meta, dict): 
+         self.addMetadata(meta)
+      else:
+         self.metadata = json.loads(meta)
    
    # ...............................................
    def _setUnits(self, units):

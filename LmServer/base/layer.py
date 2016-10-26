@@ -25,8 +25,10 @@ try:
    from cStringIO import StringIO
 except:
    from StringIO import StringIO
+import json
 import glob
 import os
+
 from osgeo import gdal, gdalconst, ogr, osr
 import subprocess
 from types import ListType, TupleType
@@ -57,7 +59,7 @@ class _Layer(LMSpatialObject, ServiceObject):
    def __init__(self, name, metalocation, dlocation, dataFormat, title, bbox, 
                 startDate, endDate, mapunits, valUnits, isCategorical, 
                 resolution, keywdSeq, epsgcode, description, author, 
-                verify=None, squid=None,
+                metadata={}, verify=None, squid=None,
                 svcObjId=None, lyrId=None, lyrUserId=None, 
                 createTime=None, modTime=None, metadataUrl=None,
                 serviceType=LMServiceType.LAYERS, moduleType=None):
@@ -101,17 +103,19 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._setVerify(verify)
       self.squid = squid
       self._metalocation = metalocation
-      self.title = title
-      self.startDate = startDate
-      self.endDate = endDate
+      self.loadMetadata(metadata)
       self._setUnits(mapunits)
       self.valUnits = valUnits
-      self.isCategorical = isCategorical
       self.resolution = resolution
-      self._setKeywords(keywdSeq)
+      # Move to EnvironmentalType.dateCode
+      self.startDate = startDate
+      self.endDate = endDate
+      # Move to self.metadata dictionary
+      self.title = title
       self.description = description
       self.author = author
-      self._thumbnail = None
+      self._setKeywords(keywdSeq)
+      self.isCategorical = isCategorical
        
 # ...............................................
    def setLayerId(self, lyrid):
@@ -145,6 +149,27 @@ class _Layer(LMSpatialObject, ServiceObject):
       """
       return self._layerUserId
    
+# ...............................................
+   def addMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.metadata[key] = val
+         
+# ...............................................
+   def dumpMetadata(self):
+      import json
+      metastring = None
+      if self.metadata:
+         metastring = json.dumps(self.metadata)
+      return metastring
+
+# ...............................................
+   def loadMetadata(self, meta):
+      import json
+      if isinstance(meta, dict): 
+         self.addMetadata(meta)
+      else:
+         self.metadata = json.loads(meta)
+
 # ...............................................
    def getValAttribute(self):
       return self._valAttribute
@@ -482,7 +507,7 @@ class Raster(_Layer):
    Class to hold information about a raster dataset.
    """
    # ...............................................       
-   def __init__(self, name=None, title=None, author=None, 
+   def __init__(self, metadata={}, name=None, title=None, author=None, 
                 minVal=None, maxVal=None, nodataVal=None, valUnits=None,
                 isCategorical=False, bbox=None, dlocation=None, 
                 metalocation=None,
@@ -958,7 +983,7 @@ class Vector(_Layer):
    Class to hold information about a vector dataset.
    """
    # ...............................................       
-   def __init__(self, name=None, title=None, author=None,  
+   def __init__(self, metadata={}, name=None, title=None, author=None,  
                 bbox=None, dlocation=None, metalocation=None, 
                 startDate=None, endDate=None, 
                 mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,

@@ -304,43 +304,32 @@ class Borg(DbPostgresql):
       @param lyr: Raster or Vector to insert
       @return: new or existing Raster or Vector object 
       """
-      min = max = nodata = ltypeid = None
-      if isinstance(lyr, EnvironmentalLayer):
-         ltypeid = lyr.getParametersId()
+      import json
+      min = max = nodata = None
       if isinstance(lyr, Raster):
          min = lyr.minVal
          max = lyr.maxVal
          nodata = lyr.nodataVal
+      if lyr.metadata:
+         meta = json.dumps(lyr.metadata)
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer', 
-                                         lyr.verify,
-                                         lyr.squid,
-                                         lyr.getLayerUserId(),
-                                         lyr.name,
-                                         lyr.title,
-                                         lyr.author,
-                                         lyr.description,
-                                         self._getRelativePath(
-                                             dlocation=lyr.getDLocation()),
-                                         self._getRelativePath(
-                                             dlocation=lyr.getMetaLocation()),
-                                         lyr.ogrType,
-                                         lyr.gdalType,
-                                         lyr.isCategorical,
-                                         lyr.dataFormat,
-                                         lyr.epsgcode,
-                                         lyr.mapUnits,
-                                         lyr.resolution,
-                                         lyr.startDate,
-                                         lyr.endDate,
-                                         lyr.modTime,
-                                         lyr.getCSVExtentString(), wkt,
-                                         nodata, min, max,
-                                         lyr.valUnits,
-                                         ltypeid,
-                                         self._getRelativePath(
-                                             url=lyr.metadataUrl))
+                           lyr.getLayerUserId(),
+                           lyr.squid,
+                           lyr.verify,
+                           lyr.name,
+                           self._getRelativePath(dlocation=lyr.getDLocation()),
+                           self._getRelativePath(url=lyr.metadataUrl),                                         meta,
+                           lyr.dataFormat,
+                           lyr.gdalType,
+                           lyr.ogrType,
+                           lyr.valUnits, nodata, min, max,
+                           lyr.epsgcode,
+                           lyr.mapUnits,
+                           lyr.resolution,
+                           lyr.getCSVExtentString(), wkt,
+                           lyr.modTime)
       updatedLyr = self._createLayer(row, idxs)
       return updatedLyr
 
@@ -394,7 +383,7 @@ class Borg(DbPostgresql):
       @return: new or existing EnvironmentalType
       """
       envtype.parametersModTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayerType',
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvironmentalType',
                                                     envtype.getParametersUserId(),
                                                     envtype.getParametersId(),
                                                     envtype.typeCode,

@@ -99,7 +99,8 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, displayName, name=None, fromGbif=False, dlocation=None, 
+   def __init__(self, displayName, metadata={},
+                name=None, fromGbif=False, dlocation=None, 
                 metalocation=None, queryCount=-1, epsgcode=DEFAULT_EPSG, 
                 ogrType=ogr.wkbPoint, ogrFormat=DEFAULT_OGR_FORMAT, bbox=None,
                 featureAttributes={}, features={}, primaryEnv=None, sciName=None,
@@ -139,7 +140,8 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
                               touchTime, modTime, userId, occId, sciName)
       ProcessObject.__init__(self, objId=occId, parentId=None, 
                 status=status, statusModTime=statusModTime)
-      Vector.__init__(self, title=displayName, bbox=bbox, epsgcode=epsgcode, 
+      Vector.__init__(self, metadata=metadata,
+                      title=displayName, bbox=bbox, epsgcode=epsgcode, 
                       dlocation=dlocation, metalocation=metalocation,
                       ogrType=ogrType, ogrFormat=ogrFormat, 
                       featureAttributes=featureAttributes, features=features,
