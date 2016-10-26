@@ -96,7 +96,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
 -- ----------------------------------------------------------------------------
 -- lm_fullmatrixlayer
 DROP VIEW IF EXISTS lm_v3.lm_fullmatrixlayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_fullmatrixlayer AS
+CREATE OR REPLACE VIEW lm_v3.lm_fullmatrixlayer
 (
    -- Layer.* 
    layerId,
@@ -196,7 +196,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    prjstatusModTime,
 
    -- Layer.* 
-   layerId,
    userid,
    lyrsquid,
    lyrverify,
@@ -241,7 +240,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    ) AS
       SELECT p.sdmprojectionId, p.layerid, p.sdmmodelid, p.scenarioId, p.scenarioCode,
              p.maskId, p.status, p.statusModTime,
-             l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
+             l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
