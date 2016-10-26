@@ -76,33 +76,27 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- EnvLayer
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
-                                          lyrsquid varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrid int,
                                           usr varchar,
+                                          lyrsquid varchar,
+                                          lyrverify varchar,
                                           lyrname varchar, 
-                                          lyrtitle varchar,
-                                          lyrauthor varchar,
-                                          lyrdesc varchar,
-                                          dloc varchar,
-                                          mloc varchar,
-                                          vtype int,
-                                          rtype int,
-                                          iscat boolean,
+                                          lyrdloc varchar,
+                                          lyrmurlprefix varchar,
+                                          lyrmeta varchar,
                                           datafmt varchar,
-                                          epsg int,
-                                          munits varchar,
-                                          res double precision,
-                                          startdt double precision,
-                                          enddt double precision,
-                                          mtime double precision,
-                                          bboxstr varchar,
-                                          bboxwkt varchar,
+                                          rtype int,
+                                          vtype int,
+                                          vunits varchar,
                                           vnodata double precision,
                                           vmin double precision,
                                           vmax double precision,
-                                          vunits varchar,
-                                          etypeid int,
-                                          murlprefix varchar,
+                                          epsg int,
+                                          munits varchar,
+                                          res double precision,
+                                          bboxstr varchar,
+                                          bboxwkt varchar,
+                                          lyrmtime double precision,
                                           
                                           etypeid int, 
                                           env varchar,
@@ -114,8 +108,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrverify varchar,
 RETURNS lm_v3.lm_envlayer AS
 $$
 DECLARE
-   lyrid int;
-   shpid int;
+   newid int;
    reclyr lm_v3.layer%ROWTYPE;
    rec_etype lm_v3.EnvironmentalType%ROWTYPE;
    rec_envlyr lm_v3.lm_envlayer%ROWTYPE;
@@ -123,18 +116,27 @@ BEGIN
    -- get or insert environmentalType 
    SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvironmentalType(etypeid, 
                     usr, env, gcm, altpred, tm, etypemeta, etypemodtime);
-   -- get or insert layer 
-   SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrverify, lyrsquid, usr, null, 
-            lyrname, lyrtitle, lyrauthor, lyrdesc, dloc, mloc, vtype, rtype, 
-            iscat, datafmt, epsg, munits, res, startdt, enddt, mtime, bboxstr, 
-            bboxwkt, vnodata, vmin, vmax, vunits, reclt.layertypeid, 
-            murlprefix) INTO reclyr;
-         
-   IF FOUND THEN
-      SELECT * INTO rec_envlyr FROM lm_v3.lm_envlayer 
-         WHERE layertypeid = reclt.layertypeid;
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to findOrInsertEnvironmentalType';
    ELSE
-      RAISE EXCEPTION 'Unable to insert shapegrid';
+      -- get or insert layer 
+      SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
+         lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
+         vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
+         
+      IF FOUND NOT THEN
+         RAISE EXCEPTION 'Unable to findOrInsertLayer';
+      ELSE
+         INSERT INTO lm_v3.EnvironmentalLayer (layerId, environmentalTypeId)
+         VALUES (reclyr.layerId, rec_etype.environmentalTypeId);
+         
+         IF FOUND NOT THEN
+            RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
+         ELSE
+            SELECT INTO newid last_value FROM lm3.EnvironmentalLayer_EnvironmentalLayerid_seq;
+            SELECT * INTO rec_envlyr FROM lm_v3.lm_envlayer WHERE layertypeid = newid;
+         END IF;
+      END IF;
    END IF;
    
    RETURN rec_envlyr;
@@ -176,7 +178,8 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- ShapeGrid
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(usr varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lyrid int,
+                                          usr varchar,
                                           lyrsquid varchar,
                                           lyrverify varchar,
                                           lyrname varchar, 
@@ -213,29 +216,32 @@ DECLARE
    reclyr lm_v3.layer%ROWTYPE;
    recshpgrd lm_v3.lm_shapegrid%ROWTYPE;
 BEGIN
-   SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
-      WHERE userid = usr AND name = lyrname AND epsgcode = epsg;
+   IF lyrid IS NOT NULL THEN
+      SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
+   ELSE
+      SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
+         WHERE userid = usr AND name = lyrname AND epsgcode = epsg;
+   END IF;
+   
    IF NOT FOUND THEN
       begin
          -- get or insert layer 
-         SELECT * FROM lm_v3.lm_findOrInsertLayer(usr, lyrsquid, lyrverify, 
-            lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
-            vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, 
-            lyrmtime)  INTO reclyr;
+         SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
+            lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
+            vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
+         
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to find or insert layer';
          ELSE
-            SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = reclyr.layerid;
+            INSERT INTO lm_v3.ShapeGrid (layerid, cellsides, cellsize, vsize, 
+               idAttribute, xAttribute, yAttribute, status, statusmodtime)
+            VALUES (reclyr.layerid, csides, csize, vsz, 
+               idAttr, xAttr, yAttr, stat, stattime);
+            
             IF NOT FOUND THEN
-               INSERT INTO lm_v3.ShapeGrid (layerid, cellsides, cellsize, vsize, 
-                  idAttribute, xAttribute, yAttribute, status, statusmodtime)
-                  VALUES (reclyr.layerid, csides, csize, vsz, 
-                  idAttr, xAttr, yAttr, stat, stattime);
-               IF FOUND THEN
-                  SELECT * INTO recshpgrd FROM lm_v3.shapegrid WHERE layerid = lyrid;
-               ELSE
-                  RAISE EXCEPTION 'Unable to insert shapegrid';
-               END IF;
+               RAISE EXCEPTION 'Unable to insert shapegrid';
+            ELSE
+               SELECT * INTO recshpgrd FROM lm_v3.shapegrid WHERE layerid = lyrid;
             END IF;
          END IF;
       end;

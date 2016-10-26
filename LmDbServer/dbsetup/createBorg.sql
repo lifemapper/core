@@ -157,7 +157,7 @@ create table lm_v3.EnvironmentalLayer
    environmentalLayerId serial UNIQUE PRIMARY KEY,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    environmentalTypeId int REFERENCES lm_v3.EnvironmentalType,
-   UNIQUE (environmentalLayerId, layerId, environmentalTypeId)
+   UNIQUE (layerId, environmentalTypeId)
 );
 
 -- -------------------------------
@@ -308,7 +308,7 @@ create table lm_v3.Process
 create table lm_v3.ShapeGrid
 (
    shapeGridId serial UNIQUE PRIMARY KEY,
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   layerId int UNIQUE NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    cellsides int,
    cellsize double precision,
    vsize int,
