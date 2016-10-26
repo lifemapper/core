@@ -180,7 +180,6 @@ create table lm_v3.EnvironmentalLayer
     resolution double precision,
     epsgcode int,
     bbox varchar(60),
-    keywords text,
     modTime double precision,
     UNIQUE (scenarioCode, userid)
  );

@@ -474,8 +474,14 @@ lyrs, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 predScenarios = createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers)
 
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
-scode = 'WC-10min'
+scode = 'observed-1km'
 scen = scens[scode]
+
+select * from lm_v3.lm_findOrInsertScenario('kubi',
+'observed-1km',
+'Worldclim1.4, Soil, SpatialDistanc',
+'Hijmans, R.J., S.E. Cameron, J.L. Parra, P.G. Jones and A. Jarvis, 2005. Very high resolution interpolated climate surfaces for global land areas. International Journal of Climatology 25: 1965-1978','WorldClim 1.4  bioclimatic variables computed from interpolated observation data collected between 1950 and 2000 (http://www.worldclim.org/), 5 min resolution','/sdm/scenarios/#id#',NULL,NULL,NULL,'meters',1000,2163,'-180.00,-60.00,180.00,90.00',NULL,'observed, climate, elevation, soil, bioclimatic variables, spatial distance, present',
+57687.8834682);
 
 newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
 scenid = newOrExistingScen.getId()
