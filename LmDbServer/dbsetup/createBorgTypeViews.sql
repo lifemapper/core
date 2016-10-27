@@ -203,12 +203,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
 
    -- Layer.* 
    userid,
-   lyrsquid,
-   lyrverify,
-   lyrname,
-   lyrdlocation,
-   lyrmetadataUrl,
-   lyrmetadata,
+   squid,
+   verify,
+   name,
+   prjdlocation,
+   prjmetadataUrl,
+   prjmetadata,
    dataFormat,
    gdalType,
    ogrType,
@@ -219,8 +219,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    epsgcode,
    mapunits,
    resolution,
-   bbox,
-   lyrmodtime,
+   prjbbox,
+   prjmodtime,
    
    -- SDMModel
    occurrenceSetId,
@@ -247,7 +247,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    ) AS
       SELECT p.sdmprojectionId, p.layerid, p.sdmmodelid, p.scenarioId, p.scenarioCode,
              p.maskId, p.status, p.statusModTime,
-             ps.scenmetadata, ps.gcmCode, ps.altpredCode, ps.dateCode,
+             ps.metadata, ps.gcmCode, ps.altpredCode, ps.dateCode,
              l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 

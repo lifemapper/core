@@ -473,6 +473,8 @@ scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'observed-1km'
 scen = scens[scode]
 
+addUsers(scribe)
+
 newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
 scenid = newOrExistingScen.getId()
 lyr = scen.layers[0]
@@ -481,6 +483,6 @@ for lyr in scen.layers:
 
 
 
-
+select * from lm_v3.lm_findOrInsertUser('kubi',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'kubi@nowhere.com',57688.8216441,'09f96622d29f96037885cfa749f979f0');
 
 """

@@ -107,7 +107,7 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
 # ...............................................
    def loadEnvMetadata(self, meta):
       if isinstance(meta, dict): 
-         self.addMetadata(meta)
+         self.addEnvMetadata(meta)
       else:
          self.envMetadata = json.loads(meta)
 
