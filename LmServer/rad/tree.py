@@ -65,11 +65,19 @@ class Tree(ServiceObject):
          metastring = json.dumps(self.metadata)
       return metastring
 
+# ...............................................
    def loadMetadata(self, meta):
-      if isinstance(meta, dict): 
-         self.addMetadata(meta)
-      else:
-         self.metadata = json.loads(meta)
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addMetadata(metajson)
 
 # ..............................................................................
    def getDLocation(self): 

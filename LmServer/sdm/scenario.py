@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import json
 from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
@@ -120,26 +121,33 @@ class Scenario(MapLayerSet):
          for lyr in lyrs:
             self.addLayer(lyr) 
          self._bbox = MapLayerSet._getIntersectBounds(self)
+
 # ...............................................
    def addMetadata(self, metadict):
       for key, val in metadict.iteritems():
          self.metadata[key] = val
          
-# ...............................................
    def dumpMetadata(self):
-      import json
       metastring = None
       if self.metadata:
          metastring = json.dumps(self.metadata)
       return metastring
 
-# ...............................................
    def loadMetadata(self, meta):
-      import json
-      if isinstance(meta, dict): 
-         self.addMetadata(meta)
-      else:
-         self.metadata = json.loads(meta)
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addMetadata(metajson)
    
    # ...............................................
    def _setUnits(self, units):

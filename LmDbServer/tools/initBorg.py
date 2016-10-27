@@ -118,8 +118,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   rstType = lyrMeta['gdaltype']
-   
    for ltype, ltmeta in lyrtypeMeta.iteritems():
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
@@ -138,7 +136,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                                   dlocation=dloc, 
                                   bbox=pkgMeta['bbox'], 
                                   gdalFormat=lyrMeta['gdalformat'], 
-                                  gdalType=rstType,
+                                  gdalType=lyrMeta['gdaltype'],
                                   mapunits=lyrMeta['mapunits'], 
                                   resolution=lyrMeta['resolution'], 
                                   epsgcode=lyrMeta['epsg'], 
@@ -468,6 +466,31 @@ scenPkgName = SCENARIO_PACKAGE
 obsOrPredRpt = pkgMeta['baseline']
 baseMeta = META.OBSERVED_PREDICTED_META[obsOrPredRpt]
 tm = baseMeta['times'].keys()[0]
+
+ltype = lyrtypeMeta.keys()[0]
+ltmeta = lyrtypeMeta[ltype]
+relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
+                                  gcm=None, tm=None, altPred=None)
+lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
+                      suffix=pkgMeta['suffix'])
+lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
+           'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
+envmeta = {'title': ltmeta['title'],
+           'description': ltmeta['description'],
+           'keywords': ltmeta['keywords']}
+dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
+envlyr = EnvironmentalLayer(lyrname, lyrMetadata=lyrmeta,
+                            valUnits=ltmeta['valunits'],
+                            dlocation=dloc, 
+                            bbox=pkgMeta['bbox'], 
+                            gdalFormat=lyrMeta['gdalformat'], 
+                            gdalType=lyrMeta['gdaltype'],
+                            mapunits=lyrMeta['mapunits'], 
+                            resolution=lyrMeta['resolution'], 
+                            epsgcode=lyrMeta['epsg'], 
+                            layerType=ltype, envMetadata=envmeta,
+                            userId=usr, modTime=CURRTIME)
+
 
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'observed-1km'

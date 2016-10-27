@@ -27,6 +27,7 @@ try:
    import cPickle as pickle
 except:
    import pickle
+import json
 import mx.DateTime
 import os
 from osgeo import ogr
@@ -267,12 +268,17 @@ class RADBucket(ServiceObject, ProcessObject):
 
 # ...............................................
    def loadMetadata(self, meta):
-      import json
-      if isinstance(meta, dict): 
-         self.addMetadata(meta)
-      else:
-         self.metadata = json.loads(meta)
-
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addMetadata(metajson)
    
    @property
    def experimentId(self):

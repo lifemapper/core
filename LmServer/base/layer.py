@@ -160,10 +160,20 @@ class _Layer(LMSpatialObject, ServiceObject):
 
 # ...............................................
    def loadLyrMetadata(self, meta):
-      if isinstance(meta, dict): 
-         self.addLyrMetadata(meta)
-      else:
-         self.lyrMetadata = json.loads(meta)
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addLyrMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addLyrMetadata(metajson)
 
 # ...............................................
    def getValAttribute(self):
@@ -509,10 +519,20 @@ class _LayerParameters(LMObject):
       return metastring
 
    def loadParamMetadata(self, meta):
-      if isinstance(meta, dict): 
-         self.addParamMetadata(meta)
-      else:
-         self.paramMetadata = json.loads(meta)
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addParamMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addParamMetadata(metajson)
 
 
 # .............................................................................
@@ -570,7 +590,8 @@ class Raster(_Layer):
       _Layer.__init__(self, name, metalocation, dlocation, gdalFormat, title, 
                       bbox, startDate, endDate, mapunits, valUnits, 
                       isCategorical, resolution, keywords, epsgcode, 
-                      description, author, verify=verify, squid=squid,
+                      description, author, 
+                      metadata=metadata, verify=verify, squid=squid,
                       svcObjId=svcObjId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, 
                       metadataUrl=metadataUrl, serviceType=serviceType, 
@@ -1048,7 +1069,8 @@ class Vector(_Layer):
       _Layer.__init__(self, name, metalocation, dlocation, ogrFormat, title, 
                       bbox, startDate, endDate, mapunits, valUnits, 
                       isCategorical, resolution, keywords, epsgcode, 
-                      description, author, verify=verify, squid=squid,
+                      description, author, 
+                      metadata=metadata, verify=verify, squid=squid,
                       svcObjId=svcObjId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=serviceType, moduleType=moduleType)
