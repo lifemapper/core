@@ -124,13 +124,13 @@ BEGIN
          lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
          vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
          
-      IF FOUND NOT THEN
+      IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertLayer';
       ELSE
          INSERT INTO lm_v3.EnvironmentalLayer (layerId, environmentalTypeId)
          VALUES (reclyr.layerId, rec_etype.environmentalTypeId);
          
-         IF FOUND NOT THEN
+         IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
          ELSE
             SELECT INTO newid last_value FROM lm3.EnvironmentalLayer_EnvironmentalLayerid_seq;

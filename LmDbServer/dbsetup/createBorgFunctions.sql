@@ -83,10 +83,8 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
                                              code varchar, 
-                                             ttl text, 
-                                             authr text,
-                                             dsc text,
-                                             metadataUrlprefix text,
+                                             metaUrlprefix text,
+                                             meta text,
                                              gcm varchar,
                                              altpred varchar,
                                              tm varchar,
@@ -95,7 +93,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
                                              epsg int,
                                              bndsstring varchar, 
                                              bboxwkt varchar,
-                                             kwds text,
                                              mtime double precision)
    RETURNS lm_v3.Scenario AS
 $$
@@ -109,16 +106,15 @@ BEGIN
       WHERE s.scenariocode = code and s.userid = usr;
    IF NOT FOUND THEN
       INSERT INTO lm_v3.Scenario 
-         (userid, scenarioCode, title, author, description, gcmCode, altpredCode, 
-         dateCode, units, resolution, epsgcode, bbox, keywords, modTime)
-         VALUES 
-         (usr, code, ttl, authr, dsc, metadataUrlprefix, gcm, altpred, 
-          tm, unts, res, epsg, bndsstring, kwds, mtime);
+         (userid, scenarioCode, metadata, gcmCode, altpredCode, 
+         dateCode, units, resolution, epsgcode, bbox, modTime)
+      VALUES 
+         (usr, code, meta, gcm, altpred, tm, unts, res, epsg, bndsstring, mtime);
                        
       IF FOUND THEN
          SELECT INTO id last_value FROM lm_v3.scenario_scenarioid_seq;
          idstr = cast(id as varchar);
-         scenmetadataUrl := replace(metadataUrlprefix, '#id#', idstr);
+         scenmetadataUrl := replace(metaUrlprefix, '#id#', idstr);
          IF bboxwkt is NULL THEN 
             UPDATE lm_v3.scenario SET metadataUrl = scenmetadataUrl WHERE scenarioId = id;
          ELSE
