@@ -103,6 +103,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._setVerify(verify)
       self.squid = squid
       self._metalocation = metalocation
+      self.metadata = {}
       self.loadMetadata(metadata)
       self._setUnits(mapunits)
       self.valUnits = valUnits

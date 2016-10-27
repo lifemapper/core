@@ -63,7 +63,9 @@ class _MatrixLayerParameters(_LayerParameters):
                    PresenceAbsenceValues for intersecting with ShapeGrid.
       """
       _LayerParameters.__init__(self, matrixIndex, None, userId, matrixLayerId)
+      self.mtxlyrMetadata = {}
       self.loadMtxLyrMetadata(metadata)
+      self.self.intparamsMetadata = {}
       self.loadIntersectParams(intersectParams)
 
 # ...............................................

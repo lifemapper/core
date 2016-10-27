@@ -49,6 +49,7 @@ class Matrix(LMObject):
       """
       self._matrix = matrix
       self.matrixType = matrixType
+      self.metadata = {}
       self.loadMetadata(metadata)
       self._dlocation = dlocation
       self._setIsCompressed(isCompressed)

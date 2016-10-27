@@ -107,6 +107,7 @@ class RADBucket(ServiceObject, ProcessObject):
       self._bucketPath = None
       self._pamSum = None
       self._randomPamSums = []
+      self.metadata = {}
       self.loadMetadata(metadata)
 #       self._experimentId = expId
 

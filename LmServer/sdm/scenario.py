@@ -85,6 +85,7 @@ class Scenario(MapLayerSet):
       self.gcmCode=None
       self.altpredCode=None
       self.dateCode=None
+      self.metadata = {}
       self.loadMetadata(metadata)
       
       # Private attributes

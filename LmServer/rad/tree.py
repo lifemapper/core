@@ -48,6 +48,7 @@ class Tree(ServiceObject):
             LMServiceType.TREES, moduleType=LMServiceModule.RAD,
             metadataUrl=metadataUrl)
       self._tree = tree
+      self.metadata = {}
       self.loadMetadata(metadata)
       self.hasBranchLengths = hasBranchLengths
       self.isUltraMetric = isUltraMetric

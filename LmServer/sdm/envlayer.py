@@ -56,7 +56,8 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
       self.dateCode = dateCode
-      self.loadMetadata(metadata)
+      self.envMetadata = {}
+      self.loadEnvMetadata(metadata)
       # Move to self.metadata dictionary
       self.typeTitle = title
       self.typeDescription = description
@@ -92,14 +93,14 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
 # ...............................................
    def addEnvMetadata(self, metadict):
       for key, val in metadict.iteritems():
-         self.envmetadata[key] = val
+         self.envMetadata[key] = val
          
 # ...............................................
    def dumpEnvMetadata(self):
       import json
       metastring = None
-      if self.envmetadata:
-         metastring = json.dumps(self.envmetadata)
+      if self.envMetadata:
+         metastring = json.dumps(self.envMetadata)
       return metastring
 
 # ...............................................
@@ -108,7 +109,7 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       if isinstance(meta, dict): 
          self.addMetadata(meta)
       else:
-         self.envmetadata = json.loads(meta)
+         self.envMetadata = json.loads(meta)
 
 # .........................................................................
 class EnvironmentalLayer(EnvironmentalType, Raster):
