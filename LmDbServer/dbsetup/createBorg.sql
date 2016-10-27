@@ -1,6 +1,7 @@
 -- ----------------------------------------------------------------------------
 -- file:   createBorg.sql
 -- author: Aimee Stewart
+-- \i /opt/lifemapper/LmDbServer/dbsetup/createBorg.sql
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 \c template1 admin
@@ -417,6 +418,7 @@ lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
 lm_v3.environmentalType, lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer, lm_v3.layer_layerid_seq, 
+lm_v3.environmentallayer, lm_v3.environmentallayer_environmentallayerid_seq, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayers,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
@@ -437,6 +439,7 @@ lm_v3.taxonomysource,
 lm_v3.taxon,
 lm_v3.environmentalType,
 lm_v3.layer, 
+lm_v3.environmentallayer,  
 lm_v3.scenario,
 lm_v3.scenariolayers,
 lm_v3.occurrenceset, 
@@ -456,6 +459,7 @@ lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
 lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer_layerid_seq,
+lm_v3.environmentallayer_environmentallayerid_seq, 
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,

@@ -477,7 +477,6 @@ usrlist = addUsers(scribe)
 
 newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
 scenid = newOrExistingScen.getId()
-lyr = scen.layers[0]
 for lyr in scen.layers:
    print 'existing: ', lyr.name, lyr.getId()
    newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
