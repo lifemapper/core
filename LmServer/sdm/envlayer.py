@@ -49,7 +49,8 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       @param environmentalTypeId: The environmentalTypeId for the database.  
       """
       # lyr.getParametersId() <-- lyr._layerTypeId 
-      _LayerParameters.__init__(self, -1, modTime, userId, environmentalTypeId)
+      _LayerParameters.__init__(self, -1, modTime, userId, environmentalTypeId,
+                                metadata=metadata)
       ServiceObject.__init__(self, userId, environmentalTypeId, modTime, modTime, 
                              serviceType=LMServiceType.LAYERTYPES, 
                              moduleType=LMServiceModule.SDM)
@@ -58,8 +59,6 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
       self.dateCode = dateCode
-      self.envMetadata = {}
-      self.loadEnvMetadata(metadata)
       # Move to self.metadata dictionary
       self.typeTitle = title
       self.typeDescription = description
@@ -91,25 +90,6 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       self._typeKeywords.add(keyword)
       
    typeKeywords = property(_getTypeKeywords, _setTypeKeywords)
-      
-# ...............................................
-   def addEnvMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.envMetadata[key] = val
-         
-# ...............................................
-   def dumpEnvMetadata(self):
-      metastring = None
-      if self.envMetadata:
-         metastring = json.dumps(self.envMetadata)
-      return metastring
-
-# ...............................................
-   def loadEnvMetadata(self, meta):
-      if isinstance(meta, dict): 
-         self.addEnvMetadata(meta)
-      else:
-         self.envMetadata = json.loads(meta)
 
 # .........................................................................
 class EnvironmentalLayer(EnvironmentalType, Raster):
@@ -123,7 +103,6 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                 gdalType=None, gdalFormat=None, 
                 mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
                 layerType=None, layerTypeId=None, envMetadata={},
-                layerTypeMetadata={}, 
                 layerTypeModTime=None,
                 gcmCode=None, altpredCode=None, dateCode=None,
                 userId=ARCHIVE_USER, layerId=None, 

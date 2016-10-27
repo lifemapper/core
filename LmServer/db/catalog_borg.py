@@ -169,12 +169,12 @@ class Borg(DbPostgresql):
          verify = self._getColumnValue(row, idxs, ['verify'])
          squid = self._getColumnValue(row, idxs, ['squid'])
          name = self._getColumnValue(row, idxs, ['name'])
-         meta = self._getColumnValue(row, idxs, ['occmetadata', 'lyrmetadata'])
-         dlocation = self._getColumnValue(row, idxs, ['prjdlocation', 'occdlocation', 'dlocation'])
+         dlocation = self._getColumnValue(row, idxs, ['prjdlocation', 
+                  'occdlocation', 'lyrdlocation', 'dlocation'])
          murl = self._getColumnValue(row, idxs, 
                   ['prjmetadataurl', 'occmetadataurl', 'metadataurl'])
-         murl = self._getColumnValue(row, idxs, 
-                  ['prjmetadata', 'occmetadata', 'metadata'])
+         meta = self._getColumnValue(row, idxs, 
+                  ['prjmetadata', 'occmetadata', 'lyrmetadata', 'metadata'])
          vtype = self._getColumnValue(row, idxs, ['ogrtype'])
          rtype = self._getColumnValue(row, idxs, ['gdaltype'])
          fformat = self._getColumnValue(row, idxs, ['dataformat'])
@@ -412,7 +412,7 @@ class Borg(DbPostgresql):
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
       envmeta = lyr.dumpParamMetadata()
-      lyrmeta = lyr.dumpParamMetadata()
+      lyrmeta = lyr.dumpLyrMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction(
                            'lm_findOrInsertEnvLayer', lyr.getId(), 
                            lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
