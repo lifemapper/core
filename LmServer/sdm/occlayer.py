@@ -48,7 +48,7 @@ class OccurrenceType(_LayerParameters):
 # Constructor
 # .............................................................................
    def __init__(self, displayName, fromGbif, queryCount, primaryEnv, touchTime, 
-                modTime, userId, occurrenceSetId, sciName=None):
+                modTime, userId, occurrenceSetId, metadata={}, sciName=None):
       """
       @summary Initialize the _Occurrences class instance
       @param displayName: Name to be displayed for this dataset
@@ -67,7 +67,8 @@ class OccurrenceType(_LayerParameters):
              information about the name associated with these data
       @todo: Remove points, count, query
       """
-      _LayerParameters.__init__(self, -1, modTime, userId, occurrenceSetId)
+      _LayerParameters.__init__(self, -1, modTime, userId, occurrenceSetId,
+                                metadata=metadata)
       self.displayName = displayName
       self.primaryEnv = primaryEnv
       self.fromGbif = fromGbif
@@ -99,7 +100,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, displayName, metadata={},
+   def __init__(self, displayName, occMetadata={},
                 name=None, fromGbif=False, dlocation=None, 
                 metalocation=None, queryCount=-1, epsgcode=DEFAULT_EPSG, 
                 ogrType=ogr.wkbPoint, ogrFormat=DEFAULT_OGR_FORMAT, bbox=None,
@@ -137,10 +138,11 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       @todo: Remove points, count, query
       """
       OccurrenceType.__init__(self, displayName, fromGbif, queryCount, primaryEnv, 
-                              touchTime, modTime, userId, occId, sciName)
+                              touchTime, modTime, userId, occId, sciName,
+                              metadata=occMetadata)
       ProcessObject.__init__(self, objId=occId, parentId=None, 
                 status=status, statusModTime=statusModTime)
-      Vector.__init__(self, metadata=metadata,
+      Vector.__init__(self, 
                       title=displayName, bbox=bbox, epsgcode=epsgcode, 
                       dlocation=dlocation, metalocation=metalocation,
                       ogrType=ogrType, ogrFormat=ogrFormat, 

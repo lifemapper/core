@@ -52,6 +52,9 @@ from LmServer.common.localconstants import APP_PATH
 class _Layer(LMSpatialObject, ServiceObject):
    """
    Superclass of Vector and Raster  
+   @todo: remove: title, isCategorical, metalocation, author, description, 
+                  startDate, endDate, keywords, createTime, isDiscreteData
+
    """
 # .............................................................................
 # Constructor
@@ -67,21 +70,14 @@ class _Layer(LMSpatialObject, ServiceObject):
       @summary Layer superclass constructor
       @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
       @param name: Short name, used for layer name in mapfiles
-      @param metalocation: File location of metadata associated with this layer.  
       @param dlocation: Data location (url, file path, ...)
       @param dataFormat: Data file format (ogr or gdal codes, used to choose
                          driver for read/write)
-      @param title: Human readable identifier
-      @param startDate: first valid date of the data 
-      @param endDate: last valid date of the data
       @param mapunits: mapunits of measurement. These are keywords as used in 
                     mapserver, choice of [feet|inches|kilometers|meters|miles|dd],
                     described in http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
       @param valUnits: Units of measurement for data values
-      @param isCategorical: True if nominal/categorical (not numerical) data.
       @param resolution: resolution of the data - pixel size in @mapunits
-      @param keywords: sequence of keywords
-      @param description: description of the layer
       @param lyrId: Database id of the layer object
       @param lyrUserId: User id on the layer object
       """
@@ -103,8 +99,8 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._setVerify(verify)
       self.squid = squid
       self._metalocation = metalocation
-      self.metadata = {}
-      self.loadMetadata(metadata)
+      self.lyrMetadata = {}
+      self.loadLyrMetadata(metadata)
       self._setUnits(mapunits)
       self.valUnits = valUnits
       self.resolution = resolution
@@ -151,25 +147,23 @@ class _Layer(LMSpatialObject, ServiceObject):
       return self._layerUserId
    
 # ...............................................
-   def addMetadata(self, metadict):
+   def addLyrMetadata(self, metadict):
       for key, val in metadict.iteritems():
-         self.metadata[key] = val
+         self.lyrMetadata[key] = val
          
 # ...............................................
-   def dumpMetadata(self):
-      import json
+   def dumpLyrMetadata(self):
       metastring = None
-      if self.metadata:
-         metastring = json.dumps(self.metadata)
+      if self.lyrMetadata:
+         metastring = json.dumps(self.lyrMetadata)
       return metastring
 
 # ...............................................
-   def loadMetadata(self, meta):
-      import json
+   def loadLyrMetadata(self, meta):
       if isinstance(meta, dict): 
-         self.addMetadata(meta)
+         self.addLyrMetadata(meta)
       else:
-         self.metadata = json.loads(meta)
+         self.lyrMetadata = json.loads(meta)
 
 # ...............................................
    def getValAttribute(self):
@@ -401,7 +395,7 @@ class _LayerParameters(LMObject):
 # Constructor
 # .............................................................................
    def __init__(self, matrixIndex, modTime, userId, paramId, 
-                attrFilter=None, valueFilter=None):
+                metadata={}, attrFilter=None, valueFilter=None):
       """
       @summary Initialize the _LayerParameters class instance
       @param matrixIndex: Index of the position in presenceAbsence or other 
@@ -421,12 +415,15 @@ class _LayerParameters(LMObject):
                     the field containing species name.
       @param valueFilter: The value of interest in the attrFilter
       """
+      self.paramMetadata = {}
+      self.loadParamMetadata(metadata)
       # TODO: create a dictionary of variable attributes for treeIndex, matrixIndex, etc
       self._treeIndex = None
       self._matrixIndex = matrixIndex
       self.parametersModTime = modTime
       self._parametersId = paramId
       self._parametersUserId = userId
+      
       self.attrFilter = attrFilter
       self.valueFilter = valueFilter
       
@@ -499,6 +496,24 @@ class _LayerParameters(LMObject):
                 the position of the layer in a tree
       """
       return self._treeIndex
+
+# ...............................................
+   def addParamMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.paramMetadata[key] = val
+         
+   def dumpParamMetadata(self):
+      metastring = None
+      if self.paramMetadata:
+         metastring = json.dumps(self.paramMetadata)
+      return metastring
+
+   def loadParamMetadata(self, meta):
+      if isinstance(meta, dict): 
+         self.addParamMetadata(meta)
+      else:
+         self.paramMetadata = json.loads(meta)
+
 
 # .............................................................................
 # Raster class (inherits from _Layer)

@@ -144,28 +144,27 @@ class Borg(DbPostgresql):
       return scen
 
 # ...............................................
-   def _createLayerType(self, row, idxs):
+   def _createEnvType(self, row, idxs):
       """
       Create an _EnvironmentalType from a LayerType, lm_envlayer,
-      lm_envlayerAndKeywords or lm_layerTypeAndKeywords record in the MAL
+      gcmcode, altpredCode, datecode, metadata
+
       """
       lyrType = None
-      keywordLst = []
       if row is not None:
-         keystr = self._getColumnValue(row, idxs, ['keywords'])
-         if keystr is not None and len(keystr) > 0:
-            keywordLst = keystr.split(',')
-         code = self._getColumnValue(row, idxs, ['typecode', 'code'])
-         title = self._getColumnValue(row, idxs, ['typetitle', 'title'])
-         desc = self._getColumnValue(row, idxs, ['typedescription', 'description'])
-         modtime = self._getColumnValue(row, idxs, ['typemodtime', 'modtime'])
-         usr = self._getColumnValue(row, idxs, ['userid'])
-         ltid = self._getColumnValue(row, idxs, ['layertypeid'])
+         envcode = self._getColumnValue(row, idxs, ['envcode'])
+         gcmcode = self._getColumnValue(row, idxs, ['gcmcode'])
+         altcode = self._getColumnValue(row, idxs, ['altpredcode'])
+         dtcode = self._getColumnValue(row, idxs, ['datecode'])
+         meta = self._getColumnValue(row, idxs, ['envmetadata, metadata'])
+         modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
+         usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
+         ltid = self._getColumnValue(row, idxs, ['environmentalTypeId'])
                                                 
-         lyrType = EnvironmentalType(code, title, desc, usr,
-                                     keywords=keywordLst,
-                                     modTime=modtime, 
-                                     environmentalTypeId=ltid)
+         lyrType = EnvironmentalType(envcode, None, None, usr,
+                                     gcmCode=gcmcode, altpredCode=altcode, 
+                                     dateCode=dtcode, metadata=meta, 
+                                     modTime=modtime, environmentalTypeId=ltid)
       return lyrType
    
 # ...............................................
@@ -181,54 +180,46 @@ class Borg(DbPostgresql):
          verify = self._getColumnValue(row, idxs, ['verify'])
          squid = self._getColumnValue(row, idxs, ['squid'])
          name = self._getColumnValue(row, idxs, ['name'])
-         title = self._getColumnValue(row, idxs, ['title'])
-         author = self._getColumnValue(row, idxs, ['author'])
-         desc = self._getColumnValue(row, idxs, ['description'])
-         dlocation = self._getColumnValue(row, idxs, ['dlocation'])
+         meta = self._getColumnValue(row, idxs, ['occmetadata', 'lyrmetadata'])
+         dlocation = self._getColumnValue(row, idxs, ['prjdlocation', 'occdlocation', 'dlocation'])
          murl = self._getColumnValue(row, idxs, 
                   ['prjmetadataurl', 'occmetadataurl', 'metadataurl'])
-         mlocation = self._getColumnValue(row, idxs, ['metalocation'])
+         murl = self._getColumnValue(row, idxs, 
+                  ['prjmetadata', 'occmetadata', 'metadata'])
          vtype = self._getColumnValue(row, idxs, ['ogrtype'])
          rtype = self._getColumnValue(row, idxs, ['gdaltype'])
-         iscat = self._getColumnValue(row, idxs, ['iscategorical'])
          fformat = self._getColumnValue(row, idxs, ['dataformat'])
          epsg = self._getColumnValue(row, idxs, ['epsgcode'])
          munits = self._getColumnValue(row, idxs, ['mapunits'])
          res = self._getColumnValue(row, idxs, ['resolution'])
-         sDate = self._getColumnValue(row, idxs, ['startdate'])
-         eDate = self._getColumnValue(row, idxs, ['enddate'])
          dtmod = self._getColumnValue(row, idxs, 
-                  ['prjstatusmodtime', 'occstatusmodtime', 'datelastmodified', 
-                   'statusmodtime'])
-         bbox = self._getColumnValue(row, idxs, ['bbox'])
+                  ['prjstatusmodtime', 'occstatusmodtime', 'statusmodtime'])
+         bbox = self._getColumnValue(row, idxs, ['prjbbox', 'occbbox', 'bbox'])
          nodata = self._getColumnValue(row, idxs, ['nodataval'])
          minval = self._getColumnValue(row, idxs, ['minval'])
          maxval = self._getColumnValue(row, idxs, ['maxval'])
          vunits = self._getColumnValue(row, idxs, ['valunits'])
                      
          if vtype is not None:
-            lyr = Vector(name=name, title=title, bbox=bbox, startDate=sDate, 
+            lyr = Vector(name=name, metadata=meta, bbox=bbox, 
                          verify=verify, squid=squid,
-                         endDate=eDate, mapunits=munits, resolution=res, 
+                         mapunits=munits, resolution=res, 
                          epsgcode=epsg, dlocation=dlocation, 
-                         metalocation=mlocation, 
-                         valUnits=vunits, isCategorical=iscat, 
+                         valUnits=vunits, 
                          ogrType=vtype, ogrFormat=fformat, 
-                         author=author, description=desc, 
                          svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
                          modTime=dtmod, metadataUrl=murl) 
          elif rtype is not None:
-            lyr = Raster(name=name, title=title, bbox=bbox, startDate=sDate, 
+            lyr = Raster(name=name, metadata=meta, bbox=bbox, 
                          verify=verify, squid=squid,
-                         endDate=eDate, mapunits=munits, resolution=res, 
+                         mapunits=munits, resolution=res, 
                          epsgcode=epsg, dlocation=dlocation, 
-                         metalocation=mlocation, minVal=minval, maxVal=maxval, 
-                         nodataVal=nodata, valUnits=vunits, isCategorical=iscat,
-                         gdalType=rtype, gdalFormat=fformat, author=author, 
-                         description=desc, svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
+                         minVal=minval, maxVal=maxval, 
+                         nodataVal=nodata, valUnits=vunits,
+                         gdalType=rtype, gdalFormat=fformat,  
+                         svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
                          modTime=dtmod, metadataUrl=murl)
       return lyr
-   
 
 # ...............................................
    def _createEnvLayer(self, row, idxs):
@@ -239,7 +230,7 @@ class Borg(DbPostgresql):
       if row is not None:
          rst = self._createLayer(row, idxs)
          if rst is not None:
-            etype = self._createLayerType(row, idxs)
+            etype = self._createEnvType(row, idxs)
             envRst = EnvironmentalLayer.initFromParts(rst, etype)
       return envRst
 
@@ -304,14 +295,12 @@ class Borg(DbPostgresql):
       @param lyr: Raster or Vector to insert
       @return: new or existing Raster or Vector object 
       """
-      import json
       min = max = nodata = None
       if isinstance(lyr, Raster):
          min = lyr.minVal
          max = lyr.maxVal
          nodata = lyr.nodataVal
-      if lyr.metadata:
-         meta = json.dumps(lyr.metadata)
+      meta = lyr.dumpLyrMetadata()
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer', 
@@ -320,7 +309,7 @@ class Borg(DbPostgresql):
                            lyr.verify,
                            lyr.name,
                            self._getRelativePath(dlocation=lyr.getDLocation()),
-                           self._getRelativePath(url=lyr.metadataUrl),                                         meta,
+                           self._getRelativePath(url=lyr.metadataUrl), meta,                                       meta,
                            lyr.dataFormat,
                            lyr.gdalType,
                            lyr.ogrType,
@@ -344,10 +333,10 @@ class Borg(DbPostgresql):
       wkt = None
       if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
+      meta = scen.dumpMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
                            scen.getUserId(), scen.code, 
-                           self._getRelativePath(url=scen.metadataUrl),
-                           scen.metadata, 
+                           self._getRelativePath(url=scen.metadataUrl), meta, 
                            scen.gcmCode, scen.altpredCode, scen.dateCode, 
                            scen.units, scen.resolution, scen.epsgcode, 
                            scen.getCSVExtentString(), wkt, scen.modTime)
@@ -431,31 +420,21 @@ class Borg(DbPostgresql):
       lyr.modTime = mx.DateTime.utc().mjd
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
+      envmeta = lyr.dumpParamMetadata()
+      lyrmeta = lyr.dumpParamMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction(
-                           'lm_findOrInsertEnvLayer', lyr.verify, lyr.squid,
-                           lyr.getUserId(), lyr.name,
-                           lyr.title, lyr.author, lyr.description, 
+                           'lm_findOrInsertEnvLayer', lyr.getId(), 
+                           lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
                            self._getRelativePath(dlocation=lyr.getDLocation()), 
-                           self._getRelativePath(dlocation=lyr.getMetaLocation()), 
-                           lyr.ogrType, lyr.gdalType, lyr.isCategorical, 
-                           lyr.dataFormat, lyr.epsgcode,
-                           lyr.mapUnits, lyr.resolution, lyr.startDate, 
-                           lyr.endDate, lyr.modTime, lyr.getCSVExtentString(), 
-                           wkt, lyr.nodataVal, lyr.minVal, 
-                           lyr.maxVal, lyr.valUnits, lyr.getParametersId(),
                            self._getRelativePath(url=lyr.metadataUrl),
-                           lyr.typeCode, lyr.typeTitle, lyr.typeDescription)
-      
+                           lyrmeta, lyr.dataFormat,  lyr.gdalType, lyr.ogrType, 
+                           lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
+                           lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
+                           lyr.getCSVExtentString(), wkt, lyr.modTime, 
+                           lyr.getParametersId(), lyr.typeCode, lyr.gcmCode,
+                           lyr.altpredCode, lyr.dateCode, envmeta, 
+                           lyr.parametersModTime)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
-      # if keywords are returned, layertype was existing
-      if not newOrExistingLyr.typeKeywords:
-         newOrExistingLyr.typeKeywords = lyr.typeKeywords
-         for kw in newOrExistingLyr.typeKeywords:
-            successCode = self.executeInsertFunction('lm_joinLayerTypeKeyword',
-                              newOrExistingLyr.getParametersId(), kw)
-            if successCode != 0:
-               self.log.debug('Failed to insert keyword {} for layertype {}'
-                              .format(kw, newOrExistingLyr.getParametersId()))
       if scenarioId is not None:
          successCode = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
                                               newOrExistingLyr.getId()) 

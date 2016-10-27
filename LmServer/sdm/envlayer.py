@@ -21,6 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import json
+
 from LmCommon.common.lmconstants import DEFAULT_EPSG
 from LmServer.common.localconstants import ARCHIVE_USER
 
@@ -97,7 +99,6 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
          
 # ...............................................
    def dumpEnvMetadata(self):
-      import json
       metastring = None
       if self.envMetadata:
          metastring = json.dumps(self.envMetadata)
@@ -105,7 +106,6 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
 
 # ...............................................
    def loadEnvMetadata(self, meta):
-      import json
       if isinstance(meta, dict): 
          self.addMetadata(meta)
       else:
@@ -117,18 +117,22 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
    Class to hold a Raster object used for species distribution modeling.
    """
 # .............................................................................
-   def __init__(self, name, scencode=None, title=None, verify=None,
+   def __init__(self, name, lyrMetadata={}, scencode=None, verify=None,
                 minVal=None, maxVal=None, nodataVal=None, valUnits=None,
-                isCategorical=False, bbox=None, dlocation=None, metalocation=None,
-                gdalType=None, gdalFormat=None, author=None, 
-                startDate=None, endDate=None, 
+                bbox=None, dlocation=None, 
+                gdalType=None, gdalFormat=None, 
                 mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
-                keywords=None, description=None, isDiscreteData=False,
-                layerType=None, layerTypeId=None, layerTypeTitle=None, 
-                layerTypeDescription=None, layerTypeModTime=None,
+                layerType=None, layerTypeId=None, envMetadata={},
+                layerTypeMetadata={}, 
+                layerTypeModTime=None,
                 gcmCode=None, altpredCode=None, dateCode=None,
                 userId=ARCHIVE_USER, layerId=None, 
-                createTime=None, modTime=None, metadataUrl=None ):
+                modTime=None, metadataUrl=None,
+                #TODO: remove these for Borg
+                title=None, isCategorical=False, metalocation=None, author=None, 
+                description=None, startDate=None, endDate=None, keywords=None, 
+                createTime=None, isDiscreteData=False,
+                layerTypeTitle=None, layerTypeDescription=None ):
       """
       @copydoc Raster::__init__()
       @param layerType: Code for the environmentalLayerType to be used when  
@@ -142,16 +146,18 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
       """
       if name is None:
          raise LMError(currargs='EnvironmentalLayer.name is required')
-      EnvironmentalType.__init__(self, layerType, layerTypeTitle, 
-                                 layerTypeDescription, userId, 
-                                 gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
-                                 keywords=keywords,
-                                 modTime=layerTypeModTime, 
-                                 environmentalTypeId=layerTypeId)
+      EnvironmentalType.__init__(self, layerType, 
+                  layerTypeTitle, layerTypeDescription, 
+                  userId, 
+                  metadata=envMetadata,
+                  gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
+                  keywords=keywords,
+                  modTime=layerTypeModTime, 
+                  environmentalTypeId=layerTypeId)
       self._mapPrefix = None
       # Raster metadataUrl and serviceType override those of EnvironmentalType 
       # if it is a full EnvironmentalLayer
-      Raster.__init__(self, name=name, title=title, author=author, bbox=bbox, 
+      Raster.__init__(self, metadata=lyrMetadata, name=name, title=title, author=author, bbox=bbox, 
                       startDate=startDate, endDate=endDate, mapunits=mapunits, 
                       resolution=resolution, epsgcode=epsgcode, 
                       dlocation=dlocation, metalocation=metalocation,
@@ -170,7 +176,8 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
 # ...............................................
    @classmethod
    def initFromParts(cls, raster, envType):
-      envLyr = EnvironmentalLayer(raster.name, title=raster.title, 
+      envLyr = EnvironmentalLayer(raster.name, lyrMetadata=raster.metadata, 
+                        title=raster.title, 
                         verify=raster.verify, minVal=raster.minVal, 
                         maxVal=raster.maxVal, nodataVal=raster.nodataVal, 
                         valUnits=raster.valUnits, 

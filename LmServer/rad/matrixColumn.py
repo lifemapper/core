@@ -32,7 +32,7 @@ from LmServer.common.lmconstants import LMServiceType, LMServiceModule
 # .............................................................................
 # .............................................................................
 # .............................................................................
-class _MatrixLayerParameters(_LayerParameters):
+class _MatrixColumnParameters(_LayerParameters):
 # .............................................................................
    """
    """
@@ -41,49 +41,12 @@ class _MatrixLayerParameters(_LayerParameters):
 # .............................................................................
    def __init__(self, matrixIndex, 
                 metadata={}, intersectParams={}, squid=None, ident=None,
-                matrixLayerId=None, userId=None, matrixId=None,
+                matrixColumnId=None, userId=None, matrixId=None,
                 status=None, statusModTime=None):
-      """
-      @summary Initialize the _PresenceAbsence class instance
-      @param matrixIndex: Index of the position in presenceAbsence matrix for a 
-                      particular layerset.  If this PresenceAbsenceLayer is not
-                      a member of a PresenceAbsenceLayerset, this value is -1.
-      @param attrPresence: Field name of the attribute denoting presence
-      @param minPresence: Minimum data value identifying presence.
-      @param maxPresence: Maximum data value identifying presence.
-      @param percentPresence: Percent of presence within a cell for it to be 
-                        considered present.
-      @param attrAbsence: Field name of the attribute denoting absence
-      @param minAbsence: Minimum data value identifying absence.
-      @param maxAbsence: Maximum data value identifying absence.
-      @param percentAbsence:  Percent of absence within a cell for it to be 
-                        considered present.
-      @param paUserId: Id for the owner of these data
-      @param paId: The presenceAbsenceId for the database.  Used to get the 
-                   PresenceAbsenceValues for intersecting with ShapeGrid.
-      """
-      _LayerParameters.__init__(self, matrixIndex, None, userId, matrixLayerId)
-      self.mtxlyrMetadata = {}
-      self.loadMtxLyrMetadata(metadata)
+      _LayerParameters.__init__(self, matrixIndex, None, userId, matrixColumnId,
+                                metadata=metadata)
       self.self.intparamsMetadata = {}
       self.loadIntersectParams(intersectParams)
-
-# ...............................................
-   def addMtxLyrMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.mtxlyrMetadata[key] = val
-         
-   def dumpMtxLyrMetadata(self):
-      metastring = None
-      if self.mtxlyrMetadata:
-         metastring = json.dumps(self.metadata)
-      return metastring
-
-   def loadMtxLyrMetadata(self, meta):
-      if isinstance(meta, dict): 
-         self.addMtxLyrMetadata(meta)
-      else:
-         self.mtxlyrMetadata = json.loads(meta)
 
 # ...............................................
    def addIntersectParams(self, paramsdict):
@@ -104,14 +67,13 @@ class _MatrixLayerParameters(_LayerParameters):
 
 
 # .............................................................................
-# PresenceAbsenceVector class (inherits from _PresenceAbsence, Vector)
 # .............................................................................
-class MatrixVector(_MatrixLayerParameters, Vector, ProcessObject):
+class MatrixColumn(_MatrixColumnParameters, Vector, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................   
    def __init__(self, matrixIndex, 
-                mtxlyrMetadata={}, intersectParams={}, squid=None, ident=None,
+                mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
                 matrixLayerId=None, userId=None, matrixId=None,
                 status=None, statusModTime=None,
                 # Vector
@@ -123,8 +85,35 @@ class MatrixVector(_MatrixLayerParameters, Vector, ProcessObject):
                 lyrId=None, lyrUserId=None, bucketId=None,
                 verify=None, squid=None, modTime=None, metadataUrl=None):
       # ...................
-      _MatrixLayerParameters.__init__(self, matrixIndex, 
-                metadata=mtxlyrMetadata, intersectParams=intersectParams, 
+      _MatrixColumnParameters.__init__(self, matrixIndex, 
+                metadata=mtxcolMetadata, intersectParams=intersectParams, 
+                squid=squid, ident=ident,
+                matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
+                status=status, statusModTime=statusModTime)
+      ProcessObject.__init__(self, objId=matrixLayerId, parentId=bucketId, 
+                status=status, statusModTime=statusModTime)
+
+# .............................................................................
+# .............................................................................
+class MatrixVector(_MatrixColumnParameters, Vector, ProcessObject):
+# .............................................................................
+# Constructor
+# .............................................................................   
+   def __init__(self, matrixIndex, 
+                mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
+                matrixLayerId=None, userId=None, matrixId=None,
+                status=None, statusModTime=None,
+                # Vector
+                name=None, lyrMetadata={}, bbox=None, dlocation=None, 
+                mapunits=None, resolution=None, epsgcode=None,
+                ogrType=None, dataFormat=None, 
+                featureCount=0, featureAttributes={}, features={}, fidAttribute=None, 
+                valUnits=None,
+                lyrId=None, lyrUserId=None, bucketId=None,
+                verify=None, squid=None, modTime=None, metadataUrl=None):
+      # ...................
+      _MatrixColumnParameters.__init__(self, matrixIndex, 
+                metadata=mtxcolMetadata, intersectParams=intersectParams, 
                 squid=squid, ident=ident,
                 matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
                 status=status, statusModTime=statusModTime)
@@ -150,12 +139,12 @@ class MatrixVector(_MatrixLayerParameters, Vector, ProcessObject):
 # .............................................................................  
          
 # .............................................................................
-class MatrixRaster(_MatrixLayerParameters, Raster, ProcessObject):
+class MatrixRaster(_MatrixColumnParameters, Raster, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................   
    def __init__(self, matrixIndex,
-                mtxlyrMetadata={}, intersectParams={}, squid=None, ident=None,
+                mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
                 matrixLayerId=None, userId=None, matrixId=None,
                 status=None, statusModTime=None,
                 # Raster
@@ -168,8 +157,8 @@ class MatrixRaster(_MatrixLayerParameters, Raster, ProcessObject):
                 verify=None, squid=None,
                 modTime=None, metadataUrl=None):
       # ...................
-      _MatrixLayerParameters.__init__(self, matrixIndex, 
-                metadata=mtxlyrMetadata, intersectParams=intersectParams, 
+      _MatrixColumnParameters.__init__(self, matrixIndex, 
+                metadata=mtxcolMetadata, intersectParams=intersectParams, 
                 squid=squid, ident=ident,
                 matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
                 status=status, statusModTime=statusModTime)
