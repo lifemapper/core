@@ -67,17 +67,6 @@ class Borg(DbPostgresql):
                             schema=LM_SCHEMA_BORG)
       earl = EarlJr()
       self._webservicePrefix = earl.createWebServicePrefix()
-            
-# ...............................................
-   def _getRelativePath(self, dlocation=None, url=None):
-      relativePath = None
-      if dlocation is not None:
-         if dlocation.startswith(ARCHIVE_PATH):
-            relativePath = dlocation[len(ARCHIVE_PATH):]
-      elif url is not None:
-         if url.startswith(self._webservicePrefix):
-            relativePath = url[len(self._webservicePrefix):]
-      return relativePath
 
 # ...............................................
    def _createUser(self, row, idxs):
@@ -308,8 +297,8 @@ class Borg(DbPostgresql):
                            lyr.squid,
                            lyr.verify,
                            lyr.name,
-                           self._getRelativePath(dlocation=lyr.getDLocation()),
-                           self._getRelativePath(url=lyr.metadataUrl), meta,                                       meta,
+                           lyr.getDLocation(),
+                           lyr.metadataUrl, meta,                                       meta,
                            lyr.dataFormat,
                            lyr.gdalType,
                            lyr.ogrType,
@@ -336,7 +325,7 @@ class Borg(DbPostgresql):
       meta = scen.dumpMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
                            scen.getUserId(), scen.code, 
-                           self._getRelativePath(url=scen.metadataUrl), meta, 
+                           scen.metadataUrl, meta, 
                            scen.gcmCode, scen.altpredCode, scen.dateCode, 
                            scen.units, scen.resolution, scen.epsgcode, 
                            scen.getCSVExtentString(), wkt, scen.modTime)
@@ -398,13 +387,13 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
                            shpgrd.verify, shpgrd.getUserId(), shpgrd.name,
                            shpgrd.title, shpgrd.author, shpgrd.description, 
-                           self._getRelativePath(dlocation=shpgrd.getDLocation()), 
-                           self._getRelativePath(dlocation=shpgrd.getMetaLocation()), 
+                           shpgrd.getDLocation(), 
+                           shpgrd.getMetaLocation(), 
                            shpgrd.ogrType, shpgrd.isCategorical, 
                            shpgrd.dataFormat, shpgrd.epsgcode,
                            shpgrd.mapUnits, shpgrd.resolution, shpgrd.modTime, 
                            shpgrd.getCSVExtentString(), wkt, 
-                           self._getRelativePath(url=shpgrd.metadataUrl),
+                           shpgrd.metadataUrl,
                            shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
                            shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
                            shpgrd.status, shpgrd.statusModTime)
@@ -427,8 +416,8 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction(
                            'lm_findOrInsertEnvLayer', lyr.getId(), 
                            lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
-                           self._getRelativePath(dlocation=lyr.getDLocation()), 
-                           self._getRelativePath(url=lyr.metadataUrl),
+                           lyr.getDLocation(), 
+                           lyr.metadataUrl,
                            lyrmeta, lyr.dataFormat,  lyr.gdalType, lyr.ogrType, 
                            lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                            lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
