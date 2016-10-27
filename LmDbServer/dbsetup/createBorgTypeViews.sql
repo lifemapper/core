@@ -94,9 +94,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
         WHERE l.layerid = sg.layerid;
 
 -- ----------------------------------------------------------------------------
--- lm_fullmatrixlayer
-DROP VIEW IF EXISTS lm_v3.lm_fullmatrixlayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_fullmatrixlayer
+-- lm_matrixlayer
+DROP VIEW IF EXISTS lm_v3.lm_matrixlayer CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
 (
    -- Layer.* 
    layerId,
@@ -120,27 +120,27 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrixlayer
    bbox,
    lyrmodtime,
 
-   -- MatrixLayer.*
-   matrixLayerId,
+   -- MatrixColumn.*
+   matrixColumnId,
    bucketId, 
-   blsquid,
-   blident,
+   mtxlyrsquid,
+   mtxlyrident,
    matrixId,
    matrixIndex,
    intersectParams,
-   blmetadata,  
-   blstatus,
-   blstatusmodtime
+   mtxlyrmetadata,  
+   mtxlyrstatus,
+   mtxlyrstatusmodtime
 ) AS 
       SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             bl.matrixLayerId, bl.bucketId, bl.squid, bl.ident, bl.matrixId, 
-             bl.matrixIndex, bl.intersectParams, bl.metadata, 
-             bl.status, bl.statusmodtime
-        FROM lm_v3.layer l, lm_v3.MatrixLayer bl
-        WHERE l.layerid = bl.layerid;
+             mc.matrixColumnId, mc.bucketId, mc.squid, mc.ident, mc.matrixId, 
+             mc.matrixIndex, mc.intersectParams, mc.metadata, 
+             mc.status, mc.statusmodtime
+        FROM lm_v3.layer l, lm_v3.MatrixColumn mc
+        WHERE l.layerid = mc.layerid;
 
 -- ----------------------------------------------------------------------------
 DROP VIEW IF EXISTS lm_v3.lm_sdmmodel CASCADE;
@@ -194,6 +194,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    prjmaskId,
    prjstatus,
    prjstatusModTime,
+   
+   -- projection scenario
+   scenmetadata,
+   gcmCode,
+   altpredCode,
+   dateCode,   
 
    -- Layer.* 
    userid,
@@ -235,11 +241,13 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    occdlocation,
    queryCount,
    occbbox,
+   occmetadata,
    occstatus,
    occstatusmodtime
    ) AS
       SELECT p.sdmprojectionId, p.layerid, p.sdmmodelid, p.scenarioId, p.scenarioCode,
              p.maskId, p.status, p.statusModTime,
+             ps.scenmetadata, ps.gcmCode, ps.altpredCode, ps.dateCode,
              l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
@@ -248,9 +256,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
              m.maskId, m.status, m.statusModTime, m.dlocation, m.email,  
              m.algorithmParams, m.algorithmCode,
              o.verify, o.displayName, o.metadataUrl, o.dlocation, o.queryCount, 
-             o.bbox, o.status, o.statusmodtime
-      FROM lm_v3.sdmprojection p, lm_v3.layer l, lm_v3.sdmmodel m, lm_v3.occurrenceSet o
+             o.bbox, o.metadata, o.status, o.statusmodtime
+      FROM lm_v3.sdmprojection p, lm_v3.scenario ps, lm_v3.layer l, 
+           lm_v3.sdmmodel m, lm_v3.occurrenceSet o
       WHERE p.layerid = l.layerid
+        AND p.scenarioid = ps.scenarioid
         AND p.sdmmodelid = m.sdmmodelid 
         AND m.occurrencesetid = o.occurrencesetid;
 
@@ -371,7 +381,7 @@ GRANT SELECT ON TABLE
 lm_v3.lm_envlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
-lm_v3.lm_fullmatrixlayer,
+lm_v3.lm_matrixlayer,
 lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP reader;
@@ -380,7 +390,7 @@ GRANT SELECT ON TABLE
 lm_v3.lm_envlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
-lm_v3.lm_fullmatrixlayer,
+lm_v3.lm_matrixlayer,
 lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
 lm_v3.lm_bloat
 TO GROUP writer;

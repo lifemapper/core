@@ -384,9 +384,9 @@ create table lm_v3.BucketTree
 
 -- -------------------------------
 -- aka PAV, PAM Vector or GRIM Vector
-create table lm_v3.MatrixLayer 
+create table lm_v3.MatrixColumn 
 (
-   matrixLayerId  serial UNIQUE PRIMARY KEY,
+   matrixColumnId  serial UNIQUE PRIMARY KEY,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
 
    -- layerId could be empty, just squid or ident
@@ -427,7 +427,7 @@ lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
 lm_v3.bucket, lm_v3.bucket_bucketid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.buckettree, lm_v3.buckettree_buckettreeid_seq,
-lm_v3.matrixlayer, lm_v3.matrixlayer_matrixlayerid_seq
+lm_v3.matrixcolumn, lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
@@ -447,7 +447,7 @@ lm_v3.shapegrid,
 lm_v3.bucket,
 lm_v3.buckettree,
 lm_v3.matrix,
-lm_v3.matrixlayer
+lm_v3.matrixcolumn
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
@@ -464,7 +464,7 @@ lm_v3.shapegrid_shapegridid_seq,
 lm_v3.bucket_bucketid_seq,
 lm_v3.buckettree_buckettreeid_seq,
 lm_v3.matrix_matrixid_seq,
-lm_v3.matrixlayer_matrixlayerid_seq
+lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP writer;
 
 -- ----------------------------------------------------------------------------
