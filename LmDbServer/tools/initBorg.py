@@ -473,16 +473,18 @@ scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'observed-1km'
 scen = scens[scode]
 
-addUsers(scribe)
+usrlist = addUsers(scribe)
 
 newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
 scenid = newOrExistingScen.getId()
 lyr = scen.layers[0]
 for lyr in scen.layers:
-   newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
+   print 'existing: ', lyr.name, lyr.getId()
+   newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
+   print '     new: ', newOrExistingLyr.name, newOrExistingLyr.getId()
+   
 
 
-
-select * from lm_v3.lm_findOrInsertUser('kubi',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'kubi@nowhere.com',57688.8216441,'09f96622d29f96037885cfa749f979f0');
+select * from lm_v3.lm_findOrInsertEnvLayer(NULL,'kubi',NULL,NULL,'t_gravel-observed-1km',NULL,'/sdm/layers/#id#',NULL,'GTiff',3,NULL,'percentage',NULL,NULL,NULL,2163,'meters',1000,'-180.00,-60.00,180.00,90.00',NULL,57688.8442057,NULL,'t_gravel',NULL,NULL,NULL,NULL,NULL);
 
 """

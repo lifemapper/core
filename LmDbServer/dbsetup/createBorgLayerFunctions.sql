@@ -24,14 +24,45 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvironmentalType(etypeid int,
 $$
 DECLARE
    rec lm_v3.EnvironmentalType%rowtype;
-   keystr varchar;
+   cmd varchar;
+   wherecls varchar;
 BEGIN
    IF etypeid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.EnvironmentalType WHERE EnvironmentalTypeid = etypeid;
    ELSE
-      SELECT * INTO rec FROM lm_v3.EnvironmentalType 
-         WHERE userid = usr AND envcode = ecode AND gcmcode = gcode 
-           AND altpredcode = apcode AND datecode = dtcode;
+      begin
+         cmd = 'SELECT * FROM lm_v3.EnvironmentalType ';
+         wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
+
+         IF ecode is not null THEN
+            wherecls = wherecls || ' AND envcode =  ' || quote_literal(ecode);
+         ELSE
+            wherecls = wherecls || ' AND envcode IS NULL ';
+         END IF;
+
+         IF gcode is not null THEN
+            wherecls = wherecls || ' AND gcmcode =  ' || quote_literal(gcode);
+         ELSE
+            wherecls = wherecls || ' AND gcmcode IS NULL ';
+         END IF;
+         
+         IF apcode is not null THEN
+            wherecls = wherecls || ' AND altpredcode =  ' || quote_literal(apcode);
+         ELSE
+            wherecls = wherecls || ' AND altpredcode IS NULL ';
+         END IF;
+         
+         IF dtcode is not null THEN
+            wherecls = wherecls || ' AND datecode =  ' || quote_literal(dtcode);
+         ELSE
+            wherecls = wherecls || ' AND datecode IS NULL ';
+         END IF;
+
+         cmd := cmd || wherecls;
+         RAISE NOTICE 'cmd = %', cmd;
+
+         EXECUTE cmd INTO rec;
+      end;
    END IF;
 
    RETURN rec;
@@ -108,7 +139,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrid int,
 RETURNS lm_v3.lm_envlayer AS
 $$
 DECLARE
-   newid int;
+   joinid int;
    reclyr lm_v3.layer%ROWTYPE;
    rec_etype lm_v3.EnvironmentalType%ROWTYPE;
    rec_envlyr lm_v3.lm_envlayer%ROWTYPE;
@@ -127,15 +158,19 @@ BEGIN
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertLayer';
       ELSE
-         INSERT INTO lm_v3.EnvironmentalLayer (layerId, environmentalTypeId)
-         VALUES (reclyr.layerId, rec_etype.environmentalTypeId);
-         
+         SELECT environmentalLayerId INTO joinid FROM lm_v3.EnvironmentalLayer 
+            WHERE layerid  = reclyr.layerid AND environmentalTypeId = rec_etype.environmentalTypeId;
          IF NOT FOUND THEN
-            RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
-         ELSE
-            SELECT INTO newid last_value FROM lm3.EnvironmentalLayer_EnvironmentalLayerid_seq;
-            SELECT * INTO rec_envlyr FROM lm_v3.lm_envlayer WHERE layertypeid = newid;
+            INSERT INTO lm_v3.EnvironmentalLayer (layerId, environmentalTypeId)
+                         VALUES (reclyr.layerId, rec_etype.environmentalTypeId);
+            IF NOT FOUND THEN
+               RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
+            ELSE
+               SELECT INTO joinid last_value FROM lm_v3.EnvironmentalLayer_EnvironmentalLayerid_seq;
+            END IF;
          END IF;
+         
+         SELECT * INTO rec_envlyr FROM lm_v3.lm_envlayer WHERE environmentalLayerId = joinid;
       END IF;
    END IF;
    
@@ -160,14 +195,16 @@ DECLARE
 BEGIN
    SELECT * into rec FROM lm_v3.lm_findEnvironmentalType(etypeid, usr, env, gcm, 
                                                          altpred, tm);
-   IF NOT FOUND THEN
+   IF rec.environmentalTypeId IS NULL THEN
       INSERT INTO lm_v3.EnvironmentalType 
          (userid, envCode, gcmCode, altpredCode, dateCode, metadata, modTime) 
       VALUES (usr, env, gcm, altpred, tm, meta, modtime);
-      
-      IF FOUND THEN
-         SELECT INTO newid last_value FROM lm3.EnvironmentalType_EnvironmentalTypeid_seq;
-         SELECT * INTO rec FROM lm3.EnvironmentalType where environmentalTypeId = newid;
+      RAISE NOTICE 'vals = %, %, %, %, %, %, %', usr, env, gcm, altpred, tm, meta, modtime;
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to insert EnvironmentalType';
+      ELSE
+         SELECT INTO newid last_value FROM lm_v3.EnvironmentalType_EnvironmentalTypeid_seq;
+         SELECT * INTO rec FROM lm_v3.EnvironmentalType where environmentalTypeId = newid;
       END IF;
    END IF;
    
@@ -300,18 +337,19 @@ BEGIN
            dataFormat, gdalType, ogrType, valUnits, nodataVal, minVal, maxVal, 
            epsgcode, mapunits, resolution, bbox, modTime)
          VALUES 
-          (usr, lyrverify, lyrsquid, lyrname, dloc, datafmt, rtype, vtype, 
-           vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, lyrmtime);         
+          (usr, lyrsquid, lyrverify, lyrname, lyrdloc, lyrmeta, 
+           datafmt, rtype, vtype, vunits, vnodata, vmin, vmax, 
+           epsg, munits, res, bboxstr, lyrmtime);         
                   
       IF FOUND THEN
          SELECT INTO newid last_value FROM lm_v3.layer_layerid_seq;
          idstr := cast(newid as varchar);
-         murl := replace(murlprefix, '#id#', idstr);
+         murl := replace(lyrmurlprefix, '#id#', idstr);
          IF bboxwkt is NOT NULL THEN
             UPDATE lm_v3.Layer SET (metadataurl, geom) 
                = (murl, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newid;
          ELSE
-            UPDATE lm_v3.Layer SET metalocation = murl WHERE layerid = newid;
+            UPDATE lm_v3.Layer SET metadataurl = murl WHERE layerid = newid;
          END IF;
          
          SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = newid;

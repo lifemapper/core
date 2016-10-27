@@ -295,7 +295,7 @@ class Borg(DbPostgresql):
       @param lyr: Raster or Vector to insert
       @return: new or existing Raster or Vector object 
       """
-      min = max = nodata = None
+      min = max = nodata = wkt = None
       if isinstance(lyr, Raster):
          min = lyr.minVal
          max = lyr.maxVal
@@ -392,6 +392,7 @@ class Borg(DbPostgresql):
       @param shpgrd: ShapeGrid to insert
       @return: new or existing ShapeGrid.
       """
+      wkt = None
       if shpgrd.epsgcode == DEFAULT_EPSG:
          wkt = shpgrd.getWkt()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
@@ -418,6 +419,7 @@ class Borg(DbPostgresql):
       @return: new or existing EnvironmentalLayer
       """
       lyr.modTime = mx.DateTime.utc().mjd
+      wkt = None
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
       envmeta = lyr.dumpParamMetadata()
