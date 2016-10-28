@@ -384,16 +384,16 @@ class Borg(DbPostgresql):
       wkt = None
       if shpgrd.epsgcode == DEFAULT_EPSG:
          wkt = shpgrd.getWkt()
+      meta = shpgrd.dumpParamMetadata()
+      gdaltype = valunits = nodata = min = max = None
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
-                           shpgrd.verify, shpgrd.getUserId(), shpgrd.name,
-                           shpgrd.title, shpgrd.author, shpgrd.description, 
-                           shpgrd.getDLocation(), 
-                           shpgrd.getMetaLocation(), 
-                           shpgrd.ogrType, shpgrd.isCategorical, 
-                           shpgrd.dataFormat, shpgrd.epsgcode,
-                           shpgrd.mapUnits, shpgrd.resolution, shpgrd.modTime, 
-                           shpgrd.getCSVExtentString(), wkt, 
-                           shpgrd.metadataUrl,
+                           shpgrd.getId(), shpgrd.getUserId(), 
+                           shpgrd.squid, shpgrd.verify, shpgrd.name,
+                           shpgrd.getDLocation(), shpgrd.metadataUrl, meta,
+                           shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
+                           valunits, nodata, min, max, 
+                           shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
+                           shpgrd.getCSVExtentString(), wkt, shpgrd.modTime, 
                            shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
                            shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
                            shpgrd.status, shpgrd.statusModTime)

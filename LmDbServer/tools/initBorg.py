@@ -389,7 +389,7 @@ if __name__ == '__main__':
                  'gridsize': META.GRID_CELLSIZE}
 
       logger.info('  Insert user metadata ...')
-      thisUserid = addUsers(scribeWithBorg, [defUser, anonUser, newUser])
+      userObjs = addUsers(scribeWithBorg, [defUser, anonUser, newUser])
 # .............................
       if metaType in ('algorithm', 'all'):
          logger.info('  Insert algorithm metadata ...')
@@ -408,7 +408,7 @@ if __name__ == '__main__':
             # Grid for GPAM
          shpId = addIntersectGrid(scribeWithBorg, lyrMeta['gridname'], lyrMeta['gridsides'], 
                            lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
-                           pkgMeta['bbox'], ARCHIVE_USER)
+                           pkgMeta['bbox'], currUserid)
 # .............................
       if metaType in ('taxonomy', 'all'):
          # Insert all taxonomic sources for now
@@ -451,11 +451,37 @@ CURRTIME = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBorg import *
 from LmDbServer.tools.initBorg import (_getBaselineLayers, _getClimateMeta, 
                                       _getbioName, _findFileFor, _getPredictedLayers)
+# .............................
+defUser = {'id': ARCHIVE_USER,
+           'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
+anonUser = {'id': DEFAULT_POST_USER,
+            'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
+try:
+   newUser = META.USER
+   currUserid = META.USER['id']
+except:
+   newUser = None
+   currUserid = ARCHIVE_USER
+# .............................
+try:
+   taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
+except:
+   taxSource = None
+
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
 
-pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
+pkgMeta = META.CLIMATE_PACKAGES[SCENARIO_PACKAGE]
+lyrMeta = {'epsg': META.EPSG, 
+           'topdir': pkgMeta['topdir'],
+           'mapunits': META.MAPUNITS, 
+           'resolution': META.RESOLUTIONS[pkgMeta['res']], 
+           'gdaltype': META.ENVLYR_GDALTYPE, 
+           'gdalformat': META.ENVLYR_GDALFORMAT,
+           'gridname': META.GRID_NAME, 
+           'gridsides': META.GRID_NUM_SIDES, 
+           'gridsize': META.GRID_CELLSIZE}
 
 usr = ARCHIVE_USER
 lyrtypeMeta = META.LAYERTYPE_META
@@ -482,28 +508,26 @@ scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'observed-1km'
 scen = scens[scode]
 
-usrlist = addUsers(scribe)
+usrlist = addUsers(scribe, [defUser, anonUser, newUser])
 
 newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
 scenid = newOrExistingScen.getId()
-lyr = scen.layers[3]
+lyr = scen.layers[5]
 nlyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
+updatedScen = scribe.insertScenario(scens
 
+shpId = addIntersectGrid(scribe, lyrMeta['gridname'], lyrMeta['gridsides'], 
+                           lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
+                           pkgMeta['bbox'], usr)
+select * from lm_v3.lm_findOrInsertShapeGrid(NULL, 'kubi', '10km-grid', 
+      NULL,NULL,NULL,
+      '/share/lm/data/archive/kubi/2163/Layers/shpgrid_10km-grid.shp',
+      NULL,3,FALSE,
+      'ESRI Shapefile',2163,'meters',10000,NULL,
+      '-180.00,-60.00,180.00,90.00',NULL,
+      'http://badenov-vc1.nhm.ku.edu/services/rad/layers/#id#',
+      4,10000,0,'siteid','centerX','centerY',NULL,NULL);
 
-def _getColumnValue(r, idxs, fldnameList):
-   val = None
-   for fldname in fldnameList:
-      try: 
-         val = r[idxs[fldname]]
-      except:
-         pass
-      else:
-         return val
 
                            
-for lyr in scen.layers:
-   print 'existing: ', lyr.name, lyr.getId()
-   newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
-   print '     new: ', newOrExistingLyr.name, newOrExistingLyr.getId()
-
 """
