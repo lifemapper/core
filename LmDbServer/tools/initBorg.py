@@ -28,6 +28,7 @@ import os
 # TODO: These should be included in the package of data
 import LmDbServer.tools.charlieMetaExp3 as META
 
+from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE)
 from LmServer.base.lmobj import LMError
@@ -44,22 +45,18 @@ from LmServer.rad.shapegrid import ShapeGrid
 CURRTIME = mx.DateTime.gmt().mjd
 # CURRTIME = 57686
 # ...............................................
-def addUsers(scribe):
+def addUsers(scribe, userList):
    """
-   @summary Adds algorithms to the database from the algorithm dictionary
+   @summary Adds ARCHIVE_USER, anon user and USER from metadata to the database
    """
-   em = '{}@nowhere.com'.format(ARCHIVE_USER)
-   defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=CURRTIME)
-   scribe.log.info('  Insert ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
-   usrid = scribe.insertUser(defaultUser)
-
-   anonName = 'anon'
-   anonEmail = '%s@nowhere.com' % anonName
-   anonUser = LMUser(anonName, anonEmail, anonEmail, modTime=CURRTIME)
-   scribe.log.info('  Insert anon {} ...'.format(anonName))
-   usrid2 = scribe.insertUser(anonUser)
-
-   return [usrid, usrid2]
+   users = []
+   for userMeta in userList:
+      if userMeta is not None:
+         user = LMUser(userMeta['id'], userMeta['email'], userMeta['email'], modTime=CURRTIME)
+         scribe.log.info('  Insert user {} ...'.format(userMeta['id']))
+         newuser = scribe.insertUser(user)
+         users.append(newuser)
+   return users
 
 # ...............................................
 def addAlgorithms(scribe):
@@ -74,18 +71,18 @@ def addAlgorithms(scribe):
       ids.append(algid)
    return ids
 
-# ...............................................
-def addLayerTypes(scribe, lyrtypeMeta, usr): 
-   etypes = [] 
-   for typecode, typeinfo in lyrtypeMeta.iteritems():
-      ltype = EnvironmentalType(typecode, typeinfo['title'], 
-                                typeinfo['description'], usr, 
-                                keywords=typeinfo['keywords'], 
-                                modTime=CURRTIME)
-      scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
-      etype = scribe.insertLayerTypeCode(ltype)
-      etypes.append(etype)
-   return etypes
+# # ...............................................
+# def addLayerTypes(scribe, lyrtypeMeta, usr): 
+#    etypes = [] 
+#    for typecode, typeinfo in lyrtypeMeta.iteritems():
+#       ltype = EnvironmentalType(typecode, typeinfo['title'], 
+#                                 typeinfo['description'], usr, 
+#                                 keywords=typeinfo['keywords'], 
+#                                 modTime=CURRTIME)
+#       scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
+#       etype = scribe.insertLayerTypeCode(ltype)
+#       etypes.append(etype)
+#    return etypes
 
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
@@ -320,43 +317,13 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    return allScenarios, msgs
       
 # ...............................................
-def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenPkgName):
+def addScenarioAndLayerMetadata(scribe, usr, scenarios):
    """
-   @summary Assemble climate, taxonomy metadata and add to database  
-            lyrMeta = {'epsg': DEFAULT_EPSG, 
-                       'mapunits': DEFAULT_MAPUNITS, 
-                       'resolution': RESOLUTIONS[pkgMeta['res']], 
-                       'gdaltype': ENVLYR_GDALTYPE, 
-                       'gridname': DEFAULT_GRID_NAME, 
-                       'gridsides': 4, 
-                       'gridsize': DEFAULT_GRID_CELLSIZE}
+   @summary Add scenario and layer metadata to database  
    """
-   # Add layertypes for this archive user
-   ltIds = addLayerTypes(scribe, lyrtypeMeta, usr)   
-   # Grid for GPAM
-   shpId = addIntersectGrid(scribe, lyrMeta['gridname'], lyrMeta['gridsides'], 
-                     lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
-                     pkgMeta['bbox'], usr)
-   scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
-   for msg in msgs:
-      scribe.log.info(msg)
-   for scode, scen in scens.iteritems():
+   for scode, scen in scenarios.iteritems():
       scribe.log.info('Insert scenario {}'.format(scode))
-      scribe.insertScenario(scen)
-
-# ...............................................
-def _getClimateMeta(scenPkg):
-   pkgMeta = META.CLIMATE_PACKAGES[scenPkg]
-   lyrMeta = {'epsg': META.EPSG, 
-              'topdir': pkgMeta['topdir'],
-              'mapunits': META.MAPUNITS, 
-              'resolution': META.RESOLUTIONS[pkgMeta['res']], 
-              'gdaltype': META.ENVLYR_GDALTYPE, 
-              'gdalformat': META.ENVLYR_GDALFORMAT,
-              'gridname': META.GRID_NAME, 
-              'gridsides': META.GRID_NUM_SIDES, 
-              'gridsize': META.GRID_CELLSIZE}
-   return pkgMeta, lyrMeta
+      newscen = scribe.insertScenario(scen)
 
 # ...............................................
 def _importClimatePackageMetadata():
@@ -382,14 +349,23 @@ if __name__ == '__main__':
             help="Which metadata to catalog (algorithm, climate, taxonomy, all (default))")
    args = parser.parse_args()
    metaType = args.metadata
-
-#    _importClimatePackageMetadata()
-
+# .............................
+   defUser = {'id': ARCHIVE_USER,
+              'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
+   anonUser = {'id': DEFAULT_POST_USER,
+               'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
+   try:
+      newUser = META.USER
+      currUserid = META.USER['id']
+   except:
+      newUser = None
+      currUserid = ARCHIVE_USER
+# .............................
    try:
       taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
    except:
       taxSource = None
-   
+# .............................
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
    try:
@@ -400,21 +376,40 @@ if __name__ == '__main__':
       if not success: 
          logger.critical('Failed to open database')
          exit(0)
-      
-      logger.info('  Insert user {} metadata ...'.format(ARCHIVE_USER))
-      archiveUserId, anonUserId = addUsers(scribeWithBorg)
-      
+# .............................
+      pkgMeta = META.CLIMATE_PACKAGES[SCENARIO_PACKAGE]
+      lyrMeta = {'epsg': META.EPSG, 
+                 'topdir': pkgMeta['topdir'],
+                 'mapunits': META.MAPUNITS, 
+                 'resolution': META.RESOLUTIONS[pkgMeta['res']], 
+                 'gdaltype': META.ENVLYR_GDALTYPE, 
+                 'gdalformat': META.ENVLYR_GDALFORMAT,
+                 'gridname': META.GRID_NAME, 
+                 'gridsides': META.GRID_NUM_SIDES, 
+                 'gridsize': META.GRID_CELLSIZE}
+
+      logger.info('  Insert user metadata ...')
+      thisUserid = addUsers(scribeWithBorg, [defUser, anonUser, newUser])
+# .............................
       if metaType in ('algorithm', 'all'):
          logger.info('  Insert algorithm metadata ...')
          aIds = addAlgorithms(scribeWithBorg)
-
+# .............................
       if metaType in ('climate', 'all'):
          logger.info('  Insert climate {} metadata ...'
                      .format(SCENARIO_PACKAGE))
-         pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-         addScenarioPackageMetadata(scribeWithBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
-                                    META.LAYERTYPE_META, SCENARIO_PACKAGE)
-
+         scens, msgs = createAllScenarios(currUserid, pkgMeta, lyrMeta, 
+                                          META.LAYERTYPE_META)
+         for msg in msgs:
+            scribeWithBorg.log.info(msg)
+         addScenarioAndLayerMetadata(scribeWithBorg, currUserid, scens)
+# .............................
+      if metaType in ('grid', 'all'):
+            # Grid for GPAM
+         shpId = addIntersectGrid(scribeWithBorg, lyrMeta['gridname'], lyrMeta['gridsides'], 
+                           lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
+                           pkgMeta['bbox'], ARCHIVE_USER)
+# .............................
       if metaType in ('taxonomy', 'all'):
          # Insert all taxonomic sources for now
          for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
@@ -481,17 +476,6 @@ envmeta = {'title': ltmeta['title'],
            'description': ltmeta['description'],
            'keywords': ltmeta['keywords']}
 dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
-envlyr = EnvironmentalLayer(lyrname, lyrMetadata=lyrmeta,
-                            valUnits=ltmeta['valunits'],
-                            dlocation=dloc, 
-                            bbox=pkgMeta['bbox'], 
-                            gdalFormat=lyrMeta['gdalformat'], 
-                            gdalType=lyrMeta['gdaltype'],
-                            mapunits=lyrMeta['mapunits'], 
-                            resolution=lyrMeta['resolution'], 
-                            epsgcode=lyrMeta['epsg'], 
-                            layerType=ltype, envMetadata=envmeta,
-                            userId=usr, modTime=CURRTIME)
 
 
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
@@ -502,10 +486,21 @@ usrlist = addUsers(scribe)
 
 newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
 scenid = newOrExistingScen.getId()
-lyr = scen.layers[2]
-newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
+lyr = scen.layers[3]
+nlyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
 
 
+def _getColumnValue(r, idxs, fldnameList):
+   val = None
+   for fldname in fldnameList:
+      try: 
+         val = r[idxs[fldname]]
+      except:
+         pass
+      else:
+         return val
+
+                           
 for lyr in scen.layers:
    print 'existing: ', lyr.name, lyr.getId()
    newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)

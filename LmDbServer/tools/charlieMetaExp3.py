@@ -36,6 +36,7 @@ RCPs (2.6, 6.0, 8.5). These projections are for both 2050 and 2070.
 
 from osgeo import gdalconst
  
+USER = {'id': 'charlie', 'email': 'aimee.stewart@ku.edu'}
 # For remote data, cannot read to get this 
 ENVLYR_GDALTYPE = gdalconst.GDT_Int16
 ENVLYR_GDALFORMAT = 'GTiff'

@@ -140,7 +140,7 @@ class BorgScribe(LMObject):
       updatedScen = self._borg.findOrInsertScenario(scen)
       scenId = updatedScen.getId()
       for lyr in scen.layers:
-         updatedLyr = self.insertScenarioLayer(lyr, scenId)
+         updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenId)
          lyrIds.append(updatedLyr.getId())
       return scenId, lyrIds
 
