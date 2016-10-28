@@ -59,7 +59,7 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
       self.dateCode = dateCode
-      # Move to self.metadata dictionary
+      # Move to self.lyrMetadata dictionary
       self.typeTitle = title
       self.typeDescription = description
       self._setTypeKeywords(keywords)
@@ -155,7 +155,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
 # ...............................................
    @classmethod
    def initFromParts(cls, raster, envType):
-      envLyr = EnvironmentalLayer(raster.name, lyrMetadata=raster.metadata, 
+      envLyr = EnvironmentalLayer(raster.name, lyrMetadata=raster.lyrMetadata, 
                         title=raster.title, 
                         verify=raster.verify, minVal=raster.minVal, 
                         maxVal=raster.maxVal, nodataVal=raster.nodataVal, 
@@ -170,6 +170,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                         description=raster.description, author=raster.author,
                         isDiscreteData=raster.getIsDiscreteData(),
                         layerType=envType.typeCode, 
+                        envMetadata=envType.paramMetadata,
                         layerTypeId=envType.getParametersId(), 
                         layerTypeTitle=envType.typeTitle, 
                         layerTypeDescription=envType.typeDescription, 

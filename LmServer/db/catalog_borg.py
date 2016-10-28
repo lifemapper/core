@@ -145,7 +145,7 @@ class Borg(DbPostgresql):
          gcmcode = self._getColumnValue(row, idxs, ['gcmcode'])
          altcode = self._getColumnValue(row, idxs, ['altpredcode'])
          dtcode = self._getColumnValue(row, idxs, ['datecode'])
-         meta = self._getColumnValue(row, idxs, ['envmetadata, metadata'])
+         meta = self._getColumnValue(row, idxs, ['envmetadata', 'metadata'])
          modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
          usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
          ltid = self._getColumnValue(row, idxs, ['environmentalTypeId'])
@@ -166,13 +166,13 @@ class Borg(DbPostgresql):
          dbid = self._getColumnValue(row, idxs, 
                   ['projectionid', 'occurrencesetid', 'layerid'])
          usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
-         verify = self._getColumnValue(row, idxs, ['verify'])
-         squid = self._getColumnValue(row, idxs, ['squid'])
-         name = self._getColumnValue(row, idxs, ['name'])
+         verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
+         squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
+         name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
          dlocation = self._getColumnValue(row, idxs, ['prjdlocation', 
-                  'occdlocation', 'lyrdlocation', 'dlocation'])
-         murl = self._getColumnValue(row, idxs, 
-                  ['prjmetadataurl', 'occmetadataurl', 'metadataurl'])
+                   'occdlocation', 'lyrdlocation', 'dlocation'])
+         murl = self._getColumnValue(row, idxs, ['prjmetadataurl', 
+                   'occmetadataurl', 'lyrmetadataurl', 'metadataurl'])
          meta = self._getColumnValue(row, idxs, 
                   ['prjmetadata', 'occmetadata', 'lyrmetadata', 'metadata'])
          vtype = self._getColumnValue(row, idxs, ['ogrtype'])
@@ -181,8 +181,8 @@ class Borg(DbPostgresql):
          epsg = self._getColumnValue(row, idxs, ['epsgcode'])
          munits = self._getColumnValue(row, idxs, ['mapunits'])
          res = self._getColumnValue(row, idxs, ['resolution'])
-         dtmod = self._getColumnValue(row, idxs, 
-                  ['prjstatusmodtime', 'occstatusmodtime', 'statusmodtime'])
+         dtmod = self._getColumnValue(row, idxs, ['prjstatusmodtime', 
+                   'occstatusmodtime', 'statusmodtime', 'lyrmodtime'])
          bbox = self._getColumnValue(row, idxs, ['prjbbox', 'occbbox', 'bbox'])
          nodata = self._getColumnValue(row, idxs, ['nodataval'])
          minval = self._getColumnValue(row, idxs, ['minval'])
