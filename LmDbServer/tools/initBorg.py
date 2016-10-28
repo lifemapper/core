@@ -119,6 +119,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    layers = []
    staticLayers = {}
    for ltype, ltmeta in lyrtypeMeta.iteritems():
+      keywords = [k for k in baseMeta['keywords']]
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
       lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
@@ -127,7 +128,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
                  'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
       envmeta = {'title': ltmeta['title'],
                  'description': ltmeta['description'],
-                 'keywords': ltmeta['keywords']}
+                 'keywords': keywords.extend(ltmeta['keywords'])}
       dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
@@ -180,6 +181,7 @@ def _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
    rstType = None
    layertypes = pkgMeta['layertypes']
    for ltype in layertypes:
+      keywords = [k for k in META.OBSERVED_PREDICTED_META[predRpt]['keywords']]
       ltmeta = lyrtypeMeta[ltype]
       relfname, isStatic = _findFileFor(ltmeta, predRpt, 
                                         gcm=gcm, tm=tm, altPred=altpred)
@@ -198,7 +200,7 @@ def _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
          lyrmeta = {'title': lyrtitle, 'description': lyrdesc}
          envmeta = {'title': ltmeta['title'],
                     'description': ltmeta['description'],
-                    'keywords': ltmeta['keywords']}
+                    'keywords': keywords.extend(ltmeta['keywords'])}
          dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
@@ -500,6 +502,10 @@ usrlist = addUsers(scribe)
 
 newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
 scenid = newOrExistingScen.getId()
+lyr = scen.layers[2]
+newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
+
+
 for lyr in scen.layers:
    print 'existing: ', lyr.name, lyr.getId()
    newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)

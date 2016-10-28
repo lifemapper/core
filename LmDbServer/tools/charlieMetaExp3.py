@@ -569,77 +569,77 @@ LAYERTYPE_META = {
       'title': 'Global Multi-resolution Terrain Elevation Data 2010',
       'description': 'mean elevation',
       'valunits': 'm',
-      'keywords': ('elevation','geospatial','environment'),
+      'keywords': ['elevation'],
       'files': {'env.gmted2010.elev_mean.tif': ['observed', 'AR5']}
       },
    't_clay': {
       'title': 'clay fraction',
       'description': '% clay fraction',
       'valunits': 'percentage',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_clay.tif': ['observed', 'AR5']}
       },
       't_gravel': {
       'title': 'gravel content',
       'description': '% volume of gravel content',
       'valunits': 'percentage',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_gravel.tif': ['observed', 'AR5']}
       },
    't_sand': {
       'title': 'sand fraction',
       'description': '% sand fraction',
       'valunits': 'percentage',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_sand.tif': ['observed', 'AR5']}
       },   
    't_silt': {
       'title': 'silt fraction',
       'description': '% silt fraction',
       'valunits': 'percentage',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_silt.tif': ['observed', 'AR5']}
       },
    't_oc': {
       'title': 'organic carbon',
       'description': '% weight',
       'valunits': 'percentage',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_oc.tif': ['observed', 'AR5']}
    },
    't_ph': {
       'title': 'pH',
       'description': 'log[H+]',
       'valunits': 'pH',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_clay': ['observed', 'AR5']}
    },
       't_cec': {
       'title': 'cation exchange capacity',
       'description': 'cmol/kg',
       'valunits': 'cmol/kg',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_cecsoil': ['observed', 'AR5']}
    },
       't_caco3': {
       'title': 'Calcium Carbonate',
       'description': '% weight',
       'valunits': 'percentage',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_caco3.tif': ['observed', 'AR5']}
    },
       't_caso4': {
       'title': 'Gypsium',
       'description': '% weight',
       'valunits': 'percentage',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_caso4.tif': ['observed', 'AR5']}
    },
       't_ece': {
       'title': 'Salinity',
       'description': 'salt content',
       'valunits': 'dS/m',
-      'keywords': ('soil','geospatial','environment'),
+      'keywords': ['soil'],
       'files': {'env.hwsd.t_ece.tif': ['observed', 'AR5']}
    },
    'svd.pc1': {
