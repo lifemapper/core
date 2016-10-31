@@ -184,7 +184,7 @@ class BorgScribe(LMObject):
       return txSourceId, url, moddate
    
 # ...............................................
-   def getScenario(self, code, user):
+   def getScenario(self, code, user=None):
       """
       @summary: Get and fill a scenario from its code or database id.  If 
                 matchingLayers is given, ensure that only layers with the same
