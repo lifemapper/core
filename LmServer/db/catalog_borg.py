@@ -531,3 +531,42 @@ class Borg(DbPostgresql):
             scen.addLayer(lyr)
       return scen
                      
+# .............................................................................
+   def insertMatrixColumn(self, palyr, bktid):
+      """
+      @summary: Insert a MatrixColumn with optional intersect params and Layer.
+                Return the updated (or found) record.
+      @return: Method returns a new, updated object.
+      """
+      updatedlyr = None
+      currtime=mx.DateTime.gmt().mjd
+      palyr.createTime = currtime
+      palyr.modTime = currtime
+      rtype, vtype = self._getSpatialLayerType(palyr)
+      if rtype is None:
+         if vtype is not None:
+            try:
+               prsOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
+                                          palyr.attrPresence)
+            except LMError:
+               raise 
+            except Exception, e:
+               raise LMError(currargs=e.args)
+            
+            if not prsOk:
+               raise LMError('Field %s of Layer %s is not present or the wrong type' 
+                             % (palyr.attrPresence, palyr.name))
+            if palyr.attrAbsence is not None:
+               try:
+                  absOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
+                                  palyr.attrAbsence)
+               except LMError:
+                  raise 
+               except Exception, e:
+                  raise LMError(currargs=e.args)
+
+               if not absOk:
+                  raise LMError('Field %s of Layer %s is not present or the wrong type' 
+                             % (palyr.attrAbsence, palyr.name))
+         else:
+            raise LMError('GDAL or OGR data type must be provided')

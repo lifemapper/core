@@ -180,7 +180,7 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def findTaxonSource(self, taxonSourceName):
-      txSourceId, url, moddate = self._mal.findTaxonSource(taxonSourceName)
+      txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
    
 # ...............................................
@@ -195,9 +195,9 @@ class BorgScribe(LMObject):
       @return: Scenario object filled with Raster objects.
       """
       if isinstance(code, IntType):
-         scenario = self._mal.getScenarioById(code, matchingLayers)
+         scenario = self._borg.getScenario(self, code=code)
       elif isinstance(code, StringType) or isinstance(code, UnicodeType):
-         scenario = self._mal.getScenarioByCode(code, matchingLayers)
+         scenario = self._borg.getScenario(scenid=code)
 
       return scenario
 

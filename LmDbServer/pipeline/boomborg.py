@@ -111,7 +111,7 @@ class _LMBoomer(LMObject):
          self.algs.append(alg)
 
       try:
-         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
+         txSourceId, url, moddate = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
          
          mscen = self._scribe.getScenario(mdlScenarioCode)
@@ -1244,6 +1244,16 @@ from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE,POINT_COUNT_
 expdate = dt.DateTime(2016, 1, 1)
 taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
 
+# ...............................................
+boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
+                            GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
+                            providerListFile=PROVIDER_DUMP_FILE,
+                            mdlMask=None, prjMask=None, 
+                            intersectGrid=DEFAULT_GRID_NAME)
+speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
+self._createMakeflow(jobs)
 
 # ...............................................
 boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
@@ -1259,17 +1269,6 @@ boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                             BISON_TSN_FILE, expdate, 
                             taxonSourceName=taxname, mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME)
-
-
-# ...............................................
-boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
-                            providerListFile=PROVIDER_DUMP_FILE,
-                            mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
-speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
-
 
 # ...............................................
 boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
