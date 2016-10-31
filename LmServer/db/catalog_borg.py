@@ -127,9 +127,6 @@ class Borg(DbPostgresql):
                          modTime=self._getColumnValue(row, idxs, ['modtime']),
                          epsgcode=self._getColumnValue(row, idxs, ['epsgcode']),
                          scenarioid=self._getColumnValue(row, idxs, ['scenarioid']))
-         keystr = self._getColumnValue(row, idxs, ['keywords'])
-         if keystr is not None:
-            scen.keywords = keystr.split(',')
       return scen
 
 # ...............................................
@@ -149,7 +146,6 @@ class Borg(DbPostgresql):
          modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
          usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
          ltid = self._getColumnValue(row, idxs, ['environmentalTypeId'])
-                                                
          lyrType = EnvironmentalType(envcode, None, None, usr,
                                      gcmCode=gcmcode, altpredCode=altcode, 
                                      dateCode=dtcode, metadata=meta, 
@@ -364,16 +360,6 @@ class Borg(DbPostgresql):
                                                     envtype.typeDescription,
                                                     envtype.parametersModTime)
       newOrExistingEnvType = self._createLayerType(row, idxs)
-      # Existing EnvType will return with keywords
-      if not newOrExistingEnvType.typeKeywords:
-         newOrExistingEnvType.typeKeywords = envtype.typeKeywords
-         for kw in newOrExistingEnvType.typeKeywords:
-            successCode = self.executeInsertFunction('lm_joinLayerTypeKeyword', 
-                                    newOrExistingEnvType.getParametersId(), kw)
-            if successCode != 0:
-               self.log.debug('Failed to insert keyword {} for layertype {}'
-                              .format(kw, newOrExistingEnvType.getParametersId()))
-
       return newOrExistingEnvType
                              
 # ...............................................
@@ -428,14 +414,6 @@ class Borg(DbPostgresql):
                            lyr.altpredCode, lyr.dateCode, envmeta, 
                            lyr.parametersModTime)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
-      if newOrExistingLyr is None:
-         raise LMError(currargs='Failed to find or insert environmental layer')
-      elif scenarioId is not None:
-         successCode = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
-                                              newOrExistingLyr.getId()) 
-         if successCode != 0:
-            raise LMError(currargs='Failed to join layer {} to scenario {}'
-                           .format(newOrExistingLyr.getId(), scenarioId))
       return newOrExistingLyr
 
 # ...............................................
