@@ -278,7 +278,7 @@ BEGIN
             IF NOT FOUND THEN
                RAISE EXCEPTION 'Unable to insert shapegrid';
             ELSE
-               SELECT * INTO recshpgrd FROM lm_v3.shapegrid 
+               SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
                  WHERE layerid = reclyr.layerid;
             END IF;
          END IF;
