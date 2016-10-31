@@ -3,7 +3,11 @@
 -- ----------------------------------------------------------------------------
 -- lm_envlayer
 DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
+CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
+   -- scenario
+   scenarioId, 
+   scenarioCode,
+   metadataUrl,
    -- Layer.* 
    layerId,
    userid,
@@ -25,8 +29,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    resolution,
    bbox,
    lyrmodtime,
-   -- EnvironmentalLayer
-   environmentalLayerId,
    -- environmentalType
    environmentalTypeId,
    envCode,
@@ -34,18 +36,20 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    altpredCode,
    dateCode,
    envMetadata, 
-   envModtime
+   envModtime,
+   
 ) AS
-      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
+      SELECT s.scenarioId, s.scenarioCode, s.metadataUrl,
+             l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             el.environmentalLayerId, 
-             lt.environmentalTypeId, lt.envCode, lt.gcmcode, lt.altpredCode, lt.dateCode, 
-             lt.metadata, lt.modtime
-        FROM lm_v3.layer l, lm_v3.EnvironmentalLayer el, lm_v3.EnvironmentalType lt
-        WHERE l.layerid = el.layerid
-          AND el.environmentalTypeid = lt.environmentalTypeid
+             et.environmentalTypeId, et.envCode, et.gcmcode, et.altpredCode, et.dateCode, 
+             et.metadata, et.modtime
+        FROM lm_v3.ScenarioLayer sl, lm_v3.layer l, lm_v3.EnvironmentalType et, lm_v3.Scenario s
+        WHERE sl.layerid = l.layerid
+          AND sl.scenarioid = s.scenarioid
+          AND sl.environmentalTypeid = et.environmentalTypeid
         ORDER BY l.layerid ASC;
 
 -- ----------------------------------------------------------------------------

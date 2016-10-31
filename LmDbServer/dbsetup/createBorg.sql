@@ -152,16 +152,6 @@ create table lm_v3.Layer
  CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
 
 -- -------------------------------
--- Note: Enforce unique userid/name pairs (in code) for display layers only
-create table lm_v3.EnvironmentalLayer
-(
-   environmentalLayerId serial UNIQUE PRIMARY KEY,
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   environmentalTypeId int REFERENCES lm_v3.EnvironmentalType,
-   UNIQUE (layerId, environmentalTypeId)
-);
-
--- -------------------------------
  create table lm_v3.Scenario
  (
     scenarioId serial UNIQUE PRIMARY KEY,
@@ -192,11 +182,13 @@ create table lm_v3.EnvironmentalLayer
 
 
 -- -------------------------------
-create table lm_v3.ScenarioLayers
+-- Join table
+create table lm_v3.ScenarioLayer
 (
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   environmentalLayerId int REFERENCES lm_v3.EnvironmentalLayer MATCH FULL ON DELETE CASCADE,
-   PRIMARY KEY (scenarioId, EnvironmentalLayer)
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   environmentalTypeId int REFERENCES lm_v3.EnvironmentalType,
+   PRIMARY KEY (scenarioId, layerId, environmentalTypeId)
 );
 
 -- -------------------------------
@@ -238,7 +230,6 @@ CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
 CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
-
 -- -------------------------------
 create table lm_v3.Algorithm
 (
@@ -246,7 +237,6 @@ create table lm_v3.Algorithm
    name varchar(60),
    modTime double precision
 );
-
 
 -- -------------------------------
 -- The 'algorithmParams' column is algorithm parameters in JSON format, with the 
@@ -306,6 +296,7 @@ create table lm_v3.Process
 );
 
 -- -------------------------------
+-- One to one relationship with Layer
 create table lm_v3.ShapeGrid
 (
    shapeGridId serial UNIQUE PRIMARY KEY,
@@ -335,6 +326,7 @@ create table lm_v3.Tree
 );
 
 -- -------------------------------
+-- Organizing object for set of layers/computations
 create table lm_v3.Bucket
 (
    bucketId serial UNIQUE PRIMARY KEY,
@@ -349,7 +341,7 @@ create table lm_v3.Bucket
 );
 
 -- -------------------------------
--- In Bucket space: PAM, GRIM, BioGeoMtx, MCPA output (dlocation is compressed set)
+-- In Bucket space: PAM, GRIM, BioGeoMtx, MCPA output
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
@@ -363,6 +355,7 @@ create table lm_v3.Matrix
 );
 
 -- -------------------------------
+-- Join user Tree to a bucket
 create table lm_v3.BucketTree 
 (
    bucketTreeId serial UNIQUE PRIMARY KEY,
@@ -418,9 +411,9 @@ lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
 lm_v3.environmentalType, lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer, lm_v3.layer_layerid_seq, 
-lm_v3.environmentallayer, lm_v3.environmentallayer_environmentallayerid_seq, 
+--  lm_v3.environmentallayer, lm_v3.environmentallayer_environmentallayerid_seq, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
-lm_v3.scenariolayers,
+lm_v3.scenariolayer,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
@@ -439,9 +432,9 @@ lm_v3.taxonomysource,
 lm_v3.taxon,
 lm_v3.environmentalType,
 lm_v3.layer, 
-lm_v3.environmentallayer,  
+--  lm_v3.environmentallayer,  
 lm_v3.scenario,
-lm_v3.scenariolayers,
+lm_v3.scenariolayer,
 lm_v3.occurrenceset, 
 lm_v3.algorithm, 
 lm_v3.sdmmodel,  
@@ -459,7 +452,7 @@ lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
 lm_v3.environmentalType_environmentalTypeid_seq,
 lm_v3.layer_layerid_seq,
-lm_v3.environmentallayer_environmentallayerid_seq, 
+--  lm_v3.environmentallayer_environmentallayerid_seq, 
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,

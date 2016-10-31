@@ -70,7 +70,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, envlyrid int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, envtypeid)
    RETURNS int AS
 $$
 DECLARE
@@ -83,13 +83,13 @@ BEGIN
       RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
    END IF;
    
-   SELECT count(*) INTO temp FROM lm_v3.lm_envlayer WHERE environmentalLayerId = envlyrid;
+   SELECT count(*) INTO temp FROM lm_v3.layer WHERE layerId = lyrid;
    IF temp < 1 THEN
       RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
    END IF;
    
    SELECT count(*) INTO temp FROM lm_v3.ScenarioLayers 
-      WHERE scenarioId = scenid AND environmentalLayerId = envlyrid;
+      WHERE scenarioId = scenid AND layerId = lyrid;
    IF temp < 1 THEN
       -- get or insert scenario x layer entry
       INSERT INTO lm_v3.ScenarioLayers (scenarioId, environmentalLayerId) VALUES (scenid, envlyrid);
@@ -108,7 +108,8 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- EnvLayer
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(scenid int,
+                                          lyrid int,
                                           usr varchar,
                                           lyrsquid varchar,
                                           lyrverify varchar,
@@ -137,13 +138,13 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrid int,
                                           tm varchar,
                                           etypemeta text,
                                           etypemodtime double precision)
-RETURNS lm_v3.lm_envlayer AS
+RETURNS lm_v3.lm_scenlayer AS
 $$
 DECLARE
    joinid int;
    reclyr lm_v3.layer%ROWTYPE;
    rec_etype lm_v3.EnvironmentalType%ROWTYPE;
-   rec_envlyr lm_v3.lm_envlayer%ROWTYPE;
+   rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
    -- get or insert environmentalType 
    SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvironmentalType(etypeid, 
@@ -159,19 +160,17 @@ BEGIN
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertLayer';
       ELSE
-         SELECT environmentalLayerId INTO joinid FROM lm_v3.EnvironmentalLayer 
-            WHERE layerid  = reclyr.layerid AND environmentalTypeId = rec_etype.environmentalTypeId;
+         INSERT INTO lm_v3.ScenarioLayer 
+            (scenarioId, layerId, environmentalTypeId) VALUES 
+            (scenid, reclyr.layerId, rec_etype.environmentalTypeId);
          IF NOT FOUND THEN
-            INSERT INTO lm_v3.EnvironmentalLayer (layerId, environmentalTypeId)
-                         VALUES (reclyr.layerId, rec_etype.environmentalTypeId);
-            IF NOT FOUND THEN
-               RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
-            ELSE
-               SELECT INTO joinid last_value FROM lm_v3.EnvironmentalLayer_EnvironmentalLayerid_seq;
-            END IF;
+            RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
+         ELSE
+            SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
+               WHERE scenarioId = scenid 
+                 AND layerid = reclyr.layerId 
+                 AND environmentalTypeId = rec_etype.environmentalTypeId;
          END IF;
-         
-         SELECT * INTO rec_envlyr FROM lm_v3.lm_envlayer WHERE environmentalLayerId = joinid;
       END IF;
    END IF;
    
@@ -215,16 +214,14 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getEnvLayersForScenario(scenid int)
-RETURNS SETOF lm_v3.lm_envlayer AS
+RETURNS SETOF lm_v3.lm_scenlayer AS
 $$
 DECLARE
-   rec lm_v3.lm_envlayer%ROWTYPE;
+   rec lm_v3.lm_scenlayer%ROWTYPE;
    elid int;
 BEGIN
-   FOR elid IN SELECT environmentalLayerId FROM lm_v3.ScenarioLayers 
-         WHERE scenarioId = scenid
+   FOR rec IN SELECT * FROM lm_v3.lm_scenlayer WHERE scenarioId = scenid
       LOOP
-         SELECT * into rec FROM lm_v3.lm_envlayer WHERE environmentalLayerId = elid;
          RETURN NEXT rec;
       END LOOP;
    RETURN;
