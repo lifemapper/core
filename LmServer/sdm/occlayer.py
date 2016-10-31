@@ -138,8 +138,8 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       @todo: Remove points, count, query
       """
       OccurrenceType.__init__(self, displayName, fromGbif, queryCount, primaryEnv, 
-                              touchTime, modTime, userId, occId, sciName,
-                              metadata=occMetadata)
+                              touchTime, modTime, userId, occId,
+                              metadata=occMetadata, sciName=sciName)
       ProcessObject.__init__(self, objId=occId, parentId=None, 
                 status=status, statusModTime=statusModTime)
       Vector.__init__(self, 

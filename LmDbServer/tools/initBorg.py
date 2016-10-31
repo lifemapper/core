@@ -478,9 +478,7 @@ lyrMeta = {'epsg': META.EPSG,
 usr = ARCHIVE_USER
 lyrtypeMeta = META.LAYERTYPE_META
 scenPkgName = SCENARIO_PACKAGE
-
 usrlist = addUsers(scribe, [defUser, anonUser, newUser])
-
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'observed-1km'
 scen = scens[scode]
