@@ -426,7 +426,9 @@ class Borg(DbPostgresql):
                            lyr.altpredCode, lyr.dateCode, envmeta, 
                            lyr.parametersModTime)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
-      if scenarioId is not None:
+      if newOrExistingLyr is None:
+         raise LMError(currargs='Failed to find or insert environmental layer')
+      elif scenarioId is not None:
          successCode = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
                                               newOrExistingLyr.getId()) 
          if successCode != 0:

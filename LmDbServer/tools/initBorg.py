@@ -317,7 +317,7 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    return allScenarios, msgs
       
 # ...............................................
-def addScenarioAndLayerMetadata(scribe, usr, scenarios):
+def addScenarioAndLayerMetadata(scribe, scenarios):
    """
    @summary Add scenario and layer metadata to database  
    """
@@ -402,7 +402,7 @@ if __name__ == '__main__':
                                           META.LAYERTYPE_META)
          for msg in msgs:
             scribeWithBorg.log.info(msg)
-         addScenarioAndLayerMetadata(scribeWithBorg, currUserid, scens)
+         addScenarioAndLayerMetadata(scribeWithBorg, scens)
 # .............................
       if metaType in ('grid', 'all'):
             # Grid for GPAM
@@ -484,6 +484,7 @@ scode = 'observed-1km'
 scen = scens[scode]
 newOrExistingScen = scribe.insertScenario(scen)
 
+select * from lm_v3.lm_findOrInsertEnvLayer(NULL,'kubi',NULL,NULL,'bio1-AR5-GISS-E2-R-RCP4.5-2050-1km','/share/lm/data/archive/kubi/2163/Layers/bio1-AR5-GISS-E2-R-RCP4.5-2050-1km.tif','http://badenov-vc1.nhm.ku.edu/services/sdm/layers/#id#','{"description": "Annual Mean Temperature for AR5, NASA GISS GCM ModelE, RCP4.5, 2041-2060, 1km", "title": "bio1, AR5, GISS-E2-R, RCP4.5, 2041-2060, 1km"}','GTiff',NULL,NULL,'degreesCelsiusTimes10',NULL,NULL,NULL,2163,'meters',1000,'-180.00,-60.00,180.00,90.00',NULL,57692.8772879,NULL,'bio1','GISS-E2-R','RCP4.5','2050','{"keywords": null, "description": "Annual Mean Temperature", "title": "Annual Mean Temperature"}',NULL);
 
 shpId = addIntersectGrid(scribe, lyrMeta['gridname'], lyrMeta['gridsides'], 
                            lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
