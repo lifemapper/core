@@ -71,41 +71,48 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, envtypeid int)
-   RETURNS int AS
+   RETURNS lm_v3.lm_scenlayer AS
 $$
 DECLARE
-   success int = -1;
-   temp int;
+   temp1 int;
+   temp2 int;
+   temp3 int;
+   rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
-   -- if layer is found
-   SELECT count(*) INTO temp FROM lm_v3.scenario WHERE scenarioid = scenid;
-   IF temp < 1 THEN
-      RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
-   END IF;
-   
-   SELECT count(*) INTO temp FROM lm_v3.layer WHERE layerId = lyrid;
-   IF temp < 1 THEN
-      RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
-   END IF;
-   
-   SELECT count(*) INTO temp FROM lm_v3.ScenarioLayer 
-      WHERE scenarioId = scenid AND layerId = lyrid;
-   IF temp < 1 THEN
-      -- get or insert scenario x layer entry
-      INSERT INTO lm_v3.ScenarioLayer (scenarioId, layerId, environmentalTypeId) 
-         VALUES (scenid, lyrid, envtypeid);
-      IF FOUND THEN
-         success := 0;
-      END IF;
+   SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
+      WHERE scenarioId = scenid AND layerid = reclyr.layerId 
+        AND environmentalTypeId = envtypeid;
+   IF FOUND THEN 
+      RAISE NOTICE 'Scenario % and Layer % and EnvironmentalType % are already joined', 
+                    scenid, lyrid, envtypeid;
    ELSE
-      RAISE NOTICE 'Scenario % and EnvironmentalLayer % are already joined', 
-                    scenid, lyrid;
-      success := 0;
+      -- make sure records exist
+      SELECT count(*) INTO temp1 FROM lm_v3.scenario WHERE scenarioid = scenid;
+      SELECT count(*) INTO temp2 FROM lm_v3.layer WHERE layerId = lyrid;
+      SELECT count(*) INTO temp3 FROM lm_v3.environmentalType WHERE environmentalTypeId = envtypeid;
+      IF temp1 < 1 THEN
+         RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
+      ELSIF temp2 < 1 THEN
+         RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
+      ELSIF temp3 < 1 THEN
+         RAISE EXCEPTION 'EnvironmentalType with id % does not exist', envtypeid;
+      END IF;
+   
+      INSERT INTO ScenarioLayer (scenarioid, layerid, environmentalTypeId) 
+                         VALUES (scenid, lyrid, envtypeid);
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
+      ELSE
+         SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
+            WHERE scenarioId = scenid AND layerid = reclyr.layerId 
+              AND environmentalTypeId = envtypeid;
+      END IF;
    END IF;
    
-   RETURN success;
+   RETURN rec_envlyr;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
 
 -- ----------------------------------------------------------------------------
 -- EnvLayer
@@ -143,7 +150,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(scenid int,
 RETURNS lm_v3.lm_scenlayer AS
 $$
 DECLARE
-   joinid int;
    reclyr lm_v3.layer%ROWTYPE;
    rec_etype lm_v3.EnvironmentalType%ROWTYPE;
    rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
@@ -162,17 +168,8 @@ BEGIN
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertLayer';
       ELSE
-         INSERT INTO lm_v3.ScenarioLayer 
-            (scenarioId, layerId, environmentalTypeId) VALUES 
-            (scenid, reclyr.layerId, rec_etype.environmentalTypeId);
-         IF NOT FOUND THEN
-            RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
-         ELSE
-            SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
-               WHERE scenarioId = scenid 
-                 AND layerid = reclyr.layerId 
-                 AND environmentalTypeId = rec_etype.environmentalTypeId;
-         END IF;
+         SELECT * INTO rec_envlyr FROM lm_v3.lm_joinScenarioLayer(scenid, 
+                                 reclyr.layerId, rec_etype.environmentalTypeId);
       END IF;
    END IF;
    

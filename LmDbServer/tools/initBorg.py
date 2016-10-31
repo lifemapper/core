@@ -425,13 +425,7 @@ if __name__ == '__main__':
        
 """
 import mx.DateTime
-
-# TODO: These should be included in the package of data
 import LmDbServer.tools.charlieMetaExp3 as META
-
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
-         DEFAULT_MAPUNITS)
-
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
@@ -445,23 +439,17 @@ from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
 from LmServer.sdm.scenario import Scenario
 from LmServer.rad.shapegrid import ShapeGrid
-
 CURRTIME = mx.DateTime.gmt().mjd
-
 from LmDbServer.tools.initBorg import *
 from LmDbServer.tools.initBorg import (_getBaselineLayers, _getbioName, 
           _findFileFor, _getPredictedLayers)
-# .............................
 defUser = {'id': ARCHIVE_USER,
            'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
 anonUser = {'id': DEFAULT_POST_USER,
             'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
-            
 newUser = META.USER
 currUserid = META.USER['id']
-
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
-
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
