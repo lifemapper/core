@@ -70,7 +70,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, envtypeid)
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, envtypeid int)
    RETURNS int AS
 $$
 DECLARE
@@ -88,16 +88,18 @@ BEGIN
       RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
    END IF;
    
-   SELECT count(*) INTO temp FROM lm_v3.ScenarioLayers 
+   SELECT count(*) INTO temp FROM lm_v3.ScenarioLayer 
       WHERE scenarioId = scenid AND layerId = lyrid;
    IF temp < 1 THEN
       -- get or insert scenario x layer entry
-      INSERT INTO lm_v3.ScenarioLayers (scenarioId, environmentalLayerId) VALUES (scenid, envlyrid);
+      INSERT INTO lm_v3.ScenarioLayer (scenarioId, layerId, environmentalTypeId) 
+         VALUES (scenid, lyrid, envtypeid);
       IF FOUND THEN
          success := 0;
       END IF;
    ELSE
-      RAISE NOTICE 'Scenario % and EnvironmentalLayer % are already joined', scenid, envlyrid;
+      RAISE NOTICE 'Scenario % and EnvironmentalLayer % are already joined', 
+                    scenid, lyrid;
       success := 0;
    END IF;
    

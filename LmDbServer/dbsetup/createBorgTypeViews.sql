@@ -35,9 +35,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    altpredCode,
    dateCode,
    envMetadata, 
-   envModtime,
-   
-) AS
+   envModtime
+   ) AS
       SELECT s.scenarioId, s.scenarioCode, 
              l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
@@ -381,7 +380,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_bloat AS
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 GRANT SELECT ON TABLE 
-lm_v3.lm_envlayer,
+lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixlayer,
@@ -390,7 +389,7 @@ lm_v3.lm_bloat
 TO GROUP reader;
 
 GRANT SELECT ON TABLE 
-lm_v3.lm_envlayer,
+lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixlayer,
