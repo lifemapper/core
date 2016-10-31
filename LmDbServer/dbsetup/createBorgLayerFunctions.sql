@@ -213,6 +213,25 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE; 
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getEnvLayersForScenario(scenid int)
+RETURNS SETOF lm_v3.lm_envlayer AS
+$$
+DECLARE
+   rec lm_v3.lm_envlayer%ROWTYPE;
+   elid int;
+BEGIN
+   FOR elid IN SELECT environmentalLayerId FROM lm_v3.ScenarioLayers 
+         WHERE scenarioId = scenid
+      LOOP
+         SELECT * into rec FROM lm_v3.lm_envlayer WHERE environmentalLayerId = elid;
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
+-- ----------------------------------------------------------------------------
 -- ShapeGrid
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lid int,

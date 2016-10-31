@@ -195,8 +195,8 @@ create table lm_v3.EnvironmentalLayer
 create table lm_v3.ScenarioLayers
 (
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   layerId int REFERENCES lm_v3.Layer MATCH FULL ON DELETE CASCADE,
-   PRIMARY KEY (scenarioId, layerId)
+   environmentalLayerId int REFERENCES lm_v3.EnvironmentalLayer MATCH FULL ON DELETE CASCADE,
+   PRIMARY KEY (scenarioId, EnvironmentalLayer)
 );
 
 -- -------------------------------

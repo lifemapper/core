@@ -510,27 +510,36 @@ class Borg(DbPostgresql):
       return txSourceId, url, moddate
    
 # .............................................................................
-   def getScenario(self, code=None, scenid=None):
+   def getScenario(self, scenid=None, code=None, usrid=None, fillLayers=False):
       """
       @summary: Return a scenario by its db id or code, filling its layers.  
       @param code: Code for the scenario to be fetched.
       @param scenid: ScenarioId for the scenario to be fetched.
       """
-      if code is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getScenarioByCode', code)
-      elif scenid is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getScenarioById', scenid)
-      else:
-         raise LMError(currargs='Must provide scenario code or id')
+      row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid, usrid, code)
       scen = self._createScenario(row, idxs)
-      if scen is not None:
-         rows, idxs = self.executeSelectManyFunction('lm_getLayersByScenarioId', 
-                                                     scen.getId())
+      if scen is not None and fillLayers:
+         for r in rows:
+            lyr = self._createEnvironmentalLayer(r, idxs)
+            scen.addLayer(lyr)
+      return scen
+
+# .............................................................................
+   def getScenarioLayers(self, scenid):
+      """
+      @summary: Return a scenario by its db id or code, filling its layers.  
+      @param code: Code for the scenario to be fetched.
+      @param scenid: ScenarioId for the scenario to be fetched.
+      """
+      row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid, usrid, code)
+      scen = self._createScenario(row, idxs)
+      if scen is not None and fillLayers:
          for r in rows:
             lyr = self._createEnvironmentalLayer(r, idxs)
             scen.addLayer(lyr)
       return scen
                      
+   
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
       """

@@ -81,6 +81,33 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- Scenario
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getScenario(scenid int,
+                                                usr varchar,
+                                                code varchar)
+   RETURNS lm_v3.Scenario AS
+$$
+DECLARE
+   id int;
+   idstr varchar;
+   rec lm_v3.Scenario%rowtype;
+BEGIN
+   IF NOT scenid IS NULL THEN
+      SELECT * INTO rec FROM lm_v3.Scenario s 
+         WHERE s.scenarioid = scenid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.Scenario s 
+          WHERE s.scenariocode = code and s.userid = usr;
+   END IF;
+   
+   IF NOT FOUND THEN
+      RAISE NOTICE 'Scenario id = % or user/code = %/% not found', scenid, usr, code;
+   END IF;
+   
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
                                              code varchar, 
                                              metaUrlprefix text,

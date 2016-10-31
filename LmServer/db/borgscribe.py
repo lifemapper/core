@@ -184,7 +184,7 @@ class BorgScribe(LMObject):
       return txSourceId, url, moddate
    
 # ...............................................
-   def getScenario(self, code, matchingLayers=None):
+   def getScenario(self, code, user):
       """
       @summary: Get and fill a scenario from its code or database id.  If 
                 matchingLayers is given, ensure that only layers with the same
@@ -195,9 +195,9 @@ class BorgScribe(LMObject):
       @return: Scenario object filled with Raster objects.
       """
       if isinstance(code, IntType):
-         scenario = self._borg.getScenario(self, code=code)
-      elif isinstance(code, StringType) or isinstance(code, UnicodeType):
          scenario = self._borg.getScenario(scenid=code)
+      else:
+         scenario = self._borg.getScenario(code=code, usrid=user)
 
       return scenario
 
