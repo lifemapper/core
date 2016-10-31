@@ -215,14 +215,14 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- ShapeGrid
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lyrid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lid int,
                                           usr varchar,
-                                          lyrsquid varchar,
-                                          lyrverify varchar,
-                                          lyrname varchar, 
-                                          lyrdloc varchar,
-                                          lyrmurlprefix varchar,
-                                          lyrmeta varchar,
+                                          lsquid varchar,
+                                          lverify varchar,
+                                          lname varchar, 
+                                          ldloc varchar,
+                                          lmurlprefix varchar,
+                                          lmeta varchar,
                                           datafmt varchar,
                                           rtype int,
                                           vtype int,
@@ -235,7 +235,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lyrid int,
                                           res double precision,
                                           bboxstr varchar,
                                           bboxwkt varchar,
-                                          lyrmtime double precision,
+                                          lmtime double precision,
                                           
                                           csides int,
                                           csize double precision,
@@ -254,18 +254,18 @@ DECLARE
    recshpgrd lm_v3.lm_shapegrid%ROWTYPE;
 BEGIN
    IF lyrid IS NOT NULL THEN
-      SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
+      SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lid;
    ELSE
       SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
-         WHERE userid = usr AND name = lyrname AND epsgcode = epsg;
+         WHERE userid = usr AND lyrname = lname AND epsgcode = epsg;
    END IF;
    
    IF NOT FOUND THEN
       begin
          -- get or insert layer 
-         SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
-            lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
-            vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
+         SELECT * FROM lm_v3.lm_findOrInsertLayer(lid, usr, lsquid, lverify, 
+            lname, ldloc, lmurlprefix, lmeta, datafmt, rtype, vtype, vunits, 
+            vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lmtime) INTO reclyr;
          
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to find or insert layer';
@@ -278,7 +278,8 @@ BEGIN
             IF NOT FOUND THEN
                RAISE EXCEPTION 'Unable to insert shapegrid';
             ELSE
-               SELECT * INTO recshpgrd FROM lm_v3.shapegrid WHERE layerid = lyrid;
+               SELECT * INTO recshpgrd FROM lm_v3.shapegrid 
+                 WHERE layerid = reclyr.layerid;
             END IF;
          END IF;
       end;

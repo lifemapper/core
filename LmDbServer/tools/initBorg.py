@@ -449,29 +449,22 @@ from LmServer.rad.shapegrid import ShapeGrid
 CURRTIME = mx.DateTime.gmt().mjd
 
 from LmDbServer.tools.initBorg import *
-from LmDbServer.tools.initBorg import (_getBaselineLayers, _getClimateMeta, 
-                                      _getbioName, _findFileFor, _getPredictedLayers)
+from LmDbServer.tools.initBorg import (_getBaselineLayers, _getbioName, 
+          _findFileFor, _getPredictedLayers)
 # .............................
 defUser = {'id': ARCHIVE_USER,
            'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
 anonUser = {'id': DEFAULT_POST_USER,
             'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
-try:
-   newUser = META.USER
-   currUserid = META.USER['id']
-except:
-   newUser = None
-   currUserid = ARCHIVE_USER
-# .............................
-try:
-   taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
-except:
-   taxSource = None
+            
+newUser = META.USER
+currUserid = META.USER['id']
+
+taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
-
 pkgMeta = META.CLIMATE_PACKAGES[SCENARIO_PACKAGE]
 lyrMeta = {'epsg': META.EPSG, 
            'topdir': pkgMeta['topdir'],
@@ -482,39 +475,17 @@ lyrMeta = {'epsg': META.EPSG,
            'gridname': META.GRID_NAME, 
            'gridsides': META.GRID_NUM_SIDES, 
            'gridsize': META.GRID_CELLSIZE}
-
 usr = ARCHIVE_USER
 lyrtypeMeta = META.LAYERTYPE_META
 scenPkgName = SCENARIO_PACKAGE
-obsOrPredRpt = pkgMeta['baseline']
-baseMeta = META.OBSERVED_PREDICTED_META[obsOrPredRpt]
-tm = baseMeta['times'].keys()[0]
 
-ltype = lyrtypeMeta.keys()[0]
-ltmeta = lyrtypeMeta[ltype]
-relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
-                                  gcm=None, tm=None, altPred=None)
-lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
-                      suffix=pkgMeta['suffix'])
-lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
-           'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
-envmeta = {'title': ltmeta['title'],
-           'description': ltmeta['description'],
-           'keywords': ltmeta['keywords']}
-dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
-
+usrlist = addUsers(scribe, [defUser, anonUser, newUser])
 
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
 scode = 'observed-1km'
 scen = scens[scode]
+newOrExistingScen = scribe.insertScenario(scen)
 
-usrlist = addUsers(scribe, [defUser, anonUser, newUser])
-
-newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
-scenid = newOrExistingScen.getId()
-lyr = scen.layers[5]
-nlyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenid)
-updatedScen = scribe.insertScenario(scens
 
 shpId = addIntersectGrid(scribe, lyrMeta['gridname'], lyrMeta['gridsides'], 
                            lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
