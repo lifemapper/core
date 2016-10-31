@@ -80,7 +80,7 @@ DECLARE
    rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
    SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
-      WHERE scenarioId = scenid AND layerid = reclyr.layerId 
+      WHERE scenarioId = scenid AND layerid = layerid
         AND environmentalTypeId = envtypeid;
    IF FOUND THEN 
       RAISE NOTICE 'Scenario % and Layer % and EnvironmentalType % are already joined', 
@@ -104,7 +104,7 @@ BEGIN
          RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
       ELSE
          SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
-            WHERE scenarioId = scenid AND layerid = reclyr.layerId 
+            WHERE scenarioId = scenid AND layerid = lyrid 
               AND environmentalTypeId = envtypeid;
       END IF;
    END IF;
