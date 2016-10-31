@@ -50,15 +50,15 @@ from LmServer.sdm.sdmprojection import SDMProjection
 # .............................................................................
 class Borg(DbPostgresql):
    """
-   Class to control modifications to the MAL database.
+   Class to control modifications to the Borg database.
    """
 # .............................................................................
 # Constructor
 # .............................................................................
    def __init__(self, logger, dbHost, dbPort, dbUser, dbKey):
       """
-      @summary Constructor for MAL class
-      @param logger: LmLogger to use for MAL
+      @summary Constructor for Borg class
+      @param logger: LmLogger to use for Borg
       @param dbHost: hostname for database machine
       @param dbPort: port for database connection
       """
@@ -159,7 +159,7 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createLayer(self, row, idxs):
       """
-      Create Raster or Vector layer from a Layer record in the MAL
+      Create Raster or Vector layer from a Layer record in the Borg
       """
       lyr = None
       if row is not None:
@@ -213,14 +213,16 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createEnvLayer(self, row, idxs):
       """
-      Create an EnvironmentalLayer from a lm_envlayer record in the MAL
+      Create an EnvironmentalLayer from a lm_scenlayer record in the Borg
       """
       envRst = None
       if row is not None:
+         scenid = self._getColumnValue(row,idxs,['scenarioid'])
+         scencode = self._getColumnValue(row,idxs,['scenariocode'])
          rst = self._createLayer(row, idxs)
          if rst is not None:
             etype = self._createEnvType(row, idxs)
-            envRst = EnvironmentalLayer.initFromParts(rst, etype)
+            envRst = EnvironmentalLayer.initFromParts(rst, etype, scencode=scencode)
       return envRst
 
 
@@ -401,9 +403,9 @@ class Borg(DbPostgresql):
       return updatedShpgrd
 
 # ...............................................
-   def findOrInsertEnvLayer(self, lyr, scenarioId=None):
+   def findOrInsertEnvLayer(self, lyr, scenarioId):
       """
-      @summary Insert or find a layer's metadata in the MAL. 
+      @summary Insert or find a layer's metadata in the Borg. 
       @param lyr: layer to insert
       @return: new or existing EnvironmentalLayer
       """
@@ -414,7 +416,7 @@ class Borg(DbPostgresql):
       envmeta = lyr.dumpParamMetadata()
       lyrmeta = lyr.dumpLyrMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction(
-                           'lm_findOrInsertEnvLayer', lyr.getId(), 
+                           'lm_findOrInsertEnvLayer', scenarioId, lyr.getId(), 
                            lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
                            lyr.getDLocation(), 
                            lyr.metadataUrl,
@@ -474,8 +476,8 @@ class Borg(DbPostgresql):
    def findUser(self, usrid, email):
       """
       @summary: find a user with either a matching userId or email address
-      @param usrid: the database primary key of the LMUser in the MAL
-      @param email: the email address of the LMUser in the MAL
+      @param usrid: the database primary key of the LMUser in the Borg
+      @param email: the email address of the LMUser in the Borg
       @return: a LMUser object
       """
       row, idxs = self.executeSelectOneFunction('lm_findUser', usrid, email)

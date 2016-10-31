@@ -119,7 +119,7 @@ class BorgScribe(LMObject):
       updatedLyr = None
       if isinstance(lyr, EnvironmentalLayer):
          if lyr.isValidDataset():
-            updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
+            updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioid)
          else:
             raise LMError(currargs='Invalid environmental layer: {}'
                                     .format(lyr.getDLocation()), 
@@ -140,7 +140,7 @@ class BorgScribe(LMObject):
       updatedScen = self._borg.findOrInsertScenario(scen)
       scenId = updatedScen.getId()
       for lyr in scen.layers:
-         updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenId)
+         updatedLyr = self.insertScenarioLayer(lyr, scenId)
          updatedLayers.append(updatedLyr)
       updatedScen.layers = updatedLayers
       return updatedScen

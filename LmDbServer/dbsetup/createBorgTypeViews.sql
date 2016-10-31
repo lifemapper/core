@@ -7,7 +7,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    -- scenario
    scenarioId, 
    scenarioCode,
-   metadataUrl,
    -- Layer.* 
    layerId,
    userid,
@@ -39,7 +38,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    envModtime,
    
 ) AS
-      SELECT s.scenarioId, s.scenarioCode, s.metadataUrl,
+      SELECT s.scenarioId, s.scenarioCode, 
              l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
