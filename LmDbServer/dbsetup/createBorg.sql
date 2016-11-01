@@ -110,7 +110,7 @@ ALTER TABLE lm_v3.EnvironmentalType ADD CONSTRAINT unique_environmentalType
    UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode);
 
 -- -------------------------------
--- Note: Enforce unique userid/name pairs (in code) for display layers only
+-- TODO: Enforce unique userid/name/epsg for display layers only?
 create table lm_v3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,

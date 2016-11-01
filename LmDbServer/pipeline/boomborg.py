@@ -114,7 +114,7 @@ class _LMBoomer(LMObject):
          txSourceId, url, moddate = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
          
-         mscen = self._scribe.getScenario(mdlScenarioCode)
+         mscen = self._scribe.getScenario(mdlScenarioCode, user=self.userid)
          if mscen is not None:
             self.modelScenario = mscen
             if mdlScenarioCode not in projScenarioCodes:
@@ -1244,8 +1244,27 @@ from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE,POINT_COUNT_
 
 expdate = dt.DateTime(2016, 1, 1)
 taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+userid = ARCHIVE_USER
 
 # ...............................................
+providerListFile=PROVIDER_DUMP_FILE
+log = ScriptLogger('testboomborg')
+scribe = BorgScribe(log)
+success = scribe.openConnections()
+
+txSourceId, url, moddate = scribe.findTaxonSource(taxname)
+mscen = scribe.getScenario(DEFAULT_MODEL_SCENARIO, user=userid)
+projScenarios = []
+for pcode in DEFAULT_PROJECTION_SCENARIOS:
+   scen = scribe.getScenario(pcode)
+   projScenarios.append(scen)
+intersectGrid = scribe.getShapeGrid(ARCHIVE_USER, shpname=DEFAULT_GRID_NAME)
+algs=[]
+for acode in DEFAULT_ALGORITHMS:
+   alg = Algorithm(acode)
+   alg.fillWithDefaults()
+   algs.append(alg)
+
 boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,

@@ -87,16 +87,19 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getScenario(scenid int,
    RETURNS lm_v3.Scenario AS
 $$
 DECLARE
-   id int;
-   idstr varchar;
    rec lm_v3.Scenario%rowtype;
 BEGIN
-   IF NOT scenid IS NULL THEN
-      SELECT * INTO rec FROM lm_v3.Scenario s 
-         WHERE s.scenarioid = scenid;
-   ELSE
-      SELECT * INTO rec FROM lm_v3.Scenario s 
-          WHERE s.scenariocode = code and s.userid = usr;
+   SELECT * INTO rec FROM lm_v3.Scenario s 
+      WHERE s.scenariocode = code and s.userid = usr;
+   IF NOT FOUND THEN
+      begin
+         SELECT * INTO STRICT rec FROM lm_v3.Scenario s WHERE s.scenarioid = scenid;
+         EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               RAISE NOTICE 'Scenario id/user/code = %/%/% not found', scenid, usr, code;
+            WHEN TOO_MANY_ROWS THEN
+               RAISE NOTICE 'Scenario id/user/code = %/%/% not unique', scenid, usr, code;
+      end;
    END IF;
    
    IF NOT FOUND THEN
@@ -105,7 +108,9 @@ BEGIN
    
    RETURN rec;
 END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,

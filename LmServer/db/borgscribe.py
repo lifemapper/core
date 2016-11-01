@@ -144,17 +144,6 @@ class BorgScribe(LMObject):
          updatedLayers.append(updatedLyr)
       updatedScen.layers = updatedLayers
       return updatedScen
-
-# ...............................................
-   def registerComputeResource(self, compResource, crContact):
-      """
-      @summary: Insert a compute resource of this Lifemapper system.  
-      @param usr: LMComputeResource object to insert
-      @return: True on success, False on failure (i.e. IPAddress is not unique)
-      """
-      borgUser = self.insertUser(crContact)
-      borgCR = self._borg.findOrInsertComputeResource(compResource)
-      return borgCR
    
 # ...............................................
    def insertUser(self, usr):
@@ -179,25 +168,37 @@ class BorgScribe(LMObject):
       return updatedShpgrd
 
 # ...............................................
+   def getShapeGrid(self, shpgridId=None, lyrId=None, 
+                    userId=None, lyrName=None, epsg=None):
+      """
+      @summary: Get and fill a shapeGrid from its shapegrid or layer id, or 
+                user/name/epsgcode.  
+      @return: Shapegrid object .
+      """
+      shpgrid = self._borg.getShapeGrid(self, shpgridId, lyrId, 
+                                        userId, lyrName, epsg)
+      return shpgrid
+
+# ...............................................
    def findTaxonSource(self, taxonSourceName):
       txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
    
 # ...............................................
-   def getScenario(self, code, user=None):
+   def getScenario(self, idOrCode, user=None):
       """
       @summary: Get and fill a scenario from its code or database id.  If 
                 matchingLayers is given, ensure that only layers with the same
                 type as layers in the matchingLayers are filled, and that the 
                 requested scenario layers are in the same order as those in 
                 the matchingLayers.
-      @param code: The code for the scenario to return
+      @param code: The code or scenarioid for the scenario to return
+      @param user: The userid for the scenario to return.  Needed if querying by code.
       @return: Scenario object filled with Raster objects.
       """
-      if isinstance(code, IntType):
-         scenario = self._borg.getScenario(scenid=code)
+      if isinstance(idOrCode, IntType):
+         scenario = self._borg.getScenario(scenid=idOrCode)
       else:
-         scenario = self._borg.getScenario(code=code, usrid=user)
-
+         scenario = self._borg.getScenario(code=idOrCode, usrid=user)
       return scenario
 

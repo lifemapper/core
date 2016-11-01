@@ -305,7 +305,32 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
  
- 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getShapegrid(sgid int, 
+                                                 lyrid int, 
+                                                 usr varchar, 
+                                                 nm varchar, 
+                                                 epsg int)
+RETURNS lm_v3.lm_shapegrid AS
+$$
+DECLARE
+   rec lm_v3.lm_shapegrid%ROWTYPE;
+BEGIN
+   IF sgid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE shapeGridId = sgid;
+   ELSIF lyrid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE layerId = lyrid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE userid = usr 
+                                                  AND lyrname = nm 
+                                                  AND epsgcode = epsg;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
 -- ----------------------------------------------------------------------------
 -- LAYER
 -- ----------------------------------------------------------------------------
