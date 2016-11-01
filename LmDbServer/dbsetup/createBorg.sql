@@ -234,7 +234,7 @@ CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 create table lm_v3.Algorithm
 (
    algorithmCode varchar(30) UNIQUE PRIMARY KEY,
-   name varchar(60),
+   metadata text,
    modTime double precision
 );
 
