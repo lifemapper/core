@@ -206,7 +206,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    -- Layer.* 
    userid,
    squid,
-   verify,
+   prjverify,
    name,
    prjdlocation,
    prjmetadataUrl,
