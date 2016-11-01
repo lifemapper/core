@@ -332,7 +332,11 @@ create table lm_v3.Bucket
    bucketId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
+   
+   -- Must have shapegrid or siteIndices (siteId, centerX, centerY)
    shapeGridId int REFERENCES lm_v3.ShapeGrid,
+   siteIndices text,
+   
    treeId int REFERENCES lm_v3.Tree,
    epsgcode int,
    metadata text,
@@ -349,6 +353,7 @@ create table lm_v3.Matrix
    matrixType int NOT NULL,
    bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
    matrixDlocation text,
+   siteLayerIndices text,
    metadata text,  
    status int,
    statusmodtime double precision
