@@ -120,7 +120,7 @@ class _LMBoomer(LMObject):
             if mdlScenarioCode not in projScenarioCodes:
                self.projScenarios.append(self.modelScenario)
             for pcode in projScenarioCodes:
-               scen = self._scribe.getScenario(pcode)
+               scen = self._scribe.getScenario(pcode, user=self.userid)
                if scen is not None:
                   self.projScenarios.append(scen)
                else:
