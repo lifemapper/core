@@ -43,7 +43,7 @@ class SDMModel(ServiceObject, ProcessObject):
 # .............................................................................
    def __init__(self, priority, occurrenceSet, scenario, algorithm, 
                 name=None, description=None, 
-                mask=None, email=None, createTime=None, 
+                mask=None, maskId=None, email=None, createTime=None, 
                 status=None, statusModTime=None, ruleset=None, 
                 qc=None, userId=ARCHIVE_USER, modelId=None):
       """
@@ -80,6 +80,7 @@ class SDMModel(ServiceObject, ProcessObject):
       self._algorithm = algorithm
 
       self._mask = mask
+      self._maskId = maskId
 #       if mask is None and len(scenario.layers) > 0:
 #          self._mask = scenario.layers[0]
          
