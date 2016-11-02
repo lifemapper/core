@@ -118,7 +118,8 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   for ltype, ltmeta in lyrtypeMeta.iteritems():
+   for ltype in pkgMeta['layertypes']:
+      ltmeta = lyrtypeMeta[ltype]
       keywords = [k for k in baseMeta['keywords']]
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
@@ -436,11 +437,6 @@ CURRTIME = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBorg import *
 from LmDbServer.tools.initBorg import (_getBaselineLayers, _getbioName, 
           _findFileFor, _getPredictedLayers)
-defUser = {'id': ARCHIVE_USER,
-           'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
-anonUser = {'id': DEFAULT_POST_USER,
-            'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
-newUser = META.USER
 metaUserId = META.USER['id']
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 logger = ScriptLogger('testing')
