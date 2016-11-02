@@ -78,7 +78,11 @@ def addAlgorithms(scribe):
    """
    ids = []
    for algcode, algdict in ALGORITHM_DATA.iteritems():
-      alg = Algorithm(algcode, meta=algdict)
+      algmeta = {}
+      for k, v in algdict.iteritems():
+         if k != 'parameters':
+            algmeta[k] = v
+      alg = Algorithm(algcode, metadata=algmeta)
       scribe.log.info('  Insert algorithm {} ...'.format(algcode))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
