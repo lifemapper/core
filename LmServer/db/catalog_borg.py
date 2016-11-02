@@ -381,8 +381,9 @@ class Borg(DbPostgresql):
       return updatedLyr
 
 # ...............................................
-   def getBaseLayer(self, lyrid):
-      row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid)
+   def getBaseLayer(self, lyrid, lyrverify, lyruser, lyrname, epsgcode):
+      row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify, 
+                                                lyruser, lyrname, epsgcode)
       lyr = self._createLayer(row, idxs)
       return lyr
 

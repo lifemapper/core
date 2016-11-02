@@ -403,6 +403,30 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getLayer(lyrid int,
+                                             lyrverify varchar,
+                                             usr varchar,
+                                             lyrname varchar,
+                                             epsg int)
+RETURNS lm_v3.Layer AS
+$$
+DECLARE
+   rec lm_v3.Layer%rowtype;
+BEGIN
+   IF lyrid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.layer WHERE layerid = lyrid;
+   ELSIF lyrverify IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.layer WHERE verify = lyrverify;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.layer WHERE userid = usr 
+                                           AND name = lyrname 
+                                           AND epsgcode = epsg;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_renameLayer(lyrid int,
                                           usr varchar,
                                           lyrname varchar,

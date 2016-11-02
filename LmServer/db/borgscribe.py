@@ -180,6 +180,17 @@ class BorgScribe(LMObject):
       return shpgrid
 
 # ...............................................
+   def getLayer(self, lyrId=None, lyrVerify=None, userId=None, lyrName=None, 
+                epsg=None):
+      """
+      @summary: Get and fill a Layer from its shapegrid or layer id, or 
+                user/name/epsgcode.  
+      @return: Shapegrid object .
+      """
+      lyr = self._borg.getBaseLayer(self, lyrId, lyrVerify, userId, lyrName, epsg)
+      return lyr
+
+# ...............................................
    def findTaxonSource(self, taxonSourceName):
       txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
