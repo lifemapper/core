@@ -316,17 +316,17 @@ class Borg(DbPostgresql):
 # Public functions
 # .............................................................................
 # ...............................................
-   def findOrInsertAlgorithm(self, alg):
+   def findOrInsertAlgorithm(self, alg, modtime):
       """
       @summary Inserts an Algorithm into the database
       @param alg: The algorithm to add
       @return: new or existing Algorithm
       """
-      if not alg.modTime:
-         alg.modTime = mx.DateTime.utc().mjd
+      if not modtime:
+         modtime = mx.DateTime.utc().mjd
       meta = alg.dumpAlgMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm', 
-                                               alg.code, meta, alg.modTime)
+                                               alg.code, meta, modtime)
       algo = self._createAlgorithm(row, idxs)
       return algo
 

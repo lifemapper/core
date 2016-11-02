@@ -86,12 +86,12 @@ class BorgScribe(LMObject):
       self._borg.close()
       
 # ...............................................
-   def insertAlgorithm(self, alg):
+   def insertAlgorithm(self, alg, modtime=None):
       """
       @summary Inserts an Algorithm into the database
       @param alg: The algorithm to add
       """
-      algo = self._borg.findOrInsertAlgorithm(alg)
+      algo = self._borg.findOrInsertAlgorithm(alg, modtime)
       return algo
 
 # ...............................................
