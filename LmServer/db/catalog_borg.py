@@ -322,9 +322,11 @@ class Borg(DbPostgresql):
       @param alg: The algorithm to add
       @return: new or existing Algorithm
       """
-      alg.modTime = mx.DateTime.utc().mjd
+      if not alg.modTime:
+         alg.modTime = mx.DateTime.utc().mjd
+      meta = alg.dumpAlgMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertAlgorithm', 
-                                               alg.code, alg.name, alg.modTime)
+                                               alg.code, meta, alg.modTime)
       algo = self._createAlgorithm(row, idxs)
       return algo
 

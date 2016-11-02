@@ -30,6 +30,7 @@ try:
    import cPickle as pickle
 except:
    import pickle
+import json
 from types import StringType, IntType, FloatType, NoneType, DictionaryType
 
 from LmServer.base.lmobj import LMError
@@ -85,16 +86,23 @@ class Algorithm(object):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, code, parameters={}, name=None):
+   def __init__(self, code, metadata={}, parameters={}, name=None):
       """
       @summary Constructor for the algorithm class.  Algorithm should be 
                initialized from the database upon construction.
       @param code: The algorithm code for openModeller
+      @param metadata: Dictionary of Algorithm metadata
       @param parameters: Dictionary of Algorithm parameters
       @param name: (optional) The full algorithm name
       """
       self.code = code
+      # TODO: update this for Borg
       self.name = name
+      if not metadata:
+         metadata = {'name': name}
+         
+      self.algMetadata = {}
+      self.loadAlgMetadata(metadata)
       self._initParameters()
       if parameters:
          self._setParameters(parameters)
@@ -137,7 +145,34 @@ class Algorithm(object):
    # .........................................................................
 # Public Methods
 # .........................................................................
+# ...............................................
+   def addAlgMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.algMetadata[key] = val
+         
+   def dumpAlgMetadata(self):
+      metastring = None
+      if self.algMetadata:
+         metastring = json.dumps(self.algMetadata)
+      return metastring
 
+   def loadAlgMetadata(self, meta):
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addAlgMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addAlgMetadata(metajson)
+
+# ...............................................
    def dumpParametersAsString(self):
       # Use default protocol 0 here, smaller dictionary can be ascii
       apstr = pickle.dumps(self._parameters)

@@ -78,7 +78,7 @@ def addAlgorithms(scribe):
    """
    ids = []
    for algcode, algdict in ALGORITHM_DATA.iteritems():
-      alg = Algorithm(algcode, name=algdict['name'])
+      alg = Algorithm(algcode, meta=algdict)
       scribe.log.info('  Insert algorithm {} ...'.format(algcode))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
@@ -347,7 +347,7 @@ if __name__ == '__main__':
             description=('Populate a Lifemapper database with metadata ' +
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-', '--metadata', default='config',
+   parser.add_argument('-m', '--metadata', default='config',
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
 
