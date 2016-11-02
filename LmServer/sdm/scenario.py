@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import json
 from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
@@ -38,19 +39,20 @@ class Scenario(MapLayerSet):
 # .............................................................................
 
    # ...............................................       
-   def __init__(self, code, title=None, author=None, description=None,
-                metadataUrl=None, dlocation=None, startdt=None, enddt=None, 
+   def __init__(self, code, metadata={},
+                metadataUrl=None, dlocation=None,
+                # TODO: Remove
+                startdt=None, enddt=None, 
+                title=None, author=None, description=None,
+                # new
                 units=None, res=None, 
+                gcmCode=None, altpredCode=None, dateCode=None,
                 bbox=None, modTime=None, keywords=None, epsgcode=None,
                 layers=None, userId=ARCHIVE_USER, scenarioid=None):
       """
       @summary Constructor for the scenario class 
       @param code: The code for this set of layers
       @param metadataUrl: Lifemapper metadataUrl of this set of layers
-      @param startdt: Beginning of time period for this dataset in modified 
-                      julian date format
-      @param enddt: Beginning of time period for this dataset in modified 
-                      julian date format
       @param units: units of measurement for pixel size
       @param res: size of each side of a pixel (assumes square pixels)
       @param bbox: (optional) a length 4 tuple of (minX, minY, maxX, maxY)
@@ -65,17 +67,27 @@ class Scenario(MapLayerSet):
       self._layers = []
       # layers are set not set in LayerSet or Layerset - done here to check
       # that each layer is an EnvironmentalLayer
-      MapLayerSet.__init__(self, code, title=title, url=metadataUrl, 
+      MapLayerSet.__init__(self, code, 
+                           title=title, url=metadataUrl, 
                            dlocation=dlocation, keywords=keywords, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
                            serviceType=LMServiceType.SCENARIOS, moduleType=LMServiceModule.SDM)      
-      # Public attributes
+      # aka MapLayerSet.name    
+      self.code = code
+      # Move to self.metadata
       self.author = author
-      self.description = description      
-      self.code = self.name
+      self.description = description  
+      # obsolete
       self.startDate = startdt
       self.endDate = enddt
+      
       self.modTime = modTime
+      # new
+      self.gcmCode=None
+      self.altpredCode=None
+      self.dateCode=None
+      self.metadata = {}
+      self.loadMetadata(metadata)
       
       # Private attributes
       self._scenarioId = scenarioid
@@ -109,6 +121,33 @@ class Scenario(MapLayerSet):
          for lyr in lyrs:
             self.addLayer(lyr) 
          self._bbox = MapLayerSet._getIntersectBounds(self)
+
+# ...............................................
+   def addMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.metadata[key] = val
+         
+   def dumpMetadata(self):
+      metastring = None
+      if self.metadata:
+         metastring = json.dumps(self.metadata)
+      return metastring
+
+   def loadMetadata(self, meta):
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addMetadata(metajson)
    
    # ...............................................
    def _setUnits(self, units):

@@ -27,6 +27,7 @@ try:
    import cPickle as pickle
 except:
    import pickle
+import json
 import mx.DateTime
 import os
 from osgeo import ogr
@@ -49,7 +50,8 @@ class RADBucket(ServiceObject, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, shapegrid, epsgcode=None, keywords=None, 
+   def __init__(self, shapegrid, metadata={},
+                epsgcode=None, keywords=None, 
                 fullPam=None, fullGrim=None, pamSum=None, randomPamSums=[],
                 pamFname=None, grimFname=None, 
                 compressedPamFname=None, sumFname=None,
@@ -106,6 +108,8 @@ class RADBucket(ServiceObject, ProcessObject):
       self._bucketPath = None
       self._pamSum = None
       self._randomPamSums = []
+      self.metadata = {}
+      self.loadMetadata(metadata)
 #       self._experimentId = expId
 
       self._epsg = None
@@ -248,6 +252,33 @@ class RADBucket(ServiceObject, ProcessObject):
 # ...............................................
 #    def getExperimentId(self):
 #       return self.parentId
+
+# ...............................................
+   def addMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.metadata[key] = val
+         
+# ...............................................
+   def dumpMetadata(self):
+      import json
+      metastring = None
+      if self.metadata:
+         metastring = json.dumps(self.metadata)
+      return metastring
+
+# ...............................................
+   def loadMetadata(self, meta):
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addMetadata(metajson)
    
    @property
    def experimentId(self):

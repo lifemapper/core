@@ -40,7 +40,7 @@ class _ProjectionType(_LayerParameters):
    """
 # .............................................................................
    def __init__(self, model, scenario, mask, priority, status, statusModTime, 
-                userId, projectionId):
+                userId, projectionId, maskId=None):
       """
       @summary Initialize the _ProjectionType class instance
       @param model: Model to be projected
@@ -61,6 +61,7 @@ class _ProjectionType(_LayerParameters):
       self._status = status
       self._statusmodtime = statusModTime      
       self._mask = mask
+      self._maskId = maskId
 #       if mask is None and len(scenario.layers) > 0:
 #          self._mask = scenario.layers[0]
       if priority is not None:
@@ -80,7 +81,8 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, model, scenario, mask=None, priority=None, 
+   def __init__(self, model, scenario, metadata={},
+                mask=None, maskId=None, priority=None, 
                 dlocation=None, status=None, statusModTime=None, 
                 bbox=None, epsgcode=None, 
                 gdalType=None, gdalFormat=DEFAULT_PROJECTION_FORMAT,
@@ -107,7 +109,7 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
       """
       usr = model.getUserId()
       _ProjectionType.__init__(self, model, scenario, mask, priority, status, 
-                               statusModTime, usr, projectionId)
+                               statusModTime, usr, projectionId, maskId=maskId)
       if bbox is None:
          bbox = self._scenario.bbox
       if epsgcode is None:
@@ -128,7 +130,7 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
          gdalFormat = ALGORITHM_DATA[model.algorithmCode]['outputFormat']
       ProcessObject.__init__(self, objId=projectionId, parentId=None, 
                              status=status, statusModTime=statusModTime)
-      Raster.__init__(self, bbox=bbox, verify=verify, squid=squid,
+      Raster.__init__(self, metadata=metadata, bbox=bbox, verify=verify, squid=squid,
             startDate=scenario.startDate, endDate=scenario.endDate, 
             mapunits=mapunits, resolution=resolution, epsgcode=epsgcode, 
             dlocation=dlocation, gdalType=gdalType, gdalFormat=gdalFormat, 

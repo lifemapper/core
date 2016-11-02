@@ -28,15 +28,12 @@ import socket
 from types import StringType, UnicodeType, IntType
 import xml.etree.ElementTree as ET 
 
-from LmCommon.common.lmconstants import (ENCODING, JobStatus, RandomizeMethods, 
-                                         ProcessType)
+from LmCommon.common.lmconstants import (ENCODING, JobStatus, ProcessType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
-from LmServer.db.catalog_model import MAL
-from LmServer.db.catalog_rad import RAD
 from LmServer.db.connect import HL_NAME
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import  DbUser, JobFamily, ReferenceType
+from LmServer.common.lmconstants import  DbUser, ReferenceType
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
                                  POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
 from LmServer.sdm.envlayer import EnvironmentalLayer, EnvironmentalType
@@ -122,7 +119,7 @@ class BorgScribe(LMObject):
       updatedLyr = None
       if isinstance(lyr, EnvironmentalLayer):
          if lyr.isValidDataset():
-            updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
+            updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioid)
          else:
             raise LMError(currargs='Invalid environmental layer: {}'
                                     .format(lyr.getDLocation()), 
@@ -139,24 +136,14 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def insertScenario(self, scen):
-      lyrIds = []
+      updatedLayers = []
       updatedScen = self._borg.findOrInsertScenario(scen)
       scenId = updatedScen.getId()
       for lyr in scen.layers:
          updatedLyr = self.insertScenarioLayer(lyr, scenId)
-         lyrIds.append(updatedLyr.getId())
-      return scenId, lyrIds
-
-# ...............................................
-   def registerComputeResource(self, compResource, crContact):
-      """
-      @summary: Insert a compute resource of this Lifemapper system.  
-      @param usr: LMComputeResource object to insert
-      @return: True on success, False on failure (i.e. IPAddress is not unique)
-      """
-      borgUser = self.insertUser(crContact)
-      borgCR = self._borg.findOrInsertComputeResource(compResource)
-      return borgCR
+         updatedLayers.append(updatedLyr)
+      updatedScen.layers = updatedLayers
+      return updatedScen
    
 # ...............................................
    def insertUser(self, usr):
@@ -181,25 +168,48 @@ class BorgScribe(LMObject):
       return updatedShpgrd
 
 # ...............................................
+   def getShapeGrid(self, shpgridId=None, lyrId=None, 
+                    userId=None, lyrName=None, epsg=None):
+      """
+      @summary: Get and fill a shapeGrid from its shapegrid or layer id, or 
+                user/name/epsgcode.  
+      @return: Shapegrid object .
+      """
+      shpgrid = self._borg.getShapeGrid(self, shpgridId, lyrId, 
+                                        userId, lyrName, epsg)
+      return shpgrid
+
+# ...............................................
+   def getLayer(self, lyrId=None, lyrVerify=None, userId=None, lyrName=None, 
+                epsg=None):
+      """
+      @summary: Get and fill a Layer from its shapegrid or layer id, or 
+                user/name/epsgcode.  
+      @return: Shapegrid object .
+      """
+      lyr = self._borg.getBaseLayer(self, lyrId, lyrVerify, userId, lyrName, epsg)
+      return lyr
+
+# ...............................................
    def findTaxonSource(self, taxonSourceName):
-      txSourceId, url, moddate = self._mal.findTaxonSource(taxonSourceName)
+      txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
    
 # ...............................................
-   def getScenario(self, code, matchingLayers=None):
+   def getScenario(self, idOrCode, user=None):
       """
       @summary: Get and fill a scenario from its code or database id.  If 
                 matchingLayers is given, ensure that only layers with the same
                 type as layers in the matchingLayers are filled, and that the 
                 requested scenario layers are in the same order as those in 
                 the matchingLayers.
-      @param code: The code for the scenario to return
+      @param code: The code or scenarioid for the scenario to return
+      @param user: The userid for the scenario to return.  Needed if querying by code.
       @return: Scenario object filled with Raster objects.
       """
-      if isinstance(code, IntType):
-         scenario = self._mal.getScenarioById(code, matchingLayers)
-      elif isinstance(code, StringType) or isinstance(code, UnicodeType):
-         scenario = self._mal.getScenarioByCode(code, matchingLayers)
-
+      if isinstance(idOrCode, IntType):
+         scenario = self._borg.getScenario(scenid=idOrCode)
+      else:
+         scenario = self._borg.getScenario(code=idOrCode, usrid=user)
       return scenario
 

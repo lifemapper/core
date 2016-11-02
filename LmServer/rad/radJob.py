@@ -947,7 +947,8 @@ class RADIntersectJobData(_JobData):
                        'dlocation': shapegrid.getDLocation(),
                        'localIdIdx': shapegrid.getLocalIdIndex(),
                        'identifier': shapegrid.verify,
-                       'shapegridUrl' : "%s/shapefile" % shapegrid.metadataUrl
+                       'shapegridUrl' : "%s/shapefile" % shapegrid.metadataUrl,
+                       'url' : "%s/shapefile" % shapegrid.metadataUrl
                       }
 
       for lyr in layerset.layers:
@@ -1071,6 +1072,7 @@ class RADMatrixJobData(_JobData):
       if processtype in [ProcessType.RAD_SPLOTCH, ProcessType.RAD_CALCULATE]:
          self.shapegrid = LmAttObj(name="shapegrid")
          self.shapegrid.shapegridUrl = "%s/shapefile" % shapegrid.metadataUrl
+         self.shapegrid.url = self.shapegrid.shapegridUrl
          self.shapegrid.identifier = shapegrid.verify
          self.shapegrid.localIdIndex = shapegrid.getLocalIdIndex()
          self.shapegrid.cellSides = shapegrid.cellsides

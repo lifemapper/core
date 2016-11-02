@@ -21,6 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import json
+
 from LmCommon.common.lmconstants import DEFAULT_EPSG
 from LmServer.common.localconstants import ARCHIVE_USER
 
@@ -33,7 +35,8 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
 # .............................................................................
    def __init__(self, envType, title, description, userId, 
                 gcmCode=None, altpredCode=None, dateCode=None, 
-                keywords=None, modTime=None, environmentalTypeId=None):
+                keywords=None, 
+                metadata={}, modTime=None, environmentalTypeId=None):
       """
       @summary Initialize the _PresenceAbsence class instance
       @param envType: Code for the environmentalLayerType to be used when  
@@ -46,7 +49,8 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       @param environmentalTypeId: The environmentalTypeId for the database.  
       """
       # lyr.getParametersId() <-- lyr._layerTypeId 
-      _LayerParameters.__init__(self, -1, modTime, userId, environmentalTypeId)
+      _LayerParameters.__init__(self, -1, modTime, userId, environmentalTypeId,
+                                metadata=metadata)
       ServiceObject.__init__(self, userId, environmentalTypeId, modTime, modTime, 
                              serviceType=LMServiceType.LAYERTYPES, 
                              moduleType=LMServiceModule.SDM)
@@ -55,6 +59,7 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
       self.dateCode = dateCode
+      # Move to self.lyrMetadata dictionary
       self.typeTitle = title
       self.typeDescription = description
       self._setTypeKeywords(keywords)
@@ -85,7 +90,6 @@ class EnvironmentalType(_LayerParameters, ServiceObject):
       self._typeKeywords.add(keyword)
       
    typeKeywords = property(_getTypeKeywords, _setTypeKeywords)
-      
 
 # .........................................................................
 class EnvironmentalLayer(EnvironmentalType, Raster):
@@ -93,18 +97,21 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
    Class to hold a Raster object used for species distribution modeling.
    """
 # .............................................................................
-   def __init__(self, name, scencode=None, title=None, verify=None,
+   def __init__(self, name, lyrMetadata={}, scencode=None, verify=None,
                 minVal=None, maxVal=None, nodataVal=None, valUnits=None,
-                isCategorical=False, bbox=None, dlocation=None, metalocation=None,
-                gdalType=None, gdalFormat=None, author=None, 
-                startDate=None, endDate=None, 
+                bbox=None, dlocation=None, 
+                gdalType=None, gdalFormat=None, 
                 mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
-                keywords=None, description=None, isDiscreteData=False,
-                layerType=None, layerTypeId=None, layerTypeTitle=None, 
-                layerTypeDescription=None, layerTypeModTime=None,
+                layerType=None, layerTypeId=None, envMetadata={},
+                layerTypeModTime=None,
                 gcmCode=None, altpredCode=None, dateCode=None,
                 userId=ARCHIVE_USER, layerId=None, 
-                createTime=None, modTime=None, metadataUrl=None ):
+                modTime=None, metadataUrl=None,
+                #TODO: remove these for Borg
+                title=None, isCategorical=False, metalocation=None, author=None, 
+                description=None, startDate=None, endDate=None, keywords=None, 
+                createTime=None, isDiscreteData=False,
+                layerTypeTitle=None, layerTypeDescription=None ):
       """
       @copydoc Raster::__init__()
       @param layerType: Code for the environmentalLayerType to be used when  
@@ -118,16 +125,18 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
       """
       if name is None:
          raise LMError(currargs='EnvironmentalLayer.name is required')
-      EnvironmentalType.__init__(self, layerType, layerTypeTitle, 
-                                 layerTypeDescription, userId, 
-                                 gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
-                                 keywords=keywords,
-                                 modTime=layerTypeModTime, 
-                                 environmentalTypeId=layerTypeId)
+      EnvironmentalType.__init__(self, layerType, 
+                  layerTypeTitle, layerTypeDescription, 
+                  userId, 
+                  metadata=envMetadata,
+                  gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
+                  keywords=keywords,
+                  modTime=layerTypeModTime, 
+                  environmentalTypeId=layerTypeId)
       self._mapPrefix = None
       # Raster metadataUrl and serviceType override those of EnvironmentalType 
       # if it is a full EnvironmentalLayer
-      Raster.__init__(self, name=name, title=title, author=author, bbox=bbox, 
+      Raster.__init__(self, metadata=lyrMetadata, name=name, title=title, author=author, bbox=bbox, 
                       startDate=startDate, endDate=endDate, mapunits=mapunits, 
                       resolution=resolution, epsgcode=epsgcode, 
                       dlocation=dlocation, metalocation=metalocation,
@@ -145,8 +154,9 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
 
 # ...............................................
    @classmethod
-   def initFromParts(cls, raster, envType):
-      envLyr = EnvironmentalLayer(raster.name, title=raster.title, 
+   def initFromParts(cls, raster, envType, scencode=None):
+      envLyr = EnvironmentalLayer(raster.name, lyrMetadata=raster.lyrMetadata, 
+                        scencode=scencode, title=raster.title, 
                         verify=raster.verify, minVal=raster.minVal, 
                         maxVal=raster.maxVal, nodataVal=raster.nodataVal, 
                         valUnits=raster.valUnits, 
@@ -160,6 +170,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                         description=raster.description, author=raster.author,
                         isDiscreteData=raster.getIsDiscreteData(),
                         layerType=envType.typeCode, 
+                        envMetadata=envType.paramMetadata,
                         layerTypeId=envType.getParametersId(), 
                         layerTypeTitle=envType.typeTitle, 
                         layerTypeDescription=envType.typeDescription, 
@@ -197,6 +208,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
       self._keywords.add(keyword)
       
    keywords = property(_getKeywords, _setKeywords)
+
 
 # ...............................................
 # other methods

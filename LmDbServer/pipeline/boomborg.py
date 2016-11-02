@@ -44,7 +44,7 @@ from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint,
                                          LOG_PATH)
 from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
 from LmServer.common.log import ScriptLogger
-from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
 from LmServer.sdm.algorithm import Algorithm
@@ -89,7 +89,7 @@ class _LMBoomer(LMObject):
       self.updateTime = None
 
       try:
-         self._scribe = Scribe(self.log)
+         self._scribe = BorgScribe(self.log)
          success = self._scribe.openConnections()
       except Exception, e:
          raise LMError(currargs='Exception opening database', prevargs=e.args)
@@ -111,16 +111,16 @@ class _LMBoomer(LMObject):
          self.algs.append(alg)
 
       try:
-         txSourceId, x,y,z = self._scribe.findTaxonSource(taxonSourceName)
+         txSourceId, url, moddate = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
          
-         mscen = self._scribe.getScenario(mdlScenarioCode)
+         mscen = self._scribe.getScenario(mdlScenarioCode, user=self.userid)
          if mscen is not None:
             self.modelScenario = mscen
             if mdlScenarioCode not in projScenarioCodes:
                self.projScenarios.append(self.modelScenario)
             for pcode in projScenarioCodes:
-               scen = self._scribe.getScenario(pcode)
+               scen = self._scribe.getScenario(pcode, user=self.userid)
                if scen is not None:
                   self.projScenarios.append(scen)
                else:
@@ -1226,6 +1226,9 @@ if __name__ == "__main__":
 import mx.DateTime as dt
 import os, sys
 import time
+
+from LmDbServer.pipeline.boomborg import *
+
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.log import DaemonLogger
@@ -1236,13 +1239,32 @@ from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE,
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
-from LmDbServer.pipeline.boom import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
 from LmServer.base.taxon import ScientificName
-from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
+from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE,POINT_COUNT_MIN
+
 expdate = dt.DateTime(2016, 1, 1)
 taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+userid = ARCHIVE_USER
 
 # ...............................................
+providerListFile=PROVIDER_DUMP_FILE
+log = ScriptLogger('testboomborg')
+scribe = BorgScribe(log)
+success = scribe.openConnections()
+
+txSourceId, url, moddate = scribe.findTaxonSource(taxname)
+mscen = scribe.getScenario(DEFAULT_MODEL_SCENARIO, user=userid)
+projScenarios = []
+for pcode in DEFAULT_PROJECTION_SCENARIOS:
+   scen = scribe.getScenario(pcode)
+   projScenarios.append(scen)
+intersectGrid = scribe.getShapeGrid(ARCHIVE_USER, shpname=DEFAULT_GRID_NAME)
+algs=[]
+for acode in DEFAULT_ALGORITHMS:
+   alg = Algorithm(acode)
+   alg.fillWithDefaults()
+   algs.append(alg)
+
 boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
@@ -1250,9 +1272,8 @@ boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                             mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME)
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
-jobs = self._processChunk(speciesKey, dataCount, dataChunk)
+jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
 self._createMakeflow(jobs)
-
 
 # ...............................................
 boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
@@ -1268,7 +1289,6 @@ boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS,
                             BISON_TSN_FILE, expdate, 
                             taxonSourceName=taxname, mdlMask=None, prjMask=None, 
                             intersectGrid=DEFAULT_GRID_NAME)
-
 
 # ...............................................
 boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 

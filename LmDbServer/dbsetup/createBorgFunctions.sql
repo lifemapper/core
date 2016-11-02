@@ -81,20 +81,51 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- Scenario
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(code varchar, 
-                                             ttl text, 
-                                             authr text,
-                                             dsc text,
-                                             metadataUrlprefix text,
-                                             startdt double precision,
-                                             enddt double precision,
+CREATE OR REPLACE FUNCTION lm_v3.lm_getScenario(scenid int,
+                                                usr varchar,
+                                                code varchar)
+   RETURNS lm_v3.Scenario AS
+$$
+DECLARE
+   rec lm_v3.Scenario%rowtype;
+BEGIN
+   SELECT * INTO rec FROM lm_v3.Scenario s 
+      WHERE s.scenariocode = code and s.userid = usr;
+   IF NOT FOUND THEN
+      begin
+         SELECT * INTO STRICT rec FROM lm_v3.Scenario s WHERE s.scenarioid = scenid;
+         EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               RAISE NOTICE 'Scenario id/user/code = %/%/% not found', scenid, usr, code;
+            WHEN TOO_MANY_ROWS THEN
+               RAISE NOTICE 'Scenario id/user/code = %/%/% not unique', scenid, usr, code;
+      end;
+   END IF;
+   
+   IF NOT FOUND THEN
+      RAISE NOTICE 'Scenario id = % or user/code = %/% not found', scenid, usr, code;
+   END IF;
+   
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
+                                             code varchar, 
+                                             metaUrlprefix text,
+                                             meta text,
+                                             gcm varchar,
+                                             altpred varchar,
+                                             tm varchar,
                                              unts varchar,
                                              res double precision,
                                              epsg int,
                                              bndsstring varchar, 
                                              bboxwkt varchar,
-                                             mtime double precision,
-                                             usr varchar)
+                                             mtime double precision)
    RETURNS lm_v3.Scenario AS
 $$
 DECLARE
@@ -107,15 +138,15 @@ BEGIN
       WHERE s.scenariocode = code and s.userid = usr;
    IF NOT FOUND THEN
       INSERT INTO lm_v3.Scenario 
-         (scenarioCode, title, author, description, startDate, endDate, units, 
-          resolution, bbox, modtime, epsgcode, userid)
-      VALUES (code, ttl, authr, dsc, startdt, enddt, unts, 
-              res, bndsstring, mtime, epsg, usr);
+         (userid, scenarioCode, metadata, gcmCode, altpredCode, 
+         dateCode, units, resolution, epsgcode, bbox, modTime)
+      VALUES 
+         (usr, code, meta, gcm, altpred, tm, unts, res, epsg, bndsstring, mtime);
                        
       IF FOUND THEN
          SELECT INTO id last_value FROM lm_v3.scenario_scenarioid_seq;
          idstr = cast(id as varchar);
-         scenmetadataUrl := replace(metadataUrlprefix, '#id#', idstr);
+         scenmetadataUrl := replace(metaUrlprefix, '#id#', idstr);
          IF bboxwkt is NULL THEN 
             UPDATE lm_v3.scenario SET metadataUrl = scenmetadataUrl WHERE scenarioId = id;
          ELSE

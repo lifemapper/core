@@ -23,12 +23,14 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import json
 import numpy
 import os
 from types import BooleanType
 
-from LmCommon.common.lmconstants import OFTInteger, OFTReal, OFTBinary
+from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, MatrixType)
 from LmServer.base.lmobj import LMObject, LMError
+from LmServer.base.serviceobject import ProcessObject
 
 
 # .............................................................................
@@ -39,13 +41,17 @@ class Matrix(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, matrix, dlocation=None, isCompressed=False, 
+   def __init__(self, matrix, matrixType=MatrixType.PAM, metadata={},
+                dlocation=None, isCompressed=False, 
                 randomParameters={}):
       """
       @param matrix: numpy array
       @param dlocation: file location of the array
       """
       self._matrix = matrix
+      self.matrixType = matrixType
+      self.metadata = {}
+      self.loadMetadata(metadata)
       self._dlocation = dlocation
       self._setIsCompressed(isCompressed)
       self._randomParameters = randomParameters
@@ -76,6 +82,33 @@ class Matrix(LMObject):
       else:
          return None
    
+# ...............................................
+   def addMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.metadata[key] = val
+         
+   def dumpMetadata(self):
+      metastring = None
+      if self.metadata:
+         metastring = json.dumps(self.metadata)
+      return metastring
+
+   def loadMetadata(self, meta):
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addMetadata(metajson)
+
 # .............................................................................
    def readData(self, filename=None):
       # filename overrides dlocation

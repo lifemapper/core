@@ -22,18 +22,15 @@
           02110-1301, USA.
 """
 import argparse
-import mx.DateTime as DT
+import mx.DateTime
 import os
 
 # TODO: These should be included in the package of data
 import LmDbServer.tools.charlieMetaExp3 as META
 
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
-         DEFAULT_MAPUNITS)
-
+from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
-         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
+from LmDbServer.common.localconstants import (SCENARIO_PACKAGE)
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
@@ -45,23 +42,21 @@ from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer
 from LmServer.sdm.scenario import Scenario
 from LmServer.rad.shapegrid import ShapeGrid
 
+CURRTIME = mx.DateTime.gmt().mjd
+# CURRTIME = 57686
 # ...............................................
-def addUsers(scribe):
+def addUsers(scribe, userList):
    """
-   @summary Adds algorithms to the database from the algorithm dictionary
+   @summary Adds ARCHIVE_USER, anon user and USER from metadata to the database
    """
-   em = '{}@nowhere.com'.format(ARCHIVE_USER)
-   defaultUser = LMUser(ARCHIVE_USER, em, em, modTime=DT.gmt().mjd)
-   scribe.log.info('  Insert ARCHIVE_USER {} ...'.format(ARCHIVE_USER))
-   usrid = scribe.insertUser(defaultUser)
-
-   anonName = 'anon'
-   anonEmail = '%s@nowhere.com' % anonName
-   anonUser = LMUser(anonName, anonEmail, anonEmail, modTime=DT.gmt().mjd)
-   scribe.log.info('  Insert anon {} ...'.format(anonName))
-   usrid2 = scribe.insertUser(anonUser)
-
-   return [usrid, usrid2]
+   users = []
+   for userMeta in userList:
+      if userMeta is not None:
+         user = LMUser(userMeta['id'], userMeta['email'], userMeta['email'], modTime=CURRTIME)
+         scribe.log.info('  Insert user {} ...'.format(userMeta['id']))
+         newuser = scribe.insertUser(user)
+         users.append(newuser)
+   return users
 
 # ...............................................
 def addAlgorithms(scribe):
@@ -76,18 +71,18 @@ def addAlgorithms(scribe):
       ids.append(algid)
    return ids
 
-# ...............................................
-def addLayerTypes(scribe, lyrtypeMeta, usr): 
-   etypes = [] 
-   for typecode, typeinfo in lyrtypeMeta.iteritems():
-      ltype = EnvironmentalType(typecode, typeinfo['title'], 
-                                typeinfo['description'], usr, 
-                                keywords=typeinfo['keywords'], 
-                                modTime=DT.gmt().mjd)
-      scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
-      etype = scribe.insertLayerTypeCode(ltype)
-      etypes.append(etype)
-   return etypes
+# # ...............................................
+# def addLayerTypes(scribe, lyrtypeMeta, usr): 
+#    etypes = [] 
+#    for typecode, typeinfo in lyrtypeMeta.iteritems():
+#       ltype = EnvironmentalType(typecode, typeinfo['title'], 
+#                                 typeinfo['description'], usr, 
+#                                 keywords=typeinfo['keywords'], 
+#                                 modTime=CURRTIME)
+#       scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
+#       etype = scribe.insertLayerTypeCode(ltype)
+#       etypes.append(etype)
+#    return etypes
 
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
@@ -120,35 +115,31 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   currtime = DT.gmt().mjd
-   rstType = lyrMeta['gdaltype']
-   
    for ltype, ltmeta in lyrtypeMeta.iteritems():
+      keywords = [k for k in baseMeta['keywords']]
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
       lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
                             suffix=pkgMeta['suffix'])
-      lyrtitle = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
-                             suffix=pkgMeta['suffix'], isTitle=True)
+      lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
+                 'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
+      envmeta = {'title': ltmeta['title'],
+                 'description': ltmeta['description'],
+                 'keywords': keywords.extend(ltmeta['keywords'])}
       dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
-      envlyr = EnvironmentalLayer(lyrname, 
-               title=lyrtitle, 
-               valUnits=ltmeta['valunits'],
-               dlocation=dloc, 
-               bbox=pkgMeta['bbox'], 
-               gdalFormat=lyrMeta['gdalformat'], 
-               gdalType=rstType,
-               author=None, 
-               mapunits=lyrMeta['mapunits'], 
-               resolution=lyrMeta['resolution'], 
-               epsgcode=lyrMeta['epsg'], 
-               keywords=ltmeta['keywords'], 
-               description=lyrtitle, 
-               layerType=ltype, layerTypeTitle=ltmeta['title'], 
-               layerTypeDescription=ltmeta['description'], 
-               userId=usr, createTime=currtime, modTime=currtime)
+      envlyr = EnvironmentalLayer(lyrname, lyrMetadata=lyrmeta,
+                                  valUnits=ltmeta['valunits'],
+                                  dlocation=dloc, 
+                                  bbox=pkgMeta['bbox'], 
+                                  gdalFormat=lyrMeta['gdalformat'], 
+                                  gdalType=lyrMeta['gdaltype'],
+                                  mapunits=lyrMeta['mapunits'], 
+                                  resolution=lyrMeta['resolution'], 
+                                  epsgcode=lyrMeta['epsg'], 
+                                  layerType=ltype, envMetadata=envmeta,
+                                  userId=usr, modTime=CURRTIME)
       layers.append(envlyr)
       if isStatic:
          staticLayers[ltype] = envlyr
@@ -166,8 +157,10 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
    else:
       for relFname, kList in ltmeta['files'].iteritems():
          if obsOrPred in kList:
-            if (gcm is not None and (gcm in kList and tm in kList and
-                                     (altPred is None or altPred in kList))):
+            if gcm == None and tm == None and altPred == None:
+               return relFname, isStatic
+            elif (gcm in kList and tm in kList and
+                  (altPred is None or altPred in kList)):
                return relFname, isStatic
    print('Failed to find layertype {} for {}, gcm {}, altpred {}, time {}'
          .format(ltmeta['title'], obsOrPred, gcm, altPred, tm))
@@ -175,50 +168,56 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
       
 # ...............................................
 def _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers,
-                        obsOrPredRpt, tm, gcm=None, altpred=None):
+                        predRpt, tm, gcm=None, altpred=None):
    """
    @summary Assembles layer metadata for a single layerset
    """
-   currtime = DT.gmt().mjd
+   mdlvals = META.OBSERVED_PREDICTED_META[predRpt]['models'][gcm]
+   tmvals = META.OBSERVED_PREDICTED_META[predRpt]['times'][tm]
    layers = []
    rstType = None
    layertypes = pkgMeta['layertypes']
    for ltype in layertypes:
+      keywords = [k for k in META.OBSERVED_PREDICTED_META[predRpt]['keywords']]
       ltmeta = lyrtypeMeta[ltype]
-      relfname, isStatic = _findFileFor(ltmeta, obsOrPredRpt, 
-                                        gcm=gcm, tm=tm, altpred=altpred)
+      relfname, isStatic = _findFileFor(ltmeta, predRpt, 
+                                        gcm=gcm, tm=tm, altPred=altpred)
       if not isStatic:
-         lyrname = _getbioName(obsOrPredRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
+         lyrname = _getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
                                altpred=altpred, lyrtype=ltype, 
                                suffix=pkgMeta['suffix'], isTitle=False)
-         lyrtitle = _getbioName(obsOrPredRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
+         lyrtitle = _getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tmvals['name'], 
                                 altpred=altpred, lyrtype=ltype, 
                                 suffix=pkgMeta['suffix'], isTitle=True)
+         scentitle = _getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
+                                 tm=tmvals['name'], altpred=altpred, 
+                                 suffix=pkgMeta['suffix'], isTitle=True)
+         lyrdesc = '{} for {}'.format(ltmeta['description'], scentitle)
+         
+         lyrmeta = {'title': lyrtitle, 'description': lyrdesc}
+         envmeta = {'title': ltmeta['title'],
+                    'description': ltmeta['description'],
+                    'keywords': keywords.extend(ltmeta['keywords'])}
          dloc = os.path.join(ENV_DATA_PATH, pkgMeta['topdir'], relfname)
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
             dloc = None
-         envlyr = EnvironmentalLayer(lyrname, 
-                  title=lyrtitle, 
-                  valUnits=ltmeta['valunits'],
-                  dlocation=dloc, 
-                  bbox=pkgMeta['bbox'], 
-                  gdalFormat=lyrMeta['gdalformat'], 
-                  gdalType=rstType,
-                  author=None, 
-                  mapunits=lyrMeta['mapunits'], 
-                  resolution=lyrMeta['resolution'], 
-                  epsgcode=lyrMeta['epsg'], 
-                  keywords=ltmeta['keywords'], 
-                  description=lyrtitle, 
-                  layerType=ltype, layerTypeTitle=ltmeta['title'], 
-                  layerTypeDescription=ltmeta['description'], 
-                  gcmCode=gcm, rcpCode=altpred, dateCode=tm,
-                  userId=usr, createTime=currtime, modTime=currtime)
+         envlyr = EnvironmentalLayer(lyrname, lyrMetadata=lyrmeta,
+                                     valUnits=ltmeta['valunits'],
+                                     dlocation=dloc, 
+                                     bbox=pkgMeta['bbox'], 
+                                     gdalFormat=lyrMeta['gdalformat'], 
+                                     gdalType=rstType,
+                                     mapunits=lyrMeta['mapunits'], 
+                                     resolution=lyrMeta['resolution'], 
+                                     epsgcode=lyrMeta['epsg'], 
+                                     layerType=ltype, 
+                                     gcmCode=gcm, altpredCode=altpred, dateCode=tm,
+                                     envMetadata=envmeta,
+                                     userId=usr, modTime=CURRTIME)
       else:
          # Use the observed data
          envlyr = staticLayers[ltype]
-
       layers.append(envlyr)
    return layers
 
@@ -231,22 +230,22 @@ def createBaselineScenario(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    obsKey = pkgMeta['baseline']
    baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
    tm = baseMeta['times'].keys()[0]
-   tmcode = baseMeta['times'][tm]['shortcode']
    basekeywords = [k for k in META.ENV_KEYWORDS]
    basekeywords.extend(baseMeta['keywords'])
    
    scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
    lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, 
                                            lyrtypeMeta)
-   scen = Scenario(scencode, 
-            title=baseMeta['title'], 
-            author=baseMeta['author'], 
-            description=baseMeta['description'], 
-            units=lyrMeta['mapunits'], 
-            res=lyrMeta['resolution'], 
-            bbox=pkgMeta['bbox'], 
-            modTime=DT.gmt().mjd, keywords=basekeywords, 
-            epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
+   scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
+               'description': baseMeta['description'], 'keywords': basekeywords}
+   scen = Scenario(scencode, metadata=scenmeta, 
+                   units=lyrMeta['mapunits'], 
+                   res=lyrMeta['resolution'], 
+                   bbox=pkgMeta['bbox'], 
+                   modTime=CURRTIME,  
+                   epsgcode=lyrMeta['epsg'], 
+                   layers=lyrs, 
+                   userId=usr)
    return scen, staticLayers
 
 # ...............................................
@@ -266,10 +265,8 @@ def createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
             altvals = {}
          else:
             altvals = META.OBSERVED_PREDICTED_META[predRpt]['alternatePredictions'][altpred]
-            altShortcode = altvals['shortcode']
          mdlvals = META.OBSERVED_PREDICTED_META[predRpt]['models'][gcm]
          tmvals = META.OBSERVED_PREDICTED_META[predRpt]['times'][tm]
-
          # Reset keywords
          scenkeywords = [k for k in META.ENV_KEYWORDS]
          scenkeywords.extend(META.OBSERVED_PREDICTED_META[predRpt]['keywords'])
@@ -278,28 +275,26 @@ def createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
                scenkeywords.extend(vals['keywords'])
             except:
                pass
-
          # LM Scenario code, title, description
-         scencode = _getbioName(predRpt, tmvals['shortcode'], pkgMeta['res'], 
-                                gcm=mdlvals['shortcode'], altpred=altShortcode, 
+         scencode = _getbioName(predRpt, pkgMeta['res'], gcm=gcm, 
+                                tm=tm, altpred=altpred, 
                                 suffix=pkgMeta['suffix'], isTitle=False)
-         scentitle = _getbioName(META.OBSERVED_PREDICTED_META[predRpt]['name'], 
-                                 tm, pkgMeta['res'], gcm=mdlvals['name'], 
-                                 altpred=altpred, suffix=pkgMeta['suffix'], 
-                                 isTitle=True)
-         scendesc =  ' '.join(('Predicted climate calculated from',
-             '{} and Worldclim 1.4 observed mean climate,'.format(scentitle),
-             'plus static layers such as elevation and soils' ))
-         lyrs = _getPredictedLayers(usr, scentitle, pkgMeta, lyrMeta, 
-                                    lyrtypeMeta, staticLayers, predRpt, gcm, tm, 
-                                    altpred=altpred)
-         scen = Scenario(scencode, title=scentitle, author=mdlvals['author'], 
-                         description=scendesc, 
-                         startdt=tmvals['startdate'], enddt=tmvals['enddate'], 
+         scentitle = _getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
+                                 tm=tmvals['name'], altpred=altpred, 
+                                 suffix=pkgMeta['suffix'], isTitle=True)
+         obstitle = META.OBSERVED_PREDICTED_META[pkgMeta['baseline']]['title']
+         scendesc =  ' '.join((obstitle, 
+                  'and predicted climate calculated from {}'.format(scentitle)))
+         scenmeta = {'title': scentitle, 'author': mdlvals['author'], 
+                     'description': scendesc, 'keywords': scenkeywords}
+         lyrs = _getPredictedLayers(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+                              staticLayers, predRpt, tm, gcm=gcm, altpred=altpred)
+         
+         scen = Scenario(scencode, metadata=scenmeta, 
+                         gcmCode=gcm, altpredCode=altpred, dateCode=tm,
                          units=lyrMeta['mapunits'], res=lyrMeta['resolution'], 
-                         bbox=pkgMeta['bbox'], modTime=DT.gmt().mjd, 
-                         keywords=scenkeywords, epsgcode=lyrMeta['epsg'],
-                         layers=lyrs, userId=usr)
+                         bbox=pkgMeta['bbox'], modTime=CURRTIME, 
+                         epsgcode=lyrMeta['epsg'], layers=lyrs, userId=usr)
          predScenarios[scencode] = scen
    return predScenarios
 
@@ -314,52 +309,21 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
                                                    lyrtypeMeta)
    msgs.append('Created base scenario')
    # Predicted Past and Future
-   unionScenarios = createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
+   allScenarios = createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                                              staticLayers)
    msgs.append('Created predicted scenarios')
    # Join all sets and dictionaries
-   unionScenarios[basescen.code] = basescen
-   return unionScenarios, msgs
+   allScenarios[basescen.code] = basescen
+   return allScenarios, msgs
       
 # ...............................................
-def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenPkgName):
+def addScenarioAndLayerMetadata(scribe, scenarios):
    """
-   @summary Assemble climate, taxonomy metadata and add to database  
-            lyrMeta = {'epsg': DEFAULT_EPSG, 
-                       'mapunits': DEFAULT_MAPUNITS, 
-                       'resolution': RESOLUTIONS[pkgMeta['res']], 
-                       'gdaltype': ENVLYR_GDALTYPE, 
-                       'gridname': DEFAULT_GRID_NAME, 
-                       'gridsides': 4, 
-                       'gridsize': DEFAULT_GRID_CELLSIZE}
+   @summary Add scenario and layer metadata to database  
    """
-   # Add layertypes for this archive user
-   ltIds = addLayerTypes(scribe, lyrtypeMeta, usr)   
-   # Grid for GPAM
-   shpId = addIntersectGrid(scribe, lyrMeta['gridname'], lyrMeta['gridsides'], 
-                     lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
-                     pkgMeta['bbox'], usr)
-   scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
-   for msg in msgs:
-      scribe.log.info(msg)
-   for scode, scen in scens.iteritems():
+   for scode, scen in scenarios.iteritems():
       scribe.log.info('Insert scenario {}'.format(scode))
-      scribe.insertScenario(scen)
-
-# ...............................................
-def _getClimateMeta(scenPkg):
-   pkgMeta = META.CLIMATE_PACKAGES[scenPkg]
-   lyrMeta = {'epsg': DEFAULT_EPSG, 
-              'topdir': pkgMeta['topdir'],
-              'mapunits': DEFAULT_MAPUNITS, 
-              'resolution': META.RESOLUTIONS[pkgMeta['res']], 
-              'gdaltype': META.ENVLYR_GDALTYPE, 
-              'gdalformat': META.ENVLYR_GDALFORMAT,
-#               'remoteurl': REMOTE_DATA_URL,
-              'gridname': DEFAULT_GRID_NAME, 
-              'gridsides': 4, 
-              'gridsize': DEFAULT_GRID_CELLSIZE}
-   return pkgMeta, lyrMeta
+      newscen = scribe.insertScenario(scen)
 
 # ...............................................
 def _importClimatePackageMetadata():
@@ -385,14 +349,23 @@ if __name__ == '__main__':
             help="Which metadata to catalog (algorithm, climate, taxonomy, all (default))")
    args = parser.parse_args()
    metaType = args.metadata
-
-#    _importClimatePackageMetadata()
-
+# .............................
+   defUser = {'id': ARCHIVE_USER,
+              'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
+   anonUser = {'id': DEFAULT_POST_USER,
+               'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
+   try:
+      newUser = META.USER
+      currUserid = META.USER['id']
+   except:
+      newUser = None
+      currUserid = ARCHIVE_USER
+# .............................
    try:
       taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
    except:
       taxSource = None
-   
+# .............................
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
    try:
@@ -403,21 +376,40 @@ if __name__ == '__main__':
       if not success: 
          logger.critical('Failed to open database')
          exit(0)
-      
-      logger.info('  Insert user {} metadata ...'.format(ARCHIVE_USER))
-      archiveUserId, anonUserId = addUsers(scribeWithBorg)
-      
+# .............................
+      pkgMeta = META.CLIMATE_PACKAGES[SCENARIO_PACKAGE]
+      lyrMeta = {'epsg': META.EPSG, 
+                 'topdir': pkgMeta['topdir'],
+                 'mapunits': META.MAPUNITS, 
+                 'resolution': META.RESOLUTIONS[pkgMeta['res']], 
+                 'gdaltype': META.ENVLYR_GDALTYPE, 
+                 'gdalformat': META.ENVLYR_GDALFORMAT,
+                 'gridname': META.GRID_NAME, 
+                 'gridsides': META.GRID_NUM_SIDES, 
+                 'gridsize': META.GRID_CELLSIZE}
+
+      logger.info('  Insert user metadata ...')
+      userObjs = addUsers(scribeWithBorg, [defUser, anonUser, newUser])
+# .............................
       if metaType in ('algorithm', 'all'):
          logger.info('  Insert algorithm metadata ...')
          aIds = addAlgorithms(scribeWithBorg)
-
+# .............................
       if metaType in ('climate', 'all'):
          logger.info('  Insert climate {} metadata ...'
                      .format(SCENARIO_PACKAGE))
-         pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-         addScenarioPackageMetadata(scribeWithBorg, ARCHIVE_USER, pkgMeta, lyrMeta, 
-                                    META.LAYERTYPE_META, SCENARIO_PACKAGE)
-
+         scens, msgs = createAllScenarios(currUserid, pkgMeta, lyrMeta, 
+                                          META.LAYERTYPE_META)
+         for msg in msgs:
+            scribeWithBorg.log.info(msg)
+         addScenarioAndLayerMetadata(scribeWithBorg, scens)
+# .............................
+      if metaType in ('grid', 'all'):
+            # Grid for GPAM
+         shpId = addIntersectGrid(scribeWithBorg, lyrMeta['gridname'], lyrMeta['gridsides'], 
+                           lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
+                           pkgMeta['bbox'], currUserid)
+# .............................
       if metaType in ('taxonomy', 'all'):
          # Insert all taxonomic sources for now
          for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
@@ -432,25 +424,68 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
+import mx.DateTime
+import LmDbServer.tools.charlieMetaExp3 as META
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
+         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
+from LmServer.base.lmobj import LMError
+from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
+from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
+from LmServer.common.log import ScriptLogger
+from LmServer.common.lmuser import LMUser
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.sdm.algorithm import Algorithm
+from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
+from LmServer.sdm.scenario import Scenario
+from LmServer.rad.shapegrid import ShapeGrid
+CURRTIME = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBorg import *
-from LmDbServer.tools.initBorg import _getClimateMeta, _getbioName, _getBaselineLayers
-
+from LmDbServer.tools.initBorg import (_getBaselineLayers, _getbioName, 
+          _findFileFor, _getPredictedLayers)
+defUser = {'id': ARCHIVE_USER,
+           'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
+anonUser = {'id': DEFAULT_POST_USER,
+            'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
+newUser = META.USER
+currUserid = META.USER['id']
+taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
-
-pkgMeta, lyrMeta = _getClimateMeta(SCENARIO_PACKAGE)
-
+pkgMeta = META.CLIMATE_PACKAGES[SCENARIO_PACKAGE]
+lyrMeta = {'epsg': META.EPSG, 
+           'topdir': pkgMeta['topdir'],
+           'mapunits': META.MAPUNITS, 
+           'resolution': META.RESOLUTIONS[pkgMeta['res']], 
+           'gdaltype': META.ENVLYR_GDALTYPE, 
+           'gdalformat': META.ENVLYR_GDALFORMAT,
+           'gridname': META.GRID_NAME, 
+           'gridsides': META.GRID_NUM_SIDES, 
+           'gridsize': META.GRID_CELLSIZE}
 usr = ARCHIVE_USER
 lyrtypeMeta = META.LAYERTYPE_META
 scenPkgName = SCENARIO_PACKAGE
+usrlist = addUsers(scribe, [defUser, anonUser, newUser])
 scens, msgs = createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta)
-scode = 'WC-10min'
+scode = 'observed-1km'
 scen = scens[scode]
+newOrExistingScen = scribe.insertScenario(scen)
 
-newOrExistingScen = scribe._borg.findOrInsertScenario(scen)
-scenid = newOrExistingScen.getId()
-lyr = scen.layers[0]
-for lyr in scen.layers:
-   newOrExistingLyr = scribe._borg.findOrInsertEnvLayer(lyr, scenarioId=scenarioid)
+select * from lm_v3.lm_findOrInsertEnvLayer(NULL,'kubi',NULL,NULL,'bio1-AR5-GISS-E2-R-RCP4.5-2050-1km','/share/lm/data/archive/kubi/2163/Layers/bio1-AR5-GISS-E2-R-RCP4.5-2050-1km.tif','http://badenov-vc1.nhm.ku.edu/services/sdm/layers/#id#','{"description": "Annual Mean Temperature for AR5, NASA GISS GCM ModelE, RCP4.5, 2041-2060, 1km", "title": "bio1, AR5, GISS-E2-R, RCP4.5, 2041-2060, 1km"}','GTiff',NULL,NULL,'degreesCelsiusTimes10',NULL,NULL,NULL,2163,'meters',1000,'-180.00,-60.00,180.00,90.00',NULL,57692.8772879,NULL,'bio1','GISS-E2-R','RCP4.5','2050','{"keywords": null, "description": "Annual Mean Temperature", "title": "Annual Mean Temperature"}',NULL);
+
+shpId = addIntersectGrid(scribe, lyrMeta['gridname'], lyrMeta['gridsides'], 
+                           lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
+                           pkgMeta['bbox'], usr)
+select * from lm_v3.lm_findOrInsertShapeGrid(NULL, 'kubi', '10km-grid', 
+      NULL,NULL,NULL,
+      '/share/lm/data/archive/kubi/2163/Layers/shpgrid_10km-grid.shp',
+      NULL,3,FALSE,
+      'ESRI Shapefile',2163,'meters',10000,NULL,
+      '-180.00,-60.00,180.00,90.00',NULL,
+      'http://badenov-vc1.nhm.ku.edu/services/rad/layers/#id#',
+      4,10000,0,'siteid','centerX','centerY',NULL,NULL);
+
+
+                           
 """

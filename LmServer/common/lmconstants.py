@@ -486,6 +486,7 @@ class JobFamily:
 # Corresponds to LmCommon individual constants MODELS_SERVICE, LAYERS_SERVICE, etc
 class LMServiceType:
    BUCKETS = 'buckets'
+   TREES = 'trees'
    EXPERIMENTS = 'experiments'
    RAD_EXPERIMENTS = 'experiments'
    SDM_EXPERIMENTS = 'experiments'
@@ -495,6 +496,7 @@ class LMServiceType:
    PAMSUMS = 'pamsums'
    ANCILLARY_LAYERS = 'anclayers'
    PRESENCEABSENCE_LAYERS = 'palayers'
+   MATRIX_LAYERS = 'mtxlayers'
    PROJECTIONS = 'projections'
    SCENARIOS = 'scenarios'
    SHAPEGRIDS = 'shpgrid'
@@ -509,10 +511,6 @@ class LMServiceModule:
    SDM = 'sdm'
    RAD = 'rad'
 
-LM_MODULE = 'lm'
-SDM_MODULE = 'sdm'
-RAD_MODULE = 'rad'
-
 # ............................................................................
 # Lifemapper RAD constants
 ORGANISM_LAYER_KEY = 'orgLayerIndices'
@@ -520,12 +518,6 @@ ENVIRONMENTAL_LAYER_KEY = 'envLayerIndices'
 
 ID_PLACEHOLDER = '#id#'
 
-# # {GDALDriverName: (ext, {Keyword Args/ create options})}
-# GDALFormats = {'AAIGrid': ('.asc', {'DECIMAL_PRECISION': 6, 
-#                                     'FORCE_CELLSIZE':'YES'}),
-#                'GTiff': ('.tif', {}),
-#                'HFA': ('.img', {})
-#                }
 GDALFormatCodes = {'AAIGrid': {'FILE_EXT': OutputFormat.ASCII, 
                                'DECIMAL_PRECISION': 6, 
                                'FORCE_CELLSIZE':'YES'},

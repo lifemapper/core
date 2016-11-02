@@ -25,8 +25,10 @@ try:
    from cStringIO import StringIO
 except:
    from StringIO import StringIO
+import json
 import glob
 import os
+
 from osgeo import gdal, gdalconst, ogr, osr
 import subprocess
 from types import ListType, TupleType
@@ -50,6 +52,9 @@ from LmServer.common.localconstants import APP_PATH
 class _Layer(LMSpatialObject, ServiceObject):
    """
    Superclass of Vector and Raster  
+   @todo: remove: title, isCategorical, metalocation, author, description, 
+                  startDate, endDate, keywords, createTime, isDiscreteData
+
    """
 # .............................................................................
 # Constructor
@@ -57,7 +62,7 @@ class _Layer(LMSpatialObject, ServiceObject):
    def __init__(self, name, metalocation, dlocation, dataFormat, title, bbox, 
                 startDate, endDate, mapunits, valUnits, isCategorical, 
                 resolution, keywdSeq, epsgcode, description, author, 
-                verify=None, squid=None,
+                metadata={}, verify=None, squid=None,
                 svcObjId=None, lyrId=None, lyrUserId=None, 
                 createTime=None, modTime=None, metadataUrl=None,
                 serviceType=LMServiceType.LAYERS, moduleType=None):
@@ -65,21 +70,14 @@ class _Layer(LMSpatialObject, ServiceObject):
       @summary Layer superclass constructor
       @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
       @param name: Short name, used for layer name in mapfiles
-      @param metalocation: File location of metadata associated with this layer.  
       @param dlocation: Data location (url, file path, ...)
       @param dataFormat: Data file format (ogr or gdal codes, used to choose
                          driver for read/write)
-      @param title: Human readable identifier
-      @param startDate: first valid date of the data 
-      @param endDate: last valid date of the data
       @param mapunits: mapunits of measurement. These are keywords as used in 
                     mapserver, choice of [feet|inches|kilometers|meters|miles|dd],
                     described in http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
       @param valUnits: Units of measurement for data values
-      @param isCategorical: True if nominal/categorical (not numerical) data.
       @param resolution: resolution of the data - pixel size in @mapunits
-      @param keywords: sequence of keywords
-      @param description: description of the layer
       @param lyrId: Database id of the layer object
       @param lyrUserId: User id on the layer object
       """
@@ -101,17 +99,20 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._setVerify(verify)
       self.squid = squid
       self._metalocation = metalocation
-      self.title = title
-      self.startDate = startDate
-      self.endDate = endDate
+      self.lyrMetadata = {}
+      self.loadLyrMetadata(metadata)
       self._setUnits(mapunits)
       self.valUnits = valUnits
-      self.isCategorical = isCategorical
       self.resolution = resolution
-      self._setKeywords(keywdSeq)
+      # Move to EnvironmentalType.dateCode
+      self.startDate = startDate
+      self.endDate = endDate
+      # Move to self.metadata dictionary
+      self.title = title
       self.description = description
       self.author = author
-      self._thumbnail = None
+      self._setKeywords(keywdSeq)
+      self.isCategorical = isCategorical
        
 # ...............................................
    def setLayerId(self, lyrid):
@@ -145,6 +146,35 @@ class _Layer(LMSpatialObject, ServiceObject):
       """
       return self._layerUserId
    
+# ...............................................
+   def addLyrMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.lyrMetadata[key] = val
+         
+# ...............................................
+   def dumpLyrMetadata(self):
+      metastring = None
+      if self.lyrMetadata:
+         metastring = json.dumps(self.lyrMetadata)
+      return metastring
+
+# ...............................................
+   def loadLyrMetadata(self, meta):
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addLyrMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addLyrMetadata(metajson)
+
 # ...............................................
    def getValAttribute(self):
       return self._valAttribute
@@ -375,7 +405,7 @@ class _LayerParameters(LMObject):
 # Constructor
 # .............................................................................
    def __init__(self, matrixIndex, modTime, userId, paramId, 
-                attrFilter=None, valueFilter=None):
+                metadata={}, attrFilter=None, valueFilter=None):
       """
       @summary Initialize the _LayerParameters class instance
       @param matrixIndex: Index of the position in presenceAbsence or other 
@@ -395,12 +425,15 @@ class _LayerParameters(LMObject):
                     the field containing species name.
       @param valueFilter: The value of interest in the attrFilter
       """
+      self.paramMetadata = {}
+      self.loadParamMetadata(metadata)
       # TODO: create a dictionary of variable attributes for treeIndex, matrixIndex, etc
       self._treeIndex = None
       self._matrixIndex = matrixIndex
       self.parametersModTime = modTime
       self._parametersId = paramId
       self._parametersUserId = userId
+      
       self.attrFilter = attrFilter
       self.valueFilter = valueFilter
       
@@ -474,6 +507,34 @@ class _LayerParameters(LMObject):
       """
       return self._treeIndex
 
+# ...............................................
+   def addParamMetadata(self, metadict):
+      for key, val in metadict.iteritems():
+         self.paramMetadata[key] = val
+         
+   def dumpParamMetadata(self):
+      metastring = None
+      if self.paramMetadata:
+         metastring = json.dumps(self.paramMetadata)
+      return metastring
+
+   def loadParamMetadata(self, meta):
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      if meta is not None:
+         if isinstance(meta, dict): 
+            self.addParamMetadata(meta)
+         else:
+            try:
+               metajson = json.loads(meta)
+            except Exception, e:
+               print('Failed to load JSON object from {} object {}'
+                     .format(type(meta), meta))
+            else:
+               self.addParamMetadata(metajson)
+
+
 # .............................................................................
 # Raster class (inherits from _Layer)
 # .............................................................................
@@ -482,7 +543,7 @@ class Raster(_Layer):
    Class to hold information about a raster dataset.
    """
    # ...............................................       
-   def __init__(self, name=None, title=None, author=None, 
+   def __init__(self, metadata={}, name=None, title=None, author=None, 
                 minVal=None, maxVal=None, nodataVal=None, valUnits=None,
                 isCategorical=False, bbox=None, dlocation=None, 
                 metalocation=None,
@@ -529,7 +590,8 @@ class Raster(_Layer):
       _Layer.__init__(self, name, metalocation, dlocation, gdalFormat, title, 
                       bbox, startDate, endDate, mapunits, valUnits, 
                       isCategorical, resolution, keywords, epsgcode, 
-                      description, author, verify=verify, squid=squid,
+                      description, author, 
+                      metadata=metadata, verify=verify, squid=squid,
                       svcObjId=svcObjId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, 
                       metadataUrl=metadataUrl, serviceType=serviceType, 
@@ -958,7 +1020,7 @@ class Vector(_Layer):
    Class to hold information about a vector dataset.
    """
    # ...............................................       
-   def __init__(self, name=None, title=None, author=None,  
+   def __init__(self, metadata={}, name=None, title=None, author=None,  
                 bbox=None, dlocation=None, metalocation=None, 
                 startDate=None, endDate=None, 
                 mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
@@ -1007,7 +1069,8 @@ class Vector(_Layer):
       _Layer.__init__(self, name, metalocation, dlocation, ogrFormat, title, 
                       bbox, startDate, endDate, mapunits, valUnits, 
                       isCategorical, resolution, keywords, epsgcode, 
-                      description, author, verify=verify, squid=squid,
+                      description, author, 
+                      metadata=metadata, verify=verify, squid=squid,
                       svcObjId=svcObjId, lyrId=lyrId, lyrUserId=lyrUserId, 
                       createTime=createTime, modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=serviceType, moduleType=moduleType)

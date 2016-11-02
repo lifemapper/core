@@ -50,15 +50,15 @@ from LmServer.sdm.sdmprojection import SDMProjection
 # .............................................................................
 class Borg(DbPostgresql):
    """
-   Class to control modifications to the MAL database.
+   Class to control modifications to the Borg database.
    """
 # .............................................................................
 # Constructor
 # .............................................................................
    def __init__(self, logger, dbHost, dbPort, dbUser, dbKey):
       """
-      @summary Constructor for MAL class
-      @param logger: LmLogger to use for MAL
+      @summary Constructor for Borg class
+      @param logger: LmLogger to use for Borg
       @param dbHost: hostname for database machine
       @param dbPort: port for database connection
       """
@@ -67,17 +67,6 @@ class Borg(DbPostgresql):
                             schema=LM_SCHEMA_BORG)
       earl = EarlJr()
       self._webservicePrefix = earl.createWebServicePrefix()
-            
-# ...............................................
-   def _getRelativePath(self, dlocation=None, url=None):
-      relativePath = None
-      if dlocation is not None:
-         if dlocation.startswith(ARCHIVE_PATH):
-            relativePath = dlocation[len(ARCHIVE_PATH):]
-      elif url is not None:
-         if url.startswith(self._webservicePrefix):
-            relativePath = url[len(self._webservicePrefix):]
-      return relativePath
 
 # ...............................................
    def _createUser(self, row, idxs):
@@ -112,10 +101,9 @@ class Borg(DbPostgresql):
       Created only from a model, lm_fullModel, or lm_fullProjection 
       """
       code = self._getColumnValue(row, idxs, ['algorithmcode'])
-      name = self._getColumnValue(row, idxs, ['name'])
       params = self._getColumnValue(row, idxs, ['algorithmparams'])
       try:
-         alg = Algorithm(code, name=name, parameters=params)
+         alg = Algorithm(code, parameters=params)
       except:
          alg = None
       return alg
@@ -138,111 +126,100 @@ class Borg(DbPostgresql):
                          modTime=self._getColumnValue(row, idxs, ['modtime']),
                          epsgcode=self._getColumnValue(row, idxs, ['epsgcode']),
                          scenarioid=self._getColumnValue(row, idxs, ['scenarioid']))
-         keystr = self._getColumnValue(row, idxs, ['keywords'])
-         if keystr is not None:
-            scen.keywords = keystr.split(',')
       return scen
 
 # ...............................................
-   def _createLayerType(self, row, idxs):
+   def _createEnvType(self, row, idxs):
       """
       Create an _EnvironmentalType from a LayerType, lm_envlayer,
-      lm_envlayerAndKeywords or lm_layerTypeAndKeywords record in the MAL
+      gcmcode, altpredCode, datecode, metadata
+
       """
       lyrType = None
-      keywordLst = []
       if row is not None:
-         keystr = self._getColumnValue(row, idxs, ['keywords'])
-         if keystr is not None and len(keystr) > 0:
-            keywordLst = keystr.split(',')
-         code = self._getColumnValue(row, idxs, ['typecode', 'code'])
-         title = self._getColumnValue(row, idxs, ['typetitle', 'title'])
-         desc = self._getColumnValue(row, idxs, ['typedescription', 'description'])
-         modtime = self._getColumnValue(row, idxs, ['typemodtime', 'modtime'])
-         usr = self._getColumnValue(row, idxs, ['userid'])
-         ltid = self._getColumnValue(row, idxs, ['layertypeid'])
-                                                
-         lyrType = EnvironmentalType(code, title, desc, usr,
-                                     keywords=keywordLst,
-                                     modTime=modtime, 
-                                     environmentalTypeId=ltid)
+         envcode = self._getColumnValue(row, idxs, ['envcode'])
+         gcmcode = self._getColumnValue(row, idxs, ['gcmcode'])
+         altcode = self._getColumnValue(row, idxs, ['altpredcode'])
+         dtcode = self._getColumnValue(row, idxs, ['datecode'])
+         meta = self._getColumnValue(row, idxs, ['envmetadata', 'metadata'])
+         modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
+         usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
+         ltid = self._getColumnValue(row, idxs, ['environmentalTypeId'])
+         lyrType = EnvironmentalType(envcode, None, None, usr,
+                                     gcmCode=gcmcode, altpredCode=altcode, 
+                                     dateCode=dtcode, metadata=meta, 
+                                     modTime=modtime, environmentalTypeId=ltid)
       return lyrType
    
 # ...............................................
    def _createLayer(self, row, idxs):
       """
-      Create Raster or Vector layer from a Layer record in the MAL
+      Create Raster or Vector layer from a Layer record in the Borg
       """
       lyr = None
       if row is not None:
          dbid = self._getColumnValue(row, idxs, 
                   ['projectionid', 'occurrencesetid', 'layerid'])
          usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
-         verify = self._getColumnValue(row, idxs, ['verify'])
-         squid = self._getColumnValue(row, idxs, ['squid'])
-         name = self._getColumnValue(row, idxs, ['name'])
-         title = self._getColumnValue(row, idxs, ['title'])
-         author = self._getColumnValue(row, idxs, ['author'])
-         desc = self._getColumnValue(row, idxs, ['description'])
-         dlocation = self._getColumnValue(row, idxs, ['dlocation'])
-         murl = self._getColumnValue(row, idxs, 
-                  ['prjmetadataurl', 'occmetadataurl', 'metadataurl'])
-         mlocation = self._getColumnValue(row, idxs, ['metalocation'])
+         verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
+         squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
+         name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
+         dlocation = self._getColumnValue(row, idxs, ['prjdlocation', 
+                   'occdlocation', 'lyrdlocation', 'dlocation'])
+         murl = self._getColumnValue(row, idxs, ['prjmetadataurl', 
+                   'occmetadataurl', 'lyrmetadataurl', 'metadataurl'])
+         meta = self._getColumnValue(row, idxs, 
+                  ['prjmetadata', 'occmetadata', 'lyrmetadata', 'metadata'])
          vtype = self._getColumnValue(row, idxs, ['ogrtype'])
          rtype = self._getColumnValue(row, idxs, ['gdaltype'])
-         iscat = self._getColumnValue(row, idxs, ['iscategorical'])
+         vunits = self._getColumnValue(row, idxs, ['valunits'])
+         nodata = self._getColumnValue(row, idxs, ['nodataval'])
+         minval = self._getColumnValue(row, idxs, ['minval'])
+         maxval = self._getColumnValue(row, idxs, ['maxval'])
          fformat = self._getColumnValue(row, idxs, ['dataformat'])
          epsg = self._getColumnValue(row, idxs, ['epsgcode'])
          munits = self._getColumnValue(row, idxs, ['mapunits'])
          res = self._getColumnValue(row, idxs, ['resolution'])
-         sDate = self._getColumnValue(row, idxs, ['startdate'])
-         eDate = self._getColumnValue(row, idxs, ['enddate'])
-         dtmod = self._getColumnValue(row, idxs, 
-                  ['prjstatusmodtime', 'occstatusmodtime', 'datelastmodified', 
-                   'statusmodtime'])
-         bbox = self._getColumnValue(row, idxs, ['bbox'])
-         nodata = self._getColumnValue(row, idxs, ['nodataval'])
-         minval = self._getColumnValue(row, idxs, ['minval'])
-         maxval = self._getColumnValue(row, idxs, ['maxval'])
-         vunits = self._getColumnValue(row, idxs, ['valunits'])
+         # for non-joined layer tables OccurrenceSet and Projection 
+         dtmod = self._getColumnValue(row, idxs, ['prjstatusmodtime', 
+                   'occstatusmodtime', 'statusmodtime', 'lyrmodtime', 'modtime'])
+         bbox = self._getColumnValue(row, idxs, ['prjbbox', 'occbbox', 'bbox'])
                      
          if vtype is not None:
-            lyr = Vector(name=name, title=title, bbox=bbox, startDate=sDate, 
+            lyr = Vector(name=name, metadata=meta, bbox=bbox, 
                          verify=verify, squid=squid,
-                         endDate=eDate, mapunits=munits, resolution=res, 
+                         mapunits=munits, resolution=res, 
                          epsgcode=epsg, dlocation=dlocation, 
-                         metalocation=mlocation, 
-                         valUnits=vunits, isCategorical=iscat, 
+                         valUnits=vunits, 
                          ogrType=vtype, ogrFormat=fformat, 
-                         author=author, description=desc, 
                          svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
                          modTime=dtmod, metadataUrl=murl) 
          elif rtype is not None:
-            lyr = Raster(name=name, title=title, bbox=bbox, startDate=sDate, 
+            lyr = Raster(name=name, metadata=meta, bbox=bbox, 
                          verify=verify, squid=squid,
-                         endDate=eDate, mapunits=munits, resolution=res, 
+                         mapunits=munits, resolution=res, 
                          epsgcode=epsg, dlocation=dlocation, 
-                         metalocation=mlocation, minVal=minval, maxVal=maxval, 
-                         nodataVal=nodata, valUnits=vunits, isCategorical=iscat,
-                         gdalType=rtype, gdalFormat=fformat, author=author, 
-                         description=desc, svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
+                         minVal=minval, maxVal=maxval, 
+                         nodataVal=nodata, valUnits=vunits,
+                         gdalType=rtype, gdalFormat=fformat,  
+                         svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
                          modTime=dtmod, metadataUrl=murl)
       return lyr
-   
 
 # ...............................................
    def _createEnvLayer(self, row, idxs):
       """
-      Create an EnvironmentalLayer from a lm_envlayer record in the MAL
+      Create an EnvironmentalLayer from a lm_scenlayer record in the Borg
       """
       envRst = None
       if row is not None:
+         scenid = self._getColumnValue(row,idxs,['scenarioid'])
+         scencode = self._getColumnValue(row,idxs,['scenariocode'])
          rst = self._createLayer(row, idxs)
          if rst is not None:
-            etype = self._createLayerType(row, idxs)
-            envRst = EnvironmentalLayer.initFromParts(rst, etype)
+            etype = self._createEnvType(row, idxs)
+            envRst = EnvironmentalLayer.initFromParts(rst, etype, scencode=scencode)
       return envRst
-
 
 # ...............................................
    def _createShapeGrid(self, row, idxs):
@@ -257,13 +234,84 @@ class Borg(DbPostgresql):
                         self._getColumnValue(row,idxs,['cellsize']), 
                         siteId='siteid', siteX='centerX', siteY='centerY', 
                         size=self._getColumnValue(row,idxs,['vsize']), 
-                        status=self._getColumnValue(row,idxs,['prjstatus', 
-                                 'occstatus', 'shpstatus', 'status']), 
-                        statusModTime=self._getColumnValue(row,idxs,
-                                 ['prjstatusmodtime', 'occstatusmodtime', 
-                                  'shpstatusmodtime', 'statusmodtime']),
+                        status=self._getColumnValue(row,idxs,['status']), 
+                        statusModTime=self._getColumnValue(row,idxs,['statusmodtime']),
                         shapegridId=self._getColumnValue(row,idxs,['shapegridid']))
       return shg
+
+# ...............................................
+   def _createOccurrenceSet(self, row, idxs):
+      """
+      @note: takes lm_shapegrid record
+      """
+      occ = None
+      if row is not None:
+         occ = OccurrenceLayer(self._getColumnValue(row,idxs,['displayname']), 
+               occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']),
+               squid=self._getColumnValue(row,idxs,['squid']),
+               verify=self._getColumnValue(row,idxs,['occverify','verify']),
+               userId=self._getColumnValue(row,idxs,['occuserid','userid']),
+               metadataUrl=self._getColumnValue(row,idxs,['occmetadataurl','metadataurl']),
+               dlocation=self._getColumnValue(row,idxs,['occdlocation','dlocation']),
+               rawDLocation=self._getColumnValue(row,idxs,['rawdlocation']),
+               queryCount=self._getColumnValue(row,idxs,['querycount']),
+               bbox=self._getColumnValue(row,idxs,['occbbox','bbox']),
+               epsgcode=self._getColumnValue(row,idxs,['epsgcode']),
+               status=self._getColumnValue(row,idxs,['occstatus','status']),
+               statusModTime=self._getColumnValue(row,idxs,['occstatusmodtime','statusmodtime']))
+      return occ
+
+# ...............................................
+   def _createSDMModel(self, row, idxs):
+      """
+      @note: takes lm_shapegrid record
+      """
+      occ = None
+      if row is not None:
+         priority = None
+         occ = self._createOccurrenceSet(row, idxs)
+         scen = Scenario(self._getColumnValue(row, idxs, ['mdlscenariocode', 'scenariocode']), 
+                         scenarioid=self._getColumnValue(row, idxs, ['mdlscenarioid', 'scenarioid']))
+         algorithm = self._createAlgorithm(row, idxs)
+         occ = SDMModel(priority, occ, scen, algorithm, 
+                maskId=self._getColumnValue(row, idxs, ['mdlmaskid', 'maskid']), 
+                email=self._getColumnValue(row, idxs, ['mdlscenarioid', 'email']), 
+                status=self._getColumnValue(row,idxs,['mdlstatus','status']),
+                statusModTime=self._getColumnValue(row,idxs,['mdlstatusmodtime','statusmodtime']),
+                ruleset=self._getColumnValue(row,idxs,['mdldlocation','dlocation']),
+                userId=self._getColumnValue(row,idxs,['occuserid','userid']), 
+                modelId=self._getColumnValue(row,idxs,['sdmmodelid']))
+      return occ
+
+# ...............................................
+   def _createProjection(self, row, idxs):
+      """
+      @note: takes lm_shapegrid record
+      """
+      prj = None
+      if row is not None:
+         mdl = self._createSDMModel(row, idxs)
+         scen = Scenario(self._getColumnValue(row, idxs, ['prjscenariocode', 'scenariocode']), 
+                         scenarioid=self._getColumnValue(row, idxs, ['prjscenarioid', 'scenarioid']))
+         prj = SDMProjection(mdl, scen, 
+                  metadata = self._getColumnValue(row, idxs, ['prjmetadata', 'metadata']),
+                  maskId=self._getColumnValue(row, idxs, ['prjmaskid', 'maskid']),
+                  dlocation=self._getColumnValue(row,idxs,['prjdlocation','dlocation']), 
+                  status=self._getColumnValue(row,idxs,['prjstatus','status']),
+                  statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime','statusmodtime']),
+                  bbox=self._getColumnValue(row,idxs,['prjbbox','bbox']),
+                  epsgcode=self._getColumnValue(row,idxs,['epsgcode']),
+                  dlocation=self._getColumnValue(row, idxs, ['prjdlocation', 'dlocation']),
+                  metadataUrl=self._getColumnValue(row, idxs, ['prjmetadataurl', 'metadataurl']),
+                  gdalType=self._getColumnValue(row, idxs, ['gdaltype']), 
+                  gdalFormat= self._getColumnValue(row, idxs, ['dataformat']),
+                  mapunits=self._getColumnValue(row, idxs, ['mapunits']), 
+                  resolution=self._getColumnValue(row, idxs, ['resolution']), 
+                  userId=self._getColumnValue(row,idxs,['userid']),
+                  projectionId=self._getColumnValue(row,idxs,['projectionid']), 
+                  verify=self._getColumnValue(row,idxs,['prjverify', 'verify']), 
+                  squid=self._getColumnValue(row,idxs,['squid']))
+      return prj
 
 # .............................................................................
 # Public functions
@@ -304,45 +352,40 @@ class Borg(DbPostgresql):
       @param lyr: Raster or Vector to insert
       @return: new or existing Raster or Vector object 
       """
-      min = max = nodata = ltypeid = None
-      if isinstance(lyr, EnvironmentalLayer):
-         ltypeid = lyr.getParametersId()
+      min = max = nodata = wkt = None
       if isinstance(lyr, Raster):
          min = lyr.minVal
          max = lyr.maxVal
          nodata = lyr.nodataVal
+      meta = lyr.dumpLyrMetadata()
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer', 
-                                         lyr.verify,
-                                         lyr.squid,
-                                         lyr.getLayerUserId(),
-                                         lyr.name,
-                                         lyr.title,
-                                         lyr.author,
-                                         lyr.description,
-                                         self._getRelativePath(
-                                             dlocation=lyr.getDLocation()),
-                                         self._getRelativePath(
-                                             dlocation=lyr.getMetaLocation()),
-                                         lyr.ogrType,
-                                         lyr.gdalType,
-                                         lyr.isCategorical,
-                                         lyr.dataFormat,
-                                         lyr.epsgcode,
-                                         lyr.mapUnits,
-                                         lyr.resolution,
-                                         lyr.startDate,
-                                         lyr.endDate,
-                                         lyr.modTime,
-                                         lyr.getCSVExtentString(), wkt,
-                                         nodata, min, max,
-                                         lyr.valUnits,
-                                         ltypeid,
-                                         self._getRelativePath(
-                                             url=lyr.metadataUrl))
+                           lyr.getId(),
+                           lyr.getLayerUserId(),
+                           lyr.squid,
+                           lyr.verify,
+                           lyr.name,
+                           lyr.getDLocation(),
+                           lyr.metadataUrl, meta,                                       meta,
+                           lyr.dataFormat,
+                           lyr.gdalType,
+                           lyr.ogrType,
+                           lyr.valUnits, nodata, min, max,
+                           lyr.epsgcode,
+                           lyr.mapUnits,
+                           lyr.resolution,
+                           lyr.getCSVExtentString(), wkt,
+                           lyr.modTime)
       updatedLyr = self._createLayer(row, idxs)
       return updatedLyr
+
+# ...............................................
+   def getBaseLayer(self, lyrid, lyrverify, lyruser, lyrname, epsgcode):
+      row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify, 
+                                                lyruser, lyrname, epsgcode)
+      lyr = self._createLayer(row, idxs)
+      return lyr
 
 # ...............................................
    def findOrInsertScenario(self, scen):
@@ -355,22 +398,14 @@ class Borg(DbPostgresql):
       wkt = None
       if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
+      meta = scen.dumpMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
-                           scen.name, scen.title, scen.author, scen.description,
-                           self._getRelativePath(url=scen.metadataUrl),
-                           scen.startDate, scen.endDate, scen.units, 
-                           scen.resolution, scen.epsgcode, 
-                           scen.getCSVExtentString(), wkt, 
-                           scen.modTime, scen.getUserId())
+                           scen.getUserId(), scen.code, 
+                           scen.metadataUrl, meta, 
+                           scen.gcmCode, scen.altpredCode, scen.dateCode, 
+                           scen.units, scen.resolution, scen.epsgcode, 
+                           scen.getCSVExtentString(), wkt, scen.modTime)
       newOrExistingScen = self._createScenario(row, idxs)
-      if not newOrExistingScen.keywords:
-         newOrExistingScen.addKeywords(scen.keywords)
-         for kw in newOrExistingScen.keywords:
-            successCode = self.executeInsertFunction('lm_joinScenarioKeyword',
-                                                newOrExistingScen.getId(), kw)
-            if successCode != 0:
-               self.log.error('Failed to insert keyword {} for scenario {}'
-                              .format(kw, newOrExistingScen.getId()))
       return newOrExistingScen
 
 # ...............................................
@@ -395,7 +430,7 @@ class Borg(DbPostgresql):
       @return: new or existing EnvironmentalType
       """
       envtype.parametersModTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayerType',
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvironmentalType',
                                                     envtype.getParametersUserId(),
                                                     envtype.getParametersId(),
                                                     envtype.typeCode,
@@ -403,16 +438,6 @@ class Borg(DbPostgresql):
                                                     envtype.typeDescription,
                                                     envtype.parametersModTime)
       newOrExistingEnvType = self._createLayerType(row, idxs)
-      # Existing EnvType will return with keywords
-      if not newOrExistingEnvType.typeKeywords:
-         newOrExistingEnvType.typeKeywords = envtype.typeKeywords
-         for kw in newOrExistingEnvType.typeKeywords:
-            successCode = self.executeInsertFunction('lm_joinLayerTypeKeyword', 
-                                    newOrExistingEnvType.getParametersId(), kw)
-            if successCode != 0:
-               self.log.debug('Failed to insert keyword {} for layertype {}'
-                              .format(kw, newOrExistingEnvType.getParametersId()))
-
       return newOrExistingEnvType
                              
 # ...............................................
@@ -422,18 +447,19 @@ class Borg(DbPostgresql):
       @param shpgrd: ShapeGrid to insert
       @return: new or existing ShapeGrid.
       """
+      wkt = None
       if shpgrd.epsgcode == DEFAULT_EPSG:
          wkt = shpgrd.getWkt()
+      meta = shpgrd.dumpParamMetadata()
+      gdaltype = valunits = nodata = min = max = None
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
-                           shpgrd.verify, shpgrd.getUserId(), shpgrd.name,
-                           shpgrd.title, shpgrd.author, shpgrd.description, 
-                           self._getRelativePath(dlocation=shpgrd.getDLocation()), 
-                           self._getRelativePath(dlocation=shpgrd.getMetaLocation()), 
-                           shpgrd.ogrType, shpgrd.isCategorical, 
-                           shpgrd.dataFormat, shpgrd.epsgcode,
-                           shpgrd.mapUnits, shpgrd.resolution, shpgrd.modTime, 
-                           shpgrd.getCSVExtentString(), wkt, 
-                           self._getRelativePath(url=shpgrd.metadataUrl),
+                           shpgrd.getId(), shpgrd.getUserId(), 
+                           shpgrd.squid, shpgrd.verify, shpgrd.name,
+                           shpgrd.getDLocation(), shpgrd.metadataUrl, meta,
+                           shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
+                           valunits, nodata, min, max, 
+                           shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
+                           shpgrd.getCSVExtentString(), wkt, shpgrd.modTime, 
                            shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
                            shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
                            shpgrd.status, shpgrd.statusModTime)
@@ -441,46 +467,43 @@ class Borg(DbPostgresql):
       return updatedShpgrd
 
 # ...............................................
-   def findOrInsertEnvLayer(self, lyr, scenarioId=None):
+   def getShapeGrid(self, shpgridId, lyrId, userId, lyrName, epsg):
       """
-      @summary Insert or find a layer's metadata in the MAL. 
+      @summary: Find or insert a ShapeGrid into the database
+      @param shpgrd: ShapeGrid to insert
+      @return: new or existing ShapeGrid.
+      """
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_getShapeGrid',
+                           shpgridId, lyrId, userId, lyrName, epsg)
+      shpgrid = self._createShapeGrid(row, idxs)
+      return shpgrid
+   
+# ...............................................
+   def findOrInsertEnvLayer(self, lyr, scenarioId):
+      """
+      @summary Insert or find a layer's metadata in the Borg. 
       @param lyr: layer to insert
       @return: new or existing EnvironmentalLayer
       """
       lyr.modTime = mx.DateTime.utc().mjd
+      wkt = None
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
+      envmeta = lyr.dumpParamMetadata()
+      lyrmeta = lyr.dumpLyrMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction(
-                           'lm_findOrInsertEnvLayer', lyr.verify, lyr.squid,
-                           lyr.getUserId(), lyr.name,
-                           lyr.title, lyr.author, lyr.description, 
-                           self._getRelativePath(dlocation=lyr.getDLocation()), 
-                           self._getRelativePath(dlocation=lyr.getMetaLocation()), 
-                           lyr.ogrType, lyr.gdalType, lyr.isCategorical, 
-                           lyr.dataFormat, lyr.epsgcode,
-                           lyr.mapUnits, lyr.resolution, lyr.startDate, 
-                           lyr.endDate, lyr.modTime, lyr.getCSVExtentString(), 
-                           wkt, lyr.nodataVal, lyr.minVal, 
-                           lyr.maxVal, lyr.valUnits, lyr.getParametersId(),
-                           self._getRelativePath(url=lyr.metadataUrl),
-                           lyr.typeCode, lyr.typeTitle, lyr.typeDescription)
-      
+                           'lm_findOrInsertEnvLayer', scenarioId, lyr.getId(), 
+                           lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
+                           lyr.getDLocation(), 
+                           lyr.metadataUrl,
+                           lyrmeta, lyr.dataFormat,  lyr.gdalType, lyr.ogrType, 
+                           lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
+                           lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
+                           lyr.getCSVExtentString(), wkt, lyr.modTime, 
+                           lyr.getParametersId(), lyr.typeCode, lyr.gcmCode,
+                           lyr.altpredCode, lyr.dateCode, envmeta, 
+                           lyr.parametersModTime)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
-      # if keywords are returned, layertype was existing
-      if not newOrExistingLyr.typeKeywords:
-         newOrExistingLyr.typeKeywords = lyr.typeKeywords
-         for kw in newOrExistingLyr.typeKeywords:
-            successCode = self.executeInsertFunction('lm_joinLayerTypeKeyword',
-                              newOrExistingLyr.getParametersId(), kw)
-            if successCode != 0:
-               self.log.debug('Failed to insert keyword {} for layertype {}'
-                              .format(kw, newOrExistingLyr.getParametersId()))
-      if scenarioId is not None:
-         successCode = self.executeInsertFunction('lm_joinScenarioLayer', scenarioId, 
-                                              newOrExistingLyr.getId()) 
-         if successCode != 0:
-            raise LMError(currargs='Failed to join layer {} to scenario {}'
-                           .format(newOrExistingLyr.getId(), scenarioId))
       return newOrExistingLyr
 
 # ...............................................
@@ -521,8 +544,8 @@ class Borg(DbPostgresql):
    def findUser(self, usrid, email):
       """
       @summary: find a user with either a matching userId or email address
-      @param usrid: the database primary key of the LMUser in the MAL
-      @param email: the email address of the LMUser in the MAL
+      @param usrid: the database primary key of the LMUser in the Borg
+      @param email: the email address of the LMUser in the Borg
       @return: a LMUser object
       """
       row, idxs = self.executeSelectOneFunction('lm_findUser', usrid, email)
@@ -559,24 +582,69 @@ class Borg(DbPostgresql):
       return txSourceId, url, moddate
    
 # .............................................................................
-   def getScenario(self, code=None, scenid=None):
+   def getScenario(self, scenid=None, code=None, usrid=None, fillLayers=False):
       """
       @summary: Return a scenario by its db id or code, filling its layers.  
       @param code: Code for the scenario to be fetched.
       @param scenid: ScenarioId for the scenario to be fetched.
       """
-      if code is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getScenarioByCode', code)
-      elif scenid is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getScenarioById', scenid)
-      else:
-         raise LMError(currargs='Must provide scenario code or id')
+      row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid, usrid, code)
       scen = self._createScenario(row, idxs)
-      if scen is not None:
-         rows, idxs = self.executeSelectManyFunction('lm_getLayersByScenarioId', 
-                                                     scen.getId())
-         for r in rows:
-            lyr = self._createEnvironmentalLayer(r, idxs)
-            scen.addLayer(lyr)
+      if scen is not None and fillLayers:
+         lyrs = self.getScenarioLayers(scen.getId())
+         scen.layers = lyrs
       return scen
-                     
+
+# .............................................................................
+   def getScenarioLayers(self, scenid):
+      """
+      @summary: Return a scenario by its db id or code, filling its layers.  
+      @param code: Code for the scenario to be fetched.
+      @param scenid: ScenarioId for the scenario to be fetched.
+      """
+      lyrs = []
+      rows, idxs = self.executeSelectOneFunction('lm_getEnvLayersForScenario', scenid)
+      for r in rows:
+         lyr = self._createEnvironmentalLayer(r, idxs)
+         lyrs.append(lyr)
+      return lyrs
+   
+# .............................................................................
+   def insertMatrixColumn(self, palyr, bktid):
+      """
+      @summary: Insert a MatrixColumn with optional intersect params and Layer.
+                Return the updated (or found) record.
+      @return: Method returns a new, updated object.
+      """
+      updatedlyr = None
+      currtime=mx.DateTime.gmt().mjd
+      palyr.createTime = currtime
+      palyr.modTime = currtime
+      rtype, vtype = self._getSpatialLayerType(palyr)
+      if rtype is None:
+         if vtype is not None:
+            try:
+               prsOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
+                                          palyr.attrPresence)
+            except LMError:
+               raise 
+            except Exception, e:
+               raise LMError(currargs=e.args)
+            
+            if not prsOk:
+               raise LMError('Field %s of Layer %s is not present or the wrong type' 
+                             % (palyr.attrPresence, palyr.name))
+            if palyr.attrAbsence is not None:
+               try:
+                  absOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
+                                  palyr.attrAbsence)
+               except LMError:
+                  raise 
+               except Exception, e:
+                  raise LMError(currargs=e.args)
+
+               if not absOk:
+                  raise LMError('Field %s of Layer %s is not present or the wrong type' 
+                             % (palyr.attrAbsence, palyr.name))
+         else:
+            raise LMError('GDAL or OGR data type must be provided')
