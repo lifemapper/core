@@ -301,7 +301,6 @@ class Borg(DbPostgresql):
                   statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime','statusmodtime']),
                   bbox=self._getColumnValue(row,idxs,['prjbbox','bbox']),
                   epsgcode=self._getColumnValue(row,idxs,['epsgcode']),
-                  dlocation=self._getColumnValue(row, idxs, ['prjdlocation', 'dlocation']),
                   metadataUrl=self._getColumnValue(row, idxs, ['prjmetadataurl', 'metadataurl']),
                   gdalType=self._getColumnValue(row, idxs, ['gdaltype']), 
                   gdalFormat= self._getColumnValue(row, idxs, ['dataformat']),
