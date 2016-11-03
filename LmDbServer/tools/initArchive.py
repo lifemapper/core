@@ -45,18 +45,31 @@ from LmServer.rad.shapegrid import ShapeGrid
 CURRTIME = mx.DateTime.gmt().mjd
 # CURRTIME = 57686
 # ...............................................
-def addUsers(scribe, userList):
+def addUsers(scribe, newUser):
    """
    @summary Adds ARCHIVE_USER, anon user and USER from metadata to the database
    """
-   users = []
-   for userMeta in userList:
-      if userMeta is not None:
-         user = LMUser(userMeta['id'], userMeta['email'], userMeta['email'], modTime=CURRTIME)
-         scribe.log.info('  Insert user {} ...'.format(userMeta['id']))
-         newuser = scribe.insertUser(user)
-         users.append(newuser)
-   return users
+   metaUserId = ARCHIVE_USER
+   userList = [{'id': ARCHIVE_USER,
+                'email': '{}@nowhere.org'.format(ARCHIVE_USER)},
+               {'id': DEFAULT_POST_USER,
+                'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}]
+   try:
+      metaUserEmail = newUser['email']
+      metaUserId = newUser['id']
+      userList.append(newUser)
+   except:
+      pass
+   
+   for usrmeta in userList:
+      try:
+         user = LMUser(usrmeta['id'], usrmeta['email'], usrmeta['email'], modTime=CURRTIME)
+      except:
+         pass
+      else:
+         scribe.log.info('  Insert user {} ...'.format(usrmeta['id']))
+         updatedUser = scribe.insertUser(user)
+   return metaUserId
 
 # ...............................................
 def addAlgorithms(scribe):
@@ -65,30 +78,20 @@ def addAlgorithms(scribe):
    """
    ids = []
    for algcode, algdict in ALGORITHM_DATA.iteritems():
-      alg = Algorithm(algcode, name=algdict['name'])
+      algmeta = {}
+      for k, v in algdict.iteritems():
+         if k != 'parameters':
+            algmeta[k] = v
+      alg = Algorithm(algcode, metadata=algmeta)
       scribe.log.info('  Insert algorithm {} ...'.format(algcode))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
    return ids
 
-# # ...............................................
-# def addLayerTypes(scribe, lyrtypeMeta, usr): 
-#    etypes = [] 
-#    for typecode, typeinfo in lyrtypeMeta.iteritems():
-#       ltype = EnvironmentalType(typecode, typeinfo['title'], 
-#                                 typeinfo['description'], usr, 
-#                                 keywords=typeinfo['keywords'], 
-#                                 modTime=CURRTIME)
-#       scribe.log.info('  Insert or get layertype {} ...'.format(typecode))
-#       etype = scribe.insertLayerTypeCode(ltype)
-#       etypes.append(etype)
-#    return etypes
-
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
    shp = ShapeGrid(gridname, cellsides, cellsize, mapunits, epsg, bbox, userId=usr)
    newshp = scribe.insertShapeGrid(shp)
-   scribe.log.info('Inserted, build shapegrid {} ...'.format(gridname))
    newshp.buildShape()
    return newshp.getId()
    
@@ -115,7 +118,8 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, lyrMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   for ltype, ltmeta in lyrtypeMeta.iteritems():
+   for ltype in pkgMeta['layertypes']:
+      ltmeta = lyrtypeMeta[ltype]
       keywords = [k for k in baseMeta['keywords']]
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
@@ -303,18 +307,17 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
    """
    @summary Assemble current, predicted past, predicted future scenarios 
    """
-   msgs = []
    # Current
    basescen, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, 
                                                    lyrtypeMeta)
-   msgs.append('Created base scenario')
+   scribeWithBorg.log.info('Created base scenario')
    # Predicted Past and Future
    allScenarios = createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
                                              staticLayers)
-   msgs.append('Created predicted scenarios')
+   scribeWithBorg.log.info('Created predicted scenarios')
    # Join all sets and dictionaries
    allScenarios[basescen.code] = basescen
-   return allScenarios, msgs
+   return allScenarios
       
 # ...............................................
 def addScenarioAndLayerMetadata(scribe, scenarios):
@@ -326,45 +329,43 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
       newscen = scribe.insertScenario(scen)
 
 # ...............................................
-def _importClimatePackageMetadata():
-   # Override the above imports if scenario metadata file exists
-   metabasename = SCENARIO_PACKAGE+'.py'
-   metafname = os.path.join(ENV_DATA_PATH, metabasename)
-   # TODO: change on update python from 2.7 to 3.3+  
+def _importClimatePackageMetadata(envPackageName):
+   if envPackageName.lower() == 'config':
+      envPackageName = SCENARIO_PACKAGE
+   metafname = os.path.join(ENV_DATA_PATH, envPackageName + '.py')
+   if not os.path.exists(metafname):
+      raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
+                    .format(metafname, e))
+   # TODO: change to importlib on python 2.7 --> 3.3+  
    try:
       import imp
       meta = imp.load_source('currentmetadata', metafname)
    except Exception, e:
       raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                     .format(metafname, e))
+   return meta
 
 # ...............................................
 if __name__ == '__main__':
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
-            description=('Initialize a new Lifemapper database with metadata ' +
-                         'specific to the configured input data'))
-   parser.add_argument('-m', '--metadata', default='all',
-            choices=['algorithm', 'climate', 'taxonomy', 'all'], 
-            help="Which metadata to catalog (algorithm, climate, taxonomy, all (default))")
+            description=('Populate a Lifemapper database with metadata ' +
+                         'specific to the configured input data or the ' +
+                         'data package named.'))
+   parser.add_argument('-m', '--metadata', default='config',
+            help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
+                  'directory and be named with the arg value and .py extension'))
+
    args = parser.parse_args()
-   metaType = args.metadata
-# .............................
-   defUser = {'id': ARCHIVE_USER,
-              'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
-   anonUser = {'id': DEFAULT_POST_USER,
-               'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
-   try:
-      newUser = META.USER
-      currUserid = META.USER['id']
-   except:
-      newUser = None
-      currUserid = ARCHIVE_USER
+   envPackageName = args.metadata
+   META = _importClimatePackageMetadata(envPackageName)
+   
 # .............................
    try:
       taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
    except:
       taxSource = None
+      
 # .............................
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
@@ -376,8 +377,8 @@ if __name__ == '__main__':
       if not success: 
          logger.critical('Failed to open database')
          exit(0)
-# .............................
-      pkgMeta = META.CLIMATE_PACKAGES[SCENARIO_PACKAGE]
+
+      pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
       lyrMeta = {'epsg': META.EPSG, 
                  'topdir': pkgMeta['topdir'],
                  'mapunits': META.MAPUNITS, 
@@ -387,36 +388,29 @@ if __name__ == '__main__':
                  'gridname': META.GRID_NAME, 
                  'gridsides': META.GRID_NUM_SIDES, 
                  'gridsize': META.GRID_CELLSIZE}
-
+         
+# .............................
       logger.info('  Insert user metadata ...')
-      userObjs = addUsers(scribeWithBorg, [defUser, anonUser, newUser])
+      metaUserId = addUsers(scribeWithBorg, META.USER)
 # .............................
-      if metaType in ('algorithm', 'all'):
-         logger.info('  Insert algorithm metadata ...')
-         aIds = addAlgorithms(scribeWithBorg)
+      logger.info('  Insert algorithm metadata ...')
+      aIds = addAlgorithms(scribeWithBorg)
 # .............................
-      if metaType in ('climate', 'all'):
-         logger.info('  Insert climate {} metadata ...'
-                     .format(SCENARIO_PACKAGE))
-         scens, msgs = createAllScenarios(currUserid, pkgMeta, lyrMeta, 
-                                          META.LAYERTYPE_META)
-         for msg in msgs:
-            scribeWithBorg.log.info(msg)
-         addScenarioAndLayerMetadata(scribeWithBorg, scens)
+      logger.info('  Insert climate {} metadata ...'.format(envPackageName))
+      scens = createAllScenarios(metaUserId, pkgMeta, lyrMeta, META.LAYERTYPE_META)
+      addScenarioAndLayerMetadata(scribeWithBorg, scens)
 # .............................
-      if metaType in ('grid', 'all'):
-            # Grid for GPAM
-         shpId = addIntersectGrid(scribeWithBorg, lyrMeta['gridname'], lyrMeta['gridsides'], 
-                           lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
-                           pkgMeta['bbox'], currUserid)
+      # Grid for GPAM
+      logger.info('  Insert, build shapegrid {} ...'.format(lyrMeta['gridname']))
+      shpId = addIntersectGrid(scribeWithBorg, lyrMeta['gridname'], lyrMeta['gridsides'], 
+                        lyrMeta['gridsize'], lyrMeta['mapunits'], lyrMeta['epsg'], 
+                        pkgMeta['bbox'], metaUserId)
 # .............................
-      if metaType in ('taxonomy', 'all'):
-         # Insert all taxonomic sources for now
-         for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-            logger.info('  Insert taxonomy {} metadata ...'
-                        .format(taxInfo['name']))
-            taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
-                                                      taxInfo['url'])      
+      # Insert all taxonomic sources for now
+      logger.info('  Insert taxonomy metadata ...')
+      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+         taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
+                                                           taxInfo['url'])      
    except Exception, e:
       logger.error(str(e))
       raise
@@ -443,12 +437,7 @@ CURRTIME = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBorg import *
 from LmDbServer.tools.initBorg import (_getBaselineLayers, _getbioName, 
           _findFileFor, _getPredictedLayers)
-defUser = {'id': ARCHIVE_USER,
-           'email': '{}@nowhere.org'.format(ARCHIVE_USER)}
-anonUser = {'id': DEFAULT_POST_USER,
-            'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}
-newUser = META.USER
-currUserid = META.USER['id']
+metaUserId = META.USER['id']
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)

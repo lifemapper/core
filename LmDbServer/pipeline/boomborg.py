@@ -130,8 +130,9 @@ class _LMBoomer(LMObject):
          
          self.modelMask = self._scribe.getLayer(mdlMaskId)
          self.projMask = self._scribe.getLayer(prjMaskId)
-         self.intersectGrid = self._scribe.getShapeGrid(self.userid, 
-                                                  shpname=intersectGridName)
+         self.intersectGrid = self._scribe.getShapeGrid(userId=self.userid, 
+                                                        lyrName=intersectGridName,
+                                                        )
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())

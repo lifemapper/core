@@ -1,7 +1,14 @@
 """
-These constants represent metadata for Lifemapper-available climate data 
-packages.  New climate data packages should be in a file named 
-CLIMATE_PACKAGE.tar.gz 
+These constants represent metadata for one or more Lifemapper environmental data 
+packages.  New climate data packages should be created in a compressed file 
+named <envPackageName>.tar.gz in the ENV_DATA_PATH directory.  
+
+Uncompressing the package should create <envPackageName>.py and 
+<envPackageName>.csv at the topmost level; data files should be under the
+'topdir', specified in the <envPackageName> entry of the CLIMATE_PACKAGES 
+dictionary. Filenames for each layertype are specified in the LAYERTYPE_DATA
+dictionary, and should be their relative path and filename (under <topdir>).
+
 @note: LAYERTYPE_DATA
 Each entry should have a title, description, value units, keywords, and files
 title: The title of this layer type.  Examples: Elevation, Annual Mean Temperature
@@ -16,26 +23,10 @@ files: a dictionary containing
        (opt to further narrow down past/future) keys for 'models'
                                                          'times'
                                                          'alternatePredictions'
-                                                         
-@note:
-Filename (baseline) pattern like alt.tif (altitude), bio1.tif .. bio19.tif
-   lowercase layertype keys
-Filename (future) pattern like cc85bi5019.tif
-   <GCM shortcode><RCP shortcode>bi<2 digit timekey><2 digit bioclim number>
-   
-@note:
-Charlie says:
-Here is my attempt at arranging the metadata files for "experiment 3" which 
-includes climate (bioclim), soil, and spatial layers.
-
-I was a little unclear on how to structure the 'env.meta' file for the 
-combinations we are looking. We are currently projecting across 4 different 
-GCMs (he, gs, gd, ac) at one RCP (4.5), and 1 GCM (he) at 3 additional 
-RCPs (2.6, 6.0, 8.5). These projections are for both 2050 and 2070.
 """
-
 from osgeo import gdalconst
  
+# Create boom ini file from
 USER = {'id': 'charlie', 'email': 'aimee.stewart@ku.edu'}
 # For remote data, cannot read to get this 
 ENVLYR_GDALTYPE = gdalconst.GDT_Int16
@@ -77,7 +68,7 @@ OBSERVED_PREDICTED_META = {
                          'shortcode': 'cc',
                          'author': 'National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/'
                          }},
-             'scenarios': None },
+             'alternatePredictions': None },
    # Future Report
    'AR5': { 
       # Name of climate report
@@ -172,7 +163,7 @@ LAYERTYPE_META = {
       'description': 'Annual Mean Temperature',
       'valunits':'degreesCelsiusTimes10',
       'keywords': ('bioclim','temperature', 'mean', 'annual'),
-      'files': {'clim.current.bio03.tif': ['observed'],
+      'files': {'clim.current.bio01.tif': ['observed'],
                 'clim.ac4550.bio01.tif': ['AR5', 'ACCESS1-0', 'RCP4.5', '2050'],
                 'clim.ac4570.bio01.tif': ['AR5', 'ACCESS1-0', 'RCP4.5', '2070'],
                 'clim.gs4550.bio01.tif': ['AR5', 'GISS-E2-R', 'RCP4.5', '2050'],

@@ -15,8 +15,8 @@
 -- Algorithm
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertAlgorithm(code varchar, 
-                                                    aname varchar, 
-                                                    mtime double precision)
+                                                    		 meta varchar, 
+                                                    		 mtime double precision)
    RETURNS lm_v3.algorithm AS
 $$
 DECLARE
@@ -25,8 +25,8 @@ BEGIN
    SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
    IF NOT FOUND THEN
       begin
-         INSERT INTO lm_v3.Algorithm (algorithmcode, name, modtime)
-            VALUES (code, aname, mtime);
+         INSERT INTO lm_v3.Algorithm (algorithmcode, metadata, modtime)
+            VALUES (code, meta, mtime);
          IF FOUND THEN
             SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
          END IF;
