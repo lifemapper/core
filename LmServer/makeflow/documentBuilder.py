@@ -236,10 +236,10 @@ class LMMakeflowDocument(LMObject):
                processType=ProcessType.ATT_MODEL, jobId=mdl.getId(), jrFn=jrFn)
 
       # Create model command
-      mdlCmd, mdlStatusFn = makeMaxentSdmModelCommand(mdl)
+      mdlCmd, mdlStatusFn = makeMaxentSdmModelCommand(mdl, jrFn)
       
       # Add entry to create job request
-      self._addJobCommand([jrFn], jrCmd, dependencies=dep, 
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
                         comment="Build model {0} request".format(mdl.getId()))
       # Add entry to build model
       self._addJobCommand([mdl.createLocalDLocation(), mdlStatusFn],
@@ -267,17 +267,17 @@ class LMMakeflowDocument(LMObject):
          dep = [mdl.occurrenceSet.createLocalDLocation()]
          
       # Generate request filename
-      jrFn = JOB_REQUEST_FILENAME.format(processType=ProcessType.ATT_MODEL,
+      jrFn = JOB_REQUEST_FILENAME.format(processType=ProcessType.OM_MODEL,
                                          jobId=mdl.getId())
       # Generate request command
       jobReqCmd = BUILD_JOB_REQUEST_CMD.format(
-               processType=ProcessType.ATT_MODEL, jobId=mdl.getId(), jrFn=jrFn)
+               processType=ProcessType.OM_MODEL, jobId=mdl.getId(), jrFn=jrFn)
 
       # Create model command
-      mdlCmd, mdlStatusFn = makeOmSdmModelCommand(mdl)
+      mdlCmd, mdlStatusFn = makeMaxentSdmModelCommand(mdl, jrFn)
       
       # Add entry to create job request
-      self._addJobCommand([jrFn], jrCmd, dependencies=dep, 
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
                         comment="Build model {0} request".format(mdl.getId()))
       # Add entry to build model
       self._addJobCommand([mdl.createLocalDLocation(), mdlStatusFn],
@@ -289,8 +289,8 @@ class LMMakeflowDocument(LMObject):
       #   them to their final location
       
       # Update DB
-      updateDbCmd = UPDATE_DB_CMD.format(processType=ProcessType.ATT_MODEL,
-                                       objId=mdl.getId(), statusFn=mdlStatusFn)
+      updateDbCmd = UPDATE_DB_CMD.format(processType=ProcessType.OM_MODEL,
+                                         objId=mdl.getId(), statusFn=mdlStatusFn)
       
    # ...........................
    def addSdmProjection(self, prj):
@@ -327,10 +327,10 @@ class LMMakeflowDocument(LMObject):
              processType=ProcessType.ATT_PROJECT, jobId=prj.getId(), jrFn=jrFn)
 
       # Create projection command
-      prjCmd, prjStatusFn = makeMaxentSdmProjectionCommand(prj)
+      prjCmd, prjStatusFn = makeMaxentSdmProjectionCommand(prj, jrFn)
       
       # Add entry to create job request
-      self._addJobCommand([jrFn], jrCmd, dependencies=dep, 
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
                         comment="Build projection {0} request".format(
                            prj.getId()))
       # Add entry to build projection
@@ -367,10 +367,10 @@ class LMMakeflowDocument(LMObject):
              processType=ProcessType.OM_PROJECT, jobId=prj.getId(), jrFn=jrFn)
 
       # Create projection command
-      prjCmd, prjStatusFn = makeOmSdmProjectionCommand(prj)
+      prjCmd, prjStatusFn = makeOmSdmProjectionCommand(prj, jrFn)
       
       # Add entry to create job request
-      self._addJobCommand([jrFn], jrCmd, dependencies=dep, 
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
                         comment="Build projection {0} request".format(
                            prj.getId()))
       # Add entry to build projection

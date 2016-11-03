@@ -147,18 +147,122 @@ def makeIdigbioOccurrenceSetCommand(occ):
    return occCmd, occStatusFn
 
 # .............................................................................
-def makeMaxentSdmModelCommand(mdl):
-   return cmd, statusFn
+def makeMaxentSdmModelCommand(mdl, jrFn):
+   """
+   @summary: Generate a command to create a Maxent model for the model object
+   @param mdl: The model object to generate the command for
+   @param jrFn: The filename of the XML request to use for model generation
+   @todo: Add metrics
+   @todo: Constant for script path
+   """
+   outDir = os.path.dirname(mdl.createLocalDLocation())
+   mdlStatusFn = "{0}-{1}.status".format(ProcessType.ATT_MODEL, mdl.getId())
+   
+   options = {
+      "-n" : "{0}-{1}".format(ProcessType.ATT_MODEL, mdl.getId()),
+      "-o" : outDir,
+      "-l" : "meMdl-{0}.log".format(mdl.getId()),
+      "-s" : mdlStatusFn,
+   }
+   
+   # Join arguments
+   args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
 
+   mdlCmd = "{python} {meRunner} {mdlXml} {options}".format(
+      python="$PYTHON",
+      meRunner=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, "me_model.py"),
+      mdlXml=jrFn,
+      options=args)
+   
+   return mdlCmd, mdlStatusFn
+   
 # .............................................................................
-def makeMaxentSdmProjectionCommand(prj):
+def makeMaxentSdmProjectionCommand(prj, jrFn):
+   """
+   @summary: Generate a command to create a Maxent projection for the projection object
+   @param prj: The projection object to generate the command for
+   @param jrFn: The filename of the XML request to use for projection generation
+   @todo: Add metrics
+   @todo: Constant for script path
+   """
+   outDir = os.path.dirname(prj.createLocalDLocation())
+   prjStatusFn = "{0}-{1}.status".format(ProcessType.ATT_PROJECT, prj.getId())
+   
+   options = {
+      "-n" : "{0}-{1}".format(ProcessType.ATT_PROJECT, prj.getId()),
+      "-o" : outDir,
+      "-l" : "mePrj-{0}.log".format(prj.getId()),
+      "-s" : prjStatusFn,
+   }
+   
+   # Join arguments
+   args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+
+   prjCmd = "{python} {meRunner} {prjXml} {options}".format(
+      python="$PYTHON",
+      meRunner=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, "me_projection.py"),
+      prjXml=jrFn,
+      options=args)
+   
    return prjCmd, prjStatusFn
 
 # .............................................................................
-def makeOmSdmModelCommand(mdl):
+def makeOmSdmModelCommand(mdl, jrFn):
+   """
+   @summary: Generate a command to create a openModeller model for the model object
+   @param mdl: The model object to generate the command for
+   @param jrFn: The filename of the XML request to use for model generation
+   @todo: Add metrics
+   @todo: Constant for script path
+   """
+   outDir = os.path.dirname(mdl.createLocalDLocation())
+   mdlStatusFn = "{0}-{1}.status".format(ProcessType.OM_MODEL, mdl.getId())
+   
+   options = {
+      "-n" : "{0}-{1}".format(ProcessType.OM_MODEL, mdl.getId()),
+      "-o" : outDir,
+      "-l" : "omMdl-{0}.log".format(mdl.getId()),
+      "-s" : mdlStatusFn,
+   }
+   
+   # Join arguments
+   args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+
+   mdlCmd = "{python} {omRunner} {mdlXml} {options}".format(
+      python="$PYTHON",
+      omRunner=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, "om_model.py"),
+      mdlXml=jrFn,
+      options=args)
+   
    return mdlCmd, mdlStatusFn
 
 # .............................................................................
-def makeOmSdmProjectionCommand(prj):
+def makeOmSdmProjectionCommand(prj, jrFn):
+   """
+   @summary: Generate a command to create a openModeller projection for the projection object
+   @param prj: The projection object to generate the command for
+   @param jrFn: The filename of the XML request to use for projection generation
+   @todo: Add metrics
+   @todo: Constant for script path
+   """
+   outDir = os.path.dirname(prj.createLocalDLocation())
+   prjStatusFn = "{0}-{1}.status".format(ProcessType.OM_PROJECT, prj.getId())
+   
+   options = {
+      "-n" : "{0}-{1}".format(ProcessType.OM_PROJECT, prj.getId()),
+      "-o" : outDir,
+      "-l" : "mePrj-{0}.log".format(prj.getId()),
+      "-s" : prjStatusFn,
+   }
+   
+   # Join arguments
+   args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+
+   prjCmd = "{python} {omRunner} {prjXml} {options}".format(
+      python="$PYTHON",
+      omRunner=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, "om_projection.py"),
+      prjXml=jrFn,
+      options=args)
+   
    return prjCmd, prjStatusFn
 
