@@ -25,12 +25,13 @@ import argparse
 import mx.DateTime
 import os
 
-# TODO: These should be included in the package of data
-import LmDbServer.tools.charlieMetaExp3 as META
-
+# # TODO: These should be included in the package of data
+# import LmDbServer.tools.charlieMetaExp3 as META
+from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
+         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
+         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_CSV_FILENAME)
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmDbServer.common.localconstants import (SCENARIO_PACKAGE)
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
@@ -303,23 +304,6 @@ def createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, staticLayers):
    return predScenarios
 
 # ...............................................
-def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
-   """
-   @summary Assemble current, predicted past, predicted future scenarios 
-   """
-   # Current
-   basescen, staticLayers = createBaselineScenario(usr, pkgMeta, lyrMeta, 
-                                                   lyrtypeMeta)
-   scribeWithBorg.log.info('Created base scenario')
-   # Predicted Past and Future
-   allScenarios = createPredictedScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta, 
-                                             staticLayers)
-   scribeWithBorg.log.info('Created predicted scenarios')
-   # Join all sets and dictionaries
-   allScenarios[basescen.code] = basescen
-   return allScenarios
-      
-# ...............................................
 def addScenarioAndLayerMetadata(scribe, scenarios):
    """
    @summary Add scenario and layer metadata to database  
@@ -334,8 +318,8 @@ def _importClimatePackageMetadata(envPackageName):
       envPackageName = SCENARIO_PACKAGE
    metafname = os.path.join(ENV_DATA_PATH, envPackageName + '.py')
    if not os.path.exists(metafname):
-      raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                    .format(metafname, e))
+      raise LMError(currargs='Climate metadata {} does not exist'
+                    .format(metafname))
    # TODO: change to importlib on python 2.7 --> 3.3+  
    try:
       import imp
@@ -344,6 +328,62 @@ def _importClimatePackageMetadata(envPackageName):
       raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                     .format(metafname, e))
    return meta
+
+# ...............................................
+def _writeConfigFile(envPackageName, userid, mdlScen=None, prjScens=None):
+   if envPackageName.lower() == 'config':
+      envPackageName = SCENARIO_PACKAGE
+   SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
+   pth, temp = os.path.split(SERVER_CONFIG_FILENAME)
+   newConfigFilename = os.path.join(pth, envPackageName + '.ini')
+   f = open(newConfigFilename, 'w')
+   f.write('[LmServer - environment]')
+   f.write('ARCHIVE_USER: {}'.format(userid))
+   f.write('DATASOURCE: User')
+   f.write('')
+   f.write('[LmServer - pipeline]')
+   try:
+      email = META.USER['email']
+      f.write('TROUBLESHOOTERS: {}'.format(email))
+   except:
+      pass
+   f.write('SPECIES_EXP_YEAR: {}'.format(CURRTIME.year))
+   f.write('SPECIES_EXP_MONTH: {}'.format(CURRTIME.month))
+   f.write('SPECIES_EXP_DAY: {}'.format(CURRTIME.day))
+   f.write('')
+   try:
+      algs = META.ALGORITHM_CODES
+   except:
+      algs = DEFAULT_ALGORITHMS
+   f.write('DEFAULT_ALGORITHMS: {}'.format(algs))
+   f.write('')
+   try:
+      gridname = META.GRID_NAME
+   except:
+      gridname = DEFAULT_GRID_NAME
+   f.write('DEFAULT_GRID_NAME: {}'.format(gridname))
+   try:
+      gridsize = META.GRID_CELLSIZE
+   except:
+      gridsize = DEFAULT_GRID_CELLSIZE
+   f.write('DEFAULT_GRID_CELLSIZE: {}'.format(gridsize))
+   f.write('')
+   try:
+      speciesDataName = META.SPECIES_DATA
+   except:
+      speciesDataName, ext = os.path.splitext(USER_OCCURRENCE_CSV_FILENAME)
+   f.write('USER_OCCURRENCE_CSV: {}.csv'.format(speciesDataName))
+   f.write('USER_OCCURRENCE_META: {}.meta'.format(speciesDataName))
+   f.write('')
+   f.write('SCENARIO_PACKAGE: {}'.format(envPackageName))
+   if mdlScen is None:
+      mdlScen = DEFAULT_MODEL_SCENARIO
+   f.write('DEFAULT_MODEL_SCENARIO: {}'.format(mdlScen))
+   if not prjScens:
+      prjScens = DEFAULT_PROJECTION_SCENARIOS
+   f.write('DEFAULT_PROJECTION_SCENARIOS: {}'.format(prjScens))
+   f.close()
+   return newConfigFilename
 
 # ...............................................
 if __name__ == '__main__':
@@ -397,8 +437,16 @@ if __name__ == '__main__':
       aIds = addAlgorithms(scribeWithBorg)
 # .............................
       logger.info('  Insert climate {} metadata ...'.format(envPackageName))
-      scens = createAllScenarios(metaUserId, pkgMeta, lyrMeta, META.LAYERTYPE_META)
-      addScenarioAndLayerMetadata(scribeWithBorg, scens)
+      # Current
+      basescen, staticLayers = createBaselineScenario(metaUserId, pkgMeta, lyrMeta, 
+                                                      META.LAYERTYPE_META)
+      logger.info('     Created base scenario {}'.format(basescen.code))
+      # Predicted Past and Future
+      predScens = createPredictedScenarios(metaUserId, pkgMeta, lyrMeta, 
+                                              META.LAYERTYPE_META, staticLayers)
+      logger.info('     Created predicted scenarios {}'.format(predScens.keys()))
+      predScens[basescen.code] = basescen
+      addScenarioAndLayerMetadata(scribeWithBorg, predScens)
 # .............................
       # Grid for GPAM
       logger.info('  Insert, build shapegrid {} ...'.format(lyrMeta['gridname']))
@@ -410,7 +458,15 @@ if __name__ == '__main__':
       logger.info('  Insert taxonomy metadata ...')
       for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
          taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
-                                                           taxInfo['url'])      
+                                                           taxInfo['url'])
+# .............................
+      # Write config file for this archive
+      mdlScencode = mdlScen=basescen.keys()[0]
+      prjScencodes = predScens.keys().append(mdlScencode)
+      newConfigFilename = _writeConfigFile(envPackageName, metaUserId, 
+                                           mdlScen=mdlScencode, 
+                                           prjScens=prjScencodes,
+                                           speciesDataName=None)
    except Exception, e:
       logger.error(str(e))
       raise

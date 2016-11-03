@@ -30,6 +30,15 @@ from osgeo import gdalconst
 # If this is None, data is assigned to the ARCHIVE_USER
 USER = None
 
+# SPECIES_DATA is the basename, without path, of the of the .csv file containing 
+# and .meta file describing species data for this archive/experiment 
+SPECIES_DATA = None
+MIN_POINT_COUNT = 20
+
+# These must be valid ALGORITHM_CODES in the Lifemapper database; 
+# If this is None, data is assigned to the DEFAULT_ALGORITHMS
+ALGORITHM_CODES = None
+
 # Constants for all CLIMATE_PACKAGES below
 EPSG = 4326
 ENVLYR_GDALTYPE = gdalconst.GDT_Int16
