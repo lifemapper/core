@@ -30,7 +30,8 @@ import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_CSV_FILENAME)
-from LmCommon.common.lmconstants import DEFAULT_POST_USER
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, DEFAULT_EPSG, 
+                                         DEFAULT_MAPUNITS)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
@@ -312,6 +313,61 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
       scribe.log.info('Insert scenario {}'.format(scode))
       newscen = scribe.insertScenario(scen)
 
+def _getLayerMetadata(pkgMeta):
+   try:
+      epsg = META.EPSG
+   except:
+      epsg = DEFAULT_EPSG
+   try:
+      topdir = pkgMeta['topdir']
+   except:
+      raise LMError('Failed to specify CLIMATE_PACKAGE \'topdir\'')
+   try:
+      mapunits = META.MAPUNITS
+   except:
+      if epsg == DEFAULT_EPSG:
+         mapunits = DEFAULT_MAPUNITS
+      else:
+         raise LMError('Failed to specify MAPUNITS for EPSG {}'.format(epsg))
+   try:
+      res = META.RESOLUTIONS[pkgMeta['res']]
+   except:
+      raise LMError('Failed to specify RESOLUTIONS or CLIMATE_PACKAGE \'res\'')
+   try:
+      gdaltype = META.ENVLYR_GDALTYPE
+   except:
+      raise LMError('Failed to specify ENVLYR_GDALTYPE')
+   try:
+      gdalformat = META.META.ENVLYR_GDALFORMAT
+   except:
+      raise LMError('Failed to specify META.ENVLYR_GDALFORMAT')
+   try:
+      grdname = META.GRID_NAME
+   except:
+      grdname = DEFAULT_GRID_NAME
+   try:
+      grdsize = META.GRID_CELLSIZE
+   except:
+      if mapunits == DEFAULT_MAPUNITS:
+         grdsize = DEFAULT_GRID_CELLSIZE
+      else:
+         raise LMError('Failed to specify GRID_CELLSIZE for MAPUNITS {}'
+                       .format(mapunits))
+   try:
+      grdsides = META.GRID_NUM_SIDES
+   except:
+      grdsides = 4
+   lyrMeta = {'epsg': epsg, 
+              'topdir': topdir,
+              'mapunits': mapunits, 
+              'resolution': res, 
+              'gdaltype': gdaltype, 
+              'gdalformat': gdalformat,
+              'gridname': grdname, 
+              'gridsides': grdsides, 
+              'gridsize': grdsize}
+   return lyrMeta
+
 # ...............................................
 def _importClimatePackageMetadata(envPackageName):
    if envPackageName.lower() == 'config':
@@ -419,16 +475,8 @@ if __name__ == '__main__':
          exit(0)
 
       pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-      lyrMeta = {'epsg': META.EPSG, 
-                 'topdir': pkgMeta['topdir'],
-                 'mapunits': META.MAPUNITS, 
-                 'resolution': META.RESOLUTIONS[pkgMeta['res']], 
-                 'gdaltype': META.ENVLYR_GDALTYPE, 
-                 'gdalformat': META.ENVLYR_GDALFORMAT,
-                 'gridname': META.GRID_NAME, 
-                 'gridsides': META.GRID_NUM_SIDES, 
-                 'gridsize': META.GRID_CELLSIZE}
-         
+      lyrMeta = _getLayerMetadata(pkgMeta)
+      
 # .............................
       logger.info('  Insert user metadata ...')
       metaUserId = addUsers(scribeWithBorg, META.USER)
