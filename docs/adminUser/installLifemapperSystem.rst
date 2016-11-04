@@ -44,23 +44,23 @@ Install both rolls on Frontend
 Update existing (maintains FE data)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   * You may remove source code rpms (lifemapper-lmserver and 
-     lifemapper-compute) to avoid error messages about file conflicts in 
-     shared code, but error messages about conflicting shared files from the 
-     first install of the source code rpm may be safely ignored. 
-   * In case the configuration rpm (rocks-lifemapper, rocks-lmcompute) versions 
-     have not changed, remove rpms to ensure that configuration scripts are run.  
-     If these rpms  are new, the larger version git tag will force the new 
-     rpm to be installed, **but if the rpm versions have not changed**, you 
-     must remove them to ensure that the installation scripts are run.::
+#. You may remove source code rpms (lifemapper-lmserver and 
+   lifemapper-compute) to avoid error messages about file conflicts in 
+   shared code, but error messages about conflicting shared files from the 
+   first install of the source code rpm may be safely ignored. 
+#. In case the configuration rpm (rocks-lifemapper, rocks-lmcompute) versions 
+   have not changed, remove rpms to ensure that configuration scripts are run.  
+   If these rpms  are new, the larger version git tag will force the new 
+   rpm to be installed, **but if the rpm versions have not changed**, you 
+   must remove them to ensure that the installation scripts are run.::
       
-      # rpm -el rocks-lifemapper rocks-lmcompute
+   # rpm -el rocks-lifemapper rocks-lmcompute
 
 New install (destroys data)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    If you do not need to save the existing data files and database records, 
-    run the cleanRoll scripts for each roll. 
+If you do not need to save the existing data files and database records, 
+run the cleanRoll scripts for each roll. 
    
 #. **Add a new roll and rpms**, ensuring that old rpms/files are replaced::
 
@@ -163,21 +163,20 @@ LmCompute
 
 #. Check LmCompute logfiles
 
-    * /tmp/post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
-    * initLMcompute.log 
-    * installComputeCronJobs.log
-    * seedData.log (seedData must be run manually by user after reboot)
+   * /tmp/post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
+   * initLMcompute.log 
+   * installComputeCronJobs.log
+   * seedData.log (seedData must be run manually by user after reboot)
 
 LmServer
 ~~~~~~~~
 
 #. Check LmServer logfiles
 
-    * /tmp/post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
-    * initLM.log
-    * installServerCronJobs.log
-    * initDbserver.log (only if new db)
-
+   * /tmp/post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
+   * initLM.log
+   * installServerCronJobs.log
+   * initDbserver.log (only if new db)
      
 #. **Test database contents** ::  
 
@@ -214,5 +213,5 @@ Change Data Defaults
        * add the variables DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS in site.ini with appropriate values
          
-  then follow the instructions in **(OPT) To change defaults** above.
+then follow the instructions in **(OPT) To change defaults** above.
    

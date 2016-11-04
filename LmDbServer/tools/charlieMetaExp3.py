@@ -25,9 +25,20 @@ files: a dictionary containing
                                                          'alternatePredictions'
 """
 from osgeo import gdalconst
- 
-# Create boom ini file from
+
+# User should be a dictionary with 'id' and 'email' keys.  
+# If this is None, data is assigned to the ARCHIVE_USER
 USER = {'id': 'charlie', 'email': 'aimee.stewart@ku.edu'}
+
+# SPECIES_DATA is the basename, without path, of the of the .csv file containing 
+# and .meta file describing species data for this archive/experiment 
+SPECIES_DATA = 'CombinedBIEN3data'
+MIN_POINT_COUNT = 20
+
+# These must be valid ALGORITHM_CODES in the Lifemapper database; 
+# If this is None, data is assigned to the DEFAULT_ALGORITHMS
+ALGORITHM_CODES = None
+
 # For remote data, cannot read to get this 
 ENVLYR_GDALTYPE = gdalconst.GDT_Int16
 ENVLYR_GDALFORMAT = 'GTiff'
