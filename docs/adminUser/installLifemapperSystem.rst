@@ -182,9 +182,9 @@ LmServer
 
    # export PGPASSWORD=`grep sdlapp /opt/lifemapper/rocks/etc/users | awk '{print $2}'`
    # psql -U sdlapp -d mal
-     psql (9.1.22)
-     Type "help" for help.
-     mal=> select scenariocode, userid from scenario;
+   psql (9.1.22)
+   Type "help" for help.
+   mal=> select scenariocode, userid from scenario;
 
 Change Data Defaults
 --------------------
@@ -213,5 +213,5 @@ Change Data Defaults
        * add the variables DEFAULT_MODEL_SCENARIO and 
          DEFAULT_PROJECTION_SCENARIOS in site.ini with appropriate values
          
-  then follow the instructions in **(OPT) To change defaults** above.
+then follow the instructions in **(OPT) To change defaults** above.
    
