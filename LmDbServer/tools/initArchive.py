@@ -409,9 +409,9 @@ def _writeConfigFile(envPackageName, userid, mdlScen=None, prjScens=None):
    f.write('SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
    f.write('\n')
    try:
-      algs = META.ALGORITHM_CODES
+      algs = ','.join(META.ALGORITHM_CODES)
    except:
-      algs = DEFAULT_ALGORITHMS
+      algs = ','.join(DEFAULT_ALGORITHMS)
    f.write('DEFAULT_ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
    try:
@@ -438,7 +438,8 @@ def _writeConfigFile(envPackageName, userid, mdlScen=None, prjScens=None):
    f.write('DEFAULT_MODEL_SCENARIO: {}\n'.format(mdlScen))
    if not prjScens:
       prjScens = DEFAULT_PROJECTION_SCENARIOS
-   f.write('DEFAULT_PROJECTION_SCENARIOS: {}\n'.format(prjScens))
+   pcodes = ','.join(prjScens)
+   f.write('DEFAULT_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    f.close()
    return newConfigFilename
 
