@@ -17,7 +17,6 @@ SCRATCH_PATH: @LMSCRATCHDISK@
 ;; This variable is identical in config.lmcompute.ini
 SHARED_DATA_PATH: @DATADIR_SHARED@
 TEMP_PATH: @TEMPDIR@
-MAPSERVER_ROOT: http://@PUBLIC_FQDN@
 
 ; ...............................................
 [LmServer - registeredcompute]
@@ -95,7 +94,6 @@ DB_HOSTNAME: @DB_FQDN@
 
 ; ...............................................
 [LmServer - webserver]
-LM_LIB_PATH: @LMWEB@
 WEB_HOSTNAME:  @WEB_FQDN@
 
 ; ...............................................
