@@ -16,7 +16,9 @@ PYTHON_CMD: @PYBIN@
 LM_PATH: @LMHOME@
 LM_DISK: @LMDISK@
 SCRATCH_PATH: @LMSCRATCHDISK@
-;; This variable is identical in config.lmserver.ini
+
+;; These 2 variables are identical in config.lmserver.ini
+PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
 
 ;;**!!! JOB_REQUEST_PATH and PLUGINS_PATH go away
@@ -57,7 +59,7 @@ CONVERT_JAVA_INIT_MEM_OPTION: 512m
 SLEEP_TIME: 30
 HOLD_JOB_PATH: @LMDISK@/holdJobs/
 INACTIVE_TIME: 600
-PID_FILE: @LMSCRATCHDISK@/temp/lm-job-submitter.pid
+PID_FILE: @LMSCRATCHDISK@/run/lm-job-submitter.pid
 
 ;;**!!! Section goes away
 ; ...............................................

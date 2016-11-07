@@ -56,7 +56,7 @@ from types import IntType, FloatType
 
 from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
-                                            SCRATCH_PATH, TEMP_PATH, PUBLIC_FQDN)
+                                            SCRATCH_PATH, TEMP_PATH, PID_PATH)
 
 BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths
@@ -75,7 +75,7 @@ USER_LOG_PATH = os.path.join(LOG_PATH, 'users')
 ERROR_LOG_PATH = os.path.join(LOG_PATH, 'errors')
 
 CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH,'config', 'cherrypy.conf')
-MATT_DAEMON_PID_FILE = os.path.join(TEMP_PATH, 'mattDaemon.pid')
+MATT_DAEMON_PID_FILE = os.path.join(PID_PATH, 'mattDaemon.pid')
 
 # CC Tools constants
 CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
