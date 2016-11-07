@@ -24,10 +24,12 @@ without losing data.
 
      lmwriter$ $PYTHON /opt/lifemapper/LmCompute/tools/jobMediator.py stop
 
-#. **Caution** If want to completely wipe out existing install::
+#. **Caution** If want to completely wipe out existing install, run::
 
-   # wget https://raw.githubusercontent.com/pragmagrid/lifemapper-server/kutest/cleanRoll.sh -O cleanServerRoll.sh
-   # wget https://raw.githubusercontent.com/pragmagrid/lifemapper-compute/kutest/cleanRoll.sh -O cleanComputeRoll.sh
+   # bash /opt/lifemapper/rocks/bin/clean-lm-server-roll.sh
+   # rocks remove roll lifemapper-server
+   # bash /opt/lifemapper/rocks/bin/clean-lm-compute-roll.sh
+   # rocks remove roll lifemapper-compute
 
 Install both rolls on Frontend
 ------------------------------
