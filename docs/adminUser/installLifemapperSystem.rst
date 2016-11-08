@@ -24,7 +24,7 @@ without losing data.
 
      lmwriter$ $PYTHON /opt/lifemapper/LmCompute/tools/jobMediator.py stop
 
-#. **Caution** If want to completely wipe out existing install, run::
+#. **Caution** If want to **completely destroy** existing install, run::
 
    # bash /opt/lifemapper/rocks/bin/clean-lm-server-roll.sh
    # rocks remove roll lifemapper-server
