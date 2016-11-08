@@ -39,8 +39,7 @@ Install both rolls on Frontend
 
    # cd /state/partition1/apps/
    # wget http://lifemapper.org/dl/lifemapper*.*
-   # sha256sum lifemapper*.iso
-   # cat lifemapper*.sha
+   # sha256sum -c lifemapper-*.sha
    
 
 Update existing (maintains FE data)
