@@ -39,9 +39,6 @@ COMPUTE_CONFIG_FILENAME = os.getenv('LIFEMAPPER_COMPUTE_CONFIG_FILE')
 SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
 SITE_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SITE_CONFIG_FILE')
 
-SITE_CONFIG_SECTION = 'SiteConfig'
-SITE_CONFIG_ITEM = 'SITE_CONFIG'
-
 #    
 # .............................................................................
 @singleton
