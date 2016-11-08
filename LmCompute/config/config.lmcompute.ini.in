@@ -115,9 +115,3 @@ OTL_TREE_WEB_URL: http://api.opentreeoflife.org/v2/tree_of_life/subtree
 INSTITUTION_NAME: University of Kansas Biodiversity Institute
 ADMIN_NAME: Jeff Cavner
 ADMIN_EMAIL: jcavner@ku.edu 
-
-; .............................................................................
-; SiteConfig 
-; .............................................................................
-[SiteConfig]
-SITE_CONFIG: site.ini
