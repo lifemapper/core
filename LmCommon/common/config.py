@@ -66,7 +66,9 @@ class Config(object):
       # Add specified config files (ex BOOM config)
       fileList.extend(fns)
          
-         
+      # Remove Nones if they exist
+      fileList = [f for f in fileList if f is not None]
+      
       if fileList is None or len(fileList) == 0:
          raise ValueError, "Missing LIFEMAPPER_SERVER_CONFIG_FILE or LIFEMAPPER_COMPUTE_CONFIG_FILE environment variable"
       self.configFiles = fileList
