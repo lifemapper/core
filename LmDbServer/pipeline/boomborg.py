@@ -35,9 +35,8 @@ from types import ListType, TupleType, StringType, UnicodeType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
-            ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, 
-            GBIF_PROVIDER_FIELD)
+            ProcessType, JobStatus, ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, 
+            GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
@@ -54,19 +53,20 @@ from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-GBIF_SERVICE_INTERVAL = 3 * ONE_MIN            
+GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
 
 # .............................................................................
 class _LMBoomer(LMObject):
    # .............................
    def __init__(self, userid, priority, algLst, mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
-                intersectGrid=None, log=None):
+                minPointCount=POINT_COUNT_MIN, intersectGrid=None, log=None):
       super(_LMBoomer, self).__init__()
       import socket
       self.hostname = socket.gethostname().lower()
       self.userid = userid
       self.priority = priority
+      self.minPointCount = minPointCount
       self.algs = []
       self.modelScenario = None
       self.projScenarios = []
@@ -510,7 +510,7 @@ class _LMBoomer(LMObject):
    
 # ...............................................
    def _processSDMChain(self, sciname, taxonSourceKeyVal, occProcessType,
-                        dataCount, minPointCount, data=None):
+                        dataCount, data=None):
       jobs = []
       if sciname is not None:
          try:
@@ -531,7 +531,7 @@ class _LMBoomer(LMObject):
                                          occJobProcessType=occProcessType, 
                                          priority=self.priority, 
                                          intersectGrid=self.intersectGrid,
-                                         minPointCount=minPointCount)
+                                         minPointCount=self.minPointCount)
                self.log.debug('Created {} jobs for occurrenceset {}'
                               .format(len(jobs), occ.getId()))
             except Exception, e:
@@ -549,11 +549,13 @@ class BisonBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
                 priority=Priority.NORMAL, taxonSourceName=None, 
-                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+                mdlMask=None, prjMask=None, minPointCount=None,
+                intersectGrid=None, log=None):
       super(BisonBoom, self).__init__(userid, priority, algLst, 
                                       mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
+                                      minPointCount=minPointCount,
                                       intersectGrid=intersectGrid, log=log)
       self._tsnfile = None      
       if taxonSourceName is None:
@@ -643,7 +645,7 @@ class BisonBoom(_LMBoomer):
          sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
          jobs = self._processSDMChain(sciName, tsn, 
                                ProcessType.BISON_TAXA_OCCURRENCE, 
-                               tsnCount, BISON_MIN_POINT_COUNT)
+                               tsnCount)
       return jobs
          
 # ...............................................
@@ -712,10 +714,11 @@ class UserBoom(_LMBoomer):
              Occurrence record and inserts one or more jobs.
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
-                occMetaFname, expDate, priority=Priority.HIGH,
+                occMetaFname, expDate, priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       super(UserBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
+                                     minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      intersectGrid=intersectGrid, log=log)
       self.occParser = None
@@ -840,7 +843,7 @@ class UserBoom(_LMBoomer):
                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
                                  priority=self.priority, 
                                  intersectGrid=None,
-                                 minPointCount=POINT_COUNT_MIN)
+                                 minPointCount=self.minPointCount)
             self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
                            len(jobs), taxonName, len(dataChunk), occ.getId()))
       else:
@@ -856,10 +859,11 @@ class GBIFBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, providerListFile=None,
-                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+                mdlMask=None, prjMask=None, minPointCount=None, intersectGrid=None, log=None):
       super(GBIFBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
+                                      minPointCount=minPointCount,
                                       intersectGrid=intersectGrid, log=log)               
       self._dumpfile = None
       csv.field_size_limit(sys.maxsize)
@@ -953,7 +957,7 @@ class GBIFBoom(_LMBoomer):
       if sciName:       
          jobs = self._processSDMChain(sciName, speciesKey, 
                             ProcessType.GBIF_TAXA_OCCURRENCE, 
-                            dataCount, POINT_COUNT_MIN, data=dataChunk)
+                            dataCount, self.minPointCount, data=dataChunk)
       return jobs
    
 # ...............................................
@@ -1072,10 +1076,12 @@ class iDigBioBoom(_LMBoomer):
    """
    def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
-                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+                mdlMask=None, prjMask=None, minPointCount=None, 
+                intersectGrid=None, log=None):
       super(iDigBioBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
                                         taxonSourceName=taxonSourceName, 
                                         mdlMask=mdlMask, prjMask=prjMask, 
+                                        minPointCount=minPointCount,
                                         intersectGrid=intersectGrid, log=log)
       if taxonSourceName is None:
          raise LMError(currargs='Missing taxonomic source')
@@ -1198,7 +1204,7 @@ class iDigBioBoom(_LMBoomer):
          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
          jobs = self._processSDMChain(sciName, taxonKey, 
                                ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                               taxonCount, POINT_COUNT_MIN)
+                               taxonCount, self.minPointCount)
       return jobs
 
 # .............................................................................
