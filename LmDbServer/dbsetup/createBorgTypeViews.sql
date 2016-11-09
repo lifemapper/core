@@ -124,7 +124,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
 
    -- MatrixColumn.*
    matrixColumnId,
-   bucketId, 
+   experimentId, 
    mtxlyrsquid,
    mtxlyrident,
    matrixId,
@@ -138,7 +138,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             mc.matrixColumnId, mc.bucketId, mc.squid, mc.ident, mc.matrixId, 
+             mc.matrixColumnId, mc.experimentId, mc.squid, mc.ident, mc.matrixId, 
              mc.matrixIndex, mc.intersectParams, mc.metadata, 
              mc.status, mc.statusmodtime
         FROM lm_v3.layer l, lm_v3.MatrixColumn mc
