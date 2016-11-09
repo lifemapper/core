@@ -23,10 +23,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-try:
-   import cPickle as pickle
-except:
-   import pickle
 import json
 import mx.DateTime
 import os
@@ -34,7 +30,7 @@ from osgeo import ogr
 import subprocess
 from types import StringType, UnicodeType
 
-from LmCommon.common.lmconstants import JobStage, JobStatus, RandomizeMethods
+from LmCommon.common.lmconstants import JobStage, JobStatus, MatrixType
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
@@ -42,217 +38,97 @@ from LmServer.rad.matrix import Matrix
 from LmServer.rad.pamvim import PamSum
 
 # .............................................................................
-class RADBucket(ServiceObject, ProcessObject):
+class BigExperiment(ServiceObject, ProcessObject):
    """
-   The RADBucket class contains all of the information for one view (extent and 
+   The BigExperiment class contains all of the information for one view (extent and 
    resolution) of a RAD experiment.  
    """
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, shapegrid, metadata={},
-                epsgcode=None, keywords=None, 
-                fullPam=None, fullGrim=None, pamSum=None, randomPamSums=[],
-                pamFname=None, grimFname=None, 
-                compressedPamFname=None, sumFname=None,
-                sitesPresent=None, layersPresent={}, indicesFilename=None,
-                stage=None, stageModTime=None, 
+   def __init__(self, metadata={}, 
+                shapegrid=None, siteIndices=None, epsgcode=None, 
+                pam=None, grim=None, biogeo=None, tree=None,
                 status=None, statusModTime=None, 
-                userId=None, expId=None, bucketId=None, createTime=None,
-                metadataUrl=None, parentMetadataUrl=None):
+                userId=None, expId=None, metadataUrl=None):
       """
-      @summary Constructor for the BgBucket class
+      @summary Constructor for the BigExperiment class
       @param shapegrid: Vector layer with polygons representing geographic sites.
-      @param fullPAM: A Matrix of the original PresenceAbsenceMatrix
-             (PAM) created directly from the input OrganismLayerset intersected
-             with the ShapeGrid
-      @param fullGRIM: A Matrix of the original Environmental Layers intersected
-             with the ShapeGrid
-      @param pamSum: The (original) PamSum object that is one Matrix and one 
-             dictionary of statistics -  
-                1) PAM - compressed version of the fullPAM, with all rows/sites 
-                   with no layer present removed and all columns/layers with no 
-                   presence in the sites removed.
-                2) SUM - A dictionary of calculations, both individual values 
-                   and vectors, corresponding to the calculations performed
-                   on the compressed PAM 
-      @param randomPamSums: A list of PamSums with a randomized, compressed 
-             version of the original PAM and a SUM from that randomized PAM. 
-      @param indicesFilename: Filename for the 2 dictionaries, sitesPresent and
-             layersPresent. This overrides the dictionaries if all are provided.
-      @param sitesPresent: A dictionary with keys the unique/record identifiers 
-             of the sites in a ShapeGrid, and values a boolean indicating 
-             presence in the compressed version of the PAM.  If the PAM has not 
-             been compressed, all site keys will have a value of True.
-      @param layersPresent: A dictionary with keys the index of each layer
-             in a Matrix (and PresenceAbsenceLayerset), and values a boolean 
-             indicating presence in the compressed version of the PAM.  If the 
-             PAM has not been compressed, all layer keys will have a value of 
-             True.
-      @param stage: The processing stage of the experiment
-      @param stageModTime: The last time that the stage was modified
+      @param siteIndices: A dictionary with keys the unique/record identifiers 
+             and values the x, y coordinates of the sites in a ShapeGrid or PAM
+      @param epsgcode: The EPSG code of the spatial reference system of data.
+      @param pam: A Presence Absence Matrix (MatrixType.PAM)
+      @param grim: A Matrix of Environmental Values (MatrixType.GRIM)
+      @param biogeo: A Matrix of Biogeographic Hypotheses (MatrixType.BIOGEO_HYPOTHESES)
+      @param tree: A Tree with taxa matching those in the PAM 
       @param status:  The run status of the current stage
       @param statusModTime: The last time that the status was modified
       @param userId: id for the owner of these data
       @param expId: database id of the RADExperiment containing this Bucket 
-      @param bucketId: database id of object 
-      @param createTime: Create Time/Date, in Modified Julian Day (MJD) format
-      @param modTime: Last modification Time/Date, in MJD format
-      select * from lm3.lm_pullMessageJobs(2,510,1,90,NULL,56593.6974963,'129.237.201.119');
       """
-      ServiceObject.__init__(self, userId, bucketId, createTime, statusModTime,
-            LMServiceType.BUCKETS, moduleType=LMServiceModule.RAD,
-            metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl)
-      ProcessObject.__init__(self, objId=bucketId, parentId=expId, status=status,  
-            statusModTime=statusModTime, stage=stage, stageModTime=stageModTime) 
-      self._bucketPath = None
-      self._pamSum = None
-      self._randomPamSums = []
+      ServiceObject.__init__(self, userId, expId, None, statusModTime,
+            LMServiceType.RAD_EXPERIMENTS, moduleType=LMServiceModule.RAD,
+            metadataUrl=metadataUrl)
+      ProcessObject.__init__(self, objId=expId, 
+                             status=status,  statusModTime=statusModTime) 
       self.metadata = {}
       self.loadMetadata(metadata)
-#       self._experimentId = expId
+      self.shapegrid = shapegrid
+      self._setEPSG(epsgcode)
 
-      self._epsg = None
-      self.shapegrid = None
+      self.setMatrix(MatrixType.PAM, mtxFileOrObj=pam)
+      self.setMatrix(MatrixType.GRIM, mtxFileOrObj=grim)
+      self.setMatrix(MatrixType.BIOGEO_HYPOTHESES, mtxFileOrObj=biogeo)
+      
       if shapegrid is not None:
          if shapegrid.getUserId() is None:
             shapegrid.setUserId(self._userId)
          self._epsg = shapegrid.epsgcode
       self.shapegrid = shapegrid
       
-      # Allow construction without shapegrid 
-      if self._epsg is None:
-         self._epsg = epsgcode
-         
-      if bucketId is not None:
-         self.setId(bucketId)
-
-      self._setKeywords(keywords)
-      
-      self._pamFname = None
-      self._grimFname = None
-      self._presidxFname = None
-
-      self._fullPAM = fullPam
-      self._setPAMFilename(pamFname)
-      self._fullGRIM = fullGrim
-      self._setGRIMFilename(grimFname)
-      self._setPAMSUM(pamSum)
-#       self._setCmpPamFilename(compressedPamFname)
-#       self._setSumFilename(sumFname)
-      
-      self.setRandomPamSums(randomPamSums)
-      
-      # indicesFilename is the only filename calculated (if not provided) on construction
-      self._setPresenceIndicesFilename(indicesFilename)
-      self._readPresenceIndices()
-      if not self._layersPresent:
-         self._layersPresent = layersPresent
-      if not self._sitesPresent and self.shapegrid is not None:
-         self._sitesPresent = shapegrid.initSitesPresent()
-         if self._bucketPath is not None:
-            self.writePresenceIndices()
+               
             
 # ...............................................
    @classmethod
-   def initFromFiles(cls, shapegrid,  epsgcode=None, keywords=None,
-                     pamFilename=None, grimFilename=None, pamsumFilename=None, 
-                     indicesFilename=None,
-                     stage=None, stageModTime=None, 
-                     status=None, statusModTime=None, 
-                     userId=None, expId=None, bucketId=None, createTime=None,
-                     metadataUrl=None, parentMetadataUrl=None):
-      """
-      @summary Constructor for the BgBucket class, does not initialize all 
-             member objects, just shapeGrid (given) and indices.
-      @param shapegrid: Vector layer with polygons representing geographic sites.
-      @param pamFilename: Filename for the Matrix of the original 
-             PresenceAbsenceMatrix (PAM) 
-             created directly from the input OrganismLayerset intersected with 
-             the ShapeGrid (or a dlocation containing those data).
-      @param grimFilename: Filename for the Matrix of the original Environmental 
-             Layers intersected
-             with the ShapeGrid (or a dlocation containing those data). 
-      @param pamsumFilename: Filename for the PamSum object that is 2 Matrices -  
-                1) PAM - compressed version of the fullPAM, with all rows/sites 
-                   with no layer present removed and all columns/layers with no 
-                   presence in the sites removed.
-                2) SUM - The matrix corresponding to the calculations performed
-                   on the compressed PAM 
-      @param indicesFilename: Filename for the 2 dictionaries, sitesPresent and
-             layersPresent.
-      """
-      pamsum = PamSum.initAndFillFromFile(pamsumFilename, epsgcode=epsgcode)
-      bkt = RADBucket(shapegrid, epsgcode=epsgcode, pamSum=pamsum, 
-                      userId=userId, expId=expId, 
-                      bucketId=bucketId, createTime=createTime,
-                      metadataUrl=metadataUrl, 
-                      parentMetadataUrl=parentMetadataUrl)
+   def initFromFiles(cls):
+      pass
 
-      # Do not read matrices until/unless they are needed
-      bkt._pamFname = pamFilename
-      bkt._grimFname = grimFilename
-
-      # Read the indices file if it exists and populate dictionaries 
-      if indicesFilename is None:
-         bkt._sitesPresent = shapegrid.initSitesPresent()
-         bkt._layersPresent = {}
+# .............................................................................
+# Properties
+# .............................................................................
+   def _setEPSG(self, epsg=None):
+      if self._shapegrid is not None:
+         self._epsg = self._shapegrid.epsgcode
       else:
-         bkt._presidxFname = indicesFilename
-         bkt._readPresenceIndices()
-      
-      return bkt
-      
+         self._epsg = epsg
+
+   def _getEPSG(self):
+      if self._epsg is None:
+         self._setEPSG()
+      return self._epsg
+
+   epsgcode = property(_getEPSG, _setEPSG)
+
+# .............................................................................
+# Methods
+# .............................................................................
+
 # ...............................................
-   def readPAM(self, fullPAMFilename=None):
-      """
-      @summary Fill the PAM object from existing file
-      @postcondition: The full PAM object will be present
-      """
-      if fullPAMFilename is not None:
-         self._pamFname = fullPAMFilename
-      elif self._pamFname is None:
-         raise LMError('No fullPAM filename to read')
-      
-      fullPAM = Matrix.initFromFile(self._pamFname, False)
-      self.setFullPAM(fullPAM)      
-         
-# ...............................................
-   def setId(self, id):
+   def setId(self, expid):
       """
       Overrides ServiceObject.setId.  
       @note: ExperimentId should always be set before this is called.
       """
-      ServiceObject.setId(self, id)
+      ServiceObject.setId(self, expid)
       self.setPath()
 
 # ...............................................
    def setPath(self):
-      if self._bucketPath is None:
-         if (self.parentId is not None and self._userId is not None and
-             self.getId() is not None):
+      if self._expPath is None:
+         if (self._userId is not None and self.getId() is not None):
             self._bucketPath = self._earlJr.createDataPath(self._userId, 
-                               epsg=self._epsg, radexpId=self.parentId, 
-                               bucketId=self.getId())
-      if self._bucketPath is not None:
-         if self._pamSum is not None:
-            self._pamSum.outputPath = self._bucketPath
-         if self._randomPamSums:
-            for rps in self._randomPamSums:
-               rps.outputPath = self._bucketPath
-               
-# ...............................................
-   def setExperimentId(self, expid):
-      self.parentId = expid
-      if self._bucketPath is None and self.getId() is not None:
-         self._bucketPath = self._earlJr.createDataPath(self._userId, 
-                            epsg=self._epsg, radexpId=self.parentId, 
-                            bucketId=self.getId())
-      
-# ...............................................
-#    def getExperimentId(self):
-#       return self.parentId
-
+                               epsg=self._getEPSG(), radexpId=self.getId())
+                     
 # ...............................................
    def addMetadata(self, metadict):
       for key, val in metadict.iteritems():
@@ -280,170 +156,28 @@ class RADBucket(ServiceObject, ProcessObject):
             else:
                self.addMetadata(metajson)
    
-   @property
-   def experimentId(self):
-      return self.parentId
-   
 # ...............................................
-   def addShapegrid(self, shpgrid):
-      if self.shapegrid is None:
-         self.setSitesPresent(shpgrid.initSitesPresent())
-      else:
-         raise LMError('Shapegrid is already attached')
-         
-# ...............................................
-   def setFullPAM(self, pam):
-      self._fullPAM = pam
-      if self._pamFname is None:
-         self._setPAMFilename()
-      
-   def getFullPAM(self):
-      return self._fullPAM
-   
-#    fullPAM = property(_getPAM, _setPAM)
-# ...............................................
-   def setFullGRIM(self, grim):
-      self._fullGRIM = grim
-      if self._grimFname is None:
-         self._setGRIMFilename()
-      
-   def getFullGRIM(self):
-      return self._fullGRIM
-   
-#    fullGRIM = property(_getGRIM, _setGRIM)
-# ...............................................
-   def _setPAMSUM(self, pamsum):
-      self._pamSum = pamsum
-      self._setCmpPamFilename()
-      self._setSumFilename()
-      if self._pamSum is not None:
-         self._pamSum.outputPath = self._bucketPath
-      
-   def _getPAMSUM(self):
-      return self._pamSum
-   
-   pamSum = property(_getPAMSUM, _setPAMSUM)
-   
-# ...............................................
-   def addRandomPamSum(self, randomPamSum=None, 
-                       randomPam=None, method=None, parameters={}, 
-                       createTime=None):
-      if randomPamSum is None:
-         if method == RandomizeMethods.SPLOTCH:
-            randomPamSum = PamSum(None, createTime=createTime, 
-                                  bucketPath=self._bucketPath, 
-                                  bucketId=self.getId(), 
-                                  expId=self.parentId,
-                                  epsgcode=self._epsg,
-                                  userId=self.getUserId(), randomMethod=method, 
-                                  randomParameters=parameters, 
-                                  splotchPam=randomPam,
-                                  parentMetadataUrl=self.metadataUrl)
-         elif method == RandomizeMethods.SWAP:
-            randomPamSum = PamSum(randomPam, createTime=createTime, 
-                                  bucketPath=self._bucketPath,
-                                  bucketId=self.getId(), 
-                                  expId=self.parentId, 
-                                  epsgcode=self._epsg,
-                                  userId=self.getUserId(), 
-                                  randomMethod=method, 
-                                  randomParameters=parameters,
-                                  parentMetadataUrl=self.metadataUrl)
-         else:
-            raise LMError(currargs='Unknown RandomizeMethod %s' % str(method))
-      if self._bucketPath is not None:
-         randomPamSum.outputPath = self._bucketPath
-      self._randomPamSums.append(randomPamSum)
-            
-   def setRandomPamSums(self, rpamsums):
-      self._randomPamSums = []
-      if rpamsums:
-         for rps in rpamsums:
-            self.addRandomPamSum(rps)
-   
-   def getRandomPamSums(self):
-      return self._randomPamSums
-   
-#    randomPamSums = property(_getRandomPamSums, _setRandomPamSums)
-   
-# ...............................................
-   def readGRIM(self, grimFilename=None):
+   def setMatrix(self, mtxType, mtxFileOrObj=None, doRead=False):
       """
       @summary Fill the GRIM object from existing file
       @postcondition: The full GRIM object will be present
       """
-      if self._grimFname is None and grimFilename is not None:
-         self._grimFname = grimFilename
-      self._fullGRIM = Matrix.initFromFile(self._grimFname, False)
-
-# # ...............................................
-#    def readCompressedPamSum(self, cmpPAMFilename=None, sumFilename=None):
-#       """
-#       @summary Fill the GRIM object from existing file
-#       @postcondition: The full GRIM object will be present
-#       """
-#       if self._cmpPAMFname is None and cmpPAMFilename is not None:
-#          self._cmpPAMFname = cmpPAMFilename
-#       self._pamSum = PamSum.initAndFillFromFile(self._cmpPAMFname, 
-#                                                 sumFilename=sumFilename)
-#       
-# # ...............................................
-#    def writePamSum(self):
-#       """
-#       @summary: Write PAM, SUM matrices to files, and sitesPresent, 
-#                layersPresent dictionaries to a file. 
-#       """
-#       self._setPAMSUMFilename()
-#       self._setPresenceIndicesFilename()
-#       if self._pamSum is not None:
-#          self._pamSum.writePam()
-#          self._pamSum.writeSum()
-#          self.writePresenceIndices()
-#       else:
-#          raise LMError(currargs='PamSum does not exist')
-         
-# ...............................................
-   def writePam(self):
-      """
-      @summary: Write PAM matrix to file. 
-      """
-      self._setPAMFilename()
-      if self._fullPAM is not None:
-         print('Writing fullPAM ...')
-         self._fullPAM.write()
-      else:
-         print('PAM does not exist')
-
-# ...............................................
-   def writeGrim(self):
-      """
-      @summary: Write GRIM matrix to file. 
-      """
-      self._setGRIMFilename()
-      if self._fullGRIM is not None:
-         print('Writing fullGRIM ...')
-         self._fullGRIM.write()
-      else:         
-         print 'GRIM does not exist'
-
-# ...............................................
-   def setFilenames(self):
-      """
-      @summary: Set the filename for the Full PAM, Compressed PAM and SUM, 
-                and the file containing sitesPresent and layersPresent indices 
-                based on the user, experimentId, and bucketId 
-      @return: True on success, False on failure
-      """
-      if self._bucketPath is not None and self.getId() is not None:
-         self._setPAMFilename()
-         self._setPAMSUMFilename()
-         self._setGRIMFilename()
-         self._setPresenceIndicesFilename()
-         return True
-      else:
-         raise LMError(currargs='Unable to set filenames until ExperimentId and BucketId are set', 
-                       lineno=self.getLineno())
-         
+      mtx = None
+      if mtxFileOrObj is not None:
+         if isinstance(mtxFileOrObj, StringType) and os.path.exists(mtxFileOrObj):
+            mtx = Matrix(matrixType=mtxType, dlocation=mtxFileOrObj)
+            if doRead:
+               mtx.readData()            
+         elif isinstance(mtxFileOrObj, Matrix):
+            mtx = mtxFileOrObj
+            
+      if mtxType == MatrixType.PAM:
+         self._pam = mtx
+      elif mtxType == MatrixType.GRIM:
+         self._grim = mtx
+      elif mtxType == MatrixType.BIOGEO_HYPOTHESES:
+         self._biogeo = mtx
+                  
 # ................................................
    def createLayerShapefileFromMatrix(self, shpfilename, isPresenceAbsence=True):
       """
@@ -533,64 +267,20 @@ class RADBucket(ServiceObject, ProcessObject):
 # ...............................................
    def rollback(self, currtime):
       """
-      @summary: Rollback processing following an addition to the set of 
-                presenceAbsenceLayers.  This indicates one or more layers must
-                be intersected into the fullPAM, the compressed PAM and SUM 
-               (original PamSum) and all randomPamSums must be deleted.
-      @param currtime: Time of status/stage modfication
-      @todo: This removes the fullPAM and its dlocation.  In the future, just 
-             intersect new layers, then add them to fullPAM
+      @summary: Rollback processing following a change to the layers.  
+      @param currtime: Time of status modfication
       """
-      self.updateStatus(JobStatus.GENERAL, modTime=currtime, 
-                        stage=JobStage.GENERAL)
-      # @todo: add to fullPAM (update object and files) instead of starting over
-      self.clearPAM()
-      self.clearPresenceIndicesFile()
-      # Delete original and random pamSums
-      if self._pamSum is not None:
-         self._pamSum.clear()
-         self._pamSum = None
-      for rps in self._randomPamSums:
-         rps.clear()
-      self._randomPamSums = []
-      
-# .............................................................................
-# Read-0nly Properties
-# .............................................................................
-#    ## The run status of the current stage of this bucket (one view of an experiment)
-#    status = property(_getStatus)
-#    ## The last time the status was updated in modified julian date format
-#    statusModTime = property(_getStatusModTime)
-# #   ## The run stage of the bucket
-#    stage = property(_getStage)
-# #   ## The last time the stage was updated in modified julian date format
-#    stageModTime = property(_getStageModTime)
-#    
-#    name = property(_getBucketName)
+      pass
+#       self.updateStatus(JobStatus.GENERAL, modTime=currtime)
 
 # .............................................................................
 # Public methods
 # .............................................................................
-
-# ...............................................
-   def populatePAMFromFile(self, pamfname=None):
-      if pamfname is None:
-         self._fullPAM = Matrix.initFromFile(self._pamFname, False)
-      else:
-         self._pamFname = pamfname
-         self._fullPAM = Matrix.initFromFile(pamfname, False)
          
 # ................................................
    def addPAMColumn(self, data, colIdx):
       self._fullPAM.addColumn(data, colIdx)
       
-# ...............................................
-   def populateGRIMFromFile(self, grimfname=None):
-      if grimfname is None:
-         self._fullGRIM = Matrix.initFromFile(self._grimFname, False)
-      else:
-         self._fullGRIM = Matrix.initFromFile(grimfname, False)
-
 # ................................................
    def addGRIMColumn(self, data, colIdx):
       self._fullGRIM.addColumn(data, colIdx)
@@ -605,35 +295,6 @@ class RADBucket(ServiceObject, ProcessObject):
       else:
          raise LMError(currargs='Cannot get column before compression')
 
-## ...............................................
-#   def randomizePAM(self, method, pam, iterations=None):
-#      if (method == RandomizeMethods.SWAP and  
-#          pam.isCompressed):
-#         if iterations is not None:
-#            self._randomize(pam, iterations = iterations)
-#         else:
-#            raise LMError('iterations must be specified')
-#      elif (method == RandomizeMethods.SPLOTCH 
-#            and self.bucket.fullPAM is not None):
-#         self._randomize(pam)
-#      else:
-#         raise LMError(currargs='%s method does not match compression state of PAM' 
-#                       % str(method))         
-
-# ...............................................
-   def uncompressPAM(self, doDeleteCompressed=False):
-      if self._fullPAM is None:
-         self._fullPAM = self._pamSum.uncompressPAM(self._sitesPresent, 
-                                                    self._layersPresent)
-      if doDeleteCompressed:
-         self._pamSum = None
-
-# ...............................................
-   def uncompressLayer(self, lyridx):
-      if self._fullPAM is None:
-         lyrdata = self._pamSum.pam.uncompressLayer(lyridx, self._sitesPresent, 
-                                                    self._layersPresent)
-      return lyrdata
     
 # ...............................................
    def getSitesPresent(self):
@@ -703,35 +364,7 @@ class RADBucket(ServiceObject, ProcessObject):
       for idx in self._sitesPresent.keys():
          self._sitesPresent[idx] = True
 
-# ...............................................
-   def clearPresenceIndices(self):
-      """
-      @summary: Reset existing layersPresent and sitesPresent to true for 
-                all layers and sites. 
-      """
-      self.clearLayersPresent()
-      self.clearSitesPresent()
 
-# ...............................................
-   def clearLayersPresent(self):
-      self._layersPresent = {}
-      
-# ...............................................
-   def clearSitesPresent(self):
-      self._sitesPresent = {}
-      
-# ...............................................
-   def hydrateLayer(self, lyrIdx):
-      pass
-   
-# ...............................................
-   def _isCompressed(self):
-      if self._pamSum is None:
-         return False
-      else:
-         return True
-   isCompressed = property(_isCompressed)
-   
 # ...............................................
    def createLocalMapFilename(self):
       """
@@ -1051,9 +684,9 @@ class RADBucket(ServiceObject, ProcessObject):
 
    def _setKeywords(self, keywords):
       """
-      @summary Sets the keywords of the RADBucket
+      @summary Sets the keywords of the BigExperiment
       @param keywords: List or comma-delimited string of keywords that will be 
-                       associated with the RADBucket
+                       associated with the BigExperiment
       """
       if isinstance(keywords, (StringType, UnicodeType)):
          keywords = keywords.split(',')   

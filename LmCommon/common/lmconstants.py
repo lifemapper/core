@@ -87,7 +87,7 @@ class MatrixType:
    PAM = 1
    GRIM = 2
    BIOGEO_HYPOTHESES = 3
-   # may be replaced by attribute in Bucket-Tree object
+   # may be replaced by attribute in Experiment-Tree object
    TREE = 4
    # OUTPUTS
    PADDED_PAM = 101
