@@ -433,6 +433,11 @@ def _writeConfigFile(envPackageName, userid, mdlScen=None, prjScens=None):
    f.write('USER_OCCURRENCE_META: {}.meta\n'.format(speciesDataName))
    f.write('')
    f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
+   try:
+      epsg = META.EPSG
+   except:
+      epsg = DEFAULT_EPSG
+   f.write('DEFAULT_EPSG: {}\n'.format(epsg))
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO
    f.write('DEFAULT_MODEL_SCENARIO: {}\n'.format(mdlScen))
