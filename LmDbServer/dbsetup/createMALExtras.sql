@@ -6272,6 +6272,8 @@ BEGIN
    start = char_length(olddir) + 1;
    UPDATE lm3.OccurrenceSet SET dlocation = newdir || substr(dlocation, start)  
 	   WHERE dlocation like olddir || '%';
+   UPDATE lm3.OccurrenceSet SET rawdlocation = newdir || substr(rawdlocation, start)  
+	   WHERE rawdlocation like olddir || '%';
 	UPDATE lm3.Layer SET dlocation = newdir || substr(dlocation, start)  
 	   WHERE dlocation like olddir || '%';
 	UPDATE lm3.Model SET dlocation = newdir || substr(dlocation, start)  

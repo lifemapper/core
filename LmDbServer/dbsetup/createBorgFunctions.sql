@@ -293,3 +293,29 @@ BEGIN
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)
+   RETURNS void AS
+$$
+DECLARE
+   start int = 0;
+BEGIN
+   start = char_length(olddir) + 1;
+   UPDATE lm_v3.JobChain SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.Layer SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.Occurrenceset SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.SDMModel SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.Process SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+   
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 
