@@ -36,6 +36,7 @@ import zipfile
 from LmCommon.common.lmconstants import HTTPStatus, SHAPEFILE_EXTENSIONS
 from LmServer.base.layer import Vector
 from LmServer.base.lmobj import LmHTTPError
+from LmServer.common.localconstants import TEMP_PATH
 from LmServer.rad.pamvim import PamSum
 from LmServer.rad.radbucket import RADBucket
 from LmServer.rad.shapegrid import ShapeGrid
@@ -64,7 +65,8 @@ class ShapefileFormatter(Formatter):
          #exts = ["shp", "prj", "shx", "dbf", "qix"]
          #self.obj.populatePAMFromFile()
          #fn = "/tmp/bucket%s" % str(self.obj.id)
-         fn = "/tmp/%s" % uuid.uuid4()
+         #fn = "/tmp/%s" % uuid.uuid4()
+         fn = os.path.join(TEMP_PATH, uuid.uuid4())
          success = self.obj.createLayerShapefileFromMatrix("%s.shp" % fn, isPresenceAbsence=True)
          
          tgStream = StringIO()
@@ -89,7 +91,8 @@ class ShapefileFormatter(Formatter):
          peruser.openConnections()
          bucket = peruser.getRADBucket(self.obj.user, bucketId=self.obj.parentId)
          peruser.closeConnections()
-         fn = "/tmp/%s" % uuid.uuid4()
+         #fn = "/tmp/%s" % uuid.uuid4()
+         fn = os.path.join(TEMP_PATH, uuid.uuid4())
          success = self.obj.createLayerShapefileFromSum(bucket, "%s.shp" % fn)
          
          tgStream = StringIO()
