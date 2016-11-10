@@ -25,12 +25,14 @@
 """
 import json
 import numpy
+import ogr
 import os
 from types import BooleanType
 
 from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, MatrixType)
 from LmServer.base.lmobj import LMObject, LMError
-from LmServer.base.serviceobject import ProcessObject
+from LmServer.base.serviceobject import ProcessObject, ServiceObject
+from LmServer.common.lmconstants import LMServiceType,LMServiceModule
 
 
 # .............................................................................
@@ -41,13 +43,29 @@ class Matrix(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, matrix, matrixType=MatrixType.PAM, metadata={},
-                dlocation=None, isCompressed=False, 
-                randomParameters={}):
+   def __init__(self, matrix, 
+                matrixType=MatrixType.PAM, 
+                metadata={},
+                dlocation=None, 
+                experimentId=None,
+                randomParameters={},
+                userId=None,
+                experimentId=None,
+                matrixId=None,
+                status=None, statusModTime=None):
       """
       @param matrix: numpy array
       @param dlocation: file location of the array
       """
+      createTime = None
+      ServiceObject.__init__(self,  userId, matrixId, createTime, statusModTime,
+                             LMServiceType.MATRICES, 
+                             moduleType=LMServiceModule.RAD,
+                             metadataUrl=metadataUrl, 
+                             parentMetadataUrl=parentMetadataUrl)
+      ProcessObject.__init__(self, objId=pamSumId, parentId=bucketId, 
+                status=status, statusModTime=statusModTime, stage=stage, 
+                stageModTime=stageModTime) 
       self._matrix = matrix
       self.matrixType = matrixType
       self.metadata = {}
@@ -210,49 +228,6 @@ class Matrix(LMObject):
          self._matrix[row][colIdx] = data[row]
    
 
-   
-# ..............................................................................
-#    def compress(self, sitesPresent, layersPresent):
-#       totalrows = 0
-#       for r,rk in enumerate(sorted(sitesPresent.keys())):
-#          
-#          if self._matrix[r].max() > 0:
-#             sitesPresent[rk] = True
-#             totalrows += 1
-#          else:
-#             sitesPresent[rk] = False
-#       
-#       totalcols = 0
-#       for c,ck in enumerate(sorted(layersPresent.keys())):
-#          if self._matrix[:,c].max() > 0:
-#             layersPresent[ck] = True
-#             totalcols += 1
-#          else:
-#             layersPresent[ck] = False
-#       
-#       cpam = numpy.zeros([totalrows, totalcols])
-#       #if self.sum is not None:
-#       #   cvim = numpy.zeros([totalrows, totalcols])
-#       #else:
-#       #   cvim = None
-#          
-#       currRow = 0
-#       #currCol = 0
-#       for r,rk in enumerate(sorted(sitesPresent.keys())):
-#          if sitesPresent[rk]:
-#             currCol = 0
-#             for c,ck in enumerate(sorted(layersPresent.keys())):
-#                if layersPresent[ck]:
-#                   cpam[currRow, currCol] = self._matrix[r,c]
-#                   #if self.sum is not None:
-#                   #   cvim[currRow, currCol] = self.sum[r,c]
-# 
-#                   currCol += 1
-#             currRow += 1
-#             
-#       compressedPam = Matrix(cpam, isCompressed=True)
-#       compressedPam.convertToBool()
-#       return (compressedPam, sitesPresent, layersPresent)
       
 #..............................................................................
    def getColumnPresence(self, sitesPresent, layersPresent, columnIdx):
@@ -326,6 +301,87 @@ class Matrix(LMObject):
       success, msg = self._deleteFile(self._dlocation, deleteDir=True)
       self._matrix = None
       
+# ...............................................
+   def setIndices(self, indicesFileOrObj=None, doRead=True):
+      """
+      @summary Fill the siteIndices from dictionary or existing file
+      """
+      indices = None
+      if indicesFileOrObj is not None:
+         if isinstance(indicesFileOrObj, StringType) and os.path.exists(indicesFileOrObj):
+            if doRead:
+               try:
+                  f = open(indicesFileOrObj, 'r')
+                  indices = f.read()
+               except:
+                  raise LMError('Failed to read indices {}'.format(indicesFileOrObj))
+               finally:
+                  f.close()
+            else:
+               indices = indicesFileOrObj
+         elif isinstance(indicesFileOrObj, dict):
+            indices = indicesFileOrObj
+      self.siteIndices = indices
+# ...............................................
+   def createLayerShapefileFromSum(self, bucket, shpfilename):
+      # needs sitesPresent
+      # consider sending it the bucket instead, and using indicesDLocation
+      # to get the sitepresent pickle
+      
+      fieldNames = {'speciesRichness-perSite' : 'specrich',      
+                    'MeanProportionalRangeSize': 'avgpropRaS',
+                    'ProportionalSpeciesDiversity' : 'propspecDi',
+                    'Per-siteRangeSizeofaLocality' : 'RaSLoc'
+                    }
+      # See if we should attach tree stats
+      #if self._sum['sites']['MNTD'] is not None:
+      fieldNames['MNTD'] = 'mntd'
+      fieldNames['PearsonsOfTDandSitesShared'] ='pearsTdSs'
+      fieldNames['AverageTaxonDistance'] = 'avgTd'
+                    
+      bucket.shapegrid.copyData(bucket.shapegrid.getDLocation(), 
+                                targetDataLocation=shpfilename,
+                                format=bucket.shapegrid.dataFormat)
+      ogr.RegisterAll()
+      drv = ogr.GetDriverByName(bucket.shapegrid.dataFormat)
+      try:
+         shpDs = drv.Open(shpfilename, True)
+      except Exception, e:
+         raise LMError(['Invalid datasource %s' % shpfilename, str(e)])
+      shpLyr = shpDs.GetLayer(0)
+      
+      sitesDict = self._sum['sites']
+      
+      statKeys = [k for k in sitesDict.keys() if sitesDict[k] is not None]
+      
+      for key in statKeys:
+         fldname = fieldNames[key]
+         fldtype = ogr.OFTReal
+         fldDefn = ogr.FieldDefn(fldname, fldtype)
+         if shpLyr.CreateField(fldDefn) != 0:
+            raise LMError('CreateField failed for %s in %s' 
+                          % (fldname, shpfilename))
+      sortedSites = sorted([x[0] for x in sitesPresent.iteritems() if x[1]])
+      currFeat = shpLyr.GetNextFeature()         
+      while currFeat is not None:
+         siteId = currFeat.GetFieldAsInteger(bucket.shapegrid.siteId)
+         print siteId
+         if sitesPresent[siteId]:
+            print "True"
+            for statname in statKeys:
+               currVector = sitesDict[statname]
+               print statname
+               currval = currVector[sortedSites.index(siteId)]
+               currFeat.SetField(fieldNames[statname], currval)
+            # SetFeature used for existing feature based on its unique FID
+            shpLyr.SetFeature(currFeat)
+            currFeat.Destroy()
+         currFeat = shpLyr.GetNextFeature()
+      shpDs.Destroy()
+      print('Closed/wrote dataset %s' % shpfilename)
+      success = True
+      return success
+
 # .............................................................................
    def subsetPamSites(self, newsitesPresent, origsitesPresent):
       """
@@ -356,110 +412,3 @@ class Matrix(LMObject):
          
          return compressedPam,layersPresent   
          
-# # .............................................................................
-#    def createSplotch(self, shapegrid, siteCount, layersPresent):
-#       """
-#       @param shapegrid:  shapegrid object belonging to the experiment
-#       @param sitesPresent: sitesPresent dictionary belonging to the bucket
-#       @param layersPrsent: layersPresent dictionary belonging to the bucket
-#       @todo: Test that this is uncompressed data
-#       """      
-#       import pysal
-#       dlocation = shapegrid.getDLocation()
-#       if not self._isCompressed:     
-#          if shapegrid._cellsides == 4:
-#             numberedges = shapegrid._cellsides
-#             neighbormatrix = pysal.rook_from_shapefile(dlocation)
-#          elif shapegrid._cellsides == 6:
-#             numberedges = shapegrid._cellsides
-#             neighbormatrix = pysal.queen_from_shapefile(dlocation)
-#          M = self._matrix.copy()
-#          numberofcells = neighbormatrix.n
-#          for column in layersPresent.keys():
-#             edges = {}
-#             totalareaincells = sum(M[:,column])
-#             zerocolumn = numpy.zeros(siteCount,dtype=numpy.dtype(bool))
-#             if totalareaincells > 0:
-#                id = random.randrange(0,numberofcells)
-#                zerocolumn[id] = True
-#                n1 = neighbormatrix.neighbors[id]
-#                firstlength = len(n1)
-#                edges[id] = numberedges - firstlength
-#                area = 1
-#                while area < (totalareaincells):
-#                   n2 =  neighbormatrix.neighbors[id]
-#                   neighborlength = len(n2)
-#                   move = 0
-#                   while move == 0:
-#                      r = random.randrange(0,neighborlength)
-#                      nextid = n2[r]
-#                      feature = zerocolumn[nextid]
-#                      if feature ^ True:
-#                         zerocolumn[nextid] = True
-#                         n3 = neighbormatrix.neighbors[nextid]
-#                         nlength = len(n3)
-#                         edges[nextid] = numberedges - nlength
-#                         for neighbor in n3:
-#                            feature = zerocolumn[neighbor]
-#                            if feature and True:
-#                               edges[nextid] +=1
-#                               edges[neighbor] += 1                                             
-#                               if edges[neighbor] == numberedges:
-#                                  del edges[neighbor] 
-#             
-#                         if edges[nextid] == numberedges:
-#                            del edges[nextid]       
-#                         items = edges.items()
-#                         id = items[random.randrange(0,len(edges))][0]
-#                         move = 1
-#                         area += 1
-#             # replace column in M with zerocolumn
-#             #print len(zerocolumn)
-#             #print M.shape
-#             M[:,column] = zerocolumn
-#          splotchedPam = Matrix(M, isCompressed=False)
-#       else:
-#          raise  LMError('Matrix must be uncompressed')
-#       return splotchedPam
-   
-        
-# # ..............................................................................
-#    def createSwap(self, iterations, sitesPresent, layersPresent):
-#       """
-#       @summary: This does something cool
-#       """
-#       if self.isCompressed:
-#          # could just do a shape on self._matrix
-#          rowLen = sitesPresent.values().count(True)
-#          colLen = layersPresent.values().count(True)
-#          if rowLen > 1 and colLen > 1:          
-#             counter = 0
-#             matrixCopy = self._matrix.copy()
-#             for x in range(0, iterations):           
-#                column1 = random.randrange(0, colLen)
-#                column2 = random.randrange(0, colLen)
-#                row1 = random.randrange(0, rowLen)                   
-#                while column2 == column1:
-#                   column2 = random.randrange(0, colLen)             
-#                firstcorner = matrixCopy[row1][column1]     
-#                if firstcorner ^ matrixCopy[row1][column2]:
-#                   row2 = random.randrange(0, rowLen)              
-#                   while row2 == row1:
-#                         row2 = random.randrange(0, rowLen)
-#                   if ((firstcorner ^ matrixCopy[row2][column1]) and 
-#                       (not(firstcorner) ^ matrixCopy[row2][column2])):
-#                         matrixCopy[row1][column2] = firstcorner
-#                         matrixCopy[row2][column1] = firstcorner
-#                         matrixCopy[row2][column2] = not(firstcorner)
-#                         matrixCopy[row1][column1] = not(firstcorner)                 
-#                         counter += 1
-#             rdmParams = {'numberOfSwaps': counter, 'numberOfIterations': iterations}
-#             swappedPam = Matrix(matrixCopy, isCompressed=True, randomParameters=rdmParams)
-#          else:
-#             raise LMError('Matrix must have more than one column or row') 
-#       else:
-#          raise LMError('Matrix must be compressed')
-#          
-#       return swappedPam
-
-

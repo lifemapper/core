@@ -500,9 +500,10 @@ class LMServiceType:
    PROJECTIONS = 'projections'
    SCENARIOS = 'scenarios'
    SHAPEGRIDS = 'shpgrid'
-   # Generic layers/layersets
+   # Generic layers/layersets/matrices
    LAYERS = 'layers'
    LAYERSETS = 'layersets'
+   MATRICES = 'matrices'
    
 # ............................................................................
 # Change to enum.Enum with Python 3.4

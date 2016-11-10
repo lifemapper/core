@@ -74,6 +74,8 @@ class BigExperiment(ServiceObject, ProcessObject):
       self.metadata = {}
       self.loadMetadata(metadata)
       self.shapegrid = shapegrid
+      self.siteIndices = None
+      self.setIndices(siteIndices, doRead=False)
       self._setEPSG(epsgcode)
 
       self.setMatrix(MatrixType.PAM, mtxFileOrObj=pam)
@@ -157,10 +159,31 @@ class BigExperiment(ServiceObject, ProcessObject):
                self.addMetadata(metajson)
    
 # ...............................................
+   def setIndices(self, indicesFileOrObj=None, doRead=True):
+      """
+      @summary Fill the siteIndices from dictionary or existing file
+      """
+      indices = None
+      if indicesFileOrObj is not None:
+         if isinstance(indicesFileOrObj, StringType) and os.path.exists(indicesFileOrObj):
+            if doRead:
+               try:
+                  f = open(indicesFileOrObj, 'r')
+                  indices = f.read()
+               except:
+                  raise LMError('Failed to read indices {}'.format(indicesFileOrObj))
+               finally:
+                  f.close()
+            else:
+               indices = indicesFileOrObj
+         elif isinstance(indicesFileOrObj, dict):
+            indices = indicesFileOrObj
+      self.siteIndices = indices
+
+# ...............................................
    def setMatrix(self, mtxType, mtxFileOrObj=None, doRead=False):
       """
-      @summary Fill the GRIM object from existing file
-      @postcondition: The full GRIM object will be present
+      @summary Fill a Matrix object from Matrix or existing file
       """
       mtx = None
       if mtxFileOrObj is not None:
