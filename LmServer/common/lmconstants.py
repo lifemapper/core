@@ -341,7 +341,6 @@ class LMFileType:
    PAM = 222
    GRIM = 223
    # Species and Site indices  
-   LAYER_INDICES = 224
    PRESENCE_INDICES = 225     # TODO: delete
    # PamSum level
    # Calculations on PAM (Original or Randomized Swap)
@@ -397,6 +396,28 @@ class LMFileType:
    
    @staticmethod
    def isRAD(rtype):
+      if rtype in [LMFileType.UNSPECIFIED_RAD,
+                   LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, LMFileType.BUCKET_MAP, 
+                   LMFileType.PAM, LMFileType.GRIM, 
+                   LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES, 
+                   LMFileType.COMPRESSED_PAM, 
+                   LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
+                   LMFileType.SPLOTCH_PAM, LMFileType.SPLOTCH_SITES, 
+                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.MATRIX_COLUMN, 
+                   LMFileType.LAYER_INDICES, LMFileType.SITE_INDICES]:
+         return True
+      return False
+
+   @staticmethod
+   def isRADExperiment(rtype):
+      if rtype in [LMFileType.PAM, LMFileType.GRIM, 
+                   LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
+                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.SITE_INDICES]:
+         return True
+      return False
+
+   @staticmethod
+   def isMatrix(rtype):
       if rtype in [LMFileType.UNSPECIFIED_RAD,
                    LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, LMFileType.BUCKET_MAP, 
                    LMFileType.PAM, LMFileType.GRIM, 

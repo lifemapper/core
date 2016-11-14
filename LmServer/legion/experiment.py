@@ -79,6 +79,8 @@ class BigExperiment(ServiceObject, ProcessObject):
       self.setIndices(siteIndices, doRead=False)
       self._setEPSG(epsgcode)
 
+      self._pam = None
+      self._pamFname = None
       self.setMatrix(MatrixType.PAM, mtxFileOrObj=pam)
       self.setMatrix(MatrixType.GRIM, mtxFileOrObj=grim)
       self.setMatrix(MatrixType.BIOGEO_HYPOTHESES, mtxFileOrObj=biogeo)
@@ -125,12 +127,22 @@ class BigExperiment(ServiceObject, ProcessObject):
 
 # ...............................................
    def setPath(self):
-      if self._expPath is None:
-         if (self._userId is not None and self.getId() is not None):
-            self._bucketPath = self._earlJr.createDataPath(self._userId, 
+      if self._path is None:
+         if (self._userId is not None and 
+             self.getId() and 
+             self._getEPSG() is not None):
+            self._path = self._earlJr.createDataPath(self._userId, 
                                LMFileType.UNSPECIFIED_RAD,
                                epsg=self._getEPSG(), radexpId=self.getId())
-                     
+         else:
+            raise LMError
+         
+   @property
+   def path(self):
+      if self._path is None:
+         self.setPath()
+      return self._path
+   
 # ...............................................
    def addMetadata(self, metadict):
       for key, val in metadict.iteritems():
@@ -398,7 +410,7 @@ class BigExperiment(ServiceObject, ProcessObject):
       if self.getId() is not None:
          mapfname = self._earlJr.createFilename(LMFileType.OTHER_MAP,
                         radexpId=self.parentId, bucketId=self.getId(), 
-                        pth=self._bucketPath, usr=self._userId, 
+                        pth=self._path, usr=self._userId, 
                         epsg=self._epsg)
       return mapfname
 
@@ -424,171 +436,21 @@ class BigExperiment(ServiceObject, ProcessObject):
       return self.createMapPrefix()
    
 # ...............................................
-   def _createPAMFilename(self):
+   def _createExperimentFilename(self, filetype):
       """
-      @summary: Set the filename for the Uncompressed PAM based on the user and 
-                experimentId
-      @return: String identifying the filename of the Uncompressed PAM
-      """
-      fname = None
-      if self.getId() is not None:
-         fname = self._earlJr.createFilename(LMFileType.PAM, 
-                    radexpId=self.parentId, bucketId=self.getId(), 
-                    pth=self._bucketPath, usr=self._userId, epsg=self._epsg)
-      return fname
-      
-# ...............................................
-   def _setPAMFilename(self, fname=None):
-      """
-      @summary: Set the filename for the Uncompressed PAM based on the user and 
-                experimentId
-      @return: String identifying the filename of the Uncompressed PAM
-      @note: Does nothing if the fullPAM is None or the filename is already set
-      """
-      # self._pamFname parameter takes precedence
-      if self._pamFname is None:
-         self._pamFname = fname
-      if self._pamFname is None:
-         self._pamFname = self._createPAMFilename()
-         
-      if self._fullPAM is None:
-         self._fullPAM = Matrix(None, dlocation=self._pamFname, 
-                                isCompressed=False)
-      elif self._fullPAM.getDLocation() is None:
-         self._fullPAM.setDLocation(self._pamFname)
-                  
-# ...............................................
-   def _getPAMFilename(self):
-      """
-      @summary: Return the filename for the Uncompressed PAM
-      @return: String identifying the filename of the Uncompressed PAM
-      """
-      if self._fullPAM is not None:
-         self._setPAMFilename()
-         return self._fullPAM.getDLocation()
-      else:
-         return None
-
-# ...............................................
-   def _setCmpPamFilename(self, fname=None):
-      """
-      @summary: Set the filename for the Compressed PAMSUM based on the 
+      @summary: Set the filename for an Experiment-based object based on the 
                 user and experimentId
-      """
-      if self._pamSum is not None:
-         self._pamSum._setPAMFilename(fname)
-      
-# ...............................................
-   def _getCmpPamFilename(self):
-      """
-      @summary: Return the filename for the Compressed PAMSUM PAM
-      @return: String identifying the filename of the Compressed PAMSUM PAM
-      """
-      if self._pamSum is not None:
-         return self._pamSum.pamDLocation
-      else:
-         return None
-      
-# ...............................................
-   def _setSumFilename(self, fname=None):
-      """
-      @summary: Set the filename for the Compressed PAMSUM based on the 
-                user and experimentId
-      """
-      if self._pamSum is not None:
-         self._pamSum._setSumFilename(fname)
-      
-# ...............................................
-   def _getSumFilename(self):
-      """
-      @summary: Return the filename for the Compressed PAMSUM PAM
-      @return: String identifying the filename of the Compressed PAMSUM PAM
-      """
-      if self._pamSum is not None:
-         self._setSumFilename()
-         return self._pamSum.sumDLocation
-      else:
-         return None
-      
-# ...............................................
-   def _createGRIMFilename(self):
-      """
-      @summary: Set the filename for the GRIM (Geographic Reference Information
-                Matrix) based on the user and experimentId
-      @return: String identifying the filename of the GRIM
+      @param filetype: LmServer.common.lmconstants.LMFileType. Valid types are: 
+             PAM, GRIM, SITE_INDICES, BIOGEO_HYPOTHESES, SUM_CALCS, SUM_SHAPE 
+      @return: String identifying the filename of the object
       """
       fname = None
-      if self.getId() is not None:
-         fname = self._earlJr.createFilename(LMFileType.GRIM, 
-                    radexpId=self.parentId, bucketId=self.getId(), 
-                    pth=self._bucketPath, usr=self._userId, epsg=self._epsg)
-      return fname
-      
-# ...............................................
-   def _setGRIMFilename(self, fname=None):
-      """
-      @summary: Set the filename for the GRIM based on the user and 
-                experimentId
-      @return: String identifying the filename of the GRIM
-      @note: Does nothing if the fullGRIM is None or the filename is already set
-      """
-      # self._grimFname parameter takes precedence
-      if self._grimFname is None:
-         self._grimFname = fname
-      if self._fullGRIM is not None:
-         if self._fullGRIM.getDLocation() is None:
-            self._grimFname = self._createGRIMFilename()
-            self._fullGRIM.setDLocation(self._grimFname)
-               
-# ...............................................
-   def _getGRIMFilename(self):
-      """
-      @summary: Return the filename for the Uncompressed PAM
-      @return: String identifying the filename of the Uncompressed PAM
-      """
-      if self._fullGRIM is not None:
-         self._setGRIMFilename()
-         return self._fullGRIM.getDLocation()
+      if LMFileType.isRADExperiment(filetype): 
+         if self.getId() is not None:
+            fname = self._earlJr.createFilename(filetype, pth=self.path)
       else:
-         return None
-
-# ...............................................
-   def _createPresenceIndicesFilename(self):
-      """
-      @summary: Create the filename for the SitesPresent and LayersPresent 
-                dictionaries based on the user, bucketid, and experimentId
-      @return: String identifying the filename of the sitesLayerPresent file
-      """
-      fname = None
-      if self.getId() is not None:
-         fname = self._earlJr.createFilename(LMFileType.PRESENCE_INDICES, 
-                    radexpId=self.parentId, bucketId=self.getId(), 
-                    pth=self._bucketPath, usr=self._userId, epsg=self._epsg)
+         raise LMError('Invalid filetype {} for RAD Experiment file')
       return fname
-   
-# ...............................................
-   def _setPresenceIndicesFilename(self, fname=None):
-      """
-      @summary: Set the filename for the SitesPresent and LayersPresent 
-                dictionaries based on the user, bucketid, and experimentId
-      @return: String identifying the filename of the sitesLayerPresent file
-      """
-      if self._presidxFname is None:
-         if fname is None:
-            fname = self._createPresenceIndicesFilename()
-         self._presidxFname = fname
-      
-# ...............................................
-   def _getPresenceIndicesFilename(self):
-      """
-      @summary: Return the filename for the pickled sitesPresent and 
-               layersPresent dictionaries
-      @return: String identifying the filename containing the sitesPresent and 
-               layersPresent
-      """
-      if self._presidxFname is None:
-         self._setPresenceIndicesFilename()
-      return self._presidxFname
       
 # ...............................................
    def clear(self):
@@ -624,13 +486,7 @@ class BigExperiment(ServiceObject, ProcessObject):
    sumDLocation = property(_getSumFilename)
    grimDLocation = property(_getGRIMFilename)
    indicesDLocation = property(_getPresenceIndicesFilename)
-   
-#    @property
-#    def indicesPresent(self):
-#       indices = {'sitesPresent': self._sitesPresent, 
-#                  'layersPresent': self._layersPresent}
-#       return indices
-   
+      
 # .............................................................................
    def writePresenceIndices(self):
       """
