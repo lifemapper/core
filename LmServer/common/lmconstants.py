@@ -304,6 +304,7 @@ class LMFileType:
    ENVIRONMENTAL_LAYER = 101
    SCENARIO_MAP = 102
    # Occurrence level (SDM data are organized by OccurrenceSets)
+   UNSPECIFIED_OCC = 100
    OCCURRENCE_FILE = 111
    OCCURRENCE_RAW_FILE = 112
    # Experiment Level
@@ -325,7 +326,7 @@ class LMFileType:
    # User level
    UNSPECIFIED_USER = 500
    SHAPEGRID = 201     # TODO: delete
-   USER_GENERIC_LAYER = 510
+   USER_LAYER = 510
    USER_SHAPEGRID = 511
    USER_ATTRIBUTE_MATRIX = 520
    USER_TREE = 530
@@ -361,64 +362,78 @@ class LMFileType:
    SITE_INDICES = 360
    
    @staticmethod
-   def sdmTypes():
-      # All organized by OccurrenceSet
-      return [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-              LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE, 
-              LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
-              LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT, 
-              LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
-              LMFileType.PROJECTION_LAYER, LMFileType.PROJECTION_ATT_LAYER, 
-              LMFileType.PROJECTION_INTERSECT]
-      
-   @staticmethod
    def isSDM(rtype):
-      if rtype in LMFileType.sdmTypes():
+      if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
+                   LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE, 
+                   LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
+                   LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT, 
+                   LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
+                   LMFileType.PROJECTION_LAYER, LMFileType.PROJECTION_ATT_LAYER, 
+                   LMFileType.PROJECTION_INTERSECT]:
          return True
       return False
    
    @staticmethod
-   def radTypes():
-      return [LMFileType.UNSPECIFIED_RAD,
-              LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, LMFileType.BUCKET_MAP, 
-              LMFileType.PAM, LMFileType.GRIM, 
-              LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES, 
-              LMFileType.COMPRESSED_PAM, 
-              LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
-              LMFileType.SPLOTCH_PAM, LMFileType.SPLOTCH_SITES, 
-              LMFileType.BIOGEO_HYPOTHESES, LMFileType.MATRIX_COLUMN, 
-              LMFileType.LAYER_INDICES, LMFileType.SITE_INDICES]
-      
+   def isOccurrence(rtype):
+      if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
+                   LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE]:
+         return True
+      return False
+
+   @staticmethod
+   def isModel(rtype):
+      if rtype in [LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
+                   LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT]:
+         return True
+      return False
+
+   @staticmethod
+   def isProjection(rtype):
+      if rtype in [LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
+                   LMFileType.PROJECTION_LAYER, LMFileType.PROJECTION_ATT_LAYER, 
+                   LMFileType.PROJECTION_INTERSECT]:
+         return True
+      return False
+   
    @staticmethod
    def isRAD(rtype):
-      if rtype in LMFileType.radTypes():
+      if rtype in [LMFileType.UNSPECIFIED_RAD,
+                   LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, LMFileType.BUCKET_MAP, 
+                   LMFileType.PAM, LMFileType.GRIM, 
+                   LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES, 
+                   LMFileType.COMPRESSED_PAM, 
+                   LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
+                   LMFileType.SPLOTCH_PAM, LMFileType.SPLOTCH_SITES, 
+                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.MATRIX_COLUMN, 
+                   LMFileType.LAYER_INDICES, LMFileType.SITE_INDICES]:
          return True
       return False
    
-   @staticmethod
-   def userSpaceTypes():
-      return [LMFileType.UNSPECIFIED_USER, LMFileType.OTHER_MAP, 
-              LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SCENARIO_MAP, 
-              LMFileType.SHAPEGRID, 
-              LMFileType.USER_GENERIC_LAYER, LMFileType.USER_SHAPEGRID, 
-              LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE]
-      
    @staticmethod
    def isUserSpace(rtype):
-      if rtype in LMFileType.userSpaceTypes():
+      if rtype in [LMFileType.UNSPECIFIED_USER, LMFileType.OTHER_MAP, 
+                   LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SCENARIO_MAP, 
+                   LMFileType.SHAPEGRID, 
+                   LMFileType.USER_LAYER, LMFileType.USER_SHAPEGRID, 
+                   LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE]:
+         return True
+      return False
+         
+   @staticmethod
+   def isMap(rtype):
+      if rtype in [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 
+                   LMFileType.SDM_MAP, LMFileType.BUCKET_MAP]:
          return True
       return False
    
    @staticmethod
-   def mapTypes(rtype):
-      return [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, LMFileType.SDM_MAP, 
-              LMFileType.BUCKET_MAP]
-      
-   @staticmethod
-   def isMap(rtype):
-      if rtype in LMFileType.mapTypes():
+   def isUserLayer(rtype):
+      if rtype in [LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID,
+                   LMFileType.USER_LAYER, LMFileType.USER_SHAPEGRID]:
          return True
       return False
+   
+
 
    
 NAME_SEPARATOR = '_'
@@ -447,8 +462,7 @@ class FileFix:
              LMFileType.PROJECTION_REQUEST: 'projReq',
              LMFileType.PROJECTION_PACKAGE: PRJ_PREFIX,
              LMFileType.PROJECTION_LAYER: PRJ_PREFIX,
-#              LMFileType.PROJECTION_ATT_LAYER: PRJ_PREFIX,
-             LMFileType.PROJECTION_INTERSECT: 'int',
+             LMFileType.PROJECTION_INTERSECT: 'int',         
              
              LMFileType.SHAPEGRID: 'shpgrid',
              LMFileType.ATTR_MATRIX: 'attrMtx',
@@ -462,8 +476,19 @@ class FileFix:
              LMFileType.SUM_CALCS: PAMSUM_PREFIX,
              LMFileType.SUM_SHAPE: PAMSUM_PREFIX,
              LMFileType.SPLOTCH_PAM: SPLOTCH_PREFIX,
-             LMFileType.SPLOTCH_SITES: SPLOTCH_PREFIX
-   }
+             LMFileType.SPLOTCH_SITES: SPLOTCH_PREFIX,
+
+             LMFileType.UNSPECIFIED_USER: None,
+             LMFileType.UNSPECIFIED_RAD: None,
+             LMFileType.UNSPECIFIED_SDM: None,
+             LMFileType.USER_LAYER: GENERIC_LAYER_NAME_PREFIX,
+             LMFileType.USER_SHAPEGRID: None,
+             LMFileType.USER_ATTRIBUTE_MATRIX: 'attributes',
+             LMFileType.USER_TREE: 'tree',
+             LMFileType.BIOGEO_HYPOTHESES: 'biogeo',
+             LMFileType.MATRIX_COLUMN: 'col',
+             LMFileType.SITE_INDICES: 'siteidx',
+}
    # Postfix
    EXTENSION = {LMFileType.OTHER_MAP: OutputFormat.MAP,
                 LMFileType.ENVIRONMENTAL_LAYER: OutputFormat.GTIFF,
@@ -494,7 +519,18 @@ class FileFix:
                 LMFileType.SUM_CALCS: OutputFormat.PICKLE,
                 LMFileType.SUM_SHAPE: OutputFormat.SHAPE,
                 LMFileType.SPLOTCH_PAM: OutputFormat.NUMPY,
-                LMFileType.SPLOTCH_SITES: OutputFormat.PICKLE
+                LMFileType.SPLOTCH_SITES: OutputFormat.PICKLE,
+                
+                LMFileType.UNSPECIFIED_USER: None,
+                LMFileType.UNSPECIFIED_RAD: None,
+                LMFileType.UNSPECIFIED_SDM: None,
+                LMFileType.USER_LAYER: None,
+                LMFileType.USER_SHAPEGRID:  OutputFormat.SHAPE,
+                LMFileType.USER_ATTRIBUTE_MATRIX: OutputFormat.NUMPY,
+                LMFileType.USER_TREE: OutputFormat.JSON,
+                LMFileType.BIOGEO_HYPOTHESES: OutputFormat.NUMPY,
+                LMFileType.MATRIX_COLUMN: OutputFormat.NUMPY,
+                LMFileType.SITE_INDICES: OutputFormat.PICKLE,
    }
    
 NAME_SEPARATOR = '_'

@@ -152,8 +152,8 @@ class EarlJr(LMObject):
       @param lyrName: Name of the layer.
       @param ext: File extentsion of this layer.
       """
-      pth = self.createDataPath(usr, LMFileType.USER_GENERIC_LAYER,
-                                epsg=epsg, isLayers=True)
+      pth = self.createDataPath(usr, LMFileType.USER_LAYER, epsg=epsg, 
+                                isLayers=True)
       lyrName = lyrName + ext
       return os.path.join(pth, lyrName)
 
@@ -171,8 +171,8 @@ class EarlJr(LMObject):
       @param modelId: SDM Model database Id
       @param projId: SDM Projection database Id
       @param radexpId: RAD Experiment database Id
-      @param bucketId: RAD Experiment database Id
-      @param pamsumId: RAD Experiment database Id
+      @param bucketId: RAD Bucket database Id
+      @param pamsumId: RAD PamSum database Id
       @param lyrname: Layer name 
       @param pth: File storage path
       @param usr: User database Id
@@ -191,29 +191,25 @@ class EarlJr(LMObject):
       elif ftype == LMFileType.BUCKET_MAP:
          nameparts.extend([radexpId, bucketId])
          
-      elif ftype in (LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID):
+      elif LMFileType.isUserLayer(ftype):
          nameparts.append(lyrname)
          
-      elif ftype in (LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-                     LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE):
+      elif LMFileType.isOccurrence(ftype):
          nameparts.append(occsetId)
          if subset:
             nameparts.append('subset')
-      elif ftype in (LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
-                     LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT):
+      elif LMFileType.isModel(ftype):
          nameparts.append(modelId)
          
-      elif ftype in (LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
-                     LMFileType.PROJECTION_LAYER, LMFileType.INTERSECT_VECTOR):
+      elif LMFileType.isProjection(ftype):
          nameparts.append(projId)
          
+      # TODO: Delete
       elif ftype in (LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE):
          nameparts.append(radexpId)
-         
       elif ftype in (LMFileType.PAM, LMFileType.GRIM,
                     LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES):
          nameparts.append(bucketId)
-         
       elif ftype in (LMFileType.COMPRESSED_PAM, LMFileType.SUM_CALCS,
                     LMFileType.SUM_SHAPE, LMFileType.SPLOTCH_PAM, 
                     LMFileType.SPLOTCH_SITES):
