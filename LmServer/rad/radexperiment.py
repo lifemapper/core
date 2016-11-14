@@ -207,6 +207,7 @@ class RADExperiment(_Experiment):
       _Experiment.setId(self, expid)
       if expid is not None:
          self._experimentPath = self._earlJr.createDataPath(self._userId, 
+                                          LMFileType.UNSPECIFIED_RAD,
                                           epsg=self._epsg, radexpId=expid)
          for bkt in self.bucketList:
             bkt.setExperimentId(expid)

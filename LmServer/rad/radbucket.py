@@ -232,6 +232,7 @@ class RADBucket(ServiceObject, ProcessObject):
          if (self.parentId is not None and self._userId is not None and
              self.getId() is not None):
             self._bucketPath = self._earlJr.createDataPath(self._userId, 
+                               LMFileType.UNSPECIFIED_RAD,
                                epsg=self._epsg, radexpId=self.parentId, 
                                bucketId=self.getId())
       if self._bucketPath is not None:
@@ -246,6 +247,7 @@ class RADBucket(ServiceObject, ProcessObject):
       self.parentId = expid
       if self._bucketPath is None and self.getId() is not None:
          self._bucketPath = self._earlJr.createDataPath(self._userId, 
+                            LMFileType.UNSPECIFIED_RAD,
                             epsg=self._epsg, radexpId=self.parentId, 
                             bucketId=self.getId())
       

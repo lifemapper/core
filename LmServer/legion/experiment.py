@@ -25,17 +25,17 @@
 """
 import json
 import mx.DateTime
+import pickle
 import os
 from osgeo import ogr
 import subprocess
 from types import StringType, UnicodeType
 
-from LmCommon.common.lmconstants import JobStage, JobStatus, MatrixType
+from LmCommon.common.lmconstants import MatrixType
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.rad.matrix import Matrix                                  
-from LmServer.rad.pamvim import PamSum
 
 # .............................................................................
 class BigExperiment(ServiceObject, ProcessObject):
@@ -75,6 +75,7 @@ class BigExperiment(ServiceObject, ProcessObject):
       self.loadMetadata(metadata)
       self.shapegrid = shapegrid
       self.siteIndices = None
+      self._siteIndicesFilename = None
       self.setIndices(siteIndices, doRead=False)
       self._setEPSG(epsgcode)
 
@@ -88,8 +89,6 @@ class BigExperiment(ServiceObject, ProcessObject):
          self._epsg = shapegrid.epsgcode
       self.shapegrid = shapegrid
       
-               
-            
 # ...............................................
    @classmethod
    def initFromFiles(cls):
@@ -129,6 +128,7 @@ class BigExperiment(ServiceObject, ProcessObject):
       if self._expPath is None:
          if (self._userId is not None and self.getId() is not None):
             self._bucketPath = self._earlJr.createDataPath(self._userId, 
+                               LMFileType.UNSPECIFIED_RAD,
                                epsg=self._getEPSG(), radexpId=self.getId())
                      
 # ...............................................
@@ -166,6 +166,7 @@ class BigExperiment(ServiceObject, ProcessObject):
       indices = None
       if indicesFileOrObj is not None:
          if isinstance(indicesFileOrObj, StringType) and os.path.exists(indicesFileOrObj):
+            self._siteIndicesFilename = indicesFileOrObj
             if doRead:
                try:
                   f = open(indicesFileOrObj, 'r')
@@ -174,8 +175,6 @@ class BigExperiment(ServiceObject, ProcessObject):
                   raise LMError('Failed to read indices {}'.format(indicesFileOrObj))
                finally:
                   f.close()
-            else:
-               indices = indicesFileOrObj
          elif isinstance(indicesFileOrObj, dict):
             indices = indicesFileOrObj
       self.siteIndices = indices
@@ -662,10 +661,6 @@ class BigExperiment(ServiceObject, ProcessObject):
       """
       allIndices = {self.getId(): {'sitesPresent': self._sitesPresent, 
                                    'layersPresent': self._layersPresent}}
-      for rps in self.getRandomPamSums():
-         if rps.randomMethod == RandomizeMethods.SPLOTCH:
-            allIndices[rps.getId()] = {'sitesPresent': 
-                                       rps.getSplotchSitesPresent()}
       return allIndices
             
 # ...............................................
