@@ -24,7 +24,7 @@ without losing data.
 
      lmwriter$ $PYTHON /opt/lifemapper/LmCompute/tools/jobMediator.py stop
 
-#. **Caution** If want to completely wipe out existing install, run::
+#. **Caution** If want to **completely destroy** existing install, run::
 
    # bash /opt/lifemapper/rocks/bin/clean-lm-server-roll.sh
    # rocks remove roll lifemapper-server
@@ -39,8 +39,7 @@ Install both rolls on Frontend
 
    # cd /state/partition1/apps/
    # wget http://lifemapper.org/dl/lifemapper*.*
-   # sha256sum lifemapper*.iso
-   # cat lifemapper*.sha
+   # sha256sum -c lifemapper-*.sha
    
 
 Update existing (maintains FE data)
@@ -88,6 +87,27 @@ Finish install
 
    # reboot
    
+Install nodes from Frontend
+---------------------------
+
+#. **(Optional)** When updating an existing installation, remove unchanged 
+   compute-node rpms manually to ensure that scripts are run.::  
+
+      # rocks run host compute 'rpm -el rocks-lmcompute'
+    
+#. **Rebuild the compute nodes** ::  
+
+   # rocks set host boot compute action=install
+   # rocks run host compute reboot 
+
+Add compute input layers to the Frontend
+----------------------------------------
+
+#. Seed the data for LmCompute on the frontend (if not done in optional step
+   above) ::
+
+   # /opt/lifemapper/rocks/bin/seedData
+
 (OPT) To change defaults
 ------------------------
 
@@ -125,28 +145,6 @@ Finish install
    
          # rocks/bin/fillDB
          
-
-Install nodes from Frontend
----------------------------
-
-#. **(Optional)** When updating an existing installation, remove unchanged 
-   compute-node rpms manually to ensure that scripts are run.::  
-
-      # rocks run host compute 'rpm -el rocks-lmcompute'
-    
-#. **Rebuild the compute nodes** ::  
-
-   # rocks set host boot compute action=install
-   # rocks run host compute reboot 
-
-Add compute input layers to the Frontend
-----------------------------------------
-
-#. Seed the data for LmCompute on the frontend (if not done in optional step
-   above) ::
-
-   # /opt/lifemapper/rocks/bin/seedData
-
    
 Look for Errors
 ---------------

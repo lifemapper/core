@@ -24,7 +24,7 @@
 from types import StringType, UnicodeType
 import os
 
-from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.lmconstants import OutputFormat, MatrixType
 
 from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
@@ -87,9 +87,10 @@ class EarlJr(LMObject):
       return parts
    
 # ...............................................
-   def createDataPath(self, usr, occsetId=None, epsg=None, 
-                      isLayers=False, isMaps=False, 
-                      radexpId=None, bucketId=None):
+   def createDataPath(self, usr, filetype, occsetId=None, epsg=None, radexpId=None, 
+                      matrixId=None, matrixType=None, treeId=None,
+                      # TODO: delete
+                      isLayers=False, isMaps=False, bucketId=None):
       """
       @note: /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
@@ -109,23 +110,34 @@ class EarlJr(LMObject):
       pth = os.path.join(ARCHIVE_PATH, usr)
       
       # OccurrenceSet overrides basic maps
-      if occsetId is not None:
-         dirparts = self._parseSDMId(str(occsetId), [])
-         for i in range(MODEL_DEPTH - len(dirparts)):
-            dirparts.insert(0, '000')
-         pth = os.path.join(pth, *dirparts)
+      if LMFileType.isSDM(filetype):
+         if occsetId is not None:
+            dirparts = self._parseSDMId(str(occsetId), [])
+            for i in range(MODEL_DEPTH - len(dirparts)):
+               dirparts.insert(0, '000')
+            pth = os.path.join(pth, *dirparts)
+         else:
+            raise LMError('Need OccurrenceSetId for SDM filepath')
 
       elif isMaps:
+#       elif LMFileType.isMap(ftype) and LMFileType.isUserSpace(ftype):
          pth = os.path.join(pth, MAP_DIR)
-               
+                        
       elif epsg is not None:    
          pthparts = [pth, str(epsg)]
-         if isLayers:
+#          if isLayers: 
+         if LMFileType.isUserSpace(filetype):
             pthparts.append(USER_LAYER_DIR)
-         elif radexpId is not None:
-            pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(radexpId))
-            if bucketId is not None:
-               pthparts.append(str(bucketId))
+#          elif radexpId is not None:
+         elif LMFileType.isRAD(filetype):
+            if radexpId is not None:
+               pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(radexpId))
+               # TODO: delete
+               if bucketId is not None:
+                  pthparts.append(str(bucketId))
+            else:
+               raise LMError('Missing RAD Experiment ID for LMFileType {}'
+                             .format(filetype))
          pth = os.path.join(*pthparts)
 
       return pth
@@ -140,7 +152,8 @@ class EarlJr(LMObject):
       @param lyrName: Name of the layer.
       @param ext: File extentsion of this layer.
       """
-      pth = self.createDataPath(usr, epsg=epsg, isLayers=True)
+      pth = self.createDataPath(usr, LMFileType.USER_LAYER, epsg=epsg, 
+                                isLayers=True)
       lyrName = lyrName + ext
       return os.path.join(pth, lyrName)
 
@@ -148,6 +161,7 @@ class EarlJr(LMObject):
    def createBasename(self, ftype, scenarioCode=None,
                       occsetId=None, subset=False, modelId=None, projId=None,
                       radexpId=None, bucketId=None, pamsumId=None,
+                      matrixId=None, matrixType=MatrixType.PAM, treeId=None,
                       lyrname=None, usr=None, epsg=None):
       """
       @summary: Return the filename for given filetype and objects 
@@ -157,8 +171,8 @@ class EarlJr(LMObject):
       @param modelId: SDM Model database Id
       @param projId: SDM Projection database Id
       @param radexpId: RAD Experiment database Id
-      @param bucketId: RAD Experiment database Id
-      @param pamsumId: RAD Experiment database Id
+      @param bucketId: RAD Bucket database Id
+      @param pamsumId: RAD PamSum database Id
       @param lyrname: Layer name 
       @param pth: File storage path
       @param usr: User database Id
@@ -177,29 +191,25 @@ class EarlJr(LMObject):
       elif ftype == LMFileType.BUCKET_MAP:
          nameparts.extend([radexpId, bucketId])
          
-      elif ftype in (LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID):
+      elif LMFileType.isUserLayer(ftype):
          nameparts.append(lyrname)
          
-      elif ftype in (LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-                     LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE):
+      elif LMFileType.isOccurrence(ftype):
          nameparts.append(occsetId)
          if subset:
             nameparts.append('subset')
-      elif ftype in (LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
-                     LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT):
+      elif LMFileType.isModel(ftype):
          nameparts.append(modelId)
          
-      elif ftype in (LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
-                     LMFileType.PROJECTION_LAYER, LMFileType.INTERSECT_VECTOR):
+      elif LMFileType.isProjection(ftype):
          nameparts.append(projId)
          
+      # TODO: Delete
       elif ftype in (LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE):
          nameparts.append(radexpId)
-         
       elif ftype in (LMFileType.PAM, LMFileType.GRIM,
                     LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES):
          nameparts.append(bucketId)
-         
       elif ftype in (LMFileType.COMPRESSED_PAM, LMFileType.SUM_CALCS,
                     LMFileType.SUM_SHAPE, LMFileType.SPLOTCH_PAM, 
                     LMFileType.SPLOTCH_SITES):
@@ -217,7 +227,12 @@ class EarlJr(LMObject):
 # ...............................................
    def createFilename(self, ftype, scenarioCode=None, modelId=None, projId=None,
                       occsetId=None, subset=False, 
-                      radexpId=None, bucketId=None, pamsumId=None,
+                      radexpId=None, 
+                      # new 
+                      matrixId=None, matrixType=MatrixType.PAM,
+                      treeId=None,
+                      # TODO: remove bucketId, pamsumId
+                      bucketId=None, pamsumId=None,
                       lyrname=None, pth=None, usr=None, epsg=None):
       """
       @summary: Return the filename for given filetype and objects 
@@ -227,8 +242,8 @@ class EarlJr(LMObject):
       @param modelId: SDM Model database Id
       @param projId: SDM Projection database Id
       @param radexpId: RAD Experiment database Id
-      @param bucketId: RAD Experiment database Id
-      @param pamsumId: RAD Experiment database Id
+      @param bucketId: RAD Bucket database Id (deprecated)
+      @param pamsumId: RAD PamSum database Id (deprecated)
       @param lyrname: Layer name 
       @param pth: File storage path
       @param usr: User database Id
@@ -237,7 +252,8 @@ class EarlJr(LMObject):
       isMaps = isLayers = False
       basename = self.createBasename(ftype, scenarioCode=scenarioCode,
                       occsetId=occsetId, subset=subset, modelId=modelId, 
-                      projId=projId, radexpId=radexpId, bucketId=bucketId, 
+                      projId=projId, radexpId=radexpId, bucketId=bucketId,
+                      matrixId=matrixId, matrixType=matrixType, treeId=treeId,
                       pamsumId=pamsumId, lyrname=lyrname, usr=usr, epsg=epsg)
       
       if pth is None:
@@ -247,8 +263,10 @@ class EarlJr(LMObject):
          elif ftype in (LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID):
             isLayers = True
             
-         pth = self.createDataPath(usr, isMaps=isMaps, isLayers=isLayers, 
-            epsg=epsg, occsetId=occsetId, radexpId=radexpId, bucketId=bucketId)
+         pth = self.createDataPath(usr, ftype, 
+            isMaps=isMaps, isLayers=isLayers, bucketId=bucketId,
+            epsg=epsg, occsetId=occsetId, radexpId=radexpId, 
+            matrixId=matrixId, matrixType=matrixType, treeId=treeId)
          
       filename = os.path.join(pth, basename + FileFix.EXTENSION[ftype])
       return filename
@@ -265,14 +283,14 @@ class EarlJr(LMObject):
             usr = self._findUserForObject(scencode=scencode, occsetId=occsetId, 
                                           radexpId=radexpId)
          if occsetId is not None:
-            pth = self.createDataPath(usr, occsetId=occsetId)
+            pth = self.createDataPath(usr, LMFileType.SDM_MAP, 
+                                      occsetId=occsetId)
          elif scencode is not None:
-            pth = self.createDataPath(usr, isMaps=True)
+            pth = self.createDataPath(usr, LMFileType.SCENARIO_MAP, isMaps=True)
          elif ancillary:
             pth = self._createStaticMapPath()
          else:
-            pth = self.createDataPath(usr, isMaps=True)
-            
+            pth = self.createDataPath(usr, LMFileType.OTHER_MAP, isMaps=True)
       if not mapname.endswith(OutputFormat.MAP):
          mapname = mapname+OutputFormat.MAP
       mapfname = os.path.join(pth, mapname)

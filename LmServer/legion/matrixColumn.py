@@ -43,32 +43,43 @@ class _MatrixColumnParameters(_LayerParameters):
                 metadata={}, intersectParams={}, squid=None, ident=None,
                 matrixColumnId=None, userId=None, matrixId=None,
                 status=None, statusModTime=None):
+      """
+      @note:  intersectParameters may include keywords:
+         filterString: to filter layer for intersect
+         valName: for attribute used in layer intersect
+         valUnits: units of attribute used in layer intersect
+         minPercent: minimum spatial coverage for gridcell intersect computation
+         weightedMean: for GRIM gridcell intersect computation
+         largestClass: for GRIM gridcell intersect computation
+         minPresence: for PAM binary gridcell intersect computation
+         maxPresence: for PAM binary gridcell intersect computation
+      """
       _LayerParameters.__init__(self, matrixIndex, None, userId, matrixColumnId,
                                 metadata=metadata)
-      self.self.intparamsMetadata = {}
+      self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
 
 # ...............................................
    def addIntersectParams(self, paramsdict):
       for key, val in paramsdict.iteritems():
-         self.intparamsMetadata[key] = val
+         self.intersectParams[key] = val
          
    def dumpIntersectParams(self):
       metastring = None
-      if self.intparamsMetadata:
-         metastring = json.dumps(self.intparamsMetadata)
+      if self.intersectParams:
+         metastring = json.dumps(self.intersectParams)
       return metastring
 
    def loadIntersectParams(self, meta):
       if isinstance(meta, dict): 
          self.addIntersectParams(meta)
       else:
-         self.intparamsMetadata = json.loads(meta)
+         self.intersectParams = json.loads(meta)
 
 
 # .............................................................................
 # .............................................................................
-class MatrixColumn(_MatrixColumnParameters, Vector, ProcessObject):
+class MatrixColumn(_MatrixColumnParameters, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................   
@@ -76,11 +87,6 @@ class MatrixColumn(_MatrixColumnParameters, Vector, ProcessObject):
                 mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
                 matrixLayerId=None, userId=None, matrixId=None,
                 status=None, statusModTime=None,
-                # Vector
-                name=None, lyrMetadata={}, bbox=None, dlocation=None, 
-                mapunits=None, resolution=None, epsgcode=None,
-                ogrType=None, dataFormat=None, 
-                featureCount=0, featureAttributes={}, features={}, fidAttribute=None, 
                 valUnits=None,
                 lyrId=None, lyrUserId=None, bucketId=None,
                 verify=None, squid=None, modTime=None, metadataUrl=None):

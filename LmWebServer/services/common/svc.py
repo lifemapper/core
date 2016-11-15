@@ -40,10 +40,8 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
-from LmServer.common.lmconstants import (DbUser, LOG_PATH, SESSION_DIR, WEB_DIR,
-                                         CHERRYPY_CONFIG_FILE)
-from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
-                                            WEBSERVICES_ROOT)
+from LmServer.common.lmconstants import (DbUser, LOG_PATH, CHERRYPY_CONFIG_FILE)
+from LmServer.common.localconstants import (ARCHIVE_USER, WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
                                  UserLogger)
@@ -52,8 +50,7 @@ from LmServer.base.utilities import (escapeString, getFileContents,
                                      getUrlParameter)
 
 from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, HTTP_ERRORS, 
-                                            STATIC_DIR)
-from LmWebServer.common.localconstants import LM_LIB_PATH
+                                            SESSION_PATH, STATIC_PATH)
 from LmWebServer.formatters.formatterFactory import FormatterFactory
 from LmWebServer.services.common.authentication import checkUserLogin
 from LmWebServer.services.common.group import LMServiceGroup
@@ -65,8 +62,6 @@ from LmWebServer.solr.lmSolr import searchArchive, searchHintIndex
 # Constants for CherryPy application
 SESSION_KEY = '_cp_username'
 REFERER_KEY = 'lm_referer'
-SESSION_PATH = os.path.join(LM_LIB_PATH, SESSION_DIR)
-STATIC_PATH = os.path.join(APP_PATH, WEB_DIR, STATIC_DIR)
 
 # .............................................................................
 class svc(object):

@@ -312,7 +312,7 @@ create table lm_v3.ShapeGrid
 );
 
 -- -------------------------------
--- original Tree in user space, or modified tree in Bucket
+-- original Tree in user space, or modified tree in Experiment
 create table lm_v3.Tree 
 (
    treeId serial UNIQUE PRIMARY KEY,
@@ -327,9 +327,9 @@ create table lm_v3.Tree
 
 -- -------------------------------
 -- Organizing object for set of layers/computations
-create table lm_v3.Bucket
+create table lm_v3.Experiment
 (
-   bucketId serial UNIQUE PRIMARY KEY,
+   experimentId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
    
@@ -345,13 +345,13 @@ create table lm_v3.Bucket
 );
 
 -- -------------------------------
--- In Bucket space: PAM, GRIM, BioGeoMtx, MCPA output
+-- In Experiment space: PAM, GRIM, BioGeoMtx, MCPA output
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
    -- Constants in LmCommon.common.lmconstants.MatrixType
    matrixType int NOT NULL,
-   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   experimentId int NOT NULL REFERENCES lm_v3.Experiment ON DELETE CASCADE,
    matrixDlocation text,
    siteLayerIndices text,
    metadata text,  
@@ -360,12 +360,12 @@ create table lm_v3.Matrix
 );
 
 -- -------------------------------
--- Join user Tree to a bucket
-create table lm_v3.BucketTree 
+-- Join user Tree to a experiment
+create table lm_v3.ExperimentTree 
 (
-   bucketTreeId serial UNIQUE PRIMARY KEY,
+   experimentTreeId serial UNIQUE PRIMARY KEY,
    treeId int NOT NULL REFERENCES lm_v3.Tree ON DELETE CASCADE,
-   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   experimentId int NOT NULL REFERENCES lm_v3.Experiment ON DELETE CASCADE,
    isPruned boolean,
    isBinary boolean,
    
@@ -386,7 +386,7 @@ create table lm_v3.BucketTree
 create table lm_v3.MatrixColumn 
 (
    matrixColumnId  serial UNIQUE PRIMARY KEY,
-   bucketId int NOT NULL REFERENCES lm_v3.Bucket ON DELETE CASCADE,
+   experimentId int NOT NULL REFERENCES lm_v3.Experiment ON DELETE CASCADE,
 
    -- layerId could be empty, just squid or ident
    layerId int REFERENCES lm_v3.Layer,
@@ -396,15 +396,15 @@ create table lm_v3.MatrixColumn
    matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int NOT NULL,
    
-   -- filterString, nameValue, minPercent, weightedMean, largestClass, 
+   -- filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
    -- minPresence, maxPresence
    intersectParams text,   
       
    metadata text,  
    status int,
    statusmodtime double precision,
-   UNIQUE (bucketId, matrixIndex),
-   UNIQUE (bucketId, layerId, intersectParams)
+   UNIQUE (experimentId, matrixIndex),
+   UNIQUE (experimentId, layerId, intersectParams)
 );
 
 -- ----------------------------------------------------------------------------
@@ -424,9 +424,9 @@ lm_v3.algorithm,
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
 lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
-lm_v3.bucket, lm_v3.bucket_bucketid_seq,
+lm_v3.experiment, lm_v3.experiment_experimentid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
-lm_v3.buckettree, lm_v3.buckettree_buckettreeid_seq,
+lm_v3.experimenttree, lm_v3.experimenttree_experimenttreeid_seq,
 lm_v3.matrixcolumn, lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP reader;
 
@@ -445,8 +445,8 @@ lm_v3.algorithm,
 lm_v3.sdmmodel,  
 lm_v3.sdmprojection,
 lm_v3.shapegrid,
-lm_v3.bucket,
-lm_v3.buckettree,
+lm_v3.experiment,
+lm_v3.experimenttree,
 lm_v3.matrix,
 lm_v3.matrixcolumn
 TO GROUP writer;
@@ -463,8 +463,8 @@ lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,
 lm_v3.sdmprojection_sdmprojectionid_seq,
 lm_v3.shapegrid_shapegridid_seq,
-lm_v3.bucket_bucketid_seq,
-lm_v3.buckettree_buckettreeid_seq,
+lm_v3.experiment_experimentid_seq,
+lm_v3.experimenttree_experimenttreeid_seq,
 lm_v3.matrix_matrixid_seq,
 lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP writer;

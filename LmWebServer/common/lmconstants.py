@@ -25,117 +25,15 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+from LmServer.common.lmconstants import SESSION_DIR, WEB_DIR
+from LmServer.common.localconstants import APP_PATH, SCRATCH_PATH
 
-# Is the Maps class used anywhere?  I 
+# Service path constants (some of these are still in LmServer.common.lmconstants
+STATIC_DIR = 'static'
 
-# class Maps:
-#    """
-#    Class to hold vendor-specific-parameters of local mapservices.
-#    """
-#    
-#    ## Vendor specific parameters dictionary
-#    vsp = {
-#           'all': 
-#          {'geom': ['POINTS', 'LINE', 'ROUTE'] },
-#           
-#           'sdl': 
-#          {'filter': ['TYPE', 'VERSION', 'SERVICELAYER', 'EXTENT']},
-#           
-#           'dgrcache': 
-#          {'mapshape': 'CIRCLE', 
-#           'filter': ['TAXON', 'FAMILY', 'GENUS', 'INSTITUTION'] }
-#          }
-#    
-#    ## Filter parameters dictionary
-#    filterParams = {'TAXON': {'layername': 'specimens',
-#                              'table': 'specimen', 
-#                              'column': 'dScientificName'},
-#                    'FAMILY': {'layername': 'specimens',
-#                               'table': 'specimen',
-#                               'column': 'dFamily'},
-#                    'GENUS': {'layername': 'specimens',
-#                              'table': 'specimen',
-#                              'column': 'dGenus'},
-#                    'INSTITUTION': {'layername': 'specimens',
-#                                    'table': 'specimen',
-#                                    'column': 'dInstitutionCode'},
-#                    'SERVICELAYER': {'layername': 'catalog',
-#                                     'table': 'layer',
-#                                     'column': 'layerid'},
-#                    'EXTENT': {'layername': 'catalog',
-#                               'table': 'layer',
-#                               'column': 'geom'}
-#                     }
-#    
-#    def supports(self, map, vspType):
-#       """
-#       @summary Checks to see if vspType is present in the vendor specific
-#                parameters
-#       @param map: Vendor specific parameter key
-#       @param vspType: Vsp sub-key
-#       @return If vspType is present in vsp, return True.  Otherwise, return 
-#               False
-#       """
-#       if self.vsp['all'].has_key(vspType):
-#          return True
-#       else:
-#          return self.vsp[map].has_key(vspType)
-#       
-#    def isGeomKey(self, key):
-#       """
-#       @summary Checks to see if key is a known geometry key
-#       @param key: The item to check
-#       @return True if key is present, False if it is not
-#       """
-#       return self.vsp['all']['geom'].__contains__(key)
-#    
-#    def isFilterKey(self, key):
-#       """
-#       @summary Checks if key is a filter key
-#       @param key: The item to check
-#       @return If key is present, return True.  Else, return False
-#       """
-#       return self.filterParams.keys().__contains__(key)
-#    
-#    def getVSPKeys(self, map, vspType):
-#       """
-#       @summary Returns the value for the vspType subkey
-#       @param map: Vsp key 
-#       @param vspType: Vsp subkey
-#       @return If vspType is found in vsp's subkeys, returns its value.  Else
-#               returns None
-#       """
-#       if self.vsp['all'].has_key(vspType):
-#          return self.vsp['all'][vspType]
-#       else:
-#          if self.vsp[map].has_key(vspType):
-#             return self.vsp[map][vspType]
-#          else:
-#             return None
-#          
-#    def getFilterLayername(self, filterKey):
-#       """
-#       @summary Finds the name of the layer associated with the filter key
-#       @param filterKey: The filter key to find the layer name for
-#       @return The layer name associated with the specified filter key
-#       """
-#       return self.filterParams[filterKey]['layername']
-# 
-#    def getFilterTable(self, filterKey):
-#       """
-#       @summary Finds the table associated with the filter key
-#       @param filterKey: The filter key to find the table for
-#       @return The name of the table associated with the specified filter key
-#       """
-#       return self.filterParams[filterKey]['table']
-#    
-#    def getFilterColumn(self, filterKey):
-#       """
-#       @summary Finds the column associated with the filter key
-#       @param filterKey: The filter key to find the column for
-#       @return The name of the column associated with the specified filter key
-#       """
-#       return self.filterParams[filterKey]['column']
+SESSION_PATH = os.path.join(SCRATCH_PATH, SESSION_DIR)
+STATIC_PATH = os.path.join(APP_PATH, WEB_DIR, STATIC_DIR)
 
 # External namespaces
 STMML_NAMESPACE = "http://www.xml-cml.org/schema/stmml"
@@ -736,9 +634,6 @@ ATOM_NS_PREFIX = "atom"
 # Kml
 KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 KML_NS_PREFIX = None
-
-# Service path constants (some of these are still in LmServer.common.lmconstants
-STATIC_DIR = 'static'
 
 
 # Projections scaling constants.  Used for mapping of archive projections

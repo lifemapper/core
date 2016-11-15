@@ -433,7 +433,8 @@ class _LayerParameters(LMObject):
       self.parametersModTime = modTime
       self._parametersId = paramId
       self._parametersUserId = userId
-      
+      # Deprecated, they will be covered by filterString in paramMetadata or 
+      #  _MatrixColumnParameters intersectParams
       self.attrFilter = attrFilter
       self.valueFilter = valueFilter
       

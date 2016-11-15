@@ -37,8 +37,7 @@ from LmCommon.common.singleton import singleton
 #    cannot be found, raise an exception
 COMPUTE_CONFIG_FILENAME = os.getenv('LIFEMAPPER_COMPUTE_CONFIG_FILE') 
 SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
-SITE_CONFIG_SECTION = 'SiteConfig'
-SITE_CONFIG_ITEM = 'SITE_CONFIG'
+SITE_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SITE_CONFIG_FILE')
 
 #    
 # .............................................................................
@@ -49,18 +48,29 @@ class Config(object):
              config.lmcompute.ini and site.ini and store values
    """
    # .....................................
-   def __init__(self, fns=[COMPUTE_CONFIG_FILENAME, SERVER_CONFIG_FILENAME]):
-      if fns is None or len(fns) == 0:
+   def __init__(self, fns=[], siteFn=SITE_CONFIG_FILENAME, 
+                   defaultFns=[COMPUTE_CONFIG_FILENAME, SERVER_CONFIG_FILENAME]):
+      """
+      @summary: Constructor.  Uses config files in order fns then siteFn then defaultFns
+      @note: Last file specified wins
+      """
+      # Start a list of config files.  Begin with default config files
+      fileList = defaultFns
+      if isinstance(fileList, basestring):
+         fileList = list(fileList)
+      
+      # Add site config files
+      if siteFn is not None:
+         fileList.append(siteFn)
+         
+      # Add specified config files (ex BOOM config)
+      fileList.extend(fns)
+         
+      # Remove Nones if they exist
+      fileList = [f for f in fileList if f is not None]
+      
+      if fileList is None or len(fileList) == 0:
          raise ValueError, "Missing LIFEMAPPER_SERVER_CONFIG_FILE or LIFEMAPPER_COMPUTE_CONFIG_FILE environment variable"
-      fileList = []
-      if isinstance(fns, StringType) or isinstance(fns, UnicodeType):
-         fileList.append(fns)
-      elif isinstance(fns, ListType) or isinstance(fns, TupleType):
-         for tmp in fns:
-            if tmp is not None:
-               fileList.append(tmp)
-      else:
-         raise Exception('Construct Config with a list')
       self.configFiles = fileList
       self.reload()
       
@@ -94,21 +104,7 @@ class Config(object):
                    restart the process.
       """
       self.config = ConfigParser.SafeConfigParser()
-      found = False
-      for fn in self.configFiles:
-         if os.path.exists(fn):
-            self.config.read(fn)
-            found = True
-            pth, tmp = os.path.split(fn)
-            try:
-               fname = self.get(SITE_CONFIG_SECTION, SITE_CONFIG_ITEM)
-            except Exception, e:
-               print('Missing site config in file = {}'.format(fn))
-#                msg = str(e) + '\n'
-#                msg += 'Missing site config in file = ' + fn
-#                raise Exception(msg)
-            else:
-               self.site = os.path.join(pth, fname)
-               self.config.read(self.site)
-      if not found:
+      readConfigFiles = self.config.read(self.configFiles)
+      if len(readConfigFiles) == 0:
          raise Exception('No config files found matching {0}'.format(self.configFiles))
+      

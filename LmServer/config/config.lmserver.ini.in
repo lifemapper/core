@@ -12,12 +12,13 @@ SMTP_SENDER: no-reply-lifemapper@@PUBLIC_FQDN@
 
 DATASOURCE: GBIF
 APP_PATH: @LMHOME@
+TEMP_PATH: @TEMPDIR@
 DATA_PATH: @DATADIR_SERVER@
 SCRATCH_PATH: @LMSCRATCHDISK@
-;; This variable is identical in config.lmcompute.ini
+
+;; These 2 variables are identical in config.lmcompute.ini
+PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
-TEMP_PATH: @TEMPDIR@
-MAPSERVER_ROOT: http://@PUBLIC_FQDN@
 
 ; ...............................................
 [LmServer - registeredcompute]
@@ -95,7 +96,6 @@ DB_HOSTNAME: @DB_FQDN@
 
 ; ...............................................
 [LmServer - webserver]
-LM_LIB_PATH: @LMWEB@
 WEB_HOSTNAME:  @WEB_FQDN@
 
 ; ...............................................
@@ -104,7 +104,7 @@ WEB_HOSTNAME:  @WEB_FQDN@
 MAX_MAKEFLOWS: 5
 
 ; Catalog Server constants
-CS_PID_FILE: @TEMPDIR@/catalog_server.pid
+CS_PID_FILE: @LMSCRATCHDISK@/run/catalog_server.pid
 CS_LOG_FILE: @LMSCRATCHDISK@/log/catalog_server.log
 CS_PORT: 9097
 CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LOG_FILE)s -O 100M -H @TEMPDIR@/catalog.history 
@@ -239,10 +239,4 @@ OTL_TREE_WEB_URL: http://api.opentreeoflife.org/v2/tree_of_life/subtree
 INSTITUTION_NAME: University of Kansas Biodiversity Institute
 ADMIN_NAME: Jeff Cavner
 ADMIN_EMAIL: jcavner@ku.edu 
-
-; .............................................................................
-; SiteConfig 
-; .............................................................................
-[SiteConfig]
-SITE_CONFIG: site.ini
 

@@ -28,4 +28,3 @@ _CONFIG_HEADING = "LmServer - webserver"
 
 # LmWebServer
 WEB_HOSTNAME = Config().get(_CONFIG_HEADING, 'WEB_HOSTNAME')
-LM_LIB_PATH = Config().get(_CONFIG_HEADING, 'LM_LIB_PATH')
