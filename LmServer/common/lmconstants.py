@@ -243,7 +243,8 @@ class ReferenceType:
 
 from LmCommon.common.lmconstants import DWCNames
 class OccurrenceFieldNames:
-   LOCAL_ID = ['localid', 'localId', 'id', 'occkey']
+   LOCAL_ID = ['localid', 'localId', 'id', 'occkey', 
+               DWCNames.OCCURRENCE_ID['SHORT'], DWCNames.OCCURRENCE_ID['FULL']]
    UUID = ['uuid']
    LONGITUDE = ['longitude', 'x', 'lon', 'long', DWCNames.DECIMAL_LONGITUDE['SHORT']]
    LATITUDE =  ['latitude', 'y', 'lat', DWCNames.DECIMAL_LATITUDE['SHORT']]
