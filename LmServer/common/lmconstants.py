@@ -246,8 +246,10 @@ class OccurrenceFieldNames:
    LOCAL_ID = ['localid', 'localId', 'id', 'occkey', 
                DWCNames.OCCURRENCE_ID['SHORT'], DWCNames.OCCURRENCE_ID['FULL']]
    UUID = ['uuid']
-   LONGITUDE = ['longitude', 'x', 'lon', 'long', DWCNames.DECIMAL_LONGITUDE['SHORT']]
-   LATITUDE =  ['latitude', 'y', 'lat', DWCNames.DECIMAL_LATITUDE['SHORT']]
+   LONGITUDE = ['longitude', 'x', 'lon', 'long', 
+                DWCNames.DECIMAL_LONGITUDE['SHORT'], DWCNames.DECIMAL_LONGITUDE['FULL']]
+   LATITUDE =  ['latitude', 'y', 'lat', DWCNames.DECIMAL_LATITUDE['SHORT'],
+                DWCNames.DECIMAL_LATITUDE['FULL']]
    DATANAME = ['canname', 'species']
    GEOMETRY_WKT = ['geomwkt']
    
