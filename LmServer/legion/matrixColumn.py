@@ -41,8 +41,7 @@ class _MatrixColumnParameters(_LayerParameters):
 # .............................................................................
    def __init__(self, matrixIndex, 
                 metadata={}, intersectParams={}, squid=None, ident=None,
-                matrixColumnId=None, userId=None, matrixId=None,
-                status=None, statusModTime=None):
+                matrixColumnId=None, userId=None, matrixId=None):
       """
       @note:  intersectParameters may include keywords:
          filterString: to filter layer for intersect
@@ -88,14 +87,13 @@ class MatrixColumn(_MatrixColumnParameters, ProcessObject):
                 matrixLayerId=None, userId=None, matrixId=None,
                 status=None, statusModTime=None,
                 valUnits=None,
-                lyrId=None, lyrUserId=None, bucketId=None,
-                verify=None, squid=None, modTime=None, metadataUrl=None):
+                lyrId=None, lyrUserId=None, verify=None, squid=None, 
+                metadataUrl=None):
       # ...................
       _MatrixColumnParameters.__init__(self, matrixIndex, 
                 metadata=mtxcolMetadata, intersectParams=intersectParams, 
                 squid=squid, ident=ident,
-                matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
-                status=status, statusModTime=statusModTime)
+                matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId)
       ProcessObject.__init__(self, objId=matrixLayerId, parentId=bucketId, 
                 status=status, statusModTime=statusModTime)
 
@@ -109,20 +107,23 @@ class MatrixVector(_MatrixColumnParameters, Vector, ProcessObject):
                 mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
                 matrixLayerId=None, userId=None, matrixId=None,
                 status=None, statusModTime=None,
+                valUnits=None,
+                lyrId=None, lyrUserId=None, verify=None, squid=None, 
+                metadataUrl=None,
                 # Vector
                 name=None, lyrMetadata={}, bbox=None, dlocation=None, 
                 mapunits=None, resolution=None, epsgcode=None,
                 ogrType=None, dataFormat=None, 
-                featureCount=0, featureAttributes={}, features={}, fidAttribute=None, 
-                valUnits=None,
-                lyrId=None, lyrUserId=None, bucketId=None,
-                verify=None, squid=None, modTime=None, metadataUrl=None):
+                featureCount=0, featureAttributes={}, features={}, fidAttribute=None):
       # ...................
-      _MatrixColumnParameters.__init__(self, matrixIndex, 
-                metadata=mtxcolMetadata, intersectParams=intersectParams, 
+      MatrixColumn(matrixIndex, 
+                mtxcolMetadata=mtxcolMetadata, intersectParams=intersectParams, 
                 squid=squid, ident=ident,
                 matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
-                status=status, statusModTime=statusModTime)
+                status=status, statusModTime=statusModTime,
+                valUnits=valUnits,
+                lyrId=lyrId, lyrUserId=lyrUserId, verify=verify, squid=squid, 
+                metadataUrl=metadataUrl)
       Vector.__init__(self, metadata=lyrMetadata, name=name, bbox=bbox, 
                       dlocation=dlocation,
                       mapunits=mapunits, resolution=resolution, 
@@ -134,8 +135,6 @@ class MatrixVector(_MatrixColumnParameters, Vector, ProcessObject):
                       modTime=modTime, metadataUrl=metadataUrl,
                       serviceType=LMServiceType.MATRIX_LAYERS, 
                       moduleType=LMServiceModule.RAD)
-      ProcessObject.__init__(self, objId=matrixLayerId, parentId=bucketId, 
-                status=status, statusModTime=statusModTime)
       
    
 # .............................................................................
@@ -159,15 +158,18 @@ class MatrixRaster(_MatrixColumnParameters, Raster, ProcessObject):
                 bbox=None, dlocation=None, 
                 gdalType=None, dataFormat=None, 
                 mapunits=None, resolution=None, epsgcode=None,
-                lyrId=None, lyrUserId=None, bucketId=None,
-                verify=None, squid=None,
-                modTime=None, metadataUrl=None):
+                lyrId=None, lyrUserId=None, verify=None, squid=None,
+                metadataUrl=None):
       # ...................
-      _MatrixColumnParameters.__init__(self, matrixIndex, 
-                metadata=mtxcolMetadata, intersectParams=intersectParams, 
+      MatrixColumn(matrixIndex, 
+                mtxcolMetadata=mtxcolMetadata, intersectParams=intersectParams, 
                 squid=squid, ident=ident,
                 matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
-                status=status, statusModTime=statusModTime)
+                status=status, statusModTime=statusModTime,
+                valUnits=valUnits,
+                lyrId=lyrId, lyrUserId=lyrUserId, verify=verify, squid=squid, 
+                metadataUrl=metadataUrl)
+
       Raster.__init__(self, metadata=lyrMetadata, name=name,
                       minVal=minVal, maxVal=maxVal, nodataVal=nodataVal, 
                       valUnits=valUnits, bbox=bbox, dlocation=dlocation, 
@@ -178,6 +180,4 @@ class MatrixRaster(_MatrixColumnParameters, Raster, ProcessObject):
                       metadataUrl=metadataUrl,
                       serviceType=LMServiceType.MATRIX_LAYERS, 
                       moduleType=LMServiceModule.RAD)
-      ProcessObject.__init__(self, objId=matrixLayerId, parentId=bucketId, 
-                status=status, statusModTime=statusModTime)
 
