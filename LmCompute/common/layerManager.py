@@ -48,7 +48,7 @@ from LmCommon.common.lmconstants import (JobStatus, OutputFormat,
 from LmCommon.common.verify import verifyHash
 from LmCompute.common.lmconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DB, 
          LayerAttributes, LayerFormat, LayerStatus, RETRIEVED_LAYER_DIR, 
-         SchemaMetadata, ME_CMD, CONVERT_TOOL, CONVERT_JAVA_CMD)
+         SchemaMetadata, ME_CMD, CONVERT_TOOL, CONVERT_JAVA_CMD, DB_TIMEOUT)
 from LmCompute.common.lmObj import LmException
 
 TIMEOUT = 600
@@ -66,7 +66,7 @@ class LayerManager(object):
       createDb = False
       if not os.path.exists(dbFile):
          createDb = True
-      self.con = sqlite3.connect(dbFile, isolation_level=None)
+      self.con = sqlite3.connect(dbFile, timeout=DB_TIMEOUT, isolation_level=None)
       if createDb:
          print("Database does not exist, creating...")
          self._createMetadataTable()
