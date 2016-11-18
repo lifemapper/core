@@ -75,6 +75,7 @@ ME_VERSION = '3.3.3k'
 # ============================================================================
 RETRIEVED_LAYER_DIR = 'retrieved'
 INPUT_LAYER_DB = 'layers.db'
+DB_TIMEOUT = 30.0 # TODO: Consider moving this to config
 
 class LayerStatus:
    """
