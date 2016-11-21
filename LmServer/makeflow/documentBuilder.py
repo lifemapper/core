@@ -461,6 +461,15 @@ class LMMakeflowDocument(LMObject):
       self._addJobCommand([], emailCmd, dependencies=dependencies, 
                           comment="Notify user")
 
+
+   # ...........................
+   def addPAMIntersect(self, shapegrid, paLayers):
+      """
+      @summary: Adds tasks to intersect a group of PA layers against a shapegrid
+      """
+      pass
+   
+
    # ...........................
    def addIntersectJob(self, intJob):
       """
