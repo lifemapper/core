@@ -504,7 +504,7 @@ class FileFix:
 
              LMFileType.UNSPECIFIED_USER: None,
              LMFileType.UNSPECIFIED_RAD: None,
-             LMFileType.UNSPECIFIED_SDM: None,
+             LMFileType.UNSPECIFIED_OCC: None,
              LMFileType.USER_LAYER: GENERIC_LAYER_NAME_PREFIX,
              LMFileType.USER_SHAPEGRID: None,
              LMFileType.USER_ATTRIBUTE_MATRIX: 'attributes',
@@ -547,7 +547,7 @@ class FileFix:
                 
                 LMFileType.UNSPECIFIED_USER: None,
                 LMFileType.UNSPECIFIED_RAD: None,
-                LMFileType.UNSPECIFIED_SDM: None,
+                LMFileType.UNSPECIFIED_OCC: None,
                 LMFileType.USER_LAYER: None,
                 LMFileType.USER_SHAPEGRID:  OutputFormat.SHAPE,
                 LMFileType.USER_ATTRIBUTE_MATRIX: OutputFormat.NUMPY,
