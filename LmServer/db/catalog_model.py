@@ -2494,32 +2494,32 @@ class MAL(DbPostgresql):
             objs.append(self._createScenario(r, idxs))
       return objs
 
-# .............................................................................
-   def countAlgorithms(self):
-      """
-      @summary: Return the count of all Algorithms.
-      @note: lm_countAlgorithms() returns int 
-      """
-      row, idxs = self.executeSelectOneFunction('lm_countAlgorithms')
-      return self._getCount(row)
+# # .............................................................................
+#    def countAlgorithms(self):
+#       """
+#       @summary: Return the count of all Algorithms.
+#       @note: lm_countAlgorithms() returns int 
+#       """
+#       row, idxs = self.executeSelectOneFunction('lm_countAlgorithms')
+#       return self._getCount(row)
 
-# .............................................................................
-   def listAlgorithms(self, firstRecNum, maxNum, atom):
-      """
-      @summary: Return all Algorithm Atoms.
-      @param firstRecNum: start at this record
-      @param maxNum: maximum number of records to return
-      @param atom: True if return objects will be Atoms, False if full 
-                   Algorithm objects
-      @note: lm_listAlgorithms(int, int) returns setof lm_atom 
-      """
-      if atom:
-         rows, idxs = self.executeSelectManyFunction('lm_listAlgorithms', 
-                                                     firstRecNum, maxNum, atom)
-         objs = self._getAtoms(rows, idxs)
-      else:
-         objs = []
-      return objs
+# # .............................................................................
+#    def listAlgorithms(self, firstRecNum, maxNum, atom):
+#       """
+#       @summary: Return all Algorithm Atoms.
+#       @param firstRecNum: start at this record
+#       @param maxNum: maximum number of records to return
+#       @param atom: True if return objects will be Atoms, False if full 
+#                    Algorithm objects
+#       @note: lm_listAlgorithms(int, int) returns setof lm_atom 
+#       """
+#       if atom:
+#          rows, idxs = self.executeSelectManyFunction('lm_listAlgorithms', 
+#                                                      firstRecNum, maxNum, atom)
+#          objs = self._getAtoms(rows, idxs)
+#       else:
+#          objs = []
+#       return objs
    
 # .............................................................................
    def listLayers(self, firstRecNum, maxNum, userId, typecode, beforetime, 

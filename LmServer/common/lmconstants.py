@@ -246,8 +246,10 @@ class OccurrenceFieldNames:
    LOCAL_ID = ['localid', 'localId', 'id', 'occkey', 
                DWCNames.OCCURRENCE_ID['SHORT'], DWCNames.OCCURRENCE_ID['FULL']]
    UUID = ['uuid']
-   LONGITUDE = ['longitude', 'x', 'lon', 'long', DWCNames.DECIMAL_LONGITUDE['SHORT']]
-   LATITUDE =  ['latitude', 'y', 'lat', DWCNames.DECIMAL_LATITUDE['SHORT']]
+   LONGITUDE = ['longitude', 'x', 'lon', 'long', 
+                DWCNames.DECIMAL_LONGITUDE['SHORT'], DWCNames.DECIMAL_LONGITUDE['FULL']]
+   LATITUDE =  ['latitude', 'y', 'lat', DWCNames.DECIMAL_LATITUDE['SHORT'],
+                DWCNames.DECIMAL_LATITUDE['FULL']]
    DATANAME = ['canname', 'species']
    GEOMETRY_WKT = ['geomwkt']
    
@@ -502,7 +504,7 @@ class FileFix:
 
              LMFileType.UNSPECIFIED_USER: None,
              LMFileType.UNSPECIFIED_RAD: None,
-             LMFileType.UNSPECIFIED_SDM: None,
+             LMFileType.UNSPECIFIED_OCC: None,
              LMFileType.USER_LAYER: GENERIC_LAYER_NAME_PREFIX,
              LMFileType.USER_SHAPEGRID: None,
              LMFileType.USER_ATTRIBUTE_MATRIX: 'attributes',
@@ -545,7 +547,7 @@ class FileFix:
                 
                 LMFileType.UNSPECIFIED_USER: None,
                 LMFileType.UNSPECIFIED_RAD: None,
-                LMFileType.UNSPECIFIED_SDM: None,
+                LMFileType.UNSPECIFIED_OCC: None,
                 LMFileType.USER_LAYER: None,
                 LMFileType.USER_SHAPEGRID:  OutputFormat.SHAPE,
                 LMFileType.USER_ATTRIBUTE_MATRIX: OutputFormat.NUMPY,

@@ -51,7 +51,7 @@ SAMPLE_LAYERS_PATH = os.path.join(LM_DISK, 'tests/data/layers/testLayers.txt')
 SAMPLE_DATA_PATH = os.path.join(LM_DISK, 'tests/data')
 METRICS_STORAGE_PATH = os.path.join(LM_DISK, 'metrics')
 
-JAVA_SYSTEM_ROOT = os.path.join(LM_DISK, '.java')
+JAVA_SYSTEM_ROOT = os.path.join(SCRATCH_PATH, '.java')
 JAVA_USER_ROOT = os.path.join(JAVA_SYSTEM_ROOT, '.userPrefs')
 JAVA_CMD = '{} -Xms{} -Xmx{} -Djava.util.prefs.systemRoot={} -Djava.util.prefs.userRoot={} -cp'.format(
            JAVA_EXE, JAVA_INIT_MEM_OPTION, JAVA_MAX_MEM_OPTION, JAVA_SYSTEM_ROOT,
