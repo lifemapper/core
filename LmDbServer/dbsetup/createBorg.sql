@@ -20,6 +20,7 @@ GRANT USAGE ON SCHEMA lm_v3 TO reader, writer;
     
 -- ----------------------------------------------------------------------------
 -- -------------------------------
+-- Modifier (for everything)
 create table lm_v3.LMUser
 (
    userId varchar(20) UNIQUE PRIMARY KEY,
@@ -36,6 +37,7 @@ create table lm_v3.LMUser
 );
 
 -- -------------------------------
+-- Modifier (for Taxon)
 create table lm_v3.TaxonomySource
 (
    taxonomySourceId serial UNIQUE PRIMARY KEY,
@@ -45,17 +47,20 @@ create table lm_v3.TaxonomySource
 );
 
 -- -------------------------------
+-- Object (Makeflow document)
 create table lm_v3.JobChain
 (
    jobchainId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    dlocation text,
    priority int,
+   -- needed?
    status int,
    statusmodtime double precision
 );
 
 -- -------------------------------
+-- Modifier (for Layer, MatrixColumn, others)
 create table lm_v3.Taxon
 (
    taxonId serial UNIQUE PRIMARY KEY,
@@ -89,9 +94,10 @@ CREATE INDEX idx_lower_sciname on lm_v3.Taxon(lower(sciname));
 CREATE INDEX idx_lower_genus on lm_v3.Taxon(lower(genus));
 
 -- -------------------------------
-create table lm_v3.EnvironmentalType
+-- Modifier (for Layer)
+create table lm_v3.EnvType
 (
-   environmentalTypeId serial UNIQUE PRIMARY KEY,
+   envTypeId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    
    -- type of data (elevation, bioclimatic variable types , etc)
@@ -106,10 +112,21 @@ create table lm_v3.EnvironmentalType
    metadata text,
    modTime double precision
 );
-ALTER TABLE lm_v3.EnvironmentalType ADD CONSTRAINT unique_environmentalType 
+ALTER TABLE lm_v3.EnvType ADD CONSTRAINT unique_envType 
    UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode);
+   
+-- -------------------------------
+-- Object (via join)
+create table lm_v3.EnvLayer
+(
+   envlayerId serial UNIQUE PRIMARY KEY,
+   envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   UNIQUE (envTypeId, layerId)
+);
 
 -- -------------------------------
+-- Object
 -- TODO: Enforce unique userid/name/epsg for display layers only?
 create table lm_v3.Layer
 (
@@ -121,7 +138,7 @@ create table lm_v3.Layer
    dlocation text,
    metadataUrl text UNIQUE,
 
-   -- JSON with title, author, description, valAttribute if vector data
+   -- JSON with title, author, description ...
    metadata text,
 
    -- GDAL/OGR codes indicating driver to use when writing files
@@ -129,8 +146,9 @@ create table lm_v3.Layer
    gdalType int,
    ogrType int,
    
-   -- valunits=categorical if non-scalar
-   valUnits varchar(60),
+   -- Data descriptors
+   valUnits varchar(60),				-- measurement units or 'categorical'
+   valAttribute varchar(20),			-- fieldname or 'pixel'
    nodataVal double precision,
    minVal double precision,
    maxVal double precision,
@@ -152,6 +170,7 @@ create table lm_v3.Layer
  CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
 
 -- -------------------------------
+-- Object
  create table lm_v3.Scenario
  (
     scenarioId serial UNIQUE PRIMARY KEY,
@@ -182,22 +201,22 @@ create table lm_v3.Layer
 
 
 -- -------------------------------
--- Join table
+-- Object (via join)
 create table lm_v3.ScenarioLayer
 (
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   environmentalTypeId int REFERENCES lm_v3.EnvironmentalType,
-   PRIMARY KEY (scenarioId, layerId, environmentalTypeId)
+   envlayerId int REFERENCES lm_v3.EnvLayer,
+   PRIMARY KEY (scenarioId, envLayerId)
 );
 
 -- -------------------------------
-create table lm_v3.OccurrenceSet
+-- Object
+create table lm_v3.OccurrenceSet 
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
+   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    verify varchar(64),
-   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    displayName text,
    metadataUrl text UNIQUE,
    dlocation text,
@@ -205,9 +224,7 @@ create table lm_v3.OccurrenceSet
    queryCount int,
    bbox varchar(60),
    epsgcode integer,
-   metadata text,
-   status integer,
-   statusmodtime double precision
+   metadata text
 );
 Select AddGeometryColumn('lm_v3', 'occurrenceset', 'geom', 4326, 'POLYGON', 2);
 ALTER TABLE lm_v3.OccurrenceSet ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
@@ -231,6 +248,7 @@ CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
 -- -------------------------------
+-- Input (for SDMModel Process)
 create table lm_v3.Algorithm
 (
    algorithmCode varchar(30) UNIQUE PRIMARY KEY,
@@ -242,37 +260,40 @@ create table lm_v3.Algorithm
 -- The 'algorithmParams' column is algorithm parameters in JSON format, with the 
    -- key = case sensitive parameter name (previously omkey)
    -- value = parameter value for this model 
--- ** Note change from pickled, protocol 0, to JSON 
-create table lm_v3.SDMModel 
+-- Process and Output object (dlocation)
+create table lm_v3.SDMModel
 (
    sdmmodelid serial UNIQUE PRIMARY KEY,
    userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   -- inputs
    occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    scenarioCode varchar(30),
    maskId int REFERENCES lm_v3.Layer,
-   status int,
-   statusModTime double precision,
-   dlocation text,
-   email varchar(64), 
    algorithmParams text,
-   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode)
+   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
+   -- output
+   dlocation text,
+   status int,
+   statusModTime double precision
 );
-CREATE INDEX idx_mdlStatusModTime ON lm_v3.SDMModel(statusModTime);
-CREATE INDEX idx_mdlUserId ON lm_v3.SDMModel(userId);
-CREATE INDEX idx_mdlStatus ON lm_v3.SDMModel(status);
+CREATE INDEX idx_mdlStatusModTime ON lm_v3.ProcessSDMModel(statusModTime);
+CREATE INDEX idx_mdlUserId ON lm_v3.ProcessSDMModel(userId);
+CREATE INDEX idx_mdlStatus ON lm_v3.ProcessSDMModel(status);
 
 -- -------------------------------
 -- Holds projection of a ruleset on to a set of environmental layers
--- 
-create table lm_v3.SDMProjection
+-- Process and Output object (via join with Layer)
+create table lm_v3.SDMProject
 (
-   sdmprojectionId serial UNIQUE PRIMARY KEY,
-   layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   sdmmodelid int REFERENCES lm_v3.SDMModel ON DELETE CASCADE,
+   sdmprojectId serial UNIQUE PRIMARY KEY,
+   -- inputs
+   sdmmodelid int REFERENCES lm_v3.ProcessSDMModel ON DELETE CASCADE,
    scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    scenarioCode varchar(30),
    maskId int REFERENCES lm_v3.Layer,
+   -- output
+   layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    status int,
    statusModTime double precision
 );  
@@ -280,12 +301,11 @@ CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProjection(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
 
 -- -------------------------------
+-- Generic table for Occurrenceset, SDM (later) MCPA, Intersect 
 create table lm_v3.Process
 (
    processId serial UNIQUE PRIMARY KEY,
    processType int NOT NULL,
-   referenceType int NOT NULL,
-   referenceId int NOT NULL,
    userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    isSinglespecies boolean NOT NULL,
    inputs text,
@@ -296,7 +316,7 @@ create table lm_v3.Process
 );
 
 -- -------------------------------
--- One to one relationship with Layer
+-- Object (via 1-to-1 join with Layer)
 create table lm_v3.ShapeGrid
 (
    shapeGridId serial UNIQUE PRIMARY KEY,
@@ -307,12 +327,12 @@ create table lm_v3.ShapeGrid
    idAttribute varchar(20),
    xAttribute varchar(20),
    yAttribute varchar(20),
-   status int,
-   statusmodtime double precision
+   processId int REFERENCES lm_v3.Process
 );
 
 -- -------------------------------
--- original Tree in user space, or modified tree in Experiment
+-- original Tree in user space
+-- Object
 create table lm_v3.Tree 
 (
    treeId serial UNIQUE PRIMARY KEY,
@@ -326,10 +346,10 @@ create table lm_v3.Tree
 );
 
 -- -------------------------------
--- Organizing object for set of layers/computations
-create table lm_v3.Experiment
+-- Organizing object for set of matrices all using same grid/extent/resolution
+create table lm_v3.Gridset
 (
-   experimentId serial UNIQUE PRIMARY KEY,
+   gridsetId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
    
@@ -337,7 +357,6 @@ create table lm_v3.Experiment
    shapeGridId int REFERENCES lm_v3.ShapeGrid,
    siteIndices text,
    
-   treeId int REFERENCES lm_v3.Tree,
    epsgcode int,
    metadata text,
    modTime double precision,
@@ -345,27 +364,38 @@ create table lm_v3.Experiment
 );
 
 -- -------------------------------
--- In Experiment space: PAM, GRIM, BioGeoMtx, MCPA output
+-- Organizing object for set of data and processes in a workflow
+create table lm_v3.Boom
+(
+   boomId serial UNIQUE PRIMARY KEY,
+   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   name varchar(100) NOT NULL,
+   metadata text,
+   UNIQUE (userId, name)
+);
+
+-- -------------------------------
+-- In Gridset space: PAM, GRIM, BioGeoMtx, MCPA output
+-- Object 
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
    -- Constants in LmCommon.common.lmconstants.MatrixType
    matrixType int NOT NULL,
-   experimentId int NOT NULL REFERENCES lm_v3.Experiment ON DELETE CASCADE,
+   gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    matrixDlocation text,
    siteLayerIndices text,
    metadata text,  
-   status int,
-   statusmodtime double precision
 );
 
 -- -------------------------------
--- Join user Tree to a experiment
-create table lm_v3.ExperimentTree 
+-- Link user Tree with a Gridset
+-- Input/Output Object 
+create table lm_v3.GridsetTree
 (
-   experimentTreeId serial UNIQUE PRIMARY KEY,
+   gridsetTreeId serial UNIQUE PRIMARY KEY,
    treeId int NOT NULL REFERENCES lm_v3.Tree ON DELETE CASCADE,
-   experimentId int NOT NULL REFERENCES lm_v3.Experiment ON DELETE CASCADE,
+   gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    isPruned boolean,
    isBinary boolean,
    
@@ -375,36 +405,46 @@ create table lm_v3.ExperimentTree
    -- Encoded Tree Matrix, used in MCPA calcs, can be used with multiple BioGeoHypotheses
    treeEncodedMatrixDlocation text,
    -- TreeCorrelationLink, JSON, used for display
-   treeCorrLinkDlocation text,
-
-   status int,
-   statusmodtime double precision
+   treeCorrLinkDlocation text
 );
 
 -- -------------------------------
--- aka PAV, PAM Vector or GRIM Vector
+-- Process
+create table lm_v3.Intersect
+(
+   intersectId  serial UNIQUE PRIMARY KEY,
+
+	--inputs
+   layerId int REFERENCES lm_v3.Layer,
+   -- filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
+   -- minPresence, maxPresence
+   intersectParams text,
+   
+   -- output
+   matrixColumnId NOT NULL REFERENCES lm_v3.MatrixColumn,
+   
+   status int,
+   statusmodtime double precision,
+   UNIQUE (layerId, intersectParams)
+);
+
+-- -------------------------------
+-- aka PAV or GRIM Vector, 
+-- Object
 create table lm_v3.MatrixColumn 
 (
    matrixColumnId  serial UNIQUE PRIMARY KEY,
-   experimentId int NOT NULL REFERENCES lm_v3.Experiment ON DELETE CASCADE,
-
-   -- layerId could be empty, just squid or ident
-   layerId int REFERENCES lm_v3.Layer,
+   gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
+	
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    ident varchar(64),
 
    matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int NOT NULL,
-   
-   -- filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
-   -- minPresence, maxPresence
-   intersectParams text,   
       
-   metadata text,  
-   status int,
-   statusmodtime double precision,
-   UNIQUE (experimentId, matrixIndex),
-   UNIQUE (experimentId, layerId, intersectParams)
+   metadata text, 
+   UNIQUE (boomId, gridsetId, matrixIndex),
+   UNIQUE (boomId, gridsetId, layerId, intersectParams)
 );
 
 -- ----------------------------------------------------------------------------
@@ -414,19 +454,19 @@ lm_v3.lmuser,
 lm_v3.jobchain, lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
-lm_v3.environmentalType, lm_v3.environmentalType_environmentalTypeid_seq,
+lm_v3.envtype, lm_v3.envtype_envtypeid_seq,
 lm_v3.layer, lm_v3.layer_layerid_seq, 
---  lm_v3.environmentallayer, lm_v3.environmentallayer_environmentallayerid_seq, 
+lm_v3.envlayer, lm_v3.envlayer_envlayerid_seq, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayer,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
 lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
-lm_v3.sdmprojection, lm_v3.sdmprojection_sdmprojectionid_seq,
+lm_v3.sdmproject, lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
-lm_v3.experiment, lm_v3.experiment_experimentid_seq,
+lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
-lm_v3.experimenttree, lm_v3.experimenttree_experimenttreeid_seq,
+lm_v3.gridsettree, lm_v3.gridsettree_gridsettreeid_seq,
 lm_v3.matrixcolumn, lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP reader;
 
@@ -435,18 +475,18 @@ lm_v3.lmuser,
 lm_v3.jobchain,
 lm_v3.taxonomysource,
 lm_v3.taxon,
-lm_v3.environmentalType,
+lm_v3.envtype,
 lm_v3.layer, 
---  lm_v3.environmentallayer,  
+lm_v3.envlayer,  
 lm_v3.scenario,
 lm_v3.scenariolayer,
 lm_v3.occurrenceset, 
 lm_v3.algorithm, 
 lm_v3.sdmmodel,  
-lm_v3.sdmprojection,
+lm_v3.sdmproject,
 lm_v3.shapegrid,
-lm_v3.experiment,
-lm_v3.experimenttree,
+lm_v3.gridset,
+lm_v3.gridsettree,
 lm_v3.matrix,
 lm_v3.matrixcolumn
 TO GROUP writer;
@@ -455,16 +495,16 @@ GRANT SELECT, UPDATE ON TABLE
 lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
-lm_v3.environmentalType_environmentalTypeid_seq,
+lm_v3.envtype_envtypeid_seq,
 lm_v3.layer_layerid_seq,
---  lm_v3.environmentallayer_environmentallayerid_seq, 
+lm_v3.envlayer_envlayerid_seq, 
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmmodel_sdmmodelid_seq,
-lm_v3.sdmprojection_sdmprojectionid_seq,
+lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid_shapegridid_seq,
-lm_v3.experiment_experimentid_seq,
-lm_v3.experimenttree_experimenttreeid_seq,
+lm_v3.gridset_gridsetid_seq,
+lm_v3.gridsettree_gridsettreeid_seq,
 lm_v3.matrix_matrixid_seq,
 lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP writer;
