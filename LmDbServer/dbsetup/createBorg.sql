@@ -119,10 +119,9 @@ ALTER TABLE lm_v3.EnvType ADD CONSTRAINT unique_envType
 -- Object (via join)
 create table lm_v3.EnvLayer
 (
-   envlayerId serial UNIQUE PRIMARY KEY,
    envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
    layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   UNIQUE (envTypeId, layerId)
+   PRIMARY KEY (envTypeId, layerId)
 );
 
 -- -------------------------------
@@ -205,8 +204,9 @@ create table lm_v3.Layer
 create table lm_v3.ScenarioLayer
 (
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   envlayerId int REFERENCES lm_v3.EnvLayer,
-   PRIMARY KEY (scenarioId, envLayerId)
+   layerId int REFERENCES lm_v3.Layer,
+   envTypeId int REFERENCES lm_v3.EnvType
+   PRIMARY KEY (scenarioId, layerId, envTypeId)
 );
 
 -- -------------------------------
@@ -248,7 +248,7 @@ CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
 -- -------------------------------
--- Input (for SDMModel Process)
+-- Input (for SDMProject Process)
 create table lm_v3.Algorithm
 (
    algorithmCode varchar(30) UNIQUE PRIMARY KEY,
@@ -257,69 +257,35 @@ create table lm_v3.Algorithm
 );
 
 -- -------------------------------
--- The 'algorithmParams' column is algorithm parameters in JSON format, with the 
-   -- key = case sensitive parameter name (previously omkey)
-   -- value = parameter value for this model 
--- Process and Output object (dlocation)
-create table lm_v3.SDMModel
-(
-   sdmmodelid serial UNIQUE PRIMARY KEY,
-   userId varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   -- inputs
-   occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
-   scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
-   scenarioCode varchar(30),
-   maskId int REFERENCES lm_v3.Layer,
-   algorithmParams text,
-   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
-   -- output
-   dlocation text,
-   status int,
-   statusModTime double precision
-);
-CREATE INDEX idx_mdlStatusModTime ON lm_v3.ProcessSDMModel(statusModTime);
-CREATE INDEX idx_mdlUserId ON lm_v3.ProcessSDMModel(userId);
-CREATE INDEX idx_mdlStatus ON lm_v3.ProcessSDMModel(status);
-
--- -------------------------------
--- Holds projection of a ruleset on to a set of environmental layers
--- Process and Output object (via join with Layer)
+-- Process and Output object (via 1-to-1 join with Layer)
 create table lm_v3.SDMProject
 (
-   sdmprojectId serial UNIQUE PRIMARY KEY,
-   -- inputs
-   sdmmodelid int REFERENCES lm_v3.ProcessSDMModel ON DELETE CASCADE,
-   scenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
-   scenarioCode varchar(30),
-   maskId int REFERENCES lm_v3.Layer,
    -- output
    layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   -- sdmprojectId serial UNIQUE PRIMARY KEY,
+   
+   -- inputs
+   occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
+   mdlscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
+   mdlmaskId int REFERENCES lm_v3.Layer,
+   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
+   prjscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
+   prjmaskId int REFERENCES lm_v3.Layer,
+   -- includes algorithmParams
+   metadata text,
+   						
    status int,
-   statusModTime double precision
+   statusModTime double precision,
+   PRIMARY KEY (layerid)
 );  
-CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProjection(statusModTime);
-CREATE INDEX idx_prjStatus ON lm_v3.SDMProjection(status);
-
--- -------------------------------
--- Generic table for Occurrenceset, SDM (later) MCPA, Intersect 
-create table lm_v3.Process
-(
-   processId serial UNIQUE PRIMARY KEY,
-   processType int NOT NULL,
-   userid varchar(20) REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   isSinglespecies boolean NOT NULL,
-   inputs text,
-   outputs text,
-   dlocation text,
-   status int,
-   statusmodtime double precision
-);
+CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
+CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);
 
 -- -------------------------------
 -- Object (via 1-to-1 join with Layer)
 create table lm_v3.ShapeGrid
 (
-   shapeGridId serial UNIQUE PRIMARY KEY,
+   -- shapeGridId serial UNIQUE PRIMARY KEY,
    layerId int UNIQUE NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    cellsides int,
    cellsize double precision,
@@ -327,7 +293,7 @@ create table lm_v3.ShapeGrid
    idAttribute varchar(20),
    xAttribute varchar(20),
    yAttribute varchar(20),
-   processId int REFERENCES lm_v3.Process
+   PRIMARY KEY (layerid)
 );
 
 -- -------------------------------
@@ -413,7 +379,6 @@ create table lm_v3.GridsetTree
 create table lm_v3.Intersect
 (
    intersectId  serial UNIQUE PRIMARY KEY,
-
 	--inputs
    layerId int REFERENCES lm_v3.Layer,
    -- filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
@@ -435,13 +400,13 @@ create table lm_v3.MatrixColumn
 (
    matrixColumnId  serial UNIQUE PRIMARY KEY,
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
+   matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
+   matrixIndex int NOT NULL,
 	
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    ident varchar(64),
-
-   matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
-   matrixIndex int NOT NULL,
-      
+   dlocation text,
+         
    metadata text, 
    UNIQUE (boomId, gridsetId, matrixIndex),
    UNIQUE (boomId, gridsetId, layerId, intersectParams)
