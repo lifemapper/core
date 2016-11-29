@@ -77,7 +77,7 @@ run the cleanRoll scripts for each roll.
 
     # rocks run roll lifemapper-server > add-server.sh
     # rocks run roll lifemapper-compute > add-compute.sh
-    # bash add-server.sh > add-server.out 2>&1
+    # bash add-server.sh 2>&1 | tee add-server.out
     # bash add-compute.sh > add-compute.out 2>&1
     
 Finish install

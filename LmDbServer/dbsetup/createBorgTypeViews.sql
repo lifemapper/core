@@ -3,10 +3,7 @@
 -- ----------------------------------------------------------------------------
 -- lm_envlayer
 DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
-   -- scenario
-   scenarioId, 
-   scenarioCode,
+CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    -- Layer.* 
    layerId,
    userid,
@@ -20,6 +17,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    gdalType,
    ogrType,
    valUnits,
+   valAttribute,
    nodataVal,
    minVal,
    maxVal,
@@ -37,24 +35,25 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    envMetadata, 
    envModtime
    ) AS
-      SELECT s.scenarioId, s.scenarioCode, 
-             l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
+      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
-             l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              et.environmentalTypeId, et.envCode, et.gcmcode, et.altpredCode, et.dateCode, 
              et.metadata, et.modtime
-        FROM lm_v3.ScenarioLayer sl, lm_v3.layer l, lm_v3.EnvironmentalType et, lm_v3.Scenario s
-        WHERE sl.layerid = l.layerid
-          AND sl.scenarioid = s.scenarioid
-          AND sl.environmentalTypeid = et.environmentalTypeid
+        FROM lm_v3.EnvLayer el, lm_v3.layer l, lm_v3.EnvType et
+        WHERE el.layerid = l.layerid
+          AND el.envTypeid = et.envTypeid
         ORDER BY l.layerid ASC;
 
 -- ----------------------------------------------------------------------------
--- lm_shapegrid
-DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
-   -- Layer.* 
+-- lm_scenlayer
+DROP VIEW IF EXISTS lm_v3.lm_scenlayer CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
+   -- scenario
+   scenarioId, 
+   scenarioCode,
+   -- lm_envlayer.* 
    layerId,
    userid,
    lyrsquid,
@@ -67,6 +66,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    gdalType,
    ogrType,
    valUnits,
+   valAttribute,
    nodataVal,
    minVal,
    maxVal,
@@ -75,23 +75,69 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    resolution,
    bbox,
    lyrmodtime,
+   environmentalTypeId,
+   envCode,
+   gcmcode,
+   altpredCode,
+   dateCode,
+   envMetadata, 
+   envModtime
+   ) AS
+      SELECT s.scenarioId, s.scenarioCode, 
+             lel.layerId, lel.userid, lel.lyrsquid, lel.lyrverify, lel.lyrname, 
+             lel.lyrdlocation, lel.lyrmetadataUrl, lel.lyrmetadata, lel.dataFormat, 
+             lel.gdalType, lel.ogrType, lel.valUnits, lel.valAttribute, 
+             lel.nodataVal, lel.minVal, lel.maxVal, lel.epsgcode, lel.mapunits, 
+             lel.resolution, lel.bbox, lel.lyrmodtime, lel.envTypeId, lel.envCode,
+             lel.gcmcode, lel.altpredCode, lel.dateCode, lel.envMetadata,  
+             lel.envModtime
+        FROM lm_v3.ScenarioLayer sl, lm_v3.lm_envlayer lel, lm_v3.Scenario s
+        WHERE sl.envlayerId = lel.envlayerId
+          AND sl.scenarioid = s.scenarioid
+        ORDER BY lel.layerid ASC;
+
+-- ----------------------------------------------------------------------------
+-- lm_shapegrid
+DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    -- ShapeGrid.*
-   shapeGridId,
+   layerId,
    cellsides,
    cellsize,
    vsize,
    idAttribute,
    xAttribute,
-   yAttribute,
-   status,
-   statusmodtime
+   yAttribute
+   -- Layer.* 
+   userid,
+   lyrsquid,
+   lyrverify,
+   lyrname,
+   lyrdlocation,
+   lyrmetadataUrl,
+   lyrmetadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   valAttribute,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   bbox,
+   lyrmodtime,
+
 ) AS
-      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
+      SELECT sg.layerId, sg.cellsides, sg.cellsize, sg.vsize, sg.idAttribute,
+             sg.xAttribute, sg.yAttribute,
+             l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
-             l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             sg.shapeGridId, sg.cellsides, sg.cellsize, sg.vsize, sg.idAttribute,
-             sg.xAttribute, sg.yAttribute, sg.status, sg.statusmodtime
+             
         FROM lm_v3.layer l, lm_v3.shapegrid sg
         WHERE l.layerid = sg.layerid;
 
@@ -113,6 +159,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    gdalType,
    ogrType,
    valUnits,
+   valAttribute,
    nodataVal,
    minVal,
    maxVal,
@@ -136,7 +183,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
 ) AS 
       SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
-             l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              mc.matrixColumnId, mc.experimentId, mc.squid, mc.ident, mc.matrixId, 
              mc.matrixIndex, mc.intersectParams, mc.metadata, 
@@ -144,65 +191,24 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
         FROM lm_v3.layer l, lm_v3.MatrixColumn mc
         WHERE l.layerid = mc.layerid;
 
--- ----------------------------------------------------------------------------
-DROP VIEW IF EXISTS lm_v3.lm_sdmmodel CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_sdmmodel (
-  -- model.*
-   sdmmodelid,
-   mdluserId,
-   occurrenceSetId,
-   mdlscenarioId,
-   mdlscenarioCode,
-   mdlmaskId,
-   mdlstatus,
-   mdlstatusModTime,
-   mdldlocation,
-   email, 
-   algorithmParams,
-   algorithmCode,
-   -- OccurrenceSet
-   squid,
-   verify,
-   displayName,
-   occmetadataUrl,
-   occdlocation,
-   rawDlocation,
-   queryCount,
-   occbbox,
-   epsgcode,
-   occstatus,
-   occstatusmodtime
-) AS
-      SELECT m.sdmmodelId, m.userId, m.occurrenceSetId, 
-      m.scenarioId, m.scenarioCode, m.maskId, m.status, m.statusModTime, 
-      m.dlocation, m.email, m.algorithmParams, m.algorithmCode, 
-      o.squid, o.verify, o.displayName, o.metadataUrl, 
-      o.dlocation, o.rawDlocation, o.queryCount, o.bbox, o.epsgcode, 
-      o.status, o.statusmodtime
-      FROM lm_v3.sdmmodel m, lm_v3.occurrenceSet o
-      WHERE m.occurrencesetid = o.occurrencesetid;
       
 -- ----------------
 -- ----------------------------------------------------------------------------
--- lm_sdmprojection 
-DROP VIEW IF EXISTS lm_v3.lm_sdmprojection CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
-   -- projection.*
-   sdmprojectionId,
+-- lm_sdmproject 
+DROP VIEW IF EXISTS lm_v3.lm_sdmproject CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
+   -- sdmproject.*
    layerid,
-   sdmmodelid,
+   occurrenceSetId,
+   mdlscenarioId,
+   mdlmaskId,
+   algorithmCode,
    prjscenarioId,
-   prjscenarioCode,
    prjmaskId,
+   prjmetadata,								
    prjstatus,
    prjstatusModTime,
    
-   -- projection scenario
-   scenmetadata,
-   gcmCode,
-   altpredCode,
-   dateCode,   
-
    -- Layer.* 
    userid,
    squid,
@@ -215,6 +221,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    gdalType,
    ogrType,
    valUnits,
+   valAttribute,
    nodataVal,
    minVal,
    maxVal,
@@ -223,18 +230,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    resolution,
    prjbbox,
    prjmodtime,
-   
-   -- SDMModel
-   occurrenceSetId,
-   mdlscenarioId,
-   mdlscenarioCode,
-   mdlmaskId,
-   mdlstatus,
-   mdlstatusModTime,
-   mdldlocation,
-   email, 
-   algorithmParams,
-   algorithmCode,
 
    -- occurrenceSet
    occverify,
@@ -244,27 +239,28 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmprojection (
    queryCount,
    occbbox,
    occmetadata,
-   occstatus,
-   occstatusmodtime
+   
+   -- projection scenario
+   scenmetadata,
+   gcmCode,
+   altpredCode,
+   dateCode, 
    ) AS
-      SELECT p.sdmprojectionId, p.layerid, p.sdmmodelid, p.scenarioId, p.scenarioCode,
-             p.maskId, p.status, p.statusModTime,
-             ps.metadata, ps.gcmCode, ps.altpredCode, ps.dateCode,
+      SELECT p.layerid, p.occurrenceSetId, p.mdlscenarioId, p.mdlmaskId, 
+             p.algorithmCode, p.prjscenarioId, p.prjmaskId, p.metadata, 
+             p.layerid, p.status, p.statusModTime,
              l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
-             l.valUnits, l.nodataVal, l.minVal, l.maxVal, 
+             l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             m.occurrenceSetId, m.scenarioCode,  m.scenarioId, m.scenarioCode,
-             m.maskId, m.status, m.statusModTime, m.dlocation, m.email,  
-             m.algorithmParams, m.algorithmCode,
              o.verify, o.displayName, o.metadataUrl, o.dlocation, o.queryCount, 
-             o.bbox, o.metadata, o.status, o.statusmodtime
-      FROM lm_v3.sdmprojection p, lm_v3.scenario ps, lm_v3.layer l, 
-           lm_v3.sdmmodel m, lm_v3.occurrenceSet o
+             o.bbox, o.metadata, 
+             ps.metadata, ps.gcmCode, ps.altpredCode, ps.dateCode,
+      FROM lm_v3.sdmproject p, lm_v3.scenario ps, lm_v3.layer l, 
+           lm_v3.occurrenceSet o
       WHERE p.layerid = l.layerid
         AND p.scenarioid = ps.scenarioid
-        AND p.sdmmodelid = m.sdmmodelid 
-        AND m.occurrencesetid = o.occurrencesetid;
+        AND p.occurrencesetid = o.occurrencesetid;
 
        
 -- ----------------------------------------------------------------------------
@@ -272,9 +268,9 @@ DROP VIEW IF EXISTS lm_v3.lm_Occurrenceset CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    -- occurrenceset.*
    occurrenceSetId,
+   userId,
    squid,
    verify,
-   userId,
    displayName,
    metadataUrl,
    dlocation,
@@ -283,8 +279,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    bbox,
    epsgcode,
    metadata,
-   status,
-   statusmodtime,
    -- Taxon
    taxonId,
    taxonomySourceId,
@@ -307,9 +301,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    url,
    datasetIdentifier
    ) AS
-   SELECT o.occurrenceSetId, o.verify, o.squid, o.userId, o.displayName, 
+   SELECT o.occurrenceSetId, o.userId, o.verify, o.squid, o.displayName, 
           o.metadataUrl, o.dlocation, o.rawDlocation, o.queryCount, 
-          o.bbox, o.epsgcode, o.metadata, o.status, o.statusmodtime, 
+          o.bbox, o.epsgcode, o.metadata, 
           t.taxonId, t.taxonomySourceId, t.taxonomyKey, t.kingdom, t.phylum, 
           t.tx_class, t.tx_order, t.family, t.genus, t.rank, 
           t.canonical, t.sciname,  t.genuskey, t.specieskey, t.keyHierarchy, 
