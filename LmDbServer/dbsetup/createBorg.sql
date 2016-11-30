@@ -47,19 +47,6 @@ create table lm_v3.TaxonomySource
 );
 
 -- -------------------------------
--- Object (Makeflow document)
-create table lm_v3.JobChain
-(
-   jobchainId serial UNIQUE PRIMARY KEY,
-   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   dlocation text,
-   priority int,
-   -- needed?
-   status int,
-   statusmodtime double precision
-);
-
--- -------------------------------
 -- Modifier (for Layer, MatrixColumn, others)
 create table lm_v3.Taxon
 (
@@ -126,7 +113,7 @@ create table lm_v3.EnvLayer
 
 -- -------------------------------
 -- Object
--- TODO: Enforce unique userid/name/epsg for display layers only?
+-- TODO: Enforcee unique userid/name/epsg for display layers only?
 create table lm_v3.Layer
 (
    layerId serial UNIQUE PRIMARY KEY,
@@ -257,7 +244,7 @@ create table lm_v3.Algorithm
 );
 
 -- -------------------------------
--- Process and Output object (via 1-to-1 join with Layer)
+-- Process AND Output object (via 1-to-1 join with Layer)
 create table lm_v3.SDMProject
 (
    -- output
@@ -330,14 +317,31 @@ create table lm_v3.Gridset
 );
 
 -- -------------------------------
+-- Master Master Process, configuration file for initArchive and archivist 
 -- Organizing object for set of data and processes in a workflow
-create table lm_v3.Boom
+create table lm_v3.Archive
 (
-   boomId serial UNIQUE PRIMARY KEY,
+   archiveId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
+   -- configuration file
+   dlocation text,
+   -- recalculate?
    metadata text,
    UNIQUE (userId, name)
+);
+
+-- -------------------------------
+--  Master Process (Makeflow document, created by archivist)
+create table lm_v3.MasterProcess
+(
+   masterProcessId serial UNIQUE PRIMARY KEY,
+   userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   dlocation text,
+   priority int,
+   metadata text,
+   status int,
+   statusmodtime double precision
 );
 
 -- -------------------------------
@@ -376,6 +380,7 @@ create table lm_v3.GridsetTree
 
 -- -------------------------------
 -- Process
+-- delete after process is complete
 create table lm_v3.Intersect
 (
    intersectId  serial UNIQUE PRIMARY KEY,
