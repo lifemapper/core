@@ -194,7 +194,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             i.intrsectParams, i.status, i.statusmodtime
+             i.intrsectParams, i.status, i.statusmodtime,
              mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.intrsectId, mc.squid, mc.ident, mc.dlocation, mc.metadata,
              m.matrixType, m.gridsetId, m.matrixDlocation, m.siteLayerIndices, 
