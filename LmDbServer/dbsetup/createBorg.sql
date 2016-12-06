@@ -103,15 +103,6 @@ ALTER TABLE lm_v3.EnvType ADD CONSTRAINT unique_envType
    UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode);
    
 -- -------------------------------
--- Object (via join)
-create table lm_v3.EnvLayer
-(
-   envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   PRIMARY KEY (envTypeId, layerId)
-);
-
--- -------------------------------
 -- Object
 -- TODO: Enforcee unique userid/name/epsg for display layers only?
 create table lm_v3.Layer
@@ -156,6 +147,15 @@ create table lm_v3.Layer
  CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
 
 -- -------------------------------
+-- Object (via join)
+create table lm_v3.EnvLayer
+(
+   envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   PRIMARY KEY (envTypeId, layerId)
+);
+
+-- -------------------------------
 -- Object
  create table lm_v3.Scenario
  (
@@ -192,7 +192,7 @@ create table lm_v3.ScenarioLayer
 (
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
    layerId int REFERENCES lm_v3.Layer,
-   envTypeId int REFERENCES lm_v3.EnvType
+   envTypeId int REFERENCES lm_v3.EnvType,
    PRIMARY KEY (scenarioId, layerId, envTypeId)
 );
 
@@ -230,8 +230,8 @@ CREATE INDEX idx_pattern_lower_displayname on lm_v3.OccurrenceSet  (lower(displa
 CREATE INDEX idx_queryCount ON lm_v3.OccurrenceSet(queryCount);
 CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 30));
 CREATE INDEX idx_occUserId ON lm_v3.OccurrenceSet(userId);
-CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
-CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
+-- CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
+-- CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
 -- -------------------------------
@@ -355,7 +355,7 @@ create table lm_v3.Matrix
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    matrixDlocation text,
    siteLayerIndices text,
-   metadata text,  
+   metadata text 
 );
 
 -- -------------------------------
@@ -391,7 +391,7 @@ create table lm_v3.Intersect
    intersectParams text,
    
    -- output
-   matrixColumnId NOT NULL REFERENCES lm_v3.MatrixColumn,
+   matrixColumnId int NOT NULL REFERENCES lm_v3.MatrixColumn,
    
    status int,
    statusmodtime double precision,
@@ -413,8 +413,7 @@ create table lm_v3.MatrixColumn
    dlocation text,
          
    metadata text, 
-   UNIQUE (boomId, gridsetId, matrixIndex),
-   UNIQUE (boomId, gridsetId, layerId, intersectParams)
+   UNIQUE (gridsetId, matrixId, matrixIndex)
 );
 
 -- ----------------------------------------------------------------------------
