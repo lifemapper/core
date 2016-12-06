@@ -91,7 +91,7 @@ Connect development code on Nodes
    be installed into the rocks/bin directory without intervention.::
       
    # rocks run host compute "(cd /opt/lifemapper; \
-     cp LmCompute/tools/lmJobScript /state/partition1/workspace/coreLmCompute/tools/lmJobScript)"
+     cp LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/lmJobScript)"
  
 #. **Or** recreate files with replaced variables in your git tree.::
       
