@@ -332,10 +332,10 @@ create table lm_v3.Archive
 );
 
 -- -------------------------------
---  Master Process (Makeflow document, created by archivist)
-create table lm_v3.MasterProcess
+--  Makeflow Process (Makeflow document, created by archivist)
+create table lm_v3.MFProcess
 (
-   masterProcessId serial UNIQUE PRIMARY KEY,
+   mfProcessId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    dlocation text,
    priority int,
@@ -431,12 +431,15 @@ lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayer,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
-lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
 lm_v3.sdmproject, lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
+lm_v3.tree, lm_v3.tree_treeid_seq,
 lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
+lm_v3.archive, lm_v3.archive_archiveid_seq,
+lm_v3.mfprocess, lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.gridsettree, lm_v3.gridsettree_gridsettreeid_seq,
+lm_v3.intersect, lm_v3.intersect_intersectid_seq,
 lm_v3.matrixcolumn, lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP reader;
 
@@ -452,12 +455,15 @@ lm_v3.scenario,
 lm_v3.scenariolayer,
 lm_v3.occurrenceset, 
 lm_v3.algorithm, 
-lm_v3.sdmmodel,  
 lm_v3.sdmproject,
 lm_v3.shapegrid,
+lm_v3.tree,
 lm_v3.gridset,
-lm_v3.gridsettree,
+lm_v3.archive,
+lm_v3.mfprocess,
 lm_v3.matrix,
+lm_v3.gridsettree,
+lm_v3.intersect,
 lm_v3.matrixcolumn
 TO GROUP writer;
 
@@ -470,12 +476,15 @@ lm_v3.layer_layerid_seq,
 lm_v3.envlayer_envlayerid_seq, 
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
-lm_v3.sdmmodel_sdmmodelid_seq,
 lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid_shapegridid_seq,
+lm_v3.tree_treeid_seq,
 lm_v3.gridset_gridsetid_seq,
-lm_v3.gridsettree_gridsettreeid_seq,
+lm_v3.archive_archiveid_seq,
+lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix_matrixid_seq,
+lm_v3.gridsettree_gridsettreeid_seq,
+lm_v3.intersect_intersectid_seq,
 lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP writer;
 

@@ -180,6 +180,14 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    mtxlyrmetadata,  
    mtxlyrstatus,
    mtxlyrstatusmodtime
+
+   -- Matrix.*
+   matrixType,
+   gridsetId,
+   matrixDlocation,
+   siteLayerIndices,
+   mtxmetadata,  
+
 ) AS 
       SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
@@ -187,9 +195,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              mc.matrixColumnId, mc.experimentId, mc.squid, mc.ident, mc.matrixId, 
              mc.matrixIndex, mc.intersectParams, mc.metadata, 
-             mc.status, mc.statusmodtime
-        FROM lm_v3.layer l, lm_v3.MatrixColumn mc
-        WHERE l.layerid = mc.layerid;
+             mc.status, mc.statusmodtime,
+             m.matrixType, m.gridsetId, m.matrixDlocation, m.siteLayerIndices, 
+             m.mtxmetadata
+        FROM lm_v3.layer l, lm_v3.MatrixColumn mc, lm_v3.Matrix m
+        WHERE mc.layerid = l.layerid
+          AND mc.matrixId = m.matrixId;
 
       
 -- ----------------
@@ -374,15 +385,17 @@ CREATE OR REPLACE VIEW lm_v3.lm_bloat AS
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 GRANT SELECT ON TABLE 
+lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixlayer,
-lm_v3.lm_sdmmodel, lm_v3.lm_sdmProjection, 
+lm_v3.lm_sdmProject, 
 lm_v3.lm_bloat
 TO GROUP reader;
 
 GRANT SELECT ON TABLE 
+lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
