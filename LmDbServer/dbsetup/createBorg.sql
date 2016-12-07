@@ -103,15 +103,6 @@ ALTER TABLE lm_v3.EnvType ADD CONSTRAINT unique_envType
    UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode);
    
 -- -------------------------------
--- Object (via join)
-create table lm_v3.EnvLayer
-(
-   envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   PRIMARY KEY (envTypeId, layerId)
-);
-
--- -------------------------------
 -- Object
 -- TODO: Enforcee unique userid/name/epsg for display layers only?
 create table lm_v3.Layer
@@ -156,6 +147,15 @@ create table lm_v3.Layer
  CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
 
 -- -------------------------------
+-- Object (via join)
+create table lm_v3.EnvLayer
+(
+   envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   PRIMARY KEY (envTypeId, layerId)
+);
+
+-- -------------------------------
 -- Object
  create table lm_v3.Scenario
  (
@@ -192,7 +192,7 @@ create table lm_v3.ScenarioLayer
 (
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
    layerId int REFERENCES lm_v3.Layer,
-   envTypeId int REFERENCES lm_v3.EnvType
+   envTypeId int REFERENCES lm_v3.EnvType,
    PRIMARY KEY (scenarioId, layerId, envTypeId)
 );
 
@@ -230,12 +230,12 @@ CREATE INDEX idx_pattern_lower_displayname on lm_v3.OccurrenceSet  (lower(displa
 CREATE INDEX idx_queryCount ON lm_v3.OccurrenceSet(queryCount);
 CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 30));
 CREATE INDEX idx_occUserId ON lm_v3.OccurrenceSet(userId);
-CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
-CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
+-- CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
+-- CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
 -- -------------------------------
--- Input (for SDMProject Process)
+-- Metadata (options for input to SDMProject Process)
 create table lm_v3.Algorithm
 (
    algorithmCode varchar(30) UNIQUE PRIMARY KEY,
@@ -317,7 +317,7 @@ create table lm_v3.Gridset
 );
 
 -- -------------------------------
--- Master Master Process, configuration file for initArchive and archivist 
+-- Metadata and configuration file for initArchive and archivist 
 -- Organizing object for set of data and processes in a workflow
 create table lm_v3.Archive
 (
@@ -332,10 +332,10 @@ create table lm_v3.Archive
 );
 
 -- -------------------------------
---  Master Process (Makeflow document, created by archivist)
-create table lm_v3.MasterProcess
+--  Makeflow Process (Makeflow document, created by archivist)
+create table lm_v3.MFProcess
 (
-   masterProcessId serial UNIQUE PRIMARY KEY,
+   mfProcessId serial UNIQUE PRIMARY KEY,
    userid varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    dlocation text,
    priority int,
@@ -355,7 +355,7 @@ create table lm_v3.Matrix
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    matrixDlocation text,
    siteLayerIndices text,
-   metadata text,  
+   metadata text 
 );
 
 -- -------------------------------
@@ -380,22 +380,19 @@ create table lm_v3.GridsetTree
 
 -- -------------------------------
 -- Process
--- delete after process is complete
-create table lm_v3.Intersect
+-- delete after process is complete??
+create table lm_v3.Intrsect
 (
-   intersectId  serial UNIQUE PRIMARY KEY,
+   intrsectId  serial UNIQUE PRIMARY KEY,
 	--inputs
    layerId int REFERENCES lm_v3.Layer,
    -- filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
    -- minPresence, maxPresence
-   intersectParams text,
-   
-   -- output
-   matrixColumnId NOT NULL REFERENCES lm_v3.MatrixColumn,
-   
+   intrsectParams text,
+      
    status int,
    statusmodtime double precision,
-   UNIQUE (layerId, intersectParams)
+   UNIQUE (layerId, intrsectParams)
 );
 
 -- -------------------------------
@@ -408,41 +405,44 @@ create table lm_v3.MatrixColumn
    matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int NOT NULL,
 	
+   -- optional process inputs: layer, params
+   intrsectId int REFERENCES lm_v3.Intrsect,
+
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    ident varchar(64),
    dlocation text,
          
    metadata text, 
-   UNIQUE (boomId, gridsetId, matrixIndex),
-   UNIQUE (boomId, gridsetId, layerId, intersectParams)
+   UNIQUE (gridsetId, matrixId, matrixIndex)
 );
 
 -- ----------------------------------------------------------------------------
 
 GRANT SELECT ON TABLE 
 lm_v3.lmuser, 
-lm_v3.jobchain, lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource, lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon, lm_v3.taxon_taxonid_seq,
 lm_v3.envtype, lm_v3.envtype_envtypeid_seq,
 lm_v3.layer, lm_v3.layer_layerid_seq, 
-lm_v3.envlayer, lm_v3.envlayer_envlayerid_seq, 
+lm_v3.envlayer, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayer,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
-lm_v3.sdmmodel, lm_v3.sdmmodel_sdmmodelid_seq, 
 lm_v3.sdmproject, lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
+lm_v3.tree, lm_v3.tree_treeid_seq,
 lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
+lm_v3.archive, lm_v3.archive_archiveid_seq,
+lm_v3.mfprocess, lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.gridsettree, lm_v3.gridsettree_gridsettreeid_seq,
+lm_v3.intrsect, lm_v3.intrsect_intrsectid_seq,
 lm_v3.matrixcolumn, lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP reader;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE 
 lm_v3.lmuser, 
-lm_v3.jobchain,
 lm_v3.taxonomysource,
 lm_v3.taxon,
 lm_v3.envtype,
@@ -452,30 +452,34 @@ lm_v3.scenario,
 lm_v3.scenariolayer,
 lm_v3.occurrenceset, 
 lm_v3.algorithm, 
-lm_v3.sdmmodel,  
 lm_v3.sdmproject,
 lm_v3.shapegrid,
+lm_v3.tree,
 lm_v3.gridset,
-lm_v3.gridsettree,
+lm_v3.archive,
+lm_v3.mfprocess,
 lm_v3.matrix,
+lm_v3.gridsettree,
+lm_v3.intrsect,
 lm_v3.matrixcolumn
 TO GROUP writer;
 
 GRANT SELECT, UPDATE ON TABLE 
-lm_v3.jobchain_jobchainid_seq,
 lm_v3.taxonomysource_taxonomysourceid_seq,
 lm_v3.taxon_taxonid_seq,
 lm_v3.envtype_envtypeid_seq,
 lm_v3.layer_layerid_seq,
-lm_v3.envlayer_envlayerid_seq, 
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
-lm_v3.sdmmodel_sdmmodelid_seq,
 lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid_shapegridid_seq,
+lm_v3.tree_treeid_seq,
 lm_v3.gridset_gridsetid_seq,
-lm_v3.gridsettree_gridsettreeid_seq,
+lm_v3.archive_archiveid_seq,
+lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix_matrixid_seq,
+lm_v3.gridsettree_gridsettreeid_seq,
+lm_v3.intrsect_intrsectid_seq,
 lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP writer;
 

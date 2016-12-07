@@ -78,7 +78,7 @@ run the cleanRoll scripts for each roll.
     # rocks run roll lifemapper-server > add-server.sh
     # rocks run roll lifemapper-compute > add-compute.sh
     # bash add-server.sh 2>&1 | tee add-server.out
-    # bash add-compute.sh > add-compute.out 2>&1
+    # bash add-compute.sh 2>&1 | tee add-compute.out
     
 Finish install
 --------------
@@ -100,11 +100,10 @@ Install nodes from Frontend
    # rocks set host boot compute action=install
    # rocks run host compute reboot 
 
-Add compute input layers to the Frontend
-----------------------------------------
+(Deprecated) Add compute input layers to the Frontend (now done on install)
+---------------------------------------------------------------------------
 
-#. Seed the data for LmCompute on the frontend (if not done in optional step
-   above) ::
+#. Seed the data for LmCompute on the frontend ::
 
    # /opt/lifemapper/rocks/bin/seedData
 
