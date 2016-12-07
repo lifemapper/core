@@ -197,7 +197,24 @@ create table lm_v3.ScenarioLayer
 );
 
 -- -------------------------------
--- Object
+-- Process (for objects with more than one process)
+-- after process is complete, move params/inputs to metadata on object, then delete
+create table lm_v3.Process
+(
+   processId  serial UNIQUE PRIMARY KEY,
+   -- LmCommon.common.lmconstants.ProcessType
+   processType int,
+	--input
+   inputId int,
+   --output 
+   outputId int,
+
+   status int,
+   statusmodtime double precision
+);
+
+-- -------------------------------
+-- Process and Output Object
 create table lm_v3.OccurrenceSet 
 (
    occurrenceSetId serial UNIQUE PRIMARY KEY,
@@ -211,7 +228,9 @@ create table lm_v3.OccurrenceSet
    queryCount int,
    bbox varchar(60),
    epsgcode integer,
-   metadata text
+   metadata text,
+   status int,
+   statusModTime double precision
 );
 Select AddGeometryColumn('lm_v3', 'occurrenceset', 'geom', 4326, 'POLYGON', 2);
 ALTER TABLE lm_v3.OccurrenceSet ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
@@ -230,8 +249,8 @@ CREATE INDEX idx_pattern_lower_displayname on lm_v3.OccurrenceSet  (lower(displa
 CREATE INDEX idx_queryCount ON lm_v3.OccurrenceSet(queryCount);
 CREATE INDEX idx_min_queryCount ON lm_v3.OccurrenceSet((queryCount >= 30));
 CREATE INDEX idx_occUserId ON lm_v3.OccurrenceSet(userId);
--- CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
--- CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
+CREATE INDEX idx_occStatus ON lm_v3.OccurrenceSet(status);
+CREATE INDEX idx_occStatusModTime ON lm_v3.OccurrenceSet(statusModTime);
 CREATE INDEX idx_occSquid on lm_v3.OccurrenceSet(squid);
 
 -- -------------------------------
@@ -244,18 +263,19 @@ create table lm_v3.Algorithm
 );
 
 -- -------------------------------
--- Process AND Output object (via 1-to-1 join with Layer)
+-- Process and Output Object (1-to-1 join with Layer)
 create table lm_v3.SDMProject
 (
    -- output
    layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   -- sdmprojectId serial UNIQUE PRIMARY KEY,
+   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    
    -- inputs
    occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
+   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
+   algParamHash text,
    mdlscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    mdlmaskId int REFERENCES lm_v3.Layer,
-   algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
    prjscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    prjmaskId int REFERENCES lm_v3.Layer,
    -- includes algorithmParams
@@ -263,16 +283,17 @@ create table lm_v3.SDMProject
    						
    status int,
    statusModTime double precision,
+   UNIQUE (userId, occurrenceSetId, algorithmCode, algParamHash, 
+           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId)
    PRIMARY KEY (layerid)
 );  
 CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);
 
 -- -------------------------------
--- Object (via 1-to-1 join with Layer)
+-- Process and Output Object (1-to-1 join with Layer)
 create table lm_v3.ShapeGrid
 (
-   -- shapeGridId serial UNIQUE PRIMARY KEY,
    layerId int UNIQUE NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    cellsides int,
    cellsize double precision,
@@ -280,8 +301,12 @@ create table lm_v3.ShapeGrid
    idAttribute varchar(20),
    xAttribute varchar(20),
    yAttribute varchar(20),
+   status int,
+   statusModTime double precision,
    PRIMARY KEY (layerid)
 );
+CREATE INDEX idx_shpgrdStatusModTime ON lm_v3.ShapeGrid(statusModTime);
+CREATE INDEX idx_shpgrdStatus ON lm_v3.ShapeGrid(status);
 
 -- -------------------------------
 -- original Tree in user space
@@ -332,7 +357,8 @@ create table lm_v3.Archive
 );
 
 -- -------------------------------
---  Makeflow Process (Makeflow document, created by archivist)
+-- Process and Output Object (Makeflow document, created by archivist)
+-- Status is aggregation of component process statuses
 create table lm_v3.MFProcess
 (
    mfProcessId serial UNIQUE PRIMARY KEY,
@@ -347,6 +373,7 @@ create table lm_v3.MFProcess
 -- -------------------------------
 -- In Gridset space: PAM, GRIM, BioGeoMtx, MCPA output
 -- Object 
+-- Status is aggregation of component MatrixColumn statuses
 create table lm_v3.Matrix
 (
    matrixId serial UNIQUE PRIMARY KEY,
@@ -379,25 +406,11 @@ create table lm_v3.GridsetTree
 );
 
 -- -------------------------------
--- Process
--- delete after process is complete??
-create table lm_v3.Intrsect
-(
-   intrsectId  serial UNIQUE PRIMARY KEY,
-	--inputs
-   layerId int REFERENCES lm_v3.Layer,
-   -- filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
-   -- minPresence, maxPresence
-   intrsectParams text,
-      
-   status int,
-   statusmodtime double precision,
-   UNIQUE (layerId, intrsectParams)
-);
-
--- -------------------------------
 -- aka PAV or GRIM Vector, 
--- Object
+-- Process and Output Object
+-- Process IntersectParams:
+--    filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
+--    minPresence, maxPresence
 create table lm_v3.MatrixColumn 
 (
    matrixColumnId  serial UNIQUE PRIMARY KEY,
@@ -405,17 +418,21 @@ create table lm_v3.MatrixColumn
    matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int NOT NULL,
 	
-   -- optional process inputs: layer, params
-   intrsectId int REFERENCES lm_v3.Intrsect,
-
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    ident varchar(64),
    dlocation text,
-         
    metadata text, 
+   
+   -- if process
+   layerId int REFERENCES lm_v3.Layer,
+   intersectParams text,
+   status int,
+   statusmodtime double precision
+   
    UNIQUE (gridsetId, matrixId, matrixIndex)
 );
-
+CREATE INDEX idx_mtxcolStatusModTime ON lm_v3.MatrixColumn(statusModTime);
+CREATE INDEX idx_mtxcolStatus ON lm_v3.MatrixColumn(status);
 -- ----------------------------------------------------------------------------
 
 GRANT SELECT ON TABLE 
@@ -429,7 +446,7 @@ lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayer,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
-lm_v3.sdmproject, lm_v3.sdmproject_sdmprojectid_seq,
+lm_v3.sdmproject,
 lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
 lm_v3.tree, lm_v3.tree_treeid_seq,
 lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
@@ -471,7 +488,6 @@ lm_v3.envtype_envtypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
-lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid_shapegridid_seq,
 lm_v3.tree_treeid_seq,
 lm_v3.gridset_gridsetid_seq,
