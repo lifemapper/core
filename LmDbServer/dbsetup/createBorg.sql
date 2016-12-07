@@ -284,7 +284,7 @@ create table lm_v3.SDMProject
    status int,
    statusModTime double precision,
    UNIQUE (userId, occurrenceSetId, algorithmCode, algParamHash, 
-           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId)
+           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId),
    PRIMARY KEY (layerid)
 );  
 CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
@@ -427,7 +427,7 @@ create table lm_v3.MatrixColumn
    layerId int REFERENCES lm_v3.Layer,
    intersectParams text,
    status int,
-   statusmodtime double precision
+   statusmodtime double precision,
    
    UNIQUE (gridsetId, matrixId, matrixIndex)
 );
@@ -444,17 +444,17 @@ lm_v3.layer, lm_v3.layer_layerid_seq,
 lm_v3.envlayer, 
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayer,
+lm_v3.process, lm_v3.process_processid_seq,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
 lm_v3.sdmproject,
-lm_v3.shapegrid, lm_v3.shapegrid_shapegridid_seq,
+lm_v3.shapegrid, 
 lm_v3.tree, lm_v3.tree_treeid_seq,
 lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
 lm_v3.archive, lm_v3.archive_archiveid_seq,
 lm_v3.mfprocess, lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.gridsettree, lm_v3.gridsettree_gridsettreeid_seq,
-lm_v3.intrsect, lm_v3.intrsect_intrsectid_seq,
 lm_v3.matrixcolumn, lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP reader;
 
@@ -467,6 +467,7 @@ lm_v3.layer,
 lm_v3.envlayer,  
 lm_v3.scenario,
 lm_v3.scenariolayer,
+lm_v3.process,
 lm_v3.occurrenceset, 
 lm_v3.algorithm, 
 lm_v3.sdmproject,
@@ -477,7 +478,6 @@ lm_v3.archive,
 lm_v3.mfprocess,
 lm_v3.matrix,
 lm_v3.gridsettree,
-lm_v3.intrsect,
 lm_v3.matrixcolumn
 TO GROUP writer;
 
@@ -488,14 +488,13 @@ lm_v3.envtype_envtypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.scenario_scenarioid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
-lm_v3.shapegrid_shapegridid_seq,
+lm_v3.process_processid_seq,
 lm_v3.tree_treeid_seq,
 lm_v3.gridset_gridsetid_seq,
 lm_v3.archive_archiveid_seq,
 lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix_matrixid_seq,
 lm_v3.gridsettree_gridsettreeid_seq,
-lm_v3.intrsect_intrsectid_seq,
 lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP writer;
 

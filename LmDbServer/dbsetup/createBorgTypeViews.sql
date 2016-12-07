@@ -177,10 +177,10 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    mtxcolsquid,
    mtxcolident,
    mtxcoldlocation,
-   mtxcolmetadata,
+   metadata, 
    intersectParams,
    mtxcolstatus,
-   mtxcolstatusmodtime
+   mtxcolstatusmodtime,
    
    -- Matrix.*
    matrixType,
@@ -194,8 +194,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
              l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
-             mc.intrsectId, mc.squid, mc.ident, mc.dlocation, mc.metadata,
-             mc.intersectParams, mc.mtxcolstatus, mc.mtxcolstatusmodtime
+             mc.squid, mc.ident, mc.dlocation, mc.metadata,
+             mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.matrixDlocation, m.siteLayerIndices, 
              m.metadata
         FROM lm_v3.layer l, lm_v3.MatrixColumn mc, lm_v3.Matrix m
@@ -252,7 +252,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    occstatus,
    occstatusModTime,
    
-   -- projection scenario
+   -- project scenario
    scenmetadata,
    scengcmCode,
    scenaltpredCode,
@@ -266,7 +266,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
              l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              o.verify, o.displayName, o.metadataUrl, o.dlocation, o.queryCount, 
-             o.bbox, o.metadata, o.status, o.statusModTime
+             o.bbox, o.metadata, o.status, o.statusModTime,
              ps.metadata, ps.gcmCode, ps.altpredCode, ps.dateCode
       FROM lm_v3.sdmproject p, lm_v3.layer l, lm_v3.occurrenceSet o, lm_v3.scenario ps
       WHERE p.layerid = l.layerid
@@ -402,7 +402,7 @@ lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixlayer,
-lm_v3.lm_sdmProjection, 
+lm_v3.lm_sdmProject, 
 lm_v3.lm_bloat
 TO GROUP writer;
 
