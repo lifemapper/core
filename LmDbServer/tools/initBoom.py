@@ -225,14 +225,14 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
 
 
 # ...............................................
-def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta):
+def createBaselineScenario(META, usr, pkgMeta, configMeta, lyrtypeMeta):
    """
    @summary Assemble Worldclim/bioclim scenario
    """
    obsKey = pkgMeta['baseline']
    baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
    tm = baseMeta['times'].keys()[0]
-   basekeywords = [k for k in META.ENV_KEYWORDS]
+   basekeywords = [k for k in META.CLIMATE_KEYWORDS]
    basekeywords.extend(baseMeta['keywords'])
    
    scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
@@ -251,7 +251,7 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta):
    return scen, staticLayers
 
 # ...............................................
-def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers):
+def createPredictedScenarios(META, usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers):
    """
    @summary Assemble predicted future scenarios defined by IPCC report
    """
@@ -270,7 +270,7 @@ def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers
          mdlvals = META.OBSERVED_PREDICTED_META[predRpt]['models'][gcm]
          tmvals = META.OBSERVED_PREDICTED_META[predRpt]['times'][tm]
          # Reset keywords
-         scenkeywords = [k for k in META.ENV_KEYWORDS]
+         scenkeywords = [k for k in META.CLIMATE_KEYWORDS]
          scenkeywords.extend(META.OBSERVED_PREDICTED_META[predRpt]['keywords'])
          for vals in (mdlvals, tmvals, altvals):
             try:
@@ -310,7 +310,7 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
       newscen = scribe.insertScenario(scen)
 
 # ...............................................
-def _getConfiguredMetadata(pkgMeta):
+def _getConfiguredMetadata(META, pkgMeta):
    try:
       userid = META.USER['id']
    except:
@@ -323,6 +323,7 @@ def _getConfiguredMetadata(pkgMeta):
       epsg = META.EPSG
    except:
       epsg = DEFAULT_EPSG
+      
    try:
       mapunits = META.MAPUNITS
    except:
@@ -333,13 +334,13 @@ def _getConfiguredMetadata(pkgMeta):
    try:
       res = META.RESOLUTIONS[pkgMeta['res']]
    except:
-      raise LMError('Failed to specify RESOLUTIONS or CLIMATE_PACKAGE \'res\'')
+      raise LMError('Failed to specify res or RESOLUTIONS for CLIMATE_PACKAGE')
    try:
       gdaltype = META.ENVLYR_GDALTYPE
    except:
       raise LMError('Failed to specify ENVLYR_GDALTYPE')
    try:
-      gdalformat = META.META.ENVLYR_GDALFORMAT
+      gdalformat = META.ENVLYR_GDALFORMAT
    except:
       raise LMError('Failed to specify META.ENVLYR_GDALFORMAT')
    try:
@@ -460,7 +461,7 @@ if __name__ == '__main__':
       envPackageName = SCENARIO_PACKAGE
    META = _importClimatePackageMetadata(envPackageName)
    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-   configMeta = _getConfiguredMetadata(pkgMeta)
+   configMeta = _getConfiguredMetadata(META, pkgMeta)
    usr = configMeta['userid']
    
 # .............................
@@ -527,7 +528,7 @@ if __name__ == '__main__':
        
 """
 import mx.DateTime
-import LmDbServer.tools.charlieMetaExp3 as META
+# import LmDbServer.tools.charlieMetaExp3 as META
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
@@ -544,25 +545,22 @@ from LmServer.rad.shapegrid import ShapeGrid
 CURR_MJD = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBoom import *
 from LmDbServer.tools.initBoom import (_getBaselineLayers, _getbioName, 
-          _findFileFor, _getPredictedLayers, _importClimatePackageMetadata)
+          _findFileFor, _getPredictedLayers, _importClimatePackageMetadata,
+          _getConfiguredMetadata)
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
+envPackageName = SCENARIO_PACKAGE
+META = _importClimatePackageMetadata(envPackageName)
+pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
+configMeta = _getConfiguredMetadata(META, pkgMeta)
+lyrtypeMeta = META.LAYERTYPE_META
+usr = configMeta['userid']
+
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
-pkgMeta = META.CLIMATE_PACKAGES[SCENARIO_PACKAGE]
-configMeta = {'epsg': META.EPSG, 
-           'mapunits': META.MAPUNITS, 
-           'resolution': META.RESOLUTIONS[pkgMeta['res']], 
-           'gdaltype': META.ENVLYR_GDALTYPE, 
-           'gdalformat': META.ENVLYR_GDALFORMAT,
-           'gridname': META.GRID_NAME, 
-           'gridsides': META.GRID_NUM_SIDES, 
-           'gridsize': META.GRID_CELLSIZE}
-usr = ARCHIVE_USER
-lyrtypeMeta = META.LAYERTYPE_META
-scenPkgName = SCENARIO_PACKAGE
-usrlist = addUsers(scribe, [defUser, anonUser, newUser])
-scens, msgs = createAllScenarios(usr, pkgMeta, configMeta, lyrtypeMeta)
+addUsers(scribe, configMeta)
+scen, staticLayers = createBaselineScenario(META, usr, pkgMeta, configMeta, lyrtypeMeta)
+predScens = createPredictedScenarios(META, usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers)
 scode = 'observed-1km'
 scen = scens[scode]
 newOrExistingScen = scribe.insertScenario(scen)

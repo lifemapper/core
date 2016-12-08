@@ -207,13 +207,17 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- LmUser
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, name1 varchar, 
-                                         name2 varchar,
-                                         inst varchar, addr1 varchar, 
-                                         addr2 varchar, addr3 varchar,
-                                         fone varchar, emale varchar, 
-                                         mtime double precision, 
-                                         psswd varchar)
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, 
+                                                     name1 varchar, 
+                                                     name2 varchar,
+                                                     inst varchar, 
+                                                     addr1 varchar, 
+                                                     addr2 varchar, 
+                                                     addr3 varchar,
+                                                     fone varchar, 
+                                                     emale varchar, 
+                                                     mtime double precision, 
+                                                     psswd varchar)
    RETURNS lm_v3.LMUser AS
 $$
 DECLARE

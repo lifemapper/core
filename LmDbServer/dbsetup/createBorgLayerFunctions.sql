@@ -14,24 +14,24 @@
 -- ----------------------------------------------------------------------------
 -- LayerType (EnvLayer)
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvironmentalType(etypeid int, 
-                                                          usr varchar, 
-                                                          ecode varchar, 
-                                                          gcode varchar, 
-                                                          apcode varchar, 
-                                                          dtcode varchar)
-   RETURNS lm_v3.EnvironmentalType AS
+CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvType(etypeid int, 
+                                                usr varchar, 
+                                                ecode varchar, 
+                                                gcode varchar, 
+                                                apcode varchar, 
+                                                dtcode varchar)
+   RETURNS lm_v3.EnvType AS
 $$
 DECLARE
-   rec lm_v3.EnvironmentalType%rowtype;
+   rec lm_v3.EnvType%rowtype;
    cmd varchar;
    wherecls varchar;
 BEGIN
    IF etypeid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.EnvironmentalType WHERE EnvironmentalTypeid = etypeid;
+      SELECT * INTO rec FROM lm_v3.EnvType WHERE EnvTypeid = etypeid;
    ELSE
       begin
-         cmd = 'SELECT * FROM lm_v3.EnvironmentalType ';
+         cmd = 'SELECT * FROM lm_v3.EnvType ';
          wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
 
          IF ecode is not null THEN
@@ -151,14 +151,14 @@ RETURNS lm_v3.lm_scenlayer AS
 $$
 DECLARE
    reclyr lm_v3.layer%ROWTYPE;
-   rec_etype lm_v3.EnvironmentalType%ROWTYPE;
+   rec_etype lm_v3.EnvType%ROWTYPE;
    rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
    -- get or insert environmentalType 
-   SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvironmentalType(etypeid, 
+   SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvType(etypeid, 
                     usr, env, gcm, altpred, tm, etypemeta, etypemodtime);
    IF NOT FOUND THEN
-      RAISE EXCEPTION 'Unable to findOrInsertEnvironmentalType';
+      RAISE EXCEPTION 'Unable to findOrInsertEnvType';
    ELSE
       -- get or insert layer 
       SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
@@ -178,7 +178,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvironmentalType(etypeid int, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvType(etypeid int, 
                                                         usr varchar,
                                                         env varchar,
                                                         gcm varchar,
@@ -186,15 +186,15 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvironmentalType(etypeid int,
                                                         tm varchar,
                                                         meta text,
                                                         modtime double precision)
-   RETURNS lm_v3.EnvironmentalType AS
+   RETURNS lm_v3.EnvType AS
 $$
 DECLARE
-   rec lm_v3.EnvironmentalType%ROWTYPE;
+   rec lm_v3.EnvType%ROWTYPE;
    newid int;
 BEGIN
-   SELECT * into rec FROM lm_v3.lm_findEnvironmentalType(etypeid, usr, env, gcm, 
+   SELECT * into rec FROM lm_v3.lm_findEnvType(etypeid, usr, env, gcm, 
                                                          altpred, tm);
-   IF rec.environmentalTypeId IS NULL THEN
+   IF rec.envTypeId IS NULL THEN
       INSERT INTO lm_v3.EnvironmentalType 
          (userid, envCode, gcmCode, altpredCode, dateCode, metadata, modTime) 
       VALUES (usr, env, gcm, altpred, tm, meta, modtime);
@@ -202,8 +202,8 @@ BEGIN
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to insert EnvironmentalType';
       ELSE
-         SELECT INTO newid last_value FROM lm_v3.EnvironmentalType_EnvironmentalTypeid_seq;
-         SELECT * INTO rec FROM lm_v3.EnvironmentalType where environmentalTypeId = newid;
+         SELECT INTO newid last_value FROM lm_v3.EnvType_EnvTypeid_seq;
+         SELECT * INTO rec FROM lm_v3.EnvType where envTypeId = newid;
       END IF;
    END IF;
    
