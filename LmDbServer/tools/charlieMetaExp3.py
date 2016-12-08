@@ -26,29 +26,49 @@ files: a dictionary containing
 """
 from osgeo import gdalconst
 
+# .............................................................................
+# Default Overrides
+# .............................................................................
+# The following section contains constants, which if None or missing, 
+# will default to constants in config.lmserver.ini
+# ...............................................
 # User should be a dictionary with 'id' and 'email' keys.  
-# If this is None, data is assigned to the ARCHIVE_USER
+# Default = ARCHIVE_USER
 USER = {'id': 'charlie', 'email': 'aimee.stewart@ku.edu'}
 
 # SPECIES_DATA is the basename, without path, of the of the .csv file containing 
-# and .meta file describing species data for this archive/experiment 
+# and .meta file describing species data for this archive/experiment.
+# Default = basename of USER_OCCURRENCE_CSV 
 SPECIES_DATA = 'CombinedBIEN3data'
-MIN_POINT_COUNT = 20
+
+# Default = POINT_COUNT_MIN
+POINT_COUNT_MIN = 20
 
 # These must be valid ALGORITHM_CODES in the Lifemapper database; 
 # If this is None, data is assigned to the DEFAULT_ALGORITHMS
 ALGORITHM_CODES = None
 
+# Default = DEFAULT_EPSG
+EPSG = 2163
+# Default = DEFAULT_MAPUNITS IFF EPSG == DEFAULT_EPSG, otherwise exception
+MAPUNITS = 'meters'
+# Defaults = DEFAULT_GRID_CELLSIZE  IFF MAPUNITS == DEFAULT_MAPUNITS, otherwise exception
+GRID_CELLSIZE = 10000
+
+# Default = DEFAULT_GRID_NAME
+GRID_NAME = '10km-grid'
+# Default = 4
+GRID_NUM_SIDES = 4
+
+# .............................................................................
+# Required
+# .............................................................................
+# The following section contains required constants, which describe this data 
+# package
+# ...............................................
 # For remote data, cannot read to get this 
 ENVLYR_GDALTYPE = gdalconst.GDT_Int16
 ENVLYR_GDALFORMAT = 'GTiff'
-EPSG = 2163
-# @TODO: meters!?
-MAPUNITS = 'meters'
-GRID_NAME = '10km-grid'
-GRID_CELLSIZE = 10000
-# Square 4, Hexagon 6
-GRID_NUM_SIDES = 4
 RESOLUTIONS = {'1km': 1000}
 ENV_KEYWORDS = ['bioclimatic variables', 'climate', 'elevation', 'soil', 
                     'spatial distance']
