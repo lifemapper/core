@@ -61,8 +61,11 @@ IDIG_FILENAME: idig_gbifids.txt
 ;; The default SPECIES_DATA set on 'lifemapper-server' roll installation
 ;; is used when DATASOURCE is anything **except** GBIF, IDIGBIO, or BISON. 
 ;; Change defaults in @LMHOME@/config/site.ini
+;; Todo: delete these 2, replace with USER_OCCURRENCE_DATA
 USER_OCCURRENCE_CSV: @SPECIES_DATA@.csv
 USER_OCCURRENCE_META: @SPECIES_DATA@.meta
+
+USER_OCCURRENCE_DATA: @SPECIES_DATA@
 
 ;; The default SCENARIO_PACKAGE (10min-past-present-future) is filled in and  
 ;; installed during 'lifemapper-server' roll installation matches these default 
