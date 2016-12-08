@@ -98,20 +98,25 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
       vectProbRsq = np.array([np.zeros(numNodes)]).T
       
    # ...........................
-   def predictorsFn(predictorCol, **kwargs):
+   #def predictorsFn(predictorCol, **kwargs):
+   def predictorsFn(predictorCol, predictors, swDiagonoal, stdPSum, resultRsq, totalPSumRedidual, nodeNumber):
+      #predictors, SumSites, stdPSum, resultRsq, totalPSumRedidual, iDictNode['y']
+      #         d =  {'predictors' :predictors,'swDiagonoal': SumSites, 
+      #               'stdPSum':stdPSum,'resultRsq':resultRsq,'totalPSumRedidual':totalPSumRedidual,
+      #               'nodeNumber':iDictNode['y']}
       """
       @summary: applied across column axis for predictor matrix.
       predictor matrix can be either env or hist biogeography
       """
       try:
          # needs the node number
-         predictors = kwargs['predictors']
-         swDiagonoal = kwargs['swDiagonoal']
-         stdPSum  = kwargs['stdPSum']
-         resultRsq = kwargs['resultRsq']
-         totalPSumRedidual = kwargs['totalPSumRedidual']
+         #predictors = kwargs['predictors']
+         #swDiagonoal = kwargs['swDiagonoal']
+         #stdPSum  = kwargs['stdPSum']
+         #resultRsq = kwargs['resultRsq']
+         #totalPSumRedidual = kwargs['totalPSumRedidual']
          
-         nodeNumber = kwargs['nodeNumber']
+         #nodeNumber = kwargs['nodeNumber']
          predNumber = iDictPred['x']  # 'x' axis of results
          
          
@@ -291,7 +296,8 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
                # sending whole Predictor mtx to predictorsFn func, and feeding it to apply_along_axis, feeds one col. at a time, 0 axis
                # 3 significance done: resultRsq, RsqAdj,FGlobal
                
-               resultSemi = np.apply_along_axis(predictorsFn, 0, predictors, **d)
+               #resultSemi = np.apply_along_axis(predictorsFn, 0, predictors, **d)
+               resultSemi = np.apply_along_axis(predictorsFn, 0, predictors, *(predictors, SumSites, stdPSum, resultRsq, totalPSumRedidual, iDictNode['y']))
                
                   
             else:
