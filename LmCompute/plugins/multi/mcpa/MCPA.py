@@ -1,84 +1,113 @@
-import os,sys
-import numpy as np
-import simplejson as json
-import warnings   #  for divide by zero
-from multiprocessing import Process, Queue, Pool 
-from Pedro_Analysis.MCPA.P_Value_Correction import correct_pvalues_for_multiple_testing
-import testWithData
+"""
+@summary: This module contains functions to perform MCPA
+@author: Jeff Cavner (edited by CJ Grady)
+
+"""
 import concurrent.futures
-import cPickle
-warnings.filterwarnings('error')
-np.seterr(all='warn')
+import numpy as np
+import os
+import sys
+
+
+from P_Value_Correction import correct_pvalues_for_multiple_testing
+
 
 
 ############  Analysis ################
 
-def stdMtx(W,M,OnesCol,I):
-   """
-   @param W: diagonal mtx
-   @param M: mtx to be std
-   @param OnesCol: column vector of ones, sites (n) or species (k)
-   @param I: Incidence mtx, PAM 
-   """
-   TotalSum = float(I.sum())
-   
-   SiteWeights = W
-   
-   sPred = np.dot(np.dot(OnesCol.T,SiteWeights),M)
-   sPred2 = np.dot(np.dot(OnesCol.T,SiteWeights),(M*M))
-   
-   MeanWeightedPred = sPred/TotalSum
-   
-   StdDevWeightedPred = ((sPred2-(sPred**2.0/TotalSum))/(TotalSum))**.5
-   
-   t = np.dot(OnesCol,StdDevWeightedPred)
-   
-   Std = ((np.dot(OnesCol,StdDevWeightedPred))**-1.0) * (M-np.dot(OnesCol,MeanWeightedPred))
-   
-   return Std
 
+# .............................................................................
+def standardizeMatrix(siteWeights, mtx):
+   """
+   @todo: Update documentation
+   @summary: Standardizes matrix, mtx
+   @param siteWeights: Diagonal matrix for site weights (W in math?)
+   @param mtx: Matrix to be standardized (M in math?)
+   @param onesCol: Column vector of ones, sites (n) or species (k)
+   @param pam: Incidence matrix (PAM) (I in math)
+   """
+   # Get the sum of the incidence matrix, which is a sum of the weights
+   iSum = float(siteWeights.sum()) 
+   
+   sPred = np.dot(siteWeights, mtx)
+   sPred2 = np.dot(siteWeights,(mtx**2))
+   
+   meanWeightedPred = sPred/iSum
+   
+   stdDevWeightedPred = ((sPred2-(sPred**2.0/iSum))/(iSum))**.5
+   
+   # The standardized matrix is just one duplicated row
+   ones = np.ones((siteWeights.shape[0], 1))
+   stdMtx = (1.0* (mtx - meanWeightedPred) * stdDevWeightedPred**-1.0) * ones
+   
+   return stdMtx
 
+def standardizeMatrixOld(siteWeights, mtx, onesCol, pam):
+   """
+   @todo: Remove
+   @summary: Standardizes matrix, mtx
+   @param siteWeights: Diagonal matrix for site weights (W in math?)
+   @param mtx: Matrix to be standardized (M in math?)
+   @param onesCol: Column vector of ones, sites (n) or species (k)
+   @param pam: Incidence matrix (PAM) (I in math)
+   """
+   # Get the sum of the incidence matrix
+   iSum = float(pam.sum()) 
+   
+   sPred = np.dot(np.dot(onesCol.T, siteWeights),mtx)
+   sPred2 = np.dot(np.dot(onesCol.T, siteWeights),(mtx**2))
+   
+   meanWeightedPred = sPred/iSum
+   
+   stdDevWeightedPred = ((sPred2-(sPred**2.0/iSum))/(iSum))**.5
+   
+   stdMtx = ((np.dot(onesCol,stdDevWeightedPred))**-1.0) * (mtx-np.dot(onesCol,meanWeightedPred))
+   
+   return stdMtx
+   
 
 # ........................................
-def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=False, 
-                                          FresultsObserved={}): 
+def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=False, 
+                                          fResultsObserved={}): 
    """
+   @todo: Fix documentation
+   @todo: Variable names
+   @todo: Function signature
    @summary: follows Pedro's matlab code as far as loops
    that are necessary for treating nodes individually. Exceptions to his code are mathematical changes
    for effeciency, and corrections for sps in tree but not in PAM, also fault checks.
-   @param FresultsObserved: contains two F score matrices
-   @param NodeMtx: Phylo Encoding (species (row) x node (column)
-   @param I: Incidence Mtx  (PAM) 
+   @param fResultsObserved: contains two F score matrices
+   @param nodeMtx: Phylo Encoding (species (row) x node (column)
+   @param pam: Incidence Mtx  (PAM) 
    """
-   
-   IncidenceMtx = I
-   NumberNodes = NodeMtx.shape[1] 
-   NumberPredictors = PredictorMtx.shape[1]  
+   numNodes = nodeMtx.shape[1] 
+   numPredictors = predictorMtx.shape[1]  
    iDictPred = {}
    iDictNode = {'y':0}
    
    if not randomize:
       # put results here
-      resultSemiPartialMtx = np.zeros((NumberNodes,NumberPredictors))
-      resultFSemiPartialMtx = np.zeros((NumberNodes,NumberPredictors))
-      resultRsqAdjMtx = np.array([np.zeros(NumberNodes)]).T
-      resultFGlobalMtx = np.array([np.zeros(NumberNodes)]).T                       
+      resultSemiPartialMtx = np.zeros((numNodes,numPredictors))
+      resultFSemiPartialMtx = np.zeros((numNodes,numPredictors))
+      resultRsqAdjMtx = np.array([np.zeros(numNodes)]).T
+      resultFGlobalMtx = np.array([np.zeros(numNodes)]).T                       
   
    else:
       
-      MatrixProbSemiPartial = np.zeros((NumberNodes,NumberPredictors))
-      VectorProbRsq = np.array([np.zeros(NumberNodes)]).T
+      mtxProbSemiPartial = np.zeros((numNodes,numPredictors))
+      vectProbRsq = np.array([np.zeros(numNodes)]).T
       
-   def predictors(predictorCol, **kwargs):
+   # ...........................
+   def predictorsFn(predictorCol, **kwargs):
       """
       @summary: applied across column axis for predictor matrix.
       predictor matrix can be either env or hist biogeography
       """
       try:
          # needs the node number
-         Predictors = kwargs['Predictors']
+         predictors = kwargs['predictors']
          swDiagonoal = kwargs['swDiagonoal']
-         StdPSum  = kwargs['StdPSum']
+         stdPSum  = kwargs['stdPSum']
          resultRsq = kwargs['resultRsq']
          TotalPSumResidual = kwargs['TotalPSumResidual']
          
@@ -87,7 +116,7 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
          
          
          IthPredictor = np.array([predictorCol]).T
-         WithoutIthPredictor = np.delete(Predictors,predNumber,axis=1)  
+         WithoutIthPredictor = np.delete(predictors,predNumber,axis=1)  
          
          # % slope for the ith predictor, Beta, regression coefficient
          Q,R = np.linalg.qr(np.dot(np.einsum('ij,j->ij',IthPredictor.T,swDiagonoal),IthPredictor))
@@ -96,7 +125,7 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
          
          IthsSlope_part = np.dot(RdivQT,IthPredictor.T)
          IthsSlope_second_part = np.einsum('ij,j->ij',IthsSlope_part,swDiagonoal)
-         IthSlope = np.dot(IthsSlope_second_part,StdPSum)
+         IthSlope = np.dot(IthsSlope_second_part,stdPSum)
          
          
          # % regression for the remaining predictors
@@ -105,28 +134,32 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
          WithoutPredRQ_r = np.dot(WithoutIthPredictor,RdivQT_r)
          H_part = np.dot(WithoutPredRQ_r,WithoutIthPredictor.T)
          H = np.einsum('ij,j->ij',H_part,swDiagonoal)
-         Predicted = np.dot(H,StdPSum)
-         RemainingRsq = np.sum(Predicted**2)/np.sum(StdPSum**2)
+         Predicted = np.dot(H,stdPSum)
+         RemainingRsq = np.sum(Predicted**2)/np.sum(stdPSum**2)
          
          if (resultRsq - RemainingRsq) >= 0:
             resultSP = IthSlope * ((resultRsq - RemainingRsq)**.5) / np.absolute(IthSlope)
          else:
+            print 'a'
             resultSP = np.array([0.0])
             
          FSemiPartial = (resultRsq - RemainingRsq)/TotalPSumResidual
          if not randomize:
             resultFSemiPartialMtx[nodeNumber][predNumber] = FSemiPartial
          else:
-            if 'FSemiPartial' in FresultsObserved:
-               if FSemiPartial >= FresultsObserved['FSemiPartial'][nodeNumber][predNumber]:
-                  MatrixProbSemiPartial[nodeNumber][predNumber] = 1 #MatrixProbSemiPartial[nodeNumber][predNumber] +1
+            if 'FSemiPartial' in fResultsObserved:
+               if FSemiPartial >= fResultsObserved['FSemiPartial'][nodeNumber][predNumber]:
+                  mtxProbSemiPartial[nodeNumber][predNumber] = 1 #mtxProbSemiPartial[nodeNumber][predNumber] +1
                   
          iDictPred['x'] += 1
       except Exception, e:
+         print str(e)
+         raise e
          resultSP = np.array([0.0])
 
       return resultSP
    
+   # ...........................
    def nodes(nodeCol):
       """
       @summary: operation to be performed on each node column
@@ -139,10 +172,10 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
       if randomize:
          # move columns around
          SpeciesPresentAtNodeRand = np.random.permutation(SpeciesPresentAtNode)
-         Incidence = IncidenceMtx[:,SpeciesPresentAtNodeRand]
+         Incidence = pam[:,SpeciesPresentAtNodeRand]
          
       else:
-         Incidence = IncidenceMtx[:,SpeciesPresentAtNode]  # might want to use a take here
+         Incidence = pam[:,SpeciesPresentAtNode]  # might want to use a take here
       
       # added Jeff, find if any of the columns in sliced Incidence are all zero
       bs = np.any(Incidence, axis=0)
@@ -159,8 +192,8 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
       if Incidence.shape[0] > 1:# and len(emptyCol) == 0: # might not need this last clause, get more good nodes for Tashi without it
          
          #print "node number ",NodeNumber
-         Predictors = PredictorMtx
-         Predictors = np.delete(Predictors,EmptySites,0) # delete rows
+         predictors = predictorMtx
+         predictors = np.delete(predictors,EmptySites,0) # delete rows
          NumberSites = Incidence.shape[0]
          
          if randomize:
@@ -170,9 +203,9 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
          #######################
          
          if not randomize:
-            if (NumberPredictors > (NumberSites -2)) or (len(np.where(np.var(Predictors,axis=0) == 0)[0]) > 0):  # column-wise variance
+            if (numPredictors > (NumberSites -2)) or (len(np.where(np.var(predictors,axis=0) == 0)[0]) > 0):  # column-wise variance
             
-               resultSemi = np.array([np.zeros(NumberPredictors)])
+               resultSemi = np.array([np.zeros(numPredictors)])
                resultSemiPartialMtx[iDictNode['y']] = resultSemi[0]
                return np.array([])
          
@@ -180,48 +213,56 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
          SumSites = np.sum(Incidence,axis = 1)  # sum of the rows, alpha
          SumSpecies = np.sum(Incidence,axis = 0)  # sum of the columns, omega
          NumberSpecies = Incidence.shape[1]
-         SiteWeights = np.diag(SumSites)   # Wn
-         SpeciesWeights = np.diag(SumSpecies) # Wk
+         SiteWeights = np.diag(SumSites)   # Wn, used?
+         SpeciesWeights = np.diag(SumSpecies) # Wk , used?
          
          try:
             # standardize Predictor, in this case Env matrix
-            Ones = np.array([np.ones(NumberSites)]).T
-            StdPredictors = stdMtx(SiteWeights, Predictors, Ones, Incidence)
+            #Junk: Ones = np.array([np.ones(NumberSites)]).T
+            #StdPredictorsNew = standardizeMatrix(SumSites, predictors)#, Ones, Incidence)
+            
+            predOnes = np.ones((NumberSites, 1))
+            StdPredictors = standardizeMatrixOld(SiteWeights, predictors, predOnes, Incidence)
             
             ## P standardize 
-            Ones = np.array([np.ones(NumberSpecies)]).T
-            StdNode = stdMtx(SpeciesWeights, nodeCol[SpeciesPresentAtNode], Ones, Incidence)
+            #Junk: Ones = np.array([np.ones(NumberSpecies)]).T
+            
+            nodeOnes = np.ones((NumberSpecies, 1))
+            
+            #StdNode = standardizeMatrix(SumSpecies, nodeCol[SpeciesPresentAtNode])#, Ones, Incidence)
+            StdNode = standardizeMatrixOld(SpeciesWeights, nodeCol[SpeciesPresentAtNode], nodeOnes, Incidence)
               
-         except:
-            resultSemi = np.array([np.zeros(NumberPredictors)])
+         except Exception, e:
+            print str(e)
+            raise e
+            resultSemi = np.array([np.zeros(numPredictors)])
          else:
             
             # PsigStd
-            StdPSum = np.dot(Incidence,StdNode)  
+            stdPSum = np.dot(Incidence,StdNode)  
             
             # regression #############3
-            Q,R = np.linalg.qr(np.dot(np.dot(StdPredictors.T,SiteWeights),StdPredictors))
-           
+            #Q,R = np.linalg.qr(np.dot(np.dot(StdPredictors.T,SiteWeights),StdPredictors))
+            Q,R = np.linalg.qr(np.dot(StdPredictors.T * SumSites, StdPredictors))
+
             RdivQT = np.linalg.lstsq(R,Q.T)[0]
             
             StdPredRQ = np.dot(StdPredictors,RdivQT)
             
             
-            swDiagonoal = np.diagonal(SiteWeights)
-            
             # H is BetaAll
             #H = np.dot(np.dot(StdPredRQ,StdPredictors.T),SiteWeights)  # WON'T SCALE!!
             H_first = np.dot(StdPredRQ,StdPredictors.T)
-            H = np.einsum('ij,j->ij',H_first,swDiagonoal)
+            H = np.einsum('ij,j->ij',H_first,SumSites)
             
-            Predicted =  np.dot(H,StdPSum)
-            TotalPSumResidual = np.sum((StdPSum-Predicted)**2)
+            Predicted =  np.dot(H,stdPSum)
+            TotalPSumResidual = np.sum((stdPSum-Predicted)**2)
             
-            StdPSumSqrs = np.sum(StdPSum**2)
+            stdPSumSqrs = np.sum(stdPSum**2)
             
-            if  StdPSumSqrs != 0:
+            if  stdPSumSqrs != 0:
                ##### R Squared ####
-               resultRsq = np.sum(Predicted**2)/StdPSumSqrs  
+               resultRsq = np.sum(Predicted**2)/stdPSumSqrs  
                ################################################3
                
                #% adjusted Rsq  (classic method) should be interpreted with some caution as the degrees of
@@ -231,32 +272,32 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
                FGlobal = np.sum(Predicted**2)/TotalPSumResidual
                
                if not randomize:
-                  if NumberSites-NumberPredictors-1 > 0:                  
-                     RsqAdj = 1 - (((NumberSites-1)/(NumberSites-NumberPredictors-1))*(1-resultRsq))   
+                  if NumberSites-numPredictors-1 > 0:                  
+                     RsqAdj = 1 - (((NumberSites-1)/(NumberSites-numPredictors-1))*(1-resultRsq))   
                   else:
                      RsqAdj = -999
                      
                   resultRsqAdjMtx[iDictNode['y']] = RsqAdj
                   resultFGlobalMtx[iDictNode['y']] = FGlobal
                else:
-                  if 'FGlobal' in FresultsObserved:
-                     if FGlobal >= FresultsObserved['FGlobal'][iDictNode['y']]:
-                        VectorProbRsq[iDictNode['y']] = 1 # VectorProbRsq[iDictNode['y']] + 1
+                  if 'FGlobal' in fResultsObserved:
+                     if FGlobal >= fResultsObserved['FGlobal'][iDictNode['y']]:
+                        vectProbRsq[iDictNode['y']] = 1 # vectProbRsq[iDictNode['y']] + 1
                         
                # semi partial correlations 
-               d =  {'Predictors' :Predictors,'swDiagonoal': swDiagonoal, 
-                     'StdPSum':StdPSum,'resultRsq':resultRsq,'TotalPSumResidual':TotalPSumResidual,
+               d =  {'predictors' :predictors,'swDiagonoal': SumSites, 
+                     'stdPSum':stdPSum,'resultRsq':resultRsq,'TotalPSumResidual':TotalPSumResidual,
                      'nodeNumber':iDictNode['y']}
-               # sending whole Predictor mtx to predictors func, and feeding it to apply_along_axis, feeds one col. at a time, 0 axis
+               # sending whole Predictor mtx to predictorsFn func, and feeding it to apply_along_axis, feeds one col. at a time, 0 axis
                # 3 significance done: resultRsq, RsqAdj,FGlobal
                
-               resultSemi = np.apply_along_axis(predictors, 0, Predictors, **d)
+               resultSemi = np.apply_along_axis(predictorsFn, 0, predictors, **d)
                
                   
             else:
-               resultSemi = np.array([np.zeros(NumberPredictors)])
+               resultSemi = np.array([np.zeros(numPredictors)])
       else:
-         resultSemi = np.array([np.zeros(NumberPredictors)])
+         resultSemi = np.array([np.zeros(numPredictors)])
       if not randomize:
          resultSemiPartialMtx[iDictNode['y']] = resultSemi[0]
       
@@ -264,11 +305,11 @@ def semiPartCorrelation_Leibold_Vectorize(I, PredictorMtx, NodeMtx, randomize=Fa
         
       return np.array([])      
    
-   np.apply_along_axis(nodes, 0, NodeMtx)
+   np.apply_along_axis(nodes, 0, nodeMtx)
    
    
    if randomize:
-      return MatrixProbSemiPartial, VectorProbRsq
+      return mtxProbSemiPartial, vectProbRsq
    else: 
       return resultSemiPartialMtx,resultRsqAdjMtx,resultFSemiPartialMtx,resultFGlobalMtx 
 # ........................................
@@ -301,39 +342,42 @@ def correctPValue(PValues):
    corrected = correct_pvalues_for_multiple_testing(PValues)
    return corrected
 
-def calculateMCPA(I, P, Pred, FGlobal=False, FSemiPartial=False, numPermute=0, numConcurrent=1, divisor=None): #calculateMCPA(I, P, E, B, randomize=False, numPermute=0):
+def calculateMCPA(pam, P, Pred, FGlobal=False, FSemiPartial=False, numPermute=0, numConcurrent=1, divisor=None): #calculateMCPA(pam, P, E, B, randomize=False, numPermute=0):
    """
    @summary: sends inputs to calculate
    """
    
    if FGlobal and FSemiPartial:
-      FresultsObserved = {'FGlobal':FGlobal ,'FSemiPartial':FSemiPartial}
+      fResultsObserved = {'FGlobal':FGlobal ,'FSemiPartial':FSemiPartial}
       tasks = []
       with concurrent.futures.ProcessPoolExecutor(
                                            max_workers=numConcurrent) as executor:
          for i in range(0,numPermute):
-            tasks.append(executor.submit(semiPartCorrelation_Leibold_Vectorize, I, Pred, P, 
-                                         randomize=True, FresultsObserved=FresultsObserved))
+            tasks.append(executor.submit(semiPartCorrelation_Leibold_Vectorize, pam, Pred, P, 
+                                         randomize=True, fResultsObserved=fResultsObserved))
       ProbSPtosum = [t.result()[0] for t in tasks]
       ProbRsqtosum = [t.result()[1] for t in tasks]
       SP_Result = sumProbabilities(ProbSPtosum,divisor)
       Rsq_Result = sumProbabilities(ProbRsqtosum,divisor)
       return SP_Result, Rsq_Result
    else:
-      rSemiPartialMtx, rRsqAdjVct,rFSemiPartialMtx, rFGlobalMtx = semiPartCorrelation_Leibold_Vectorize(I,Pred,P)
+      rSemiPartialMtx, rRsqAdjVct,rFSemiPartialMtx, rFGlobalMtx = semiPartCorrelation_Leibold_Vectorize(pam,Pred,P)
       return rSemiPartialMtx, rRsqAdjVct,rFSemiPartialMtx, rFGlobalMtx
 
 
 
 if __name__ == "__main__":
    
-   NodeMtx,I = testWithData.makeInputsForTextTest()
+   import cPickle
+   import testWithData
+   
+   nodeMtx,pam = testWithData.makeInputsForTextTest()
    E = testWithData.getEnvTextMatrix()
    ########## Environmental ###########
    
-   rSemiPartialMtx_E, rRsqAdjVct_E,rFSemiPartialMtx_E, rFGlobalMtx_E = calculateMCPA(I, NodeMtx, E)
-   FresultsObserved = {'FGlobal':rFGlobalMtx_E ,'FSemiPartial':rFSemiPartialMtx_E} # setting global
-   cPickle.dump(FresultsObserved,open('/home/jcavner/compare_corr/concurrent/FScores.pkl','wb'))
+   rSemiPartialMtx_E, rRsqAdjVct_E,rFSemiPartialMtx_E, rFGlobalMtx_E = calculateMCPA(pam, nodeMtx, E)
+   fResultsObserved = {'FGlobal':rFGlobalMtx_E ,'FSemiPartial':rFSemiPartialMtx_E} # setting global
+   cPickle.dump(fResultsObserved,open('/tmp/FScores.pkl','wb'))
    
    ## random calculations
    ProbSPtosum_E = []
@@ -346,8 +390,8 @@ if __name__ == "__main__":
                                         max_workers=numConcurrent) as executor:
       for i in range(0,numPermute):
          #pool.apply_async(semiPartCorrelation_Leibold_Vectorize_Randomize,callback = poolResults)
-         tasks.append(executor.submit(semiPartCorrelation_Leibold_Vectorize, I, E, NodeMtx, 
-                                      randomize=True, FresultsObserved=FresultsObserved))
+         tasks.append(executor.submit(semiPartCorrelation_Leibold_Vectorize, pam, E, nodeMtx, 
+                                      randomize=True, fResultsObserved=fResultsObserved))
    #tasks.all()  # look at https://github.com/cjgrady/irksome-broccoli/blob/master/src/singleTile/parallelDijkstra.py#L73    
    ProbSPtosum_E = [t.result()[0] for t in tasks]
    ProbRsqtosum_E = [t.result()[1] for t in tasks]
@@ -356,6 +400,8 @@ if __name__ == "__main__":
    
    randSPSum = reduce(np.add,ProbSPtosum_E)
    P_SP_E = randSPSum/float(numPermute)
+   print P_SP_E
    
    randRSum = reduce(np.add,ProbRsqtosum_E)
    P_R_E = randRSum/float(numPermute)
+   print P_R_E
