@@ -8,23 +8,24 @@ import numpy as np
 import os
 import sys
 
-
+#TODO: Fix import
 from P_Value_Correction import correct_pvalues_for_multiple_testing
 
-
-
-############  Analysis ################
+# Constants
+F_GLOBAL_KEY = 'fGlobal'
+F_SEMI_PARTIAL_KEY = 'fSemiPartial'
 
 
 # .............................................................................
 def standardizeMatrix(siteWeights, mtx):
    """
-   @todo: Update documentation
    @summary: Standardizes matrix, mtx
-   @param siteWeights: Diagonal matrix for site weights (W in math?)
+   @param siteWeights: Vector of row / column totals for site weights
    @param mtx: Matrix to be standardized (M in math?)
-   @param onesCol: Column vector of ones, sites (n) or species (k)
-   @param pam: Incidence matrix (PAM) (I in math)
+   @todo: Switch to this
+   @note: This function produces the same output as the old, but the end result
+             seems to be different.  Something may be modifying something out 
+             of scope
    """
    # Get the sum of the incidence matrix, which is a sum of the weights
    iSum = float(siteWeights.sum()) 
@@ -42,9 +43,14 @@ def standardizeMatrix(siteWeights, mtx):
    
    return stdMtx
 
+# .............................................................................
 def standardizeMatrixOld(siteWeights, mtx, onesCol, pam):
    """
    @todo: Remove
+   @deprecated: This method has been rewritten
+   @note: Cannot remove until the difference is figured out between old and new.
+             New method produces the same output but the final result is 
+             different.  Could be something modified at incorrect scope
    @summary: Standardizes matrix, mtx
    @param siteWeights: Diagonal matrix for site weights (W in math?)
    @param mtx: Matrix to be standardized (M in math?)
@@ -65,20 +71,21 @@ def standardizeMatrixOld(siteWeights, mtx, onesCol, pam):
    
    return stdMtx
    
-
 # ........................................
-def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=False, 
-                                          fResultsObserved={}): 
+def semiPartialCorrelationLeiboldVectorize(pam, predictorMtx, nodeMtx, 
+                                         randomize=False, fResultsObserved={}): 
    """
-   @todo: Fix documentation
-   @todo: Variable names
-   @todo: Function signature
-   @summary: follows Pedro's matlab code as far as loops
-   that are necessary for treating nodes individually. Exceptions to his code are mathematical changes
-   for effeciency, and corrections for sps in tree but not in PAM, also fault checks.
-   @param fResultsObserved: contains two F score matrices
-   @param nodeMtx: Phylo Encoding (species (row) x node (column)
-   @param pam: Incidence Mtx  (PAM) 
+   @summary: A vectorizable function for computing the semi-partial correlation 
+                of a matrix using Leibold's method
+   @note: Follows Pedro's matlab code as far as loops that are necessary for
+             treating nodes individually.  Exceptions to his code are 
+             mathematical changes for efficiency, and corrections for 
+             semi-partials in tree but not in PAM.  Also fault checks.
+   @param pam: The PAM, or incidence matrix
+   @param predictorMtx: Predictor matrix
+   @param nodeMtx: Phylogenetic encoding (species (row) by node (column))
+   @param randomize: Boolean indicating if this is a randomization
+   @param fResultsObserved: Contains two F-Score matrices
    """
    numNodes = nodeMtx.shape[1] 
    numPredictors = predictorMtx.shape[1]  
@@ -98,12 +105,20 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
       vectProbRsq = np.array([np.zeros(numNodes)]).T
       
    # ...........................
-   def predictorsFn(predictorCol, predictors, swDiagonoal, stdPSum, resultRsq, totalPSumResidual, nodeNumber):
+   def computeSemiPartials(predictorCol, predictors, swDiagonal, stdPSum, 
+                           resultRsq, totalPSumResidual, nodeNumber):
       """
-      @todo: Fix documentation
-      @summary: applied across column axis for predictor matrix.
-      predictor matrix can be either env or hist biogeography
-      @todo: Document each variable
+      @summary: Determines semi-partial correlations
+      @note: Applied across column axis for predictor matrix
+      @note: Predictor matrix can be either environment or 
+                historical biogeography
+      @param precitorCol: The column of the predictor matrix to use
+      @param predictors: The entire predictor matrix
+      @param swDiagonal: Vector of site totals
+      @param stdPsum: Standardized P-sigma
+      @param resultRsq: Result R-squared
+      @param totalPSumResidual: Total P-sigma residual
+      @param nodeNumber: The node number
       """
       try:
          predNumber = iDictPred['x']  # 'x' axis of results
@@ -113,21 +128,21 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
          withoutIthPredictor = np.delete(predictors,predNumber,axis=1)  
          
          # % slope for the ith predictor, Beta, regression coefficient
-         q,r = np.linalg.qr(np.dot(np.einsum('ij,j->ij',ithPredictor.T,swDiagonoal),ithPredictor))
+         q,r = np.linalg.qr(np.dot(np.einsum('ij,j->ij',ithPredictor.T,swDiagonal),ithPredictor))
          
          rDivQtrans = np.linalg.lstsq(r,q.T)[0]
          
          ithSlopPart1 = np.dot(rDivQtrans,ithPredictor.T)
-         ithSlopePart2 = np.einsum('ij,j->ij',ithSlopPart1,swDiagonoal)
+         ithSlopePart2 = np.einsum('ij,j->ij',ithSlopPart1,swDiagonal)
          ithSlope = np.dot(ithSlopePart2,stdPSum)
          
          
          # % regression for the remaining predictors
-         q,r = np.linalg.qr(np.dot(np.einsum('ij,j->ij',withoutIthPredictor.T,swDiagonoal),withoutIthPredictor))
+         q,r = np.linalg.qr(np.dot(np.einsum('ij,j->ij',withoutIthPredictor.T,swDiagonal),withoutIthPredictor))
          rDivQtransR = np.linalg.lstsq(r,q.T)[0]
          withoutPredRQR = np.dot(withoutIthPredictor,rDivQtransR)
          hPart = np.dot(withoutPredRQR,withoutIthPredictor.T)
-         h = np.einsum('ij,j->ij',hPart,swDiagonoal)
+         h = np.einsum('ij,j->ij',hPart,swDiagonal)
          predicted = np.dot(h,stdPSum)
          remainingRsq = np.sum(predicted**2)/np.sum(stdPSum**2)
          
@@ -140,8 +155,9 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
          if not randomize:
             resultFSemiPartialMtx[nodeNumber][predNumber] = fSemiPartial
          else:
-            if 'fSemiPartial' in fResultsObserved:
-               if fSemiPartial >= fResultsObserved['fSemiPartial'][nodeNumber][predNumber]:
+            #if F_SEMI_PARTIAL_KEY in fResultsObserved.keys():
+            if fResultsObserved.has_key(F_SEMI_PARTIAL_KEY):
+               if fSemiPartial >= fResultsObserved[F_SEMI_PARTIAL_KEY][nodeNumber][predNumber]:
                   mtxProbSemiPartial[nodeNumber][predNumber] = 1 #mtxProbSemiPartial[nodeNumber][predNumber] +1
                   
          iDictPred['x'] += 1
@@ -156,6 +172,7 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
    def nodes(nodeCol):
       """
       @summary: operation to be performed on each node column
+      @param nodeCol: The node column to operate on
       """
       
       iDictPred['x'] = 0
@@ -269,15 +286,19 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
                   resultRsqAdjMtx[iDictNode['y']] = rSqAdj
                   resultFGlobalMtx[iDictNode['y']] = fGlobal
                else:
-                  if 'fGlobal' in fResultsObserved:
-                     if fGlobal >= fResultsObserved['fGlobal'][iDictNode['y']]:
+                  if fResultsObserved.has_key(F_GLOBAL_KEY):
+                     if fGlobal >= fResultsObserved[F_GLOBAL_KEY][iDictNode['y']]:
                         vectProbRsq[iDictNode['y']] = 1 # vectProbRsq[iDictNode['y']] + 1
                         
                # semi partial correlations 
-               # sending whole Predictor mtx to predictorsFn func, and feeding it to apply_along_axis, feeds one col. at a time, 0 axis
+               # sending whole Predictor mtx to computeSemiPartials func, and feeding it to apply_along_axis, feeds one col. at a time, 0 axis
                # 3 significance done: resultRsq, rSqAdj,fGlobal
                
-               resultSemi = np.apply_along_axis(predictorsFn, 0, predictors, *(predictors, sumSites, stdPSum, resultRsq, totalPSumResidual, iDictNode['y']))
+               #Note: The predictors variable is sent twice, the first one is
+               #         iterated over by numpy and the second is used for the
+               #         calculation
+               
+               resultSemi = np.apply_along_axis(computeSemiPartials, 0, predictors, predictors, sumSites, stdPSum, resultRsq, totalPSumResidual, iDictNode['y'])
                
                   
             else:
@@ -289,7 +310,7 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
       
       iDictNode['y'] += 1    
         
-      return np.array([])      
+      return np.array([]) # Why is this being returned?
    
    np.apply_along_axis(nodes, 0, nodeMtx)
    
@@ -302,6 +323,7 @@ def semiPartCorrelation_Leibold_Vectorize(pam, predictorMtx, nodeMtx, randomize=
 ############ End Analysis #################
  
   
+# .............................................................................
 def sumProbabilities(toSum, divisor=None):
    """
    @note: if divisor exists divide sum by it, return mean. if not return sum
@@ -312,6 +334,7 @@ def sumProbabilities(toSum, divisor=None):
    else:
       return valuesSummed
 
+# .............................................................................
 def appendENVtoBG(b, e):
    """
    @summary: appends e to b to control for e in b
@@ -320,6 +343,7 @@ def appendENVtoBG(b, e):
    b = np.concatenate((b,e),axis=1)
    return b
 
+# .............................................................................
 def correctPValue(pValues):
    """
    @summary: correction routine
@@ -328,6 +352,7 @@ def correctPValue(pValues):
    corrected = correct_pvalues_for_multiple_testing(pValues)
    return corrected
 
+# .............................................................................
 def calculateMCPA(pam, p, pred, fGlobal=False, fSemiPartial=False, numPermute=0, numConcurrent=1, divisor=None): 
    #calculateMCPA(pam, p, E, B, randomize=False, numPermute=0):
    """
@@ -335,12 +360,12 @@ def calculateMCPA(pam, p, pred, fGlobal=False, fSemiPartial=False, numPermute=0,
    """
    
    if fGlobal and fSemiPartial:
-      fResultsObserved = {'fGlobal':fGlobal ,'fSemiPartial':fSemiPartial}
+      fResultsObserved = {F_GLOBAL_KEY:fGlobal , F_SEMI_PARTIAL_KEY:fSemiPartial}
       tasks = []
       with concurrent.futures.ProcessPoolExecutor(
                                            max_workers=numConcurrent) as executor:
          for i in range(0,numPermute):
-            tasks.append(executor.submit(semiPartCorrelation_Leibold_Vectorize, pam, pred, p, 
+            tasks.append(executor.submit(semiPartialCorrelationLeiboldVectorize, pam, pred, p, 
                                          randomize=True, fResultsObserved=fResultsObserved))
       probSemiPartialsToSum = [t.result()[0] for t in tasks]
       probRsqToSum = [t.result()[1] for t in tasks]
@@ -348,11 +373,11 @@ def calculateMCPA(pam, p, pred, fGlobal=False, fSemiPartial=False, numPermute=0,
       rSqResult = sumProbabilities(probRsqToSum,divisor)
       return semiPartialResult, rSqResult
    else:
-      rSemiPartialMtx, rRsqAdjVct,rFSemiPartialMtx, rFGlobalMtx = semiPartCorrelation_Leibold_Vectorize(pam,pred,p)
+      rSemiPartialMtx, rRsqAdjVct,rFSemiPartialMtx, rFGlobalMtx = semiPartialCorrelationLeiboldVectorize(pam,pred,p)
       return rSemiPartialMtx, rRsqAdjVct,rFSemiPartialMtx, rFGlobalMtx
 
 
-
+# .............................................................................
 if __name__ == "__main__":
    
    import cPickle
@@ -363,12 +388,12 @@ if __name__ == "__main__":
    ########## Environmental ###########
    
    rSemiPartialMtx_E, rRsqAdjVct_E,rFSemiPartialMtx_E, rFGlobalMtx_E = calculateMCPA(pam, nodeMtx, e)
-   fResultsObserved = {'fGlobal':rFGlobalMtx_E ,'fSemiPartial':rFSemiPartialMtx_E} # setting global
+   fResultsObserved = {F_GLOBAL_KEY:rFGlobalMtx_E ,F_SEMI_PARTIAL_KEY:rFSemiPartialMtx_E} # setting global
    cPickle.dump(fResultsObserved,open('/tmp/FScores.pkl','wb'))
    
    ## random calculations
-   ProbSPtosum_E = []
-   ProbRsqtosum_E = []
+   probSemiPartialToSumEnv = []
+   probRsqToSumEnv = []
    numPermute = 10
    #pool = Pool()  # can parameterize to number of cores, otherwise no arg uses all available
    numConcurrent = 5
@@ -376,19 +401,19 @@ if __name__ == "__main__":
    with concurrent.futures.ProcessPoolExecutor(
                                         max_workers=numConcurrent) as executor:
       for i in range(0,numPermute):
-         #pool.apply_async(semiPartCorrelation_Leibold_Vectorize_Randomize,callback = poolResults)
-         tasks.append(executor.submit(semiPartCorrelation_Leibold_Vectorize, pam, e, nodeMtx, 
+         #pool.apply_async(semiPartialCorrelationLeiboldVectorize_Randomize,callback = poolResults)
+         tasks.append(executor.submit(semiPartialCorrelationLeiboldVectorize, pam, e, nodeMtx, 
                                       randomize=True, fResultsObserved=fResultsObserved))
    #tasks.all()  # look at https://github.com/cjgrady/irksome-broccoli/blob/master/src/singleTile/parallelDijkstra.py#L73    
-   ProbSPtosum_E = [t.result()[0] for t in tasks]
-   ProbRsqtosum_E = [t.result()[1] for t in tasks]
+   probSemiPartialToSumEnv = [t.result()[0] for t in tasks]
+   probRsqToSumEnv = [t.result()[1] for t in tasks]
    #pool.close()
    #pool.join()
    
-   randSPSum = reduce(np.add,ProbSPtosum_E)
-   P_SP_E = randSPSum/float(numPermute)
-   print P_SP_E
+   randSPSum = reduce(np.add,probSemiPartialToSumEnv)
+   probSemiPartialEnv = randSPSum/float(numPermute)
+   print probSemiPartialEnv
    
-   randRSum = reduce(np.add,ProbRsqtosum_E)
-   P_R_E = randRSum/float(numPermute)
-   print P_R_E
+   randRSum = reduce(np.add,probRsqToSumEnv)
+   probRsqEnv = randRSum/float(numPermute)
+   print probRsqEnv
