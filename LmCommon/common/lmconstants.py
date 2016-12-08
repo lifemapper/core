@@ -62,6 +62,9 @@ class OutputFormat:
    SHAPE = '.shp'
    LOG = '.log'
    MAKEFLOW = '.mf'
+   METADATA = '.meta'
+   PYTHON = '.py'
+   CONFIG = '.ini'
    
 SHAPEFILE_EXTENSIONS = [".shp", ".shx", ".dbf", ".prj", ".sbn", ".sbx", ".fbn", 
                         ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", 
