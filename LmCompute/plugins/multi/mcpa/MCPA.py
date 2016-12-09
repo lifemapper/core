@@ -1,7 +1,9 @@
 """
 @summary: This module contains functions to perform MCPA
 @author: Jeff Cavner (edited by CJ Grady)
-
+@see: Leibold, m.A., E.P. Economo and P.R. Peres-Neto. 2010. Metacommunity
+         phylogenetics: separating the roles of environmental filters and 
+         historical biogeography. Ecology letters 13: 1290-1299.
 """
 import concurrent.futures
 import numpy as np
@@ -9,7 +11,7 @@ import os
 import sys
 
 #TODO: Fix import
-from P_Value_Correction import correct_pvalues_for_multiple_testing
+from pValueCorrection import correctPValuesForMultipleTesting
 
 # Constants
 F_GLOBAL_KEY = 'fGlobal'
@@ -344,7 +346,7 @@ def correctPValue(pValues):
    @summary: correction routine
    @todo: need to test correcting vector
    """
-   corrected = correct_pvalues_for_multiple_testing(pValues)
+   corrected = correctPValuesForMultipleTesting(pValues)
    return corrected
 
 # .............................................................................
