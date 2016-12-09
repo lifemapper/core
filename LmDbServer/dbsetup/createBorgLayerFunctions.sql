@@ -70,46 +70,74 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, etypeid int)
-   RETURNS lm_v3.lm_scenlayer AS
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinEnvLayer(lyrid int, etypeid int)
+   RETURNS lm_v3.lm_envlayer AS
 $$
 DECLARE
    temp1 int;
    temp2 int;
-   temp3 int;
-   rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
+   rec lm_v3.lm_envlayer%ROWTYPE;
 BEGIN
-   SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
-      WHERE scenarioId = scenid AND layerid = layerid
-        AND envTypeId = etypeid;
-   IF FOUND THEN 
-      RAISE NOTICE 'Scenario % and Layer % and EnvType % are already joined', 
-                    scenid, lyrid, etypeid;
-   ELSE
-      -- make sure records exist
-      SELECT count(*) INTO temp1 FROM lm_v3.scenario WHERE scenarioid = scenid;
-      SELECT count(*) INTO temp2 FROM lm_v3.layer WHERE layerId = lyrid;
-      SELECT count(*) INTO temp3 FROM lm_v3.envType WHERE envTypeId = etypeid;
-      IF temp1 < 1 THEN
-         RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
-      ELSIF temp2 < 1 THEN
-         RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
-      ELSIF temp3 < 1 THEN
-         RAISE EXCEPTION 'EnvType with id % does not exist', etypeid;
-      END IF;
+   SELECT count(*) INTO temp1 FROM lm_v3.layer WHERE layerId = lyrid;
+   SELECT count(*) INTO temp2 FROM lm_v3.envType WHERE envTypeId = etypeid;
+   IF temp1 < 1 THEN
+      RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
+   ELSIF temp2 < 1 THEN
+      RAISE EXCEPTION 'EnvType with id % does not exist', etypeid;
+   END IF;
    
-      INSERT INTO ScenarioLayer (scenarioid, layerid, envTypeId) 
-                         VALUES (scenid, lyrid, etypeid);
+   SELECT * INTO rec FROM lm_v3.lm_envlayer
+      WHERE layerid = lyrid AND envTypeId = etypeid;
+   IF FOUND THEN 
+      RAISE NOTICE 'Layer % and EnvType % are already joined', lyrid, etypeid;
+   ELSE   
+      INSERT INTO EnvLayer (layerid, envTypeId) VALUES (lyrid, etypeid);
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to insert/join EnvLayer';
       ELSE
-         SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
-            WHERE scenarioId = scenid AND layerid = lyrid 
-              AND envTypeId = etypeid;
+         SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE layerid = lyrid 
+                                                    AND envTypeId = etypeid;
       END IF;
    END IF;
    
-   RETURN rec_envlyr;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, etypeid int)
+   RETURNS lm_v3.lm_scenlayer AS
+$$
+DECLARE
+   temp int;
+   recel lm_v3.lm_envlayer%ROWTYPE;
+   recsl lm_v3.lm_scenlayer%ROWTYPE;
+BEGIN
+   SELECT count(*) INTO temp FROM lm_v3.scenario WHERE scenarioid = scenid;
+   IF temp < 1 THEN
+      RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
+   END IF;
+   
+   SELECT * INTO recel FROM lm_v3.lm_joinEnvLayer(lyrid, etypeid);
+   IF FOUND THEN    
+      SELECT * INTO recsl FROM lm_v3.lm_scenlayer WHERE scenarioId = scenid 
+                                                    AND layerid = lyrid 
+                                                    AND envTypeId = etypeid;
+      IF NOT FOUND THEN
+         INSERT INTO lm_v3.ScenarioLayer (scenarioid, layerid, envTypeId) 
+                         VALUES (scenid, lyrid, etypeid);
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to insert/join EnvLayer';
+         ELSE
+            SELECT * INTO recsl FROM lm_v3.ScenarioLayer 
+               WHERE scenarioId = scenid 
+                 AND layerid = lyrid 
+                 AND envTypeId = etypeid;
+         END IF;
+      END IF;
+   END IF;
+   
+   RETURN recsl;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
@@ -461,11 +489,3 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
-
-select * from lm_v3.lm_findOrInsertEnvLayer(1,NULL,'testinitboom',NULL,NULL,'alt-observed-10min',
-'/share/lm/data/layers/worldclim1.4/alt.tif','http://badenov-vc1.nhm.ku.edu/services/sdm/layers/#id#',
-'{"description": "observed Worldclim Elevation (altitude above sea level, from SRTM, http://www2.jpl.nasa.gov/srtm/)", "title": "observed Elevation"}',
-'GTiff',3,NULL,'meters',NULL,NULL,NULL,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00',
-'POLYGON((-180 -60,-180 90,180 90,180 -60,-180 -60))',57731.9416285,NULL,'alt',NULL,NULL,NULL,
-'{"keywords": null, "description": "Worldclim Elevation (altitude above sea level, from SRTM, http://www2.jpl.nasa.gov/srtm/)", "title": "Elevation"}',
-NULL);

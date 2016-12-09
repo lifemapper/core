@@ -579,22 +579,8 @@ predScens = createPredictedScenarios(usr, pkgMeta, configMeta,
                                      META.CLIMATE_KEYWORDS)
 predScens[basescen.code] = basescen
 addScenarioAndLayerMetadata(scribe, predScens)
-scode = 'observed-1km'
-scen = scens[scode]
-newOrExistingScen = scribe.insertScenario(scen)
 
 shpId = addIntersectGrid(scribe, configMeta['gridname'], configMeta['gridsides'], 
                            configMeta['gridsize'], configMeta['mapunits'], configMeta['epsg'], 
                            pkgMeta['bbox'], usr)
-select * from lm_v3.lm_findOrInsertShapeGrid(NULL, 'kubi', '10km-grid', 
-      NULL,NULL,NULL,
-      '/share/lm/data/archive/kubi/2163/Layers/shpgrid_10km-grid.shp',
-      NULL,3,FALSE,
-      'ESRI Shapefile',2163,'meters',10000,NULL,
-      '-180.00,-60.00,180.00,90.00',NULL,
-      'http://badenov-vc1.nhm.ku.edu/services/rad/layers/#id#',
-      4,10000,0,'siteid','centerX','centerY',NULL,NULL);
-
-
-                           
 """
