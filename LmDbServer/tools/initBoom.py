@@ -123,7 +123,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
                                         gcm=None, tm=None, altPred=None)
       lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
                             suffix=pkgMeta['suffix'])
-      configMeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
+      lyrMeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
                  'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
       envmeta = {'title': ltmeta['title'],
                  'description': ltmeta['description'],
@@ -131,7 +131,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
       dloc = os.path.join(ENV_DATA_PATH, relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
-      envlyr = EnvironmentalLayer(lyrname, configMetadata=configMeta,
+      envlyr = EnvironmentalLayer(lyrname, lyrMetadata=lyrMeta,
                                   valUnits=ltmeta['valunits'],
                                   dlocation=dloc, 
                                   bbox=pkgMeta['bbox'], 
@@ -170,17 +170,17 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
       
 # ...............................................
 def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
-                        predRpt, tm, gcm=None, altpred=None):
+                        observedPredictedMeta, predRpt, tm, gcm=None, altpred=None):
    """
    @summary Assembles layer metadata for a single layerset
    """
-   mdlvals = META.OBSERVED_PREDICTED_META[predRpt]['models'][gcm]
-   tmvals = META.OBSERVED_PREDICTED_META[predRpt]['times'][tm]
+   mdlvals = observedPredictedMeta[predRpt]['models'][gcm]
+   tmvals = observedPredictedMeta[predRpt]['times'][tm]
    layers = []
    rstType = None
    layertypes = pkgMeta['layertypes']
    for ltype in layertypes:
-      keywords = [k for k in META.OBSERVED_PREDICTED_META[predRpt]['keywords']]
+      keywords = [k for k in observedPredictedMeta[predRpt]['keywords']]
       ltmeta = lyrtypeMeta[ltype]
       relfname, isStatic = _findFileFor(ltmeta, predRpt, 
                                         gcm=gcm, tm=tm, altPred=altpred)
@@ -225,14 +225,15 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
 
 
 # ...............................................
-def createBaselineScenario(META, usr, pkgMeta, configMeta, lyrtypeMeta):
+def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta, 
+                           observedPredictedMeta, climKeywords):
    """
    @summary Assemble Worldclim/bioclim scenario
    """
    obsKey = pkgMeta['baseline']
-   baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
+   baseMeta = observedPredictedMeta[obsKey]
    tm = baseMeta['times'].keys()[0]
-   basekeywords = [k for k in META.CLIMATE_KEYWORDS]
+   basekeywords = [k for k in climKeywords]
    basekeywords.extend(baseMeta['keywords'])
    
    scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
@@ -251,7 +252,8 @@ def createBaselineScenario(META, usr, pkgMeta, configMeta, lyrtypeMeta):
    return scen, staticLayers
 
 # ...............................................
-def createPredictedScenarios(META, usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers):
+def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
+                             observedPredictedMeta, climKeywords):
    """
    @summary Assemble predicted future scenarios defined by IPCC report
    """
@@ -266,12 +268,12 @@ def createPredictedScenarios(META, usr, pkgMeta, configMeta, lyrtypeMeta, static
          except:
             altvals = {}
          else:
-            altvals = META.OBSERVED_PREDICTED_META[predRpt]['alternatePredictions'][altpred]
-         mdlvals = META.OBSERVED_PREDICTED_META[predRpt]['models'][gcm]
-         tmvals = META.OBSERVED_PREDICTED_META[predRpt]['times'][tm]
+            altvals = observedPredictedMeta[predRpt]['alternatePredictions'][altpred]
+         mdlvals = observedPredictedMeta[predRpt]['models'][gcm]
+         tmvals = observedPredictedMeta[predRpt]['times'][tm]
          # Reset keywords
-         scenkeywords = [k for k in META.CLIMATE_KEYWORDS]
-         scenkeywords.extend(META.OBSERVED_PREDICTED_META[predRpt]['keywords'])
+         scenkeywords = [k for k in climKeywords]
+         scenkeywords.extend(observedPredictedMeta[predRpt]['keywords'])
          for vals in (mdlvals, tmvals, altvals):
             try:
                scenkeywords.extend(vals['keywords'])
@@ -284,13 +286,14 @@ def createPredictedScenarios(META, usr, pkgMeta, configMeta, lyrtypeMeta, static
          scentitle = _getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
                                  tm=tmvals['name'], altpred=altpred, 
                                  suffix=pkgMeta['suffix'], isTitle=True)
-         obstitle = META.OBSERVED_PREDICTED_META[pkgMeta['baseline']]['title']
+         obstitle = observedPredictedMeta[pkgMeta['baseline']]['title']
          scendesc =  ' '.join((obstitle, 
                   'and predicted climate calculated from {}'.format(scentitle)))
          scenmeta = {'title': scentitle, 'author': mdlvals['author'], 
                      'description': scendesc, 'keywords': scenkeywords}
          lyrs = _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, 
-                              staticLayers, predRpt, tm, gcm=gcm, altpred=altpred)
+                              staticLayers, observedPredictedMeta, predRpt, tm, 
+                              gcm=gcm, altpred=altpred)
          
          scen = Scenario(scencode, metadata=scenmeta, 
                          gcmCode=gcm, altpredCode=altpred, dateCode=tm,
@@ -396,11 +399,11 @@ def _importClimatePackageMetadata(envPackageName):
    # TODO: change to importlib on python 2.7 --> 3.3+  
    try:
       import imp
-      meta = imp.load_source('currentmetadata', metafname)
+      META = imp.load_source('currentmetadata', metafname)
    except Exception, e:
       raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                     .format(metafname, e))
-   return meta
+   return META
 
 # ...............................................
 def _writeConfigFile(envPackageName, userid, configMeta, mdlScen=None, prjScens=None):
@@ -459,6 +462,7 @@ if __name__ == '__main__':
    envPackageName = args.metadata
    if envPackageName.lower() == 'config':
       envPackageName = SCENARIO_PACKAGE
+   # Imports META
    META = _importClimatePackageMetadata(envPackageName)
    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
    configMeta = _getConfiguredMetadata(META, pkgMeta)
@@ -492,11 +496,15 @@ if __name__ == '__main__':
       logger.info('  Insert climate {} metadata ...'.format(envPackageName))
       # Current
       basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
-                                                      META.LAYERTYPE_META)
+                                                      META.LAYERTYPE_META,
+                                                      META.OBSERVED_PREDICTED_META,
+                                                      META.CLIMATE_KEYWORDS)
       logger.info('     Created base scenario {}'.format(basescen.code))
       # Predicted Past and Future
       predScens = createPredictedScenarios(usr, pkgMeta, configMeta, 
-                                              META.LAYERTYPE_META, staticLayers)
+                                           META.LAYERTYPE_META, staticLayers,
+                                           META.OBSERVED_PREDICTED_META,
+                                           META.CLIMATE_KEYWORDS)
       logger.info('     Created predicted scenarios {}'.format(predScens.keys()))
       predScens[basescen.code] = basescen
       addScenarioAndLayerMetadata(scribeWithBorg, predScens)
@@ -559,8 +567,13 @@ logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
 addUsers(scribe, configMeta)
-scen, staticLayers = createBaselineScenario(META, usr, pkgMeta, configMeta, lyrtypeMeta)
-predScens = createPredictedScenarios(META, usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers)
+scen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
+                                           META.OBSERVED_PREDICTED_META,
+                                           META.CLIMATE_KEYWORDS)
+predScens = createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, 
+                                     staticLayers,
+                                     META.OBSERVED_PREDICTED_META,
+                                     META.CLIMATE_KEYWORDS)
 scode = 'observed-1km'
 scen = scens[scode]
 newOrExistingScen = scribe.insertScenario(scen)
