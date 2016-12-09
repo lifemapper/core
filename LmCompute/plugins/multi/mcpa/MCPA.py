@@ -96,13 +96,13 @@ def semiPartialCorrelationLeiboldVectorize(pam, predictorMtx, nodeMtx,
       # put results here
       resultSemiPartialMtx = np.zeros((numNodes, numPredictors))
       resultFSemiPartialMtx = np.zeros((numNodes, numPredictors))
-      resultRsqAdjMtx = np.array([np.zeros(numNodes)]).T # TODO: Fix
-      resultFGlobalMtx = np.array([np.zeros(numNodes)]).T # TODO: Fix            
+      resultRsqAdjMtx = np.zeros((numNodes, 1))
+      resultFGlobalMtx = np.zeros((numNodes, 1))            
   
    else:
       
       mtxProbSemiPartial = np.zeros((numNodes, numPredictors))
-      vectProbRsq = np.array([np.zeros(numNodes)]).T # TODO: Fix
+      vectProbRsq = np.zeros((numNodes, 1))
       
    # ...........................
    def computeSemiPartials(predictorCol, predictors, swDiagonal, stdPSum, 
@@ -244,7 +244,7 @@ def semiPartialCorrelationLeiboldVectorize(pam, predictorMtx, nodeMtx,
             resultSemi = np.array([np.zeros(numPredictors)])
          else:
             # Standardized P-sigma
-            stdPSum = np.dot(incidence,stdNode)  
+            stdPSum = np.dot(incidence, stdNode)  
             
             # regression
             q,r = np.linalg.qr(np.dot(stdPredictors.T * sumSites, 
