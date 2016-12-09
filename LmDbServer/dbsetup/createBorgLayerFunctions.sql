@@ -70,7 +70,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, envtypeid int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, etypeid int)
    RETURNS lm_v3.lm_scenlayer AS
 $$
 DECLARE
@@ -81,31 +81,31 @@ DECLARE
 BEGIN
    SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
       WHERE scenarioId = scenid AND layerid = layerid
-        AND environmentalTypeId = envtypeid;
+        AND envTypeId = etypeid;
    IF FOUND THEN 
-      RAISE NOTICE 'Scenario % and Layer % and EnvironmentalType % are already joined', 
-                    scenid, lyrid, envtypeid;
+      RAISE NOTICE 'Scenario % and Layer % and EnvType % are already joined', 
+                    scenid, lyrid, etypeid;
    ELSE
       -- make sure records exist
       SELECT count(*) INTO temp1 FROM lm_v3.scenario WHERE scenarioid = scenid;
       SELECT count(*) INTO temp2 FROM lm_v3.layer WHERE layerId = lyrid;
-      SELECT count(*) INTO temp3 FROM lm_v3.environmentalType WHERE environmentalTypeId = envtypeid;
+      SELECT count(*) INTO temp3 FROM lm_v3.envType WHERE envTypeId = etypeid;
       IF temp1 < 1 THEN
          RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
       ELSIF temp2 < 1 THEN
          RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
       ELSIF temp3 < 1 THEN
-         RAISE EXCEPTION 'EnvironmentalType with id % does not exist', envtypeid;
+         RAISE EXCEPTION 'EnvType with id % does not exist', etypeid;
       END IF;
    
-      INSERT INTO ScenarioLayer (scenarioid, layerid, environmentalTypeId) 
-                         VALUES (scenid, lyrid, envtypeid);
+      INSERT INTO ScenarioLayer (scenarioid, layerid, envTypeId) 
+                         VALUES (scenid, lyrid, etypeid);
       IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
+         RAISE EXCEPTION 'Unable to insert/join EnvLayer';
       ELSE
          SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
             WHERE scenarioId = scenid AND layerid = lyrid 
-              AND environmentalTypeId = envtypeid;
+              AND envTypeId = etypeid;
       END IF;
    END IF;
    
@@ -154,7 +154,7 @@ DECLARE
    rec_etype lm_v3.EnvType%ROWTYPE;
    rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
-   -- get or insert environmentalType 
+   -- get or insert envType 
    SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvType(etypeid, 
                     usr, env, gcm, altpred, tm, etypemeta, etypemodtime);
    IF NOT FOUND THEN
@@ -169,7 +169,7 @@ BEGIN
          RAISE EXCEPTION 'Unable to findOrInsertLayer';
       ELSE
          SELECT * INTO rec_envlyr FROM lm_v3.lm_joinScenarioLayer(scenid, 
-                                 reclyr.layerId, rec_etype.environmentalTypeId);
+                                 reclyr.layerId, rec_etype.envTypeId);
       END IF;
    END IF;
    
@@ -195,12 +195,12 @@ BEGIN
    SELECT * into rec FROM lm_v3.lm_findEnvType(etypeid, usr, env, gcm, 
                                                          altpred, tm);
    IF rec.envTypeId IS NULL THEN
-      INSERT INTO lm_v3.EnvironmentalType 
+      INSERT INTO lm_v3.EnvType 
          (userid, envCode, gcmCode, altpredCode, dateCode, metadata, modTime) 
       VALUES (usr, env, gcm, altpred, tm, meta, modtime);
       RAISE NOTICE 'vals = %, %, %, %, %, %, %', usr, env, gcm, altpred, tm, meta, modtime;
       IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to insert EnvironmentalType';
+         RAISE EXCEPTION 'Unable to insert EnvType';
       ELSE
          SELECT INTO newid last_value FROM lm_v3.EnvType_EnvTypeid_seq;
          SELECT * INTO rec FROM lm_v3.EnvType where envTypeId = newid;
@@ -462,3 +462,10 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+select * from lm_v3.lm_findOrInsertEnvLayer(1,NULL,'testinitboom',NULL,NULL,'alt-observed-10min',
+'/share/lm/data/layers/worldclim1.4/alt.tif','http://badenov-vc1.nhm.ku.edu/services/sdm/layers/#id#',
+'{"description": "observed Worldclim Elevation (altitude above sea level, from SRTM, http://www2.jpl.nasa.gov/srtm/)", "title": "observed Elevation"}',
+'GTiff',3,NULL,'meters',NULL,NULL,NULL,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00',
+'POLYGON((-180 -60,-180 90,180 90,180 -60,-180 -60))',57731.9416285,NULL,'alt',NULL,NULL,NULL,
+'{"keywords": null, "description": "Worldclim Elevation (altitude above sea level, from SRTM, http://www2.jpl.nasa.gov/srtm/)", "title": "Elevation"}',
+NULL);

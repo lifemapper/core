@@ -266,6 +266,7 @@ def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers
          try:
             altpred = modelDef[2]
          except:
+            altpred = None
             altvals = {}
          else:
             altvals = observedPredictedMeta[predRpt]['alternatePredictions'][altpred]
@@ -567,18 +568,20 @@ logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
 addUsers(scribe, configMeta)
-scen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
-                                           META.OBSERVED_PREDICTED_META,
-                                           META.CLIMATE_KEYWORDS)
-predScens = createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, 
-                                     staticLayers,
+
+basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
+                                                META.LAYERTYPE_META,
+                                                META.OBSERVED_PREDICTED_META,
+                                                META.CLIMATE_KEYWORDS)
+predScens = createPredictedScenarios(usr, pkgMeta, configMeta, 
+                                     META.LAYERTYPE_META, staticLayers,
                                      META.OBSERVED_PREDICTED_META,
                                      META.CLIMATE_KEYWORDS)
+predScens[basescen.code] = basescen
+addScenarioAndLayerMetadata(scribe, predScens)
 scode = 'observed-1km'
 scen = scens[scode]
 newOrExistingScen = scribe.insertScenario(scen)
-
-select * from lm_v3.lm_findOrInsertEnvLayer(NULL,'kubi',NULL,NULL,'bio1-AR5-GISS-E2-R-RCP4.5-2050-1km','/share/lm/data/archive/kubi/2163/Layers/bio1-AR5-GISS-E2-R-RCP4.5-2050-1km.tif','http://badenov-vc1.nhm.ku.edu/services/sdm/layers/#id#','{"description": "Annual Mean Temperature for AR5, NASA GISS GCM ModelE, RCP4.5, 2041-2060, 1km", "title": "bio1, AR5, GISS-E2-R, RCP4.5, 2041-2060, 1km"}','GTiff',NULL,NULL,'degreesCelsiusTimes10',NULL,NULL,NULL,2163,'meters',1000,'-180.00,-60.00,180.00,90.00',NULL,57692.8772879,NULL,'bio1','GISS-E2-R','RCP4.5','2050','{"keywords": null, "description": "Annual Mean Temperature", "title": "Annual Mean Temperature"}',NULL);
 
 shpId = addIntersectGrid(scribe, configMeta['gridname'], configMeta['gridsides'], 
                            configMeta['gridsize'], configMeta['mapunits'], configMeta['epsg'], 
