@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -44,16 +44,15 @@ from LmServer.common.log import ScriptLogger
 
 
 # .............................................................................
-def getArchiveParameters(envPackageName=None):
+def getArchiveParameters(envPackageName):
    _ENV_HEADING = "LmServer - environment"
    _PIPELINE_HEADING = "LmServer - pipeline"
-   if envPackageName is not None:
-      # If there was a Override 
-      SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
-      configPath = os.path.split(SERVER_CONFIG_FILENAME)[0]
-      boomFname = os.path.join(configPath, envPackageName+'.v2{}'+OutputFormat.CONFIG)
+   # If there was a Override 
+   SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
+   configPath = os.path.split(SERVER_CONFIG_FILENAME)[0]
+   boomFname = os.path.join(configPath, envPackageName+OutputFormat.CONFIG)
    cfg = Config(fns=[boomFname])
- 
+   
    ARCHIVE_USER = cfg.get(_ENV_HEADING, 'ARCHIVE_USER')
    DATASOURCE = cfg.get(_ENV_HEADING, 'DATASOURCE')
    POINT_COUNT_MIN = cfg.getint(_PIPELINE_HEADING, 'POINT_COUNT_MIN')
@@ -90,7 +89,10 @@ class Archivist(Daemon):
       self.name = self.__class__.__name__.lower()
       expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                      SPECIES_EXP_DAY).mjd
-      taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+      try:
+         taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+      except:
+         taxname = None
       try:
          if DATASOURCE == 'BISON':
             self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
@@ -185,6 +187,9 @@ if __name__ == "__main__":
 
    args = parser.parse_args()
    envPackageName = args.metadata
+   if envPackageName == defaultConfiguration:
+      from LmDbServer.common.localconstants import SCENARIO_PACKAGE
+      envPackageName = SCENARIO_PACKAGE
    
    (ARCHIVE_USER, DEFAULT_EPSG, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
     DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
@@ -225,7 +230,6 @@ if __name__ == "__main__":
 
 
 """
-import argparse
 import mx.DateTime as dt
 import os, sys, time
 from LmBackend.common.daemon import Daemon
@@ -238,11 +242,13 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ENV_DATA_PATH, SPECIES_DATA_PATH
 from LmServer.common.log import ScriptLogger
 envPackageName = '10min-past-present-future'
-(ARCHIVE_USER, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
- DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
- DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, USER_OCCURRENCE_DATA, 
- SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
- SPECIES_EXP_DAY) = getArchiveParameters(envPackageName=envPackageName)
+
+from LmDbServer.tools.archivistborg import *
+(ARCHIVE_USER, DEFAULT_EPSG, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
+           DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
+           DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, USER_OCCURRENCE_DATA, 
+           SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY,
+           DATASOURCE) = getArchiveParameters(envPackageName=envPackageName)
 
 name = 'archivistborg'
 secs = time.time()
@@ -252,9 +258,12 @@ logger = ScriptLogger('{}.{}'.format(name, timestamp))
 
 expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                SPECIES_EXP_DAY).mjd
-taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+try:
+   taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+except:
+   taxname = None
 
-boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
                   DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                   GBIF_DUMP_FILE, expdate, taxonSourceName=taxname,
                   providerListFile=PROVIDER_DUMP_FILE,
