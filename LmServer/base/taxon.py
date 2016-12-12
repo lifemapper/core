@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,6 +26,7 @@ from LmServer.base.lmobj import LMObject
 # ..............................................................................
 class ScientificName(LMObject):
    def __init__(self, scientificName, rank=None, canonicalName=None, 
+                userid=None, squid=None,
                 kingdom=None, phylum=None, txClass=None, txOrder=None, 
                 family=None, genus=None, lastOccurrenceCount=None, 
                 createTime=None, modTime=None, 
@@ -40,6 +41,8 @@ class ScientificName(LMObject):
       self.scientificName = scientificName
       self.canonicalName = canonicalName
       self.rank = rank
+      self.userid = userid
+      self.squid = squid
       self.kingdom = kingdom 
       self.phylum = phylum
       self.txClass = txClass

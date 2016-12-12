@@ -196,6 +196,11 @@ class BorgScribe(LMObject):
       return txSourceId, url, moddate
    
 # ...............................................
+   def findOrInsertTaxon(self, taxonSourceId=None, taxonKey=None, sciName=None):
+      sciname = self._borg.findOrInsertTaxon(taxonSourceId, taxonKey, sciName)
+      return sciname
+
+# ...............................................
    def getScenario(self, idOrCode, user=None):
       """
       @summary: Get and fill a scenario from its code or database id.  If 

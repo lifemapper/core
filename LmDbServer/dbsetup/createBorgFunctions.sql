@@ -299,6 +299,66 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findTaxon(tsourceid int,
+                                            tkey int)
+RETURNS lm_v3.Taxon AS
+$$
+DECLARE
+   rec lm_v3.Taxon%ROWTYPE;
+BEGIN
+   SELECT * INTO rec FROM lm_v3.Taxon
+      WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertTaxon(tsourceid int,
+                                              tkey int,
+                                              usr varchar,
+                                              sqd varchar,
+                                              king varchar,
+                                              phyl varchar,
+                                              clss varchar,
+                                              ordr varchar,
+                                              fam  varchar,
+                                              gen  varchar,
+                                              rnk varchar,
+                                              can varchar,
+                                              sname varchar,
+                                              gkey int,
+                                              skey int,
+                                              hierkey varchar,
+                                              cnt  int,
+                                              currtime double precision)
+RETURNS lm_v3.Taxon AS
+$$
+DECLARE
+   rec lm_v3.Taxon%ROWTYPE;
+   tid int := -1;
+BEGIN
+   SELECT * INTO rec FROM lm_v3.Taxon
+      WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
+
+   IF NOT FOUND THEN
+      begin
+         INSERT INTO lm_v3.Taxon (taxonomysourceid, userid, taxonomykey, squid,
+                                  kingdom, phylum, tx_class, tx_order, family, 
+                                  genus, rank, canonical, sciname, genuskey, 
+                                  specieskey, keyHierarchy, lastcount, modtime)
+                 VALUES (tsourceid, usr, tkey, sqd, king, phyl, clss, ordr, fam, 
+                         gen, rnk, can, sname, gkey, skey, hierkey, cnt, currtime);
+         IF FOUND THEN 
+            SELECT INTO tid last_value FROM lm_v3.taxon_taxonid_seq;
+            SELECT * INTO rec FROM lm_v3.Taxon WHERE taxonid = tid;
+         END IF;
+      end;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)
    RETURNS void AS
 $$

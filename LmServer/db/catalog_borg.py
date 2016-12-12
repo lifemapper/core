@@ -37,7 +37,7 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, ARCHIVE_PATH,
                   LMServiceModule, DEFAULT_PROJECTION_FORMAT, JobFamily, 
                   DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
 from LmServer.common.notifyJob import NotifyJob
 from LmServer.rad.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
@@ -95,6 +95,56 @@ class Borg(DbPostgresql):
                                 hbTime=self._getColumnValue(row, idxs, ['lastheartbeat']))
       return cr
 
+# ...............................................
+   def _createScientificName(self, row, idxs):
+      """
+      @summary Returns an ScientificName object from:
+                - an ScientificName row
+                - an lm_fullScientificName
+      @param row: A row of ScientificName data
+      @param idxs: Indexes for the row of data
+      @return A ScientificName object generated from the information in the row
+      """
+      sciname = None
+      if row is not None:
+         scientificname = self._getColumnValue(row, idxs, ['sciname'])
+         
+         if scientificname is not None:
+            taxonid = self._getColumnValue(row, idxs, ['taxonid'])
+            taxonomySourceId = self._getColumnValue(row, idxs, ['taxonomysourceid']) 
+            usr = self._getColumnValue(row, idxs, ['userid']) 
+            srckey = self._getColumnValue(row, idxs, ['taxonomykey'])
+            squid = self._getColumnValue(row, idxs, ['squid'])
+            kingdom = self._getColumnValue(row, idxs, ['kingdom'])
+            phylum = self._getColumnValue(row, idxs, ['phylum']) 
+            txClass = self._getColumnValue(row, idxs, ['tx_class'])
+            txOrder = self._getColumnValue(row, idxs, ['tx_order'])
+            family = self._getColumnValue(row, idxs, ['family'])
+            genus = self._getColumnValue(row, idxs, ['genus'])
+            rank = self._getColumnValue(row, idxs, ['rank'])
+            canonical = self._getColumnValue(row, idxs, ['canonical'])
+            genkey = self._getColumnValue(row, idxs, ['genuskey'])
+            spkey = self._getColumnValue(row, idxs, ['specieskey'])
+            hier = self._getColumnValue(row, idxs, ['keyhierarchy'])
+            lcnt = self._getColumnValue(row, idxs, ['lastcount'])
+            modtime = self._getColumnValue(row, idxs, ['taxmodtime', 'modtime'])
+
+            sciname = ScientificName(scientificname, 
+                                     rank=rank, canonicalName=canonical, 
+                                     userid=usr, squid=squid,
+                                     kingdom=kingdom, phylum=phylum,  
+                                     txClass=txClass, txOrder=txOrder, 
+                                     family=family, genus=genus, 
+                                     lastOccurrenceCount=lcnt, 
+                                     modTime=modtime, 
+                                     taxonomySourceId=taxonomySourceId, 
+                                     taxonomySourceKey=srckey, 
+                                     taxonomySourceGenusKey=genkey, 
+                                     taxonomySourceSpeciesKey=spkey, 
+                                     taxonomySourceKeyHierarchy=hier,
+                                     scientificNameId=taxonid)
+      return sciname
+   
 # ...............................................
    def _createAlgorithm(self, row, idxs):
       """
@@ -582,6 +632,60 @@ class Borg(DbPostgresql):
             moddate =  self._getColumnValue(row, idxs, ['modtime'])
       return txSourceId, url, moddate
    
+# ...............................................
+   def findTaxon(self, taxonSourceId, taxonkey):
+      try:
+         row, idxs = self.executeSelectOneFunction('lm_findOrInsertTaxon', 
+                        taxonSourceId, taxonkey, None, None, None, None, None, 
+                        None, None, None, None, None, None, None, None, None, 
+                        None, None)
+      except Exception, e:
+         raise e
+      sciname = self._createScientificName(row, idxs)
+      return sciname
+   
+# ...............................................
+   def findOrInsertTaxon(self, taxonSourceId, taxonKey, sciName):
+      scientificname = None
+      currtime = mx.DateTime.gmt().mjd
+      usr = kingdom = phylum = cls = ordr = family = genus = None
+      rank = canname = sciname = genkey = spkey = keyhierarchy = lastcount = None
+      try:
+         taxonSourceId = sciName.taxonomySourceId
+         taxonKey = sciName.sourceTaxonKey
+         usr = sciName.userid
+         squid = sciName.squid
+         kingdom = sciName.kingdom
+         phylum = sciName.phylum
+         cls = sciName.txClass
+         ordr = sciName.txOrder
+         family = sciName.family
+         genus = sciName.genus
+         rank = sciName.rank
+         canname = sciName.canonicalName
+         sciname = sciName.scientificName
+         genkey = sciName.sourceGenusKey
+         spkey = sciName.sourceSpeciesKey
+         keyhierarchy = sciName.sourceKeyHierarchy
+         lastcount = sciName.lastOccurrenceCount
+      except:
+         pass
+      try:
+         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxon', 
+                                                taxonSourceId, taxonKey,
+                                                usr, squid, kingdom, phylum,
+                                                cls, ordr, family, genus, rank,
+                                                canname, sciname, genkey, spkey,
+                                                keyhierarchy, lastcount, 
+                                                currtime)
+      except Exception, e:
+         raise e
+      else:
+         scientificname = self._createScientificName(row, idxs)
+      
+      return scientificname
+
+
 # .............................................................................
    def getScenario(self, scenid=None, code=None, usrid=None, fillLayers=False):
       """

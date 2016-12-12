@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -307,8 +307,8 @@ class _LMBoomer(LMObject):
       """
       Returns an existing or newly inserted ScientificName
       """
-      sciName = self._scribe.findTaxon(self._taxonSourceId, 
-                                           taxonKey)
+      sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+                                               taxonKey=taxonKey)
       if sciName is not None:
          self.log.info('Found sciname for taxonKey {}, {}, with {} points'
                        .format(taxonKey, sciName.scientificName, taxonCount))
@@ -327,9 +327,10 @@ class _LMBoomer(LMObject):
             if taxStatus == 'ACCEPTED':
 #             if taxonKey in (retSpecieskey, acceptedkey, genuskey):
                currtime = dt.gmt().mjd
-               sciName = ScientificName(scinameStr, 
+               sname = ScientificName(scinameStr, 
                                rank=rankStr, 
                                canonicalName=canonicalStr,
+                               userid=None, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
@@ -340,7 +341,7 @@ class _LMBoomer(LMObject):
                                taxonomySourceGenusKey=genusKey, 
                                taxonomySourceSpeciesKey=speciesKey)
                try:
-                  self._scribe.insertTaxon(sciName)
+                  sciName = self._scribe.findOrInsertTaxon(sciName=sname)
                   self.log.info('Inserted sciname for taxonKey {}, {}'
                                 .format(taxonKey, sciName.scientificName))
                except Exception, e:
