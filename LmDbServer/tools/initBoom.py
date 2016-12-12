@@ -35,7 +35,7 @@ from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
-                                            DEFAULT_EPSG, DEFAULT_MAPUNITS, )
+                                            DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
@@ -433,7 +433,6 @@ def _writeConfigFile(envPackageName, userid, configMeta, mdlScen=None, prjScens=
    f.write('USER_OCCURRENCE_DATA: {}\n\n'.format(configMeta['speciesdata']))
 
    f.write('SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))
-
    f.write('DEFAULT_EPSG: {}\n\n'.format(configMeta['epsg']))
    f.write('DEFAULT_MAPUNITS: {}\n\n'.format(configMeta['mapunits']))
    
