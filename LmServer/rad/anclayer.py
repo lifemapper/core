@@ -21,12 +21,13 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.lmconstants import DEFAULT_EPSG, ANCILLARY_LAYERS_SERVICE
+from LmCommon.common.lmconstants import ANCILLARY_LAYERS_SERVICE
 
 from LmServer.base.layer import _LayerParameters, Vector, Raster
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ProcessObject
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule
+from LmServer.common.localconstants import DEFAULT_EPSG
 
 # .............................................................................
 class _AncillaryValue(_LayerParameters):

@@ -41,7 +41,8 @@ from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
                                          LOG_PATH)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
+from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS,
+                                            DEFAULT_EPSG)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
@@ -58,7 +59,7 @@ GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
 # .............................................................................
 class _LMBoomer(LMObject):
    # .............................
-   def __init__(self, userid, priority, algLst, mdlScen, prjScenLst, 
+   def __init__(self, userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
                 minPointCount=POINT_COUNT_MIN, intersectGrid=None, log=None):
       super(_LMBoomer, self).__init__()
@@ -68,6 +69,7 @@ class _LMBoomer(LMObject):
       self.priority = priority
       self.minPointCount = minPointCount
       self.algs = []
+      self.epsg = epsg
       self.modelScenario = None
       self.projScenarios = []
       self.modelMask = None
@@ -457,7 +459,7 @@ class _LMBoomer(LMObject):
          if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
             ogrFormat = 'CSV'
          occ = OccurrenceLayer(taxonName, name=taxonName, fromGbif=False, 
-               queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
+               queryCount=dataCount, epsgcode=self.epsg, 
                ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
                primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
@@ -547,11 +549,11 @@ class BisonBoom(_LMBoomer):
    """
    @summary: Initializes the job chainer for BISON.
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None,
                 intersectGrid=None, log=None):
-      super(BisonBoom, self).__init__(userid, priority, algLst, 
+      super(BisonBoom, self).__init__(userid, epsg, priority, algLst, 
                                       mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
@@ -713,10 +715,10 @@ class UserBoom(_LMBoomer):
              The parser writes each new text chunk to a file, updates the 
              Occurrence record and inserts one or more jobs.
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataname, 
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occDataname, 
                 expDate, priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
-      super(UserBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+      super(UserBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
                                      minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
@@ -858,10 +860,10 @@ class GBIFBoom(_LMBoomer):
              text chunk to a file, then creates an OccurrenceJob for it and 
              updates the Occurrence record and inserts a job.
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occfilename, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, providerListFile=None,
                 mdlMask=None, prjMask=None, minPointCount=None, intersectGrid=None, log=None):
-      super(GBIFBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+      super(GBIFBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       minPointCount=minPointCount,
@@ -1075,11 +1077,11 @@ class iDigBioBoom(_LMBoomer):
              creating a chain of SDM jobs for each, unless the species is 
              up-to-date. 
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, idigFname, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None, 
                 intersectGrid=None, log=None):
-      super(iDigBioBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+      super(iDigBioBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                                         taxonSourceName=taxonSourceName, 
                                         mdlMask=mdlMask, prjMask=prjMask, 
                                         minPointCount=minPointCount,

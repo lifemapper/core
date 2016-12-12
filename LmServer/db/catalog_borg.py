@@ -24,7 +24,7 @@
 import mx.DateTime
 import os 
    
-from LmCommon.common.lmconstants import JobStatus, DEFAULT_EPSG, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType
 
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer import Raster, Vector

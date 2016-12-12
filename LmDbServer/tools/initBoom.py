@@ -30,12 +30,12 @@ import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, DEFAULT_EPSG, 
-                                         DEFAULT_MAPUNITS, OutputFormat)
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
+from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
+                                            DEFAULT_EPSG, DEFAULT_MAPUNITS, )
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
@@ -435,6 +435,7 @@ def _writeConfigFile(envPackageName, userid, configMeta, mdlScen=None, prjScens=
    f.write('SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))
 
    f.write('DEFAULT_EPSG: {}\n\n'.format(configMeta['epsg']))
+   f.write('DEFAULT_MAPUNITS: {}\n\n'.format(configMeta['mapunits']))
    
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO

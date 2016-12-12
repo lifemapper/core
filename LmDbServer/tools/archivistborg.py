@@ -71,7 +71,7 @@ def getArchiveParameters(envPackageName=None):
    SPECIES_EXP_MONTH = cfg.getint(_PIPELINE_HEADING, 'SPECIES_EXP_MONTH')
    SPECIES_EXP_DAY = cfg.getint(_PIPELINE_HEADING, 'SPECIES_EXP_DAY')
     
-   return (ARCHIVE_USER, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
+   return (ARCHIVE_USER, DEFAULT_EPSG, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
            DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, USER_OCCURRENCE_DATA, 
            SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY,DATASOURCE)
@@ -93,7 +93,7 @@ class Archivist(Daemon):
       taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
       try:
          if DATASOURCE == 'BISON':
-            self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+            self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             BISON_TSN_FILE, expdate, 
                             taxonSourceName=taxname, mdlMask=None, prjMask=None, 
@@ -101,7 +101,7 @@ class Archivist(Daemon):
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
             
          elif DATASOURCE == 'GBIF':
-            self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+            self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             GBIF_DUMP_FILE, expdate, taxonSourceName=taxname,
                             providerListFile=PROVIDER_DUMP_FILE,
@@ -110,7 +110,7 @@ class Archivist(Daemon):
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
             
          elif DATASOURCE == 'IDIGBIO':
-            self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+            self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             IDIGBIO_FILE, expdate, taxonSourceName=taxname,
                             mdlMask=None, prjMask=None, 
@@ -118,7 +118,7 @@ class Archivist(Daemon):
                             intersectGrid=DEFAULT_GRID_NAME, log=self.log)
    
          else:
-            self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
+            self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
                             DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
                             USER_OCCURRENCE_DATA, expdate, 
                             mdlMask=None, prjMask=None, 
@@ -186,7 +186,7 @@ if __name__ == "__main__":
    args = parser.parse_args()
    envPackageName = args.metadata
    
-   (ARCHIVE_USER, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
+   (ARCHIVE_USER, DEFAULT_EPSG, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
     DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
     DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, USER_OCCURRENCE_DATA, 
     SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY,
@@ -229,6 +229,7 @@ import argparse
 import mx.DateTime as dt
 import os, sys, time
 from LmBackend.common.daemon import Daemon
+from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import BISON_MIN_POINT_COUNT, OutputFormat
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
          GBIF_DUMP_FILE, PROVIDER_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)

@@ -24,7 +24,7 @@
 import mx.DateTime
 import os 
    
-from LmCommon.common.lmconstants import JobStatus, DEFAULT_EPSG, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType
 
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.job import _Job
@@ -35,6 +35,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
                   DEFAULT_PROJECTION_FORMAT, JobFamily, MAL_STORE, ReferenceType)
+from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.notifyJob import NotifyJob

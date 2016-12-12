@@ -23,13 +23,11 @@
 """
 import json
 
-from LmCommon.common.lmconstants import DEFAULT_EPSG
-from LmServer.common.localconstants import ARCHIVE_USER
-
+from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
+from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
 from LmServer.base.layer import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject
-from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
 # .........................................................................
 class EnvironmentalType(_LayerParameters, ServiceObject):
 # .............................................................................

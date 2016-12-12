@@ -1040,8 +1040,6 @@ LM_WKT_FIELD = 'geomwkt'
 DEFAULT_OGR_FORMAT = 'ESRI Shapefile'
 DEFAULT_GDAL_FORMAT = 'GTiff'
 
-DEFAULT_EPSG = 4326
-DEFAULT_MAPUNITS = 'dd'
 LegalMapUnits = ['feet', 'inches', 'kilometers', 'meters', 'miles', 'dd', 'ds']
 
 URL_ESCAPES = [ [" ", "%20"], [",", "%2C"] ]

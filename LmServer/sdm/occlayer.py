@@ -25,9 +25,9 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, GBIF_LINK_FIELD, 
-                                         LM_NAMESPACE, DEFAULT_OGR_FORMAT)
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT)
+from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
+
 
 from LmServer.base.layer import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError

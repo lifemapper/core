@@ -35,7 +35,7 @@ from types import ListType, TupleType
 import zipfile
 
 from LmCommon.common.lmAttObject import LmAttObj
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, SHAPEFILE_EXTENSIONS, 
+from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
                   DEFAULT_OGR_FORMAT, SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits,
    OFTInteger, OFTString)
 from LmCommon.common.verify import computeHash, verifyHash
@@ -46,7 +46,7 @@ from LmServer.base.serviceobject import ServiceObject
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
             GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
             OutputFormat, LMServiceType)
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.localconstants import APP_PATH, DEFAULT_EPSG
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
