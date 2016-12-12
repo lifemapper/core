@@ -34,12 +34,12 @@ from LmCommon.encoding.contrasts import BioGeo, PhyloEncoding
 from LmCommon.encoding.lmTree import LMTree
 
 # .............................................................................
-def TestTreeModule(inputFn, outputFn=None, tipsToDrop=None):
+def testTreeModule(inputFn, outputFn=None, tipsToDrop=None):
    """
    @param inputFn: file path to either json or newick
    @note: what happens if mtxIdx (mx) in tree?
    """
-   tmo = LMTreefromFile(inputFn)
+   tmo = LMTree.fromFile(inputFn)
    
    if not tmo.binary:
       resolvedTree = tmo.resolvePoly()  # returns new PhyloEncoding object
@@ -55,10 +55,12 @@ def TestTreeModule(inputFn, outputFn=None, tipsToDrop=None):
    return finalTree
 
 # .............................................................................
-def TestTreeEncoding(treeFn, pamFn, ultra, treeDict = None, pam = None, outFn=None):
+def testTreeEncoding(treeFn, pamFn, ultra, treeDict=None, pam=None, outFn=None):
    """
    @param treeFn: file path to tree with mtxIdx ('mx') in tips
    @param pamFn: file path to pam .npy
+   @todo: Document parameters
+   @todo: Fix variable names
    """
    if treeDict is not None and pam is not None:
       emo = PhyloEncoding(treeDict,pam)
@@ -75,9 +77,10 @@ def TestTreeEncoding(treeFn, pamFn, ultra, treeDict = None, pam = None, outFn=No
       np.save(outFn,P)   
       
 # .............................................................................
-def TestBioGeoEncoding(intersectLyrFn, contrasShpList, EventField=False, writeBioEncFn=None):
+def testBioGeoEncoding(intersectLyrFn, contrasShpList, EventField=False, writeBioEncFn=None):
    """
    @param EventField: optional, requried only for non-collections (merged or mut. exclus.)
+   @todo: Document
    """
    biogeo = BioGeo(contrasShpList, intersectLyrFn, EventField = EventField)
    biogeo.buildContrasts()
@@ -112,15 +115,15 @@ if __name__ == "__main__":
    else:
       td = args.tipsToDrop
    
-   tree = TestTreeModule(inputFn, tipsToDrop = td,
+   tree = testTreeModule(inputFn, tipsToDrop = td,
                          outputFn=args.modifedTreeWriteFn)
    
    ## tree encoding test
    inputFn = args.treeJSON_MX_Fn
    pamFn = args.incidenceMtxFn
-   tmo = LMTreefromFile(inputFn)
+   tmo = LMTree.fromFile(inputFn)
    ultra = tmo.checkUltraMetric()
-   TestTreeEncoding(inputFn, pamFn, ultra, outFn=args.encTreeMtxWriteFn)
+   testTreeEncoding(inputFn, pamFn, ultra, outFn=args.encTreeMtxWriteFn)
    
    #############
    
@@ -129,7 +132,7 @@ if __name__ == "__main__":
       event = "event"
    else:
       event = args.eventField
-   TestBioGeoEncoding(args.intersectLyrFn, args.contrastShpList, 
+   testBioGeoEncoding(args.intersectLyrFn, args.contrastShpList, 
                       EventField = args.eventField, writeBioEncFn=args.bioEncOutFn)
    
    
