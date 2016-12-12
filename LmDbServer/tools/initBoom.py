@@ -29,8 +29,7 @@ import os
 # import LmDbServer.tools.charlieMetaExp3 as META
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
-         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA,
-         USER_OCCURRENCE_CSV_FILENAME)
+         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, DEFAULT_EPSG, 
                                          DEFAULT_MAPUNITS, OutputFormat)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
@@ -421,9 +420,9 @@ def _writeConfigFile(envPackageName, userid, configMeta, mdlScen=None, prjScens=
    if configMeta['email'] is not None:
       f.write('TROUBLESHOOTERS: {}\n\n'.format(configMeta['email']))
    
-   f.write('SPECIES_EXP_YEAR: {}\n'.format(configMeta['speciesdata'][0]))
-   f.write('SPECIES_EXP_MONTH: {}\n'.format(configMeta['speciesdata'][1]))
-   f.write('SPECIES_EXP_DAY: {}\n\n'.format(configMeta['speciesdata'][2]))
+   f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
+   f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
+   f.write('SPECIES_EXP_DAY: {}\n\n'.format(CURRDATE[2]))
 
    algs = ','.join(configMeta['algorithms'])
    f.write('DEFAULT_ALGORITHMS: {}\n\n'.format(algs))
@@ -525,7 +524,7 @@ if __name__ == '__main__':
 # .............................
       # Write config file for this archive
       mdlScencode = basescen.code
-      prjScencodes = predScens.keys().append(mdlScencode)
+      prjScencodes = predScens.keys()
       newConfigFilename = _writeConfigFile(envPackageName, usr, 
                                            configMeta, mdlScen=mdlScencode, 
                                            prjScens=prjScencodes)
@@ -544,7 +543,48 @@ from LmDbServer.common.localconstants import (SCENARIO_PACKAGE,
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
+from LmServer.common.log import ScriptLoimport mx.DateTime
+# import LmDbServer.tools.charlieMetaExp3 as META
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
+         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
+from LmServer.base.lmobj import LMError
+from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
+from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
 from LmServer.common.log import ScriptLogger
+from LmServer.common.lmuser import LMUser
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.sdm.algorithm import Algorithm
+from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
+from LmServer.sdm.scenario import Scenario
+from LmServer.rad.shapegrid import ShapeGrid
+CURR_MJD = mx.DateTime.gmt().mjd
+from LmDbServer.tools.initBoom import *
+from LmDbServer.tools.initBoom import (_getBaselineLayers, _getbioName, 
+          _findFileFor, _getPredictedLayers, _importClimatePackageMetadata,
+          _getConfiguredMetadata)
+taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
+envPackageName = SCENARIO_PACKAGE
+META = _importClimatePackageMetadata(envPackageName)
+pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
+configMeta = _getConfiguredMetadata(META, pkgMeta)
+lyrtypeMeta = META.LAYERTYPE_META
+usr = configMeta['userid']
+
+logger = ScriptLogger('testing')
+scribe = BorgScribe(logger)
+success = scribe.openConnections()
+addUsers(scribe, configMeta)
+
+basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
+                                                META.LAYERTYPE_META,
+                                                META.OBSERVED_PREDICTED_META,
+                                                META.CLIMATE_KEYWORDS)
+predScens = createPredictedScenarios(usr, pkgMeta, configMeta, 
+                                     META.LAYERTYPE_META, staticLayers,
+                                     META.OBSERVED_PREDICTED_META,
+                                     META.CLIMATE_KEYWORDS)
+gger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm

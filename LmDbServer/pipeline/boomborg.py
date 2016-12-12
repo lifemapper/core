@@ -35,8 +35,8 @@ from types import ListType, TupleType, StringType, UnicodeType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            ProcessType, JobStatus, ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, 
-            GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
+            ProcessType, JobStatus, OutputFormat, ONE_HOUR, ONE_MIN, 
+            GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
@@ -713,8 +713,8 @@ class UserBoom(_LMBoomer):
              The parser writes each new text chunk to a file, updates the 
              Occurrence record and inserts one or more jobs.
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
-                occMetaFname, expDate, priority=Priority.HIGH, minPointCount=None,
+   def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataname, 
+                expDate, priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       super(UserBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
@@ -723,7 +723,8 @@ class UserBoom(_LMBoomer):
                                      intersectGrid=intersectGrid, log=log)
       self.occParser = None
       try:
-         self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
+         self.occParser = OccDataParser(self.log, occDataname + OutputFormat.CSV, 
+                                        occDataname + OutputFormat.METADATA)
       except Exception, e:
          raise LMError(currargs=e.args)
          
