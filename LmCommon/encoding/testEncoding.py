@@ -26,22 +26,20 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-#from Pedro_Analysis.MCPA.encoding.lmTree import LMtree as LT
-from lmTree import LMtree as LT
-#from Pedro_Analysis.MCPA.encoding.contrasts import PhyloEncoding, BioGeo
-from contrasts import PhyloEncoding, BioGeo
+import argparse
 import os
 import numpy as np
-import argparse
-from __builtin__ import None
 
+from LmCommon.encoding.contrasts import BioGeo, PhyloEncoding
+from LmCommon.encoding.lmTree import LMTree
 
+# .............................................................................
 def TestTreeModule(inputFn, outputFn=None, tipsToDrop=None):
    """
    @param inputFn: file path to either json or newick
    @note: what happens if mtxIdx (mx) in tree?
    """
-   tmo = LT.fromFile(inputFn)
+   tmo = LMTreefromFile(inputFn)
    
    if not tmo.binary:
       resolvedTree = tmo.resolvePoly()  # returns new PhyloEncoding object
@@ -56,6 +54,7 @@ def TestTreeModule(inputFn, outputFn=None, tipsToDrop=None):
       
    return finalTree
 
+# .............................................................................
 def TestTreeEncoding(treeFn, pamFn, ultra, treeDict = None, pam = None, outFn=None):
    """
    @param treeFn: file path to tree with mtxIdx ('mx') in tips
@@ -75,6 +74,7 @@ def TestTreeEncoding(treeFn, pamFn, ultra, treeDict = None, pam = None, outFn=No
    if outFn is not None:
       np.save(outFn,P)   
       
+# .............................................................................
 def TestBioGeoEncoding(intersectLyrFn, contrasShpList, EventField=False, writeBioEncFn=None):
    """
    @param EventField: optional, requried only for non-collections (merged or mut. exclus.)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
    ## tree encoding test
    inputFn = args.treeJSON_MX_Fn
    pamFn = args.incidenceMtxFn
-   tmo = LT.fromFile(inputFn)
+   tmo = LMTreefromFile(inputFn)
    ultra = tmo.checkUltraMetric()
    TestTreeEncoding(inputFn, pamFn, ultra, outFn=args.encTreeMtxWriteFn)
    
