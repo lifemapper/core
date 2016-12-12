@@ -342,21 +342,133 @@ BEGIN
 
    IF NOT FOUND THEN
       begin
-         INSERT INTO lm_v3.Taxon (taxonomysourceid, userid, taxonomykey, squid,
+         -- if no squid, do not insert, return empty record
+         IF sqd IS NOT NULL THEN
+            INSERT INTO lm_v3.Taxon (taxonomysourceid, userid, taxonomykey, squid,
                                   kingdom, phylum, tx_class, tx_order, family, 
                                   genus, rank, canonical, sciname, genuskey, 
                                   specieskey, keyHierarchy, lastcount, modtime)
                  VALUES (tsourceid, usr, tkey, sqd, king, phyl, clss, ordr, fam, 
                          gen, rnk, can, sname, gkey, skey, hierkey, cnt, currtime);
-         IF FOUND THEN 
-            SELECT INTO tid last_value FROM lm_v3.taxon_taxonid_seq;
-            SELECT * INTO rec FROM lm_v3.Taxon WHERE taxonid = tid;
+            IF FOUND THEN 
+               SELECT INTO tid last_value FROM lm_v3.taxon_taxonid_seq;
+               SELECT * INTO rec FROM lm_v3.Taxon WHERE taxonid = tid;
+            END IF;
          END IF;
       end;
    END IF;
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getOccurrenceSetsForSquidUser(sqd varchar,
+                                                                  usr varchar)
+   RETURNS SETOF lm_v3.occurrenceset AS
+$$
+DECLARE
+   rec_occ lm_v3.occurrenceset%ROWTYPE;
+BEGIN
+   FOR rec_occ in 
+      SELECT o.* FROM lm_v3.occurrenceset o
+         WHERE o.squid = sqd AND o.userid = usr
+      LOOP
+         RETURN NEXT rec_occ;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;  
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3._lm_getOccurrenceSet(occid int,
+                                                    usr varchar, 
+                                                    sqd varchar, 
+                                                    epsg int)
+   RETURNS lm_v3.occurrenceset AS
+$$
+DECLARE
+   rec lm_v3.occurrenceset%ROWTYPE;                             
+BEGIN                                                      
+   IF occid IS NOT NULL then                          
+      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = occid;
+   ELSE
+      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE userid = usr
+                                                   AND squid = sqd
+                                                   AND epsgcode = epsg;
+   END IF;                                                 
+   RETURN rec;                                              
+END; 
+$$ LANGUAGE 'plpgsql' STABLE; 
+                                                                        
+
+-- ----------------------------------------------------------------------------
+-- Find or insert occurrenceSet and return id.  Return -1 on failure.
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertOccurrenceSet(occid int,
+                                                  usr varchar,
+                                                  sqd varchar,
+                                                  vrfy varchar,
+                                                  name varchar,
+                                                  metadataUrlprefix varchar,
+                                                  dloc varchar,
+                                                  rdloc varchar,
+                                                  total int,
+                                                  bounds varchar, 
+                                                  epsg int,
+                                                  meta text,
+                                                  stat int,
+                                                  stattime double precision,
+                                                  polywkt text,
+                                                  pointswkt text)
+   RETURNS lm_v3.occurrenceset AS
+$$
+DECLARE
+   rec lm_v3.occurrenceset%ROWTYPE;                             
+   id int = -1;
+   idstr varchar = '';
+   occmetadataUrl varchar = '';
+BEGIN
+   SELECT INTO rec lm_v3._lm_getOccurrenceSet(occid, usr, sqd, epsg);
+   IF NOT FOUND THEN
+      BEGIN
+         -- Default LM EPSG Code
+         IF epsg = 4326 THEN 
+            INSERT INTO lm_v3.OccurrenceSet 
+               (verify, squid, userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
+                dateLastChecked, epsgcode, bbox, geom, geompts,
+                primaryEnv, rawdlocation, status, statusModTime, scientificNameId)
+            VALUES 
+               (lyrverify, lyrsquid, usrid, frmgbif, name, dloc, qrynum, qrytime, 
+                qrytime, epsg, bounds, 
+                ST_GeomFromText(polywkt, epsg), ST_GeomFromText(pointswkt, epsg),
+                env, rdloc, stat, stattime, scinameid);
+
+         -- Other EPSG Codes skip geometry
+         ELSE 
+            INSERT INTO lm_v3.OccurrenceSet 
+               (verify, squid, userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
+                dateLastChecked, epsgcode, bbox,
+                primaryEnv, rawdlocation, status, statusModTime, scientificNameId)
+            VALUES 
+               (lyrverify, lyrsquid, usrid, frmgbif, name, dloc, qrynum, qrytime, 
+                qrytime, epsg, bounds, env, rdloc, stat, stattime, scinameid);
+
+         END IF;
+        
+         -- Create metadataUrl in the form: 'http://lifemapper.org/ogc?map=data_9999&layers=occ_9999'
+         -- for an occurrenceset with id = 9999. 
+         IF FOUND THEN
+            SELECT INTO id last_value FROM lm_v3.occurrenceset_occurrencesetid_seq;
+            idstr = cast(id as varchar);
+            occmetadataUrl := replace(metadataUrlprefix, '#id#', idstr);
+            UPDATE lm_v3.OccurrenceSet SET metadataUrl = occmetadataUrl WHERE occurrenceSetId = id;
+         END IF;
+         
+      END;  -- end alternatives for epsgcode
+   END IF;  -- end if occurrenceset found
+   RETURN id;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)

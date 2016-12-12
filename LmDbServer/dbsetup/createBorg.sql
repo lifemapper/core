@@ -230,7 +230,8 @@ create table lm_v3.OccurrenceSet
    epsgcode integer,
    metadata text,
    status int,
-   statusModTime double precision
+   statusModTime double precision,
+   UNIQUE (userId, squid, epsgcode)
 );
 Select AddGeometryColumn('lm_v3', 'occurrenceset', 'geom', 4326, 'POLYGON', 2);
 ALTER TABLE lm_v3.OccurrenceSet ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
