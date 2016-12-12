@@ -30,9 +30,14 @@ import numpy as np
 from operator import itemgetter #TODO: Really necessary?
 import os
 from random import randint
-import simplejson as json # TODO: Do we need simplejson?
+import json
 
+from LmCommon.common.lmconstants import OutputFormat
 from LmCommon.encoding.newickToJson import Parser
+
+#TODO: Move to constants module and consider a FileTypes class
+NHX_EXT = [".nhx", ".tre"]
+
 
 # .............................................................................
 class LmTree(object):
@@ -44,8 +49,6 @@ class LmTree(object):
    NO_BRANCH_LEN = 0  # missing all branch lengths
    MISSING_BRANCH_LEN = 1 # missing some branch lengths
    HAS_BRANCH_LEN = 2
-   JSON_EXT = ".json"
-   NHX_EXT = [".nhx",".tre"]
    
    # ..............................   
    def __init__(self,treeDict):
@@ -71,11 +74,11 @@ class LmTree(object):
    def fromFile(cls,dLoc):
       if os.path.exists(dLoc):
          fn,e = os.path.splitext(dLoc)
-         if e == cls.JSON_EXT:
+         if e == OutputFormat.JSON:
             with open(dLoc,'r') as f:
                jsonstr = f.read()
             return cls(json.loads(jsonstr))
-         elif e in cls.NHX_EXT:
+         elif e in NHX_EXT:
             phyloDict = cls.convertFromNewick(dLoc) 
             if  isinstance(phyloDict,Exception):
                raise ValueError("Expected an python dictionary "+str(phyloDict))
@@ -474,61 +477,6 @@ class LmTree(object):
       
       return tree
 
-   # ..............................   
-   def _makeCladeFromEdges_tips(self, edge, lengths=False,tips=False):
-      """
-      @summary: MORE GENERIC VERSION,makes a tree dict from a (2 * No. internal node) x 2 numpy matrix
-      @param edge: numpy array of edges (integers)
-      @param lengths: boolean for adding lengths
-      """
-      sT = self.subTrees
-      # these paths are for tips and internal for R sample tree 
-      self.internalPaths = {
-                            '7':[7],
-                            '10':[10,7],
-                            '8':[8,7],
-                            '9':[9,8,7]
-                            }
-      self.tipPaths = {
-                       '6':[6,10,7],
-                       '5':[5,10,7],
-                       '4':[4,9,8,7],
-                       '3':[3,9,8,7],
-                       '2':[2,8,7],
-                       '1':[1,8,7]
-                       }
-      #tips = self.tipPaths.keys()
-      iNodes = list(set(edge[:,0]))
-      m = {}  # key is internal node, value is list of terminating nodes
-      for iN in iNodes:
-         dx = np.where(edge[:,0]==iN)[0]
-         le = list(edge[dx][:,1])
-         m[iN] = le
-      print m
-      #m = {k[0]:list(k) for k in edge }
-      tree = {'pathId':str(0),'path':"7",'children':[],"name":str(0)}  # will take out name for internal after testing
-      # ..............................   
-      def recurse(clade,l):
-         for x in l:
-            if 'children' in clade:
-               nc = {'pathId':str(x),'path':[],"name":str(x)} # will take out name for internal after testing
-               if lengths:
-                  #nc["length"] = self.lengths[x]
-                  pass
-               if x not in tips:
-                  nc['children'] = []
-                  nc["path"] = ','.join([str(pI) for pI in self.internalPaths[str(x)]])
-               else:
-                  #nc["name"] = self.tipPaths[str(x)][1]
-                  nc["path"] = ','.join([str(pI) for pI in self.tipPaths[str(x)]])
-                  pass
-               clade['children'].append(nc)
-               if x not in tips:
-                  recurse(nc,m[x])
-      recurse(tree,m[7])
-      
-      return tree
-   
    # ..............................   
    def _makeCladeFromRandomEdges(self, edge, n):
       """
