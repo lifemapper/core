@@ -175,7 +175,7 @@ class BorgScribe(LMObject):
                 user/name/epsgcode.  
       @return: Shapegrid object .
       """
-      shpgrid = self._borg.getShapeGrid(self, shpgridId, lyrId, 
+      shpgrid = self._borg.getShapeGrid(shpgridId, lyrId, 
                                         userId, lyrName, epsg)
       return shpgrid
 
