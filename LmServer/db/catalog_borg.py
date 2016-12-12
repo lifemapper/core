@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -648,7 +648,7 @@ class Borg(DbPostgresql):
    def findOrInsertTaxon(self, taxonSourceId, taxonKey, sciName):
       scientificname = None
       currtime = mx.DateTime.gmt().mjd
-      usr = kingdom = phylum = cls = ordr = family = genus = None
+      usr = squid = kingdom = phylum = cls = ordr = family = genus = None
       rank = canname = sciname = genkey = spkey = keyhierarchy = lastcount = None
       try:
          taxonSourceId = sciName.taxonomySourceId

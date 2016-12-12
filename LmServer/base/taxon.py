@@ -21,7 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmServer.base.lmobj import LMObject
+from LmCommon.common.verify import computeHash
+from LmServer.base.lmobj import LMObject, LMError
 
 # ..............................................................................
 class ScientificName(LMObject):
@@ -42,7 +43,6 @@ class ScientificName(LMObject):
       self.canonicalName = canonicalName
       self.rank = rank
       self.userid = userid
-      self.squid = squid
       self.kingdom = kingdom 
       self.phylum = phylum
       self.txClass = txClass
@@ -58,6 +58,8 @@ class ScientificName(LMObject):
       self._sourceSpeciesKey = taxonomySourceSpeciesKey
       self._sourceKeyHierarchy = taxonomySourceKeyHierarchy
       self._dbId = scientificNameId 
+      self._squid = None
+      self._setSquid(squid)
       
 # .............................................................................
 # Public methods
@@ -101,4 +103,14 @@ class ScientificName(LMObject):
    @property
    def sourceKeyHierarchy(self):
       return self._sourceKeyHierarchy
-
+   
+   def _setSquid(self, squid=None):
+      if squid is None:         
+         if self._sourceId is not None and self._sourceKey is not None:
+            squid = computeHash(content='{}:{}'.format(self._sourceId, self._sourceKey))
+         elif self.userid is not None and self.scientificName is not None:
+            squid = computeHash(content='{}:{}'.format(self.userid, self.scientificName))
+         else:
+            raise LMError('Scientific name requires unique identifier comprised of: '+
+                           'taxonomySourceId/taxonomySourceKey OR userid/scientificName')
+      self.squid = squid
