@@ -34,17 +34,20 @@ import simplejson as json # TODO: Do we need simplejson?
 
 from LmCommon.encoding.newickToJson import Parser
 
-
-
-class LMtree():
+# .............................................................................
+class LmTree(object):
+   """
+   @summary: Class representing a phylogenetic tree in Lifemapper
+   """
    
+   # TODO: Move these to constants
    NO_BRANCH_LEN = 0  # missing all branch lengths
    MISSING_BRANCH_LEN = 1 # missing some branch lengths
    HAS_BRANCH_LEN = 2
    JSON_EXT = ".json"
    NHX_EXT = [".nhx",".tre"]
    
-   
+   # ..............................   
    def __init__(self,treeDict):
       """
       @note: what happens if mtxIdx (mx) in tree?
@@ -63,6 +66,7 @@ class LMtree():
       self._tipNamesWithMX = []
       self.getTreeInfo(self.tree)
       
+   # ..............................   
    @classmethod
    def fromFile(cls,dLoc):
       if os.path.exists(dLoc):
@@ -80,6 +84,7 @@ class LMtree():
       else:
          pass # ?
       
+   # ..............................   
    @classmethod
    def convertFromNewick(cls,dLoc):
       
@@ -92,6 +97,7 @@ class LMtree():
          result = e
       return result
       
+   # ..............................   
    def getTreeInfo(self,clade):
       """
       @summary: performs one recursion for all tree info objects
@@ -102,6 +108,7 @@ class LMtree():
       subTrees = {}
       self.polyPos = {}
       
+      # ..............................   
       def recurseClade(clade):
          if "children" in clade:
             # do stuff in here
@@ -144,11 +151,13 @@ class LMtree():
       self.labels = np.array([self.tipPaths[str(li)][1] for li in self.labelIds])
       self._subTrees = subTrees
       #return tipPaths, lengths, subTrees
-#...................................................   
+
+   # ..............................   
    def findDropTipsDelMtx(self,dropTips):
       """
       @summary: find tips by name to drop and if there is a mx for tip removes all mx
       """     
+      # ..............................   
       def takeOutMtx(clade):
          if "children" in clade:
             clade.pop('mx', None)
@@ -156,13 +165,13 @@ class LMtree():
                takeOutMtx(child)
          else:
             clade.pop('mx', None)
-      #...................................................
+      
       for n in dropTips:
          if n in self.tipNamesWithMX:
             takeOutMtx(self.tree)
             break
                
-#...................................................   
+   # ..............................   
    def dropTips(self, tips ):
       """
       @summary: dropt tips from current tree returns new tree
@@ -244,7 +253,7 @@ class LMtree():
       else:
          raise ValueError('Cannot remove all tips from a tree, or leave single tip')
       
-#...................................................         
+   # ..............................   
    def _getEdges(self):
       """
       @summary: makes a (2 * No. internal Nodes) x 2 matrix representation of the tree 
@@ -267,7 +276,8 @@ class LMtree():
       edge = np.array(edge_ll)
       
       return edge
-#...................................................   
+
+   # ..............................   
    def _truncate(self,f, n):
       """
       @summary: Truncates/pads a float f to n decimal places without rounding
@@ -279,7 +289,7 @@ class LMtree():
       i, p, d = s.partition('.')
       return '.'.join([i, (d+'0'*n)[:n]])
 
-#...................................................   
+   # ..............................   
    def checkUltraMetric(self):
       """
       @summary: check to see if tree is ultrametric, all the way to the root
@@ -304,43 +314,52 @@ class LMtree():
       else:
          return self.NO_BRANCH_LEN  # need to think about this
    
+   # ..............................   
    @property
    def tipNames(self):
       return self._tipNames
    
+   # ..............................   
    @property
    def tipNamesWithMX(self):
       return self._tipNamesWithMX
    
+   # ..............................   
    @property
    def polytomies(self):
       
       return self._polytomy
    
+   # ..............................   
    @property
    def internalCount(self):
       
       return len(self.subTrees)   
    
+   # ..............................   
    @property
    def subTrees(self):
       
       return self._subTrees
          
+   # ..............................   
    @property
    def lengths(self):
      
       return self._lengths
      
+   # ..............................   
    @property
    def tipCount(self):
        
       return len(self.tipPaths)
       
+   # ..............................   
    @property
    def binary(self):
       return bool(1//(self.tipCount - self.internalCount))
       
+   # ..............................   
    @property
    def branchLengths(self):
       #if not self.tipPaths:
@@ -353,13 +372,14 @@ class LMtree():
          else:
             return self.MISSING_BRANCH_LEN
    
-# .........................................................................   
+   # ..............................   
    def makePaths(self, tree, takeOutBranches=False):
       """
       @summary: makes paths by recursing tree and appending parent to new pathId
       """
       print "in make Paths"
       p = {'c':0}   
+      # ..............................   
       def recursePaths(clade, parent):
          if "children" in clade:
             clade['path'].insert(0,str(p['c']))
@@ -375,7 +395,7 @@ class LMtree():
             clade['path'] = clade['path'] + parent
             clade['pathId'] = str(p['c'])
             #clade['name'] = str(p['c'])  #take this out for real
-      # ................................
+      # ..............................   
       def takeOutBr(clade):
          
          if "children" in clade:
@@ -384,7 +404,7 @@ class LMtree():
                takeOutBr(child)
          else:
             clade.pop('length', None)
-      # ................................      
+      # ..............................   
       def takeOutStrPaths(clade):
          
          if "children" in clade:
@@ -395,7 +415,8 @@ class LMtree():
          else:
             clade["path"] = []
             clade["pathId"] = ''
-      # ................................
+
+      
       takeOutStrPaths(tree)    
       
       recursePaths(tree,[])
@@ -403,6 +424,8 @@ class LMtree():
       if takeOutBranches:
          takeOutBr(tree)
       
+      # ..............................
+      # TODO: Why is this defined here?   
       def stringifyPaths(clade):
          if "children" in clade:
             clade['path'] = ','.join(clade['path'])
@@ -413,7 +436,7 @@ class LMtree():
             
       stringifyPaths(tree)
    
-# .........................................................................   
+   # ..............................   
    def _makeCladeFromEdges(self, edge, lengths=False, tips=False):
       """
       @summary: MORE GENERIC VERSION,makes a tree dict from a (2 * No. internal node) x 2 numpy matrix
@@ -450,7 +473,8 @@ class LMtree():
       recurse(tree,m[edge[0][0]])
       
       return tree
-# .........................................................................
+
+   # ..............................   
    def _makeCladeFromEdges_tips(self, edge, lengths=False,tips=False):
       """
       @summary: MORE GENERIC VERSION,makes a tree dict from a (2 * No. internal node) x 2 numpy matrix
@@ -483,6 +507,7 @@ class LMtree():
       print m
       #m = {k[0]:list(k) for k in edge }
       tree = {'pathId':str(0),'path':"7",'children':[],"name":str(0)}  # will take out name for internal after testing
+      # ..............................   
       def recurse(clade,l):
          for x in l:
             if 'children' in clade:
@@ -504,7 +529,7 @@ class LMtree():
       
       return tree
    
-# .........................................................................        
+   # ..............................   
    def _makeCladeFromRandomEdges(self, edge, n):
       """
       @summary: makes a tree dict from a (2 * No. internal node) x 2 numpy matrix
@@ -534,6 +559,7 @@ class LMtree():
       
       return tree
       
+   # ..............................   
    def makeClades(self, edge):
       """
       @deprecated: false start but has some good ideas in it
@@ -553,11 +579,13 @@ class LMtree():
       le.sort(key=itemgetter(0)) 
       print le
    
+   # ..............................   
    def _getRTips(self,rt):
       """
       @summary: recurses a random subtree and returns a list of its tips
       """
       tips = []
+      # ..............................   
       def findTips(clade):
          if 'children' in clade:
             clade['name'] = ''
@@ -571,6 +599,7 @@ class LMtree():
       findTips(rt)
       return tips    
      
+   # ..............................   
    def resolvePoly(self):
       """
       @summary: resolves polytomies against tree object
@@ -603,6 +632,7 @@ class LMtree():
             st_copy[int(k)].append(c2)
             
          removeList = list(self.polyPos.keys())
+         # ..............................   
          def replaceInTree(clade):
             if "children" in clade:
                #if clade["pathId"] in self.polyPos.keys():
@@ -630,6 +660,7 @@ class LMtree():
          return self
         
       
+   # ..............................   
    def rTree(self, n, rooted=True):
       """
       @summary: given the number of tips generate a random binary tree by randomly splitting edges, 
@@ -637,6 +668,7 @@ class LMtree():
       @param n: number of tips
       @note: this is just for >= 4 so far, but not be a problem
       """
+      # ..............................   
       def generate(n, pos):
          n1 = randint(1,n-1)
          n2 = n - n1
@@ -674,12 +706,14 @@ class LMtree():
       rt = self._makeCladeFromRandomEdges(edge, n)
       return rt
    
+   # ..............................   
    def writeTree(self, path):
       #if os.path.exists(path):
       with open(path,'w') as f:
          f.write(json.dumps(self.tree,sort_keys=True, indent=4))
       
-      
+
+# .............................................................................      
 if __name__ == "__main__":
    
    p = "/home/jcavner/Charolettes_Data/Trees/RAxML_bestTree.12.15.14.1548tax.ultrametric.tre"
