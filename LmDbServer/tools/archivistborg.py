@@ -270,6 +270,14 @@ boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS,
                   mdlMask=None, prjMask=None, 
                   minPointCount=POINT_COUNT_MIN,  
                   intersectGrid=DEFAULT_GRID_NAME, log=logger)
+boomer.moveToStart()
+#boomer.chainOne()
+speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+if speciesKey:
+   jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
+   boomer._createMakeflow(jobs)
+
+boomer.saveNextStart()
 
 
 
