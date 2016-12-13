@@ -117,4 +117,4 @@ class ScientificName(LMObject):
          else:
             raise LMError('Scientific name requires unique identifier comprised of: '+
                            'taxonomySourceId/taxonomySourceKey OR userid/scientificName')
-      self.squid = squid
+      self._squid = squid
