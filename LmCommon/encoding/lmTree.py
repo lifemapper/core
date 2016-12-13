@@ -38,6 +38,15 @@ from LmCommon.encoding.newickToJson import Parser
 #TODO: Move to constants module and consider a FileTypes class
 NHX_EXT = [".nhx", ".tre"]
 
+C_KEY = 'c' # TODO: What is this?  Document
+CHILDREN_KEY = 'children'
+DESC_KEY = 'desc' #TODO: What is this? Document.  Only used twice
+LENGTH_KEY = 'length'
+MX_KEY = 'mx' #TODO: What is this? Document
+NAME_KEY = 'name'
+NC_KEY = 'nc'
+PATH_KEY = 'path'
+PATH_ID_KEY = 'pathId'
 
 # .............................................................................
 class LmTree(object):
@@ -132,37 +141,37 @@ class LmTree(object):
          @todo: use constants for strings
          @todo: Evaluate casting
          """
-         if "children" in clade:
+         if clade.has_key(CHILDREN_KEY):
             # do stuff in here
-            if "length" in clade:  # to control for pathId 0 not having length
-               lengths[int(clade["pathId"])] = float(clade["length"])
+            if clade.has_key(LENGTH_KEY):  # to control for pathId 0 not having length
+               lengths[int(clade[PATH_ID_KEY])] = float(clade[LENGTH_KEY])
             else:
-               if int(clade['pathId']) != 0:
+               if int(clade[PATH_ID_KEY]) != 0:
                   self._numberMissingLengths +=1
-            internalPaths[clade['pathId']] = [int(x) for x in clade["path"].split(',')]
-            subTrees[int(clade['pathId'])] = clade["children"]
-            if len(clade["children"]) > 2:
+            internalPaths[clade[PATH_ID_KEY]] = [int(x) for x in clade[PATH_KEY].split(',')]
+            subTrees[int(clade[PATH_ID_KEY])] = clade[CHILDREN_KEY]
+            if len(clade[CHILDREN_KEY]) > 2:
                self._polytomy = True
-               self.whichNPoly.append(int(clade["pathId"]))
+               self.whichNPoly.append(int(clade[PATH_ID_KEY]))
                polydesc = {}
-               for p in clade["children"]:
-                  if 'length' in p:
-                     polydesc[int(p["pathId"])] = p['length']
+               for p in clade[CHILDREN_KEY]:
+                  if p.has_key(LENGTH_KEY):
+                     polydesc[int(p[PATH_ID_KEY])] = p[LENGTH_KEY]
                   else:
-                     polydesc[int(p["pathId"])] = ''
-               self.polyPos[clade["pathId"]] = {'path': clade["path"], "desc":polydesc}
-            for child in clade["children"]:
+                     polydesc[int(p[PATH_ID_KEY])] = ''
+               self.polyPos[clade[PATH_ID_KEY]] = {PATH_KEY: clade[PATH_KEY], DESC_KEY: polydesc}
+            for child in clade[CHILDREN_KEY]:
                recurseClade(child)
          else:
             # tip
-            if "length" not in clade:
+            if not clade.has_key(LENGTH_KEY):
                self._numberMissingLengths +=1
             else:
-               lengths[int(clade["pathId"])] = float(clade["length"]) 
-            tipPaths[clade["pathId"]] = ([int(x) for x in clade["path"].split(',')], clade["name"])
-            self._tipNames.append(clade["name"]) 
-            if 'mx' in clade:
-               self._tipNamesWithMX.append(clade["name"])
+               lengths[int(clade[PATH_ID_KEY])] = float(clade[LENGTH_KEY]) 
+            tipPaths[clade[PATH_ID_KEY]] = ([int(x) for x in clade[PATH_KEY].split(',')], clade[NAME_KEY])
+            self._tipNames.append(clade[NAME_KEY]) 
+            if clade.has_key(MX_KEY):
+               self._tipNamesWithMX.append(clade[NAME_KEY])
       #...................................................
       #TODO: Document
       recurseClade(clade)
@@ -185,12 +194,12 @@ class LmTree(object):
       """     
       # ..............................   
       def takeOutMtx(clade):
-         if "children" in clade:
-            clade.pop('mx', None)
-            for child in clade["children"]:
+         if clade.has_key(CHILDREN_KEY):
+            clade.pop(MX_KEY, None)
+            for child in clade[CHILDREN_KEY]:
                takeOutMtx(child)
          else:
-            clade.pop('mx', None)
+            clade.pop(MX_KEY, None)
       
       for n in dropTips:
          if n in self.tipNamesWithMX:
@@ -293,11 +302,11 @@ class LmTree(object):
       edgeDict = {}
       #TODO: Evaluate
       def recurseEdge(clade):
-         if "children" in clade:
-            childIds = [int(c['pathId']) for c in clade['children']]
-            if int(clade['pathId']) not in edgeDict:
-               edgeDict[int(clade['pathId'])] = childIds
-            for child in clade["children"]:
+         if clade.has_key(CHILDREN_KEY):
+            childIds = [int(c[PATH_ID_KEY]) for c in clade[CHILDREN_KEY]]
+            if int(clade[PATH_ID_KEY]) not in edgeDict:
+               edgeDict[int(clade[PATH_ID_KEY])] = childIds
+            for child in clade[CHILDREN_KEY]:
                recurseEdge(child)        
       recurseEdge(self.tree)
       
@@ -422,43 +431,43 @@ class LmTree(object):
       @todo: Probably remove inner functions
       """
       print "in make Paths"
-      p = {'c':0}   
+      p = {C_KEY:0}   
       # ..............................   
       def recursePaths(clade, parent):
-         if "children" in clade:
-            clade['path'].insert(0,str(p['c']))
-            clade['path'] = clade['path'] + parent 
-            clade['pathId'] = str(p['c'])
-            #clade['name'] = str(p['c'])
-            for child in clade["children"]:
-               p['c'] = p['c'] + 1
-               recursePaths(child, clade['path'])
+         if clade.has_key(CHILDREN_KEY):
+            clade[PATH_KEY].insert(0,str(p[C_KEY]))
+            clade[PATH_KEY] = clade[PATH_KEY] + parent 
+            clade[PATH_ID_KEY] = str(p[C_KEY])
+            #clade[NAME_KEY] = str(p[C_KEY])
+            for child in clade[CHILDREN_KEY]:
+               p[C_KEY] = p[C_KEY] + 1
+               recursePaths(child, clade[PATH_KEY])
          else:
             # tips
-            clade['path'].insert(0,str(p['c']))
-            clade['path'] = clade['path'] + parent
-            clade['pathId'] = str(p['c'])
-            #clade['name'] = str(p['c'])  #take this out for real
+            clade[PATH_KEY].insert(0,str(p[C_KEY]))
+            clade[PATH_KEY] = clade[PATH_KEY] + parent
+            clade[PATH_ID_KEY] = str(p[C_KEY])
+            #clade[NAME_KEY] = str(p[C_KEY])  #take this out for real
       # ..............................   
       def takeOutBr(clade):
          
-         if "children" in clade:
-            clade.pop('length', None)
-            for child in clade["children"]:
+         if clade.has_key(CHILDREN_KEY):
+            clade.pop(LENGTH_KEY, None)
+            for child in clade[CHILDREN_KEY]:
                takeOutBr(child)
          else:
-            clade.pop('length', None)
+            clade.pop(LENGTH_KEY, None)
       # ..............................   
       def takeOutStrPaths(clade):
          
-         if "children" in clade:
-            clade["path"] = []
-            clade["pathId"] = ''
-            for child in clade["children"]:
+         if clade.has_key(CHILDREN_KEY):
+            clade[PATH_KEY] = []
+            clade[PATH_ID_KEY] = ''
+            for child in clade[CHILDREN_KEY]:
                takeOutStrPaths(child)
          else:
-            clade["path"] = []
-            clade["pathId"] = ''
+            clade[PATH_KEY] = []
+            clade[PATH_ID_KEY] = ''
 
       
       takeOutStrPaths(tree)    
@@ -471,12 +480,12 @@ class LmTree(object):
       # ..............................
       # TODO: Why is this defined here?   
       def stringifyPaths(clade):
-         if "children" in clade:
-            clade['path'] = ','.join(clade['path'])
-            for child in clade["children"]:
+         if clade.has_key(CHILDREN_KEY):
+            clade[PATH_KEY] = ','.join(clade[PATH_KEY])
+            for child in clade[CHILDREN_KEY]:
                stringifyPaths(child)
          else:
-            clade['path'] = ','.join(clade['path'])
+            clade[PATH_KEY] = ','.join(clade[PATH_KEY])
             
       stringifyPaths(tree)
    
@@ -498,22 +507,22 @@ class LmTree(object):
          m[iN] = le
       #print m
       #m = {k[0]:list(k) for k in edge }
-      tree = {'pathId':str(0), 'path':'', 'children':[]}  # will take out name for internal after testing
+      tree = {PATH_ID_KEY:str(0), PATH_KEY:'', CHILDREN_KEY:[]}  # will take out name for internal after testing
       def recurse(clade, l):
          for x in l:
-            if 'children' in clade:
-               nc = {'pathId':str(x), 'path':''} # will take out name for internal after testing
+            if clade.has_children(CHILDREN_KEY):
+               nc = {PATH_ID_KEY:str(x), PATH_KEY:''} # will take out name for internal after testing
                if lengths:
-                  nc["length"] = lengths[x]
+                  nc[LENGTH_KEY] = lengths[x]
                if x not in tips:
-                  nc['children'] = []
-                  #nc["path"] = ','.join([str(pI) for pI in self.internalPaths[str(x)]])
-                  nc["path"] = ''
+                  nc[CHILDREN_KEY] = []
+                  #nc[PATH_KEY] = ','.join([str(pI) for pI in self.internalPaths[str(x)]])
+                  nc[PATH_KEY] = ''
                else:
-                  nc["name"] = self.tipPaths[str(x)][1]
-                  #nc["path"] = ','.join([str(pI) for pI in self.tipPaths[str(x)][0]])
-                  nc["path"] = ''
-               clade['children'].append(nc)
+                  nc[NAME_KEY] = self.tipPaths[str(x)][1]
+                  #nc[PATH_KEY] = ','.join([str(pI) for pI in self.tipPaths[str(x)][0]])
+                  nc[PATH_KEY] = ''
+               clade[CHILDREN_KEY].append(nc)
                if x not in tips:
                   recurse(nc, m[x])
       recurse(tree, m[edge[0][0]])
@@ -539,14 +548,14 @@ class LmTree(object):
          m[iN] = le
       #print m
       #m = {k[0]:list(k) for k in edge }
-      tree = {'pathId':str(n+1), 'path':[], 'children':[], "name":str(n+1), "length":"0"}
+      tree = {PATH_ID_KEY: str(n+1), PATH_KEY: [], CHILDREN_KEY: [], NAME_KEY: str(n+1), LENGTH_KEY:"0"}
       def recurse(clade, l):
          for x in l:
-            if 'children' in clade:
-               nc = {'pathId':str(x), 'path':[], "name":str(x), "length":'0'}
+            if clade.has_key(CHILDREN_KEY):
+               nc = {PATH_ID_KEY: str(x), PATH_KEY: [], NAME_KEY: str(x), LENGTH_KEY: '0'}
                if x not in tips:
-                  nc['children'] = []
-               clade['children'].append(nc)
+                  nc[CHILDREN_KEY] = []
+               clade[CHILDREN_KEY].append(nc)
                if x not in tips:
                   recurse(nc, m[x])
       recurse(tree, m[n+1])
@@ -565,11 +574,11 @@ class LmTree(object):
       terminalLookUp = {}
       for row in terminalEdges:
          pt = row[0]
-         child = {'pathId':row[1], 'path':''}
+         child = {PATH_ID_KEY:row[1], PATH_KEY:''}
          if pt not in terminalLookUp:
-            terminalLookUp[pt] = {'pathId':pt, 'path':'', 'children':[child]}   
+            terminalLookUp[pt] = {PATH_ID_KEY:pt, PATH_KEY:'', CHILDREN_KEY:[child]}   
          else:
-            terminalLookUp[pt]['children'].append(child)
+            terminalLookUp[pt][CHILDREN_KEY].append(child)
       
       le = [[x[0], x[1]] for x in edge] 
       le.sort(key=itemgetter(0)) 
@@ -584,13 +593,13 @@ class LmTree(object):
       tips = []
       # ..............................   
       def findTips(clade):
-         if 'children' in clade:
-            clade['name'] = ''
-            for child in clade['children']:
+         if clade.has_key(CHILDREN_KEY):
+            clade[NAME_KEY] = ''
+            for child in clade[CHILDREN_KEY]:
                findTips(child)
          else:
             # tips
-            clade['name'] = ''
+            clade[NAME_KEY] = ''
             tips.append(clade)
             
       findTips(rt)
@@ -609,22 +618,22 @@ class LmTree(object):
          st_copy = self.subTrees.copy()
          # loops through polys and makes rnd tree and attaches as children in subtree
          for k in self.polyPos.keys():
-            pTips =  self.polyPos[k]['desc'].items()  # these are integers
+            pTips =  self.polyPos[k][DESC_KEY].items()  # these are integers
             n = len(pTips)          
             rt = self.rTree(n)
             tips = self._getRTips(rt)
             for pt, t in zip(pTips, tips):
                #print pt," ",t
-               t['pathId'] = str(pt[0])  # might not need this
-               t['length'] = pt[1]
+               t[PATH_ID_KEY] = str(pt[0])  # might not need this
+               t[LENGTH_KEY] = pt[1]
                if str(pt[0]) not in self.tipPaths:
-                  t['children'] = self.subTrees[pt[0]]
+                  t[CHILDREN_KEY] = self.subTrees[pt[0]]
                else:
-                  t['name'] = self.tipPaths[str(pt[0])][1]
+                  t[NAME_KEY] = self.tipPaths[str(pt[0])][1]
                   #print pt," ",t
             # now at this level get the two children of the random root
-            c1 = rt['children'][0]
-            c2 = rt['children'][1]
+            c1 = rt[CHILDREN_KEY][0]
+            c2 = rt[CHILDREN_KEY][1]
             
             st_copy[int(k)] = []
             st_copy[int(k)].append(c1)
@@ -633,15 +642,15 @@ class LmTree(object):
          removeList = list(self.polyPos.keys())
          # ..............................   
          def replaceInTree(clade):
-            if "children" in clade:
-               #if clade["pathId"] in self.polyPos.keys():
-               if clade["pathId"] in removeList:
-                  idx = removeList.index(clade['pathId'] )
+            if clade.has_key(CHILDREN_KEY):
+               #if clade[PATH_ID_KEY] in self.polyPos.keys():
+               if clade[PATH_ID_KEY] in removeList:
+                  idx = removeList.index(clade[PATH_ID_KEY] )
                   del removeList[idx]
-               #if clade["pathId"] == polyKey:
-                  clade["children"] = st_copy[int(clade["pathId"])]
+               #if clade[PATH_ID_KEY] == polyKey:
+                  clade[CHILDREN_KEY] = st_copy[int(clade[PATH_ID_KEY])]
                   #return
-               for child in clade["children"]:
+               for child in clade[CHILDREN_KEY]:
                   replaceInTree(child)
             else:
                pass    
@@ -675,30 +684,30 @@ class LmTree(object):
          n1 = randint(1,n-1)
          n2 = n - n1
          po2 = pos + 2 * n1 - 1
-         edge[pos][0] = nod['nc']
-         edge[po2][0] = nod['nc']
-         nod['nc'] = nod['nc'] + 1
+         edge[pos][0] = nod[NC_KEY]
+         edge[po2][0] = nod[NC_KEY]
+         nod[NC_KEY] = nod[NC_KEY] + 1
          if n1 > 2:
-            edge[pos][1] = nod['nc']
+            edge[pos][1] = nod[NC_KEY]
             generate(n1, pos+1)
          elif n1 == 2:
-            edge[pos+1][0] = nod['nc']
-            edge[pos+2][0] = nod['nc']
-            edge[pos][1]   = nod['nc']
-            nod['nc'] = nod['nc'] + 1
+            edge[pos+1][0] = nod[NC_KEY]
+            edge[pos+2][0] = nod[NC_KEY]
+            edge[pos][1]   = nod[NC_KEY]
+            nod[NC_KEY] = nod[NC_KEY] + 1
          if n2 > 2:
-            edge[po2][1] = nod['nc']
+            edge[po2][1] = nod[NC_KEY]
             generate(n2, po2+1)
          elif n2 == 2:
-            edge[po2 + 1][0] = nod['nc']
-            edge[po2 + 2][0] = nod['nc']
-            edge[po2][1]    = nod['nc']
-            nod['nc'] = nod['nc'] + 1
+            edge[po2 + 1][0] = nod[NC_KEY]
+            edge[po2 + 2][0] = nod[NC_KEY]
+            edge[po2][1]    = nod[NC_KEY]
+            nod[NC_KEY] = nod[NC_KEY] + 1
          
       nbr = (2 * n) - 3 + rooted
       edge =  np.array(np.arange(0, 2*nbr)).reshape(2, nbr).T
       edge.fill(-999)
-      nod = {'nc': n + 1}
+      nod = {NC_KEY: n + 1}
       generate(n, 0)
      
       idx = np.where(edge[:,1]==-999)[0]
