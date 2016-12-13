@@ -27,10 +27,37 @@
           02110-1301, USA.
           
 @todo: Should this be generalized?
-"""
 
+@note: The grammar nodes
+
+   Tree: The full input Newick Format for a single tree
+   Subtree: an internal node (and its descendants) or a leaf node
+   Leaf: a node with no descendants
+   Internal: a node and its one or more descendants
+   BranchSet: a set of one or more Branches
+   Branch: a tree edge and its descendant subtree.
+   Name: the name of a node
+   Length: the length of a tree edge.
+
+The grammar rules
+
+Note, "|" separates alternatives.
+
+   Tree → Subtree ";" | Branch ";"
+   Subtree → Leaf | Internal
+   Leaf → Name
+   Internal → "(" BranchSet ")" Name
+   BranchSet → Branch | Branch "," BranchSet
+   Branch → Subtree Length
+   Name → empty | string
+   Length → empty | ":" number
+
+"""
 import re
-from cStringIO import StringIO #TODO: Make this import safe
+try:
+   from cStringIO import StringIO
+except:
+   from StringIO import StringIO
 
 tokens = [
     (r"\(",                                'open parens'),
@@ -70,6 +97,7 @@ class Parser(object):
       """
       @todo: Document
       @todo: Function name
+      @todo: This probably doesn't work
       """
       handle = StringIO(treetext)
       return handle       
