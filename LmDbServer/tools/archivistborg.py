@@ -61,7 +61,7 @@ def getArchiveParameters(envPackageName):
    DEFAULT_MODEL_SCENARIO = cfg.get(_PIPELINE_HEADING, 'DEFAULT_MODEL_SCENARIO')
    DEFAULT_PROJECTION_SCENARIOS = cfg.getlist(_PIPELINE_HEADING, 
                                                    'DEFAULT_PROJECTION_SCENARIOS')
-   DEFAULT_EPSG = cfg.get(_PIPELINE_HEADING, 'DEFAULT_EPSG')
+   DEFAULT_EPSG = cfg.getint(_PIPELINE_HEADING, 'DEFAULT_EPSG')
    SCENARIO_PACKAGE = cfg.get(_PIPELINE_HEADING, 'SCENARIO_PACKAGE')
    DEFAULT_GRID_NAME = cfg.get(_PIPELINE_HEADING, 'DEFAULT_GRID_NAME')
    DEFAULT_GRID_CELLSIZE = cfg.get(_PIPELINE_HEADING, 'DEFAULT_GRID_CELLSIZE')
@@ -234,7 +234,8 @@ import mx.DateTime as dt
 import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import BISON_MIN_POINT_COUNT, OutputFormat
+from LmCommon.common.lmconstants import (BISON_MIN_POINT_COUNT, OutputFormat,
+                                         ProcessType)
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
          GBIF_DUMP_FILE, PROVIDER_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
 from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
@@ -273,6 +274,10 @@ boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS,
 boomer.moveToStart()
 #boomer.chainOne()
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
+jobs = boomer._processSDMChain(sciName, speciesKey, 
+                            ProcessType.GBIF_TAXA_OCCURRENCE, 
+                            dataCount, data=dataChunk)
 if speciesKey:
    jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
    boomer._createMakeflow(jobs)
@@ -280,7 +285,7 @@ if speciesKey:
 boomer.saveNextStart()
 
 
-
+select * from lm_v3.lm_getOccurrenceSet(NULL,'88d1b0b6b327e9bd69c94f7cc90f74402fbb5e47055b677b6bceb2d84e693d1f','kubi','4326')
 
 
 """
