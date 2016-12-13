@@ -38,15 +38,16 @@ from LmCommon.encoding.newickToJson import Parser
 #TODO: Move to constants module and consider a FileTypes class
 NHX_EXT = [".nhx", ".tre"]
 
+# Dictionary keys
 C_KEY = 'c' # TODO: What is this?  Document
-CHILDREN_KEY = 'children'
+CHILDREN_KEY = 'children' # Children of a node
 DESC_KEY = 'desc' #TODO: What is this? Document.  Only used twice
-LENGTH_KEY = 'length'
-MX_KEY = 'mx' #TODO: What is this? Document
-NAME_KEY = 'name'
-NC_KEY = 'nc'
-PATH_KEY = 'path'
-PATH_ID_KEY = 'pathId'
+LENGTH_KEY = 'length' # Branch length for that node
+MTX_IDX_KEY = 'mx' # The matrix index for this node
+NAME_KEY = 'name' # Name of the node
+NC_KEY = 'nc' #TODO: Document
+PATH_KEY = 'path' #TODO: Document
+PATH_ID_KEY = 'pathId' # TODO: Document
 
 NO_BRANCH_LEN = 0
 MISSING_BRANCH_LEN = 1
@@ -169,7 +170,7 @@ class LmTree(object):
                lengths[int(clade[PATH_ID_KEY])] = float(clade[LENGTH_KEY]) 
             tipPaths[clade[PATH_ID_KEY]] = ([int(x) for x in clade[PATH_KEY].split(',')], clade[NAME_KEY])
             self._tipNames.append(clade[NAME_KEY]) 
-            if clade.has_key(MX_KEY):
+            if clade.has_key(MTX_IDX_KEY):
                self._tipNamesWithMX.append(clade[NAME_KEY])
       #...................................................
       #TODO: Document
@@ -194,11 +195,11 @@ class LmTree(object):
       # ..............................   
       def takeOutMtx(clade):
          if clade.has_key(CHILDREN_KEY):
-            clade.pop(MX_KEY, None)
+            clade.pop(MTX_IDX_KEY, None)
             for child in clade[CHILDREN_KEY]:
                takeOutMtx(child)
          else:
-            clade.pop(MX_KEY, None)
+            clade.pop(MTX_IDX_KEY, None)
       
       for n in dropTips:
          if n in self.tipNamesWithMX:
@@ -562,28 +563,6 @@ class LmTree(object):
       return tree
       
    # ..............................   
-   def makeClades(self, edge):
-      """
-      @deprecated: false start but has some good ideas in it
-      @todo: Remove
-      @todo: Remove itemgetter import
-      """
-      iNodes = list(set(edge[:,0])) #.sort()  # unique internal nodes from edges
-      terminalEdges = [list(r) for r in edge if r[0] > r[1]]
-      terminalLookUp = {}
-      for row in terminalEdges:
-         pt = row[0]
-         child = {PATH_ID_KEY:row[1], PATH_KEY:''}
-         if pt not in terminalLookUp:
-            terminalLookUp[pt] = {PATH_ID_KEY:pt, PATH_KEY:'', CHILDREN_KEY:[child]}   
-         else:
-            terminalLookUp[pt][CHILDREN_KEY].append(child)
-      
-      le = [[x[0], x[1]] for x in edge] 
-      le.sort(key=itemgetter(0)) 
-      print le
-   
-   # ..............................   
    def _getRTips(self, rt):
       """
       @summary: recurses a random subtree and returns a list of its tips
@@ -611,6 +590,7 @@ class LmTree(object):
       @return: new tree object
       @todo: Document
       @todo: Use constants 
+      @todo: Rename this function to resolvePolytomies
       """ 
       if len(self.polyPos.keys()) > 0:
          
