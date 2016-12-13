@@ -28,7 +28,11 @@
           
 @todo: Should this be generalized?
 
-@note: The grammar nodes
+@note: Newick Definition: http://evolution.genetics.washington.edu/phylip/newick_doc.html
+
+@note: From Wikipedia
+
+The grammar nodes
 
    Tree: The full input Newick Format for a single tree
    Subtree: an internal node (and its descendants) or a leaf node
