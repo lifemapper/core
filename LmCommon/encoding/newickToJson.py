@@ -1,11 +1,11 @@
 """
 @summary: This script will convert a Nexus file from Jeff into Phylo-XML
-@author: CJ Grady
+@author: Jeff Cavner (edited by CJ Grady)
 @version: 1.0
 @status: alpha
 
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -25,13 +25,12 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+          
+@todo: Should this be generalized?
 """
 
 import re
-from cStringIO import StringIO
-
-
-
+from cStringIO import StringIO #TODO: Make this import safe
 
 tokens = [
     (r"\(",                                'open parens'),
@@ -46,26 +45,41 @@ tokens = [
 ]
 tokenizer = re.compile('(%s)' % '|'.join([token[0] for token in tokens]))
 
+# .............................................................................
 class Parser(object):
-   """Parse a Newick tree given a file handle.
+   """
+   @summary: Parse a Newick tree given a file handle.
 
     Based on the parser in `Bio.Nexus.Trees`.
    """
    
+   # ..............................   
    def __init__(self, handle):
+      """
+      @todo: move documentation
+      """
       self.handle = handle
       # parents Dict get built with keys(pathId) for all nodes other than
       # root, since it doesn't have a parent. Node id's value is that node's parent clade 
       # and the entire sub tree from that parent to it's tips 
       self.parentDicts = {}
    
+   # ..............................   
    @classmethod
    def from_string(cls, treetext):
+      """
+      @todo: Document
+      @todo: Function name
+      """
       handle = StringIO(treetext)
       return handle       
       
+   # ..............................   
    def parse(self, values_are_confidence=False, comments_are_confidence=False, rooted=False):
-      """Parse the text stream this object was initialized with."""
+      """
+      @todo: Document
+      @todo: Fix variable names
+      Parse the text stream this object was initialized with."""
       self.values_are_confidence = values_are_confidence
       self.comments_are_confidence = comments_are_confidence
       self.rooted = rooted
@@ -73,23 +87,29 @@ class Parser(object):
       for line in self.handle:
          buf += line.rstrip()
          if buf.endswith(';'):
-            phyloDict,parentDicts = self._parse_tree(buf)
+            phyloDict, parentDicts = self._parse_tree(buf)
             buf = ''
       if buf:        
          # Last tree is missing a terminal ';' character -- that's OK
          #yield self._parse_tree(buf)
-         phyloDict,parentDicts = self._parse_tree(buf)
+         phyloDict, parentDicts = self._parse_tree(buf)
          buf = ''
-      return phyloDict,parentDicts      
+      return phyloDict, parentDicts      
       
-   def getParentDict(self,clade):
+   # ..............................   
+   def getParentDict(self, clade):
       """
       @summary: returns the parent dictionary for a clade
       @param clade: clade dictionary
       """
       return self.parentDicts[clade["pathId"]]
    
-   def newCladeDict(self,parent=None,id=None):
+   # ..............................   
+   def newCladeDict(self, parent=None, id=None):
+      """
+      @todo: Document
+      @todo: Constants
+      """
       
       if parent is not None:
          # find the parent path
@@ -104,11 +124,16 @@ class Parser(object):
          
          self.parentDicts[newClade["pathId"]] = parent
       else:
-         newClade = {'path':'0',"pathId":"0","children":[]}
+         newClade = {'path':'0', "pathId":"0", "children":[]}
       return newClade
       
+   # ..............................   
    def _parse_tree(self, text):
-      """Parses the text representation into an Tree object."""
+      """
+      @summary: Parses the text representation into an Tree object.
+      @todo: Document
+      @todo: Constants
+      """
       tokens = re.finditer(tokenizer, text.strip())      
       newCladeDict = self.newCladeDict
       cladeId  = 0          
@@ -146,7 +171,7 @@ class Parser(object):
             lp_count += 1           
             ########  JSON #####################
             currentCladeDict['children'] = []
-            tempClade = newCladeDict(currentCladeDict,id=cladeId)
+            tempClade = newCladeDict(currentCladeDict, id=cladeId)
             cladeId += 1
             currentCladeDict = tempClade
             
@@ -164,7 +189,7 @@ class Parser(object):
             ########### JSON ############
             parentDict = self.getParentDict(currentCladeDict)
             #parentDict["children"] = []
-            currentCladeDict = newCladeDict(parentDict,cladeId)         
+            currentCladeDict = newCladeDict(parentDict, cladeId)
             #############################
              
             cladeId +=1
@@ -209,15 +234,4 @@ class Parser(object):
       except StopIteration:
          pass
       
-      return rootDict,self.parentDicts # Newick.Tree(root=root_clade, rooted=self.rooted)
-        
-
-      
-      
-      
-      
-      
-      
-      
-      
-      
+      return rootDict, self.parentDicts # Newick.Tree(root=root_clade, rooted=self.rooted)
