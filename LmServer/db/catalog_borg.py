@@ -131,7 +131,7 @@ class Borg(DbPostgresql):
 
             sciname = ScientificName(scientificname, 
                                      rank=rank, canonicalName=canonical, 
-                                     userid=usr, squid=squid,
+                                     userId=usr, squid=squid,
                                      kingdom=kingdom, phylum=phylum,  
                                      txClass=txClass, txOrder=txOrder, 
                                      family=family, genus=genus, 
@@ -653,7 +653,7 @@ class Borg(DbPostgresql):
       try:
          taxonSourceId = sciName.taxonomySourceId
          taxonKey = sciName.sourceTaxonKey
-         usr = sciName.userid
+         usr = sciName.userId
          squid = sciName.squid
          kingdom = sciName.kingdom
          phylum = sciName.phylum
@@ -708,12 +708,61 @@ class Borg(DbPostgresql):
       @param scenid: ScenarioId for the scenario to be fetched.
       """
       lyrs = []
-      rows, idxs = self.executeSelectOneFunction('lm_getEnvLayersForScenario', scenid)
+      rows, idxs = self.executeSelectManyFunction('lm_getEnvLayersForScenario', scenid)
       for r in rows:
          lyr = self._createEnvironmentalLayer(r, idxs)
          lyrs.append(lyr)
       return lyrs
    
+# .............................................................................
+   def getOccurrenceSet(self, occid, squid, userId, epsg):
+      occsets = []
+      rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSet',
+                                                  occid, squid, userId, epsg)
+      for r in rows:
+         occ = self._createOccurrenceSet(r, idxs)
+         occsets.append(occ)
+      return occsets
+   
+# ...............................................
+   def updateOccurrenceSet(self, occ, polyWkt=None, pointsWkt=None):
+      """
+      @summary Method to update an occurrenceSet object in the MAL database with 
+               the verify hash, displayname, dlocation, queryCount, bbox, geom, 
+               status/statusmodtime.
+      @param occ the occurrences object to update
+      @note: queryCount should be updated on the object before calling this;
+             geometries should be calculated and sent separately. 
+      """
+#       pointtotal = occ.queryCount
+#       if not occ.getFeatures():
+#          occ.readShapefile()
+#       if occ.getFeatures():
+#          pointtotal = occ.featureCount
+#          if occ.epsgcode == DEFAULT_EPSG:
+#             polywkt = occ.getConvexHullWkt()
+#             pointswkt = occ.getWkt()
+      metadata = occ.dumpLyrMetadata()
+      try:
+         success = self.executeModifyFunction('lm_updateOccurrenceSet', 
+                                              occ.getId(), 
+                                              occ.verify,
+                                              occ.displayName,
+                                              occ.getDLocation(), 
+                                              occ.getRawDLocation(), 
+                                              occ.queryCount, 
+                                              occ.getCSVExtentString(), 
+                                              occ.epsgcode, 
+                                              metadata,
+                                              occ.status, 
+                                              occ.statusModTime, 
+                                              polyWkt, 
+                                              pointsWkt)
+      except Exception, e:
+         raise e
+      return success
+
+
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
       """
@@ -753,3 +802,25 @@ class Borg(DbPostgresql):
                              % (palyr.attrAbsence, palyr.name))
          else:
             raise LMError('GDAL or OGR data type must be provided')
+
+# ...............................................
+   def findOrInsertOccurrenceSet(self, occ):
+      """
+      @summary: Save a new occurrence set   
+      @param occ: New OccurrenceSet to save 
+      @note: updates db with count, the actual count on the object (likely zero 
+             on initial insertion)
+      """
+      """
+      @summary: Insert a user of the Lifemapper system. 
+      @param usr: LMUser object to insert
+      @return: new or existing LMUser
+      """
+      usr.modTime = mx.DateTime.utc().mjd
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceset', 
+                              usr.userid, usr.firstName, usr.lastName, 
+                              usr.institution, usr.address1, usr.address2, 
+                              usr.address3, usr.phone, usr.email, usr.modTime, 
+                              usr.getPassword())
+      newOrExistingUsr = self._createUser(row, idxs)
+      return newOrExistingUsr

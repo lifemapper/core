@@ -434,72 +434,66 @@ class _LMBoomer(LMObject):
    def _createOrResetOccurrenceset(self, sciname, taxonSourceKeyVal, 
                                    occProcessType, dataCount, data=None):
       """
+      @param sciname: ScientificName object
+      @param taxonSourceKeyVal: unique identifier for this name in source 
+             taxonomy database
+      @param occProcessType: Type of input data to be converted to shapefile
+      @param dataCount: reported number of points for taxon in input dataset
+      @param data: raw point data
       @note: Updates to existing occset are not saved until 
       """
       currtime = dt.gmt().mjd
-      occ = occs = None
+      occ = None
       ignore = False
+         
       # Find existing
       try:
-         if isinstance(sciname, ScientificName):
-            occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
-                                                                self.userid)
-            taxonName = sciname.name
-         elif isinstance(sciname, StringType) or isinstance(sciname, UnicodeType):
-            occs = self._scribe.getOccurrenceSetsForName(sciname, userid=self.userid)
-            taxonName = sciname
-            sciname = None
+         occ = self._scribe.getOccurrenceSet(squid=sciname.squid, 
+                                             userId=self.userid, epsg=self.epsg)
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
-         
+
+      # Reset existing if failed, waiting with missing data, out-of-date
+      if occ is not None:
+         if (JobStatus.failed(occ.status)
+              or
+             (JobStatus.waiting(occ.status) and occ.getRawDLocation() is None)
+              or 
+             (occ.status == JobStatus.COMPLETE and 
+              occ.statusModTime > 0 and occ.statusModTime < self._obsoleteTime)):
+            # Reset verify hash, name, count, status 
+            occ.verify = None
+            occ.displayName = sciname.name 
+            occ.queryCount = dataCount
+            occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
+            self.log.info('Updating occset {} ({})'
+                          .format(occ.getId(), sciname.name))
+         else:
+            ignore = True
+            self.log.debug('Ignoring occset {} ({}) is up to date'
+                           .format(occ.getId(), sciname.name))
+
       # Create new
-      if not occs:
+      else:
          ogrFormat = None
          if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
             ogrFormat = 'CSV'
-         occ = OccurrenceLayer(taxonName, name=taxonName, fromGbif=False, 
-               queryCount=dataCount, epsgcode=self.epsg, 
+         occ = OccurrenceLayer(sciname.name, name=sciname.name, fromGbif=False, 
+               squid=sciname.squid, queryCount=dataCount, epsgcode=self.epsg, 
                ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
                primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciname)
          try:
-            occid = self._scribe.insertOccurrenceSet(occ)
-            self.log.info('Inserted occset for taxonname {}'.format(taxonName))
+            occ = self._scribe.insertOccurrenceSet(occ)
+            self.log.info('Inserted occset for taxonname {}'.format(sciname.name))
          except Exception, e:
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
             
-      # Reset existing if missing data, obsolete, or failed
-      elif len(occs) == 1:
-         tmpOcc = occs[0]
-         # waiting but raw data missing (status = 0 or 1)
-         if ((JobStatus.waiting(tmpOcc.status) 
-              and tmpOcc.getRawDLocation() is None)
-             or
-             # complete but obsolete (statusmodtime < SPECIES_EXP)
-             (tmpOcc.status == JobStatus.COMPLETE 
-              and tmpOcc.statusModTime > 0 
-              and tmpOcc.statusModTime < self._obsoleteTime)
-             or 
-             # failed (status > 1000)
-             JobStatus.failed(tmpOcc.status)):
-            # Reset existing 
-            occ = tmpOcc
-            occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-            self.log.info('Updating occset {} ({})'
-                          .format(tmpOcc.getId(), taxonName))
-         else:
-            ignore = True
-            self.log.debug('Ignoring occset {} ({}) is up to date'
-                           .format(tmpOcc.getId(), taxonName))
-      else:
-         raise LMError(currargs='Too many ({}) occsets for {}'
-                       .format(len(occs), taxonName))
-
       # Set raw data and update status
       if occ and not ignore:
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
@@ -507,7 +501,7 @@ class _LMBoomer(LMObject):
          if not rdloc:
             raise LMError(currargs='Unable to set raw data location')
          occ.setRawDLocation(rdloc, currtime)
-         self._scribe.updateOccset(occ)
+         self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
       
       return occ
    
@@ -809,7 +803,8 @@ class UserBoom(_LMBoomer):
    def chainOne(self):
       dataChunk, dataCount, taxonName  = self._getChunk()
       if dataChunk:
-         jobs = self._processInputSpecies(dataChunk, dataCount, taxonName)
+         sciname = self._getInsertSciNameForUser(taxonName)
+         jobs = self._processInputSpecies(dataChunk, dataCount, sciname)
          self._createMakeflow(jobs)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
@@ -832,10 +827,16 @@ class UserBoom(_LMBoomer):
       return rdloc
 
 # ...............................................
-   def _processInputSpecies(self, dataChunk, dataCount, taxonName):
+   def _getInsertSciNameForUser(self, taxonName):
+      bbsciname = ScientificName(taxonName, userId=self.userid)
+      sciname = self.findOrInsertTaxon(sciName=bbsciname)
+      return sciname
+
+# ...............................................
+   def _processInputSpecies(self, dataChunk, dataCount, sciname):
       jobs = []
       if dataChunk:
-         occ = self._createOrResetOccurrenceset(taxonName, None, 
+         occ = self._createOrResetOccurrenceset(sciname, None, 
                                           ProcessType.USER_TAXA_OCCURRENCE,
                                           dataCount, data=dataChunk)
    
@@ -849,7 +850,8 @@ class UserBoom(_LMBoomer):
                                  intersectGrid=None,
                                  minPointCount=self.minPointCount)
             self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                           len(jobs), taxonName, len(dataChunk), occ.getId()))
+                           len(jobs), sciname.scientificName, len(dataChunk), 
+                           occ.getId()))
       else:
          self.log.debug('No data in chunk')
       return jobs
@@ -961,7 +963,7 @@ class GBIFBoom(_LMBoomer):
       if sciName:       
          jobs = self._processSDMChain(sciName, speciesKey, 
                             ProcessType.GBIF_TAXA_OCCURRENCE, 
-                            dataCount, self.minPointCount, data=dataChunk)
+                            dataCount, data=dataChunk)
       return jobs
    
 # ...............................................

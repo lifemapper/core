@@ -362,28 +362,10 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getOccurrenceSetsForSquidUser(sqd varchar,
-                                                                  usr varchar)
-   RETURNS SETOF lm_v3.occurrenceset AS
-$$
-DECLARE
-   rec_occ lm_v3.occurrenceset%ROWTYPE;
-BEGIN
-   FOR rec_occ in 
-      SELECT o.* FROM lm_v3.occurrenceset o
-         WHERE o.squid = sqd AND o.userid = usr
-      LOOP
-         RETURN NEXT rec_occ;
-      END LOOP;
-   RETURN;
-END;
-$$  LANGUAGE 'plpgsql' STABLE;  
-
--- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3._lm_getOccurrenceSet(occid int,
-                                                    usr varchar, 
-                                                    sqd varchar, 
-                                                    epsg int)
+                                                      usr varchar, 
+                                                      sqd varchar, 
+                                                      epsg int)
    RETURNS lm_v3.occurrenceset AS
 $$
 DECLARE
@@ -408,7 +390,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertOccurrenceSet(occid int,
                                                   sqd varchar,
                                                   vrfy varchar,
                                                   name varchar,
-                                                  metadataUrlprefix varchar,
+                                                  metaurlprefix varchar,
                                                   dloc varchar,
                                                   rdloc varchar,
                                                   total int,
@@ -423,7 +405,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertOccurrenceSet(occid int,
 $$
 DECLARE
    rec lm_v3.occurrenceset%ROWTYPE;                             
-   id int = -1;
+   newid int = -1;
    idstr varchar = '';
    occmetadataUrl varchar = '';
 BEGIN
@@ -433,42 +415,83 @@ BEGIN
          -- Default LM EPSG Code
          IF epsg = 4326 THEN 
             INSERT INTO lm_v3.OccurrenceSet 
-               (verify, squid, userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
-                dateLastChecked, epsgcode, bbox, geom, geompts,
-                primaryEnv, rawdlocation, status, statusModTime, scientificNameId)
+               (userId, squid, verify, displayName, dlocation, rawDlocation, 
+                queryCount, bbox, epsgcode, metadata, status, statusModTime, 
+                geom, geompts)
             VALUES 
-               (lyrverify, lyrsquid, usrid, frmgbif, name, dloc, qrynum, qrytime, 
-                qrytime, epsg, bounds, 
-                ST_GeomFromText(polywkt, epsg), ST_GeomFromText(pointswkt, epsg),
-                env, rdloc, stat, stattime, scinameid);
+               (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
+                stat, stattime, ST_GeomFromText(polywkt, epsg), 
+                ST_GeomFromText(pointswkt, epsg));
 
          -- Other EPSG Codes skip geometry
          ELSE 
             INSERT INTO lm_v3.OccurrenceSet 
-               (verify, squid, userId, fromGbif, displayName, dlocation, queryCount, dateLastModified, 
-                dateLastChecked, epsgcode, bbox,
-                primaryEnv, rawdlocation, status, statusModTime, scientificNameId)
+               (userId, squid, verify, displayName, dlocation, rawDlocation, 
+                queryCount, bbox, epsgcode, metadata, status, statusModTime)
             VALUES 
-               (lyrverify, lyrsquid, usrid, frmgbif, name, dloc, qrynum, qrytime, 
-                qrytime, epsg, bounds, env, rdloc, stat, stattime, scinameid);
+               (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
+                stat, stattime);
 
          END IF;
-        
+
          -- Create metadataUrl in the form: 'http://lifemapper.org/ogc?map=data_9999&layers=occ_9999'
          -- for an occurrenceset with id = 9999. 
          IF FOUND THEN
-            SELECT INTO id last_value FROM lm_v3.occurrenceset_occurrencesetid_seq;
-            idstr = cast(id as varchar);
-            occmetadataUrl := replace(metadataUrlprefix, '#id#', idstr);
-            UPDATE lm_v3.OccurrenceSet SET metadataUrl = occmetadataUrl WHERE occurrenceSetId = id;
+            SELECT INTO newid last_value FROM lm_v3.occurrenceset_occurrencesetid_seq;
+            idstr = cast(newid as varchar);
+            occmetadataUrl := replace(metaurlprefix, '#id#', idstr);
+            UPDATE lm_v3.OccurrenceSet SET metadataUrl = occmetadataUrl WHERE occurrenceSetId = newid;
+            SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = newid;
          END IF;
          
       END;  -- end alternatives for epsgcode
    END IF;  -- end if occurrenceset found
-   RETURN id;
+   RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateOccurrenceSet(occid int,
+                                                  vrfy varchar,
+                                                  name varchar,
+                                                  dloc varchar,
+                                                  rdloc varchar,
+                                                  total int,
+                                                  bounds varchar, 
+                                                  epsg int,
+                                                  meta text,
+                                                  stat int,
+                                                  stattime double precision,
+                                                  polywkt text,
+                                                  pointswkt text)
+   RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   UPDATE lm3.OccurrenceSet SET 
+      (verify, displayName, dlocation, rawDlocation, queryCount, bbox, metadata, 
+       status, statusModTime)
+    = (vrfy, name, dloc, rdloc, total, bounds, meta, stat, stattime)
+   WHERE occurrenceSetId = occid;
+
+   IF FOUND THEN
+      success = 0;
+   END IF;
+
+   IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
+      UPDATE lm3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
+         WHERE occurrenceSetId = occid;
+   END IF;
+
+   IF ST_IsValid(ST_GeomFromText(pointswkt, epsg)) THEN
+      UPDATE lm3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
+         WHERE occurrenceSetId = occid;
+   END IF;
+
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)

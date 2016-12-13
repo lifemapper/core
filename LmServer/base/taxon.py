@@ -27,7 +27,7 @@ from LmServer.base.lmobj import LMObject, LMError
 # ..............................................................................
 class ScientificName(LMObject):
    def __init__(self, scientificName, rank=None, canonicalName=None, 
-                userid=None, squid=None,
+                userId=None, squid=None,
                 kingdom=None, phylum=None, txClass=None, txOrder=None, 
                 family=None, genus=None, lastOccurrenceCount=None, 
                 createTime=None, modTime=None, 
@@ -42,7 +42,7 @@ class ScientificName(LMObject):
       self.scientificName = scientificName
       self.canonicalName = canonicalName
       self.rank = rank
-      self.userid = userid
+      self.userId = userId
       self.kingdom = kingdom 
       self.phylum = phylum
       self.txClass = txClass
@@ -104,6 +104,10 @@ class ScientificName(LMObject):
    def sourceKeyHierarchy(self):
       return self._sourceKeyHierarchy
    
+   @property
+   def squid(self):
+      return self._squid
+
    def _setSquid(self, squid=None):
       if squid is None:         
          if self._sourceId is not None and self._sourceKey is not None:
