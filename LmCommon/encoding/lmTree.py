@@ -48,16 +48,15 @@ NC_KEY = 'nc'
 PATH_KEY = 'path'
 PATH_ID_KEY = 'pathId'
 
+NO_BRANCH_LEN = 0
+MISSING_BRANCH_LEN = 1
+HAS_BRANCH_LEN = 2
+
 # .............................................................................
 class LmTree(object):
    """
    @summary: Class representing a phylogenetic tree in Lifemapper
    """
-   
-   # TODO: Move these to constants
-   NO_BRANCH_LEN = 0  # missing all branch lengths
-   MISSING_BRANCH_LEN = 1 # missing some branch lengths
-   HAS_BRANCH_LEN = 2
    
    # ..............................   
    def __init__(self, treeDict):
@@ -246,7 +245,7 @@ class LmTree(object):
             keep[sel] = False
          newEdges = edge[keep]
         
-         if self.branchLengths == self.HAS_BRANCH_LEN:
+         if self.branchLengths == HAS_BRANCH_LEN:
             len_copy = self.lengths.copy()
          else:
             len_copy = False
@@ -341,7 +340,7 @@ class LmTree(object):
       #tipPaths,treeLengths,subTrees = self.getTreeInfo(self.tree)
       #self._subTrees = subTrees
       
-      if self.branchLengths == self.HAS_BRANCH_LEN:
+      if self.branchLengths == HAS_BRANCH_LEN:
          toSet = []
          for tip in self.tipPaths:
             #copytipPath = list(tipPaths[tip][0])
@@ -357,7 +356,7 @@ class LmTree(object):
          count = len(set(toSet))
          return bool(1//count)
       else:
-         return self.NO_BRANCH_LEN  # need to think about this
+         return NO_BRANCH_LEN  # need to think about this
    
    #TODO: Document properties and move to end of class definition
    #TODO: Evaluate properties
@@ -416,12 +415,12 @@ class LmTree(object):
       #if not self.tipPaths:
       #   self.subTrees = self.getTreeInfo(self.tree)[2] 
       if self._numberMissingLengths == 0:
-         return self.HAS_BRANCH_LEN
+         return HAS_BRANCH_LEN
       else:    
          if self._numberMissingLengths == (self.tipCount + self.internalCount -1):
-            return self.NO_BRANCH_LEN
+            return NO_BRANCH_LEN
          else:
-            return self.MISSING_BRANCH_LEN
+            return MISSING_BRANCH_LEN
    
    # ..............................   
    def makePaths(self, tree, takeOutBranches=False):
@@ -656,7 +655,7 @@ class LmTree(object):
                pass    
          newTree = self.tree.copy()
          replaceInTree(newTree) 
-         if self.branchLengths == self.NO_BRANCH_LEN:
+         if self.branchLengths == NO_BRANCH_LEN:
             takeOutBr = True
          else: 
             takeOutBr = False
