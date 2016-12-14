@@ -1,5 +1,5 @@
 """
-@summary: This script will convert a Nexus file from Jeff into Phylo-XML
+@summary: This script will convert a Nexus file into JSON
 @author: Jeff Cavner (edited by CJ Grady)
 @version: 1.0
 @status: alpha
@@ -25,9 +25,9 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-          
-@todo: Should this be generalized?
 
+@todo: Consider using recursion to parse the tree instead of current approach
+          
 @note: Newick Definition: http://evolution.genetics.washington.edu/phylip/newick_doc.html
 
 @note: From Wikipedia
@@ -59,25 +59,23 @@ Note, "|" separates alternatives.
 """
 import os
 import re
-try:
-   from cStringIO import StringIO
-except:
-   from StringIO import StringIO
 
-# TODO: Move these to constants file since they are shared
-CHILDREN_KEY = 'children'
-LENGTH_KEY = 'length'
-NAME_KEY = 'name'
-PATH_KEY = 'path'
-PATH_ID_KEY = 'pathId'
+from LmCommon.common.lmconstants import PhyloTreeKeys
 
+# .............................................................................
+class NewickParseError(Exception):
+   """
+   @summary: A wrapper around the base exception class for parsing errors
+   """
+   pass
 
 # .............................................................................
 class Parser(object):
    """
    @summary: Parse a Newick tree given a file handle.
-
-    Based on the parser in `Bio.Nexus.Trees`.
+   @note: We are not doing anything with confidence (values or comments)
+   @note: We are not tracking if the tree is rooted
+   @note: Based on the parser in `Bio.Nexus.Trees`.
    """
    
    # ..............................   
@@ -88,11 +86,12 @@ class Parser(object):
       """
       self.newickString = newickString
 
-      # parentsDict gets built with keys(pathId) for all nodes other than root, 
+      # parentsClade gets built with keys(pathId) for all nodes other than root, 
       #    since it doesn't have a parent.
       # nodeId's value is that node's parent clade and the entire sub tree from 
       #    that parent to it's tips
-      self.parentDicts = {}
+      self.parentClades = {}
+      self.rootClade = {}
       tokens = [
          (r"\(",                                'open parens'),
          (r"\)",                                'close parens'),
@@ -130,69 +129,44 @@ class Parser(object):
       return cls(newickString)
    
    # ..............................   
-   def parse(self, values_are_confidence=False, comments_are_confidence=False, rooted=False):
+   def parse(self):
       """
-      @todo: Document
-      @todo: Fix variable names
-      Parse the text stream this object was initialized with."""
-      self.values_are_confidence = values_are_confidence
-      self.comments_are_confidence = comments_are_confidence
-      self.rooted = rooted
-      
-      
-      
-      #TODO: It looks like a file can have multiple trees but this isn't a good way to do this
-      #TODO: It also looks to be a last one in wins situation
-      #buf = ''
-      #for line in self.handle:
-      #   buf += line.rstrip()
-      #   if buf.endswith(';'):
-      #      phyloDict, parentDicts = self._parse_tree(buf)
-      #      buf = ''
-      #if buf:        
-      #   # Last tree is missing a terminal ';' character -- that's OK
-      #   #yield self._parse_tree(buf)
-      #   phyloDict, parentDicts = self._parse_tree(buf)
-      #   buf = ''
-      
-      # TODO: This is better, unless we allow semi-colons in quoted labels
-      for treeStr in self.newickString.split(';'):
-         phyloDict, parentDicts = self._parse_tree(treeStr)
-         
-      
-      return phyloDict, parentDicts      
+      @summary: Parse the provided Newick tree string
+      @note: We assume only one tree specified
+      """
+      self._parse_tree(self.newickString)
+
+      return self.rootClade, self.parentClades      
       
    # ..............................   
-   def getParentDict(self, clade):
+   def getParentClade(self, clade):
       """
-      @summary: Returns the parent dictionary for a clade
-      @param clade: Clade dictionary
+      @summary: Returns the parent clade
+      @param clade: Child clade to get the parent of
       @note: This is a lookup structure
-      @todo: Better if we use recursion instead?
       """
-      return self.parentDicts[clade[PATH_ID_KEY]]
+      return self.parentClades[clade[PhyloTreeKeys.PATH_ID]]
    
    # ..............................   
    def newClade(self, cladeId, parent=None):
       """
-      @summary: Create a new clade dictionary
+      @summary: Create a new clade
       @param cladeId: The id for this new clade
-      @param parent: (optional) A parent clade dictionary
-      @todo: Can we use integers or do we really need path id to be a string?
+      @param parent: (optional) A parent clade
       """
       newClade = {
-         PATH_ID_KEY: cladeId,
-         PATH_KEY: "{0}".format(cladeId),
-         CHILDREN_KEY: []
+         PhyloTreeKeys.PATH_ID: cladeId,
+         PhyloTreeKeys.PATH: "{0}".format(cladeId),
+         PhyloTreeKeys.CHILDREN: []
       }
       
       # If a parent is provided, update the parent and the path
       if parent is not None:
          # Update the path
-         newClade[PATH_KEY] = "{cladeId},{parentPath}".format(
-                                  cladeId=cladeId, parentPath=parent[PATH_KEY])
-         parent[CHILDREN_KEY].append(newClade)
-         self.parentDicts[newClade[PATH_ID_KEY]] = parent
+         newClade[PhyloTreeKeys.PATH] = "{cladeId},{parentPath}".format(
+                                  cladeId=cladeId, parentPath=parent[PhyloTreeKeys.PATH])
+         parent[PhyloTreeKeys.CHILDREN].append(newClade)
+         self.parentClades[newClade[PhyloTreeKeys.PATH_ID]] = parent
 
       return newClade
       
@@ -203,11 +177,11 @@ class Parser(object):
       @param text: The Newick tree text to parse
       """
       cladeId = 0
-      rootDict = newClade(cladeId)
+      self.rootClade = newClade(cladeId)
       
       cladeId += 1
             
-      currentClade = rootDict
+      currentClade = self.rootClade
           
       # Unmatched parentheses:
       #   The tree should have the same number of left and right parens to be
@@ -217,30 +191,21 @@ class Parser(object):
       
       tokens = re.finditer(self.tokenizer, text.strip())
 
-      # TODO: Consider using a generator and recursion
-              
       for match in tokens:
          token = match.group()
          
          if token.startswith("'"): # quoted label; add characters to clade name
-            #TODO: Why not use strip?  or replace?
-            currentClade[NAME_KEY] = token[1:-1]
+            currentClade[PhyloTreeKeys.NAME] = token.strip("'")
             
          elif token.startswith('['):
             # comment
-            # TODO: Add this or remove it
-            if self.comments_are_confidence:
-               pass
+            pass
          
          elif token == '(': # Start a new clade, which is a child of the current
             unmatchedParens += 1
-            currentClade[CHILDREN_KEY] = [] # TODO: Remove.  Unnecessary
-            
             # Update the parent
             parentClade = currentClade
-            # TODO: Should be able to do this in one command
-            tempClade = self.newClade(cladeId, parent=currentClade)
-            currentClade = tempClade
+            currentClade = self.newClade(cladeId, parent=currentClade)
             cladeId += 1
             
          elif token == ',': # start a new child clade
@@ -249,26 +214,22 @@ class Parser(object):
             
          elif token == ')': # done adding children for this parent clade
             currentClade = parentClade
-            parentClade = self.getParentDict(currentClade)
+            parentClade = self.getParentClade(currentClade)
             unmatchedParens -= 1
             
-         elif token == ';': # TODO: Remove most likely
-            break
-         
          elif token.startswith(':'): # branch length or confidence
             value = float(token[1:])
-            currentClade[LENGTH_KEY] = value
+            currentClade[PhyloTreeKeys.BRANCH_LENGTH] = value
             
          elif token == '\n':
             pass
          
          else: # unquoted node label
-            currentClade[NAME_KEY] = token
+            # Spec says to convert underscores to blanks
+            currentClade[PhyloTreeKeys.NAME] = token.replace('_', ' ')
       
       # Check there are no unmatched parentheses
-      # TODO: Add a specific exception
       if unmatchedParens != 0:
-         raise Exception, "Parser error.  Number of open / close parentheses do not match"
+         raise NewickParseError(
+            "Parser error.  Number of open / close parentheses do not match")
       
-      
-      return rootDict, self.parentDicts # Newick.Tree(root=root_clade, rooted=self.rooted)
