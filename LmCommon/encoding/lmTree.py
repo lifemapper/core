@@ -171,7 +171,6 @@ class LmTree(object):
       @summary: find tips by name to drop and if there is a mx for tip removes all mx
       @todo: Document
       @todo: Remove inner function
-      @todo: Use constants instead of strings
       """     
       # ..............................   
       def takeOutMtx(clade):
@@ -300,45 +299,35 @@ class LmTree(object):
       return edge
 
    # ..............................   
-   def _truncate(self, f, n):
-      """
-      @summary: Truncates/pads a float f to n decimal places without rounding
-      @todo: Document
-      @todo: Remove most likely, there are built-ins for this
-      """
-      s = '{}'.format(f)
-      if 'e' in s or 'E' in s:
-         return '{0:.{1}f}'.format(f, n)
-      i, p, d = s.partition('.')
-      return '.'.join([i, (d+'0'*n)[:n]])
-
-   # ..............................   
    def checkUltraMetric(self):
       """
+      @summary: Check if the tree is ultrametric
+      @note: To be ultrametric, the branch length from root to tip must be 
+                equal for all tips
       @summary: check to see if tree is ultrametric, all the way to the root
-      @todo: Use constants not class constants
-      @todo: Document
       """
-      #tipPaths,treeLengths,subTrees = self.getTreeInfo(self.tree)
-      #self._subTrees = subTrees
-      
+      # Only possible if the tree has branch lengths
       if self.branchLengths == HAS_BRANCH_LEN:
-         toSet = []
+         checkSum = None
+         # TODO: Can we do this better?
          for tip in self.tipPaths:
-            #copytipPath = list(tipPaths[tip][0])
-            copytipPath = list(self.tipPaths[tip][0])
-            copytipPath.pop()  # removes internal pathId from path list for root of tree
-            toSum = []
-            for pathId in copytipPath:
-               toSum.append(self.lengths[pathId])
-            urs = sum(toSum)
-            s = self._truncate(urs, 3)
-            toSet.append(s)
-         #TODO: This can only be true if length is one, no need to make it complicated
-         count = len(set(toSet))
-         return bool(1//count)
+            # We only need the tip path up the tree
+            # TODO: Is that true?
+            copytipPath = self.tipPaths[tip][0][1:]
+            
+            # Create a list of branch lengths from the tip to root, sum them, 
+            #    and round to 3 decimal places
+            urs = round(
+               sum([self.lengths[pathId] for pathId in copytipPath]), 3)
+            
+            if checkSum is None:
+               checkSum = urs
+            elif urs != checkSum: 
+               # We can fail the first time a time has a different branch 
+               #    length to root
+               return False
       else:
-         return NO_BRANCH_LEN  # need to think about this
+         return False
    
    #TODO: Document properties and move to end of class definition
    #TODO: Evaluate properties
