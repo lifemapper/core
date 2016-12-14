@@ -80,28 +80,30 @@ class FileFormats:
    @summary: Class containing known formats to Lifemapper
    @todo: Deprecate OutputFormat and instead use this
    """
-   TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
-   TXT = FileFormat('.txt', 'text/plain')
-   XML = FileFormat('.xml', 'application/xml')
-   ZIP = FileFormat('.zip', 'application/zip')
-   TMP = FileFormat('.tmp', 'application/octet-stream')
-   MAP = FileFormat('.map', 'text/plain')
+   ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'])
    CSV = FileFormat('.csv', 'text/csv')
+   GTIFF = FileFormat('.tif', 'image/tiff')
+   HFA = FileFormat('.img', 'image/octet-stream')
    JSON = FileFormat('.json', 'application/json')
+   KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
+   LOG = FileFormat('.log', 'text/plain')
+   MAKEFLOW = FileFormat('.mf', 'text/plain')
+   MAP = FileFormat('.map', 'text/plain')
    MXE = FileFormat('.mxe', 'application/octet-stream')
+   NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
    NUMPY = FileFormat('.npy', 'application/octet-stream')
    PICKLE = FileFormat('.pkl', 'application/octet-stream')
-   GTIFF = FileFormat('.tif', 'image/tiff')
-   ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'])
-   HFA = FileFormat('.img', 'image/octet-stream')
    SHAPE = FileFormat('.shp', 'application/x-gzip', 
                       allExtensions=[".shp", ".shx", ".dbf", ".prj", ".sbn", 
                                      ".sbx", ".fbn", ".fbx", ".ain", ".aih", 
                                      ".ixs", ".mxs", ".atx", ".shp.xml", 
                                      ".cpg", ".qix"])
-   LOG = FileFormat('.log', 'text/plain')
-   MAKEFLOW = FileFormat('.mf', 'text/plain')
-   KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
+   TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
+   TMP = FileFormat('.tmp', 'application/octet-stream')
+   TXT = FileFormat('.txt', 'text/plain')
+   XML = FileFormat('.xml', 'application/xml')
+   ZIP = FileFormat('.zip', 'application/zip')
+
    
 # .............................................................................
 class OutputFormat:
