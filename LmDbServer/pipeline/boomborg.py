@@ -330,7 +330,7 @@ class _LMBoomer(LMObject):
                sname = ScientificName(scinameStr, 
                                rank=rankStr, 
                                canonicalName=canonicalStr,
-                               userid=None, squid=None,
+                               userId=None, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 

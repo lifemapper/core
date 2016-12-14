@@ -236,7 +236,7 @@ import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (BISON_MIN_POINT_COUNT, OutputFormat,
-                                         ProcessType)
+                                         ProcessType, JobStatus)
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
          GBIF_DUMP_FILE, PROVIDER_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
 from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
@@ -277,13 +277,13 @@ boomer.moveToStart()
 #boomer.chainOne()
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
+ogrFormat = 'CSV'
 occ = OccurrenceLayer(sciName.scientificName, name=sciName.scientificName, 
-               fromGbif=False, 
                squid=sciName.squid, queryCount=dataCount, epsgcode=boomer.epsg, 
                ogrType=wkbPoint, ogrFormat=ogrFormat, userId=boomer.userid,
-               primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciName)
+occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
 occ = boomer._createOrResetOccurrenceset(sciName, speciesKey, 
                               ProcessType.GBIF_TAXA_OCCURRENCE, dataCount, 
                               data=dataChunk)

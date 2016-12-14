@@ -409,7 +409,7 @@ DECLARE
    idstr varchar = '';
    occmetadataUrl varchar = '';
 BEGIN
-   SELECT INTO rec lm_v3._lm_getOccurrenceSet(occid, usr, sqd, epsg);
+   SELECT INTO rec lm_v3.lm_getOccurrenceSet(occid, usr, sqd, epsg);
    IF NOT FOUND THEN
       BEGIN
          -- Default LM EPSG Code
