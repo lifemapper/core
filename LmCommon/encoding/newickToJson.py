@@ -155,7 +155,7 @@ class Parser(object):
       #   phyloDict, parentDicts = self._parse_tree(buf)
       #   buf = ''
       
-      # TODO: This is better
+      # TODO: This is better, unless we allow semi-colons in quoted labels
       for treeStr in self.newickString.split(';'):
          phyloDict, parentDicts = self._parse_tree(treeStr)
          
@@ -173,7 +173,7 @@ class Parser(object):
       return self.parentDicts[clade[PATH_ID_KEY]]
    
    # ..............................   
-   def newCladeDict(self, cladeId, parent=None):
+   def newClade(self, cladeId, parent=None):
       """
       @summary: Create a new clade dictionary
       @param cladeId: The id for this new clade
@@ -203,13 +203,11 @@ class Parser(object):
       @param text: The Newick tree text to parse
       """
       cladeId = 0
-      rootDict = newCladeDict(cladeId)
+      rootDict = newClade(cladeId)
       
-      cladeId +=1
+      cladeId += 1
             
-      ########### JSON ###########
-      currentCladeDict = rootDict
-      ###########################
+      currentClade = rootDict
           
       # Unmatched parentheses:
       #   The tree should have the same number of left and right parens to be
@@ -222,81 +220,50 @@ class Parser(object):
       # TODO: Consider using a generator and recursion
               
       for match in tokens:
-         #print "MATCH"
          token = match.group()
          
-         if token.startswith("'"):
-            # quoted label; add characters to clade name
-            
-            ########### JSON ###################
+         if token.startswith("'"): # quoted label; add characters to clade name
             #TODO: Why not use strip?  or replace?
-            currentCladeDict[NAME_KEY] = token[1:-1]
-            ####################################
+            currentClade[NAME_KEY] = token[1:-1]
             
          elif token.startswith('['):
             # comment
+            # TODO: Add this or remove it
             if self.comments_are_confidence:
                pass
          
-         elif token == '(':
+         elif token == '(': # Start a new clade, which is a child of the current
             unmatchedParens += 1
-            # start a new clade, which is a child of the current clade
-            ########  JSON #####################
-            currentCladeDict[CHILDREN_KEY] = []
-            tempClade = self.newCladeDict(cladeId, parent=currentCladeDict)
+            currentClade[CHILDREN_KEY] = [] # TODO: Remove.  Unnecessary
+            
+            # Update the parent
+            parentClade = currentClade
+            # TODO: Should be able to do this in one command
+            tempClade = self.newClade(cladeId, parent=currentClade)
+            currentClade = tempClade
             cladeId += 1
-            currentCladeDict = tempClade
             
-         elif token == ',':
-            # if the current clade is the root, then the external parentheses are missing
-            # and a new root should be created
+         elif token == ',': # start a new child clade
+            currentClade = self.newClade(cladeId, parent=parentClade)
+            cladeId += 1
             
-            ############  JSON ###############
-            if currentCladeDict[PATH_ID_KEY] == "0":
-               print "is it getting in here for F(A,B,(C,D)E); Answer: No"
-               #TODO: Can this happen?  Handle better if it can
-               rootDict = self.newCladeDict(cladeId)
-               cladeId +=1
-               self.parentDicts[str(currentCladeDict[PATH_ID_KEY])] = rootDict      
-            # start a new child clade at the same level as the current clade
-            ########### JSON ############
-            parentDict = self.getParentDict(currentCladeDict)
-            #parentDict["children"] = []
-            currentCladeDict = self.newCladeDict(cladeId, parent=parentDict)
-            #############################
-             
-            cladeId +=1
-            
-         elif token == ')':
-            # done adding children for this parent clade
-            ######### JSON #################
-            parentDict = self.getParentDict(currentCladeDict)
-                  
-            ##########  JSON ###########
-            currentCladeDict = parentDict       
-            ############################
+         elif token == ')': # done adding children for this parent clade
+            currentClade = parentClade
+            parentClade = self.getParentDict(currentClade)
             unmatchedParens -= 1
             
-         elif token == ';':
+         elif token == ';': # TODO: Remove most likely
             break
          
-         elif token.startswith(':'):
-            # branch length or confidence
-            #print "does it ever get in here, branch length"
+         elif token.startswith(':'): # branch length or confidence
             value = float(token[1:])
-            currentCladeDict[LENGTH_KEY] = str(value)
+            currentClade[LENGTH_KEY] = value
             
          elif token == '\n':
             pass
          
-         else:
-            # unquoted node label            
-            ############ JSON ##############
-            #nameL = token.split("_")
-            #name = "%s_%s" % (nameL[len(nameL)-2],nameL[len(nameL)-1])
-            #currentCladeDict["name"] = name
-            currentCladeDict[NAME_KEY] = token
-            ################################
+         else: # unquoted node label
+            currentClade[NAME_KEY] = token
       
       # Check there are no unmatched parentheses
       # TODO: Add a specific exception
