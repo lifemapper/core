@@ -281,6 +281,9 @@ create table lm_v3.SDMProject
    prjmaskId int REFERENCES lm_v3.Layer,
    -- includes algorithmParams
    metadata text,
+
+   -- LmCommon.common.lmconstants.ProcessType
+   processType int,
    						
    status int,
    statusModTime double precision,

@@ -469,7 +469,7 @@ $$
 DECLARE
    success int = -1;
 BEGIN
-   UPDATE lm3.OccurrenceSet SET 
+   UPDATE lm_v3.OccurrenceSet SET 
       (verify, displayName, dlocation, rawDlocation, queryCount, bbox, metadata, 
        status, statusModTime)
     = (vrfy, name, dloc, rdloc, total, bounds, meta, stat, stattime)
@@ -480,12 +480,12 @@ BEGIN
    END IF;
 
    IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
-      UPDATE lm3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
+      UPDATE lm_v3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
          WHERE occurrenceSetId = occid;
    END IF;
 
    IF ST_IsValid(ST_GeomFromText(pointswkt, epsg)) THEN
-      UPDATE lm3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
+      UPDATE lm_v3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
          WHERE occurrenceSetId = occid;
    END IF;
 
