@@ -78,6 +78,15 @@ tokens = [
 ]
 tokenizer = re.compile('(%s)' % '|'.join([token[0] for token in tokens]))
 
+
+# TODO: Move these to constants file since they are shared
+CHILDREN_KEY = 'children'
+LENGTH_KEY = 'length'
+NAME_KEY = 'name'
+PATH_KEY = 'path'
+PATH_ID_KEY = 'pathId'
+
+
 # .............................................................................
 class Parser(object):
    """
@@ -93,6 +102,11 @@ class Parser(object):
       @param newickString: A Newick tree as a string
       """
       self.newickString = newickString
+
+      # parentsDict gets built with keys(pathId) for all nodes other than root, 
+      #    since it doesn't have a parent.
+      # nodeId's value is that node's parent clade and the entire sub tree from 
+      #    that parent to it's tips
       self.parentDicts = {}
       
    # ..............................
@@ -117,19 +131,6 @@ class Parser(object):
       with open(fn) as inF:
          newickString = inF.read()
       return cls(newickString)
-   
-   
-   #def __init__(self, handle):
-   #   """
-   #   @summary: Constructor
-   #   @note: This currently takes a file like object (flo). I'm not sure that it should.  We could provide a class method for that as well as a from file method
-   #   @todo: move documentation
-   #   """
-   #   self.handle = handle
-   #   # parents Dict get built with keys(pathId) for all nodes other than
-   #   # root, since it doesn't have a parent. Node id's value is that node's parent clade 
-   #   # and the entire sub tree from that parent to it's tips 
-   #   self.parentDicts = {}
    
    # ..............................   
    def parse(self, values_are_confidence=False, comments_are_confidence=False, rooted=False):
@@ -167,10 +168,10 @@ class Parser(object):
    # ..............................   
    def getParentDict(self, clade):
       """
-      @summary: returns the parent dictionary for a clade
-      @param clade: clade dictionary
+      @summary: Returns the parent dictionary for a clade
+      @param clade: Clade dictionary
       """
-      return self.parentDicts[clade["pathId"]]
+      return self.parentDicts[clade[PATH_ID_KEY]]
    
    # ..............................   
    def newCladeDict(self, parent=None, id=None):
@@ -181,18 +182,18 @@ class Parser(object):
       
       if parent is not None:
          # find the parent path
-         parentPath = parent["path"]
+         parentPath = parent[PATH_KEY]
          newClade = {}
-         newClade["pathId"] = str(id)
-         parent["children"].append(newClade)
+         newClade[PATH_ID_KEY] = str(id)
+         parent[CHILDREN_KEY].append(newClade)
          if id is not None:
             path = str(id) + ','+ parentPath
-            newClade["path"] = path
+            newClade[PATH_KEY] = path
          
          
-         self.parentDicts[newClade["pathId"]] = parent
+         self.parentDicts[newClade[PATH_ID_KEY]] = parent
       else:
-         newClade = {'path':'0', "pathId":"0", "children":[]}
+         newClade = {PATH_KEY: '0', PATH_ID_KEY: "0", CHILDREN_KEY: []}
       return newClade
       
    # ..............................   
@@ -206,7 +207,7 @@ class Parser(object):
       newCladeDict = self.newCladeDict
       cladeId  = 0          
       ######## JSON ###########
-      rootDict = {"pathId":'0',"path":'0',"children":[]} 
+      rootDict = {PATH_KEY: '0', PATH_ID_KEY: "0", CHILDREN_KEY: []} 
       #########################
       
       cladeId +=1
@@ -226,7 +227,8 @@ class Parser(object):
             # quoted label; add characters to clade name
             
             ########### JSON ###################
-            currentCladeDict["name"] = token[1:-1]
+            #TODO: Why not use strip?  or replace?
+            currentCladeDict[NAME_KEY] = token[1:-1]
             ####################################
             
          elif token.startswith('['):
@@ -238,7 +240,7 @@ class Parser(object):
             # start a new clade, which is a child of the current clade
             lp_count += 1           
             ########  JSON #####################
-            currentCladeDict['children'] = []
+            currentCladeDict[CHILDREN_KEY] = []
             tempClade = newCladeDict(currentCladeDict, id=cladeId)
             cladeId += 1
             currentCladeDict = tempClade
@@ -248,11 +250,11 @@ class Parser(object):
             # and a new root should be created
             
             ############  JSON ###############
-            if currentCladeDict["pathId"] == "0":
+            if currentCladeDict[PATH_ID_KEY] == "0":
                print "is it getting in here for F(A,B,(C,D)E); Answer: No"
                rootDict = newCladeDict(id=cladeId)
                cladeId +=1
-               self.parentDicts[str(currentCladeDict["pathId"])] = rootDict      
+               self.parentDicts[str(currentCladeDict[PATH_ID_KEY])] = rootDict      
             # start a new child clade at the same level as the current clade
             ########### JSON ############
             parentDict = self.getParentDict(currentCladeDict)
@@ -279,7 +281,7 @@ class Parser(object):
             # branch length or confidence
             #print "does it ever get in here, branch length"
             value = float(token[1:])
-            currentCladeDict["length"] = str(value)
+            currentCladeDict[LENGTH_KEY] = str(value)
             
          elif token == '\n':
             pass
@@ -290,12 +292,15 @@ class Parser(object):
             #nameL = token.split("_")
             #name = "%s_%s" % (nameL[len(nameL)-2],nameL[len(nameL)-1])
             #currentCladeDict["name"] = name
-            currentCladeDict["name"] = token
+            currentCladeDict[NAME_KEY] = token
             ################################
+      # TODO: We can just count this at the beginning instead of accumulating
+      # TODO: Raise exception?
       if not lp_count == rp_count:
          print 'Number of open/close parentheses do not match.'
       
       # if ; token broke out of for loop, there should be no remaining tokens
+      # TODO: This won't happen since we split on ; before
       try:
          next_token = tokens.next()
          print 'Text after semicolon in Newick tree: %s' % (next_token.group())
