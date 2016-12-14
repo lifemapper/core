@@ -208,6 +208,7 @@ class Parser(object):
       @todo: Document
       @todo: Constants
       """
+      
       #TODO: NO!!!!  Bad variable name
       tokens = re.finditer(tokenizer, text.strip())
       
@@ -222,10 +223,12 @@ class Parser(object):
       currentCladeDict = rootDict
       ###########################
           
-      #TODO: Replace
-      lp_count = 0
-      rp_count = 0
-      
+      # Unmatched parentheses:
+      #   The tree should have the same number of left and right parens to be
+      #      valid.  An exception to that would be unmatched parens in quoted
+      #      labels, in which case, the tree is still valid
+      unmatchedParens = 0
+
       # TODO: Consider using a generator and recursion
               
       for match in tokens:
@@ -246,8 +249,8 @@ class Parser(object):
                pass
          
          elif token == '(':
+            unmatchedParens += 1
             # start a new clade, which is a child of the current clade
-            lp_count += 1           
             ########  JSON #####################
             currentCladeDict[CHILDREN_KEY] = []
             tempClade = self.newCladeDict(currentCladeDict, id=cladeId)
@@ -282,8 +285,8 @@ class Parser(object):
             ##########  JSON ###########
             currentCladeDict = parentDict       
             ############################
-            rp_count += 1
-         
+            unmatchedParens -= 1
+            
          elif token == ';':
             break
          
@@ -304,17 +307,11 @@ class Parser(object):
             #currentCladeDict["name"] = name
             currentCladeDict[NAME_KEY] = token
             ################################
-      # TODO: We can just count this at the beginning instead of accumulating
-      # TODO: Raise exception?
-      if not lp_count == rp_count:
-         print 'Number of open/close parentheses do not match.'
       
-      # if ; token broke out of for loop, there should be no remaining tokens
-      # TODO: This won't happen since we split on ; before
-      try:
-         next_token = tokens.next()
-         print 'Text after semicolon in Newick tree: %s' % (next_token.group())
-      except StopIteration:
-         pass
+      # Check there are no unmatched parentheses
+      # TODO: Add a specific exception
+      if unmatchedParens != 0:
+         raise Exception, "Parser error.  Number of open / close parentheses do not match"
+      
       
       return rootDict, self.parentDicts # Newick.Tree(root=root_clade, rooted=self.rooted)
