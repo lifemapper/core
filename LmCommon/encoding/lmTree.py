@@ -32,22 +32,11 @@ import os
 from random import randint
 import json
 
-from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.lmconstants import OutputFormat, PhyloTreeKeys
 from LmCommon.encoding.newickToJson import Parser
 
 #TODO: Move to constants module and consider a FileTypes class
 NHX_EXT = [".nhx", ".tre"]
-
-# Dictionary keys
-C_KEY = 'c' # TODO: What is this?  Document
-CHILDREN_KEY = 'children' # Children of a node
-DESC_KEY = 'desc' #TODO: What is this? Document.  Only used twice
-LENGTH_KEY = 'length' # Branch length for that node
-MTX_IDX_KEY = 'mx' # The matrix index for this node
-NAME_KEY = 'name' # Name of the node
-NC_KEY = 'nc' #TODO: Document
-PATH_KEY = 'path' #TODO: Document
-PATH_ID_KEY = 'pathId' # TODO: Document
 
 NO_BRANCH_LEN = 0
 MISSING_BRANCH_LEN = 1
@@ -141,37 +130,37 @@ class LmTree(object):
          @todo: use constants for strings
          @todo: Evaluate casting
          """
-         if clade.has_key(CHILDREN_KEY):
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
             # do stuff in here
-            if clade.has_key(LENGTH_KEY):  # to control for pathId 0 not having length
-               lengths[int(clade[PATH_ID_KEY])] = float(clade[LENGTH_KEY])
+            if clade.has_key(PhyloTreeKeys.BRANCH_LENGTH):  # to control for pathId 0 not having length
+               lengths[int(clade[PhyloTreeKeys.PATH_ID])] = float(clade[PhyloTreeKeys.BRANCH_LENGTH])
             else:
-               if int(clade[PATH_ID_KEY]) != 0:
+               if int(clade[PhyloTreeKeys.PATH_ID]) != 0:
                   self._numberMissingLengths +=1
-            internalPaths[clade[PATH_ID_KEY]] = [int(x) for x in clade[PATH_KEY].split(',')]
-            subTrees[int(clade[PATH_ID_KEY])] = clade[CHILDREN_KEY]
-            if len(clade[CHILDREN_KEY]) > 2:
+            internalPaths[clade[PhyloTreeKeys.PATH_ID]] = [int(x) for x in clade[PhyloTreeKeys.PATH].split(',')]
+            subTrees[int(clade[PhyloTreeKeys.PATH_ID])] = clade[PhyloTreeKeys.CHILDREN]
+            if len(clade[PhyloTreeKeys.CHILDREN]) > 2:
                self._polytomy = True
-               self.whichNPoly.append(int(clade[PATH_ID_KEY]))
+               self.whichNPoly.append(int(clade[PhyloTreeKeys.PATH_ID]))
                polydesc = {}
-               for p in clade[CHILDREN_KEY]:
-                  if p.has_key(LENGTH_KEY):
-                     polydesc[int(p[PATH_ID_KEY])] = p[LENGTH_KEY]
+               for p in clade[PhyloTreeKeys.CHILDREN]:
+                  if p.has_key(PhyloTreeKeys.BRANCH_LENGTH):
+                     polydesc[int(p[PhyloTreeKeys.PATH_ID])] = p[PhyloTreeKeys.BRANCH_LENGTH]
                   else:
-                     polydesc[int(p[PATH_ID_KEY])] = ''
-               self.polyPos[clade[PATH_ID_KEY]] = {PATH_KEY: clade[PATH_KEY], DESC_KEY: polydesc}
-            for child in clade[CHILDREN_KEY]:
+                     polydesc[int(p[PhyloTreeKeys.PATH_ID])] = ''
+               self.polyPos[clade[PhyloTreeKeys.PATH_ID]] = {PhyloTreeKeys.PATH: clade[PhyloTreeKeys.PATH], PhyloTreeKeys.DESC: polydesc}
+            for child in clade[PhyloTreeKeys.CHILDREN]:
                recurseClade(child)
          else:
             # tip
-            if not clade.has_key(LENGTH_KEY):
+            if not clade.has_key(PhyloTreeKeys.BRANCH_LENGTH):
                self._numberMissingLengths +=1
             else:
-               lengths[int(clade[PATH_ID_KEY])] = float(clade[LENGTH_KEY]) 
-            tipPaths[clade[PATH_ID_KEY]] = ([int(x) for x in clade[PATH_KEY].split(',')], clade[NAME_KEY])
-            self._tipNames.append(clade[NAME_KEY]) 
-            if clade.has_key(MTX_IDX_KEY):
-               self._tipNamesWithMX.append(clade[NAME_KEY])
+               lengths[int(clade[PhyloTreeKeys.PATH_ID])] = float(clade[PhyloTreeKeys.BRANCH_LENGTH]) 
+            tipPaths[clade[PhyloTreeKeys.PATH_ID]] = ([int(x) for x in clade[PhyloTreeKeys.PATH].split(',')], clade[PhyloTreeKeys.NAME])
+            self._tipNames.append(clade[PhyloTreeKeys.NAME]) 
+            if clade.has_key(PhyloTreeKeys.MTX_IDX):
+               self._tipNamesWithMX.append(clade[PhyloTreeKeys.NAME])
       #...................................................
       #TODO: Document
       recurseClade(clade)
@@ -194,12 +183,12 @@ class LmTree(object):
       """     
       # ..............................   
       def takeOutMtx(clade):
-         if clade.has_key(CHILDREN_KEY):
-            clade.pop(MTX_IDX_KEY, None)
-            for child in clade[CHILDREN_KEY]:
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
+            clade.pop(PhyloTreeKeys.MTX_IDX, None)
+            for child in clade[PhyloTreeKeys.CHILDREN]:
                takeOutMtx(child)
          else:
-            clade.pop(MTX_IDX_KEY, None)
+            clade.pop(PhyloTreeKeys.MTX_IDX, None)
       
       for n in dropTips:
          if n in self.tipNamesWithMX:
@@ -302,11 +291,11 @@ class LmTree(object):
       edgeDict = {}
       #TODO: Evaluate
       def recurseEdge(clade):
-         if clade.has_key(CHILDREN_KEY):
-            childIds = [int(c[PATH_ID_KEY]) for c in clade[CHILDREN_KEY]]
-            if int(clade[PATH_ID_KEY]) not in edgeDict:
-               edgeDict[int(clade[PATH_ID_KEY])] = childIds
-            for child in clade[CHILDREN_KEY]:
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
+            childIds = [int(c[PhyloTreeKeys.PATH_ID]) for c in clade[PhyloTreeKeys.CHILDREN]]
+            if int(clade[PhyloTreeKeys.PATH_ID]) not in edgeDict:
+               edgeDict[int(clade[PhyloTreeKeys.PATH_ID])] = childIds
+            for child in clade[PhyloTreeKeys.CHILDREN]:
                recurseEdge(child)        
       recurseEdge(self.tree)
       
@@ -431,43 +420,43 @@ class LmTree(object):
       @todo: Probably remove inner functions
       """
       print "in make Paths"
-      p = {C_KEY:0}   
+      p = {PhyloTreeKeys.C:0}   
       # ..............................   
       def recursePaths(clade, parent):
-         if clade.has_key(CHILDREN_KEY):
-            clade[PATH_KEY].insert(0,str(p[C_KEY]))
-            clade[PATH_KEY] = clade[PATH_KEY] + parent 
-            clade[PATH_ID_KEY] = str(p[C_KEY])
-            #clade[NAME_KEY] = str(p[C_KEY])
-            for child in clade[CHILDREN_KEY]:
-               p[C_KEY] = p[C_KEY] + 1
-               recursePaths(child, clade[PATH_KEY])
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
+            clade[PhyloTreeKeys.PATH].insert(0,str(p[PhyloTreeKeys.C]))
+            clade[PhyloTreeKeys.PATH] = clade[PhyloTreeKeys.PATH] + parent 
+            clade[PhyloTreeKeys.PATH_ID] = str(p[PhyloTreeKeys.C])
+            #clade[PhyloTreeKeys.NAME] = str(p[PhyloTreeKeys.C])
+            for child in clade[PhyloTreeKeys.CHILDREN]:
+               p[PhyloTreeKeys.C] = p[PhyloTreeKeys.C] + 1
+               recursePaths(child, clade[PhyloTreeKeys.PATH])
          else:
             # tips
-            clade[PATH_KEY].insert(0,str(p[C_KEY]))
-            clade[PATH_KEY] = clade[PATH_KEY] + parent
-            clade[PATH_ID_KEY] = str(p[C_KEY])
-            #clade[NAME_KEY] = str(p[C_KEY])  #take this out for real
+            clade[PhyloTreeKeys.PATH].insert(0,str(p[PhyloTreeKeys.C]))
+            clade[PhyloTreeKeys.PATH] = clade[PhyloTreeKeys.PATH] + parent
+            clade[PhyloTreeKeys.PATH_ID] = str(p[PhyloTreeKeys.C])
+            #clade[PhyloTreeKeys.NAME] = str(p[PhyloTreeKeys.C])  #take this out for real
       # ..............................   
       def takeOutBr(clade):
          
-         if clade.has_key(CHILDREN_KEY):
-            clade.pop(LENGTH_KEY, None)
-            for child in clade[CHILDREN_KEY]:
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
+            clade.pop(PhyloTreeKeys.BRANCH_LENGTH, None)
+            for child in clade[PhyloTreeKeys.CHILDREN]:
                takeOutBr(child)
          else:
-            clade.pop(LENGTH_KEY, None)
+            clade.pop(PhyloTreeKeys.BRANCH_LENGTH, None)
       # ..............................   
       def takeOutStrPaths(clade):
          
-         if clade.has_key(CHILDREN_KEY):
-            clade[PATH_KEY] = []
-            clade[PATH_ID_KEY] = ''
-            for child in clade[CHILDREN_KEY]:
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
+            clade[PhyloTreeKeys.PATH] = []
+            clade[PhyloTreeKeys.PATH_ID] = ''
+            for child in clade[PhyloTreeKeys.CHILDREN]:
                takeOutStrPaths(child)
          else:
-            clade[PATH_KEY] = []
-            clade[PATH_ID_KEY] = ''
+            clade[PhyloTreeKeys.PATH] = []
+            clade[PhyloTreeKeys.PATH_ID] = ''
 
       
       takeOutStrPaths(tree)    
@@ -480,12 +469,12 @@ class LmTree(object):
       # ..............................
       # TODO: Why is this defined here?   
       def stringifyPaths(clade):
-         if clade.has_key(CHILDREN_KEY):
-            clade[PATH_KEY] = ','.join(clade[PATH_KEY])
-            for child in clade[CHILDREN_KEY]:
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
+            clade[PhyloTreeKeys.PATH] = ','.join(clade[PhyloTreeKeys.PATH])
+            for child in clade[PhyloTreeKeys.CHILDREN]:
                stringifyPaths(child)
          else:
-            clade[PATH_KEY] = ','.join(clade[PATH_KEY])
+            clade[PhyloTreeKeys.PATH] = ','.join(clade[PhyloTreeKeys.PATH])
             
       stringifyPaths(tree)
    
@@ -507,22 +496,22 @@ class LmTree(object):
          m[iN] = le
       #print m
       #m = {k[0]:list(k) for k in edge }
-      tree = {PATH_ID_KEY:str(0), PATH_KEY:'', CHILDREN_KEY:[]}  # will take out name for internal after testing
+      tree = {PhyloTreeKeys.PATH_ID:str(0), PhyloTreeKeys.PATH:'', PhyloTreeKeys.CHILDREN:[]}  # will take out name for internal after testing
       def recurse(clade, l):
          for x in l:
-            if clade.has_children(CHILDREN_KEY):
-               nc = {PATH_ID_KEY:str(x), PATH_KEY:''} # will take out name for internal after testing
+            if clade.has_children(PhyloTreeKeys.CHILDREN):
+               nc = {PhyloTreeKeys.PATH_ID:str(x), PhyloTreeKeys.PATH:''} # will take out name for internal after testing
                if lengths:
-                  nc[LENGTH_KEY] = lengths[x]
+                  nc[PhyloTreeKeys.BRANCH_LENGTH] = lengths[x]
                if x not in tips:
-                  nc[CHILDREN_KEY] = []
-                  #nc[PATH_KEY] = ','.join([str(pI) for pI in self.internalPaths[str(x)]])
-                  nc[PATH_KEY] = ''
+                  nc[PhyloTreeKeys.CHILDREN] = []
+                  #nc[PhyloTreeKeys.PATH] = ','.join([str(pI) for pI in self.internalPaths[str(x)]])
+                  nc[PhyloTreeKeys.PATH] = ''
                else:
-                  nc[NAME_KEY] = self.tipPaths[str(x)][1]
-                  #nc[PATH_KEY] = ','.join([str(pI) for pI in self.tipPaths[str(x)][0]])
-                  nc[PATH_KEY] = ''
-               clade[CHILDREN_KEY].append(nc)
+                  nc[PhyloTreeKeys.NAME] = self.tipPaths[str(x)][1]
+                  #nc[PhyloTreeKeys.PATH] = ','.join([str(pI) for pI in self.tipPaths[str(x)][0]])
+                  nc[PhyloTreeKeys.PATH] = ''
+               clade[PhyloTreeKeys.CHILDREN].append(nc)
                if x not in tips:
                   recurse(nc, m[x])
       recurse(tree, m[edge[0][0]])
@@ -548,14 +537,14 @@ class LmTree(object):
          m[iN] = le
       #print m
       #m = {k[0]:list(k) for k in edge }
-      tree = {PATH_ID_KEY: str(n+1), PATH_KEY: [], CHILDREN_KEY: [], NAME_KEY: str(n+1), LENGTH_KEY:"0"}
+      tree = {PhyloTreeKeys.PATH_ID: str(n+1), PhyloTreeKeys.PATH: [], PhyloTreeKeys.CHILDREN: [], PhyloTreeKeys.NAME: str(n+1), PhyloTreeKeys.BRANCH_LENGTH:"0"}
       def recurse(clade, l):
          for x in l:
-            if clade.has_key(CHILDREN_KEY):
-               nc = {PATH_ID_KEY: str(x), PATH_KEY: [], NAME_KEY: str(x), LENGTH_KEY: '0'}
+            if clade.has_key(PhyloTreeKeys.CHILDREN):
+               nc = {PhyloTreeKeys.PATH_ID: str(x), PhyloTreeKeys.PATH: [], PhyloTreeKeys.NAME: str(x), PhyloTreeKeys.BRANCH_LENGTH: '0'}
                if x not in tips:
-                  nc[CHILDREN_KEY] = []
-               clade[CHILDREN_KEY].append(nc)
+                  nc[PhyloTreeKeys.CHILDREN] = []
+               clade[PhyloTreeKeys.CHILDREN].append(nc)
                if x not in tips:
                   recurse(nc, m[x])
       recurse(tree, m[n+1])
@@ -571,13 +560,13 @@ class LmTree(object):
       tips = []
       # ..............................   
       def findTips(clade):
-         if clade.has_key(CHILDREN_KEY):
-            clade[NAME_KEY] = ''
-            for child in clade[CHILDREN_KEY]:
+         if clade.has_key(PhyloTreeKeys.CHILDREN):
+            clade[PhyloTreeKeys.NAME] = ''
+            for child in clade[PhyloTreeKeys.CHILDREN]:
                findTips(child)
          else:
             # tips
-            clade[NAME_KEY] = ''
+            clade[PhyloTreeKeys.NAME] = ''
             tips.append(clade)
             
       findTips(rt)
@@ -597,22 +586,22 @@ class LmTree(object):
          st_copy = self.subTrees.copy()
          # loops through polys and makes rnd tree and attaches as children in subtree
          for k in self.polyPos.keys():
-            pTips =  self.polyPos[k][DESC_KEY].items()  # these are integers
+            pTips =  self.polyPos[k][PhyloTreeKeys.DESC].items()  # these are integers
             n = len(pTips)          
             rt = self.rTree(n)
             tips = self._getRTips(rt)
             for pt, t in zip(pTips, tips):
                #print pt," ",t
-               t[PATH_ID_KEY] = str(pt[0])  # might not need this
-               t[LENGTH_KEY] = pt[1]
+               t[PhyloTreeKeys.PATH_ID] = str(pt[0])  # might not need this
+               t[PhyloTreeKeys.BRANCH_LENGTH] = pt[1]
                if str(pt[0]) not in self.tipPaths:
-                  t[CHILDREN_KEY] = self.subTrees[pt[0]]
+                  t[PhyloTreeKeys.CHILDREN] = self.subTrees[pt[0]]
                else:
-                  t[NAME_KEY] = self.tipPaths[str(pt[0])][1]
+                  t[PhyloTreeKeys.NAME] = self.tipPaths[str(pt[0])][1]
                   #print pt," ",t
             # now at this level get the two children of the random root
-            c1 = rt[CHILDREN_KEY][0]
-            c2 = rt[CHILDREN_KEY][1]
+            c1 = rt[PhyloTreeKeys.CHILDREN][0]
+            c2 = rt[PhyloTreeKeys.CHILDREN][1]
             
             st_copy[int(k)] = []
             st_copy[int(k)].append(c1)
@@ -621,15 +610,15 @@ class LmTree(object):
          removeList = list(self.polyPos.keys())
          # ..............................   
          def replaceInTree(clade):
-            if clade.has_key(CHILDREN_KEY):
-               #if clade[PATH_ID_KEY] in self.polyPos.keys():
-               if clade[PATH_ID_KEY] in removeList:
-                  idx = removeList.index(clade[PATH_ID_KEY] )
+            if clade.has_key(PhyloTreeKeys.CHILDREN):
+               #if clade[PhyloTreeKeys.PATH_ID] in self.polyPos.keys():
+               if clade[PhyloTreeKeys.PATH_ID] in removeList:
+                  idx = removeList.index(clade[PhyloTreeKeys.PATH_ID] )
                   del removeList[idx]
-               #if clade[PATH_ID_KEY] == polyKey:
-                  clade[CHILDREN_KEY] = st_copy[int(clade[PATH_ID_KEY])]
+               #if clade[PhyloTreeKeys.PATH_ID] == polyKey:
+                  clade[PhyloTreeKeys.CHILDREN] = st_copy[int(clade[PhyloTreeKeys.PATH_ID])]
                   #return
-               for child in clade[CHILDREN_KEY]:
+               for child in clade[PhyloTreeKeys.CHILDREN]:
                   replaceInTree(child)
             else:
                pass    
@@ -663,30 +652,30 @@ class LmTree(object):
          n1 = randint(1,n-1)
          n2 = n - n1
          po2 = pos + 2 * n1 - 1
-         edge[pos][0] = nod[NC_KEY]
-         edge[po2][0] = nod[NC_KEY]
-         nod[NC_KEY] = nod[NC_KEY] + 1
+         edge[pos][0] = nod[PhyloTreeKeys.NC]
+         edge[po2][0] = nod[PhyloTreeKeys.NC]
+         nod[PhyloTreeKeys.NC] = nod[PhyloTreeKeys.NC] + 1
          if n1 > 2:
-            edge[pos][1] = nod[NC_KEY]
+            edge[pos][1] = nod[PhyloTreeKeys.NC]
             generate(n1, pos+1)
          elif n1 == 2:
-            edge[pos+1][0] = nod[NC_KEY]
-            edge[pos+2][0] = nod[NC_KEY]
-            edge[pos][1]   = nod[NC_KEY]
-            nod[NC_KEY] = nod[NC_KEY] + 1
+            edge[pos+1][0] = nod[PhyloTreeKeys.NC]
+            edge[pos+2][0] = nod[PhyloTreeKeys.NC]
+            edge[pos][1]   = nod[PhyloTreeKeys.NC]
+            nod[PhyloTreeKeys.NC] = nod[PhyloTreeKeys.NC] + 1
          if n2 > 2:
-            edge[po2][1] = nod[NC_KEY]
+            edge[po2][1] = nod[PhyloTreeKeys.NC]
             generate(n2, po2+1)
          elif n2 == 2:
-            edge[po2 + 1][0] = nod[NC_KEY]
-            edge[po2 + 2][0] = nod[NC_KEY]
-            edge[po2][1]    = nod[NC_KEY]
-            nod[NC_KEY] = nod[NC_KEY] + 1
+            edge[po2 + 1][0] = nod[PhyloTreeKeys.NC]
+            edge[po2 + 2][0] = nod[PhyloTreeKeys.NC]
+            edge[po2][1]    = nod[PhyloTreeKeys.NC]
+            nod[PhyloTreeKeys.NC] = nod[PhyloTreeKeys.NC] + 1
          
       nbr = (2 * n) - 3 + rooted
       edge =  np.array(np.arange(0, 2*nbr)).reshape(2, nbr).T
       edge.fill(-999)
-      nod = {NC_KEY: n + 1}
+      nod = {PhyloTreeKeys.NC: n + 1}
       generate(n, 0)
      
       idx = np.where(edge[:,1]==-999)[0]
