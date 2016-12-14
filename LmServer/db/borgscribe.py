@@ -320,7 +320,6 @@ class BorgScribe(LMObject):
    def initSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
                     mdlMask=None, projMask=None,
                     occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
-                    mdlMask=None, prjMask=None,
                     intersectGrid=None, minPointCount=None):
       """
       @summary: Initialize LMArchive job chain (models, projections, 
