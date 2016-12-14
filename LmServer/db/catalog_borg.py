@@ -723,7 +723,7 @@ class Borg(DbPostgresql):
       return occ
    
 # ...............................................
-   def updateOccurrenceSet(self, occ, polyWkt=None, pointsWkt=None):
+   def updateOccurrenceSet(self, occ, polyWkt, pointsWkt):
       """
       @summary Method to update an occurrenceSet object in the MAL database with 
                the verify hash, displayname, dlocation, queryCount, bbox, geom, 
@@ -732,14 +732,6 @@ class Borg(DbPostgresql):
       @note: queryCount should be updated on the object before calling this;
              geometries should be calculated and sent separately. 
       """
-#       pointtotal = occ.queryCount
-#       if not occ.getFeatures():
-#          occ.readShapefile()
-#       if occ.getFeatures():
-#          pointtotal = occ.featureCount
-#          if occ.epsgcode == DEFAULT_EPSG:
-#             polywkt = occ.getConvexHullWkt()
-#             pointswkt = occ.getWkt()
       metadata = occ.dumpLyrMetadata()
       try:
          success = self.executeModifyFunction('lm_updateOccurrenceSet', 

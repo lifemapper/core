@@ -259,4 +259,17 @@ class BorgScribe(LMObject):
                         .format(occ.getId()))
       return newOcc
          
-
+# ...............................................
+   def updateOccset(self, occ, polyWkt=None, pointsWkt=None):
+      """
+      @summary: Update OccurrenceLayer attributes: 
+                  verify, displayName, dlocation, rawDlocation, queryCount, 
+                  bbox, metadata, status, statusModTime, geometries if valid
+      @note: Does not update userid, squid, and epsgcode
+      @param occ: OccurrenceLayer to be updated.  
+      @param polyWkt: geometry for the minimum polygon around these points
+      @param pointsWkt: multipoint geometry for these points
+      @return: True/False for successful update.
+      """
+      success = self._borg.updateOccurrenceSetMetadataAndStatus(occ, polyWkt, pointsWkt)
+      return success
