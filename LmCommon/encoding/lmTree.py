@@ -95,21 +95,17 @@ class LmTree(object):
       
    # ..............................   
    @classmethod
-   def convertFromNewick(cls, dLoc):
+   def convertFromNewick(cls, filename):
       """
-      @todo: Document
+      @summary: Creates a new LmTree object by converting a Newick tree
+      @param filename: The location of the Newick tree file
       """
-      try:
-         #TODO: Fix memory leak
-         tree = open(dLoc, 'r').read()
-         #TODO: Fix, recursive unnecessarily
-         sh = Parser.from_string(tree)
-         parser = Parser(sh)
-         result, parentDicts = parser.parse()
-      except Exception, e:
-         #TODO: Do we want to return an exception as the result?  Should bubble up
-         result = e
-      return result
+      with open(filename) as inF:
+         newickString = inF.read()
+      # Use the Newick parser to get JSON, then feed that into constructor
+      newickParser = Parser(newickString)
+      jsonTree, _ = newickParser.parse()
+      return cls(jsonTree)
       
    # ..............................   
    def getTreeInfo(self, clade):
