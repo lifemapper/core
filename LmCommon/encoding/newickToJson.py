@@ -170,14 +170,20 @@ class Parser(object):
       """
       @summary: Returns the parent dictionary for a clade
       @param clade: Clade dictionary
+      @note: This is a lookup structure
+      @todo: Better if we use recursion instead?
       """
       return self.parentDicts[clade[PATH_ID_KEY]]
    
    # ..............................   
    def newCladeDict(self, parent=None, id=None):
       """
-      @todo: Document
-      @todo: Constants
+      @summary: Create a new clade dictionary
+      @param parent: (optional) A parent clade dictionary
+      @param id: (optional) The id of the parent clade?
+      @todo: Look into id
+      @todo: Rename id parameter to cladeId or parentCladeId
+      @todo: Can this work if you don't provide id?
       """
       
       if parent is not None:
@@ -189,7 +195,6 @@ class Parser(object):
          if id is not None:
             path = str(id) + ','+ parentPath
             newClade[PATH_KEY] = path
-         
          
          self.parentDicts[newClade[PATH_ID_KEY]] = parent
       else:
@@ -203,8 +208,9 @@ class Parser(object):
       @todo: Document
       @todo: Constants
       """
-      tokens = re.finditer(tokenizer, text.strip())      
-      newCladeDict = self.newCladeDict
+      #TODO: NO!!!!  Bad variable name
+      tokens = re.finditer(tokenizer, text.strip())
+      
       cladeId  = 0          
       ######## JSON ###########
       rootDict = {PATH_KEY: '0', PATH_ID_KEY: "0", CHILDREN_KEY: []} 
@@ -216,8 +222,11 @@ class Parser(object):
       currentCladeDict = rootDict
       ###########################
           
+      #TODO: Replace
       lp_count = 0
       rp_count = 0
+      
+      # TODO: Consider using a generator and recursion
               
       for match in tokens:
          #print "MATCH"
@@ -241,7 +250,7 @@ class Parser(object):
             lp_count += 1           
             ########  JSON #####################
             currentCladeDict[CHILDREN_KEY] = []
-            tempClade = newCladeDict(currentCladeDict, id=cladeId)
+            tempClade = self.newCladeDict(currentCladeDict, id=cladeId)
             cladeId += 1
             currentCladeDict = tempClade
             
@@ -252,14 +261,15 @@ class Parser(object):
             ############  JSON ###############
             if currentCladeDict[PATH_ID_KEY] == "0":
                print "is it getting in here for F(A,B,(C,D)E); Answer: No"
-               rootDict = newCladeDict(id=cladeId)
+               #TODO: Can this happen?  Handle better if it can
+               rootDict = self.newCladeDict(id=cladeId)
                cladeId +=1
                self.parentDicts[str(currentCladeDict[PATH_ID_KEY])] = rootDict      
             # start a new child clade at the same level as the current clade
             ########### JSON ############
             parentDict = self.getParentDict(currentCladeDict)
             #parentDict["children"] = []
-            currentCladeDict = newCladeDict(parentDict, cladeId)
+            currentCladeDict = self.newCladeDict(parentDict, cladeId)
             #############################
              
             cladeId +=1
