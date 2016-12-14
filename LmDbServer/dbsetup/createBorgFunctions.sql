@@ -362,7 +362,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3._lm_getOccurrenceSet(occid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_getOccurrenceSet(occid int,
                                                       usr varchar, 
                                                       sqd varchar, 
                                                       epsg int)

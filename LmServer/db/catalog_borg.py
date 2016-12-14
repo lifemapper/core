@@ -716,13 +716,10 @@ class Borg(DbPostgresql):
    
 # .............................................................................
    def getOccurrenceSet(self, occid, squid, userId, epsg):
-      occsets = []
-      rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSet',
+      row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
                                                   occid, squid, userId, epsg)
-      for r in rows:
-         occ = self._createOccurrenceSet(r, idxs)
-         occsets.append(occ)
-      return occsets
+      occ = self._createOccurrenceSet(row, idxs)
+      return occ
    
 # ...............................................
    def updateOccurrenceSet(self, occ, polyWkt=None, pointsWkt=None):
