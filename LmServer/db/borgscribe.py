@@ -23,6 +23,7 @@
           02110-1301, USA.
 """
 import mx.DateTime
+from osgeo.ogr import wkbPoint
 import os
 import socket
 from types import StringType, UnicodeType, IntType

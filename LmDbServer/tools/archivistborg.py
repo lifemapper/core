@@ -231,6 +231,7 @@ if __name__ == "__main__":
 
 """
 import mx.DateTime as dt
+from osgeo.ogr import wkbPoint
 import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.config import Config
@@ -242,6 +243,7 @@ from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserB
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ENV_DATA_PATH, SPECIES_DATA_PATH
 from LmServer.common.log import ScriptLogger
+from LmServer.sdm.occlayer import OccurrenceLayer
 envPackageName = '10min-past-present-future'
 
 from LmDbServer.tools.archivistborg import *
@@ -256,7 +258,7 @@ secs = time.time()
 tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
 logger = ScriptLogger('{}.{}'.format(name, timestamp))
-
+currtime = dt.gmt().mjd
 expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                SPECIES_EXP_DAY).mjd
 try:
@@ -275,9 +277,20 @@ boomer.moveToStart()
 #boomer.chainOne()
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
-jobs = boomer._processSDMChain(sciName, speciesKey, 
-                            ProcessType.GBIF_TAXA_OCCURRENCE, 
-                            dataCount, data=dataChunk)
+occ = OccurrenceLayer(sciName.scientificName, name=sciName.scientificName, 
+               fromGbif=False, 
+               squid=sciName.squid, queryCount=dataCount, epsgcode=boomer.epsg, 
+               ogrType=wkbPoint, ogrFormat=ogrFormat, userId=boomer.userid,
+               primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
+               status=JobStatus.INITIALIZE, statusModTime=currtime, 
+               sciName=sciName)
+occ = boomer._createOrResetOccurrenceset(sciName, speciesKey, 
+                              ProcessType.GBIF_TAXA_OCCURRENCE, dataCount, 
+                              data=dataChunk)
+                              
+# jobs = boomer._processSDMChain(sciName, speciesKey, 
+#                             ProcessType.GBIF_TAXA_OCCURRENCE, 
+#                             dataCount, data=dataChunk)
 if speciesKey:
    jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
    boomer._createMakeflow(jobs)

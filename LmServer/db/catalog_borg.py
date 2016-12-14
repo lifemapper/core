@@ -290,7 +290,7 @@ class Borg(DbPostgresql):
       return shg
 
 # ...............................................
-   def _createOccurrenceSet(self, row, idxs):
+   def _createOccurrenceLayer(self, row, idxs):
       """
       @note: takes lm_shapegrid record
       """
@@ -319,7 +319,7 @@ class Borg(DbPostgresql):
       occ = None
       if row is not None:
          priority = None
-         occ = self._createOccurrenceSet(row, idxs)
+         occ = self._createOccurrenceLayer(row, idxs)
          scen = Scenario(self._getColumnValue(row, idxs, ['mdlscenariocode', 'scenariocode']), 
                          scenarioid=self._getColumnValue(row, idxs, ['mdlscenarioid', 'scenarioid']))
          algorithm = self._createAlgorithm(row, idxs)
@@ -718,7 +718,7 @@ class Borg(DbPostgresql):
    def getOccurrenceSet(self, occid, squid, userId, epsg):
       row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
                                                   occid, squid, userId, epsg)
-      occ = self._createOccurrenceSet(row, idxs)
+      occ = self._createOccurrenceLayer(row, idxs)
       return occ
    
 # ...............................................
@@ -803,21 +803,25 @@ class Borg(DbPostgresql):
 # ...............................................
    def findOrInsertOccurrenceSet(self, occ):
       """
-      @summary: Save a new occurrence set   
+      @summary: Find existing (from occsetid OR usr/squid/epsg) 
+                OR save a new OccurrenceLayer  
       @param occ: New OccurrenceSet to save 
-      @note: updates db with count, the actual count on the object (likely zero 
-             on initial insertion)
+      @return new or existing OccurrenceLayer 
       """
-      """
-      @summary: Insert a user of the Lifemapper system. 
-      @param usr: LMUser object to insert
-      @return: new or existing LMUser
-      """
-      usr.modTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceset', 
-                              usr.userid, usr.firstName, usr.lastName, 
-                              usr.institution, usr.address1, usr.address2, 
-                              usr.address3, usr.phone, usr.email, usr.modTime, 
-                              usr.getPassword())
-      newOrExistingUsr = self._createUser(row, idxs)
+      polywkt = pointswkt = None
+      pointtotal = occ.queryCount
+      if occ.getFeatures():
+         pointtotal = occ.featureCount
+         polywkt = occ.getConvexHullWkt()
+         pointswkt = occ.getWkt()
+         
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceSet', 
+                              occ.getId(), occ.getUserId(), occ.squid, 
+                              occ.verify, occ.displayName,
+                              occ.constructMetadataUrl(),
+                              occ.getDLocation(), occ.getRawDLocation(),
+                              pointtotal, occ.getCSVExtentString(), occ.epsgcode,
+                              occ.dumpLyrMetadata(),
+                              occ.status, occ.statusModTime, polywkt, pointswkt)
+      newOrExistingUsr = self._createOccurrenceLayer(row, idxs)
       return newOrExistingUsr
