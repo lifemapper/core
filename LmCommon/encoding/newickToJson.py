@@ -57,12 +57,14 @@ Note, "|" separates alternatives.
    Length → empty | ":" number
 
 """
+import os
 import re
 try:
    from cStringIO import StringIO
 except:
    from StringIO import StringIO
 
+#TODO: These shouldn't be module level
 tokens = [
     (r"\(",                                'open parens'),
     (r"\)",                                'close parens'),
@@ -85,27 +87,50 @@ class Parser(object):
    """
    
    # ..............................   
-   def __init__(self, handle):
+   def __init__(self, newickString):
       """
-      @todo: move documentation
+      @summary: Construct a new parser from a Newick tree string
+      @param newickString: A Newick tree as a string
       """
-      self.handle = handle
-      # parents Dict get built with keys(pathId) for all nodes other than
-      # root, since it doesn't have a parent. Node id's value is that node's parent clade 
-      # and the entire sub tree from that parent to it's tips 
+      self.newickString = newickString
       self.parentDicts = {}
-   
-   # ..............................   
-   @classmethod
-   def from_string(cls, treetext):
-      """
-      @todo: Document
-      @todo: Function name
-      @todo: This probably doesn't work
-      """
-      handle = StringIO(treetext)
-      return handle       
       
+   # ..............................
+   @classmethod
+   def fromFileLikeObject(cls, flo):
+      """
+      @summary: Returns a Parser instance using the contents of a file-like 
+                  object
+      @param flo: A file-like object to read the tree from
+      """
+      newickString = flo.read()
+      return cls(newickString)
+   
+   # ..............................
+   @classmethod
+   def fromFilename(cls, fn):
+      """
+      @summary: Returns a Parser instance using the contents of a file
+      @param flo: A file-like object to read the tree from
+      @raise IOError: If the file does not exist
+      """
+      with open(fn) as inF:
+         newickString = inF.read()
+      return cls(newickString)
+   
+   
+   #def __init__(self, handle):
+   #   """
+   #   @summary: Constructor
+   #   @note: This currently takes a file like object (flo). I'm not sure that it should.  We could provide a class method for that as well as a from file method
+   #   @todo: move documentation
+   #   """
+   #   self.handle = handle
+   #   # parents Dict get built with keys(pathId) for all nodes other than
+   #   # root, since it doesn't have a parent. Node id's value is that node's parent clade 
+   #   # and the entire sub tree from that parent to it's tips 
+   #   self.parentDicts = {}
+   
    # ..............................   
    def parse(self, values_are_confidence=False, comments_are_confidence=False, rooted=False):
       """
@@ -115,17 +140,28 @@ class Parser(object):
       self.values_are_confidence = values_are_confidence
       self.comments_are_confidence = comments_are_confidence
       self.rooted = rooted
-      buf = ''
-      for line in self.handle:
-         buf += line.rstrip()
-         if buf.endswith(';'):
-            phyloDict, parentDicts = self._parse_tree(buf)
-            buf = ''
-      if buf:        
-         # Last tree is missing a terminal ';' character -- that's OK
-         #yield self._parse_tree(buf)
-         phyloDict, parentDicts = self._parse_tree(buf)
-         buf = ''
+      
+      
+      
+      #TODO: It looks like a file can have multiple trees but this isn't a good way to do this
+      #TODO: It also looks to be a last one in wins situation
+      #buf = ''
+      #for line in self.handle:
+      #   buf += line.rstrip()
+      #   if buf.endswith(';'):
+      #      phyloDict, parentDicts = self._parse_tree(buf)
+      #      buf = ''
+      #if buf:        
+      #   # Last tree is missing a terminal ';' character -- that's OK
+      #   #yield self._parse_tree(buf)
+      #   phyloDict, parentDicts = self._parse_tree(buf)
+      #   buf = ''
+      
+      # TODO: This is better
+      for treeStr in self.newickString.split(';'):
+         phyloDict, parentDicts = self._parse_tree(treeStr)
+         
+      
       return phyloDict, parentDicts      
       
    # ..............................   
