@@ -173,45 +173,37 @@ class Parser(object):
       return self.parentDicts[clade[PATH_ID_KEY]]
    
    # ..............................   
-   def newCladeDict(self, parent=None, id=None):
+   def newCladeDict(self, cladeId, parent=None):
       """
       @summary: Create a new clade dictionary
+      @param cladeId: The id for this new clade
       @param parent: (optional) A parent clade dictionary
-      @param id: (optional) The id of the parent clade?
-      @todo: Look into id
-      @todo: Rename id parameter to cladeId or parentCladeId
-      @todo: Can this work if you don't provide id?
+      @todo: Can we use integers or do we really need path id to be a string?
       """
+      newClade = {
+         PATH_ID_KEY: cladeId,
+         PATH_KEY: "{0}".format(cladeId),
+         CHILDREN_KEY: []
+      }
       
+      # If a parent is provided, update the parent and the path
       if parent is not None:
-         # find the parent path
-         parentPath = parent[PATH_KEY]
-         newClade = {}
-         newClade[PATH_ID_KEY] = str(id)
+         # Update the path
+         newClade[PATH_KEY] = "{cladeId},{parentPath}".format(
+                                  cladeId=cladeId, parentPath=parent[PATH_KEY])
          parent[CHILDREN_KEY].append(newClade)
-         if id is not None:
-            path = str(id) + ','+ parentPath
-            newClade[PATH_KEY] = path
-         
          self.parentDicts[newClade[PATH_ID_KEY]] = parent
-      else:
-         newClade = {PATH_KEY: '0', PATH_ID_KEY: "0", CHILDREN_KEY: []}
+
       return newClade
       
    # ..............................   
    def _parse_tree(self, text):
       """
-      @summary: Parses the text representation into an Tree object.
-      @todo: Document
-      @todo: Constants
+      @summary: Parses the text representation into a dictionary
+      @param text: The Newick tree text to parse
       """
-      
-      tokens = re.finditer(self.tokenizer, text.strip())
-      
-      cladeId  = 0          
-      ######## JSON ###########
-      rootDict = {PATH_KEY: '0', PATH_ID_KEY: "0", CHILDREN_KEY: []} 
-      #########################
+      cladeId = 0
+      rootDict = newCladeDict(cladeId)
       
       cladeId +=1
             
@@ -224,6 +216,8 @@ class Parser(object):
       #      valid.  An exception to that would be unmatched parens in quoted
       #      labels, in which case, the tree is still valid
       unmatchedParens = 0
+      
+      tokens = re.finditer(self.tokenizer, text.strip())
 
       # TODO: Consider using a generator and recursion
               
@@ -249,7 +243,7 @@ class Parser(object):
             # start a new clade, which is a child of the current clade
             ########  JSON #####################
             currentCladeDict[CHILDREN_KEY] = []
-            tempClade = self.newCladeDict(currentCladeDict, id=cladeId)
+            tempClade = self.newCladeDict(cladeId, parent=currentCladeDict)
             cladeId += 1
             currentCladeDict = tempClade
             
@@ -261,14 +255,14 @@ class Parser(object):
             if currentCladeDict[PATH_ID_KEY] == "0":
                print "is it getting in here for F(A,B,(C,D)E); Answer: No"
                #TODO: Can this happen?  Handle better if it can
-               rootDict = self.newCladeDict(id=cladeId)
+               rootDict = self.newCladeDict(cladeId)
                cladeId +=1
                self.parentDicts[str(currentCladeDict[PATH_ID_KEY])] = rootDict      
             # start a new child clade at the same level as the current clade
             ########### JSON ############
             parentDict = self.getParentDict(currentCladeDict)
             #parentDict["children"] = []
-            currentCladeDict = self.newCladeDict(parentDict, cladeId)
+            currentCladeDict = self.newCladeDict(cladeId, parent=parentDict)
             #############################
              
             cladeId +=1
