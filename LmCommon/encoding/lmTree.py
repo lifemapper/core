@@ -32,11 +32,8 @@ import os
 from random import randint
 import json
 
-from LmCommon.common.lmconstants import OutputFormat, PhyloTreeKeys
+from LmCommon.common.lmconstants import FileFormats, OutputFormat, PhyloTreeKeys
 from LmCommon.encoding.newickToJson import Parser
-
-#TODO: Move to constants module and consider a FileTypes class
-NHX_EXT = [".nhx", ".tre"]
 
 NO_BRANCH_LEN = 0
 MISSING_BRANCH_LEN = 1
@@ -71,27 +68,25 @@ class LmTree(object):
       
    # ..............................   
    @classmethod
-   def fromFile(cls, dLoc):
+   def fromFile(cls, filename):
       """
-      @todo: Document
+      @summary: Create a new LmTree object from a file
+      @param filename: The location of the file to read
+      @raise IOError: Raised if the file does not exist
       """
-      if os.path.exists(dLoc):
-         fn,e = os.path.splitext(dLoc)
-         if e == OutputFormat.JSON:
-            #TODO: Fix duplication of effort. Should be able to load directly
-            with open(dLoc, 'r') as f:
-               jsonstr = f.read()
-            return cls(json.loads(jsonstr))
-         elif e in NHX_EXT:
-            phyloDict = cls.convertFromNewick(dLoc)
-            # TODO: Fix 
-            if  isinstance(phyloDict, Exception):
-               raise ValueError("Expected an python dictionary "+str(phyloDict))
-            else:
-               return cls(phyloDict)          
-      else:
-         #TODO: Raise exception
-         pass # ?
+      with open(filename) as inF:
+         content = inF.read()
+      
+      ext = os.path.splitext(filename)[1]
+      
+      if ext in FileFormats.JSON.getExtensions(): # JSON
+         return cls(content)
+      elif ext in FileFormats.NEWICK.getExtensions(): # Newick
+         newickParser = Parser(content)
+         jsonTree, _ = newickParser.parse()
+         return cls(jsonTree)
+      else: # Unknown
+         raise Exception, "LmTree does not know how to read %s files" % ext
       
    # ..............................   
    @classmethod
@@ -99,6 +94,7 @@ class LmTree(object):
       """
       @summary: Creates a new LmTree object by converting a Newick tree
       @param filename: The location of the Newick tree file
+      @raise IOError: Raised if the file does not exist
       """
       with open(filename) as inF:
          newickString = inF.read()
