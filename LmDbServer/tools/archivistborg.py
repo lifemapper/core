@@ -274,23 +274,18 @@ boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS,
                   minPointCount=POINT_COUNT_MIN,  
                   intersectGrid=DEFAULT_GRID_NAME, log=logger)
 boomer.moveToStart()
-#boomer.chainOne()
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
-ogrFormat = 'CSV'
-occ = OccurrenceLayer(sciName.scientificName, name=sciName.scientificName, 
-               squid=sciName.squid, queryCount=dataCount, epsgcode=boomer.epsg, 
-               ogrType=wkbPoint, ogrFormat=ogrFormat, userId=boomer.userid,
-               status=JobStatus.INITIALIZE, statusModTime=currtime, 
-               sciName=sciName)
-occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
 occ = boomer._createOrResetOccurrenceset(sciName, speciesKey, 
                               ProcessType.GBIF_TAXA_OCCURRENCE, dataCount, 
                               data=dataChunk)
-                              
-# jobs = boomer._processSDMChain(sciName, speciesKey, 
-#                             ProcessType.GBIF_TAXA_OCCURRENCE, 
-#                             dataCount, data=dataChunk)
+jobs = boomer._scribe.initSDMChain(boomer.userid, occ, boomer.algs, 
+                                         boomer.modelScenario, 
+                                         boomer.projScenarios, 
+                                         occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE, 
+                                         intersectGrid=boomer.intersectGrid,
+                                         minPointCount=boomer.minPointCount)
+                            
 if speciesKey:
    jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
    boomer._createMakeflow(jobs)

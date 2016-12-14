@@ -507,7 +507,7 @@ class _LMBoomer(LMObject):
 # ...............................................
    def _processSDMChain(self, sciName, taxonSourceKeyVal, occProcessType,
                         dataCount, data=None):
-      jobs = []
+      objs = []
       if sciName is not None:
          try:
             occ = self._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
@@ -521,22 +521,19 @@ class _LMBoomer(LMObject):
             # Create jobs for Archive Chain; 'reset' to existing occset will be 
             # saved here
             try:
-               jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
-                                         self.modelScenario, 
-                                         self.projScenarios, 
-                                         occJobProcessType=occProcessType, 
-                                         priority=self.priority, 
-                                         intersectGrid=self.intersectGrid,
-                                         minPointCount=self.minPointCount)
-               self.log.debug('Created {} jobs for occurrenceset {}'
-                              .format(len(jobs), occ.getId()))
+               objs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+                              self.modelScenario, self.projScenarios, 
+                              occJobProcessType=occProcessType, 
+                              mdlMask=self.modelMask, projMask=self.projMask,
+                              intersectGrid=self.intersectGrid,
+                              minPointCount=self.minPointCount)
+               self.log.debug('Created {} objects for occurrenceset {}'
+                              .format(len(objs), occ.getId()))
             except Exception, e:
                if not isinstance(e, LMError):
                   e = LMError(currargs=e.args, lineno=self.getLineno())
                raise e
-      return jobs
-#       else:
-#          self.log.debug('ScientificName does not exist')
+      return objs
 
 # ..............................................................................
 class BisonBoom(_LMBoomer):
@@ -833,7 +830,7 @@ class UserBoom(_LMBoomer):
 
 # ...............................................
    def _processInputSpecies(self, dataChunk, dataCount, sciName):
-      jobs = []
+      objs = []
       if dataChunk:
          occ = self._createOrResetOccurrenceset(sciName, None, 
                                           ProcessType.USER_TAXA_OCCURRENCE,
@@ -842,18 +839,19 @@ class UserBoom(_LMBoomer):
          # Create jobs for Archive Chain: occurrence population, 
          # model, projection, and (later) intersect computation
          if occ is not None:
-            jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+            objs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
                                  self.modelScenario, self.projScenarios, 
+                                 mdlMask=self.modelMask, projMask=self.projMask,
                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
                                  priority=self.priority, 
                                  intersectGrid=None,
                                  minPointCount=self.minPointCount)
-            self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                           len(jobs), sciName.scientificName, len(dataChunk), 
+            self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
+                           len(objs), sciName.scientificName, len(dataChunk), 
                            occ.getId()))
       else:
          self.log.debug('No data in chunk')
-      return jobs
+      return objs
 
 # ..............................................................................
 class GBIFBoom(_LMBoomer):

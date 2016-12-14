@@ -181,10 +181,11 @@ class ProcessObject(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, objId=None, parentId=None, 
+   def __init__(self, objId=None, processType=None, parentId=None, 
                 status=None, statusModTime=None, stage=None, stageModTime=None):
       """
-      @param objId: Unique identifier for this parameterized object, 
+      @param objId: Unique identifier for this parameterized object
+      @param processType: Integer code LmCommon.common.lmconstants.ProcessType
       @param parentId: Id of container (i.e. RADBucket), if any, associated 
              with one instance of this parameterized object
       @param status: status of processing
@@ -200,6 +201,7 @@ class ProcessObject(LMObject):
       """
       self.objId = objId
       self.parentId = parentId
+      self.processType = processType
       self._status = status
       self._statusmodtime = statusModTime
       self._stage = stage
