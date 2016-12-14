@@ -226,8 +226,8 @@ class BorgScribe(LMObject):
       @param squid: a Squid (Species Thread) string, tied to a ScientificName
       @param userId: the database primary key of the LMUser
       """
-      occsets = self._borg.getOccurrenceSet(occid, squid, userId, epsg)
-      return occsets
+      occset = self._borg.getOccurrenceSet(occid, squid, userId, epsg)
+      return occset
 
 
 # ...............................................
