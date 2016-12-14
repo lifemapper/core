@@ -64,21 +64,6 @@ try:
 except:
    from StringIO import StringIO
 
-#TODO: These shouldn't be module level
-tokens = [
-    (r"\(",                                'open parens'),
-    (r"\)",                                'close parens'),
-    (r"[^\s\(\)\[\]\'\:\;\,]+",            'unquoted node label'),
-    (r"\:[0-9]*\.?[0-9]+([eE][+\-]?\d+)?", 'edge length'),
-    (r"\,",                                'comma'),
-    (r"\[(\\.|[^\]])*\]",                  'comment'),
-    (r"\'(\\.|[^\'])*\'",                  'quoted node label'),
-    (r"\;",                                'semicolon'),
-    (r"\n",                                'newline'),
-]
-tokenizer = re.compile('(%s)' % '|'.join([token[0] for token in tokens]))
-
-
 # TODO: Move these to constants file since they are shared
 CHILDREN_KEY = 'children'
 LENGTH_KEY = 'length'
@@ -108,6 +93,18 @@ class Parser(object):
       # nodeId's value is that node's parent clade and the entire sub tree from 
       #    that parent to it's tips
       self.parentDicts = {}
+      tokens = [
+         (r"\(",                                'open parens'),
+         (r"\)",                                'close parens'),
+         (r"[^\s\(\)\[\]\'\:\;\,]+",            'unquoted node label'),
+         (r"\:[0-9]*\.?[0-9]+([eE][+\-]?\d+)?", 'edge length'),
+         (r"\,",                                'comma'),
+         (r"\[(\\.|[^\]])*\]",                  'comment'),
+         (r"\'(\\.|[^\'])*\'",                  'quoted node label'),
+         (r"\;",                                'semicolon'),
+         (r"\n",                                'newline'),
+      ]
+      self.tokenizer = re.compile('(%s)' % '|'.join([token[0] for token in tokens]))
       
    # ..............................
    @classmethod
@@ -209,8 +206,7 @@ class Parser(object):
       @todo: Constants
       """
       
-      #TODO: NO!!!!  Bad variable name
-      tokens = re.finditer(tokenizer, text.strip())
+      tokens = re.finditer(self.tokenizer, text.strip())
       
       cladeId  = 0          
       ######## JSON ###########
