@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -24,7 +24,7 @@
 import mx.DateTime
 import os 
    
-from LmCommon.common.lmconstants import JobStatus, DEFAULT_EPSG, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType
 
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer import Raster, Vector
@@ -37,7 +37,7 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, ARCHIVE_PATH,
                   LMServiceModule, DEFAULT_PROJECTION_FORMAT, JobFamily, 
                   DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
 from LmServer.common.notifyJob import NotifyJob
 from LmServer.rad.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
@@ -95,6 +95,56 @@ class Borg(DbPostgresql):
                                 hbTime=self._getColumnValue(row, idxs, ['lastheartbeat']))
       return cr
 
+# ...............................................
+   def _createScientificName(self, row, idxs):
+      """
+      @summary Returns an ScientificName object from:
+                - an ScientificName row
+                - an lm_fullScientificName
+      @param row: A row of ScientificName data
+      @param idxs: Indexes for the row of data
+      @return A ScientificName object generated from the information in the row
+      """
+      sciname = None
+      if row is not None:
+         scientificname = self._getColumnValue(row, idxs, ['sciname'])
+         
+         if scientificname is not None:
+            taxonid = self._getColumnValue(row, idxs, ['taxonid'])
+            taxonomySourceId = self._getColumnValue(row, idxs, ['taxonomysourceid']) 
+            usr = self._getColumnValue(row, idxs, ['userid']) 
+            srckey = self._getColumnValue(row, idxs, ['taxonomykey'])
+            squid = self._getColumnValue(row, idxs, ['squid'])
+            kingdom = self._getColumnValue(row, idxs, ['kingdom'])
+            phylum = self._getColumnValue(row, idxs, ['phylum']) 
+            txClass = self._getColumnValue(row, idxs, ['tx_class'])
+            txOrder = self._getColumnValue(row, idxs, ['tx_order'])
+            family = self._getColumnValue(row, idxs, ['family'])
+            genus = self._getColumnValue(row, idxs, ['genus'])
+            rank = self._getColumnValue(row, idxs, ['rank'])
+            canonical = self._getColumnValue(row, idxs, ['canonical'])
+            genkey = self._getColumnValue(row, idxs, ['genuskey'])
+            spkey = self._getColumnValue(row, idxs, ['specieskey'])
+            hier = self._getColumnValue(row, idxs, ['keyhierarchy'])
+            lcnt = self._getColumnValue(row, idxs, ['lastcount'])
+            modtime = self._getColumnValue(row, idxs, ['taxmodtime', 'modtime'])
+
+            sciname = ScientificName(scientificname, 
+                                     rank=rank, canonicalName=canonical, 
+                                     userId=usr, squid=squid,
+                                     kingdom=kingdom, phylum=phylum,  
+                                     txClass=txClass, txOrder=txOrder, 
+                                     family=family, genus=genus, 
+                                     lastOccurrenceCount=lcnt, 
+                                     modTime=modtime, 
+                                     taxonomySourceId=taxonomySourceId, 
+                                     taxonomySourceKey=srckey, 
+                                     taxonomySourceGenusKey=genkey, 
+                                     taxonomySourceSpeciesKey=spkey, 
+                                     taxonomySourceKeyHierarchy=hier,
+                                     scientificNameId=taxonid)
+      return sciname
+   
 # ...............................................
    def _createAlgorithm(self, row, idxs):
       """
@@ -582,6 +632,60 @@ class Borg(DbPostgresql):
             moddate =  self._getColumnValue(row, idxs, ['modtime'])
       return txSourceId, url, moddate
    
+# ...............................................
+   def findTaxon(self, taxonSourceId, taxonkey):
+      try:
+         row, idxs = self.executeSelectOneFunction('lm_findOrInsertTaxon', 
+                        taxonSourceId, taxonkey, None, None, None, None, None, 
+                        None, None, None, None, None, None, None, None, None, 
+                        None, None)
+      except Exception, e:
+         raise e
+      sciname = self._createScientificName(row, idxs)
+      return sciname
+   
+# ...............................................
+   def findOrInsertTaxon(self, taxonSourceId, taxonKey, sciName):
+      scientificname = None
+      currtime = mx.DateTime.gmt().mjd
+      usr = squid = kingdom = phylum = cls = ordr = family = genus = None
+      rank = canname = sciname = genkey = spkey = keyhierarchy = lastcount = None
+      try:
+         taxonSourceId = sciName.taxonomySourceId
+         taxonKey = sciName.sourceTaxonKey
+         usr = sciName.userId
+         squid = sciName.squid
+         kingdom = sciName.kingdom
+         phylum = sciName.phylum
+         cls = sciName.txClass
+         ordr = sciName.txOrder
+         family = sciName.family
+         genus = sciName.genus
+         rank = sciName.rank
+         canname = sciName.canonicalName
+         sciname = sciName.scientificName
+         genkey = sciName.sourceGenusKey
+         spkey = sciName.sourceSpeciesKey
+         keyhierarchy = sciName.sourceKeyHierarchy
+         lastcount = sciName.lastOccurrenceCount
+      except:
+         pass
+      try:
+         row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTaxon', 
+                                                taxonSourceId, taxonKey,
+                                                usr, squid, kingdom, phylum,
+                                                cls, ordr, family, genus, rank,
+                                                canname, sciname, genkey, spkey,
+                                                keyhierarchy, lastcount, 
+                                                currtime)
+      except Exception, e:
+         raise e
+      else:
+         scientificname = self._createScientificName(row, idxs)
+      
+      return scientificname
+
+
 # .............................................................................
    def getScenario(self, scenid=None, code=None, usrid=None, fillLayers=False):
       """
@@ -604,12 +708,61 @@ class Borg(DbPostgresql):
       @param scenid: ScenarioId for the scenario to be fetched.
       """
       lyrs = []
-      rows, idxs = self.executeSelectOneFunction('lm_getEnvLayersForScenario', scenid)
+      rows, idxs = self.executeSelectManyFunction('lm_getEnvLayersForScenario', scenid)
       for r in rows:
          lyr = self._createEnvironmentalLayer(r, idxs)
          lyrs.append(lyr)
       return lyrs
    
+# .............................................................................
+   def getOccurrenceSet(self, occid, squid, userId, epsg):
+      occsets = []
+      rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSet',
+                                                  occid, squid, userId, epsg)
+      for r in rows:
+         occ = self._createOccurrenceSet(r, idxs)
+         occsets.append(occ)
+      return occsets
+   
+# ...............................................
+   def updateOccurrenceSet(self, occ, polyWkt=None, pointsWkt=None):
+      """
+      @summary Method to update an occurrenceSet object in the MAL database with 
+               the verify hash, displayname, dlocation, queryCount, bbox, geom, 
+               status/statusmodtime.
+      @param occ the occurrences object to update
+      @note: queryCount should be updated on the object before calling this;
+             geometries should be calculated and sent separately. 
+      """
+#       pointtotal = occ.queryCount
+#       if not occ.getFeatures():
+#          occ.readShapefile()
+#       if occ.getFeatures():
+#          pointtotal = occ.featureCount
+#          if occ.epsgcode == DEFAULT_EPSG:
+#             polywkt = occ.getConvexHullWkt()
+#             pointswkt = occ.getWkt()
+      metadata = occ.dumpLyrMetadata()
+      try:
+         success = self.executeModifyFunction('lm_updateOccurrenceSet', 
+                                              occ.getId(), 
+                                              occ.verify,
+                                              occ.displayName,
+                                              occ.getDLocation(), 
+                                              occ.getRawDLocation(), 
+                                              occ.queryCount, 
+                                              occ.getCSVExtentString(), 
+                                              occ.epsgcode, 
+                                              metadata,
+                                              occ.status, 
+                                              occ.statusModTime, 
+                                              polyWkt, 
+                                              pointsWkt)
+      except Exception, e:
+         raise e
+      return success
+
+
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
       """
@@ -649,3 +802,25 @@ class Borg(DbPostgresql):
                              % (palyr.attrAbsence, palyr.name))
          else:
             raise LMError('GDAL or OGR data type must be provided')
+
+# ...............................................
+   def findOrInsertOccurrenceSet(self, occ):
+      """
+      @summary: Save a new occurrence set   
+      @param occ: New OccurrenceSet to save 
+      @note: updates db with count, the actual count on the object (likely zero 
+             on initial insertion)
+      """
+      """
+      @summary: Insert a user of the Lifemapper system. 
+      @param usr: LMUser object to insert
+      @return: new or existing LMUser
+      """
+      usr.modTime = mx.DateTime.utc().mjd
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceset', 
+                              usr.userid, usr.firstName, usr.lastName, 
+                              usr.institution, usr.address1, usr.address2, 
+                              usr.address3, usr.phone, usr.email, usr.modTime, 
+                              usr.getPassword())
+      newOrExistingUsr = self._createUser(row, idxs)
+      return newOrExistingUsr

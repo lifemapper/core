@@ -31,11 +31,11 @@ from types import ListType
 
 from LmCommon.common.lmXml import deserialize, fromstring
 from LmCommon.common.lmconstants import (JobStage, JobStatus, RandomizeMethods,
-                                    HTTPStatus, DEFAULT_EPSG, DEFAULT_MAPUNITS)
-
+                                    HTTPStatus)
 from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LMError, LmHTTPError
-from LmServer.common.localconstants import WEBSERVICES_ROOT
+from LmServer.common.localconstants import (WEBSERVICES_ROOT, DEFAULT_EPSG, 
+                                            DEFAULT_MAPUNITS)
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.scribe import Scribe
 from LmServer.rad.anclayer import AncillaryRaster, AncillaryVector

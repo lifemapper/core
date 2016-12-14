@@ -207,13 +207,17 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- LmUser
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, name1 varchar, 
-                                         name2 varchar,
-                                         inst varchar, addr1 varchar, 
-                                         addr2 varchar, addr3 varchar,
-                                         fone varchar, emale varchar, 
-                                         mtime double precision, 
-                                         psswd varchar)
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, 
+                                                     name1 varchar, 
+                                                     name2 varchar,
+                                                     inst varchar, 
+                                                     addr1 varchar, 
+                                                     addr2 varchar, 
+                                                     addr3 varchar,
+                                                     fone varchar, 
+                                                     emale varchar, 
+                                                     mtime double precision, 
+                                                     psswd varchar)
    RETURNS lm_v3.LMUser AS
 $$
 DECLARE
@@ -293,6 +297,201 @@ BEGIN
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findTaxon(tsourceid int,
+                                            tkey int)
+RETURNS lm_v3.Taxon AS
+$$
+DECLARE
+   rec lm_v3.Taxon%ROWTYPE;
+BEGIN
+   SELECT * INTO rec FROM lm_v3.Taxon
+      WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertTaxon(tsourceid int,
+                                              tkey int,
+                                              usr varchar,
+                                              sqd varchar,
+                                              king varchar,
+                                              phyl varchar,
+                                              clss varchar,
+                                              ordr varchar,
+                                              fam  varchar,
+                                              gen  varchar,
+                                              rnk varchar,
+                                              can varchar,
+                                              sname varchar,
+                                              gkey int,
+                                              skey int,
+                                              hierkey varchar,
+                                              cnt  int,
+                                              currtime double precision)
+RETURNS lm_v3.Taxon AS
+$$
+DECLARE
+   rec lm_v3.Taxon%ROWTYPE;
+   tid int := -1;
+BEGIN
+   SELECT * INTO rec FROM lm_v3.Taxon
+      WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
+
+   IF NOT FOUND THEN
+      begin
+         -- if no squid, do not insert, return empty record
+         IF sqd IS NOT NULL THEN
+            INSERT INTO lm_v3.Taxon (taxonomysourceid, userid, taxonomykey, squid,
+                                  kingdom, phylum, tx_class, tx_order, family, 
+                                  genus, rank, canonical, sciname, genuskey, 
+                                  specieskey, keyHierarchy, lastcount, modtime)
+                 VALUES (tsourceid, usr, tkey, sqd, king, phyl, clss, ordr, fam, 
+                         gen, rnk, can, sname, gkey, skey, hierkey, cnt, currtime);
+            IF FOUND THEN 
+               SELECT INTO tid last_value FROM lm_v3.taxon_taxonid_seq;
+               SELECT * INTO rec FROM lm_v3.Taxon WHERE taxonid = tid;
+            END IF;
+         END IF;
+      end;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3._lm_getOccurrenceSet(occid int,
+                                                      usr varchar, 
+                                                      sqd varchar, 
+                                                      epsg int)
+   RETURNS lm_v3.occurrenceset AS
+$$
+DECLARE
+   rec lm_v3.occurrenceset%ROWTYPE;                             
+BEGIN                                                      
+   IF occid IS NOT NULL then                          
+      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = occid;
+   ELSE
+      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE userid = usr
+                                                   AND squid = sqd
+                                                   AND epsgcode = epsg;
+   END IF;                                                 
+   RETURN rec;                                              
+END; 
+$$ LANGUAGE 'plpgsql' STABLE; 
+                                                                        
+
+-- ----------------------------------------------------------------------------
+-- Find or insert occurrenceSet and return id.  Return -1 on failure.
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertOccurrenceSet(occid int,
+                                                  usr varchar,
+                                                  sqd varchar,
+                                                  vrfy varchar,
+                                                  name varchar,
+                                                  metaurlprefix varchar,
+                                                  dloc varchar,
+                                                  rdloc varchar,
+                                                  total int,
+                                                  bounds varchar, 
+                                                  epsg int,
+                                                  meta text,
+                                                  stat int,
+                                                  stattime double precision,
+                                                  polywkt text,
+                                                  pointswkt text)
+   RETURNS lm_v3.occurrenceset AS
+$$
+DECLARE
+   rec lm_v3.occurrenceset%ROWTYPE;                             
+   newid int = -1;
+   idstr varchar = '';
+   occmetadataUrl varchar = '';
+BEGIN
+   SELECT INTO rec lm_v3._lm_getOccurrenceSet(occid, usr, sqd, epsg);
+   IF NOT FOUND THEN
+      BEGIN
+         -- Default LM EPSG Code
+         IF epsg = 4326 THEN 
+            INSERT INTO lm_v3.OccurrenceSet 
+               (userId, squid, verify, displayName, dlocation, rawDlocation, 
+                queryCount, bbox, epsgcode, metadata, status, statusModTime, 
+                geom, geompts)
+            VALUES 
+               (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
+                stat, stattime, ST_GeomFromText(polywkt, epsg), 
+                ST_GeomFromText(pointswkt, epsg));
+
+         -- Other EPSG Codes skip geometry
+         ELSE 
+            INSERT INTO lm_v3.OccurrenceSet 
+               (userId, squid, verify, displayName, dlocation, rawDlocation, 
+                queryCount, bbox, epsgcode, metadata, status, statusModTime)
+            VALUES 
+               (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
+                stat, stattime);
+
+         END IF;
+
+         -- Create metadataUrl in the form: 'http://lifemapper.org/ogc?map=data_9999&layers=occ_9999'
+         -- for an occurrenceset with id = 9999. 
+         IF FOUND THEN
+            SELECT INTO newid last_value FROM lm_v3.occurrenceset_occurrencesetid_seq;
+            idstr = cast(newid as varchar);
+            occmetadataUrl := replace(metaurlprefix, '#id#', idstr);
+            UPDATE lm_v3.OccurrenceSet SET metadataUrl = occmetadataUrl WHERE occurrenceSetId = newid;
+            SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = newid;
+         END IF;
+         
+      END;  -- end alternatives for epsgcode
+   END IF;  -- end if occurrenceset found
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateOccurrenceSet(occid int,
+                                                  vrfy varchar,
+                                                  name varchar,
+                                                  dloc varchar,
+                                                  rdloc varchar,
+                                                  total int,
+                                                  bounds varchar, 
+                                                  epsg int,
+                                                  meta text,
+                                                  stat int,
+                                                  stattime double precision,
+                                                  polywkt text,
+                                                  pointswkt text)
+   RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   UPDATE lm3.OccurrenceSet SET 
+      (verify, displayName, dlocation, rawDlocation, queryCount, bbox, metadata, 
+       status, statusModTime)
+    = (vrfy, name, dloc, rdloc, total, bounds, meta, stat, stattime)
+   WHERE occurrenceSetId = occid;
+
+   IF FOUND THEN
+      success = 0;
+   END IF;
+
+   IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
+      UPDATE lm3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
+         WHERE occurrenceSetId = occid;
+   END IF;
+
+   IF ST_IsValid(ST_GeomFromText(pointswkt, epsg)) THEN
+      UPDATE lm3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
+         WHERE occurrenceSetId = occid;
+   END IF;
+
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)

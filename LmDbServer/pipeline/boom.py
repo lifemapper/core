@@ -35,14 +35,15 @@ from types import ListType, TupleType, StringType, UnicodeType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            BISON_MIN_POINT_COUNT, ProcessType, DEFAULT_EPSG, JobStatus, 
+            BISON_MIN_POINT_COUNT, ProcessType, JobStatus, 
             ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, 
             GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
                                          LOG_PATH)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
+from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS, 
+                                            DEFAULT_EPSG)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument

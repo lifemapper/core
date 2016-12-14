@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -35,13 +35,14 @@ from types import ListType, TupleType, StringType, UnicodeType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            ProcessType, JobStatus, ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, 
-            GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
+            ProcessType, JobStatus, OutputFormat, ONE_HOUR, ONE_MIN, 
+            GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
                                          LOG_PATH)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
+from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS,
+                                            DEFAULT_EPSG)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
@@ -58,7 +59,7 @@ GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
 # .............................................................................
 class _LMBoomer(LMObject):
    # .............................
-   def __init__(self, userid, priority, algLst, mdlScen, prjScenLst, 
+   def __init__(self, userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
                 minPointCount=POINT_COUNT_MIN, intersectGrid=None, log=None):
       super(_LMBoomer, self).__init__()
@@ -68,6 +69,7 @@ class _LMBoomer(LMObject):
       self.priority = priority
       self.minPointCount = minPointCount
       self.algs = []
+      self.epsg = epsg
       self.modelScenario = None
       self.projScenarios = []
       self.modelMask = None
@@ -132,7 +134,7 @@ class _LMBoomer(LMObject):
          self.projMask = self._scribe.getLayer(prjMaskId)
          self.intersectGrid = self._scribe.getShapeGrid(userId=self.userid, 
                                                         lyrName=intersectGridName,
-                                                        )
+                                                        epsg=self.epsg)
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -305,8 +307,8 @@ class _LMBoomer(LMObject):
       """
       Returns an existing or newly inserted ScientificName
       """
-      sciName = self._scribe.findTaxon(self._taxonSourceId, 
-                                           taxonKey)
+      sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+                                               taxonKey=taxonKey)
       if sciName is not None:
          self.log.info('Found sciname for taxonKey {}, {}, with {} points'
                        .format(taxonKey, sciName.scientificName, taxonCount))
@@ -325,9 +327,10 @@ class _LMBoomer(LMObject):
             if taxStatus == 'ACCEPTED':
 #             if taxonKey in (retSpecieskey, acceptedkey, genuskey):
                currtime = dt.gmt().mjd
-               sciName = ScientificName(scinameStr, 
+               sname = ScientificName(scinameStr, 
                                rank=rankStr, 
                                canonicalName=canonicalStr,
+                               userid=None, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
@@ -338,7 +341,7 @@ class _LMBoomer(LMObject):
                                taxonomySourceGenusKey=genusKey, 
                                taxonomySourceSpeciesKey=speciesKey)
                try:
-                  self._scribe.insertTaxon(sciName)
+                  sciName = self._scribe.findOrInsertTaxon(sciName=sname)
                   self.log.info('Inserted sciname for taxonKey {}, {}'
                                 .format(taxonKey, sciName.scientificName))
                except Exception, e:
@@ -431,72 +434,66 @@ class _LMBoomer(LMObject):
    def _createOrResetOccurrenceset(self, sciname, taxonSourceKeyVal, 
                                    occProcessType, dataCount, data=None):
       """
+      @param sciname: ScientificName object
+      @param taxonSourceKeyVal: unique identifier for this name in source 
+             taxonomy database
+      @param occProcessType: Type of input data to be converted to shapefile
+      @param dataCount: reported number of points for taxon in input dataset
+      @param data: raw point data
       @note: Updates to existing occset are not saved until 
       """
       currtime = dt.gmt().mjd
-      occ = occs = None
+      occ = None
       ignore = False
+         
       # Find existing
       try:
-         if isinstance(sciname, ScientificName):
-            occs = self._scribe.getOccurrenceSetsForScientificName(sciname, 
-                                                                self.userid)
-            taxonName = sciname.name
-         elif isinstance(sciname, StringType) or isinstance(sciname, UnicodeType):
-            occs = self._scribe.getOccurrenceSetsForName(sciname, userid=self.userid)
-            taxonName = sciname
-            sciname = None
+         occ = self._scribe.getOccurrenceSet(squid=sciname.squid, 
+                                             userId=self.userid, epsg=self.epsg)
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
-         
+
+      # Reset existing if failed, waiting with missing data, out-of-date
+      if occ is not None:
+         if (JobStatus.failed(occ.status)
+              or
+             (JobStatus.waiting(occ.status) and occ.getRawDLocation() is None)
+              or 
+             (occ.status == JobStatus.COMPLETE and 
+              occ.statusModTime > 0 and occ.statusModTime < self._obsoleteTime)):
+            # Reset verify hash, name, count, status 
+            occ.verify = None
+            occ.displayName = sciname.name 
+            occ.queryCount = dataCount
+            occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
+            self.log.info('Updating occset {} ({})'
+                          .format(occ.getId(), sciname.name))
+         else:
+            ignore = True
+            self.log.debug('Ignoring occset {} ({}) is up to date'
+                           .format(occ.getId(), sciname.name))
+
       # Create new
-      if not occs:
+      else:
          ogrFormat = None
          if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
             ogrFormat = 'CSV'
-         occ = OccurrenceLayer(taxonName, name=taxonName, fromGbif=False, 
-               queryCount=dataCount, epsgcode=DEFAULT_EPSG, 
+         occ = OccurrenceLayer(sciname.name, name=sciname.name, fromGbif=False, 
+               squid=sciname.squid, queryCount=dataCount, epsgcode=self.epsg, 
                ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
                primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciname)
          try:
-            occid = self._scribe.insertOccurrenceSet(occ)
-            self.log.info('Inserted occset for taxonname {}'.format(taxonName))
+            occ = self._scribe.insertOccurrenceSet(occ)
+            self.log.info('Inserted occset for taxonname {}'.format(sciname.name))
          except Exception, e:
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
             
-      # Reset existing if missing data, obsolete, or failed
-      elif len(occs) == 1:
-         tmpOcc = occs[0]
-         # waiting but raw data missing (status = 0 or 1)
-         if ((JobStatus.waiting(tmpOcc.status) 
-              and tmpOcc.getRawDLocation() is None)
-             or
-             # complete but obsolete (statusmodtime < SPECIES_EXP)
-             (tmpOcc.status == JobStatus.COMPLETE 
-              and tmpOcc.statusModTime > 0 
-              and tmpOcc.statusModTime < self._obsoleteTime)
-             or 
-             # failed (status > 1000)
-             JobStatus.failed(tmpOcc.status)):
-            # Reset existing 
-            occ = tmpOcc
-            occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-            self.log.info('Updating occset {} ({})'
-                          .format(tmpOcc.getId(), taxonName))
-         else:
-            ignore = True
-            self.log.debug('Ignoring occset {} ({}) is up to date'
-                           .format(tmpOcc.getId(), taxonName))
-      else:
-         raise LMError(currargs='Too many ({}) occsets for {}'
-                       .format(len(occs), taxonName))
-
       # Set raw data and update status
       if occ and not ignore:
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
@@ -504,7 +501,7 @@ class _LMBoomer(LMObject):
          if not rdloc:
             raise LMError(currargs='Unable to set raw data location')
          occ.setRawDLocation(rdloc, currtime)
-         self._scribe.updateOccset(occ)
+         self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
       
       return occ
    
@@ -547,11 +544,11 @@ class BisonBoom(_LMBoomer):
    """
    @summary: Initializes the job chainer for BISON.
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None,
                 intersectGrid=None, log=None):
-      super(BisonBoom, self).__init__(userid, priority, algLst, 
+      super(BisonBoom, self).__init__(userid, epsg, priority, algLst, 
                                       mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
@@ -713,17 +710,18 @@ class UserBoom(_LMBoomer):
              The parser writes each new text chunk to a file, updates the 
              Occurrence record and inserts one or more jobs.
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, occDataFname, 
-                occMetaFname, expDate, priority=Priority.HIGH, minPointCount=None,
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occDataname, 
+                expDate, priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
-      super(UserBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+      super(UserBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
                                      minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      intersectGrid=intersectGrid, log=log)
       self.occParser = None
       try:
-         self.occParser = OccDataParser(self.log, occDataFname, occMetaFname)
+         self.occParser = OccDataParser(self.log, occDataname + OutputFormat.CSV, 
+                                        occDataname + OutputFormat.METADATA)
       except Exception, e:
          raise LMError(currargs=e.args)
          
@@ -805,7 +803,8 @@ class UserBoom(_LMBoomer):
    def chainOne(self):
       dataChunk, dataCount, taxonName  = self._getChunk()
       if dataChunk:
-         jobs = self._processInputSpecies(dataChunk, dataCount, taxonName)
+         sciname = self._getInsertSciNameForUser(taxonName)
+         jobs = self._processInputSpecies(dataChunk, dataCount, sciname)
          self._createMakeflow(jobs)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
@@ -828,10 +827,16 @@ class UserBoom(_LMBoomer):
       return rdloc
 
 # ...............................................
-   def _processInputSpecies(self, dataChunk, dataCount, taxonName):
+   def _getInsertSciNameForUser(self, taxonName):
+      bbsciname = ScientificName(taxonName, userId=self.userid)
+      sciname = self.findOrInsertTaxon(sciName=bbsciname)
+      return sciname
+
+# ...............................................
+   def _processInputSpecies(self, dataChunk, dataCount, sciname):
       jobs = []
       if dataChunk:
-         occ = self._createOrResetOccurrenceset(taxonName, None, 
+         occ = self._createOrResetOccurrenceset(sciname, None, 
                                           ProcessType.USER_TAXA_OCCURRENCE,
                                           dataCount, data=dataChunk)
    
@@ -845,7 +850,8 @@ class UserBoom(_LMBoomer):
                                  intersectGrid=None,
                                  minPointCount=self.minPointCount)
             self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                           len(jobs), taxonName, len(dataChunk), occ.getId()))
+                           len(jobs), sciname.scientificName, len(dataChunk), 
+                           occ.getId()))
       else:
          self.log.debug('No data in chunk')
       return jobs
@@ -857,10 +863,10 @@ class GBIFBoom(_LMBoomer):
              text chunk to a file, then creates an OccurrenceJob for it and 
              updates the Occurrence record and inserts a job.
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, occfilename, expDate,
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occfilename, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, providerListFile=None,
                 mdlMask=None, prjMask=None, minPointCount=None, intersectGrid=None, log=None):
-      super(GBIFBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+      super(GBIFBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       minPointCount=minPointCount,
@@ -957,7 +963,7 @@ class GBIFBoom(_LMBoomer):
       if sciName:       
          jobs = self._processSDMChain(sciName, speciesKey, 
                             ProcessType.GBIF_TAXA_OCCURRENCE, 
-                            dataCount, self.minPointCount, data=dataChunk)
+                            dataCount, data=dataChunk)
       return jobs
    
 # ...............................................
@@ -1074,11 +1080,11 @@ class iDigBioBoom(_LMBoomer):
              creating a chain of SDM jobs for each, unless the species is 
              up-to-date. 
    """
-   def __init__(self, userid, algLst, mdlScen, prjScenLst, idigFname, expDate,
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, idigFname, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None, 
                 intersectGrid=None, log=None):
-      super(iDigBioBoom, self).__init__(userid, priority, algLst, mdlScen, prjScenLst, 
+      super(iDigBioBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                                         taxonSourceName=taxonSourceName, 
                                         mdlMask=mdlMask, prjMask=prjMask, 
                                         minPointCount=minPointCount,

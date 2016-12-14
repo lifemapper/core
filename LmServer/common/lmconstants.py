@@ -54,9 +54,10 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, JobStatus, OutputFormat)
+from LmCommon.common.lmconstants import (JobStatus, OutputFormat)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
-                                            SCRATCH_PATH, TEMP_PATH, PID_PATH)
+                                            SCRATCH_PATH, TEMP_PATH, PID_PATH,
+                                            DEFAULT_EPSG)
 
 BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths

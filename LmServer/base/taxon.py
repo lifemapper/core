@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -21,11 +21,13 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmServer.base.lmobj import LMObject
+from LmCommon.common.verify import computeHash
+from LmServer.base.lmobj import LMObject, LMError
 
 # ..............................................................................
 class ScientificName(LMObject):
    def __init__(self, scientificName, rank=None, canonicalName=None, 
+                userId=None, squid=None,
                 kingdom=None, phylum=None, txClass=None, txOrder=None, 
                 family=None, genus=None, lastOccurrenceCount=None, 
                 createTime=None, modTime=None, 
@@ -40,6 +42,7 @@ class ScientificName(LMObject):
       self.scientificName = scientificName
       self.canonicalName = canonicalName
       self.rank = rank
+      self.userId = userId
       self.kingdom = kingdom 
       self.phylum = phylum
       self.txClass = txClass
@@ -55,6 +58,8 @@ class ScientificName(LMObject):
       self._sourceSpeciesKey = taxonomySourceSpeciesKey
       self._sourceKeyHierarchy = taxonomySourceKeyHierarchy
       self._dbId = scientificNameId 
+      self._squid = None
+      self._setSquid(squid)
       
 # .............................................................................
 # Public methods
@@ -98,4 +103,18 @@ class ScientificName(LMObject):
    @property
    def sourceKeyHierarchy(self):
       return self._sourceKeyHierarchy
+   
+   @property
+   def squid(self):
+      return self._squid
 
+   def _setSquid(self, squid=None):
+      if squid is None:         
+         if self._sourceId is not None and self._sourceKey is not None:
+            squid = computeHash(content='{}:{}'.format(self._sourceId, self._sourceKey))
+         elif self.userid is not None and self.scientificName is not None:
+            squid = computeHash(content='{}:{}'.format(self.userid, self.scientificName))
+         else:
+            raise LMError('Scientific name requires unique identifier comprised of: '+
+                           'taxonomySourceId/taxonomySourceKey OR userid/scientificName')
+      self._squid = squid

@@ -14,24 +14,24 @@
 -- ----------------------------------------------------------------------------
 -- LayerType (EnvLayer)
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvironmentalType(etypeid int, 
-                                                          usr varchar, 
-                                                          ecode varchar, 
-                                                          gcode varchar, 
-                                                          apcode varchar, 
-                                                          dtcode varchar)
-   RETURNS lm_v3.EnvironmentalType AS
+CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvType(etypeid int, 
+                                                usr varchar, 
+                                                ecode varchar, 
+                                                gcode varchar, 
+                                                apcode varchar, 
+                                                dtcode varchar)
+   RETURNS lm_v3.EnvType AS
 $$
 DECLARE
-   rec lm_v3.EnvironmentalType%rowtype;
+   rec lm_v3.EnvType%rowtype;
    cmd varchar;
    wherecls varchar;
 BEGIN
    IF etypeid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.EnvironmentalType WHERE EnvironmentalTypeid = etypeid;
+      SELECT * INTO rec FROM lm_v3.EnvType WHERE EnvTypeid = etypeid;
    ELSE
       begin
-         cmd = 'SELECT * FROM lm_v3.EnvironmentalType ';
+         cmd = 'SELECT * FROM lm_v3.EnvType ';
          wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
 
          IF ecode is not null THEN
@@ -70,46 +70,74 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, envtypeid int)
-   RETURNS lm_v3.lm_scenlayer AS
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinEnvLayer(lyrid int, etypeid int)
+   RETURNS lm_v3.lm_envlayer AS
 $$
 DECLARE
    temp1 int;
    temp2 int;
-   temp3 int;
-   rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
+   rec lm_v3.lm_envlayer%ROWTYPE;
 BEGIN
-   SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
-      WHERE scenarioId = scenid AND layerid = layerid
-        AND environmentalTypeId = envtypeid;
-   IF FOUND THEN 
-      RAISE NOTICE 'Scenario % and Layer % and EnvironmentalType % are already joined', 
-                    scenid, lyrid, envtypeid;
-   ELSE
-      -- make sure records exist
-      SELECT count(*) INTO temp1 FROM lm_v3.scenario WHERE scenarioid = scenid;
-      SELECT count(*) INTO temp2 FROM lm_v3.layer WHERE layerId = lyrid;
-      SELECT count(*) INTO temp3 FROM lm_v3.environmentalType WHERE environmentalTypeId = envtypeid;
-      IF temp1 < 1 THEN
-         RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
-      ELSIF temp2 < 1 THEN
-         RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
-      ELSIF temp3 < 1 THEN
-         RAISE EXCEPTION 'EnvironmentalType with id % does not exist', envtypeid;
-      END IF;
+   SELECT count(*) INTO temp1 FROM lm_v3.layer WHERE layerId = lyrid;
+   SELECT count(*) INTO temp2 FROM lm_v3.envType WHERE envTypeId = etypeid;
+   IF temp1 < 1 THEN
+      RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
+   ELSIF temp2 < 1 THEN
+      RAISE EXCEPTION 'EnvType with id % does not exist', etypeid;
+   END IF;
    
-      INSERT INTO ScenarioLayer (scenarioid, layerid, environmentalTypeId) 
-                         VALUES (scenid, lyrid, envtypeid);
+   SELECT * INTO rec FROM lm_v3.lm_envlayer
+      WHERE layerid = lyrid AND envTypeId = etypeid;
+   IF FOUND THEN 
+      RAISE NOTICE 'Layer % and EnvType % are already joined', lyrid, etypeid;
+   ELSE   
+      INSERT INTO EnvLayer (layerid, envTypeId) VALUES (lyrid, etypeid);
       IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to insert/join EnvironmentalLayer';
+         RAISE EXCEPTION 'Unable to insert/join EnvLayer';
       ELSE
-         SELECT * INTO rec_envlyr FROM lm_v3.lm_scenlayer 
-            WHERE scenarioId = scenid AND layerid = lyrid 
-              AND environmentalTypeId = envtypeid;
+         SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE layerid = lyrid 
+                                                    AND envTypeId = etypeid;
       END IF;
    END IF;
    
-   RETURN rec_envlyr;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, etypeid int)
+   RETURNS lm_v3.lm_scenlayer AS
+$$
+DECLARE
+   temp int;
+   recel lm_v3.lm_envlayer%ROWTYPE;
+   recsl lm_v3.lm_scenlayer%ROWTYPE;
+BEGIN
+   SELECT count(*) INTO temp FROM lm_v3.scenario WHERE scenarioid = scenid;
+   IF temp < 1 THEN
+      RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
+   END IF;
+   
+   SELECT * INTO recel FROM lm_v3.lm_joinEnvLayer(lyrid, etypeid);
+   IF FOUND THEN    
+      SELECT * INTO recsl FROM lm_v3.lm_scenlayer WHERE scenarioId = scenid 
+                                                    AND layerid = lyrid 
+                                                    AND envTypeId = etypeid;
+      IF NOT FOUND THEN
+         INSERT INTO lm_v3.ScenarioLayer (scenarioid, layerid, envTypeId) 
+                         VALUES (scenid, lyrid, etypeid);
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to insert/join EnvLayer';
+         ELSE
+            SELECT * INTO recsl FROM lm_v3.ScenarioLayer 
+               WHERE scenarioId = scenid 
+                 AND layerid = lyrid 
+                 AND envTypeId = etypeid;
+         END IF;
+      END IF;
+   END IF;
+   
+   RETURN recsl;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
@@ -151,14 +179,14 @@ RETURNS lm_v3.lm_scenlayer AS
 $$
 DECLARE
    reclyr lm_v3.layer%ROWTYPE;
-   rec_etype lm_v3.EnvironmentalType%ROWTYPE;
+   rec_etype lm_v3.EnvType%ROWTYPE;
    rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
-   -- get or insert environmentalType 
-   SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvironmentalType(etypeid, 
+   -- get or insert envType 
+   SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvType(etypeid, 
                     usr, env, gcm, altpred, tm, etypemeta, etypemodtime);
    IF NOT FOUND THEN
-      RAISE EXCEPTION 'Unable to findOrInsertEnvironmentalType';
+      RAISE EXCEPTION 'Unable to findOrInsertEnvType';
    ELSE
       -- get or insert layer 
       SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
@@ -169,7 +197,7 @@ BEGIN
          RAISE EXCEPTION 'Unable to findOrInsertLayer';
       ELSE
          SELECT * INTO rec_envlyr FROM lm_v3.lm_joinScenarioLayer(scenid, 
-                                 reclyr.layerId, rec_etype.environmentalTypeId);
+                                 reclyr.layerId, rec_etype.envTypeId);
       END IF;
    END IF;
    
@@ -178,7 +206,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvironmentalType(etypeid int, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvType(etypeid int, 
                                                         usr varchar,
                                                         env varchar,
                                                         gcm varchar,
@@ -186,24 +214,24 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvironmentalType(etypeid int,
                                                         tm varchar,
                                                         meta text,
                                                         modtime double precision)
-   RETURNS lm_v3.EnvironmentalType AS
+   RETURNS lm_v3.EnvType AS
 $$
 DECLARE
-   rec lm_v3.EnvironmentalType%ROWTYPE;
+   rec lm_v3.EnvType%ROWTYPE;
    newid int;
 BEGIN
-   SELECT * into rec FROM lm_v3.lm_findEnvironmentalType(etypeid, usr, env, gcm, 
+   SELECT * into rec FROM lm_v3.lm_findEnvType(etypeid, usr, env, gcm, 
                                                          altpred, tm);
-   IF rec.environmentalTypeId IS NULL THEN
-      INSERT INTO lm_v3.EnvironmentalType 
+   IF rec.envTypeId IS NULL THEN
+      INSERT INTO lm_v3.EnvType 
          (userid, envCode, gcmCode, altpredCode, dateCode, metadata, modTime) 
       VALUES (usr, env, gcm, altpred, tm, meta, modtime);
       RAISE NOTICE 'vals = %, %, %, %, %, %, %', usr, env, gcm, altpred, tm, meta, modtime;
       IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to insert EnvironmentalType';
+         RAISE EXCEPTION 'Unable to insert EnvType';
       ELSE
-         SELECT INTO newid last_value FROM lm_v3.EnvironmentalType_EnvironmentalTypeid_seq;
-         SELECT * INTO rec FROM lm_v3.EnvironmentalType where environmentalTypeId = newid;
+         SELECT INTO newid last_value FROM lm_v3.EnvType_EnvTypeid_seq;
+         SELECT * INTO rec FROM lm_v3.EnvType where envTypeId = newid;
       END IF;
    END IF;
    
@@ -461,4 +489,3 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
-

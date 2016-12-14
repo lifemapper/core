@@ -1,7 +1,7 @@
 # coding=utf-8
 """
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -37,6 +37,7 @@ from LmServer.common.lmconstants import  DbUser, ReferenceType
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
                                  POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
 from LmServer.sdm.envlayer import EnvironmentalLayer, EnvironmentalType
+from LmServer.base.taxon import ScientificName
 
 # .............................................................................
 class BorgScribe(LMObject):
@@ -175,7 +176,7 @@ class BorgScribe(LMObject):
                 user/name/epsgcode.  
       @return: Shapegrid object .
       """
-      shpgrid = self._borg.getShapeGrid(self, shpgridId, lyrId, 
+      shpgrid = self._borg.getShapeGrid(shpgridId, lyrId, 
                                         userId, lyrName, epsg)
       return shpgrid
 
@@ -196,6 +197,11 @@ class BorgScribe(LMObject):
       return txSourceId, url, moddate
    
 # ...............................................
+   def findOrInsertTaxon(self, taxonSourceId=None, taxonKey=None, sciName=None):
+      sciname = self._borg.findOrInsertTaxon(taxonSourceId, taxonKey, sciName)
+      return sciname
+
+# ...............................................
    def getScenario(self, idOrCode, user=None):
       """
       @summary: Get and fill a scenario from its code or database id.  If 
@@ -212,4 +218,44 @@ class BorgScribe(LMObject):
       else:
          scenario = self._borg.getScenario(code=idOrCode, usrid=user)
       return scenario
+
+# ...............................................
+   def getOccurrenceSet(self, occid=None, squid=None, userId=None, epsg=None):
+      """
+      @summary: get a list of occurrencesets for the given squid and User
+      @param squid: a Squid (Species Thread) string, tied to a ScientificName
+      @param userId: the database primary key of the LMUser
+      """
+      occsets = self._borg.getOccurrenceSet(occid, squid, userId, epsg)
+      return occsets
+
+
+# ...............................................
+   def getOccurrenceSetsForName(self, scinameStr, userId):
+      """
+      @summary: get a list of occurrencesets for the given squid and User
+      @param squid: a Squid (Species Thread) string, tied to a ScientificName
+      @param userId: the database primary key of the LMUser
+      """
+      sciName = ScientificName(scinameStr, userId=userId)
+      updatedSciName = self.findOrInsertTaxon(sciName=sciName)
+      occsets = self._borg.getOccurrenceSetsForSquid(updatedSciName.squid,userId)
+      return occsets
+
+# ...............................................
+   def findOrInsertOccurrenceSet(self, occ):
+      """
+      @summary: Save a new occurrence set   
+      @param occ: New OccurrenceSet to save 
+      @note: updates db with count, the actual count on the object (likely zero 
+             on initial insertion)
+      """
+      # Save user points reference to MAL
+      if occ.getId() is None :
+         newOcc = self._borg.findOrInsertOccurrenceSet(occ)
+      else:
+         self.log.error('OccurrenceLayer {} already contains a database ID'
+                        .format(occ.getId()))
+      return newOcc
+         
 

@@ -25,16 +25,14 @@ import argparse
 import mx.DateTime as DT
 import os
 
-from LmCommon.common.lmconstants import (DEFAULT_EPSG, 
-         DEFAULT_MAPUNITS)
-
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
          DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
 import LmDbServer.tools.bioclimMeta as meta
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
+from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
+                                            DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe

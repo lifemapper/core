@@ -36,12 +36,12 @@ import urllib2
 import zipfile
 
 from LmCommon.common.lmXml import deserialize, fromstring
-from LmCommon.common.lmconstants import (JobStatus, ProcessType, Instances, 
-                                         DEFAULT_MAPUNITS, DEFAULT_EPSG)
+from LmCommon.common.lmconstants import (JobStatus, ProcessType, Instances)
 
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.common.lmconstants import JobFamily, TEST_DATA_PATH
-from LmServer.common.localconstants import WEBSERVICES_ROOT
+from LmServer.common.localconstants import (WEBSERVICES_ROOT, DEFAULT_MAPUNITS, 
+                                            DEFAULT_EPSG)
 from LmServer.common.log import ThreadLogger
 from LmServer.db.scribe import Scribe
 from LmServer.sdm.envlayer import EnvironmentalLayer
