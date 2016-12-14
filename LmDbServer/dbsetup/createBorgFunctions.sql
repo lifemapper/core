@@ -370,13 +370,12 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getOccurrenceSet(occid int,
 $$
 DECLARE
    rec lm_v3.occurrenceset%ROWTYPE;                             
-BEGIN                                                      
-   IF occid IS NOT NULL then                          
+BEGIN
+   IF occid IS NOT NULL then                     
       SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = occid;
    ELSE
-      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE userid = usr
-                                                   AND squid = sqd
-                                                   AND epsgcode = epsg;
+      SELECT * INTO rec from lm_v3.OccurrenceSet 
+             WHERE userid = usr AND squid = sqd AND epsgcode = epsg;
    END IF;                                                 
    RETURN rec;                                              
 END; 
@@ -384,7 +383,7 @@ $$ LANGUAGE 'plpgsql' STABLE;
                                                                         
 
 -- ----------------------------------------------------------------------------
--- Find or insert occurrenceSet and return id.  Return -1 on failure.
+-- Find or insert occurrenceSet and return record.
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertOccurrenceSet(occid int,
                                                   usr varchar,
                                                   sqd varchar,
@@ -409,38 +408,39 @@ DECLARE
    idstr varchar = '';
    occmetadataUrl varchar = '';
 BEGIN
-   SELECT INTO rec lm_v3.lm_getOccurrenceSet(occid, usr, sqd, epsg);
+   IF occid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = occid;
+   ELSE
+      SELECT * INTO rec from lm_v3.OccurrenceSet 
+             WHERE userid = usr AND squid = sqd AND epsgcode = epsg;
+   END IF;                                                 
    IF NOT FOUND THEN
       BEGIN
-         -- Default LM EPSG Code
-         IF epsg = 4326 THEN 
-            INSERT INTO lm_v3.OccurrenceSet 
-               (userId, squid, verify, displayName, dlocation, rawDlocation, 
-                queryCount, bbox, epsgcode, metadata, status, statusModTime, 
-                geom, geompts)
-            VALUES 
-               (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
-                stat, stattime, ST_GeomFromText(polywkt, epsg), 
-                ST_GeomFromText(pointswkt, epsg));
+         INSERT INTO lm_v3.OccurrenceSet 
+            (userId, squid, verify, displayName, dlocation, rawDlocation, 
+             queryCount, bbox, epsgcode, metadata, status, statusModTime)
+         VALUES 
+            (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
+             stat, stattime);
 
-         -- Other EPSG Codes skip geometry
-         ELSE 
-            INSERT INTO lm_v3.OccurrenceSet 
-               (userId, squid, verify, displayName, dlocation, rawDlocation, 
-                queryCount, bbox, epsgcode, metadata, status, statusModTime)
-            VALUES 
-               (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
-                stat, stattime);
-
-         END IF;
-
-         -- Create metadataUrl in the form: 'http://lifemapper.org/ogc?map=data_9999&layers=occ_9999'
-         -- for an occurrenceset with id = 9999. 
          IF FOUND THEN
+            -- add geometries if valid
+            IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
+               UPDATE lm3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
+                  WHERE occurrenceSetId = occid;
+            END IF;
+            IF ST_IsValid(ST_GeomFromText(pointswkt, epsg)) THEN
+               UPDATE lm3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
+                  WHERE occurrenceSetId = occid;
+            END IF;
+
+            -- update metadataUrl
             SELECT INTO newid last_value FROM lm_v3.occurrenceset_occurrencesetid_seq;
             idstr = cast(newid as varchar);
             occmetadataUrl := replace(metaurlprefix, '#id#', idstr);
             UPDATE lm_v3.OccurrenceSet SET metadataUrl = occmetadataUrl WHERE occurrenceSetId = newid;
+
+            -- get updated record
             SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = newid;
          END IF;
          

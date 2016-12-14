@@ -297,6 +297,7 @@ class Borg(DbPostgresql):
       occ = None
       if row is not None:
          occ = OccurrenceLayer(self._getColumnValue(row,idxs,['displayname']), 
+               occId=self._getColumnValue(row,idxs,['occurrencesetid']),
                occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']),
                squid=self._getColumnValue(row,idxs,['squid']),
                verify=self._getColumnValue(row,idxs,['occverify','verify']),
@@ -823,5 +824,5 @@ class Borg(DbPostgresql):
                               pointtotal, occ.getCSVExtentString(), occ.epsgcode,
                               occ.dumpLyrMetadata(),
                               occ.status, occ.statusModTime, polywkt, pointswkt)
-      newOrExistingUsr = self._createOccurrenceLayer(row, idxs)
-      return newOrExistingUsr
+      newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
+      return newOrExistingOcc

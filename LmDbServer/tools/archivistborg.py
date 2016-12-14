@@ -297,8 +297,5 @@ if speciesKey:
 
 boomer.saveNextStart()
 
-
-select * from lm_v3.lm_getOccurrenceSet(NULL,'88d1b0b6b327e9bd69c94f7cc90f74402fbb5e47055b677b6bceb2d84e693d1f','kubi','4326')
-
-
+select * from lm_v3.lm_findOrInsertOccurrenceSet(NULL,'kubi','88d1b0b6b327e9bd69c94f7cc90f74402fbb5e47055b677b6bceb2d84e693d1f',NULL,'Hexarthra fennica (Levander, 1892)','http://badenov-vc1.nhm.ku.edu/services/sdm/occurrences/#id#',NULL,NULL,5,NULL,4326,NULL,1,57736.7157809,NULL,NULL);
 """
