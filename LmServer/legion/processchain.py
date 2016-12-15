@@ -21,16 +21,12 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json 
 import mx.DateTime
 import os
 
-from LmCommon.common.lmconstants import OutputFormat, JobStatus
-
-from LmServer.base.lmobj import LMError, LMObject
+from LmServer.base.lmobj import LMObject
 from LmServer.base.serviceobject import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMFileType, 
-               ID_PLACEHOLDER, LMServiceType, LMServiceModule)
+from LmServer.common.lmconstants import (LMFileType)
 # .........................................................................
 class MFChain(ProcessObject):
 # .............................................................................
@@ -57,39 +53,25 @@ class MFChain(ProcessObject):
          statusModTime = mx.DateTime.utc().mjd
       self._dlocation = dlocation
       self.priority = priority
-      self.metadata = metadata
+      self.mfMetadata = {}
+      self.loadMfMetadata(metadata)
       ProcessObject.__init__(self, objId=None, processType=None, parentId=None,
                              status=None, statusModTime=None)
       
       
 # ...............................................
-   def addMFMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.mfMetadata[key] = val
-         
+   def dumpMfMetadata(self, metadataDict):
+      return LMObject._dumpMetadata(self, self.mfMetadata)
+ 
 # ...............................................
-   def dumpMFMetadata(self):
-      metastring = None
-      if self.mfMetadata:
-         metastring = json.dumps(self.mfMetadata)
-      return metastring
+   def loadMfMetadata(self, newMetadata):
+      self.mfMetadata = LMObject._loadMetadata(self, newMetadata)
 
 # ...............................................
-   def loadMFMetadata(self, meta):
-      """
-      @note: Adds to dictionary or modifies values for existing keys
-      """
-      if meta is not None:
-         if isinstance(meta, dict): 
-            self.addMFMetadata(meta)
-         else:
-            try:
-               metajson = json.loads(meta)
-            except Exception, e:
-               print('Failed to load JSON object from {} object {}'
-                     .format(type(meta), meta))
-            else:
-               self.addMFMetadata(metajson)
+   def addMfMetadata(self, newMetadataDict):
+      self.mfMetadata = LMObject._addMetadata(self, newMetadataDict, 
+                                  existingMetadataDict=self.mtxColMetadata)
+
 
 # .............................................................................
 # Superclass methods overridden

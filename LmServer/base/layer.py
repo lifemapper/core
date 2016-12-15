@@ -365,20 +365,18 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._keywords.add(keyword)
 
 # ...............................................
-   def getThumbnail(self):
-      """
-      @summary Get thumbnail image filename associated with the layer
-      @return thumbnail image filename associated with the layer
-      """
-      return self._thumbnail
-         
-   def setThumbnail(self, thumbnailImg):
-      """
-      @summary Set the thumbnail image filename to be associated with the layer
-      @param thumbnailImg: thumbnail image filename
-      """
-      self._thumbnail = thumbnailImg
-         
+   def dumpLyrMetadata(self, metadataDict):
+      return LMObject._dumpMetadata(self, self.lyrMetadata)
+ 
+# ...............................................
+   def loadLyrMetadata(self, newMetadata):
+      self.lyrMetadata = LMObject._loadMetadata(self, newMetadata)
+
+# ...............................................
+   def addLyrMetadata(self, newMetadataDict):
+      self.lyrMetadata = LMObject._addMetadata(self, newMetadataDict, 
+                                  existingMetadataDict=self.lyrMetadata)
+
 # ...............................................
 # Properties
 # ...............................................           
@@ -400,6 +398,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 # .............................................................................
 # .............................................................................
 class _LayerParameters(LMObject):
+   
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -418,13 +417,13 @@ class _LayerParameters(LMObject):
       @param paramId: The database Id for the parameter values.  If these 
                       parameters are not held in a separate table, this value
                       is the layerId.  
+      @param metadata: Dictionary of metadata keys/values 
       @param attrFilter: The record attribute name on which to filter 
                     for items of interest, i.e. in a multi-species vector file, 
                     where each Layer object represents one species, this is
                     the field containing species name.
       @param valueFilter: The value of interest in the attrFilter
       """
-      self.paramMetadata = {}
       self.loadParamMetadata(metadata)
       # TODO: create a dictionary of variable attributes for treeIndex, matrixIndex, etc
       self._treeIndex = None
@@ -437,6 +436,19 @@ class _LayerParameters(LMObject):
       self.attrFilter = attrFilter
       self.valueFilter = valueFilter
       
+# ...............................................
+   def dumpParamMetadata(self):
+      return LMObject._dumpMetadata(self, self.paramMetadata)
+ 
+# ...............................................
+   def loadParamMetadata(self, newMetadata):
+      self.paramMetadata = LMObject._loadMetadata(self, newMetadata)
+
+# ...............................................
+   def addParamMetadata(self, newMetadataDict):
+      self.paramMetadata = LMObject._addMetadata(self, newMetadataDict, 
+                                  existingMetadataDict=self.paramMetadata)
+
 # ...............................................
    def setParametersId(self, paramid):
       """
@@ -506,34 +518,6 @@ class _LayerParameters(LMObject):
                 the position of the layer in a tree
       """
       return self._treeIndex
-
-# ...............................................
-   def addParamMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.paramMetadata[key] = val
-         
-   def dumpParamMetadata(self):
-      metastring = None
-      if self.paramMetadata:
-         metastring = json.dumps(self.paramMetadata)
-      return metastring
-
-   def loadParamMetadata(self, meta):
-      """
-      @note: Adds to dictionary or modifies values for existing keys
-      """
-      if meta is not None:
-         if isinstance(meta, dict): 
-            self.addParamMetadata(meta)
-         else:
-            try:
-               metajson = json.loads(meta)
-            except Exception, e:
-               print('Failed to load JSON object from {} object {}'
-                     .format(type(meta), meta))
-            else:
-               self.addParamMetadata(metajson)
-
 
 # .............................................................................
 # Raster class (inherits from _Layer)

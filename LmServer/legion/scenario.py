@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -21,9 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
 from LmServer.base.layerset import MapLayerSet
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.sdm.envlayer import EnvironmentalLayer
@@ -34,10 +33,12 @@ class Scenario(MapLayerSet):
    Class to hold a set of Raster object environmental data layers 
    that are used together for creating or projecting a niche model
    """
+   META_TITLE = 'title'
+   META_AUTHOR = 'author'
+   META_DESCRIPTION = 'description'
 # .............................................................................
 # Constructor
 # .............................................................................
-
    # ...............................................       
    def __init__(self, code, metadata={},
                 metadataUrl=None, dlocation=None,
@@ -47,6 +48,7 @@ class Scenario(MapLayerSet):
                 layers=None, userId=ARCHIVE_USER, scenarioid=None):
       """
       @summary Constructor for the scenario class 
+      @todo: Move title, author, description to self.metadata
       @param code: The code for this set of layers
       @param metadataUrl: Lifemapper metadataUrl of this set of layers
       @param units: units of measurement for pixel size
@@ -64,26 +66,18 @@ class Scenario(MapLayerSet):
       # layers are set not set in LayerSet or Layerset - done here to check
       # that each layer is an EnvironmentalLayer
       MapLayerSet.__init__(self, code, 
-                           title=title, url=metadataUrl, 
+                           url=metadataUrl, 
                            dlocation=dlocation, keywords=keywords, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
                            serviceType=LMServiceType.SCENARIOS, moduleType=LMServiceModule.SDM)      
       # aka MapLayerSet.name    
       self.code = code
-      # Move to self.metadata
-      self.author = author
-      self.description = description  
-      # obsolete
-      self.startDate = startdt
-      self.endDate = enddt
-      
       self.modTime = modTime
-      # new
+
       self.gcmCode=None
       self.altpredCode=None
       self.dateCode=None
-      self.metadata = {}
-      self.loadMetadata(metadata)
+      self.loadScenMetadata(metadata)
       
       # Private attributes
       self._scenarioId = scenarioid
@@ -95,16 +89,31 @@ class Scenario(MapLayerSet):
       self.setLocalMapFilename()
             
    # ...............................................
-   def setId(self, id):
+   def setId(self, scenid):
       """
       @summary: Sets the database id on the object
-      @param id: The database id for the object
+      @param scenid: The database id for the object
       """
-      MapLayerSet.setId(self, id)
+      MapLayerSet.setId(self, scenid)
+
+# ...............................................
+   def dumpScenMetadata(self, metadataDict):
+      return LMObject._dumpMetadata(self, self.scenMetadata)
+ 
+# ...............................................
+   def loadScenMetadata(self, newMetadata):
+      self.scenMetadata = LMObject._loadMetadata(self, newMetadata)
+
+# ...............................................
+   def addScenMetadata(self, newMetadataDict):
+      self.scenMetadata = LMObject._addMetadata(self, newMetadataDict, 
+                                  existingMetadataDict=self.scenMetadata)
+
 
    # ...............................................
    # layers property code overrides the same methods in layerset.LayerSet
-   def _getLayers(self):
+   @property
+   def layers(self):
       return self._layers
       
    def _setLayers(self, lyrs):
@@ -117,33 +126,6 @@ class Scenario(MapLayerSet):
          for lyr in lyrs:
             self.addLayer(lyr) 
          self._bbox = MapLayerSet._getIntersectBounds(self)
-
-# ...............................................
-   def addMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.metadata[key] = val
-         
-   def dumpMetadata(self):
-      metastring = None
-      if self.metadata:
-         metastring = json.dumps(self.metadata)
-      return metastring
-
-   def loadMetadata(self, meta):
-      """
-      @note: Adds to dictionary or modifies values for existing keys
-      """
-      if meta is not None:
-         if isinstance(meta, dict): 
-            self.addMetadata(meta)
-         else:
-            try:
-               metajson = json.loads(meta)
-            except Exception, e:
-               print('Failed to load JSON object from {} object {}'
-                     .format(type(meta), meta))
-            else:
-               self.addMetadata(metajson)
    
    # ...............................................
    def _setUnits(self, units):
@@ -154,7 +136,8 @@ class Scenario(MapLayerSet):
       else:
          self._units = None
          
-   def _getUnits(self):
+   @property
+   def units(self):
       if self._units is None and len(self._layers) > 0:
          self._units = self._layers[0].mapUnits
       return self._units   
@@ -168,22 +151,11 @@ class Scenario(MapLayerSet):
       else:
          self._resolution = None
          
-   def _getRes(self):
+   @property
+   def resolution(self):
       if self._resolution is None and len(self._layers) > 0:
          self._resolution = self._layers[0].resolution
       return self._resolution
-   
-# .........................................................................
-# Public Properties
-# .........................................................................
-   ## Units of the (1st) Scenario layers
-   units = property(_getUnits, _setUnits)
-   
-   ## Resolution of the (1st) Scenario layers
-   resolution = property(_getRes, _setRes)
-   
-   layers = property(_getLayers, _setLayers)
-   
    
 # .........................................................................
 # Public Methods

@@ -28,7 +28,7 @@ import os
 from LmCommon.common.lmconstants import OutputFormat, JobStatus
 
 from LmServer.base.layer import Raster, _LayerParameters
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LMError,LMObject
 from LmServer.base.serviceobject import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, ALGORITHM_DATA,
                DEFAULT_PROJECTION_FORMAT, DEFAULT_WMS_FORMAT,
@@ -40,7 +40,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
    """
 # .............................................................................
    def __init__(self, occurrenceSet, algorithm, modelScenario, modelMaskId, 
-                projScenario, projMaskId, processType,
+                projScenario, projMaskId, processType, projMetadata,
                 status, statusModTime, userId, layerId):
       """
       @summary Initialize the _ProjectionType class instance
@@ -61,7 +61,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
          statusModTime = mx.DateTime.utc().mjd
          
       _LayerParameters.__init__(self, -1, statusModTime, userId, 
-                                layerId)
+                                layerId, metadata=projMetadata)
       ProcessObject.__init__(self, objId=layerId, 
                              processType=processType, parentId=None, 
                              status=status, statusModTime=statusModTime)
@@ -72,6 +72,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       self._projMaskId = projMaskId
       self._projScenario = projScenario
       
+                
 # .............................................................................
 class SDMProjection(_ProjectionType, Raster):
    """
@@ -86,7 +87,7 @@ class SDMProjection(_ProjectionType, Raster):
    def __init__(self, occurrenceSet, algorithm, modelScenario, 
                 projScenario, processType=None, 
                 modelMaskId=None, projMaskId=None, 
-                prjMetadata={}, lyrMetadata={},
+                projMetadata={}, lyrMetadata={},
                 status=None, statusModTime=None, 
                 userId=None, layerId=None, verify=None, squid=None, 
                 dlocation=None, bbox=None, epsgcode=None, 
@@ -122,9 +123,10 @@ class SDMProjection(_ProjectionType, Raster):
                                                  isDiscreteData, gdalFormat)
       _ProjectionType.__init__(self, occurrenceSet, algorithm, 
                                modelScenario, modelMaskId, 
-                               projScenario, projMaskId, processType,
+                               projScenario, projMaskId, processType, 
+                               projMetadata,
                                status, statusModTime, userId, layerId)
-      lyrmetadata = self._createMetadata(metadata)
+      lyrmetadata = self._createMetadata(lyrMetadata)
       Raster.__init__(metadata=lyrmetadata, bbox=bbox, dlocation=dlocation, 
                 gdalType=gdalType, gdalFormat=gdalFormat, 
                 mapunits=mapunits, resolution=resolution, epsgcode=epsgcode,
@@ -136,7 +138,7 @@ class SDMProjection(_ProjectionType, Raster):
       self.setId(layerId)
       self.setLocalMapFilename()
       self._setMapPrefix()
-
+   
 # .............................................................................
 # Superclass methods overridden
 ## .............................................................................

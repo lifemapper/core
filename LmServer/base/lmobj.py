@@ -138,8 +138,7 @@ class LMObject(object):
       return success, msg
    
 # ...............................................
-   def addMetadata(self, newMetadataDict, existingMetadataDict=None):
-      existingMetadataDict = {}
+   def _addMetadata(self, newMetadataDict, existingMetadataDict={}):
       for key, val in newMetadataDict.iteritems():
          try:
             existingVal = existingMetadataDict[key]
@@ -159,14 +158,14 @@ class LMObject(object):
       return existingMetadataDict
          
 # ...............................................
-   def dumpMetadata(self, metadataDict):
+   def _dumpMetadata(self, metadataDict):
       metadataStr = None
       if metadataDict:
          metadataStr = json.dumps(metadataDict)
       return metadataStr
 
 # ...............................................
-   def loadMetadata(self, newMetadata):
+   def _loadMetadata(self, newMetadata):
       """
       @note: Adds to dictionary or modifies values for existing keys
       """

@@ -2,7 +2,7 @@
 @summary Module that contains the RADExperiment class
 @author Aimee Stewart
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -32,15 +32,15 @@ import subprocess
 from types import StringType, UnicodeType
 
 from LmCommon.common.lmconstants import MatrixType
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.rad.matrix import Matrix                                  
 
 # .............................................................................
-class BigExperiment(ServiceObject, ProcessObject):
+class Gridset(ServiceObject, ProcessObject):
    """
-   The BigExperiment class contains all of the information for one view (extent and 
+   The Gridset class contains all of the information for one view (extent and 
    resolution) of a RAD experiment.  
    """
 # .............................................................................
@@ -52,7 +52,7 @@ class BigExperiment(ServiceObject, ProcessObject):
                 status=None, statusModTime=None, 
                 userId=None, expId=None, metadataUrl=None):
       """
-      @summary Constructor for the BigExperiment class
+      @summary Constructor for the Gridset class
       @param shapegrid: Vector layer with polygons representing geographic sites.
       @param siteIndices: A dictionary with keys the unique/record identifiers 
              and values the x, y coordinates of the sites in a ShapeGrid or PAM
@@ -67,12 +67,12 @@ class BigExperiment(ServiceObject, ProcessObject):
       @param expId: database id of the RADExperiment containing this Bucket 
       """
       ServiceObject.__init__(self, userId, expId, None, statusModTime,
-            LMServiceType.RAD_EXPERIMENTS, moduleType=LMServiceModule.RAD,
+            LMServiceType.RAD_EXPERIMENTS, moduleType=LMServiceModule.LM,
             metadataUrl=metadataUrl)
       ProcessObject.__init__(self, objId=expId, 
                              status=status,  statusModTime=statusModTime) 
-      self.metadata = {}
-      self.loadMetadata(metadata)
+      self.grdMetadata = {}
+      self.loadGrdMetadata(metadata)
       self.shapegrid = shapegrid
       self.siteIndices = None
       self._siteIndicesFilename = None
@@ -142,33 +142,6 @@ class BigExperiment(ServiceObject, ProcessObject):
       if self._path is None:
          self.setPath()
       return self._path
-   
-# ...............................................
-   def addMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.metadata[key] = val
-         
-# ...............................................
-   def dumpMetadata(self):
-      import json
-      metastring = None
-      if self.metadata:
-         metastring = json.dumps(self.metadata)
-      return metastring
-
-# ...............................................
-   def loadMetadata(self, meta):
-      if meta is not None:
-         if isinstance(meta, dict): 
-            self.addMetadata(meta)
-         else:
-            try:
-               metajson = json.loads(meta)
-            except Exception, e:
-               print('Failed to load JSON object from {} object {}'
-                     .format(type(meta), meta))
-            else:
-               self.addMetadata(metajson)
    
 # ...............................................
    def setIndices(self, indicesFileOrObj=None, doRead=True):
@@ -310,7 +283,19 @@ class BigExperiment(ServiceObject, ProcessObject):
 # .............................................................................
 # Public methods
 # .............................................................................
-         
+# ...............................................
+   def dumpGrdMetadata(self, metadataDict):
+      return LMObject._dumpMetadata(self, self.grdMetadata)
+ 
+# ...............................................
+   def loadGrdMetadata(self, newMetadata):
+      self.grdMetadata = LMObject._loadMetadata(self, newMetadata)
+
+# ...............................................
+   def addGrdMetadata(self, newMetadataDict):
+      self.grdMetadata = LMObject._addMetadata(self, newMetadataDict, 
+                                  existingMetadataDict=self.grdMetadata)
+
 # ................................................
    def addPAMColumn(self, data, colIdx):
       self._fullPAM.addColumn(data, colIdx)
@@ -537,37 +522,6 @@ class BigExperiment(ServiceObject, ProcessObject):
          
          self._sitesPresent = indices['sitesPresent']
          self._layersPresent = indices['layersPresent']
-
-# .............................................................................
-   def addKeywords(self, keywordSequence):
-      """
-      @summary Adds keywords to the LayerSet object
-      @param keywordSequence: List of keywords to add
-      """
-      if keywordSequence is not None:
-         for k in keywordSequence:
-            self._keywords.add(k)
-         
-   def addKeyword(self, keyword):
-      """
-      @summary Adds a keyword to the LayerSet object
-      @param keyword: Keyword to add
-      """
-      if keyword is not None:
-         self._keywords.add(keyword)
-
-   def _setKeywords(self, keywords):
-      """
-      @summary Sets the keywords of the BigExperiment
-      @param keywords: List or comma-delimited string of keywords that will be 
-                       associated with the BigExperiment
-      """
-      if isinstance(keywords, (StringType, UnicodeType)):
-         keywords = keywords.split(',')   
-      if keywords is not None:
-         self._keywords = set(keywords)
-      else:
-         self._keywords = set()
             
 # .............................................................................
 # Read-0nly Properties

@@ -412,7 +412,7 @@ create table lm_v3.GridsetTree
 -- -------------------------------
 -- aka PAV or GRIM Vector, 
 -- Process and Output Object
--- Process IntersectParams:
+-- Process IntersectParams: in LmServer.legion.matrixColumn.MatrixColumn.PARAM_*
 --    filterString, valName, valUnits, minPercent, weightedMean, largestClass, 
 --    minPresence, maxPresence
 create table lm_v3.MatrixColumn 

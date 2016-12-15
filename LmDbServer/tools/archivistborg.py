@@ -279,13 +279,13 @@ sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
 occ = boomer._createOrResetOccurrenceset(sciName, speciesKey, 
                               ProcessType.GBIF_TAXA_OCCURRENCE, dataCount, 
                               data=dataChunk)
-jobs = boomer._scribe.initSDMChain(boomer.userid, occ, boomer.algs, 
+objs = boomer._scribe.initSDMChain(boomer.userid, occ, boomer.algs, 
                                          boomer.modelScenario, 
                                          boomer.projScenarios, 
                                          occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE, 
                                          intersectGrid=boomer.intersectGrid,
                                          minPointCount=boomer.minPointCount)
-                            
+boomer._createMakeflow(objs)
 if speciesKey:
    jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
    boomer._createMakeflow(jobs)
