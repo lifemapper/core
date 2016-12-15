@@ -144,8 +144,7 @@ class BorgScribe(LMObject):
       scenId = updatedScen.getId()
       for lyr in scen.layers:
          updatedLyr = self.insertScenarioLayer(lyr, scenId)
-         updatedLayers.append(updatedLyr)
-      updatedScen.layers = updatedLayers
+         updatedScen.addLayer(updatedLyr)
       return updatedScen
    
 # ...............................................
