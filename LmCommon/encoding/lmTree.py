@@ -667,7 +667,46 @@ class LmTree(object):
       return rt
    
    # ..............................   
+   def createRandomTree(self, numTips):
+      """
+      @summary: Creates a random binary Phylogenetic tree with the specified 
+                   number of tips
+      @param numTips: The number of tips to include in this tree
+      @note: Tips will have path ids 1 - numTips
+      @note: Following convention in R package to number beginning with 1
+      """
+      clades = []
+      for i in range(numTips):
+         clades.append({
+                          PhyloTreeKeys.PATH_ID: i+1, 
+                          PhyloTreeKeys.PATH: [], 
+                          PhyloTreeKeys.CHILDREN: [], 
+                          PhyloTreeKeys.NAME: str(i+1), 
+                          PhyloTreeKeys.BRANCH_LENGTH: 0.0})
+      
+      n = numTips + 1
+      
+      while len(clades) > 1:
+         shuffle(clades)
+         c1 = clades.pop(0)
+         c2 = clades.pop(0)
+         newClade = {
+                       PhyloTreeKeys.PATH_ID: n,
+                       PhyloTreeKeys.PATH: [],
+                       PhyloTreeKeys.CHILDREN : [c1, c2],
+                       PhyloTreeKeys.BRANCH_LENGTH: 0.0
+                    }
+         clades.append(newClade)
+         n += 1
+      
+      return clades[0]
+
+   # ..............................   
    def writeTree(self, path):
+      """
+      @todo: Document
+      @todo: Use json.dump?
+      """
       #if os.path.exists(path):
       with open(path,'w') as f:
          f.write(json.dumps(self.tree, sort_keys=True, indent=4))
