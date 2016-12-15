@@ -99,8 +99,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._setVerify(verify)
       self.squid = squid
       self._metalocation = metalocation
-      self.lyrMetadata = {}
-      self.loadLyrMetadata(metadata)
+      self.lyrMetadata = self.loadMetadata(metadata)
       self._setUnits(mapunits)
       self.valUnits = valUnits
       self.resolution = resolution
@@ -146,34 +145,34 @@ class _Layer(LMSpatialObject, ServiceObject):
       """
       return self._layerUserId
    
-# ...............................................
-   def addLyrMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.lyrMetadata[key] = val
-         
-# ...............................................
-   def dumpLyrMetadata(self):
-      metastring = None
-      if self.lyrMetadata:
-         metastring = json.dumps(self.lyrMetadata)
-      return metastring
-
-# ...............................................
-   def loadLyrMetadata(self, meta):
-      """
-      @note: Adds to dictionary or modifies values for existing keys
-      """
-      if meta is not None:
-         if isinstance(meta, dict): 
-            self.addLyrMetadata(meta)
-         else:
-            try:
-               metajson = json.loads(meta)
-            except Exception, e:
-               print('Failed to load JSON object from {} object {}'
-                     .format(type(meta), meta))
-            else:
-               self.addLyrMetadata(metajson)
+# # ...............................................
+#    def addLyrMetadata(self, metadict):
+#       for key, val in metadict.iteritems():
+#          self.lyrMetadata[key] = val
+#          
+# # ...............................................
+#    def dumpLyrMetadata(self):
+#       metastring = None
+#       if self.lyrMetadata:
+#          metastring = json.dumps(self.lyrMetadata)
+#       return metastring
+# 
+# # ...............................................
+#    def loadLyrMetadata(self, meta):
+#       """
+#       @note: Adds to dictionary or modifies values for existing keys
+#       """
+#       if meta is not None:
+#          if isinstance(meta, dict): 
+#             self.addLyrMetadata(meta)
+#          else:
+#             try:
+#                metajson = json.loads(meta)
+#             except Exception, e:
+#                print('Failed to load JSON object from {} object {}'
+#                      .format(type(meta), meta))
+#             else:
+#                self.addLyrMetadata(metajson)
 
 # ...............................................
    def getValAttribute(self):

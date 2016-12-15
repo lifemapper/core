@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -34,16 +34,17 @@ from LmServer.common.lmconstants import (LMFileType, ALGORITHM_DATA,
                DEFAULT_PROJECTION_FORMAT, DEFAULT_WMS_FORMAT,
                ID_PLACEHOLDER, LMServiceType, LMServiceModule)
 # .........................................................................
-class _ProjectionType(_LayerParameters):
+class _ProjectionType(_LayerParameters, ProcessObject):
 # .............................................................................
    """
    """
 # .............................................................................
-   def __init__(self, occurrenceSet, algorithm, modelScenario, modelMask, 
-                projScenario, projMask, 
-                status, statusModTime, userId, projectionId):
+   def __init__(self, occurrenceSet, algorithm, modelScenario, modelMaskId, 
+                projScenario, projMaskId, processType,
+                status, statusModTime, userId, layerId):
       """
       @summary Initialize the _ProjectionType class instance
+      @param occurrenceSet: OccurrenceLayer object for SDM model process
       @param algorithm: Algorithm object for SDM model process
       @param modelScenario: : Scenario (environmental layer inputs) for 
              SDM model process
@@ -54,43 +55,48 @@ class _ProjectionType(_LayerParameters):
       @param status: status of computation
       @param statusModTime: Time stamp in MJD for status modification.
       @param userId: Id for the owner of this projection
-      @param projectionId: The projectionId for the database.  
+      @param layerId: The layerId for the Layer and SDMProject tables in database.  
       """
       if status is not None and statusModTime is None:
          statusModTime = mx.DateTime.utc().mjd
+         
       _LayerParameters.__init__(self, -1, statusModTime, userId, 
-                                projectionId)
+                                layerId)
+      ProcessObject.__init__(self, objId=layerId, 
+                             processType=processType, parentId=None, 
+                             status=status, statusModTime=statusModTime)
       self._occurrenceSet = occurrenceSet
       self._algorithm = algorithm
-      self._modelMask = modelMask
+      self._modelMaskId = modelMaskId
       self._modelScenario = modelScenario
-      self._projMask = projMask
+      self._projMaskId = projMaskId
       self._projScenario = projScenario
-      self._status = status
-      self._statusmodtime = statusModTime
       
 # .............................................................................
-class SDMProjection(_ProjectionType, Raster, ProcessObject):
+class SDMProjection(_ProjectionType, Raster):
    """
-   The Projection class contains all of the information 
-            that openModeller needs to project a model onto a scenario.
+   @summary: The SDMProjection class contains all of the information 
+   that openModeller or ATT Maxent needs to model and project SDM inputs.
    @todo: make Models and Projections consistent for data member access 
           between public/private members, properties, get/set/update
    """
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, algorithm, modelScenario, modelMask, projScenario, projMask, 
-                processType=None, status=None, statusModTime=None, 
-                userId=None, layerId=None, 
-                verify=None, squid=None, metadata={}, dlocation=None, 
-                bbox=None, epsgcode=None, 
+   def __init__(self, occurrenceSet, algorithm, modelScenario, 
+                projScenario, processType=None, 
+                modelMaskId=None, projMaskId=None, 
+                prjMetadata={}, lyrMetadata={},
+                status=None, statusModTime=None, 
+                userId=None, layerId=None, verify=None, squid=None, 
+                dlocation=None, bbox=None, epsgcode=None, 
                 gdalType=None, gdalFormat=DEFAULT_PROJECTION_FORMAT,
                 mapunits=None, resolution=None, isDiscreteData=None,
                 metadataUrl=None):
       """
       @todo: remove userId keyword parameter??
       @summary Constructor for the SDMProjection class
+      @param occurrenceSet: OccurrenceLayer object for SDM model process
       @param algorithm: Algorithm object for SDM model process
       @param modelScenario: : Scenario (environmental layer inputs) for 
              SDM model process
@@ -109,16 +115,15 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
                             in modified julian date format
       @param projectionId: database id of the Projection
       """
-      _ProjectionType.__init__(self, algorithm, modelScenario, modelMask, 
-                               projScenario, projMask, 
-                               status, statusModTime, userId, layerId)         
-      ProcessObject.__init__(self, objId=layerId, 
-                             processType=processType, parentId=None, 
-                             status=status, statusModTime=statusModTime)
-
-      (bbox, epsgcode, mapunits, resolution, isDiscreteData, gdalFormat) = \
-         self._getDefaultsFromInputs(projScenario, algorithm, bbox, epsgcode, 
-                              mapunits, resolution, isDiscreteData, gdalFormat)
+      (processType, bbox, epsgcode, mapunits, resolution, isDiscreteData, 
+       gdalFormat) = self._getDefaultsFromInputs(processType, projScenario, 
+                                                 algorithm, bbox, epsgcode, 
+                                                 mapunits, resolution, 
+                                                 isDiscreteData, gdalFormat)
+      _ProjectionType.__init__(self, occurrenceSet, algorithm, 
+                               modelScenario, modelMaskId, 
+                               projScenario, projMaskId, processType,
+                               status, statusModTime, userId, layerId)
       lyrmetadata = self._createMetadata(metadata)
       Raster.__init__(metadata=lyrmetadata, bbox=bbox, dlocation=dlocation, 
                 gdalType=gdalType, gdalFormat=gdalFormat, 
@@ -152,21 +157,19 @@ class SDMProjection(_ProjectionType, Raster, ProcessObject):
          self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
          self._setMapPrefix()
 
-# ...............................................
-   @property
-   def makeflowFilename(self):
-      dloc = self.createLocalDLocation(makeflow=True)
-      return dloc
+# # ...............................................
+#    @property
+#    def makeflowFilename(self):
+#       dloc = self.createLocalDLocation(makeflow=True)
+#       return dloc
    
 # ...............................................
-   def createLocalDLocation(self, makeflow=False):
+   def createLocalDLocation(self):
       """
       @summary: Create data location
       """
       dloc = None
-      if makeflow:
-         dloc = self._model.createLocalDLocation(makeflow=True)
-      elif self.getId() is not None:
+      if self.getId() is not None:
          dloc = self._earlJr.createFilename(LMFileType.PROJECTION_LAYER, 
                    projId=self.getId(), pth=self.getAbsolutePath(), 
                    usr=self._userId, epsg=self._epsg)

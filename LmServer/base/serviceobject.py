@@ -181,7 +181,7 @@ class ProcessObject(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, objId=None, processType=None, parentId=None, 
+   def __init__(self, objId=None, processType=None, parentId=None,
                 status=None, statusModTime=None, stage=None, stageModTime=None):
       """
       @param objId: Unique identifier for this parameterized object
@@ -200,8 +200,8 @@ class ProcessObject(LMObject):
       @todo: Revisit stage/stageModTime when job chaining is implemented
       """
       self.objId = objId
-      self.parentId = parentId
       self.processType = processType
+      self.parentId = parentId
       self._status = status
       self._statusmodtime = statusModTime
       self._stage = stage

@@ -967,8 +967,8 @@ class GBIFBoom(_LMBoomer):
    def chainOne(self):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
-         jobs = self._processChunk(speciesKey, dataCount, dataChunk)
-         self._createMakeflow(jobs)
+         objs = self._processChunk(speciesKey, dataCount, dataChunk)
+         self._createMakeflow(objs)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
 

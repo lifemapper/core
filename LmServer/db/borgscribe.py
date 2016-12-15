@@ -333,6 +333,17 @@ class BorgScribe(LMObject):
             prjs = self.initSDMProjections(occ, mdlScen, 
                               prjScenList, alg, usr, 
                               modtime=currtime, 
-                              mdlMask=mdlMask, prjMask=prjMask)
+                              mdlMask=mdlMask, prjMask=projMask)
             objs.extend(prjs)
       return objs
+   
+# ...............................................
+   def insertMFChain(self, usr, dlocation, priority=None):
+      """
+      @summary: Inserts a jobChain into database
+      @return: jobChainId
+      """
+      mfchain = self._borg.insertMFChain(usr, dlocation, JobStatus.INITIALIZE, 
+                                            priority)
+      return mfchain   
+

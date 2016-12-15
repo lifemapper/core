@@ -41,10 +41,6 @@ class Scenario(MapLayerSet):
    # ...............................................       
    def __init__(self, code, metadata={},
                 metadataUrl=None, dlocation=None,
-                # TODO: Remove
-                startdt=None, enddt=None, 
-                title=None, author=None, description=None,
-                # new
                 units=None, res=None, 
                 gcmCode=None, altpredCode=None, dateCode=None,
                 bbox=None, modTime=None, keywords=None, epsgcode=None,

@@ -494,6 +494,31 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm3.lm_insertMFChain(usr varchar,
+                                                  dloc varchar,
+                                                  stat int,
+                                                  prior int, 
+                                                  currtime double precision)
+RETURNS int AS
+$$
+DECLARE
+   rec lm3.JobChain%ROWTYPE;
+   jid int = -1;
+BEGIN
+   INSERT INTO lm3.JobChain 
+             (userid, dlocation, priority, status, statusmodtime, datecreated)
+      VALUES (usr, dloc, prior, stat, currtime, currtime);
+   IF FOUND THEN 
+      SELECT INTO jid last_value FROM lm3.jobchain_jobchainid_seq;
+   END IF;
+
+   RETURN jid;
+
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)
    RETURNS void AS
 $$
