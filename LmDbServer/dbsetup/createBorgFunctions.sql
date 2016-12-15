@@ -494,29 +494,30 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm3.lm_insertMFChain(usr varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_insertMFChain(usr varchar,
                                                   dloc varchar,
+                                                  prior int,
+                                                  meta text,  
                                                   stat int,
-                                                  prior int, 
                                                   currtime double precision)
-RETURNS int AS
+RETURNS lm_v3.MFProcess AS
 $$
 DECLARE
-   rec lm3.JobChain%ROWTYPE;
-   jid int = -1;
+   rec lm_v3.MFProcess%ROWTYPE;
+   mfid int = -1;
 BEGIN
-   INSERT INTO lm3.JobChain 
-             (userid, dlocation, priority, status, statusmodtime, datecreated)
-      VALUES (usr, dloc, prior, stat, currtime, currtime);
+   INSERT INTO lm_v3.MFProcess 
+             (userid, dlocation, priority, metadata, status, statusmodtime)
+      VALUES (usr, dloc, prior, meta, stat, currtime);
    IF FOUND THEN 
-      SELECT INTO jid last_value FROM lm3.jobchain_jobchainid_seq;
+      SELECT INTO mfid last_value FROM lm3.mfprocess_mfprocessid_seq;
+      SELECT * INTO rec FROM lm_v3.MFProcess WHERE mfProcessId = mfid;      
    END IF;
 
-   RETURN jid;
+   RETURN rec;
 
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
-
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)

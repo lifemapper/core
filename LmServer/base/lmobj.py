@@ -172,7 +172,7 @@ class LMObject(object):
       objMetadata = {}
       if newMetadata is not None:
          if type(newMetadata) is dict: 
-            objMetadata = self.addMetadata(newMetadata)
+            objMetadata = self._addMetadata(newMetadata)
          else:
             try:
                newMetadataDict = json.loads(newMetadata)
@@ -180,7 +180,7 @@ class LMObject(object):
                print('Failed to load JSON object from type {} object {}'
                      .format(type(newMetadata), newMetadata))
             else:
-               objMetadata = self.addMetadata(newMetadataDict)
+               objMetadata = self._addMetadata(newMetadataDict)
       return objMetadata
 
 # ............................................................................

@@ -97,7 +97,7 @@ class Scenario(MapLayerSet):
       MapLayerSet.setId(self, scenid)
 
 # ...............................................
-   def dumpScenMetadata(self, metadataDict):
+   def dumpScenMetadata(self):
       return LMObject._dumpMetadata(self, self.scenMetadata)
  
 # ...............................................

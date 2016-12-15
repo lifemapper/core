@@ -60,7 +60,7 @@ class MFChain(ProcessObject):
       
       
 # ...............................................
-   def dumpMfMetadata(self, metadataDict):
+   def dumpMfMetadata(self):
       return LMObject._dumpMetadata(self, self.mfMetadata)
  
 # ...............................................

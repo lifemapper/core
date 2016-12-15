@@ -74,7 +74,7 @@ class OutOfRangeError( LMError ):
 
    
 # .........................................................................
-class Algorithm(object):
+class Algorithm(LMObject):
    """       
    Class to hold algorithm and its parameter values and constraints  
    """
@@ -141,7 +141,7 @@ class Algorithm(object):
 # Public Methods
 # .........................................................................
 # ...............................................
-   def dumpAlgMetadata(self, metadataDict):
+   def dumpAlgMetadata(self):
       return LMObject._dumpMetadata(self, self.algMetadata)
  
 # ...............................................

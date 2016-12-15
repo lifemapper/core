@@ -65,7 +65,7 @@ class _MatrixColumnParameters(_LayerParameters):
       self.loadParamMetadata(metadata)
 
 # ...............................................
-   def dumpIntersectParams(self, intersectParamsDict):
+   def dumpIntersectParams(self):
       return LMObject._dumpMetadata(self, self.intersectParams)
  
 # ...............................................

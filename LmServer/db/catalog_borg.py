@@ -40,7 +40,7 @@ from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.rad.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer
+from LmServer.legion.envlayer import EnvironmentalType, EnvironmentalLayer
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.sdmproj import SDMProjection

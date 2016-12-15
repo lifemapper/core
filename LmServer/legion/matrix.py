@@ -109,7 +109,7 @@ class Matrix(LMObject):
          raise LMError('Matrix File %s does not exist' % str(self._dlocation))
 
 # ...............................................
-   def dumpMtxMetadata(self, metadataDict):
+   def dumpMtxMetadata(self):
       return LMObject._dumpMetadata(self, self.mtxMetadata)
  
 # ...............................................
@@ -122,7 +122,7 @@ class Matrix(LMObject):
                                   existingMetadataDict=self.mtxMetadata)
 
 # ...............................................
-   def dumpRandomParams(self, intersectParamsDict):
+   def dumpRandomParams(self):
       return LMObject._dumpMetadata(self, self.randomParams)
  
 # ...............................................
