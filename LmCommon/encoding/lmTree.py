@@ -27,9 +27,8 @@
           02110-1301, USA.
 """
 import numpy as np
-from operator import itemgetter #TODO: Really necessary?
 import os
-from random import randint
+from random import randint, shuffle
 import json
 
 from LmCommon.common.lmconstants import FileFormats, OutputFormat, PhyloTreeKeys
