@@ -107,6 +107,7 @@ class LmTree(object):
       """
       @summary: performs one recursion for all tree info objects
       @todo: Document
+      @todo: Better recursion
       """
       tipPaths = {}
       internalPaths = {}
@@ -552,6 +553,25 @@ class LmTree(object):
       findTips(rt)
       return tips
      
+   # ..............................   
+   def resolvePolytomies(self, tree=None):
+      """
+      @summary: Resolve polytomies in a tree
+      @param tree: (Optional) The tree to resolve.  If omitted, use tree root
+      @todo: Do we need to do anything with branch lengths?
+      @todo: Fix paths as we edit
+      """
+      if tree is None: # Start at the root
+         tree = self.tree
+      while len(tree[CHILDREN]) > 2:
+         shuffle(tree[CHILDREN])
+         c1 = tree[CHILDREN].pop(0)
+         tree[CHILDREN][0][CHILDREN].append(c1)
+      
+      for i in range(len(tree[CHILDREN])):
+         self.resolvePolytomies(tree=tree[CHILDREN][i])
+      
+
    # ..............................   
    def resolvePoly(self):
       """
