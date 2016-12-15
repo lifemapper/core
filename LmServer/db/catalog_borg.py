@@ -448,7 +448,7 @@ class Borg(DbPostgresql):
       wkt = None
       if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
-      meta = scen.dumpMetadata()
+      meta = scen.dumpScenMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
                            scen.getUserId(), scen.code, 
                            scen.metadataUrl, meta, 
@@ -479,14 +479,17 @@ class Borg(DbPostgresql):
       @param envtype: An EnvironmentalType or EnvironmentalLayer object
       @return: new or existing EnvironmentalType
       """
-      envtype.parametersModTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvironmentalType',
-                                                    envtype.getParametersUserId(),
+      currtime = mx.DateTime.utc().mjd
+      meta = envtype.dumpParamMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvType',
                                                     envtype.getParametersId(),
+                                                    envtype.getParametersUserId(),
                                                     envtype.typeCode,
-                                                    envtype.typeTitle,
-                                                    envtype.typeDescription,
-                                                    envtype.parametersModTime)
+                                                    envtype.gcmCode,
+                                                    envtype.altpredCode,
+                                                    envtype.dateCode,
+                                                    meta,
+                                                    currtime)
       newOrExistingEnvType = self._createLayerType(row, idxs)
       return newOrExistingEnvType
                              

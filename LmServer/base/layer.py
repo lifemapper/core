@@ -99,7 +99,8 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._setVerify(verify)
       self.squid = squid
       self._metalocation = metalocation
-      self.lyrMetadata = self.loadMetadata(metadata)
+      self.lyrMetadata = {}
+      self.loadLyrMetadata(metadata)
       self._setUnits(mapunits)
       self.valUnits = valUnits
       self.resolution = resolution

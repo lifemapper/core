@@ -40,8 +40,8 @@ from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
-from LmServer.sdm.scenario import Scenario
+from LmServer.legion.envlayer import EnvironmentalLayer                    
+from LmServer.legion.scenario import Scenario
 from LmServer.rad.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)

@@ -25,7 +25,7 @@ from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.common.localconstants import ARCHIVE_USER
-from LmServer.sdm.envlayer import EnvironmentalLayer
+from LmServer.legion.envlayer import EnvironmentalLayer
 
 # .........................................................................
 class Scenario(MapLayerSet):
