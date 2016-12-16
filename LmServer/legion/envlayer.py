@@ -25,41 +25,40 @@ import json
 
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
 from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
-from LmServer.base.layer import Raster, _LayerParameters
+from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject
 # .........................................................................
-class EnvironmentalType(_LayerParameters, ServiceObject):
+class EnvType(_LayerParameters, ServiceObject):
 # .............................................................................
-   def __init__(self, envType, title, description, userId, 
+   def __init__(self, envCode, userId, 
                 gcmCode=None, altpredCode=None, dateCode=None, 
-                keywords=None, 
-                metadata={}, modTime=None, environmentalTypeId=None):
+                metadata={}, modTime=None, envTypeId=None):
       """
       @summary Initialize the _PresenceAbsence class instance
-      @param envType: Code for the environmentalLayerType to be used when  
-                      matching layers for an SDM to be projected onto to the  
-                      layers used when calculating the SDM. 
-      @param title: Title of the layer type (short, human-readable)
-      @param description: Description of the data this describes.
+      @param envCode: Code for the environmental type (i.e. temp, elevation, bio7)
       @param userId: Id for the owner of this layer type
+      @param gcmCode: Code for the Global Climate Model used to create these data
+      @param altpredCode: Code for the alternate prediction (i.e. IPCC scenario 
+             or Representative Concentration Pathways/RCPs) used to create 
+             these data
+      @param dateCode: Code for the time period for which these data are predicted.
       @param modTime: Time stamp for creation or modification.
       @param environmentalTypeId: The environmentalTypeId for the database.  
       """
       # lyr.getParametersId() <-- lyr._layerTypeId 
-      _LayerParameters.__init__(self, -1, modTime, userId, environmentalTypeId,
+      _LayerParameters.__init__(self, -1, modTime, userId, envTypeId,
                                 metadata=metadata)
-      ServiceObject.__init__(self, userId, environmentalTypeId, modTime, modTime, 
+      ServiceObject.__init__(self, userId, envTypeId, modTime, modTime, 
                              serviceType=LMServiceType.LAYERTYPES, 
                              moduleType=LMServiceModule.LM)
-      #  typeCode <-- layerType
-      self.typeCode = envType
+      self.envCode = envCode
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
-      self.dateCode = dateCode   
+      self.dateCode = dateCode
 
 # .........................................................................
-class EnvironmentalLayer(EnvironmentalType, Raster):
+class EnvironmentalLayer(EnvType, Raster):
    """       
    Class to hold a Raster object used for species distribution modeling.
    """
@@ -69,16 +68,12 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                 bbox=None, dlocation=None, 
                 gdalType=None, gdalFormat=None, 
                 mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
-                layerType=None, layerTypeId=None, envMetadata={},
-                layerTypeModTime=None,
-                gcmCode=None, altpredCode=None, dateCode=None,
                 userId=ARCHIVE_USER, layerId=None, 
                 modTime=None, metadataUrl=None,
-                #TODO: remove these for Borg
-                title=None, isCategorical=False, metalocation=None, author=None, 
-                description=None, startDate=None, endDate=None, keywords=None, 
-                createTime=None, isDiscreteData=False,
-                layerTypeTitle=None, layerTypeDescription=None ):
+                # EnvType
+                envCode=None, envTypeId=None, envMetadata={}, envModTime=None,
+                gcmCode=None, altpredCode=None, dateCode=None, 
+                 ):
       """
       @copydoc Raster::__init__()
       @param layerType: Code for the environmentalLayerType to be used when  

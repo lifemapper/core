@@ -27,8 +27,8 @@ import os
 
 from LmCommon.common.lmconstants import OutputFormat, JobStatus
 
-from LmServer.base.layer import Raster, _LayerParameters
-from LmServer.base.lmobj import LMError,LMObject
+from LmServer.base.layer2 import Raster, _LayerParameters
+from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, ALGORITHM_DATA,
                DEFAULT_PROJECTION_FORMAT, DEFAULT_WMS_FORMAT,
