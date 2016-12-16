@@ -27,24 +27,23 @@ from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileTy
 from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
-from LmServer.base.serviceobject import ServiceObject
+from LmServer.base.serviceobject2 import ServiceObject
 # .........................................................................
-class EnvType(_LayerParameters, ServiceObject):
+class EnvType(_LayerParameters):
 # .............................................................................
    def __init__(self, envCode, userId, 
                 gcmCode=None, altpredCode=None, dateCode=None, 
                 metadata={}, modTime=None, envTypeId=None):
       """
-      @summary Initialize the _PresenceAbsence class instance
+      @summary Initialize the EnvType  class instance
+      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+      @copydoc LmServer.base.layer2._LayerParameters::__init__()
       @param envCode: Code for the environmental type (i.e. temp, elevation, bio7)
-      @param userId: Id for the owner of this layer type
       @param gcmCode: Code for the Global Climate Model used to create these data
       @param altpredCode: Code for the alternate prediction (i.e. IPCC scenario 
              or Representative Concentration Pathways/RCPs) used to create 
              these data
       @param dateCode: Code for the time period for which these data are predicted.
-      @param modTime: Time stamp for creation or modification.
-      @param environmentalTypeId: The environmentalTypeId for the database.  
       """
       # lyr.getParametersId() <-- lyr._layerTypeId 
       _LayerParameters.__init__(self, -1, modTime, userId, envTypeId,
@@ -58,118 +57,72 @@ class EnvType(_LayerParameters, ServiceObject):
       self.dateCode = dateCode
 
 # .........................................................................
-class EnvironmentalLayer(EnvType, Raster):
+class EnvLayer(EnvType, Raster):
    """       
    Class to hold a Raster object used for species distribution modeling.
    """
 # .............................................................................
-   def __init__(self, name, lyrMetadata={}, scencode=None, verify=None,
-                minVal=None, maxVal=None, nodataVal=None, valUnits=None,
-                bbox=None, dlocation=None, 
-                gdalType=None, gdalFormat=None, 
-                mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
-                userId=ARCHIVE_USER, layerId=None, 
-                modTime=None, metadataUrl=None,
+   def __init__(self, name, userId, epsgcode, scencode=None, lyrId=None, 
+                squid=None, verify=None, dlocation=None, 
+                lyrMetadata={}, dataFormat=None, gdalType=None, 
+                valUnits=None, valAttribute=None, 
+                nodataVal=None, minVal=None, maxVal=None, 
+                mapunits=None, resolution=None, 
+                bbox=None,
+                svcObjId=None, serviceType=LMServiceType.LAYERS, 
+                moduleType=LMServiceModule.LM,
+                metadataUrl=None, parentMetadataUrl=None, modTime=None,                
                 # EnvType
-                envCode=None, envTypeId=None, envMetadata={}, envModTime=None,
-                gcmCode=None, altpredCode=None, dateCode=None, 
-                 ):
+                envCode=None, gcmCode=None, altpredCode=None, dateCode=None, 
+                envMetadata={}, envModTime=None, envTypeId=None):
       """
-      @copydoc Raster::__init__()
-      @param layerType: Code for the environmentalLayerType to be used when  
-                      matching layers for an SDM to be projected onto to the  
-                      layers used when calculating the SDM. 
-      @param layerTypeTitle: Title of the layer type (short, human-readable)
-      @param layerTypeDescription: Description of the data this describes.
-      @param layerTypeUserId: Id for the owner of this layer type
-      @param layerTypeModTime: Time stamp for EnvironmentalType creation/modification.
-      @param layerTypeId: The environmentalTypeId for the database.  
+      @copydoc LmServer.base.layer2.Raster::__init__()
+      @copydoc LmServer.base.legion.EnvType::__init__()
       """
       if name is None:
-         raise LMError(currargs='EnvironmentalLayer.name is required')
-      EnvironmentalType.__init__(self, layerType, 
-                  layerTypeTitle, layerTypeDescription, 
-                  userId, 
-                  metadata=envMetadata,
-                  gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode,
-                  keywords=keywords,
-                  modTime=layerTypeModTime, 
-                  environmentalTypeId=layerTypeId)
+         raise LMError(currargs='EnvLayer.name is required')
+      EnvType.__init__(self, envCode, userId, 
+                gcmCode=gcmCode, altpredCode=altpredCode, dateCode=dateCode, 
+                metadata=envMetadata, modTime=envModTime, envTypeId=envTypeId)
       self._mapPrefix = None
-      # Raster metadataUrl and serviceType override those of EnvironmentalType 
-      # if it is a full EnvironmentalLayer
-      Raster.__init__(self, metadata=lyrMetadata, name=name, title=title, author=author, bbox=bbox, 
-                      startDate=startDate, endDate=endDate, mapunits=mapunits, 
-                      resolution=resolution, epsgcode=epsgcode, 
-                      dlocation=dlocation, metalocation=metalocation,
-                      minVal=minVal, maxVal=maxVal, nodataVal=nodataVal, 
-                      valUnits=valUnits, isCategorical=isCategorical,
-                      gdalType=gdalType, gdalFormat=gdalFormat, 
-                      description=description,
-                      isDiscreteData=isDiscreteData, svcObjId=layerId,
-                      lyrId=layerId, lyrUserId=userId, verify=verify, 
-                      createTime=createTime, modTime=modTime,
-                      metadataUrl=metadataUrl, serviceType=LMServiceType.LAYERS, 
-                      moduleType=LMServiceModule.LM)
+      # Raster metadataUrl and serviceType override those of EnvType 
+      # if it is a full EnvLayer
+      Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
+                squid=squid, verify=verify, dlocation=dlocation, 
+                metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
+                valUnits=valUnits, valAttribute=valAttribute, 
+                nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
+                mapunits=mapunits, resolution=resolution, 
+                bbox=bbox, svcObjId=svcObjId, serviceType=serviceType, 
+                moduleType=moduleType, metadataUrl=metadataUrl, 
+                parentMetadataUrl=parentMetadataUrl, modTime=modTime)
       self._scenCode = scencode
       self._setMapPrefix(scencode=scencode)
 
 # ...............................................
    @classmethod
    def initFromParts(cls, raster, envType, scencode=None):
-      envLyr = EnvironmentalLayer(raster.name, lyrMetadata=raster.lyrMetadata, 
-                        scencode=scencode, title=raster.title, 
-                        verify=raster.verify, minVal=raster.minVal, 
-                        maxVal=raster.maxVal, nodataVal=raster.nodataVal, 
-                        valUnits=raster.valUnits, 
-                        isCategorical=raster.isCategorical,
-                        bbox=raster.bbox, dlocation=raster.getDLocation(), 
-                        metalocation=raster.getMetaLocation(),
-                        gdalType=raster.gdalType, gdalFormat=raster.dataFormat, 
-                        startDate=raster.startDate, endDate=raster.endDate, 
-                        mapunits=raster.mapUnits, resolution=raster.resolution, 
-                        epsgcode=raster.epsgcode,  
-                        description=raster.description, author=raster.author,
-                        isDiscreteData=raster.getIsDiscreteData(),
-                        layerType=envType.typeCode, 
-                        envMetadata=envType.paramMetadata,
-                        layerTypeId=envType.getParametersId(), 
-                        layerTypeTitle=envType.typeTitle, 
-                        layerTypeDescription=envType.typeDescription, 
-                        gcmCode=envType.gcmCode, altpredCode=envType.altpredCode, dateCode=envType.dateCode,
-                        keywords=envType.typeKeywords,
-                        layerTypeModTime=envType.parametersModTime,
-                        userId=raster.getUserId(), layerId=raster.getId(),
-                        createTime=raster.createTime, modTime=raster.modTime,
-                        metadataUrl=raster.metadataUrl)
+      envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode, 
+                  scencode=scencode, lyrId=raster.getId(), squid=raster.squid, 
+                  verify=raster.verify, dlocation=raster.getDLocation(),
+                  lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat, 
+                  gdalType=raster.gdalType, valUnits=raster.valUnits, 
+                  valAttribute=raster.getValAttribute(), 
+                  nodataVal=raster.nodataVal, minVal=raster.minVal, 
+                  maxVal=raster.maxVal, mapunits=raster.mapUnits, 
+                  resolution=raster.resolution, bbox=raster.bbox,
+                  # using this a straight layer object
+                  svcObjId=raster.getId(), 
+                  serviceType=raster.serviceType, moduleType=raster.moduleType,
+                  metadataUrl=raster.metadataUrl, 
+                  parentMetadataUrl=raster.parentMetadataUrl, 
+                  modTime=raster.modTime,                
+                  # EnvType
+                  envCode=envType.envCode, gcmCode=envType.gcmCode, 
+                  altpredCode=envType.altpredCode, dateCode=envType.dateCode, 
+                  envMetadata=envType.paramMetadata, envModTime=envType.modTime, 
+                  envTypeId=envType.getParametersId())
       return envLyr
-
-# ...............................................
-   def _getKeywords(self):
-      """
-      @summary Get keywords associated with the layer and EnvironmentalType
-      @note: Overrides layer.keywords property
-      """
-      return self._keywords.union(self.typeKeywords)
-         
-   def _setKeywords(self, keywordSequence):
-      """
-      @summary Set the keywords to be associated with the EnvironmentalType
-      @param keywordSequence: sequence of keywords
-      """
-      if keywordSequence is not None:
-         self._keywords = set(keywordSequence)
-      else:
-         self._keywords = set()
-         
-   def addKeyword(self, keyword):
-      """
-      @summary Add a keyword to be associated with the EnvironmentalType
-      @param keyword: single keyword to add
-      """
-      self._keywords.add(keyword)
-      
-   keywords = property(_getKeywords, _setKeywords)
 
 
 # ...............................................
@@ -244,15 +197,14 @@ class EnvironmentalLayer(EnvType, Raster):
 # ...............................................
    def setLayerParam(self, envType):
       """ 
-      @param envType: an LmServer.sdm.EnvironmentalType object
+      @param envType: an LmServer.legion.EnvironmentalType object
       """
       # _LayerParameters
-      self._matrixIndex = -1
+      self.envCode=envType.envCode
+      self.gcmCode=envType.gcmCode, 
+      self.altpredCode=envType.altpredCode
+      self.dateCode=envType.dateCode 
+      self.loadParamMetadata(envType.paramMetadata)
+      self.envModTime=envType.modTime
+      self.setParametersId(envType.getParametersId())
       self.parametersModTime = envType.parametersModTime
-      self._parametersId = envType.getParametersId()
-      self._parametersUserId = envType.getParametersUserId()
-      self.attrFilter = envType.attrFilter
-      self.valueFilter = envType.valueFilter
-      self.typeCode = envType.typeCode
-      self.typeTitle = envType.typeTitle
-      self.typeDescription = envType.typeDescription

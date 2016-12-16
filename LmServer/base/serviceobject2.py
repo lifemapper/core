@@ -118,6 +118,10 @@ class ServiceObject(LMObject):
    def setParentMetadataUrl(self, url):
       self._parentMetadataUrl = url
       
+   @property
+   def parentMetadataUrl(self):
+      return self._parentMetadataUrl 
+      
 # ...............................................   
    def resetMetadataUrl(self):
       """

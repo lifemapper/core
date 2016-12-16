@@ -173,6 +173,15 @@ class _Layer(LMSpatialObject, ServiceObject):
    def dataFormat(self):
       return self._dataFormat
    
+   @property
+   def gdalType(self):
+      return self._gdalType
+
+   @property
+   def ogrType(self):
+      return self._ogrType
+
+   
 # ...............................................
    def _setUnits(self, mapunits):
       """
@@ -545,14 +554,6 @@ class Raster(_Layer):
 # .............................................................................
 # Properties
 # .............................................................................
-   @property
-   def gdalType(self):
-      return self._gdalType
-
-   @property
-   def ogrType(self):
-      return None
-
    def _verifyDataDescription(self, gdalType, gdalFormat):
       """
       @summary Verifies that the dataType and format are either LM-supported 
@@ -991,13 +992,7 @@ class Vector(_Layer):
 # .............................................................................
 # Properties
 # .............................................................................
-   @property
-   def ogrType(self):
-      return self._ogrType
 
-   @property
-   def gdalType(self):
-      return None
 # ...............................................
    def getFormatLongName(self):
       return self._dataFormat 
