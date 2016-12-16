@@ -330,7 +330,7 @@ class _LMBoomer(LMObject):
                sname = ScientificName(scinameStr, 
                                rank=rankStr, 
                                canonicalName=canonicalStr,
-                               userId=None, squid=None,
+                               userId=self.userid, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
@@ -367,33 +367,28 @@ class _LMBoomer(LMObject):
    def _getInsertSciNameForExternalSpeciesKey(self, speciesKey):
       self._raiseSubclassError()
       
-# ...............................................
-   def _createMakeflow(self, jobs):
-      jobchainId = usr = filename = None
-      if jobs:
-         mfdoc = LMMakeflowDocument()
-         for j in jobs:
-            if isinstance(j, SDMOccurrenceJob):
-               mfdoc.buildOccurrenceSet(j)
-            elif isinstance(j, SDMModelJob):
-               mfdoc.buildModel(j)
-            elif isinstance(j, SDMProjectionJob):
-               mfdoc.buildProjection(j)
-            if usr is None:
-               usr = j.getUserId()
-            if filename is None:
-               filename = j.makeflowFilename
-         self.log.info('Writing makeflow document {} ...'.format(filename))
-         success = mfdoc.write(filename)
-         if not success:
-            self.log.error('Failed to write {}'.format(filename))
-         
-         try:
-            jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
-         except Exception, e:
-            raise LMError(currargs='Failed to insert jobChain for {}; ({})'
-                          .format(filename, e))
-      return jobchainId
+# # ...............................................
+#    def _createMakeflow(self, objs):
+#       mfchainId = usr = filename = None
+#       if objs:
+#          mfdoc = LMMakeflowDocument()
+#          for o in objs:
+#             mfdoc.buildOccurrenceSet(occJob)
+#             if usr is None:
+#                usr = j.getUserId()
+#             if filename is None:
+#                filename = j.makeflowFilename
+#          self.log.info('Writing makeflow document {} ...'.format(filename))
+#          success = mfdoc.write(filename)
+#          if not success:
+#             self.log.error('Failed to write {}'.format(filename))
+#          
+#          try:
+#             jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
+#          except Exception, e:
+#             raise LMError(currargs='Failed to insert jobChain for {}; ({})'
+#                           .format(filename, e))
+#       return jobchainId
 
 # ...............................................
    def chainOne(self):
