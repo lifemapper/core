@@ -110,7 +110,7 @@ class EnvironmentalLayer(EnvType, Raster):
                       lyrId=layerId, lyrUserId=userId, verify=verify, 
                       createTime=createTime, modTime=modTime,
                       metadataUrl=metadataUrl, serviceType=LMServiceType.LAYERS, 
-                      moduleType=LMServiceModule.SDM)
+                      moduleType=LMServiceModule.LM)
       self._scenCode = scencode
       self._setMapPrefix(scencode=scencode)
 
