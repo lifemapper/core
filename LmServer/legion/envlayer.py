@@ -44,8 +44,8 @@ class EnvType(_LayerParameters):
       @param dateCode: Code for the time period for which these data are predicted.
       """
       # lyr.getParametersId() <-- lyr._layerTypeId 
-      _LayerParameters.__init__(self, -1, modTime, userId, envTypeId,
-                                metadata=metadata)
+      _LayerParameters.__init__(self, userId, paramId=envTypeId, 
+                                metadata=metadata, modTime=modTime)
       self.envCode = envCode
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
@@ -83,8 +83,7 @@ class EnvLayer(EnvType, Raster):
       Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
-                valUnits=valUnits, valAttribute=valAttribute, 
-                nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
+                valUnits=valUnits, odataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 
                 bbox=bbox, svcObjId=envLayerId, 
                 serviceType=LMServiceType.ENVIRONMENTAL_LAYERS, 
@@ -102,7 +101,6 @@ class EnvLayer(EnvType, Raster):
                   verify=raster.verify, dlocation=raster.getDLocation(),
                   lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat, 
                   gdalType=raster.gdalType, valUnits=raster.valUnits, 
-                  valAttribute=raster.getValAttribute(), 
                   nodataVal=raster.nodataVal, minVal=raster.minVal, 
                   maxVal=raster.maxVal, mapunits=raster.mapUnits, 
                   resolution=raster.resolution, bbox=raster.bbox,

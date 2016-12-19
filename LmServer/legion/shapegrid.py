@@ -73,7 +73,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       # field with latitude of the centroid of a site
       self.siteY = siteY
 
-      _LayerParameters.__init__(self, -1, modTime, userId, lyrId)
+      _LayerParameters.__init__(self, userId, paramId=lyrId, modTime=modTime)
       Vector.__init__(self, name, userId, epsgcode, lyrId=lyrId, verify=verify, 
             dlocation=dlocation, metadata=metadata, 
             dataFormat=DEFAULT_OGR_FORMAT, ogrType=ogr.wkbPolygon, 
