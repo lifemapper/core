@@ -33,14 +33,17 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    altpredCode,
    dateCode,
    envMetadata, 
-   envModtime
+   envModtime, 
+   -- EnvLayer
+   envLayerId
    ) AS
       SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              et.envTypeId, et.envCode, et.gcmcode, et.altpredCode, et.dateCode, 
-             et.metadata, et.modtime
+             et.metadata, et.modtime,
+             el.envLayerId
         FROM lm_v3.EnvLayer el, lm_v3.layer l, lm_v3.EnvType et
         WHERE el.layerid = l.layerid
           AND el.envTypeid = et.envTypeid
@@ -81,7 +84,10 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    altpredCode,
    dateCode,
    envMetadata, 
-   envModtime
+   envModtime,
+   envLayerId,
+   -- ScenarioLayer
+   scenarioLayerId
    ) AS
       SELECT s.scenarioId, s.scenarioCode, 
              lel.layerId, lel.userid, lel.lyrsquid, lel.lyrverify, lel.lyrname, 
@@ -90,12 +96,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
              lel.nodataVal, lel.minVal, lel.maxVal, lel.epsgcode, lel.mapunits, 
              lel.resolution, lel.bbox, lel.lyrmodtime, lel.envTypeId, lel.envCode,
              lel.gcmcode, lel.altpredCode, lel.dateCode, lel.envMetadata,  
-             lel.envModtime
+             lel.envModtime, lel.envLayerId, 
+             sl.scenarioLayerId
         FROM lm_v3.ScenarioLayer sl, lm_v3.lm_envlayer lel, lm_v3.Scenario s
-        WHERE sl.layerId = lel.layerId
-          AND sl.envTypeId = lel.envTypeId
+        WHERE sl.envLayerId = lel.envLayerId
           AND sl.scenarioid = s.scenarioid
-        ORDER BY lel.layerid ASC;
+        ORDER BY sl.scenarioLayerId ASC;
 
 -- ----------------------------------------------------------------------------
 -- lm_shapegrid

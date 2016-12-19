@@ -150,9 +150,9 @@ create table lm_v3.Layer
 -- Object (via join)
 create table lm_v3.EnvLayer
 (
+   envLayerId serial UNIQUE PRIMARY KEY,
    envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
-   PRIMARY KEY (envTypeId, layerId)
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE
 );
 
 -- -------------------------------
@@ -190,10 +190,9 @@ create table lm_v3.EnvLayer
 -- Object (via join)
 create table lm_v3.ScenarioLayer
 (
+	scenarioLayerId serial UNIQUE PRIMARY KEY,
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
-   layerId int REFERENCES lm_v3.Layer,
-   envTypeId int REFERENCES lm_v3.EnvType,
-   PRIMARY KEY (scenarioId, layerId, envTypeId)
+   envLayerId int REFERENCES lm_v3.EnvLayer ON DELETE CASCADE
 );
 
 -- -------------------------------
@@ -201,7 +200,7 @@ create table lm_v3.ScenarioLayer
 -- after process is complete, move params/inputs to metadata on object, then delete
 create table lm_v3.Process
 (
-   processId  serial UNIQUE PRIMARY KEY,
+   processId serial UNIQUE PRIMARY KEY,
    -- LmCommon.common.lmconstants.ProcessType
    processType int,
 	--input
