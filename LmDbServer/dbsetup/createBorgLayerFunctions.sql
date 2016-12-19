@@ -120,19 +120,16 @@ BEGIN
    
    SELECT * INTO recel FROM lm_v3.lm_joinEnvLayer(lyrid, etypeid);
    IF FOUND THEN    
-      SELECT * INTO recsl FROM lm_v3.lm_scenlayer WHERE scenarioId = scenid 
-                                                    AND layerid = lyrid 
-                                                    AND envTypeId = etypeid;
-      IF NOT FOUND THEN
-         INSERT INTO lm_v3.ScenarioLayer (scenarioid, layerid, envTypeId) 
-                         VALUES (scenid, lyrid, etypeid);
+      SELECT * INTO recsl FROM lm_v3.lm_scenlayer 
+         WHERE scenarioId = scenid AND envLayerId = recel.envlayerid;
+      IF temp < 1 THEN
+         INSERT INTO lm_v3.ScenarioLayer (scenarioid, envlayerid) 
+                                  VALUES (scenid, recel.envlayerid);
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to insert/join EnvLayer';
          ELSE
             SELECT * INTO recsl FROM lm_v3.ScenarioLayer 
-               WHERE scenarioId = scenid 
-                 AND layerid = lyrid 
-                 AND envTypeId = etypeid;
+               WHERE scenarioId = scenid AND envLayerId = recel.envlayerid;
          END IF;
       END IF;
    END IF;

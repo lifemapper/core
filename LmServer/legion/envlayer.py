@@ -83,7 +83,7 @@ class EnvLayer(EnvType, Raster):
       Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
-                valUnits=valUnits, odataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
+                valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 
                 bbox=bbox, svcObjId=envLayerId, 
                 serviceType=LMServiceType.ENVIRONMENTAL_LAYERS, 

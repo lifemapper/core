@@ -551,7 +551,7 @@ class Borg(DbPostgresql):
                            lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                            lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
                            lyr.getCSVExtentString(), wkt, lyr.modTime, 
-                           lyr.getParametersId(), lyr.typeCode, lyr.gcmCode,
+                           lyr.getParametersId(), lyr.envCode, lyr.gcmCode,
                            lyr.altpredCode, lyr.dateCode, envmeta, 
                            lyr.parametersModTime)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
