@@ -220,13 +220,21 @@ DECLARE
    rec lm_v3.EnvType%ROWTYPE;
    newid int;
 BEGIN
-   SELECT * into rec FROM lm_v3.lm_findEnvType(etypeid, usr, env, gcm, 
-                                                         altpred, tm);
-   IF rec.envTypeId IS NULL THEN
+   IF etypeid IS NOT NULL THEN
+      SELECT * into rec FROM lm_v3.EnvType WHERE envtypeid = etypeid;
+   ELSE
+      SELECT * into rec FROM lm_v3.EnvType WHERE userid = usr
+                                             AND envCode = env
+                                             AND gcmCode = gcm
+                                             AND altpredCode = altpred
+                                             AND dateCode = tm;
+   END IF;
+   IF NOT FOUND THEN
+      RAISE NOTICE 'EnvType not found for % % % % %', usr, env, gcm, altpred, tm;
       INSERT INTO lm_v3.EnvType 
          (userid, envCode, gcmCode, altpredCode, dateCode, metadata, modTime) 
       VALUES (usr, env, gcm, altpred, tm, meta, modtime);
-      RAISE NOTICE 'vals = %, %, %, %, %, %, %', usr, env, gcm, altpred, tm, meta, modtime;
+ 
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to insert EnvType';
       ELSE
