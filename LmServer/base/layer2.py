@@ -107,15 +107,14 @@ class _Layer(LMSpatialObject, ServiceObject):
                              moduleType=moduleType, metadataUrl=metadataUrl,
                              parentMetadataUrl=parentMetadataUrl, modTime=modTime)
 #      ogr.UseExceptions()
-      self._verify = None
       self.name = name
       self._layerUserId = userId
       self._layerId = lyrId
       self.squid = squid
-      self._verify = None
-      self._setVerify(verify)
       self._dlocation = None
       self.setDLocation(dlocation)
+      self._verify = None
+      self._setVerify(verify)
       self.lyrMetadata = {}
       self.loadLyrMetadata(metadata)
       self._dataFormat = dataFormat
@@ -633,8 +632,12 @@ class Raster(_Layer):
          else:
             dataset, band = self._openWithGDAL(dlocation=dlocation, bandnum=bandnum)
             srs = dataset.GetProjection()
-            geoTransform = dataset.GetGeoTransform()
             size = (dataset.RasterXSize, dataset.RasterYSize)
+            geoTransform = dataset.GetGeoTransform()
+            ulx = geoTransform[0]
+            xPixelSize = geoTransform[1]
+            uly = geoTransform[3]
+            yPixelSize = geoTransform[5]
             
             drv = dataset.GetDriver()
             gdalFormat = drv.GetDescription()
@@ -654,10 +657,6 @@ class Raster(_Layer):
                dlocation = head + correctExt
                os.rename(oldDl, dlocation)
    
-            ulx = self.geoTransform[0]
-            xPixelSize = self.geoTransform[1]
-            uly = self.geoTransform[3]
-            yPixelSize = self.geoTransform[5]
             # Assumes square pixels
             if resolution is None:
                resolution = xPixelSize
