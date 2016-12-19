@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -25,7 +25,7 @@ import json
 
 from LmCommon.common.lmconstants import MATRIX_LAYERS_SERVICE
 from LmServer.base.layer import Raster, Vector, _LayerParameters
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.serviceobject import ProcessObject
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule
 
@@ -33,9 +33,14 @@ from LmServer.common.lmconstants import LMServiceType, LMServiceModule
 # .............................................................................
 # .............................................................................
 class _MatrixColumnParameters(_LayerParameters):
-# .............................................................................
-   """
-   """
+   INTERSECT_PARAM_FILTER_STRING = 'filterString'
+   INTERSECT_PARAM_VAL_NAME = 'valName'
+   INTERSECT_PARAM_VAL_UNITS = 'valUnits'
+   INTERSECT_PARAM_MIN_PERCENT = 'minPercent'
+   INTERSECT_PARAM_WEIGHTED_MEAN = 'weightedMean'
+   INTERSECT_PARAM_LARGEST_CLASS = 'largestClass' 
+   INTERSECT_PARAM_MIN_PRESENCE = 'minPresence'
+   INTERSECT_PARAM_MAX_PRESENCE = 'maxPresence'
 # .............................................................................
 # Constructor
 # .............................................................................
@@ -57,23 +62,20 @@ class _MatrixColumnParameters(_LayerParameters):
                                 metadata=metadata)
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
+      self.loadParamMetadata(metadata)
 
 # ...............................................
-   def addIntersectParams(self, paramsdict):
-      for key, val in paramsdict.iteritems():
-         self.intersectParams[key] = val
-         
    def dumpIntersectParams(self):
-      metastring = None
-      if self.intersectParams:
-         metastring = json.dumps(self.intersectParams)
-      return metastring
+      return LMObject._dumpMetadata(self, self.intersectParams)
+ 
+# ...............................................
+   def loadIntersectParams(self, newIntersectParams):
+      self.intersectParams = LMObject._loadMetadata(self, newIntersectParams)
 
-   def loadIntersectParams(self, meta):
-      if isinstance(meta, dict): 
-         self.addIntersectParams(meta)
-      else:
-         self.intersectParams = json.loads(meta)
+# ...............................................
+   def addIntersectParams(self, newIntersectParams):
+      self.intersectParams = LMObject._addMetadata(self, newIntersectParams, 
+                                  existingMetadataDict=self.intersectParams)
 
 
 # .............................................................................
@@ -94,7 +96,7 @@ class MatrixColumn(_MatrixColumnParameters, ProcessObject):
                 metadata=mtxcolMetadata, intersectParams=intersectParams, 
                 squid=squid, ident=ident,
                 matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId)
-      ProcessObject.__init__(self, objId=matrixLayerId, parentId=bucketId, 
+      ProcessObject.__init__(self, objId=matrixLayerId, parentId=matrixId, 
                 status=status, statusModTime=statusModTime)
 
 # .............................................................................
@@ -132,9 +134,9 @@ class MatrixVector(_MatrixColumnParameters, Vector, ProcessObject):
                       fidAttribute=fidAttribute, 
                       valUnits=valUnits,
                       svcObjId=matrixLayerId, lyrId=lyrId, lyrUserId=lyrUserId,
-                      modTime=modTime, metadataUrl=metadataUrl,
+                      metadataUrl=metadataUrl,
                       serviceType=LMServiceType.MATRIX_LAYERS, 
-                      moduleType=LMServiceModule.RAD)
+                      moduleType=LMServiceModule.LM)
       
    
 # .............................................................................
@@ -176,7 +178,7 @@ class MatrixRaster(_MatrixColumnParameters, Raster, ProcessObject):
                       gdalType=gdalType, gdalFormat=dataFormat,  
                       mapunits=mapunits, resolution=resolution, epsgcode=epsgcode,
                       svcObjId=matrixLayerId, lyrId=lyrId, lyrUserId=lyrUserId, 
-                      verify=verify, squid=squid, modTime=modTime, 
+                      verify=verify, squid=squid, 
                       metadataUrl=metadataUrl,
                       serviceType=LMServiceType.MATRIX_LAYERS, 
                       moduleType=LMServiceModule.RAD)

@@ -39,36 +39,31 @@ class ServiceObject(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, userId, dbId, createTime, modTime, serviceType, moduleType=None,
-                metadataUrl=None, parentMetadataUrl=None):
+   def __init__(self, userId, dbId, serviceType, moduleType=None,
+                metadataUrl=None, parentMetadataUrl=None, modTime=None):
       """
       @summary Constructor for the abstract ServiceObject class
       @param userId: id for the owner of these data
-      @param dbid: database id of the object 
-      @param createTime: Create Time/Date, in Modified Julian Day (MJD) format
-      @param modTime: Last modification Time/Date, in MJD format
+      @param dbId: database id of the object 
       @param serviceType: REST Service Type
-      @param moduleType: (optional) ModuleType (RAD/SDM) for base objects not 
-                         identified by a module-specific class
-      @param metadataUrl: (optional) URL for retrieving the metadata
-      @param parentMetadataUrl: (optional) URL for retrieving the metadata of a
+      @param moduleType: ModuleType (LM/RAD/SDM) web services
+      @param metadataUrl: URL for retrieving the metadata
+      @param parentMetadataUrl: URL for retrieving the metadata of a
                                  parent container object
+      @param modTime: Last modification Time/Date, in MJD format
       """
       LMObject.__init__(self)
       self._earlJr = EarlJr()
-      self._metadataUrl = metadataUrl
-      self._parentMetadataUrl = parentMetadataUrl
-      self.createTime = createTime
-      self.modTime = modTime
+
       self._userId = userId
       self._dbId = dbId
       self.serviceType = serviceType
-      if serviceType is None:
-         raise Exception('Object %s does not have serviceType' % str(type(self)))
-#       if moduleType is None:
-#          raise Exception('Object %s does not have moduleType' % str(type(self)))
       self.moduleType = moduleType
-      
+      self._metadataUrl = metadataUrl
+      self._parentMetadataUrl = parentMetadataUrl
+      self.modTime = modTime
+      if serviceType is None:
+         raise Exception('Object %s does not have serviceType' % str(type(self)))      
       
 # .............................................................................
 # Public methods
@@ -80,12 +75,12 @@ class ServiceObject(LMObject):
       """
       return self._dbId
    
-   def setId(self, id):
+   def setId(self, dbid):
       """
       @summary: Sets the database id on the object
-      @param id: The database id for the object
+      @param dbid: The database id for the object
       """
-      self._dbId = id
+      self._dbId = dbid
    
 # ...............................................
    def getUserId(self):
@@ -95,12 +90,12 @@ class ServiceObject(LMObject):
       """
       return self._userId
 
-   def setUserId(self, id):
+   def setUserId(self, usr):
       """
       @summary: Sets the user id on the object
-      @param id: The user id for the object
+      @param usr: The user id for the object
       """
-      self._userId = id
+      self._userId = usr
 
 # .............................................................................
 # Private methods
@@ -123,6 +118,10 @@ class ServiceObject(LMObject):
    def setParentMetadataUrl(self, url):
       self._parentMetadataUrl = url
       
+   @property
+   def parentMetadataUrl(self):
+      return self._parentMetadataUrl 
+      
 # ...............................................   
    def resetMetadataUrl(self):
       """
@@ -130,8 +129,6 @@ class ServiceObject(LMObject):
       @return URL string representing a webservice request for metadata of this object
       """        
       self._metadataUrl = self.constructMetadataUrl()
-      #TODO: Aimee - This was returning 'murl' which does not exist here.  
-      #         Do you want this to return the metadata url or just set it?
       return self._metadataUrl
    
 # ...............................................   
@@ -143,7 +140,6 @@ class ServiceObject(LMObject):
       objId = self.getId() 
       if objId is None:
          objId = ID_PLACEHOLDER
-         
       murl = self._earlJr.constructLMMetadataUrl(self.serviceType, 
                                                objId,
                                                moduleType=self.moduleType,
@@ -182,30 +178,23 @@ class ProcessObject(LMObject):
 # Constructor
 # .............................................................................   
    def __init__(self, objId=None, processType=None, parentId=None,
-                status=None, statusModTime=None, stage=None, stageModTime=None):
+                status=None, statusModTime=None):
       """
       @param objId: Unique identifier for this parameterized object
       @param processType: Integer code LmCommon.common.lmconstants.ProcessType
-      @param parentId: Id of container (i.e. RADBucket), if any, associated 
-             with one instance of this parameterized object
+      @param parentId: Id of container, if any, associated with one instance of 
+                       this parameterized object
       @param status: status of processing
-      @param statusModTime: time of the latest status modification 
-             in modified julian date format
-      @param stage: stage of processing 
-      @param stageModTime: time of the latest stage modification 
-             in modified julian date format
+      @param statusModTime: last status modification time in MJD format 
       @note: The object with objId can be instantiated for each container, 
              all use the same base object, but will be subject to different 
              processes (for example PALayers intersected for every bucket)
-      @todo: Revisit stage/stageModTime when job chaining is implemented
       """
       self.objId = objId
       self.processType = processType
       self.parentId = parentId
       self._status = status
       self._statusmodtime = statusModTime
-      self._stage = stage
-      self._stagemodtime = stageModTime
       
    # ...............................................
    @property
@@ -216,19 +205,7 @@ class ProcessObject(LMObject):
    def statusModTime(self):
       return self._statusmodtime
 
-   @property
-   def stage(self):
-      return self._stage
-
-   @property
-   def stageModTime(self):
-      return self._stagemodtime
-
    # ...............................................
-   def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd, stage=None,
-                    statusModTime=None, stageModTime=None):
+   def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd):
       self._status = status
       self._statusmodtime = modTime
-      if stage is not None and stage != self._stage:
-         self._stage = stage
-         self._stagemodtime = modTime

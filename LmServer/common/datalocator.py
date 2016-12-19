@@ -118,17 +118,18 @@ class EarlJr(LMObject):
             pth = os.path.join(pth, *dirparts)
          else:
             raise LMError('Need OccurrenceSetId for SDM filepath')
+         
+      # General makeflow documents go directly in user directory
+      elif filetype == LMFileType.MF_DOCUMENT:
+         pass
 
       elif isMaps:
-#       elif LMFileType.isMap(ftype) and LMFileType.isUserSpace(ftype):
          pth = os.path.join(pth, MAP_DIR)
                         
       elif epsg is not None:    
          pthparts = [pth, str(epsg)]
-#          if isLayers: 
          if LMFileType.isUserSpace(filetype):
             pthparts.append(USER_LAYER_DIR)
-#          elif radexpId is not None:
          elif LMFileType.isRAD(filetype):
             if radexpId is not None:
                pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(radexpId))
@@ -161,7 +162,8 @@ class EarlJr(LMObject):
    def createBasename(self, ftype, scenarioCode=None,
                       occsetId=None, subset=False, modelId=None, projId=None,
                       radexpId=None, bucketId=None, pamsumId=None,
-                      matrixId=None, matrixType=MatrixType.PAM, treeId=None,
+                      matrixId=None, matrixType=MatrixType.PAM, treeId=None, 
+                      mfchainId=None,
                       lyrname=None, usr=None, epsg=None):
       """
       @summary: Return the filename for given filetype and objects 
@@ -183,6 +185,9 @@ class EarlJr(LMObject):
       nameparts = []
       if FileFix.PREFIX[ftype] is not None:
          nameparts.append(FileFix.PREFIX[ftype])
+         
+      if ftype == LMFileType.MF_DOCUMENT:
+         nameparts.append(mfchainId)
       
       if ftype == LMFileType.SCENARIO_MAP:
          nameparts.append(scenarioCode)
@@ -227,12 +232,11 @@ class EarlJr(LMObject):
 # ...............................................
    def createFilename(self, ftype, scenarioCode=None, modelId=None, projId=None,
                       occsetId=None, subset=False, 
-                      radexpId=None, 
                       # new 
                       matrixId=None, matrixType=MatrixType.PAM,
-                      treeId=None,
+                      treeId=None, mfchainId=None,
                       # TODO: remove bucketId, pamsumId
-                      bucketId=None, pamsumId=None,
+                      bucketId=None, pamsumId=None, radexpId=None, 
                       lyrname=None, pth=None, usr=None, epsg=None):
       """
       @summary: Return the filename for given filetype and objects 
@@ -251,10 +255,10 @@ class EarlJr(LMObject):
       """
       isMaps = isLayers = False
       basename = self.createBasename(ftype, scenarioCode=scenarioCode,
-                      occsetId=occsetId, subset=subset, modelId=modelId, 
-                      projId=projId, radexpId=radexpId, bucketId=bucketId,
-                      matrixId=matrixId, matrixType=matrixType, treeId=treeId,
-                      pamsumId=pamsumId, lyrname=lyrname, usr=usr, epsg=epsg)
+                  occsetId=occsetId, subset=subset, modelId=modelId, 
+                  projId=projId, radexpId=radexpId, bucketId=bucketId,
+                  matrixId=matrixId, matrixType=matrixType, treeId=treeId,mfchainId=mfchainId,
+                  pamsumId=pamsumId, lyrname=lyrname, usr=usr, epsg=epsg)
       
       if pth is None:
          if ftype in (LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 

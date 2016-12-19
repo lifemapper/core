@@ -231,17 +231,19 @@ if __name__ == "__main__":
 
 """
 import mx.DateTime as dt
+from osgeo.ogr import wkbPoint
 import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (BISON_MIN_POINT_COUNT, OutputFormat,
-                                         ProcessType)
+                                         ProcessType, JobStatus)
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
          GBIF_DUMP_FILE, PROVIDER_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
 from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ENV_DATA_PATH, SPECIES_DATA_PATH
 from LmServer.common.log import ScriptLogger
+from LmServer.sdm.occlayer import OccurrenceLayer
 envPackageName = '10min-past-present-future'
 
 from LmDbServer.tools.archivistborg import *
@@ -256,7 +258,7 @@ secs = time.time()
 tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
 logger = ScriptLogger('{}.{}'.format(name, timestamp))
-
+currtime = dt.gmt().mjd
 expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
                                SPECIES_EXP_DAY).mjd
 try:
@@ -272,20 +274,23 @@ boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS,
                   minPointCount=POINT_COUNT_MIN,  
                   intersectGrid=DEFAULT_GRID_NAME, log=logger)
 boomer.moveToStart()
-#boomer.chainOne()
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
-jobs = boomer._processSDMChain(sciName, speciesKey, 
-                            ProcessType.GBIF_TAXA_OCCURRENCE, 
-                            dataCount, data=dataChunk)
+occ = boomer._createOrResetOccurrenceset(sciName, speciesKey, 
+                              ProcessType.GBIF_TAXA_OCCURRENCE, dataCount, 
+                              data=dataChunk)
+objs = boomer._scribe.initSDMChain(boomer.userid, occ, boomer.algs, 
+                                         boomer.modelScenario, 
+                                         boomer.projScenarios, 
+                                         occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE, 
+                                         intersectGrid=boomer.intersectGrid,
+                                         minPointCount=boomer.minPointCount)
+boomer._createMakeflow(objs)
 if speciesKey:
    jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
    boomer._createMakeflow(jobs)
 
 boomer.saveNextStart()
 
-
-select * from lm_v3.lm_getOccurrenceSet(NULL,'88d1b0b6b327e9bd69c94f7cc90f74402fbb5e47055b677b6bceb2d84e693d1f','kubi','4326')
-
-
+select * from lm_v3.lm_findOrInsertOccurrenceSet(NULL,'kubi','88d1b0b6b327e9bd69c94f7cc90f74402fbb5e47055b677b6bceb2d84e693d1f',NULL,'Hexarthra fennica (Levander, 1892)','http://badenov-vc1.nhm.ku.edu/services/sdm/occurrences/#id#',NULL,NULL,5,NULL,4326,NULL,1,57736.7157809,NULL,NULL);
 """

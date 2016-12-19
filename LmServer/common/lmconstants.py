@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -334,6 +334,7 @@ class LMFileType:
    USER_SHAPEGRID = 511
    USER_ATTRIBUTE_MATRIX = 520
    USER_TREE = 530
+   MF_DOCUMENT = 540
    
    # Experiment Level (maybe a pruned user-level object)
    UNSPECIFIED_RAD = 200
@@ -510,6 +511,7 @@ class FileFix:
              LMFileType.USER_SHAPEGRID: None,
              LMFileType.USER_ATTRIBUTE_MATRIX: 'attributes',
              LMFileType.USER_TREE: 'tree',
+             LMFileType.MF_DOCUMENT: 'mf',
              LMFileType.BIOGEO_HYPOTHESES: 'biogeo',
              LMFileType.MATRIX_COLUMN: 'col',
              LMFileType.SITE_INDICES: 'siteidx',
@@ -553,6 +555,7 @@ class FileFix:
                 LMFileType.USER_SHAPEGRID:  OutputFormat.SHAPE,
                 LMFileType.USER_ATTRIBUTE_MATRIX: OutputFormat.NUMPY,
                 LMFileType.USER_TREE: OutputFormat.JSON,
+                LMFileType.MF_DOCUMENT: OutputFormat.MAKEFLOW,
                 LMFileType.BIOGEO_HYPOTHESES: OutputFormat.NUMPY,
                 LMFileType.MATRIX_COLUMN: OutputFormat.NUMPY,
                 LMFileType.SITE_INDICES: OutputFormat.PICKLE,

@@ -24,6 +24,7 @@
 from collections import namedtuple
 from fractions import Fraction
 import inspect
+import json
 import mx.DateTime
 from osgeo.osr import CoordinateTransformation, SpatialReference
 import sys
@@ -136,6 +137,52 @@ class LMObject(object):
                   msg = 'Failed to remove {}, {}'.format(pth, str(e))
       return success, msg
    
+# ...............................................
+   def _addMetadata(self, newMetadataDict, existingMetadataDict={}):
+      for key, val in newMetadataDict.iteritems():
+         try:
+            existingVal = existingMetadataDict[key]
+         except:
+            existingMetadataDict[key] = val
+         else:
+            # if metadata exists and is ...
+            if type(existingVal) is set: 
+               # a set, add to it
+               if type(val) is set:
+                  existingMetadataDict[key].union(val)
+               else:
+                  existingMetadataDict[key].add(val)
+            else:
+               # not a set, replace it
+               existingMetadataDict[key] = val
+      return existingMetadataDict
+         
+# ...............................................
+   def _dumpMetadata(self, metadataDict):
+      metadataStr = None
+      if metadataDict:
+         metadataStr = json.dumps(metadataDict)
+      return metadataStr
+
+# ...............................................
+   def _loadMetadata(self, newMetadata):
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      objMetadata = {}
+      if newMetadata is not None:
+         if type(newMetadata) is dict: 
+            objMetadata = self._addMetadata(newMetadata)
+         else:
+            try:
+               newMetadataDict = json.loads(newMetadata)
+            except Exception, e:
+               print('Failed to load JSON object from type {} object {}'
+                     .format(type(newMetadata), newMetadata))
+            else:
+               objMetadata = self._addMetadata(newMetadataDict)
+      return objMetadata
+
 # ............................................................................
 # ............................................................................
 class LMAbstractObject(LMObject):

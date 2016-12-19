@@ -27,6 +27,7 @@ except:
    pass
 
 import csv
+from osgeo.ogr import wkbPoint
 import os
 import sys
 from time import sleep
@@ -39,10 +40,9 @@ from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
+from LmServer.common.lmconstants import (Priority, wkbPoint, 
                                          LOG_PATH)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS,
-                                            DEFAULT_EPSG)
+from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
@@ -310,7 +310,7 @@ class _LMBoomer(LMObject):
       sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
                                                taxonKey=taxonKey)
       if sciName is not None:
-         self.log.info('Found sciname for taxonKey {}, {}, with {} points'
+         self.log.info('Found sciName for taxonKey {}, {}, with {} points'
                        .format(taxonKey, sciName.scientificName, taxonCount))
       else:
          # Use API to get and insert species name 
@@ -330,7 +330,7 @@ class _LMBoomer(LMObject):
                sname = ScientificName(scinameStr, 
                                rank=rankStr, 
                                canonicalName=canonicalStr,
-                               userid=None, squid=None,
+                               userId=self.userid, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
@@ -342,7 +342,7 @@ class _LMBoomer(LMObject):
                                taxonomySourceSpeciesKey=speciesKey)
                try:
                   sciName = self._scribe.findOrInsertTaxon(sciName=sname)
-                  self.log.info('Inserted sciname for taxonKey {}, {}'
+                  self.log.info('Inserted sciName for taxonKey {}, {}'
                                 .format(taxonKey, sciName.scientificName))
                except Exception, e:
                   if not isinstance(e, LMError):
@@ -367,33 +367,28 @@ class _LMBoomer(LMObject):
    def _getInsertSciNameForExternalSpeciesKey(self, speciesKey):
       self._raiseSubclassError()
       
-# ...............................................
-   def _createMakeflow(self, jobs):
-      jobchainId = usr = filename = None
-      if jobs:
-         mfdoc = LMMakeflowDocument()
-         for j in jobs:
-            if isinstance(j, SDMOccurrenceJob):
-               mfdoc.buildOccurrenceSet(j)
-            elif isinstance(j, SDMModelJob):
-               mfdoc.buildModel(j)
-            elif isinstance(j, SDMProjectionJob):
-               mfdoc.buildProjection(j)
-            if usr is None:
-               usr = j.getUserId()
-            if filename is None:
-               filename = j.makeflowFilename
-         self.log.info('Writing makeflow document {} ...'.format(filename))
-         success = mfdoc.write(filename)
-         if not success:
-            self.log.error('Failed to write {}'.format(filename))
-         
-         try:
-            jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
-         except Exception, e:
-            raise LMError(currargs='Failed to insert jobChain for {}; ({})'
-                          .format(filename, e))
-      return jobchainId
+# # ...............................................
+#    def _createMakeflow(self, objs):
+#       mfchainId = usr = filename = None
+#       if objs:
+#          mfdoc = LMMakeflowDocument()
+#          for o in objs:
+#             mfdoc.buildOccurrenceSet(occJob)
+#             if usr is None:
+#                usr = j.getUserId()
+#             if filename is None:
+#                filename = j.makeflowFilename
+#          self.log.info('Writing makeflow document {} ...'.format(filename))
+#          success = mfdoc.write(filename)
+#          if not success:
+#             self.log.error('Failed to write {}'.format(filename))
+#          
+#          try:
+#             jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
+#          except Exception, e:
+#             raise LMError(currargs='Failed to insert jobChain for {}; ({})'
+#                           .format(filename, e))
+#       return jobchainId
 
 # ...............................................
    def chainOne(self):
@@ -431,10 +426,10 @@ class _LMBoomer(LMObject):
          return self._linenum
 
 # ...............................................
-   def _createOrResetOccurrenceset(self, sciname, taxonSourceKeyVal, 
+   def _createOrResetOccurrenceset(self, sciName, taxonSourceKeyVal, 
                                    occProcessType, dataCount, data=None):
       """
-      @param sciname: ScientificName object
+      @param sciName: ScientificName object
       @param taxonSourceKeyVal: unique identifier for this name in source 
              taxonomy database
       @param occProcessType: Type of input data to be converted to shapefile
@@ -448,7 +443,7 @@ class _LMBoomer(LMObject):
          
       # Find existing
       try:
-         occ = self._scribe.getOccurrenceSet(squid=sciname.squid, 
+         occ = self._scribe.getOccurrenceSet(squid=sciName.squid, 
                                              userId=self.userid, epsg=self.epsg)
       except Exception, e:
          if not isinstance(e, LMError):
@@ -465,30 +460,29 @@ class _LMBoomer(LMObject):
               occ.statusModTime > 0 and occ.statusModTime < self._obsoleteTime)):
             # Reset verify hash, name, count, status 
             occ.verify = None
-            occ.displayName = sciname.name 
+            occ.displayName = sciName.scientificName
             occ.queryCount = dataCount
             occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
             self.log.info('Updating occset {} ({})'
-                          .format(occ.getId(), sciname.name))
+                          .format(occ.getId(), sciName.scientificName))
          else:
             ignore = True
             self.log.debug('Ignoring occset {} ({}) is up to date'
-                           .format(occ.getId(), sciname.name))
+                           .format(occ.getId(), sciName.scientificName))
 
       # Create new
       else:
          ogrFormat = None
          if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
             ogrFormat = 'CSV'
-         occ = OccurrenceLayer(sciname.name, name=sciname.name, fromGbif=False, 
-               squid=sciname.squid, queryCount=dataCount, epsgcode=self.epsg, 
+         occ = OccurrenceLayer(sciName.scientificName, name=sciName.scientificName, 
+               squid=sciName.squid, queryCount=dataCount, epsgcode=self.epsg, 
                ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
-               primaryEnv=PrimaryEnvironment.TERRESTRIAL, createTime=currtime, 
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
-               sciName=sciname)
+               sciName=sciName)
          try:
-            occ = self._scribe.insertOccurrenceSet(occ)
-            self.log.info('Inserted occset for taxonname {}'.format(sciname.name))
+            occ = self._scribe.findOrInsertOccurrenceSet(occ)
+            self.log.info('Inserted occset for taxonname {}'.format(sciName.scientificName))
          except Exception, e:
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -506,12 +500,12 @@ class _LMBoomer(LMObject):
       return occ
    
 # ...............................................
-   def _processSDMChain(self, sciname, taxonSourceKeyVal, occProcessType,
+   def _processSDMChain(self, sciName, taxonSourceKeyVal, occProcessType,
                         dataCount, data=None):
-      jobs = []
-      if sciname is not None:
+      objs = []
+      if sciName is not None:
          try:
-            occ = self._createOrResetOccurrenceset(sciname, taxonSourceKeyVal, 
+            occ = self._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
                               occProcessType, dataCount, data=data)
          except Exception, e:
             if not isinstance(e, LMError):
@@ -522,22 +516,19 @@ class _LMBoomer(LMObject):
             # Create jobs for Archive Chain; 'reset' to existing occset will be 
             # saved here
             try:
-               jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
-                                         self.modelScenario, 
-                                         self.projScenarios, 
-                                         occJobProcessType=occProcessType, 
-                                         priority=self.priority, 
-                                         intersectGrid=self.intersectGrid,
-                                         minPointCount=self.minPointCount)
-               self.log.debug('Created {} jobs for occurrenceset {}'
-                              .format(len(jobs), occ.getId()))
+               objs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+                              self.modelScenario, self.projScenarios, 
+                              occJobProcessType=occProcessType, 
+                              mdlMask=self.modelMask, projMask=self.projMask,
+                              intersectGrid=self.intersectGrid,
+                              minPointCount=self.minPointCount)
+               self.log.debug('Created {} objects for occurrenceset {}'
+                              .format(len(objs), occ.getId()))
             except Exception, e:
                if not isinstance(e, LMError):
                   e = LMError(currargs=e.args, lineno=self.getLineno())
                raise e
-      return jobs
-#       else:
-#          self.log.debug('ScientificName does not exist')
+      return objs
 
 # ..............................................................................
 class BisonBoom(_LMBoomer):
@@ -679,9 +670,9 @@ class BisonBoom(_LMBoomer):
    def  _getInsertSciNameForItisTSN(self, itisTsn, tsnCount):
       if itisTsn is None:
          return None
-      sciname = self._scribe.findTaxon(self._taxonSourceId, itisTsn)
+      sciName = self._scribe.findTaxon(self._taxonSourceId, itisTsn)
          
-      if sciname is None:
+      if sciName is None:
          try:
             (itisname, king, tsnHier) = BisonAPI.getItisTSNValues(itisTsn)
          except Exception, e:
@@ -690,16 +681,16 @@ class BisonBoom(_LMBoomer):
          else:
             sleep(5)
             if itisname is not None and itisname != '':
-               sciname = ScientificName(itisname, kingdom=king,
+               sciName = ScientificName(itisname, kingdom=king,
                                      lastOccurrenceCount=tsnCount, 
                                      taxonomySourceId=self._taxonSourceId, 
                                      taxonomySourceKey=itisTsn, 
                                      taxonomySourceSpeciesKey=itisTsn,
                                      taxonomySourceKeyHierarchy=tsnHier)
-               self._scribe.insertTaxon(sciname)
-               self.log.info('Inserted sciname for ITIS tsn {}, {}'
-                             .format(itisTsn, sciname.scientificName))
-      return sciname
+               self._scribe.insertTaxon(sciName)
+               self.log.info('Inserted sciName for ITIS tsn {}, {}'
+                             .format(itisTsn, sciName.scientificName))
+      return sciName
 
 # ..............................................................................
 class UserBoom(_LMBoomer):
@@ -803,8 +794,8 @@ class UserBoom(_LMBoomer):
    def chainOne(self):
       dataChunk, dataCount, taxonName  = self._getChunk()
       if dataChunk:
-         sciname = self._getInsertSciNameForUser(taxonName)
-         jobs = self._processInputSpecies(dataChunk, dataCount, sciname)
+         sciName = self._getInsertSciNameForUser(taxonName)
+         jobs = self._processInputSpecies(dataChunk, dataCount, sciName)
          self._createMakeflow(jobs)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
@@ -828,33 +819,34 @@ class UserBoom(_LMBoomer):
 
 # ...............................................
    def _getInsertSciNameForUser(self, taxonName):
-      bbsciname = ScientificName(taxonName, userId=self.userid)
-      sciname = self.findOrInsertTaxon(sciName=bbsciname)
-      return sciname
+      bbsciName = ScientificName(taxonName, userId=self.userid)
+      sciName = self.findOrInsertTaxon(sciName=bbsciName)
+      return sciName
 
 # ...............................................
-   def _processInputSpecies(self, dataChunk, dataCount, sciname):
-      jobs = []
+   def _processInputSpecies(self, dataChunk, dataCount, sciName):
+      objs = []
       if dataChunk:
-         occ = self._createOrResetOccurrenceset(sciname, None, 
+         occ = self._createOrResetOccurrenceset(sciName, None, 
                                           ProcessType.USER_TAXA_OCCURRENCE,
                                           dataCount, data=dataChunk)
    
          # Create jobs for Archive Chain: occurrence population, 
          # model, projection, and (later) intersect computation
          if occ is not None:
-            jobs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+            objs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
                                  self.modelScenario, self.projScenarios, 
+                                 mdlMask=self.modelMask, projMask=self.projMask,
                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
                                  priority=self.priority, 
                                  intersectGrid=None,
                                  minPointCount=self.minPointCount)
-            self.log.debug('Init {} jobs for {} ({} points, occid {})'.format(
-                           len(jobs), sciname.scientificName, len(dataChunk), 
+            self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
+                           len(objs), sciName.scientificName, len(dataChunk), 
                            occ.getId()))
       else:
          self.log.debug('No data in chunk')
-      return jobs
+      return objs
 
 # ..............................................................................
 class GBIFBoom(_LMBoomer):
@@ -970,8 +962,8 @@ class GBIFBoom(_LMBoomer):
    def chainOne(self):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
-         jobs = self._processChunk(speciesKey, dataCount, dataChunk)
-         self._createMakeflow(jobs)
+         objs = self._processChunk(speciesKey, dataCount, dataChunk)
+         self._createMakeflow(objs)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
 

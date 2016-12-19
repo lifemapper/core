@@ -2,7 +2,7 @@
 @summary Module that contains the Matrix class
 @author Aimee Stewart
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -63,20 +63,24 @@ class Matrix(LMObject):
       createTime = None
       ServiceObject.__init__(self,  userId, matrixId, createTime, statusModTime,
                              LMServiceType.MATRICES, 
-                             moduleType=LMServiceModule.RAD,
+                             moduleType=LMServiceModule.LM,
                              metadataUrl=metadataUrl, 
                              parentMetadataUrl=parentMetadataUrl)
       ProcessObject.__init__(self, objId=matrixId, parentId=experimentId, 
                 status=status, statusModTime=statusModTime) 
       self._matrix = matrix
       self.matrixType = matrixType
-      self.layerIndices = None
-      self._layerIndicesFilename = None
-      self.setIndices(layerIndices, doRead=False)
-      self.metadata = {}
-      self.loadMetadata(metadata)
       self._dlocation = dlocation
-      self._randomParameters = randomParameters
+
+      self._layerIndicesFilename = None
+      self.layerIndices = None
+      self.setIndices(layerIndices, doRead=False)
+
+      self.mtxMetadata = {}
+      self.loadMtxMetadata(metadata)
+      
+      self.randomParams = {}
+      self.loadRandomParams(randomParameters)
       
 
 # ..............................................................................
@@ -85,33 +89,6 @@ class Matrix(LMObject):
       matrix = numpy.zeros([siteCount, layerCount])
       return Matrix(matrix)
    
-# ...............................................
-   def addMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.metadata[key] = val
-         
-   def dumpMetadata(self):
-      metastring = None
-      if self.metadata:
-         metastring = json.dumps(self.metadata)
-      return metastring
-
-   def loadMetadata(self, meta):
-      """
-      @note: Adds to dictionary or modifies values for existing keys
-      """
-      if meta is not None:
-         if isinstance(meta, dict): 
-            self.addMetadata(meta)
-         else:
-            try:
-               metajson = json.loads(meta)
-            except Exception, e:
-               print('Failed to load JSON object from {} object {}'
-                     .format(type(meta), meta))
-            else:
-               self.addMetadata(metajson)
-
 # .............................................................................
    def readData(self, filename=None):
       # filename overrides dlocation
@@ -130,6 +107,33 @@ class Matrix(LMObject):
                           % str(self._dlocation))
       else:
          raise LMError('Matrix File %s does not exist' % str(self._dlocation))
+
+# ...............................................
+   def dumpMtxMetadata(self):
+      return LMObject._dumpMetadata(self, self.mtxMetadata)
+ 
+# ...............................................
+   def loadMtxMetadata(self, newMetadata):
+      self.mtxMetadata = LMObject._loadMetadata(self, newMetadata)
+
+# ...............................................
+   def addMtxMetadata(self, newMetadataDict):
+      self.mtxMetadata = LMObject._addMetadata(self, newMetadataDict, 
+                                  existingMetadataDict=self.mtxMetadata)
+
+# ...............................................
+   def dumpRandomParams(self):
+      return LMObject._dumpMetadata(self, self.randomParams)
+ 
+# ...............................................
+   def loadRandomParams(self, newRandomParams):
+      self.randomParams = LMObject._loadMetadata(self, newRandomParams)
+
+# ...............................................
+   def addRandomParams(self, newRandomParams):
+      self.randomParams = LMObject._addMetadata(self, newRandomParams, 
+                                  existingMetadataDict=self.randomParams)
+
 
 # .............................................................................
    @property

@@ -23,6 +23,7 @@
           02110-1301, USA.
 """
 import mx.DateTime
+from osgeo.ogr import wkbPoint
 import os
 import socket
 from types import StringType, UnicodeType, IntType
@@ -36,6 +37,7 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import  DbUser, ReferenceType
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
                                  POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
+from LmServer.legion.sdmproj import SDMProjection
 from LmServer.sdm.envlayer import EnvironmentalLayer, EnvironmentalType
 from LmServer.base.taxon import ScientificName
 
@@ -142,8 +144,7 @@ class BorgScribe(LMObject):
       scenId = updatedScen.getId()
       for lyr in scen.layers:
          updatedLyr = self.insertScenarioLayer(lyr, scenId)
-         updatedLayers.append(updatedLyr)
-      updatedScen.layers = updatedLayers
+         updatedScen.addLayer(updatedLyr)
       return updatedScen
    
 # ...............................................
@@ -226,8 +227,8 @@ class BorgScribe(LMObject):
       @param squid: a Squid (Species Thread) string, tied to a ScientificName
       @param userId: the database primary key of the LMUser
       """
-      occsets = self._borg.getOccurrenceSet(occid, squid, userId, epsg)
-      return occsets
+      occset = self._borg.getOccurrenceSet(occid, squid, userId, epsg)
+      return occset
 
 
 # ...............................................
@@ -258,4 +259,90 @@ class BorgScribe(LMObject):
                         .format(occ.getId()))
       return newOcc
          
+# ...............................................
+   def updateOccset(self, occ, polyWkt=None, pointsWkt=None):
+      """
+      @summary: Update OccurrenceLayer attributes: 
+                  verify, displayName, dlocation, rawDlocation, queryCount, 
+                  bbox, metadata, status, statusModTime, geometries if valid
+      @note: Does not update userid, squid, and epsgcode
+      @param occ: OccurrenceLayer to be updated.  
+      @param polyWkt: geometry for the minimum polygon around these points
+      @param pointsWkt: multipoint geometry for these points
+      @return: True/False for successful update.
+      """
+      success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
+      return success
+   
+# # ...............................................
+#    def initSDMOcc(self, usr, occ, occJobProcessType, currtime):
+#       occJob = self.getJobOfType(JobFamily.SDM, occ)
+#       if occJob is not None and JobStatus.failed(occJob.status):
+#          self._mal.deleteJob(occJob)
+#          occJob = None
+#       if occJob is None:
+# #          try:
+#          if occ.status != JobStatus.INITIALIZE:
+#             occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
+#          occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
+#                                    status=JobStatus.INITIALIZE, 
+#                                    statusModTime=modtime, createTime=modtime,
+#                                    priority=Priority.NORMAL)
+# 
+#          success = self.updateOccState(occ)
+#          updatedOccJob = self.insertJob(occJob)
+#          occJob = updatedOccJob
+#       return occJob
+
+# ...............................................
+   def initSDMProjections(self, usr, occset, mdlScen, prjScenList, alg,  
+                          mdlMask=None, prjMask=None, 
+                          modtime=mx.DateTime.gmt().mjd, 
+                          email=None, name=None, description=None):
+      """
+      @summary: Initialize model, projections for inputs/algorithm.
+      """
+      prjs = []
+      if alg.code == 'ATT_MAXENT':
+         processType = ProcessType.ATT_PROJECT
+      else:
+         processType = ProcessType.OM_PROJECT
+      for pscen in prjScenList:
+         prj = SDMProjection(occset, alg, mdlScen, mdlMask, pscen, prjMask, 
+                             processType=processType, 
+                             status=JobStatus.GENERAL, statusModTime=modtime)
+         self._borg.insertProjection(prj)
+         prjs.append(prj)
+      return prjs
+
+# ...............................................
+   def initSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
+                    mdlMask=None, projMask=None,
+                    occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
+                    intersectGrid=None, minPointCount=None):
+      """
+      @summary: Initialize LMArchive job chain (models, projections, 
+                optional intersect) for occurrenceset.
+      """
+      objs = [occ]
+      currtime = mx.DateTime.gmt().mjd
+      # ........................
+      if minPointCount is None or occ.queryCount >= minPointCount: 
+         for alg in algList:
+            prjs = self.initSDMProjections(occ, mdlScen, 
+                              prjScenList, alg, usr, 
+                              modtime=currtime, 
+                              mdlMask=mdlMask, prjMask=projMask)
+            objs.extend(prjs)
+      return objs
+   
+# ...............................................
+   def insertMFChain(self, usr, dlocation, priority=None):
+      """
+      @summary: Inserts a jobChain into database
+      @return: jobChainId
+      """
+      mfchain = self._borg.insertMFChain(usr, dlocation, JobStatus.INITIALIZE, 
+                                            priority)
+      return mfchain   
 

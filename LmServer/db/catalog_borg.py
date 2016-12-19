@@ -37,15 +37,13 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, ARCHIVE_PATH,
                   LMServiceModule, DEFAULT_PROJECTION_FORMAT, JobFamily, 
                   DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
-from LmServer.common.notifyJob import NotifyJob
+from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.rad.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer
+from LmServer.legion.envlayer import EnvironmentalType, EnvironmentalLayer
 from LmServer.sdm.occlayer import OccurrenceLayer
-from LmServer.sdm.scenario import Scenario
-from LmServer.sdm.sdmmodel import SDMModel
-from LmServer.sdm.sdmprojection import SDMProjection
+from LmServer.legion.scenario import Scenario
+from LmServer.legion.sdmproj import SDMProjection
 
 # .............................................................................
 class Borg(DbPostgresql):
@@ -159,23 +157,41 @@ class Borg(DbPostgresql):
       return alg
    
 # ...............................................
-   def _createScenario(self, row, idxs):
+   def _createScenario(self, row, idxs, isForModel=True):
+      """
+      @note: created only from Scenario table or lm_sdmproject view
+      """
       scen = None
+      if isForModel:
+         scenid = self._getColumnValue(row, idxs, ['mdlscenarioid', 'scenarioid'])
+         scencode = self._getColumnValue(row, idxs, ['mdlscenariocode', 'scenariocode'])
+         meta = self._getColumnValue(row, idxs, ['mdlscenmetadata', 'metadata'])
+         gcmcode = self._getColumnValue(row, idxs, ['mdlscengcmcode', 'gcmcode'])
+         altpredcode = self._getColumnValue(row, idxs, ['mdlscenaltpredcode', 'altpredcode'])
+         datecode = self._getColumnValue(row, idxs, ['mdlscendatecode', 'datecode'])
+      else:
+         scenid = self._getColumnValue(row, idxs, ['prjscenarioid', 'scenarioid'])
+         scencode = self._getColumnValue(row, idxs, ['prjscenariocode', 'scenariocode'])
+         meta = self._getColumnValue(row, idxs, ['prjscenmetadata', 'metadata'])
+         gcmcode = self._getColumnValue(row, idxs, ['prjscengcmcode', 'gcmcode'])
+         altpredcode = self._getColumnValue(row, idxs, ['prjscenaltpredcode', 'altpredcode'])
+         datecode = self._getColumnValue(row, idxs, ['prjscendatecode', 'datecode'])
+         
+      usr = self._getColumnValue(row, idxs, ['userid'])
+      metaurl = self._getColumnValue(row, idxs, ['metadataurl'])
+      meta = self._getColumnValue(row, idxs, ['metadata'])
+      units = self._getColumnValue(row, idxs, ['units'])
+      res = self._getColumnValue(row, idxs, ['resolution'])
+      epsg = self._getColumnValue(row, idxs, ['epsgcode'])
+      bbox = self._getColumnValue(row, idxs, ['bbox'])
+      modtime = self._getColumnValue(row, idxs, ['modtime'])
+    
       if row is not None:
-         scen = Scenario(self._getColumnValue(row, idxs, ['scenariocode']), 
-                         title=self._getColumnValue(row, idxs, ['title']), 
-                         author=self._getColumnValue(row, idxs, ['author']), 
-                         description=self._getColumnValue(row, idxs, ['description']),
-                         metadataUrl=self._getColumnValue(row, idxs, ['metadataurl']), 
-                         dlocation=self._getColumnValue(row, idxs, ['dlocation']),
-                         startdt=self._getColumnValue(row, idxs, ['startdate']), 
-                         enddt=self._getColumnValue(row, idxs, ['enddate']),
-                         units=self._getColumnValue(row, idxs, ['units']), 
-                         res=self._getColumnValue(row, idxs, ['resolution']), 
-                         bbox=self._getColumnValue(row, idxs, ['bbox']), 
-                         modTime=self._getColumnValue(row, idxs, ['modtime']),
-                         epsgcode=self._getColumnValue(row, idxs, ['epsgcode']),
-                         scenarioid=self._getColumnValue(row, idxs, ['scenarioid']))
+         scen = Scenario(scencode, metadata=meta, metadataUrl=metaurl, 
+                     units=units, res=res, 
+                     gcmCode=gcmcode, altpredCode=altpredcode, dateCode=datecode,
+                     bbox=bbox, modTime=modtime, epsgcode=epsg,
+                     layers=None, userId=usr, scenarioid=scenid)
       return scen
 
 # ...............................................
@@ -209,7 +225,7 @@ class Borg(DbPostgresql):
       lyr = None
       if row is not None:
          dbid = self._getColumnValue(row, idxs, 
-                  ['projectionid', 'occurrencesetid', 'layerid'])
+                  ['projectionid', 'occurrencesetid', 'mdlmaskId', 'layerid'])
          usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
          verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
          squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
@@ -290,13 +306,14 @@ class Borg(DbPostgresql):
       return shg
 
 # ...............................................
-   def _createOccurrenceSet(self, row, idxs):
+   def _createOccurrenceLayer(self, row, idxs):
       """
       @note: takes lm_shapegrid record
       """
       occ = None
       if row is not None:
          occ = OccurrenceLayer(self._getColumnValue(row,idxs,['displayname']), 
+               occId=self._getColumnValue(row,idxs,['occurrencesetid']),
                occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']),
                squid=self._getColumnValue(row,idxs,['squid']),
                verify=self._getColumnValue(row,idxs,['occverify','verify']),
@@ -312,54 +329,36 @@ class Borg(DbPostgresql):
       return occ
 
 # ...............................................
-   def _createSDMModel(self, row, idxs):
-      """
-      @note: takes lm_shapegrid record
-      """
-      occ = None
-      if row is not None:
-         priority = None
-         occ = self._createOccurrenceSet(row, idxs)
-         scen = Scenario(self._getColumnValue(row, idxs, ['mdlscenariocode', 'scenariocode']), 
-                         scenarioid=self._getColumnValue(row, idxs, ['mdlscenarioid', 'scenarioid']))
-         algorithm = self._createAlgorithm(row, idxs)
-         occ = SDMModel(priority, occ, scen, algorithm, 
-                maskId=self._getColumnValue(row, idxs, ['mdlmaskid', 'maskid']), 
-                email=self._getColumnValue(row, idxs, ['mdlscenarioid', 'email']), 
-                status=self._getColumnValue(row,idxs,['mdlstatus','status']),
-                statusModTime=self._getColumnValue(row,idxs,['mdlstatusmodtime','statusmodtime']),
-                ruleset=self._getColumnValue(row,idxs,['mdldlocation','dlocation']),
-                userId=self._getColumnValue(row,idxs,['occuserid','userid']), 
-                modelId=self._getColumnValue(row,idxs,['sdmmodelid']))
-      return occ
-
-# ...............................................
    def _createProjection(self, row, idxs):
       """
-      @note: takes lm_shapegrid record
+      @note: takes lm_project record
       """
       prj = None
       if row is not None:
-         mdl = self._createSDMModel(row, idxs)
-         scen = Scenario(self._getColumnValue(row, idxs, ['prjscenariocode', 'scenariocode']), 
-                         scenarioid=self._getColumnValue(row, idxs, ['prjscenarioid', 'scenarioid']))
-         prj = SDMProjection(mdl, scen, 
-                  metadata = self._getColumnValue(row, idxs, ['prjmetadata', 'metadata']),
-                  maskId=self._getColumnValue(row, idxs, ['prjmaskid', 'maskid']),
-                  dlocation=self._getColumnValue(row,idxs,['prjdlocation','dlocation']), 
-                  status=self._getColumnValue(row,idxs,['prjstatus','status']),
-                  statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime','statusmodtime']),
-                  bbox=self._getColumnValue(row,idxs,['prjbbox','bbox']),
-                  epsgcode=self._getColumnValue(row,idxs,['epsgcode']),
-                  metadataUrl=self._getColumnValue(row, idxs, ['prjmetadataurl', 'metadataurl']),
+         occ = self._createOccurrenceLayer(row, idxs)
+         alg = self._createAlgorithm(row, idxs)
+         mdlscen = self._createScenario(row, idxs, isForModel=True)
+         prjscen = self._createScenario(row, idxs, isForModel=False)
+         prj = SDMProjection(occ, alg, mdlscen, prjscen,
+                  modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
+                  projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
+                  prjMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
+                  lyrMetadata=self._getColumnValue(row, idxs, ['lyrmetadata']),
+                  status=self._getColumnValue(row,idxs,['prjstatus']), 
+                  statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
+                  userId=self._getColumnValue(row,idxs,['userid']), 
+                  layerId=self._getColumnValue(row,idxs,['layerid']), 
+                  verify=self._getColumnValue(row,idxs,['lyrverify']), 
+                  squid=self._getColumnValue(row,idxs,['squid']), 
+                  metadata=self._getColumnValue(row, idxs, ['prjmetadata', 'metadata']), 
+                  dlocation=self._getColumnValue(row,idxs,['lyrdlocation','dlocation']), 
+                  bbox=self._getColumnValue(row,idxs,['lyrbbox','bbox']), 
+                  epsgcode=self._getColumnValue(row,idxs,['epsgcode']), 
                   gdalType=self._getColumnValue(row, idxs, ['gdaltype']), 
-                  gdalFormat= self._getColumnValue(row, idxs, ['dataformat']),
+                  gdalFormat=self._getColumnValue(row, idxs, ['dataformat']),
                   mapunits=self._getColumnValue(row, idxs, ['mapunits']), 
                   resolution=self._getColumnValue(row, idxs, ['resolution']), 
-                  userId=self._getColumnValue(row,idxs,['userid']),
-                  projectionId=self._getColumnValue(row,idxs,['projectionid']), 
-                  verify=self._getColumnValue(row,idxs,['prjverify', 'verify']), 
-                  squid=self._getColumnValue(row,idxs,['squid']))
+                  metadataUrl=self._getColumnValue(row, idxs, ['metadataurl']))
       return prj
 
 # .............................................................................
@@ -449,7 +448,7 @@ class Borg(DbPostgresql):
       wkt = None
       if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
-      meta = scen.dumpMetadata()
+      meta = scen.dumpScenMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
                            scen.getUserId(), scen.code, 
                            scen.metadataUrl, meta, 
@@ -480,14 +479,17 @@ class Borg(DbPostgresql):
       @param envtype: An EnvironmentalType or EnvironmentalLayer object
       @return: new or existing EnvironmentalType
       """
-      envtype.parametersModTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvironmentalType',
-                                                    envtype.getParametersUserId(),
+      currtime = mx.DateTime.utc().mjd
+      meta = envtype.dumpParamMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvType',
                                                     envtype.getParametersId(),
+                                                    envtype.getParametersUserId(),
                                                     envtype.typeCode,
-                                                    envtype.typeTitle,
-                                                    envtype.typeDescription,
-                                                    envtype.parametersModTime)
+                                                    envtype.gcmCode,
+                                                    envtype.altpredCode,
+                                                    envtype.dateCode,
+                                                    meta,
+                                                    currtime)
       newOrExistingEnvType = self._createLayerType(row, idxs)
       return newOrExistingEnvType
                              
@@ -716,16 +718,13 @@ class Borg(DbPostgresql):
    
 # .............................................................................
    def getOccurrenceSet(self, occid, squid, userId, epsg):
-      occsets = []
-      rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSet',
+      row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
                                                   occid, squid, userId, epsg)
-      for r in rows:
-         occ = self._createOccurrenceSet(r, idxs)
-         occsets.append(occ)
-      return occsets
+      occ = self._createOccurrenceLayer(row, idxs)
+      return occ
    
 # ...............................................
-   def updateOccurrenceSet(self, occ, polyWkt=None, pointsWkt=None):
+   def updateOccurrenceSet(self, occ, polyWkt, pointsWkt):
       """
       @summary Method to update an occurrenceSet object in the MAL database with 
                the verify hash, displayname, dlocation, queryCount, bbox, geom, 
@@ -734,14 +733,6 @@ class Borg(DbPostgresql):
       @note: queryCount should be updated on the object before calling this;
              geometries should be calculated and sent separately. 
       """
-#       pointtotal = occ.queryCount
-#       if not occ.getFeatures():
-#          occ.readShapefile()
-#       if occ.getFeatures():
-#          pointtotal = occ.featureCount
-#          if occ.epsgcode == DEFAULT_EPSG:
-#             polywkt = occ.getConvexHullWkt()
-#             pointswkt = occ.getWkt()
       metadata = occ.dumpLyrMetadata()
       try:
          success = self.executeModifyFunction('lm_updateOccurrenceSet', 
@@ -806,21 +797,37 @@ class Borg(DbPostgresql):
 # ...............................................
    def findOrInsertOccurrenceSet(self, occ):
       """
-      @summary: Save a new occurrence set   
+      @summary: Find existing (from occsetid OR usr/squid/epsg) 
+                OR save a new OccurrenceLayer  
       @param occ: New OccurrenceSet to save 
-      @note: updates db with count, the actual count on the object (likely zero 
-             on initial insertion)
+      @return new or existing OccurrenceLayer 
       """
+      polywkt = pointswkt = None
+      pointtotal = occ.queryCount
+      if occ.getFeatures():
+         pointtotal = occ.featureCount
+         polywkt = occ.getConvexHullWkt()
+         pointswkt = occ.getWkt()
+         
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceSet', 
+                              occ.getId(), occ.getUserId(), occ.squid, 
+                              occ.verify, occ.displayName,
+                              occ.constructMetadataUrl(),
+                              occ.getDLocation(), occ.getRawDLocation(),
+                              pointtotal, occ.getCSVExtentString(), occ.epsgcode,
+                              occ.dumpLyrMetadata(),
+                              occ.status, occ.statusModTime, polywkt, pointswkt)
+      newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
+      return newOrExistingOcc
+
+# ...............................................
+   def insertMFChain(self, usr, dlocation, status):
       """
-      @summary: Insert a user of the Lifemapper system. 
-      @param usr: LMUser object to insert
-      @return: new or existing LMUser
+      @summary: Inserts a Makeflow Chain (MFProcess) into database
+      @return: jobChainId
       """
-      usr.modTime = mx.DateTime.utc().mjd
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceset', 
-                              usr.userid, usr.firstName, usr.lastName, 
-                              usr.institution, usr.address1, usr.address2, 
-                              usr.address3, usr.phone, usr.email, usr.modTime, 
-                              usr.getPassword())
-      newOrExistingUsr = self._createUser(row, idxs)
-      return newOrExistingUsr
+      currtime = mx.DateTime.gmt().mjd
+      mfchain = self.executeInsertFunction('lm_insertMFChain', usr, 
+                                          dlocation, priority, metadata, status, currtime)
+      return mfchain   
+

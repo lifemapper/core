@@ -1,11 +1,6 @@
 """
-@summary This module contains the Algorithm base class
-@author Aimee Stewart
-@contact Email: astewart@ku.edu
-@version 1.0
-@status Status: alpha
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -33,7 +28,7 @@ except:
 import json
 from types import StringType, IntType, FloatType, NoneType, DictionaryType
 
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import ALGORITHM_DATA
 
 # .........................................................................
@@ -79,7 +74,7 @@ class OutOfRangeError( LMError ):
 
    
 # .........................................................................
-class Algorithm(object):
+class Algorithm(LMObject):
    """       
    Class to hold algorithm and its parameter values and constraints  
    """
@@ -146,31 +141,17 @@ class Algorithm(object):
 # Public Methods
 # .........................................................................
 # ...............................................
-   def addAlgMetadata(self, metadict):
-      for key, val in metadict.iteritems():
-         self.algMetadata[key] = val
-         
    def dumpAlgMetadata(self):
-      metastring = None
-      if self.algMetadata:
-         metastring = json.dumps(self.algMetadata)
-      return metastring
+      return LMObject._dumpMetadata(self, self.algMetadata)
+ 
+# ...............................................
+   def loadAlgMetadata(self, newMetadata):
+      self.algMetadata = LMObject._loadMetadata(self, newMetadata)
 
-   def loadAlgMetadata(self, meta):
-      """
-      @note: Adds to dictionary or modifies values for existing keys
-      """
-      if meta is not None:
-         if isinstance(meta, dict): 
-            self.addAlgMetadata(meta)
-         else:
-            try:
-               metajson = json.loads(meta)
-            except Exception, e:
-               print('Failed to load JSON object from {} object {}'
-                     .format(type(meta), meta))
-            else:
-               self.addAlgMetadata(metajson)
+# ...............................................
+   def addAlgMetadata(self, newMetadataDict):
+      self.algMetadata = LMObject._addMetadata(self, newMetadataDict, 
+                                  existingMetadataDict=self.algMetadata)
 
 # ...............................................
    def dumpParametersAsString(self):

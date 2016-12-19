@@ -251,12 +251,15 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    occmetadata,
    occstatus,
    occstatusModTime,
+
+   -- model scenario
+   mdlscenarioCode,
    
    -- project scenario
-   scenmetadata,
-   scengcmCode,
-   scenaltpredCode,
-   scendateCode
+   prjscenarioCode,
+   prjscengcmCode,
+   prjscenaltpredCode,
+   prjscendateCode
    ) AS
       SELECT p.layerid, p.userid, p.occurrenceSetId, p.algorithmCode, p.algParamHash, 
              p.mdlscenarioId, p.mdlmaskId, p.prjscenarioId, p.prjmaskId, 
@@ -267,10 +270,13 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              o.verify, o.displayName, o.metadataUrl, o.dlocation, o.queryCount, 
              o.bbox, o.metadata, o.status, o.statusModTime,
-             ps.metadata, ps.gcmCode, ps.altpredCode, ps.dateCode
-      FROM lm_v3.sdmproject p, lm_v3.layer l, lm_v3.occurrenceSet o, lm_v3.scenario ps
+             ms.scenarioCode, 
+             ps.scenarioCode, ps.gcmCode, ps.altpredCode, ps.dateCode
+      FROM lm_v3.sdmproject p, lm_v3.layer l, lm_v3.occurrenceSet o, 
+           lm_v3.scenario ms, lm_v3.scenario ps
       WHERE p.layerid = l.layerid
         AND p.prjscenarioId = ps.scenarioid
+        AND p.mdlscenarioId = ms.scenarioid
         AND p.occurrencesetid = o.occurrencesetid;
 
        
