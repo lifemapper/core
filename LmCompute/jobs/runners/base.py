@@ -1,11 +1,11 @@
 """
 @summary: Module containing job runner base class
 @author: CJ Grady
-@version: 3.0.0
-@status: beta
+@version: 4.0.0
+@status: alpha
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2016, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,19 +26,25 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import argparse
+import datetime
+from hashlib import md5
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 import signal
+import sys
 
 from LmCommon.common.lmconstants import JobStatus
-from LmCompute.common.lmconstants import COMPUTE_LOG_PATH, METRICS_STORAGE_PATH
+from LmCommon.common.lmXml import deserialize, parse
+
+from LmCompute.common.lmObj import LmException
 from LmCompute.common.localconstants import (ADMIN_EMAIL, ADMIN_NAME, 
-                        INSTITUTION_NAME, LOCAL_MACHINE_ID, 
-                        STORE_LOGS, STORE_METRICS)
+                        INSTITUTION_NAME, LOCAL_MACHINE_ID)
 
 from LmBackend.common.systemMetadata import getSystemConfigurationDictionary
 
+#TODO: This are also defined in LmServer.common.lmconstants, consider moving to LmBackend
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
 # Date format for log dates
 LOG_DATE_FORMAT = '%d %b %Y %H:%M'
@@ -49,68 +55,104 @@ class JobRunner(object):
    @summary: Job Runner base class. Job runners are responsible for running a 
                 process required to execute some job.
    """
+   prog = ''
+   processType = ''
+   
    # ..................................
-   def __init__(self, job, env):
-      self.job = job
-      self.env = env
+   def __init__(self, jobName=None, outDir=None, workDir=None, 
+                      metricsFn=None, logFn=None, logLevel=None, statusFn=None):
+      """
+      @summary: Constructor for base class, should be called by subclasses or
+                   inherited
+      @param jobName: (optional) The name of the job (used for work directory 
+                                    and logging
+      @param outDir: (optional) A directory where outputs should be written.  
+                                   This can be the final location or a shared 
+                                   directory with the front end.
+      @param workDir: (optional) A workspace directory where the work directory
+                                    should be created.  If omitted, uses the
+                                    current directory
+      @param metricsFn: (optional) A file name to store metrics from the job run
+      @param logFn: (optional) A file name to write the job log to.  If this is
+                       not an absolute path, it will be relative to the work
+                       directory.  If None, only log to console
+      @param logLevel: (optional) What level to write the logs
+      @param statusFn: (optional) If not None, write final status of job here
+      """
       self.metrics = {}
-      self.log = None # This will be initialized after the job is initialized 
-                      #    and the log directory is created.
-      signal.signal(signal.SIGTERM, self._receiveStopSignal) # Stop signal
       
-   # ..................................
-   def run(self):
-      raise Exception, "Run method must be declared in a sub-class"
-   
-   # ...................................
-   def _cleanUp(self, removeOutput=True):
-      """
-      @summary: Cleans up after a job has completed.  This should deleting all
-                   files created by the job that do not need to be kept on the
-                   node.
-      @param removeOutput: (optional) Should output directory be removed at the 
-                              end of the job
-      """
-      try: # Output some extra logging information
-         self.log.debug("Job end time: %s" % self.endTime)
-      except Exception, e:
-         print str(e)
-         #pass
-      try:
-         import shutil
-         if STORE_LOGS:
-            shutil.move(self.jobLogFile, os.path.join(COMPUTE_LOG_PATH, os.path.basename(self.jobLogFile)))
-         if removeOutput:
-            shutil.rmtree(self.outputPath)#, ignore_errors=True)
-      except:
-         pass
-   
-   # ..................................
-   def _initLogger(self, name, filename):
-      self.log = logging.getLogger(name)
-      self.log.setLevel(logging.DEBUG)
-      fileLogHandler = RotatingFileHandler(self.jobLogFile)
-      fileLogHandler.setLevel(self.log.level)
-      formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
-      fileLogHandler.setFormatter(formatter)
-      self.log.addHandler(fileLogHandler)
+      # If job name is None, generate one
+      if jobName is not None:
+         self.jobName = jobName
+      else:
+         self.jobName = md5().hexdigest()[:8]
+      self.outDir = outDir
 
-   # ...................................
+      # Get the cwd if workDir is None
+      if workDir is None:
+         workDir = os.getcwd()
+      self.workDir = os.path.join(workDir, self.jobName)
+      self.metricsFn = metricsFn
+      
+      # If log path is absolute, use it.  If not, assume relative to work dir
+      if os.path.isabs(logFn):
+         self.logFn = logFn
+      else:
+         self.logFn = os.path.join(self.workDir, logFn)
+      
+      # Make sure that we have a file and not a directory, if directory add file
+      if len(os.path.basename(self.logFn)) == 0: # Path ended with /
+         self.logFn = os.path.join(self.logFn, 'jobLog.log')
+      self.logFn = logFn
+      self.logLevel = logLevel
+      
+      self.statusFn = statusFn
+      self.status = JobStatus.GENERAL
+      
+      signal.signal(signal.SIGTERM, self._receiveStopSignal) # Stop signal
+   
+   # ..................................
+   def _cleanUp(self):
+      if self.args.cleanUp:
+         if self.createdWS:
+            shutil.rmtree(self.args.work_dir)
+         else:
+            self.log.debug("Workspace directory was not created by this process.  Don't delete.")
+   
+   # ..................................
+   def _doWork(self):
+      """
+      @summary: Do the work associated with this job
+      """
+      pass
+   
+   # ..................................
+   def _finishJob(self):
+      """
+      @summary: Finish the job by moving outputs to the specified location and
+                   finalizing whatever else needs to be done before cleanup
+      """
+      pass
+   
+   # ..................................
    def _initializeJob(self):
       """
-      @summary: This method initializes a job.  This may include writing out 
-                   parameter files to the file system or other initialization
-                   tasks.
+      @summary: Prepares the work directory, logs some metadata and reads the 
+                   job xml file
       """
-      self.outputPath = os.path.join(self.env.getJobOutputPath(), 
-                       "job-{0}-{1}".format(self.PROCESS_TYPE, self.job.jobId))
-
-      if not os.path.exists(self.outputPath):
-         os.makedirs(self.outputPath)
-
-      self.jobLogFile = "%s/jobLog-%s.log" % (self.outputPath, self.job.jobId)
-      self._initLogger('job-%s-%s' % (self.PROCESS_TYPE, self.job.jobId), self.jobLogFile)
-      self.log.debug("Job start time: %s" % self.startTime)
+      self.job = deserialize(parse(self.jobXmlFn))
+      
+      self.createdWS = False
+      # Create the work directory if it does not exist
+      if not os.path.exists(self.workDir):
+         #TODO: What to do if this fails?
+         os.makedirs(self.workDir)
+         self.createdWS = True
+      
+      # Set up the log after the word directory is created
+      self._initializeLog()
+   
+      self.log.debug("Job start time: %s" % str(datetime.datetime.now()))
       self.log.debug("-------------------------------------------------------")
       self.log.debug("Job Id: %s" % self.job.jobId)
       self.log.debug("User Id: %s" % self.job.userId)
@@ -129,21 +171,7 @@ class JobRunner(object):
       self.log.debug("-------------------------------------------------------")
       self.log.debug("Process Id: %s" % os.getpid())
       self.log.debug("-------------------------------------------------------")
-      self._logSystemInformation()
-      
-      self._processJobInput()
-      
-      self.status = JobStatus.COMPUTE_INITIALIZED
 
-   # ..................................
-   def _processJobInput(self):
-      """
-      @summary: Process job inputs
-      """
-      pass      
-   
-   # ..................................
-   def _logSystemInformation(self):
       sysConfig = getSystemConfigurationDictionary()
       try:
          self.metrics['machine id'] = LOCAL_MACHINE_ID
@@ -161,7 +189,46 @@ class JobRunner(object):
          self.log.debug("-------------------------------------------------------")
       except:
          pass
-
+      
+      self._processJobInput()
+      
+   # ..................................
+   def _initializeLog(self):
+      """
+      @summary: Initialize the log file, if specified, for this job
+      """
+      self.log = logging.getLogger(self.jobName)
+      
+      if self.logLevel is not None and self.logLevel.lower() in ['info', 'debug', 'warn', 'error', 'critical']:
+         if self.logLevel == 'info':
+            ll = logging.INFO
+         elif self.logLevel == 'debug':
+            ll = logging.DEBUG
+         elif self.logLevel == 'warn':
+            ll = logging.WARNING
+         elif self.logLevel == 'error':
+            ll = logging.ERROR
+         else:
+            ll = logging.CRITICAL
+      else:
+         ll = logging.NOTSET
+      self.log.setLevel(ll)
+      
+      # Only set file handler if should log to file, else omit
+      if self.logFn is not None:
+         fileLogHandler = RotatingFileHandler(self.logFn)
+         fileLogHandler.setLevel(self.log.level)
+         formatter = logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT)
+         fileLogHandler.setFormatter(formatter)
+         self.log.addHandler(fileLogHandler)
+   
+   # .............................
+   def _processJobInput(self):
+      """
+      @summary: Process the job inputs and set up anything necessary
+      """
+      pass
+   
    # .............................
    def _receiveStopSignal(self, sigNum, stack):
       """
@@ -173,6 +240,14 @@ class JobRunner(object):
          self.remoteStop()
 
    # ..................................
+   def _writeMetrics(self):
+      if self.metricsFn is not None:
+         if len(self.metrics.keys()) > 0:
+            with open(self.metricsFn, 'w') as outFile:
+               for key in self.metrics.keys():
+                  outFile.write("%s: %s\n" % (key, str(self.metrics[key])))
+
+   # ..................................
    def remoteStop(self):
       """
       @summary: This is called when a job is asked to stop remotely with 
@@ -180,18 +255,48 @@ class JobRunner(object):
                    operation cleanly.  This signal will likely be followed by a 
                    SIGKILL if emitted by a scheduler and that cannot be caught.
       """
-      pass
+      sys.exit(1)
    
    # ..................................
-   def writeMetrics(self, jobType, jobId):
+   def run(self):
       """
-      @summary: Writes out the metrics of the job
+      @summary: Runs the job.  This method probably doesn't need to be 
+                   overwritten in subclasses unless a different behavior is 
+                   needed for some reason
       """
-      if STORE_METRICS:
-         fn = os.path.join(METRICS_STORAGE_PATH,
-                           "job-%s-%s.metrics" % (jobType, jobId))
-         if len(self.metrics.keys()) > 0:
-            with open(fn, 'w') as outFile:
-               for key in self.metrics.keys():
-                  outFile.write("%s: %s\n" % (key, str(self.metrics[key])))
+      # Initialization time
+      initTime = datetime.datetime.now()
+      self._initializeJob()
+      # Job start time
+      startTime = datetime.datetime.now()
+      try:
+         self._doWork()
+      except LmException, lme:
+         self.status = lme.code
+         print lme.msg
+      except Exception, e:
+         if self.status < JobStatus.GENERAL_ERROR:
+            self.status = JobStatus.GENERAL_ERROR
+      # job end time
+      endTime = datetime.datetime.now()
+      if self.status < JobStatus.GENERAL_ERROR:
+         self._finishJob()
+      # Finalize time
+      finalizeTime = datetime.datetime.now()
+      self._cleanUp()
+      # Clean up time
+      cleanupTime = datetime.datetime.now()
+
+      self.metrics['init clock'] = str(initTime)
+      self.metrics['init time'] = str(startTime - initTime)
+      self.metrics['run time'] = str(endTime - startTime)
+      self.metrics['finalize time'] = str(finalizeTime - endTime)
+      self.metrics['cleanup time'] = str(cleanupTime - finalizeTime)
+      self.metrics['elapsed time'] = str(cleanupTime - initTime)
+      self.metrics['end clock'] = str(cleanupTime)
+      self._writeMetrics()
       
+      if self.statusFn is not None:
+         with open(self.statusFn, 'w') as statusOut:
+            statusOut.write(self.status)
+            

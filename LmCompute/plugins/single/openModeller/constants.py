@@ -1,5 +1,5 @@
 """
-@summary: Module containing the python job runner base class
+@summary: Module containing Lifemapper constants for openModeller SDM jobs
 @author: CJ Grady
 @version: 4.0.0
 @status: beta
@@ -26,11 +26,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCompute.jobs.runners.base import JobRunner
-
-class PythonRunner(JobRunner):
-   """
-   @summary: This is the base class for Job Runners that run python code to 
-                work on a job.
-   """
-   pass
+FILE_TYPES = ["FloatingHFA", "FloatingTiff", "GreyTiff"]
+DEFAULT_FILE_TYPE = 'GreyTiff100'
+DEFAULT_LOG_LEVEL = 'debug'
+OM_MODEL_CMD = 'om_model'
+OM_PROJECT_CMD = 'om_project'
+OM_VERSION = '1.5.0'

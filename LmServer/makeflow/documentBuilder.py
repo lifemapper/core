@@ -25,27 +25,37 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 
-@note: Inputs could be objects or job objects
 @todo: Many functions can take a subworkflow or a pre-existing object, handle that
-@note: Start by using job objects
 @note: Let job server handle object updates for now
 @todo: Job request dir and python command constants need to move out of compute
 @todo:   Or, use $PYTHON if that works and job requests will be generated in workspace
+@todo: Should we tell dependencies to compute if needed?
+@todo: remove status files
 """
 import os
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, ProcessType
 
 from LmCompute.common.localconstants import JOB_REQUEST_PATH, PYTHON_CMD
 
 from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
+# TODO: Okay that this in server?
 from LmServer.common.localconstants import APP_PATH
+from LmServer.makefow.makeJobCommand import (makeBisonOccurrenceSetCommand,
+                                             makeGbifOccurrenceSetCommand,
+                                             makeIdigbioOccurrenceSetCommand,
+                                             makeMaxentSdmModelCommand,
+                                             makeMaxentSdmProjectionCommand,
+                                             makeOmSdmModelCommand,
+                                             makeOmSdmProjectionCommand)
+
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 JOB_REQUEST_FILENAME = "$JOB_REQUESTS/{processType}-{jobId}Req.xml"
 BUILD_JOB_REQUEST_CMD = "LOCAL $PYTHON $MAKE_JOB_REQUEST {objectFamily} {jobId} -f {jrFn}"
 LM_JOB_RUNNER_CMD = "$PYTHON $RUNNER {jrFn}"
+UPDATE_DB_CMD = "$PYTHON $UPDATE_DB_SCRIPT {processType} {objId} {status}"
 
 # .............................................................................
 class LMMakeflowDocument(LMObject):
@@ -94,6 +104,8 @@ class LMMakeflowDocument(LMObject):
       self.headers.append("MAKE_JOB_REQUEST={jrScript}".format(
                                  jrScript=os.path.join(APP_PATH, 
                                       "LmServer/makeflow/makeJobRequest.py")))
+      self.headers.append("SINGLE_SPECIES_SCRIPTS_PATH={sssPath}".format(
+                             sssPath=SINGLE_SPECIES_SCRIPTS_PATH))
       #REQ_FILL=$HOME/git/core/LmCompute/scripts/fillProjectionRequest.py
    
    # ...........................
@@ -116,6 +128,274 @@ class LMMakeflowDocument(LMObject):
                self.buildProjection(item)
             else:
                raise Exception, "Don't know how to build Makeflow process for: %s" % item.__class__
+         
+   # ...........................
+   def addBisonOccurrenceSet(self, occ):
+      """
+      @summary: Adds tasks related to filling a BISON occurrence set
+      """
+      # Fill the occurrence set command
+      occCmd, occStatusFn = makeBisonOccurrenceSetCommand(occ)
+      
+      # Add entry to fill occurrence set
+      self._addJobCommand([occ.createLocalDLocation(), occStatusFn],
+                          occCmd, dependencies=[],
+                          comment="Fill BISON occurrence set {0}".format(occ.getId()))
+   
+      # Move outputs
+      # If we decide to create outputs in a temporary space, we'll need to move
+      #   them to their final location
+      
+      # Update DB
+      updateDbCmd = UPDATE_DB_CMD.format(
+                       processType=ProcessType.BISON_TAXA_OCCURRENCE,
+                       objId=occ.getId(), statusFn=occStatusFn)
+      
+   # ...........................
+   def addGbifOccurrenceSet(self, occ):
+      """
+      @summary: Adds tasks related to filling a GBIF occurrence set
+      """
+      # Need the raw data location to fill the occurrence set
+      dep = [occ.rawDLocation()]
+         
+      # Fill the occurrence set command
+      occCmd, occStatusFn = makeGbifOccurrenceSetCommand(occ)
+      
+      # Add entry to fill occurrence set
+      self._addJobCommand([occ.createLocalDLocation(), occStatusFn],
+                          occCmd, dependencies=dep,
+                          comment="Fill GBIF occurrence set {0}".format(occ.getId()))
+   
+      # Move outputs
+      # If we decide to create outputs in a temporary space, we'll need to move
+      #   them to their final location
+      
+      # Update DB
+      updateDbCmd = UPDATE_DB_CMD.format(processType=ProcessType.GBIF_TAXA_OCCURRENCE,
+                                         objId=occ.getId(), statusFn=occStatusFn)
+      
+   # ...........................
+   def addIdigbioOccurrenceSet(self, occ):
+      """
+      @summary: Adds tasks related to filling an iDigBio occurrence set
+      """
+      # Fill the occurrence set command
+      occCmd, occStatusFn = makeIdigbioOccurrenceSetCommand(occ)
+      
+      # Add entry to fill occurrence set
+      self._addJobCommand([occ.createLocalDLocation(), occStatusFn],
+                          occCmd, dependencies=[],
+                          comment="Fill iDigBio occurrence set {0}".format(occ.getId()))
+   
+      # Move outputs
+      # If we decide to create outputs in a temporary space, we'll need to move
+      #   them to their final location
+      
+      # Update DB
+      updateDbCmd = UPDATE_DB_CMD.format(
+                       processType=ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                       objId=occ.getId(), statusFn=occStatusFn)
+      
+   # ...........................
+   def addUserOccurrenceSet(self, occ):
+      """
+      @summary: This is just like GBIF occurrence sets
+      """
+      self.addGbifOccurrenceSet(occ)
+      
+   # ...........................
+   def addSdmModel(self, mdl):
+      """
+      @summary: Adds all of the processes necessary for computing an SDM model
+      """
+      # Determine which type of model to add
+      
+      # TODO: Use a constant!
+      if mdl.algorithmCode == 'ATT_MAXENT':
+         self.addMaxentModel(mdl)
+      else:
+         self.addOmModel(mdl)
+         
+   # ...........................
+   def addMaxentModel(self, mdl):
+      """
+      @summary: Adds all of the processes necessary for computing a Maxent model
+      """
+      # Determine if there are dependencies
+      if mdl.occurrenceSet.status == JobStatus.COMPLETE:
+         dep = []
+      else:
+         dep = [mdl.occurrenceSet.createLocalDLocation()]
+         
+      # Generate request filename
+      jrFn = JOB_REQUEST_FILENAME.format(processType=ProcessType.ATT_MODEL,
+                                         jobId=mdl.getId())
+      # Generate request command
+      jobReqCmd = BUILD_JOB_REQUEST_CMD.format(
+               processType=ProcessType.ATT_MODEL, jobId=mdl.getId(), jrFn=jrFn)
+
+      # Create model command
+      mdlCmd, mdlStatusFn = makeMaxentSdmModelCommand(mdl, jrFn)
+      
+      # Add entry to create job request
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
+                        comment="Build model {0} request".format(mdl.getId()))
+      # Add entry to build model
+      self._addJobCommand([mdl.createLocalDLocation(), mdlStatusFn],
+                          mdlCmd, dependencies=[jrFn],
+                          comment="Build model {0}".format(mdl.getId()))
+   
+      # Move outputs
+      # If we decide to create outputs in a temporary space, we'll need to move
+      #   them to their final location
+      
+      # Update DB
+      updateDbCmd = UPDATE_DB_CMD.format(processType=ProcessType.ATT_MODEL,
+                                         objId=mdl.getId(), statusFn=mdlStatusFn)
+      
+   # ...........................
+   def addOmModel(self, mdl):
+      """
+      @summary: Adds all of the processes necessary for computing an 
+                   openModeller model
+      """
+      # Determine if there are dependencies
+      if mdl.occurrenceSet.status == JobStatus.COMPLETE:
+         dep = []
+      else:
+         dep = [mdl.occurrenceSet.createLocalDLocation()]
+         
+      # Generate request filename
+      jrFn = JOB_REQUEST_FILENAME.format(processType=ProcessType.OM_MODEL,
+                                         jobId=mdl.getId())
+      # Generate request command
+      jobReqCmd = BUILD_JOB_REQUEST_CMD.format(
+               processType=ProcessType.OM_MODEL, jobId=mdl.getId(), jrFn=jrFn)
+
+      # Create model command
+      mdlCmd, mdlStatusFn = makeMaxentSdmModelCommand(mdl, jrFn)
+      
+      # Add entry to create job request
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
+                        comment="Build model {0} request".format(mdl.getId()))
+      # Add entry to build model
+      self._addJobCommand([mdl.createLocalDLocation(), mdlStatusFn],
+                          mdlCmd, dependencies=[jrFn],
+                          comment="Build model {0}".format(mdl.getId()))
+   
+      # Move outputs
+      # If we decide to create outputs in a temporary space, we'll need to move
+      #   them to their final location
+      
+      # Update DB
+      updateDbCmd = UPDATE_DB_CMD.format(processType=ProcessType.OM_MODEL,
+                                         objId=mdl.getId(), statusFn=mdlStatusFn)
+      
+   # ...........................
+   def addSdmProjection(self, prj):
+      """
+      @summary: Adds all of the processes necessary for computing an SDM 
+                   projection
+      """
+      # Determine which type of projection to add
+      
+      # TODO: Use a constant!
+      if prj.getModel().algorithmCode == 'ATT_MAXENT':
+         self.addMaxentProjection(prj)
+      else:
+         self.addOmProjection(prj)
+         
+   # ...........................
+   def addMaxentProjection(self, prj):
+      """
+      @summary: Adds all of the processes necessary for computing a Maxent 
+                   projection
+      """
+      # Determine if there are dependencies
+      mdl = prj.getModel()
+      if mdl.status == JobStatus.COMPLETE:
+         dep = []
+      else:
+         dep = [mdl.createLocalDLocation()]
+         
+      # Generate request filename
+      jrFn = JOB_REQUEST_FILENAME.format(processType=ProcessType.ATT_PROJECT,
+                                         jobId=prj.getId())
+      # Generate request command
+      jobReqCmd = BUILD_JOB_REQUEST_CMD.format(
+             processType=ProcessType.ATT_PROJECT, jobId=prj.getId(), jrFn=jrFn)
+
+      # Create projection command
+      prjCmd, prjStatusFn = makeMaxentSdmProjectionCommand(prj, jrFn)
+      
+      # Add entry to create job request
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
+                        comment="Build projection {0} request".format(
+                           prj.getId()))
+      # Add entry to build projection
+      self._addJobCommand([prj.createLocalDLocation(), prjStatusFn],
+                          prjCmd, dependencies=[jrFn],
+                          comment="Build projection {0}".format(prj.getId()))
+   
+      # Move outputs
+      # If we decide to create outputs in a temporary space, we'll need to move
+      #   them to their final location
+      
+      # Update DB
+      updateDbCmd = UPDATE_DB_CMD.format(processType=ProcessType.ATT_PROJECT,
+                                       objId=prj.getId(), statusFn=prjStatusFn)
+      
+   # ...........................
+   def addOmProjection(self, prj):
+      """
+      @summary: Adds all of the processes necessary for computing an  
+                   openModeller projection
+      """
+      # Determine if there are dependencies
+      mdl = prj.getModel()
+      if mdl.status == JobStatus.COMPLETE:
+         dep = []
+      else:
+         dep = [mdl.createLocalDLocation()]
+         
+      # Generate request filename
+      jrFn = JOB_REQUEST_FILENAME.format(processType=ProcessType.OM_PROJECT,
+                                         jobId=prj.getId())
+      # Generate request command
+      jobReqCmd = BUILD_JOB_REQUEST_CMD.format(
+             processType=ProcessType.OM_PROJECT, jobId=prj.getId(), jrFn=jrFn)
+
+      # Create projection command
+      prjCmd, prjStatusFn = makeOmSdmProjectionCommand(prj, jrFn)
+      
+      # Add entry to create job request
+      self._addJobCommand([jrFn], jobReqCmd, dependencies=dep, 
+                        comment="Build projection {0} request".format(
+                           prj.getId()))
+      # Add entry to build projection
+      self._addJobCommand([prj.createLocalDLocation(), prjStatusFn],
+                          prjCmd, dependencies=[jrFn],
+                          comment="Build projection {0}".format(prj.getId()))
+   
+      # Move outputs
+      # If we decide to create outputs in a temporary space, we'll need to move
+      #   them to their final location
+      
+      # Update DB
+      updateDbCmd = UPDATE_DB_CMD.format(processType=ProcessType.OM_PROJECT,
+                                       objId=prj.getId(), statusFn=prjStatusFn)
+      
+   # Occurrence set (3+ flavors)
+   # Create intersect parameters
+   # Intersect PAM
+   # Intersect layer
+   # Calculate
+   # MCPA
+   # Encoding (tree and biogeo)
+   # Compress?
+   # Randomizations
+   
          
    # ...........................
    #def addProcessesForChain(self, jobChain):
@@ -156,85 +436,6 @@ class LMMakeflowDocument(LMObject):
    #   addProcessForItem(item, deps)
    
    # ...........................
-   def buildOccurrenceSet(self, occJob):
-      """
-      @summary: Adds commands to build an occurrence set
-      @todo: Consider adding an option to force a rebuild
-      @note: We will continue to use the job server (for now) to update the job
-      @todo: To remove job server, need to have a script update the db here
-      """
-      jobId = occJob.getId()
-      jrFn = JOB_REQUEST_FILENAME.format(processType=occJob.processType, 
-                                         jobId=jobId)
-      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.SDM, 
-                                           jobId=jobId, jrFn=jrFn)
-      # Add job to create job request
-      self._addJobCommand([jrFn], jrCmd, 
-                  comment='Build occurrence set {0} job request'.format(jobId))
-      
-      # Add job to create occurrence set
-      self._addJobCommand([occJob.outputObj.createLocalDLocation()], 
-                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
-                          dependencies=[jrFn], 
-                          comment="Build occurrence set {0}".format(jobId))
-
-   # ...........................
-   def buildModel(self, mdlJob):
-      """
-      @summary: Adds commands to build an SDM model
-      @param mdlJob: A Lifemapper model job
-      @note: Output is model ruleset, this will be used in other jobs 
-                potentially
-      """
-      # Determine if there is a dependent job to build an occurrence set
-      if mdlJob.outputObj.occurrenceSet.status == JobStatus.COMPLETE:
-         dep = []
-      else:
-         dep = [mdlJob.outputObj.occurrenceSet.createLocalDLocation()]
-
-      jobId = mdlJob.getId()
-      jrFn = JOB_REQUEST_FILENAME.format(processType=mdlJob.processType, 
-                                         jobId=jobId)
-      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.SDM, 
-                                           jobId=jobId, jrFn=jrFn)
-      # Add job to create job request
-      self._addJobCommand([jrFn], jrCmd, dependencies=dep,
-                  comment='Build model {0} job request'.format(jobId))
-      
-      # Add job to create model
-      self._addJobCommand([mdlJob.dataObj.createLocalDLocation()], 
-                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
-                          dependencies=[jrFn], 
-                          comment="Build model {0}".format(jobId))
-   
-   # ...........................
-   def buildProjection(self, prjJob):
-      """
-      @summary: Adds commands to create an SDM projection
-      """
-      # Determine if there is a dependent job to build a model
-      if prjJob.outputObj.getModel().status == JobStatus.COMPLETE:
-         dep = []
-      else:
-         mdl = prjJob.outputObj.getModel()
-         dep = [mdl.createLocalDLocation()]
-
-      jobId = prjJob.getId()
-      jrFn = JOB_REQUEST_FILENAME.format(processType=prjJob.processType, 
-                                         jobId=jobId)
-      jrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.SDM, 
-                                           jobId=jobId, jrFn=jrFn)
-      # Add job to create job request
-      self._addJobCommand([jrFn], jrCmd, dependencies=dep,
-                  comment='Build projection {0} job request'.format(jobId))
-      
-      # Add job to create projection
-      self._addJobCommand([prjJob.outputObj.createLocalDLocation()], 
-                          LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
-                          dependencies=[jrFn], 
-                          comment="Build projection {0}".format(jobId))
-   
-   # ...........................
    def addProjectionToGlobalPAM(self, prj, shapegrid):
       """
       @todo: Do I need to pass Solr connection information or name GPAM?
@@ -259,6 +460,15 @@ class LMMakeflowDocument(LMObject):
                               subject=subject, msg=message)
       self._addJobCommand([], emailCmd, dependencies=dependencies, 
                           comment="Notify user")
+
+
+   # ...........................
+   def addPAMIntersect(self, shapegrid, paLayers):
+      """
+      @summary: Adds tasks to intersect a group of PA layers against a shapegrid
+      """
+      pass
+   
 
    # ...........................
    def addIntersectJob(self, intJob):

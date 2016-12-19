@@ -35,11 +35,6 @@ _CMDS_SECTION = 'LmCompute - commands'
 _CONTACT_SECTION = 'LmCompute - contact'
 _OPTIONS_SECTION = 'LmCompute - options'
 _METRICS_SECTION = 'LmCompute - metrics'
-_JOB_PUSHER_SECTION = 'LmCompute - Job Pusher'
-_ME_PLUGIN_SECTION = 'LmCompute - plugins - maxent'
-_MEDIATOR_SECTION = "LmCompute - Job Mediator"
-_JOB_SUBMITTER_SECTION = "LmCompute - Job Submitter"
-_JOB_RETRIEVERS_SECTION = "LmCompute - Job Retrievers"
    
 # Environment variables
 LM_PATH = _cfg.get(_ENV_SECTION, 'LM_PATH')
@@ -64,96 +59,3 @@ INSTITUTION_NAME = _cfg.get(_CONTACT_SECTION, 'INSTITUTION_NAME')
 ADMIN_NAME = _cfg.get(_CONTACT_SECTION, 'ADMIN_NAME')
 ADMIN_EMAIL = _cfg.get(_CONTACT_SECTION, 'ADMIN_EMAIL')
 LOCAL_MACHINE_ID = _cfg.get(_CONTACT_SECTION, 'LOCAL_MACHINE_ID')
-
-# Options
-STORE_LOGS = _cfg.getboolean(_OPTIONS_SECTION, 'STORE_LOG_FILES')
-
-# Metrics
-STORE_METRICS = _cfg.getboolean(_METRICS_SECTION, 'STORE_METRICS')
-
-# Job pusher
-PUSH_JOBS_PATH = _cfg.get(_JOB_PUSHER_SECTION, 'PUSH_JOBS_PATH')
-LOCKFILE_NAME = _cfg.get(_JOB_PUSHER_SECTION, 'LOCKFILE_NAME')
-METAFILE_NAME = _cfg.get(_JOB_PUSHER_SECTION, 'METAFILE_NAME')
-
-# Job mediator Constants
-JOB_MEDIATOR_PID_FILE = _cfg.get(_MEDIATOR_SECTION, 'PID_FILE')
-JM_SLEEP_TIME = _cfg.getint(_MEDIATOR_SECTION, 'SLEEP_TIME')
-# JM_HOLD_PATH will go away
-JM_HOLD_PATH = _cfg.get(_MEDIATOR_SECTION, 'HOLD_JOB_PATH')
-JM_INACTIVE_TIME = _cfg.getint(_MEDIATOR_SECTION, 'INACTIVE_TIME')
-
-# Job submitter
-JOB_SUBMITTER_TYPE = _cfg.get(_JOB_SUBMITTER_SECTION, 'JOB_SUBMITTER_TYPE')
-JOB_CAPACITY = _cfg.getint(_JOB_SUBMITTER_SECTION, 'CAPACITY')
-try:
-   LOCAL_SUBMIT_COMMAND = _cfg.get(_JOB_SUBMITTER_SECTION, 'LOCAL_SUBMIT_COMMAND')
-except:
-   LOCAL_SUBMIT_COMMAND = None
-
-try:
-   SGE_SUBMIT_COMMAND = _cfg.get(_JOB_SUBMITTER_SECTION, 'SGE_SUBMIT_COMMAND')
-except:
-   SGE_SUBMIT_COMMAND = None
-try:
-   SGE_COUNT_JOBS_COMMAND = _cfg.get(_JOB_SUBMITTER_SECTION, 'NUM_JOBS_COMMAND')
-except:
-   SGE_COUNT_JOBS_COMMAND = None
-
-
-# Job retrievers constants
-JOB_RETRIEVERS = {}
-   
-# Get retriever keys
-_retrieverKeys = _cfg.getlist(_JOB_RETRIEVERS_SECTION, 'JOB_RETRIEVER_KEYS')
-
-for retKey in _retrieverKeys:
-   # Each retriever has its own section
-   retSec = "%s - %s" % (_JOB_RETRIEVERS_SECTION, retKey)
-      
-   retrieverType = _cfg.get(retSec, 'RETRIEVER_TYPE')
-      
-   # TODO: CJ: directory option and JOB_DIR is not in the default config.lmcompute.ini
-   #       If it is added, it should be JOB_PATH
-   #  CJG 9/14/16: This will go away soon.  Won't fix
-   if retrieverType.lower() == 'directory':
-      from LmCompute.jobs.retrievers.directoryJobRetriever import DirectoryRetriever
-      jobDir = _cfg.get(retSec, 'JOB_DIR')
-      retriever = DirectoryRetriever(jobDir)
-      JOB_RETRIEVERS[retKey] = {
-                                "retrieverType" : "directory",
-                                "jobDirectory" : jobDir
-                               }
-   elif retrieverType.lower() == 'server':
-      jobDir = os.path.join(JM_HOLD_PATH, retKey)
-      jobServer = _cfg.get(retSec, 'JOB_SERVER')
-      numToPull = _cfg.getint(retSec, 'NUM_TO_PULL')
-      threshold = _cfg.getint(retSec, 'PULL_THRESHOLD')
-      
-      # Create a dictionary with the optional parameters so they can be 
-      #    passed in if provided but ignored if not
-      optionalParameters = {}
-      try:
-         jobTypes = _cfg.getlist(retSec, 'JOB_TYPES')
-         jobTypes = map(int, jobTypes)
-         optionalParameters['jobTypes'] = jobTypes
-      except:
-         pass
-      
-      try:
-         users = _cfg.get(retSec, 'USERS')
-         optionalParameters['users'] = users
-      except:
-         pass
-     
-      JOB_RETRIEVERS[retKey] = {
-                                "jobDirectory" : jobDir,
-                                "retrieverType" : "server",
-                                "jobServer" : jobServer,
-                                "numToPull" : numToPull,
-                                "threshold" : threshold,
-                                "options" : optionalParameters
-                               }
-   else:
-      raise Exception, "Unknown job retriever type for %s: %s" % (retKey, 
-                                                           retrieverType)

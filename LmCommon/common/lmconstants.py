@@ -43,8 +43,70 @@ ENV_LAYER_DIR = 'layers'
 MASK_TYPECODE = 'MASK'
 ENCODING =  'utf-8'   
 
+# .............................................................................
+class FileFormat:
+   """
+   @summary: This class contains file format meta information
+   @todo: Add GDAL / OGR type as optional parameters
+   """
+   # ...........................
+   def __init__(self, extension, mimeType, allExtensions=[]):
+      """
+      @summary: Constructor
+      @param extension: This is the default extension if a format has multiple, 
+                           or it could be the only extension
+      @param mimeType: The MIME-Type for this format
+      @param allExtensions: (optional) Provide a list of all possible extensions
+                               for this format
+      """
+      self.mimeType = mimeType
+      self.ext = defaultExtension
+      self.extensions = allExtensions
+      # Add the default extension to the extensions list if not present
+      if self.ext not in allExtensions:
+         self.extensions.append(self.ext)
+   
+   # ...........................
+   def getExtensions(self):
+      return self.extensions
+   
+   # ...........................
+   def getMimeType(self):
+      return self.mimeType
+   
+# .............................................................................
+class FileFormats:
+   """
+   @summary: Class containing known formats to Lifemapper
+   @todo: Deprecate OutputFormat and instead use this
+   """
+   ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'])
+   CSV = FileFormat('.csv', 'text/csv')
+   GTIFF = FileFormat('.tif', 'image/tiff')
+   HFA = FileFormat('.img', 'image/octet-stream')
+   JSON = FileFormat('.json', 'application/json')
+   KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
+   LOG = FileFormat('.log', 'text/plain')
+   MAKEFLOW = FileFormat('.mf', 'text/plain')
+   MAP = FileFormat('.map', 'text/plain')
+   MXE = FileFormat('.mxe', 'application/octet-stream')
+   NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
+   NUMPY = FileFormat('.npy', 'application/octet-stream')
+   PICKLE = FileFormat('.pkl', 'application/octet-stream')
+   SHAPE = FileFormat('.shp', 'application/x-gzip', 
+                      allExtensions=[".shp", ".shx", ".dbf", ".prj", ".sbn", 
+                                     ".sbx", ".fbn", ".fbx", ".ain", ".aih", 
+                                     ".ixs", ".mxs", ".atx", ".shp.xml", 
+                                     ".cpg", ".qix"])
+   TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
+   TMP = FileFormat('.tmp', 'application/octet-stream')
+   TXT = FileFormat('.txt', 'text/plain')
+   XML = FileFormat('.xml', 'application/xml')
+   ZIP = FileFormat('.zip', 'application/zip')
+
+   
+# .............................................................................
 class OutputFormat:
-# ............................................................................
    TAR_GZ = '.tar.gz'
    TXT = '.txt'
    XML = '.xml'
@@ -1131,3 +1193,21 @@ LOGFILE_MAX_BYTES = 52000000
 #    When the maximum number of backups has been met, the oldest will be 
 #    discarded.
 LOGFILE_BACKUP_COUNT = 5
+
+
+# .............................................................................
+# .                     Phylogenetic Tree Module Constants                    .
+# .............................................................................
+class PhyloTreeKeys(object):
+   """
+   @summary: Class containing keys for Jeff's Phylo Trees
+   """
+   C = 'c' # TODO: What is this?  Document
+   CHILDREN = 'children' # Children of a node
+   DESC = 'desc' #TODO: What is this? Document.  Only used twice
+   BRANCH_LENGTH = 'length' # Branch length for that node
+   MTX_IDX = 'mx' # The matrix index for this node
+   NAME = 'name' # Name of the node
+   NC = 'nc' #TODO: Document
+   PATH = 'path' #TODO: Document
+   PATH_ID = 'pathId' # TODO: Document

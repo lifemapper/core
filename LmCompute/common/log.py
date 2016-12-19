@@ -54,43 +54,6 @@ class LmComputeLogger(LmLogger):
          self._addFileHandler(fn)
 
 # .............................................................................
-class JobClientLogger(LmComputeLogger):
-   """
-   @summary: This logger can be used with the job client to log interactions 
-                with the job server
-   """
-   def __init__(self, level=logging.DEBUG):
-      LmComputeLogger.__init__(self, 'jobClient', level=level, addFile=True)
-
-# .............................................................................
-class MediatorLogger(LmComputeLogger):
-   """
-   @summary: This logger can be used with the job mediator to log interactions 
-                with job retrievers and submitters
-   """
-   def __init__(self, pid, level=logging.DEBUG):
-      name = 'mediator.%s' % pid
-      LmComputeLogger.__init__(self, name, level=level, addFile=True)
-
-# .............................................................................
-class RetrieverLogger(LmComputeLogger):
-   """
-   @summary: This logger can be used with the job retriever to log job 
-                retrieval actions
-   """
-   def __init__(self, name, level=logging.DEBUG):
-      LmComputeLogger.__init__(self, name, level=level, addFile=True)
-
-# .............................................................................
-class SubmitterLogger(LmComputeLogger):
-   """
-   @summary: This logger can be used with the job submitter to log processes
-                being submitted to the compute environment
-   """
-   def __init__(self, level=logging.DEBUG):
-      LmComputeLogger.__init__(self, 'submitter', level=level, addFile=True)
-
-# .............................................................................
 class TestLogger(LmComputeLogger):
    """
    @summary: This logger can be used with the job retriever to log job 
