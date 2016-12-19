@@ -47,14 +47,14 @@ The grammar rules
 
 Note, "|" separates alternatives.
 
-   Tree → Subtree ";" | Branch ";"
-   Subtree → Leaf | Internal
-   Leaf → Name
-   Internal → "(" BranchSet ")" Name
-   BranchSet → Branch | Branch "," BranchSet
-   Branch → Subtree Length
-   Name → empty | string
-   Length → empty | ":" number
+   Tree -> Subtree ";" | Branch ";"
+   Subtree -> Leaf | Internal
+   Leaf -> Name
+   Internal -> "(" BranchSet ")" Name
+   BranchSet -> Branch | Branch "," BranchSet
+   Branch -> Subtree Length
+   Name -> empty | string
+   Length -> empty | ":" number
 
 """
 import os
@@ -148,7 +148,7 @@ class Parser(object):
       return self.parentClades[clade[PhyloTreeKeys.PATH_ID]]
    
    # ..............................   
-   def newClade(self, cladeId, parent=None):
+   def createNewClade(self, cladeId, parent=None):
       """
       @summary: Create a new clade
       @param cladeId: The id for this new clade
@@ -177,7 +177,7 @@ class Parser(object):
       @param text: The Newick tree text to parse
       """
       cladeId = 0
-      self.rootClade = newClade(cladeId)
+      self.rootClade = self.createNewClade(cladeId)
       
       cladeId += 1
             
@@ -205,11 +205,11 @@ class Parser(object):
             unmatchedParens += 1
             # Update the parent
             parentClade = currentClade
-            currentClade = self.newClade(cladeId, parent=currentClade)
+            currentClade = self.createNewClade(cladeId, parent=currentClade)
             cladeId += 1
             
          elif token == ',': # start a new child clade
-            currentClade = self.newClade(cladeId, parent=parentClade)
+            currentClade = self.createNewClade(cladeId, parent=parentClade)
             cladeId += 1
             
          elif token == ')': # done adding children for this parent clade
