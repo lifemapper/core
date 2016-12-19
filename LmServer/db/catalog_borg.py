@@ -543,7 +543,7 @@ class Borg(DbPostgresql):
       envmeta = lyr.dumpParamMetadata()
       lyrmeta = lyr.dumpLyrMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction(
-                           'lm_findOrInsertEnvLayer', scenarioId, lyr.getId(), 
+                           'lm_findOrInsertScenLayer', scenarioId, lyr.getId(), 
                            lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
                            lyr.getDLocation(), 
                            lyr.metadataUrl,

@@ -131,10 +131,10 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def insertLayerTypeCode(self, envType):
-      if isinstance(envType, EnvironmentalType):
+      if isinstance(envType, EnvType):
          newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
       else:
-         raise LMError(currargs='Invalid object for EnvironmentalType insertion')
+         raise LMError(currargs='Invalid object for EnvType insertion')
       return newOrExistingET
 
 # ...............................................

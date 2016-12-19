@@ -226,7 +226,10 @@ BEGIN
                                              AND altpredCode = altpred
                                              AND dateCode = tm;
    END IF;
-   IF NOT FOUND THEN
+   IF FOUND THEN
+      RAISE NOTICE 'EnvType, id %, found for % % % % %', rec.envtypeid, 
+                                                 usr, env, gcm, altpred, tm;
+   ELSE
       RAISE NOTICE 'EnvType not found for % % % % %', usr, env, gcm, altpred, tm;
       INSERT INTO lm_v3.EnvType 
          (userid, envCode, gcmCode, altpredCode, dateCode, metadata, modTime) 

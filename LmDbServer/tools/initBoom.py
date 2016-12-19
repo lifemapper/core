@@ -140,6 +140,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
                         bbox=pkgMeta['bbox'], 
                         modTime=CURR_MJD, 
                         envCode=envcode, 
+                        dateCode=pkgMeta['baseline'],
                         envMetadata=envmeta,
                         envModTime=CURR_MJD,)
       layers.append(envlyr)
