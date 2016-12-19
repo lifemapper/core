@@ -113,6 +113,7 @@ class LmTree(object):
       internalPaths = {}
       lengths =  {}
       subTrees = {}
+      #TODO: We don't seem to need this with my changes to resolve polytomies
       self.polyPos = {}
       
       # ..............................   
@@ -129,6 +130,7 @@ class LmTree(object):
             else:
                if int(clade[PhyloTreeKeys.PATH_ID]) != 0:
                   self._numberMissingLengths +=1
+            # TODO: Wasting compute
             internalPaths[clade[PhyloTreeKeys.PATH_ID]] = [int(x) for x in clade[PhyloTreeKeys.PATH].split(',')]
             subTrees[int(clade[PhyloTreeKeys.PATH_ID])] = clade[PhyloTreeKeys.CHILDREN]
             if len(clade[PhyloTreeKeys.CHILDREN]) > 2:
@@ -177,6 +179,7 @@ class LmTree(object):
          if clade.has_key(PhyloTreeKeys.CHILDREN):
             clade.pop(PhyloTreeKeys.MTX_IDX, None)
             for child in clade[PhyloTreeKeys.CHILDREN]:
+               # TODO: This is not possible given Jeff's implementation
                takeOutMtx(child)
          else:
             clade.pop(PhyloTreeKeys.MTX_IDX, None)
@@ -305,6 +308,7 @@ class LmTree(object):
       @note: To be ultrametric, the branch length from root to tip must be 
                 equal for all tips
       @summary: check to see if tree is ultrametric, all the way to the root
+      @todo: Return true for some scenario
       """
       # Only possible if the tree has branch lengths
       if self.branchLengths == HAS_BRANCH_LEN:
@@ -399,6 +403,7 @@ class LmTree(object):
       @summary: makes paths by recursing tree and appending parent to new pathId
       @todo: Document
       @todo: Probably remove inner functions
+      @todo: Why are we resetting PATH_ID?
       """
       print "in make Paths"
       p = {PhyloTreeKeys.C:0}   
@@ -730,6 +735,24 @@ class LmTree(object):
       with open(path,'w') as f:
          f.write(json.dumps(self.tree, sort_keys=True, indent=4))
       
+   # ..............................
+   def hasPolytomies(self):
+      """
+      @summary: Returns boolean indicating if the tree has polytomies
+      """
+      return self._hasPolytomies(self.tree)
+   
+   # ..............................
+   def _hasPolytomies(self, clade):
+      if clade.has_key(PhyloTreeKeys.CHILDREN):
+         if len(clade[PhyloTreeKeys.CHILDREN]) > 2:
+            return True
+         else:
+            for c in clade[PhyloTreeKeys.CHILDREN]:
+               if self._hasPolytomies(c):
+                  return True
+      return False # Only if no polytomies here or branches
+
 
 # .............................................................................      
 if __name__ == "__main__":

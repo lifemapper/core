@@ -60,7 +60,7 @@ class FileFormat:
                                for this format
       """
       self.mimeType = mimeType
-      self.ext = defaultExtension
+      self.ext = extension
       self.extensions = allExtensions
       # Add the default extension to the extensions list if not present
       if self.ext not in allExtensions:
