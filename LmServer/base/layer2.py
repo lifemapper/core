@@ -1059,6 +1059,11 @@ class Vector(_Layer):
    
    # ..................................
    @property
+   def featureAttributes(self):
+      return self._featureAttributes
+   
+   # ..................................
+   @property
    def fidAttribute(self):
       return self._fidAttribute
    

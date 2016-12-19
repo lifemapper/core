@@ -38,9 +38,9 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, ARCHIVE_PATH,
                   DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
-from LmServer.rad.shapegrid import ShapeGrid
+from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.legion.envlayer import EnvironmentalType, EnvironmentalLayer
+from LmServer.legion.envlayer import EnvType, EnvLayer
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.sdmproj import SDMProjection
@@ -197,9 +197,7 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createEnvType(self, row, idxs):
       """
-      Create an _EnvironmentalType from a LayerType, lm_envlayer,
-      gcmcode, altpredCode, datecode, metadata
-
+      Create an _EnvironmentalType from an EnvType, lm_envlayer, lm_scenlayer
       """
       lyrType = None
       if row is not None:
@@ -210,8 +208,8 @@ class Borg(DbPostgresql):
          meta = self._getColumnValue(row, idxs, ['envmetadata', 'metadata'])
          modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
          usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
-         ltid = self._getColumnValue(row, idxs, ['environmentalTypeId'])
-         lyrType = EnvironmentalType(envcode, None, None, usr,
+         ltid = self._getColumnValue(row, idxs, ['envtypeid'])
+         lyrType = EnvType(envcode, None, None, usr,
                                      gcmCode=gcmcode, altpredCode=altcode, 
                                      dateCode=dtcode, metadata=meta, 
                                      modTime=modtime, environmentalTypeId=ltid)
@@ -220,22 +218,20 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createLayer(self, row, idxs):
       """
-      Create Raster or Vector layer from a Layer record in the Borg
+      @summary: Create Raster or Vector layer from a Layer or view in the Borg. 
+      @note: OccurrenceSet and SDMProject objects do not use this function
+      @note: used with Layer, lm_envlayer, lm_scenlayer, lm_shapegrid
       """
       lyr = None
       if row is not None:
-         dbid = self._getColumnValue(row, idxs, 
-                  ['projectionid', 'occurrencesetid', 'mdlmaskId', 'layerid'])
+         dbid = self._getColumnValue(row, idxs, ['layerid'])
          usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
          verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
          squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
          name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
-         dlocation = self._getColumnValue(row, idxs, ['prjdlocation', 
-                   'occdlocation', 'lyrdlocation', 'dlocation'])
-         murl = self._getColumnValue(row, idxs, ['prjmetadataurl', 
-                   'occmetadataurl', 'lyrmetadataurl', 'metadataurl'])
-         meta = self._getColumnValue(row, idxs, 
-                  ['prjmetadata', 'occmetadata', 'lyrmetadata', 'metadata'])
+         dlocation = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
+         murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
+         meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
          vtype = self._getColumnValue(row, idxs, ['ogrtype'])
          rtype = self._getColumnValue(row, idxs, ['gdaltype'])
          vunits = self._getColumnValue(row, idxs, ['valunits'])
@@ -247,9 +243,8 @@ class Borg(DbPostgresql):
          munits = self._getColumnValue(row, idxs, ['mapunits'])
          res = self._getColumnValue(row, idxs, ['resolution'])
          # for non-joined layer tables OccurrenceSet and Projection 
-         dtmod = self._getColumnValue(row, idxs, ['prjstatusmodtime', 
-                   'occstatusmodtime', 'statusmodtime', 'lyrmodtime', 'modtime'])
-         bbox = self._getColumnValue(row, idxs, ['prjbbox', 'occbbox', 'bbox'])
+         dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
+         bbox = self._getColumnValue(row, idxs, ['bbox'])
                      
          if vtype is not None:
             lyr = Vector(name=name, metadata=meta, bbox=bbox, 
@@ -275,16 +270,18 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createEnvLayer(self, row, idxs):
       """
-      Create an EnvironmentalLayer from a lm_scenlayer record in the Borg
+      Create an EnvLayer from a lm_envlayer or lm_scenlayer record in the Borg
       """
       envRst = None
+      envLayerId = self._getColumnValue(row,idxs,['envlayerid'])
       if row is not None:
          scenid = self._getColumnValue(row,idxs,['scenarioid'])
          scencode = self._getColumnValue(row,idxs,['scenariocode'])
          rst = self._createLayer(row, idxs)
          if rst is not None:
             etype = self._createEnvType(row, idxs)
-            envRst = EnvironmentalLayer.initFromParts(rst, etype, scencode=scencode)
+            envRst = EnvLayer.initFromParts(rst, etype, envLayerId=envLayerId, 
+                                            scencode=scencode)
       return envRst
 
 # ...............................................
@@ -296,19 +293,20 @@ class Borg(DbPostgresql):
       if row is not None:
          lyr = self._createLayer(row, idxs)
          shg = ShapeGrid.initFromParts(lyr, 
-                        self._getColumnValue(row,idxs,['cellsides']), 
-                        self._getColumnValue(row,idxs,['cellsize']), 
-                        siteId='siteid', siteX='centerX', siteY='centerY', 
-                        size=self._getColumnValue(row,idxs,['vsize']), 
-                        status=self._getColumnValue(row,idxs,['status']), 
-                        statusModTime=self._getColumnValue(row,idxs,['statusmodtime']),
-                        shapegridId=self._getColumnValue(row,idxs,['shapegridid']))
+                  self._getColumnValue(row,idxs,['cellsides']), 
+                  self._getColumnValue(row,idxs,['cellsize']),
+                  siteId=self._getColumnValue(row,idxs,['idattribute']), 
+                  siteX=self._getColumnValue(row,idxs,['xattribute']), 
+                  siteY=self._getColumnValue(row,idxs,['yattribute']), 
+                  size=self._getColumnValue(row,idxs,['vsize']),
+                  status=self._getColumnValue(row,idxs,['status']), 
+                  statusModTime=self._getColumnValue(row,idxs,['statusmodtime']))
       return shg
 
 # ...............................................
    def _createOccurrenceLayer(self, row, idxs):
       """
-      @note: takes lm_shapegrid record
+      @note: takes OccurrenceSet or lm_sdmproject record
       """
       occ = None
       if row is not None:
@@ -331,7 +329,7 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createProjection(self, row, idxs):
       """
-      @note: takes lm_project record
+      @note: takes lm_sdmproject record
       """
       prj = None
       if row is not None:
@@ -350,8 +348,8 @@ class Borg(DbPostgresql):
                   layerId=self._getColumnValue(row,idxs,['layerid']), 
                   verify=self._getColumnValue(row,idxs,['lyrverify']), 
                   squid=self._getColumnValue(row,idxs,['squid']), 
-                  metadata=self._getColumnValue(row, idxs, ['prjmetadata', 'metadata']), 
-                  dlocation=self._getColumnValue(row,idxs,['lyrdlocation','dlocation']), 
+                  metadata=self._getColumnValue(row, idxs, ['prjmetadata',]), 
+                  dlocation=self._getColumnValue(row,idxs,['lyrdlocation']), 
                   bbox=self._getColumnValue(row,idxs,['lyrbbox','bbox']), 
                   epsgcode=self._getColumnValue(row,idxs,['epsgcode']), 
                   gdalType=self._getColumnValue(row, idxs, ['gdaltype']), 
