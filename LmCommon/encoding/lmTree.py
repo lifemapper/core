@@ -1,5 +1,5 @@
 """
-@summary: Module containing LMTree class
+@summary: Module containing LmTree class
 @author: Jeff Cavner (edited by CJ Grady)
 @version: 1.0
 @status: alpha
@@ -271,7 +271,7 @@ class LmTree(object):
          tree = self._makeCladeFromEdges(newEdges, lengths=len_copy, tips=newtips)  # this relies on old data structures
          self.makePaths(tree)
          
-         return LMtree(tree)
+         return Lmtree(tree)
       else:
          raise ValueError('Cannot remove all tips from a tree, or leave single tip')
       
@@ -568,13 +568,13 @@ class LmTree(object):
       """
       if tree is None: # Start at the root
          tree = self.tree
-      while len(tree[CHILDREN]) > 2:
-         shuffle(tree[CHILDREN])
-         c1 = tree[CHILDREN].pop(0)
-         tree[CHILDREN][0][CHILDREN].append(c1)
+      while len(tree[PhyloTreeKeys.CHILDREN]) > 2:
+         shuffle(tree[PhyloTreeKeys.CHILDREN])
+         c1 = tree[PhyloTreeKeys.CHILDREN].pop(0)
+         tree[PhyloTreeKeys.CHILDREN][0][PhyloTreeKeys.CHILDREN].append(c1)
       
-      for i in range(len(tree[CHILDREN])):
-         self.resolvePolytomies(tree=tree[CHILDREN][i])
+      for i in range(len(tree[PhyloTreeKeys.CHILDREN])):
+         self.resolvePolytomies(tree=tree[PhyloTreeKeys.CHILDREN][i])
       
 
    # ..............................   
@@ -635,7 +635,7 @@ class LmTree(object):
             takeOutBr = False
          self.makePaths(newTree, takeOutBranches=takeOutBr)
             
-         return LMtree(newTree)
+         return LmTree(newTree)
       
       else:
          return self
@@ -761,7 +761,7 @@ if __name__ == "__main__":
    
    p = "/home/jcavner/PhyloXM_Examples/test_polyWithoutLengths.json"
    
-   to = LMtree.fromFile(p)
+   to = LmTree.fromFile(p)
    
    print to.polyPos
    
@@ -801,7 +801,7 @@ if __name__ == "__main__":
    #with open(os.path.join(treeDir,'tree_fromEdges.json'),'w') as f:
    #   f.write(json.dumps(tree,sort_keys=True, indent=4))
    #   
-   #to2 = LMtree.fromFile(os.path.join(treeDir,'tree_withoutNewPaths_2_YES.json'))
+   #to2 = LmTree.fromFile(os.path.join(treeDir,'tree_withoutNewPaths_2_YES.json'))
    
    #print "after tips ", to.tipCount
    #print "after internal ",to.internalCount
