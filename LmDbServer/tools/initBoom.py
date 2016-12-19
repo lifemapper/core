@@ -40,13 +40,12 @@ from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.legion.envlayer import EnvironmentalLayer                    
+from LmServer.legion.envlayer import EnvLayer                    
 from LmServer.legion.scenario import Scenario
-from LmServer.rad.shapegrid import ShapeGrid
+from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-# CURR_MJD = 57686
 # ...............................................
 def addUsers(scribe, configMeta):
    """
@@ -115,12 +114,12 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
    """
    layers = []
    staticLayers = {}
-   for ltype in pkgMeta['layertypes']:
-      ltmeta = lyrtypeMeta[ltype]
+   for envcode in pkgMeta['layertypes']:
+      ltmeta = lyrtypeMeta[envcode]
       keywords = [k for k in baseMeta['keywords']]
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
-      lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=ltype, 
+      lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=envcode, 
                             suffix=pkgMeta['suffix'])
       lyrMeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
                  'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
@@ -130,20 +129,22 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
       dloc = os.path.join(ENV_DATA_PATH, relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
-      envlyr = EnvironmentalLayer(lyrname, lyrMetadata=lyrMeta,
-                                  valUnits=ltmeta['valunits'],
-                                  dlocation=dloc, 
-                                  bbox=pkgMeta['bbox'], 
-                                  gdalFormat=configMeta['gdalformat'], 
-                                  gdalType=configMeta['gdaltype'],
-                                  mapunits=configMeta['mapunits'], 
-                                  resolution=configMeta['resolution'], 
-                                  epsgcode=configMeta['epsg'], 
-                                  layerType=ltype, envMetadata=envmeta,
-                                  userId=usr, modTime=CURR_MJD)
+      envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
+                        dlocation=dloc, 
+                        lyrMetadata=lyrMeta,
+                        dataFormat=configMeta['gdalformat'], 
+                        gdalType=configMeta['gdaltype'],
+                        valUnits=ltmeta['valunits'],
+                        mapunits=configMeta['mapunits'], 
+                        resolution=configMeta['resolution'], 
+                        bbox=pkgMeta['bbox'], 
+                        modTime=CURR_MJD, 
+                        envCode=envcode, 
+                        envMetadata=envmeta,
+                        envModTime=CURR_MJD,)
       layers.append(envlyr)
       if isStatic:
-         staticLayers[ltype] = envlyr
+         staticLayers[envcode] = envlyr
    return layers, staticLayers
 
 # ...............................................
@@ -178,17 +179,17 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
    layers = []
    rstType = None
    layertypes = pkgMeta['layertypes']
-   for ltype in layertypes:
+   for envcode in layertypes:
       keywords = [k for k in observedPredictedMeta[predRpt]['keywords']]
-      ltmeta = lyrtypeMeta[ltype]
+      ltmeta = lyrtypeMeta[envcode]
       relfname, isStatic = _findFileFor(ltmeta, predRpt, 
                                         gcm=gcm, tm=tm, altPred=altpred)
       if not isStatic:
          lyrname = _getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tm, 
-                               altpred=altpred, lyrtype=ltype, 
+                               altpred=altpred, lyrtype=envcode, 
                                suffix=pkgMeta['suffix'], isTitle=False)
          lyrtitle = _getbioName(predRpt, pkgMeta['res'], gcm=gcm, tm=tmvals['name'], 
-                                altpred=altpred, lyrtype=ltype, 
+                                altpred=altpred, lyrtype=envcode, 
                                 suffix=pkgMeta['suffix'], isTitle=True)
          scentitle = _getbioName(predRpt, pkgMeta['res'], gcm=mdlvals['name'], 
                                  tm=tmvals['name'], altpred=altpred, 
@@ -203,22 +204,23 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
             dloc = None
-         envlyr = EnvironmentalLayer(lyrname, lyrMetadata=lyrmeta,
-                                     valUnits=ltmeta['valunits'],
-                                     dlocation=dloc, 
-                                     bbox=pkgMeta['bbox'], 
-                                     gdalFormat=configMeta['gdalformat'], 
-                                     gdalType=rstType,
-                                     mapunits=configMeta['mapunits'], 
-                                     resolution=configMeta['resolution'], 
-                                     epsgcode=configMeta['epsg'], 
-                                     layerType=ltype, 
-                                     gcmCode=gcm, altpredCode=altpred, dateCode=tm,
-                                     envMetadata=envmeta,
-                                     userId=usr, modTime=CURR_MJD)
+         envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
+                           dlocation=dloc, 
+                           lyrMetadata=lyrmeta,
+                           dataFormat=configMeta['gdalformat'], 
+                           gdalType=rstType,
+                           valUnits=ltmeta['valunits'],
+                           mapunits=configMeta['mapunits'], 
+                           resolution=configMeta['resolution'], 
+                           bbox=pkgMeta['bbox'], 
+                           modTime=CURR_MJD,
+                           envCode=envcode, 
+                           gcmCode=gcm, altpredCode=altpred, dateCode=tm,
+                           envMetadata=envmeta, 
+                           envModTime=CURR_MJD)
       else:
          # Use the observed data
-         envlyr = staticLayers[ltype]
+         envlyr = staticLayers[envcode]
       layers.append(envlyr)
    return layers
 
@@ -240,14 +242,13 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
                                            lyrtypeMeta)
    scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
                'description': baseMeta['description'], 'keywords': basekeywords}
-   scen = Scenario(scencode, metadata=scenmeta, 
+   scen = Scenario(scencode, usr, configMeta['epsg'], 
+                   metadata=scenmeta, 
                    units=configMeta['mapunits'], 
                    res=configMeta['resolution'], 
                    bbox=pkgMeta['bbox'], 
                    modTime=CURR_MJD,  
-                   epsgcode=configMeta['epsg'], 
-                   layers=lyrs, 
-                   userId=usr)
+                   layers=lyrs)
    return scen, staticLayers
 
 # ...............................................
@@ -295,11 +296,14 @@ def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers
                               staticLayers, observedPredictedMeta, predRpt, tm, 
                               gcm=gcm, altpred=altpred)
          
-         scen = Scenario(scencode, metadata=scenmeta, 
+         scen = Scenario(scencode, usr, configMeta['epsg'], 
+                         metadata=scenmeta, 
+                         units=configMeta['mapunits'], 
+                         res=configMeta['resolution'], 
                          gcmCode=gcm, altpredCode=altpred, dateCode=tm,
-                         units=configMeta['mapunits'], res=configMeta['resolution'], 
-                         bbox=pkgMeta['bbox'], modTime=CURR_MJD, 
-                         epsgcode=configMeta['epsg'], layers=lyrs, userId=usr)
+                         bbox=pkgMeta['bbox'], 
+                         modTime=CURR_MJD, 
+                         layers=lyrs)
          predScenarios[scencode] = scen
    return predScenarios
 
@@ -536,61 +540,25 @@ if __name__ == '__main__':
        
 """
 import mx.DateTime
-# import LmDbServer.tools.charlieMetaExp3 as META
+import os
+from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
+         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
+         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
-         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
-from LmServer.common.log import ScriptLoimport mx.DateTime
-# import LmDbServer.tools.charlieMetaExp3 as META
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmDbServer.common.localconstants import (SCENARIO_PACKAGE, 
-         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE)
-from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE)
+from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
+                                            DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
-from LmServer.sdm.scenario import Scenario
-from LmServer.rad.shapegrid import ShapeGrid
-CURR_MJD = mx.DateTime.gmt().mjd
-from LmDbServer.tools.initBoom import *
-from LmDbServer.tools.initBoom import (_getBaselineLayers, _getbioName, 
-          _findFileFor, _getPredictedLayers, _importClimatePackageMetadata,
-          _getConfiguredMetadata)
-taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
-envPackageName = SCENARIO_PACKAGE
-META = _importClimatePackageMetadata(envPackageName)
-pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-configMeta = _getConfiguredMetadata(META, pkgMeta)
-lyrtypeMeta = META.LAYERTYPE_META
-usr = configMeta['userid']
+from LmServer.legion.envlayer import EnvLayer                    
+from LmServer.legion.scenario import Scenario
+from LmServer.legion.shapegrid import ShapeGrid
 
-logger = ScriptLogger('testing')
-scribe = BorgScribe(logger)
-success = scribe.openConnections()
-addUsers(scribe, configMeta)
-
-basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
-                                                META.LAYERTYPE_META,
-                                                META.OBSERVED_PREDICTED_META,
-                                                META.CLIMATE_KEYWORDS)
-predScens = createPredictedScenarios(usr, pkgMeta, configMeta, 
-                                     META.LAYERTYPE_META, staticLayers,
-                                     META.OBSERVED_PREDICTED_META,
-                                     META.CLIMATE_KEYWORDS)
-gger
-from LmServer.common.lmuser import LMUser
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.sdm.algorithm import Algorithm
-from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer                    
-from LmServer.sdm.scenario import Scenario
-from LmServer.rad.shapegrid import ShapeGrid
+CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBoom import *
 from LmDbServer.tools.initBoom import (_getBaselineLayers, _getbioName, 

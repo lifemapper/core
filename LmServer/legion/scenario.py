@@ -25,7 +25,7 @@ from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.common.localconstants import ARCHIVE_USER
-from LmServer.legion.envlayer import EnvironmentalLayer
+from LmServer.legion.envlayer import EnvLayer
 
 # .........................................................................
 class Scenario(MapLayerSet):
@@ -36,16 +36,17 @@ class Scenario(MapLayerSet):
    META_TITLE = 'title'
    META_AUTHOR = 'author'
    META_DESCRIPTION = 'description'
+   META_KEYWORDS = 'keywords'
 # .............................................................................
 # Constructor
 # .............................................................................
    # ...............................................       
-   def __init__(self, code, metadata={},
-                metadataUrl=None, dlocation=None,
+   def __init__(self, code, userId, epsgcode, metadata={},
+                metadataUrl=None, 
                 units=None, res=None, 
                 gcmCode=None, altpredCode=None, dateCode=None,
-                bbox=None, modTime=None, keywords=None, epsgcode=None,
-                layers=None, userId=ARCHIVE_USER, scenarioid=None):
+                bbox=None, modTime=None, 
+                layers=None, scenarioid=None):
       """
       @summary Constructor for the scenario class 
       @todo: Move title, author, description to self.metadata
@@ -64,12 +65,12 @@ class Scenario(MapLayerSet):
       """
       self._layers = []
       # layers are set not set in LayerSet or Layerset - done here to check
-      # that each layer is an EnvironmentalLayer
+      # that each layer is an EnvLayer
       MapLayerSet.__init__(self, code, 
                            url=metadataUrl, 
-                           dlocation=dlocation, keywords=keywords, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
-                           serviceType=LMServiceType.SCENARIOS, moduleType=LMServiceModule.SDM)      
+                           serviceType=LMServiceType.SCENARIOS, 
+                           moduleType=LMServiceModule.LM)      
       # aka MapLayerSet.name    
       self.code = code
       self.modTime = modTime
@@ -169,7 +170,7 @@ class Scenario(MapLayerSet):
       """
       if lyr is not None:
          if lyr.getId() is None or self.getLayer(lyr.metadataUrl) is None:
-            if isinstance(lyr, EnvironmentalLayer):
+            if isinstance(lyr, EnvLayer):
                self._layers.append(lyr)
                self._bbox = MapLayerSet._getIntersectBounds(self)
                # Set mapPrefix only if does not exist. Could be in multiple 
