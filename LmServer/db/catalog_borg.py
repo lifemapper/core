@@ -149,7 +149,7 @@ class Borg(DbPostgresql):
       Created only from a model, lm_fullModel, or lm_fullProjection 
       """
       code = self._getColumnValue(row, idxs, ['algorithmcode'])
-      params = self._getColumnValue(row, idxs, ['algorithmparams'])
+      params = self._getColumnValue(row, idxs, ['algparams'])
       try:
          alg = Algorithm(code, parameters=params)
       except:
@@ -750,7 +750,7 @@ class Borg(DbPostgresql):
       """
       metadata = occ.dumpLyrMetadata()
       try:
-         success = self.executeModifyFunction('lm_updateOccurrenceSet', 
+         row, idxs = self.executeSelectOneFunction('lm_updateOccurrenceSet', 
                                               occ.getId(), 
                                               occ.verify,
                                               occ.displayName,
@@ -764,9 +764,10 @@ class Borg(DbPostgresql):
                                               occ.statusModTime, 
                                               polyWkt, 
                                               pointsWkt)
+         updatedOcc = self._createOccurrenceLayer(row, idxs)
       except Exception, e:
          raise e
-      return success
+      return updatedOcc
 
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
@@ -835,31 +836,56 @@ class Borg(DbPostgresql):
       return newOrExistingOcc
 
 # ...............................................
-   def findOrInsertSDMProject(self, occ):
+   def findOrInsertSDMProject(self, proj):
       """
-      @summary: Find existing (from projectID OR usr/squid/epsg) 
-                OR save a new OccurrenceLayer  
-      @param occ: New OccurrenceSet to save 
-      @return new or existing OccurrenceLayer 
+      @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
+                OR save a new SDMProjection
+      @param proj: the SDMProjection object to update
+      @return new or existing SDMProjection 
       """
-      polywkt = pointswkt = None
-      pointtotal = occ.queryCount
-      if occ.getFeatures():
-         pointtotal = occ.featureCount
-         polywkt = occ.getConvexHullWkt()
-         pointswkt = occ.getWkt()
-         
+      lyrmeta = proj.dumpLyrMetadata()
+      prjmeta = proj.dumpParamMetadata()
+      algparams = proj.algorithm.dumpParametersAsString()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProject', 
-                              occ.getId(), occ.getUserId(), occ.squid, 
-                              occ.verify, occ.displayName,
-                              occ.constructMetadataUrl(),
-                              occ.getDLocation(), occ.getRawDLocation(),
-                              pointtotal, occ.getCSVExtentString(), occ.epsgcode,
-                              occ.dumpLyrMetadata(),
-                              occ.status, occ.statusModTime, polywkt, pointswkt)
-      newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
-      return newOrExistingOcc
+                     proj.getParametersId(), proj.getId(), proj.getUserId(), 
+                     proj.squid, proj.verify, proj.name, proj.getDLocation(), 
+                     proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
+                     proj.ogrType(), proj.valUnits, proj.nodataVal, proj.minVal,
+                     proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
+                     proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
+                     proj.occurrenceSet.getId(), proj.algorithmCode, algparams,
+                     proj.modelScenario.getId(), proj.modelMask.getId(),
+                     proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
+                     proj.processType, proj.status, proj.statusModTime)
+      newOrExistingProj = self._createProjection(row, idxs)
+      return newOrExistingProj
 
+# # ...............................................
+#    def updateSDMProject(self, proj):
+#       """
+#       @summary Method to update an SDMProjection object in the database with 
+#                the dlocation, bbox, geom, status/statusmodtime.
+#       @param proj: the SDMProjection object to update
+#       """
+#       metadata = prj.dumpLyrMetadata()
+#       try:
+#          success = self.executeSelectOneFunction('lm_updateOccurrenceSet', 
+#                                               occ.getId(), 
+#                                               occ.verify,
+#                                               occ.displayName,
+#                                               occ.getDLocation(), 
+#                                               occ.getRawDLocation(), 
+#                                               occ.queryCount, 
+#                                               occ.getCSVExtentString(), 
+#                                               occ.epsgcode, 
+#                                               metadata,
+#                                               occ.status, 
+#                                               occ.statusModTime, 
+#                                               polyWkt, 
+#                                               pointsWkt)
+#       except Exception, e:
+#          raise e
+#       return success
 
 # ...............................................
    def insertMFChain(self, usr, dlocation, priority, metadata, status):

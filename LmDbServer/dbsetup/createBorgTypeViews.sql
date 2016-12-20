@@ -218,7 +218,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    userid,
    occurrenceSetId,
    algorithmCode,
-   algParamHash,
+   algParams,
    mdlscenarioId,
    mdlmaskId,
    prjscenarioId,
@@ -269,7 +269,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    prjscendateCode
    ) AS
       SELECT p.sdmprojectid, p.layerid, p.userid, p.occurrenceSetId, 
-             p.algorithmCode, p.algParamHash, 
+             p.algorithmCode, p.algParams, 
              p.mdlscenarioId, p.mdlmaskId, p.prjscenarioId, p.prjmaskId, 
              p.metadata, p.layerid, p.status, p.statusModTime,
              l.squid, l.verify, l.name, l.dlocation, l.metadataUrl, l.metadata, 

@@ -440,7 +440,6 @@ class _LMBoomer(LMObject):
       currtime = dt.gmt().mjd
       occ = None
       ignore = False
-         
       # Find existing
       try:
          occ = self._scribe.getOccurrenceSet(squid=sciName.squid, 
@@ -449,7 +448,6 @@ class _LMBoomer(LMObject):
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
-
       # Reset existing if failed, waiting with missing data, out-of-date
       if occ is not None:
          if (JobStatus.failed(occ.status)
@@ -469,7 +467,6 @@ class _LMBoomer(LMObject):
             ignore = True
             self.log.debug('Ignoring occset {} ({}) is up to date'
                            .format(occ.getId(), sciName.scientificName))
-
       # Create new
       else:
          ogrFormat = None
@@ -487,7 +484,6 @@ class _LMBoomer(LMObject):
             if not isinstance(e, LMError):
                e = LMError(currargs=e.args, lineno=self.getLineno())
             raise e
-            
       # Set raw data and update status
       if occ and not ignore:
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
@@ -496,7 +492,9 @@ class _LMBoomer(LMObject):
             raise LMError(currargs='Unable to set raw data location')
          occ.setRawDLocation(rdloc, currtime)
          self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
-      
+      # No need to return up-to-date occ
+      if ignore:
+         occ = None
       return occ
    
 # ...............................................
@@ -834,11 +832,10 @@ class UserBoom(_LMBoomer):
          # Create jobs for Archive Chain: occurrence population, 
          # model, projection, and (later) intersect computation
          if occ is not None:
-            objs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+            objs = self._scribe.initOrRollbackSDMChain(self.userid, occ, self.algs, 
                                  self.modelScenario, self.projScenarios, 
                                  mdlMask=self.modelMask, projMask=self.projMask,
                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-                                 priority=self.priority, 
                                  intersectGrid=None,
                                  minPointCount=self.minPointCount)
             self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
@@ -1306,11 +1303,10 @@ occ = boomer._createOrResetOccurrenceset(taxonName, None,
                                        ProcessType.USER_TAXA_OCCURRENCE,
                                        dataCount, data=dataChunk)
 
-jobs = boomer._scribe.initSDMChain(boomer.userid, occ, boomer.algs, 
+jobs = boomer._scribe.initOrRollbackSDMChain(boomer.userid, occ, boomer.algs, 
                           boomer.modelScenario, 
                           boomer.projScenarios, 
                           occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-                          priority=Priority.NORMAL, 
                           intersectGrid=None,
                           minPointCount=POINT_COUNT_MIN)
 

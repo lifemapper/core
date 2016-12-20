@@ -307,12 +307,19 @@ class BorgScribe(LMObject):
 # ...............................................
    def initOrRollbackSDMProjects(self, usr, occset, mdlScen, prjScenList, alg,  
                           mdlMask=None, projMask=None, 
-                          modtime=mx.DateTime.gmt().mjd, 
-                          email=None, name=None, description=None):
+                          modtime=mx.DateTime.gmt().mjd, email=None):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
       prjs = []
+      try:
+         mmaskid = mdlMask.getId()
+      except:
+         mmaskid = None
+      try:
+         pmaskid = projMask.getId()
+      except:
+         pmaskid = None
       if alg.code == 'ATT_MAXENT':
          processType = ProcessType.ATT_PROJECT
       else:
@@ -320,11 +327,12 @@ class BorgScribe(LMObject):
       for prjScen in prjScenList:
          prj = SDMProjection(occset, alg, mdlScen, prjScen, 
                         processType=processType, 
-                        modelMaskId=mdlMask.getId(), projMaskId=projMask.getId(), 
+                        modelMaskId=mmaskid, projMaskId=pmaskid, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
-         if newOrExistingPrj.statusModTime
-         prjs.append(prj)
+         if JobStatus.finished(newOrExistingPrj.status):
+            newOrExistingPrj.updateStatus(JobStatus.GENERAL, stattime=modtime)
+         prjs.append(newOrExistingPrj)
       return prjs
 
 # ...............................................
@@ -333,13 +341,14 @@ class BorgScribe(LMObject):
                     occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
                     intersectGrid=None, minPointCount=None):
       """
-      @summary: Initialize LMArchive job chain (models, projections, 
-                optional intersect) for occurrenceset.
+      @summary: Initialize or rollback existing LMArchive SDM chain 
+                (SDMProjection, Intersection) dependent on this occurrenceset.
       """
       objs = [occ]
       currtime = mx.DateTime.gmt().mjd
       # ........................
-      if minPointCount is None or occ.queryCount >= minPointCount: 
+      if (minPointCount is None or occ.queryCount is None or 
+          occ.queryCount >= minPointCount): 
          for alg in algList:
             prjs = self.initOrRollbackSDMProjects(occ, mdlScen, 
                               prjScenList, alg, usr, 

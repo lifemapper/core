@@ -394,6 +394,10 @@ class SDMProjection(_ProjectionType, Raster):
       return self._projScenario
 
    @property
+   def projScenarioCode(self):
+      return self._projScenario.code
+
+   @property
    def projMask(self):
       return self._projMask
    
@@ -418,8 +422,16 @@ class SDMProjection(_ProjectionType, Raster):
       return self._algorithm.code
    
    @property
-   def projScenarioCode(self):
-      return self._projScenario.code
+   def modelScenario(self):
+      return self._modelScenario
+
+   @property
+   def modelScenarioCode(self):
+      return self._modelScenario.code
+   
+   @property
+   def modelMask(self):
+      return self._modelMask
    
    @property
    def projInputLayers(self):
