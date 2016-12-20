@@ -68,6 +68,13 @@ class EarlJr(LMObject):
       else:
          raise LMError(currargs='Must supply OccsetId or ProjId for layer name')
       return basename
+   
+# ...............................................
+   def createSDMProjectName(self, userId, squid, taxaname, algCode, mdlscenCode, 
+                            prjscenCode):
+      name = 'Taxa {} ({}) modeled with {} and {} projected onto {}'.format(
+               squid, taxaname, algCode, mdlscenCode, prjscenCode )
+      return name
 
 # ...............................................
    def _parseSDMId(self, idstr, parts):

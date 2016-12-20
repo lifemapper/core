@@ -255,7 +255,175 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+-- SDMProject
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProject(prjid int,
+                                                           lyrid int,
+                                                           usr varchar, 
+                                                           occid int,
+                                                           algcode varchar,
+                                                           alghash text,
+                                                           mdlscenid int,
+                                                           mdlmskid int,
+                                                           prjscenid int,
+                                                           prjmskid int,
+                                                           prjmeta text, 
+                                                           ptype int, 
+                                                           stat int, 
+                                                           stattime double precision)
+   RETURNS lm_v3.lm_sdmproject AS
+$$
+DECLARE
+   rec lm_v3.lm_sdmproject%ROWTYPE;                             
+BEGIN
+   IF prjid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE sdmprojectId = prjid;
+   ELSIF lyrid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE layerId = lyrid;
+   ELSE
+      SELECT * INTO rec from lm_v3.lm_sdmproject
+             WHERE userid = usr 
+               AND occurrenceSetId = occid 
+               AND algorithmCode = algcode 
+               AND algParamHash = alghash
+               AND mdlscenarioId = mdlscenid
+               AND mdlmaskId = mdlmskid
+               AND prjscenarioId = prjscenid
+               AND prjmaskId = prjmskid;
+   END IF;
+   
+   IF NOT FOUND THEN 
+   RETURN rec;                                              
+END; 
+$$ LANGUAGE 'plpgsql' STABLE; 
+                                                                        
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProject(prjid int, 
+                                          lyrid int,
+                                          usr varchar,
+                                          lyrsquid varchar,
+                                          lyrverify varchar,
+                                          lyrname varchar, 
+                                          lyrdloc varchar,
+                                          lyrmurlprefix varchar,
+                                          lyrmeta varchar,
+                                          datafmt varchar,
+                                          rtype int,
+                                          vtype int,
+                                          vunits varchar,
+                                          vnodata double precision,
+                                          vmin double precision,
+                                          vmax double precision,
+                                          epsg int,
+                                          munits varchar,
+                                          res double precision,
+                                          bboxstr varchar,
+                                          bboxwkt varchar,
+                                          lyrmtime double precision,
+                                          
+                                          occid int,
+                                          algcode varchar,
+                                          alghash text,
+                                          mdlscenid int,
+                                          mdlmskid int,
+                                          prjscenid int,
+                                          prjmskid int,
+                                          prjmeta text,
+                                          ptype int,
+                                          stat int,
+                                          stattime double precision)
+RETURNS lm_v3.lm_sdmproject AS
+$$
+occurrenceSetId,
+                                          algorithmCode,
+                                          algParamHash,
+                                          mdlscenarioId,
+                                          mdlmaskId,
+                                          prjscenarioId,
+                                          prjmaskId,
+                                          metadata,
+                                          processType,
+                                          status,
+                                          statusModTime
+DECLARE
+   newid int = -1;
+   idstr varchar;
+   murl varchar;
+   rec_lyr lm_v3.Layer%rowtype;
+   rec_prj lm_v3.SDMProject%rowtype;
+   rec_fullprj lm_v3.lm_sdmproject%rowtype;
+BEGIN
+   -- get or insert sdmproject 
+   SELECT * INTO rec_prj FROM lm_v3.lm_findOrInsertSDMProject(prjid, lyrid, usr, occid, 
+                   algcode, alghash, mdlscenid, mdlmskid, prjscenid, prjmskid, 
+                   prjmeta, ptype, stat, stattime);
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to findOrInsertSDMProject';
+   ELSE
 
+   -- get or insert layer 
+   SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
+      lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
+      vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
+
+
+   -- get or insert envType 
+   SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvType(etypeid, 
+                    usr, env, gcm, altpred, tm, etypemeta, etypemodtime);
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to findOrInsertEnvType';
+   ELSE
+         
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to findOrInsertLayer';
+      ELSE
+         SELECT * INTO rec_envlyr FROM lm_v3.lm_joinScenarioLayer(scenid, 
+                                 reclyr.layerId, rec_etype.envTypeId);
+      END IF;
+   END IF;
+   
+   RETURN rec_envlyr;
+
+   -- get or insert layer 
+   IF lyrid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = lyrid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.Layer WHERE userId = usr AND name = lyrname
+                                           AND epsgcode = epsg;
+   END IF;
+   
+   IF FOUND THEN
+      RAISE NOTICE 'User/Name/EPSG Layer % / % / % found with id %', 
+                    usr, lyrname, epsg, rec.layerid;
+   ELSE
+      INSERT INTO lm_v3.Layer (userid, squid, verify, name, dlocation, metadata, 
+           dataFormat, gdalType, ogrType, valUnits, nodataVal, minVal, maxVal, 
+           epsgcode, mapunits, resolution, bbox, modTime)
+         VALUES 
+          (usr, lyrsquid, lyrverify, lyrname, lyrdloc, lyrmeta, 
+           datafmt, rtype, vtype, vunits, vnodata, vmin, vmax, 
+           epsg, munits, res, bboxstr, lyrmtime);         
+                  
+      IF FOUND THEN
+         SELECT INTO newid last_value FROM lm_v3.layer_layerid_seq;
+         idstr := cast(newid as varchar);
+         murl := replace(lyrmurlprefix, '#id#', idstr);
+         IF bboxwkt is NOT NULL THEN
+            UPDATE lm_v3.Layer SET (metadataurl, geom) 
+               = (murl, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newid;
+         ELSE
+            UPDATE lm_v3.Layer SET metadataurl = murl WHERE layerid = newid;
+         END IF;
+         
+         SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = newid;
+      END IF; -- end if layer inserted
+   END IF;  
+      
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- ShapeGrid
 -- ----------------------------------------------------------------------------
@@ -332,7 +500,6 @@ BEGIN
    RETURN recshpgrd;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
- 
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateShapeGrid(lyrid int,

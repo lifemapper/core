@@ -305,8 +305,8 @@ class BorgScribe(LMObject):
 #       return occJob
 
 # ...............................................
-   def initSDMProjections(self, usr, occset, mdlScen, prjScenList, alg,  
-                          mdlMask=None, prjMask=None, 
+   def initOrRollbackSDMProjects(self, usr, occset, mdlScen, prjScenList, alg,  
+                          mdlMask=None, projMask=None, 
                           modtime=mx.DateTime.gmt().mjd, 
                           email=None, name=None, description=None):
       """
@@ -317,16 +317,18 @@ class BorgScribe(LMObject):
          processType = ProcessType.ATT_PROJECT
       else:
          processType = ProcessType.OM_PROJECT
-      for pscen in prjScenList:
-         prj = SDMProjection(occset, alg, mdlScen, mdlMask, pscen, prjMask, 
-                             processType=processType, 
-                             status=JobStatus.GENERAL, statusModTime=modtime)
-         self._borg.insertProjection(prj)
+      for prjScen in prjScenList:
+         prj = SDMProjection(occset, alg, mdlScen, prjScen, 
+                        processType=processType, 
+                        modelMaskId=mdlMask.getId(), projMaskId=projMask.getId(), 
+                        status=JobStatus.GENERAL, statusModTime=modtime)
+         newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
+         if newOrExistingPrj.statusModTime
          prjs.append(prj)
       return prjs
 
 # ...............................................
-   def initSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
+   def initOrRollbackSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
                     mdlMask=None, projMask=None,
                     occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
                     intersectGrid=None, minPointCount=None):
@@ -339,7 +341,7 @@ class BorgScribe(LMObject):
       # ........................
       if minPointCount is None or occ.queryCount >= minPointCount: 
          for alg in algList:
-            prjs = self.initSDMProjections(occ, mdlScen, 
+            prjs = self.initOrRollbackSDMProjects(occ, mdlScen, 
                               prjScenList, alg, usr, 
                               modtime=currtime, 
                               mdlMask=mdlMask, prjMask=projMask)
@@ -347,12 +349,12 @@ class BorgScribe(LMObject):
       return objs
    
 # ...............................................
-   def insertMFChain(self, usr, dlocation, priority=None):
+   def insertMFChain(self, usr, dlocation, priority=None, metadata={}):
       """
       @summary: Inserts a jobChain into database
       @return: jobChainId
       """
-      mfchain = self._borg.insertMFChain(usr, dlocation, JobStatus.INITIALIZE, 
-                                            priority)
+      mfchain = self._borg.insertMFChain(usr, dlocation, priority, metadata, 
+                                         JobStatus.INITIALIZE)
       return mfchain   
 

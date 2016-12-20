@@ -34,7 +34,6 @@ class EnvType(_LayerParameters):
                 metadata={}, modTime=None, envTypeId=None):
       """
       @summary Initialize the EnvType  class instance
-      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
       @param envCode: Code for the environmental type (i.e. temp, elevation, bio7)
       @param gcmCode: Code for the Global Climate Model used to create these data

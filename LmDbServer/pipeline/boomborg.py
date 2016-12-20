@@ -516,7 +516,7 @@ class _LMBoomer(LMObject):
             # Create jobs for Archive Chain; 'reset' to existing occset will be 
             # saved here
             try:
-               objs = self._scribe.initSDMChain(self.userid, occ, self.algs, 
+               objs = self._scribe.initOrRollbackSDMChain(self.userid, occ, self.algs, 
                               self.modelScenario, self.projScenarios, 
                               occJobProcessType=occProcessType, 
                               mdlMask=self.modelMask, projMask=self.projMask,

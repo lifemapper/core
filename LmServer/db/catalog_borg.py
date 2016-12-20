@@ -768,7 +768,6 @@ class Borg(DbPostgresql):
          raise e
       return success
 
-
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
       """
@@ -836,13 +835,41 @@ class Borg(DbPostgresql):
       return newOrExistingOcc
 
 # ...............................................
-   def insertMFChain(self, usr, dlocation, status):
+   def findOrInsertSDMProject(self, occ):
+      """
+      @summary: Find existing (from projectID OR usr/squid/epsg) 
+                OR save a new OccurrenceLayer  
+      @param occ: New OccurrenceSet to save 
+      @return new or existing OccurrenceLayer 
+      """
+      polywkt = pointswkt = None
+      pointtotal = occ.queryCount
+      if occ.getFeatures():
+         pointtotal = occ.featureCount
+         polywkt = occ.getConvexHullWkt()
+         pointswkt = occ.getWkt()
+         
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProject', 
+                              occ.getId(), occ.getUserId(), occ.squid, 
+                              occ.verify, occ.displayName,
+                              occ.constructMetadataUrl(),
+                              occ.getDLocation(), occ.getRawDLocation(),
+                              pointtotal, occ.getCSVExtentString(), occ.epsgcode,
+                              occ.dumpLyrMetadata(),
+                              occ.status, occ.statusModTime, polywkt, pointswkt)
+      newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
+      return newOrExistingOcc
+
+
+# ...............................................
+   def insertMFChain(self, usr, dlocation, priority, metadata, status):
       """
       @summary: Inserts a Makeflow Chain (MFProcess) into database
       @return: jobChainId
       """
       currtime = mx.DateTime.gmt().mjd
       mfchain = self.executeInsertFunction('lm_insertMFChain', usr, 
-                                          dlocation, priority, metadata, status, currtime)
-      return mfchain   
+                                          dlocation, priority, metadata, status, 
+                                          currtime)
+      return mfchain
 

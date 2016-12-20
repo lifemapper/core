@@ -266,8 +266,9 @@ create table lm_v3.Algorithm
 -- Process and Output Object (1-to-1 join with Layer)
 create table lm_v3.SDMProject
 (
+   sdmProjectId serial UNIQUE PRIMARY KEY,
    -- output
-   layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   layerid int UNIQUE NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    
    -- inputs
@@ -287,8 +288,7 @@ create table lm_v3.SDMProject
    status int,
    statusModTime double precision,
    UNIQUE (userId, occurrenceSetId, algorithmCode, algParamHash, 
-           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId),
-   PRIMARY KEY (layerid)
+           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId)
 );  
 CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);
