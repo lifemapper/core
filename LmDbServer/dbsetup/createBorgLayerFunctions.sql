@@ -141,7 +141,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- EnvLayer
-select * from lm_v3.lm_findOrInsertScenLayer(10,NULL,'kubi',NULL,'c71b3f8f68a212800a085f5be8f46717c465973de5df803fb6460e08f5dac8c4','alt-observed-10min','/share/lm/data/layers/10min/worldclim1.4/alt.tif','http://badenov-vc1.nhm.ku.edu/services/lm/envlayers/#id#','{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}','GTiff',3,NULL,'meters',-9999.0,-353.0,6241.0,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00','POLYGON((-180 -60,-180 90,180 90,180 -60,-180 -60))',57741.9625627,NULL,'alt',NULL,NULL,'observed','{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}',57741.9623055);
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenLayer(scenid int,
                                           lyrid int,
@@ -336,6 +335,46 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
  
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateShapeGrid(lyrid int,
+                                          lyrverify varchar,
+                                          lyrdloc varchar,
+                                          lyrmeta varchar,
+                                          lyrmtime double precision,
+                                          vsz int,
+                                          stat int,
+                                          stattime double precision)
+RETURNS lm_v3.lm_shapegrid AS
+$$
+DECLARE
+   reclyr lm_v3.layer%ROWTYPE;
+   recshpgrd lm_v3.lm_shapegrid%ROWTYPE;
+BEGIN
+   SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
+   IF NOT FOUND THEN
+      -- get or insert layer 
+      SELECT * FROM lm_v3.lm_updateLayer(lyrid, null, lverify, 
+         ldloc, lmeta, null, null, null, lmtime) INTO reclyr;
+         
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to find or update layer';
+      ELSE
+         UPDATE lm_v3.ShapeGrid 
+            SET (vsize, status, statusmodtime) = (vsz, stat, stattime);
+            
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to update shapegrid';
+         ELSE
+            SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
+              WHERE layerid = lyrid;
+         END IF;
+      END IF;
+   END IF;
+   
+   RETURN recshpgrd;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getShapegrid(sgid int, 
                                                  lyrid int, 
                                                  usr varchar, 
@@ -425,6 +464,45 @@ BEGIN
          
          SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = newid;
       END IF; -- end if layer inserted
+   END IF;  
+      
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateLayer(lyrid int,
+                                          lyrsquid varchar,
+                                          lyrverify varchar,
+                                          lyrdloc varchar,
+                                          lyrmeta varchar,
+                                          vnodata double precision,
+                                          vmin double precision,
+                                          vmax double precision,
+                                          lyrmtime double precision)
+RETURNS lm_v3.Layer AS
+$$
+DECLARE
+   newid int = -1;
+   idstr varchar;
+   murl varchar;
+   rec lm_v3.Layer%rowtype;
+BEGIN
+   -- get layer 
+   SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = lyrid;
+   
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Layer % NOT found', lyrid; 
+   ELSE
+      UPDATE lm_v3.Layer SET (squid, verify, dlocation, metadata, nodataVal, 
+                              minVal, maxVal, modTime)
+         = (lyrsquid, lyrverify, lyrdloc, lyrmeta, vnodata, vmin, vmax, lyrmtime)
+         WHERE layerid = lyrid;         
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Layer % NOT updated', lyrid;
+      ELSE 
+         SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = lyrid;
+      END IF; -- end if layer updated
    END IF;  
       
    RETURN rec;

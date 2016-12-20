@@ -518,6 +518,23 @@ class Borg(DbPostgresql):
       return updatedShpgrd
 
 # ...............................................
+   def updateShapeGrid(self, shpgrd):
+      """
+      @summary: Update Shapegrid attributes: 
+         verify, dlocation, metadata, modtime, size, status, statusModTime
+      @param shpgrd: ShapeGrid to be updated.  
+      @return: Updated record for successful update.
+      """
+      currtime = mx.DateTime.utc().mjd
+      meta = shpgrd.dumpMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_updateShapeGrid',
+                        shpgrd.getId(), shpgrd.verify, shpgrd.getDLocation(),
+                        meta, currtime, shpgrd.size, 
+                        shpgrd.status, shpgrd.statusModTime)
+      shpgrid = self._createShapeGrid(row, idxs)
+      return shpgrid
+
+# ...............................................
    def getShapeGrid(self, shpgridId, lyrId, userId, lyrName, epsg):
       """
       @summary: Find or insert a ShapeGrid into the database

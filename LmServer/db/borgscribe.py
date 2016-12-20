@@ -29,14 +29,13 @@ import socket
 from types import StringType, UnicodeType, IntType
 import xml.etree.ElementTree as ET 
 
-from LmCommon.common.lmconstants import (ENCODING, JobStatus, ProcessType)
+from LmCommon.common.lmconstants import (JobStatus, ProcessType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import  DbUser, ReferenceType
-from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
-                                 POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
+from LmServer.common.lmconstants import  DbUser
+from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName
@@ -167,6 +166,17 @@ class BorgScribe(LMObject):
 # ...............................................
    def insertShapeGrid(self, shpgrd, cutout=None):
       updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
+      return updatedShpgrd
+
+# ...............................................
+   def updateShapeGrid(self, shpgrd):
+      """
+      @summary: Update Shapegrid attributes: 
+         verify, dlocation, metadata, modtime, size, status, statusModTime
+      @param shpgrd: ShapeGrid to be updated.  
+      @return: Updated record for successful update.
+      """
+      updatedShpgrd = self._borg.updateShapeGrid(shpgrd)
       return updatedShpgrd
 
 # ...............................................
