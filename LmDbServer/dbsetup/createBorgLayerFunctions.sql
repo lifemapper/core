@@ -110,42 +110,40 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, ety
 $$
 DECLARE
    temp int;
-   recel lm_v3.lm_envlayer%ROWTYPE;
-   recsl lm_v3.lm_scenlayer%ROWTYPE;
+   elid int;
+   rec_scenlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
    SELECT count(*) INTO temp FROM lm_v3.scenario WHERE scenarioid = scenid;
    IF temp < 1 THEN
       RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
    END IF;
    
-   SELECT * INTO recel FROM lm_v3.lm_joinEnvLayer(lyrid, etypeid);
+   SELECT envlayerid INTO elid FROM lm_v3.lm_joinEnvLayer(lyrid, etypeid);
    IF FOUND THEN    
-      SELECT * INTO recsl FROM lm_v3.lm_scenlayer WHERE scenarioId = scenid 
-                                                    AND layerid = lyrid 
-                                                    AND envTypeId = etypeid;
-      IF NOT FOUND THEN
-         INSERT INTO lm_v3.ScenarioLayer (scenarioid, layerid, envTypeId) 
-                         VALUES (scenid, lyrid, etypeid);
+      SELECT * INTO rec_scenlyr FROM lm_v3.lm_scenlayer 
+         WHERE scenarioId = scenid AND envLayerId = elid;
+      IF rec_scenlyr.scenariolayerid IS NULL THEN
+         INSERT INTO lm_v3.ScenarioLayer (scenarioid, envlayerid) 
+                                  VALUES (scenid, elid);
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to insert/join EnvLayer';
          ELSE
-            SELECT * INTO recsl FROM lm_v3.ScenarioLayer 
-               WHERE scenarioId = scenid 
-                 AND layerid = lyrid 
-                 AND envTypeId = etypeid;
+            SELECT * INTO rec_scenlyr FROM lm_v3.ScenarioLayer 
+               WHERE scenarioId = scenid AND envLayerId = elid;
          END IF;
       END IF;
    END IF;
    
-   RETURN recsl;
+   RETURN rec_scenlyr;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
 -- EnvLayer
+select * from lm_v3.lm_findOrInsertScenLayer(10,NULL,'kubi',NULL,'c71b3f8f68a212800a085f5be8f46717c465973de5df803fb6460e08f5dac8c4','alt-observed-10min','/share/lm/data/layers/10min/worldclim1.4/alt.tif','http://badenov-vc1.nhm.ku.edu/services/lm/envlayers/#id#','{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}','GTiff',3,NULL,'meters',-9999.0,-353.0,6241.0,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00','POLYGON((-180 -60,-180 90,180 90,180 -60,-180 -60))',57741.9625627,NULL,'alt',NULL,NULL,'observed','{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}',57741.9623055);
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(scenid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenLayer(scenid int,
                                           lyrid int,
                                           usr varchar,
                                           lyrsquid varchar,
@@ -220,13 +218,16 @@ DECLARE
    rec lm_v3.EnvType%ROWTYPE;
    newid int;
 BEGIN
-   SELECT * into rec FROM lm_v3.lm_findEnvType(etypeid, usr, env, gcm, 
-                                                         altpred, tm);
-   IF rec.envTypeId IS NULL THEN
+   SELECT * into rec FROM lm_findEnvType(etypeid, usr, env, gcm, altpred, tm);
+   IF rec.envtypeid IS NOT NULL THEN
+      RAISE NOTICE 'EnvType, id %, found for % % % % %', rec.envtypeid, 
+                                                 usr, env, gcm, altpred, tm;
+   ELSE
+      RAISE NOTICE 'Inserting EnvType for % % % % %', usr, env, gcm, altpred, tm;
       INSERT INTO lm_v3.EnvType 
          (userid, envCode, gcmCode, altpredCode, dateCode, metadata, modTime) 
       VALUES (usr, env, gcm, altpred, tm, meta, modtime);
-      RAISE NOTICE 'vals = %, %, %, %, %, %, %', usr, env, gcm, altpred, tm, meta, modtime;
+ 
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to insert EnvType';
       ELSE

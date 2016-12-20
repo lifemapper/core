@@ -638,6 +638,7 @@ class LMServiceType:
    ANCILLARY_LAYERS = 'anclayers'
    PRESENCEABSENCE_LAYERS = 'palayers'
    MATRIX_LAYERS = 'mtxlayers'
+   ENVIRONMENTAL_LAYERS = 'envlayers'
    PROJECTIONS = 'projections'
    SCENARIOS = 'scenarios'
    SHAPEGRIDS = 'shpgrid'

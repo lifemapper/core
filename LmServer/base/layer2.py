@@ -107,15 +107,14 @@ class _Layer(LMSpatialObject, ServiceObject):
                              moduleType=moduleType, metadataUrl=metadataUrl,
                              parentMetadataUrl=parentMetadataUrl, modTime=modTime)
 #      ogr.UseExceptions()
-      self._verify = None
       self.name = name
       self._layerUserId = userId
       self._layerId = lyrId
       self.squid = squid
-      self._verify = None
-      self._setVerify(verify)
       self._dlocation = None
       self.setDLocation(dlocation)
+      self._verify = None
+      self._setVerify(verify)
       self.lyrMetadata = {}
       self.loadLyrMetadata(metadata)
       self._dataFormat = dataFormat
@@ -475,8 +474,7 @@ class Raster(_Layer):
    def __init__(self, name, userId, epsgcode, lyrId=None, 
                 squid=None, verify=None, dlocation=None, 
                 metadata={}, dataFormat=None, gdalType=None, 
-                valUnits=None, valAttribute='pixel', 
-                nodataVal=None, minVal=None, maxVal=None, 
+                valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
                 bbox=None,
                 svcObjId=None, serviceType=LMServiceType.LAYERS, 
@@ -507,7 +505,7 @@ class Raster(_Layer):
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, gdalType=gdalType, 
-                valUnits=valUnits, valAttribute=valAttribute, 
+                valUnits=valUnits, valAttribute='pixel', 
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 
                 bbox=bbox,
@@ -634,8 +632,12 @@ class Raster(_Layer):
          else:
             dataset, band = self._openWithGDAL(dlocation=dlocation, bandnum=bandnum)
             srs = dataset.GetProjection()
-            geoTransform = dataset.GetGeoTransform()
             size = (dataset.RasterXSize, dataset.RasterYSize)
+            geoTransform = dataset.GetGeoTransform()
+            ulx = geoTransform[0]
+            xPixelSize = geoTransform[1]
+            uly = geoTransform[3]
+            yPixelSize = geoTransform[5]
             
             drv = dataset.GetDriver()
             gdalFormat = drv.GetDescription()
@@ -655,10 +657,6 @@ class Raster(_Layer):
                dlocation = head + correctExt
                os.rename(oldDl, dlocation)
    
-            ulx = self.geoTransform[0]
-            xPixelSize = self.geoTransform[1]
-            uly = self.geoTransform[3]
-            yPixelSize = self.geoTransform[5]
             # Assumes square pixels
             if resolution is None:
                resolution = xPixelSize
@@ -1056,6 +1054,11 @@ class Vector(_Layer):
                      (self._featureAttributes[k2][0], self._features[k1][k2]) \
                      for k2 in self._featureAttributes]), 
                        "Feature") for k1 in self._features]
+   
+   # ..................................
+   @property
+   def featureAttributes(self):
+      return self._featureAttributes
    
    # ..................................
    @property

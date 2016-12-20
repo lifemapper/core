@@ -24,10 +24,8 @@
 import json
 
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
-from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
-from LmServer.base.serviceobject2 import ServiceObject
 # .........................................................................
 class EnvType(_LayerParameters):
 # .............................................................................
@@ -46,11 +44,8 @@ class EnvType(_LayerParameters):
       @param dateCode: Code for the time period for which these data are predicted.
       """
       # lyr.getParametersId() <-- lyr._layerTypeId 
-      _LayerParameters.__init__(self, -1, modTime, userId, envTypeId,
-                                metadata=metadata)
-      ServiceObject.__init__(self, userId, envTypeId, modTime, modTime, 
-                             serviceType=LMServiceType.LAYERTYPES, 
-                             moduleType=LMServiceModule.LM)
+      _LayerParameters.__init__(self, userId, paramId=envTypeId, 
+                                metadata=metadata, modTime=modTime)
       self.envCode = envCode
       self.gcmCode = gcmCode
       self.altpredCode = altpredCode
@@ -68,10 +63,8 @@ class EnvLayer(EnvType, Raster):
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
-                bbox=None,
-                svcObjId=None, serviceType=LMServiceType.LAYERS, 
-                moduleType=LMServiceModule.LM,
-                metadataUrl=None, parentMetadataUrl=None, modTime=None,                
+                bbox=None, envLayerId=None, metadataUrl=None, 
+                parentMetadataUrl=None, modTime=None,                
                 # EnvType
                 envCode=None, gcmCode=None, altpredCode=None, dateCode=None, 
                 envMetadata={}, envModTime=None, envTypeId=None):
@@ -90,30 +83,29 @@ class EnvLayer(EnvType, Raster):
       Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
-                valUnits=valUnits, valAttribute=valAttribute, 
-                nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
+                valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 
-                bbox=bbox, svcObjId=svcObjId, serviceType=serviceType, 
-                moduleType=moduleType, metadataUrl=metadataUrl, 
-                parentMetadataUrl=parentMetadataUrl, modTime=modTime)
+                bbox=bbox, svcObjId=envLayerId, 
+                serviceType=LMServiceType.ENVIRONMENTAL_LAYERS, 
+                moduleType=LMServiceModule.LM, 
+                metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
+                modTime=modTime)
       self._scenCode = scencode
       self._setMapPrefix(scencode=scencode)
 
 # ...............................................
    @classmethod
-   def initFromParts(cls, raster, envType, scencode=None):
+   def initFromParts(cls, raster, envType, envLayerId=None, scencode=None):
       envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode, 
                   scencode=scencode, lyrId=raster.getId(), squid=raster.squid, 
                   verify=raster.verify, dlocation=raster.getDLocation(),
                   lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat, 
                   gdalType=raster.gdalType, valUnits=raster.valUnits, 
-                  valAttribute=raster.getValAttribute(), 
                   nodataVal=raster.nodataVal, minVal=raster.minVal, 
                   maxVal=raster.maxVal, mapunits=raster.mapUnits, 
                   resolution=raster.resolution, bbox=raster.bbox,
-                  # using this a straight layer object
-                  svcObjId=raster.getId(), 
-                  serviceType=raster.serviceType, moduleType=raster.moduleType,
+                  # Join table for EnvironmentalLayer ServiceObject unique id
+                  envLayerId=envLayerId, 
                   metadataUrl=raster.metadataUrl, 
                   parentMetadataUrl=raster.parentMetadataUrl, 
                   modTime=raster.modTime,                

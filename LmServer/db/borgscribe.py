@@ -38,7 +38,7 @@ from LmServer.common.lmconstants import  DbUser, ReferenceType
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
                                  POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.sdm.envlayer import EnvironmentalLayer, EnvironmentalType
+from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName
 
 # .............................................................................
@@ -120,7 +120,7 @@ class BorgScribe(LMObject):
 # ...............................................
    def insertScenarioLayer(self, lyr, scenarioid):
       updatedLyr = None
-      if isinstance(lyr, EnvironmentalLayer):
+      if isinstance(lyr, EnvLayer):
          if lyr.isValidDataset():
             updatedLyr = self._borg.findOrInsertEnvLayer(lyr, scenarioid)
          else:
@@ -131,10 +131,10 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def insertLayerTypeCode(self, envType):
-      if isinstance(envType, EnvironmentalType):
+      if isinstance(envType, EnvType):
          newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
       else:
-         raise LMError(currargs='Invalid object for EnvironmentalType insertion')
+         raise LMError(currargs='Invalid object for EnvType insertion')
       return newOrExistingET
 
 # ...............................................
