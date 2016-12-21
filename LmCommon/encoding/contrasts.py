@@ -48,10 +48,10 @@ from osgeo import ogr,gdal
 ogr.UseExceptions()
 
 # .............................................................................
-class BioGeo(object):
+class BioGeoEncoding(object):
    """
-   @summary: The BioGeo class represents a site by biogeographic hypothesis
-                matrix
+   @summary: The BioGeoEncoding class represents a site by biogeographic
+                hypothesis matrix
    @todo: Improve documentation
    """
    
@@ -526,7 +526,7 @@ class PhyloEncoding(object):
       return len(mx) == colCnt
 
    # ..............................   
-   def makeP(self,branchLengths):
+   def makeP(self, branchLengths):
       """
       @summary: encodes phylogeny into matrix P and checks
       for sps in tree but not in PAM (I), if not in PAM, returns
@@ -536,13 +536,13 @@ class PhyloEncoding(object):
       @todo: Function documentation
       """
       ######### make P ###########
-      tips, internal, tipsNotInMtx, lengths,tipPaths = self.buildTips()
+      tips, internal, tipsNotInMtx, lengths, tipPaths = self.buildTips()
       negsDict = self.processInternalNodes(internal)
       tipIds,internalIds = self.getIds(tips,internalDict=internal)
       #matrix = initMatrix(len(tipIds),len(internalIds))
 
       if branchLengths:
-         sides = self.getSides(internal,lengths)
+         sides = self.getSides(internal, lengths)
          matrix = np.zeros((len(tipIds), len(internalIds)), dtype=np.float)  # consider it's own init func
          P = self.buildP_BrLen(matrix, internal, sides, lengths, tips, tipPaths)
       else:
@@ -679,6 +679,11 @@ class PhyloEncoding(object):
       # TODO: Function documentation
       # TODO: Inline documentation
    def negs(self, clade):
+      """
+      @todo: Document what this is doing
+      @summary: 
+      @param clade: The clade to do it for
+      """
       sL = []
       def getNegIds(clade):    
          if "children" in clade:
@@ -718,14 +723,26 @@ class PhyloEncoding(object):
       
    # ..............................   
    def buildPMatrix(self, emptyMtx, internalIds, tipsDictList, whichSide):
+      """
+      @summary: Creates a P matrix when no branch lengths are present
+      @param emptyMtx: 
+      @param internalIds: 
+      @param tipsDictList: 
+      @param whichSide: 
+      @todo: Document
+      """
       # TODO: Function documentation
       # TODO: Inline documentation
       #negs = {'0': [1,2,3,4,5,6,7], '2': [3, 4, 5], '1':[2,3,4,5,6],
       #        '3':[4],'8':[9]}
       negs = whichSide
+      # TODO: What is ri?  Is it just path id?  Or is it tied to the matrix?
       for ri, tip in enumerate(tipsDictList):
          newRow = np.zeros(len(internalIds), dtype=np.float)  # need these as zeros since init mtx is autofil
+         
+         # TODO: These are already integers
          pathList = [int(x) for x in tip["path"].split(",")][1:]
+
          tipId = tip["pathId"]
          for i,n in enumerate(pathList):
             m = 1
@@ -739,42 +756,18 @@ class PhyloEncoding(object):
       return emptyMtx  
    
    # ..............................   
-   def getSides_0(self, internal, lengths):
-      """
-      has to have complete lengths
-      """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      def goToTip(clade):
-         
-         if "children" in clade:
-            lengthsfromSide[int(clade["pathId"])] = float(clade["length"])
-            for child in clade["children"]:
-               goToTip(child)
-         else:
-            # tips
-            lengthsfromSide[int(clade["pathId"])] = float(clade["length"])
-            #pass
-      # for each key (pathId) in internal recurse each side
-      sides = {}
-      for pi in internal:
-         sides[int(pi)] = []
-         
-         lengthsfromSide = {}
-         goToTip(internal[pi][0])
-         sides[int(pi)].append(lengthsfromSide)
-         
-         lengthsfromSide = {}
-         goToTip(internal[pi][1])
-         sides[int(pi)].append(lengthsfromSide)
-      #print sides
-      #print
-      return sides
-   
-   # ..............................   
    def getSides(self, internal, lengths):
       """
-      has to have complete lengths
+      @summary: Builds a dictionary of lists of two items.
+      @param internal:
+      @param lengths: A dictionary of path id (key) branch length (value) for all nodes in a tree
+      @note: Creates a dictionary of lists, two items long
+      @note: Each item in the list is a dictionary of path id: length
+      @note: Internal nodes have one child and decendents on each side
+      @todo: Document
+      @todo: Rewrite this, it is very redundant
+      @todo: Add a get decendents method to LmTree
+      @todo: Add an LmTree to the class
       """
       # TODO: Function documentation
       # TODO: Inline documentation
@@ -813,7 +806,19 @@ class PhyloEncoding(object):
    # ..............................   
    def buildP_BrLen(self, emptyMtx, internal, sides, lengths, tipsDictList, tipPaths):
       """
-      @summary: new, more effecient method for br len enc.
+      @todo: Rename this to something like buildPMatrixFromBranchLengths
+      @summary: Build a P matrix from branch lengths
+      @todo: Jeff's doc - new, more effecient method for br len enc.
+      
+      @param emptyMtx:
+      @param internal: 
+      @param sides: A dictionary of lists (see getSides for more info)
+      @param lengths: A dictionary of path id (key) branch length (value)
+      @param tipsDictList: A list of tips dictionaries
+      @param tipPaths:  
+      
+      
+      
       @param lengths: lengths keys are ints
       @param sides: sides keys are ints
       """
@@ -848,6 +853,7 @@ class PhyloEncoding(object):
             num = tipLength + sum([lengths[i] / sum(NotipsDescFromInternal[i]) for i in InternalPerSide if i in tipPath])
             result = num/posDen
             emptyMtx[mx][col] = result
+
          #negSideClade = internal[k][1]  # clade dict
          negDen = sum(sides[k][1].values()) 
          TipsPerSide = [x for x in sides[k][1].keys() if x in tipIds]
