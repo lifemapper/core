@@ -25,7 +25,7 @@ import glob
 import mx.DateTime
 import os
 
-from LmCommon.common.lmconstants import OutputFormat, JobStatus
+from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType
 
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
@@ -41,28 +41,28 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 # .............................................................................
    def __init__(self, occurrenceSet, algorithm, modelScenario, modelMaskId, 
                 projScenario, projMaskId, processType, projMetadata,
-                status, statusModTime, userId, layerId):
+                status, statusModTime, userId, projectId):
       """
       @summary Initialize the _ProjectionType class instance
+      @copydoc LmServer.base.layer2._LayerParameters::__init__()
+      @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
       @param occurrenceSet: OccurrenceLayer object for SDM model process
       @param algorithm: Algorithm object for SDM model process
       @param modelScenario: : Scenario (environmental layer inputs) for 
              SDM model process
-      @param modelMask: Mask for SDM model process
+      @param modelMaskId: Mask for SDM model process
       @param projScenario: Scenario (environmental layer inputs) for 
              SDM project process
-      @param projMask: Mask for SDM project process
-      @param status: status of computation
-      @param statusModTime: Time stamp in MJD for status modification.
-      @param userId: Id for the owner of this projection
-      @param layerId: The layerId for the Layer and SDMProject tables in database.  
+      @param projMaskId: Mask for SDM project process
+      @param processType: LmCommon.common.lmconstants.ProcessType for computation
+      @param projMetadata: Metadata for this projection 
       """
       if status is not None and statusModTime is None:
          statusModTime = mx.DateTime.utc().mjd
          
       _LayerParameters.__init__(self, -1, statusModTime, userId, 
-                                layerId, metadata=projMetadata)
-      ProcessObject.__init__(self, objId=layerId, 
+                                projectId, metadata=projMetadata)
+      ProcessObject.__init__(self, objId=projectId, 
                              processType=processType, parentId=None, 
                              status=status, statusModTime=statusModTime)
       self._occurrenceSet = occurrenceSet
@@ -71,7 +71,6 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       self._modelScenario = modelScenario
       self._projMaskId = projMaskId
       self._projScenario = projScenario
-      
                 
 # .............................................................................
 class SDMProjection(_ProjectionType, Raster):
@@ -84,58 +83,39 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, occurrenceSet, algorithm, modelScenario, 
-                projScenario, processType=None, 
-                modelMaskId=None, projMaskId=None, 
-                projMetadata={}, lyrMetadata={},
-                status=None, statusModTime=None, 
-                userId=None, layerId=None, verify=None, squid=None, 
-                dlocation=None, bbox=None, epsgcode=None, 
-                gdalType=None, gdalFormat=DEFAULT_PROJECTION_FORMAT,
-                mapunits=None, resolution=None, isDiscreteData=None,
-                metadataUrl=None):
+   def __init__(self, occurrenceSet, algorithm, modelScenario, projScenario, 
+                processType=None, modelMaskId=None, projMaskId=None, 
+                projMetadata={}, status=None, statusModTime=None, projectId=None,
+                name=None, epsgcode=None, lyrId=None, squid=None, verify=None, 
+                dlocation=None, lyrMetadata={}, dataFormat=None, gdalType=None, 
+                valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
+                mapunits=None, resolution=None, bbox=None,
+                metadataUrl=None, parentMetadataUrl=None, modTime=None):
       """
-      @todo: remove userId keyword parameter??
       @summary Constructor for the SDMProjection class
-      @param occurrenceSet: OccurrenceLayer object for SDM model process
-      @param algorithm: Algorithm object for SDM model process
-      @param modelScenario: : Scenario (environmental layer inputs) for 
-             SDM model process
-      @param modelMask: Mask for SDM model process
-      @param projScenario: Scenario (environmental layer inputs) for 
-             SDM project process
-      @param projMask: Mask for SDM project process
-      @param status: status of computation
-      @param statusModTime: Time stamp in MJD for status modification.
-      @param userId: Id for the owner of this projection
-      @param layerId: The layerId for the projection and layer tables in db.  
-
-      @param dlocation: absolute filename of the projection raster
-      @param status: status of the Projection
-      @param statusModTime: time of the latest status modification 
-                            in modified julian date format
-      @param projectionId: database id of the Projection
+      @copydoc LmServer.legion.sdmproj._ProjectionType::__init__()
+      @copydoc LmServer.base.layer2._Layer::__init__()
       """
-      (processType, bbox, epsgcode, mapunits, resolution, isDiscreteData, 
-       gdalFormat) = self._getDefaultsFromInputs(processType, projScenario, 
-                                                 algorithm, bbox, epsgcode, 
-                                                 mapunits, resolution, 
-                                                 isDiscreteData, gdalFormat)
+      (userId, name, squid, processType, bbox, epsg, mapunits, resolution, 
+       isDiscreteData, dataFormat) = self._getDefaultsFromInputs(occurrenceSet, 
+                              algorithm, modelScenario, projScenario, 
+                              name, squid, processType, bbox, epsgcode, 
+                              mapunits, resolution, dataFormat)
       _ProjectionType.__init__(self, occurrenceSet, algorithm, 
                                modelScenario, modelMaskId, 
                                projScenario, projMaskId, processType, 
                                projMetadata,
-                               status, statusModTime, userId, layerId)
-      lyrmetadata = self._createMetadata(lyrMetadata)
-      Raster.__init__(metadata=lyrmetadata, bbox=bbox, dlocation=dlocation, 
-                gdalType=gdalType, gdalFormat=gdalFormat, 
-                mapunits=mapunits, resolution=resolution, epsgcode=epsgcode,
-                isDiscreteData=isDiscreteData,
-                svcObjId=layerId, lyrId=layerId, lyrUserId=userId, 
-                verify=verify, squid=squid, modTime=statusModTime, 
-                metadataUrl=metadataUrl,
-                serviceType=LMServiceType.PROJECTIONS, moduleType=LMServiceModule.SDM)
-      self.setId(layerId)
+                               status, statusModTime, userId, projectId)
+      lyrmetadata = self._createMetadata(lyrMetadata, isDiscreteData=isDiscreteData)
+      Raster.__init__(name, userId, epsg, lyrId=lyrId, 
+                squid=squid, verify=verify, dlocation=dlocation, 
+                metadata=lyrmetadata, dataFormat=dataFormat, gdalType=gdalType, 
+                valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, 
+                maxVal=maxVal, mapunits=mapunits, resolution=resolution, 
+                bbox=bbox, svcObjId=lyrId, serviceType=LMServiceType.PROJECTIONS, 
+                moduleType=LMServiceModule.LM, metadataUrl=metadataUrl, 
+                parentMetadataUrl=parentMetadataUrl, modTime=modTime)
+      self.setId(lyrId)
       self.setLocalMapFilename()
       self._setMapPrefix()
    
@@ -155,7 +135,6 @@ class SDMProjection(_ProjectionType, Raster):
             filename = self.createLocalDLocation()
             if os.path.exists(filename):
                self._dlocation = filename
-         
          self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
          self._setMapPrefix()
 
@@ -186,37 +165,57 @@ class SDMProjection(_ProjectionType, Raster):
       return self._model.getAbsolutePath()
 
 # ...............................................
-   def _createMetadata(self, metadata):
+   def _createMetadata(self, metadata, isDiscreteData=False):
       try:
-         metadata['keywords']
+         metadata[Raster.META_KEYWORDS]
       except:
          keywds = set(['SDM', 'potential habitat', self.speciesName, 
                        self.algorithmCode])
          keywds = keywds.union(self._projScenario.keywords)
-         metadata['keywords'] = keywds
+         metadata[Raster.META_KEYWORDS] = keywds
       try:
-         metadata['description']
+         metadata[Raster.META_DESCRIPTION]
       except:
-         metadata['description'] = ('Modeled habitat for {} projected onto {} datalayers'
+         metadata[Raster.META_DESCRIPTION] = ('Modeled habitat for {} projected onto {} datalayers'
                            .format(self.speciesName, self._projScenario.name))
+      try:
+         metadata[Raster.META_IS_DISCRETE]
+      except:
+         metadata[Raster.META_IS_DISCRETE] = isDiscreteData
       return metadata
    
 # ...............................................
-   def _getDefaultsFromInputs(self, projScenario, algorithm, bbox, epsgcode, 
-                              mapunits, resolution, isDiscreteData, gdalFormat):
+   def _getDefaultsFromInputs(self, occurrenceSet, algorithm, 
+                              modelScenario, projScenario, 
+                              name, squid, processType, bbox, epsgcode, 
+                              mapunits, resolution, gdalFormat):
+      userId = occurrenceSet.getUserId()
+      if name is None:
+         name = self._earlJr.createSDMProjectName(userId, occurrenceSet.squid, 
+                                                  occurrenceSet.displayName, 
+                                                  algorithm.code, 
+                                                  modelScenario.code, 
+                                                  projScenario.code)
+      if squid is None:
+         squid = occurrenceSet.squid
       if bbox is None:
-         bbox = self._projScenario.bbox
+         bbox = projScenario.bbox
       if epsgcode is None:
-         epsgcode = self._projScenario.epsgcode
+         epsgcode = projScenario.epsgcode
       if mapunits is None:
-         mapunits = self._projScenario.units
+         mapunits = projScenario.units
       if resolution is None:
-         resolution = self._projScenario.resolution
-      if isDiscreteData is None:
-         isDiscreteData = ALGORITHM_DATA[self._algorithm.code]['isDiscreteOutput']
+         resolution = projScenario.resolution
+      if processType is None:
+         if algorithm.code == 'ATT_MAXENT':
+            processType = ProcessType.ATT_PROJECT
+         else:
+            processType = ProcessType.OM_PROJECT
+      isDiscreteData = ALGORITHM_DATA[algorithm.code]['isDiscreteOutput']
       if gdalFormat is None:
-         gdalFormat = ALGORITHM_DATA[self._algorithm.code]['outputFormat']
-      return (bbox, epsgcode, mapunits, resolution, isDiscreteData, gdalFormat)
+         gdalFormat = ALGORITHM_DATA[algorithm.code]['outputFormat']
+      return (userId, name, squid, processType, bbox, epsgcode, mapunits, 
+              resolution, isDiscreteData, gdalFormat)
 
 # .............................................................................
 # Public methods
@@ -400,6 +399,10 @@ class SDMProjection(_ProjectionType, Raster):
       return self._projScenario
 
    @property
+   def projScenarioCode(self):
+      return self._projScenario.code
+
+   @property
    def projMask(self):
       return self._projMask
    
@@ -424,8 +427,16 @@ class SDMProjection(_ProjectionType, Raster):
       return self._algorithm.code
    
    @property
-   def projScenarioCode(self):
-      return self._projScenario.code
+   def modelScenario(self):
+      return self._modelScenario
+
+   @property
+   def modelScenarioCode(self):
+      return self._modelScenario.code
+   
+   @property
+   def modelMask(self):
+      return self._modelMask
    
    @property
    def projInputLayers(self):

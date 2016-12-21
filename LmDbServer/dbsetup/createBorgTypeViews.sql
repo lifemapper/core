@@ -213,11 +213,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
 DROP VIEW IF EXISTS lm_v3.lm_sdmproject CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    -- sdmproject.*
+   sdmprojectid,
    layerid,
    userid,
    occurrenceSetId,
    algorithmCode,
-   algParamHash,
+   algParams,
    mdlscenarioId,
    mdlmaskId,
    prjscenarioId,
@@ -267,7 +268,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    prjscenaltpredCode,
    prjscendateCode
    ) AS
-      SELECT p.layerid, p.userid, p.occurrenceSetId, p.algorithmCode, p.algParamHash, 
+      SELECT p.sdmprojectid, p.layerid, p.userid, p.occurrenceSetId, 
+             p.algorithmCode, p.algParams, 
              p.mdlscenarioId, p.mdlmaskId, p.prjscenarioId, p.prjmaskId, 
              p.metadata, p.layerid, p.status, p.statusModTime,
              l.squid, l.verify, l.name, l.dlocation, l.metadataUrl, l.metadata, 

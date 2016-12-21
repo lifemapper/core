@@ -24,9 +24,9 @@
 import json
 
 from LmCommon.common.lmconstants import MATRIX_LAYERS_SERVICE
-from LmServer.base.layer import Raster, Vector, _LayerParameters
+from LmServer.base.layer2 import Raster, Vector, _LayerParameters
 from LmServer.base.lmobj import LMError, LMObject
-from LmServer.base.serviceobject import ProcessObject
+from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule
 
 # .............................................................................

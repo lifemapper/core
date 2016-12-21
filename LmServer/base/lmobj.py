@@ -421,9 +421,6 @@ class LMSpatialObject(LMObject):
    maxY = property(getMaxY)
 
 # ..............................................................................
-   def getWktExtentString(self):
-      return self.getWkt()
-   
    def getWkt(self):
       """
       @summary: Get Well-Known-Text (WKT) describing the bounding box polygon.

@@ -26,7 +26,7 @@ import os
 from types import IntType
 import math
 import numpy as np
-import rtree
+# import rtree
 
 from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS, DEFAULT_OGR_FORMAT
 from LmServer.base.layer2 import _LayerParameters, Vector
@@ -112,8 +112,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                           modTime=vector.modTime,
                           featureCount=vector.featureCount, 
                           featureAttributes=vector.featureAttributes, 
-                          features=vector.features, fidAttribute=
-                          vector.fidAttribute,
+                          features=vector.features, 
+                          fidAttribute=vector.fidAttribute,
                           status=status, statusModTime=statusModTime)
       return shpGrid
 
@@ -227,9 +227,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    def cutout(self, cutoutWKT, removeOrig=False, dloc=None):
       """
       @summary: create a new shapegrid from original using cutout
-      """
-      
-      
+      @todo: Check this, it may fail on newer versions of OGR - 
+             old: CreateFeature vs new: SetFeature
+      """      
       if not removeOrig and dloc == None:
          raise LMError("If not modifying existing shapegrid you must provide new dloc")
       ods = ogr.Open(self._dlocation)
@@ -297,14 +297,13 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       """
       @summary: method to build the shapefile for the shapegrid object.
       Calculates the topology for each cell, square or hexagonal.
-      @todo: Remove this, it will fail on newer versions of OGR - 
+      @todo: Check this, it may fail on newer versions of OGR - 
              old: CreateFeature vs new: SetFeature
       """ 
       # After build, setDLocation, write shapefile, and setSiteIndices
       if os.path.exists(self._dlocation):
          print "Shapegrid file already exists at: %s" % self._dlocation
          return 
-      
       self._readyFilename(self._dlocation, overwrite=overwrite)
 
       try:
@@ -315,7 +314,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          
          x_res = self.cellsize 
          y_res = self.cellsize
-         
          shapepath = self._dlocation
          
          if self.cellsides == 6:
@@ -342,7 +340,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                elif y_row == False:
                   xc = min_x  + (x_res * .75) # this will be minx + 
                while xc < max_x:
-                    
                   wkt = "POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f, %f %f, %f %f))"% \
                                 ( xc - (x_res * .5)/2, yc + (y_res * .5)*math.sqrt(3)/2,\
                                   xc + (x_res * .5)/2, yc + (y_res * .5)*math.sqrt(3)/2,\
@@ -373,7 +370,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             ds.Destroy()
             
          elif self.cellsides == 4:
-            
             t_srs = osr.SpatialReference()
             #t_srs.SetFromUserInput('WGS84')
             t_srs.ImportFromEPSG(self.epsgcode)
@@ -388,7 +384,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             shape_id = 0
             for yc in np.arange(max_y,min_y,-y_res):
                for xc in np.arange(min_x, max_x, x_res):
-               
             #for xc in xrange(min_x, max_x, x_res):
                #for yc in xrange(min_y,max_y,y_res):
                   wkt = "POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))"% \
@@ -408,13 +403,12 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                   feat.SetField(self.siteId,shape_id)
                   layer.CreateFeature(feat)
                   feat.Destroy()
-                  shape_id += 1
-            
+                  shape_id += 1            
             ds.Destroy()
       except Exception, e:
          raise LMError(e)
-           
       else:
+         self._setCellMeasurements(shape_id)
          if cutout is not None:
             self.cutout(cutout,removeOrig=True)
          self.setSiteIndices()

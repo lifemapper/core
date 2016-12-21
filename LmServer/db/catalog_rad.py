@@ -202,7 +202,7 @@ class RAD(DbPostgresql):
                                                          shpgrd.metadataUrl,
                                                          shpgrd.modTime,
                                                          shpgrd.getCSVExtentString(),
-                                                         shpgrd.getWktExtentString(),
+                                                         shpgrd.getWkt(),
                                                          shpgrd.metadataUrl)
       shpgrd = self._createShapeGrid(row, idxs)
       
@@ -762,7 +762,7 @@ class RAD(DbPostgresql):
                                          lyr.createTime,
                                          lyr.modTime,
                                          lyr.getCSVExtentString(),
-                                         lyr.getWktExtentString(),
+                                         lyr.getWkt(),
                                          lyr.metadataUrl)
       if lyrid != -1:
          lyr.setLayerId(lyrid)
@@ -819,7 +819,7 @@ class RAD(DbPostgresql):
                                       lyr._metalocation,
                                       lyr.modTime,
                                       lyr.getCSVExtentString(),
-                                      lyr.getWktExtentString())
+                                      lyr.getWkt())
       return success
 # ...............................................
    def renameLayer(self, lyr, newname):
@@ -1008,7 +1008,7 @@ class RAD(DbPostgresql):
                                                          anclyr.createTime,
                                                          anclyr.modTime,
                                                          anclyr.getCSVExtentString(),
-                                                         anclyr.getWktExtentString(),
+                                                         anclyr.getWkt(),
                                                          anclyr.attrValue,
                                                          anclyr.weightedMean,
                                                          anclyr.largestClass,
@@ -1305,7 +1305,7 @@ class RAD(DbPostgresql):
                                                         palyr.createTime,
                                                         palyr.modTime,
                                                         palyr.getCSVExtentString(),
-                                                        palyr.getWktExtentString(),
+                                                        palyr.getWkt(),
                                                         palyr.attrPresence,
                                                         palyr.minPresence,
                                                         palyr.maxPresence,

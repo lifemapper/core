@@ -24,19 +24,15 @@
 """
 import mx.DateTime
 from osgeo.ogr import wkbPoint
-import os
 import socket
 from types import StringType, UnicodeType, IntType
-import xml.etree.ElementTree as ET 
 
-from LmCommon.common.lmconstants import (ENCODING, JobStatus, ProcessType)
+from LmCommon.common.lmconstants import (JobStatus, ProcessType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import  DbUser, ReferenceType
-from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
-                                 POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
+from LmServer.common.lmconstants import  DbUser
+from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName
@@ -170,6 +166,17 @@ class BorgScribe(LMObject):
       return updatedShpgrd
 
 # ...............................................
+   def updateShapeGrid(self, shpgrd):
+      """
+      @summary: Update Shapegrid attributes: 
+         verify, dlocation, metadata, modtime, size, status, statusModTime
+      @param shpgrd: ShapeGrid to be updated.  
+      @return: Updated record for successful update.
+      """
+      updatedShpgrd = self._borg.updateShapeGrid(shpgrd)
+      return updatedShpgrd
+
+# ...............................................
    def getShapeGrid(self, shpgridId=None, lyrId=None, 
                     userId=None, lyrName=None, epsg=None):
       """
@@ -271,65 +278,62 @@ class BorgScribe(LMObject):
       @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
       """
-      success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
-      return success
-   
-# # ...............................................
-#    def initSDMOcc(self, usr, occ, occJobProcessType, currtime):
-#       occJob = self.getJobOfType(JobFamily.SDM, occ)
-#       if occJob is not None and JobStatus.failed(occJob.status):
-#          self._mal.deleteJob(occJob)
-#          occJob = None
-#       if occJob is None:
-# #          try:
-#          if occ.status != JobStatus.INITIALIZE:
-#             occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
-#          occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
-#                                    status=JobStatus.INITIALIZE, 
-#                                    statusModTime=modtime, createTime=modtime,
-#                                    priority=Priority.NORMAL)
-# 
-#          success = self.updateOccState(occ)
-#          updatedOccJob = self.insertJob(occJob)
-#          occJob = updatedOccJob
-#       return occJob
+      updatedOcc = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
+      return updatedOcc
 
 # ...............................................
-   def initSDMProjections(self, usr, occset, mdlScen, prjScenList, alg,  
-                          mdlMask=None, prjMask=None, 
-                          modtime=mx.DateTime.gmt().mjd, 
-                          email=None, name=None, description=None):
+   def updateSDMProject(self, proj):
+      """
+      @summary Method to update an SDMProjection object in the database with 
+               the verify hash, metadata, data extent and values, status/statusmodtime.
+      @param proj the SDMProjection object to update
+      """
+      updatedProj = self._borg.updateSDMProject(proj)
+      return updatedProj   
+   
+# ...............................................
+   def initOrRollbackSDMProjects(self, usr, occset, mdlScen, prjScenList, alg,  
+                          mdlMask=None, projMask=None, 
+                          modtime=mx.DateTime.gmt().mjd, email=None):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
       prjs = []
-      if alg.code == 'ATT_MAXENT':
-         processType = ProcessType.ATT_PROJECT
-      else:
-         processType = ProcessType.OM_PROJECT
-      for pscen in prjScenList:
-         prj = SDMProjection(occset, alg, mdlScen, mdlMask, pscen, prjMask, 
-                             processType=processType, 
-                             status=JobStatus.GENERAL, statusModTime=modtime)
-         self._borg.insertProjection(prj)
-         prjs.append(prj)
+      try:
+         mmaskid = mdlMask.getId()
+      except:
+         mmaskid = None
+      try:
+         pmaskid = projMask.getId()
+      except:
+         pmaskid = None
+      for prjScen in prjScenList:
+         prj = SDMProjection(occset, alg, mdlScen, prjScen, 
+                        modelMaskId=mmaskid, projMaskId=pmaskid, 
+                        status=JobStatus.GENERAL, statusModTime=modtime)
+         newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
+         if JobStatus.finished(newOrExistingPrj.status):
+            newOrExistingPrj.updateStatus(JobStatus.GENERAL, stattime=modtime)
+            newerPrj = self.updateSDMProject(newOrExistingPrj)
+         prjs.append(newerPrj)
       return prjs
 
 # ...............................................
-   def initSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
+   def initOrRollbackSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
                     mdlMask=None, projMask=None,
                     occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
                     intersectGrid=None, minPointCount=None):
       """
-      @summary: Initialize LMArchive job chain (models, projections, 
-                optional intersect) for occurrenceset.
+      @summary: Initialize or rollback existing LMArchive SDM chain 
+                (SDMProjection, Intersection) dependent on this occurrenceset.
       """
       objs = [occ]
       currtime = mx.DateTime.gmt().mjd
       # ........................
-      if minPointCount is None or occ.queryCount >= minPointCount: 
+      if (minPointCount is None or occ.queryCount is None or 
+          occ.queryCount >= minPointCount): 
          for alg in algList:
-            prjs = self.initSDMProjections(occ, mdlScen, 
+            prjs = self.initOrRollbackSDMProjects(occ, mdlScen, 
                               prjScenList, alg, usr, 
                               modtime=currtime, 
                               mdlMask=mdlMask, prjMask=projMask)
@@ -337,12 +341,12 @@ class BorgScribe(LMObject):
       return objs
    
 # ...............................................
-   def insertMFChain(self, usr, dlocation, priority=None):
+   def insertMFChain(self, usr, dlocation, priority=None, metadata={}):
       """
       @summary: Inserts a jobChain into database
       @return: jobChainId
       """
-      mfchain = self._borg.insertMFChain(usr, dlocation, JobStatus.INITIALIZE, 
-                                            priority)
+      mfchain = self._borg.insertMFChain(usr, dlocation, priority, metadata, 
+                                         JobStatus.INITIALIZE)
       return mfchain   
 

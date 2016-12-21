@@ -30,7 +30,8 @@ import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat)
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
+                                         JobStatus)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
@@ -86,10 +87,16 @@ def addAlgorithms(scribe):
 
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
-   shp = ShapeGrid(gridname, cellsides, cellsize, mapunits, epsg, bbox, userId=usr)
+   shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
+                   status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
    newshp = scribe.insertShapeGrid(shp)
-   newshp.buildShape()
-   return newshp.getId()
+   try:
+      newshp.buildShape()
+   except Exception, e:
+      scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
+   else:
+      updatedShp =  scribe.updateShapeGrid(newshp)
+   return updatedShp
    
 # ...............................................
 def _getbioName(obsOrPred, res, 
@@ -588,7 +595,7 @@ predScens = createPredictedScenarios(usr, pkgMeta, configMeta,
                                      META.CLIMATE_KEYWORDS)
 predScens[basescen.code] = basescen
 
-select * from lm_v3.lm_findOrInsertScenLayer(9,NULL,'kubi',NULL,'c71b3f8f68a212800a085f5be8f46717c465973de5df803fb6460e08f5dac8c4','alt-observed-10min','/share/lm/data/layers/10min/worldclim1.4/alt.tif','http://badenov-vc1.nhm.ku.edu/services/lm/envlayers/#id#','{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}','GTiff',3,NULL,'meters',-9999.0,-353.0,6241.0,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00','POLYGON((-180 -60,-180 90,180 90,180 -60,-180 -60))',57741.9012461,NULL,'alt',NULL,NULL,NULL,'{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}',57741.9011491);
+newscen = scribe.insertScenario(basescen)
 addScenarioAndLayerMetadata(scribe, predScens)
 
 shpId = addIntersectGrid(scribe, configMeta['gridname'], configMeta['gridsides'], 

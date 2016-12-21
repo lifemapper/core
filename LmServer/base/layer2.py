@@ -373,12 +373,12 @@ class _LayerParameters(LMObject):
                        class attributes.
       @param modTime: time/date last modified
       """
-      self._parametersUserId = userId
-      self._parametersId = paramId
+      self._paramUserId = userId
+      self._paramId = paramId
       self.paramMetadata = {}
       self.loadParamMetadata(metadata)
       self._matrixIndex = matrixIndex
-      self.parametersModTime = modTime
+      self.paramModTime = modTime
       
 # ...............................................
    def dumpParamMetadata(self):
@@ -401,33 +401,33 @@ class _LayerParameters(LMObject):
                 multiple Parameterized Layer objects
       @param paramid: The record id for the database 
       """
-      self._parametersId = paramid
+      self._paramId = paramid
 
-   def getParametersId(self):
+   def getParamId(self):
       """
       @summary: Returns the database id of the Layer Parameters (either 
                 PresenceAbsence or AncillaryValues) record, which can be used by 
                 multiple Parameterized Layer objects
       """
-      return self._parametersId
+      return self._paramId
 
 # ...............................................
-   def setParametersUserId(self, usr):
+   def setParamUserId(self, usr):
       """
       @summary: Sets the User id of the Layer Parameters (either 
                 PresenceAbsence or AncillaryValues) record, which can be used by 
                 multiple Parameterized Layer objects
       @param usr: The user id for the parameters 
       """
-      self._parametersUserId = usr
+      self._paramUserId = usr
 
-   def getParametersUserId(self):
+   def getParamUserId(self):
       """
       @summary: Returns the User id of the Layer Parameters (either 
                 PresenceAbsence or AncillaryValues) record, which can be used by 
                 multiple Parameterized Layer objects
       """
-      return self._parametersUserId
+      return self._paramUserId
    
 # ...............................................
    def setMatrixIndex(self, matrixIdx):
@@ -482,7 +482,7 @@ class Raster(_Layer):
                 metadataUrl=None, parentMetadataUrl=None, modTime=None):
       """
       @summary Raster constructor, inherits from _Layer
-      @copydoc LmServer.base.layer._Layer::__init__()
+      @copydoc LmServer.base.layer2._Layer::__init__()
       """
       self._verifyDataDescription(gdalType, dataFormat)
       self.size = None
@@ -931,7 +931,7 @@ class Vector(_Layer):
                 featureCount=0, featureAttributes={}, features={}, fidAttribute=None):
       """
       @summary Vector constructor, inherits from _Layer
-      @copydoc LmServer.base.layer._Layer::__init__()
+      @copydoc LmServer.base.layer2._Layer::__init__()
       @param featureCount: number of features in this layer.  This is stored in
                     database and may be populated even if the features are not.
       @param featureAttributes: Dictionary with key attributeName and value

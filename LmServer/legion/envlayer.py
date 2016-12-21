@@ -34,7 +34,6 @@ class EnvType(_LayerParameters):
                 metadata={}, modTime=None, envTypeId=None):
       """
       @summary Initialize the EnvType  class instance
-      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
       @param envCode: Code for the environmental type (i.e. temp, elevation, bio7)
       @param gcmCode: Code for the Global Climate Model used to create these data
@@ -43,7 +42,6 @@ class EnvType(_LayerParameters):
              these data
       @param dateCode: Code for the time period for which these data are predicted.
       """
-      # lyr.getParametersId() <-- lyr._layerTypeId 
       _LayerParameters.__init__(self, userId, paramId=envTypeId, 
                                 metadata=metadata, modTime=modTime)
       self.envCode = envCode
@@ -112,8 +110,8 @@ class EnvLayer(EnvType, Raster):
                   # EnvType
                   envCode=envType.envCode, gcmCode=envType.gcmCode, 
                   altpredCode=envType.altpredCode, dateCode=envType.dateCode, 
-                  envMetadata=envType.paramMetadata, envModTime=envType.modTime, 
-                  envTypeId=envType.getParametersId())
+                  envMetadata=envType.paramMetadata, envModTime=envType.paramModTime, 
+                  envTypeId=envType.getParamId())
       return envLyr
 
 
@@ -198,5 +196,5 @@ class EnvLayer(EnvType, Raster):
       self.dateCode=envType.dateCode 
       self.loadParamMetadata(envType.paramMetadata)
       self.envModTime=envType.modTime
-      self.setParametersId(envType.getParametersId())
-      self.parametersModTime = envType.parametersModTime
+      self.setParamId(envType.getParamId())
+      self.paramModTime = envType.paramModTime

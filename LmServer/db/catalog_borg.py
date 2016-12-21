@@ -27,7 +27,7 @@ import os
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 
 from LmServer.base.dbpgsql import DbPostgresql
-from LmServer.base.layer import Raster, Vector
+from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
 from LmServer.base.layerset import MapLayerSet                                  
 from LmServer.base.lmobj import LMError
@@ -149,7 +149,7 @@ class Borg(DbPostgresql):
       Created only from a model, lm_fullModel, or lm_fullProjection 
       """
       code = self._getColumnValue(row, idxs, ['algorithmcode'])
-      params = self._getColumnValue(row, idxs, ['algorithmparams'])
+      params = self._getColumnValue(row, idxs, ['algparams'])
       try:
          alg = Algorithm(code, parameters=params)
       except:
@@ -209,10 +209,9 @@ class Borg(DbPostgresql):
          modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
          usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
          ltid = self._getColumnValue(row, idxs, ['envtypeid'])
-         lyrType = EnvType(envcode, None, None, usr,
-                                     gcmCode=gcmcode, altpredCode=altcode, 
-                                     dateCode=dtcode, metadata=meta, 
-                                     modTime=modtime, environmentalTypeId=ltid)
+         lyrType = EnvType(envcode, usr, gcmCode=gcmcode, altpredCode=altcode, 
+                           dateCode=dtcode, metadata=meta, modTime=modtime, 
+                           envTypeId=ltid)
       return lyrType
    
 # ...............................................
@@ -220,7 +219,7 @@ class Borg(DbPostgresql):
       """
       @summary: Create Raster or Vector layer from a Layer or view in the Borg. 
       @note: OccurrenceSet and SDMProject objects do not use this function
-      @note: used with Layer, lm_envlayer, lm_scenlayer, lm_shapegrid
+      @note: used with Layer, lm_envlayer, lm_scenlayer, lm_sdmproject, lm_shapegrid
       """
       lyr = None
       if row is not None:
@@ -229,12 +228,13 @@ class Borg(DbPostgresql):
          verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
          squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
          name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
-         dlocation = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
+         dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
          murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
          meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
          vtype = self._getColumnValue(row, idxs, ['ogrtype'])
          rtype = self._getColumnValue(row, idxs, ['gdaltype'])
          vunits = self._getColumnValue(row, idxs, ['valunits'])
+         vattr = self._getColumnValue(row, idxs, ['valattribute'])
          nodata = self._getColumnValue(row, idxs, ['nodataval'])
          minval = self._getColumnValue(row, idxs, ['minval'])
          maxval = self._getColumnValue(row, idxs, ['maxval'])
@@ -242,29 +242,23 @@ class Borg(DbPostgresql):
          epsg = self._getColumnValue(row, idxs, ['epsgcode'])
          munits = self._getColumnValue(row, idxs, ['mapunits'])
          res = self._getColumnValue(row, idxs, ['resolution'])
-         # for non-joined layer tables OccurrenceSet and Projection 
          dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
          bbox = self._getColumnValue(row, idxs, ['bbox'])
                      
          if vtype is not None:
-            lyr = Vector(name=name, metadata=meta, bbox=bbox, 
-                         verify=verify, squid=squid,
-                         mapunits=munits, resolution=res, 
-                         epsgcode=epsg, dlocation=dlocation, 
-                         valUnits=vunits, 
-                         ogrType=vtype, ogrFormat=fformat, 
-                         svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
-                         modTime=dtmod, metadataUrl=murl) 
+            lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
+                         dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                         ogrType=vtype, valUnits=vunits, valAttribute=vattr,
+                         nodataVal=nodata, minVal=minval, maxVal=maxval, 
+                         mapunits=munits, resolution=res, bbox=bbox, 
+                         metadataUrl=murl, modTime=dtmod)
          elif rtype is not None:
-            lyr = Raster(name=name, metadata=meta, bbox=bbox, 
-                         verify=verify, squid=squid,
-                         mapunits=munits, resolution=res, 
-                         epsgcode=epsg, dlocation=dlocation, 
-                         minVal=minval, maxVal=maxval, 
-                         nodataVal=nodata, valUnits=vunits,
-                         gdalType=rtype, gdalFormat=fformat,  
-                         svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
-                         modTime=dtmod, metadataUrl=murl)
+            lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
+                         dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                         gdalType=rtype, valUnits=vunits, nodataVal=nodata, 
+                         minVal=minval, maxVal=maxval, mapunits=munits, 
+                         resolution=res, bbox=bbox, metadataUrl=murl, 
+                         modTime=dtmod)
       return lyr
 
 # ...............................................
@@ -327,7 +321,7 @@ class Borg(DbPostgresql):
       return occ
 
 # ...............................................
-   def _createProjection(self, row, idxs):
+   def _createSDMProjection(self, row, idxs):
       """
       @note: takes lm_sdmproject record
       """
@@ -480,8 +474,8 @@ class Borg(DbPostgresql):
       currtime = mx.DateTime.utc().mjd
       meta = envtype.dumpParamMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvType',
-                                                    envtype.getParametersId(),
-                                                    envtype.getParametersUserId(),
+                                                    envtype.getParamId(),
+                                                    envtype.getParamUserId(),
                                                     envtype.typeCode,
                                                     envtype.gcmCode,
                                                     envtype.altpredCode,
@@ -518,6 +512,23 @@ class Borg(DbPostgresql):
       return updatedShpgrd
 
 # ...............................................
+   def updateShapeGrid(self, shpgrd):
+      """
+      @summary: Update Shapegrid attributes: 
+         verify, dlocation, metadata, modtime, size, status, statusModTime
+      @param shpgrd: ShapeGrid to be updated.  
+      @return: Updated record for successful update.
+      """
+      currtime = mx.DateTime.utc().mjd
+      meta = shpgrd.dumpMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_updateShapeGrid',
+                        shpgrd.getId(), shpgrd.verify, shpgrd.getDLocation(),
+                        meta, currtime, shpgrd.size, 
+                        shpgrd.status, shpgrd.statusModTime)
+      shpgrid = self._createShapeGrid(row, idxs)
+      return shpgrid
+
+# ...............................................
    def getShapeGrid(self, shpgridId, lyrId, userId, lyrName, epsg):
       """
       @summary: Find or insert a ShapeGrid into the database
@@ -551,9 +562,9 @@ class Borg(DbPostgresql):
                            lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                            lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
                            lyr.getCSVExtentString(), wkt, lyr.modTime, 
-                           lyr.getParametersId(), lyr.envCode, lyr.gcmCode,
+                           lyr.getParamId(), lyr.envCode, lyr.gcmCode,
                            lyr.altpredCode, lyr.dateCode, envmeta, 
-                           lyr.parametersModTime)
+                           lyr.paramModTime)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
       return newOrExistingLyr
 
@@ -733,7 +744,7 @@ class Borg(DbPostgresql):
       """
       metadata = occ.dumpLyrMetadata()
       try:
-         success = self.executeModifyFunction('lm_updateOccurrenceSet', 
+         row, idxs = self.executeSelectOneFunction('lm_updateOccurrenceSet', 
                                               occ.getId(), 
                                               occ.verify,
                                               occ.displayName,
@@ -747,10 +758,42 @@ class Borg(DbPostgresql):
                                               occ.statusModTime, 
                                               polyWkt, 
                                               pointsWkt)
+         updatedOcc = self._createOccurrenceLayer(row, idxs)
       except Exception, e:
          raise e
-      return success
+      return updatedOcc
 
+# ...............................................
+   def updateSDMProject(self, proj):
+      """
+      @summary Method to update an SDMProjection object in the database with 
+               the verify hash, metadata, data extent and values, status/statusmodtime.
+      @param proj the SDMProjection object to update
+      """
+      lyrmeta = proj.dumpLyrMetadata()
+      prjmeta = proj.dumpParamMetadata()
+      try:
+         row, idxs = self.executeSelectOneFunction('lm_updateSDMProjectLayer', 
+                                              proj.getParamId(), 
+                                              proj.getId(), 
+                                              proj.verify,
+                                              proj.getDLocation(), 
+                                              lyrmeta,
+                                              proj.valUnits,
+                                              proj.nodataVal,
+                                              proj.minVal,
+                                              proj.maxVal,
+                                              proj.epsgcode,
+                                              proj.getCSVExtentString(),
+                                              proj.getWkt(),
+                                              proj.modTime,
+                                              prjmeta,
+                                              proj.status, 
+                                              proj.statusModTime)
+         updatedProj = self._createSDMProjection(row, idxs)
+      except Exception, e:
+         raise e
+      return updatedProj
 
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
@@ -819,13 +862,66 @@ class Borg(DbPostgresql):
       return newOrExistingOcc
 
 # ...............................................
-   def insertMFChain(self, usr, dlocation, status):
+   def findOrInsertSDMProject(self, proj):
+      """
+      @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
+                OR save a new SDMProjection
+      @param proj: the SDMProjection object to update
+      @return new or existing SDMProjection 
+      """
+      lyrmeta = proj.dumpLyrMetadata()
+      prjmeta = proj.dumpParamMetadata()
+      algparams = proj.algorithm.dumpParametersAsString()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProject', 
+                     proj.getParamId(), proj.getId(), proj.getUserId(), 
+                     proj.squid, proj.verify, proj.name, proj.getDLocation(), 
+                     proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
+                     proj.ogrType(), proj.valUnits, proj.nodataVal, proj.minVal,
+                     proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
+                     proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
+                     proj.occurrenceSet.getId(), proj.algorithmCode, algparams,
+                     proj.modelScenario.getId(), proj.modelMask.getId(),
+                     proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
+                     proj.processType, proj.status, proj.statusModTime)
+      newOrExistingProj = self._createSDMProjection(row, idxs)
+      return newOrExistingProj
+
+# # ...............................................
+#    def updateSDMProject(self, proj):
+#       """
+#       @summary Method to update an SDMProjection object in the database with 
+#                the dlocation, bbox, geom, status/statusmodtime.
+#       @param proj: the SDMProjection object to update
+#       """
+#       metadata = prj.dumpLyrMetadata()
+#       try:
+#          success = self.executeSelectOneFunction('lm_updateOccurrenceSet', 
+#                                               occ.getId(), 
+#                                               occ.verify,
+#                                               occ.displayName,
+#                                               occ.getDLocation(), 
+#                                               occ.getRawDLocation(), 
+#                                               occ.queryCount, 
+#                                               occ.getCSVExtentString(), 
+#                                               occ.epsgcode, 
+#                                               metadata,
+#                                               occ.status, 
+#                                               occ.statusModTime, 
+#                                               polyWkt, 
+#                                               pointsWkt)
+#       except Exception, e:
+#          raise e
+#       return success
+
+# ...............................................
+   def insertMFChain(self, usr, dlocation, priority, metadata, status):
       """
       @summary: Inserts a Makeflow Chain (MFProcess) into database
       @return: jobChainId
       """
       currtime = mx.DateTime.gmt().mjd
       mfchain = self.executeInsertFunction('lm_insertMFChain', usr, 
-                                          dlocation, priority, metadata, status, currtime)
-      return mfchain   
+                                          dlocation, priority, metadata, status, 
+                                          currtime)
+      return mfchain
 

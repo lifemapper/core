@@ -266,14 +266,15 @@ create table lm_v3.Algorithm
 -- Process and Output Object (1-to-1 join with Layer)
 create table lm_v3.SDMProject
 (
+   sdmProjectId serial UNIQUE PRIMARY KEY,
    -- output
-   layerid int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   layerid int UNIQUE NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    
    -- inputs
    occurrenceSetId int REFERENCES lm_v3.OccurrenceSet ON DELETE CASCADE,
    algorithmCode varchar(30) NOT NULL REFERENCES lm_v3.Algorithm(algorithmCode),
-   algParamHash text,
+   algParams text,
    mdlscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
    mdlmaskId int REFERENCES lm_v3.Layer,
    prjscenarioId int REFERENCES lm_v3.Scenario ON DELETE CASCADE,
@@ -286,9 +287,8 @@ create table lm_v3.SDMProject
    						
    status int,
    statusModTime double precision,
-   UNIQUE (userId, occurrenceSetId, algorithmCode, algParamHash, 
-           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId),
-   PRIMARY KEY (layerid)
+   UNIQUE (userId, occurrenceSetId, algorithmCode, algParams, 
+           mdlscenarioId, mdlmaskId, prjscenarioId, prjmaskId)
 );  
 CREATE INDEX idx_prjStatusModTime ON lm_v3.SDMProject(statusModTime);
 CREATE INDEX idx_prjStatus ON lm_v3.SDMProject(status);
@@ -450,7 +450,7 @@ lm_v3.scenariolayer, lm_v3.scenariolayer_scenariolayerid_seq,
 lm_v3.process, lm_v3.process_processid_seq,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
 lm_v3.algorithm, 
-lm_v3.sdmproject,
+lm_v3.sdmproject, lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid, 
 lm_v3.tree, lm_v3.tree_treeid_seq,
 lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
@@ -493,6 +493,7 @@ lm_v3.envlayer_envlayerid_seq,
 lm_v3.scenario_scenarioid_seq,
 lm_v3.scenariolayer_scenariolayerid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
+lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.process_processid_seq,
 lm_v3.tree_treeid_seq,
 lm_v3.gridset_gridsetid_seq,

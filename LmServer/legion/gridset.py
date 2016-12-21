@@ -33,7 +33,7 @@ from types import StringType, UnicodeType
 
 from LmCommon.common.lmconstants import MatrixType
 from LmServer.base.lmobj import LMError, LMObject
-from LmServer.base.serviceobject import ServiceObject, ProcessObject
+from LmServer.base.serviceobject2 import ServiceObject, ProcessObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.rad.matrix import Matrix                                  
 

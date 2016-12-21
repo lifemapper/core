@@ -141,7 +141,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- EnvLayer
-select * from lm_v3.lm_findOrInsertScenLayer(10,NULL,'kubi',NULL,'c71b3f8f68a212800a085f5be8f46717c465973de5df803fb6460e08f5dac8c4','alt-observed-10min','/share/lm/data/layers/10min/worldclim1.4/alt.tif','http://badenov-vc1.nhm.ku.edu/services/lm/envlayers/#id#','{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}','GTiff',3,NULL,'meters',-9999.0,-353.0,6241.0,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00','POLYGON((-180 -60,-180 90,180 90,180 -60,-180 -60))',57741.9625627,NULL,'alt',NULL,NULL,'observed','{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "past"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min", "title": "CMIP5, Community Climate System Model, 4.0, Last Glacial Maximium (~22K years ago), 10min"}',57741.9623055);
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenLayer(scenid int,
                                           lyrid int,
@@ -256,6 +255,207 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+-- SDMProject
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProject(prjid int,
+                                                           lyrid int,
+                                                           usr varchar, 
+                                                           occid int,
+                                                           algcode varchar,
+                                                           algstr text,
+                                                           mdlscenid int,
+                                                           mdlmskid int,
+                                                           prjscenid int,
+                                                           prjmskid int,
+                                                           prjmeta text, 
+                                                           ptype int, 
+                                                           stat int, 
+                                                           stattime double precision)
+   RETURNS lm_v3.lm_sdmproject AS
+$$
+DECLARE
+   rec lm_v3.lm_sdmproject%ROWTYPE;  
+   newid int;                           
+BEGIN
+   IF prjid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE sdmprojectId = prjid;
+   ELSIF lyrid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE layerId = lyrid;
+   ELSE
+      SELECT * INTO rec from lm_v3.lm_sdmproject
+             WHERE userid = usr 
+               AND occurrenceSetId = occid 
+               AND algorithmCode = algcode 
+               AND algParams = algstr
+               AND mdlscenarioId = mdlscenid
+               AND mdlmaskId = mdlmskid
+               AND prjscenarioId = prjscenid
+               AND prjmaskId = prjmskid;
+   END IF;
+   
+   IF NOT FOUND THEN 
+      INSERT INTO lm_v3.sdmproject (layerid, userId, occurrenceSetId, 
+          algorithmCode, algParams, mdlscenarioId, mdlmaskId, prjscenarioId, 
+          prjmaskId, metadata, processType, status, statusModTime) 
+       VALUES (lyrid, usr, occid, algcode, algstr, mdlscenid, mdlmskid, 
+          prjscenid, prjmskid, prjmeta, ptype, stat, stattime);
+          
+       IF NOT FOUND THEN
+          RAISE EXCEPTION 'Unable to insert SDMProject';
+       ELSE
+          SELECT INTO newid last_value FROM lm_v3.SDMProject_SDMProjectid_seq;
+          SELECT * INTO rec FROM lm_v3.lm_sdmproject WHERE layerid = newid;
+       END IF;
+   END IF;
+   RETURN rec;                                              
+END; 
+$$ LANGUAGE 'plpgsql' STABLE; 
+                                                                        
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProjectLayer(prjid int, 
+                                          lyrid int,
+                                          usr varchar,
+                                          lyrsquid varchar,
+                                          lyrverify varchar,
+                                          lyrname varchar, 
+                                          lyrdloc varchar,
+                                          lyrmurlprefix varchar,
+                                          lyrmeta varchar,
+                                          datafmt varchar,
+                                          rtype int,
+                                          vtype int,
+                                          vunits varchar,
+                                          vnodata double precision,
+                                          vmin double precision,
+                                          vmax double precision,
+                                          epsg int,
+                                          munits varchar,
+                                          res double precision,
+                                          bboxstr varchar,
+                                          bboxwkt varchar,
+                                          lyrmtime double precision,
+                                          -- sdmproject
+                                          occid int,
+                                          algcode varchar,
+                                          algstr text,
+                                          mdlscenid int,
+                                          mdlmskid int,
+                                          prjscenid int,
+                                          prjmskid int,
+                                          prjmeta text,
+                                          ptype int,
+                                          stat int,
+                                          stattime double precision)
+RETURNS lm_v3.lm_sdmproject AS
+$$
+DECLARE
+   newlyrid int = -1;
+   idstr varchar;
+   murl varchar;
+   rec_lyr lm_v3.Layer%rowtype;
+   rec_prj lm_v3.SDMProject%rowtype;
+   rec_fullprj lm_v3.lm_sdmproject%rowtype;
+BEGIN
+   -- get or insert layer 
+   SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
+      lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
+      vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime);
+      
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to findOrInsertLayer';
+   ELSE
+      newlyrid = rec_lyr.layerid;
+      
+      -- get or insert sdmproject 
+      SELECT * INTO rec_prj FROM lm_v3.lm_findOrInsertSDMProject(prjid, newlyrid, 
+                   usr, occid, algcode, algstr, mdlscenid, mdlmskid, prjscenid, 
+                   prjmskid, prjmeta, ptype, stat, stattime);
+
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to findOrInsertSDMProject';
+      ELSE
+         -- update URL and geometry 
+         idstr := cast(newlyrid as varchar);
+         murl := replace(lyrmurlprefix, '#id#', idstr);
+         IF bboxwkt is NOT NULL THEN
+            UPDATE lm_v3.Layer SET (metadataurl, geom) 
+               = (murl, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newlyrid;
+         ELSE
+            UPDATE lm_v3.Layer SET metadataurl = murl WHERE layerid = newlyrid;
+         END IF;
+         
+         SELECT * INTO rec_fullprj FROM lm_v3.lm_sdmproject WHERE layerid = lyrid;
+      
+      END IF;
+   END IF;
+   
+   RETURN rec_fullprj;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateSDMProjectLayer(prjid int, 
+                                          lyrid int,
+                                          lyrverify varchar,
+                                          lyrdloc varchar,
+                                          lyrmeta varchar,
+                                          vunits varchar,
+                                          vnodata double precision,
+                                          vmin double precision,
+                                          vmax double precision,
+                                          epsg int,
+                                          bboxstr varchar,
+                                          bboxwkt varchar,
+                                          lyrmtime double precision,
+                                          -- sdmproject
+                                          prjmeta text,
+                                          stat int,
+                                          stattime double precision)
+RETURNS lm_v3.lm_sdmproject AS
+$$
+DECLARE
+   rec lm_v3.lm_sdmproject%rowtype;
+BEGIN
+   -- get or insert layer 
+   IF prjid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE sdmprojectId = prjid;
+   ELSIF lyrid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE layerId = lyrid;
+	END IF;
+	
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to find lm_sdmproject';
+   ELSE
+      -- Update Layer record
+      IF bboxwkt is NOT NULL THEN
+         UPDATE lm_v3.Layer 
+           SET (verify, dlocation, metadata, valunits, nodataval, minval, maxval, 
+                bbox, modtime, geom) 
+             = (lyrverify, lyrdloc, lyrmeta, vunits, vnodata, vmin, vmax, 
+                bboxstr, lyrmtime, ST_GeomFromText(bboxwkt, epsg)) 
+           WHERE layerid = rec.layerid;
+      ELSE
+         UPDATE lm_v3.Layer 
+           SET (verify, dlocation, metadata, valunits, nodataval, minval, maxval, 
+                bbox, modtime) 
+             = (lyrverify, lyrdloc, lyrmeta, vunits, vnodata, vmin, vmax, 
+                bboxstr, lyrmtime) WHERE layerid = rec.layerid;
+      END IF;
+      
+      -- Update SDMProject record
+      UPDATE lm_v3.sdmProject SET (metadata, status, statusmodtime) 
+                                = (prjmeta, stat, statime) 
+        WHERE sdmprojectid = rec.sdmprojectid;
+        
+      -- return updated joined record
+      SELECT * INTO rec FROM lm_v3.lm_sdmproject WHERE layerid = rec.layerid;
+      
+   END IF;   
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- ShapeGrid
@@ -333,7 +533,46 @@ BEGIN
    RETURN recshpgrd;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
- 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateShapeGrid(lyrid int,
+                                          lyrverify varchar,
+                                          lyrdloc varchar,
+                                          lyrmeta varchar,
+                                          lyrmtime double precision,
+                                          vsz int,
+                                          stat int,
+                                          stattime double precision)
+RETURNS lm_v3.lm_shapegrid AS
+$$
+DECLARE
+   reclyr lm_v3.layer%ROWTYPE;
+   recshpgrd lm_v3.lm_shapegrid%ROWTYPE;
+BEGIN
+   SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
+   IF NOT FOUND THEN
+      -- get or insert layer 
+      SELECT * FROM lm_v3.lm_updateLayer(lyrid, null, lverify, 
+         ldloc, lmeta, null, null, null, lmtime) INTO reclyr;
+         
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to find or update layer';
+      ELSE
+         UPDATE lm_v3.ShapeGrid 
+            SET (vsize, status, statusmodtime) = (vsz, stat, stattime);
+            
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to update shapegrid';
+         ELSE
+            SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
+              WHERE layerid = lyrid;
+         END IF;
+      END IF;
+   END IF;
+   
+   RETURN recshpgrd;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getShapegrid(sgid int, 
@@ -425,6 +664,45 @@ BEGIN
          
          SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = newid;
       END IF; -- end if layer inserted
+   END IF;  
+      
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateLayer(lyrid int,
+                                          lyrsquid varchar,
+                                          lyrverify varchar,
+                                          lyrdloc varchar,
+                                          lyrmeta varchar,
+                                          vnodata double precision,
+                                          vmin double precision,
+                                          vmax double precision,
+                                          lyrmtime double precision)
+RETURNS lm_v3.Layer AS
+$$
+DECLARE
+   newid int = -1;
+   idstr varchar;
+   murl varchar;
+   rec lm_v3.Layer%rowtype;
+BEGIN
+   -- get layer 
+   SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = lyrid;
+   
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Layer % NOT found', lyrid; 
+   ELSE
+      UPDATE lm_v3.Layer SET (squid, verify, dlocation, metadata, nodataVal, 
+                              minVal, maxVal, modTime)
+         = (lyrsquid, lyrverify, lyrdloc, lyrmeta, vnodata, vmin, vmax, lyrmtime)
+         WHERE layerid = lyrid;         
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Layer % NOT updated', lyrid;
+      ELSE 
+         SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = lyrid;
+      END IF; -- end if layer updated
    END IF;  
       
    RETURN rec;
