@@ -327,7 +327,7 @@ class Borg(DbPostgresql):
       return occ
 
 # ...............................................
-   def _createProjection(self, row, idxs):
+   def _createSDMProjection(self, row, idxs):
       """
       @note: takes lm_sdmproject record
       """
@@ -769,6 +769,39 @@ class Borg(DbPostgresql):
          raise e
       return updatedOcc
 
+# ...............................................
+   def updateSDMProject(self, proj):
+      """
+      @summary Method to update an SDMProjection object in the database with 
+               the verify hash, metadata, data extent and values, status/statusmodtime.
+      @param proj the SDMProjection object to update
+      """
+      lyrmeta = proj.dumpLyrMetadata()
+      prjmeta = proj.dumpParamMetadata()
+      algparams = proj.algorithm.dumpParametersAsString()
+      try:
+         row, idxs = self.executeSelectOneFunction('lm_updateSDMProjectLayer', 
+                                              proj.getParametersId(), 
+                                              proj.getId(), 
+                                              proj.verify,
+                                              proj.getDLocation(), 
+                                              lyrmeta,
+                                              proj.valUnits,
+                                              proj.nodataVal,
+                                              proj.minVal,
+                                              proj.maxVal,
+                                              proj.epsgcode,
+                                              proj.getCSVExtentString(),
+                                              proj.getWkt(),
+                                              proj.modTime,
+                                              prjmeta,
+                                              proj.status, 
+                                              proj.statusModTime)
+         updatedOcc = self._createSDMProjection(row, idxs)
+      except Exception, e:
+         raise e
+      return updatedOcc
+
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
       """
@@ -857,7 +890,7 @@ class Borg(DbPostgresql):
                      proj.modelScenario.getId(), proj.modelMask.getId(),
                      proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
                      proj.processType, proj.status, proj.statusModTime)
-      newOrExistingProj = self._createProjection(row, idxs)
+      newOrExistingProj = self._createSDMProjection(row, idxs)
       return newOrExistingProj
 
 # # ...............................................
