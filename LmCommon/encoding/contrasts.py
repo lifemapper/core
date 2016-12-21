@@ -39,7 +39,9 @@ import operator
 import json
 from osgeo import ogr,gdal
 
-# TODO: Separators for classes and functions
+from LmCommon.encoding.lmTree import LmTree
+
+
 # TODO: Spacing
 # TODO: Constants
 # TODO: Remove references to Jeff's machine
@@ -480,7 +482,7 @@ class PhyloEncoding(object):
       # TODO: Function documentation
       # TODO: Inline documentation
       
-      self.treeDict = treeDict
+      self.tree = LmTree(treeDict)
       self.PAM = PAM
       if not self._checkMtxIdx():
          raise Exception, "PAM sps dimension doesn't match number of mtxIdx"
@@ -518,7 +520,7 @@ class PhyloEncoding(object):
             tips.append(clade['pathId'])
             if 'mx' in clade:
                mx.append(int(clade['mx']))
-      findMtxTips(self.treeDict)
+      findMtxTips(self.tree.tree)
       return len(mx) == colCnt
 
    # ..............................   
@@ -560,7 +562,7 @@ class PhyloEncoding(object):
       @param noColPam: at what point does this arg get set/sent
       @todo: Document
       """ 
-      clade = self.treeDict
+      clade = self.tree.tree
       noColPam = self.PAM.shape[1]   
       noMx = {'c':noColPam}  # needs to start with last sps in pam
       tips = []
