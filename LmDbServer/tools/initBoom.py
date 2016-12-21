@@ -554,6 +554,7 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS,
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
@@ -569,8 +570,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBoom import *
-from LmDbServer.tools.initBoom import (_getBaselineLayers, _getbioName, 
-          _findFileFor, _getPredictedLayers, _importClimatePackageMetadata,
+from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
           _getConfiguredMetadata)
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 envPackageName = SCENARIO_PACKAGE
@@ -583,6 +583,7 @@ usr = configMeta['userid']
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
+
 addUsers(scribe, configMeta)
 
 basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
@@ -594,11 +595,26 @@ predScens = createPredictedScenarios(usr, pkgMeta, configMeta,
                                      META.OBSERVED_PREDICTED_META,
                                      META.CLIMATE_KEYWORDS)
 predScens[basescen.code] = basescen
-
-newscen = scribe.insertScenario(basescen)
 addScenarioAndLayerMetadata(scribe, predScens)
 
-shpId = addIntersectGrid(scribe, configMeta['gridname'], configMeta['gridsides'], 
-                           configMeta['gridsize'], configMeta['mapunits'], configMeta['epsg'], 
-                           pkgMeta['bbox'], usr)
+(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
+ scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
+ configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
+
+shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
+                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
+
+lp = _LayerParameters(usr)         
+v = Vector(gridname, usr, epsg, mapunits=mapunits, bbox = bbox)  
+
+
+shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
+                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
+
+newshp = scribe.insertShapeGrid(shp)
+
+newshp.buildShape()
+
+updatedShp =  scribe.updateShapeGrid(newshp)
+ 
 """
