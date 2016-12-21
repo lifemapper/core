@@ -2243,6 +2243,11 @@ class Vector(_Layer):
       @summary: Read the file at dlocation and fill the featureCount and 
                 featureAttributes dictionary.  If doReadData is True, read and 
                 fill features dictionary.
+      @param dlocation: file location, overrides local attribute
+      @param dataFormat: OGR format driver name, overrides local attribute
+      @param featureLimit: limits number of features to be read into self._features
+      @param doReadData: True to read all features; False to read only the 
+             featureAttributes and feature count. 
       @return: new bbox string, indices of the localId int and geometry fields
       @todo: remove featureLimit, read subsetDLocation if there is a limit 
       """
