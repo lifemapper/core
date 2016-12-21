@@ -150,7 +150,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       return self._cellsides
    
 # ...............................................
-   def _setCellMeasurements(self, size):
+   def _setCellMeasurements(self, size=None):
       self._size = None
       if size is not None and isinstance(size, IntType):
          self._size = size
@@ -291,6 +291,14 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 #       self.clearFeatures()
 #       self.addFeatures(intersectingFeatures)
 #       self._setBBox(minx, miny, maxx, maxy)
+# ...............................................
+   def readData(self, dlocation=None, dataFormat=None, featureLimit=None, 
+                doReadData=False):
+      """
+      @copydoc: LmServer.base.layer2.Vector::readData() 
+      """
+      Vector.readData(self, dlocation, dataFormat, featureLimit, doReadData)
+      self._setCellMeasurements()
       
 # ...................................................
    def buildShape(self, cutout=None, overwrite=False):
@@ -303,6 +311,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       # After build, setDLocation, write shapefile, and setSiteIndices
       if os.path.exists(self._dlocation):
          print "Shapegrid file already exists at: %s" % self._dlocation
+         self.readData(doReadData=False)
          return 
       self._readyFilename(self._dlocation, overwrite=overwrite)
 

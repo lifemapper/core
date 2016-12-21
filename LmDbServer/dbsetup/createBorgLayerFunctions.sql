@@ -552,8 +552,8 @@ BEGIN
    SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
    IF NOT FOUND THEN
       -- get or insert layer 
-      SELECT * FROM lm_v3.lm_updateLayer(lyrid, null, lverify, 
-         ldloc, lmeta, null, null, null, lmtime) INTO reclyr;
+      SELECT * FROM lm_v3.lm_updateLayer(lyrid, null, lyrverify, 
+         lyrdloc, lyrmeta, null, null, null, lyrmtime) INTO reclyr;
          
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to find or update layer';
