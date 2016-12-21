@@ -496,13 +496,13 @@ class Borg(DbPostgresql):
       if shpgrd.epsgcode == DEFAULT_EPSG:
          wkt = shpgrd.getWkt()
       meta = shpgrd.dumpParamMetadata()
-      gdaltype = valunits = nodata = min = max = None
+      gdaltype = valunits = nodataval = minval = maxval = None
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
                            shpgrd.getId(), shpgrd.getUserId(), 
                            shpgrd.squid, shpgrd.verify, shpgrd.name,
                            shpgrd.getDLocation(), shpgrd.metadataUrl, meta,
                            shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
-                           valunits, nodata, min, max, 
+                           valunits, nodataval, minval, maxval, 
                            shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
                            shpgrd.getCSVExtentString(), wkt, shpgrd.modTime, 
                            shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
@@ -520,7 +520,7 @@ class Borg(DbPostgresql):
       @return: Updated record for successful update.
       """
       currtime = mx.DateTime.utc().mjd
-      meta = shpgrd.dumpMetadata()
+      meta = shpgrd.dumpLyrMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_updateShapeGrid',
                         shpgrd.getId(), shpgrd.verify, shpgrd.getDLocation(),
                         meta, currtime, shpgrd.size, 

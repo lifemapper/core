@@ -959,11 +959,15 @@ class Vector(_Layer):
       self._featureAttributes = None
       self._features = None
       self._featureCount = None
-      
-      self._verifyDataDescription(ogrType, dataFormat)
-      
+      self._geomIdx = None
+      self._localIdIdx = None
+      self._geometry = None
+      self._convexHull = None
       self.setFeatures(features, featureAttributes)
-       
+      
+      self._dlocation = None
+             
+      self._verifyDataDescription(ogrType, dataFormat)
       try:
          # sets localIdIdx, geomIdx, featureCount, featureAttributes, 
          # and features (if doReadData)

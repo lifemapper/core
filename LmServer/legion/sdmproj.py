@@ -390,7 +390,7 @@ class SDMProjection(_ProjectionType, Raster):
       @param format: (optional) image file format, default is 'image/png'
       """
       wmsUrl = self._earlJr.constructLMMapRequest(self.mapPrefix, width, height, 
-                     bbox, color, self.SRS, format)
+                     bbox, color, self.getSRSAsString(), format)
       return wmsUrl   
 
 # ...............................................
