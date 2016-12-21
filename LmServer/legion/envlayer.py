@@ -42,7 +42,6 @@ class EnvType(_LayerParameters):
              these data
       @param dateCode: Code for the time period for which these data are predicted.
       """
-      # lyr.getParametersId() <-- lyr._layerTypeId 
       _LayerParameters.__init__(self, userId, paramId=envTypeId, 
                                 metadata=metadata, modTime=modTime)
       self.envCode = envCode
@@ -111,8 +110,8 @@ class EnvLayer(EnvType, Raster):
                   # EnvType
                   envCode=envType.envCode, gcmCode=envType.gcmCode, 
                   altpredCode=envType.altpredCode, dateCode=envType.dateCode, 
-                  envMetadata=envType.paramMetadata, envModTime=envType.modTime, 
-                  envTypeId=envType.getParametersId())
+                  envMetadata=envType.paramMetadata, envModTime=envType.paramModTime, 
+                  envTypeId=envType.getParamId())
       return envLyr
 
 
@@ -197,5 +196,5 @@ class EnvLayer(EnvType, Raster):
       self.dateCode=envType.dateCode 
       self.loadParamMetadata(envType.paramMetadata)
       self.envModTime=envType.modTime
-      self.setParametersId(envType.getParametersId())
-      self.parametersModTime = envType.parametersModTime
+      self.setParamId(envType.getParamId())
+      self.paramModTime = envType.paramModTime

@@ -373,12 +373,12 @@ class _LayerParameters(LMObject):
                        class attributes.
       @param modTime: time/date last modified
       """
-      self._parametersUserId = userId
-      self._parametersId = paramId
+      self._paramUserId = userId
+      self._paramId = paramId
       self.paramMetadata = {}
       self.loadParamMetadata(metadata)
       self._matrixIndex = matrixIndex
-      self.parametersModTime = modTime
+      self.paramModTime = modTime
       
 # ...............................................
    def dumpParamMetadata(self):
@@ -401,33 +401,33 @@ class _LayerParameters(LMObject):
                 multiple Parameterized Layer objects
       @param paramid: The record id for the database 
       """
-      self._parametersId = paramid
+      self._paramId = paramid
 
-   def getParametersId(self):
+   def getParamId(self):
       """
       @summary: Returns the database id of the Layer Parameters (either 
                 PresenceAbsence or AncillaryValues) record, which can be used by 
                 multiple Parameterized Layer objects
       """
-      return self._parametersId
+      return self._paramId
 
 # ...............................................
-   def setParametersUserId(self, usr):
+   def setParamUserId(self, usr):
       """
       @summary: Sets the User id of the Layer Parameters (either 
                 PresenceAbsence or AncillaryValues) record, which can be used by 
                 multiple Parameterized Layer objects
       @param usr: The user id for the parameters 
       """
-      self._parametersUserId = usr
+      self._paramUserId = usr
 
-   def getParametersUserId(self):
+   def getParamUserId(self):
       """
       @summary: Returns the User id of the Layer Parameters (either 
                 PresenceAbsence or AncillaryValues) record, which can be used by 
                 multiple Parameterized Layer objects
       """
-      return self._parametersUserId
+      return self._paramUserId
    
 # ...............................................
    def setMatrixIndex(self, matrixIdx):

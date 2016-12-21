@@ -209,10 +209,9 @@ class Borg(DbPostgresql):
          modtime = self._getColumnValue(row, idxs, ['envmodtime', 'modtime'])
          usr = self._getColumnValue(row, idxs, ['envuserid', 'userid'])
          ltid = self._getColumnValue(row, idxs, ['envtypeid'])
-         lyrType = EnvType(envcode, None, None, usr,
-                                     gcmCode=gcmcode, altpredCode=altcode, 
-                                     dateCode=dtcode, metadata=meta, 
-                                     modTime=modtime, environmentalTypeId=ltid)
+         lyrType = EnvType(envcode, usr, gcmCode=gcmcode, altpredCode=altcode, 
+                           dateCode=dtcode, metadata=meta, modTime=modtime, 
+                           envTypeId=ltid)
       return lyrType
    
 # ...............................................
@@ -475,8 +474,8 @@ class Borg(DbPostgresql):
       currtime = mx.DateTime.utc().mjd
       meta = envtype.dumpParamMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvType',
-                                                    envtype.getParametersId(),
-                                                    envtype.getParametersUserId(),
+                                                    envtype.getParamId(),
+                                                    envtype.getParamUserId(),
                                                     envtype.typeCode,
                                                     envtype.gcmCode,
                                                     envtype.altpredCode,
@@ -563,9 +562,9 @@ class Borg(DbPostgresql):
                            lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                            lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
                            lyr.getCSVExtentString(), wkt, lyr.modTime, 
-                           lyr.getParametersId(), lyr.envCode, lyr.gcmCode,
+                           lyr.getParamId(), lyr.envCode, lyr.gcmCode,
                            lyr.altpredCode, lyr.dateCode, envmeta, 
-                           lyr.parametersModTime)
+                           lyr.paramModTime)
       newOrExistingLyr = self._createEnvLayer(row, idxs)
       return newOrExistingLyr
 
@@ -775,7 +774,7 @@ class Borg(DbPostgresql):
       prjmeta = proj.dumpParamMetadata()
       try:
          row, idxs = self.executeSelectOneFunction('lm_updateSDMProjectLayer', 
-                                              proj.getParametersId(), 
+                                              proj.getParamId(), 
                                               proj.getId(), 
                                               proj.verify,
                                               proj.getDLocation(), 
@@ -874,7 +873,7 @@ class Borg(DbPostgresql):
       prjmeta = proj.dumpParamMetadata()
       algparams = proj.algorithm.dumpParametersAsString()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProject', 
-                     proj.getParametersId(), proj.getId(), proj.getUserId(), 
+                     proj.getParamId(), proj.getId(), proj.getUserId(), 
                      proj.squid, proj.verify, proj.name, proj.getDLocation(), 
                      proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
                      proj.ogrType(), proj.valUnits, proj.nodataVal, proj.minVal,
