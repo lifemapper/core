@@ -214,7 +214,8 @@ class Parser(object):
             
          elif token == ')': # done adding children for this parent clade
             currentClade = parentClade
-            parentClade = self.getParentClade(currentClade)
+            if currentClade != self.rootClade:
+               parentClade = self.getParentClade(currentClade)
             unmatchedParens -= 1
             
          elif token.startswith(':'): # branch length or confidence
@@ -223,6 +224,9 @@ class Parser(object):
             
          elif token == '\n':
             pass
+         
+         elif token == ';':
+            break
          
          else: # unquoted node label
             # Spec says to convert underscores to blanks

@@ -1202,12 +1202,9 @@ class PhyloTreeKeys(object):
    """
    @summary: Class containing keys for Jeff's Phylo Trees
    """
-   C = 'c' # TODO: What is this?  Document
    CHILDREN = 'children' # Children of a node
-   DESC = 'desc' #TODO: What is this? Document.  Only used twice
    BRANCH_LENGTH = 'length' # Branch length for that node
    MTX_IDX = 'mx' # The matrix index for this node
    NAME = 'name' # Name of the node
-   NC = 'nc' #TODO: Document
    PATH = 'path' #TODO: Document
    PATH_ID = 'pathId' # TODO: Document
