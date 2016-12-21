@@ -1,3 +1,7 @@
+# TODO: Module documentation
+
+
+# TODO: Check imports
 import numpy as np
 import csv
 from operator import itemgetter
@@ -8,16 +12,23 @@ import operator
 import json
 from osgeo import ogr,gdal
 
+# TODO: Separators for classes and functions
+# TODO: Spacing
+# TODO: Constants
+# TODO: Remove references to Jeff's machine
 
-
+# TODO: Is this needed
 ogr.UseExceptions()
 
+# TODO: Inherit from object or another class
 class BioGeo():
    
    def __init__(self, contrastsdLoc, intersectionLyrDLoc, EventField=False):
       """
       @summary: contructor for all biogeo encoding
       @note: EventField only for non-collections
+      @todo: Function documentation
+      @todo: Inline documentation
       """
       self.encMtx = False
       self.contrastColl = False  # list of ogr data sources
@@ -82,6 +93,8 @@ class BioGeo():
 
 # ........................................................................
    def buildContrasts(self):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       if not self.contrastColl:
          if self._mutuallyEx:
             encMtx = self._buildFromExclusive()
@@ -95,6 +108,8 @@ class BioGeo():
       """
       @summary: determine if mutually exclusive
       @note: this might not work under certain circumstances
+      @todo: Function documentation
+      @todo: Explain why it might not work
       """
       lyr = ds.GetLayer(0)
       fc = lyr.GetFeatureCount()
@@ -110,6 +125,8 @@ class BioGeo():
            
 # ........................................................................      
    def _setCommon(self, intersectionLyrDLoc):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       set = True
       try:
          self.intersectionDs = self.openShapefile(intersectionLyrDLoc)
@@ -119,6 +136,8 @@ class BioGeo():
       return set      
 # ........................................................................
    def _setSinglePathValues(self, EventField, contrastsdLoc):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       set = True
       try:
          self.contrastShpName = ntpath.basename(contrastsdLoc)
@@ -171,10 +190,14 @@ class BioGeo():
 # ........................................................................
    @property
    def positions(self):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       return self._positions
       
 # ........................................................................       
    def openShapefile(self,dlocation):
+      # TODO: Function documentation
+      # TODO: Inline documentation
    
       ogr.RegisterAll()
       drv = ogr.GetDriverByName('ESRI Shapefile')
@@ -189,6 +212,8 @@ class BioGeo():
       @param lyr: osgeo lyr object
       @return: 2-D list of site features sorted by siteids [siteid,feature],[..]..
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       sites = []
       for feature in lyr:
          idIdx = feature.GetFieldIndex('siteid')
@@ -201,6 +226,8 @@ class BioGeo():
       """
       @summary: returns list of distinct event string values
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       distinctEvents = []
       sql = 'SELECT DISTINCT %s FROM %s' % (eventFieldName,constrastShpName)
       layer = contrastLyrDS.ExecuteSQL(sql)
@@ -213,6 +240,8 @@ class BioGeo():
       """
       @summary: collects the (two) features for each distinct event in a merged shp 
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       
       distinctEvents = self.distinctEvents   
       contrastLyr = self.contrastsDs.GetLayer(0)
@@ -237,6 +266,8 @@ class BioGeo():
       @todo: needs to get build for contrast collection too, which means not using distinct
       events, which makes sense since shouldn't need EventField in collection.
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       if not fromCollection:
          refD = {k:v for v,k in enumerate(distinctEvents)}
       else:
@@ -256,6 +287,8 @@ class BioGeo():
       @note: TEST THIS WITH /home/jcavner/TASHI_PAM/Test!!
       @note: have to disallow this method for merged data. # TEST THIS WITH /home/jcavner/TASHI_PAM/Test!!
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       try:
          mds = self.contrastsDs
          meConstrastLyr = mds.GetLayer(0) 
@@ -369,6 +402,8 @@ class BioGeo():
       self.encMtx = contrastsMtx
 # ........................................................................   
    def writeBioGeoMtx(self,dLoc):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       
       wrote = False
       if not isinstance(self.encMtx, bool):
@@ -380,12 +415,15 @@ class BioGeo():
             wrote = True
       return wrote
 # ........................................................................      
-
+# TODO: Class documentation
+# TODO: Inherit from something
 class PhyloEncoding():
    
    ##############  tree  ###################
    
    def __init__(self, treeDict, PAM):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       
       self.treeDict = treeDict
       self.PAM = PAM
@@ -398,6 +436,8 @@ class PhyloEncoding():
       @param TreedLoc: location of tree json
       @param PAMdLoc: locat of PAM .npy file
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       if os.path.exists(TreedLoc) and os.path.exists(PAMdLoc):
          try:
             with open(TreedLoc,'r') as f:
@@ -411,6 +451,8 @@ class PhyloEncoding():
          return None
    #...................................................   
    def _checkMtxIdx(self):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       
       colCnt = self.PAM.shape[1]
       tips = []
@@ -431,6 +473,9 @@ class PhyloEncoding():
       @summary: encodes phylogeny into matrix P and checks
       for sps in tree but not in PAM (I), if not in PAM, returns
       new PAM (I) in addition to P
+      @todo: Function name
+      @todo: Document
+      @todo: Function documentation
       """
       ######### make P ###########
       tips, internal, tipsNotInMtx, lengths,tipPaths = self.buildTips()
@@ -458,6 +503,7 @@ class PhyloEncoding():
       unsure how calculations would reflect/change if more tips in tree
       than in PAM.  If it does it needs to check for matrix key
       @param noColPam: at what point does this arg get set/sent
+      @todo: Document
       """ 
       clade = self.treeDict
       noColPam = self.PAM.shape[1]   
@@ -504,6 +550,7 @@ class PhyloEncoding():
    def getSiblingsMx(self, clade):
       """
       @summary: gets all tips that are siblings that are in PAM, (have 'mx')
+      @todo: Document
       """
       
       mx = []
@@ -521,6 +568,7 @@ class PhyloEncoding():
       """
       @param tipsNotInMtx: list of tip dictionaries
       @param internal: list of internal nodes made in buildTips
+      @todo: Document
       """  
       
       mxMapping = {} 
@@ -556,6 +604,7 @@ class PhyloEncoding():
       @summary: takes dict of interal nodes from one side of the phylogeny
       returns dict of lists of ids that descend from parent on that branch,
       key is parent pathId
+      @todo: Document
       """
       negDict = {}
       for k in internal:
@@ -567,6 +616,8 @@ class PhyloEncoding():
       return negDict
    
    # ..........................      
+      # TODO: Function documentation
+      # TODO: Inline documentation
    def negs(self, clade):
       sL = []
       def getNegIds(clade):    
@@ -581,12 +632,16 @@ class PhyloEncoding():
    
    # ..........................................   
    def initMatrix(self, rowCnt,colCnt):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       return np.empty((rowCnt,colCnt))
    # ..........................................
    def getIds(self, tipsDictList,internalDict=None):
       """
       @summary: get tip ids and internal ids
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       
       tipIds = [int(tp["pathId"]) for tp in tipsDictList ]
       if internalDict is None:
@@ -602,6 +657,8 @@ class PhyloEncoding():
       
    
    def buildPMatrix(self, emptyMtx, internalIds, tipsDictList, whichSide):
+      # TODO: Function documentation
+      # TODO: Inline documentation
       #negs = {'0': [1,2,3,4,5,6,7], '2': [3, 4, 5], '1':[2,3,4,5,6],
       #        '3':[4],'8':[9]}
       negs = whichSide
@@ -625,6 +682,8 @@ class PhyloEncoding():
       """
       has to have complete lengths
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       def goToTip(clade):
          
          if "children" in clade:
@@ -655,6 +714,8 @@ class PhyloEncoding():
       """
       has to have complete lengths
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       def goToTip(clade):
          
          if "children" in clade:
@@ -695,6 +756,8 @@ class PhyloEncoding():
       @param lengths: lengths keys are ints
       @param sides: sides keys are ints
       """
+      # TODO: Function documentation
+      # TODO: Inline documentation
       
       tipIds = [int(tp["pathId"]) for tp in tipsDictList] # maybe also flatten this to get mx by tip pathId
       NotipsDescFromInternal = {}
