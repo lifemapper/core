@@ -954,8 +954,8 @@ class Vector(_Layer):
       self._localIdFieldName = OccurrenceFieldNames.LOCAL_ID[0]
       self._localIdFieldType = OFTInteger
       self._fidAttribute = fidAttribute
-      self._featureAttributes = None
-      self._features = None
+      self._featureAttributes = {}
+      self._features = {}
       self._featureCount = 0
 
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
@@ -969,22 +969,20 @@ class Vector(_Layer):
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
       self._verifyDataDescription(ogrType, dataFormat)
-      try:
-         # sets features, featureAttributes, and featureCount (if doReadData)
-         newBBox, localIdIdx, geomIdx = self.readData(dlocation=dlocation, 
-                                        dataFormat=dataFormat, doReadData=False)
-      except Exception, e:
-         print 'Warning: %s' % str(e)
-      # Reset some attributes based on data
-      if newBBox is not None:
-         self.bbox = newBBox
-      self._geomIdx = geomIdx
-      self._localIdIdx = localIdIdx   
-
       # The following may be reset by setFeatures:
       # features, featureAttributes, featureCount, geomIdx, localIdIdx, geom, convexHull
       self.setFeatures(features, featureAttributes, featureCount=featureCount)
-
+      try:
+         # sets features, featureAttributes, and featureCount (if doReadData)
+         (newBBox, localIdIdx, geomIdx) = self.readData(dlocation=dlocation, 
+                                        dataFormat=dataFormat, doReadData=False)
+      # Reset some attributes based on data
+         if newBBox is not None:
+            self.bbox = newBBox
+         self._geomIdx = geomIdx
+         self._localIdIdx = localIdIdx   
+      except Exception, e:
+         print 'Warning in Vector.__init__: %s' % str(e)
       
 # .............................................................................
 # Static methods
@@ -1072,11 +1070,18 @@ class Vector(_Layer):
 # .............................................................................
    def setFeatures(self, features, featureAttributes, featureCount=0):
       """
-      @summary: Sets Vector._features and Vector.featureCount
+      @summary: Sets Vector attributes: 
+                   _features, _featureAttributes and featureCount.  
+                Also sets one or more of:
+                   _geomIdx, _localIdIdx, _geometry, _convexHull
       @param features: a dictionary of features, with key the featureid (FID) or
                 localid of the feature, and value a list of values for the 
                 feature.  Values are ordered in the same order as 
                 in featureAttributes.
+      @param featureAttributes: a dictionary of featureAttributes, with key the 
+                index of this attribute in each feature, and value a tuple of
+                (field name, field type (OGR))
+      @param featureCount: the number of features in these data
       """
       if featureAttributes:
          self._featureAttributes = featureAttributes
@@ -2193,7 +2198,6 @@ class Vector(_Layer):
                         currFeatureVals.append(val)
                         if k == localIdIdx:
                            localid = val
-      
                      # Add values localId (if not present) and geom to features
                      if not foundLocalId:
                         localid = currFeat.GetFID()

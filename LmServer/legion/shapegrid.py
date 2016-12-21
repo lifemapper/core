@@ -297,7 +297,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       """
       @copydoc: LmServer.base.layer2.Vector::readData() 
       """
-      Vector.readData(self, dlocation, dataFormat, featureLimit, doReadData)
+      Vector.readData(self, dlocation=dlocation, dataFormat=dataFormat, 
+                      featureLimit=featureLimit, doReadData=doReadData)
       self._setCellMeasurements()
       
 # ...................................................

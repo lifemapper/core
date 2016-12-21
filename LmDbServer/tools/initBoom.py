@@ -552,11 +552,11 @@ import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat)
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, DEFAULT_OGR_FORMAT)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
+from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH, OccurrenceFieldNames
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
@@ -600,17 +600,38 @@ addScenarioAndLayerMetadata(scribe, predScens)
 (scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
  scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
  configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
-
 shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
                 status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
 
-lp = _LayerParameters(usr)         
-v = Vector(gridname, usr, epsg, mapunits=mapunits, bbox = bbox)  
+dlocation = shp._dlocation
+dataFormat = shp.dataFormat
+featureLimit=None
+doReadData=False
+(newBBox, localIdIdx, geomIdx) = shp.readData(dlocation=dlocation, 
+                                        dataFormat=dataFormat, doReadData=False)
+
+newBBox = localIdIdx = geomIdx = None
+if dataFormat == DEFAULT_OGR_FORMAT:
+   (thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
+    featureCount) = shp.readWithOGR(dlocation, dataFormat, 
+                                     featureLimit=featureLimit, 
+                                     doReadData=doReadData)
+elif dataFormat == 'CSV':
+   (thisBBox, localIdIdx, features, featureAttributes, 
+    featureCount) = shp.readCSVPointsWithIDs(dlocation=dlocation, 
+                                              featureLimit=featureLimit, 
+                                              doReadData=doReadData)
+                                              
+                                              
+shp.setFeatures(features, featureAttributes, featureCount=featureCount)
+newBBox = shp._transformBBox(origBBox=thisBBox)
+print (newBBox, localIdIdx, geomIdx)
 
 
-shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
-                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
-
+(thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
+             featureCount) = shp.readWithOGR(dlocation, dataFormat, 
+                                              featureLimit=featureLimit, 
+                                              doReadData=doReadData)
 newshp = scribe.insertShapeGrid(shp)
 
 newshp.buildShape()
