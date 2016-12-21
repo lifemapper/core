@@ -26,9 +26,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import numpy as np
 import os
-from random import randint, shuffle
+from random import shuffle
 import json
 
 from LmCommon.common.lmconstants import FileFormats, OutputFormat, PhyloTreeKeys
