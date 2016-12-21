@@ -26,6 +26,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+#TODO: Constants
+#TODO: Fix check for keys
+# TODO: Get rid of unnecessary casting
 
 
 # TODO: Check imports
@@ -39,6 +42,7 @@ import operator
 import json
 from osgeo import ogr,gdal
 
+from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.encoding.lmTree import LmTree
 
 
@@ -483,6 +487,7 @@ class PhyloEncoding(object):
       # TODO: Inline documentation
       
       self.tree = LmTree(treeDict)
+      self.treeDict = treeDict
       self.PAM = PAM
       if not self._checkMtxIdx():
          raise Exception, "PAM sps dimension doesn't match number of mtxIdx"
@@ -510,16 +515,13 @@ class PhyloEncoding(object):
       # TODO: Inline documentation
       
       colCnt = self.PAM.shape[1]
-      tips = []
       mx = []
+
       def findMtxTips(clade):
-         if "children" in clade:
-            for child in clade["children"]:
-               findMtxTips(child)
-         else:
-            tips.append(clade['pathId'])
-            if 'mx' in clade:
-               mx.append(int(clade['mx']))
+         if clade.has_key(PhyloTreeKeys.MTX_IDX):
+            mx.append(clade[PhyloTreeKeys.MTX_IDX])
+         for child in clade[PhyloTreeKeys.CHILDREN]:
+            findMtxTips(child)
       findMtxTips(self.tree.tree)
       return len(mx) == colCnt
 
@@ -570,22 +572,22 @@ class PhyloEncoding(object):
       internal = {}
       lengths = {}
       tipPaths = {}
-      def buildLeaves(clade):
       
-         if "children" in clade: 
+      def buildLeaves(clade):
+         if len(clade[PhyloTreeKeys.CHILDREN]) > 0:
             #### just a check, probably take out 
-            if "length" in clade:
+            if clade.has_key(PhyloTreeKeys.BRANCH_LENGTH):
                lengths[int(clade["pathId"])] = float(clade["length"])
-            if len(clade["children"]) > 2:
-               print "polytomy ", clade["pathId"]
+            if len(clade[PhyloTreeKeys.CHILDREN]) > 2:
+               print "polytomy ", clade[PhyloTreeKeys.PATH_ID]
             ############    
-            internal[clade["pathId"]] = clade["children"] # both sides
-            for child in clade["children"]:  
+            internal[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.CHILDREN] # both sides
+            for child in clade[PhyloTreeKeys.CHILDREN]:  
                buildLeaves(child)
-         else: 
-            if "mx" in clade: 
+         else:
+            if clade.has_key(PhyloTreeKeys.MTX_IDX):
                castClade = clade.copy()
-               castClade["mx"] = int(castClade["mx"])
+               castClade[PhyloTreeKeys.MTX_IDX] = castClade[PhyloTreeKeys.MTX_IDX]
                tips.append(castClade)
                
             else:
@@ -611,12 +613,12 @@ class PhyloEncoding(object):
       
       mx = []
       def getMtxIds(clade):
-         if "children" in clade:
+         if len(clade[PhyloTreeKeys.CHILDREN]) > 0:
             for child in clade['children']:
                getMtxIds(child)
          else:
-            if "mx" in clade:
-               mx.append(int(clade["mx"]))
+            if clade.has_key(PhyloTreeKeys.MTX_IDX):
+               mx.append(int(clade[PhyloTreeKeys.MTX_IDX]))
       getMtxIds(clade)
       return mx
 
@@ -630,12 +632,14 @@ class PhyloEncoding(object):
       
       mxMapping = {} 
       for tip in tipsNotInMtx:
-         parentId = [x for x in tip["path"].split(",")][1]  
+         #TODO: Consider reversing path
+         parentId = tip[PhyloTreeKeys.PATH][1]
+  
          parentsChildren = internal[parentId]#['children']  
          for sibling in parentsChildren:
             if tip['pathId'] != sibling['pathId']:
                # not itself
-               if 'children' in sibling:
+               if len(sibling[PhyloTreeKeys.CHILDREN]) > 0:
                   # recurse unitl it get to tips with 'mx'
                   mxs = self.getSiblingsMx(sibling)
                   mxMapping[int(tip['mx'])] = mxs
@@ -666,6 +670,7 @@ class PhyloEncoding(object):
       """
       negDict = {}
       for k in internal:
+         print k
          #l = negs(internal[k])  #for when one side is captured in buildTips
          l = self.negs(internal[k][0]) # for when all children are attached to internal
          negDict[str(k)] = l  # cast key to string, Dec. 10, 2015
@@ -683,13 +688,10 @@ class PhyloEncoding(object):
       @param clade: The clade to do it for
       """
       sL = []
-      def getNegIds(clade):    
-         if "children" in clade:
-            sL.append(int(clade["pathId"]))
-            for child in clade["children"]:
-               getNegIds(child)
-         else:
-            sL.append(int(clade["pathId"]))
+      def getNegIds(clade):
+         sL.append(clade[PhyloTreeKeys.PATH_ID])
+         for child in clade[PhyloTreeKeys.CHILDREN]:
+            getNegIds(child)
       getNegIds(clade)
       return sL
    
@@ -738,8 +740,8 @@ class PhyloEncoding(object):
       for ri, tip in enumerate(tipsDictList):
          newRow = np.zeros(len(internalIds), dtype=np.float)  # need these as zeros since init mtx is autofil
          
-         # TODO: These are already integers
-         pathList = [int(x) for x in tip["path"].split(",")][1:]
+         # TODO: Consider if this is reversed
+         pathList = tip[PhyloTreeKeys.PATH][1:]
 
          tipId = tip["pathId"]
          for i,n in enumerate(pathList):
@@ -770,19 +772,15 @@ class PhyloEncoding(object):
       # TODO: Function documentation
       # TODO: Inline documentation
       def goToTip(clade):
-         
-         if "children" in clade:
-            lengthsfromSide[int(clade["pathId"])] = float(clade["length"])
-            for child in clade["children"]:
-               goToTip(child)
-         else:
-            # tips
-            lengthsfromSide[int(clade["pathId"])] = float(clade["length"])
-            #pass
+         lengthsfromSide[clade["pathId"]] = float(clade["length"])
+         for child in clade[PhyloTreeKeys.CHILDREN]:
+            goToTip(child)
+
       # for each key (pathId) in internal recurse each side
       sides = {}
       ik = [int(k) for k in internal.keys()]  # int version of internal keys
       all_keys = list(set(lengths.keys() + ik))
+      print all_keys
       for pi in all_keys:  # 0 doesn't have a lengh so isn't in lengths
          sides[int(pi)] = []
          if str(pi) in internal:
@@ -847,7 +845,7 @@ class PhyloEncoding(object):
          for tip in TipsPerSide:
             mx = mxByTip[tip]
             tipLength = lengths[tip]
-            tipPath = [int(x) for x in tipPaths[str(tip)].split(",")]
+            tipPath = tipPaths[int(tip)]#[int(x) for x in tipPaths[str(tip)].split(",")]
             num = tipLength + sum([lengths[i] / sum(NotipsDescFromInternal[i]) for i in InternalPerSide if i in tipPath])
             result = num/posDen
             emptyMtx[mx][col] = result
@@ -859,7 +857,7 @@ class PhyloEncoding(object):
          for tip in TipsPerSide:
             mx = mxByTip[tip]
             tipLength = lengths[tip]
-            tipPath = [int(x) for x in tipPaths[str(tip)].split(",")]
+            tipPath = tipPaths[int(tip)]#[int(x) for x in tipPaths[str(tip)].split(",")]
             num = tipLength + sum([lengths[i]/sum(NotipsDescFromInternal[i]) for i in InternalPerSide if i in tipPath] )
             result = num/negDen
             emptyMtx[mx][col] = result
