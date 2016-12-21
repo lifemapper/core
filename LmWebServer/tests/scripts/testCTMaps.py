@@ -38,7 +38,7 @@ def createTestMap(lyr):
    height, width = lyr.getHeightWidthByBBox(limitWidth=500)
    srs = 'epsg:%d' % lyr.epsgcode
    lyrurl = earl.constructLMMapRequest(lyr.mapPrefix, width, height, lyr.bbox,
-                                       srs=lyr.SRS)
+                                       srs=lyr.getSRSAsString())
    return lyrurl
 
 # ...............................................   

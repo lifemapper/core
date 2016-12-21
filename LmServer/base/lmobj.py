@@ -212,9 +212,10 @@ class LMSpatialObject(LMObject):
       @param bbox: Sequence in the form (minX, minY, maxX, maxY)
                    or string in the form 'minX, minY, maxX, maxY'
       """
+      self._epsg = None
       self._setEPSG(epsgcode)
+      self._bbox = None
       self._setBBox(bbox)
-
       LMObject.__init__(self)
 
 # ...............................................
@@ -227,6 +228,9 @@ class LMSpatialObject(LMObject):
       return srs
 
 # ...............................................
+   def getSRS(self):
+      raise LMError(currargs='getSRS is only implemented on subclasses')
+
    def getSRSAsWkt(self):
       try:
          srs = self.getSRS()
@@ -236,11 +240,13 @@ class LMSpatialObject(LMObject):
          wkt = srs.ExportToWkt()
          return wkt 
 
-# ...............................................
-   def getSRS(self):
-      raise LMError(currargs='getSRS is only implemented on subclasses')
+   def getSRSAsString(self):
+      """
+      @summary: Get SRS suitable for a Mapserver file
+      """
+      if self._epsg is not None:
+         return 'epsg:' + str(self._epsg)
       
-
 # .............................................................................
    def _getEPSG(self):
       return self._epsg
@@ -267,14 +273,7 @@ class LMSpatialObject(LMObject):
          else:
             raise LMError('Invalid EPSG code {} type {}'.format(epsg, type(epsg)))
    epsgcode = property(_getEPSG, _setEPSG)
-   
-# .............................................................................
-   def _getSRS(self):
-      if self._epsg is not None:
-         return 'epsg:' + str(self._epsg)
          
-   SRS = property(_getSRS)
-   
 # ..............................................................................
    def getHeightWidthByBBox(self, bbox=None, limitWidth=1000):
       if bbox is None or len(bbox) != 4:
