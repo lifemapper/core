@@ -25,7 +25,7 @@ import glob
 import mx.DateTime
 import os
 
-from LmCommon.common.lmconstants import OutputFormat, JobStatus
+from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType
 
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
@@ -206,6 +206,11 @@ class SDMProjection(_ProjectionType, Raster):
          mapunits = projScenario.units
       if resolution is None:
          resolution = projScenario.resolution
+      if processType is None:
+         if algorithm.code == 'ATT_MAXENT':
+            processType = ProcessType.ATT_PROJECT
+         else:
+            processType = ProcessType.OM_PROJECT
       isDiscreteData = ALGORITHM_DATA[algorithm.code]['isDiscreteOutput']
       if gdalFormat is None:
          gdalFormat = ALGORITHM_DATA[algorithm.code]['outputFormat']

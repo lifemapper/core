@@ -778,7 +778,6 @@ class Borg(DbPostgresql):
       """
       lyrmeta = proj.dumpLyrMetadata()
       prjmeta = proj.dumpParamMetadata()
-      algparams = proj.algorithm.dumpParametersAsString()
       try:
          row, idxs = self.executeSelectOneFunction('lm_updateSDMProjectLayer', 
                                               proj.getParametersId(), 
@@ -797,10 +796,10 @@ class Borg(DbPostgresql):
                                               prjmeta,
                                               proj.status, 
                                               proj.statusModTime)
-         updatedOcc = self._createSDMProjection(row, idxs)
+         updatedProj = self._createSDMProjection(row, idxs)
       except Exception, e:
          raise e
-      return updatedOcc
+      return updatedProj
 
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):

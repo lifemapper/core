@@ -24,16 +24,13 @@
 """
 import mx.DateTime
 from osgeo.ogr import wkbPoint
-import os
 import socket
 from types import StringType, UnicodeType, IntType
-import xml.etree.ElementTree as ET 
 
 from LmCommon.common.lmconstants import (JobStatus, ProcessType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
-from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import  DbUser
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
 from LmServer.legion.sdmproj import SDMProjection
@@ -281,29 +278,19 @@ class BorgScribe(LMObject):
       @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
       """
-      success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
-      return success
-   
-# # ...............................................
-#    def initSDMOcc(self, usr, occ, occJobProcessType, currtime):
-#       occJob = self.getJobOfType(JobFamily.SDM, occ)
-#       if occJob is not None and JobStatus.failed(occJob.status):
-#          self._mal.deleteJob(occJob)
-#          occJob = None
-#       if occJob is None:
-# #          try:
-#          if occ.status != JobStatus.INITIALIZE:
-#             occ.updateStatus(JobStatus.INITIALIZE, modTime=modtime)
-#          occJob = SDMOccurrenceJob(occ, processType=occJobProcessType,
-#                                    status=JobStatus.INITIALIZE, 
-#                                    statusModTime=modtime, createTime=modtime,
-#                                    priority=Priority.NORMAL)
-# 
-#          success = self.updateOccState(occ)
-#          updatedOccJob = self.insertJob(occJob)
-#          occJob = updatedOccJob
-#       return occJob
+      updatedOcc = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
+      return updatedOcc
 
+# ...............................................
+   def updateSDMProject(self, proj):
+      """
+      @summary Method to update an SDMProjection object in the database with 
+               the verify hash, metadata, data extent and values, status/statusmodtime.
+      @param proj the SDMProjection object to update
+      """
+      updatedProj = self._borg.updateSDMProject(proj)
+      return updatedProj   
+   
 # ...............................................
    def initOrRollbackSDMProjects(self, usr, occset, mdlScen, prjScenList, alg,  
                           mdlMask=None, projMask=None, 
@@ -320,19 +307,15 @@ class BorgScribe(LMObject):
          pmaskid = projMask.getId()
       except:
          pmaskid = None
-      if alg.code == 'ATT_MAXENT':
-         processType = ProcessType.ATT_PROJECT
-      else:
-         processType = ProcessType.OM_PROJECT
       for prjScen in prjScenList:
          prj = SDMProjection(occset, alg, mdlScen, prjScen, 
-                        processType=processType, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
          if JobStatus.finished(newOrExistingPrj.status):
             newOrExistingPrj.updateStatus(JobStatus.GENERAL, stattime=modtime)
-         prjs.append(newOrExistingPrj)
+            newerPrj = self.updateSDMProject(newOrExistingPrj)
+         prjs.append(newerPrj)
       return prjs
 
 # ...............................................
