@@ -424,7 +424,7 @@ class LmTree(object):
       self.cladePaths[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.PATH]
 
    # ..............................
-   def _findLargestPathId(self, clade=None):
+   def _findLargestPathId(self, clade):
       """
       @summary: Find the largest path id in the tree so that new path ids will
                    not collide
@@ -558,7 +558,7 @@ class LmTree(object):
       @summary: Process the provided tree, fill in missing information, and 
                    create clade paths dictionary
       """
-      self.lastCladeId = self._findLargestPathId(self, clade=None)
+      self.lastCladeId = self._findLargestPathId(self.tree)
       if self.lastCladeId is None:
          self.lastCladeId = -1
          
