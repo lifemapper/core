@@ -487,25 +487,21 @@ class PhyloEncoding(object):
    
    # ..............................   
    @classmethod
-   def fromFile(cls, TreedLoc, PAMdLoc):
+   def fromFile(cls, treeDLoc, pamDLoc):
       """
-      @param TreedLoc: location of tree json
-      @param PAMdLoc: locat of PAM .npy file
+      @summary: Creates an instance of the PhyloEncoding class from tree and 
+                   pam files
+      @param treeDLoc: The location of the tree (in JSON format)
+      @param pamDLoc: The location of the PAM (in numpy format)
+      @raise IOError: If one or both of the files are not found
       """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      if os.path.exists(TreedLoc) and os.path.exists(PAMdLoc):
-         try:
-            with open(TreedLoc,'r') as f:
-               jsonstr = f.read()
-            pam = np.load(PAMdLoc)
-         except:
-            return None
-         else:
-            return cls(json.loads(jsonstr), pam)
-      else:
-         return None
-
+      with open(treeDLoc, 'r') as treeF:
+         tree = json.load(treeF)
+      
+      pam = np.load(pamDLoc)
+      
+      return cls(tree, pam)
+      
    # ..............................   
    def _checkMtxIdx(self):
       # TODO: Function documentation
