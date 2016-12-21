@@ -220,7 +220,7 @@ class Borg(DbPostgresql):
       """
       @summary: Create Raster or Vector layer from a Layer or view in the Borg. 
       @note: OccurrenceSet and SDMProject objects do not use this function
-      @note: used with Layer, lm_envlayer, lm_scenlayer, lm_shapegrid
+      @note: used with Layer, lm_envlayer, lm_scenlayer, lm_sdmproject, lm_shapegrid
       """
       lyr = None
       if row is not None:
@@ -229,12 +229,13 @@ class Borg(DbPostgresql):
          verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
          squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
          name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
-         dlocation = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
+         dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
          murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
          meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
          vtype = self._getColumnValue(row, idxs, ['ogrtype'])
          rtype = self._getColumnValue(row, idxs, ['gdaltype'])
          vunits = self._getColumnValue(row, idxs, ['valunits'])
+         vattr = self._getColumnValue(row, idxs, ['valattribute'])
          nodata = self._getColumnValue(row, idxs, ['nodataval'])
          minval = self._getColumnValue(row, idxs, ['minval'])
          maxval = self._getColumnValue(row, idxs, ['maxval'])
@@ -242,29 +243,23 @@ class Borg(DbPostgresql):
          epsg = self._getColumnValue(row, idxs, ['epsgcode'])
          munits = self._getColumnValue(row, idxs, ['mapunits'])
          res = self._getColumnValue(row, idxs, ['resolution'])
-         # for non-joined layer tables OccurrenceSet and Projection 
          dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
          bbox = self._getColumnValue(row, idxs, ['bbox'])
                      
          if vtype is not None:
-            lyr = Vector(name=name, metadata=meta, bbox=bbox, 
-                         verify=verify, squid=squid,
-                         mapunits=munits, resolution=res, 
-                         epsgcode=epsg, dlocation=dlocation, 
-                         valUnits=vunits, 
-                         ogrType=vtype, ogrFormat=fformat, 
-                         svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
-                         modTime=dtmod, metadataUrl=murl) 
+            lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
+                         dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                         ogrType=vtype, valUnits=vunits, valAttribute=vattr,
+                         nodataVal=nodata, minVal=minval, maxVal=maxval, 
+                         mapunits=munits, resolution=res, bbox=bbox, 
+                         metadataUrl=murl, modTime=dtmod)
          elif rtype is not None:
-            lyr = Raster(name=name, metadata=meta, bbox=bbox, 
-                         verify=verify, squid=squid,
-                         mapunits=munits, resolution=res, 
-                         epsgcode=epsg, dlocation=dlocation, 
-                         minVal=minval, maxVal=maxval, 
-                         nodataVal=nodata, valUnits=vunits,
-                         gdalType=rtype, gdalFormat=fformat,  
-                         svcObjId=dbid, lyrId=dbid, lyrUserId=usr, 
-                         modTime=dtmod, metadataUrl=murl)
+            lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
+                         dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                         gdalType=rtype, valUnits=vunits, nodataVal=nodata, 
+                         minVal=minval, maxVal=maxval, mapunits=munits, 
+                         resolution=res, bbox=bbox, metadataUrl=murl, 
+                         modTime=dtmod)
       return lyr
 
 # ...............................................
