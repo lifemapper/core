@@ -87,7 +87,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       @param dataFormat: Data file format (ogr or gdal codes, used to choose
                   driver for read/write). 
                   GDAL Raster Format code at http://www.gdal.org/formats_list.html.
-                  OGR Vector Format code at http://www.gdal.org/ogr/ogr_formats.html
+                  OGR Vector Format code at http://www.gdal.org/ogr_formats.html
       @param gdalType:  Integer indicating osgeo.gdalconst datatype
                   GDALDataType in http://www.gdal.org/gdal_8h.html
       @param ogrType: OGR geometry type (wkbPoint, ogr.wkbPolygon, etc)
@@ -945,36 +945,6 @@ class Vector(_Layer):
       @param fidAttribute: Attribute containing the unique identifier or 
                     feature ID (FID) for this layer/shapefile.
       """
-      self._geomIdx = None
-      self._geomFieldName = OccurrenceFieldNames.GEOMETRY_WKT[0]
-      self._geomFieldType = OFTString      
-      self._geometry = None
-      self._convexHull = None
-      
-      self._localIdIdx = None
-      self._localIdFieldName = OccurrenceFieldNames.LOCAL_ID[0]
-      self._localIdFieldType = OFTInteger
-      
-      self._fidAttribute = fidAttribute
-      self._featureAttributes = None
-      self._features = None
-      self._featureCount = None
-      self._geomIdx = None
-      self._localIdIdx = None
-      self._geometry = None
-      self._convexHull = None
-      self.setFeatures(features, featureAttributes)
-      
-      self._dlocation = None
-             
-      self._verifyDataDescription(ogrType, dataFormat)
-      try:
-         # sets localIdIdx, geomIdx, featureCount, featureAttributes, 
-         # and features (if doReadData)
-         bbox = self.readData(dlocation, dataFormat, doReadData=False)
-      except Exception, e:
-         print 'Warning: %s' % str(e)
-
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, ogrType=ogrType, 
@@ -985,6 +955,36 @@ class Vector(_Layer):
                 svcObjId=svcObjId, serviceType=serviceType, moduleType=moduleType,
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
+
+      self._verifyDataDescription(ogrType, dataFormat)
+      try:
+         # sets localIdIdx, geomIdx, featureCount, featureAttributes, 
+         # and features (if doReadData)
+         (newBBox, localIdIdx, geomIdx, features, featureAttributes, 
+          featureCount) = self.readData(dlocation=dlocation, 
+                                        dataFormat=dataFormat, doReadData=False)
+      except Exception, e:
+         print 'Warning: %s' % str(e)
+         
+      if newBBox is not None:
+         self.bbox = newBBox
+
+      self._geomIdx = geomIdx
+      self._geomFieldName = OccurrenceFieldNames.GEOMETRY_WKT[0]
+      self._geomFieldType = OFTString      
+      self._geometry = None
+      self._convexHull = None      
+      self._localIdIdx = localIdIdx
+      self._localIdFieldName = OccurrenceFieldNames.LOCAL_ID[0]
+      self._localIdFieldType = OFTInteger
+      self._fidAttribute = fidAttribute
+      self._featureAttributes = None
+      self._features = None
+      self._featureCount = 0
+      # The following may be set by setFeatures (depending on what is sent):
+      # features, featureAttributes, featureCount, geomIdx, localIdIdx, geom, convexHull
+      self.setFeatures(features, featureAttributes, featureCount=featureCount)
+
       
 # .............................................................................
 # Static methods
