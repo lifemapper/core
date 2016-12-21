@@ -945,6 +945,19 @@ class Vector(_Layer):
       @param fidAttribute: Attribute containing the unique identifier or 
                     feature ID (FID) for this layer/shapefile.
       """
+      self._geomIdx = None
+      self._geomFieldName = OccurrenceFieldNames.GEOMETRY_WKT[0]
+      self._geomFieldType = OFTString      
+      self._geometry = None
+      self._convexHull = None      
+      self._localIdIdx = None
+      self._localIdFieldName = OccurrenceFieldNames.LOCAL_ID[0]
+      self._localIdFieldType = OFTInteger
+      self._fidAttribute = fidAttribute
+      self._featureAttributes = None
+      self._features = None
+      self._featureCount = 0
+
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, ogrType=ogrType, 
@@ -955,33 +968,20 @@ class Vector(_Layer):
                 svcObjId=svcObjId, serviceType=serviceType, moduleType=moduleType,
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
-
       self._verifyDataDescription(ogrType, dataFormat)
       try:
-         # sets localIdIdx, geomIdx, featureCount, featureAttributes, 
-         # and features (if doReadData)
-         (newBBox, localIdIdx, geomIdx, features, featureAttributes, 
-          featureCount) = self.readData(dlocation=dlocation, 
+         # sets features, featureAttributes, and featureCount (if doReadData)
+         newBBox, localIdIdx, geomIdx = self.readData(dlocation=dlocation, 
                                         dataFormat=dataFormat, doReadData=False)
       except Exception, e:
          print 'Warning: %s' % str(e)
-         
+      # Reset some attributes based on data
       if newBBox is not None:
          self.bbox = newBBox
-
       self._geomIdx = geomIdx
-      self._geomFieldName = OccurrenceFieldNames.GEOMETRY_WKT[0]
-      self._geomFieldType = OFTString      
-      self._geometry = None
-      self._convexHull = None      
-      self._localIdIdx = localIdIdx
-      self._localIdFieldName = OccurrenceFieldNames.LOCAL_ID[0]
-      self._localIdFieldType = OFTInteger
-      self._fidAttribute = fidAttribute
-      self._featureAttributes = None
-      self._features = None
-      self._featureCount = 0
-      # The following may be set by setFeatures (depending on what is sent):
+      self._localIdIdx = localIdIdx   
+
+      # The following may be reset by setFeatures:
       # features, featureAttributes, featureCount, geomIdx, localIdIdx, geom, convexHull
       self.setFeatures(features, featureAttributes, featureCount=featureCount)
 
@@ -2124,7 +2124,7 @@ class Vector(_Layer):
       @note: populateStats calls this
       @todo: remove featureLimit, read subsetDLocation if there is a limit 
       """
-      thisBBox = localIdIdx = geomIdx = features = featureAttributes = None
+      thisBBox = localIdIdx = geomIdx = feats = featAttrs = None
       if dlocation is not None and os.path.exists(dlocation):
          ogr.RegisterAll()
          drv = ogr.GetDriverByName(ogrFormat)
@@ -2145,13 +2145,13 @@ class Vector(_Layer):
          thisBBox = (minX, minY, maxX, maxY)
  
          # .........................
-         # Read field structure (featureAttributes)
+         # Read field structure (featAttrs)
          lyrDef = slyr.GetLayerDefn()
          fldCount = lyrDef.GetFieldCount()
          foundLocalId = False         
          geomtype = self._getGeomType(slyr, lyrDef)
          # Read Fields (indexes start at 0)
-         featureAttributes = {}
+         featAttrs = {}
          for i in range(fldCount):
             fld = lyrDef.GetFieldDefn(i)
             fldname = fld.GetNameRef()
@@ -2163,21 +2163,21 @@ class Vector(_Layer):
             if not foundLocalId and fldname in OccurrenceFieldNames.LOCAL_ID:
                localIdIdx = i
                foundLocalId = True
-            featureAttributes[i] = (fld.GetNameRef(), fld.GetType())
+            featAttrs[i] = (fld.GetNameRef(), fld.GetType())
 
          # .........................
-         # Add fields FID (if not present) and geom to featureAttributes
+         # Add fields FID (if not present) and geom to featAttrs
          i = fldCount
          if not foundLocalId:
-            featureAttributes[i] = (self._localIdFieldName, self._localIdFieldType)
+            featAttrs[i] = (self._localIdFieldName, self._localIdFieldType)
             localIdIdx = i
             i += 1
-         featureAttributes[i] = (self._geomFieldName, self._geomFieldType)
+         featAttrs[i] = (self._geomFieldName, self._geomFieldType)
          geomIdx = i
          
          # .........................
          # Read data (features)
-         features = {}
+         feats = {}
          featCount = slyr.GetFeatureCount()
          if doReadData:
             # Limit the number of features to read (for mapping and modeling)
@@ -2201,15 +2201,15 @@ class Vector(_Layer):
                      currFeatureVals.append(currFeat.geometry().ExportToWkt())
                      
                      # Add the feature values with key=localId to the dictionary 
-                     features[localid] = currFeatureVals
+                     feats[localid] = currFeatureVals
             except Exception, e:
                raise LMError(currargs='Failed to read features from %s (%s)' 
                              % (dlocation, str(e)), doTrace=True)
          
-         self.setFeatures(features, featureAttributes, featureCount=featCount)
+#          self.setFeatures(features, featAttrs, featureCount=featCount)
       else:
          raise LMError('dlocation %s does not exist' % str(dlocation))
-      return thisBBox, localIdIdx, geomIdx, features, featureAttributes, featCount
+      return thisBBox, localIdIdx, geomIdx, feats, featAttrs, featCount
 
       
 # ...............................................
@@ -2241,7 +2241,9 @@ class Vector(_Layer):
                 doReadData=False):
       """
       @summary: Read the file at dlocation and fill the featureCount and 
-                featureAttributes and features dictionaries.
+                featureAttributes dictionary.  If doReadData is True, read and 
+                fill features dictionary.
+      @return: new bbox string, indices of the localId int and geometry fields
       @todo: remove featureLimit, read subsetDLocation if there is a limit 
       """
       newBBox = localIdIdx = geomIdx = None
@@ -2261,9 +2263,9 @@ class Vector(_Layer):
              featureCount) = self.readCSVPointsWithIDs(dlocation=dlocation, 
                                                        featureLimit=featureLimit, 
                                                        doReadData=doReadData)
+         self.setFeatures(features, featureAttributes, featureCount=featureCount)
          newBBox = self._transformBBox(origBBox=thisBBox)
-      return (newBBox, localIdIdx, geomIdx, features, featureAttributes, 
-              featureCount)
+      return (newBBox, localIdIdx, geomIdx)
    
 # ...............................................
    def getOGRLayerTypeName(self, ogrWKBType=None):
