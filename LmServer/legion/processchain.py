@@ -25,7 +25,7 @@ import mx.DateTime
 import os
 
 from LmServer.base.lmobj import LMObject
-from LmServer.base.serviceobject import ProcessObject, ServiceObject
+from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType)
 # .........................................................................
 class MFChain(ProcessObject):

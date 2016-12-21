@@ -26,7 +26,7 @@ import os
 from types import IntType
 import math
 import numpy as np
-import rtree
+# import rtree
 
 from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS, DEFAULT_OGR_FORMAT
 from LmServer.base.layer2 import _LayerParameters, Vector
@@ -112,8 +112,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                           modTime=vector.modTime,
                           featureCount=vector.featureCount, 
                           featureAttributes=vector.featureAttributes, 
-                          features=vector.features, fidAttribute=
-                          vector.fidAttribute,
+                          features=vector.features, 
+                          fidAttribute=vector.fidAttribute,
                           status=status, statusModTime=statusModTime)
       return shpGrid
 

@@ -27,7 +27,7 @@ import os
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 
 from LmServer.base.dbpgsql import DbPostgresql
-from LmServer.base.layer import Raster, Vector
+from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
 from LmServer.base.layerset import MapLayerSet                                  
 from LmServer.base.lmobj import LMError

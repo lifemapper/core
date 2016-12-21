@@ -482,7 +482,7 @@ class Raster(_Layer):
                 metadataUrl=None, parentMetadataUrl=None, modTime=None):
       """
       @summary Raster constructor, inherits from _Layer
-      @copydoc LmServer.base.layer._Layer::__init__()
+      @copydoc LmServer.base.layer2._Layer::__init__()
       """
       self._verifyDataDescription(gdalType, dataFormat)
       self.size = None
@@ -931,7 +931,7 @@ class Vector(_Layer):
                 featureCount=0, featureAttributes={}, features={}, fidAttribute=None):
       """
       @summary Vector constructor, inherits from _Layer
-      @copydoc LmServer.base.layer._Layer::__init__()
+      @copydoc LmServer.base.layer2._Layer::__init__()
       @param featureCount: number of features in this layer.  This is stored in
                     database and may be populated even if the features are not.
       @param featureAttributes: Dictionary with key attributeName and value

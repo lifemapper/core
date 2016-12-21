@@ -31,7 +31,7 @@ from types import BooleanType, StringType
 
 from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, MatrixType)
 from LmServer.base.lmobj import LMObject, LMError
-from LmServer.base.serviceobject import ProcessObject, ServiceObject
+from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMServiceType,LMServiceModule
 
 
