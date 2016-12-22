@@ -169,6 +169,7 @@ class LMObject(object):
       """
       @note: Adds to dictionary or modifies values for existing keys
       """
+      objMetadata = {}
       if newMetadata is not None:
          if type(newMetadata) is dict: 
             objMetadata = newMetadata
