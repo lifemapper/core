@@ -482,6 +482,7 @@ class LmTree(object):
               clade[PhyloTreeKeys.PATH_ID]
       for child in clade[PhyloTreeKeys.CHILDREN]:
          branchLengths.extend(self._getBranchLengths(child))
+      return branchLengths
    
    # ..............................
    def _getDescendants(self, clade):
