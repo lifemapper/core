@@ -32,6 +32,7 @@ import json
 
 from LmCommon.common.lmconstants import FileFormats, OutputFormat, PhyloTreeKeys
 from LmCommon.encoding.newickToJson import Parser
+from pygments.lexer import include
 
 # .............................................................................
 class LmTree(object):
@@ -240,7 +241,22 @@ class LmTree(object):
          pass
       
       return self.getClade(paths[0][i])
- 
+   
+   # ..............................
+   def getDescendants(self, clade):
+      """
+      @summary: Get the descendants of the specified clade (including this one)
+      @param clade: The clade to get the descendants of.  If integer, assumes 
+                       that this is the path id of the clade.  If None, assumes
+                       root
+      """
+      if clade is None:
+         clade = self.tree
+      elif isinstance(clade, int):
+         clade = self.getClade(clade)
+      
+      return self._getDescendants(clade)
+
    # ..............................
    def getLabels(self):
       """
@@ -466,6 +482,17 @@ class LmTree(object):
               clade[PhyloTreeKeys.PATH_ID]
       for child in clade[PhyloTreeKeys.CHILDREN]:
          branchLengths.extend(self._getBranchLengths(child))
+   
+   # ..............................
+   def _getDescendants(self, clade):
+      """
+      @summary: Gets the decendants of the specified clade
+      @param clade: The clade dictionary to get the descendants of
+      """
+      desc = [clade[PhyloTreeKeys.PATH_ID]]
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         desc.extend(self._getDescendants(child))
+      return desc
    
    # ..............................
    def _getLabels(self, clade):
