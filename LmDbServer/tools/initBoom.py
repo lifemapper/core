@@ -125,7 +125,6 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
    for envcode in pkgMeta['layertypes']:
       ltmeta = lyrtypeMeta[envcode]
       envKeywords = [k for k in baseMeta['keywords']]
-      envKeywords = envKeywords.extend(ltmeta['keywords'])
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
       lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=envcode, 
@@ -134,7 +133,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
                  'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
       envmeta = {'title': ltmeta['title'],
                  'description': ltmeta['description'],
-                 'keywords': envKeywords}
+                 'keywords': envKeywords.extend(ltmeta['keywords'])}
       dloc = os.path.join(ENV_DATA_PATH, relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
@@ -608,56 +607,6 @@ addUsers(scribe, configMeta)
 
 # ...................................................
 # Scenario testing
-obsKey = pkgMeta['baseline']
-baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
-tm = baseMeta['times'].keys()[0]
-basekeywords = [k for k in META.CLIMATE_KEYWORDS]
-basekeywords.extend(baseMeta['keywords'])
-
-scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
-lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, 
-                                        lyrtypeMeta)
-envcode = 'bio1'
-ltmeta = lyrtypeMeta[envcode]
-envKeywords = [k for k in baseMeta['keywords']]
-envKeywords = envKeywords.extend(ltmeta['keywords'])
-relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
-                                  gcm=None, tm=None, altPred=None)
-lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=envcode, 
-                      suffix=pkgMeta['suffix'])
-lyrMeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
-           'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
-envmeta = {'title': ltmeta['title'],
-           'description': ltmeta['description'],
-           'keywords': envKeywords}
-dloc = os.path.join(ENV_DATA_PATH, relfname)
-envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
-                  dlocation=dloc, 
-                  lyrMetadata=lyrMeta,
-                  dataFormat=configMeta['gdalformat'], 
-                  gdalType=configMeta['gdaltype'],
-                  valUnits=ltmeta['valunits'],
-                  mapunits=configMeta['mapunits'], 
-                  resolution=configMeta['resolution'], 
-                  bbox=pkgMeta['bbox'], 
-                  modTime=CURR_MJD, 
-                  envCode=envcode, 
-                  dateCode=pkgMeta['baseline'],
-                  envMetadata=envmeta,
-                  envModTime=CURR_MJD)
-
-
-scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
-            'description': baseMeta['description'], 'keywords': basekeywords}
-scen = Scenario(scencode, usr, configMeta['epsg'], 
-                metadata=scenmeta, 
-                units=configMeta['mapunits'], 
-                res=configMeta['resolution'], 
-                dateCode=tm,
-                bbox=pkgMeta['bbox'], 
-                modTime=CURR_MJD,  
-                layers=lyrs)
-
 basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
                                                 META.LAYERTYPE_META,
                                                 META.OBSERVED_PREDICTED_META,
