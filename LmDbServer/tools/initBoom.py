@@ -242,7 +242,7 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
    """
    obsKey = pkgMeta['baseline']
    baseMeta = observedPredictedMeta[obsKey]
-   tm = baseMeta['times'].keys()[0]
+#    tm = baseMeta['times'].keys()[0]
    basekeywords = [k for k in climKeywords]
    basekeywords.extend(baseMeta['keywords'])
    
@@ -255,6 +255,7 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
                    metadata=scenmeta, 
                    units=configMeta['mapunits'], 
                    res=configMeta['resolution'], 
+                   dateCode=pkgMeta['baseline'],
                    bbox=pkgMeta['bbox'], 
                    modTime=CURR_MJD,  
                    layers=lyrs)
@@ -572,7 +573,7 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 CURR_MJD = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBoom import *
 from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
-          _getConfiguredMetadata)
+          _getConfiguredMetadata, _getbioName, _getBaselineLayers)
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 envPackageName = SCENARIO_PACKAGE
 META = _importClimatePackageMetadata(envPackageName)
@@ -606,6 +607,26 @@ addUsers(scribe, configMeta)
 
 # ...................................................
 # Scenario testing
+obsKey = pkgMeta['baseline']
+baseMeta = META.OBSERVED_PREDICTED_META[obsKey]
+tm = baseMeta['times'].keys()[0]
+basekeywords = [k for k in META.CLIMATE_KEYWORDS]
+basekeywords.extend(baseMeta['keywords'])
+
+scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
+lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, 
+                                        lyrtypeMeta)
+scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
+            'description': baseMeta['description'], 'keywords': basekeywords}
+scen = Scenario(scencode, usr, configMeta['epsg'], 
+                metadata=scenmeta, 
+                units=configMeta['mapunits'], 
+                res=configMeta['resolution'], 
+                dateCode=tm,
+                bbox=pkgMeta['bbox'], 
+                modTime=CURR_MJD,  
+                layers=lyrs)
+
 basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
                                                 META.LAYERTYPE_META,
                                                 META.OBSERVED_PREDICTED_META,

@@ -75,9 +75,9 @@ class Scenario(MapLayerSet):
       self.code = code
       self.modTime = modTime
 
-      self.gcmCode=None
-      self.altpredCode=None
-      self.dateCode=None
+      self.gcmCode=gcmCode
+      self.altpredCode=altpredCode
+      self.dateCode=dateCode
       self.loadScenMetadata(metadata)
       
       # Private attributes
