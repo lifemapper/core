@@ -95,6 +95,7 @@ def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox
    except Exception, e:
       scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
    else:
+      newshp.updateStatus(JobStatus.COMPLETE)
       updatedShp =  scribe.updateShapeGrid(newshp)
    return updatedShp
    
@@ -584,8 +585,86 @@ logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
 
+
+# ...................................................
+# Shapegrid testing
+(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
+ scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
+ configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
+shpgrd = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
+                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)                                              
+
+row, idxs = scribe._borg.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
+                           shpgrd.getId(), shpgrd.getUserId(),
+                           shpgrd.squid, shpgrd.verify, shpgrd.name,
+                           shpgrd.getDLocation(), shpgrd.metadataUrl, meta,
+                           shpgrd.dataFormat, gdaltype, shpgrd.ogrType,
+                           valunits, nodataval, minval, maxval,
+                           shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution,
+                           shpgrd.getCSVExtentString(), wkt, shpgrd.modTime,
+                           shpgrd.cellsides, shpgrd.cellsize, shpgrd.size,
+                           shpgrd.siteId, shpgrd.siteX, shpgrd.siteY,
+                           shpgrd.status, shpgrd.statusModTime)
+                           
+dbid = scribe._borg._getColumnValue(row, idxs, ['layerid'])
+usr = scribe._borg._getColumnValue(row, idxs, ['lyruserid', 'userid'])
+verify = scribe._borg._getColumnValue(row, idxs, ['lyrverify', 'verify'])
+squid = scribe._borg._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
+name = scribe._borg._getColumnValue(row, idxs, ['lyrname', 'name'])
+dloc = scribe._borg._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
+murl = scribe._borg._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
+meta = scribe._borg._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
+vtype = scribe._borg._getColumnValue(row, idxs, ['ogrtype'])
+rtype = scribe._borg._getColumnValue(row, idxs, ['gdaltype'])
+vunits = scribe._borg._getColumnValue(row, idxs, ['valunits'])
+vattr = scribe._borg._getColumnValue(row, idxs, ['valattribute'])
+nodata = scribe._borg._getColumnValue(row, idxs, ['nodataval'])
+minval = scribe._borg._getColumnValue(row, idxs, ['minval'])
+maxval = scribe._borg._getColumnValue(row, idxs, ['maxval'])
+fformat = scribe._borg._getColumnValue(row, idxs, ['dataformat'])
+epsg = scribe._borg._getColumnValue(row, idxs, ['epsgcode'])
+munits = scribe._borg._getColumnValue(row, idxs, ['mapunits'])
+res = scribe._borg._getColumnValue(row, idxs, ['resolution'])
+dtmod = scribe._borg._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
+bbox = scribe._borg._getColumnValue(row, idxs, ['bbox'])
+
+lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
+                         dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                         ogrType=vtype, valUnits=vunits, valAttribute=vattr,
+                         nodataVal=nodata, minVal=minval, maxVal=maxval, 
+                         mapunits=munits, resolution=res, bbox=bbox, 
+                         metadataUrl=murl, modTime=dtmod)
+cellsides = scribe._borg._getColumnValue(row,idxs,['cellsides'])
+cellsize = scribe._borg._getColumnValue(row,idxs,['cellsize'])
+siteId = scribe._borg._getColumnValue(row,idxs,['idattribute']) 
+siteX = scribe._borg._getColumnValue(row,idxs,['xattribute']) 
+siteY = scribe._borg._getColumnValue(row,idxs,['yattribute'])
+size = scribe._borg._getColumnValue(row,idxs,['vsize'])
+status = scribe._borg._getColumnValue(row,idxs,['shpgrdstatus','status']) 
+statusModTime = scribe._borg._getColumnValue(row,idxs,['shpgrdstatusmodtime','statusmodtime'])
+
+shg = ShapeGrid.initFromParts(lyr, cellsides, cellsize,siteId=siteId, 
+                  siteX=siteX, siteY=siteY, size=size,
+                  status=status,statusModTime=statusModTime)
+                  
+lyr = scribe._borg._createLayer(row, idxs)
+shp = scribe._borg._createShapeGrid(row, idxs)
+
+
+
+# newshp = scribe.insertShapeGrid(shp)
+
+newshp.buildShape()
+newshp.updateStatus(JobStatus.COMPLETE)
+
+updatedShp =  scribe.updateShapeGrid(newshp)
+ 
+# ...................................................
+# User testing
 addUsers(scribe, configMeta)
 
+# ...................................................
+# Scenario testing
 basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
                                                 META.LAYERTYPE_META,
                                                 META.OBSERVED_PREDICTED_META,
@@ -597,45 +676,5 @@ predScens = createPredictedScenarios(usr, pkgMeta, configMeta,
 predScens[basescen.code] = basescen
 addScenarioAndLayerMetadata(scribe, predScens)
 
-(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
- scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
- configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
-shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
-                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
 
-dlocation = shp._dlocation
-dataFormat = shp.dataFormat
-featureLimit=None
-doReadData=False
-(newBBox, localIdIdx, geomIdx) = shp.readData(dlocation=dlocation, 
-                                        dataFormat=dataFormat, doReadData=False)
-
-newBBox = localIdIdx = geomIdx = None
-if dataFormat == DEFAULT_OGR_FORMAT:
-   (thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
-    featureCount) = shp.readWithOGR(dlocation, dataFormat, 
-                                     featureLimit=featureLimit, 
-                                     doReadData=doReadData)
-elif dataFormat == 'CSV':
-   (thisBBox, localIdIdx, features, featureAttributes, 
-    featureCount) = shp.readCSVPointsWithIDs(dlocation=dlocation, 
-                                              featureLimit=featureLimit, 
-                                              doReadData=doReadData)
-                                              
-                                              
-shp.setFeatures(features, featureAttributes, featureCount=featureCount)
-newBBox = shp._transformBBox(origBBox=thisBBox)
-print (newBBox, localIdIdx, geomIdx)
-
-
-(thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
-             featureCount) = shp.readWithOGR(dlocation, dataFormat, 
-                                              featureLimit=featureLimit, 
-                                              doReadData=doReadData)
-newshp = scribe.insertShapeGrid(shp)
-
-newshp.buildShape()
-
-updatedShp =  scribe.updateShapeGrid(newshp)
- 
 """

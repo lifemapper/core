@@ -510,7 +510,8 @@ BEGIN
          -- get or insert layer 
          SELECT * FROM lm_v3.lm_findOrInsertLayer(lid, usr, lsquid, lverify, 
             lname, ldloc, lmurlprefix, lmeta, datafmt, rtype, vtype, vunits, 
-            vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lmtime) INTO reclyr;
+            vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lmtime) 
+            INTO reclyr;
          
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to find or insert layer';

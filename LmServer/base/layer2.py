@@ -102,6 +102,8 @@ class _Layer(LMSpatialObject, ServiceObject):
                     described in http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
       @param resolution: resolution of the data - pixel size in @mapunits
       """
+      if svcObjId is None:
+         svcObjId = lyrId
       LMSpatialObject.__init__(self, epsgcode, bbox)
       ServiceObject.__init__(self,  userId, svcObjId, serviceType, 
                              moduleType=moduleType, metadataUrl=metadataUrl,

@@ -103,7 +103,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       shpGrid = ShapeGrid(vector.name, vector.getUserId(), vector.epsgcode, 
                           cellsides, cellsize, vector.mapUnits, vector.bbox, 
                           siteId=siteId, siteX=siteX, siteY=siteY, size=size,
-                          lyrId=vector.getId(), verify=vector.verify,
+                          lyrId=vector.getLayerId(), verify=vector.verify,
                           dlocation=vector.getDLocation(), 
                           metadata=vector.lyrMetadata, 
                           resolution=vector.resolution, 
@@ -151,7 +151,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    
 # ...............................................
    def _setCellMeasurements(self, size=None):
-      self._size = None
       if size is not None and isinstance(size, IntType):
          self._size = size
       else:
@@ -291,15 +290,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 #       self.clearFeatures()
 #       self.addFeatures(intersectingFeatures)
 #       self._setBBox(minx, miny, maxx, maxy)
-# ...............................................
-   def readData(self, dlocation=None, dataFormat=None, featureLimit=None, 
-                doReadData=False):
-      """
-      @copydoc: LmServer.base.layer2.Vector::readData() 
-      """
-      Vector.readData(self, dlocation=dlocation, dataFormat=dataFormat, 
-                      featureLimit=featureLimit, doReadData=doReadData)
-      self._setCellMeasurements()
       
 # ...................................................
    def buildShape(self, cutout=None, overwrite=False):
@@ -313,6 +303,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if os.path.exists(self._dlocation):
          print "Shapegrid file already exists at: %s" % self._dlocation
          self.readData(doReadData=False)
+         self._setCellMeasurements()
          return 
       self._readyFilename(self._dlocation, overwrite=overwrite)
 

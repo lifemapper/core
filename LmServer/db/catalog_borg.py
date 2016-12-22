@@ -215,6 +215,38 @@ class Borg(DbPostgresql):
       return lyrType
    
 # ...............................................
+   def _getLayerInputs(self, row, idxs):
+      """
+      @summary: Create Raster or Vector layer from a Layer or view in the Borg. 
+      @note: OccurrenceSet and SDMProject objects do not use this function
+      @note: used with Layer, lm_envlayer, lm_scenlayer, lm_sdmproject, lm_shapegrid
+      """
+      dbid = self._getColumnValue(row, idxs, ['layerid'])
+      usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
+      verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
+      squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
+      name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
+      dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
+      murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
+      meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
+      vtype = self._getColumnValue(row, idxs, ['ogrtype'])
+      rtype = self._getColumnValue(row, idxs, ['gdaltype'])
+      vunits = self._getColumnValue(row, idxs, ['valunits'])
+      vattr = self._getColumnValue(row, idxs, ['valattribute'])
+      nodata = self._getColumnValue(row, idxs, ['nodataval'])
+      minval = self._getColumnValue(row, idxs, ['minval'])
+      maxval = self._getColumnValue(row, idxs, ['maxval'])
+      fformat = self._getColumnValue(row, idxs, ['dataformat'])
+      epsg = self._getColumnValue(row, idxs, ['epsgcode'])
+      munits = self._getColumnValue(row, idxs, ['mapunits'])
+      res = self._getColumnValue(row, idxs, ['resolution'])
+      dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
+      bbox = self._getColumnValue(row, idxs, ['bbox'])
+      return (dbid, usr, verify, squid, name, dloc, murl, meta, vtype, rtype, 
+              vunits, vattr, nodata, minval, maxval, fformat, epsg, munits, res, 
+              dtmod, bbox)
+
+# ...............................................
    def _createLayer(self, row, idxs):
       """
       @summary: Create Raster or Vector layer from a Layer or view in the Borg. 
@@ -293,8 +325,10 @@ class Borg(DbPostgresql):
                   siteX=self._getColumnValue(row,idxs,['xattribute']), 
                   siteY=self._getColumnValue(row,idxs,['yattribute']), 
                   size=self._getColumnValue(row,idxs,['vsize']),
-                  status=self._getColumnValue(row,idxs,['status']), 
-                  statusModTime=self._getColumnValue(row,idxs,['statusmodtime']))
+                  # todo: will these ever be accessed without 'shpgrd' prefix?
+                  status=self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
+                  statusModTime=self._getColumnValue(row,idxs,['shpgrdstatusmodtime', 
+                                                               'statusmodtime']))
       return shg
 
 # ...............................................
