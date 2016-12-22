@@ -539,7 +539,7 @@ class PhyloEncoding(object):
       @todo: Function documentation
       """
       ######### make P ###########
-      tips, internal, tipsNotInMtx, tipPaths = self.buildTips()
+      tips, internal, tipsNotInMtx = self.buildTips()
       negsDict = self.processInternalNodes(internal)
       
       tipIds = self.tree.tips
@@ -553,7 +553,7 @@ class PhyloEncoding(object):
       if self.tree.hasBranchLengths():
          sides = self.getSides(internal, lengths)
          matrix = np.zeros((len(tipIds), len(internalIds)), dtype=np.float)  # consider it's own init func
-         P = self.buildP_BrLen(matrix, internal, sides, lengths, tips, tipPaths)
+         P = self.buildP_BrLen(matrix, internal, sides, lengths, tips)
       else:
          matrix = self.initMatrix(len(tipIds), len(internalIds))
          P = self.buildPMatrix(matrix, internalIds, tips, negsDict)
@@ -582,7 +582,6 @@ class PhyloEncoding(object):
       tips = []
       tipsNotInMatrix = []
       internal = {}
-      tipPaths = {}
       
       def buildLeaves(clade):
          if len(clade[PhyloTreeKeys.CHILDREN]) > 0:
@@ -605,7 +604,6 @@ class PhyloEncoding(object):
                tips.append(castClade)
                tipsNotInMatrix.append(castClade)
                noMx['c'] = noMx['c'] + 1
-            tipPaths[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.PATH]
       buildLeaves(clade)
       
       tips.sort(key=operator.itemgetter(PhyloTreeKeys.MTX_IDX))   
@@ -615,10 +613,9 @@ class PhyloEncoding(object):
       # tips: List of tip clades sorted by matrix index
       # internal: Dictionary of path id, list of children for that path, I'm sure we can do better
       # tipsNotInMatrix: List of tip clades not in matrix (somehow sorted by matrix id?)
-      # tipPaths: Dictionary of path id, path to clade (duplicates what is in LmTree, remove
       
       
-      return tips, internal, tipsNotInMatrix, tipPaths
+      return tips, internal, tipsNotInMatrix
    
    # ..............................   
    def getSiblingsMx(self, clade):
@@ -802,7 +799,7 @@ class PhyloEncoding(object):
       return sides
    
    # ..............................   
-   def buildP_BrLen(self, emptyMtx, internal, sides, lengths, tipsDictList, tipPaths):
+   def buildP_BrLen(self, emptyMtx, internal, sides, lengths, tipsDictList):
       """
       @todo: Rename this to something like buildPMatrixFromBranchLengths
       @summary: Build a P matrix from branch lengths
@@ -813,7 +810,6 @@ class PhyloEncoding(object):
       @param sides: A dictionary of lists (see getSides for more info)
       @param lengths: A dictionary of path id (key) branch length (value)
       @param tipsDictList: A list of tips dictionaries
-      @param tipPaths:  
       
       
       
@@ -844,10 +840,11 @@ class PhyloEncoding(object):
          posDen = sum(sides[k][0].values()) * -1
          TipsPerSide = [x for x in sides[k][0].keys() if x in tipIds]
          InternalPerSide = [x for x in sides[k][0].keys() if x not in tipIds]
+         # TODO: This is path id
          for tip in TipsPerSide:
             mx = mxByTip[tip]
             tipLength = lengths[tip]
-            tipPath = tipPaths[tip]#[int(x) for x in tipPaths[str(tip)].split(",")]
+            tipPath = self.tree.cladePaths[tip]
             num = tipLength + sum([lengths[i] / sum(NotipsDescFromInternal[i]) for i in InternalPerSide if i in tipPath])
             result = num/posDen
             emptyMtx[mx][col] = result
@@ -859,7 +856,7 @@ class PhyloEncoding(object):
          for tip in TipsPerSide:
             mx = mxByTip[tip]
             tipLength = lengths[tip]
-            tipPath = tipPaths[tip]#[int(x) for x in tipPaths[str(tip)].split(",")]
+            tipPath = self.tree.cladePaths[tip]
             num = tipLength + sum([lengths[i]/sum(NotipsDescFromInternal[i]) for i in InternalPerSide if i in tipPath] )
             result = num/negDen
             emptyMtx[mx][col] = result
