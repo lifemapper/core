@@ -122,7 +122,7 @@ if __name__ == "__main__":
    
    treeEncodeObj = PhyloEncoding(tree,I)
    
-   P, I, internal = treeEncodeObj.makeP(True)
+   P, I, internal = treeEncodeObj.makeP()
    
 
    testP = np.array([
