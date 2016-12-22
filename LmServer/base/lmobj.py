@@ -169,18 +169,15 @@ class LMObject(object):
       """
       @note: Adds to dictionary or modifies values for existing keys
       """
-      objMetadata = {}
       if newMetadata is not None:
          if type(newMetadata) is dict: 
-            objMetadata = self._addMetadata(newMetadata)
+            objMetadata = newMetadata
          else:
             try:
-               newMetadataDict = json.loads(newMetadata)
+               objMetadata = json.loads(newMetadata)
             except Exception, e:
                print('Failed to load JSON object from type {} object {}'
                      .format(type(newMetadata), newMetadata))
-            else:
-               objMetadata = self._addMetadata(newMetadataDict)
       return objMetadata
 
 # ............................................................................

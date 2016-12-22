@@ -124,22 +124,23 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
    staticLayers = {}
    for envcode in pkgMeta['layertypes']:
       ltmeta = lyrtypeMeta[envcode]
-      keywords = [k for k in baseMeta['keywords']]
+      envKeywords = [k for k in baseMeta['keywords']]
+      envKeywords = envKeywords.extend(ltmeta['keywords'])
       relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
                                         gcm=None, tm=None, altPred=None)
       lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=envcode, 
                             suffix=pkgMeta['suffix'])
-      lyrMeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
+      lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
                  'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
       envmeta = {'title': ltmeta['title'],
                  'description': ltmeta['description'],
-                 'keywords': keywords.extend(ltmeta['keywords'])}
+                 'keywords': envKeywords}
       dloc = os.path.join(ENV_DATA_PATH, relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
       envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
                         dlocation=dloc, 
-                        lyrMetadata=lyrMeta,
+                        lyrMetadata=lyrmeta,
                         dataFormat=configMeta['gdalformat'], 
                         gdalType=configMeta['gdaltype'],
                         valUnits=ltmeta['valunits'],
@@ -150,7 +151,7 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
                         envCode=envcode, 
                         dateCode=pkgMeta['baseline'],
                         envMetadata=envmeta,
-                        envModTime=CURR_MJD,)
+                        envModTime=CURR_MJD)
       layers.append(envlyr)
       if isStatic:
          staticLayers[envcode] = envlyr
@@ -565,7 +566,7 @@ from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.legion.envlayer import EnvLayer                    
+from LmServer.legion.envlayer import EnvLayer, EnvType                    
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 
@@ -573,7 +574,7 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 CURR_MJD = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBoom import *
 from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
-          _getConfiguredMetadata, _getbioName, _getBaselineLayers)
+          _getConfiguredMetadata, _getbioName, _getBaselineLayers, _findFileFor)
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 envPackageName = SCENARIO_PACKAGE
 META = _importClimatePackageMetadata(envPackageName)
@@ -616,6 +617,36 @@ basekeywords.extend(baseMeta['keywords'])
 scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
 lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, 
                                         lyrtypeMeta)
+envcode = 'bio1'
+ltmeta = lyrtypeMeta[envcode]
+envKeywords = [k for k in baseMeta['keywords']]
+envKeywords = envKeywords.extend(ltmeta['keywords'])
+relfname, isStatic = _findFileFor(ltmeta, pkgMeta['baseline'], 
+                                  gcm=None, tm=None, altPred=None)
+lyrname = _getbioName(pkgMeta['baseline'], pkgMeta['res'], lyrtype=envcode, 
+                      suffix=pkgMeta['suffix'])
+lyrMeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
+           'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
+envmeta = {'title': ltmeta['title'],
+           'description': ltmeta['description'],
+           'keywords': envKeywords}
+dloc = os.path.join(ENV_DATA_PATH, relfname)
+envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
+                  dlocation=dloc, 
+                  lyrMetadata=lyrMeta,
+                  dataFormat=configMeta['gdalformat'], 
+                  gdalType=configMeta['gdaltype'],
+                  valUnits=ltmeta['valunits'],
+                  mapunits=configMeta['mapunits'], 
+                  resolution=configMeta['resolution'], 
+                  bbox=pkgMeta['bbox'], 
+                  modTime=CURR_MJD, 
+                  envCode=envcode, 
+                  dateCode=pkgMeta['baseline'],
+                  envMetadata=envmeta,
+                  envModTime=CURR_MJD)
+
+
 scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
             'description': baseMeta['description'], 'keywords': basekeywords}
 scen = Scenario(scencode, usr, configMeta['epsg'], 
