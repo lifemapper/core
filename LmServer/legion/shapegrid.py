@@ -103,7 +103,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       shpGrid = ShapeGrid(vector.name, vector.getUserId(), vector.epsgcode, 
                           cellsides, cellsize, vector.mapUnits, vector.bbox, 
                           siteId=siteId, siteX=siteX, siteY=siteY, size=size,
-                          lyrId=vector.getId(), verify=vector.verify,
+                          lyrId=vector.getLayerId(), verify=vector.verify,
                           dlocation=vector.getDLocation(), 
                           metadata=vector.lyrMetadata, 
                           resolution=vector.resolution, 
@@ -151,7 +151,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    
 # ...............................................
    def _setCellMeasurements(self, size=None):
-      self._size = None
       if size is not None and isinstance(size, IntType):
          self._size = size
       else:
@@ -291,15 +290,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 #       self.clearFeatures()
 #       self.addFeatures(intersectingFeatures)
 #       self._setBBox(minx, miny, maxx, maxy)
-# ...............................................
-   def readData(self, dlocation=None, dataFormat=None, featureLimit=None, 
-                doReadData=False):
-      """
-      @copydoc: LmServer.base.layer2.Vector::readData() 
-      """
-      Vector.readData(self, dlocation=dlocation, dataFormat=dataFormat, 
-                      featureLimit=featureLimit, doReadData=doReadData)
-      self._setCellMeasurements()
       
 # ...................................................
    def buildShape(self, cutout=None, overwrite=False):
@@ -313,6 +303,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if os.path.exists(self._dlocation):
          print "Shapegrid file already exists at: %s" % self._dlocation
          self.readData(doReadData=False)
+         self._setCellMeasurements()
          return 
       self._readyFilename(self._dlocation, overwrite=overwrite)
 
@@ -418,131 +409,11 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       except Exception, e:
          raise LMError(e)
       else:
-         self._setCellMeasurements(shape_id)
+         # Modify shapegrid by subseting 
          if cutout is not None:
-            self.cutout(cutout,removeOrig=True)
+            minx,miny,maxx,maxy = self.cutout(cutout,removeOrig=True)
+         # update size and verify attributes
+         self._setCellMeasurements()
+         self._setVerify()
          self.setSiteIndices()
 
-   
-#................................................   
-   def _buildVectorAreaDict(self, fid, layer, shpgridextentpoly, idx, shpgridLayerObj,
-                      areaDict):
-      """
-      @note: This modifies the areaDict parameter
-      @summary: against each feature in the species layer build a geometry object
-      from the wkt.  it then does a bool check for the intersection of that geometry
-      against the extent of the shapegrid, if there is an intersection
-      he bbox for that intersection is used to intersect against the 
-      r-tree index of shapegrid cell envelopes which returns a list
-      of the feature id's of intersection against envelopes
-      @param fid: fid from layer features
-      @param layer: layer object
-      @param shpgridextentpoly: poly ogr geom object for shpgrd 
-      @param idx: rtree index
-      @param shpgridLayerObj: shpgrid ogr layer object
-      @param areaDict: dictionary with two lists, keyed by fid, first list 
-      contains all areas of intersection with one shpgrid cell, second list
-      contains the area of the cell
-      """
-      geomfieldname = layer._geomFieldName               
-      poly = ogr.CreateGeometryFromWkt(layer.getFeatureValByFieldName(geomfieldname, fid))
-      shpgridcellfids = []
-      if poly.Intersect(shpgridextentpoly):
-         firstintersection = poly.Intersection(shpgridextentpoly)              
-         minx, maxx, miny, maxy = firstintersection.GetEnvelope()
-         shpgridcellfids = list(idx.intersection((minx, miny, maxx, maxy))) 
-      else:
-         minx, maxx, miny, maxy = poly.GetEnvelope()
-      # for each feature id in intersection list check and see if corresponding
-      # item in areaDict is already coded with area total of cellshape, this keeps
-      # cells from being recoded that have an intersection total that is already
-      # equal or larger than the area of the cell      
-      if len(shpgridcellfids) > 0:              
-         for id in shpgridcellfids:
-            shpgrdfeature = shpgridLayerObj.GetFeature(id) 
-            gridgeom =  shpgrdfeature.GetGeometryRef() 
-            cellarea = gridgeom.GetArea() 
-            if sum(areaDict[id][0]) < cellarea:   
-               if firstintersection.Contains(gridgeom):                    
-                  areaDict[id][0].append(cellarea) 
-                  if not areaDict[id][1]:
-                     areaDict[id][1].append(cellarea)
-               else:                        
-                  if firstintersection.Intersect(gridgeom):
-                     intersection = firstintersection.Intersection(gridgeom)
-                     area = intersection.GetArea()
-                     areaDict[id][0].append(area) 
-                     if not areaDict[id][1]:
-                        areaDict[id][1].append(cellarea)
-                     
-            del shpgrdfeature
-            
-#................................................                             
-   def _getSpatialFilterBounds(self, layer, sgminx, sgmaxx, sgminy, sgmaxy):   
-      minx = max(sgminx, layer.minX)
-      miny = max(sgminy, layer.minY)
-      maxx = min(sgmaxx, layer.maxX)
-      maxy = min(sgmaxy, layer.maxY)
-      return minx, miny, maxx,  maxy
-         
-#................................................          
-          
-   def _vectorIntersect(self, layer):
-      """
-      @summary: Takes a vector species layer input and intersects it with the 
-                shapegrid.  Returns an array of presence (1), and absence(0)
-                for each site
-      """
-      # Note: this must be disabled, fails in AGoodle, possibly elsewhere
-      ogr.UseExceptions()
-      maxPresence = layer.maxPresence
-      minPresence = layer.minPresence
-      percentPresenceDec = layer.percentPresence/100.0
-      attrPresence = layer.attrPresence  
-      shpgridhandle = ogr.Open(self._dlocation)
-      shpgridLayerObj = shpgridhandle.GetLayer(0)
-      rowcount = shpgridLayerObj.GetFeatureCount()
-      layerArray = np.zeros(rowcount,bool)     
-      sgminx, sgmaxx, sgminy, sgmaxy = shpgridLayerObj.GetExtent()             
-      # make a polygon for broad intersection from the extent of the shapegrid  
-      wktstring = 'Polygon (('+str(sgminx)+' '+str(sgminy)+','+str(sgmaxx)+' '+\
-                  str(sgminy)+','+str(sgmaxx)+' '+str(sgmaxy)+','+str(sgminx)+\
-                  ' '+str(sgmaxy)+','+str(sgminx)+' '+str(sgminy)+'))'
-      shpgridextentpoly = ogr.CreateGeometryFromWkt(wktstring) 
-          
-      sfminx, sfminy, sfmaxx, sfmaxy = self._getSpatialFilterBounds(layer, sgminx,
-                                        sgmaxx, sgminy, sgmaxy)
-      shpgridLayerObj.SetSpatialFilterRect(sfminx,sfminy,sfmaxx,sfmaxy)
-      
-      # an empty rtree index
-      idx = rtree.index.Index()
-      areaDict = {}
-      # because of the spatial filter set above, the while loop will only get the cells
-      # within the spatial filter, cell envelopes are then added to the r-tree
-      # index
-      cell = shpgridLayerObj.GetNextFeature()     
-      while cell is not None:
-         # GetFieldAsString           
-         fid = cell.GetFID()
-         #fid = cell.GetFieldAsString(self.siteId)
-         areaDict[fid] = ([],[]) 
-         geomRef = cell.GetGeometryRef()
-         minx, maxx, miny, maxy = geomRef.GetEnvelope()
-         idx.insert(fid,(minx,miny,maxx,maxy))      
-         cell = shpgridLayerObj.GetNextFeature()        
-      if not layer.getFeatures():
-         layer.readData()
-      layerfeatures = layer.getFeatures()                     
-      for fid, attrs in layerfeatures.iteritems():
-         if ((layer.getFeatureValByFieldName(attrPresence, fid) <= maxPresence) 
-             and (layer.getFeatureValByFieldName(attrPresence, fid) >= minPresence)):
-            self._buildVectorAreaDict(fid, layer, shpgridextentpoly, idx, shpgridLayerObj,
-                               areaDict)            
-                           
-      for fid, areas in areaDict.iteritems():
-         if len(areas[0]) > 0: 
-            if (sum(areas[0]) > (areas[1][0] * percentPresenceDec)):  
-               layerArray[fid] = True
-      # Note, this must be disabled, fails in AGoodle, possibly elsewhere
-      ogr.DontUseExceptions()
-      return layerArray

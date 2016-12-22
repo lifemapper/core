@@ -95,6 +95,7 @@ def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox
    except Exception, e:
       scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
    else:
+      newshp.updateStatus(JobStatus.COMPLETE)
       updatedShp =  scribe.updateShapeGrid(newshp)
    return updatedShp
    
@@ -584,8 +585,27 @@ logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
 
+
+# ...................................................
+# Shapegrid testing
+(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
+ scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
+ configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
+shpgrd = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
+                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)                                              
+
+newshp = scribe.insertShapeGrid(shpgrd)
+
+newshp.buildShape()
+newshp.updateStatus(JobStatus.COMPLETE)
+updatedShp =  scribe.updateShapeGrid(newshp)
+ 
+# ...................................................
+# User testing
 addUsers(scribe, configMeta)
 
+# ...................................................
+# Scenario testing
 basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
                                                 META.LAYERTYPE_META,
                                                 META.OBSERVED_PREDICTED_META,
@@ -597,45 +617,5 @@ predScens = createPredictedScenarios(usr, pkgMeta, configMeta,
 predScens[basescen.code] = basescen
 addScenarioAndLayerMetadata(scribe, predScens)
 
-(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
- scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
- configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
-shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
-                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
 
-dlocation = shp._dlocation
-dataFormat = shp.dataFormat
-featureLimit=None
-doReadData=False
-(newBBox, localIdIdx, geomIdx) = shp.readData(dlocation=dlocation, 
-                                        dataFormat=dataFormat, doReadData=False)
-
-newBBox = localIdIdx = geomIdx = None
-if dataFormat == DEFAULT_OGR_FORMAT:
-   (thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
-    featureCount) = shp.readWithOGR(dlocation, dataFormat, 
-                                     featureLimit=featureLimit, 
-                                     doReadData=doReadData)
-elif dataFormat == 'CSV':
-   (thisBBox, localIdIdx, features, featureAttributes, 
-    featureCount) = shp.readCSVPointsWithIDs(dlocation=dlocation, 
-                                              featureLimit=featureLimit, 
-                                              doReadData=doReadData)
-                                              
-                                              
-shp.setFeatures(features, featureAttributes, featureCount=featureCount)
-newBBox = shp._transformBBox(origBBox=thisBBox)
-print (newBBox, localIdIdx, geomIdx)
-
-
-(thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
-             featureCount) = shp.readWithOGR(dlocation, dataFormat, 
-                                              featureLimit=featureLimit, 
-                                              doReadData=doReadData)
-newshp = scribe.insertShapeGrid(shp)
-
-newshp.buildShape()
-
-updatedShp =  scribe.updateShapeGrid(newshp)
- 
 """

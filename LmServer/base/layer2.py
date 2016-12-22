@@ -102,6 +102,8 @@ class _Layer(LMSpatialObject, ServiceObject):
                     described in http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
       @param resolution: resolution of the data - pixel size in @mapunits
       """
+      if svcObjId is None:
+         svcObjId = lyrId
       LMSpatialObject.__init__(self, epsgcode, bbox)
       ServiceObject.__init__(self,  userId, svcObjId, serviceType, 
                              moduleType=moduleType, metadataUrl=metadataUrl,
@@ -114,7 +116,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._dlocation = None
       self.setDLocation(dlocation)
       self._verify = None
-      self._setVerify(verify)
+      self._setVerify(verify=verify)
       self.lyrMetadata = {}
       self.loadLyrMetadata(metadata)
       self._dataFormat = dataFormat
@@ -247,7 +249,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       return verified
    
 # ...............................................
-   def _setVerify(self, verify, dlocation=None, content=None):
+   def _setVerify(self, verify=None, dlocation=None, content=None):
       value = None
       if verify is not None:
          self._verify = verify

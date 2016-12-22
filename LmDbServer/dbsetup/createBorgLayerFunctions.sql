@@ -510,7 +510,8 @@ BEGIN
          -- get or insert layer 
          SELECT * FROM lm_v3.lm_findOrInsertLayer(lid, usr, lsquid, lverify, 
             lname, ldloc, lmurlprefix, lmeta, datafmt, rtype, vtype, vunits, 
-            vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lmtime) INTO reclyr;
+            vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lmtime) 
+            INTO reclyr;
          
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to find or insert layer';
@@ -551,6 +552,8 @@ DECLARE
 BEGIN
    SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to find shapegrid';
+   ELSE
       -- get or insert layer 
       SELECT * FROM lm_v3.lm_updateLayer(lyrid, null, lyrverify, 
          lyrdloc, lyrmeta, null, null, null, lyrmtime) INTO reclyr;
@@ -671,6 +674,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+-- (lyrid, null, lyrverify, lyrdloc, lyrmeta, null, null, null, lyrmtime)
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateLayer(lyrid int,
                                           lyrsquid varchar,
                                           lyrverify varchar,
