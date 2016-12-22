@@ -116,7 +116,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._dlocation = None
       self.setDLocation(dlocation)
       self._verify = None
-      self._setVerify(verify)
+      self._setVerify(verify=verify)
       self.lyrMetadata = {}
       self.loadLyrMetadata(metadata)
       self._dataFormat = dataFormat
@@ -249,7 +249,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       return verified
    
 # ...............................................
-   def _setVerify(self, verify, dlocation=None, content=None):
+   def _setVerify(self, verify=None, dlocation=None, content=None):
       value = None
       if verify is not None:
          self._verify = verify

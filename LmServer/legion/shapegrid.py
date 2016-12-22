@@ -409,8 +409,11 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       except Exception, e:
          raise LMError(e)
       else:
-         self._setCellMeasurements(shape_id)
+         # Modify shapegrid by subseting 
          if cutout is not None:
-            self.cutout(cutout,removeOrig=True)
+            minx,miny,maxx,maxy = self.cutout(cutout,removeOrig=True)
+         # update size and verify attributes
+         self._setCellMeasurements()
+         self._setVerify()
          self.setSiteIndices()
 
