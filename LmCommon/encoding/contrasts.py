@@ -539,11 +539,17 @@ class PhyloEncoding(object):
       @todo: Function documentation
       """
       ######### make P ###########
-      tips, internal, tipsNotInMtx, lengths, tipPaths = self.buildTips()
+      tips, internal, tipsNotInMtx, tipPaths = self.buildTips()
       negsDict = self.processInternalNodes(internal)
-      tipIds,internalIds = self.getIds(tips,internalDict=internal)
-      #matrix = initMatrix(len(tipIds),len(internalIds))
-
+      
+      tipIds = self.tree.tips
+      # Create a list of path ids that are not tips
+      internalIds = [pathId for pathId in self.tree.cladePaths.keys() if pathId not in tipIds]
+      
+      # Get the branch lengths for every clade
+      # TODO: Can we do this where it is needed instead of here?
+      lengths = self.tree.getBranchLengths()
+      
       if self.tree.hasBranchLengths():
          sides = self.getSides(internal, lengths)
          matrix = np.zeros((len(tipIds), len(internalIds)), dtype=np.float)  # consider it's own init func
@@ -576,14 +582,11 @@ class PhyloEncoding(object):
       tips = []
       tipsNotInMatrix = []
       internal = {}
-      lengths = {}
       tipPaths = {}
       
       def buildLeaves(clade):
          if len(clade[PhyloTreeKeys.CHILDREN]) > 0:
             #### just a check, probably take out 
-            if clade.has_key(PhyloTreeKeys.BRANCH_LENGTH):
-               lengths[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.BRANCH_LENGTH]
             if len(clade[PhyloTreeKeys.CHILDREN]) > 2:
                print "polytomy ", clade[PhyloTreeKeys.PATH_ID]
             ############    
@@ -602,8 +605,6 @@ class PhyloEncoding(object):
                tips.append(castClade)
                tipsNotInMatrix.append(castClade)
                noMx['c'] = noMx['c'] + 1
-            if clade.has_key(PhyloTreeKeys.BRANCH_LENGTH):
-               lengths[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.BRANCH_LENGTH] 
             tipPaths[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.PATH]
       buildLeaves(clade)
       
@@ -614,11 +615,10 @@ class PhyloEncoding(object):
       # tips: List of tip clades sorted by matrix index
       # internal: Dictionary of path id, list of children for that path, I'm sure we can do better
       # tipsNotInMatrix: List of tip clades not in matrix (somehow sorted by matrix id?)
-      # lengths: Dictionary of path id, branch length (duplicates what is in LmTree, remove
       # tipPaths: Dictionary of path id, path to clade (duplicates what is in LmTree, remove
       
       
-      return tips, internal, tipsNotInMatrix, lengths, tipPaths
+      return tips, internal, tipsNotInMatrix, tipPaths
    
    # ..............................   
    def getSiblingsMx(self, clade):
