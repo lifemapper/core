@@ -786,24 +786,19 @@ class PhyloEncoding(object):
       # for each key (pathId) in internal recurse each side
       sides = {}
       lengths = self.tree.getBranchLengths()
-      #print lengths.keys()
+
       for pathId in lengths.keys():  # 0 doesn't have a lengh so isn't in lengths
-         sides[pathId] = []
          if internal.has_key(pathId):
+            sides[pathId] = []
             lengthsfromSide = {}
             goToTip(internal[pathId][0])
             sides[pathId].append(lengthsfromSide)
-         else:
-            sides[pathId].append({pathId: lengths[pathId]})
-         # TODO: Why not do this in previous conditional?
-         if internal.has_key(pathId):
+            
+            # TODO: Make this clearer
             lengthsfromSide = {}
             goToTip(internal[pathId][1])
             sides[pathId].append(lengthsfromSide)
-         else:
-            sides[pathId].append({pathId: lengths[pathId]})
-      #print sides
-      #print
+
       return sides
    
    # ..............................   
@@ -831,6 +826,8 @@ class PhyloEncoding(object):
       # TODO: Inline documentation
       
       # numTipsDescFromInternal: The number of tips that are descendant from an internal node
+      #                             Only used to get the total number, change this
+      
       # tipIds: A list of tip ids in a tree
       # mxByTip: A dictionary of path id: matrix index for all tips
       
@@ -838,12 +835,12 @@ class PhyloEncoding(object):
       numTipsDescFromInternal = {}
 
       for internalKey in sides:
-         if internalKey not in tipIds:
-            numTipsDescFromInternal[internalKey] = []
-            num = len([x for x in sides[internalKey][0].keys() if x in tipIds])
-            numTipsDescFromInternal[internalKey].append(num)
-            num = len([x for x in sides[internalKey][1].keys() if x in tipIds])
-            numTipsDescFromInternal[internalKey].append(num)
+         #if internalKey not in tipIds:
+         numTipsDescFromInternal[internalKey] = []
+         num = len([x for x in sides[internalKey][0].keys() if x in tipIds])
+         numTipsDescFromInternal[internalKey].append(num)
+         num = len([x for x in sides[internalKey][1].keys() if x in tipIds])
+         numTipsDescFromInternal[internalKey].append(num)
       
       mxByTip = {tipClade[PhyloTreeKeys.PATH_ID]: tipClade[PhyloTreeKeys.MTX_IDX] for tipClade in tipsDictList}
       
