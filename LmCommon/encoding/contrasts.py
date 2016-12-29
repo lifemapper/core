@@ -669,11 +669,11 @@ class PhyloEncoding(object):
       @param internal: list of internal nodes made in buildTips
       @todo: Document
       """  
-      
+      print "In process tip not in matrix"
       mxMapping = {} 
       for tip in tipsNotInMtx:
          #TODO: Consider reversing path
-         parentId = tip[PhyloTreeKeys.PATH][1]
+         parentId = tip[PhyloTreeKeys.PATH][-2]
   
          parentsChildren = internal[parentId]#['children']  
          for sibling in parentsChildren:
@@ -747,6 +747,7 @@ class PhyloEncoding(object):
       for ri, tip in enumerate(tipsDictList):
          newRow = np.zeros(len(internalIds), dtype=np.float)  # need these as zeros since init mtx is autofil
          
+         print "In build p matrix"
          # TODO: Consider if this is reversed
          pathList = tip[PhyloTreeKeys.PATH][1:]
 
@@ -830,9 +831,8 @@ class PhyloEncoding(object):
       
       # tipIds: A list of tip ids in a tree
       # mxByTip: A dictionary of path id: matrix index for all tips
-      
-      tipIds = self.tree.tips
       numTipsDescFromInternal = {}
+      tipIds = self.tree.tips
 
       for internalKey in sides:
          #if internalKey not in tipIds:
@@ -841,6 +841,45 @@ class PhyloEncoding(object):
          numTipsDescFromInternal[internalKey].append(num)
          num = len([x for x in sides[internalKey][1].keys() if x in tipIds])
          numTipsDescFromInternal[internalKey].append(num)
+
+      # ........................
+      def getNumerator(tipPathId, cladePathId):
+         """
+         @summary: Gets the numerator for a particular matrix cell
+         @param tipPathId: The path id of the tip of the clade in question
+         @param cladePathId: The path id of the clade to use 
+         @note: The numerator is the sum of the length of the tip clade plus
+                   the weighted sums of the branch lengths of clades between 
+                   the clade with cladePathId and the tip
+         @todo: Consider if this should be done differently.  This function 
+                   does not make sense as part of the main class but it also
+                   seems redundant to do this for every tip / clade combination.
+                   Perhaps we can make better use of recursion to accomplish
+                   this.
+         @todo: Maybe we can at least move this so that it is at the top of the
+                   function.  To do so, we'll need to change the 
+                   numTipsDescFromInternal dictionary (which should be done 
+                   anyway)
+         """
+         tipPath = self.tree.cladePaths[pathId]
+         # TODO: Take this out if we reverse it
+         #tipPath.reverse()
+
+         # Get the position of the current clade since we will only sum 
+         #   the branch lengths between that clade and the tip
+         # So if we have the following path where the clade is d and the tip
+         #    is g, we would only use e and f
+         # [a, b, c, d, e, f, g]
+         cladePosition = tipPath.index(clade[PhyloTreeKeys.PATH_ID])
+         # The numerator is the branch length of the tip plus the sum of the 
+         #    weighted lengths between the tip and the current clade
+         numerator = lengths[pathId] + sum(
+                               [lengths[i] / sum(numTipsDescFromInternal[i]) \
+                                   for i in tipPath[cladePosition+1:-1]])
+         return numerator
+      
+      
+      
       
       mxByTip = {tipClade[PhyloTreeKeys.PATH_ID]: tipClade[PhyloTreeKeys.MTX_IDX] for tipClade in tipsDictList}
       
@@ -848,27 +887,37 @@ class PhyloEncoding(object):
       sortedInternalKeys = sorted(internal.keys())
       #print sortedInternalKeys
       
+      # TODO: Don't use strings
       for col, k in enumerate(sortedInternalKeys):
-         # this loop should build mtx
-         #posSideClade = internal[k][0]  # clade dict
-         posDen = sum(sides[k][0].values()) * -1
-         print posDen
-         tipsPerSide = [x for x in sides[k][0].keys() if x in tipIds]
-         internalPerSide = [x for x in sides[k][0].keys() if x not in tipIds]
-         # TODO: This is path id
-         for tip in tipsPerSide:
-            num = lengths[tip] + sum([lengths[i] / sum(numTipsDescFromInternal[i]) for i in internalPerSide if i in self.tree.cladePaths[tip]])
-            result = num/posDen
-            emptyMtx[mxByTip[tip]][col] = result
+         
+         clade = self.tree.getClade(int(k))
+         # Assume that the tree is binary
+         leftChild, rightChild = clade[PhyloTreeKeys.CHILDREN]
+         
+         leftDescendants = self.tree.getDescendants(leftChild)
+         rightDescendants = self.tree.getDescendants(rightChild)
+         
+         # The left denominator is the sum of all of the branch lengths on the
+         #    left side of the clade multiplied by -1
+         # TODO: Should this be an integer?
+         leftDenominator = sum(lengths[x] for x in leftDescendants) * -1
+         
+         # The right denominator is the same as the left, but for the right 
+         #    side of the tree but it is not multiplied
+         rightDenominator = sum(lengths[x] for x in rightDescendants)
 
-         #negSideClade = internal[k][1]  # clade dict
-         negDen = sum(sides[k][1].values()) 
-         tipsPerSide = [x for x in sides[k][1].keys() if x in tipIds]
-         internalPerSide = [x for x in sides[k][1].keys() if x not in tipIds]
-         for tip in tipsPerSide:
-            num = lengths[tip] + sum([lengths[i] / sum(numTipsDescFromInternal[i]) for i in internalPerSide if i in self.tree.cladePaths[tip]])
-            result = num/negDen
-            emptyMtx[mxByTip[tip]][col] = result
+         # Get the descendants from both sides that are tips of the tree
+         leftTips = [x for x in leftDescendants if x in self.tree.tips]
+         rightTips = [x for x in rightDescendants if x in self.tree.tips]
+         
+         for pathId in leftTips:
+            numerator = getNumerator(pathId, k)
+            emptyMtx[mxByTip[pathId]][col] = numerator / leftDenominator
+         
+         for pathId in rightTips:
+            numerator = getNumerator(pathId, k)
+            emptyMtx[mxByTip[pathId]][col] = numerator / rightDenominator
+         
             
       return emptyMtx   
 
