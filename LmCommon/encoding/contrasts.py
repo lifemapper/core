@@ -568,21 +568,10 @@ class PhyloEncoding(object):
       tips, internal, tipsNotInMtx = self.buildTips()
       negsDict = self.processInternalNodes(internal)
       
-      tipIds = self.tree.tips
-      # Create a list of path ids that are not tips
-      internalIds = [pathId for pathId in self.tree.cladePaths.keys() if pathId not in tipIds]
-      
-      # Get the branch lengths for every clade
-      # TODO: Can we do this where it is needed instead of here?
-      lengths = self.tree.getBranchLengths()
-      
       if self.tree.hasBranchLengths():
-         sides = self.getSides(internal)
-         matrix = np.zeros((len(tipIds), len(internalIds)), dtype=np.float)  # consider it's own init func
-         P = self.buildP_BrLen(matrix, internal, sides, lengths, tips)
+         P = self._buildPMatrixFromBranchLengths()
       else:
-         matrix = np.empty(len(tipIds), len(internalIds))
-         P = self.buildPMatrix(matrix, internalIds, tips, negsDict)
+         P = self.buildPMatrix(tips, negsDict)
       
       if len(tipsNotInMtx) > 0:
          I = self.processTipNotInMatrix(tipsNotInMtx, internal, self.pam)
@@ -729,7 +718,7 @@ class PhyloEncoding(object):
       return negDict
    
    # ..............................   
-   def buildPMatrix(self, emptyMtx, internalIds, tipsDictList, whichSide):
+   def buildPMatrix(self, tipsDictList, whichSide):
       """
       @summary: Creates a P matrix when no branch lengths are present
       @param emptyMtx: 
@@ -740,12 +729,26 @@ class PhyloEncoding(object):
       """
       # TODO: Function documentation
       # TODO: Inline documentation
+
+      # Get all path ids in the tree
+      allPathIds = self.tree.getDescendants(None)
+      
+      # Internal path ids are the subset of path ids that are not tips
+      internalPathIds = list(set(allPathIds) - set(self.tree.tips))
+      
+      # Initialize the matrix
+      matrix = np.zeros((len(self.tree.tips), len(internalPathIds)), 
+                        dtype=np.float)  # consider it's own init func
+      
+      
+      
+      
       #negs = {'0': [1,2,3,4,5,6,7], '2': [3, 4, 5], '1':[2,3,4,5,6],
       #        '3':[4],'8':[9]}
       negs = whichSide
       # TODO: What is ri?  Is it just path id?  Or is it tied to the matrix?
       for ri, tip in enumerate(tipsDictList):
-         newRow = np.zeros(len(internalIds), dtype=np.float)  # need these as zeros since init mtx is autofil
+         newRow = np.zeros(len(internalPathIds), dtype=np.float)  # need these as zeros since init mtx is autofil
          
          print "In build p matrix"
          # TODO: Consider if this is reversed
@@ -757,140 +760,42 @@ class PhyloEncoding(object):
             #print n
             if tipId in negs[n]:
                m = -1
-            idx = internalIds.index(n)
+            idx = internalPathIds.index(n)
             newRow[idx] = (.5**i) * m
-         emptyMtx[ri] = newRow  
+         matrix[ri] = newRow  
       
-      return emptyMtx  
+      return matrix  
    
    # ..............................   
-   def getSides(self, internal):
+   def _buildPMatrixFromBranchLengths(self):
       """
-      @summary: Builds a dictionary of lists of two items.
-      @param internal:
-      @note: Creates a dictionary of lists, two items long
-      @note: Each item in the list is a dictionary of path id: length
-      @note: Internal nodes have one child and decendents on each side
-      @todo: Document
-      @todo: Rewrite this, it is very redundant
-      
-      @todo: Get rid of this or completely rewrite and actually document what it is doing and why
-      
-      """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      def goToTip(clade):
-         lengthsfromSide[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.BRANCH_LENGTH]
-         for child in clade[PhyloTreeKeys.CHILDREN]:
-            goToTip(child)
-
-      # for each key (pathId) in internal recurse each side
-      sides = {}
-      lengths = self.tree.getBranchLengths()
-
-      for pathId in lengths.keys():  # 0 doesn't have a lengh so isn't in lengths
-         if internal.has_key(pathId):
-            sides[pathId] = []
-            lengthsfromSide = {}
-            goToTip(internal[pathId][0])
-            sides[pathId].append(lengthsfromSide)
-            
-            # TODO: Make this clearer
-            lengthsfromSide = {}
-            goToTip(internal[pathId][1])
-            sides[pathId].append(lengthsfromSide)
-
-      return sides
-   
-   # ..............................   
-   def buildP_BrLen(self, emptyMtx, internal, sides, lengths, tipsDictList):
-      """
-      @todo: Rename this to something like buildPMatrixFromBranchLengths
-      @summary: Build a P matrix from branch lengths
-      @todo: Jeff's doc - new, more effecient method for br len enc.
-      
-      @param emptyMtx:
-      @param internal: 
-      @param sides: A dictionary of lists (see getSides for more info)
-      @param lengths: A dictionary of path id (key) branch length (value)
-      @param tipsDictList: A list of tips dictionaries
-      @todo: This should be a private function
+      @summary: Build a P matrix from branch lengths in the tree
       @note: Path ids matter.  The order changes if they change.
       @note: The output should be based on position in the tree, not the path id
-      
-      
-      
-      @param lengths: lengths keys are ints
-      @param sides: sides keys are ints
       """
-      # TODO: Function documentation
-      # TODO: Inline documentation
+      lengths = self.tree.getBranchLengths()
       
-      # numTipsDescFromInternal: The number of tips that are descendant from an internal node
-      #                             Only used to get the total number, change this
+      # Get all path ids in the tree
+      allPathIds = self.tree.getDescendants(None)
       
-      # tipIds: A list of tip ids in a tree
-      # mxByTip: A dictionary of path id: matrix index for all tips
-      numTipsDescFromInternal = {}
-      tipIds = self.tree.tips
+      # Internal path ids are the subset of path ids that are not tips
+      internalPathIds = list(set(allPathIds) - set(self.tree.tips))
+      
+      # Initialize the matrix
+      matrix = np.zeros((len(self.tree.tips), len(internalPathIds)), 
+                        dtype=np.float)  # consider it's own init func
+      
+      # Sort these for processing
+      sortedInternalPathIds = sorted(internalPathIds)
+      
+      numDescTips = self.tree.getNumberOfDescendantTipsDict()
 
-      for internalKey in sides:
-         #if internalKey not in tipIds:
-         numTipsDescFromInternal[internalKey] = []
-         num = len([x for x in sides[internalKey][0].keys() if x in tipIds])
-         numTipsDescFromInternal[internalKey].append(num)
-         num = len([x for x in sides[internalKey][1].keys() if x in tipIds])
-         numTipsDescFromInternal[internalKey].append(num)
-
-      # ........................
-      def getNumerator(tipPathId, cladePathId):
-         """
-         @summary: Gets the numerator for a particular matrix cell
-         @param tipPathId: The path id of the tip of the clade in question
-         @param cladePathId: The path id of the clade to use 
-         @note: The numerator is the sum of the length of the tip clade plus
-                   the weighted sums of the branch lengths of clades between 
-                   the clade with cladePathId and the tip
-         @todo: Consider if this should be done differently.  This function 
-                   does not make sense as part of the main class but it also
-                   seems redundant to do this for every tip / clade combination.
-                   Perhaps we can make better use of recursion to accomplish
-                   this.
-         @todo: Maybe we can at least move this so that it is at the top of the
-                   function.  To do so, we'll need to change the 
-                   numTipsDescFromInternal dictionary (which should be done 
-                   anyway)
-         """
-         tipPath = self.tree.cladePaths[pathId]
-         # TODO: Take this out if we reverse it
-         #tipPath.reverse()
-
-         # Get the position of the current clade since we will only sum 
-         #   the branch lengths between that clade and the tip
-         # So if we have the following path where the clade is d and the tip
-         #    is g, we would only use e and f
-         # [a, b, c, d, e, f, g]
-         cladePosition = tipPath.index(clade[PhyloTreeKeys.PATH_ID])
-         # The numerator is the branch length of the tip plus the sum of the 
-         #    weighted lengths between the tip and the current clade
-         numerator = lengths[pathId] + sum(
-                               [lengths[i] / sum(numTipsDescFromInternal[i]) \
-                                   for i in tipPath[cladePosition+1:-1]])
-         return numerator
+      mtxIdxMapping = self.tree.getMatrixIndicesMapping()
       
-      
-      
-      
-      mxByTip = {tipClade[PhyloTreeKeys.PATH_ID]: tipClade[PhyloTreeKeys.MTX_IDX] for tipClade in tipsDictList}
-      
-      # Do these need to be sorted?
-      sortedInternalKeys = sorted(internal.keys())
-      #print sortedInternalKeys
-      
-      # TODO: Don't use strings
-      for col, k in enumerate(sortedInternalKeys):
+      # TODO: Can we do this better than sorting?
+      for col, k in enumerate(sortedInternalPathIds):
          
-         clade = self.tree.getClade(int(k))
+         clade = self.tree.getClade(k)
          # Assume that the tree is binary
          leftChild, rightChild = clade[PhyloTreeKeys.CHILDREN]
          
@@ -899,8 +804,7 @@ class PhyloEncoding(object):
          
          # The left denominator is the sum of all of the branch lengths on the
          #    left side of the clade multiplied by -1
-         # TODO: Should this be an integer?
-         leftDenominator = sum(lengths[x] for x in leftDescendants) * -1
+         leftDenominator = sum(lengths[x] for x in leftDescendants) * -1.0
          
          # The right denominator is the same as the left, but for the right 
          #    side of the tree but it is not multiplied
@@ -910,14 +814,29 @@ class PhyloEncoding(object):
          leftTips = [x for x in leftDescendants if x in self.tree.tips]
          rightTips = [x for x in rightDescendants if x in self.tree.tips]
          
-         for pathId in leftTips:
-            numerator = getNumerator(pathId, k)
-            emptyMtx[mxByTip[pathId]][col] = numerator / leftDenominator
+         # We do the same operation for the left and right children, so rather
+         #    than duplicate code, make the operation more generic and loop
+         #    through the values
+         for tipList, denominator in [(leftTips, leftDenominator), 
+                                      (rightTips, rightDenominator)]:
+            for pathId in tipList:
+               tipPath = self.tree.cladePaths[pathId]
+               # Get the position of the current clade since we will only sum 
+               #   the branch lengths between that clade and the tip
+               # So if we have the following path where the clade is d and the
+               #    tip is g, we would only use e and f
+               # [a, b, c, d, e, f, g]
+               cladePosition = tipPath.index(k)
+               
+                  # The numerator is the branch length of the tip plus the sum 
+                  #    of the weighted lengths between the tip and the current 
+                  #    clade
+               numerator = lengths[pathId] + sum(
+                               [lengths[i] / numDescTips[i] \
+                                   for i in tipPath[cladePosition+1:-1]])
          
-         for pathId in rightTips:
-            numerator = getNumerator(pathId, k)
-            emptyMtx[mxByTip[pathId]][col] = numerator / rightDenominator
+               matrix[mtxIdxMapping[pathId]][col] = numerator / denominator
          
             
-      return emptyMtx   
+      return matrix   
 

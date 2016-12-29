@@ -272,6 +272,22 @@ class LmTree(object):
          clade = self.tree
          
       return self._getMatrixIndicesInClade(clade)
+
+   # ..............................
+   def getMatrixIndicesMapping(self):
+      """
+      @summary: Gets a dictionary mapping matrix index to path id for the clades 
+                   in the tree
+      @return: Dictionary of path id keys with matrix index values
+      """
+      return self._getMatrixIndicesMapping(self.tree)
+   
+   # ..............................
+   def getNumberOfDescendantTipsDict(self):
+      """
+      @summary: Returns a dictionary of pathId: number of descending tips
+      """
+      return self._getNumberOfDescendantTips(self.tree)
    
    # ..............................
    def getLabels(self):
@@ -539,6 +555,19 @@ class LmTree(object):
       return mtxIdxs
 
    # ..............................
+   def _getMatrixIndicesMapping(self, clade):
+      """
+      @summary: Recursively build a dictionary of matrix index mapping to path 
+                   id
+      """
+      mapping = {}
+      if clade.has_key(PhyloTreeKeys.MTX_IDX):
+         mapping[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.MTX_IDX]
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         mapping.update(self._getMatrixIndicesMapping(child))
+      return mapping
+   
+   # ..............................
    def _getNewPathId(self):
       """
       @summary: Gets an unused path id to use for a new clade
@@ -546,6 +575,26 @@ class LmTree(object):
       self.lastCladeId += 1
       return self.lastCladeId
 
+   # ..............................
+   def _getNumberOfDescendantTips(self, clade):
+      """
+      @summary: Get the number of tips descending from this clade
+      """
+      descs = {}
+      numTips = 0
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         # If no children, add 1 to tips
+         if len(child[PhyloTreeKeys.CHILDREN]) == 0:
+            numTips += 1 
+         # else, add the number of tips in the child
+         else:
+            subDict = self._getNumberOfDescendantTips(child)
+            descs.update(subDict)
+            numTips += subDict[child[PhyloTreeKeys.PATH_ID]]
+         
+      descs[clade[PhyloTreeKeys.PATH_ID]] = numTips
+      return descs
+   
    # ..............................
    def _getPathIdsWithoutBranchLengths(self, clade):
       """
