@@ -853,26 +853,26 @@ class PhyloEncoding(object):
          #posSideClade = internal[k][0]  # clade dict
          posDen = sum(sides[k][0].values()) * -1
          print posDen
-         TipsPerSide = [x for x in sides[k][0].keys() if x in tipIds]
-         InternalPerSide = [x for x in sides[k][0].keys() if x not in tipIds]
+         tipsPerSide = [x for x in sides[k][0].keys() if x in tipIds]
+         internalPerSide = [x for x in sides[k][0].keys() if x not in tipIds]
          # TODO: This is path id
-         for tip in TipsPerSide:
+         for tip in tipsPerSide:
             mx = mxByTip[tip]
             tipLength = lengths[tip]
             tipPath = self.tree.cladePaths[tip]
-            num = tipLength + sum([lengths[i] / sum(numTipsDescFromInternal[i]) for i in InternalPerSide if i in tipPath])
+            num = tipLength + sum([lengths[i] / sum(numTipsDescFromInternal[i]) for i in internalPerSide if i in tipPath])
             result = num/posDen
             emptyMtx[mx][col] = result
 
          #negSideClade = internal[k][1]  # clade dict
          negDen = sum(sides[k][1].values()) 
-         TipsPerSide = [x for x in sides[k][1].keys() if x in tipIds]
-         InternalPerSide = [x for x in sides[k][1].keys() if x not in tipIds]
-         for tip in TipsPerSide:
+         tipsPerSide = [x for x in sides[k][1].keys() if x in tipIds]
+         internalPerSide = [x for x in sides[k][1].keys() if x not in tipIds]
+         for tip in tipsPerSide:
             mx = mxByTip[tip]
             tipLength = lengths[tip]
             tipPath = self.tree.cladePaths[tip]
-            num = tipLength + sum([lengths[i]/sum(numTipsDescFromInternal[i]) for i in InternalPerSide if i in tipPath] )
+            num = tipLength + sum([lengths[i]/sum(numTipsDescFromInternal[i]) for i in internalPerSide if i in tipPath] )
             result = num/negDen
             emptyMtx[mx][col] = result
             
