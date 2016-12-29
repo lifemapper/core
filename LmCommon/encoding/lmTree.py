@@ -201,9 +201,8 @@ class LmTree(object):
          cladePath = self.cladePaths[pathId]
       else:
          raise Exception, "Path id: %s was not found" % pathId
-      
       # Reverse path so we can process easier
-      cladePath.reverse()
+      #cladePath.reverse()
       
       clade = self.tree
       for cid in cladePath[1:]: # We can skip the root
@@ -226,7 +225,8 @@ class LmTree(object):
       paths = []
       for pathId in pathIds:
          path = self.cladePaths[pathId]
-         path.reverse() # Reverse for easy comparison
+         # TODO: Remove when sure it is working
+         #path.reverse() # Reverse for easy comparison
          paths.append(path)
          
       i = 0
@@ -418,7 +418,6 @@ class LmTree(object):
                    keys
       @param clade: The clade to clean up
       @param basePath: The base path to use for this clade
-      @todo: Should the path be reversed?
       """
       if clade is None:
          clade = self.tree
@@ -438,10 +437,8 @@ class LmTree(object):
             clade[PhyloTreeKeys.PATH_ID] is None:
          clade[PhyloTreeKeys.PATH_ID] = self._getNewPathId()
       
-      # Path should be the path id of this clade followed by the path to the
-      #    parent.  This creates a list starting at the node and then going
-      #    up the tree to the root.
-      cladePath = [clade[PhyloTreeKeys.PATH_ID]] + basePath
+      # Path should be the path to the clade from the root
+      cladePath = basePath + [clade[PhyloTreeKeys.PATH_ID]]
       # Set the path on this clade
       clade[PhyloTreeKeys.PATH] = cladePath
       # Recurse to children
