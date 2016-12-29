@@ -25,6 +25,8 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: If I add a get parent method, can I get rid of path in other modules?
+@todo: Or a get siblings method?
 """
 import os
 from random import shuffle
@@ -146,6 +148,7 @@ class LmTree(object):
       """
       @summary: Add matrix indices to the tree
       @param pamMetadata: A dictionary of (label, matrix index) pairs for a PAM
+      @todo: Should this fail if not all of the columns are found?
       """
       self._addMatrixIndices(self.tree, pamMetadata)
    
@@ -257,6 +260,19 @@ class LmTree(object):
       
       return self._getDescendants(clade)
 
+   # ..............................
+   def getMatrixIndicesInClade(self, clade=None):
+      """
+      @summary: Returns a list of all matrix indices in the tree
+      @param clade: (optional) If not provided, use the root
+      @note: Duplication is possible if matrix index is present in multiple 
+                clades of the tree
+      """
+      if clade is None:
+         clade = self.tree
+         
+      return self._getMatrixIndicesInClade(clade)
+   
    # ..............................
    def getLabels(self):
       """
@@ -487,7 +503,7 @@ class LmTree(object):
    # ..............................
    def _getDescendants(self, clade):
       """
-      @summary: Gets the decendants of the specified clade
+      @summary: Gets the descendants of the specified clade
       @param clade: The clade dictionary to get the descendants of
       """
       desc = [clade[PhyloTreeKeys.PATH_ID]]
@@ -511,6 +527,20 @@ class LmTree(object):
 
       return localLabels
    
+   # ..............................
+   def _getMatrixIndicesInClade(self, clade):
+      """
+      @summary: Recurses through the clade and builds a list of matrix indices
+                   in the clade
+      @param clade: The clade to look for matrix indices in
+      """
+      mtxIdxs = []
+      if clade.has_key(PhyloTreeKeys.MTX_IDX):
+         mtxIdxs.append(clade[PhyloTreeKeys.MTX_IDX])
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         mtxIdxs.extend(self._getMatrixIndicesInClade(child))
+      return mtxIdxs
+
    # ..............................
    def _getNewPathId(self):
       """
