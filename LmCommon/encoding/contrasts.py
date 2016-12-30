@@ -25,6 +25,9 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@see: Leibold, m.A., E.P. Economo and P.R. Peres-Neto. 2010. Metacommunity
+         phylogenetics: separating the roles of environmental filters and 
+         historical biogeography. Ecology letters 13: 1290-1299.
 """
 #TODO: Constants
 #TODO: Fix check for keys
@@ -43,9 +46,6 @@ from osgeo import ogr,gdal
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.encoding.lmTree import LmTree
-from numpy.ma.core import ids
-import this
-from wheel import metadata
 
 
 # TODO: Spacing
@@ -566,12 +566,11 @@ class PhyloEncoding(object):
       """
       ######### make P ###########
       tips, internal, tipsNotInMtx = self.buildTips()
-      negsDict = self.processInternalNodes(internal)
       
       if self.tree.hasBranchLengths():
          P = self._buildPMatrixFromBranchLengths()
       else:
-         P = self.buildPMatrix(tips, negsDict)
+         P = self._buildPMatrixNoBranchLengths()
       
       if len(tipsNotInMtx) > 0:
          I = self.processTipNotInMatrix(tipsNotInMtx, internal, self.pam)
@@ -702,69 +701,118 @@ class PhyloEncoding(object):
       return newPam
 
    # ..............................   
-   def processInternalNodes(self, internal):
-      """
-      @summary: takes dict of interal nodes from one side of the phylogeny
-      returns dict of lists of ids that descend from parent on that branch,
-      key is parent pathId
-      @todo: Document
-      """
-      negDict = {}
-      for k in internal.keys():
-         l = self.tree.getDescendants(k)
-         negDict[k] = l
-         # since looked like conversion to json at one point wasn't converting
-         # pathId 0 at root of tree to string
-      return negDict
-   
-   # ..............................   
-   def buildPMatrix(self, tipsDictList, whichSide):
+   def _buildPMatrixNoBranchLengths(self):
       """
       @summary: Creates a P matrix when no branch lengths are present
-      @param emptyMtx: 
-      @param internalIds: 
-      @param tipsDictList: 
-      @param whichSide: 
-      @todo: Document
+      @note: For this method, we assume that there is a total weight of -1 to 
+                the left and +1 to the right for each node.  As we go down 
+                (towards the tips) of the tree, we divide the proportion of 
+                each previously visited node by 2.  We then recurse with this 
+                new visited list down the tree.  Once we reach a tip, we can 
+                return that list of proportions because it will match for that 
+                tip for each of it's ancestors.
+      @note: Example: 
+               3
+               +--2
+               |  +-- 1
+               |  |   +--0
+               |  |   |  +-- A
+               |  |   |  +-- B
+               |  |   |
+               |  |   +-- C
+               |  |
+               |  +-- D
+               |
+               +--4
+                  +-- E
+                  +-- F
+                  
+            Step 1: (Node 3) [] 
+                      - recurse left with [(3,-1)] 
+                      - recurse right with [(3,1)]
+            Step 2: (Node 2) [(3,-1)]
+                      - recurse left with [(3,-.5),(2,-1)] 
+                      - recurse right with [(3,-.5),(2,1)]
+            Step 3: (Node 1)[(3,-.5),(2,-1)] 
+                      - recurse left with [(3,-.25),(2,-.5),(1,-1)]
+                      - recurse right with [3,-.25),(2,-.5),(1,1)]
+            Step 4: (Node 0)[(3,-.25),(2,-.5),(1,-1)]
+                      - recurse left with [(3,-.125),(2,-.25),(1,-.5),(0,-1)]
+                      - recurse right with [(3,-.125),(2,-.25),(1,-.5),(0,1)]
+            Step 5: (Tip A) - Return [(3,-.125),(2,-.25),(1,-.5),(0,-1)]
+            Step 6: (Tip B) - Return [(3,-.125),(2,-.25),(1,-.5),(0,1)]
+            Step 7: (Tip C) - Return [(3,-.25),(2,-.5),(1,1)]
+            Step 8: (Tip D) - Return [(3,-.5),(2,1)]
+            Step 9: (Node 4) [(3,1)] - recurse left with [(3,.5),(4,-1)]
+                                     - recurse right with [(3,.5),(4,1)]
+            Step 10: (Tip E) - Return [(3,.5),(4,-1)]
+            Step 11: (Tip F) - Return [(3,.5),(4,1)]
+            
+            Creates matrix:
+                   0    1    2     3      4
+               A -1.0 -0.5 -0.25 -0.125  0.0
+               B  1.0 -0.5 -0.25 -0.125  0.0
+               C  0.0  1.0 -0.5  -0.25   0.0
+               D  0.0  0.0  1.0  -0.5    0.0
+               E  0.0  0.0  0.0   0.5   -1.0
+               F  0.0  0.0  0.0   0.5    1.0
+      
+      @see: Page 1293 of the literature
       """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-
-      # Get all path ids in the tree
+      # .......................
+      # Initialize the matrix
       allPathIds = self.tree.getDescendants(None)
       
       # Internal path ids are the subset of path ids that are not tips
       internalPathIds = list(set(allPathIds) - set(self.tree.tips))
-      
-      # Initialize the matrix
       matrix = np.zeros((len(self.tree.tips), len(internalPathIds)), 
-                        dtype=np.float)  # consider it's own init func
-      
-      
-      
-      
-      #negs = {'0': [1,2,3,4,5,6,7], '2': [3, 4, 5], '1':[2,3,4,5,6],
-      #        '3':[4],'8':[9]}
-      negs = whichSide
-      # TODO: What is ri?  Is it just path id?  Or is it tied to the matrix?
-      for ri, tip in enumerate(tipsDictList):
-         newRow = np.zeros(len(internalPathIds), dtype=np.float)  # need these as zeros since init mtx is autofil
-         
-         print "In build p matrix"
-         # TODO: Consider if this is reversed
-         pathList = tip[PhyloTreeKeys.PATH][1:]
+                        dtype=np.float)
 
-         tipId = tip[PhyloTreeKeys.PATH_ID]
-         for i,n in enumerate(pathList):
-            m = 1
-            #print n
-            if tipId in negs[n]:
-               m = -1
-            idx = internalPathIds.index(n)
-            newRow[idx] = (.5**i) * m
-         matrix[ri] = newRow  
+      # Get the list of tip proportion lists
+      # Note: Which tip each of the lists belongs to doesn't really matter but
+      #          recursion will start at the top and go to the bottom of the 
+      #          tree tips
+      tipProps = self._buildPMatrixTipProportionList(self.tree.tree, visited=[])
       
+      # We need a mapping of node path id to matrix column.  I don't think 
+      #    order matters
+      nodeColumnIndex = dict(zip(internalPathIds, range(len(internalPathIds))))
+      
+      # "i" will be used as the row index in the matrix for the tip
+      for i in range(len(tipProps)):
+         for nodePathId, val in tipProps[i]:
+            matrix[i][nodeColumnIndex[nodePathId]] = val
+            
       return matrix  
+   
+   # ..............................   
+   def _buildPMatrixTipProportionList(self, clade, visited=[]):
+      """
+      @summary: Recurses through the tree to build a list of tip proportions to 
+                   be used to build a P-matrix when no branch lengths are 
+                   present
+      @param clade: The current clade
+      @param visited: A list of [(node matrix index, proportion)]
+      @note: Proportion for each visited node is divided by two as we go 
+                towards the tips at each hop
+      @todo: This appears to be a slightly modified version of the branch 
+                lengths version.  Perhaps rewrite these to use the same 
+                function and simplify branch length method
+      """
+      tipProps = []
+      if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
+         # First divide all existing visited by two
+         newVisited = [(idx, val / 2.0) for idx, val in visited]
+         # Recurse.  Left is negative, right is positive
+         tipProps.extend(
+            self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][0], 
+                            newVisited + [(clade[PhyloTreeKeys.PATH_ID], -1.0)]))
+         tipProps.extend(
+            self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][1], 
+                             newVisited + [(clade[PhyloTreeKeys.PATH_ID], 1.0)]))
+      else: # We are at a tip
+         tipProps.append(visited) # Just return a list with one list
+      return tipProps
    
    # ..............................   
    def _buildPMatrixFromBranchLengths(self):
@@ -772,6 +820,7 @@ class PhyloEncoding(object):
       @summary: Build a P matrix from branch lengths in the tree
       @note: Path ids matter.  The order changes if they change.
       @note: The output should be based on position in the tree, not the path id
+      @todo: See if this can be combined with no branch lengths method
       """
       lengths = self.tree.getBranchLengths()
       

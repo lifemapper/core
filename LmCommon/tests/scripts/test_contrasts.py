@@ -139,6 +139,66 @@ if __name__ == "__main__":
    assert np.sum(P) == 0.0
    
 
+   tree2 = {
+      "name": "0",
+      "pathId": 0,
+      "children": [
+         {
+            "pathId": 1,
+            "children": [
+               {
+                  "pathId" : 2,
+                  "children": [
+                     {
+                        "pathId" : 3,
+                        "children": [
+                           {
+                              "pathId" : 4,
+                              "mx" : 0
+                           },
+                           {
+                              "pathId" : 5,
+                              "mx" : 1
+                           }
+                        ]
+                     },
+                     {
+                        "pathId" : 6,
+                        "mx" : 2
+                     }
+                  ]
+               },
+               {
+                  "pathId" : 7,
+                  "mx" : 3
+               }
+            ]
+         },
+         {
+            "pathId" : 8,
+            "children": [
+               {
+                  "pathId" : 9,
+                  "mx" : 4
+               },
+               {
+                  "pathId" : 10,
+                  "mx" : 5
+               }
+            ]
+         } 
+      ]
+   }
+   
+   i2 = np.random.choice(2,24).reshape(4,6)
+   
+   treeEncodeObj2 = PhyloEncoding(tree2, i2)
+   
+   p2, i3 , internal2 = treeEncodeObj2.makeP()
+   
+
+   print p2
+   assert np.sum(P) == 0.0
 
    
    
