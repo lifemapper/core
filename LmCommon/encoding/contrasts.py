@@ -568,7 +568,8 @@ class PhyloEncoding(object):
       tips, internal, tipsNotInMtx = self.buildTips()
       
       if self.tree.hasBranchLengths():
-         P = self._buildPMatrixFromBranchLengths()
+         #P = self._buildPMatrixFromBranchLengths()
+         P = self._buildPMatrixWithBranchLengths()
       else:
          P = self._buildPMatrixNoBranchLengths()
       
@@ -656,6 +657,7 @@ class PhyloEncoding(object):
       @param tipsNotInMtx: list of tip dictionaries
       @param internal: list of internal nodes made in buildTips
       @todo: Document
+      @todo: Extends the PAM with generated columns for tips without matrix indexes
       """  
       print "In process tip not in matrix"
       mxMapping = {} 
@@ -795,9 +797,7 @@ class PhyloEncoding(object):
       @param visited: A list of [(node matrix index, proportion)]
       @note: Proportion for each visited node is divided by two as we go 
                 towards the tips at each hop
-      @todo: This appears to be a slightly modified version of the branch 
-                lengths version.  Perhaps rewrite these to use the same 
-                function and simplify branch length method
+      @todo: Where is matrix index?
       """
       tipProps = []
       if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
@@ -813,6 +813,154 @@ class PhyloEncoding(object):
       else: # We are at a tip
          tipProps.append(visited) # Just return a list with one list
       return tipProps
+   
+   # ..............................   
+   def _buildPMatrixWithBranchLengths(self):
+      """
+      @summary: Creates a P matrix when branch lengths are present
+      @note: For this method, we assume that there is a total weight of -1 to 
+                the left and +1 to the right for each node.  As we go down 
+                (towards the tips) of the tree, we divide the proportion of 
+                each previously visited node by 2.  We then recurse with this 
+                new visited list down the tree.  Once we reach a tip, we can 
+                return that list of proportions because it will match for that 
+                tip for each of it's ancestors.
+      @note: Example: 
+               3
+               +-- 2 (0.4)
+               |   +-- 1 (0.15)
+               |   |   +-- 0 (0.65)
+               |   |   |   +-- A (0.2)
+               |   |   |   +-- B (0.2)
+               |   |   |
+               |   |   +-- C (0.85)
+               |   |
+               |   +-- D (1.0)
+               |
+               +-- 4 (0.9)
+                   +-- E (0.5)
+                   +-- F (0.5)
+                  
+            Value for any cell (tip)(node) = (l1 + l2/2 + l3/3 + ... + ln/n)/
+                                       (Sum of branch lengths in daughter clade)
+             
+            P(A)(2) = (0.2 + 0.65/2 + 0.15/3) / (0.2 + 0.2 + 0.65 + 0.85 + 0.15)
+                    = (0.2 + 0.325 + 0.05) / (2.05)
+                    = 0.575 / 2.05
+                    = 0.280
+                    
+            P(D)(3) = (1.0 + 0.4/2) / (.2 + .2 + .65 + .85 + .15 + 1.0 + .4)
+                    = 1.2 / 3.45
+                    = 0.348
+                  
+            
+            Creates matrix:
+                    0       1       2       3       4
+               A  -1.000  -0.500  -0.280  -0.196   0.000
+               B  -1.000  -0.500  -0.280  -0.196   0.000
+               C   0.000   1.000  -0.440  -0.260   0.000
+               D   0.000   0.000   1.000  -0.348   0.000
+               E   0.000   0.000   0.000   0.500  -1.000
+               F   0.000   0.000   0.000   0.500   1.000
+      
+      @see: Literature supplemental material
+      """
+      # We only need the P-values dictionary
+      _, _, pValDict = self._buildPBranchLengthValues(self.tree.tree)
+      
+      
+      # Initialize the matrix
+      matrix = np.zeros((len(self.tree.tips), len(pValDict.keys())), 
+                        dtype=np.float)
+
+      # We need a mapping of node path id to matrix column.  I don't think 
+      #    order matters
+      nodeColumnIndex = dict(zip(pValDict.keys(), range(len(pValDict.keys()))))
+      
+      for nodePathId in pValDict.keys():
+         for tipMtxIdx in pValDict[nodePathId].keys():
+            matrix[tipMtxIdx][nodeColumnIndex[nodePathId]] = pValDict[
+                                                         nodePathId][tipMtxIdx]
+            
+      return matrix  
+   
+   # ..............................
+   def _buildPBranchLengthValues(self, clade):
+      """
+      @summary: Recurse through tree to get P matrix values for node / tip 
+                   combinations
+      @param clade: The current clade
+      @todo: What to do if a tip doesn't have a matrix index?
+      @todo: Handle root
+      """
+      blDict = {} # Dictionary of branch length lists bottom-up from tip to 
+      #                current clade
+      
+      cladeBL = clade[PhyloTreeKeys.BRANCH_LENGTH] # To avoid lookups
+      
+      # This is the sum of all branch lengths in the clade and will be used as
+      #    the denominator for the p value for each tip to this node.  See the
+      #    literature for more information.  We will initialize with the branch
+      #    length of this clade because it will always be added whether we are
+      #    at a tip or an internal node
+      blSum = cladeBL
+      
+      pValsDict = {} # Dictionary of dictionaries of P-values, first key is 
+      #                   node path id, sub keys are tip matrix indices for 
+      #                   that node
+      if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
+         
+         cladePvals = {} # Initialize P-values for the clade dictionary
+         multipliers = [-1.0, 1.0] # One branch should be positive, the other 
+         #                              negative
+
+         # TODO: Consider shuffling the multipliers as it should be arbitrary
+         for child in clade[PhyloTreeKeys.CHILDREN]:
+            
+            childBlDict, childBlSum, childPvalDict = \
+                                          self._buildPBranchLengthValues(child)
+            multiplier = multipliers.pop(0)
+            
+            # Extend the P values dictionary
+            pValsDict.update(childPvalDict)
+            
+            # Add this child's branch length sum to the clade's branch length 
+            #    sum
+            blSum += childBlSum
+
+            childBL = child[PhyloTreeKeys.BRANCH_LENGTH]
+
+            # We will add this value to the branch length list for all of the 
+            #    tips in this clade.  It is the branch length of this clade 
+            #    divided by the number of tips in the clade
+            addVal = 1.0 * childBL / len(childBlDict.keys())
+            
+            # Process each of the tips in childBlDict
+            for k in childBlDict.keys():
+               
+               # The formula for calculating the P-value is:
+               # P(tip)(node) = (l1 + l2/2 + l3/3 + ... ln/n) / Sum of branch lengths to node
+               #   This value is arbitrarily set to be positve for one child 
+               #      and negative for the other (we will use "multiplier")
+               # The l term is the length of a branch and it is divided by the
+               #    number of tips that share that branch
+               tipBLs = childBlDict[k] + [addVal]
+               
+               # Add the P-value to pValsDict
+               cladePvals[k] = multiplier * sum(tipBLs) / childBlSum
+               
+               # Add to blDict with this branch length
+               blDict[k] = tipBLs
+
+         pValsDict[clade[PhyloTreeKeys.PATH_ID]] = cladePvals
+         
+      else: # We are at a tip
+         blDict = {
+            clade[PhyloTreeKeys.MTX_IDX] : []#cladeBL]
+         }
+         
+      
+      return blDict, blSum, pValsDict
    
    # ..............................   
    def _buildPMatrixFromBranchLengths(self):
