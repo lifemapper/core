@@ -153,7 +153,7 @@ class LmTree(object):
       self._addMatrixIndices(self.tree, pamMetadata)
    
    # ..............................
-   def checkUltraMetric(self):
+   def checkUltrametric(self):
       """
       @summary: Check if the tree is ultrametric
       @note: To be ultrametric, the branch length from root to tip must be 
@@ -176,7 +176,7 @@ class LmTree(object):
             
             if checkSum is None:
                checkSum = tipBL
-            elif urs != checkSum:
+            elif tipBL != checkSum:
                return False
          # If we made it through all of the tips, return true
          return True
@@ -434,6 +434,7 @@ class LmTree(object):
                    keys
       @param clade: The clade to clean up
       @param basePath: The base path to use for this clade
+      @todo: Clean up should probably ensure that the resulting tree is binary
       """
       if clade is None:
          clade = self.tree
