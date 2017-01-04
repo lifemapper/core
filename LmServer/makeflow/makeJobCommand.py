@@ -27,7 +27,7 @@
 import os
 
 from LmCommon.common.lmconstants import ProcessType
-from LmServer.common.localconstants import POINT_COUNT_MAX
+from LmServer.common.localconstants import POINT_COUNT_MAX, APP_PATH
 
 SINGLE_SPECIES_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/single')
 MULTI_SPECIES_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/multi')
