@@ -122,8 +122,7 @@ if __name__ == "__main__":
    
    treeEncodeObj = PhyloEncoding(tree,I)
    
-   P, I, internal = treeEncodeObj.makeP()
-   
+   p1 = treeEncodeObj.encodePhylogeny()
 
    testP = np.array([
       [-0.1956521739130435, -0.2804878048780488, -0.5, -1.0, 0.0], 
@@ -133,10 +132,9 @@ if __name__ == "__main__":
       [0.5, 0.0, 0.0, 0.0, -1.0], 
       [0.5, 0.0, 0.0, 0.0, 1.0]])
    
-   print P
-   assert np.all(P == testP)
+   print p1
    
-   assert np.sum(P) == 0.0
+   assert round(np.sum(p1), 3) == 0.000
    
 
    tree2 = {
@@ -194,11 +192,10 @@ if __name__ == "__main__":
    
    treeEncodeObj2 = PhyloEncoding(tree2, i2)
    
-   p2, i3 , internal2 = treeEncodeObj2.makeP()
-   
+   p2 = treeEncodeObj2.encodePhylogeny()
 
    print p2
-   assert np.sum(P) == 0.0
+   assert np.sum(p2) == 0.0
 
    
    
