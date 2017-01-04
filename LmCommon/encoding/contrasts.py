@@ -737,9 +737,10 @@ class PhyloEncoding(object):
       nodeColumnIndex = dict(zip(internalPathIds, range(len(internalPathIds))))
       
       # "i" will be used as the row index in the matrix for the tip
-      for i in range(len(tipProps)):
-         for nodePathId, val in tipProps[i]:
-            matrix[i][nodeColumnIndex[nodePathId]] = val
+      #for i in range(len(tipProps)):
+      for rowIdx, tipProp in tipProps:
+         for nodePathId, val in tipProp:
+            matrix[rowIdx][nodeColumnIndex[nodePathId]] = val
             
       return matrix  
    
@@ -750,10 +751,9 @@ class PhyloEncoding(object):
                    be used to build a P-matrix when no branch lengths are 
                    present
       @param clade: The current clade
-      @param visited: A list of [(node matrix index, proportion)]
+      @param visited: A list of [(node path id, proportion)]
       @note: Proportion for each visited node is divided by two as we go 
                 towards the tips at each hop
-      @todo: Where is matrix index?
       """
       tipProps = []
       if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
@@ -767,7 +767,7 @@ class PhyloEncoding(object):
             self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][1], 
                              newVisited + [(clade[PhyloTreeKeys.PATH_ID], 1.0)]))
       else: # We are at a tip
-         tipProps.append(visited) # Just return a list with one list
+         tipProps.append((clade[PhyloTreeKeys.MTX_IDX], visited)) # Just return a list with one list
       return tipProps
    
    # ..............................   
