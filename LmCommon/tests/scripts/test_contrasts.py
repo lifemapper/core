@@ -31,6 +31,8 @@ import os
 
 from LmCommon.encoding.contrasts import BioGeoEncoding, PhyloEncoding
 
+#TODO: This should not reference my local machine.  Integrate this into testing
+#         framework
 BASE_DATA_DIR = "/home/cjgrady/jeff/"
 OUT_DIR = os.path.join(BASE_DATA_DIR, "output")
 
