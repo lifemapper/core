@@ -699,18 +699,19 @@ class UserBoom(_LMBoomer):
              The parser writes each new text chunk to a file, updates the 
              Occurrence record and inserts one or more jobs.
    """
-   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occDataname, 
-                expDate, priority=Priority.HIGH, minPointCount=None,
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, 
+                userOccCSV, userOccMeta, expDate, 
+                priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
-      super(UserBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
+      super(UserBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, 
+                                     prjScenLst, 
                                      taxonSourceName=None, 
                                      minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      intersectGrid=intersectGrid, log=log)
       self.occParser = None
       try:
-         self.occParser = OccDataParser(self.log, occDataname + OutputFormat.CSV, 
-                                        occDataname + OutputFormat.METADATA)
+         self.occParser = OccDataParser(self.log, userOccCSV, userOccMeta) 
       except Exception, e:
          raise LMError(currargs=e.args)
          
