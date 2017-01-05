@@ -35,9 +35,10 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat,
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import (ARCHIVE_USER, 
+from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
+from LmServer.common.lmconstants import DEFAULT_CONFIG
 from LmServer.common.lmuser import LMUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
@@ -420,7 +421,8 @@ def _importClimatePackageMetadata(envPackageName):
    return META
 
 # ...............................................
-def _writeConfigFile(envPackageName, userid, datasource, configMeta, mdlScen=None, prjScens=None):
+def _writeConfigFile(envPackageName, userid, datasource, configMeta, minpoints,
+                     mdlScen=None, prjScens=None):
    SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
    pth, temp = os.path.split(SERVER_CONFIG_FILENAME)
    newConfigFilename = os.path.join(pth, '{}{}'.format(envPackageName, 
@@ -437,6 +439,8 @@ def _writeConfigFile(envPackageName, userid, datasource, configMeta, mdlScen=Non
    f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
    f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
    f.write('SPECIES_EXP_DAY: {}\n\n'.format(CURRDATE[2]))
+   
+   f.write('POINT_COUNT_MIN: {}\n\n'.format(minpoints))
 
    algs = ','.join(configMeta['algorithms'])
    f.write('DEFAULT_ALGORITHMS: {}\n\n'.format(algs))
@@ -468,20 +472,29 @@ if __name__ == '__main__':
             description=('Populate a Lifemapper database with metadata ' +
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-m', '--metadata', default='config',
+   parser.add_argument('-m', '--metadata', default=SCENARIO_PACKAGE,
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
-   parser.add_argument('-d', '--datasource', default='User',
-            help=('Datasource will be \'User\' for user-supplied CSV data, ' +
+   parser.add_argument('-s', '--species_source', default='User',
+            help=('Species source will be \'User\' for user-supplied CSV data, ' +
                   '\'GBIF\' for GBIF-provided CSV data sorted by taxon id, ' +
                   '\'IDIGBIO\' for a list of GBIF accepted taxon ids suitable ' +
                   'for querying the iDigBio API'))
+   parser.add_argument('-p', '--min_points', default=POINT_COUNT_MIN,
+            help=('Minimum number of points required for SDM computation ' +
+                  'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
+                  'the site-specific configuration file config.site.ini' ))
 
    args = parser.parse_args()
    envPackageName = args.metadata
-   datasource = args.datasource.upper()
-   if envPackageName.lower() == 'config':
-      envPackageName = SCENARIO_PACKAGE
+   datasource = args.species_source.upper()
+   minpoints = args.min_points
+   try:
+      int(minpoints)
+   except:
+      print ('Invalid points parameter {}, min_points requires an integer'
+             .format(minpoints))
+      minpoints = POINT_COUNT_MIN
    # Imports META
    META = _importClimatePackageMetadata(envPackageName)
    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
@@ -546,7 +559,8 @@ if __name__ == '__main__':
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
       newConfigFilename = _writeConfigFile(envPackageName, usr, datasource,
-                                           configMeta, mdlScen=mdlScencode, 
+                                           configMeta, minpoints, 
+                                           mdlScen=mdlScencode, 
                                            prjScens=prjScencodes)
    except Exception, e:
       logger.error(str(e))

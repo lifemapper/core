@@ -83,6 +83,8 @@ CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
 WORKER_FACTORY_BIN = os.path.join(BIN_PATH, 'work_queue_factory')
 MAKEFLOW_BIN = os.path.join(BIN_PATH, 'makeflow')
 
+DEFAULT_CONFIG = 'config'
+
 # Depth of path for archive SDM experiment data - this is the number of levels 
 # that the occurrencesetid associated with a model and its projections 
 # is split into i.e. occurrencesetid = 123456789 --> path 000/123/456/789/

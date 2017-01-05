@@ -1,6 +1,6 @@
 """
 @summary: Module containing classes for Phylogenetic and BioGeographic contrasts
-@author: Jeff Cavner (modified by CJ Grady)
+@author: CJ Grady (originally by Jeff Cavner)
 @version: 1.0
 @status: alpha
 
@@ -29,454 +29,212 @@
          phylogenetics: separating the roles of environmental filters and 
          historical biogeography. Ecology letters 13: 1290-1299.
 """
-#TODO: Constants
-#TODO: Fix check for keys
-
-
-# TODO: Check imports
-import numpy as np
-import csv
-from operator import itemgetter
-import cPickle
-import os, sys
-import ntpath
-import operator
 import json
-from osgeo import ogr,gdal
+import numpy as np
+import os
+from osgeo import ogr
+from random import shuffle
 
-from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.lmconstants import (DEFAULT_OGR_FORMAT, FileFormats, 
+                                         PhyloTreeKeys)
 from LmCommon.encoding.lmTree import LmTree
 
-
-# TODO: Spacing
-# TODO: Constants
-# TODO: Remove references to Jeff's machine
-
-# TODO: Is this needed
-ogr.UseExceptions()
+SITE_FIELD = 'siteid'
 
 # .............................................................................
 class BioGeoEncoding(object):
    """
-   @summary: The BioGeoEncoding class represents a site by biogeographic
-                hypothesis matrix
-   @todo: Improve documentation
+   @summary: This class encodes a set of biogeographic hypothesis and a 
+                shapegrid into a matrix of site rows and hypothesis columns
    """
-   
-   # ..............................   
-   def __init__(self, contrastsdLoc, intersectionLyrDLoc, eventField=False):
+   # ..............................
+   def __init__(self, shapegridDLoc):
       """
-      @summary: Constructor for Biogeographic hypothesis encodings
-      @note: eventField only for non-collections
-      @todo: Function documentation
-      @todo: Inline documentation
+      @summary: The constructor sets the data location for the shapegrid to be 
+                   used for intersection
+      @param shapegridDLoc: The file location of the shapegrid to use for 
+                               intersection
       """
-      self.encMtx = False
-      self.contrastColl = False  # list of ogr data sources
-      self.eventField = eventField
-      fieldName = sPSet = commonSet = True 
-      self._mutuallyEx = False
+      self.layers = [] # A list of layer data locations
+      self.sortedSites = [] # Will be filled in next step
       
-      try: 
-         if os.path.exists(contrastsdLoc) and os.path.exists(intersectionLyrDLoc) and eventField:
-            
-            self.contrastsDs = self.openShapefile(contrastsdLoc) 
-            fieldName = self._checkEventFieldName()
-            
-            if not fieldName:
-               raise Exception, "incorrect event field"
-            
-            sPSet = self._setSinglePathValues(eventField, contrastsdLoc)
-            commonSet = self._setCommon(intersectionLyrDLoc)
-            self._setMutuallyExclusive(self.contrastsDs, eventField)
-            
-         else:
-            raise ValueError('shapefile or eventField missing')
-      except Exception, e:
-         if fieldName and sPSet and commonSet:
-            try:
-               # this branch for multiples (collection)
-               if len(contrastsdLoc) == 1 and os.path.exists(contrastsdLoc[0]):
-                  raise Exception, "list_one"
-               
-               self.contrastColl = []
-               for fn in contrastsdLoc:
-                  if os.path.exists(fn):
-                     ds = self.openShapefile(fn)
-                     self.contrastColl.append(ds)
-                     
-               self._positions = self.buildContrastPostions(self.contrastColl,
-                                                            fromCollection=True)
-               
-               if not self._eachTwo():
-                  self.contrastColl = False
-                  raise Exception, "more then two features in .."
-               #if not self._checkEventFieldName():  # does a contrast collection need an eventField?
-                  #self.contrastColl = False
-                  raise Exception, "incorrect event field"
-               if os.path.exists(intersectionLyrDLoc):
-                  self._setCommon(intersectionLyrDLoc)
-               else:
-                  self.contrastColl = False
-                  raise ValueError('shapefile missing')
-               
-            except Exception, e: 
-               try:
-                  if str(e) == 'list_one':
-                     if os.path.exists(intersectionLyrDLoc):  
-                        
-                        self.contrastsDs = self.openShapefile(contrastsdLoc[0])
+      self._getSortedSitesForIntersection(shapegridDLoc)
 
-                        if not self._checkEventFieldName():
-                           raise Exception, "incorrect event field"
-                        self._setSinglePathValues(eventField, contrastsdLoc[0])
-                        self._setCommon(intersectionLyrDLoc)
-                        self._setMutuallyExclusive(self.contrastsDs, eventField)
-                        
-                     else:
-                        raise ValueError('shapefile missing')
-                  else:
-                     raise Exception, str(e)  # was ValueError('unable to build collection')
-               except Exception, e:
-                  print str(e)
-         else:
-            print str(e)
-
-   # ..............................   
-   def buildContrasts(self):
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      if not self.contrastColl:
-         if self._mutuallyEx:
-            encMtx = self._buildFromExclusive()
-         else:
-            encMtx = self._buildFromTwoFeatureSetOrSingleMerged(False)
-      else:
-         encMtx = self._buildFromTwoFeatureSetOrSingleMerged(True)
-      return encMtx
-
-   # ..............................   
-   def _setMutuallyExclusive(self, ds, eventFieldName):
+   # ..............................
+   def addLayers(self, layers, eventField=None):
       """
-      @summary: determine if mutually exclusive
-      @note: this might not work under certain circumstances
-      @todo: Function documentation
-      @todo: Explain why it might not work
+      @summary: Add a layer or list of layers for encoding
+      @param layer: The file location of the layer to add or list of locations
+      @param eventField: (optional) If provided, use this field to split a 
+                            merged hypothesis shapefile into multiple 
+                            hypotheses.  If omitted, assume that the 
+                            shapefile(s) only have two features to be used for 
+                            the hypothesis.
+      @note: The eventField will be used for every layer in the list.  Call this
+                method multiple times with different lists if this should not
+                be the case.
       """
-      lyr = ds.GetLayer(0)
-      fc = lyr.GetFeatureCount()
-      # now call get distinct
-      fn = ds.name
-      name = ntpath.basename(fn).replace(".shp","")
-      dE = self.getDistinctEvents(ds, eventFieldName, name)
-      if fc == len(dE):
-         self._mutuallyEx = True
-      else:
-         self._mutuallyEx = False
+      if isinstance(layers, basestring): # Just a single value
+         layers = [layers] # Make it a list of one item
       
-   # ..............................   
-   def _setCommon(self, intersectionLyrDLoc):
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      set = True
-      try:
-         self.intersectionDs = self.openShapefile(intersectionLyrDLoc)
-         self.sortedSites = self.sortShpGridFeaturesBySiteID(self.intersectionDs.GetLayer(0))
-      except:
-         set = False
-      return set      
+      for lyr in layers:
+         self.layers.append((lyr, eventField))
 
-   # ..............................   
-   def _setSinglePathValues(self, eventField, contrastsdLoc):
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      set = True
-      try:
-         self.contrastShpName = ntpath.basename(contrastsdLoc)
-         #TODO: Constant
-         if '.shp' in self.contrastShpName:
-            self.contrastShpName = self.contrastShpName.replace('.shp','')
+   # ..............................
+   def encodeHypotheses(self):
+      """
+      @summary: Encodes the provided layers into a matrix (B in the literature)
+      """
+      encodedLayers = []
+      for dloc, eventField in self.layers:
+         if eventField is None:
+            features = self._getFeaturesNoEvent(dloc)
+         else:
+            features = self._getFeaturesWithEvent(dloc, eventField)
+         for featureTuple in features:
+            encodedLayers.append(self._encodeFeatures(featureTuple))
          
-         self.distinctEvents = self.getDistinctEvents(self.contrastsDs, eventField, self.contrastShpName) 
-         self._positions = self.buildContrastPostions(self.distinctEvents)
-      except Exception, e:
-         print "error in setSinglePath ",str(e)
-         set = False
-      return set
+      matrix = np.concatenate(encodedLayers, axis=1)
+      return matrix
 
-   # ..............................   
-   def _checkEventFieldName(self):
+   # ..............................
+   def _encodeFeatures(self, featureTuple):
       """
-      @summary: check that in self.eventField exists in contrast shapes
+      @summary: Encode the feature tuple by intersecting the features within
+                   with the shapegrid sites.  If there is only one features, 
+                   intersecting values will be coded as 1 and non-intersecting 
+                   will be coded as -1.  If there are two features, intersecting
+                   with one will be coded as 1, the other -1, and 
+                   non-intersecting sites will be coded as 0.
       """
-      if not self.contrastColl:
-         dataSrcs = [self.contrastsDs]
-      else:
-         dataSrcs = self.contrastColl
-      
-      fieldExists = True
-      
-      for cShpDs in dataSrcs:
-         lyr = cShpDs.GetLayer(0)
-         lyrDef = lyr.GetLayerDefn()
-         if lyrDef.GetFieldIndex(self.eventField) == -1:
-            fieldExists = False
-            break
+      feat1, feat2 = featureTuple
+      if feat2 is None: # Only one feature
+         defaultValue = -1
+      else: # Two values
+         defaultValue = 0
+      contrast = []
+      for siteId, site in self.sortedSites:
+         val = defaultValue
+         intersectedArea = 0.0
+         siteGeom = site.GetGeometryRef()
+         if siteGeom.Intersect(feat1.GetGeometryRef()):
+            intersectedArea = siteGeom.Intersection(feat1.GetGeometryRef()).GetArea()
+            val = 1
+         if feat2 is not None and siteGeom.Intersect(feat2.GetGeometryRef()):
+            area2 = siteGeom.Intersection(feat2.GetGeometryRef()).GetArea()
+            if area2 > intersectedArea:
+               val = -1
+         contrast.append(val)
+      # Make a list of this list and transpose the resulting numpy array so it
+      #    is one column wide and number of site rows
+      return np.array([contrast]).T
          
-      return fieldExists   
-   
-   # ..............................   
-   def _eachTwo(self):
+   # ..............................
+   def _getFeaturesNoEvent(self, layerDL):
       """
-      @summary: check to see if each shp file in contrast collection only has two features
+      @summary: Get features from a layer without an event field
+      @param layerDL: The file location of the layer
+      @note: Returns a list with one tuple with one or two features
+      @raise Exception: If there are zero or more than two features
+      @todo: Specific exception
       """
-      eachTwo = True
-      try:
-         for cShpDs in self.contrastColl:
-            lyr = cShpDs.GetLayer(0)
-            fc = lyr.GetFeatureCount()
-            if fc != 2:
-               fn = cShpDs.name
-               name = ntpath.basename(fn)
-               raise Exception, "More than 2 features in lyr %s" % (name)
-      except Exception,e:
-         eachTwo = False
-         print str(e)
-      return eachTwo
-
-   # ..............................   
-   @property
-   def positions(self):
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      return self._positions
+      lyrDS = self._openShapefile(layerDL)
+      lyr = lyrDS.GetLayer(0)
       
-   # ..............................   
-   def openShapefile(self,dlocation):
-      # TODO: Function documentation
-      # TODO: Inline documentation
-   
-      ogr.RegisterAll()
-      drv = ogr.GetDriverByName('ESRI Shapefile')
+      featCount = lyr.GetFeatureCount()
+      
+      # Make sure feature count is 1 or 2
+      if featCount < 1:
+         raise Exception, "Need at least one feature"
+      if featCount > 2:
+         raise Exception, "Too many features in layer"
+      
+      feat1 = None
+      feat2 = None
+      
+      feat1 = lyr.GetNextFeature()#.GetGeometryRef()
       try:
-         ds = drv.Open(dlocation)
-      except Exception, e:
-         raise Exception, 'Invalid datasource, %s: %s' % (dlocation, str(e))
-      return ds
+         feat2 = lyr.GetNextFeature()#.GetGeometryRef()
+      except: # Second feature is optional
+         pass
+      
+      return [(feat1, feat2)]
+   
+   # ..............................
+   def _getFeaturesWithEvent(self, layerDL, eventField):
+      """
+      @summary: Get features from a layer using an event field
+      @param layerDL: The file location of the layer
+      @param eventField: The field in the layer to use to separate hypotheses
+      @note: For each distinct event value in the event field, return a tuple
+                of one or two features
+      @raise Exception: If there are zero or more than two features for any 
+                           specific event
+      @todo: Specific exception
+      """
+      featuresList = []
+      # Find distinct events
+      distinctEvents = []
+      # Get the data set name (file base name without extension)
+      dsName = os.path.basename(layerDL).replace(FileFormats.SHAPE.ext, '')
+      lyrDS = self._openShapefile(layerDL)
+      deSQL = "SELECT DISTINCT {field} FROM {dsName}".format(field=eventField,
+                                                             dsName=dsName)
+      deLyr = lyrDS.ExecuteSQL(deSQL)
+      for feat in deLyr:
+         distinctEvents.append(feat.GetField(0))
+      
+      lyr = lyrDS.GetLayer(0) # Get the full layer
+      # For each distinct event
+      for de in distinctEvents:
+      #   Filter for each distinct event
+         filter = "{eventField} = '{value}'".format(eventField=eventField,
+                                                    value=de)
+         lyr.SetAttributeFilter(filter)
+         featCount = lyr.GetFeatureCount()
+         # Make sure feature count is 1 or 2
+         # Don't need to check for at least 1 since we check for distinct events
+         if featCount > 2:
+            raise Exception, "Too many features for event: %s" % de
 
-   # ..............................   
-   def sortShpGridFeaturesBySiteID(self, lyr):
+         feat1 = None
+         feat2 = None
+         
+         feat1 = lyr.GetNextFeature()#.GetGeometryRef()
+         try:
+            feat2 = lyr.GetNextFeature()#.GetGeometryRef()
+         except: # Second feature is optional
+            pass
+         
+         featuresList.append((feat1, feat2))
+
+      return featuresList
+      
+   # ..............................
+   def _getSortedSitesForIntersection(self, sgDLoc):
       """
-      @param lyr: osgeo lyr object
-      @return: 2-D list of site features sorted by siteids [siteid,feature],[..]..
+      @summary: Initializes the sorted sites list from the shapegrid
+      @param sgDloc: The file location of the shapegrid shapefile
+      @note: self.sortedSites is a list of (site id, feature) tuples that is 
+                sorted by site id
       """
-      # TODO: Function documentation
-      # TODO: Inline documentation
+      sgDs = self._openShapefile(sgDLoc)
+      lyr = sgDs.GetLayer(0)
       sites = []
       for feature in lyr:
-         idIdx = feature.GetFieldIndex('siteid')
+         idIdx = feature.GetFieldIndex(SITE_FIELD)
          siteId = feature.GetFieldAsInteger(idIdx)
          sites.append([siteId, feature])
-      sortedSites = sorted(sites, key=itemgetter(0))
-      return sortedSites
+      self.sortedSites = sorted(sites)
 
-   # ..............................   
-   def getDistinctEvents(self, contrastLyrDS, eventFieldName, constrastShpName):
+   # ..............................
+   def _openShapefile(self, fn):
       """
-      @summary: returns list of distinct event string values
+      @summary: Opens a shapefile and returns the OGR dataset object
       """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      distinctEvents = []
-      sql = 'SELECT DISTINCT %s FROM %s' % (eventFieldName, constrastShpName)
-      layer = contrastLyrDS.ExecuteSQL(sql)
-      for feature in layer:
-         distinctEvents.append(feature.GetField(0))
-      
-      return distinctEvents
-
-   # ..............................   
-   def getContrastsData(self):
-      """
-      @summary: collects the (two) features for each distinct event in a merged shp 
-      """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      
-      distinctEvents = self.distinctEvents   
-      contrastLyr = self.contrastsDs.GetLayer(0)
-      contrasts = []
-      for event in distinctEvents:
-         filter = "%s = '%s'" % (self.eventField, event)
-         contrastLyr.SetAttributeFilter(filter)
-         innerList = [event]
-         fc = contrastLyr.GetFeatureCount()  # if this is more than 2 throw exception and bail
-         if fc != 2:
-            contrasts = False
-            break
-         for feature in contrastLyr:
-            innerList.append(feature) #.GetGeometryRef())   
-         contrasts.append(innerList)
-      
-      return contrasts
-
-   # ..............................   
-   def buildContrastPostions(self, distinctEvents, fromCollection=False):
-      """
-      @summary: build look up for contrast methods and visualization of outputs
-      @todo: needs to get build for contrast collection too, which means not using distinct
-      events, which makes sense since shouldn't need eventField in collection.
-      """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      if not fromCollection:
-         refD = {k:v for v,k in enumerate(distinctEvents)}
-      else:
-         collectionsDs = distinctEvents
-         refD = {}
-         for v,shp in enumerate(collectionsDs):
-            fn = shp.name
-            name = ntpath.basename(fn).replace(".shp","")
-            refD[name] = v
-            
-      return refD
-
-   # ..............................   
-   def _buildFromExclusive(self):
-      """
-      @summary: builds from one shapefile where feature is exclusive (no overlap)
-      this doesn't use area, could be a problem if site intersects more then one event
-      @note: TEST THIS WITH /home/jcavner/TASHI_PAM/Test!!
-      @note: have to disallow this method for merged data. # TEST THIS WITH /home/jcavner/TASHI_PAM/Test!!
-      """
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      try:
-         mds = self.contrastsDs
-         meConstrastLyr = mds.GetLayer(0) 
-         
-         gds = self.intersectionDs
-         gLyr = gds.GetLayer(0)
-         siteCount = gLyr.GetFeatureCount()
-         sortedSites = self.sortedSites
-         
-         positions = self.positions
-         contrastMtx = np.zeros((siteCount,len(positions)), dtype=np.int)
-         
-         
-         for i,site in enumerate(sortedSites):
-         #while siteFeature is not None:   
-            siteGeom = site[1].GetGeometryRef()
-            #siteGeom = siteFeature.GetGeometryRef()
-            
-            meConstrastLyr.ResetReading()
-            contrastFeature = meConstrastLyr.GetNextFeature()
-            while contrastFeature is not None:        
-               eventGeom = contrastFeature.GetGeometryRef()
-               
-               eventNameIdx = contrastFeature.GetFieldIndex(self.eventField)
-               eventName = contrastFeature.GetFieldAsString(eventNameIdx)
-               
-               if eventName in positions:
-                  colPos = positions[eventName] # columns are contrasts
-                  if siteGeom.Intersect(eventGeom):
-                     contrastMtx[i][colPos] = 1  
-                  else:
-                     contrastMtx[i][colPos] = -1      
-               contrastFeature = meConstrastLyr.GetNextFeature()
-               
-            negOnes = np.where(contrastMtx[i] == -1)[0]  #site not in any event
-            if len(negOnes) == len(positions):
-               contrastMtx[i] = np.zeros(len(positions), dtype=np.int)
-            # What if site intersects all events!! might neeed area
-            # but then wouldn't work with centroids
-      except Exception, e:
-         contrastMtx = False
-         
-      self.encMtx = contrastMtx
-     
-   # ..............................   
-   def _buildFromTwoFeatureSetOrSingleMerged(self, fromCollection):
-      """
-      @summary: builds from shapefile that inclues all the contrasts.
-      This uses area so will only work with a shapegrid (cells)
-      @param fromCollection: bool
-      @todo: make so it can also centroid (X,Y)
-      """
-      if not fromCollection:
-         contrastData = self.getContrastsData()
-      else:
-         # build contrastData from collection
-         try:
-            contrastData = []
-            for shpDs in self.contrastColl:
-               # coordinate with positions?
-               fn = shpDs.name
-               name = ntpath.basename(fn).replace(".shp","")
-               inner = [name]
-               lyr = shpDs.GetLayer(0)
-               for feature in lyr:
-                  inner.append(feature)
-               contrastData.append(inner)   
-         except:
-            False
-      if contrastData:
-         try:
-            eventPos =  self.positions
-            
-            gds = self.intersectionDs
-            gLyr = gds.GetLayer(0)
-            #
-            numRow = gLyr.GetFeatureCount()
-            numCol = len(contrastData)
-            # init Contrasts mtx
-            contrastsMtx = np.zeros((numRow, numCol), dtype=np.int)
-            sortedSites = self.sortedSites
-            #
-            for contrast in contrastData:  
-               event = contrast[0]
-               if event in eventPos:
-                  colPos = eventPos[event]
-                  for i, site in enumerate(sortedSites):   
-                     siteGeom = site[1].GetGeometryRef()
-                     A1 = 0.0
-                     A2 = 0.0
-                     if siteGeom.Intersect(contrast[1].GetGeometryRef()):
-                        intersection = siteGeom.Intersection(contrast[1].GetGeometryRef())
-                        A1 = intersection.GetArea()
-                        contrastsMtx[i][colPos] = -1
-                     if siteGeom.Intersect(contrast[2].GetGeometryRef()):
-                        if A1 > 0.0:
-                           intersection = siteGeom.Intersection(contrast[2].GetGeometryRef())
-                           A2 = intersection.GetArea()
-                           if A2 > A1:
-                              contrastsMtx[i][colPos] = 1     
-                        else:
-                           contrastsMtx[i][colPos] = 1
-               else:
-                  break
-         except Exception, e:
-            contrastsMtx = False
-            print str(e)
-         
-      else:
-         contrastsMtx = False
-      self.encMtx = contrastsMtx
-
-   # ..............................   
-   def writeBioGeoMtx(self,dLoc):
-      # TODO: Function documentation
-      # TODO: Inline documentation
-      
-      wrote = False
-      if not isinstance(self.encMtx, bool):
-         try:
-            np.save(dLoc, self.encMtx)
-         except Exception,e:
-            print str(e)
-         else:
-            wrote = True
-      return wrote
+      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+      ds = drv.Open(fn)
+      return ds
 
 # .............................................................................
 class PhyloEncoding(object):
@@ -607,10 +365,10 @@ class PhyloEncoding(object):
       if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
          
          cladePvals = {} # Initialize P-values for the clade dictionary
-         multipliers = [-1.0, 1.0] # One branch should be positive, the other 
+         multipliers = [-1.0, 1.0] # One branch should be positive, the other  
          #                              negative
-
-         # TODO: Consider shuffling the multipliers as it should be arbitrary
+         shuffle(multipliers)
+         
          for child in clade[PhyloTreeKeys.CHILDREN]:
             
             childBlDict, childBlSum, childPvalDict = \
@@ -736,10 +494,10 @@ class PhyloEncoding(object):
       #    order matters
       nodeColumnIndex = dict(zip(internalPathIds, range(len(internalPathIds))))
       
-      # "i" will be used as the row index in the matrix for the tip
-      for i in range(len(tipProps)):
-         for nodePathId, val in tipProps[i]:
-            matrix[i][nodeColumnIndex[nodePathId]] = val
+      # The matrix index of the tip in the PAM maps to the row index of P
+      for rowIdx, tipProp in tipProps:
+         for nodePathId, val in tipProp:
+            matrix[rowIdx][nodeColumnIndex[nodePathId]] = val
             
       return matrix  
    
@@ -750,10 +508,9 @@ class PhyloEncoding(object):
                    be used to build a P-matrix when no branch lengths are 
                    present
       @param clade: The current clade
-      @param visited: A list of [(node matrix index, proportion)]
+      @param visited: A list of [(node path id, proportion)]
       @note: Proportion for each visited node is divided by two as we go 
                 towards the tips at each hop
-      @todo: Where is matrix index?
       """
       tipProps = []
       if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
@@ -767,7 +524,7 @@ class PhyloEncoding(object):
             self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][1], 
                              newVisited + [(clade[PhyloTreeKeys.PATH_ID], 1.0)]))
       else: # We are at a tip
-         tipProps.append(visited) # Just return a list with one list
+         tipProps.append((clade[PhyloTreeKeys.MTX_IDX], visited)) # Just return a list with one list
       return tipProps
    
    # ..............................   

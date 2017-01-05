@@ -1,11 +1,38 @@
 """
 @summary: This module tests the LmCommon.encoding.contrasts module
+@author: CJ Grady
+@version: 1.0
+@status: alpha 2
+
+@license: gpl2
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
+
+          Lifemapper Project, lifemapper [at] ku [dot] edu, 
+          Biodiversity Institute,
+          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
+   
+          This program is free software; you can redistribute it and/or modify 
+          it under the terms of the GNU General Public License as published by 
+          the Free Software Foundation; either version 2 of the License, or (at 
+          your option) any later version.
+  
+          This program is distributed in the hope that it will be useful, but 
+          WITHOUT ANY WARRANTY; without even the implied warranty of 
+          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+          General Public License for more details.
+  
+          You should have received a copy of the GNU General Public License 
+          along with this program; if not, write to the Free Software 
+          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
+          02110-1301, USA.
 """
 import numpy as np
 import os
 
 from LmCommon.encoding.contrasts import BioGeoEncoding, PhyloEncoding
 
+#TODO: This should not reference my local machine.  Integrate this into testing
+#         framework
 BASE_DATA_DIR = "/home/cjgrady/jeff/"
 OUT_DIR = os.path.join(BASE_DATA_DIR, "output")
 
@@ -16,7 +43,9 @@ if __name__ == "__main__":
    
    contrastsDloc = os.path.join(BASE_DATA_DIR, "goodContrasts/MergedContrasts_Florida.shp")
 
-   merged = BioGeoEncoding(contrastsDloc, gridDloc, eventField="event")
+   #merged = BioGeoEncoding(contrastsDloc, gridDloc, eventField="event")
+   merged = BioGeoEncoding(gridDloc)
+   merged.addLayers(contrastsDloc, eventField="event")
    
    shpDir = os.path.join(BASE_DATA_DIR, "goodContrasts")
    shpList = ["ApalachicolaRiver.shp","GulfAtlantic.shp","Pliocene.shp"]
@@ -25,22 +54,27 @@ if __name__ == "__main__":
       fn = os.path.join(shpDir, shp)
       pathList.append(fn)
    
-   collection = BioGeoEncoding(pathList, gridDloc)
+   collection = BioGeoEncoding(gridDloc)
+   collection.addLayers(pathList)
    
-   merged.buildContrasts()
+   #merged.buildContrasts()
+   bg1 = merged.encodeHypotheses()
    
    testMerged = np.load(os.path.join(OUT_DIR, "test_mergedFA.npy"))
    
    #merged.writeBioGeoMtx(os.path.join(OUT_DIR, "mergedFA.npy"))
    
-   assert np.all(testMerged == merged.encMtx)
+   
+   #assert np.all(testMerged == merged.encMtx)
+   assert np.all(abs(np.sum(testMerged, axis=0)) == abs(np.sum(bg1, axis=0)))
    
    
-   collection.buildContrasts()
+   #collection.buildContrasts()
+   bg2 = collection.encodeHypotheses()
    #collection.writeBioGeoMtx(os.path.join(OUT_DIR, "collectionFA.npy"))
    testCollection = np.load(os.path.join(OUT_DIR, "test_collectionFA.npy"))
 
-   assert np.all(testCollection == collection.encMtx)
+   assert np.all(abs(np.sum(testCollection, axis=0)) == abs(np.sum(bg2, axis=0)))
    
    #################  end BioGeo  ######################## 
    #

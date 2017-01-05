@@ -28,55 +28,81 @@ import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import BISON_MIN_POINT_COUNT, OutputFormat
-from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
-         GBIF_DUMP_FILE, PROVIDER_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE)
-# from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-#            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
-#            DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, USER_OCCURRENCE_DATA,
-#            SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
+from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE)
 from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import ENV_DATA_PATH, SPECIES_DATA_PATH
-# from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN, 
-#                                             DATASOURCE, POINT_COUNT_MAX)
+from LmServer.common.lmconstants import (ENV_DATA_PATH, SPECIES_DATA_PATH, 
+                                         DEFAULT_CONFIG)
 from LmServer.common.log import ScriptLogger
-# from LmDbServer.tools.10min-past-present-future.v2 import DATASOURCE
-
-
-# .............................................................................
-def getArchiveParameters(envPackageName):
-   _ENV_HEADING = "LmServer - environment"
-   _PIPELINE_HEADING = "LmServer - pipeline"
-   # If there was a Override 
-   SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
-   configPath = os.path.split(SERVER_CONFIG_FILENAME)[0]
-   boomFname = os.path.join(configPath, envPackageName+OutputFormat.CONFIG)
-   cfg = Config(fns=[boomFname])
-   
-   ARCHIVE_USER = cfg.get(_ENV_HEADING, 'ARCHIVE_USER')
-   DATASOURCE = cfg.get(_ENV_HEADING, 'DATASOURCE')
-   POINT_COUNT_MIN = cfg.getint(_PIPELINE_HEADING, 'POINT_COUNT_MIN')
-   POINT_COUNT_MAX = cfg.getint(_PIPELINE_HEADING, 'POINT_COUNT_MAX')
-   DEFAULT_ALGORITHMS = cfg.getlist(_PIPELINE_HEADING, 'DEFAULT_ALGORITHMS')
-   DEFAULT_MODEL_SCENARIO = cfg.get(_PIPELINE_HEADING, 'DEFAULT_MODEL_SCENARIO')
-   DEFAULT_PROJECTION_SCENARIOS = cfg.getlist(_PIPELINE_HEADING, 
-                                                   'DEFAULT_PROJECTION_SCENARIOS')
-   DEFAULT_EPSG = cfg.getint(_PIPELINE_HEADING, 'DEFAULT_EPSG')
-   SCENARIO_PACKAGE = cfg.get(_PIPELINE_HEADING, 'SCENARIO_PACKAGE')
-   DEFAULT_GRID_NAME = cfg.get(_PIPELINE_HEADING, 'DEFAULT_GRID_NAME')
-   DEFAULT_GRID_CELLSIZE = cfg.get(_PIPELINE_HEADING, 'DEFAULT_GRID_CELLSIZE')
-   USER_OCCURRENCE_DATA = cfg.get(_PIPELINE_HEADING, 'USER_OCCURRENCE_DATA')
-   SPECIES_EXP_YEAR = cfg.getint(_PIPELINE_HEADING, 'SPECIES_EXP_YEAR')
-   SPECIES_EXP_MONTH = cfg.getint(_PIPELINE_HEADING, 'SPECIES_EXP_MONTH')
-   SPECIES_EXP_DAY = cfg.getint(_PIPELINE_HEADING, 'SPECIES_EXP_DAY')
-    
-   return (ARCHIVE_USER, DEFAULT_EPSG, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
-           DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
-           DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, USER_OCCURRENCE_DATA, 
-           SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY,DATASOURCE)
 
 # .............................................................................
 class Archivist(Daemon):
+   # .............................
+   def __init__(self, pidfile, log=None, envSource=None, speciesSource=None):      
+      Daemon.__init__(self, pidfile, log=log)
+      self.name = self.__class__.__name__.lower()
+      if envSource == DEFAULT_CONFIG:
+         from LmDbServer.common.localconstants import SCENARIO_PACKAGE
+         envSource = SCENARIO_PACKAGE
+      self.envSource = envSource
+      self.speciesSource = speciesSource
+                        
+   # .............................
+   def _getArchiveSpecificConfig(self):
+      fileList = []
+      if self.envSource is not None:
+         cfgfile = os.path.join(ENV_DATA_PATH, '{}.ini'.format(self.envSource))
+         if os.path.exists(cfgfile):
+            fileList.append(self.cfgfile)
+      cfg = Config(fns=fileList)
+      
+      _CONFIG_HEADING = "LmServer - pipeline"
+      _ENV_CONFIG_HEADING = "LmServer - environment"
+
+      user = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
+      datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
+      # Data Archive Pipeline
+      algorithms = cfg.getlist(_CONFIG_HEADING, 'DEFAULT_ALGORITHMS')
+      mdlScen = cfg.get(_CONFIG_HEADING, 'DEFAULT_MODEL_SCENARIO')
+      prjScens = cfg.getlist(_CONFIG_HEADING, 'DEFAULT_PROJECTION_SCENARIOS')
+      epsg = cfg.getint(_CONFIG_HEADING, 'DEFAULT_EPSG')
+      gridname = cfg.get(_CONFIG_HEADING, 'DEFAULT_GRID_NAME')
+      
+      userOccData = cfg.get(_CONFIG_HEADING, 'USER_OCCURRENCE_DATA')
+      userOccCSV = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.CSV)
+      userOccMeta = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.METADATA)
+      
+      minPoints = cfg.getint(_CONFIG_HEADING, 'POINT_COUNT_MIN')
+      
+      # Bison data
+      bisonTsn = Config().get(_CONFIG_HEADING, 'TSN_FILENAME')
+      bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
+      if datasource == 'BISON':
+         minPoints = BISON_MIN_POINT_COUNT
+         
+      # iDigBio data
+      idigTaxonids = Config().get(_CONFIG_HEADING, 'IDIG_FILENAME')
+      idigTaxonidsFile = os.path.join(SPECIES_DATA_PATH, idigTaxonids)
+
+      
+      # GBIF data
+      gbifTax = cfg.get(_CONFIG_HEADING, 'TAXONOMY_FILENAME')
+      gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
+      gbifOcc = cfg.get(_CONFIG_HEADING, 'OCCURRENCE_FILENAME')
+      gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
+      gbifProv = cfg.get(_CONFIG_HEADING, 'PROVIDER_FILENAME')
+      gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
+      
+      # Expiration date for retrieved species data 
+      speciesExpYear = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_YEAR')
+      speciesExpMonth = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_MONTH')
+      speciesExpDay = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_DAY')
+
+      return (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
+              gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+              gbifTaxFile, gbifOccFile, gbifProvFile, 
+              speciesExpYear, speciesExpMonth, speciesExpDay)  
+
    # .............................
    def initialize(self):
       """
@@ -86,46 +112,45 @@ class Archivist(Daemon):
       @note: The argument to this script/daemon contains variables to override 
              installed defaults
       """
-      self.name = self.__class__.__name__.lower()
-      expdate = dt.DateTime(SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, 
-                                     SPECIES_EXP_DAY).mjd
+      (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
+       gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+       gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
+       speciesExpDay) = self._getArchiveSpecificConfig()
+
+      expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay).mjd 
       try:
-         taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
+         taxname = TAXONOMIC_SOURCE[datasource]['name']
       except:
          taxname = None
       try:
-         if DATASOURCE == 'BISON':
-            self.boomer = BisonBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            BISON_TSN_FILE, expdate, 
+         if datasource == 'BISON':
+            self.boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
+                            bisonTsnFile, expdate, 
                             taxonSourceName=taxname, mdlMask=None, prjMask=None, 
-                            minPointCount=BISON_MIN_POINT_COUNT, 
-                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
+                            minPointCount=minPoints, 
+                            intersectGrid=gridname, log=self.log)
             
-         elif DATASOURCE == 'GBIF':
-            self.boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            GBIF_DUMP_FILE, expdate, taxonSourceName=taxname,
-                            providerListFile=PROVIDER_DUMP_FILE,
+         elif datasource == 'GBIF':
+            self.boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+                            gbifOccFile, expdate, taxonSourceName=taxname,
+                            providerListFile=gbifProvFile,
                             mdlMask=None, prjMask=None, 
-                            minPointCount=POINT_COUNT_MIN,  
-                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
+                            minPointCount=minPoints,  
+                            intersectGrid=gridname, log=self.log)
             
-         elif DATASOURCE == 'IDIGBIO':
-            self.boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            IDIGBIO_FILE, expdate, taxonSourceName=taxname,
+         elif datasource == 'IDIGBIO':
+            self.boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
+                            idigTaxonidsFile, expdate, taxonSourceName=taxname,
                             mdlMask=None, prjMask=None, 
-                            minPointCount=POINT_COUNT_MIN, 
-                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
+                            minPointCount=minPoints, 
+                            intersectGrid=gridname, log=self.log)
    
          else:
-            self.boomer = UserBoom(ARCHIVE_USER, DEFAULT_EPSG, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            USER_OCCURRENCE_DATA, expdate, 
+            self.boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
+                            userOccCSV, userOccMeta, expdate, 
                             mdlMask=None, prjMask=None, 
-                            minPointCount=POINT_COUNT_MIN, 
-                            intersectGrid=DEFAULT_GRID_NAME, log=self.log)
+                            minPointCount=minPoints, 
+                            intersectGrid=gridname, log=self.log)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Archivist ({})'.format(e))
       
@@ -176,27 +201,24 @@ def isCorrectUser():
 
 # .............................................................................
 if __name__ == "__main__":
-   defaultConfiguration = 'config'
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
-            description=('Populate a Lifemapper boom archive ' +
-                         'with the configured input data package named.'))
-   parser.add_argument('-m', '--metadata', default=defaultConfiguration,
-            help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
-                  'directory and be named with the arg value and .py extension'))
+            description=('Populate a Lifemapper archive with metadata ' +
+                         'for single- or multi-species computations ' + 
+                         'specific to the configured input data or the ' +
+                         'data package named.'))
+   parser.add_argument('-e', '--env_source', default=DEFAULT_CONFIG,
+            help=('Input config file should exist in the {} '.format(ENV_DATA_PATH) +
+                  'directory and be named with the arg value and .ini extension'))
+   parser.add_argument('-s', '--species_source', default='User',
+            help=('Species source will be \'User\' for user-supplied CSV data, ' +
+                  '\'GBIF\' for GBIF-provided CSV data sorted by taxon id, ' +
+                  '\'IDIGBIO\' for a list of GBIF accepted taxon ids suitable ' +
+                  'for querying the iDigBio API'))
 
    args = parser.parse_args()
-   envPackageName = args.metadata
-   if envPackageName == defaultConfiguration:
-      from LmDbServer.common.localconstants import SCENARIO_PACKAGE
-      envPackageName = SCENARIO_PACKAGE
-   
-   (ARCHIVE_USER, DEFAULT_EPSG, POINT_COUNT_MIN, POINT_COUNT_MAX, DEFAULT_ALGORITHMS, 
-    DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, SCENARIO_PACKAGE, 
-    DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, USER_OCCURRENCE_DATA, 
-    SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY,
-    DATASOURCE) = getArchiveParameters(envPackageName=envPackageName)
-       
+   envSource = args.env_source
+   speciesSource = args.species_source
    if os.path.exists(BOOM_PID_FILE):
       pid = open(BOOM_PID_FILE).read().strip()
    else:
@@ -210,7 +232,8 @@ if __name__ == "__main__":
    tuple = time.localtime(secs)
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
    logger = ScriptLogger('archivist.{}'.format(timestamp))
-   boomer = Archivist(BOOM_PID_FILE, log=logger)
+   boomer = Archivist(BOOM_PID_FILE, log=logger, envSource=envSource, 
+                      speciesSource=speciesSource)
      
    if len(sys.argv) == 2:
       if sys.argv[1].lower() == 'start':
