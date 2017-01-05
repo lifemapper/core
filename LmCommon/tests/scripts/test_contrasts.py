@@ -2,7 +2,7 @@
 @summary: This module tests the LmCommon.encoding.contrasts module
 @author: CJ Grady
 @version: 1.0
-@status: alpha
+@status: alpha 2
 
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
@@ -31,6 +31,8 @@ import os
 
 from LmCommon.encoding.contrasts import BioGeoEncoding, PhyloEncoding
 
+#TODO: This should not reference my local machine.  Integrate this into testing
+#         framework
 BASE_DATA_DIR = "/home/cjgrady/jeff/"
 OUT_DIR = os.path.join(BASE_DATA_DIR, "output")
 
