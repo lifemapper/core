@@ -16,7 +16,9 @@ if __name__ == "__main__":
    
    contrastsDloc = os.path.join(BASE_DATA_DIR, "goodContrasts/MergedContrasts_Florida.shp")
 
-   merged = BioGeoEncoding(contrastsDloc, gridDloc, eventField="event")
+   #merged = BioGeoEncoding(contrastsDloc, gridDloc, eventField="event")
+   merged = BioGeoEncoding(gridDloc)
+   merged.addLayers(contrastsDloc, eventField="event")
    
    shpDir = os.path.join(BASE_DATA_DIR, "goodContrasts")
    shpList = ["ApalachicolaRiver.shp","GulfAtlantic.shp","Pliocene.shp"]
@@ -25,22 +27,27 @@ if __name__ == "__main__":
       fn = os.path.join(shpDir, shp)
       pathList.append(fn)
    
-   collection = BioGeoEncoding(pathList, gridDloc)
+   collection = BioGeoEncoding(gridDloc)
+   collection.addLayers(pathList)
    
-   merged.buildContrasts()
+   #merged.buildContrasts()
+   bg1 = merged.encodeHypotheses()
    
    testMerged = np.load(os.path.join(OUT_DIR, "test_mergedFA.npy"))
    
    #merged.writeBioGeoMtx(os.path.join(OUT_DIR, "mergedFA.npy"))
    
-   assert np.all(testMerged == merged.encMtx)
+   
+   #assert np.all(testMerged == merged.encMtx)
+   assert np.all(abs(np.sum(testMerged, axis=0)) == abs(np.sum(bg1, axis=0)))
    
    
-   collection.buildContrasts()
+   #collection.buildContrasts()
+   bg2 = collection.encodeHypotheses()
    #collection.writeBioGeoMtx(os.path.join(OUT_DIR, "collectionFA.npy"))
    testCollection = np.load(os.path.join(OUT_DIR, "test_collectionFA.npy"))
 
-   assert np.all(testCollection == collection.encMtx)
+   assert np.all(abs(np.sum(testCollection, axis=0)) == abs(np.sum(bg2, axis=0)))
    
    #################  end BioGeo  ######################## 
    #
