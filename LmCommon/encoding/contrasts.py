@@ -29,24 +29,15 @@
          phylogenetics: separating the roles of environmental filters and 
          historical biogeography. Ecology letters 13: 1290-1299.
 """
-
-
-# TODO: Check imports
-# TODO: ntpath is for windows.  os.path will work for any
-import numpy as np
-import csv
-import os, sys
-import ntpath
 import json
-from osgeo import ogr,gdal
+import numpy as np
+import os
+from osgeo import ogr
 
-from LmCommon.common.lmconstants import FileFormats, PhyloTreeKeys
+from LmCommon.common.lmconstants import (DEFAULT_OGR_FORMAT, FileFormats, 
+                                         PhyloTreeKeys)
 from LmCommon.encoding.lmTree import LmTree
 
-
-ogr.UseExceptions()
-
-SHAPEFILE_DRIVER_NAME = 'ESRI Shapefile'
 SITE_FIELD = 'siteid'
 
 # .............................................................................
@@ -240,7 +231,7 @@ class BioGeoEncoding(object):
       """
       @summary: Opens a shapefile and returns the OGR dataset object
       """
-      drv = ogr.GetDriverByName(SHAPEFILE_DRIVER_NAME)
+      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
       ds = drv.Open(fn)
       return ds
 
