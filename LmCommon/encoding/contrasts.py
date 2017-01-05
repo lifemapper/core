@@ -33,6 +33,7 @@ import json
 import numpy as np
 import os
 from osgeo import ogr
+from random import shuffle
 
 from LmCommon.common.lmconstants import (DEFAULT_OGR_FORMAT, FileFormats, 
                                          PhyloTreeKeys)
@@ -364,10 +365,10 @@ class PhyloEncoding(object):
       if len(clade[PhyloTreeKeys.CHILDREN]) > 0: # Assume this is two
          
          cladePvals = {} # Initialize P-values for the clade dictionary
-         multipliers = [-1.0, 1.0] # One branch should be positive, the other 
+         multipliers = [-1.0, 1.0] # One branch should be positive, the other  
          #                              negative
-
-         # TODO: Consider shuffling the multipliers as it should be arbitrary
+         shuffle(multipliers)
+         
          for child in clade[PhyloTreeKeys.CHILDREN]:
             
             childBlDict, childBlSum, childPvalDict = \
