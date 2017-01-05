@@ -1,6 +1,6 @@
 """
 @summary: This module tests the LmCommon.encoding.contrasts module
-@author: CJ Grady (originally by Jeff Cavner)
+@author: CJ Grady
 @version: 1.0
 @status: alpha
 
