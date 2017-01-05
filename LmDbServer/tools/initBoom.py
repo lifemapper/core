@@ -35,7 +35,7 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat,
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
-from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
+from LmServer.common.localconstants import (ARCHIVE_USER, 
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
@@ -420,7 +420,7 @@ def _importClimatePackageMetadata(envPackageName):
    return META
 
 # ...............................................
-def _writeConfigFile(envPackageName, userid, configMeta, mdlScen=None, prjScens=None):
+def _writeConfigFile(envPackageName, userid, datasource, configMeta, mdlScen=None, prjScens=None):
    SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
    pth, temp = os.path.split(SERVER_CONFIG_FILENAME)
    newConfigFilename = os.path.join(pth, '{}{}'.format(envPackageName, 
@@ -428,7 +428,7 @@ def _writeConfigFile(envPackageName, userid, configMeta, mdlScen=None, prjScens=
    f = open(newConfigFilename, 'w')
    f.write('[LmServer - environment]\n')
    f.write('ARCHIVE_USER: {}\n'.format(userid))
-   f.write('DATASOURCE: User\n\n')
+   f.write('DATASOURCE: {}\n\n'.format(datasource))
 
    f.write('[LmServer - pipeline]\n')
    if configMeta['email'] is not None:
@@ -471,9 +471,15 @@ if __name__ == '__main__':
    parser.add_argument('-m', '--metadata', default='config',
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
+   parser.add_argument('-d', '--datasource', default='User',
+            help=('Datasource will be \'User\' for user-supplied CSV data, ' +
+                  '\'GBIF\' for GBIF-provided CSV data sorted by taxon id, ' +
+                  '\'IDIGBIO\' for a list of GBIF accepted taxon ids suitable ' +
+                  'for querying the iDigBio API'))
 
    args = parser.parse_args()
    envPackageName = args.metadata
+   datasource = args.datasource.upper()
    if envPackageName.lower() == 'config':
       envPackageName = SCENARIO_PACKAGE
    # Imports META
@@ -482,11 +488,11 @@ if __name__ == '__main__':
    configMeta = _getConfiguredMetadata(META, pkgMeta)
    usr = configMeta['userid']
    
-# .............................
-   try:
-      taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
-   except:
-      taxSource = None
+# # .............................
+#    try:
+#       taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
+#    except:
+#       taxSource = None
       
 # .............................
    basefilename = os.path.basename(__file__)
@@ -539,7 +545,7 @@ if __name__ == '__main__':
       # Write config file for this archive
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
-      newConfigFilename = _writeConfigFile(envPackageName, usr, 
+      newConfigFilename = _writeConfigFile(envPackageName, usr, datasource,
                                            configMeta, mdlScen=mdlScencode, 
                                            prjScens=prjScencodes)
    except Exception, e:

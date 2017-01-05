@@ -35,6 +35,7 @@ _CMDS_SECTION = 'LmCompute - commands'
 _CONTACT_SECTION = 'LmCompute - contact'
 _OPTIONS_SECTION = 'LmCompute - options'
 _METRICS_SECTION = 'LmCompute - metrics'
+_ME_PLUGIN_SECTION = 'LmCompute - plugins - maxent'
    
 # Environment variables
 LM_PATH = _cfg.get(_ENV_SECTION, 'LM_PATH')

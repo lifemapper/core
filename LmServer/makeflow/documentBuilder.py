@@ -42,7 +42,7 @@ from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import JobFamily
 # TODO: Okay that this in server?
 from LmServer.common.localconstants import APP_PATH
-from LmServer.makefow.makeJobCommand import (makeBisonOccurrenceSetCommand,
+from LmServer.makeflow.makeJobCommand import (makeBisonOccurrenceSetCommand,
                                              makeGbifOccurrenceSetCommand,
                                              makeIdigbioOccurrenceSetCommand,
                                              makeMaxentSdmModelCommand,
