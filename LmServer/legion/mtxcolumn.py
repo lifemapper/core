@@ -23,7 +23,7 @@
 """
 import json
 
-from LmCommon.common.lmconstants import MATRIX_LAYERS_SERVICE
+from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.layer2 import Raster, Vector, _LayerParameters
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.serviceobject2 import ProcessObject
@@ -32,7 +32,7 @@ from LmServer.common.lmconstants import LMServiceType, LMServiceModule
 # .............................................................................
 # .............................................................................
 # .............................................................................
-class _MatrixColumnParameters(_LayerParameters):
+class MatrixColumn(_LayerParameters, ProcessObject):
    INTERSECT_PARAM_FILTER_STRING = 'filterString'
    INTERSECT_PARAM_VAL_NAME = 'valName'
    INTERSECT_PARAM_VAL_UNITS = 'valUnits'
@@ -44,9 +44,10 @@ class _MatrixColumnParameters(_LayerParameters):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, matrixIndex, 
+   def __init__(self, matrixIndex, matrixId, gridsetId, userId, 
+                processType=ProcessType.RAD_INTERSECT, 
                 metadata={}, intersectParams={}, squid=None, ident=None,
-                matrixColumnId=None, userId=None, matrixId=None):
+                matrixColumnId=None, status=None, statusModTime=None):
       """
       @note:  intersectParameters may include keywords:
          filterString: to filter layer for intersect
@@ -60,6 +61,12 @@ class _MatrixColumnParameters(_LayerParameters):
       """
       _LayerParameters.__init__(self, matrixIndex, None, userId, matrixColumnId,
                                 metadata=metadata)
+      ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
+                             parentId=matrixId, status=status, 
+                             statusModTime=statusModTime)
+      self.squid = squid
+      self.ident = ident
+      self.gridsetId = gridsetId
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
       self.loadParamMetadata(metadata)
@@ -80,63 +87,51 @@ class _MatrixColumnParameters(_LayerParameters):
 
 # .............................................................................
 # .............................................................................
-class MatrixColumn(_MatrixColumnParameters, ProcessObject):
-# .............................................................................
-# Constructor
-# .............................................................................   
-   def __init__(self, matrixIndex, 
-                mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
-                matrixLayerId=None, userId=None, matrixId=None,
-                status=None, statusModTime=None,
-                valUnits=None,
-                lyrId=None, lyrUserId=None, verify=None, squid=None, 
-                metadataUrl=None):
-      # ...................
-      _MatrixColumnParameters.__init__(self, matrixIndex, 
-                metadata=mtxcolMetadata, intersectParams=intersectParams, 
-                squid=squid, ident=ident,
-                matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId)
-      ProcessObject.__init__(self, objId=matrixLayerId, parentId=matrixId, 
-                status=status, statusModTime=statusModTime)
 
 # .............................................................................
 # .............................................................................
-class MatrixVector(_MatrixColumnParameters, Vector, ProcessObject):
+class MatrixVector(MatrixColumn, Vector):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, matrixIndex, 
-                mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
-                matrixLayerId=None, userId=None, matrixId=None,
-                status=None, statusModTime=None,
-                valUnits=None,
-                lyrId=None, lyrUserId=None, verify=None, squid=None, 
-                metadataUrl=None,
+   def __init__(self, matrixIndex, matrixId, gridsetId, userId, 
                 # Vector
-                name=None, lyrMetadata={}, bbox=None, dlocation=None, 
-                mapunits=None, resolution=None, epsgcode=None,
-                ogrType=None, dataFormat=None, 
-                featureCount=0, featureAttributes={}, features={}, fidAttribute=None):
+                name, epsgcode, lyrId=None, 
+                squid=None, verify=None, dlocation=None, 
+                lyrMetadata={}, dataFormat=None, ogrType=None,
+                valUnits=None, valAttribute=None, 
+                nodataVal=None, minVal=None, maxVal=None, 
+                mapunits=None, resolution=None, 
+                bbox=None,
+                svcObjId=None, serviceType=LMServiceType.LAYERS, 
+                moduleType=LMServiceModule.LM,
+                metadataUrl=None, parentMetadataUrl=None, modTime=None,
+                featureCount=0, featureAttributes={}, features={}, 
+                fidAttribute=None,
+                # MatrixColumn
+                processType=None, mtxcolMetadata={}, intersectParams={}, 
+                ident=None, matrixColumnId=None, status=None, statusModTime=None):
+                
       # ...................
-      MatrixColumn(matrixIndex, 
-                mtxcolMetadata=mtxcolMetadata, intersectParams=intersectParams, 
-                squid=squid, ident=ident,
-                matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
-                status=status, statusModTime=statusModTime,
-                valUnits=valUnits,
-                lyrId=lyrId, lyrUserId=lyrUserId, verify=verify, squid=squid, 
-                metadataUrl=metadataUrl)
-      Vector.__init__(self, metadata=lyrMetadata, name=name, bbox=bbox, 
-                      dlocation=dlocation,
-                      mapunits=mapunits, resolution=resolution, 
-                      epsgcode=epsgcode, ogrType=ogrType, ogrFormat=dataFormat,
-                      featureAttributes=featureAttributes, features=features,
-                      fidAttribute=fidAttribute, 
-                      valUnits=valUnits,
-                      svcObjId=matrixLayerId, lyrId=lyrId, lyrUserId=lyrUserId,
-                      metadataUrl=metadataUrl,
+      MatrixColumn(matrixIndex, matrixId, gridsetId, userId, 
+                   processType=processType, 
+                   metadata=mtxcolMetadata, intersectParams=intersectParams, 
+                   squid=squid, ident=ident, matrixColumnId=matrixColumnId, 
+                   status=status, statusModTime=statusModTime)
+      Vector.__init__(self, name, userId, epsgcode, lyrId=lyrId, squid=squid, 
+                      verify=verify, dlocation=dlocation, metadata=lyrMetadata, 
+                      dataFormat=dataFormat, ogrType=ogrType, valUnits=valUnits, 
+                      valAttribute=valAttribute, nodataVal=nodataVal, 
+                      minVal=minVal, maxVal=maxVal, mapunits=mapunits, 
+                      resolution=resolution, bbox=bbox, svcObjId=matrixColumnId, 
                       serviceType=LMServiceType.MATRIX_LAYERS, 
-                      moduleType=LMServiceModule.LM)
+                      moduleType=LMServiceModule.LM,
+                      metadataUrl=metadataUrl, 
+                      parentMetadataUrl=parentMetadataUrl, modTime=modTime,
+                      featureCount=featureCount, 
+                      featureAttributes=featureAttributes, features=features, 
+                      fidAttribute=fidAttribute)
+
       
    
 # .............................................................................
@@ -146,40 +141,39 @@ class MatrixVector(_MatrixColumnParameters, Vector, ProcessObject):
 # .............................................................................  
          
 # .............................................................................
-class MatrixRaster(_MatrixColumnParameters, Raster, ProcessObject):
+class MatrixRaster(MatrixColumn, Raster):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, matrixIndex,
-                mtxcolMetadata={}, intersectParams={}, squid=None, ident=None,
-                matrixLayerId=None, userId=None, matrixId=None,
-                status=None, statusModTime=None,
+   def __init__(self, matrixIndex, matrixId, gridsetId, userId, 
                 # Raster
-                lyrMetadata={}, name=None,  
-                minVal=None, maxVal=None, nodataVal=None, valUnits=None,
-                bbox=None, dlocation=None, 
-                gdalType=None, dataFormat=None, 
-                mapunits=None, resolution=None, epsgcode=None,
-                lyrId=None, lyrUserId=None, verify=None, squid=None,
-                metadataUrl=None):
-      # ...................
-      MatrixColumn(matrixIndex, 
-                mtxcolMetadata=mtxcolMetadata, intersectParams=intersectParams, 
-                squid=squid, ident=ident,
-                matrixLayerId=matrixLayerId, userId=userId, matrixId=matrixId,
-                status=status, statusModTime=statusModTime,
-                valUnits=valUnits,
-                lyrId=lyrId, lyrUserId=lyrUserId, verify=verify, squid=squid, 
-                metadataUrl=metadataUrl)
+                name, epsgcode, lyrId=None, 
+                squid=None, verify=None, dlocation=None, 
+                lyrMetadata={}, dataFormat=None, gdalType=None, 
+                valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
+                mapunits=None, resolution=None, 
+                bbox=None,
+                svcObjId=None, serviceType=LMServiceType.LAYERS, 
+                moduleType=LMServiceModule.LM,
+                metadataUrl=None, parentMetadataUrl=None, modTime=None,
+                # MatrixColumn
+                processType=None, mtxcolMetadata={}, intersectParams={}, 
+                ident=None, matrixColumnId=None, status=None, statusModTime=None):
 
-      Raster.__init__(self, metadata=lyrMetadata, name=name,
-                      minVal=minVal, maxVal=maxVal, nodataVal=nodataVal, 
-                      valUnits=valUnits, bbox=bbox, dlocation=dlocation, 
-                      gdalType=gdalType, gdalFormat=dataFormat,  
-                      mapunits=mapunits, resolution=resolution, epsgcode=epsgcode,
-                      svcObjId=matrixLayerId, lyrId=lyrId, lyrUserId=lyrUserId, 
-                      verify=verify, squid=squid, 
-                      metadataUrl=metadataUrl,
-                      serviceType=LMServiceType.MATRIX_LAYERS, 
-                      moduleType=LMServiceModule.RAD)
+      # ...................
+      MatrixColumn(matrixIndex, matrixId, gridsetId, userId, 
+                   processType=processType, 
+                   metadata=mtxcolMetadata, intersectParams=intersectParams, 
+                   squid=squid, ident=ident, matrixColumnId=matrixColumnId, 
+                   status=status, statusModTime=statusModTime)
+      Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
+                squid=squid, verify=verify, dlocation=dlocation, 
+                metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
+                valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, 
+                maxVal=maxVal, mapunits=mapunits, resolution=resolution, 
+                bbox=bbox, svcObjId=matrixColumnId, 
+                serviceType=LMServiceType.MATRIX_LAYERS, 
+                moduleType=LMServiceModule.LM,
+                metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
+                modTime=modTime)
 

@@ -353,6 +353,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 # ...............................................           
 # .............................................................................
 class _LayerParameters(LMObject):
+   # Constants for metadata dictionary keys
    PARAM_FILTER_STRING = 'filterString'
    PARAM_VAL_NAME = 'valName'
    PARAM_VAL_UNITS = 'valUnits'

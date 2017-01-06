@@ -33,6 +33,7 @@ from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.common.lmconstants import  DbUser
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
+from LmServer.legion.mtxcolumn import MatrixRaster
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName
@@ -292,6 +293,31 @@ class BorgScribe(LMObject):
       return updatedProj   
    
 # ...............................................
+   def initOrRollbackIntersect(self, prj, gridset, modtime):
+      """
+      @summary: Initialize model, projections for inputs/algorithm.
+      """
+      newOrExistingMtxcol = None
+      if gridset is not None:
+         mtxrst = MatrixRaster(-1, -1, prj.getUserId(), gridset, prj.name, prj.epsgcode,  
+                     lyrId=prj.getId(), squid=prj.squid, verify=prj.verify, 
+                     dlocation=prj.getDLocation(), lyrMetadata=prj.lyrMetadata, 
+                     dataFormat=prj.dataFormat, gdalType=prj.gdalType, 
+                     valUnits=prj.valUnits, nodataVal=prj.nodataVal, 
+                     minVal=prj.minVal, maxVal=prj.maxVal, mapunits=prj.mapUnits, 
+                     resolution=prj.resolution, bbox=prj.bbox, 
+                     metadataUrl=prj.metadataUrl, modTime=prj.statusModTime,
+                     processType=ProcessType.RAD_INTERSECT, 
+                     mtxcolMetadata={}, intersectParams={}, 
+                     status=JobStatus.GENERAL, statusModTime=None)
+         # TODO:
+         newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxrst)
+         if JobStatus.finished(newOrExistingMtxcol.status):
+            newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, stattime=modtime)
+            newOrExistingMtxcol = self.updateMtxcol(newOrExistingMtxcol)
+      return newOrExistingMtxcol
+
+# ...............................................
    def initOrRollbackSDMProjects(self, usr, occset, mdlScen, prjScenList, alg,  
                           mdlMask=None, projMask=None, 
                           modtime=mx.DateTime.gmt().mjd, email=None):
@@ -314,15 +340,16 @@ class BorgScribe(LMObject):
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
          if JobStatus.finished(newOrExistingPrj.status):
             newOrExistingPrj.updateStatus(JobStatus.GENERAL, stattime=modtime)
-            newerPrj = self.updateSDMProject(newOrExistingPrj)
-         prjs.append(newerPrj)
+            newOrExistingPrj = self.updateSDMProject(newOrExistingPrj)
+         
+         prjs.append(newOrExistingPrj)
       return prjs
 
 # ...............................................
    def initOrRollbackSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
                     mdlMask=None, projMask=None,
                     occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
-                    intersectGrid=None, minPointCount=None):
+                    gridset=None, minPointCount=None):
       """
       @summary: Initialize or rollback existing LMArchive SDM chain 
                 (SDMProjection, Intersection) dependent on this occurrenceset.
@@ -338,6 +365,13 @@ class BorgScribe(LMObject):
                               modtime=currtime, 
                               mdlMask=mdlMask, prjMask=projMask)
             objs.extend(prjs)
+            # Intersect if intersectGrid is provided
+            if gridset is not None:
+               mtxcols = []
+               for prj in prjs:
+                  mtxcol = self.initOrRollbackIntersect(prj, gridset, currtime)
+                  mtxcols.append(mtxcol)
+               objs.extend(mtxcols)
       return objs
    
 # ...............................................

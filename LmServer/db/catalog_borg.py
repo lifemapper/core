@@ -906,9 +906,33 @@ class Borg(DbPostgresql):
       lyrmeta = proj.dumpLyrMetadata()
       prjmeta = proj.dumpParamMetadata()
       algparams = proj.algorithm.dumpParametersAsString()
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProject', 
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer', 
                      proj.getParamId(), proj.getId(), proj.getUserId(), 
                      proj.squid, proj.verify, proj.name, proj.getDLocation(), 
+                     proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
+                     proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
+                     proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
+                     proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
+                     proj.occurrenceSet.getId(), proj.algorithmCode, algparams,
+                     proj.modelScenario.getId(), proj.modelMask.getId(),
+                     proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
+                     proj.processType, proj.status, proj.statusModTime)
+      newOrExistingProj = self._createSDMProjection(row, idxs)
+      return newOrExistingProj
+
+# ...............................................
+   def findOrInsertMtxcol(self, mtxcol):
+      """
+      @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
+                OR save a new SDMProjection
+      @param proj: the SDMProjection object to update
+      @return new or existing SDMProjection 
+      """
+      mcmeta = mtxcol.dumpParamMetadata()
+      intparams = mtxcol.dumpIntersectParams()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
+                     mtxcol.getId(), mtxcol.squid, mtxcol.ident, 
+                     mtxcol.getDLocation(), mcmeta, mtxcol.getLayerId(), 
                      proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
                      proj.ogrType(), proj.valUnits, proj.nodataVal, proj.minVal,
                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,

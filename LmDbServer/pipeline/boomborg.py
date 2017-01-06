@@ -31,27 +31,23 @@ from osgeo.ogr import wkbPoint
 import os
 import sys
 from time import sleep
-from types import ListType, TupleType, StringType, UnicodeType
+from types import ListType, TupleType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            ProcessType, JobStatus, OutputFormat, ONE_HOUR, ONE_MIN, 
+            ProcessType, JobStatus, ONE_HOUR, ONE_MIN, 
             GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (Priority, wkbPoint, 
-                                         LOG_PATH)
+from LmServer.common.lmconstants import (Priority, LOG_PATH, OutputFormat)
 from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.sdm.occlayer import OccurrenceLayer
-from LmServer.sdm.omJob import OmProjectionJob, OmModelJob
-from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
-from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
@@ -85,9 +81,6 @@ class _LMBoomer(LMObject):
          log = ScriptLogger(self.name)
       self.log = log
       self.developers = TROUBLESHOOTERS
-      self.startStatus=JobStatus.GENERAL 
-      self.queueStatus=JobStatus.GENERAL 
-      self.endStatus=JobStatus.INITIALIZE
       self.updateTime = None
 
       try:
@@ -233,62 +226,6 @@ class _LMBoomer(LMObject):
          except:
             self.log.error('Failed to write next starting line {} to file {}'
                            .format(lineNum, self.startFile))
-   
-# ...............................................
-   def _rollbackQueuedJobs(self):
-      if self.startStatus < self.queueStatus:
-         count = self._scribe.rollbackIncompleteRADJobs(self.queueStatus)
-         self.updateTime = dt.gmt().mjd
-         self.log.debug('Reset {} queued ({}) jobs to completed status ({})'
-                        .format(count, self.queueStatus, self.startStatus))
-   
-# ...............................................
-   def _notifyComplete(self, job):
-      # Should already have lock
-      success = True
-      msg = None
-      if job.email is not None:
-         # Notify on Model only if fail
-         if isinstance(job, (MeModelJob, OmModelJob)):
-            if job.status >= JobStatus.NOT_FOUND:
-               subject = 'Lifemapper SDM Model {} Error'.format(job.jid)
-               msg = ''.join(('The Lifemapper Species Distribution Modeling '
-                              '(LmSDM) job that you requested has failed with code {}.  '
-                              .format(job.status),
-                              'You may visit {} for error information'
-                              .format(job.metadataUrl)))
-         # Notify on Projection only if it's the last one
-         elif isinstance(job, (MeProjectionJob, OmProjectionJob)):
-            model = job.projection.getModel()
-            unfinishedCount = self._scribe.countProjections(job.userId, 
-                                                            inProcess=True, 
-                                                            mdlId=model.getId())   
-            if unfinishedCount == 0:
-               if job.status == JobStatus.COMPLETE:
-                  subject = 'Lifemapper SDM Experiment {} Completed'.format(model.getId())
-                  msg = ''.join(('The Lifemapper Species Distribution Modeling '
-                                 '(LmSDM) job that you requested is now complete.  ',
-                                 'You may visit {} to retrieve your data' 
-                                 .format(job.metadataUrl))) 
-               else:
-                  subject = 'Lifemapper SDM Experiment {} Error'.format(model.getId())
-                  msg = ''.join(('The Lifemapper Species Distribution Modeling '
-                                 '(LmSDM) job that you requested has failed with code {}.  '
-                                 .format(job.status),
-                                 'You may visit {} for error information' 
-                                 .format(job.metadataUrl)))  
-            else:
-               self.log.info('Notify: {} unfinished projections for model {}, user {}'
-                             .format(unfinishedCount, model.getId(), job.email))
-         if msg is not None:
-            try:
-               self._notifyPeople(subject, msg, recipients=[job.email])
-               self.log.info('Notified: {}, user {}'.format(subject, job.email))
-            except LMError, e:
-               self.log.info('Failed to notify user {} of {} ({})'
-                             .format(job.email, subject, e))
-               success = False
-      return success         
 
    # ...............................................
    def _deleteOccurrenceSet(self, occSet):
@@ -367,28 +304,41 @@ class _LMBoomer(LMObject):
    def _getInsertSciNameForExternalSpeciesKey(self, speciesKey):
       self._raiseSubclassError()
       
-# # ...............................................
-#    def _createMakeflow(self, objs):
-#       mfchainId = usr = filename = None
-#       if objs:
-#          mfdoc = LMMakeflowDocument()
-#          for o in objs:
-#             mfdoc.buildOccurrenceSet(occJob)
-#             if usr is None:
-#                usr = j.getUserId()
-#             if filename is None:
-#                filename = j.makeflowFilename
-#          self.log.info('Writing makeflow document {} ...'.format(filename))
-#          success = mfdoc.write(filename)
-#          if not success:
-#             self.log.error('Failed to write {}'.format(filename))
-#          
-#          try:
-#             jobchainId = self._scribe.insertJobChain(usr, filename, self.priority)
-#          except Exception, e:
-#             raise LMError(currargs='Failed to insert jobChain for {}; ({})'
-#                           .format(filename, e))
-#       return jobchainId
+# ...............................................
+   def _createMakeflow(self, objs):
+      mfchainId = filename = None
+      if objs:
+         mfdoc = LMMakeflowDocument()
+         for o in objs:
+            if filename is None:
+               filename = o.makeflowFilename
+               
+            if o.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
+               mfdoc.addGbifOccurrenceSet(o)
+            elif o.processType == ProcessType.BISON_TAXA_OCCURRENCE:
+               mfdoc.addBisonOccurrenceSet(o)
+            elif o.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+               mfdoc.addIdigbioOccurrenceSet(o)
+            elif o.processType == ProcessType.USER_TAXA_OCCURRENCE:
+               mfdoc.addUserOccurrenceSet(o)
+            elif o.processType == ProcessType.ATT_PROJECT:
+               mfdoc.addMaxentProjection(o)
+            elif o.processType == ProcessType.OM_PROJECT:
+               mfdoc.addOmProjection(o)
+            elif o.processType == ProcessType.RAD_INTERSECT:
+               mfdoc.addIntersect(o)
+               
+         self.log.info('Writing makeflow document {} ...'.format(filename))
+         success = mfdoc.write(filename)
+         if not success:
+            self.log.error('Failed to write {}'.format(filename))
+          
+         try:
+            jobchainId = self._scribe.insertJobChain(self.userid, filename, self.priority)
+         except Exception, e:
+            raise LMError(currargs='Failed to insert jobChain for {}; ({})'
+                          .format(filename, e))
+      return jobchainId
 
 # ...............................................
    def chainOne(self):
@@ -472,9 +422,9 @@ class _LMBoomer(LMObject):
          ogrFormat = None
          if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
             ogrFormat = 'CSV'
-         occ = OccurrenceLayer(sciName.scientificName, name=sciName.scientificName, 
-               squid=sciName.squid, queryCount=dataCount, epsgcode=self.epsg, 
-               ogrType=wkbPoint, ogrFormat=ogrFormat, userId=self.userid,
+         occ = OccurrenceLayer(sciName.scientificName, self.userid, self.epsg, 
+               dataCount, squid=sciName.squid, dataFormat=ogrFormat, 
+               ogrType=wkbPoint, processType=occProcessType,
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciName)
          try:
@@ -699,18 +649,19 @@ class UserBoom(_LMBoomer):
              The parser writes each new text chunk to a file, updates the 
              Occurrence record and inserts one or more jobs.
    """
-   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occDataname, 
-                expDate, priority=Priority.HIGH, minPointCount=None,
+   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, 
+                userOccCSV, userOccMeta, expDate, 
+                priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
-      super(UserBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
+      super(UserBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, 
+                                     prjScenLst, 
                                      taxonSourceName=None, 
                                      minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      intersectGrid=intersectGrid, log=log)
       self.occParser = None
       try:
-         self.occParser = OccDataParser(self.log, occDataname + OutputFormat.CSV, 
-                                        occDataname + OutputFormat.METADATA)
+         self.occParser = OccDataParser(self.log, userOccCSV, userOccMeta) 
       except Exception, e:
          raise LMError(currargs=e.args)
          
@@ -947,13 +898,13 @@ class GBIFBoom(_LMBoomer):
          
 # ...............................................
    def _processChunk(self, speciesKey, dataCount, dataChunk):
-      jobs = []
+      objs = []
       sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
       if sciName:       
-         jobs = self._processSDMChain(sciName, speciesKey, 
+         objs = self._processSDMChain(sciName, speciesKey, 
                             ProcessType.GBIF_TAXA_OCCURRENCE, 
                             dataCount, data=dataChunk)
-      return jobs
+      return objs
    
 # ...............................................
    def chainOne(self):
