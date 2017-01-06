@@ -2,11 +2,11 @@
 @summary: This module contains a base-Daemon class
 @author: (edited by) CJ Grady
 @version: 1.0
-@status: alpha
+@status: beta
 @note: Originally from www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -34,7 +34,7 @@ import subprocess
 from LmCommon.common.log import DaemonLogger
 
 # ............................................................................. 
-class Daemon:
+class Daemon(object):
    """
    @summary: A generic daemon class.
    
