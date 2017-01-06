@@ -88,6 +88,9 @@ def addAlgorithms(scribe):
 
 # ...............................................
 def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
+   """
+   @todo: Add a gridset for the Global PAM here
+   """
    shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
                    status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
    newshp = scribe.insertShapeGrid(shp)

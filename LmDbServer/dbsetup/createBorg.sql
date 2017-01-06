@@ -418,7 +418,8 @@ create table lm_v3.MatrixColumn
 (
    matrixColumnId  serial UNIQUE PRIMARY KEY,
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
-   matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
+   -- This may be null for a global PAM
+   matrixId int REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int NOT NULL,
 	
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
