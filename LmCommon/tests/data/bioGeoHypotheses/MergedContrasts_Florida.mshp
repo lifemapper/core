@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAGA_METADATA>
+  <HISTORY saga-version="2.1.4">
+    <MODULE library="shapes_tools" id="2" name="Merge Layers">
+      <OPTION type="boolean" id="SRCINFO" name="Add Source Information">TRUE</OPTION>
+      <OPTION type="boolean" id="MATCH" name="Match Fields by Name">TRUE</OPTION>
+      <INPUT_LIST type="shapes_list" id="INPUT" name="Layers">
+        <INPUT type="shapes_list" id="INPUT" name="Layers">
+          <FILE>/home/jcavner/TASHI_PAM/GoodContrasts/ApalachicolaRiver.shp</FILE>
+        </INPUT>
+        <INPUT type="shapes_list" id="INPUT" name="Layers">
+          <FILE>/home/jcavner/TASHI_PAM/GoodContrasts/GulfAtlantic.shp</FILE>
+        </INPUT>
+        <INPUT type="shapes_list" id="INPUT" name="Layers">
+          <FILE>/home/jcavner/TASHI_PAM/GoodContrasts/Pliocene.shp</FILE>
+        </INPUT>
+      </INPUT_LIST>
+      <OUTPUT type="shapes" id="MERGED" name="Merged Layer">Merged Layers</OUTPUT>
+    </MODULE>
+  </HISTORY>
+  <SOURCE>
+    <FILE>/home/jcavner/TASHI_PAM/GoodContrasts/MergedContrasts_Florida.shp</FILE>
+    <DATABASE></DATABASE>
+    <PROJECTION>
+      <OGC_WKT>GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]</OGC_WKT>
+      <PROJ4>+proj=longlat +a=6378137.000000 +b=6356752.314245 +no_defs</PROJ4>
+      <EPSG>-1</EPSG>
+    </PROJECTION>
+  </SOURCE>
+  <DESCRIPTION></DESCRIPTION>
+</SAGA_METADATA>

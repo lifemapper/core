@@ -84,9 +84,12 @@ class BioGeoEncoding(object):
    def encodeHypotheses(self):
       """
       @summary: Encodes the provided layers into a matrix (B in the literature)
+      @raise IOError: Raised if a layer file does not exist
       """
       encodedLayers = []
       for dloc, eventField in self.layers:
+         if not os.path.exists(dloc):
+            raise IOError, "File {fn} does not exist".format(fn=dloc)
          if eventField is None:
             features = self._getFeaturesNoEvent(dloc)
          else:
@@ -217,7 +220,11 @@ class BioGeoEncoding(object):
       @param sgDloc: The file location of the shapegrid shapefile
       @note: self.sortedSites is a list of (site id, feature) tuples that is 
                 sorted by site id
+      @raise IOError: Raised if shapegrid file does not exist
       """
+      if not os.path.exists(sgDLoc):
+         raise IOError, "Shapegrid: {fn} does not exist".format(fn=sgDLoc)
+      
       sgDs = self._openShapefile(sgDLoc)
       lyr = sgDs.GetLayer(0)
       sites = []
@@ -250,7 +257,10 @@ class PhyloEncoding(object):
                 converted to an LmTree object
       @param pam: A numpy array for a PAM
       """
-      self.tree = LmTree(treeDict)
+      if not isinstance(treeDict, LmTree):
+         self.tree = LmTree(treeDict)
+      else:
+         self.tree = treeDict
       self.pam = pam
    
    # ..............................   
