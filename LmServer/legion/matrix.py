@@ -23,11 +23,10 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
 import numpy
 import ogr
 import os
-from types import BooleanType, StringType
+from types import StringType
 
 from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, MatrixType)
 from LmServer.base.lmobj import LMObject, LMError
@@ -36,7 +35,7 @@ from LmServer.common.lmconstants import LMServiceType,LMServiceModule
 
 
 # .............................................................................
-class Matrix(LMObject):
+class Matrix(ServiceObject, ProcessObject):
    """
    The Matrix class contains a 2-dimensional numeric matrix.
    """
@@ -47,13 +46,12 @@ class Matrix(LMObject):
                 matrixType=MatrixType.PAM, 
                 metadata={},
                 dlocation=None, 
-#                 siteIndices=None,
                 layerIndices=None,
                 randomParameters={},
                 metadataUrl=None,
                 parentMetadataUrl=None,
                 userId=None,
-                experimentId=None,
+                gridsetId=None,
                 matrixId=None,
                 status=None, statusModTime=None):
       """
@@ -66,8 +64,8 @@ class Matrix(LMObject):
                              moduleType=LMServiceModule.LM,
                              metadataUrl=metadataUrl, 
                              parentMetadataUrl=parentMetadataUrl)
-      ProcessObject.__init__(self, objId=matrixId, parentId=experimentId, 
-                status=status, statusModTime=statusModTime) 
+      ProcessObject.__init__(self, objId=matrixId, parentId=gridsetId, 
+                             status=status, statusModTime=statusModTime) 
       self._matrix = matrix
       self.matrixType = matrixType
       self._dlocation = dlocation

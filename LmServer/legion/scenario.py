@@ -33,10 +33,6 @@ class Scenario(MapLayerSet):
    Class to hold a set of Raster object environmental data layers 
    that are used together for creating or projecting a niche model
    """
-   META_TITLE = 'title'
-   META_AUTHOR = 'author'
-   META_DESCRIPTION = 'description'
-   META_KEYWORDS = 'keywords'
 # .............................................................................
 # Constructor
 # .............................................................................

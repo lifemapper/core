@@ -304,6 +304,7 @@ create table lm_v3.ShapeGrid
    idAttribute varchar(20),
    xAttribute varchar(20),
    yAttribute varchar(20),
+   siteIndices text,
    status int,
    statusModTime double precision,
    PRIMARY KEY (layerid)
@@ -318,6 +319,7 @@ create table lm_v3.Tree
 (
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   metadataUrl text UNIQUE,
    -- original (Newick or JSON)
    treeDlocation text,
    hasBranchLengths boolean,
@@ -333,29 +335,18 @@ create table lm_v3.Gridset
    gridsetId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
+   metadataUrl text UNIQUE,
    
    -- Must have shapegrid or siteIndices (siteId, centerX, centerY)
    shapeGridId int REFERENCES lm_v3.ShapeGrid,
    siteIndices text,
    
+   -- Optional metadata and configuration file for initArchive and archivist workflow
+   dlocation text,
+
    epsgcode int,
    metadata text,
    modTime double precision,
-   UNIQUE (userId, name)
-);
-
--- -------------------------------
--- Metadata and configuration file for initArchive and archivist 
--- Organizing object for set of data and processes in a workflow
-create table lm_v3.Archive
-(
-   archiveId serial UNIQUE PRIMARY KEY,
-   userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-   name varchar(100) NOT NULL,
-   -- configuration file
-   dlocation text,
-   -- recalculate?
-   metadata text,
    UNIQUE (userId, name)
 );
 
@@ -384,8 +375,11 @@ create table lm_v3.Matrix
    matrixType int NOT NULL,
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    matrixDlocation text,
-   siteLayerIndices text,
-   metadata text 
+   layerIndices text,
+   metadataUrl text UNIQUE,
+   metadata text,
+   status int,
+   statusmodtime double precision
 );
 
 -- -------------------------------
@@ -418,9 +412,9 @@ create table lm_v3.MatrixColumn
 (
    matrixColumnId  serial UNIQUE PRIMARY KEY,
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
-   -- This may be null for a global PAM
-   matrixId int REFERENCES lm_v3.Matrix ON DELETE CASCADE,
-   matrixIndex int NOT NULL,
+   -- Global PAM will have an entry
+   matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
+   matrixIndex int,
 	
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    ident varchar(64),
@@ -455,7 +449,6 @@ lm_v3.sdmproject, lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.shapegrid, 
 lm_v3.tree, lm_v3.tree_treeid_seq,
 lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
-lm_v3.archive, lm_v3.archive_archiveid_seq,
 lm_v3.mfprocess, lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
 lm_v3.gridsettree, lm_v3.gridsettree_gridsettreeid_seq,
@@ -478,7 +471,6 @@ lm_v3.sdmproject,
 lm_v3.shapegrid,
 lm_v3.tree,
 lm_v3.gridset,
-lm_v3.archive,
 lm_v3.mfprocess,
 lm_v3.matrix,
 lm_v3.gridsettree,
@@ -498,7 +490,6 @@ lm_v3.sdmproject_sdmprojectid_seq,
 lm_v3.process_processid_seq,
 lm_v3.tree_treeid_seq,
 lm_v3.gridset_gridsetid_seq,
-lm_v3.archive_archiveid_seq,
 lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix_matrixid_seq,
 lm_v3.gridsettree_gridsettreeid_seq,

@@ -35,6 +35,10 @@ class ServiceObject(LMObject):
    The ServiceObject class contains all of the information for subclasses
    to be exposed in a webservice. 
    """
+   META_TITLE = 'title'
+   META_AUTHOR = 'author'
+   META_DESCRIPTION = 'description'
+   META_KEYWORDS = 'keywords'
    
 # .............................................................................
 # Constructor

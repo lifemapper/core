@@ -23,22 +23,21 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
 import mx.DateTime
 import pickle
 import os
 from osgeo import ogr
 import subprocess
-from types import StringType, UnicodeType
+from types import StringType
 
 from LmCommon.common.lmconstants import MatrixType
 from LmServer.base.lmobj import LMError, LMObject
-from LmServer.base.serviceobject2 import ServiceObject, ProcessObject
+from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.rad.matrix import Matrix                                  
 
 # .............................................................................
-class Gridset(ServiceObject, ProcessObject):
+class Gridset(ServiceObject):
    """
    The Gridset class contains all of the information for one view (extent and 
    resolution) of a RAD experiment.  
@@ -46,37 +45,45 @@ class Gridset(ServiceObject, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, metadata={}, 
-                shapegrid=None, siteIndices=None, epsgcode=None, 
-                pam=None, grim=None, biogeo=None, tree=None,
-                status=None, statusModTime=None, 
-                userId=None, expId=None, metadataUrl=None):
+   def __init__(self, name=None, metadata={}, 
+                shapegrid=None, siteIndices=None, configFilename=None, 
+                epsgcode=None, pam=None, grim=None, biogeo=None, tree=None,
+                userId=None, gridsetId=None, metadataUrl=None, modTime=None):
       """
       @summary Constructor for the Gridset class
+      @param name: Short identifier for this gridset, not required to be unique.
       @param shapegrid: Vector layer with polygons representing geographic sites.
       @param siteIndices: A dictionary with keys the unique/record identifiers 
-             and values the x, y coordinates of the sites in a ShapeGrid or PAM
+             and values the x, y coordinates of the sites in a PAM (if 
+             shapegrid is not provided)
       @param epsgcode: The EPSG code of the spatial reference system of data.
       @param pam: A Presence Absence Matrix (MatrixType.PAM)
       @param grim: A Matrix of Environmental Values (MatrixType.GRIM)
       @param biogeo: A Matrix of Biogeographic Hypotheses (MatrixType.BIOGEO_HYPOTHESES)
       @param tree: A Tree with taxa matching those in the PAM 
-      @param status:  The run status of the current stage
-      @param statusModTime: The last time that the status was modified
       @param userId: id for the owner of these data
-      @param expId: database id of the RADExperiment containing this Bucket 
+      @param gridsetId: database id of this gridset 
       """
-      ServiceObject.__init__(self, userId, expId, None, statusModTime,
-            LMServiceType.RAD_EXPERIMENTS, moduleType=LMServiceModule.LM,
+      if shapegrid is not None:
+         if userId is None:
+            userId = shapegrid.getUserId()
+         if epsgcode is None:
+            epsgcode = shapegrid.epsgcode
+         elif epsgcode != shapegrid.epsgcode:
+            raise LMError('Gridset EPSG {} does not match Shapegrid EPSG {}'
+                          .format(self._epsg, shapegrid.epsgcode))
+
+      ServiceObject.__init__(self, userId, gridsetId, None, modTime,
+            LMServiceType.GRIDSETS, moduleType=LMServiceModule.LM,
             metadataUrl=metadataUrl)
-      ProcessObject.__init__(self, objId=expId, 
-                             status=status,  statusModTime=statusModTime) 
+      self.name = name
       self.grdMetadata = {}
       self.loadGrdMetadata(metadata)
       self.shapegrid = shapegrid
       self.siteIndices = None
       self._siteIndicesFilename = None
       self.setIndices(siteIndices, doRead=False)
+      self.configFilename = configFilename
       self._setEPSG(epsgcode)
 
       self._pam = None
@@ -85,10 +92,6 @@ class Gridset(ServiceObject, ProcessObject):
       self.setMatrix(MatrixType.GRIM, mtxFileOrObj=grim)
       self.setMatrix(MatrixType.BIOGEO_HYPOTHESES, mtxFileOrObj=biogeo)
       
-      if shapegrid is not None:
-         if shapegrid.getUserId() is None:
-            shapegrid.setUserId(self._userId)
-         self._epsg = shapegrid.epsgcode
       self.shapegrid = shapegrid
       
 # ...............................................
@@ -100,10 +103,10 @@ class Gridset(ServiceObject, ProcessObject):
 # Properties
 # .............................................................................
    def _setEPSG(self, epsg=None):
-      if self._shapegrid is not None:
-         self._epsg = self._shapegrid.epsgcode
-      else:
-         self._epsg = epsg
+      if epsg is None:
+         if self._shapegrid is not None:
+            epsg = self._shapegrid.epsgcode
+      self._epsg = epsg
 
    def _getEPSG(self):
       if self._epsg is None:
@@ -133,7 +136,7 @@ class Gridset(ServiceObject, ProcessObject):
              self._getEPSG() is not None):
             self._path = self._earlJr.createDataPath(self._userId, 
                                LMFileType.UNSPECIFIED_RAD,
-                               epsg=self._getEPSG(), radexpId=self.getId())
+                               epsg=self._epsg, gridsetId=self.getId())
          else:
             raise LMError
          
@@ -271,13 +274,12 @@ class Gridset(ServiceObject, ProcessObject):
 
 
          
-# ...............................................
-   def rollback(self, currtime):
-      """
-      @summary: Rollback processing following a change to the layers.  
-      @param currtime: Time of status modfication
-      """
-      pass
+# # ...............................................
+#    def rollback(self, currtime):
+#       """
+#       @summary: Rollback processing following a change to the layers.  
+#       @param currtime: Time of status modfication
+#       """
 #       self.updateStatus(JobStatus.GENERAL, modTime=currtime)
 
 # .............................................................................
@@ -296,23 +298,15 @@ class Gridset(ServiceObject, ProcessObject):
       self.grdMetadata = LMObject._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.grdMetadata)
 
-# ................................................
-   def addPAMColumn(self, data, colIdx):
-      self._fullPAM.addColumn(data, colIdx)
-      
-# ................................................
-   def addGRIMColumn(self, data, colIdx):
-      self._fullGRIM.addColumn(data, colIdx)
-
-# ................................................
-   def slicePAM(self, columnIdx): 
-      if self.isCompressed:
-         ids = self._pamSum.getColumnPresence(self._sitesPresent, 
-                                              self._layersPresent,
-                                              columnIdx)
-         return ids
-      else:
-         raise LMError(currargs='Cannot get column before compression')
+# # ................................................
+#    def slicePAM(self, columnIdx): 
+#       if self.isCompressed:
+#          ids = self._pamSum.getColumnPresence(self._sitesPresent, 
+#                                               self._layersPresent,
+#                                               columnIdx)
+#          return ids
+#       else:
+#          raise LMError(currargs='Cannot get column before compression')
 
     
 # ...............................................
@@ -436,92 +430,7 @@ class Gridset(ServiceObject, ProcessObject):
       else:
          raise LMError('Invalid filetype {} for RAD Experiment file')
       return fname
-      
-# ...............................................
-   def clear(self):
-      self.clearGRIM()
-      self.clearPAM()
-      self.clearPresenceIndices()
-
-# ...............................................
-   def clearPresenceIndicesFile(self):
-      if self._presidxFname is None:
-         self._setPresenceIndicesFilename()
-      success, msg = self._deleteFile(self._presidxFname)
-
-# ...............................................
-   def clearPAM(self):
-      self.clearPresenceIndicesFile()
-      if self._pamFname is None:
-         self._setPAMFilename()
-      success, msg = self._deleteFile(self._pamFname)
-      self._fullPAM = None      
-
-# ...............................................
-   def clearGRIM(self):
-      self.clearPresenceIndicesFile()
-      if self._grimFname is None:
-         self._setGRIMFilename()
-      success, msg = self._deleteFile(self._grimFname)
-      self._fullGRIM = None      
-
-# ...............................................
-   pamDLocation = property(_getPAMFilename)
-   cmpPamDLocation = property(_getCmpPamFilename)
-   sumDLocation = property(_getSumFilename)
-   grimDLocation = property(_getGRIMFilename)
-   indicesDLocation = property(_getPresenceIndicesFilename)
-      
-# .............................................................................
-   def writePresenceIndices(self):
-      """
-      @summary: Pickle _sitesPresent and _layersPresent into _presidxFname
-      """
-      self._setPresenceIndicesFilename()
-      if self._presidxFname is None:
-         raise LMError('Unable to set Indices Filename')
-      
-      self._readyFilename(self._presidxFname, overwrite=True)
-      
-      indices = {'sitesPresent': self._sitesPresent, 
-                 'layersPresent': self._layersPresent}
-      print('Writing Presence Indices %s' % self._presidxFname)
-      try:
-         f = open(self._presidxFname, 'wb')
-         # Pickle the list using the highest protocol available.
-         pickle.dump(indices, f, protocol=pickle.HIGHEST_PROTOCOL)
-      except Exception, e:
-         raise LMError('Error pickling file %s' % self._presidxFname, str(e))
-      finally:
-         f.close()
-      
-# .............................................................................
-   def getAllPresenceIndices(self):
-      """
-      @summary: Pickle _sitesPresent and _layersPresent into _presidxFname
-      """
-      allIndices = {self.getId(): {'sitesPresent': self._sitesPresent, 
-                                   'layersPresent': self._layersPresent}}
-      return allIndices
             
-# ...............................................
-   def _readPresenceIndices(self):
-      """
-      @summary: Unpickle _presidxFname into sitesPresent and layersPresent
-      """
-      # Clear any existing dictionaries
-      self._sitesPresent = {}
-      self._layersPresent = {}
-      if self._presidxFname is not None and os.path.isfile(self._presidxFname):
-         try: 
-            f = open(self._presidxFname,'rb')         
-            indices = pickle.load(f)
-         except Exception, e:
-            raise LMError(currargs='Failed to load %s into indices' % 
-                          self._presidxFname, prevargs=str(e))
-         
-         self._sitesPresent = indices['sitesPresent']
-         self._layersPresent = indices['layersPresent']
             
 # .............................................................................
 # Read-0nly Properties
@@ -541,40 +450,6 @@ class Gridset(ServiceObject, ProcessObject):
       @return Status modification time in modified julian date format
       """
       return self._statusmodtime
-
-# ...............................................
-   @property
-   def stage(self):
-      """
-      @summary Gets the stage of the RADExperiment
-      @return The stage of the RADExperiment
-      """
-      return self._stage
-
-   @property
-   def stageModTime(self):
-      """
-      @summary Gets the last time the stage was modified
-      @return Stage modification time in modified julian date format
-      """
-      return self._stagemodtime
-   
-# ...............................................
-   @property
-   def keywords(self):
-      """
-      @summary Gets the keywords of the LayerSet
-      @return List of keywords describing the LayerSet
-      """
-      return self._keywords   
-
-# ...............................................
-   @property
-   def name(self):
-      name = None
-      if self.shapegrid is not None:
-         name = self.shapegrid.name
-      return name
 
 # ...............................................
    @property
