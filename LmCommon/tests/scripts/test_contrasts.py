@@ -58,28 +58,123 @@ class TestPhyloEncoding(unittest.TestCase):
       assert False
    
    # ..............................   
-   def test_from_file_with_branch_lengths(self):
-      """
-      @summary: Test checks that encoding works properly when the tree has 
-                   branch lengths and comes from a JSON file
-      """
-      assert False
-   
-   # ..............................   
-   def test_from_file_without_branch_lengths(self):
-      """
-      @summary: Test that checks that encoding a tree from a file works when it
-                   does not have branch lengths
-      """
-      assert False
-   
-   # ..............................   
    def test_lmtree_with_branch_lengths(self):
       """
       @summary: Test checks that encoding works properly when the tree has 
                    branch lengths and is already an LmTree object
       """
-      assert False
+      treeDict = {
+         "name": "0",
+         "path":  [0],
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "pathId": 1,
+               "length": .4,
+               "path": [1,0],
+               "children": [
+                  {
+                     "pathId" : 2,
+                     "length": .15,
+                     "path": [9,5,0],
+                     "children": [
+                        {
+                           "pathId" : 3,
+                           "length" : .65,
+                           "path": [3,2,1,0],
+                           "children": [
+                              {
+                                 "pathId" : 4,
+                                 "length" : .2,
+                                 "path" : [4,3,2,1,0],
+                                 "mx" : 0
+                              },
+                              {
+                                 "pathId" : 5,
+                                 "length" : .2,
+                                 "path" : [5,3,2,1,0],
+                                 "mx" : 1
+                              }
+                           ]
+                        },
+                        {
+                           "pathId" : 6,
+                           "length" : .85,
+                           "path" : [6,2,1,0],
+                           "mx" : 2
+                        }
+                     ]
+                  },
+                  {
+                     "pathId" : 7,
+                     "length" : 1.0,
+                     "path" : [7,1,0],
+                     "mx" : 3
+                  }
+               ]
+            },
+            {
+               "pathId" : 8,
+               "length": .9,
+               "path": [8,0],
+               "children": [
+                  {
+                     "pathId" : 9,
+                     "length" : .5,
+                     "path" : [9,8,0],
+                     "mx" : 4
+                  },
+                  {
+                     "pathId" : 10,
+                     "length" : .5,
+                     "path" : [10,8,0],
+                     "mx" : 5
+                  }
+               ]
+            } 
+         ]
+      }
+      
+      lmt = LmTree(treeDict)
+      
+      pam = np.random.choice(2, 24).reshape(4, 6)
+      
+      treeEncoder = PhyloEncoding(lmt, pam)
+      
+      pMtx = treeEncoder.encodePhylogeny()
+      print pMtx
+   
+      assert round(np.sum(pMtx), 3) == 0.000
+      
+      # Check that sum of absolute values is 2*columns
+      assert round(np.sum(np.abs(pMtx)), 3) == 2.000 * pMtx.shape[1]
+
+      # Approximate expected result
+      #    Absolute values should be equal but order can vary (column-wise)
+      #    Rows should be in same order
+      approximateExpectedResult = [
+         [ 0.000,  0.280,  0.500, -1.000,  0.196],
+         [ 0.000,  0.280,  0.500,  1.000,  0.196],
+         [ 0.000,  0.439, -1.000,  0.000,  0.290],
+         [ 0.000, -1.000,  0.000,  0.000,  0.319],
+         [-1.000,  0.000,  0.000,  0.000, -0.500],
+         [ 1.000,  0.000,  0.000,  0.000, -0.500]
+      ]
+      
+      # Get a set of the absolute values of both the expected values and the 
+      #    actual values and make sure they match
+      expectedValues = set([])
+      for row in approximateExpectedResult:
+         for item in row:
+            expectedValues.add(abs(round(item, 3)))
+      
+      testValues = set([])
+      for row in pMtx:
+         for item in row:
+            testValues.add(abs(round(item, 3)))
+
+      assert testValues == expectedValues
    
    # ..............................   
    def test_lmtree_without_branch_lengths(self):
@@ -87,28 +182,290 @@ class TestPhyloEncoding(unittest.TestCase):
       @summary: Test that checks that encoding an LmTree object works when it
                    does not have branch lengths
       """
-      assert False
+      treeDict = {
+         "name": "0",
+         "pathId": 0,
+            "children": [
+            {
+               "pathId": 1,
+               "children": [
+                  {
+                     "pathId" : 2,
+                     "children": [
+                        {
+                           "pathId" : 3,
+                           "children": [
+                              {
+                                 "pathId" : 4,
+                                 "mx" : 0
+                              },
+                              {
+                                 "pathId" : 5,
+                                 "mx" : 1
+                              }
+                           ]
+                        },
+                        {
+                           "pathId" : 6,
+                           "mx" : 2
+                        }
+                     ]
+                  },
+                  {
+                     "pathId" : 7,
+                     "mx" : 3
+                  }
+               ]
+            },
+            {
+               "pathId" : 8,
+               "children": [
+                  {
+                     "pathId" : 9,
+                     "mx" : 4
+                  },
+                  {
+                     "pathId" : 10,
+                     "mx" : 5
+                  }
+               ]
+            } 
+         ]
+      }
+      
+      pam = np.random.choice(2, 24).reshape(4, 6)
+   
+      lmt = LmTree(treeDict)
+      treeEncoder = PhyloEncoding(lmt, pam)
+      pMtx = treeEncoder.encodePhylogeny()
+      print pMtx
+   
+      assert round(np.sum(pMtx), 3) == 0.000
+      
+      # Check that sum of absolute values is 2*columns
+      assert round(np.sum(np.abs(pMtx)), 3) == 2.000 * pMtx.shape[1]
+
+      # Approximate expected result
+      #    Absolute values should be equal but order can vary (column-wise)
+      #    Rows should be in same order
+      approximateExpectedResult = [
+         [-0.125, -0.250, -0.500, -1.000,  0.000],
+         [-0.125, -0.250, -0.500,  1.000,  0.000],
+         [-0.250, -0.500,  1.000,  0.000,  0.000],
+         [-0.500,  1.000,  0.000,  0.000,  0.000],
+         [ 0.500,  0.000,  0.000,  0.000, -1.000],
+         [ 0.500,  0.000,  0.000,  0.000,  1.000]
+       ]
+      
+      # Get a set of the absolute values of both the expected values and the 
+      #    actual values and make sure they match
+      expectedValues = set([])
+      for row in approximateExpectedResult:
+         for item in row:
+            expectedValues.add(abs(round(item, 3)))
+      
+      testValues = set([])
+      for row in pMtx:
+         for item in row:
+            testValues.add(abs(round(item, 3)))
+
+      assert testValues == expectedValues
+   
    
    # ..............................   
    def test_nonbinary_fail(self):
       """
       @summary: Test that encoding fails when the tree is not binary
       """
-      assert False
+      treeDict = {
+         "name": "0",
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "length": .4,
+               "children": [
+                  {
+                     "length": .15,
+                     "children": [
+                        {
+                           "length" : .85,
+                           "mx" : 0
+                        },
+                     ]
+                  },
+                  {
+                     "length" : 1.0,
+                     "mx" : 3
+                  }
+               ]
+            },
+            {
+               "length": .9,
+               "children": [
+                  {
+                     "length" : .5,
+                     "mx" : 4
+                  },
+                  {
+                     "length" : .5,
+                     "mx" : 5
+                  }
+               ]
+            } 
+         ]
+      }
+      
+      pam = np.random.choice(2, 24).reshape(4, 6)
+      
+      treeEncoder = PhyloEncoding(treeDict, pam)
+      
+      with self.assertRaises(EncodingException):
+         pMtx = treeEncoder.encodePhylogeny()
    
    # ..............................   
    def test_nonultrametric_fail(self):
       """
       @summary: Test that encoding fails when the tree is not ultrametric
       """
-      assert False
+      treeDict = {
+         "name": "0",
+         "path":  [0],
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "pathId": 1,
+               "length": .4,
+               "path": [1,0],
+               "children": [
+                  {
+                     "pathId" : 2,
+                     "length": .15,
+                     "path": [9,5,0],
+                     "children": [
+                        {
+                           "pathId" : 3,
+                           "length" : .65,
+                           "path": [3,2,1,0],
+                           "children": [
+                              {
+                                 "pathId" : 4,
+                                 "length" : .25,
+                                 "path" : [4,3,2,1,0],
+                                 "mx" : 0
+                              },
+                              {
+                                 "pathId" : 5,
+                                 "length" : .3,
+                                 "path" : [5,3,2,1,0],
+                                 "mx" : 1
+                              }
+                           ]
+                        },
+                        {
+                           "pathId" : 6,
+                           "length" : .85,
+                           "path" : [6,2,1,0],
+                           "mx" : 2
+                        }
+                     ]
+                  },
+                  {
+                     "pathId" : 7,
+                     "length" : 1.0,
+                     "path" : [7,1,0],
+                     "mx" : 3
+                  }
+               ]
+            },
+            {
+               "pathId" : 8,
+               "length": .9,
+               "path": [8,0],
+               "children": [
+                  {
+                     "pathId" : 9,
+                     "length" : .5,
+                     "path" : [9,8,0],
+                     "mx" : 4
+                  },
+                  {
+                     "pathId" : 10,
+                     "length" : .5,
+                     "path" : [10,8,0],
+                     "mx" : 5
+                  }
+               ]
+            } 
+         ]
+      }
+      
+      pam = np.random.choice(2, 24).reshape(4, 6)
+      
+      treeEncoder = PhyloEncoding(treeDict, pam)
+      
+      with self.assertRaises(EncodingException):
+         pMtx = treeEncoder.encodePhylogeny()
    
    # ..............................   
    def test_polytomy_fail(self):
       """
       @summary: Test that encoding fails when the tree has polytomies
       """
-      assert False
+      treeDict = {
+         "name": "0",
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "length": .4,
+               "children": [
+                  {
+                     "length": .15,
+                     "children": [
+                        {
+                           "length" : .85,
+                           "mx" : 0
+                        },
+                        {
+                           "length" : .85,
+                           "mx" : 1
+                        },
+                        {
+                           "length" : .85,
+                           "mx" : 2
+                        }
+                     ]
+                  },
+                  {
+                     "length" : 1.0,
+                     "mx" : 3
+                  }
+               ]
+            },
+            {
+               "length": .9,
+               "children": [
+                  {
+                     "length" : .5,
+                     "mx" : 4
+                  },
+                  {
+                     "length" : .5,
+                     "mx" : 5
+                  }
+               ]
+            } 
+         ]
+      }
+      
+      pam = np.random.choice(2, 24).reshape(4, 6)
+      
+      treeEncoder = PhyloEncoding(treeDict, pam)
+      
+      with self.assertRaises(EncodingException):
+         pMtx = treeEncoder.encodePhylogeny()
    
    # ..............................   
    def test_resolution_functions(self):
@@ -124,7 +481,85 @@ class TestPhyloEncoding(unittest.TestCase):
       @summary: Test to check that encoding fails if the matrix indices in the
                    tips do not match the PAM
       """
-      assert False
+      treeDict = {
+         "name": "0",
+         "path":  [0],
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "pathId": 1,
+               "length": .4,
+               "path": [1,0],
+               "children": [
+                  {
+                     "pathId" : 2,
+                     "length": .15,
+                     "path": [9,5,0],
+                     "children": [
+                        {
+                           "pathId" : 3,
+                           "length" : .65,
+                           "path": [3,2,1,0],
+                           "children": [
+                              {
+                                 "pathId" : 4,
+                                 "length" : .2,
+                                 "path" : [4,3,2,1,0],
+                                 "mx" : 0
+                              },
+                              {
+                                 "pathId" : 5,
+                                 "length" : .2,
+                                 "path" : [5,3,2,1,0],
+                                 "mx" : 1
+                              }
+                           ]
+                        },
+                        {
+                           "pathId" : 6,
+                           "length" : .85,
+                           "path" : [6,2,1,0],
+                           "mx" : 2
+                        }
+                     ]
+                  },
+                  {
+                     "pathId" : 7,
+                     "length" : 1.0,
+                     "path" : [7,1,0],
+                     "mx" : 3
+                  }
+               ]
+            },
+            {
+               "pathId" : 8,
+               "length": .9,
+               "path": [8,0],
+               "children": [
+                  {
+                     "pathId" : 9,
+                     "length" : .5,
+                     "path" : [9,8,0],
+                     "mx" : 4
+                  },
+                  {
+                     "pathId" : 10,
+                     "length" : .5,
+                     "path" : [10,8,0],
+                     "mx" : 5
+                  }
+               ]
+            } 
+         ]
+      }
+      
+      pam = np.random.choice(2, 24).reshape(4, 6)
+      
+      treeEncoder = PhyloEncoding(treeDict, pam)
+      
+      with self.assertRaises(EncodingException):
+         pMtx = treeEncoder.encodePhylogeny()
    
    # ..............................   
    def test_tree_dict_with_branch_lengths(self):
@@ -435,20 +870,6 @@ class TestBioGeoEncoding(unittest.TestCase):
       assert np.all(abs(np.sum(testMerged, axis=0)) == abs(np.sum(bg1, axis=0)))
    
    # ..............................   
-   def test_merged_too_many_features_fail(self):
-      """
-      @summary: Test that BioGeo encoding fails when adding a layer with too
-                   many features.
-      @note: Too many features is defined as more than two for a particular 
-                event
-      """
-      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, "threeFeatures.shp")
-      # Add with event field instead of mutually exclusive
-      self.bgEncoder.addLayers(layerDL, eventField='event')
-      with self.assertRaises(EncodingException):
-         bg1 = self.bgEncoder.encodeHypotheses()
-   
-   # ..............................   
    def test_multiple_layers(self):
       """
       @summary: Tests that bio geo encoding works properly when adding multiple
@@ -492,15 +913,36 @@ class TestBioGeoEncoding(unittest.TestCase):
       
    # ..............................
    def test_one_hypothesis(self):
-      assert False
+      """
+      @summary: Test that encoding is successful when the layer includes one
+                   hypothesis
+      """
+      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, "oneFeature.shp")
+      self.bgEncoder.addLayers(layerDL, eventField='event')
+      bg1 = self.bgEncoder.encodeHypotheses()
    
    # ..............................   
-   def test_one_layer_too_many_features_fail(self):
-      assert False
+   def test_layer_too_many_features_fail(self):
+      """
+      @summary: Test that BioGeo encoding fails when adding a layer with too
+                   many features.
+      @note: Too many features is defined as more than two for a particular 
+                event
+      """
+      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, "threeFeatures.shp")
+      # Add with event field instead of mutually exclusive
+      self.bgEncoder.addLayers(layerDL, eventField='event')
+      with self.assertRaises(EncodingException):
+         bg1 = self.bgEncoder.encodeHypotheses()
    
    # ..............................   
    def test_one_layer_two_features(self):
-      assert False
+      """
+      @summary: Test that encoding is successful when the layer has two features
+      """
+      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, "GulfAtlantic.shp")
+      self.bgEncoder.addLayers(layerDL, eventField='event')
+      bg1 = self.bgEncoder.encodeHypotheses()
    
    # ..............................
    def test_shapegrid_does_not_exist_fail(self):
@@ -514,8 +956,16 @@ class TestBioGeoEncoding(unittest.TestCase):
    
    # ..............................
    def test_zero_features_fail(self):
-      assert False
+      """
+      @summary: Test that encoding fails when there are zero features for a 
+                   layer
+      """
+      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, "zeroFeatures.shp")
+      self.bgEncoder.addLayers(layerDL, eventField='event')
+      with self.assertRaises(EncodingException):
+         bg1 = self.bgEncoder.encodeHypotheses()
    
 # .............................................................................
 if __name__ == "__main__":
+   #TODO: Unit testify this module
    pass

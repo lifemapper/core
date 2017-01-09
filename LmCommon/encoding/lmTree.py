@@ -126,7 +126,6 @@ class LmTree(object):
          PhyloTreeKeys.BRANCH_LENGTH: 0.0
       }
       
-      n = 1
       for i in range(numTips):
          root[PhyloTreeKeys.CHILDREN].append({
                           PhyloTreeKeys.PATH_ID: i+1, 
@@ -134,8 +133,6 @@ class LmTree(object):
                           PhyloTreeKeys.CHILDREN: [], 
                           PhyloTreeKeys.NAME: str(i+1), 
                           PhyloTreeKeys.BRANCH_LENGTH: 0.0})
-      
-      n = numTips + 1
       
       newTree = cls(root)
       newTree.resolvePolytomies()
