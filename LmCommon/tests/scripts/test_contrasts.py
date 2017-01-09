@@ -30,7 +30,8 @@ import numpy as np
 import os
 import unittest
 
-from LmCommon.encoding.contrasts import BioGeoEncoding, PhyloEncoding
+from LmCommon.encoding.contrasts import (BioGeoEncoding, EncodingException, 
+                                         PhyloEncoding)
 from LmCommon.encoding.lmTree import LmTree
 
 from LmCommon.tests.helpers.testConstants import (BIO_GEO_HYPOTHESES_PATH,
@@ -396,6 +397,18 @@ class TestBioGeoEncoding(unittest.TestCase):
                                                                        axis=0)))
    
    # ..............................
+   def test_every_feature_a_hypothesis(self):
+      """
+      @summary: Test that a layer defined as having every feature as a separate 
+                   hypothesis is encoded successfully
+      @todo: Check output 
+      """
+      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, "threeFeatures.shp")
+      # Treat every feature as a hypothesis since we don't provide event field
+      self.bgEncoder.addLayers(layerDL, eventField='id')
+      bg1 = self.bgEncoder.encodeHypotheses()
+
+   # ..............................
    def test_layer_does_not_exist_fail(self):
       """
       @summary: Test that a file not found (IOError) exception is thrown when
@@ -423,7 +436,17 @@ class TestBioGeoEncoding(unittest.TestCase):
    
    # ..............................   
    def test_merged_too_many_features_fail(self):
-      assert False
+      """
+      @summary: Test that BioGeo encoding fails when adding a layer with too
+                   many features.
+      @note: Too many features is defined as more than two for a particular 
+                event
+      """
+      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, "threeFeatures.shp")
+      # Add with event field instead of mutually exclusive
+      self.bgEncoder.addLayers(layerDL, eventField='event')
+      with self.assertRaises(EncodingException):
+         bg1 = self.bgEncoder.encodeHypotheses()
    
    # ..............................   
    def test_multiple_layers(self):
@@ -455,9 +478,18 @@ class TestBioGeoEncoding(unittest.TestCase):
       assert np.all(abs(np.sum(testEncoding, axis=0)) == abs(np.sum(bg1, axis=0)))
    
    # ..............................
-   def test_mutually_exclusive(self):
-      assert False
-
+   def test_missing_eventfield_column(self):
+      """
+      @summary: Test that an EncodingException is thrown when trying to encode
+                   a layer with an event field that does not exist
+      """
+      layerDL = os.path.join(BIO_GEO_HYPOTHESES_PATH, 
+                             "MergedContrasts_Florida.shp")
+      # Add with event field instead of mutually exclusive
+      self.bgEncoder.addLayers(layerDL, eventField='bad_field')
+      with self.assertRaises(EncodingException):
+         bg1 = self.bgEncoder.encodeHypotheses()
+      
    # ..............................
    def test_one_hypothesis(self):
       assert False

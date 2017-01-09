@@ -42,6 +42,14 @@ from LmCommon.encoding.lmTree import LmTree
 SITE_FIELD = 'siteid'
 
 # .............................................................................
+class EncodingException(Exception):
+   """
+   @summary: This exception is raised when there is a problem with encoding.
+                The message should provide more information
+   """
+   pass
+
+# .............................................................................
 class BioGeoEncoding(object):
    """
    @summary: This class encodes a set of biogeographic hypothesis and a 
@@ -138,8 +146,7 @@ class BioGeoEncoding(object):
       @summary: Get features from a layer without an event field
       @param layerDL: The file location of the layer
       @note: Returns a list with one tuple with one or two features
-      @raise Exception: If there are zero or more than two features
-      @todo: Specific exception
+      @raise EncodingException: If there are zero or more than two features
       """
       lyrDS = self._openShapefile(layerDL)
       lyr = lyrDS.GetLayer(0)
@@ -148,9 +155,9 @@ class BioGeoEncoding(object):
       
       # Make sure feature count is 1 or 2
       if featCount < 1:
-         raise Exception, "Need at least one feature"
+         raise EncodingException("Need at least one feature")
       if featCount > 2:
-         raise Exception, "Too many features in layer"
+         raise EncodingException("Too many features in layer")
       
       feat1 = None
       feat2 = None
@@ -171,9 +178,9 @@ class BioGeoEncoding(object):
       @param eventField: The field in the layer to use to separate hypotheses
       @note: For each distinct event value in the event field, return a tuple
                 of one or two features
-      @raise Exception: If there are zero or more than two features for any 
-                           specific event
-      @todo: Specific exception
+      @raise EncodingException: If there are zero or more than two features for  
+                                   any specific event
+      @raise EncodingException: If the event field provided is not found
       """
       featuresList = []
       # Find distinct events
@@ -181,6 +188,21 @@ class BioGeoEncoding(object):
       # Get the data set name (file base name without extension)
       dsName = os.path.basename(layerDL).replace(FileFormats.SHAPE.ext, '')
       lyrDS = self._openShapefile(layerDL)
+      
+      # Look for event field
+      eventFieldFound = False
+      lyrDef = lyrDS.GetLayer(0).GetLayerDefn()
+      for i in range(lyrDef.GetFieldCount()):
+         fieldName = lyrDef.GetFieldDefn(i).GetName().lower()
+         print fieldName
+         if fieldName == eventField.lower():
+            eventFieldFound = True
+            break
+      
+      if not eventFieldFound:
+         raise EncodingException("Event field: {0} not found".format(
+                                                                  eventField))
+
       deSQL = "SELECT DISTINCT {field} FROM {dsName}".format(field=eventField,
                                                              dsName=dsName)
       deLyr = lyrDS.ExecuteSQL(deSQL)
@@ -198,7 +220,7 @@ class BioGeoEncoding(object):
          # Make sure feature count is 1 or 2
          # Don't need to check for at least 1 since we check for distinct events
          if featCount > 2:
-            raise Exception, "Too many features for event: %s" % de
+            raise EncodingException("Too many features for event: %s" % de)
 
          feat1 = None
          feat2 = None
@@ -294,7 +316,8 @@ class PhyloEncoding(object):
          else:
             pMtx = self._buildPMatrixNoBranchLengths()
       else:
-         raise Exception, "PAM and Tree do not match, fix before encoding"
+         raise EncodingException(
+                  "PAM and Tree do not match, fix before encoding")
       
       return pMtx
    
