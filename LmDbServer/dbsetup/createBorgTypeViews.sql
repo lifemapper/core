@@ -163,6 +163,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    mtxcolident,
    mtxcoldlocation,
    mtxcolmetadata, 
+   layerId,
    intersectParams,
    mtxcolstatus,
    mtxcolstatusmodtime,
@@ -178,7 +179,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    mtxstatusmodtime
 ) AS 
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
-             mc.squid, mc.ident, mc.dlocation, mc.metadata,
+             mc.squid, mc.ident, mc.dlocation, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.matrixDlocation, m.layerIndices, 
              m.metadataUrl, m.metadata, m.status, m.statusmodtime
@@ -198,6 +199,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    mtxcolident,
    mtxcoldlocation,
    mtxcolmetadata, 
+   layerId,
    intersectParams,
    mtxcolstatus,
    mtxcolstatusmodtime,
@@ -211,7 +213,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    mtxstatusmodtime,
    
    -- Layer.* 
-   layerId,
    userid,
    lyrsquid,
    lyrverify,
@@ -233,11 +234,17 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    bbox,
    lyrmodtime
 ) AS 
-      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
-             mc.mtxcolsquid, mc.mtxcolident, mc.mtxcoldlocation, mc.mtxcolmetadata,
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, mc.mtxcolsquid, 
+             mc.mtxcolident, mc.mtxcoldlocation, mc.mtxcolmetadata, mc.layerId, 
              mc.intersectParams, mc.mtxcolstatus, mc.mtxcolstatusmodtime,
              mc.matrixType, mc.gridsetId, mc.matrixDlocation, mc.layerIndices, 
-             mc.mtxmetadataUrl, mc.mtxmetadata, mc.mtxstatus, mc.mtxstatusmodtime
+             mc.mtxmetadataUrl, mc.mtxmetadata, mc.mtxstatus, 
+             mc.mtxstatusmodtime,
+             l.userid, l.lyrsquid, l.lyrverify, l.lyrname, l.lyrdlocation, 
+             l.lyrmetadataUrl, l.lyrmetadata, l.dataFormat, l.gdalType, 
+             l.ogrType, l.valUnits, l.valAttribute, l.nodataVal, l.minVal,
+             l.maxVal, l.epsgcode, l.mapunits, l.resolution, l.bbox, 
+             l.lyrmodtime
         FROM lm_v3.lm_matrixcolumn mc
         LEFT JOIN lm_v3.layer l ON mc.layerid = l.layerid;
 

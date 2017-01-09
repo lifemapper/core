@@ -426,7 +426,7 @@ create table lm_v3.MatrixColumn
    status int,
    statusmodtime double precision,
    
-   UNIQUE (gridsetId, matrixId, matrixIndex)
+   UNIQUE (matrixId, matrixIndex)
 );
 CREATE INDEX idx_mtxcolStatusModTime ON lm_v3.MatrixColumn(statusModTime);
 CREATE INDEX idx_mtxcolStatus ON lm_v3.MatrixColumn(status);
