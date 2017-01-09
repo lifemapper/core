@@ -240,11 +240,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
              mc.matrixType, mc.gridsetId, mc.matrixDlocation, mc.layerIndices, 
              mc.mtxmetadataUrl, mc.mtxmetadata, mc.mtxstatus, 
              mc.mtxstatusmodtime,
-             l.userid, l.lyrsquid, l.lyrverify, l.lyrname, l.lyrdlocation, 
-             l.lyrmetadataUrl, l.lyrmetadata, l.dataFormat, l.gdalType, 
+             l.userid, l.squid, l.verify, l.name, l.dlocation, 
+             l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, 
              l.ogrType, l.valUnits, l.valAttribute, l.nodataVal, l.minVal,
              l.maxVal, l.epsgcode, l.mapunits, l.resolution, l.bbox, 
-             l.lyrmodtime
+             l.modtime
         FROM lm_v3.lm_matrixcolumn mc
         LEFT JOIN lm_v3.layer l ON mc.layerid = l.layerid;
 

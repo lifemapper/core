@@ -245,6 +245,9 @@ class Matrix(ServiceObject, ProcessObject):
       success, msg = self._deleteFile(self._dlocation, deleteDir=True)
       self._matrix = None
       
+   def getLayerIndicesFilename(self):
+      return self._layerIndicesFilename
+   
 # ...............................................
    def setIndices(self, indicesFileOrObj=None, isLayer=True, doRead=True):
       """

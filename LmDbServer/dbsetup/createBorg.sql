@@ -379,7 +379,8 @@ create table lm_v3.Matrix
    metadataUrl text UNIQUE,
    metadata text,
    status int,
-   statusmodtime double precision
+   statusmodtime double precision,
+   UNIQUE (matrixType, gridsetId)
 );
 
 -- -------------------------------

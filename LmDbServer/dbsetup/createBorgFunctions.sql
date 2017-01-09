@@ -245,8 +245,107 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_countJobChains(usrid varchar(20), 
-    	                                           stat int)
+-- Gridset
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertGridset(grdid int,
+                                                        usr varchar, 
+                                                        nm varchar,
+                                                        metaurlprefix varchar,
+                                                        sgid int,
+                                                        siteidxs text,
+                                                        dloc text,
+                                                        epsg int,
+                                                        meta varchar, 
+                                                    	  mtime double precision)
+   RETURNS lm_v3.gridset AS
+$$
+DECLARE
+   rec lm_v3.gridset%rowtype;
+   newid int;
+   idstr varchar;
+   newurl varchar;
+BEGIN
+   IF grdid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.gridset WHERE gridsetid = grdid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.gridset WHERE userid = usr AND name = nm;
+   END IF;
+   IF NOT FOUND THEN
+      begin
+         INSERT INTO lm_v3.gridset (userId, name, shapeGridId, siteIndices, 
+                                    dlocation, epsgcode, metadata, modTime) 
+                             VALUES (usr, nm, sgid, siteidxs, 
+                                     dloc, epsg, meta, mtime);
+         IF FOUND THEN
+            -- update metadataUrl
+            SELECT INTO newid last_value FROM lm_v3.gridset_gridsetid_seq;
+            idstr = cast(newid as varchar);
+            newurl := replace(metaurlprefix, '#id#', idstr);
+            UPDATE lm_v3.Gridset SET metadataUrl = newurl WHERE gridsetId = newid;
+
+            -- get updated record
+            SELECT * INTO rec from lm_v3.Gridset WHERE gridsetId = newid;
+         END IF;
+      end;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;    
+
+-- ----------------------------------------------------------------------------
+-- Matrix
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
+                                                       mtxtype int,
+                                                       grdid int,
+                                                       dloc text,
+                                                       lyridxs text,
+                                                       metaurlprefix varchar,
+                                                       meta varchar, 
+                                                       stat int,
+                                                   	 stattime double precision)
+   RETURNS lm_v3.Matrix AS
+$$
+DECLARE
+   rec lm_v3.matrix%rowtype;
+   newid int;
+   idstr varchar;
+   newurl varchar;
+BEGIN
+   IF mtxid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixid = mtxid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
+                                            AND gridsetid = grdid;
+   END IF;
+   IF NOT FOUND THEN
+      begin
+         INSERT INTO lm_v3.matrix (matrixType, gridsetId, matrixDlocation, 
+                                   layerIndices, metadata, status, statusmodtime) 
+                           VALUES (mtxtype, grdid, dloc, 
+                                   lyridxs, meta, stat, stattime);
+         IF FOUND THEN
+            -- update metadataUrl
+            SELECT INTO newid last_value FROM lm_v3.matrix_matrixid_seq;
+            idstr = cast(newid as varchar);
+            newurl := replace(metaurlprefix, '#id#', idstr);
+            UPDATE lm_v3.matrix SET metadataUrl = newurl WHERE matrixId = newid;
+
+            -- get updated record
+            SELECT * INTO rec from lm_v3.matrix WHERE matrixId = newid;
+         END IF;
+      end;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;    
+
+-- ----------------------------------------------------------------------------
+-- JobChain
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countMFProcess(usrid varchar(20), 
+    	                                             stat int)
    RETURNS int AS
 $$
 DECLARE
@@ -255,10 +354,10 @@ DECLARE
    wherecls varchar;
 BEGIN
    IF usrid IS null THEN
-      SELECT count(*) INTO num FROM lm_v3.jobchain WHERE status = stat;
+      SELECT count(*) INTO num FROM lm_v3.MFProcess WHERE status = stat;
    ELSE
-      SELECT count(*) INTO num FROM lm_v3.jobchain WHERE status = stat 
-                                                   AND userid = usr;
+      SELECT count(*) INTO num FROM lm_v3.MFProcess WHERE status = stat 
+                                                      AND userid = usr;
    END IF;
 
    RETURN num;

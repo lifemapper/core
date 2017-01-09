@@ -162,9 +162,19 @@ class BorgScribe(LMObject):
       return taxSource
 
 # ...............................................
-   def insertShapeGrid(self, shpgrd, cutout=None):
+   def findOrInsertShapeGrid(self, shpgrd, cutout=None):
       updatedShpgrd = self._borg.findOrInsertShapeGrid(shpgrd, cutout)
       return updatedShpgrd
+   
+# ...............................................
+   def findOrInsertGridset(self, grdset):
+      updatedGrdset = self._borg.findOrInsertGridset(grdset)
+      return updatedGrdset   
+
+# ...............................................
+   def findOrInsertMatrix(self, mtx):
+      updatedMtx = self._borg.findOrInsertMatrix(mtx)
+      return updatedMtx   
 
 # ...............................................
    def updateShapeGrid(self, shpgrd):

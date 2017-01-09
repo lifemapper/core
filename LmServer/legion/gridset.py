@@ -53,9 +53,9 @@ class Gridset(ServiceObject):
       @summary Constructor for the Gridset class
       @param name: Short identifier for this gridset, not required to be unique.
       @param shapegrid: Vector layer with polygons representing geographic sites.
-      @param siteIndices: A dictionary with keys the unique/record identifiers 
-             and values the x, y coordinates of the sites in a PAM (if 
-             shapegrid is not provided)
+      @param siteIndices: A filename containing a dictionary with keys the 
+             unique/record identifiers and values the x, y coordinates of the 
+             sites in a Matrix (if shapegrid is not provided)
       @param epsgcode: The EPSG code of the spatial reference system of data.
       @param pam: A Presence Absence Matrix (MatrixType.PAM)
       @param grim: A Matrix of Environmental Values (MatrixType.GRIM)
@@ -73,15 +73,15 @@ class Gridset(ServiceObject):
             raise LMError('Gridset EPSG {} does not match Shapegrid EPSG {}'
                           .format(self._epsg, shapegrid.epsgcode))
 
-      ServiceObject.__init__(self, userId, gridsetId, None, modTime,
-            LMServiceType.GRIDSETS, moduleType=LMServiceModule.LM,
-            metadataUrl=metadataUrl)
+      ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
+                             moduleType=LMServiceModule.LM, 
+                             metadataUrl=metadataUrl, modTime=modTime)
       self.name = name
       self.grdMetadata = {}
       self.loadGrdMetadata(metadata)
       self.shapegrid = shapegrid
-      self.siteIndices = None
-      self._siteIndicesFilename = None
+      self._siteIndicesFilename = siteIndices
+      self._siteIndices = None
       self.setIndices(siteIndices, doRead=False)
       self.configFilename = configFilename
       self._setEPSG(epsgcode)
@@ -114,7 +114,7 @@ class Gridset(ServiceObject):
       return self._epsg
 
    epsgcode = property(_getEPSG, _setEPSG)
-
+   
 # .............................................................................
 # Methods
 # .............................................................................
@@ -145,27 +145,28 @@ class Gridset(ServiceObject):
       if self._path is None:
          self.setPath()
       return self._path
-   
+
 # ...............................................
-   def setIndices(self, indicesFileOrObj=None, doRead=True):
+   def readIndices(self, indicesFilename=None):
       """
-      @summary Fill the siteIndices from dictionary or existing file
+      @summary Fill the siteIndices from existing file
       """
       indices = None
-      if indicesFileOrObj is not None:
-         if isinstance(indicesFileOrObj, StringType) and os.path.exists(indicesFileOrObj):
-            self._siteIndicesFilename = indicesFileOrObj
-            if doRead:
-               try:
-                  f = open(indicesFileOrObj, 'r')
-                  indices = f.read()
-               except:
-                  raise LMError('Failed to read indices {}'.format(indicesFileOrObj))
-               finally:
-                  f.close()
-         elif isinstance(indicesFileOrObj, dict):
-            indices = indicesFileOrObj
+      if indicesFilename is None:
+         indicesFilename = self._siteIndicesFilename
+      if isinstance(indicesFilename, StringType) and os.path.exists(indicesFilename):
+         try:
+            f = open(indicesFilename, 'r')
+            indices = pickle.load(f)
+         except:
+            raise LMError('Failed to read indices {}'.format(indicesFilename))
+         finally:
+            f.close()
       self.siteIndices = indices
+      
+
+   def getSiteIndicesFilename(self):
+      return self._siteIndicesFilename
 
 # ...............................................
    def setMatrix(self, mtxType, mtxFileOrObj=None, doRead=False):
@@ -268,21 +269,6 @@ class Gridset(ServiceObject):
       
 
 # .............................................................................
-# Private methods
-# .............................................................................
-# .............................................................................
-
-
-         
-# # ...............................................
-#    def rollback(self, currtime):
-#       """
-#       @summary: Rollback processing following a change to the layers.  
-#       @param currtime: Time of status modfication
-#       """
-#       self.updateStatus(JobStatus.GENERAL, modTime=currtime)
-
-# .............................................................................
 # Public methods
 # .............................................................................
 # ...............................................
@@ -297,166 +283,19 @@ class Gridset(ServiceObject):
    def addGrdMetadata(self, newMetadataDict):
       self.grdMetadata = LMObject._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.grdMetadata)
-
-# # ................................................
-#    def slicePAM(self, columnIdx): 
-#       if self.isCompressed:
-#          ids = self._pamSum.getColumnPresence(self._sitesPresent, 
-#                                               self._layersPresent,
-#                                               columnIdx)
-#          return ids
-#       else:
-#          raise LMError(currargs='Cannot get column before compression')
-
-    
-# ...............................................
-   def getSitesPresent(self):
-      """
-      @summary: Return an dictionary of site/row identifier keys and boolean values 
-                for presence of at least one layer.
-      """
-      return self._sitesPresent
-         
-# ...............................................
-   def setSitesPresent(self, sitesPresent):
-      """
-      @summary: Set the dictionary of site/row identifier keys and boolean values 
-                for presence of at least one layer.
-      """
-      if not self._sitesPresent:
-         self._sitesPresent = sitesPresent
-         
-# ...............................................
-   def getLayersPresent(self):
-      """
-      @summary: Return an dictionary of layer/column identifier keys and boolean values 
-                for presence in at least one site.
-      """
-      return self._layersPresent
-
-# ...............................................
-   def setLayersPresent(self, layersPresent):
-      """
-      @summary: Set the dictionary of layer/column identifier keys and boolean values 
-                for presence of at least one site.
-      @note: Do not reset this if it is already populated.  If necessary, 
-             clearLayersPresent first.
-      """
-      if not self._layersPresent:
-         self._layersPresent = layersPresent
-         
-# ...............................................
-   def getCleanLayersPresent(self):
-      """
-      @summary: Return a new layersPresent, all layers = True
-      """
-      newLayersPresent = {}
-      for idx in self._layersPresent.keys():
-         newLayersPresent[idx] = True
-      return newLayersPresent
-
-# ...............................................
-   def getCleanSitesPresent(self):
-      """
-      @summary: Reset existing layersPresent and sitesPresent to true for 
-                all layers and sites. 
-      """
-      newSitesPresent = {}
-      for idx in self._sitesPresent.keys():
-         newSitesPresent[idx] = True
-      return newSitesPresent
-
-# ...............................................
-   def resetPresenceIndices(self):
-      """
-      @summary: Reset existing layersPresent and sitesPresent to true for 
-                all layers and sites. 
-      """
-      for idx in self._layersPresent.keys():
-         self._layersPresent[idx] = True
-      for idx in self._sitesPresent.keys():
-         self._sitesPresent[idx] = True
-
-
-# ...............................................
-   def createLocalMapFilename(self):
-      """
-      @summary: Set the filename for the bucket-based mapfile containing 
-                shapegrid (now) and computed layers (todo) 
-      @return: String identifying the filename mapfile
-      """
-      mapfname = None
-      if self.getId() is not None:
-         mapfname = self._earlJr.createFilename(LMFileType.OTHER_MAP,
-                        radexpId=self.parentId, bucketId=self.getId(), 
-                        pth=self._path, usr=self._userId, 
-                        epsg=self._epsg)
-      return mapfname
-
-# ...............................................
-   def createMapPrefix(self, lyrName=None):
-      """
-      @summary Gets the OGC service URL prefix for this object
-      @return URL string representing a webservice request for maps of this object
-      """
-      mapfilename = self.createLocalMapFilename()
-      mapname, ext = os.path.splitext(os.path.split(mapfilename)[1])
-      mapprefix = self._earlJr.constructMapPrefix(ftype=LMFileType.BUCKET_MAP, 
-                                                  mapname=mapname, lyrname=lyrName)
-      return mapprefix
-          
-# ...............................................
-   @property
-   def mapPrefix(self):
-      """
-      @summary: Construct the endpoint of a Lifemapper WMS URL for 
-                this object.
-      """
-      return self.createMapPrefix()
-   
-# ...............................................
-   def _createExperimentFilename(self, filetype):
-      """
-      @summary: Set the filename for an Experiment-based object based on the 
-                user and experimentId
-      @param filetype: LmServer.common.lmconstants.LMFileType. Valid types are: 
-             PAM, GRIM, SITE_INDICES, BIOGEO_HYPOTHESES, SUM_CALCS, SUM_SHAPE 
-      @return: String identifying the filename of the object
-      """
-      fname = None
-      if LMFileType.isRADExperiment(filetype): 
-         if self.getId() is not None:
-            fname = self._earlJr.createFilename(filetype, pth=self.path)
-      else:
-         raise LMError('Invalid filetype {} for RAD Experiment file')
-      return fname
-            
             
 # .............................................................................
 # Read-0nly Properties
 # .............................................................................
-   @property
-   def status(self):
-      """
-      @summary Gets the run status of the RADExperiment for the current stage
-      @return The run status of the RADExperiment for the current stage
-      """
-      return self._status
-   
-   @property
-   def statusModTime(self):
-      """
-      @summary Gets the last time the status was modified for the current stage
-      @return Status modification time in modified julian date format
-      """
-      return self._statusmodtime
-
 # ...............................................
-   @property
-   def outputPath(self):
-      return self._bucketPath
-
 # ...............................................
    @property
    def epsgcode(self):
       return self._epsg
+
+   @property
+   def shapeGridId(self):
+      if self.shapegrid is not None:
+         return self.shapegrid.getId()
+      else:
+         return None

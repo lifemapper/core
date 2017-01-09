@@ -544,6 +544,29 @@ class Borg(DbPostgresql):
                            shpgrd.status, shpgrd.statusModTime)
       updatedShpgrd = self._createShapeGrid(row, idxs)
       return updatedShpgrd
+   
+# ...............................................
+   def findOrInsertGridset(self, grdset):
+      """
+      @summary: Find or insert a Gridset into the database
+      @param grdset: Gridset to insert
+      @return: Updated new or existing Gridset.
+      """
+      meta = grdset.dumpGrdMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertGridset',
+                                                         grdset.getId(),
+                                                         grdset.getUserId(),
+                                                         grdset.name,
+                                                         grdset.metadataUrl,
+                                                         grdset.shapeGridId,
+                                                         grdset.getSiteIndicesFilename(),
+                                                         grdset.configFilename,
+                                                         grdset.epsgcode,
+                                                         meta,
+                                                         grdset.modTime)
+      updatedGrdset = self._createGridset(row, idxs)
+      return updatedGrdset
+      
 
 # ...............................................
    def updateShapeGrid(self, shpgrd):
@@ -920,29 +943,44 @@ class Borg(DbPostgresql):
       newOrExistingProj = self._createSDMProjection(row, idxs)
       return newOrExistingProj
 
+# # ...............................................
+#    def findOrInsertMtxcol(self, mtxcol):
+#       """
+#       @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
+#                 OR save a new SDMProjection
+#       @param proj: the SDMProjection object to update
+#       @return new or existing SDMProjection 
+#       """
+#       mcmeta = mtxcol.dumpParamMetadata()
+#       intparams = mtxcol.dumpIntersectParams()
+#       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
+#                      mtxcol.getId(), mtxcol.squid, mtxcol.ident, 
+#                      mtxcol.getDLocation(), mcmeta, mtxcol.getLayerId(), 
+#                      proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
+#                      proj.ogrType(), proj.valUnits, proj.nodataVal, proj.minVal,
+#                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
+#                      proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
+#                      proj.occurrenceSet.getId(), proj.algorithmCode, algparams,
+#                      proj.modelScenario.getId(), proj.modelMask.getId(),
+#                      proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
+#                      proj.processType, proj.status, proj.statusModTime)
+#       newOrExistingProj = self._createSDMProjection(row, idxs)
+#       return newOrExistingProj
+
 # ...............................................
-   def findOrInsertMtxcol(self, mtxcol):
+   def findOrInsertMatrix(self, mtx):
       """
-      @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
-                OR save a new SDMProjection
-      @param proj: the SDMProjection object to update
-      @return new or existing SDMProjection 
+      @summary: Find existing OR save a new Matrix
+      @param mtx: the Matrix object to insert
+      @return new or existing Matrix
       """
-      mcmeta = mtxcol.dumpParamMetadata()
-      intparams = mtxcol.dumpIntersectParams()
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
-                     mtxcol.getId(), mtxcol.squid, mtxcol.ident, 
-                     mtxcol.getDLocation(), mcmeta, mtxcol.getLayerId(), 
-                     proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
-                     proj.ogrType(), proj.valUnits, proj.nodataVal, proj.minVal,
-                     proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
-                     proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
-                     proj.occurrenceSet.getId(), proj.algorithmCode, algparams,
-                     proj.modelScenario.getId(), proj.modelMask.getId(),
-                     proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
-                     proj.processType, proj.status, proj.statusModTime)
-      newOrExistingProj = self._createSDMProjection(row, idxs)
-      return newOrExistingProj
+      meta = mtx.dumpMtxMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix', 
+                     mtx.getId(), mtx.matrixType, mtx.parentId, 
+                     mtx.getDLocation(), mtx.getLayerIndicesFilename(),
+                     mtx.metadataUrl, meta, mtx.status, mtx.statusModTime)
+      newOrExistingMtx = self._createMatrix(row, idxs)
+      return newOrExistingMtx
 
 # # ...............................................
 #    def updateSDMProject(self, proj):

@@ -39,7 +39,6 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH,
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
-from LmServer.common.lmconstants import DEFAULT_CONFIG
 from LmServer.common.lmuser import LMUser
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
@@ -94,7 +93,7 @@ def addAlgorithms(scribe):
 def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
    shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
                    status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
-   newshp = scribe.insertShapeGrid(shp)
+   newshp = scribe.findOrInsertShapeGrid(shp)
    try:
       newshp.buildShape()
    except Exception, e:
@@ -117,7 +116,7 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
            ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
    grdset = Gridset(name=archiveName, metadata=meta, shapegrid=shp, configFilename=configFname, 
                     epsgcode=shp.epsgcode, userId=usr, modTime=CURR_MJD)
-   updatedGrdset = scribe.insertGridset(grdset)
+   updatedGrdset = scribe.findOrInsertGridset(grdset)
 
    # "Global" PAM
    meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
@@ -125,7 +124,7 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
    gpam = Matrix(None, matrixType=MatrixType.PAM, metadata=meta,
                  userId=usr, gridsetId=updatedGrdset.getId(),
                  status=JobStatus.GENERAL, statusModTime=CURR_MJD)
-   updatedGpam = scribe.insertMatrix(gpam)
+   updatedGpam = scribe.findOrInsertMatrix(gpam)
    
 # ...............................................
 def _getbioName(obsOrPred, res, 
@@ -433,6 +432,7 @@ def _getConfiguredMetadata(META, pkgMeta):
 
 # ...............................................
 def _importClimatePackageMetadata(envPackageName):
+   # TODO: Remove `v2`
    metafname = os.path.join(ENV_DATA_PATH, '{}.v2{}'.format(envPackageName, 
                                                             OutputFormat.PYTHON))
    if not os.path.exists(metafname):
@@ -604,18 +604,22 @@ import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, DEFAULT_OGR_FORMAT)
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
+                                         JobStatus, MatrixType)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH, OccurrenceFieldNames
-from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
+from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
+         GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
+from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
+from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.legion.envlayer import EnvLayer, EnvType                    
+from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.matrix import Matrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 
@@ -623,9 +627,14 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 CURR_MJD = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBoom import *
 from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
-          _getConfiguredMetadata, _getbioName, _getBaselineLayers, _findFileFor)
-taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
-envPackageName = SCENARIO_PACKAGE
+          _getConfiguredMetadata, _getbioName, _getBaselineLayers, _findFileFor,
+          _addIntersectGrid)
+          
+envPackageName = '10min-past-present-future'
+datasource = 'User'
+archiveName = ARCHIVE_NAME
+minpoints = 20
+
 META, metafname = _importClimatePackageMetadata(envPackageName)
 pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
 configMeta = _getConfiguredMetadata(META, pkgMeta)
@@ -636,21 +645,6 @@ logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
 success = scribe.openConnections()
 
-
-# ...................................................
-# Shapegrid testing
-(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
- scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
- configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
-shpgrd = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
-                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)                                              
-
-newshp = scribe.insertShapeGrid(shpgrd)
-
-newshp.buildShape()
-newshp.updateStatus(JobStatus.COMPLETE)
-updatedShp =  scribe.updateShapeGrid(newshp)
- 
 # ...................................................
 # User testing
 addUsers(scribe, configMeta)
@@ -667,6 +661,24 @@ predScens = createPredictedScenarios(usr, pkgMeta, configMeta,
                                      META.CLIMATE_KEYWORDS)
 predScens[basescen.code] = basescen
 addScenarioAndLayerMetadata(scribe, predScens)
+
+# ...................................................
+# Shapegrid testing
+# (scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
+#  scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
+#  configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
+
+shpId = addArchive(scribe, metafname, archiveName, 
+                   configMeta['gridname'], configMeta['gridsides'], 
+                   configMeta['gridsize'], configMeta['mapunits'], 
+                   configMeta['epsg'], pkgMeta['bbox'], usr)
+
+newshp = scribe.insertShapeGrid(shpgrd)
+
+newshp.buildShape()
+newshp.updateStatus(JobStatus.COMPLETE)
+updatedShp =  scribe.updateShapeGrid(newshp)
+ 
 
 
 """
