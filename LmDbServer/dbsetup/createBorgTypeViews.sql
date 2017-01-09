@@ -157,7 +157,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
 (
    -- MatrixColumn.*
    matrixColumnId,
-   gridsetId,
    matrixId,
    matrixIndex,
    mtxcolsquid,
@@ -178,7 +177,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    mtxstatus,
    mtxstatusmodtime
 ) AS 
-      SELECT mc.matrixColumnId, mc.gridsetId, mc.matrixId, mc.matrixIndex, 
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.squid, mc.ident, mc.dlocation, mc.metadata,
              mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.matrixDlocation, m.layerIndices, 
@@ -193,7 +192,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
 (
    -- lm_matrixcolumn.*
    matrixColumnId,
-   gridsetId,
    matrixId,
    matrixIndex,
    mtxcolsquid,
@@ -235,7 +233,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    bbox,
    lyrmodtime
 ) AS 
-      SELECT mc.matrixColumnId, mc.gridsetId, mc.matrixId, mc.matrixIndex, 
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.mtxcolsquid, mc.mtxcolident, mc.mtxcoldlocation, mc.mtxcolmetadata,
              mc.intersectParams, mc.mtxcolstatus, mc.mtxcolstatusmodtime,
              mc.matrixType, mc.gridsetId, mc.matrixDlocation, mc.layerIndices, 

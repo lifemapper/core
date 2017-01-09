@@ -411,7 +411,6 @@ create table lm_v3.GridsetTree
 create table lm_v3.MatrixColumn 
 (
    matrixColumnId  serial UNIQUE PRIMARY KEY,
-   gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    -- Global PAM will have an entry
    matrixId int NOT NULL REFERENCES lm_v3.Matrix ON DELETE CASCADE,
    matrixIndex int,
