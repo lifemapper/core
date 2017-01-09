@@ -94,10 +94,11 @@ class EarlJr(LMObject):
       return parts
    
 # ...............................................
-   def createDataPath(self, usr, filetype, occsetId=None, epsg=None, radexpId=None, 
+   def createDataPath(self, usr, filetype, occsetId=None, epsg=None, 
+                      gridsetId=None,
                       matrixId=None, matrixType=None, treeId=None,
                       # TODO: delete
-                      isLayers=False, isMaps=False, bucketId=None):
+                      radexpId=None, isLayers=False, isMaps=False, bucketId=None):
       """
       @note: /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
@@ -106,9 +107,9 @@ class EarlJr(LMObject):
              /ARCHIVE_PATH/userId/<epsg>/USER_LAYER_DIR/
                  contains user layers common to epsg 
              /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/
-                 contains computed data for RAD experiment xxx
+                 contains computed data for RAD gridset xxx
              /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/<yyy>
-                 contains computed data for RAD experiment xxx, Bucket yyy
+                 contains computed data for RAD experiment xxx, Matrix yyy
       """
       if (usr is None or 
           (not isMaps and (epsg is None and occsetId is None))):
@@ -138,13 +139,18 @@ class EarlJr(LMObject):
          if LMFileType.isUserSpace(filetype):
             pthparts.append(USER_LAYER_DIR)
          elif LMFileType.isRAD(filetype):
-            if radexpId is not None:
+            # New
+            if gridsetId is not None:
+               pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(gridsetId))
+               if matrixId is not None:
+                  pthparts.append(str(matrixId))
+            # TODO: delete
+            elif radexpId is not None:
                pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(radexpId))
-               # TODO: delete
                if bucketId is not None:
                   pthparts.append(str(bucketId))
             else:
-               raise LMError('Missing RAD Experiment ID for LMFileType {}'
+               raise LMError('Missing RAD Gridset/Experiment ID for LMFileType {}'
                              .format(filetype))
          pth = os.path.join(*pthparts)
 

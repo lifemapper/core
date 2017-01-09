@@ -31,18 +31,22 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS,
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
-                                         JobStatus)
+                                         JobStatus, MatrixType)
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
+from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
+         GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmconstants import DEFAULT_CONFIG
 from LmServer.common.lmuser import LMUser
+from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
-from LmServer.legion.envlayer import EnvLayer                    
+from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.matrix import Matrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 
@@ -87,10 +91,7 @@ def addAlgorithms(scribe):
    return ids
 
 # ...............................................
-def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
-   """
-   @todo: Add a gridset for the Global PAM here
-   """
+def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
    shp = ShapeGrid(gridname, usr, epsg, cellsides, cellsize, mapunits, bbox,
                    status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
    newshp = scribe.insertShapeGrid(shp)
@@ -102,6 +103,29 @@ def addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox
       newshp.updateStatus(JobStatus.COMPLETE)
       updatedShp =  scribe.updateShapeGrid(newshp)
    return updatedShp
+   
+# ...............................................
+def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize, 
+               mapunits, epsg, bbox, usr):
+   """
+   @summary: Create a Shapegrid, PAM, and Gridset for this archive's Global PAM
+   """
+   shp = _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, 
+                           bbox, usr)
+   # "BOOM" Archive
+   meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
+           ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
+   grdset = Gridset(name=archiveName, metadata=meta, shapegrid=shp, configFilename=configFname, 
+                    epsgcode=shp.epsgcode, userId=usr, modTime=CURR_MJD)
+   updatedGrdset = scribe.insertGridset(grdset)
+
+   # "Global" PAM
+   meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
+           ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
+   gpam = Matrix(None, matrixType=MatrixType.PAM, metadata=meta,
+                 userId=usr, gridsetId=updatedGrdset.getId(),
+                 status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+   updatedGpam = scribe.insertMatrix(gpam)
    
 # ...............................................
 def _getbioName(obsOrPred, res, 
@@ -421,7 +445,7 @@ def _importClimatePackageMetadata(envPackageName):
    except Exception, e:
       raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
                     .format(metafname, e))
-   return META
+   return META, metafname
 
 # ...............................................
 def _writeConfigFile(envPackageName, userid, datasource, configMeta, minpoints,
@@ -475,7 +499,7 @@ if __name__ == '__main__':
             description=('Populate a Lifemapper database with metadata ' +
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-m', '--metadata', default=SCENARIO_PACKAGE,
+   parser.add_argument('-e', '--environmental_metadata', default=SCENARIO_PACKAGE,
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
    parser.add_argument('-s', '--species_source', default='User',
@@ -483,14 +507,17 @@ if __name__ == '__main__':
                   '\'GBIF\' for GBIF-provided CSV data sorted by taxon id, ' +
                   '\'IDIGBIO\' for a list of GBIF accepted taxon ids suitable ' +
                   'for querying the iDigBio API'))
+   parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
+            help=('Name for the archive and gridset created from these data'))
    parser.add_argument('-p', '--min_points', default=POINT_COUNT_MIN,
             help=('Minimum number of points required for SDM computation ' +
                   'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
                   'the site-specific configuration file config.site.ini' ))
 
    args = parser.parse_args()
-   envPackageName = args.metadata
+   envPackageName = args.environmental_metadata
    datasource = args.species_source.upper()
+   archiveName = args.archive_name
    minpoints = args.min_points
    try:
       int(minpoints)
@@ -499,7 +526,7 @@ if __name__ == '__main__':
              .format(minpoints))
       minpoints = POINT_COUNT_MIN
    # Imports META
-   META = _importClimatePackageMetadata(envPackageName)
+   META, metafname = _importClimatePackageMetadata(envPackageName)
    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
    configMeta = _getConfiguredMetadata(META, pkgMeta)
    usr = configMeta['userid']
@@ -547,10 +574,10 @@ if __name__ == '__main__':
 # .............................
       # Grid for GPAM
       logger.info('  Insert, build shapegrid {} ...'.format(configMeta['gridname']))
-      shpId = addIntersectGrid(scribeWithBorg, configMeta['gridname'], 
-                     configMeta['gridsides'], configMeta['gridsize'], 
-                     configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], 
-                     usr)
+      shpId = addArchive(scribeWithBorg, metafname, archiveName, 
+                         configMeta['gridname'], configMeta['gridsides'], 
+                         configMeta['gridsize'], configMeta['mapunits'], 
+                         configMeta['epsg'], pkgMeta['bbox'], usr)
 # .............................
       # Insert all taxonomic sources for now
       logger.info('  Insert taxonomy metadata ...')
@@ -599,7 +626,7 @@ from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
           _getConfiguredMetadata, _getbioName, _getBaselineLayers, _findFileFor)
 taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
 envPackageName = SCENARIO_PACKAGE
-META = _importClimatePackageMetadata(envPackageName)
+META, metafname = _importClimatePackageMetadata(envPackageName)
 pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
 configMeta = _getConfiguredMetadata(META, pkgMeta)
 lyrtypeMeta = META.LAYERTYPE_META

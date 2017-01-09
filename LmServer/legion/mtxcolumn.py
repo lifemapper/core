@@ -44,7 +44,7 @@ class MatrixColumn(_LayerParameters, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, matrixIndex, matrixId, gridsetId, userId, 
+   def __init__(self, matrixIndex, matrixId, userId, 
                 processType=ProcessType.RAD_INTERSECT, 
                 metadata={}, intersectParams={}, squid=None, ident=None,
                 matrixColumnId=None, status=None, statusModTime=None):
@@ -66,7 +66,6 @@ class MatrixColumn(_LayerParameters, ProcessObject):
                              statusModTime=statusModTime)
       self.squid = squid
       self.ident = ident
-      self.gridsetId = gridsetId
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
       self.loadParamMetadata(metadata)
@@ -94,7 +93,7 @@ class MatrixVector(MatrixColumn, Vector):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, matrixIndex, matrixId, gridsetId, userId, 
+   def __init__(self, matrixIndex, matrixId, userId, 
                 # Vector
                 name, epsgcode, lyrId=None, 
                 squid=None, verify=None, dlocation=None, 
@@ -113,7 +112,7 @@ class MatrixVector(MatrixColumn, Vector):
                 ident=None, matrixColumnId=None, status=None, statusModTime=None):
                 
       # ...................
-      MatrixColumn(matrixIndex, matrixId, gridsetId, userId, 
+      MatrixColumn(matrixIndex, matrixId, userId, 
                    processType=processType, 
                    metadata=mtxcolMetadata, intersectParams=intersectParams, 
                    squid=squid, ident=ident, matrixColumnId=matrixColumnId, 
@@ -145,7 +144,7 @@ class MatrixRaster(MatrixColumn, Raster):
 # .............................................................................
 # Constructor
 # .............................................................................   
-   def __init__(self, matrixIndex, matrixId, gridsetId, userId, 
+   def __init__(self, matrixIndex, matrixId, userId, 
                 # Raster
                 name, epsgcode, lyrId=None, 
                 squid=None, verify=None, dlocation=None, 
@@ -161,7 +160,7 @@ class MatrixRaster(MatrixColumn, Raster):
                 ident=None, matrixColumnId=None, status=None, statusModTime=None):
 
       # ...................
-      MatrixColumn(matrixIndex, matrixId, gridsetId, userId, 
+      MatrixColumn(matrixIndex, matrixId, userId, 
                    processType=processType, 
                    metadata=mtxcolMetadata, intersectParams=intersectParams, 
                    squid=squid, ident=ident, matrixColumnId=matrixColumnId, 

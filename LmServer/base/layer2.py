@@ -50,10 +50,6 @@ from LmServer.common.localconstants import APP_PATH, DEFAULT_EPSG
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
-   META_TITLE = 'title'
-   META_AUTHOR = 'author'
-   META_DESCRIPTION = 'description'
-   META_KEYWORDS = 'keywords'
    META_IS_CATEGORICAL = 'isCategorical'
    META_IS_DISCRETE = 'isDiscrete'
 # .............................................................................
@@ -82,8 +78,8 @@ class _Layer(LMSpatialObject, ServiceObject):
       @param squid: unique identifier maintaining 'Species thread' for a user
       @param verify: Hash of the data for verification
       @param dlocation: Data location (url, file path, ...)
-      @param metadata: Dictionary of metadata key/values; uses class attribute 
-                       constants META_* as keys
+      @param metadata: Dictionary of metadata key/values; uses class or 
+                       superclass attribute constants META_* as keys
       @param dataFormat: Data file format (ogr or gdal codes, used to choose
                   driver for read/write). 
                   GDAL Raster Format code at http://www.gdal.org/formats_list.html.

@@ -631,7 +631,7 @@ class LMServiceType:
    BUCKETS = 'buckets'
    TREES = 'trees'
    EXPERIMENTS = 'experiments'
-   RAD_EXPERIMENTS = 'experiments'
+   GRIDSETS = 'gridsets'
    SDM_EXPERIMENTS = 'experiments'
    LAYERTYPES = 'typecodes'
    MODELS = 'models'
@@ -648,6 +648,11 @@ class LMServiceType:
    LAYERS = 'layers'
    LAYERSETS = 'layersets'
    MATRICES = 'matrices'
+   
+# Archive and Global PAM descriptions
+GPAM_KEYWORD = 'Global PAM'
+ARCHIVE_NAME = 'BOOM Archive'
+ARCHIVE_KEYWORD = 'archive'
    
 # ............................................................................
 # Change to enum.Enum with Python 3.4

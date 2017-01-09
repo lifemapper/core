@@ -115,6 +115,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    idAttribute,
    xAttribute,
    yAttribute,
+   siteIndices,
    shpgrdstatus,
    shpgrdstatusmodtime,
    -- Layer.* 
@@ -140,7 +141,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    lyrmodtime
 ) AS
       SELECT sg.layerId, sg.cellsides, sg.cellsize, sg.vsize, sg.idAttribute,
-             sg.xAttribute, sg.yAttribute, sg.status, sg.statusmodtime,
+             sg.xAttribute, sg.yAttribute, sg.siteIndices, sg.status, 
+             sg.statusmodtime,
              l.userid, l.squid, l.verify, l.name, l.dlocation,
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
@@ -150,11 +152,67 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
 
 -- ----------------------------------------------------------------------------
 -- lm_matrixlayer
+DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
+(
+   -- MatrixColumn.*
+   matrixColumnId,
+   matrixId,
+   matrixIndex,
+   mtxcolsquid,
+   mtxcolident,
+   mtxcoldlocation,
+   mtxcolmetadata, 
+   layerId,
+   intersectParams,
+   mtxcolstatus,
+   mtxcolstatusmodtime,
+   
+   -- Matrix.*
+   matrixType,
+   gridsetId,
+   matrixDlocation,
+   layerIndices,
+   mtxmetadataUrl,
+   mtxmetadata,
+   mtxstatus,
+   mtxstatusmodtime
+) AS 
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
+             mc.squid, mc.ident, mc.dlocation, mc.metadata, mc.layerId,
+             mc.intersectParams, mc.status, mc.statusmodtime,
+             m.matrixType, m.gridsetId, m.matrixDlocation, m.layerIndices, 
+             m.metadataUrl, m.metadata, m.status, m.statusmodtime
+        FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m
+        WHERE mc.matrixId = m.matrixId;
+
+-- ----------------------------------------------------------------------------
+-- lm_matrixlayer
 DROP VIEW IF EXISTS lm_v3.lm_matrixlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
 (
-   -- Layer.* 
+   -- lm_matrixcolumn.*
+   matrixColumnId,
+   matrixId,
+   matrixIndex,
+   mtxcolsquid,
+   mtxcolident,
+   mtxcoldlocation,
+   mtxcolmetadata, 
    layerId,
+   intersectParams,
+   mtxcolstatus,
+   mtxcolstatusmodtime,
+   matrixType,
+   gridsetId,
+   matrixDlocation,
+   layerIndices,
+   mtxmetadataUrl,
+   mtxmetadata,
+   mtxstatus,
+   mtxstatusmodtime,
+   
+   -- Layer.* 
    userid,
    lyrsquid,
    lyrverify,
@@ -174,39 +232,21 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    mapunits,
    resolution,
    bbox,
-   lyrmodtime,
-
-   -- MatrixColumn.*
-   matrixColumnId,
-   matrixId,
-   matrixIndex,
-   mtxcolsquid,
-   mtxcolident,
-   mtxcoldlocation,
-   metadata, 
-   intersectParams,
-   mtxcolstatus,
-   mtxcolstatusmodtime,
-   
-   -- Matrix.*
-   matrixType,
-   gridsetId,
-   matrixDlocation,
-   siteLayerIndices,
-   mtxmetadata
+   lyrmodtime
 ) AS 
-      SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
-             l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
-             l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
-             l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
-             mc.squid, mc.ident, mc.dlocation, mc.metadata,
-             mc.intersectParams, mc.status, mc.statusmodtime,
-             m.matrixType, m.gridsetId, m.matrixDlocation, m.siteLayerIndices, 
-             m.metadata
-        FROM lm_v3.layer l, lm_v3.MatrixColumn mc, lm_v3.Matrix m
-        WHERE mc.matrixId = m.matrixId
-          AND mc.layerid = l.layerid;
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, mc.mtxcolsquid, 
+             mc.mtxcolident, mc.mtxcoldlocation, mc.mtxcolmetadata, mc.layerId, 
+             mc.intersectParams, mc.mtxcolstatus, mc.mtxcolstatusmodtime,
+             mc.matrixType, mc.gridsetId, mc.matrixDlocation, mc.layerIndices, 
+             mc.mtxmetadataUrl, mc.mtxmetadata, mc.mtxstatus, 
+             mc.mtxstatusmodtime,
+             l.userid, l.lyrsquid, l.lyrverify, l.lyrname, l.lyrdlocation, 
+             l.lyrmetadataUrl, l.lyrmetadata, l.dataFormat, l.gdalType, 
+             l.ogrType, l.valUnits, l.valAttribute, l.nodataVal, l.minVal,
+             l.maxVal, l.epsgcode, l.mapunits, l.resolution, l.bbox, 
+             l.lyrmodtime
+        FROM lm_v3.lm_matrixcolumn mc
+        LEFT JOIN lm_v3.layer l ON mc.layerid = l.layerid;
 
 -- ----------------
 -- lm_sdmproject 
@@ -405,6 +445,7 @@ lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
+lm_v3.lm_matrixcolumn,
 lm_v3.lm_matrixlayer,
 lm_v3.lm_sdmProject, 
 lm_v3.lm_bloat
@@ -415,6 +456,7 @@ lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
+lm_v3.lm_matrixcolumn,
 lm_v3.lm_matrixlayer,
 lm_v3.lm_sdmProject, 
 lm_v3.lm_bloat
