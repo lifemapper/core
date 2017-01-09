@@ -194,7 +194,6 @@ class BioGeoEncoding(object):
       lyrDef = lyrDS.GetLayer(0).GetLayerDefn()
       for i in range(lyrDef.GetFieldCount()):
          fieldName = lyrDef.GetFieldDefn(i).GetName().lower()
-         print fieldName
          if fieldName == eventField.lower():
             eventFieldFound = True
             break
@@ -208,6 +207,10 @@ class BioGeoEncoding(object):
       deLyr = lyrDS.ExecuteSQL(deSQL)
       for feat in deLyr:
          distinctEvents.append(feat.GetField(0))
+      
+      if not distinctEvents: # Empty list
+         raise EncodingException(
+                  "There are no features in {0}r to encode".format(layerDL))
       
       lyr = lyrDS.GetLayer(0) # Get the full layer
       # For each distinct event
@@ -352,7 +355,8 @@ class PhyloEncoding(object):
                    used to create an encoding
       """
       # check if tree is ultrametric
-      if not self.tree.hasBranchLengths() or self.tree.checkUltrametric(): 
+      if (not self.tree.hasBranchLengths() or self.tree.checkUltrametric()) and \
+           self.tree.isBinary(): 
          # Check that matrix indices in tree match PAM
          # List of matrix indices (based on PAM column count)
          pamMatrixIndices = range(self.pam.shape[1])
