@@ -335,7 +335,7 @@ class PhyloEncoding(object):
                    sister tip columns have true presence at that site.
       """
       _, newColumns = self._getSisterTipsForClade(self.tree.tree, 
-                                                           self.pam.shape[1])
+                                                           self.pam.shape[1]-1)
       newColumMtx = np.zeros((self.pam.shape[0], len(newColumns.keys())), 
                              dtype=np.int)
       # Extend the PAM by adding new columns to the right side
@@ -645,6 +645,7 @@ class PhyloEncoding(object):
                    of new matrix columns to create.  Then recurse over children.
       @param clade: The clade to process
       @param lastColumn: The last column in the PAM.  Add to this as necessary
+      @todo: Consider changing the name of this function
       """
       newColumns = {} # This is a dictionary with new matrix index key and a 
       #                    list of tips in the sister clade with matrix indices

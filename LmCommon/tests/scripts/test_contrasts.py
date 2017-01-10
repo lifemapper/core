@@ -26,10 +26,12 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import logging
 import numpy as np
 import os
 import unittest
 
+from LmCommon.common.unicode import toUnicode
 from LmCommon.encoding.contrasts import (BioGeoEncoding, EncodingException, 
                                          PhyloEncoding)
 from LmCommon.encoding.lmTree import LmTree
@@ -37,10 +39,6 @@ from LmCommon.encoding.lmTree import LmTree
 from LmCommon.tests.helpers.testConstants import (BIO_GEO_HYPOTHESES_PATH,
                OUTPUT_BIO_GEO_ENCODINGS_PATH, OUTPUT_PHYLO_ENCODINGS_PATH,
                SHAPEGRIDS_PATH, TREES_PATH)
-from numpy.ma.testutils import approx
-
-
-
 
 # .............................................................................
 class TestPhyloEncoding(unittest.TestCase):
@@ -48,14 +46,26 @@ class TestPhyloEncoding(unittest.TestCase):
    @summary: This is a test class for the PhyloEncoding class
    """
    # ..............................   
-   def test_consistent_results(self):
+   def test_consistent_results_branch_lengths(self):
       """
       @summary: Check that we have a deterministic result when encoding.  Rows
                    should always be in the same order but columns may change.
                    The value for a site may be negative or positive, but the 
                    absolute value should be the same.
       """
-      assert False
+      self._consistent_results_helper(os.path.join(TREES_PATH, 
+                                        'generatedTreeWithBranchLengths.json'))
+      
+   # ..............................   
+   def test_consistent_results_no_branch_lengths(self):
+      """
+      @summary: Check that we have a deterministic result when encoding.  Rows
+                   should always be in the same order but columns may change.
+                   The value for a site may be negative or positive, but the 
+                   absolute value should be the same.
+      """
+      self._consistent_results_helper(os.path.join(TREES_PATH, 
+                                        'generatedTreeNoBranchLengths.json'))
    
    # ..............................   
    def test_lmtree_with_branch_lengths(self):
@@ -468,12 +478,105 @@ class TestPhyloEncoding(unittest.TestCase):
          pMtx = treeEncoder.encodePhylogeny()
    
    # ..............................   
-   def test_resolution_functions(self):
+   def test_extend_pam_to_match_tree(self):
       """
-      @summary: Test to check that PAM / tree resolution functions work 
-                   properly to resolve polytomies and match matrix indices
+      @summary: Test to check that PAM can be expanded to match tips in tree
       """
-      assert False
+      treeDict = {
+         "name": "0",
+         "path":  [0],
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "pathId": 1,
+               "length": .4,
+               "path": [1,0],
+               "children": [
+                  {
+                     "pathId" : 2,
+                     "length": .15,
+                     "path": [9,5,0],
+                     "children": [
+                        {
+                           "pathId" : 3,
+                           "length" : .65,
+                           "path": [3,2,1,0],
+                           "children": [
+                              {
+                                 "pathId" : 4,
+                                 "length" : .2,
+                                 "path" : [4,3,2,1,0],
+                                 "mx" : 0
+                              },
+                              {
+                                 "pathId" : 5,
+                                 "length" : .2,
+                                 "path" : [5,3,2,1,0],
+                                 "mx" : 1
+                              }
+                           ]
+                        },
+                        {
+                           "pathId" : 6,
+                           "length" : .85,
+                           "path" : [6,2,1,0],
+                           "mx" : 2
+                        }
+                     ]
+                  },
+                  {
+                     "pathId" : 7,
+                     "length" : 1.0,
+                     "path" : [7,1,0],
+                  }
+               ]
+            },
+            {
+               "pathId" : 8,
+               "length": .9,
+               "path": [8,0],
+               "children": [
+                  {
+                     "pathId" : 9,
+                     "length" : .5,
+                     "path" : [9,8,0],
+                     "mx" : 3
+                  },
+                  {
+                     "pathId" : 10,
+                     "length" : .5,
+                     "path" : [10,8,0],
+                  }
+               ]
+            } 
+         ]
+      }
+      
+      pam = np.random.choice(2, 16).reshape(4, 4)
+      
+      treeEncoder = PhyloEncoding(treeDict, pam)
+      treeEncoder.extendPamToMatchTree()
+      
+      pMtx = treeEncoder.encodePhylogeny()
+      
+      # Check that PAM has extra columns
+      assert treeEncoder.pam.shape == (4, 6)
+      
+      # Check the values of those columns in the encoding
+      # Expected absolute values for the last two columns
+      expectedValues = np.round(np.array([
+         [1.0, 0.19565],
+         [1.0, 0.19565],
+         [0.0, 0.28985],
+         [0.0, 0.50000],
+         [0.0, 0.31884],
+         [0.0, 0.50000]
+      ]), 3)
+      
+      cmpMtx = np.round(np.abs(pMtx[:,-2:]), 3)
+      
+      assert np.all(np.sort(cmpMtx) == np.sort(expectedValues))
    
    # ..............................   
    def test_tips_missing_matrix_idx(self):
@@ -506,7 +609,6 @@ class TestPhyloEncoding(unittest.TestCase):
                                  "pathId" : 4,
                                  "length" : .2,
                                  "path" : [4,3,2,1,0],
-                                 "mx" : 0
                               },
                               {
                                  "pathId" : 5,
@@ -772,6 +874,64 @@ class TestPhyloEncoding(unittest.TestCase):
 
       assert testValues == expectedValues
    
+   # ..............................
+   def _consistent_results_helper(self, fn):
+      """
+      @summary: This is a helper function to make sure that results are 
+                   consistent.  It is used for both branch lengths method and
+                   non-branch lengths method
+      """
+      lmt = LmTree.fromFile(os.path.join(fn))
+      
+      numTips = len(lmt.tips)
+      numSites = 10 # Just picked a random number
+      numIterations = 10 # Number of times to check that results are the same
+      
+      # Add matrix indices (just set the matrix index to be the label
+      # Note: We started tip labels at 1
+      pamMetadata = dict([(toUnicode(str(i+1)), i) for i in xrange(numTips)])
+      
+      lmt.addMatrixIndices(pamMetadata)
+      
+      # Create a PAM
+      pam = np.random.choice(2, (numTips*numSites)).reshape(numSites, numTips)
+
+      treeEncoder = PhyloEncoding(lmt, pam)
+      
+      cmpMtx = treeEncoder.encodePhylogeny()
+      
+      # Check that the sum of the matrix is zero
+      assert round(np.sum(cmpMtx), 3) == 0.000
+      
+      # Check that sum of every column is zero
+      assert np.all(np.round(np.sum(cmpMtx, axis=0), 3) == 0.000)
+      
+      # Check that the sum of the absolute values is 2 * columns
+      assert round(np.sum(np.abs(cmpMtx)), 3) == 2.000 * cmpMtx.shape[1]
+      
+      # Get the absolute values and sort.  We'll test that results are the same
+      sortedMtx = np.sort(np.abs(cmpMtx))
+      
+      for i in xrange(numIterations):
+         # NOTE: Probably only need to check that sorted values are the same 
+         #          and that the columns sum to zero.  The other tests are 
+         #          redundant but may thrown an error more quickly
+         pMtx = treeEncoder.encodePhylogeny()
+         
+         # Check that sum is zero
+         assert round(np.sum(pMtx), 3) == 0.000
+         
+         # Check that the sum of the absolute values is 2*columns
+         assert round(np.sum(np.abs(pMtx)), 3) == 2.000 * pMtx.shape[1]
+         
+         # Check that column sums are zero
+         assert np.all(np.round(np.sum(pMtx, axis=0), 3) == 0.000)
+         
+         # Get the absolute value and sort, then check if the values are the
+         #    same as our compare matrix
+         sortedPMtx = np.sort(np.abs(pMtx))
+         assert np.all(sortedMtx == sortedPMtx)
+      
 # .............................................................................
 class TestBioGeoEncoding(unittest.TestCase):
    """
@@ -966,6 +1126,24 @@ class TestBioGeoEncoding(unittest.TestCase):
          bg1 = self.bgEncoder.encodeHypotheses()
    
 # .............................................................................
-if __name__ == "__main__":
-   #TODO: Unit testify this module
-   pass
+def getTestSuites():
+   """
+   @summary: Gets the test suites for the LmCommon.common.systemMetadata module.
+   @return: A list of test suites
+   """
+   loader = unittest.TestLoader()
+   testSuites = []
+   testSuites.append(loader.loadTestsFromTestCase(TestBioGeoEncoding))
+   testSuites.append(loader.loadTestsFromTestCase(TestPhyloEncoding))
+   return testSuites
+
+# ============================================================================
+# = Main                                                                     =
+# ============================================================================
+
+if __name__ == '__main__':
+   #tests
+   logging.basicConfig(level = logging.DEBUG)
+
+   for suite in getTestSuites():
+      unittest.TextTestRunner(verbosity=2).run(suite)
