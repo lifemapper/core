@@ -50,7 +50,7 @@ class FileFormat:
    @todo: Add GDAL / OGR type as optional parameters
    """
    # ...........................
-   def __init__(self, extension, mimeType, allExtensions=[]):
+   def __init__(self, extension, mimeType, allExtensions=None):
       """
       @summary: Constructor
       @param extension: This is the default extension if a format has multiple, 
@@ -59,20 +59,22 @@ class FileFormat:
       @param allExtensions: (optional) Provide a list of all possible extensions
                                for this format
       """
-      self.mimeType = mimeType
+      self._mimeType = mimeType
       self.ext = extension
-      self.extensions = allExtensions
+      self._extensions = allExtensions
+      if self._extensions is None:
+         self._extensions = []
       # Add the default extension to the extensions list if not present
-      if self.ext not in allExtensions:
-         self.extensions.append(self.ext)
+      if self.ext not in self._extensions:
+         self._extensions.append(self.ext)
    
    # ...........................
    def getExtensions(self):
-      return self.extensions
+      return self._extensions
    
    # ...........................
    def getMimeType(self):
-      return self.mimeType
+      return self._mimeType
    
 # .............................................................................
 class FileFormats:

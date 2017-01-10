@@ -355,7 +355,7 @@ class PhyloEncoding(object):
                    used to create an encoding
       """
       # check if tree is ultrametric
-      if (not self.tree.hasBranchLengths() or self.tree.checkUltrametric()) and \
+      if (not self.tree.hasBranchLengths() or self.tree.isUltrametric()) and \
            self.tree.isBinary(): 
          # Check that matrix indices in tree match PAM
          # List of matrix indices (based on PAM column count)
@@ -514,7 +514,7 @@ class PhyloEncoding(object):
       """
       # .......................
       # Initialize the matrix
-      allPathIds = self.tree.getDescendants(None)
+      allPathIds = self.tree.cladePaths.keys()
       
       # Internal path ids are the subset of path ids that are not tips
       internalPathIds = list(set(allPathIds) - set(self.tree.tips))
