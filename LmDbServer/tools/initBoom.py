@@ -114,7 +114,7 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
    # "BOOM" Archive
    meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
            ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
-   grdset = Gridset(name=archiveName, metadata=meta, shapegrid=shp, 
+   grdset = Gridset(name=archiveName, metadata=meta, shapeGridId=shp.getId(), 
                     configFilename=configFname, epsgcode=shp.epsgcode, 
                     userId=usr, modTime=CURR_MJD)
    updatedGrdset = scribe.findOrInsertGridset(grdset)

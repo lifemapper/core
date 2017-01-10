@@ -68,6 +68,10 @@ class Gridset(ServiceObject):
       if shapeGrid is not None:
          if userId is None:
             userId = shapeGrid.getUserId()
+         if shapeGridId is None:
+            shapeGridId = shapeGrid.getId()
+         if siteIndicesFilename is None:
+            siteIndicesFilename = shapeGrid.getSiteIndicesFilename()
          if epsgcode is None:
             epsgcode = shapeGrid.epsgcode
          elif epsgcode != shapeGrid.epsgcode:
@@ -80,12 +84,9 @@ class Gridset(ServiceObject):
       self.name = name
       self.grdMetadata = {}
       self.loadGrdMetadata(metadata)
-      self.shapeGrid = shapeGrid
-      self.shapeGridId = shapeGridId
-      if shapeGrid is not None and siteIndicesFilename is None:
-         self._siteIndicesFilename = shapeGrid.getSiteIndicesFilename()
-      else:
-         self._siteIndicesFilename = siteIndicesFilename
+      self._shapeGrid = shapeGrid
+      self._shapeGridId = shapeGridId
+      self._siteIndicesFilename = siteIndicesFilename
       self._siteIndices = None
       self.configFilename = configFilename
       self._setEPSG(epsgcode)
@@ -93,8 +94,6 @@ class Gridset(ServiceObject):
       self.setMatrix(MatrixType.PAM, mtxFileOrObj=pam)
       self.setMatrix(MatrixType.GRIM, mtxFileOrObj=grim)
       self.setMatrix(MatrixType.BIOGEO_HYPOTHESES, mtxFileOrObj=biogeo)
-      
-      self.shapeGrid = shapeGrid
       
 # ...............................................
    @classmethod
@@ -106,8 +105,8 @@ class Gridset(ServiceObject):
 # .............................................................................
    def _setEPSG(self, epsg=None):
       if epsg is None:
-         if self.shapeGrid is not None:
-            epsg = self.shapeGrid.epsgcode
+         if self._shapeGrid is not None:
+            epsg = self._shapeGrid.epsgcode
       self._epsg = epsg
 
    def _getEPSG(self):
@@ -200,14 +199,14 @@ class Gridset(ServiceObject):
          matrix = self.getFullPAM()
       else:
          matrix = self.getFullGRIM()
-      if matrix is None or self.shapeGrid is None:
+      if matrix is None or self._shapeGrid is None:
          return False
       else:
-         self.shapeGrid.copyData(self.shapeGrid.getDLocation(), 
+         self._shapeGrid.copyData(self._shapeGrid.getDLocation(), 
                                  targetDataLocation=shpfilename,
-                                 format=self.shapeGrid.dataFormat)
+                                 format=self._shapeGrid.dataFormat)
          ogr.RegisterAll()
-         drv = ogr.GetDriverByName(self.shapeGrid.dataFormat)
+         drv = ogr.GetDriverByName(self._shapeGrid.dataFormat)
          try:
             shpDs = drv.Open(shpfilename, True)
          except Exception, e:
@@ -244,7 +243,7 @@ class Gridset(ServiceObject):
                if exists:
                   # add field to the layer
                   fldname = 'lyr%s' % str(lyridx)
-                  siteidx = currFeat.GetFieldAsInteger(self.shapeGrid.siteId)
+                  siteidx = currFeat.GetFieldAsInteger(self._shapeGrid.siteId)
                   #sitesKeys = sorted(self.getSitesPresent().keys())
                   realsiteidx = sitesKeys.index(siteidx)
                   currval = matrix.getValue(realsiteidx,lyridx)
@@ -297,7 +296,4 @@ class Gridset(ServiceObject):
 
    @property
    def shapeGridId(self):
-      if self.shapeGrid is not None:
-         return self.shapeGrid.getId()
-      else:
-         return None
+      return self._shapeGridId
