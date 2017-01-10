@@ -114,10 +114,10 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
    # "BOOM" Archive
    meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
            ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
-   grdset = Gridset(name=archiveName, metadata=meta, shapegrid=shp, configFilename=configFname, 
-                    epsgcode=shp.epsgcode, userId=usr, modTime=CURR_MJD)
+   grdset = Gridset(name=archiveName, metadata=meta, shapegrid=shp, 
+                    configFilename=configFname, epsgcode=shp.epsgcode, 
+                    userId=usr, modTime=CURR_MJD)
    updatedGrdset = scribe.findOrInsertGridset(grdset)
-
    # "Global" PAM
    meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
            ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
@@ -125,6 +125,8 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
                  userId=usr, gridsetId=updatedGrdset.getId(),
                  status=JobStatus.GENERAL, statusModTime=CURR_MJD)
    updatedGpam = scribe.findOrInsertMatrix(gpam)
+   
+   return shp, updatedGrdset, updatedGpam
    
 # ...............................................
 def _getbioName(obsOrPred, res, 
@@ -574,7 +576,8 @@ if __name__ == '__main__':
 # .............................
       # Grid for GPAM
       logger.info('  Insert, build shapegrid {} ...'.format(configMeta['gridname']))
-      shpId = addArchive(scribeWithBorg, metafname, archiveName, 
+      updatedShp, updatedGrdset, updatedGpam = addArchive(scribeWithBorg, 
+                         metafname, archiveName, 
                          configMeta['gridname'], configMeta['gridsides'], 
                          configMeta['gridsize'], configMeta['mapunits'], 
                          configMeta['epsg'], pkgMeta['bbox'], usr)
@@ -668,7 +671,7 @@ addScenarioAndLayerMetadata(scribe, predScens)
 #  scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
 #  configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
 
-shpId = addArchive(scribe, metafname, archiveName, 
+updatedShp, updatedGrdset, updatedGpam = addArchive(scribe, metafname, archiveName, 
                    configMeta['gridname'], configMeta['gridsides'], 
                    configMeta['gridsize'], configMeta['mapunits'], 
                    configMeta['epsg'], pkgMeta['bbox'], usr)
