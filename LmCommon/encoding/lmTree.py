@@ -84,7 +84,7 @@ class LmTree(object):
       ext = os.path.splitext(filename)[1]
       
       if ext in FileFormats.JSON.getExtensions(): # JSON
-         return cls(content)
+         return cls(json.loads(content))
       elif ext in FileFormats.NEWICK.getExtensions(): # Newick
          newickParser = Parser(content)
          jsonTree, _ = newickParser.parse()
@@ -155,6 +155,8 @@ class LmTree(object):
       @summary: Check if the tree is ultrametric
       @note: To be ultrametric, the branch length from root to tip must be 
                 equal for all tips
+      @todo: Should this be called 'isUltrametric' so that it matches isBinary?
+                Or should we change 'isBinary' to 'checkBinary'?
       """
       # Only possible if the tree has branch lengths
       if self.hasBranchLengths():
