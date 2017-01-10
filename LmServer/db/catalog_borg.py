@@ -312,41 +312,43 @@ class Borg(DbPostgresql):
       lyr = None
       if row is not None:
          dbid = self._getColumnValue(row, idxs, ['layerid'])
-         usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
-         verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
-         squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
          name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
-         dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
-         murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
-         meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
-         vtype = self._getColumnValue(row, idxs, ['ogrtype'])
-         rtype = self._getColumnValue(row, idxs, ['gdaltype'])
-         vunits = self._getColumnValue(row, idxs, ['valunits'])
-         vattr = self._getColumnValue(row, idxs, ['valattribute'])
-         nodata = self._getColumnValue(row, idxs, ['nodataval'])
-         minval = self._getColumnValue(row, idxs, ['minval'])
-         maxval = self._getColumnValue(row, idxs, ['maxval'])
-         fformat = self._getColumnValue(row, idxs, ['dataformat'])
+         usr = self._getColumnValue(row, idxs, ['lyruserid', 'userid'])
          epsg = self._getColumnValue(row, idxs, ['epsgcode'])
-         munits = self._getColumnValue(row, idxs, ['mapunits'])
-         res = self._getColumnValue(row, idxs, ['resolution'])
-         dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
-         bbox = self._getColumnValue(row, idxs, ['bbox'])
-                     
-         if vtype is not None:
-            lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
-                         dlocation=dloc, metadata=meta, dataFormat=fformat, 
-                         ogrType=vtype, valUnits=vunits, valAttribute=vattr,
-                         nodataVal=nodata, minVal=minval, maxVal=maxval, 
-                         mapunits=munits, resolution=res, bbox=bbox, 
-                         metadataUrl=murl, modTime=dtmod)
-         elif rtype is not None:
-            lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
-                         dlocation=dloc, metadata=meta, dataFormat=fformat, 
-                         gdalType=rtype, valUnits=vunits, nodataVal=nodata, 
-                         minVal=minval, maxVal=maxval, mapunits=munits, 
-                         resolution=res, bbox=bbox, metadataUrl=murl, 
-                         modTime=dtmod)
+         # Layer may be optional
+         if (dbid is not None and name is not None and usr is not None and epsg is not None):
+            verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
+            squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
+            dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
+            murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
+            meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
+            vtype = self._getColumnValue(row, idxs, ['ogrtype'])
+            rtype = self._getColumnValue(row, idxs, ['gdaltype'])
+            vunits = self._getColumnValue(row, idxs, ['valunits'])
+            vattr = self._getColumnValue(row, idxs, ['valattribute'])
+            nodata = self._getColumnValue(row, idxs, ['nodataval'])
+            minval = self._getColumnValue(row, idxs, ['minval'])
+            maxval = self._getColumnValue(row, idxs, ['maxval'])
+            fformat = self._getColumnValue(row, idxs, ['dataformat'])
+            munits = self._getColumnValue(row, idxs, ['mapunits'])
+            res = self._getColumnValue(row, idxs, ['resolution'])
+            dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
+            bbox = self._getColumnValue(row, idxs, ['bbox'])
+                        
+            if vtype is not None:
+               lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
+                            dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                            ogrType=vtype, valUnits=vunits, valAttribute=vattr,
+                            nodataVal=nodata, minVal=minval, maxVal=maxval, 
+                            mapunits=munits, resolution=res, bbox=bbox, 
+                            metadataUrl=murl, modTime=dtmod)
+            elif rtype is not None:
+               lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
+                            dlocation=dloc, metadata=meta, dataFormat=fformat, 
+                            gdalType=rtype, valUnits=vunits, nodataVal=nodata, 
+                            minVal=minval, maxVal=maxval, mapunits=munits, 
+                            resolution=res, bbox=bbox, metadataUrl=murl, 
+                            modTime=dtmod)
       return lyr
 
 # ...............................................
@@ -374,19 +376,21 @@ class Borg(DbPostgresql):
       shg = None
       if row is not None:
          lyr = self._createLayer(row, idxs)
-         shg = ShapeGrid.initFromParts(lyr, 
-                  self._getColumnValue(row,idxs,['cellsides']), 
-                  self._getColumnValue(row,idxs,['cellsize']),
-                  siteId = self._getColumnValue(row,idxs,['idattribute']), 
-                  siteX = self._getColumnValue(row,idxs,['xattribute']), 
-                  siteY = self._getColumnValue(row,idxs,['yattribute']), 
-                  size = self._getColumnValue(row,idxs,['vsize']),
-                  siteIndicesFilename = self._getColumnValue(row,idxs,
-                                    ['shpgrdsiteindices', 'siteindices']),
-                  # todo: will these ever be accessed without 'shpgrd' prefix?
-                  status = self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
-                  statusModTime = self._getColumnValue(row,idxs,
-                                    ['shpgrdstatusmodtime', 'statusmodtime']))
+         # Shapegrid may be optional
+         if lyr is not None:
+            shg = ShapeGrid.initFromParts(lyr, 
+                     self._getColumnValue(row,idxs,['cellsides']), 
+                     self._getColumnValue(row,idxs,['cellsize']),
+                     siteId = self._getColumnValue(row,idxs,['idattribute']), 
+                     siteX = self._getColumnValue(row,idxs,['xattribute']), 
+                     siteY = self._getColumnValue(row,idxs,['yattribute']), 
+                     size = self._getColumnValue(row,idxs,['vsize']),
+                     siteIndicesFilename = self._getColumnValue(row,idxs,
+                                       ['shpgrdsiteindices', 'siteindices']),
+                     # todo: will these ever be accessed without 'shpgrd' prefix?
+                     status = self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
+                     statusModTime = self._getColumnValue(row,idxs,
+                                       ['shpgrdstatusmodtime', 'statusmodtime']))
       return shg
 
 # ...............................................

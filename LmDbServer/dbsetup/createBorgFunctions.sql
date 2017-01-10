@@ -251,16 +251,16 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertGridset(grdid int,
                                                         usr varchar, 
                                                         nm varchar,
                                                         metaurlprefix varchar,
-                                                        sgid int,
+                                                        lyrid int,
                                                         siteidxs text,
                                                         dloc text,
                                                         epsg int,
                                                         meta varchar, 
                                                     	  mtime double precision)
-   RETURNS lm_v3.gridset AS
+   RETURNS lm_v3.lm_gridset AS
 $$
 DECLARE
-   rec lm_v3.gridset%rowtype;
+   rec lm_v3.lm_gridset%rowtype;
    newid int;
    idstr varchar;
    newurl varchar;
@@ -272,9 +272,9 @@ BEGIN
    END IF;
    IF NOT FOUND THEN
       begin
-         INSERT INTO lm_v3.gridset (userId, name, shapeGridId, siteIndices, 
+         INSERT INTO lm_v3.gridset (userId, name, layerId, siteIndices, 
                                     dlocation, epsgcode, metadata, modTime) 
-                             VALUES (usr, nm, sgid, siteidxs, 
+                             VALUES (usr, nm, lyrid, siteidxs, 
                                      dloc, epsg, meta, mtime);
          IF FOUND THEN
             -- update metadataUrl
