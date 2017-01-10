@@ -25,16 +25,21 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: If I add a get parent method, can I get rid of path in other modules?
-@todo: Or a get siblings method?
 """
+from copy import deepcopy
 import os
-from random import shuffle
 import json
+from random import shuffle
 
 from LmCommon.common.lmconstants import FileFormats, OutputFormat, PhyloTreeKeys
 from LmCommon.encoding.newickToJson import Parser
-from pygments.lexer import include
+
+# .............................................................................
+class LmTreeException(Exception):
+   """
+   @summary: Wrapper around the base Exception class for tree related errors
+   """
+   pass
 
 # .............................................................................
 class LmTree(object):
@@ -52,7 +57,7 @@ class LmTree(object):
       
       # Last clade id is used as a reference so that new clades have an unused
       #    identifier
-      self.lastCladeId = None
+      self._lastCladeId = None
       
       # The cladePaths dictionary contains paths (value) to clades (key)
       self.cladePaths = {}
@@ -67,7 +72,7 @@ class LmTree(object):
                    the provided tree
       @param oldTree: An instance of LmTree to copy
       """
-      newTreeDict = oldTree.tree.copy()
+      newTreeDict = deepcopy(oldTree.tree)
       return cls(newTreeDict)
       
    # ..............................   
@@ -82,7 +87,9 @@ class LmTree(object):
          content = inF.read()
       
       ext = os.path.splitext(filename)[1]
-      
+      print filename
+      print "Ext:", ext
+      print FileFormats.JSON.getExtensions()
       if ext in FileFormats.JSON.getExtensions(): # JSON
          return cls(json.loads(content))
       elif ext in FileFormats.NEWICK.getExtensions(): # Newick
@@ -90,53 +97,8 @@ class LmTree(object):
          jsonTree, _ = newickParser.parse()
          return cls(jsonTree)
       else: # Unknown
-         raise Exception, "LmTree does not know how to read %s files" % ext
-      
-   # ..............................   
-   @classmethod
-   def convertFromNewick(cls, filename):
-      """
-      @summary: Creates a new LmTree object by converting a Newick tree
-      @param filename: The location of the Newick tree file
-      @raise IOError: Raised if the file does not exist
-      """
-      with open(filename) as inF:
-         newickString = inF.read()
-      # Use the Newick parser to get JSON, then feed that into constructor
-      newickParser = Parser(newickString)
-      jsonTree, _ = newickParser.parse()
-      return cls(jsonTree)
-   
-   # ..............................
-   @classmethod
-   def createRandomTree(cls, numTips):
-      """
-      @summary: Creates a random binary Phylogenetic tree with the specified 
-                   number of tips
-      @param numTips: The number of tips to include in this tree
-      @note: Tips will have path ids 1 - numTips
-      @note: Following convention in R package to number beginning with 1
-      """
-      # Create the root
-      root = {
-         PhyloTreeKeys.PATH_ID: 0,
-         PhyloTreeKeys.PATH: [0],
-         PhyloTreeKeys.CHILDREN: [],
-         PhyloTreeKeys.NAME: '',
-         PhyloTreeKeys.BRANCH_LENGTH: 0.0
-      }
-      
-      for i in range(numTips):
-         root[PhyloTreeKeys.CHILDREN].append({
-                          PhyloTreeKeys.PATH_ID: i+1, 
-                          PhyloTreeKeys.PATH: [], 
-                          PhyloTreeKeys.CHILDREN: [], 
-                          PhyloTreeKeys.NAME: str(i+1), 
-                          PhyloTreeKeys.BRANCH_LENGTH: 0.0})
-      
-      newTree = cls(root)
-      newTree.resolvePolytomies()
-      return newTree
+         raise LmTreeException(
+            "LmTree does not know how to read %s files" % ext)
 
    # Public functions
    # ..........................................................................
@@ -150,13 +112,91 @@ class LmTree(object):
       self._addMatrixIndices(self.tree, pamMetadata)
    
    # ..............................
-   def checkUltrametric(self):
+   def getBranchLengths(self):
+      """
+      @summary: Return a dictionary of branch lengths for each clade
+      @note: Path id is key, branch length is value
+      """
+      branchLengths = self._getBranchLengths(self.tree)
+      return dict(branchLengths)
+   
+   # ..............................
+   def getClade(self, pathId):
+      """
+      @summary: Get a clade by it's path id
+      @param pathId: The path id of the clade to retrieve
+      """
+      if self.cladePaths.has_key(pathId):
+         cladePath = self.cladePaths[pathId]
+      else:
+         raise LmTreeException("Path id: %s was not found" % pathId)
+      
+      clade = self.tree
+      for cid in cladePath[1:]: # We can skip the root
+         for child in clade[PhyloTreeKeys.CHILDREN]:
+            if child[PhyloTreeKeys.PATH_ID] == cid:
+               clade = child
+               break
+      if clade[PhyloTreeKeys.PATH_ID] == pathId:
+         return clade
+      else:
+         raise LmTreeException("Could not find clade: %s" % pathId)
+
+   # ..............................
+   def getMatrixIndicesInClade(self, clade=None):
+      """
+      @summary: Returns a list of all matrix indices in the tree
+      @param clade: (optional) If not provided, use the root
+      @note: Duplication is possible if matrix index is present in multiple 
+                clades of the tree
+      """
+      if clade is None:
+         clade = self.tree
+         
+      return self._getMatrixIndicesInClade(clade)
+
+   # ..............................
+   def getLabels(self):
+      """
+      @summary: Get tip labels for a clade
+      @note: Bottom-up order
+      """
+      labels = self._getLabels(self.tree)
+      
+      # Reverse so bottom-up ordering instead of top-down
+      labels.reverse()
+      
+      return labels
+      
+   # ..............................
+   def hasBranchLengths(self):
+      """
+      @summary: Returns boolean indicating if the tree has branch lengths for
+                   every clade
+      """
+      return self._hasBranchLengths(self.tree)
+
+   # ..............................
+   def hasPolytomies(self):
+      """
+      @summary: Returns boolean indicating if the tree has polytomies
+      """
+      return self._hasPolytomies(self.tree)
+   
+   # ..............................
+   def isBinary(self):
+      """
+      @summary: Returns a boolean indicating if the tree is binary
+      @note: Checks that every clade has either zero or two children
+      """
+      return self._isBinary(self.tree)
+   
+   # ..............................
+   def isUltrametric(self):
       """
       @summary: Check if the tree is ultrametric
       @note: To be ultrametric, the branch length from root to tip must be 
                 equal for all tips
-      @todo: Should this be called 'isUltrametric' so that it matches isBinary?
-                Or should we change 'isBinary' to 'checkBinary'?
       """
       # Only possible if the tree has branch lengths
       if self.hasBranchLengths():
@@ -183,173 +223,6 @@ class LmTree(object):
          return False
    
    # ..............................
-   def getBranchLengths(self):
-      """
-      @summary: Return a dictionary of branch lengths for each clade
-      @note: Path id is key, branch length is value
-      """
-      branchLengths = self._getBranchLengths(self.tree)
-      return dict(branchLengths)
-   
-   # ..............................
-   def getClade(self, pathId):
-      """
-      @summary: Get a clade by it's path id
-      """
-      if self.cladePaths.has_key(pathId):
-         cladePath = self.cladePaths[pathId]
-      else:
-         raise Exception, "Path id: %s was not found" % pathId
-      # Reverse path so we can process easier
-      #cladePath.reverse()
-      
-      clade = self.tree
-      for cid in cladePath[1:]: # We can skip the root
-         for child in clade[PhyloTreeKeys.CHILDREN]:
-            if child[PhyloTreeKeys.PATH_ID] == cid:
-               clade = child
-               break
-      if clade[PhyloTreeKeys.PATH_ID] == pathId:
-         return clade
-      else:
-         raise Exception, "Could not find clade: %s" % pathId
-
-   # ..............................
-   def getCommonAncestor(self, pathIds):
-      """
-      @summary: Gets the common ancestor clade of the path ids specified
-      @param pathIds: A list of path ids to find the common ancestor of
-      @note: Assumes that all paths share root
-      """
-      paths = []
-      for pathId in pathIds:
-         path = self.cladePaths[pathId]
-         # TODO: Remove when sure it is working
-         #path.reverse() # Reverse for easy comparison
-         paths.append(path)
-         
-      i = 0
-      try:
-         while True: # Loop until the paths don't match
-            items = set([]) # Create a set for the items
-            for pth in paths:
-               items.add(pth[i+1]) # Will fail out if goes past end of list 
-            
-            if len(items) == 1: # If all items are the same
-               i += 1
-            else:
-               break
-      except: # If we reach the end of a path most likely, i should be fine
-         pass
-      
-      return self.getClade(paths[0][i])
-   
-   # ..............................
-   def getDescendants(self, clade):
-      """
-      @summary: Get the descendants of the specified clade (including this one)
-      @param clade: The clade to get the descendants of.  If integer, assumes 
-                       that this is the path id of the clade.  If None, assumes
-                       root
-      """
-      if clade is None:
-         clade = self.tree
-      elif isinstance(clade, int):
-         clade = self.getClade(clade)
-      
-      return self._getDescendants(clade)
-
-   # ..............................
-   def getMatrixIndicesInClade(self, clade=None):
-      """
-      @summary: Returns a list of all matrix indices in the tree
-      @param clade: (optional) If not provided, use the root
-      @note: Duplication is possible if matrix index is present in multiple 
-                clades of the tree
-      """
-      if clade is None:
-         clade = self.tree
-         
-      return self._getMatrixIndicesInClade(clade)
-
-   # ..............................
-   def getMatrixIndicesMapping(self):
-      """
-      @summary: Gets a dictionary mapping matrix index to path id for the clades 
-                   in the tree
-      @return: Dictionary of path id keys with matrix index values
-      """
-      return self._getMatrixIndicesMapping(self.tree)
-   
-   # ..............................
-   def getNumberOfDescendantTipsDict(self):
-      """
-      @summary: Returns a dictionary of pathId: number of descending tips
-      """
-      return self._getNumberOfDescendantTips(self.tree)
-   
-   # ..............................
-   def getLabels(self):
-      """
-      @summary: Get tip labels for a clade
-      @note: Bottom-up order
-      """
-      labels = self._getLabels(self.tree)
-      
-      # Reverse so bottom-up ordering instead of top-down
-      labels.reverse()
-      
-      return labels
-      
-   # ..............................
-   def getPathIdsWithoutBranchLengths(self):
-      """
-      @summary: Returns a list of path ids without branch lengths
-      """
-      return self._getPathIdsWithoutBranchLengths(self.tree)
-
-   # ..............................
-   def getTipsToPrune(self, pamMetadata):
-      """
-      @summary: Returns a list of path ids for tips that are not in the pam
-                   metadata dictionary
-      @param pamMetadata: A dictionary of (label, matrix index) pairs for a PAM
-      @return: A list of labels that are in the tree but not the PAM
-      """
-      pamLabels = pamMetadata.keys()
-      treeLabels = self.getLabels()
-      # Create a list of the labels in treeLabels that are not in pamLabels
-      labelsToPrune = list(set(treeLabels) - set(pamLabels))
-      
-      if len(labelsToPrune) == len(treeLabels):
-         raise Exception, "Cannot prune all tips, PAM does not match tree"
-      else:
-         return labelsToPrune
-   
-   # ..............................
-   def hasBranchLengths(self):
-      """
-      @summary: Returns boolean indicating if the tree has branch lengths for
-                   every clade
-      """
-      return self._hasBranchLengths(self.tree)
-
-   # ..............................
-   def hasPolytomies(self):
-      """
-      @summary: Returns boolean indicating if the tree has polytomies
-      """
-      return self._hasPolytomies(self.tree)
-   
-   # ..............................
-   def isBinary(self):
-      """
-      @summary: Returns a boolean indicating if the tree is binary
-      @note: Checks that every clade has either zero or two children
-      """
-      return self._isBinary(self.tree)
-   
-   # ..............................
    def pruneTree(self, labels, onlyTips=True):
       """
       @summary: Prunes the tree of any clade in the labels list
@@ -368,6 +241,7 @@ class LmTree(object):
    def removeMatrixIndices(self):
       """
       @summary: Remove all matrix indices from the tree
+      @todo: Evaluate how useful this actually is
       """
       self._removeMatrixIndices(self.tree)
       
@@ -397,9 +271,13 @@ class LmTree(object):
       """
       @summary: Writes the tree JSON to the specified file path
       @param fn: The file location to write the JSON tree
+      @todo: Possibly remove.  Unless we decide that the trees written to disk
+                should not include matrix index / path / maybe others.  We may
+                do that because those things can vary between loads.  We are 
+                already resetting the path on load
       """
       with open(fn, 'w') as outF:
-         self.writeTree(outF)
+         self.writeTreeFlo(outF)
          
    # ..............................
    def writeTreeToFlo(self, flo):
@@ -507,22 +385,11 @@ class LmTree(object):
          branchLengths.append((clade[PhyloTreeKeys.PATH_ID], 
                                clade[PhyloTreeKeys.BRANCH_LENGTH]))
       else:
-         raise Exception, "Clade %s does not have branch length" % \
-              clade[PhyloTreeKeys.PATH_ID]
+         raise LmTreeException("Clade {0} does not have branch length".format(
+              clade[PhyloTreeKeys.PATH_ID]))
       for child in clade[PhyloTreeKeys.CHILDREN]:
          branchLengths.extend(self._getBranchLengths(child))
       return branchLengths
-   
-   # ..............................
-   def _getDescendants(self, clade):
-      """
-      @summary: Gets the descendants of the specified clade
-      @param clade: The clade dictionary to get the descendants of
-      """
-      desc = [clade[PhyloTreeKeys.PATH_ID]]
-      for child in clade[PhyloTreeKeys.CHILDREN]:
-         desc.extend(self._getDescendants(child))
-      return desc
    
    # ..............................
    def _getLabels(self, clade):
@@ -572,42 +439,9 @@ class LmTree(object):
       """
       @summary: Gets an unused path id to use for a new clade
       """
-      self.lastCladeId += 1
-      return self.lastCladeId
+      self._lastCladeId += 1
+      return self._lastCladeId
 
-   # ..............................
-   def _getNumberOfDescendantTips(self, clade):
-      """
-      @summary: Get the number of tips descending from this clade
-      """
-      descs = {}
-      numTips = 0
-      for child in clade[PhyloTreeKeys.CHILDREN]:
-         # If no children, add 1 to tips
-         if len(child[PhyloTreeKeys.CHILDREN]) == 0:
-            numTips += 1 
-         # else, add the number of tips in the child
-         else:
-            subDict = self._getNumberOfDescendantTips(child)
-            descs.update(subDict)
-            numTips += subDict[child[PhyloTreeKeys.PATH_ID]]
-         
-      descs[clade[PhyloTreeKeys.PATH_ID]] = numTips
-      return descs
-   
-   # ..............................
-   def _getPathIdsWithoutBranchLengths(self, clade):
-      """
-      @summary: Recursively finds clades without branch lengths
-      @param clade: The clade to recurse through
-      """
-      noBranchLengths = []
-      if not clade.has_key(PhyloTreeKeys.BRANCH_LENGTH):
-         noBranchLengths.append(clade[PhyloTreeKeys.PATH_ID])
-      for child in clade[PhyloTreeKeys.CHILDREN]:
-         noBranchLengths.extend(self._getBranchLengths(child))
-      return noBranchLengths
-   
    # ..............................
    def _hasBranchLengths(self, clade):
       """
@@ -662,9 +496,9 @@ class LmTree(object):
       @summary: Process the provided tree, fill in missing information, and 
                    create clade paths dictionary
       """
-      self.lastCladeId = self._findLargestPathId(self.tree)
-      if self.lastCladeId is None:
-         self.lastCladeId = -1
+      self._lastCladeId = self._findLargestPathId(self.tree)
+      if self._lastCladeId is None:
+         self._lastCladeId = -1
          
       # Fill in paths and populate tips
       self._cleanUpClade()
@@ -736,10 +570,10 @@ class LmTree(object):
          }
 
          # Fix the paths of this clade and all children
-         self._cleanUpClade(newClade, basePath=tree[PhyloTreeKeys.PATH])
+         self._cleanUpClade(newClade, basePath=self.tree[PhyloTreeKeys.PATH])
 
          # Append the new clade
          clade[PhyloTreeKeys.CHILDREN].append(newClade)
       
       for child in clade[PhyloTreeKeys.CHILDREN]:
-         self.resolvePolytomies(child)
+         self._resolvePolytomies(child)

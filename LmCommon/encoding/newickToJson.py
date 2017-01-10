@@ -76,6 +76,7 @@ class Parser(object):
    @note: We are not doing anything with confidence (values or comments)
    @note: We are not tracking if the tree is rooted
    @note: Based on the parser in `Bio.Nexus.Trees`.
+   @todo: Consider renaming this
    """
    
    # ..............................   
@@ -156,15 +157,11 @@ class Parser(object):
       """
       newClade = {
          PhyloTreeKeys.PATH_ID: cladeId,
-         PhyloTreeKeys.PATH: "{0}".format(cladeId),
          PhyloTreeKeys.CHILDREN: []
       }
       
       # If a parent is provided, update the parent and the path
       if parent is not None:
-         # Update the path
-         newClade[PhyloTreeKeys.PATH] = "{cladeId},{parentPath}".format(
-                                  cladeId=cladeId, parentPath=parent[PhyloTreeKeys.PATH])
          parent[PhyloTreeKeys.CHILDREN].append(newClade)
          self.parentClades[newClade[PhyloTreeKeys.PATH_ID]] = parent
 
