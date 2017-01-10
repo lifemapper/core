@@ -46,32 +46,33 @@ class Gridset(ServiceObject):
 # Constructor
 # .............................................................................
    def __init__(self, name=None, metadata={}, 
-                shapegrid=None, siteIndices=None, configFilename=None, 
-                epsgcode=None, pam=None, grim=None, biogeo=None, tree=None,
+                shapeGrid=None, shapeGridId=None, siteIndicesFilename=None, 
+                configFilename=None, epsgcode=None, 
+                pam=None, grim=None, biogeo=None, tree=None,
                 userId=None, gridsetId=None, metadataUrl=None, modTime=None):
       """
       @summary Constructor for the Gridset class
+      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+      @param gridsetId: dbId  for ServiceObject
       @param name: Short identifier for this gridset, not required to be unique.
-      @param shapegrid: Vector layer with polygons representing geographic sites.
+      @param shapeGrid: Vector layer with polygons representing geographic sites.
       @param siteIndices: A filename containing a dictionary with keys the 
              unique/record identifiers and values the x, y coordinates of the 
-             sites in a Matrix (if shapegrid is not provided)
+             sites in a Matrix (if shapeGrid is not provided)
       @param epsgcode: The EPSG code of the spatial reference system of data.
       @param pam: A Presence Absence Matrix (MatrixType.PAM)
       @param grim: A Matrix of Environmental Values (MatrixType.GRIM)
       @param biogeo: A Matrix of Biogeographic Hypotheses (MatrixType.BIOGEO_HYPOTHESES)
       @param tree: A Tree with taxa matching those in the PAM 
-      @param userId: id for the owner of these data
-      @param gridsetId: database id of this gridset 
       """
-      if shapegrid is not None:
+      if shapeGrid is not None:
          if userId is None:
-            userId = shapegrid.getUserId()
+            userId = shapeGrid.getUserId()
          if epsgcode is None:
-            epsgcode = shapegrid.epsgcode
-         elif epsgcode != shapegrid.epsgcode:
+            epsgcode = shapeGrid.epsgcode
+         elif epsgcode != shapeGrid.epsgcode:
             raise LMError('Gridset EPSG {} does not match Shapegrid EPSG {}'
-                          .format(self._epsg, shapegrid.epsgcode))
+                          .format(self._epsg, shapeGrid.epsgcode))
 
       ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
                              moduleType=LMServiceModule.LM, 
@@ -79,20 +80,21 @@ class Gridset(ServiceObject):
       self.name = name
       self.grdMetadata = {}
       self.loadGrdMetadata(metadata)
-      self.shapegrid = shapegrid
-      self._siteIndicesFilename = siteIndices
+      self.shapeGrid = shapeGrid
+      self.shapeGridId = shapeGridId
+      if shapeGrid is not None and siteIndicesFilename is None:
+         self._siteIndicesFilename = shapeGrid.getSiteIndicesFilename()
+      else:
+         self._siteIndicesFilename = siteIndicesFilename
       self._siteIndices = None
-      self.setIndices(siteIndices, doRead=False)
       self.configFilename = configFilename
       self._setEPSG(epsgcode)
-
-      self._pam = None
-      self._pamFname = None
+      # Optional Matrices
       self.setMatrix(MatrixType.PAM, mtxFileOrObj=pam)
       self.setMatrix(MatrixType.GRIM, mtxFileOrObj=grim)
       self.setMatrix(MatrixType.BIOGEO_HYPOTHESES, mtxFileOrObj=biogeo)
       
-      self.shapegrid = shapegrid
+      self.shapeGrid = shapeGrid
       
 # ...............................................
    @classmethod
@@ -104,8 +106,8 @@ class Gridset(ServiceObject):
 # .............................................................................
    def _setEPSG(self, epsg=None):
       if epsg is None:
-         if self._shapegrid is not None:
-            epsg = self._shapegrid.epsgcode
+         if self.shapeGrid is not None:
+            epsg = self.shapeGrid.epsgcode
       self._epsg = epsg
 
    def _getEPSG(self):
@@ -162,7 +164,7 @@ class Gridset(ServiceObject):
             raise LMError('Failed to read indices {}'.format(indicesFilename))
          finally:
             f.close()
-      self.siteIndices = indices
+      self._siteIndices = indices
       
 
    def getSiteIndicesFilename(self):
@@ -198,14 +200,14 @@ class Gridset(ServiceObject):
          matrix = self.getFullPAM()
       else:
          matrix = self.getFullGRIM()
-      if matrix is None or self.shapegrid is None:
+      if matrix is None or self.shapeGrid is None:
          return False
       else:
-         self.shapegrid.copyData(self.shapegrid.getDLocation(), 
+         self.shapeGrid.copyData(self.shapeGrid.getDLocation(), 
                                  targetDataLocation=shpfilename,
-                                 format=self.shapegrid.dataFormat)
+                                 format=self.shapeGrid.dataFormat)
          ogr.RegisterAll()
-         drv = ogr.GetDriverByName(self.shapegrid.dataFormat)
+         drv = ogr.GetDriverByName(self.shapeGrid.dataFormat)
          try:
             shpDs = drv.Open(shpfilename, True)
          except Exception, e:
@@ -242,7 +244,7 @@ class Gridset(ServiceObject):
                if exists:
                   # add field to the layer
                   fldname = 'lyr%s' % str(lyridx)
-                  siteidx = currFeat.GetFieldAsInteger(self.shapegrid.siteId)
+                  siteidx = currFeat.GetFieldAsInteger(self.shapeGrid.siteId)
                   #sitesKeys = sorted(self.getSitesPresent().keys())
                   realsiteidx = sitesKeys.index(siteidx)
                   currval = matrix.getValue(realsiteidx,lyridx)
@@ -295,7 +297,7 @@ class Gridset(ServiceObject):
 
    @property
    def shapeGridId(self):
-      if self.shapegrid is not None:
-         return self.shapegrid.getId()
+      if self.shapeGrid is not None:
+         return self.shapeGrid.getId()
       else:
          return None

@@ -667,16 +667,15 @@ addScenarioAndLayerMetadata(scribe, predScens)
 
 # ...................................................
 # Shapegrid testing
-# (scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
-#  scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
-#  configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
-
+(gridname, configFname, cellsides, cellsize, mapunits, epsg, 
+bbox) = (configMeta['gridname'], metafname, configMeta['gridsides'], 
+         configMeta['gridsize'], configMeta['mapunits'], 
+         configMeta['epsg'], pkgMeta['bbox'])
 updatedShp, updatedGrdset, updatedGpam = addArchive(scribe, metafname, archiveName, 
                    configMeta['gridname'], configMeta['gridsides'], 
                    configMeta['gridsize'], configMeta['mapunits'], 
                    configMeta['epsg'], pkgMeta['bbox'], usr)
 
-newshp = scribe.insertShapeGrid(shpgrd)
 
 newshp.buildShape()
 newshp.updateStatus(JobStatus.COMPLETE)

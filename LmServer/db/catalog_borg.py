@@ -38,6 +38,9 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, ARCHIVE_PATH,
                   DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.matrix import Matrix
+from LmServer.legion.mtxcolumn import MatrixColumn, MatrixRaster, MatrixVector
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvType, EnvLayer
@@ -197,7 +200,8 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createEnvType(self, row, idxs):
       """
-      Create an _EnvironmentalType from an EnvType, lm_envlayer, lm_scenlayer
+      @summary: Create an _EnvironmentalType from a database EnvType record, or 
+                lm_envlayer, lm_scenlayer view
       """
       lyrType = None
       if row is not None:
@@ -213,6 +217,58 @@ class Borg(DbPostgresql):
                            dateCode=dtcode, metadata=meta, modTime=modtime, 
                            envTypeId=ltid)
       return lyrType
+   
+# ...............................................
+   def _createGridset(self, row, idxs):
+      """
+      @summary: Create a Gridset from a database Gridset record or lm_gridset view
+      """
+      grdset = None
+      if row is not None:
+         shp = self._createShapeGrid(row, idxs)
+         shpId = self._getColumnValue(row, idxs, ['layerid'])
+         grdid = self._getColumnValue(row, idxs, ['gridsetid'])
+         usr = self._getColumnValue(row, idxs, ['userid'])
+         name = self._getColumnValue(row, idxs, ['grdname', 'name'])
+         murl = self._getColumnValue(row, idxs, ['grdmetadataurl', 'metadataurl'])
+         siteidxsdloc = self._getColumnValue(row, idxs, 
+                                 ['grdsiteindices', 'siteindices'])
+         dloc = self._getColumnValue(row, idxs, ['grddlocation', 'dlocation'])
+         epsg = self._getColumnValue(row, idxs, ['grdepsgcode', 'epsgcode'])
+         meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
+         mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
+         grdset = Gridset(name=name, metadata=meta, shapegrid=shp, 
+                          shapeGridId=shpId, siteIndices=siteidxsdloc, 
+                          configFilename=dloc, epsgcode=epsg, userId=usr, 
+                          gridsetId=grdid, metadataUrl=murl, modTime=mtime)
+      return grdset
+   
+# ...............................................
+   def _createMatrix(self, row, idxs):
+      """
+      @summary: Create a Matrix from a database Matrix record or lm_gridset view
+      """
+      mtx = None
+      if row is not None:
+         grdset = self._createGridset(row, idxs)
+         mtxid = self._getColumnValue(row, idxs, ['matrixid'])
+         mtype = self._getColumnValue(row, idxs, ['matrixtype'])
+         grdid = self._getColumnValue(row, idxs, ['gridsetid'])
+         usr = self._getColumnValue(row, idxs, ['userid'])
+         grdid = self._getColumnValue(row, idxs, ['gridsetid'])
+         dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
+         lyridxs = self._getColumnValue(row, idxs, 
+                                        ['mtxlayerindices', 'layerindices'])
+         murl = self._getColumnValue(row, idxs, ['metadataurl'])
+         meta = self._getColumnValue(row, idxs, ['metadata'])
+         stat = self._getColumnValue(row, idxs, ['status'])
+         stattime = self._getColumnValue(row, idxs, ['statusmodtime'])
+         mtx = Matrix(None, matrixType=mtype, processType=None, 
+                      metadata=meta, dlocation=dloc, 
+                      layerIndicesFilename=lyridxs, metadataUrl=murl,
+                      userId=usr, gridset=grdset, gridsetId=grdid, 
+                      matrixId=mtxid, status=stat, statusModTime=stattime)
+      return mtx
    
 # ...............................................
    def _getLayerInputs(self, row, idxs):
@@ -321,14 +377,16 @@ class Borg(DbPostgresql):
          shg = ShapeGrid.initFromParts(lyr, 
                   self._getColumnValue(row,idxs,['cellsides']), 
                   self._getColumnValue(row,idxs,['cellsize']),
-                  siteId=self._getColumnValue(row,idxs,['idattribute']), 
-                  siteX=self._getColumnValue(row,idxs,['xattribute']), 
-                  siteY=self._getColumnValue(row,idxs,['yattribute']), 
-                  size=self._getColumnValue(row,idxs,['vsize']),
+                  siteId = self._getColumnValue(row,idxs,['idattribute']), 
+                  siteX = self._getColumnValue(row,idxs,['xattribute']), 
+                  siteY = self._getColumnValue(row,idxs,['yattribute']), 
+                  size = self._getColumnValue(row,idxs,['vsize']),
+                  siteIndicesFilename = self._getColumnValue(row,idxs,
+                                    ['shpgrdsiteindices', 'siteindices']),
                   # todo: will these ever be accessed without 'shpgrd' prefix?
-                  status=self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
-                  statusModTime=self._getColumnValue(row,idxs,['shpgrdstatusmodtime', 
-                                                               'statusmodtime']))
+                  status = self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
+                  statusModTime = self._getColumnValue(row,idxs,
+                                    ['shpgrdstatusmodtime', 'statusmodtime']))
       return shg
 
 # ...............................................

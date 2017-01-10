@@ -1,7 +1,7 @@
 -- ----------------------------------------------------------------------------
 \c borg
 -- ----------------------------------------------------------------------------
--- lm_envlayer
+-- lm_envlayer (Layer + EnvType)
 DROP VIEW IF EXISTS lm_v3.lm_envlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    -- Layer.* 
@@ -50,7 +50,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
         ORDER BY l.layerid ASC;
 
 -- ----------------------------------------------------------------------------
--- lm_scenlayer
+-- lm_scenlayer (Scenario + lm_envlayer)
 DROP VIEW IF EXISTS lm_v3.lm_scenlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    -- scenario
@@ -104,7 +104,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
         ORDER BY sl.scenarioLayerId ASC;
 
 -- ----------------------------------------------------------------------------
--- lm_shapegrid
+-- lm_shapegrid (ShapeGrid + Layer)
 DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    -- ShapeGrid.*
@@ -115,7 +115,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    idAttribute,
    xAttribute,
    yAttribute,
-   siteIndices,
+   shpgrdsiteIndices,
    shpgrdstatus,
    shpgrdstatusmodtime,
    -- Layer.* 
@@ -151,7 +151,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
         WHERE l.layerid = sg.layerid;
 
 -- ----------------------------------------------------------------------------
--- lm_matrixlayer
+-- lm_matrixlayer (MatrixColumn + Matrix)
 DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
 (
@@ -187,7 +187,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
         WHERE mc.matrixId = m.matrixId;
 
 -- ----------------------------------------------------------------------------
--- lm_matrixlayer
+-- lm_matrixlayer (lm_matrixcolumn + Layer)
 DROP VIEW IF EXISTS lm_v3.lm_matrixlayer CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
 (
@@ -248,8 +248,131 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
         FROM lm_v3.lm_matrixcolumn mc
         LEFT JOIN lm_v3.layer l ON mc.layerid = l.layerid;
 
+
 -- ----------------
--- lm_sdmproject 
+-- lm_gridset  (Gridset + lm_shapegrid)
+DROP VIEW IF EXISTS lm_v3.lm_gridset CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_gridset (
+   gridsetId,
+   userId,
+   grdname,
+   grdmetadataUrl,
+   layerId,
+   grdsiteIndices,
+   grddlocation,
+   grdepsgcode,
+   grdmetadata,
+   grdmodTime,
+   -- lm_shapegrid.*
+   cellsides,
+   cellsize,
+   vsize,
+   idAttribute,
+   xAttribute,
+   yAttribute,
+   shpgrdsiteIndices,
+   shpgrdstatus,
+   shpgrdstatusmodtime,
+   lyrsquid,
+   lyrverify,
+   lyrname,
+   lyrdlocation,
+   lyrmetadataUrl,
+   lyrmetadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   valAttribute,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   bbox,
+   lyrmodtime) AS
+   SELECT g.gridsetId, g.userId, g.name, g.metadataUrl, g.shapeGridId, 
+          g.siteIndices, g.dlocation, g.epsgcode, g.metadata, g.modTime
+          lsg.layerId, lsg.cellsides, lsg.cellsize, lsg.vsize, lsg.idAttribute,
+          lsg.xAttribute, lsg.yAttribute, lsg.shpgrdsiteIndices, lsg.shpgrdstatus, 
+          lsg.shpgrdstatusmodtime, lsg.lyrsquid, lsg.lyrverify, lsg.lyrname, 
+          lsg.lyrdlocation, lsg.lyrmetadataUrl, lsg.lyrmetadata, lsg.dataFormat, 
+          lsg.gdalType, lsg.ogrType, lsg.valUnits, lsg.valAttribute, 
+          lsg.nodataVal, lsg.minVal, lsg.maxVal, lsg.epsgcode, lsg.mapunits, 
+          lsg.resolution, lsg.bbox, lsg.lyrmodtime
+   FROM lm_v3.gridset g
+   LEFT JOIN lm_v3.lm_shapegrid lsg ON g.layerid = lsg.layerid; 
+
+-- ----------------
+-- lm_matrix (Matrix + lm_gridset)
+DROP VIEW IF EXISTS lm_v3.lm_matrix CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_matrix (
+   -- Matrix
+   matrixId,
+   matrixType,
+   gridsetId,
+   matrixDlocation,
+   layerIndices,
+   metadataUrl,
+   metadata,
+   status,
+   statusmodtime, 
+   -- lm_gridset
+   userId,
+   grdname,
+   grdmetadataUrl,
+   layerId,
+   grdsiteIndices,
+   grddlocation,
+   grdepsgcode,
+   grdmetadata,
+   grdmodTime,
+   cellsides,
+   cellsize,
+   vsize,
+   idAttribute,
+   xAttribute,
+   yAttribute,
+   shpgrdsiteIndices,
+   shpgrdstatus,
+   shpgrdstatusmodtime,
+   lyrsquid,
+   lyrverify,
+   lyrname,
+   lyrdlocation,
+   lyrmetadataUrl,
+   lyrmetadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   valAttribute,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   bbox,
+   lyrmodtime) AS
+   SELECT m.matrixId, m.matrixType, m.gridsetId, m.matrixDlocation, 
+          m.layerIndices, m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
+          g.userId, g.grdname, g.grdmetadataUrl, g.layerId, 
+          g.grdsiteIndices, g.grddlocation, g.grdepsgcode, g.grdmetadata, 
+          g.grdmodTime, g.cellsides, g.cellsize, g.vsize, g.idAttribute, 
+          g.xAttribute, g.yAttribute, g.shpgrdsiteIndices, g.shpgrdstatus, 
+          g.shpgrdstatusmodtime, g.lyrsquid, g.lyrverify, g.lyrname, 
+          g.lyrdlocation, g.lyrmetadataUrl, g.lyrmetadata, g.dataFormat, 
+          g.gdalType, g.ogrType, g.valUnits, g.valAttribute, g.nodataVal, 
+          g.minVal, g.maxVal, g.epsgcode, g.mapunits, g.resolution, g.bbox, 
+          g.lyrmodtime
+   FROM lm_v3.matrix m, lm_v3.lm_gridset g
+   WHERE m.gridsetid = g.gridsetid;
+
+-- ----------------
+-- lm_sdmproject (SDMProject + Layer + Occurrenceset + Model scenarioCode 
+--                       + Project scenarioCode, gcmCode, altPredCode, dateCode)
 DROP VIEW IF EXISTS lm_v3.lm_sdmproject CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    -- sdmproject.*
@@ -329,6 +452,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
 
        
 -- ----------------------------------------------------------------------------
+-- lm_occurrenceset (Occurrenceset + Taxon + TaxonomySource) 
 DROP VIEW IF EXISTS lm_v3.lm_Occurrenceset CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    -- occurrenceset.*

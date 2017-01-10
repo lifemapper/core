@@ -396,6 +396,66 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(mtxcolid int,
+                                                             mtxid int,
+                                                             mtxidx int,
+                                                             sqd varchar,
+                                                             idnt varchar,
+                                                             dloc varchar,
+                                                             meta text,
+                                                             lyrid int,
+                                                             intparams text,
+                                                             stat int,
+                                                             stattime double precision)
+RETURNS lm_v3.lm_matrixlayer AS
+$$
+DECLARE
+   lyrcount int;
+   mtxcount int;
+   newid int;
+   rec_mtxlyr lm_v3.lm_matrixlayer%rowtype;
+BEGIN
+   -- check existence of required referenced matrix
+   SELECT count(*) INTO mtxcount FROM lm_v3.Matrix WHERE matrixid = mtxid;
+   IF mtxcount < 1 THEN
+      RAISE EXCEPTION 'Matrix with id % does not exist', mtxid;
+   END IF;
+   -- check existence of optional referenced layer
+   IF lyrid IS NOT NULL THEN
+      SELECT count(*) INTO lyrcount FROM lm_v3.Layer WHERE layerid = lyrid;
+      IF lyrcount < 1 THEN
+         RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
+      END IF;
+   END IF;
+   
+   -- Find existing column at position in matrix
+   IF mtxidx IS NOT NULL THEN
+      SELECT * INTO rec_mtxlyr FROM lm_v3.lm_matrixlayer 
+         WHERE matrixid = mtxid AND matrixIndex = mtxidx;
+      IF FOUND THEN
+         RAISE NOTICE 'Returning existing MatrixColumn for Matrix % and Column %',
+            mtxid, mtxidx;
+      -- or insert this
+      ELSE
+         INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
+               dlocation, metadata, layerId, intersectParams, status, 
+               statusmodtime)
+            VALUES (mtxid, mtxidx, sqd, idnt, dloc, meta, lyrid, intparams, stat, 
+               stattime);
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
+         ELSE
+            SELECT * INTO rec_mtxlyr FROM lm_v3.lm_matrixlayer 
+               WHERE matrixid = mtxid AND matrixIndex = mtxidx;
+         END IF;
+      END IF;
+   END IF;
+   
+   RETURN rec_mtxlyr;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateSDMProjectLayer(prjid int, 
                                           lyrid int,
                                           lyrverify varchar,
