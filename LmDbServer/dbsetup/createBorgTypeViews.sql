@@ -292,9 +292,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    resolution,
    bbox,
    lyrmodtime) AS
-   SELECT g.gridsetId, g.userId, g.name, g.metadataUrl, g.shapeGridId, 
-          g.siteIndices, g.dlocation, g.epsgcode, g.metadata, g.modTime
-          lsg.layerId, lsg.cellsides, lsg.cellsize, lsg.vsize, lsg.idAttribute,
+   SELECT g.gridsetId, g.userId, g.name, g.metadataUrl, g.layerId, 
+          g.siteIndices, g.dlocation, g.epsgcode, g.metadata, g.modTime,
+          lsg.cellsides, lsg.cellsize, lsg.vsize, lsg.idAttribute,
           lsg.xAttribute, lsg.yAttribute, lsg.shpgrdsiteIndices, lsg.shpgrdstatus, 
           lsg.shpgrdstatusmodtime, lsg.lyrsquid, lsg.lyrverify, lsg.lyrname, 
           lsg.lyrdlocation, lsg.lyrmetadataUrl, lsg.lyrmetadata, lsg.dataFormat, 
