@@ -112,6 +112,16 @@ class LmTree(object):
       self._addMatrixIndices(self.tree, pamMetadata)
    
    # ..............................
+   def addSQUIDs(self, squidDict):
+      """
+      @summary: Add Lifemapper SQUIDs to the tree
+      @param squidDict: A dictionary with tip label keys and LM squid values
+      @todo: Can this be combined with matrix indices?  Something like add 
+                metadata?
+      """
+      self._addSQUIDs(self.tree, squidDict)
+   
+   # ..............................
    def getBranchLengths(self):
       """
       @summary: Return a dictionary of branch lengths for each clade
@@ -303,6 +313,20 @@ class LmTree(object):
    
       for child in clade[PhyloTreeKeys.CHILDREN]:
          self._addMatrixIndices(child, pamMetadata)
+
+   # ..............................
+   def _addSQUIDs(self, clade, squidDict):
+      """
+      @summary: Recursively adds LM species SQUIDs to a clade
+      @param clade: The clade to add SQUIDs to
+      @param squidDict: A dictionary of label, squid pairs for the tree
+      """
+      # If the name of this clade is in the SQUID dictionary, add the squid
+      if squidDict.has_key(clade[PhyloTreeKeys.NAME]):
+         clade[PhyloTreeKeys.SQUID] = squidDict[clade[PhyloTreeKeys.NAME]]
+   
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         self._addSQUIDs(child, squidDict)
 
    # ..............................
    def _cleanUpClade(self, clade=None, basePath=[]):
