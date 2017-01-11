@@ -2,7 +2,7 @@
 @summary: This module tests the LmCommon.encoding.lmTree module
 @author: CJ Grady
 @version: 1.0
-@status: alpha
+@status: release
 
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research

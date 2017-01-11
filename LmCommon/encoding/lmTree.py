@@ -2,7 +2,7 @@
 @summary: Module containing LmTree class
 @author: CJ Grady (originally from Jeff Cavner)
 @version: 1.0
-@status: beta
+@status: release
 
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
