@@ -114,7 +114,7 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
    # "BOOM" Archive
    meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
            ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
-   grdset = Gridset(name=archiveName, metadata=meta, shapegrid=shp, 
+   grdset = Gridset(name=archiveName, metadata=meta, shapeGridId=shp.getId(), 
                     configFilename=configFname, epsgcode=shp.epsgcode, 
                     userId=usr, modTime=CURR_MJD)
    updatedGrdset = scribe.findOrInsertGridset(grdset)
@@ -667,20 +667,31 @@ addScenarioAndLayerMetadata(scribe, predScens)
 
 # ...................................................
 # Shapegrid testing
-# (scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr) = (
-#  scribe, configMeta['gridname'], configMeta['gridsides'], configMeta['gridsize'], 
-#  configMeta['mapunits'], configMeta['epsg'], pkgMeta['bbox'], usr)
+(gridname, configFname, cellsides, cellsize, mapunits, epsg, 
+bbox) = (configMeta['gridname'], metafname, configMeta['gridsides'], 
+         configMeta['gridsize'], configMeta['mapunits'], 
+         configMeta['epsg'], pkgMeta['bbox'])
 
-updatedShp, updatedGrdset, updatedGpam = addArchive(scribe, metafname, archiveName, 
-                   configMeta['gridname'], configMeta['gridsides'], 
-                   configMeta['gridsize'], configMeta['mapunits'], 
-                   configMeta['epsg'], pkgMeta['bbox'], usr)
 
-newshp = scribe.insertShapeGrid(shpgrd)
 
-newshp.buildShape()
-newshp.updateStatus(JobStatus.COMPLETE)
-updatedShp =  scribe.updateShapeGrid(newshp)
+
+
+shp = _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, 
+                        bbox, usr)
+# "BOOM" Archive
+meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
+        ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
+grdset = Gridset(name=archiveName, metadata=meta, shapeGridId=shp.getId(), 
+                 configFilename=configFname, epsgcode=shp.epsgcode, 
+                 userId=usr, modTime=CURR_MJD)
+updatedGrdset = scribe.findOrInsertGridset(grdset)
+# "Global" PAM
+meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
+        ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
+gpam = Matrix(None, matrixType=MatrixType.PAM, metadata=meta,
+              userId=usr, gridsetId=updatedGrdset.getId(),
+              status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+updatedGpam = scribe.findOrInsertMatrix(gpam)
  
 
 

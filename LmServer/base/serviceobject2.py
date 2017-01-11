@@ -49,8 +49,8 @@ class ServiceObject(LMObject):
       @summary Constructor for the abstract ServiceObject class
       @param userId: id for the owner of these data
       @param dbId: database id of the object 
-      @param serviceType: REST Service Type
-      @param moduleType: ModuleType (LM/RAD/SDM) web services
+      @param serviceType: constant from LmServer.common.lmconstants.LMServiceType
+      @param moduleType: constant from LmServer.common.lmconstants.LMServiceModule
       @param metadataUrl: URL for retrieving the metadata
       @param parentMetadataUrl: URL for retrieving the metadata of a
                                  parent container object

@@ -23,12 +23,14 @@
 """
 from osgeo import ogr, osr
 import os
-from types import IntType
+import pickle
+from types import IntType, StringType
 import math
 import numpy as np
 # import rtree
 
-from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS, DEFAULT_OGR_FORMAT
+from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
+                                         DEFAULT_OGR_FORMAT, ProcessType)
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject
@@ -45,8 +47,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 # .............................................................................
    def __init__(self, name, userId, epsgcode, cellsides, cellsize, mapunits, bbox, 
                 siteId='siteid', siteX='centerX', siteY='centerY', size=None,
-                lyrId=None, verify=None, dlocation=None, metadata={}, 
-                resolution=None, 
+                siteIndicesFilename=None, lyrId=None, verify=None, 
+                dlocation=None, metadata={}, resolution=None, 
                 metadataUrl=None, parentMetadataUrl=None, modTime=None,
                 featureCount=0, featureAttributes={}, features={}, fidAttribute=None,
                 status=None, statusModTime=None):
@@ -66,6 +68,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       """
       # siteIndices are a dictionary of {siteIndex: (FID, centerX, centerY)}
       self._siteIndices = None
+      self._siteIndicesFilename = siteIndicesFilename
       # field with unique values identifying each site
       self.siteId = siteId
       # field with longitude of the centroid of a site
@@ -84,11 +87,12 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             featureAttributes=featureAttributes, features=features,
             fidAttribute=fidAttribute)
       ProcessObject.__init__(self, objId=lyrId, 
+                             processType=ProcessType.RAD_BUILDGRID,
+                             parentId=None,
                              status=status, statusModTime=statusModTime)
       # Don't necessarily need centroids (requires reading shapegrid), can 
       # explicitly call public method initSites to initialize centroids and
       # sitesPresent dictionary if they are needed.
-#      self.setSiteIndices()
       self._setMapPrefix()
       self._setCellsides(cellsides)
       self.cellsize = cellsize
@@ -99,7 +103,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    @classmethod
    def initFromParts(cls, vector, cellsides, cellsize, 
                      siteId='siteid', siteX='centerX', siteY='centerY', size=None,
-                     status=None, statusModTime=None):
+                     siteIndicesFilename=None, status=None, statusModTime=None):
       shpGrid = ShapeGrid(vector.name, vector.getUserId(), vector.epsgcode, 
                           cellsides, cellsize, vector.mapUnits, vector.bbox, 
                           siteId=siteId, siteX=siteX, siteY=siteY, size=size,
@@ -116,6 +120,28 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                           fidAttribute=vector.fidAttribute,
                           status=status, statusModTime=statusModTime)
       return shpGrid
+
+# ...............................................
+   def readIndices(self, indicesFilename=None):
+      """
+      @summary Fill the siteIndices from existing file
+      """
+      indices = None
+      if indicesFilename is None:
+         indicesFilename = self._siteIndicesFilename
+      if isinstance(indicesFilename, StringType) and os.path.exists(indicesFilename):
+         try:
+            f = open(indicesFilename, 'r')
+            indices = pickle.load(f)
+         except:
+            raise LMError('Failed to read indices {}'.format(indicesFilename))
+         finally:
+            f.close()
+      self._siteIndices = indices
+      
+
+   def getSiteIndicesFilename(self):
+      return self._siteIndicesFilename
 
 # ...............................................
    def _createMapPrefix(self):

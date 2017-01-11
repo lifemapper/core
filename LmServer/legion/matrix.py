@@ -26,9 +26,11 @@
 import numpy
 import ogr
 import os
+import pickle
 from types import StringType
 
-from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, MatrixType)
+from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, 
+                                         MatrixType)
 from LmServer.base.lmobj import LMObject, LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMServiceType,LMServiceModule
@@ -44,41 +46,48 @@ class Matrix(ServiceObject, ProcessObject):
 # .............................................................................
    def __init__(self, matrix, 
                 matrixType=MatrixType.PAM, 
+                processType=None,
                 metadata={},
                 dlocation=None, 
-                layerIndices=None,
-                randomParameters={},
+                layerIndicesFilename=None,
                 metadataUrl=None,
-                parentMetadataUrl=None,
                 userId=None,
-                gridsetId=None,
+                gridset=None, gridsetId=None,
                 matrixId=None,
                 status=None, statusModTime=None):
       """
+      @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
+      @param gridsetId: parentID for ProcessObject
+      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+      @param matrixId: dbId  for ServiceObject
       @param matrix: numpy array
+      @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
+      @param metadata: dictionary of metadata using Keys defined in superclasses
       @param dlocation: file location of the array
+      @param layerIndicesFilename: file location of layer indices
+      @param gridset: parent gridset of this Matrix
       """
-      createTime = None
-      ServiceObject.__init__(self,  userId, matrixId, createTime, statusModTime,
-                             LMServiceType.MATRICES, 
-                             moduleType=LMServiceModule.LM,
+      self._gridset = gridset
+      self._gridsetId = gridsetId
+      gridsetUrl = None
+      if gridset is not None:
+         gridsetUrl = gridset.metadataUrl
+         gridsetId = gridset.getId()
+      ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
+                             moduleType=LMServiceModule.LM, 
                              metadataUrl=metadataUrl, 
-                             parentMetadataUrl=parentMetadataUrl)
-      ProcessObject.__init__(self, objId=matrixId, parentId=gridsetId, 
+                             parentMetadataUrl=gridsetUrl,
+                             modTime=statusModTime)
+      ProcessObject.__init__(self, objId=matrixId, processType=processType,
+                             parentId=gridsetId, 
                              status=status, statusModTime=statusModTime) 
       self._matrix = matrix
       self.matrixType = matrixType
       self._dlocation = dlocation
-
-      self._layerIndicesFilename = None
-      self.layerIndices = None
-      self.setIndices(layerIndices, doRead=False)
-
+      self._layerIndicesFilename = layerIndicesFilename
+      self._layerIndices = None
       self.mtxMetadata = {}
       self.loadMtxMetadata(metadata)
-      
-      self.randomParams = {}
-      self.loadRandomParams(randomParameters)
       
 
 # ..............................................................................
@@ -118,20 +127,6 @@ class Matrix(ServiceObject, ProcessObject):
    def addMtxMetadata(self, newMetadataDict):
       self.mtxMetadata = LMObject._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.mtxMetadata)
-
-# ...............................................
-   def dumpRandomParams(self):
-      return LMObject._dumpMetadata(self, self.randomParams)
- 
-# ...............................................
-   def loadRandomParams(self, newRandomParams):
-      self.randomParams = LMObject._loadMetadata(self, newRandomParams)
-
-# ...............................................
-   def addRandomParams(self, newRandomParams):
-      self.randomParams = LMObject._addMetadata(self, newRandomParams, 
-                                  existingMetadataDict=self.randomParams)
-
 
 # .............................................................................
    @property
@@ -245,39 +240,24 @@ class Matrix(ServiceObject, ProcessObject):
       success, msg = self._deleteFile(self._dlocation, deleteDir=True)
       self._matrix = None
       
-   def getLayerIndicesFilename(self):
-      return self._layerIndicesFilename
-   
 # ...............................................
-   def setIndices(self, indicesFileOrObj=None, isLayer=True, doRead=True):
+   def readIndices(self, indicesFilename=None):
       """
-      @summary Fill the siteIndices from dictionary or existing file
-      @param indicesFileOrObj: File or dictionary containing siteIndices or 
-                               layerIndices.
-      @param isLayer: True if dictionary contains column number (matrixIdx) 
-                      with value layerId (or squid)
-                      False if dictionary contains row number (siteId) key with 
-                      value (x,y).
-                      
-      @param doRead: If indicesFileOrObj is a file, read the data into the 
-                     siteIndices or layerIndices dictionary.  
+      @summary Fill the siteIndices from existing file
       """
       indices = None
-      if indicesFileOrObj is not None:
-         if isinstance(indicesFileOrObj, StringType) and os.path.exists(indicesFileOrObj):
-            if doRead:
-               self._layerIndicesFilename = indicesFileOrObj
-               try:
-                  f = open(indicesFileOrObj, 'r')
-                  indices = f.read()
-               except:
-                  raise LMError('Failed to read indices {}'.format(indicesFileOrObj))
-               finally:
-                  f.close()
-         elif isinstance(indicesFileOrObj, dict):
-            indices = indicesFileOrObj
-      if isLayer:
-         self.siteIndices = indices
-      else:
-         self.layerIndices = indices
+      if indicesFilename is None:
+         indicesFilename = self._layerIndicesFilename
+      if isinstance(indicesFilename, StringType) and os.path.exists(indicesFilename):
+         try:
+            f = open(indicesFilename, 'r')
+            indices = pickle.load(f)
+         except:
+            raise LMError('Failed to read indices {}'.format(indicesFilename))
+         finally:
+            f.close()
+      self._layerIndices = indices
+      
+   def getLayerIndicesFilename(self):
+      return self._layerIndicesFilename
       

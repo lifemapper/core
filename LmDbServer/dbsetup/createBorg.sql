@@ -338,7 +338,7 @@ create table lm_v3.Gridset
    metadataUrl text UNIQUE,
    
    -- Must have shapegrid or siteIndices (siteId, centerX, centerY)
-   shapeGridId int REFERENCES lm_v3.ShapeGrid,
+   layerId int REFERENCES lm_v3.ShapeGrid,
    siteIndices text,
    
    -- Optional metadata and configuration file for initArchive and archivist workflow
