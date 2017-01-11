@@ -29,7 +29,6 @@
          phylogenetics: separating the roles of environmental filters and 
          historical biogeography. Ecology letters 13: 1290-1299.
 """
-import json
 import numpy as np
 import os
 from osgeo import ogr
@@ -298,8 +297,7 @@ class PhyloEncoding(object):
       @param pamDLoc: The location of the PAM (in numpy format)
       @raise IOError: If one or both of the files are not found
       """
-      with open(treeDLoc, 'r') as treeF:
-         tree = json.load(treeF)
+      tree = LmTree.fromFile(treeDLoc)
       
       pam = np.load(pamDLoc)
       
