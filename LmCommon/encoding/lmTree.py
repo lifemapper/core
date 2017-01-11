@@ -25,6 +25,8 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Should we provide a method to collapse clades that only have one child?
+@todo: Should pruning a tree collapse clades automatically?
 """
 from copy import deepcopy
 import os
@@ -87,9 +89,6 @@ class LmTree(object):
          content = inF.read()
       
       ext = os.path.splitext(filename)[1]
-      print filename
-      print "Ext:", ext
-      print FileFormats.JSON.getExtensions()
       if ext in FileFormats.JSON.getExtensions(): # JSON
          return cls(json.loads(content))
       elif ext in FileFormats.NEWICK.getExtensions(): # Newick
@@ -287,7 +286,7 @@ class LmTree(object):
                 already resetting the path on load
       """
       with open(fn, 'w') as outF:
-         self.writeTreeFlo(outF)
+         self.writeTreeToFlo(outF)
          
    # ..............................
    def writeTreeToFlo(self, flo):

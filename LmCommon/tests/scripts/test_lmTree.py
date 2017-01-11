@@ -26,13 +26,80 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from copy import deepcopy
+import json
 import logging
 import os
+from random import randint, shuffle
+from StringIO import StringIO
+from tempfile import gettempdir
 import unittest
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.encoding.lmTree import LmTree, LmTreeException
 from LmCommon.tests.helpers.testConstants import TREES_PATH
+
+BASE_TEST_TREE = {
+   "name": "0",
+   "pathId": 0,
+   "length": 0.0,
+   "children": [
+      {
+         "pathId": 1,
+         "length": .4,
+         "children": [
+            {
+               "pathId" : 2,
+               "length": .15,
+               "children": [
+                  {
+                     "pathId" : 3,
+                     "length" : .65,
+                     "children": [
+                        {
+                           "name" : "4",
+                           "pathId" : 4,
+                           "length" : .2,
+                        },
+                        {
+                           "name" : "5",
+                           "pathId" : 5,
+                           "length" : .2,
+                        }
+                     ]
+                  },
+                  {
+                     "name" : "6",
+                     "pathId" : 6,
+                     "length" : .85,
+                  }
+               ]
+            },
+            {
+               "name" : "7",
+               "pathId" : 7,
+               "length" : 1.0,
+            }
+         ]
+      },
+      {
+         "pathId" : 8,
+         "length": .9,
+         "children": [
+            {
+               "name" : "9",
+               "pathId" : 9,
+               "length" : .5,
+            },
+            {
+               "name" : "10",
+               "pathId" : 10,
+               "length" : .5,
+            }
+         ]
+      } 
+   ]
+}
 
 # .............................................................................
 class TestLmTree(unittest.TestCase):
@@ -59,63 +126,7 @@ class TestLmTree(unittest.TestCase):
       @summary: This test checks that creating a copy of a tree returns a true
                    copy and not a reference to the previous tree
       """
-      treeDict = {
-         "name": "0",
-         "pathId": 0,
-         "length": 0.0,
-         "children": [
-            {
-               "pathId": 1,
-               "length": .4,
-               "children": [
-                  {
-                     "pathId" : 2,
-                     "length": .15,
-                     "children": [
-                        {
-                           "pathId" : 3,
-                           "length" : .65,
-                           "children": [
-                              {
-                                 "pathId" : 4,
-                                 "length" : .2,
-                              },
-                              {
-                                 "pathId" : 5,
-                                 "length" : .2,
-                              }
-                           ]
-                        },
-                        {
-                           "pathId" : 6,
-                           "length" : .85,
-                        }
-                     ]
-                  },
-                  {
-                     "pathId" : 7,
-                     "length" : 1.0,
-                  }
-               ]
-            },
-            {
-               "pathId" : 8,
-               "length": .9,
-               "children": [
-                  {
-                     "pathId" : 9,
-                     "length" : .5,
-                  },
-                  {
-                     "pathId" : 10,
-                     "length" : .5,
-                  }
-               ]
-            } 
-         ]
-      }
-      
-      lmt1 = LmTree(treeDict)
+      lmt1 = LmTree(BASE_TEST_TREE)
       lmt2 = LmTree.createCopy(lmt1)
       cladeId = 2
       
@@ -174,14 +185,47 @@ class TestLmTree(unittest.TestCase):
       """
       @summary: Test that we can successfully add matrix indices
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
+      # Randomly assign matrix indices to labels
+      mtxIdxs = [i for i in range(len(lmt.tips))]
+      shuffle(mtxIdxs)
+      
+      pamMetadata = {}
+      i = 0
+      for label, pathId in lmt.getLabels():
+         pamMetadata[label] = mtxIdxs[i]
+         i += 1
+      
+      lmt.addMatrixIndices(pamMetadata)
+      
+      for tipId in lmt.tips:
+         clade = lmt.getClade(tipId)
+         cladeLabel = clade[PhyloTreeKeys.NAME]
+         assert clade[PhyloTreeKeys.MTX_IDX] == pamMetadata[cladeLabel]
       
    # ............................
-   def test_add_matrix_indices_not_matching_fail(self):
+   def test_add_squids(self):
       """
-      @summary: Test that trying to add matrix indices that don't match, fails
+      @summary: Test that we can successfully add LM species squids to a tree
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
+      
+      # Create a list from a string.  We'll shuffle this and then convert back
+      #    to a string so we can have pseudo SQUIDs
+      pseudoSquid = list("SomeSquidWellRandomize")
+      
+      # Randomly create "squids" for each label
+      squidDict = {}
+      for label, pathId in lmt.getLabels():
+         shuffle(pseudoSquid)
+         squidDict[label] = ''.join(pseudoSquid)
+      
+      lmt.addSQUIDs(squidDict)
+      
+      for tipId in lmt.tips:
+         clade = lmt.getClade(tipId)
+         cladeLabel = clade[PhyloTreeKeys.NAME]
+         assert clade[PhyloTreeKeys.SQUID] == squidDict[cladeLabel]
       
    # ............................
    def test_get_branch_lengths(self):
@@ -189,7 +233,11 @@ class TestLmTree(unittest.TestCase):
       @summary: Test that a branch lengths dictionary is successfully returned
                    when requested and the tree has branch lengths.
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
+      bls = lmt.getBranchLengths()
+      assert bls # Assert that there is at least one branch length
+      # Assert that every clade has a branch length
+      assert len(bls) == len(lmt.cladePaths.keys()) 
       
    # ............................
    def test_get_branch_lengths_no_branch_lengths_fail(self):
@@ -197,21 +245,29 @@ class TestLmTree(unittest.TestCase):
       @summary: Test that an exception is thrown when trying to retrieve branch
                    lengths from a tree that does not have them.
       """
-      assert False
+      fn = os.path.join(TREES_PATH, 'generatedTreeNoBranchLengths.json')
+      lmt = LmTree.fromFile(fn)
+      with self.assertRaises(LmTreeException):
+         bls = lmt.getBranchLengths()
       
    # ............................
    def test_get_clade_existing(self):
       """
       @summary: Test that an existing clade can be successfully returned
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
+      for cladeId in lmt.cladePaths.keys():
+         clade = lmt.getClade(cladeId)
+         assert clade[PhyloTreeKeys.PATH_ID] == cladeId
 
    # ............................
    def test_get_clade_nonexisting_fail(self):
       """
       @summary: Test that trying to retrieve a clade that does not exist fails
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
+      with self.assertRaises(LmTreeException):
+         clade = lmt.getClade(-9873) # Should not exist
 
    # ............................
    def test_get_matrix_indices_in_existing_clade(self):
@@ -219,81 +275,484 @@ class TestLmTree(unittest.TestCase):
       @summary: Test that we can successfully retrieve the matrix indices in an
                    existing clade
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
       
-   # ............................
-   def test_get_matrix_indices_in_nonexisting_clade_fail(self):
-      """
-      @summary: Test that requesting the matrix indices from an non-existing 
-                   clade fails
-      """
-      assert False
+      # Randomly assign matrix indices to labels
+      mtxIdxs = [i for i in range(len(lmt.tips))]
+      shuffle(mtxIdxs)
       
+      pamMetadata = {}
+      i = 0
+      for label, pathId in lmt.getLabels():
+         pamMetadata[label] = mtxIdxs[i]
+         i += 1
+      
+      lmt.addMatrixIndices(pamMetadata)
+
+      # Since we assigned a matrix index to every tip, every clade should have 
+      #    matrix indices
+      for cladeId in lmt.cladePaths.keys():
+         clade = lmt.getClade(cladeId)
+         # Check that there is at least one entry in each list
+         assert lmt.getMatrixIndicesInClade(clade=clade)
+
    # ............................
    def test_get_matrix_indices_in_root(self):
       """
       @summary: Test that we can successfully retrieve the matrix indices in 
                    the entire tree from the root
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
       
+      # Randomly assign matrix indices to labels
+      mtxIdxs = [i for i in range(len(lmt.tips))]
+      shuffle(mtxIdxs)
+      
+      pamMetadata = {}
+      i = 0
+      for label, pathId in lmt.getLabels():
+         pamMetadata[label] = mtxIdxs[i]
+         i += 1
+      
+      lmt.addMatrixIndices(pamMetadata)
+
+      # All of the matrix indices we created should be in the tree
+      assert sorted(mtxIdxs) == sorted(lmt.getMatrixIndicesInClade())
+
    # ............................
    def test_get_labels(self):
       """
       @summary: Test that the get labels method returns all of the labels in 
                    the tree
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
+      labels = lmt.getLabels()
+      
+      # All of our tips have labels in the test tree, so the labels list should
+      #    be at least as long as the tips list
+      assert len(labels) >= len(lmt.tips)
       
    # ............................
    def test_has_branch_lengths(self):
       """
       @summary: Test that the has branch lengths method works
       """
-      assert False
+      blFn = os.path.join(TREES_PATH, 'generatedTreeWithBranchLengths.json')
+      noBlFn = os.path.join(TREES_PATH, 'generatedTreeNoBranchLengths.json')
+      
+      # Check that a tree that we know has branch lengths reports that it does
+      lmtWithBL = LmTree.fromFile(blFn)
+      assert lmtWithBL.hasBranchLengths()
+      
+      # Check that a tree w/o branch lengths reports that it does not have them
+      lmtNoBL = LmTree.fromFile(noBlFn)
+      assert not lmtNoBL.hasBranchLengths()
    
    # ............................
    def test_has_polytomies(self):
       """
       @summary: Test the hasPolytomies method
       """
-      assert False
+      # Check that a tree that has polytomies, reports as such
+      treeDict = {
+         "name" : "0",
+         "children" : [
+            {
+               "name" : "1",
+               "children" : []
+            },
+            {
+               "name" : "2",
+               "children" : []
+            },
+            {
+               "name" : "3",
+               "children" : []
+            },
+            {
+               "name" : "4",
+               "children" : []
+            },
+            {
+               "name" : "5",
+               "children" : []
+            },
+         ]
+      }
+      
+      lmt = LmTree(treeDict)
+      
+      assert lmt.hasPolytomies()
+
+      lmt2 = LmTree(BASE_TEST_TREE)
+      
+      # Check that a tree that should not have polytomies, does not report them
+      assert not lmt2.hasPolytomies()
       
    # ............................
    def test_is_binary(self):
       """
       @summary: Test the isBinary method
       """
-      assert False
+      # Not binary (polytomies)
+      polyTreeDict = {
+         "name" : "0",
+         "children" : [
+            {
+               "name" : "1",
+               "children" : []
+            },
+            {
+               "name" : "2",
+               "children" : []
+            },
+            {
+               "name" : "3",
+               "children" : []
+            },
+            {
+               "name" : "4",
+               "children" : []
+            },
+            {
+               "name" : "5",
+               "children" : []
+            },
+         ]
+      }
+      lmt1 = LmTree(polyTreeDict)
+      assert not lmt1.isBinary()
+      
+      # Not binary (one child)
+      oneChildTreeDict = {
+         "name" : "0",
+         "children" : [
+            {
+               "name" : "1",
+               "children" : [
+                  {
+                     "name" : "3",
+                     "children" : []
+                  },
+                  {
+                     "name" : "4",
+                     "children" : []
+                  }
+               ]
+            },
+            {
+               "name" : "2",
+               "children" : [ # Only one child
+                  {
+                     "name" : "5",
+                     "children" : []
+                  }
+               ]
+            },
+         ]
+      }
+      lmt2 = LmTree(oneChildTreeDict)
+      assert not lmt2.isBinary()
+      
+      # Binary
+      tfn = os.path.join(TREES_PATH, 'generatedTreeNoBranchLengths.json')
+      lmt3 = LmTree.fromFile(tfn)
+      assert lmt3.isBinary()
       
    # ............................
    def test_is_ultrametric(self):
       """
       @summary: Test the isUltrametric method
       """
-      assert False
+      # Not ultrametric
+      nonUltrametricTreeDict = {
+         "name": "0",
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "pathId": 1,
+               "length": .4,
+               "children": [
+                  {
+                     "pathId" : 2,
+                     "length": .15,
+                     "children": [
+                        {
+                           "pathId" : 3,
+                           "length" : .65,
+                           "children": [ # Children don't have same lengths
+                              {
+                                 "name" : "4",
+                                 "pathId" : 4,
+                                 "length" : .3,
+                              },
+                              {
+                                 "name" : "5",
+                                 "pathId" : 5,
+                                 "length" : .1,
+                              }
+                           ]
+                        },
+                        {
+                           "name" : "6",
+                           "pathId" : 6,
+                           "length" : .85,
+                        }
+                     ]
+                  },
+                  {
+                     "name" : "7",
+                     "pathId" : 7,
+                     "length" : 1.0,
+                  }
+               ]
+            },
+            {
+               "pathId" : 8,
+               "length": .9,
+               "children": [
+                  {
+                     "name" : "9",
+                     "pathId" : 9,
+                     "length" : .5,
+                  },
+                  {
+                     "name" : "10",
+                     "pathId" : 10,
+                     "length" : .5,
+                  }
+               ]
+            } 
+         ]
+      }
+      lmt1 = LmTree(nonUltrametricTreeDict)
+      assert not lmt1.isUltrametric()
+      
+      # Ultrametric
+      tfn = os.path.join(TREES_PATH, 'generatedTreeWithBranchLengths.json')
+      lmt2 = LmTree.fromFile(tfn)
+      assert lmt2.isUltrametric()
 
    # ............................
    def test_prune_tree(self):
       """
       @summary: Test that we can successfully prune clades from a tree
       """
-      assert False
+      treeDict = { # Not using base test tree because we need labels
+         "name": "0",
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "name" : "1",
+               "pathId": 1,
+               "length": .4,
+               "children": [
+                  {
+                     "name" : "2",
+                     "pathId" : 2,
+                     "length": .15,
+                     "children": [
+                        {
+                           "name" : "3",
+                           "pathId" : 3,
+                           "length" : .65,
+                           "children": [
+                              {
+                                 "name" : "4",
+                                 "pathId" : 4,
+                                 "length" : .2,
+                              },
+                              {
+                                 "name" : "5",
+                                 "pathId" : 5,
+                                 "length" : .2,
+                              }
+                           ]
+                        },
+                        {
+                           "name" : "6",
+                           "pathId" : 6,
+                           "length" : .85,
+                        }
+                     ]
+                  },
+                  {
+                     "name" : "7",
+                     "pathId" : 7,
+                     "length" : 1.0,
+                  }
+               ]
+            },
+            {
+               "name" : "8",
+               "pathId" : 8,
+               "length": .9,
+               "children": [
+                  {
+                     "name" : "9",
+                     "pathId" : 9,
+                     "length" : .5,
+                  },
+                  {
+                     "name" : "10",
+                     "pathId" : 10,
+                     "length" : .5,
+                  }
+               ]
+            } 
+         ]
+      }
+      lmt = LmTree(treeDict)
+      tipId = ("7", 7) # label, tip id
+      upperCladeId = ("8", 8) # Label , tip id
+      testRemovedClades = [8, 9, 10] # These clades should not be in tree after
+                                     #    removing the upper clade
+                                     
+      # Prune a tip, make sure that it is not present afterwards
+      lmt.pruneTree([tipId[0], upperCladeId[0]], onlyTips=False)
+      assert tipId[1] not in lmt.cladePaths.keys()
+      with self.assertRaises(LmTreeException):
+         tipClade = lmt.getClade(tipId[1])
+         
+      # Prune an upper clade, make sure that it and its children are gone
+      for cladeId in testRemovedClades:
+         assert cladeId not in lmt.cladePaths.keys()
+         with self.assertRaises(LmTreeException):
+            tipClade = lmt.getClade(cladeId)
       
    # ............................
    def test_prune_tree_only_tips(self):
       """
       @summary: Test that using the only tips options causes the pruneTree 
-                   method to only prune tils
+                   method to only prune tips
       """
-      assert False
+      treeDict = { # Not using base test tree because we need labels
+         "name": "0",
+         "pathId": 0,
+         "length": 0.0,
+         "children": [
+            {
+               "name" : "1",
+               "pathId": 1,
+               "length": .4,
+               "children": [
+                  {
+                     "name" : "2",
+                     "pathId" : 2,
+                     "length": .15,
+                     "children": [
+                        {
+                           "name" : "3",
+                           "pathId" : 3,
+                           "length" : .65,
+                           "children": [
+                              {
+                                 "name" : "4",
+                                 "pathId" : 4,
+                                 "length" : .2,
+                              },
+                              {
+                                 "name" : "5",
+                                 "pathId" : 5,
+                                 "length" : .2,
+                              }
+                           ]
+                        },
+                        {
+                           "name" : "6",
+                           "pathId" : 6,
+                           "length" : .85,
+                        }
+                     ]
+                  },
+                  {
+                     "name" : "7",
+                     "pathId" : 7,
+                     "length" : 1.0,
+                  }
+               ]
+            },
+            {
+               "name" : "8",
+               "pathId" : 8,
+               "length": .9,
+               "children": [
+                  {
+                     "name" : "9",
+                     "pathId" : 9,
+                     "length" : .5,
+                  },
+                  {
+                     "name" : "10",
+                     "pathId" : 10,
+                     "length" : .5,
+                  }
+               ]
+            } 
+         ]
+      }
+      lmt = LmTree(treeDict)
+
+      # Attempt to remove a tip and a clade with the only tips option
+      #    The clade should remain but the tip should be removed
+      #    Only the tip should be removed from the tree, none of the others
+      
+      innerClades = list(set(lmt.cladePaths.keys()) - set(lmt.tips))
+      shuffle(innerClades)
+      tipIds = deepcopy(lmt.tips) # Deep Copy so we have a new list
+      shuffle(tipIds)
+      
+      removeClade = innerClades[0] # Random
+      removeTip = tipIds.pop(0) # Random
+
+      lmt.pruneTree([str(removeClade), str(removeTip)], onlyTips=True)
+      
+      # Check that tip has been removed
+      assert removeTip not in lmt.cladePaths.keys()
+      assert removeTip not in lmt.tips
+      
+      with self.assertRaises(LmTreeException):
+         lmt.getClade(removeTip)
+         
+      # Check that the rest of the tips are present
+      for tipId in tipIds: # We removed the tip from this list with pop earlier
+         assert tipId in lmt.cladePaths.keys()
+         assert tipId in lmt.tips
+         lmt.getClade(tipId) # Should be successful
+         
+      # Check for clades, should all be present
+      for cladeId in innerClades:
+         assert cladeId in lmt.cladePaths.keys()
+         lmt.getClade(cladeId) # Should be successful
       
    # ............................
    def test_remove_matrix_indices(self):
       """
       @summary: Test that the remove matrix indices method works correctly
       """
-      assert False
+      lmt = LmTree(BASE_TEST_TREE)
+      # Randomly assign matrix indices to labels
+      mtxIdxs = [i for i in range(len(lmt.tips))]
+      shuffle(mtxIdxs)
+      
+      pamMetadata = {}
+      i = 0
+      for label, pathId in lmt.getLabels():
+         pamMetadata[label] = mtxIdxs[i]
+         i += 1
+      
+      lmt.addMatrixIndices(pamMetadata)
+      
+      # Check that we have matrix indices
+      assert lmt.getMatrixIndicesInClade()
+      
+      # Remove them
+      lmt.removeMatrixIndices()
+      
+      # Check that there are no longer matrix indices
+      assert not lmt.getMatrixIndicesInClade()
       
    # ............................
    def test_resolve_polytomies(self):
@@ -461,141 +920,41 @@ class TestLmTree(unittest.TestCase):
       """
       @summary: Test that a tree can be successfully written to a file
       """
-      assert False
+      # Make a tree
+      lmt = LmTree(BASE_TEST_TREE)
+      # Get a random file name
+      fn = os.path.join(gettempdir(), "tmp{0}tree.json".format(
+                                                           randint(0, 100000)))
+      # Write the tree to it
+      lmt.writeTree(fn)
+      # Get a new tree from the file
+      lmt2 = LmTree.fromFile(fn)
+      
+      # Delete the temp file
+      os.remove(fn)
+      
+      # Check that the trees are equal
+      assert sorted(lmt.cladePaths.keys()) == sorted(lmt2.cladePaths.keys())
+      assert sorted(lmt.tips) == sorted(lmt2.tips)
       
    # ............................
    def test_write_tree_flo(self):
       """
       @summary: Test that a tree can be written to a File-like object
       """
-      assert False
+      # Make a tree
+      lmt = LmTree(BASE_TEST_TREE)
+      # Write the tree to a string io object
+      flo = StringIO()
+      lmt.writeTreeToFlo(flo)
+      # Load the tree from the string io object
+      flo.seek(0)
+      treeJson = json.load(flo)
+      lmt2 = LmTree(treeJson)
+      # Check that the trees are equal
+      assert sorted(lmt.cladePaths.keys()) == sorted(lmt2.cladePaths.keys())
+      assert sorted(lmt.tips) == sorted(lmt2.tips)
    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   #TODO: Remove
-   #p = "/home/jcavner/Charolettes_Data/Trees/RAxML_bestTree.12.15.14.1548tax.ultrametric.tre"
-   
-   #p = "/home/jcavner/PhyloXM_Examples/test_polyWithoutLengths.json"
-   
-   #to = LmTree.fromFile(p)
-   
-   #print to.polyPos
-   
-   #newTree = to.resolvePoly()
-   
-   #newTree.writeTree("/home/jcavner/PhyloXM_Examples/resolvedPolyWithoutBranchLen.json")
-   #treeDir = "/home/jcavner/PhyloXM_Examples/"
-   #with open(os.path.join(treeDir,'resolvedPolyWithoutBranchLen.json'),'w') as f:
-   #   f.write(json.dumps(newTree,sort_keys=True, indent=4))
-   
-   
-   #newTree.writeTree("/home/jcavner/PhyloXM_Examples/resolvedPolyWithoutBranchLen.json")
-   
-   #print "first tips ", to.tipCount
-   #print "first internal ",to.internalCount
-   #print
-   
-   #rt = to.rTree(125)
-   #to.makePaths(to.tree)
-   #to._subTrees = False
-   #print to.polytomies   
-   
-   #######################
-   #to.resolvePoly()
-   
-   #to.subTrees = False
-   #st = to.subTrees
-   #####################
-   
-   #edges = to._getEdges()
-   #tree = to._makeCladeFromEdges(edges,lengths=True)
-   
-   #p_t = to.dropTips(['B','D','H','I','J','K']) # 'A','C','D' # 'B','D'
-   #p_t.writeTree("/home/jcavner/PhyloXM_Examples/test_drop.json")
-   
-   #treeDir = "/home/jcavner/PhyloXM_Examples/"
-   #with open(os.path.join(treeDir,'tree_fromEdges.json'),'w') as f:
-   #   f.write(json.dumps(tree,sort_keys=True, indent=4))
-   #   
-   #to2 = LmTree.fromFile(os.path.join(treeDir,'tree_withoutNewPaths_2_YES.json'))
-   
-   #print "after tips ", to.tipCount
-   #print "after internal ",to.internalCount
-   
-         
-   
-   
-         
-   
-#If tree is ultrametric and we resolve polytomies, it should remain ultrametric
-
-#Get common ancestor?
-
-#Get node
-
-#Get labels?
-
-#Set branch length for node
-
-#Find nodes without branch lengths
-
-#Add matrix ids
-
-#Remove matrix id(s)
-
-
-
-#200 lines docs
-#642 total
-#442 code
-
-
-#61 lines docs
-#747 total
-#686 code
-
-
-
-
-
-
-# When pruning tree, the result should be binary (maybe add an option to enforce binary)
-
-
 # .............................................................................
 def getTestSuites():
    """
