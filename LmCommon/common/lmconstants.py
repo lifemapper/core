@@ -1208,5 +1208,6 @@ class PhyloTreeKeys(object):
    BRANCH_LENGTH = 'length' # Branch length for that node
    MTX_IDX = 'mx' # The matrix index for this node
    NAME = 'name' # Name of the node
-   PATH = 'path' #TODO: Document
-   PATH_ID = 'pathId' # TODO: Document
+   PATH = 'path' # Path from the root to this clade
+   PATH_ID = 'pathId' # This is an identifier for the clade
+   SQUID = 'squid' # This is the LM SQUID (species identifier) for the tip

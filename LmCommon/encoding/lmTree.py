@@ -2,7 +2,7 @@
 @summary: Module containing LmTree class
 @author: CJ Grady (originally from Jeff Cavner)
 @version: 1.0
-@status: beta
+@status: release
 
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
@@ -25,6 +25,8 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Should we provide a method to collapse clades that only have one child?
+@todo: Should pruning a tree collapse clades automatically?
 """
 from copy import deepcopy
 import os
@@ -87,9 +89,6 @@ class LmTree(object):
          content = inF.read()
       
       ext = os.path.splitext(filename)[1]
-      print filename
-      print "Ext:", ext
-      print FileFormats.JSON.getExtensions()
       if ext in FileFormats.JSON.getExtensions(): # JSON
          return cls(json.loads(content))
       elif ext in FileFormats.NEWICK.getExtensions(): # Newick
@@ -110,6 +109,16 @@ class LmTree(object):
       @todo: Should this fail if not all of the columns are found?
       """
       self._addMatrixIndices(self.tree, pamMetadata)
+   
+   # ..............................
+   def addSQUIDs(self, squidDict):
+      """
+      @summary: Add Lifemapper SQUIDs to the tree
+      @param squidDict: A dictionary with tip label keys and LM squid values
+      @todo: Can this be combined with matrix indices?  Something like add 
+                metadata?
+      """
+      self._addSQUIDs(self.tree, squidDict)
    
    # ..............................
    def getBranchLengths(self):
@@ -277,7 +286,7 @@ class LmTree(object):
                 already resetting the path on load
       """
       with open(fn, 'w') as outF:
-         self.writeTreeFlo(outF)
+         self.writeTreeToFlo(outF)
          
    # ..............................
    def writeTreeToFlo(self, flo):
@@ -303,6 +312,20 @@ class LmTree(object):
    
       for child in clade[PhyloTreeKeys.CHILDREN]:
          self._addMatrixIndices(child, pamMetadata)
+
+   # ..............................
+   def _addSQUIDs(self, clade, squidDict):
+      """
+      @summary: Recursively adds LM species SQUIDs to a clade
+      @param clade: The clade to add SQUIDs to
+      @param squidDict: A dictionary of label, squid pairs for the tree
+      """
+      # If the name of this clade is in the SQUID dictionary, add the squid
+      if squidDict.has_key(clade[PhyloTreeKeys.NAME]):
+         clade[PhyloTreeKeys.SQUID] = squidDict[clade[PhyloTreeKeys.NAME]]
+   
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         self._addSQUIDs(child, squidDict)
 
    # ..............................
    def _cleanUpClade(self, clade=None, basePath=[]):
