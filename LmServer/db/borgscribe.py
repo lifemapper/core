@@ -345,7 +345,7 @@ class BorgScribe(LMObject):
       except:
          pmaskid = None
       for prjScen in prjScenList:
-         prj = SDMProjection(occset, mdlScen, prjScen, alg, 
+         prj = SDMProjection(occset, alg, mdlScen, prjScen, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
@@ -371,10 +371,9 @@ class BorgScribe(LMObject):
       if (minPointCount is None or occ.queryCount is None or 
           occ.queryCount >= minPointCount): 
          for alg in algList:
-            prjs = self.initOrRollbackSDMProjects(occ, mdlScen, 
-                              prjScenList, alg, usr, 
-                              modtime=currtime, 
-                              mdlMask=mdlMask, projMask=projMask)
+            prjs = self.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
+                              mdlMask=mdlMask, projMask=projMask, 
+                              modtime=currtime)
             objs.extend(prjs)
             # Intersect if intersectGrid is provided
             if gridset is not None:

@@ -1261,30 +1261,32 @@ sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
 taxonSourceKeyVal = speciesKey
 occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
 data = dataChunk
-
 occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
+
 
 occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
                squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciName)
-               
 occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
 rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
                             data=data)
 occ.setRawDLocation(rdloc, currtime)
-
 success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
-usr, occ, algList, mdlScen, prjScenList, 
-                    
+
+usr = user
+mdlScen = boomer.modelScenario
+prjScenList = boomer.projScenarios                
 mdlMask=None
 projMask=None
 occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE
 gridset=boomer.intersectGrid
-minPointCount=None
+minPointCount=boomer.minPointCount
 
-
+alg = boomer.algs[0]
+prjs = boomer._scribe.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
+                              mdlMask=mdlMask, projMask=projMask, modtime=currtime)
 
 
 

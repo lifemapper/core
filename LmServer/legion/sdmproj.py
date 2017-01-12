@@ -31,8 +31,7 @@ from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, ALGORITHM_DATA,
-               DEFAULT_PROJECTION_FORMAT, DEFAULT_WMS_FORMAT,
-               ID_PLACEHOLDER, LMServiceType, LMServiceModule)
+            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
 # .............................................................................
@@ -60,8 +59,8 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       if status is not None and statusModTime is None:
          statusModTime = mx.DateTime.utc().mjd
          
-      _LayerParameters.__init__(self, -1, statusModTime, userId, 
-                                projectId, metadata=projMetadata)
+      _LayerParameters.__init__(self, userId, paramId=projectId, matrixIndex=-1, 
+                                metadata=projMetadata, modTime=statusModTime)
       ProcessObject.__init__(self, objId=projectId, 
                              processType=processType, parentId=None, 
                              status=status, statusModTime=statusModTime)
@@ -191,11 +190,9 @@ class SDMProjection(_ProjectionType, Raster):
                               mapunits, resolution, gdalFormat):
       userId = occurrenceSet.getUserId()
       if name is None:
-         name = self._earlJr.createSDMProjectName(userId, occurrenceSet.squid, 
-                                                  occurrenceSet.displayName, 
-                                                  algorithm.code, 
-                                                  modelScenario.code, 
-                                                  projScenario.code)
+         name = occurrenceSet._earlJr.createSDMProjectName(userId, 
+                        occurrenceSet.squid, occurrenceSet.displayName, 
+                        algorithm.code, modelScenario.code, projScenario.code)
       if squid is None:
          squid = occurrenceSet.squid
       if bbox is None:
