@@ -46,15 +46,15 @@ class Archivist(Daemon):
                         
    # .............................
    @staticmethod
-   def getArchiveSpecificConfig(self):
+   def getArchiveSpecificConfig(envSource=None):
       from LmCommon.common.config import Config
       from LmCommon.common.lmconstants import BISON_MIN_POINT_COUNT, OutputFormat
       from LmServer.common.lmconstants import ENV_DATA_PATH, SPECIES_DATA_PATH
       fileList = []
-      if self.envSource is not None:
-         cfgfile = os.path.join(ENV_DATA_PATH, '{}.ini'.format(self.envSource))
+      if envSource is not None:
+         cfgfile = os.path.join(ENV_DATA_PATH, '{}.ini'.format(envSource))
          if os.path.exists(cfgfile):
-            fileList.append(self.cfgfile)
+            fileList.append(cfgfile)
       cfg = Config(fns=fileList)
       
       _CONFIG_HEADING = "LmServer - pipeline"

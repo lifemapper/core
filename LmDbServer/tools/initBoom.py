@@ -454,7 +454,7 @@ def _writeConfigFile(envPackageName, userid, datasource, configMeta, minpoints,
                      mdlScen=None, prjScens=None):
    SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
    pth, temp = os.path.split(SERVER_CONFIG_FILENAME)
-   newConfigFilename = os.path.join(pth, '{}{}'.format(envPackageName, 
+   newConfigFilename = os.path.join(ENV_DATA_PATH, '{}{}'.format(envPackageName, 
                                                        OutputFormat.CONFIG))
    f = open(newConfigFilename, 'w')
    f.write('[LmServer - environment]\n')
@@ -602,6 +602,8 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
+# $PYTHON LmDbServer/tools/initBoom.py -e 10min-past-present-future -s GBIF
+
 import mx.DateTime
 import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 

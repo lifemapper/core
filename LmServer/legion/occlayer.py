@@ -124,7 +124,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
                 status=status, statusModTime=statusModTime)
       Vector.__init__(self, None, userId, epsgcode, lyrId=occurrenceSetId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
-                metadata={}, dataFormat=dataFormat, ogrType=ogrType,
+                metadata=lyrMetadata, dataFormat=dataFormat, ogrType=ogrType,
                 valUnits=valUnits, valAttribute=valAttribute, 
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 

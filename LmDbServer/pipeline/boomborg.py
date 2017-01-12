@@ -422,12 +422,10 @@ class _LMBoomer(LMObject):
                            .format(occ.getId(), sciName.scientificName))
       # Create new
       else:
-         ogrFormat = None
          occ = OccurrenceLayer(sciName.scientificName, self.userid, self.epsg, 
-               dataCount, squid=sciName.squid, dataFormat=ogrFormat, 
-               ogrType=wkbPoint, processType=occProcessType,
-               status=JobStatus.INITIALIZE, statusModTime=currtime, 
-               sciName=sciName)
+               dataCount, squid=sciName.squid, ogrType=wkbPoint, 
+               processType=occProcessType, status=JobStatus.INITIALIZE, 
+               statusModTime=currtime, sciName=sciName)
          try:
             occ = self._scribe.findOrInsertOccurrenceSet(occ)
             self.log.info('Inserted occset for taxonname {}'.format(sciName.scientificName))
@@ -1203,73 +1201,76 @@ import os, sys
 import time
 
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
-from LmCommon.common.log import ScriptLogger
+from LmServer.common.log import ScriptLogger
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.taxon import ScientificName
 from LmDbServer.pipeline.boomborg import *
 from LmDbServer.tools.archivistborg import Archivist
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 
 (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
  gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
  gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
- speciesExpDay) = Archivist.getArchiveSpecificConfig()
+ speciesExpDay) = Archivist.getArchiveSpecificConfig(envSource='10min-past-present-future')
+
+expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
+currtime = dt.gmt().mjd
+taxname = TAXONOMIC_SOURCE[datasource]['name']
+log = ScriptLogger('testboomborg')
 
 if datasource == 'BISON':
    boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
                    bisonTsnFile, expdate, 
                    taxonSourceName=taxname, mdlMask=None, prjMask=None, 
                    minPointCount=minPoints, 
-                   intersectGrid=gridname, log=self.log)
+                   intersectGrid=gridname, log=log)
 elif datasource == 'GBIF':
    boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
                    gbifOccFile, expdate, taxonSourceName=taxname,
                    providerListFile=gbifProvFile,
                    mdlMask=None, prjMask=None, 
                    minPointCount=minPoints,  
-                   intersectGrid=gridname, log=self.log)
+                   intersectGrid=gridname, log=log)
 elif datasource == 'IDIGBIO':
    boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
                    idigTaxonidsFile, expdate, taxonSourceName=taxname,
                    mdlMask=None, prjMask=None, 
                    minPointCount=minPoints, 
-                   intersectGrid=gridname, log=self.log)
+                   intersectGrid=gridname, log=log)
 else:
    boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
                    userOccCSV, userOccMeta, expdate, 
                    mdlMask=None, prjMask=None, 
                    minPointCount=minPoints, 
-                   intersectGrid=gridname, log=self.log)
+                   intersectGrid=gridname, log=log)
 
 # ...............................................
-log = DaemonLogger('testboomborg')
-scribe = BorgScribe(log)
-success = scribe.openConnections()
-
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+                   gbifOccFile, expdate, taxonSourceName=taxname,
+                   providerListFile=gbifProvFile,
+                   mdlMask=None, prjMask=None,
+                   minPointCount=minPoints,
+                   intersectGrid=gridname, log=log)
+
+objs = boomer._processChunk(speciesKey, dataCount, dataChunk)
+sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
+taxonSourceKeyVal = speciesKey
+occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
+data = dataChunk
+occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
+                              occProcessType, dataCount, data=data)
+occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
+
+occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
+               squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
+               status=JobStatus.INITIALIZE, statusModTime=currtime, 
+               sciName=sciName)
+
 jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
 self._createMakeflow(jobs)
 
-# ...............................................
-boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         IDIGBIO_FILE, expdate.mjd, taxonSourceName=taxname,
-                         mdlMask=None, prjMask=None, 
-                         intersectGrid=DEFAULT_GRID_NAME)
-taxonKey, taxonCount, taxonName = boomer._getCurrTaxon()
 
-# ...............................................
-boomer = BisonBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            BISON_TSN_FILE, expdate, 
-                            taxonSourceName=taxname, mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
-
-# ...............................................
-boomer = UserBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            USER_OCCURRENCE_CSV, USER_OCCURRENCE_META, expdate, 
-                            mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
 dataChunk, dataCount, taxonName  = boomer._getChunk()
 occ = boomer._createOrResetOccurrenceset(taxonName, None, 
                                        ProcessType.USER_TAXA_OCCURRENCE,
