@@ -25,7 +25,7 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import (LM_NAMESPACE)
+from LmCommon.common.lmconstants import (LM_NAMESPACE, ProcessType)
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ServiceObject, ProcessObject
@@ -79,7 +79,7 @@ class OccurrenceType(_LayerParameters):
       else:
          return None
 
-# ...............................................
+# ...............................................ProcessType
    def getScientificName(self):
       return self._scientificName
 
@@ -93,7 +93,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
 # .............................................................................
    def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None, 
                 squid=None, verify=None, dlocation=None, 
-                metadata={}, dataFormat=None, ogrType=None,
+                lyrMetadata={}, dataFormat=None, ogrType=None,
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
@@ -103,7 +103,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
                 metadataUrl=None, parentMetadataUrl=None, 
                 featureCount=0, featureAttributes={}, features={}, 
                 fidAttribute=None,                
-                metadata={}, sciName=None,
+                occMetadata={}, sciName=None,
                 objId=None, processType=None, parentId=None,
                 status=None, statusModTime=None
                 ):
@@ -115,8 +115,11 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       @todo: Remove points, count, query
       @note: Vector.name is constructed in OccurrenceLayer.setId()
       """
+      # TODO: since this is raw format, is it necessary?
+      if dataFormat is None and processType == ProcessType.GBIF_TAXA_OCCURRENCE:
+         dataFormat = 'CSV'
       OccurrenceType.__init__(self, displayName, queryCount, statusModTime, 
-                userId, occurrenceSetId, metadata=metadata, sciName=sciName, 
+                userId, occurrenceSetId, metadata=occMetadata, sciName=sciName, 
                 processType=processType, parentId=parentId,
                 status=status, statusModTime=statusModTime)
       Vector.__init__(self, None, userId, epsgcode, lyrId=occurrenceSetId, 

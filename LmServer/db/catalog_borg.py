@@ -237,8 +237,8 @@ class Borg(DbPostgresql):
          epsg = self._getColumnValue(row, idxs, ['grdepsgcode', 'epsgcode'])
          meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
          mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
-         grdset = Gridset(name=name, metadata=meta, shapegrid=shp, 
-                          shapeGridId=shpId, siteIndices=siteidxsdloc, 
+         grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
+                          shapeGridId=shpId, siteIndicesFilename=siteidxsdloc, 
                           configFilename=dloc, epsgcode=epsg, userId=usr, 
                           gridsetId=grdid, metadataUrl=murl, modTime=mtime)
       return grdset
