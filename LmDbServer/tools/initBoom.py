@@ -574,7 +574,7 @@ if __name__ == '__main__':
       predScens[basescen.code] = basescen
       addScenarioAndLayerMetadata(scribeWithBorg, predScens)
 # .............................
-      # Grid for GPAM
+      # Shapefile, Gridset, Matrix for GPAM/BOOMArchive
       logger.info('  Insert, build shapegrid {} ...'.format(configMeta['gridname']))
       updatedShp, updatedGrdset, updatedGpam = addArchive(scribeWithBorg, 
                          metafname, archiveName, 

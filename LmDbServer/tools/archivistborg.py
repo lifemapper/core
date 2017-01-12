@@ -26,13 +26,10 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import BISON_MIN_POINT_COUNT, OutputFormat
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE)
 from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import (ENV_DATA_PATH, SPECIES_DATA_PATH, 
-                                         DEFAULT_CONFIG)
+from LmServer.common.lmconstants import DEFAULT_CONFIG
 from LmServer.common.log import ScriptLogger
 
 # .............................................................................
@@ -48,7 +45,11 @@ class Archivist(Daemon):
       self.speciesSource = speciesSource
                         
    # .............................
-   def _getArchiveSpecificConfig(self):
+   @staticmethod
+   def getArchiveSpecificConfig(self):
+      from LmCommon.common.config import Config
+      from LmCommon.common.lmconstants import BISON_MIN_POINT_COUNT, OutputFormat
+      from LmServer.common.lmconstants import ENV_DATA_PATH, SPECIES_DATA_PATH
       fileList = []
       if self.envSource is not None:
          cfgfile = os.path.join(ENV_DATA_PATH, '{}.ini'.format(self.envSource))
@@ -58,7 +59,7 @@ class Archivist(Daemon):
       
       _CONFIG_HEADING = "LmServer - pipeline"
       _ENV_CONFIG_HEADING = "LmServer - environment"
-
+   
       user = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
       datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
       # Data Archive Pipeline
@@ -67,12 +68,16 @@ class Archivist(Daemon):
       prjScens = cfg.getlist(_CONFIG_HEADING, 'DEFAULT_PROJECTION_SCENARIOS')
       epsg = cfg.getint(_CONFIG_HEADING, 'DEFAULT_EPSG')
       gridname = cfg.get(_CONFIG_HEADING, 'DEFAULT_GRID_NAME')
-      
+      minPoints = cfg.getint(_CONFIG_HEADING, 'POINT_COUNT_MIN')
+      # Expiration date for retrieved species data 
+      speciesExpYear = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_YEAR')
+      speciesExpMonth = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_MONTH')
+      speciesExpDay = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_DAY')
+   
+      # User data   
       userOccData = cfg.get(_CONFIG_HEADING, 'USER_OCCURRENCE_DATA')
       userOccCSV = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.CSV)
       userOccMeta = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.METADATA)
-      
-      minPoints = cfg.getint(_CONFIG_HEADING, 'POINT_COUNT_MIN')
       
       # Bison data
       bisonTsn = Config().get(_CONFIG_HEADING, 'TSN_FILENAME')
@@ -83,7 +88,6 @@ class Archivist(Daemon):
       # iDigBio data
       idigTaxonids = Config().get(_CONFIG_HEADING, 'IDIG_FILENAME')
       idigTaxonidsFile = os.path.join(SPECIES_DATA_PATH, idigTaxonids)
-
       
       # GBIF data
       gbifTax = cfg.get(_CONFIG_HEADING, 'TAXONOMY_FILENAME')
@@ -92,12 +96,7 @@ class Archivist(Daemon):
       gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
       gbifProv = cfg.get(_CONFIG_HEADING, 'PROVIDER_FILENAME')
       gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
-      
-      # Expiration date for retrieved species data 
-      speciesExpYear = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_YEAR')
-      speciesExpMonth = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_MONTH')
-      speciesExpDay = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_DAY')
-
+         
       return (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
               gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
               gbifTaxFile, gbifOccFile, gbifProvFile, 
@@ -115,7 +114,7 @@ class Archivist(Daemon):
       (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
        gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
        gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
-       speciesExpDay) = self._getArchiveSpecificConfig()
+       speciesExpDay) = self.getArchiveSpecificConfig()
 
       expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay).mjd 
       try:
@@ -208,7 +207,7 @@ if __name__ == "__main__":
                          'specific to the configured input data or the ' +
                          'data package named.'))
    parser.add_argument('-e', '--env_source', default=DEFAULT_CONFIG,
-            help=('Input config file should exist in the {} '.format(ENV_DATA_PATH) +
+            help=('Input config file should exist in the ENV_DATA_PATH ' +
                   'directory and be named with the arg value and .ini extension'))
    parser.add_argument('-s', '--species_source', default='User',
             help=('Species source will be \'User\' for user-supplied CSV data, ' +

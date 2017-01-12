@@ -36,12 +36,12 @@ from types import ListType, TupleType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            ProcessType, JobStatus, ONE_HOUR, ONE_MIN, 
-            GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD)
+            GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD,
+            ProcessType, JobStatus, ONE_HOUR, ONE_MIN) 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import (Priority, LOG_PATH, OutputFormat)
-from LmServer.common.localconstants import (POINT_COUNT_MIN, TROUBLESHOOTERS)
+from LmServer.common.lmconstants import Priority, LOG_PATH
+from LmServer.common.localconstants import TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.occlayer import OccurrenceLayer
@@ -57,13 +57,13 @@ class _LMBoomer(LMObject):
    # .............................
    def __init__(self, userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
-                minPointCount=POINT_COUNT_MIN, intersectGrid=None, log=None):
+                minPointCount=None, intersectGrid=None, log=None):
       super(_LMBoomer, self).__init__()
       import socket
       self.hostname = socket.gethostname().lower()
       self.userid = userid
       self.priority = priority
-      self.minPointCount = minPointCount
+#       self.minPointCount = minPointCount
       self.algs = []
       self.epsg = epsg
       self.modelScenario = None
@@ -398,12 +398,15 @@ class _LMBoomer(LMObject):
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
-      # Reset existing if failed, waiting with missing data, out-of-date
+      # Reset existing if:
       if occ is not None:
+         # failed
          if (JobStatus.failed(occ.status)
               or
+              # waiting with missing data
              (JobStatus.waiting(occ.status) and occ.getRawDLocation() is None)
               or 
+              # out-of-date
              (occ.status == JobStatus.COMPLETE and 
               occ.statusModTime > 0 and occ.statusModTime < self._obsoleteTime)):
             # Reset verify hash, name, count, status 
@@ -420,8 +423,6 @@ class _LMBoomer(LMObject):
       # Create new
       else:
          ogrFormat = None
-         if occProcessType == ProcessType.GBIF_TAXA_OCCURRENCE:
-            ogrFormat = 'CSV'
          occ = OccurrenceLayer(sciName.scientificName, self.userid, self.epsg, 
                dataCount, squid=sciName.squid, dataFormat=ogrFormat, 
                ogrType=wkbPoint, processType=occProcessType,
@@ -1156,22 +1157,43 @@ class iDigBioBoom(_LMBoomer):
 # .............................................................................
 # .............................................................................
 if __name__ == "__main__":
-   from LmDbServer.common.lmconstants import IDIGBIO_FILE
-   from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
-   from LmServer.common.localconstants import ARCHIVE_USER
+   from LmDbServer.tools.archivistborg import Archivist
+   from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+   (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
+    gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+    gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
+    speciesExpDay) = Archivist.getArchiveSpecificConfig()
    
-   expdate = dt.DateTime(2016, 1, 1)
-   try:
-      boomer = iDigBioBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                         IDIGBIO_FILE, expdate.mjd, taxonSource=1,
-                         mdlMask=None, prjMask=None, intersectGrid=None)
-   except Exception, e:
-      raise LMError(prevargs=e.args)
+   expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
+   taxname = TAXONOMIC_SOURCE[datasource]['name']
+   log = ScriptLogger('testboomborg')
+   
+   if datasource == 'BISON':
+      boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
+                      bisonTsnFile, expdate, 
+                      taxonSourceName=taxname, mdlMask=None, prjMask=None, 
+                      minPointCount=minPoints, 
+                      intersectGrid=gridname, log=log)
+   elif datasource == 'GBIF':
+      boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+                      gbifOccFile, expdate, taxonSourceName=taxname,
+                      providerListFile=gbifProvFile,
+                      mdlMask=None, prjMask=None, 
+                      minPointCount=minPoints,  
+                      intersectGrid=gridname, log=log)
+   elif datasource == 'IDIGBIO':
+      boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
+                      idigTaxonidsFile, expdate, taxonSourceName=taxname,
+                      mdlMask=None, prjMask=None, 
+                      minPointCount=minPoints, 
+                      intersectGrid=gridname, log=log)
    else:
-      print 'iDigBioBoom is fine'
-      
+      boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
+                      userOccCSV, userOccMeta, expdate, 
+                      mdlMask=None, prjMask=None, 
+                      minPointCount=minPoints, 
+                      intersectGrid=gridname, log=log)
+         
    boomer.chainOne()
 
 
@@ -1180,50 +1202,49 @@ import mx.DateTime as dt
 import os, sys
 import time
 
-from LmDbServer.pipeline.boomborg import *
-
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
-from LmBackend.common.daemon import Daemon
-from LmCommon.common.log import DaemonLogger
+from LmCommon.common.log import ScriptLogger
 from LmCommon.common.lmconstants import ProcessType
-from LmDbServer.common.lmconstants import (BOOM_PID_FILE, BISON_TSN_FILE, 
-         GBIF_DUMP_FILE, IDIGBIO_FILE, TAXONOMIC_SOURCE, PROVIDER_DUMP_FILE,
-         USER_OCCURRENCE_CSV, USER_OCCURRENCE_META)
-from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
-         SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
 from LmServer.base.taxon import ScientificName
-from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE,POINT_COUNT_MIN
+from LmDbServer.pipeline.boomborg import *
+from LmDbServer.tools.archivistborg import Archivist
 
-expdate = dt.DateTime(2016, 1, 1)
-taxname = TAXONOMIC_SOURCE[DATASOURCE]['name']
-userid = ARCHIVE_USER
+(user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
+ gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+ gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
+ speciesExpDay) = Archivist.getArchiveSpecificConfig()
+
+if datasource == 'BISON':
+   boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
+                   bisonTsnFile, expdate, 
+                   taxonSourceName=taxname, mdlMask=None, prjMask=None, 
+                   minPointCount=minPoints, 
+                   intersectGrid=gridname, log=self.log)
+elif datasource == 'GBIF':
+   boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+                   gbifOccFile, expdate, taxonSourceName=taxname,
+                   providerListFile=gbifProvFile,
+                   mdlMask=None, prjMask=None, 
+                   minPointCount=minPoints,  
+                   intersectGrid=gridname, log=self.log)
+elif datasource == 'IDIGBIO':
+   boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
+                   idigTaxonidsFile, expdate, taxonSourceName=taxname,
+                   mdlMask=None, prjMask=None, 
+                   minPointCount=minPoints, 
+                   intersectGrid=gridname, log=self.log)
+else:
+   boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
+                   userOccCSV, userOccMeta, expdate, 
+                   mdlMask=None, prjMask=None, 
+                   minPointCount=minPoints, 
+                   intersectGrid=gridname, log=self.log)
 
 # ...............................................
-providerListFile=PROVIDER_DUMP_FILE
-log = ScriptLogger('testboomborg')
+log = DaemonLogger('testboomborg')
 scribe = BorgScribe(log)
 success = scribe.openConnections()
 
-txSourceId, url, moddate = scribe.findTaxonSource(taxname)
-mscen = scribe.getScenario(DEFAULT_MODEL_SCENARIO, user=userid)
-projScenarios = []
-for pcode in DEFAULT_PROJECTION_SCENARIOS:
-   scen = scribe.getScenario(pcode)
-   projScenarios.append(scen)
-intersectGrid = scribe.getShapeGrid(ARCHIVE_USER, shpname=DEFAULT_GRID_NAME)
-algs=[]
-for acode in DEFAULT_ALGORITHMS:
-   alg = Algorithm(acode)
-   alg.fillWithDefaults()
-   algs.append(alg)
-
-boomer = GBIFBoom(ARCHIVE_USER, DEFAULT_ALGORITHMS, 
-                            DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, 
-                            GBIF_DUMP_FILE, expdate.mjd, taxonSourceName=taxname,
-                            providerListFile=PROVIDER_DUMP_FILE,
-                            mdlMask=None, prjMask=None, 
-                            intersectGrid=DEFAULT_GRID_NAME)
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
 self._createMakeflow(jobs)
