@@ -61,15 +61,15 @@ class MFChain(ProcessObject):
       
 # ...............................................
    def dumpMfMetadata(self):
-      return LMObject._dumpMetadata(self, self.mfMetadata)
+      return super(MFChain, self)._dumpMetadata(self.mfMetadata)
  
 # ...............................................
    def loadMfMetadata(self, newMetadata):
-      self.mfMetadata = LMObject._loadMetadata(self, newMetadata)
+      self.mfMetadata = super(MFChain, self)._loadMetadata(newMetadata)
 
 # ...............................................
    def addMfMetadata(self, newMetadataDict):
-      self.mfMetadata = LMObject._addMetadata(self, newMetadataDict, 
+      self.mfMetadata = super(MFChain, self)._addMetadata(newMetadataDict, 
                                   existingMetadataDict=self.mtxColMetadata)
 
 

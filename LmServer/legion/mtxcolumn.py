@@ -72,15 +72,15 @@ class MatrixColumn(_LayerParameters, ProcessObject):
 
 # ...............................................
    def dumpIntersectParams(self):
-      return LMObject._dumpMetadata(self, self.intersectParams)
+      return super(MatrixColumn, self)._dumpMetadata(self.intersectParams)
  
 # ...............................................
    def loadIntersectParams(self, newIntersectParams):
-      self.intersectParams = LMObject._loadMetadata(self, newIntersectParams)
+      self.intersectParams = super(MatrixColumn, self)._loadMetadata(newIntersectParams)
 
 # ...............................................
    def addIntersectParams(self, newIntersectParams):
-      self.intersectParams = LMObject._addMetadata(self, newIntersectParams, 
+      self.intersectParams = super(MatrixColumn, self)._addMetadata(newIntersectParams, 
                                   existingMetadataDict=self.intersectParams)
 
 

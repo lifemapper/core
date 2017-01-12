@@ -252,7 +252,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
              and Vector.name.  ServiceObject.metadataUrl is constructed using
              the id on first access.
       """
-      ServiceObject.setId(self, occid)
+      super(OccurrenceLayer, self).setId(occid)
       if occid is not None:
          if self.name is None:
             self.name = self._earlJr.createLayername(occsetId=self.getId())

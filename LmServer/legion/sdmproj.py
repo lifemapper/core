@@ -29,7 +29,7 @@ from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType
 
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
-from LmServer.base.serviceobject import ProcessObject, ServiceObject
+from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, ALGORITHM_DATA,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
 # .........................................................................
@@ -106,7 +106,7 @@ class SDMProjection(_ProjectionType, Raster):
                                projMetadata,
                                status, statusModTime, userId, projectId)
       lyrmetadata = self._createMetadata(lyrMetadata, isDiscreteData=isDiscreteData)
-      Raster.__init__(name, userId, epsg, lyrId=lyrId, 
+      Raster.__init__(self, name, userId, epsg, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=lyrmetadata, dataFormat=dataFormat, gdalType=gdalType, 
                 valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, 
@@ -127,7 +127,7 @@ class SDMProjection(_ProjectionType, Raster):
                 SDMProjection.mapPrefix of the file if it is None.
       @param id: The database id for the object
       """
-      ServiceObject.setId(self, lyrid)
+      super(SDMProjection, self).setId(lyrid)
       if lyrid is not None:
          self.name = self._earlJr.createLayername(projId=lyrid)
          if self._dlocation is None:

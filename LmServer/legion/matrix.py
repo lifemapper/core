@@ -117,15 +117,15 @@ class Matrix(ServiceObject, ProcessObject):
 
 # ...............................................
    def dumpMtxMetadata(self):
-      return LMObject._dumpMetadata(self, self.mtxMetadata)
+      return super(Matrix, self)._dumpMetadata(self.mtxMetadata)
  
 # ...............................................
    def loadMtxMetadata(self, newMetadata):
-      self.mtxMetadata = LMObject._loadMetadata(self, newMetadata)
+      self.mtxMetadata = super(Matrix, self)._loadMetadata(self, newMetadata)
 
 # ...............................................
    def addMtxMetadata(self, newMetadataDict):
-      self.mtxMetadata = LMObject._addMetadata(self, newMetadataDict, 
+      self.mtxMetadata = super(Matrix, self)._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.mtxMetadata)
 
 # .............................................................................

@@ -95,15 +95,15 @@ class Scenario(MapLayerSet):
 
 # ...............................................
    def dumpScenMetadata(self):
-      return LMObject._dumpMetadata(self, self.scenMetadata)
+      return super(Scenario, self)._dumpMetadata(self.scenMetadata)
  
 # ...............................................
    def loadScenMetadata(self, newMetadata):
-      self.scenMetadata = LMObject._loadMetadata(self, newMetadata)
+      self.scenMetadata = super(Scenario, self)._loadMetadata(newMetadata)
 
 # ...............................................
    def addScenMetadata(self, newMetadataDict):
-      self.scenMetadata = LMObject._addMetadata(self, newMetadataDict, 
+      self.scenMetadata = super(Scenario, self)._addMetadata(newMetadataDict, 
                                   existingMetadataDict=self.scenMetadata)
 
 

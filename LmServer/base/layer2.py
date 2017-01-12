@@ -381,16 +381,17 @@ class _LayerParameters(LMObject):
       
 # ...............................................
    def dumpParamMetadata(self):
-      return LMObject._dumpMetadata(self, self.paramMetadata)
+      return super(_LayerParameters, self)._dumpMetadata(self.paramMetadata)
  
 # ...............................................
    def loadParamMetadata(self, newMetadata):
-      self.paramMetadata = LMObject._loadMetadata(self, newMetadata)
+      self.paramMetadata = super(_LayerParameters, self)._loadMetadata(newMetadata)
 
 # ...............................................
    def addParamMetadata(self, newMetadataDict):
-      self.paramMetadata = LMObject._addMetadata(self, newMetadataDict, 
-                                  existingMetadataDict=self.paramMetadata)
+      self.paramMetadata = super(_LayerParameters, self)._addMetadata(
+                                       newMetadataDict, 
+                                       existingMetadataDict=self.paramMetadata)
 
 # ...............................................
    def setParametersId(self, paramid):
@@ -545,7 +546,7 @@ class Raster(_Layer):
             ext = OutputFormat.TMP
          else:
             ext = GDALFormatCodes[self._dataFormat]['FILE_EXT']
-      dloc = _Layer.createLocalDLocation(self, ext)
+      dloc = super(_Layer, self).createLocalDLocation(ext)
       return dloc
 
 # .............................................................................
@@ -624,6 +625,7 @@ class Raster(_Layer):
       @postcondition: prints warning if data format and type differ from GDAL-reported
       @postcondition: renames file with supported extension if it differs
       """
+      srs = geoTransform = size = msgs = None
       if dlocation is not None:
          msgs = []
          if not os.path.exists(dlocation):
@@ -1194,7 +1196,7 @@ class Vector(_Layer):
              created in the appropriate Subclass (EnvironmentalLayer, OccurrenceSet, 
              SDMProjections) 
       """
-      dloc = _Layer.createLocalDLocation(self, ext)
+      dloc = super(Vector, self).createLocalDLocation(ext)
       return dloc
 
 # .............................................................................
