@@ -63,7 +63,7 @@ class _LMBoomer(LMObject):
       self.hostname = socket.gethostname().lower()
       self.userid = userid
       self.priority = priority
-#       self.minPointCount = minPointCount
+      self.minPointCount = minPointCount
       self.algs = []
       self.epsg = epsg
       self.modelScenario = None
@@ -440,7 +440,7 @@ class _LMBoomer(LMObject):
          if not rdloc:
             raise LMError(currargs='Unable to set raw data location')
          occ.setRawDLocation(rdloc, currtime)
-         self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+         success = self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
       # No need to return up-to-date occ
       if ignore:
          occ = None
@@ -803,8 +803,9 @@ class GBIFBoom(_LMBoomer):
              updates the Occurrence record and inserts a job.
    """
    def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occfilename, expDate,
-                priority=Priority.NORMAL, taxonSourceName=None, providerListFile=None,
-                mdlMask=None, prjMask=None, minPointCount=None, intersectGrid=None, log=None):
+                priority=Priority.NORMAL, taxonSourceName=None, 
+                providerListFile=None, mdlMask=None, prjMask=None, 
+                minPointCount=None, intersectGrid=None, log=None):
       super(GBIFBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
@@ -1204,6 +1205,7 @@ from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmServer.common.log import ScriptLogger
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.taxon import ScientificName
+from LmServer.legion.occlayer import OccurrenceLayer
 from LmDbServer.pipeline.boomborg import *
 from LmDbServer.tools.archivistborg import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
@@ -1218,33 +1220,40 @@ currtime = dt.gmt().mjd
 taxname = TAXONOMIC_SOURCE[datasource]['name']
 log = ScriptLogger('testboomborg')
 
-if datasource == 'BISON':
-   boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
-                   bisonTsnFile, expdate, 
-                   taxonSourceName=taxname, mdlMask=None, prjMask=None, 
-                   minPointCount=minPoints, 
-                   intersectGrid=gridname, log=log)
-elif datasource == 'GBIF':
-   boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+# if datasource == 'BISON':
+#    boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
+#                    bisonTsnFile, expdate, 
+#                    taxonSourceName=taxname, mdlMask=None, prjMask=None, 
+#                    minPointCount=minPoints, 
+#                    intersectGrid=gridname, log=log)
+# elif datasource == 'GBIF':
+#    boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+#                    gbifOccFile, expdate, taxonSourceName=taxname,
+#                    providerListFile=gbifProvFile,
+#                    mdlMask=None, prjMask=None, 
+#                    minPointCount=minPoints,  
+#                    intersectGrid=gridname, log=log)
+# elif datasource == 'IDIGBIO':
+#    boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
+#                    idigTaxonidsFile, expdate, taxonSourceName=taxname,
+#                    mdlMask=None, prjMask=None, 
+#                    minPointCount=minPoints, 
+#                    intersectGrid=gridname, log=log)
+# else:
+#    boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
+#                    userOccCSV, userOccMeta, expdate, 
+#                    mdlMask=None, prjMask=None, 
+#                    minPointCount=minPoints, 
+#                    intersectGrid=gridname, log=log)
+# 
+# ...............................................
+boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
                    gbifOccFile, expdate, taxonSourceName=taxname,
                    providerListFile=gbifProvFile,
                    mdlMask=None, prjMask=None, 
                    minPointCount=minPoints,  
                    intersectGrid=gridname, log=log)
-elif datasource == 'IDIGBIO':
-   boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
-                   idigTaxonidsFile, expdate, taxonSourceName=taxname,
-                   mdlMask=None, prjMask=None, 
-                   minPointCount=minPoints, 
-                   intersectGrid=gridname, log=log)
-else:
-   boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
-                   userOccCSV, userOccMeta, expdate, 
-                   mdlMask=None, prjMask=None, 
-                   minPointCount=minPoints, 
-                   intersectGrid=gridname, log=log)
 
-# ...............................................
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
@@ -1259,16 +1268,21 @@ occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount,
                squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciName)
+               
 occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
-
 rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
                             data=data)
-if not rdloc:
-   raise LMError(currargs='Unable to set raw data location')
 occ.setRawDLocation(rdloc, currtime)
-newOcc = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
+success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
+usr, occ, algList, mdlScen, prjScenList, 
+                    
+mdlMask=None
+projMask=None
+occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE
+gridset=boomer.intersectGrid
+minPointCount=None
 
 
 

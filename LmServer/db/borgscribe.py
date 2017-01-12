@@ -182,10 +182,10 @@ class BorgScribe(LMObject):
       @summary: Update Shapegrid attributes: 
          verify, dlocation, metadata, modtime, size, status, statusModTime
       @param shpgrd: ShapeGrid to be updated.  
-      @return: Updated record for successful update.
+      @return: True/False for successful update.
       """
-      updatedShpgrd = self._borg.updateShapeGrid(shpgrd)
-      return updatedShpgrd
+      success = self._borg.updateShapeGrid(shpgrd)
+      return success
 
 # ...............................................
    def getShapeGrid(self, shpgridId=None, lyrId=None, 
@@ -289,8 +289,8 @@ class BorgScribe(LMObject):
       @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
       """
-      updatedOcc = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
-      return updatedOcc
+      success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
+      return success
 
 # ...............................................
    def updateSDMProject(self, proj):
@@ -298,9 +298,10 @@ class BorgScribe(LMObject):
       @summary Method to update an SDMProjection object in the database with 
                the verify hash, metadata, data extent and values, status/statusmodtime.
       @param proj the SDMProjection object to update
+      @return: True/False for successful update.
       """
-      updatedProj = self._borg.updateSDMProject(proj)
-      return updatedProj   
+      success = self._borg.updateSDMProject(proj)
+      return success   
    
 # ...............................................
    def initOrRollbackIntersect(self, prj, gridset, modtime):
@@ -328,7 +329,7 @@ class BorgScribe(LMObject):
       return newOrExistingMtxcol
 
 # ...............................................
-   def initOrRollbackSDMProjects(self, usr, occset, mdlScen, prjScenList, alg,  
+   def initOrRollbackSDMProjects(self, occset, mdlScen, prjScenList, alg,  
                           mdlMask=None, projMask=None, 
                           modtime=mx.DateTime.gmt().mjd, email=None):
       """
@@ -344,7 +345,7 @@ class BorgScribe(LMObject):
       except:
          pmaskid = None
       for prjScen in prjScenList:
-         prj = SDMProjection(occset, alg, mdlScen, prjScen, 
+         prj = SDMProjection(occset, mdlScen, prjScen, alg, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
@@ -373,7 +374,7 @@ class BorgScribe(LMObject):
             prjs = self.initOrRollbackSDMProjects(occ, mdlScen, 
                               prjScenList, alg, usr, 
                               modtime=currtime, 
-                              mdlMask=mdlMask, prjMask=projMask)
+                              mdlMask=mdlMask, projMask=projMask)
             objs.extend(prjs)
             # Intersect if intersectGrid is provided
             if gridset is not None:

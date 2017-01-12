@@ -638,14 +638,14 @@ class Borg(DbPostgresql):
       @param shpgrd: ShapeGrid to be updated.  
       @return: Updated record for successful update.
       """
+      success = False
       currtime = mx.DateTime.utc().mjd
       meta = shpgrd.dumpLyrMetadata()
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_updateShapeGrid',
+      success = self.executeModifyFunction('lm_updateShapeGrid',
                         shpgrd.getId(), shpgrd.verify, shpgrd.getDLocation(),
                         meta, currtime, shpgrd.size, 
                         shpgrd.status, shpgrd.statusModTime)
-      shpgrid = self._createShapeGrid(row, idxs)
-      return shpgrid
+      return success
 
 # ...............................................
    def getShapeGrid(self, shpgridId, lyrId, userId, lyrName, epsg):
@@ -847,7 +847,7 @@ class Borg(DbPostgresql):
 # .............................................................................
    def getOccurrenceSet(self, occid, squid, userId, epsg):
       row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
-                                                  occid, squid, userId, epsg)
+                                                  occid, userId, squid, epsg)
       occ = self._createOccurrenceLayer(row, idxs)
       return occ
    
@@ -861,9 +861,10 @@ class Borg(DbPostgresql):
       @note: queryCount should be updated on the object before calling this;
              geometries should be calculated and sent separately. 
       """
+      success = False
       metadata = occ.dumpLyrMetadata()
       try:
-         row, idxs = self.executeSelectOneFunction('lm_updateOccurrenceSet', 
+         success = self.executeModifyFunction('lm_updateOccurrenceSet', 
                                               occ.getId(), 
                                               occ.verify,
                                               occ.displayName,
@@ -877,10 +878,9 @@ class Borg(DbPostgresql):
                                               occ.statusModTime, 
                                               polyWkt, 
                                               pointsWkt)
-         updatedOcc = self._createOccurrenceLayer(row, idxs)
       except Exception, e:
          raise e
-      return updatedOcc
+      return success
 
 # ...............................................
    def updateSDMProject(self, proj):
@@ -889,10 +889,11 @@ class Borg(DbPostgresql):
                the verify hash, metadata, data extent and values, status/statusmodtime.
       @param proj the SDMProjection object to update
       """
+      success = False
       lyrmeta = proj.dumpLyrMetadata()
       prjmeta = proj.dumpParamMetadata()
       try:
-         row, idxs = self.executeSelectOneFunction('lm_updateSDMProjectLayer', 
+         success = self.executeModifyFunction('lm_updateSDMProjectLayer', 
                                               proj.getParamId(), 
                                               proj.getId(), 
                                               proj.verify,
@@ -909,10 +910,9 @@ class Borg(DbPostgresql):
                                               prjmeta,
                                               proj.status, 
                                               proj.statusModTime)
-         updatedProj = self._createSDMProjection(row, idxs)
       except Exception, e:
          raise e
-      return updatedProj
+      return success
 
 # .............................................................................
    def insertMatrixColumn(self, palyr, bktid):
@@ -1043,33 +1043,6 @@ class Borg(DbPostgresql):
                      mtx.metadataUrl, meta, mtx.status, mtx.statusModTime)
       newOrExistingMtx = self._createMatrix(row, idxs)
       return newOrExistingMtx
-
-# # ...............................................
-#    def updateSDMProject(self, proj):
-#       """
-#       @summary Method to update an SDMProjection object in the database with 
-#                the dlocation, bbox, geom, status/statusmodtime.
-#       @param proj: the SDMProjection object to update
-#       """
-#       metadata = prj.dumpLyrMetadata()
-#       try:
-#          success = self.executeSelectOneFunction('lm_updateOccurrenceSet', 
-#                                               occ.getId(), 
-#                                               occ.verify,
-#                                               occ.displayName,
-#                                               occ.getDLocation(), 
-#                                               occ.getRawDLocation(), 
-#                                               occ.queryCount, 
-#                                               occ.getCSVExtentString(), 
-#                                               occ.epsgcode, 
-#                                               metadata,
-#                                               occ.status, 
-#                                               occ.statusModTime, 
-#                                               polyWkt, 
-#                                               pointsWkt)
-#       except Exception, e:
-#          raise e
-#       return success
 
 # ...............................................
    def insertMFChain(self, usr, dlocation, priority, metadata, status):
