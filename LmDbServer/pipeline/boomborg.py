@@ -1246,26 +1246,51 @@ else:
 
 # ...............................................
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
-boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
-                   gbifOccFile, expdate, taxonSourceName=taxname,
-                   providerListFile=gbifProvFile,
-                   mdlMask=None, prjMask=None,
-                   minPointCount=minPoints,
-                   intersectGrid=gridname, log=log)
 
-objs = boomer._processChunk(speciesKey, dataCount, dataChunk)
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
+
 taxonSourceKeyVal = speciesKey
 occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
 data = dataChunk
-occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
-                              occProcessType, dataCount, data=data)
+
 occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
 
 occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
                squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciName)
+occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
+
+rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
+                            data=data)
+if not rdloc:
+   raise LMError(currargs='Unable to set raw data location')
+occ.setRawDLocation(rdloc, currtime)
+newOcc = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
+                              occProcessType, dataCount, data=data)
+                              
+
+
+
+
 
 jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
 self._createMakeflow(jobs)

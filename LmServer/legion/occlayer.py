@@ -34,7 +34,7 @@ from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, OccurrenceFieldName
 
 # .............................................................................
 # .............................................................................
-class OccurrenceType(_LayerParameters):
+class OccurrenceType(_LayerParameters, ProcessObject):
 # .............................................................................
    """
    @todo: Update string formatting when python 2.5 is gone
@@ -61,8 +61,9 @@ class OccurrenceType(_LayerParameters):
              information about the name associated with these data
       @param rawDLocation: URL or file location of raw data to be processed
       """
-      _LayerParameters.__init__(self, -1, modTime, userId, occurrenceSetId,
-                                metadata=metadata)
+      _LayerParameters.__init__(self, userId, paramId=occurrenceSetId,
+                                matrixIndex=-1, metadata=metadata, 
+                                modTime=modTime)
       ProcessObject.__init__(self, objId=occurrenceSetId, 
                              processType=processType, parentId=parentId,
                              status=status, statusModTime=statusModTime)
@@ -86,7 +87,7 @@ class OccurrenceType(_LayerParameters):
 # .............................................................................
 # .............................................................................
 
-class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
+class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
 # .............................................................................
 # Constructor
@@ -227,6 +228,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
    
    def setRawDLocation(self, rawDLocation, touchTime):
       self._rawDLocation = rawDLocation
+      self.paramModTime = touchTime
    
    # ...............................................
    def updateStatus(self, status, modTime=None, queryCount=None):
@@ -236,7 +238,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
       ProcessObject.updateStatus(self, status, modTime=modTime)
       if queryCount is not None: 
          self.queryCount = queryCount
-         self.parametersModTime = self.statusModTime
+         self.paramModTime = self.statusModTime
                   
 # .............................................................................
 # Superclass methods overridden
@@ -250,8 +252,8 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
              and Vector.name.  ServiceObject.metadataUrl is constructed using
              the id on first access.
       """
-      ServiceObject.setId(self, id)
-      if id is not None:
+      ServiceObject.setId(self, occid)
+      if occid is not None:
          if self.name is None:
             self.name = self._earlJr.createLayername(occsetId=self.getId())
          self.setDLocation()

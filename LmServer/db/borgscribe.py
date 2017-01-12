@@ -269,7 +269,7 @@ class BorgScribe(LMObject):
       @note: updates db with count, the actual count on the object (likely zero 
              on initial insertion)
       """
-      # Save user points reference to MAL
+      newOcc = None
       if occ.getId() is None :
          newOcc = self._borg.findOrInsertOccurrenceSet(occ)
       else:
