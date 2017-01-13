@@ -1249,17 +1249,13 @@ success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
 
 usr = user
-mdlScen = boomer.modelScenario
-prjScenList = boomer.projScenarios                
-mdlMask=None
-projMask=None
 occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE
 gridset=boomer.intersectGrid
 minPointCount=boomer.minPointCount
 
-alg = boomer.algs[0]
-prjs = boomer._scribe.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
-                              mdlMask=mdlMask, projMask=projMask, modtime=currtime)
+prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
+               boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
+               modtime=currtime)
 
 
 

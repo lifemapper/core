@@ -70,6 +70,36 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       self._modelScenario = modelScenario
       self._projMaskId = projMaskId
       self._projScenario = projScenario
+      
+# ...............................................
+# Projection Input Data Object attributes: 
+# OccurrenceSet, Algorithm, ModelMask, ModelScenario, ProjMask, ProjScenario 
+# ...............................................
+   def getOccurrenceSetId(self):
+      return self._occurrenceSet.getId()
+
+   def getDisplayName(self):
+      return self._occurrenceSet.displayName
+
+   def dumpAlgorithmParametersAsString(self):
+      return self._algorithm.dumpParametersAsString()
+
+   def getAlgorithmCode(self):
+      return self._algorithm.code
+   
+   def getModelMaskId(self):
+      return self._modelMaskId
+
+   def getModelScenarioId(self):
+      return self._modelScenario.getId()
+
+   def getProjMaskId(self):
+      return self._projMaskId
+
+   def getProjScenarioId(self):
+      return self._projScenario.getId()
+
+   
                 
 # .............................................................................
 class SDMProjection(_ProjectionType, Raster):
@@ -171,7 +201,9 @@ class SDMProjection(_ProjectionType, Raster):
          keywds = ['SDM', 'potential habitat', self.speciesName, 
                    self.algorithmCode]
          prjKeywds = self._projScenario.scenMetadata[ServiceObject.META_KEYWORDS]
-         keywds = list(set(keywds.extend(prjKeywds)))
+         keywds.extend(prjKeywds)
+         # remove duplicates
+         keywds = list(set(keywds))
          metadata[ServiceObject.META_KEYWORDS] = keywds
       try:
          metadata[ServiceObject.META_DESCRIPTION]

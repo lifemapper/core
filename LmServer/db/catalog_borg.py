@@ -990,7 +990,7 @@ class Borg(DbPostgresql):
       """
       lyrmeta = proj.dumpLyrMetadata()
       prjmeta = proj.dumpParamMetadata()
-      algparams = proj.algorithm.dumpParametersAsString()
+      algparams = proj.dumpAlgorithmParametersAsString()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer', 
                      proj.getParamId(), proj.getId(), proj.getUserId(), 
                      proj.squid, proj.verify, proj.name, proj.getDLocation(), 
@@ -998,9 +998,9 @@ class Borg(DbPostgresql):
                      proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
                      proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
-                     proj.occurrenceSet.getId(), proj.algorithmCode, algparams,
-                     proj.modelScenario.getId(), proj.modelMask.getId(),
-                     proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
+                     proj.getOccurrenceSetId(), proj.getAlgorithmCode(), algparams,
+                     proj.getModelScenarioId(), proj.getModelMaskId(),
+                     proj.getProjScenarioId(), proj.getProjMaskId(), prjmeta,
                      proj.processType, proj.status, proj.statusModTime)
       newOrExistingProj = self._createSDMProjection(row, idxs)
       return newOrExistingProj
