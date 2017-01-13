@@ -146,12 +146,15 @@ class LMObject(object):
             existingMetadataDict[key] = val
          else:
             # if metadata exists and is ...
-            if type(existingVal) is set: 
-               # a set, add to it
-               if type(val) is set:
-                  existingMetadataDict[key].union(val)
+            if type(existingVal) is list: 
+               # a list, add to it
+               if type(val) is list:
+                  newVal = list(set(existingVal.extend(val)))
+                  existingMetadataDict[key] = newVal
+                  
                else:
-                  existingMetadataDict[key].add(val)
+                  newVal = list(set(existingVal.append(val)))
+                  existingMetadataDict[key] = newVal
             else:
                # not a set, replace it
                existingMetadataDict[key] = val

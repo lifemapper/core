@@ -333,15 +333,15 @@ class _Layer(LMSpatialObject, ServiceObject):
                   
 # ...............................................
    def dumpLyrMetadata(self):
-      return LMObject._dumpMetadata(self, self.lyrMetadata)
+      return super(_Layer, self)._dumpMetadata(self.lyrMetadata)
  
 # ...............................................
    def loadLyrMetadata(self, newMetadata):
-      self.lyrMetadata = LMObject._loadMetadata(self, newMetadata)
+      self.lyrMetadata = super(_Layer, self)._loadMetadata(self, newMetadata)
 
 # ...............................................
    def addLyrMetadata(self, newMetadataDict):
-      self.lyrMetadata = LMObject._addMetadata(self, newMetadataDict, 
+      self.lyrMetadata = super(_Layer, self)._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.lyrMetadata)
 
 # ...............................................

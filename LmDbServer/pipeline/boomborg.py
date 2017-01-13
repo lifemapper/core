@@ -1220,32 +1220,6 @@ currtime = dt.gmt().mjd
 taxname = TAXONOMIC_SOURCE[datasource]['name']
 log = ScriptLogger('testboomborg')
 
-# if datasource == 'BISON':
-#    boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
-#                    bisonTsnFile, expdate, 
-#                    taxonSourceName=taxname, mdlMask=None, prjMask=None, 
-#                    minPointCount=minPoints, 
-#                    intersectGrid=gridname, log=log)
-# elif datasource == 'GBIF':
-#    boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
-#                    gbifOccFile, expdate, taxonSourceName=taxname,
-#                    providerListFile=gbifProvFile,
-#                    mdlMask=None, prjMask=None, 
-#                    minPointCount=minPoints,  
-#                    intersectGrid=gridname, log=log)
-# elif datasource == 'IDIGBIO':
-#    boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
-#                    idigTaxonidsFile, expdate, taxonSourceName=taxname,
-#                    mdlMask=None, prjMask=None, 
-#                    minPointCount=minPoints, 
-#                    intersectGrid=gridname, log=log)
-# else:
-#    boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
-#                    userOccCSV, userOccMeta, expdate, 
-#                    mdlMask=None, prjMask=None, 
-#                    minPointCount=minPoints, 
-#                    intersectGrid=gridname, log=log)
-# 
 # ...............................................
 boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
                    gbifOccFile, expdate, taxonSourceName=taxname,
@@ -1257,7 +1231,6 @@ boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
-
 taxonSourceKeyVal = speciesKey
 occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
 data = dataChunk
