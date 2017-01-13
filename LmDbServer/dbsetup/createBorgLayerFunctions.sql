@@ -311,7 +311,7 @@ BEGIN
    END IF;
    RETURN rec;                                              
 END; 
-$$ LANGUAGE 'plpgsql' STABLE; 
+$$ LANGUAGE 'plpgsql' VOLATILE; 
                                                                         
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProjectLayer(prjid int, 

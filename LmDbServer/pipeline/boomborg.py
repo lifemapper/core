@@ -1229,7 +1229,9 @@ boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
                    intersectGrid=gridname, log=log)
 
 speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
-
+speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
 taxonSourceKeyVal = speciesKey
 occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
@@ -1258,7 +1260,7 @@ prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario,
                modtime=currtime)
 
 
-
+select * from lm_v3.lm_findOrInsertSDMProjectLayer(NULL,NULL,'kubi','63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e',NULL,'Taxa 63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e (Hexarthra mira (Hudson, 1871)) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min',NULL,'http://badenov-vc1.nhm.ku.edu/services/lm/projections/#id#','{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers"}','GTiff',NULL,NULL,NULL,NULL,NULL,NULL,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00','POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))',NULL,3,'BIOCLIM','(dp1\nS\'\'StandardDeviationCutoff\'\'\np2\nF0.67400000000000004\ns.',4,NULL,1,NULL,NULL,220,0,57766.7422038);
 
 
 
