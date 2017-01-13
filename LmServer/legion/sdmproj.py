@@ -166,22 +166,22 @@ class SDMProjection(_ProjectionType, Raster):
 # ...............................................
    def _createMetadata(self, metadata, isDiscreteData=False):
       try:
-         metadata[self.META_KEYWORDS]
+         metadata[ServiceObject.META_KEYWORDS]
       except:
          keywds = ['SDM', 'potential habitat', self.speciesName, 
                    self.algorithmCode]
-         prjKeywds = self._projScenario.scenMetadata[self.META_KEYWORDS]
+         prjKeywds = self._projScenario.scenMetadata[ServiceObject.META_KEYWORDS]
          keywds = list(set(keywds.extend(prjKeywds)))
-         metadata[self.META_KEYWORDS] = keywds
+         metadata[ServiceObject.META_KEYWORDS] = keywds
       try:
-         metadata[self.META_DESCRIPTION]
+         metadata[ServiceObject.META_DESCRIPTION]
       except:
-         metadata[self.META_DESCRIPTION] = ('Modeled habitat for {} projected onto {} datalayers'
+         metadata[ServiceObject.META_DESCRIPTION] = ('Modeled habitat for {} projected onto {} datalayers'
                            .format(self.speciesName, self._projScenario.name))
       try:
-         metadata[self.META_IS_DISCRETE]
+         metadata[Raster.META_IS_DISCRETE]
       except:
-         metadata[self.META_IS_DISCRETE] = isDiscreteData
+         metadata[Raster.META_IS_DISCRETE] = isDiscreteData
       return metadata
    
 # ...............................................
