@@ -170,8 +170,8 @@ class SDMProjection(_ProjectionType, Raster):
       except:
          keywds = ['SDM', 'potential habitat', self.speciesName, 
                    self.algorithmCode]
-         keywds = keywds.union(self._projScenario.keywords)
-         keywds = list(keywds)
+         prjKeywds = self._projScenario.scenMetadata[self.META_KEYWORDS]
+         keywds = list(set(keywds.extend(prjKeywds)))
          metadata[self.META_KEYWORDS] = keywds
       try:
          metadata[self.META_DESCRIPTION]
