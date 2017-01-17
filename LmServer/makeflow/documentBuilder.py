@@ -478,6 +478,7 @@ class LMMakeflowDocument(LMObject):
       for mtxCol in matrixColumns:
          # Add command to intersect the matrix column
          # Add command to move the PAV to the final location
+         # Add command to update database for PAV
          pass
    
 
