@@ -44,10 +44,10 @@ from LmServer.common.lmconstants import Priority, LOG_PATH
 from LmServer.common.localconstants import TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
-from LmServer.sdm.algorithm import Algorithm
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
@@ -1266,61 +1266,6 @@ prjScen = prjScenList[0]
 prj = SDMProjection(occset, alg, mdlScen, prjScen, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
-proj = prj
-lyrmeta = proj.dumpLyrMetadata()
-prjmeta = proj.dumpParamMetadata()
-algparams = proj.dumpAlgorithmParametersAsString()
-row, idxs = boomer._scribe._borg.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer', 
-               proj.getParamId(), proj.getId(), proj.getUserId(), 
-               proj.squid, proj.verify, proj.name, proj.getDLocation(), 
-               proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
-               proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
-               proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
-               proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
-               proj.getOccurrenceSetId(), proj.getAlgorithmCode(), algparams,
-               proj.getModelScenarioId(), proj.getModelMaskId(),
-               proj.getProjScenarioId(), proj.getProjMaskId(), prjmeta,
-               proj.processType, proj.status, proj.statusModTime)
-               
-pocc = boomer._scribe._borg._createOccurrenceLayer(row, idxs)
-alg = boomer._scribe._borg._createAlgorithm(row, idxs)
-mdlscen = boomer._scribe._borg._createScenario(row, idxs, isForModel=True)
-prjscen = boomer._scribe._borg._createScenario(row, idxs, isForModel=False)
-
-# dbid = boomer._scribe._borg._getColumnValue(row, idxs, ['layerid'])
-# name = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrname', 'name'])
-# usr = boomer._scribe._borg._getColumnValue(row, idxs, ['lyruserid', 'userid'])
-# epsg = boomer._scribe._borg._getColumnValue(row, idxs, ['epsgcode'])
-# verify = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrverify', 'verify'])
-# squid = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
-# dloc = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
-# murl = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
-# meta = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
-# vtype = boomer._scribe._borg._getColumnValue(row, idxs, ['ogrtype'])
-# rtype = boomer._scribe._borg._getColumnValue(row, idxs, ['gdaltype'])
-# vunits = boomer._scribe._borg._getColumnValue(row, idxs, ['valunits'])
-# vattr = boomer._scribe._borg._getColumnValue(row, idxs, ['valattribute'])
-# nodata = boomer._scribe._borg._getColumnValue(row, idxs, ['nodataval'])
-# minval = boomer._scribe._borg._getColumnValue(row, idxs, ['minval'])
-# maxval = boomer._scribe._borg._getColumnValue(row, idxs, ['maxval'])
-# fformat = boomer._scribe._borg._getColumnValue(row, idxs, ['dataformat'])
-# munits = boomer._scribe._borg._getColumnValue(row, idxs, ['mapunits'])
-# res = boomer._scribe._borg._getColumnValue(row, idxs, ['resolution'])
-# dtmod = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
-# bbox = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrbbox', 'bbox'])
-
-layer = boomer._scribe._borg._createLayer(row, idxs)
-prj = SDMProjection.initFromParts(pocc, alg, mdlscen, prjscen, layer,
-         modelMaskId=boomer._scribe._borg._getColumnValue(row, idxs, ['mdlmaskid']), 
-         projMaskId=boomer._scribe._borg._getColumnValue(row, idxs, ['prjmaskid']),
-         projMetadata=boomer._scribe._borg._getColumnValue(row, idxs, ['prjmetadata']), 
-         status=boomer._scribe._borg._getColumnValue(row,idxs,['prjstatus']), 
-         statusModTime=boomer._scribe._borg._getColumnValue(row,idxs,['prjstatusmodtime']), 
-         sdmProjectionId=boomer._scribe._borg._getColumnValue(row,idxs,['sdmprojectid']))                  
-
-newOrExistingProj = boomer._scribe._borg._createSDMProjection(row, idxs)
-
-                        
 newOrExistingPrj = boomer._scribe._borg.findOrInsertSDMProject(prj)
 
 select * from lm_v3.lm_findOrInsertSDMProjectLayer(NULL,NULL,E\'kubi\',E\'63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e\',NULL,E\'Taxa 63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e (Hexarthra mira (Hudson, 1871)) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min\',NULL,E\'http://badenov-vc1.nhm.ku.edu/services/lm/projections/#id#\',E\'{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers"}\',E\'GTiff\',NULL,NULL,NULL,NULL,NULL,NULL,4326,E\'dd\',0.16667,E\'-180.00,-60.00,180.00,90.00\',E\'POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))\',NULL,3,E\'BIOCLIM\',E\'{"StandardDeviationCutoff": 0.674}\',4,NULL,1,NULL,NULL,220,0,57770.7411618);

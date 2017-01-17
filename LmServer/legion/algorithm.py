@@ -26,7 +26,7 @@ try:
 except:
    import pickle
 import json
-from types import StringType, IntType, FloatType, NoneType, DictionaryType
+from types import StringType, IntType, FloatType, NoneType
 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import ALGORITHM_DATA
@@ -133,9 +133,9 @@ class Algorithm(LMObject):
                print('Failed to load JSON object from type {} object {}'
                      .format(type(params), params))
 
-      if not(isinstance(newParams, DictionaryType)):
+      if type(newParams) is dict: 
          try:
-            for k, v in params.iteritems():
+            for k, v in newParams.iteritems():
                self.setParameter(k,v)
          except Exception, e:
             raise LMError('Failed to load parameter {} with value {}'.format(k, v))
