@@ -658,6 +658,8 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- LAYER
 -- ----------------------------------------------------------------------------
+-- MetadataUrl and possibly name will be constructed from the new dbid after
+-- replacing #id# in the string.  LmServer.common.lmconstants.ID_PLACEHOLDER
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayer(lyrid int,
                                           usr varchar,
                                           lyrsquid varchar,
@@ -685,6 +687,7 @@ DECLARE
    newid int = -1;
    idstr varchar;
    murl varchar;
+   newname varchar;
    rec lm_v3.Layer%rowtype;
 BEGIN
    -- get or insert layer 
@@ -699,23 +702,27 @@ BEGIN
       RAISE NOTICE 'User/Name/EPSG Layer % / % / % found with id %', 
                     usr, lyrname, epsg, rec.layerid;
    ELSE
-      INSERT INTO lm_v3.Layer (userid, squid, verify, name, dlocation, metadata, 
+      INSERT INTO lm_v3.Layer (userid, squid, verify, dlocation, metadata, 
            dataFormat, gdalType, ogrType, valUnits, nodataVal, minVal, maxVal, 
            epsgcode, mapunits, resolution, bbox, modTime)
          VALUES 
-          (usr, lyrsquid, lyrverify, lyrname, lyrdloc, lyrmeta, 
+          (usr, lyrsquid, lyrverify, lyrdloc, lyrmeta, 
            datafmt, rtype, vtype, vunits, vnodata, vmin, vmax, 
            epsg, munits, res, bboxstr, lyrmtime);         
                   
       IF FOUND THEN
          SELECT INTO newid last_value FROM lm_v3.layer_layerid_seq;
          idstr := cast(newid as varchar);
+         -- Found in LmServer.common.lmconstants.ID_PLACEHOLDER
          murl := replace(lyrmurlprefix, '#id#', idstr);
+         -- If given name does not contain this string, newname = lyrname
+         newname := replace(lyrname, '#id#', idstr);
          IF bboxwkt is NOT NULL THEN
-            UPDATE lm_v3.Layer SET (metadataurl, geom) 
-               = (murl, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newid;
+            UPDATE lm_v3.Layer SET (metadataurl, name, geom) 
+               = (murl, newname, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newid;
          ELSE
-            UPDATE lm_v3.Layer SET metadataurl = murl WHERE layerid = newid;
+            UPDATE lm_v3.Layer SET (metadataurl, name) 
+               = (murl, newname) WHERE layerid = newid;
          END IF;
          
          SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = newid;

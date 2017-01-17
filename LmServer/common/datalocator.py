@@ -70,10 +70,10 @@ class EarlJr(LMObject):
       return basename
    
 # ...............................................
-   def createSDMProjectName(self, userId, squid, taxaname, algCode, mdlscenCode, 
+   def createSDMProjectTitle(self, userId, taxaname, algCode, mdlscenCode, 
                             prjscenCode):
-      name = 'Taxa {} ({}) modeled with {} and {} projected onto {}'.format(
-               squid, taxaname, algCode, mdlscenCode, prjscenCode )
+      name = 'Taxa {} modeled with {} and {} projected onto {}'.format(
+               taxaname, algCode, mdlscenCode, prjscenCode )
       return name
 
 # ...............................................

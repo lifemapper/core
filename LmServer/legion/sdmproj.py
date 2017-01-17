@@ -127,10 +127,10 @@ class SDMProjection(_ProjectionType, Raster):
       @copydoc LmServer.base.layer2._Layer::__init__()
       """
       (userId, name, squid, processType, bbox, epsg, mapunits, resolution, 
-       isDiscreteData, dataFormat) = self._getDefaultsFromInputs(occurrenceSet, 
-                              algorithm, modelScenario, projScenario, 
-                              name, squid, processType, bbox, epsgcode, 
-                              mapunits, resolution, dataFormat)
+       isDiscreteData, dataFormat) = self._getDefaultsFromInputs(lyrId,
+                           occurrenceSet, algorithm, modelScenario, projScenario, 
+                           name, squid, processType, bbox, epsgcode, mapunits, 
+                           resolution, dataFormat)
       _ProjectionType.__init__(self, occurrenceSet, algorithm, 
                                modelScenario, modelMaskId, 
                                projScenario, projMaskId, processType, 
@@ -241,18 +241,26 @@ class SDMProjection(_ProjectionType, Raster):
          metadata[Raster.META_IS_DISCRETE]
       except:
          metadata[Raster.META_IS_DISCRETE] = isDiscreteData
+         
+      try:
+         metadata[Raster.META_TITLE]
+      except:
+         metadata[Raster.META_TITLE] = self._earlJr.createSDMProjectName(self._userId, 
+                        self.squid, self.displayName, self.algorithmCode, 
+                        self.modelScenarioCode, self.projScenarioCode)
+
       return metadata
    
 # ...............................................
-   def _getDefaultsFromInputs(self, occurrenceSet, algorithm, 
+   def _getDefaultsFromInputs(self, lyrId, occurrenceSet, algorithm, 
                               modelScenario, projScenario, 
                               name, squid, processType, bbox, epsgcode, 
                               mapunits, resolution, gdalFormat):
       userId = occurrenceSet.getUserId()
       if name is None:
-         name = occurrenceSet._earlJr.createSDMProjectName(userId, 
-                        occurrenceSet.squid, occurrenceSet.displayName, 
-                        algorithm.code, modelScenario.code, projScenario.code)
+         if lyrId is None:
+            lyrId = ID_PLACEHOLDER
+         name = occurrenceSet._earlJr.createLayername(projId=lyrId)
       if squid is None:
          squid = occurrenceSet.squid
       if bbox is None:
@@ -466,6 +474,10 @@ class SDMProjection(_ProjectionType, Raster):
    @property
    def occurrenceSet(self):
       return self._occurrenceSet
+
+   @property
+   def displayName(self):
+      return self._occurrenceSet.displayName
 
    @property
    def status(self):

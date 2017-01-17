@@ -110,10 +110,6 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._layerUserId = userId
       self._layerId = lyrId
       self.squid = squid
-      self._dlocation = None
-      self.setDLocation(dlocation)
-      self._verify = None
-      self._setVerify(verify=verify)
       self.lyrMetadata = {}
       self.loadLyrMetadata(metadata)
       self._dataFormat = dataFormat
@@ -128,6 +124,10 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._mapunits = None 
       self._setUnits(mapunits)
       self.resolution = resolution
+      self._dlocation = None
+      self.setDLocation(dlocation)
+      self._verify = None
+      self._setVerify(verify=verify)
       self._mapFilename = None
       
 # ...............................................
@@ -547,7 +547,7 @@ class Raster(_Layer):
             ext = OutputFormat.TMP
          else:
             ext = GDALFormatCodes[self._dataFormat]['FILE_EXT']
-      dloc = super(_Layer, self).createLocalDLocation(ext)
+      dloc = super(Raster, self).createLocalDLocation(ext)
       return dloc
 
 # .............................................................................
