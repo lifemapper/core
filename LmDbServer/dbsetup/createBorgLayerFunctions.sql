@@ -295,7 +295,9 @@ BEGIN
                AND prjmaskId = prjmskid;
    END IF;
    
-   IF NOT FOUND THEN 
+   IF FOUND THEN
+      RAISE NOTICE 'SDMProject found with ids % and %', rec.layerid, rec.sdmprojectId;
+   ELSE 
       INSERT INTO lm_v3.sdmproject (layerid, userId, occurrenceSetId, 
           algorithmCode, algParams, mdlscenarioId, mdlmaskId, prjscenarioId, 
           prjmaskId, metadata, processType, status, statusModTime) 
@@ -355,7 +357,6 @@ DECLARE
    idstr varchar;
    murl varchar;
    rec_lyr lm_v3.Layer%rowtype;
-   rec_prj lm_v3.SDMProject%rowtype;
    rec_fullprj lm_v3.lm_sdmproject%rowtype;
 BEGIN
    -- get or insert layer 
@@ -367,27 +368,18 @@ BEGIN
       RAISE EXCEPTION 'Unable to findOrInsertLayer';
    ELSE
       newlyrid = rec_lyr.layerid;
+      RAISE NOTICE 'newlyrid = %', newlyrid;
       
       -- get or insert sdmproject 
-      SELECT * INTO rec_prj FROM lm_v3.lm_findOrInsertSDMProject(prjid, newlyrid, 
+      SELECT * INTO rec_fullprj FROM lm_v3.lm_findOrInsertSDMProject(prjid, newlyrid, 
                    usr, occid, algcode, algstr, mdlscenid, mdlmskid, prjscenid, 
                    prjmskid, prjmeta, ptype, stat, stattime);
 
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertSDMProject';
       ELSE
-         -- update URL and geometry 
-         idstr := cast(newlyrid as varchar);
-         murl := replace(lyrmurlprefix, '#id#', idstr);
-         IF bboxwkt is NOT NULL THEN
-            UPDATE lm_v3.Layer SET (metadataurl, geom) 
-               = (murl, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newlyrid;
-         ELSE
-            UPDATE lm_v3.Layer SET metadataurl = murl WHERE layerid = newlyrid;
-         END IF;
-         
-         SELECT * INTO rec_fullprj FROM lm_v3.lm_sdmproject WHERE layerid = lyrid;
-      
+         -- URL and geometry are updated on Layer insert 
+         RAISE NOTICE 'Successfully got or inserted SDMProject';
       END IF;
    END IF;
    

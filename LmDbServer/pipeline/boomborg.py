@@ -1206,6 +1206,7 @@ from LmServer.common.log import ScriptLogger
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.taxon import ScientificName
 from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.sdmproj import SDMProjection
 from LmDbServer.pipeline.boomborg import *
 from LmDbServer.tools.archivistborg import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
@@ -1254,10 +1255,41 @@ usr = user
 occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE
 gridset=boomer.intersectGrid
 minPointCount=boomer.minPointCount
+occset = occ
+mdlScen = boomer.modelScenario
+prjScenList =  boomer.projScenarios
+alg = boomer.algs[0]
+mdlMask = projMask = email = mmaskid = pmaskid = None
+modtime=currtime
+prjScen = prjScenList[0]
 
-prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
-               boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
-               modtime=currtime)
+prj = SDMProjection(occset, alg, mdlScen, prjScen, 
+                        modelMaskId=mmaskid, projMaskId=pmaskid, 
+                        status=JobStatus.GENERAL, statusModTime=modtime)
+newOrExistingPrj = boomer._scribe._borg.findOrInsertSDMProject(prj)
+
+select * from lm_v3.lm_findOrInsertSDMProjectLayer(NULL,NULL,
+'kubi',
+'63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e',
+NULL,
+'Taxa 63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e (Hexarthra mira (Hudson, 1871)) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min',
+NULL,
+'http://badenov-vc1.nhm.ku.edu/services/lm/projections/#id#',
+'{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers"}',
+'GTiff',
+NULL,NULL,NULL,NULL,NULL,NULL,4326,
+'dd',
+0.16667,
+'-180.00,-60.00,180.00,90.00',
+'POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))',
+NULL,3,
+'BIOCLIM',
+'{"StandardDeviationCutoff": 0.674}',
+4,NULL,1,NULL,NULL,220,0,57770.7202031);
+
+# prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
+#                boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
+#                modtime=currtime)
 
 
 select * from lm_v3.lm_findOrInsertSDMProjectLayer(NULL,NULL,'kubi','63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e',NULL,'Taxa 63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e (Hexarthra mira (Hudson, 1871)) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min',NULL,'http://badenov-vc1.nhm.ku.edu/services/lm/projections/#id#','{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers"}','GTiff',NULL,NULL,NULL,NULL,NULL,NULL,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00','POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))',NULL,3,'BIOCLIM','(dp1\nS\'\'StandardDeviationCutoff\'\'\np2\nF0.67400000000000004\ns.',4,NULL,1,NULL,NULL,220,0,57766.7422038);

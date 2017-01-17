@@ -82,7 +82,7 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       return self._occurrenceSet.displayName
 
    def dumpAlgorithmParametersAsString(self):
-      return self._algorithm.dumpParametersAsString()
+      return self._algorithm.dumpAlgParameters()
 
    def getAlgorithmCode(self):
       return self._algorithm.code
