@@ -36,7 +36,8 @@ import zipfile
 
 from LmCommon.common.lmAttObject import LmAttObj
 from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
-                  DEFAULT_OGR_FORMAT, SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits,
+                  DEFAULT_OGR_FORMAT, DEFAULT_GDAL_FORMAT, 
+                  SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits,
    OFTInteger, OFTString)
 from LmCommon.common.verify import computeHash, verifyHash
 
@@ -44,7 +45,7 @@ from LmServer.base.lmobj import LMError, LMObject, LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
 
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
-            GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
+            GDALFormatCodes, GDALDataTypes, OGRFormatCodes, OGRDataTypes, 
             OutputFormat, LMServiceType, LMServiceModule)
 from LmServer.common.localconstants import APP_PATH, DEFAULT_EPSG
 
@@ -473,7 +474,7 @@ class Raster(_Layer):
    # ...............................................       
    def __init__(self, name, userId, epsgcode, lyrId=None, 
                 squid=None, verify=None, dlocation=None, 
-                metadata={}, dataFormat=None, gdalType=None, 
+                metadata={}, dataFormat=DEFAULT_GDAL_FORMAT, gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
                 bbox=None,
@@ -550,22 +551,21 @@ class Raster(_Layer):
       return dloc
 
 # .............................................................................
-# Properties
+# Private methods
 # .............................................................................
    def _verifyDataDescription(self, gdalType, gdalFormat):
       """
       @summary Verifies that the dataType and format are either LM-supported 
                GDAL types or None.
-      @raise LMError: Thrown when type is not legal for a Raster.  
+      @raise LMError: Thrown when gdalFormat is missing or 
+             either gdalFormat or gdalType is not legal for a Lifemapper Raster.  
       """
+      # GDAL DataFormat is required (may be a placeholder and changed later)
+      if gdalFormat not in GDALFormatCodes.keys():
+         raise LMError(['Unsupported Raster GDAL dataFormat', gdalFormat])
       if gdalType is not None and gdalType not in GDALDataTypes:
-         raise LMError(['Unsupported Raster type', gdalType])      
-      if gdalFormat is not None and gdalFormat not in GDALFormatCodes.keys():
-         raise LMError(['Unsupported Raster format', gdalFormat])
+         raise LMError(['Unsupported Raster GDAL type', gdalType])      
 
-# .............................................................................
-# Public methods
-# .............................................................................
 # ...............................................
    def _openWithGDAL(self, dlocation=None, bandnum=1):
       """
@@ -580,6 +580,10 @@ class Raster(_Layer):
          raise LMError(['Unable to open dataset or band {} with GDAL ({})'
                         .format(dlocation, str(e))])
       return dataset, band
+
+# .............................................................................
+# Public methods
+# .............................................................................
 
 # ...............................................
    def getHistogram(self, bandnum=1):
@@ -921,7 +925,7 @@ class Vector(_Layer):
    # ...............................................       
    def __init__(self, name, userId, epsgcode, lyrId=None, 
                 squid=None, verify=None, dlocation=None, 
-                metadata={}, dataFormat=None, ogrType=None,
+                metadata={}, dataFormat=DEFAULT_OGR_FORMAT, ogrType=None,
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
@@ -946,6 +950,7 @@ class Vector(_Layer):
       @param fidAttribute: Attribute containing the unique identifier or 
                     feature ID (FID) for this layer/shapefile.
       """
+      self._verifyDataDescription(ogrType, dataFormat)
       self._geomIdx = None
       self._geomFieldName = OccurrenceFieldNames.GEOMETRY_WKT[0]
       self._geomFieldType = OFTString      
@@ -991,13 +996,8 @@ class Vector(_Layer):
 # LM field definitions for data fields (geomwkt, ufid, url) written to shapefiles. 
    
 # .............................................................................
-# Properties
+# Private methods
 # .............................................................................
-
-# ...............................................
-   def getFormatLongName(self):
-      return self._dataFormat 
-   
 # ...............................................
    def _verifyDataDescription(self, ogrType, ogrFormat):
       """
@@ -1005,13 +1005,23 @@ class Vector(_Layer):
       @param ogrType: OGR type of the vector, valid choices are in OGRDataTypes
       @param ogrFormat: OGR Vector Format, only a subset (in OGRFormats) are 
                         valid here
-      @raise LMError: Thrown when type is not legal for a Vector.  
+      @raise LMError: Thrown when ogrFormat is missing or 
+             either ogrFormat or ogrType is not legal for a Lifemapper Vector.  
       """
+      # OGR dataFormat is required (may be a placeholder and changed later)
+      if ogrFormat not in OGRFormatCodes.keys():
+         raise LMError(['Unsupported Vector OGR dataFormat', ogrFormat])
       if ogrType is not None and ogrType not in OGRDataTypes:
-         raise LMError(['Unsupported Vector type', ogrType])
-      if ogrFormat is not None and ogrFormat not in OGRFormats.keys():
-         raise LMError(['Unsupported Vector format', ogrFormat])
+         raise LMError(['Unsupported Vector ogrType', ogrType])
       
+# .............................................................................
+# Properties
+# .............................................................................
+
+# ...............................................
+   def getFormatLongName(self):
+      return self._dataFormat 
+   
 # ...............................................
    def _getFeatureCount(self):
       if self._featureCount is None:

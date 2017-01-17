@@ -33,7 +33,8 @@ from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (ALGORITHM_DATA, ARCHIVE_PATH, 
+from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
+                  ALGORITHM_DATA, ARCHIVE_PATH, 
                   LMServiceModule, DEFAULT_PROJECTION_FORMAT, JobFamily, 
                   DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
@@ -335,14 +336,14 @@ class Borg(DbPostgresql):
             dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
             bbox = self._getColumnValue(row, idxs, ['lyrbbox', 'bbox'])
                   
-            if vtype is not None:
+            if fformat in OGRFormatCodes.keys():
                lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
                             dlocation=dloc, metadata=meta, dataFormat=fformat, 
                             ogrType=vtype, valUnits=vunits, valAttribute=vattr,
                             nodataVal=nodata, minVal=minval, maxVal=maxval, 
                             mapunits=munits, resolution=res, bbox=bbox, 
                             metadataUrl=murl, modTime=dtmod)
-            elif rtype is not None:
+            elif fformat in GDALFormatCodes.keys():
                lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
                             dlocation=dloc, metadata=meta, dataFormat=fformat, 
                             gdalType=rtype, valUnits=vunits, nodataVal=nodata, 

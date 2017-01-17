@@ -1286,16 +1286,39 @@ pocc = boomer._scribe._borg._createOccurrenceLayer(row, idxs)
 alg = boomer._scribe._borg._createAlgorithm(row, idxs)
 mdlscen = boomer._scribe._borg._createScenario(row, idxs, isForModel=True)
 prjscen = boomer._scribe._borg._createScenario(row, idxs, isForModel=False)
+
+dbid = boomer._scribe._borg._getColumnValue(row, idxs, ['layerid'])
+name = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrname', 'name'])
+usr = boomer._scribe._borg._getColumnValue(row, idxs, ['lyruserid', 'userid'])
+epsg = boomer._scribe._borg._getColumnValue(row, idxs, ['epsgcode'])
+verify = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrverify', 'verify'])
+squid = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
+dloc = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
+murl = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
+meta = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
+vtype = boomer._scribe._borg._getColumnValue(row, idxs, ['ogrtype'])
+rtype = boomer._scribe._borg._getColumnValue(row, idxs, ['gdaltype'])
+vunits = boomer._scribe._borg._getColumnValue(row, idxs, ['valunits'])
+vattr = boomer._scribe._borg._getColumnValue(row, idxs, ['valattribute'])
+nodata = boomer._scribe._borg._getColumnValue(row, idxs, ['nodataval'])
+minval = boomer._scribe._borg._getColumnValue(row, idxs, ['minval'])
+maxval = boomer._scribe._borg._getColumnValue(row, idxs, ['maxval'])
+fformat = boomer._scribe._borg._getColumnValue(row, idxs, ['dataformat'])
+munits = boomer._scribe._borg._getColumnValue(row, idxs, ['mapunits'])
+res = boomer._scribe._borg._getColumnValue(row, idxs, ['resolution'])
+dtmod = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
+bbox = boomer._scribe._borg._getColumnValue(row, idxs, ['lyrbbox', 'bbox'])
+
 layer = boomer._scribe._borg._createLayer(row, idxs)
 prj = SDMProjection.initFromParts(pocc, alg, mdlscen, prjscen, layer,
-         modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
-         projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
-         projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
-         status=self._getColumnValue(row,idxs,['prjstatus']), 
-         statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
-         sdmProjectionId=self._getColumnValue(row,idxs,['sdmprojectid']))                  
+         modelMaskId=boomer._scribe._borg._getColumnValue(row, idxs, ['mdlmaskid']), 
+         projMaskId=boomer._scribe._borg._getColumnValue(row, idxs, ['prjmaskid']),
+         projMetadata=boomer._scribe._borg._getColumnValue(row, idxs, ['prjmetadata']), 
+         status=boomer._scribe._borg._getColumnValue(row,idxs,['prjstatus']), 
+         statusModTime=boomer._scribe._borg._getColumnValue(row,idxs,['prjstatusmodtime']), 
+         sdmProjectionId=boomer._scribe._borg._getColumnValue(row,idxs,['sdmprojectid']))                  
 
-newOrExistingProj = self._createSDMProjection(row, idxs)
+newOrExistingProj = boomer._scribe._borg._createSDMProjection(row, idxs)
 
                         
 newOrExistingPrj = boomer._scribe._borg.findOrInsertSDMProject(prj)

@@ -25,13 +25,13 @@
 import mx.DateTime
 from osgeo.ogr import wkbPoint
 import socket
-from types import StringType, UnicodeType, IntType
+from types import IntType
 
 from LmCommon.common.lmconstants import (JobStatus, ProcessType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
-from LmServer.common.lmconstants import  DbUser
+from LmServer.common.lmconstants import  DbUser, DEFAULT_PROJECTION_FORMAT
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
 from LmServer.legion.mtxcolumn import MatrixRaster
 from LmServer.legion.sdmproj import SDMProjection
@@ -347,6 +347,7 @@ class BorgScribe(LMObject):
       for prjScen in prjScenList:
          prj = SDMProjection(occset, alg, mdlScen, prjScen, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
+                        dataFormat=DEFAULT_PROJECTION_FORMAT,
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
          if JobStatus.finished(newOrExistingPrj.status):

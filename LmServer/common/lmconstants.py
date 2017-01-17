@@ -674,11 +674,16 @@ GDALFormatCodes = {'AAIGrid': {'FILE_EXT': OutputFormat.ASCII,
                    'GTiff': {'FILE_EXT': OutputFormat.GTIFF},
                    'HFA': {'FILE_EXT': OutputFormat.HFA}
                    }
+
 DEFAULT_PROJECTION_FORMAT = 'GTiff'
 GDALDataTypes = (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
                  GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
                  GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64)
 # OGR string constants supported here, and associated file extensions
+OGRFormatCodes = {'CSV': {'FILE_EXT': OutputFormat.CSV},
+                  'ESRI Shapefile': {'FILE_EXT': OutputFormat.SHAPE}
+                  }
+# TODO: delete
 OGRFormats = {'CSV': '.csv', 
               'ESRI Shapefile': '.shp'
               }
