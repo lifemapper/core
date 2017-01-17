@@ -307,8 +307,7 @@ BEGIN
        IF NOT FOUND THEN
           RAISE EXCEPTION 'Unable to insert SDMProject';
        ELSE
-          SELECT INTO newid last_value FROM lm_v3.SDMProject_SDMProjectid_seq;
-          SELECT * INTO rec FROM lm_v3.lm_sdmproject WHERE layerid = newid;
+          SELECT * INTO rec FROM lm_v3.lm_sdmproject WHERE layerid = lyrid;
        END IF;
    END IF;
    RETURN rec;                                              
@@ -374,6 +373,8 @@ BEGIN
       SELECT * INTO rec_fullprj FROM lm_v3.lm_findOrInsertSDMProject(prjid, newlyrid, 
                    usr, occid, algcode, algstr, mdlscenid, mdlmskid, prjscenid, 
                    prjmskid, prjmeta, ptype, stat, stattime);
+      RAISE NOTICE 'Returned rec_fullprj % / %', 
+         rec_fullprj.layerid, rec_fullprj.sdmprojectId;
 
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertSDMProject';

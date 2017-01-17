@@ -333,8 +333,8 @@ class Borg(DbPostgresql):
             munits = self._getColumnValue(row, idxs, ['mapunits'])
             res = self._getColumnValue(row, idxs, ['resolution'])
             dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
-            bbox = self._getColumnValue(row, idxs, ['bbox'])
-                        
+            bbox = self._getColumnValue(row, idxs, ['lyrbbox', 'bbox'])
+                  
             if vtype is not None:
                lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
                             dlocation=dloc, metadata=meta, dataFormat=fformat, 
@@ -427,26 +427,14 @@ class Borg(DbPostgresql):
          alg = self._createAlgorithm(row, idxs)
          mdlscen = self._createScenario(row, idxs, isForModel=True)
          prjscen = self._createScenario(row, idxs, isForModel=False)
-         prj = SDMProjection(occ, alg, mdlscen, prjscen,
+         layer = self._createLayer(row, idxs)
+         prj = SDMProjection.initFromParts(occ, alg, mdlscen, prjscen, layer,
                   modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
                   projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
                   prjMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
-                  lyrMetadata=self._getColumnValue(row, idxs, ['lyrmetadata']),
                   status=self._getColumnValue(row,idxs,['prjstatus']), 
                   statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
-                  userId=self._getColumnValue(row,idxs,['userid']), 
-                  layerId=self._getColumnValue(row,idxs,['layerid']), 
-                  verify=self._getColumnValue(row,idxs,['lyrverify']), 
-                  squid=self._getColumnValue(row,idxs,['squid']), 
-                  metadata=self._getColumnValue(row, idxs, ['prjmetadata',]), 
-                  dlocation=self._getColumnValue(row,idxs,['lyrdlocation']), 
-                  bbox=self._getColumnValue(row,idxs,['lyrbbox','bbox']), 
-                  epsgcode=self._getColumnValue(row,idxs,['epsgcode']), 
-                  gdalType=self._getColumnValue(row, idxs, ['gdaltype']), 
-                  gdalFormat=self._getColumnValue(row, idxs, ['dataformat']),
-                  mapunits=self._getColumnValue(row, idxs, ['mapunits']), 
-                  resolution=self._getColumnValue(row, idxs, ['resolution']), 
-                  metadataUrl=self._getColumnValue(row, idxs, ['metadataurl']))
+                  projectId=self._getColumnValue(row,idxs,['sdmprojectid']))                  
       return prj
 
 # .............................................................................

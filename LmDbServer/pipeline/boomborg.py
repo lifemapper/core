@@ -1266,7 +1266,26 @@ prjScen = prjScenList[0]
 prj = SDMProjection(occset, alg, mdlScen, prjScen, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
+
+lyrmeta = proj.dumpLyrMetadata()
+prjmeta = proj.dumpParamMetadata()
+algparams = proj.dumpAlgorithmParametersAsString()
+row, idxs = boomer._scribe._borg.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer', 
+               proj.getParamId(), proj.getId(), proj.getUserId(), 
+               proj.squid, proj.verify, proj.name, proj.getDLocation(), 
+               proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
+               proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
+               proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
+               proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
+               proj.getOccurrenceSetId(), proj.getAlgorithmCode(), algparams,
+               proj.getModelScenarioId(), proj.getModelMaskId(),
+               proj.getProjScenarioId(), proj.getProjMaskId(), prjmeta,
+               proj.processType, proj.status, proj.statusModTime)
+
+                        
 newOrExistingPrj = boomer._scribe._borg.findOrInsertSDMProject(prj)
+
+select * from lm_v3.lm_findOrInsertSDMProjectLayer(NULL,NULL,E\'kubi\',E\'63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e\',NULL,E\'Taxa 63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e (Hexarthra mira (Hudson, 1871)) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min\',NULL,E\'http://badenov-vc1.nhm.ku.edu/services/lm/projections/#id#\',E\'{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers"}\',E\'GTiff\',NULL,NULL,NULL,NULL,NULL,NULL,4326,E\'dd\',0.16667,E\'-180.00,-60.00,180.00,90.00\',E\'POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))\',NULL,3,E\'BIOCLIM\',E\'{"StandardDeviationCutoff": 0.674}\',4,NULL,1,NULL,NULL,220,0,57770.7411618);
 
 select * from lm_v3.lm_findOrInsertSDMProjectLayer(NULL,NULL,
 'kubi',
@@ -1287,12 +1306,11 @@ NULL,3,
 '{"StandardDeviationCutoff": 0.674}',
 4,NULL,1,NULL,NULL,220,0,57770.7202031);
 
-# prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
-#                boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
-#                modtime=currtime)
+prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
+               boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
+               modtime=currtime)
 
 
-select * from lm_v3.lm_findOrInsertSDMProjectLayer(NULL,NULL,'kubi','63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e',NULL,'Taxa 63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e (Hexarthra mira (Hudson, 1871)) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min',NULL,'http://badenov-vc1.nhm.ku.edu/services/lm/projections/#id#','{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers"}','GTiff',NULL,NULL,NULL,NULL,NULL,NULL,4326,'dd',0.16667,'-180.00,-60.00,180.00,90.00','POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))',NULL,3,'BIOCLIM','(dp1\nS\'\'StandardDeviationCutoff\'\'\np2\nF0.67400000000000004\ns.',4,NULL,1,NULL,NULL,220,0,57766.7422038);
 
 
 

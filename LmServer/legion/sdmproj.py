@@ -149,6 +149,31 @@ class SDMProjection(_ProjectionType, Raster):
       self._setMapPrefix()
    
 # .............................................................................
+# another Constructor
+## .............................................................................
+   def initFromParts(self, occurrenceSet, algorithm, modelScenario, projScenario,
+                     layer, processType=None, modelMaskId=None, projMaskId=None, 
+                     projMetadata={}, status=None, statusModTime=None, 
+                     projectId=None):
+      prj = SDMProjection(occurrenceSet, algorithm, modelScenario, projScenario, 
+                          processType=processType, modelMaskId=modelMaskId, 
+                          projMaskId=projMaskId, projMetadata=projMetadata, 
+                          status=status, statusModTime=statusModTime, 
+                          projectId=projectId,
+                          name=layer.name, epsgcode=layer.epsgcode, 
+                          lyrId=layer.getId(), squid=layer.squid, 
+                          verify=layer.verify, dlocation=layer.getDLocation(), 
+                          lyrMetadata=layer.lyrMetadata, 
+                          dataFormat=layer.dataFormat, gdalType=layer.gdalType,
+                          valUnits=layer.valUnits, nodataVal=layer.nodataVal, 
+                          minVal=layer.minVal, maxVal=layer.maxVal, 
+                          mapunits=layer.mapUnits, resolution=layer.resolution, 
+                          bbox=layer.bbox, metadataUrl=layer.metadataUrl, 
+                          parentMetadataUrl=layer.parentMetadataUrl, 
+                          modTime=layer.modTime)
+      return prj
+
+# .............................................................................
 # Superclass methods overridden
 ## .............................................................................
    def setId(self, lyrid):
