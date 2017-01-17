@@ -39,11 +39,11 @@ from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes,
                   DB_STORE, ReferenceType, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
+from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.matrix import Matrix
 from LmServer.legion.mtxcolumn import MatrixColumn, MatrixRaster, MatrixVector
 from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvType, EnvLayer
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario

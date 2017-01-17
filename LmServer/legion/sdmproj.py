@@ -283,8 +283,8 @@ class SDMProjection(_ProjectionType, Raster):
          else:
             processType = ProcessType.OM_PROJECT
       isDiscreteData = ALGORITHM_DATA[algorithm.code]['isDiscreteOutput']
-      title = occurrenceSet._earlJr.createSDMProjectName(
-                        occurrenceSet._userId, squid, occurrenceSet.displayName, 
+      title = occurrenceSet._earlJr.createSDMProjectTitle(
+                        occurrenceSet._userId, occurrenceSet.displayName, 
                         algorithm.code, modelScenario.code, projScenario.code)
       if gdalFormat is None:
          gdalFormat = ALGORITHM_DATA[algorithm.code]['outputFormat']

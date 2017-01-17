@@ -91,8 +91,6 @@ class Algorithm(LMObject):
       @param name: (optional) The full algorithm name
       """
       self.code = code
-      # TODO: update this for Borg
-      self.name = name
       if not metadata:
          metadata = {'name': name}
          
@@ -125,15 +123,25 @@ class Algorithm(LMObject):
       @summary Set the properties of the algorithm
       @param params: A list of AlgorithmParameter objects for the algorithm 
       """
-      if not(isinstance(params, DictionaryType)):
+      if params is not None:
+         if type(params) is dict: 
+            newParams = params
+         else:
+            try:
+               newParams = json.loads(params)
+            except Exception, e:
+               print('Failed to load JSON object from type {} object {}'
+                     .format(type(params), params))
+
+      if not(isinstance(newParams, DictionaryType)):
          try:
-            params = pickle.loads(params)
+            for k, v in params.iteritems():
+               self.setParameter(k,v)
          except Exception, e:
-            raise LMError('Algorithm Parameters must be a dictionary or a pickled dictionary')
+            raise LMError('Failed to load parameter {} with value {}'.format(k, v))
+      else:
+         raise LMError('Algorithm Parameters must be a dictionary or a JSON-encoded dictionary')
          
-      for k, v in params.iteritems():
-         self.setParameter(k,v)
-      
    ## List of algorithm parameters
    parameters = property(_getParameters, _setParameters)
       
@@ -141,23 +149,23 @@ class Algorithm(LMObject):
 # Public Methods
 # .........................................................................
 # ...............................................
+# ...............................................
+   def dumpAlgParameters(self):
+      return LMObject._dumpMetadata(self, self._parameters)
+
+   def loadAlgParameters(self, newMetadata):
+      self._parameters = LMObject._loadMetadata(self, newMetadata)
+
+# ...............................................
    def dumpAlgMetadata(self):
       return LMObject._dumpMetadata(self, self.algMetadata)
  
-# ...............................................
    def loadAlgMetadata(self, newMetadata):
       self.algMetadata = LMObject._loadMetadata(self, newMetadata)
 
-# ...............................................
    def addAlgMetadata(self, newMetadataDict):
       self.algMetadata = LMObject._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.algMetadata)
-
-# ...............................................
-   def dumpParametersAsString(self):
-      # Use default protocol 0 here, smaller dictionary can be ascii
-      apstr = pickle.dumps(self._parameters)
-      return apstr
 
    # ...............................................
    def fillWithDefaults(self):
