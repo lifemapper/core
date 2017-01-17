@@ -463,11 +463,23 @@ class LMMakeflowDocument(LMObject):
 
 
    # ...........................
-   def addPAMIntersect(self, shapegrid, paLayers):
+   def addPAMIntersect(self, shapegrid, matrixColumns):
       """
-      @summary: Adds tasks to intersect a group of PA layers against a shapegrid
+      @summary: Adds tasks to intersect a set of matrix columns against a 
+                   shapegrid for a PAM
+      @param shapegrid: Shapegrid object (May want to change this to a file 
+                           location later, or look for file name.  Just so it 
+                           is a bit more flexible)
+      @param matrixColumns: A list of one or more matrix columns to intersect.
+      @note: Matrix column needs a input dLocation, the intersect parameters, 
+                and a final data location 
+      @todo: Generalize
       """
-      pass
+      for mtxCol in matrixColumns:
+         # Add command to intersect the matrix column
+         # Add command to move the PAV to the final location
+         # Add command to update database for PAV
+         pass
    
 
    # ...........................
