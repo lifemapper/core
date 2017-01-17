@@ -1240,15 +1240,15 @@ data = dataChunk
 occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
 
 
-occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
-               squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
-               status=JobStatus.INITIALIZE, statusModTime=currtime, 
-               sciName=sciName)
-occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
-rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
-                            data=data)
-occ.setRawDLocation(rdloc, currtime)
-success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+# occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
+#                squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
+#                status=JobStatus.INITIALIZE, statusModTime=currtime, 
+#                sciName=sciName)
+# occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
+# rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
+#                             data=data)
+# occ.setRawDLocation(rdloc, currtime)
+# success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
 
 usr = user
@@ -1266,7 +1266,7 @@ prjScen = prjScenList[0]
 prj = SDMProjection(occset, alg, mdlScen, prjScen, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
-
+proj = prj
 lyrmeta = proj.dumpLyrMetadata()
 prjmeta = proj.dumpParamMetadata()
 algparams = proj.dumpAlgorithmParametersAsString()
@@ -1281,6 +1281,21 @@ row, idxs = boomer._scribe._borg.executeInsertAndSelectOneFunction('lm_findOrIns
                proj.getModelScenarioId(), proj.getModelMaskId(),
                proj.getProjScenarioId(), proj.getProjMaskId(), prjmeta,
                proj.processType, proj.status, proj.statusModTime)
+               
+pocc = boomer._scribe._borg._createOccurrenceLayer(row, idxs)
+alg = boomer._scribe._borg._createAlgorithm(row, idxs)
+mdlscen = boomer._scribe._borg._createScenario(row, idxs, isForModel=True)
+prjscen = boomer._scribe._borg._createScenario(row, idxs, isForModel=False)
+layer = boomer._scribe._borg._createLayer(row, idxs)
+prj = SDMProjection.initFromParts(pocc, alg, mdlscen, prjscen, layer,
+         modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
+         projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
+         projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
+         status=self._getColumnValue(row,idxs,['prjstatus']), 
+         statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
+         sdmProjectionId=self._getColumnValue(row,idxs,['sdmprojectid']))                  
+
+newOrExistingProj = self._createSDMProjection(row, idxs)
 
                         
 newOrExistingPrj = boomer._scribe._borg.findOrInsertSDMProject(prj)

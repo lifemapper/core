@@ -434,7 +434,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
       SELECT p.sdmprojectid, p.layerid, p.userid, p.occurrenceSetId, 
              p.algorithmCode, p.algParams, 
              p.mdlscenarioId, p.mdlmaskId, p.prjscenarioId, p.prjmaskId, 
-             p.metadata, p.layerid, p.status, p.statusModTime,
+             p.metadata, p.status, p.statusModTime,
              l.squid, l.verify, l.name, l.dlocation, l.metadataUrl, l.metadata, 
              l.dataFormat, l.gdalType, l.ogrType, l.valUnits, l.valAttribute, 
              l.nodataVal, l.minVal, l.maxVal, 

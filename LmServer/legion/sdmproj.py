@@ -114,7 +114,8 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
    def __init__(self, occurrenceSet, algorithm, modelScenario, projScenario, 
                 processType=None, modelMaskId=None, projMaskId=None, 
-                projMetadata={}, status=None, statusModTime=None, projectId=None,
+                projMetadata={}, status=None, statusModTime=None, 
+                sdmProjectionId=None,
                 name=None, epsgcode=None, lyrId=None, squid=None, verify=None, 
                 dlocation=None, lyrMetadata={}, dataFormat=None, gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
@@ -134,7 +135,7 @@ class SDMProjection(_ProjectionType, Raster):
                                modelScenario, modelMaskId, 
                                projScenario, projMaskId, processType, 
                                projMetadata,
-                               status, statusModTime, userId, projectId)
+                               status, statusModTime, userId, sdmProjectionId)
       lyrmetadata = self._createMetadata(lyrMetadata, isDiscreteData=isDiscreteData)
       Raster.__init__(self, name, userId, epsg, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
@@ -151,15 +152,16 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
 # another Constructor
 ## .............................................................................
-   def initFromParts(self, occurrenceSet, algorithm, modelScenario, projScenario,
+   @classmethod
+   def initFromParts(cls, occurrenceSet, algorithm, modelScenario, projScenario,
                      layer, processType=None, modelMaskId=None, projMaskId=None, 
                      projMetadata={}, status=None, statusModTime=None, 
-                     projectId=None):
+                     sdmProjectionId=None):
       prj = SDMProjection(occurrenceSet, algorithm, modelScenario, projScenario, 
                           processType=processType, modelMaskId=modelMaskId, 
                           projMaskId=projMaskId, projMetadata=projMetadata, 
                           status=status, statusModTime=statusModTime, 
-                          projectId=projectId,
+                          sdmProjectionId=sdmProjectionId,
                           name=layer.name, epsgcode=layer.epsgcode, 
                           lyrId=layer.getId(), squid=layer.squid, 
                           verify=layer.verify, dlocation=layer.getDLocation(), 

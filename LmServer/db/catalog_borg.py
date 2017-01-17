@@ -431,10 +431,10 @@ class Borg(DbPostgresql):
          prj = SDMProjection.initFromParts(occ, alg, mdlscen, prjscen, layer,
                   modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
                   projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
-                  prjMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
+                  projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
                   status=self._getColumnValue(row,idxs,['prjstatus']), 
                   statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
-                  projectId=self._getColumnValue(row,idxs,['sdmprojectid']))                  
+                  sdmProjectionId=self._getColumnValue(row,idxs,['sdmprojectid']))                  
       return prj
 
 # .............................................................................
