@@ -127,7 +127,7 @@ class SDMProjection(_ProjectionType, Raster):
       @copydoc LmServer.base.layer2._Layer::__init__()
       """
       (userId, name, squid, processType, bbox, epsg, mapunits, resolution, 
-       isDiscreteData, dataFormat) = self._getDefaultsFromInputs(lyrId,
+       isDiscreteData, dataFormat, title) = self._getDefaultsFromInputs(lyrId,
                            occurrenceSet, algorithm, modelScenario, projScenario, 
                            name, squid, processType, bbox, epsgcode, mapunits, 
                            resolution, dataFormat)
@@ -136,10 +136,11 @@ class SDMProjection(_ProjectionType, Raster):
                                projScenario, projMaskId, processType, 
                                projMetadata,
                                status, statusModTime, userId, sdmProjectionId)
-      lyrmetadata = self._createMetadata(lyrMetadata, isDiscreteData=isDiscreteData)
+      lyrMetadata = self._createMetadata(lyrMetadata, title=title,
+                                         isDiscreteData=isDiscreteData)
       Raster.__init__(self, name, userId, epsg, lyrId=lyrId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
-                metadata=lyrmetadata, dataFormat=dataFormat, gdalType=gdalType, 
+                metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
                 valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, 
                 maxVal=maxVal, mapunits=mapunits, resolution=resolution, 
                 bbox=bbox, svcObjId=lyrId, serviceType=LMServiceType.PROJECTIONS, 
@@ -221,7 +222,10 @@ class SDMProjection(_ProjectionType, Raster):
       return self._model.getAbsolutePath()
 
 # ...............................................
-   def _createMetadata(self, metadata, isDiscreteData=False):
+   def _createMetadata(self, metadata, title=None, isDiscreteData=False):
+      """
+      @summary: Assemble SDMProjection metadata the first time it is created.
+      """
       try:
          metadata[ServiceObject.META_KEYWORDS]
       except:
@@ -235,20 +239,18 @@ class SDMProjection(_ProjectionType, Raster):
       try:
          metadata[ServiceObject.META_DESCRIPTION]
       except:
-         metadata[ServiceObject.META_DESCRIPTION] = ('Modeled habitat for {} projected onto {} datalayers'
+         metadata[ServiceObject.META_DESCRIPTION] = (
+                           'Modeled habitat for {} projected onto {} datalayers'
                            .format(self.speciesName, self._projScenario.name))
       try:
          metadata[Raster.META_IS_DISCRETE]
       except:
          metadata[Raster.META_IS_DISCRETE] = isDiscreteData
-         
       try:
          metadata[Raster.META_TITLE]
       except:
-         metadata[Raster.META_TITLE] = self._earlJr.createSDMProjectName(self._userId, 
-                        self.squid, self.displayName, self.algorithmCode, 
-                        self.modelScenarioCode, self.projScenarioCode)
-
+         if title is not None:
+            metadata[Raster.META_TITLE] = title
       return metadata
    
 # ...............................................
@@ -256,6 +258,10 @@ class SDMProjection(_ProjectionType, Raster):
                               modelScenario, projScenario, 
                               name, squid, processType, bbox, epsgcode, 
                               mapunits, resolution, gdalFormat):
+      """
+      @summary: Assemble SDMProjection attributes from process inputs the first 
+                time it is created.
+      """
       userId = occurrenceSet.getUserId()
       if name is None:
          if lyrId is None:
@@ -277,10 +283,13 @@ class SDMProjection(_ProjectionType, Raster):
          else:
             processType = ProcessType.OM_PROJECT
       isDiscreteData = ALGORITHM_DATA[algorithm.code]['isDiscreteOutput']
+      title = occurrenceSet._earlJr.createSDMProjectName(
+                        occurrenceSet._userId, squid, occurrenceSet.displayName, 
+                        algorithm.code, modelScenario.code, projScenario.code)
       if gdalFormat is None:
          gdalFormat = ALGORITHM_DATA[algorithm.code]['outputFormat']
       return (userId, name, squid, processType, bbox, epsgcode, mapunits, 
-              resolution, isDiscreteData, gdalFormat)
+              resolution, isDiscreteData, gdalFormat, title)
 
 # .............................................................................
 # Public methods
