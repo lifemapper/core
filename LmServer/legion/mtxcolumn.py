@@ -33,13 +33,20 @@ from LmServer.common.lmconstants import LMServiceType, LMServiceModule
 # .............................................................................
 # .............................................................................
 class MatrixColumn(_LayerParameters, ProcessObject):
+   # Query to filter layer for intersect
    INTERSECT_PARAM_FILTER_STRING = 'filterString'
+   # Attribute used in layer intersect
    INTERSECT_PARAM_VAL_NAME = 'valName'
+   # Units of measurement for attribute used in layer intersect
    INTERSECT_PARAM_VAL_UNITS = 'valUnits'
+   # Minimum spatial coverage for gridcell intersect computation
    INTERSECT_PARAM_MIN_PERCENT = 'minPercent'
+   # Types of GRIM gridcell intersect computation
    INTERSECT_PARAM_WEIGHTED_MEAN = 'weightedMean'
-   INTERSECT_PARAM_LARGEST_CLASS = 'largestClass' 
+   INTERSECT_PARAM_LARGEST_CLASS = 'largestClass'
+   # Minimum percentage of acceptable value for PAM gridcell intersect computation 
    INTERSECT_PARAM_MIN_PRESENCE = 'minPresence'
+   # Maximum percentage of acceptable value for PAM gridcell intersect computation 
    INTERSECT_PARAM_MAX_PRESENCE = 'maxPresence'
 # .............................................................................
 # Constructor
@@ -49,18 +56,13 @@ class MatrixColumn(_LayerParameters, ProcessObject):
                 metadata={}, intersectParams={}, squid=None, ident=None,
                 matrixColumnId=None, status=None, statusModTime=None):
       """
-      @note:  intersectParameters may include keywords:
-         filterString: to filter layer for intersect
-         valName: for attribute used in layer intersect
-         valUnits: units of attribute used in layer intersect
-         minPercent: minimum spatial coverage for gridcell intersect computation
-         weightedMean: for GRIM gridcell intersect computation
-         largestClass: for GRIM gridcell intersect computation
-         minPresence: for PAM binary gridcell intersect computation
-         maxPresence: for PAM binary gridcell intersect computation
+      @summary MatrixColumn constructor
+      @copydoc LmServer.base.layer2._LayerParameters::__init__()
+      @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
       """
-      _LayerParameters.__init__(self, matrixIndex, None, userId, matrixColumnId,
-                                metadata=metadata)
+      _LayerParameters.__init__(self, userId, paramId=matrixColumnId, 
+                                matrixIndex=matrixIndex, metadata=metadata, 
+                                modTime=statusModTime)
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                              parentId=matrixId, status=status, 
                              statusModTime=statusModTime)
@@ -83,10 +85,6 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       self.intersectParams = super(MatrixColumn, self)._addMetadata(newIntersectParams, 
                                   existingMetadataDict=self.intersectParams)
 
-
-# .............................................................................
-# .............................................................................
-
 # .............................................................................
 # .............................................................................
 class MatrixVector(MatrixColumn, Vector):
@@ -100,9 +98,8 @@ class MatrixVector(MatrixColumn, Vector):
                 lyrMetadata={}, dataFormat=None, ogrType=None,
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
-                mapunits=None, resolution=None, 
-                bbox=None,
-                svcObjId=None, serviceType=LMServiceType.LAYERS, 
+                mapunits=None, resolution=None, bbox=None, svcObjId=None, 
+                serviceType=LMServiceType.MATRIX_LAYERS, 
                 moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, modTime=None,
                 featureCount=0, featureAttributes={}, features={}, 
@@ -110,7 +107,11 @@ class MatrixVector(MatrixColumn, Vector):
                 # MatrixColumn
                 processType=None, mtxcolMetadata={}, intersectParams={}, 
                 ident=None, matrixColumnId=None, status=None, statusModTime=None):
-                
+      """
+      @summary MatrixVector constructor
+      @copydoc LmServer.legion.mtxcolumn.MatrixColumn::__init__()
+      @copydoc LmServer.base.layer2.Vector::__init__()
+      """
       # ...................
       MatrixColumn(matrixIndex, matrixId, userId, 
                    processType=processType, 
@@ -123,21 +124,12 @@ class MatrixVector(MatrixColumn, Vector):
                       valAttribute=valAttribute, nodataVal=nodataVal, 
                       minVal=minVal, maxVal=maxVal, mapunits=mapunits, 
                       resolution=resolution, bbox=bbox, svcObjId=matrixColumnId, 
-                      serviceType=LMServiceType.MATRIX_LAYERS, 
-                      moduleType=LMServiceModule.LM,
+                      serviceType=serviceType, moduleType=moduleType,
                       metadataUrl=metadataUrl, 
                       parentMetadataUrl=parentMetadataUrl, modTime=modTime,
                       featureCount=featureCount, 
                       featureAttributes=featureAttributes, features=features, 
                       fidAttribute=fidAttribute)
-
-      
-   
-# .............................................................................
-# Private methods
-# .............................................................................
-
-# .............................................................................  
          
 # .............................................................................
 class MatrixRaster(MatrixColumn, Raster):
@@ -150,15 +142,18 @@ class MatrixRaster(MatrixColumn, Raster):
                 squid=None, verify=None, dlocation=None, 
                 lyrMetadata={}, dataFormat=None, gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
-                mapunits=None, resolution=None, 
-                bbox=None,
-                svcObjId=None, serviceType=LMServiceType.LAYERS, 
+                mapunits=None, resolution=None, bbox=None, svcObjId=None, 
+                serviceType=LMServiceType.MATRIX_LAYERS, 
                 moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, modTime=None,
                 # MatrixColumn
                 processType=None, mtxcolMetadata={}, intersectParams={}, 
                 ident=None, matrixColumnId=None, status=None, statusModTime=None):
-
+      """
+      @summary MatrixRaster constructor
+      @copydoc LmServer.legion.mtxcolumn.MatrixColumn::__init__()
+      @copydoc LmServer.base.layer2.Raster::__init__()
+      """
       # ...................
       MatrixColumn(matrixIndex, matrixId, userId, 
                    processType=processType, 
@@ -171,8 +166,7 @@ class MatrixRaster(MatrixColumn, Raster):
                 valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, 
                 maxVal=maxVal, mapunits=mapunits, resolution=resolution, 
                 bbox=bbox, svcObjId=matrixColumnId, 
-                serviceType=LMServiceType.MATRIX_LAYERS, 
-                moduleType=LMServiceModule.LM,
+                serviceType=serviceType, moduleType=moduleType,
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
 

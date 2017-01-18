@@ -310,7 +310,7 @@ class BorgScribe(LMObject):
       """
       newOrExistingMtxcol = None
       if gridset is not None:
-         mtxrst = MatrixRaster(-1, -1, prj.getUserId(), gridset, prj.name, prj.epsgcode,  
+         mtxrst = MatrixRaster(-1, -1, prj.getUserId(), prj.name, prj.epsgcode,  
                      lyrId=prj.getId(), squid=prj.squid, verify=prj.verify, 
                      dlocation=prj.getDLocation(), lyrMetadata=prj.lyrMetadata, 
                      dataFormat=prj.dataFormat, gdalType=prj.gdalType, 
@@ -320,7 +320,7 @@ class BorgScribe(LMObject):
                      metadataUrl=prj.metadataUrl, modTime=prj.statusModTime,
                      processType=ProcessType.RAD_INTERSECT, 
                      mtxcolMetadata={}, intersectParams={}, 
-                     status=JobStatus.GENERAL, statusModTime=None)
+                     status=JobStatus.GENERAL, statusModTime=modtime)
          # TODO:
          newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxrst)
          if JobStatus.finished(newOrExistingMtxcol.status):
