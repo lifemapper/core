@@ -375,11 +375,11 @@ BEGIN
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;   
    EXECUTE cmd INTO rec_fullprj;
+   RAISE NOTICE 'Results layerid = %, gdaltype = %', rec_fullprj.layerid, rec_fullprj.gdaltype;   
    
    -- Add new
-   IF NOT FOUND THEN
-      RAISE NOTICE 'Unable to existing lm_sdmProject for user: %', usr;
-   ELSE   
+   IF rec_fullprj.layerid IS NULL THEN
+      RAISE NOTICE 'Unable to find existing lm_sdmProject for user: %', usr;
       -- get or insert layer 
       SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
          lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
