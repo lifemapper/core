@@ -370,6 +370,40 @@ class Borg(DbPostgresql):
       return envRst
 
 # ...............................................
+   def _createMatrixLayer(self, row, idxs):
+      """
+      Create an EnvLayer from a lm_envlayer or lm_scenlayer record in the Borg
+      """
+      mtxobj = None
+      if row is not None:
+         lyrid = self._getColumnValue(row,idxs,['layerid'])
+         mtxIdx = self._getColumnValue(row,idxs,['layerid']) 
+         mtxId = self._getColumnValue(row,idxs,['layerid']) 
+         usr = self._getColumnValue(row,idxs,['layerid']) 
+         coldloc = self._getColumnValue(row,idxs,['layerid'])
+         meta = self._getColumnValue(row,idxs,['layerid']) 
+         intparams = self._getColumnValue(row,idxs,['layerid'])
+         squid = self._getColumnValue(row,idxs,['layerid']) 
+         ident = self._getColumnValue(row,idxs,['layerid'])
+         mtxcolid = self._getColumnValue(row,idxs,['layerid']) 
+         stat = self._getColumnValue(row,idxs,['layerid']) 
+         stattime = self._getColumnValue(row,idxs,['layerid'])
+         mtxcol = MatrixColumn(mtxIdx, mtxId, usr, layerId=lyrid,
+                               colDLocation=coldloc, metadata=meta, 
+                               intersectParams=intparams, squid=squid, 
+                               ident=ident, matrixColumnId=mtxcolid, 
+                               status=stat, statusModTime=stattime)
+         lyr = self._createLayer(row, idxs)
+         if lyr is None:
+            mtxobj = mtxcol
+         else:
+            if lyr.dataFormat in OGRFormatCodes.keys():
+               mtxobj = MatrixVector.initFromParts(mtxcol, lyr)
+            elif lyr.dataFormat in GDALFormatCodes.keys():
+               mtxobj = MatrixRaster.initFromParts(mtxcol, lyr)
+      return mtxobj
+
+# ...............................................
    def _createShapeGrid(self, row, idxs):
       """
       @note: takes lm_shapegrid record
@@ -648,6 +682,29 @@ class Borg(DbPostgresql):
       shpgrid = self._createShapeGrid(row, idxs)
       return shpgrid
    
+# # ...............................................
+#    def findOrInsertLayer(self, layer):
+#       """
+#       @summary Insert or find a layer's metadata in the Borg. 
+#       @param lyr: layer to insert
+#       @return: new or existing EnvironmentalLayer
+#       """
+#       layer.modTime = mx.DateTime.utc().mjd
+#       wkt = None
+#       if layer.epsgcode == DEFAULT_EPSG:
+#          wkt = layer.getWkt()
+#       lyrmeta = layer.dumpLyrMetadata()
+#       row, idxs = self.executeInsertAndSelectOneFunction(
+#                            'lm_findOrInsertLayer', layer.getId(), 
+#                            layer.getUserId(), layer.squid, layer.verify, layer.name,
+#                            layer.getDLocation(), layer.metadataUrl,
+#                            lyrmeta, layer.dataFormat,  layer.gdalType, layer.ogrType, 
+#                            layer.valUnits, layer.nodataVal, layer.minVal, layer.maxVal, 
+#                            layer.epsgcode, layer.mapUnits, layer.resolution, 
+#                            layer.getCSVExtentString(), wkt, layer.modTime)
+#       newOrExistingLyr = self._createLayer(row, idxs)
+#       return newOrExistingLyr
+
 # ...............................................
    def findOrInsertEnvLayer(self, lyr, scenarioId):
       """
@@ -994,29 +1051,54 @@ class Borg(DbPostgresql):
       newOrExistingProj = self._createSDMProjection(row, idxs)
       return newOrExistingProj
 
-# # ...............................................
-#    def findOrInsertMtxcol(self, mtxcol):
-#       """
-#       @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
-#                 OR save a new SDMProjection
-#       @param proj: the SDMProjection object to update
-#       @return new or existing SDMProjection 
-#       """
-#       mcmeta = mtxcol.dumpParamMetadata()
-#       intparams = mtxcol.dumpIntersectParams()
-#       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
-#                      mtxcol.getId(), mtxcol.squid, mtxcol.ident, 
-#                      mtxcol.getDLocation(), mcmeta, mtxcol.getLayerId(), 
-#                      proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
-#                      proj.ogrType(), proj.valUnits, proj.nodataVal, proj.minVal,
-#                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
-#                      proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
-#                      proj.occurrenceSet.getId(), proj.algorithmCode, algparams,
-#                      proj.modelScenario.getId(), proj.modelMask.getId(),
-#                      proj.projScenario.getId(), proj.projMask.getId(), prjmeta,
-#                      proj.processType, proj.status, proj.statusModTime)
-#       newOrExistingProj = self._createSDMProjection(row, idxs)
-#       return newOrExistingProj
+# ...............................................
+   def findOrInsertMtxcol(self, mtxobj, layer=None):
+      """
+      @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
+                OR save a new SDMProjection
+      @param mtxobj: the Matrix* object (MatrixColumn, MatrixRaster, MatrixVector) 
+             to get or insert
+      @return new or existing Matrix* object
+      """
+      try:
+         lyrid = mtxobj.layerId
+      except:
+         lyrid = None
+      try:
+         lyrmeta = mtxobj.dumpLyrMetadata()
+         usr = mtxobj.getUserId()
+         lyrverify = mtxobj.verify
+         lyrname = mtxobj.name
+         lyrdloc = mtxobj.getDLocation()
+         lyrmurl = mtxobj.metadataUrl
+         datafmt = mtxobj.dataFormat
+         rtype = mtxobj.gdalType
+         vtype = mtxobj.ogrType
+         vunits = mtxobj.valUnits
+         vnodata = mtxobj.nodataVal
+         vmin = mtxobj.minVal
+         vmax = mtxobj.maxVal
+         epsg = mtxobj.epsgcode
+         munits = mtxobj.mapUnits
+         res = mtxobj.resolution
+         bboxstr = mtxobj.getCSVExtentString()
+         bboxwkt = mtxobj.getWkt()
+         lyrmtime = mtxobj.modTime
+      except:
+         lyrmeta = usr = lyrverify = lyrname = lyrdloc = lyrmurl = None
+         datafmt = rtype = vtype = vunits = vnodata = vmin = vmax = epsg = None
+         munits = res = bboxstr = bboxwkt = lyrmtime = None
+      mcmeta = mtxobj.dumpParamMetadata()
+      intparams = mtxobj.dumpIntersectParams()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
+                     mtxobj.getId(), mtxobj.parentId, mtxobj.getMatrixIndex(),
+                     mtxobj.squid, mtxobj.ident, mtxobj.getColumnDLocation(), 
+                     mcmeta, intparams, mtxobj.status, mtxobj.statusModTime,
+                     lyrid, usr, lyrverify, lyrname, lyrdloc, lyrmurl, lyrmeta, 
+                     datafmt, rtype, vtype, vunits, vnodata, vmin, vmax, epsg, 
+                     munits, res, bboxstr, bboxwkt, lyrmtime)
+      newOrExistingProj = self._createSDMProjection(row, idxs)
+      return newOrExistingProj
 
 # ...............................................
    def findOrInsertMatrix(self, mtx):

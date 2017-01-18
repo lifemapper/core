@@ -412,17 +412,40 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(mtxcolid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(-- MatrixColumn
+                                                             mtxcolid int,
                                                              mtxid int,
                                                              mtxidx int,
                                                              sqd varchar,
                                                              idnt varchar,
                                                              dloc varchar,
                                                              meta text,
-                                                             lyrid int,
                                                              intparams text,
                                                              stat int,
-                                                             stattime double precision)
+                                                             stattime double precision,
+                                                             -- Layer                                                             -- Layer
+                                                             lyrid int,
+                                                             usr varchar,
+                                                             -- sqd from MC,
+                                                             lyrverify varchar,
+                                                             lyrname varchar, 
+                                                             lyrdloc varchar,
+                                                             lyrmurlprefix varchar,
+                                                             lyrmeta varchar,
+                                                             datafmt varchar,
+                                                             rtype int,
+                                                             vtype int,
+                                                             vunits varchar,
+                                                             vnodata double precision,
+                                                             vmin double precision,
+                                                             vmax double precision,
+                                                             epsg int,
+                                                             munits varchar,
+                                                             res double precision,
+                                                             bboxstr varchar,
+                                                             bboxwkt varchar,
+                                                             lyrmtime double precision,
+)
 RETURNS lm_v3.lm_matrixlayer AS
 $$
 DECLARE
@@ -436,8 +459,16 @@ BEGIN
    IF mtxcount < 1 THEN
       RAISE EXCEPTION 'Matrix with id % does not exist', mtxid;
    END IF;
-   -- check existence of optional referenced layer
-   IF lyrid IS NOT NULL THEN
+   -- insert or find optional referenced layer
+   IF lyrid IS NOT NULL OR (usr IS NOT NULL AND lyrname IS NOT NULL AND epsg IS NOT NULL) THEN
+      SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
+         lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
+         vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime);
+      
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to findOrInsertLayer';
+      ELSE
+      
       SELECT count(*) INTO lyrcount FROM lm_v3.Layer WHERE layerid = lyrid;
       IF lyrcount < 1 THEN
          RAISE EXCEPTION 'Layer with id % does not exist', lyrid;

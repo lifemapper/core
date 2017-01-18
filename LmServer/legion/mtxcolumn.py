@@ -51,8 +51,8 @@ class MatrixColumn(_LayerParameters, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, matrixIndex, matrixId, userId, 
-                processType=ProcessType.RAD_INTERSECT, 
+   def __init__(self, matrixIndex, matrixId, userId, layerId=None,
+                processType=ProcessType.RAD_INTERSECT, colDLocation=None,
                 metadata={}, intersectParams={}, squid=None, ident=None,
                 matrixColumnId=None, status=None, statusModTime=None):
       """
@@ -66,6 +66,7 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                              parentId=matrixId, status=status, 
                              statusModTime=statusModTime)
+      self.layerId = layerId
       self.squid = squid
       self.ident = ident
       self.intersectParams = {}
@@ -84,6 +85,24 @@ class MatrixColumn(_LayerParameters, ProcessObject):
    def addIntersectParams(self, newIntersectParams):
       self.intersectParams = super(MatrixColumn, self)._addMetadata(newIntersectParams, 
                                   existingMetadataDict=self.intersectParams)
+   
+# ...............................................
+   def getColumnDLocation(self):
+      return self._colDLocation
+   
+   def setColumnDLocation(self, colDLocation, modTime):
+      self._colDLocation = colDLocation
+      self.paramModTime = modTime
+   
+   # ...............................................
+   def updateStatus(self, status, modTime=None, queryCount=None):
+      """
+      @note: Overrides ProcessObject.updateStatus
+      """
+      ProcessObject.updateStatus(self, status, modTime=modTime)
+      if queryCount is not None: 
+         self.queryCount = queryCount
+         self.paramModTime = self.statusModTime
 
 # .............................................................................
 # .............................................................................
@@ -113,7 +132,7 @@ class MatrixVector(MatrixColumn, Vector):
       @copydoc LmServer.base.layer2.Vector::__init__()
       """
       # ...................
-      MatrixColumn(matrixIndex, matrixId, userId, 
+      MatrixColumn(matrixIndex, matrixId, userId, layerId=lyrId, 
                    processType=processType, 
                    metadata=mtxcolMetadata, intersectParams=intersectParams, 
                    squid=squid, ident=ident, matrixColumnId=matrixColumnId, 
@@ -155,7 +174,7 @@ class MatrixRaster(MatrixColumn, Raster):
       @copydoc LmServer.base.layer2.Raster::__init__()
       """
       # ...................
-      MatrixColumn(matrixIndex, matrixId, userId, 
+      MatrixColumn(matrixIndex, matrixId, userId, layerId=lyrId,
                    processType=processType, 
                    metadata=mtxcolMetadata, intersectParams=intersectParams, 
                    squid=squid, ident=ident, matrixColumnId=matrixColumnId, 

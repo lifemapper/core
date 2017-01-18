@@ -321,7 +321,6 @@ class BorgScribe(LMObject):
                      processType=ProcessType.RAD_INTERSECT, 
                      mtxcolMetadata={}, intersectParams={}, 
                      status=JobStatus.GENERAL, statusModTime=modtime)
-         # TODO:
          newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxrst)
          if JobStatus.finished(newOrExistingMtxcol.status):
             newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, stattime=modtime)

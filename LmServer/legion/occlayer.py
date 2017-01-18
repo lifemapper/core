@@ -84,6 +84,24 @@ class OccurrenceType(_LayerParameters, ProcessObject):
    def getScientificName(self):
       return self._scientificName
 
+# ...............................................
+   def getRawDLocation(self):
+      return self._rawDLocation
+   
+   def setRawDLocation(self, rawDLocation, modTime):
+      self._rawDLocation = rawDLocation
+      self.paramModTime = modTime
+   
+   # ...............................................
+   def updateStatus(self, status, modTime=None, queryCount=None):
+      """
+      @note: Overrides ProcessObject.updateStatus
+      """
+      ProcessObject.updateStatus(self, status, modTime=modTime)
+      if queryCount is not None: 
+         self.queryCount = queryCount
+         self.paramModTime = self.statusModTime
+
 # .............................................................................
 # .............................................................................
 
@@ -93,27 +111,23 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # Constructor
 # .............................................................................
    def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None, 
-                squid=None, verify=None, dlocation=None, 
-                lyrMetadata={}, dataFormat=None, ogrType=None,
-                valUnits=None, valAttribute=None, 
-                nodataVal=None, minVal=None, maxVal=None, 
-                mapunits=None, resolution=None, 
-                bbox=None,
-                occurrenceSetId=None, serviceType=LMServiceType.OCCURRENCES, 
+                squid=None, verify=None, dlocation=None, rawDLocation=None,
+                lyrMetadata={}, dataFormat=None, ogrType=None, valUnits=None, 
+                valAttribute=None, nodataVal=None, minVal=None, maxVal=None, 
+                mapunits=None, resolution=None, bbox=None, occurrenceSetId=None, 
+                serviceType=LMServiceType.OCCURRENCES, 
                 moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, 
                 featureCount=0, featureAttributes={}, features={}, 
                 fidAttribute=None,                
-                occMetadata={}, sciName=None,
-                objId=None, processType=None, parentId=None,
-                status=None, statusModTime=None
-                ):
+                occMetadata={}, sciName=None, objId=None, processType=None, 
+                parentId=None, status=None, statusModTime=None):
       """
       @todo: calculate bbox from points upon population, update as appropriate
       @summary Initialize the OccurrenceSet class instance
       @copydoc LmServer.base.layer2.Vector::__init__()
       @copydoc LmServer.legion.occlayer.OccurrenceType::__init__()
-      @todo: Remove points, count, query
+      @todo: Remove count?
       @note: Vector.name is constructed in OccurrenceLayer.setId()
       """
       # TODO: since this is raw format, is it necessary?
@@ -121,8 +135,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
          dataFormat = 'CSV'
       OccurrenceType.__init__(self, displayName, queryCount, statusModTime, 
                 userId, occurrenceSetId, metadata=occMetadata, sciName=sciName, 
-                processType=processType, parentId=parentId,
-                status=status, statusModTime=statusModTime)
+                rawDLocation=rawDLocation, processType=processType, 
+                parentId=parentId, status=status, statusModTime=statusModTime)
       Vector.__init__(self, None, userId, epsgcode, lyrId=occurrenceSetId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
                 metadata=lyrMetadata, dataFormat=dataFormat, ogrType=ogrType,
@@ -221,25 +235,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       return self._getFeatureCount()
          
    count = property(_getCount)
-         
-# ...............................................
-   def getRawDLocation(self):
-      return self._rawDLocation
-   
-   def setRawDLocation(self, rawDLocation, touchTime):
-      self._rawDLocation = rawDLocation
-      self.paramModTime = touchTime
-   
-   # ...............................................
-   def updateStatus(self, status, modTime=None, queryCount=None):
-      """
-      @note: Overrides ProcessObject.updateStatus
-      """
-      ProcessObject.updateStatus(self, status, modTime=modTime)
-      if queryCount is not None: 
-         self.queryCount = queryCount
-         self.paramModTime = self.statusModTime
-                  
+                           
 # .............................................................................
 # Superclass methods overridden
 ## .............................................................................

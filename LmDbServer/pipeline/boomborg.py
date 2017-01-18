@@ -1240,7 +1240,6 @@ occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
 data = dataChunk
 occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
 
-
 # occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
 #                squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
 #                status=JobStatus.INITIALIZE, statusModTime=currtime, 
@@ -1251,23 +1250,12 @@ occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=eps
 # occ.setRawDLocation(rdloc, currtime)
 # success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
-
-usr = user
-occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE
-gridset=boomer.intersectGrid
-minPointCount=boomer.minPointCount
-occset = occ
-mdlScen = boomer.modelScenario
-prjScenList =  boomer.projScenarios
-alg = boomer.algs[0]
-mdlMask = projMask = email = mmaskid = pmaskid = None
-modtime=currtime
-prjScen = prjScenList[0]
-
 prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
                boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
                modtime=currtime)
-
+prj = prjs[0]
+gridset = boomer.intersectGrid
+mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset, currtime)
 
 
 
