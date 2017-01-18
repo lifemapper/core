@@ -259,7 +259,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- SDMProject
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProject(prjid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_insertSDMProject(prjid int,
                                                            lyrid int,
                                                            usr varchar, 
                                                            occid int,
@@ -279,36 +279,17 @@ DECLARE
    rec lm_v3.lm_sdmproject%ROWTYPE;  
    newid int;                           
 BEGIN
-   IF prjid IS NOT NULL then                     
-      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE sdmprojectId = prjid;
-   ELSIF lyrid IS NOT NULL then                     
-      SELECT * INTO rec from lm_v3.lm_sdmproject WHERE layerId = lyrid;
-   ELSE
-      SELECT * INTO rec from lm_v3.lm_sdmproject
-             WHERE userid = usr 
-               AND occurrenceSetId = occid 
-               AND algorithmCode = algcode 
-               AND algParams = algstr
-               AND mdlscenarioId = mdlscenid
-               AND mdlmaskId = mdlmskid
-               AND prjscenarioId = prjscenid
-               AND prjmaskId = prjmskid;
-   END IF;
-   
-   IF FOUND THEN
-      RAISE NOTICE 'SDMProject found with ids % and %', rec.layerid, rec.sdmprojectId;
-   ELSE 
-      INSERT INTO lm_v3.sdmproject (layerid, userId, occurrenceSetId, 
-          algorithmCode, algParams, mdlscenarioId, mdlmaskId, prjscenarioId, 
-          prjmaskId, metadata, processType, status, statusModTime) 
-       VALUES (lyrid, usr, occid, algcode, algstr, mdlscenid, mdlmskid, 
-          prjscenid, prjmskid, prjmeta, ptype, stat, stattime);
+   -- Already searched for existing before calling this function
+   INSERT INTO lm_v3.sdmproject (layerid, userId, occurrenceSetId, 
+       algorithmCode, algParams, mdlscenarioId, mdlmaskId, prjscenarioId, 
+       prjmaskId, metadata, processType, status, statusModTime) 
+   VALUES (lyrid, usr, occid, algcode, algstr, mdlscenid, mdlmskid, 
+       prjscenid, prjmskid, prjmeta, ptype, stat, stattime);
           
-       IF NOT FOUND THEN
-          RAISE EXCEPTION 'Unable to insert SDMProject';
-       ELSE
-          SELECT * INTO rec FROM lm_v3.lm_sdmproject WHERE layerid = lyrid;
-       END IF;
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to insert SDMProject';
+   ELSE
+      SELECT * INTO rec FROM lm_v3.lm_sdmproject WHERE layerid = lyrid;
    END IF;
    RETURN rec;                                              
 END; 
@@ -352,35 +333,77 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProjectLayer(prjid int,
 RETURNS lm_v3.lm_sdmproject AS
 $$
 DECLARE
+   cmd varchar;
+   wherecls varchar = '';
    newlyrid int = -1;
    idstr varchar;
    murl varchar;
    rec_lyr lm_v3.Layer%rowtype;
    rec_fullprj lm_v3.lm_sdmproject%rowtype;
 BEGIN
-   -- get or insert layer 
-   SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
-      lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
-      vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime);
-      
-   IF NOT FOUND THEN
-      RAISE EXCEPTION 'Unable to findOrInsertLayer';
+   -- Find existing
+   IF prjid IS NOT NULL then                     
+      cmd = 'SELECT * from lm_v3.lm_sdmproject WHERE sdmprojectId = ' || 
+             quote_literal(prjid);
+   ELSIF lyrid IS NOT NULL then                     
+      cmd = 'SELECT * from lm_v3.lm_sdmproject WHERE layerId = ' || 
+             quote_literal(lyrid);
    ELSE
-      newlyrid = rec_lyr.layerid;
-      RAISE NOTICE 'newlyrid = %', newlyrid;
+      begin
+         cmd = 'SELECT * from lm_v3.lm_sdmproject ';
+         wherecls = ' WHERE userid =  ' || quote_literal(usr) ||
+                    '   AND occurrenceSetId =  ' || quote_literal(occid) || 
+                    '   AND algorithmCode =  ' || quote_literal(algcode) ||
+                    '   AND algParams =  ' || quote_literal(algstr) ||
+                    '   AND mdlscenarioId =  ' || quote_literal(mdlscenid) ||
+                    '   AND prjscenarioId =  ' || quote_literal(prjscenid);
+
+         IF mdlmskid IS NOT NULL THEN
+            wherecls = wherecls || ' AND mdlmaskId =  ' || quote_literal(mdlmskid);
+         ELSE
+            wherecls = wherecls || ' AND mdlmaskId IS NULL ';
+         END IF;
+
+         IF prjmskid IS NOT NULL THEN
+            wherecls = wherecls || ' AND prjmaskId =  ' || quote_literal(prjmskid);
+         ELSE
+            wherecls = wherecls || ' AND prjmaskId IS NULL ';
+         END IF;
+      end;
+   END IF;
+   
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;   
+   EXECUTE cmd INTO rec_fullprj;
+   
+   -- Add new
+   IF NOT FOUND THEN
+      RAISE NOTICE 'Unable to existing lm_sdmProject for user: %', usr;
+   ELSE   
+      -- get or insert layer 
+      SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
+         lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
+         vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime);
       
-      -- get or insert sdmproject 
-      SELECT * INTO rec_fullprj FROM lm_v3.lm_findOrInsertSDMProject(prjid, newlyrid, 
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to findOrInsertLayer';
+      ELSE
+         newlyrid = rec_lyr.layerid;
+         RAISE NOTICE 'newlyrid = %', newlyrid;
+      
+         -- get or insert sdmproject 
+         SELECT * INTO rec_fullprj FROM lm_v3.lm_insertSDMProject(prjid, newlyrid, 
                    usr, occid, algcode, algstr, mdlscenid, mdlmskid, prjscenid, 
                    prjmskid, prjmeta, ptype, stat, stattime);
-      RAISE NOTICE 'Returned rec_fullprj % / %', 
-         rec_fullprj.layerid, rec_fullprj.sdmprojectId;
+         RAISE NOTICE 'Returned rec_fullprj % / %', 
+                       rec_fullprj.layerid, rec_fullprj.sdmprojectId;
 
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to findOrInsertSDMProject';
-      ELSE
-         -- URL and geometry are updated on Layer insert 
-         RAISE NOTICE 'Successfully got or inserted SDMProject';
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to insertSDMProject';
+         ELSE
+            -- URL and geometry are updated on Layer insert 
+            RAISE NOTICE 'Successfully inserted SDMProject';
+         END IF;
       END IF;
    END IF;
    
