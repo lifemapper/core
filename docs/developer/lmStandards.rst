@@ -13,33 +13,51 @@ Organization
 
    #. LmBackend is used by Server and Compute
    #. LmCommon is shared everywhere, backend and clients
-   #. LmCompute contains code for running jobs with SGE and Makeflow, and calculations
+   #. LmCompute contains code for running jobs with SGE and Makeflow, and 
+      calculations
    #. LmDbServer contains database initialization scripts and boom/pipeline code
-   #. LmDebug contains testing code
+   #. LmTest contains testing code
    #. LmServer contains the bulk of base objects, tools, utilities for the Server
    #. LmWebServer contains code for web services and the LMDashboard application
 
 LM-specific best practices
 **************************
-#. all imports should use the full module path
-#. keep imports roughly in alphabetical order, standard or external first, 
-   then LM
+#. Update deprecated code to the current version standard (i.e. string 
+   formatting) 
+#. Note when Python code is known to be deprecated in the next version 
+   (Python 3+) (i.e. calling super class functions)
+#. Note new dependencies 3rd party libraries, avoid when possible.  When 
+   necessary, notify the developer working on installation packages to ensure 
+   the dependency is included in packaging code.
+
    
 Coding conventions
 ******************
+#. Use meaningful variable names
+#. Document code that is not self-explanatory (i.e. object.updateStatus)
+#. 
 #. Use style, naming, and coding conventions at 
    http://www.python.org/dev/peps/pep-0008/ .  We have several exceptions that
    we may change in the future.  Look at existing project code and follow 
    standards in place.  If big inconsistencies are discovered, bring 
-   it to the team's attention and we can decide on the course of action. Some 
-   known exceptions:
+   it to the team's attention and we can decide on the course of action. 
    
-   #. Indent 3 spaces (not 4)
-   #. Use mixed case as defined in the PEP 8 document (not lowercase with 
-      underscores) for function and method names
+   * In particular, read the following sections:
+   
+      #. Imports
+      #. Comments
+      #. 
+      
+   * Some LM exceptions:
+   
+      #. Indent 3 spaces (not 4)
+      #. Use mixed case as defined in the PEP 8 document (not lowercase with 
+         underscores) for function and method names
+      #. Comments must be understandable but are not required to be full sentences.
       
       
-#. Read the following, but follow Pep 8 when there is a conflict.  All these links provide good programming tips too.
+#. Read the following, but follow Pep 8 when there is a conflict.  All these 
+   links provide good programming tips too.
 
    #. http://jaynes.colorado.edu/PythonIdioms.html
    #. http://jaynes.colorado.edu/PythonGuidelines.html
