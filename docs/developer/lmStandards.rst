@@ -11,13 +11,13 @@ Organization
 ************
 #. LM module has code that is shared by various modules:
 
-    #. LmBackend is used by Server and Compute
-    #. LmCommon is shared everywhere, backend and clients
-    #. LmCompute contains code for running jobs with SGE and Makeflow, and calculations
-    #. LmDbServer contains database initialization scripts and boom/pipeline code
-    #. LmDebug contains testing code
-    #. LmServer contains the bulk of base objects, tools, utilities for the Server
-    #. LmWebServer contains code for web services and the LMDashboard application
+   #. LmBackend is used by Server and Compute
+   #. LmCommon is shared everywhere, backend and clients
+   #. LmCompute contains code for running jobs with SGE and Makeflow, and calculations
+   #. LmDbServer contains database initialization scripts and boom/pipeline code
+   #. LmDebug contains testing code
+   #. LmServer contains the bulk of base objects, tools, utilities for the Server
+   #. LmWebServer contains code for web services and the LMDashboard application
 
 LM-specific best practices
 **************************
