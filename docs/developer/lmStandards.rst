@@ -29,12 +29,15 @@ Coding conventions
 ******************
 #. Use style, naming, and coding conventions at 
    http://www.python.org/dev/peps/pep-0008/ .  We have several exceptions that
-   we could change, especially if we create a new module, but for existing code
-   it would require too much code modification.
+   we may change in the future.  Look at existing project code and follow 
+   standards in place.  If big inconsistencies are discovered, bring 
+   it to the team's attention and we can decide on the course of action. Some 
+   known exceptions:
    
-   #. Exception: indent 3 spaces (not 4)
-   #. Exception: use mixed case as defined in the document (not lowercase with 
+   #. Indent 3 spaces (not 4)
+   #. Use mixed case as defined in the PEP 8 document (not lowercase with 
       underscores) for function and method names
+      
       
 #. Read the following, but follow Pep 8 when there is a conflict.  All these links provide good programming tips too.
 
