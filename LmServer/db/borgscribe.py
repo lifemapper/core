@@ -33,7 +33,7 @@ from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.common.lmconstants import  DbUser, DEFAULT_PROJECTION_FORMAT
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
-from LmServer.legion.mtxcolumn import MatrixRaster
+from LmServer.legion.mtxcolumn import MatrixRaster, MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName

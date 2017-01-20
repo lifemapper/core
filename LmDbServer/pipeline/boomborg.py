@@ -1255,6 +1255,21 @@ prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario,
                modtime=currtime)
 prj = prjs[0]
 gridset = boomer.intersectGrid
+modtime = currtime
+mtxrst = MatrixRaster(-1, -1, prj.getUserId(), prj.name, prj.epsgcode,  
+                     lyrId=prj.getId(), squid=prj.squid, verify=prj.verify, 
+                     dlocation=prj.getDLocation(), lyrMetadata=prj.lyrMetadata, 
+                     dataFormat=prj.dataFormat, gdalType=prj.gdalType, 
+                     valUnits=prj.valUnits, nodataVal=prj.nodataVal, 
+                     minVal=prj.minVal, maxVal=prj.maxVal, mapunits=prj.mapUnits, 
+                     resolution=prj.resolution, bbox=prj.bbox, 
+                     metadataUrl=prj.metadataUrl, modTime=prj.statusModTime,
+                     processType=ProcessType.RAD_INTERSECT, 
+                     mtxcolMetadata={}, intersectParams={}, 
+                     status=JobStatus.GENERAL, statusModTime=modtime)
+
+
+
 mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset, currtime)
 
 
