@@ -52,7 +52,7 @@ class Matrix(ServiceObject, ProcessObject):
                 layerIndicesFilename=None,
                 metadataUrl=None,
                 userId=None,
-                gridset=None, gridsetId=None,
+                gridset=None, 
                 matrixId=None,
                 status=None, statusModTime=None):
       """
@@ -68,11 +68,6 @@ class Matrix(ServiceObject, ProcessObject):
       @param gridset: parent gridset of this Matrix
       """
       self._gridset = gridset
-      self._gridsetId = gridsetId
-      gridsetUrl = None
-      if gridset is not None:
-         gridsetUrl = gridset.metadataUrl
-         gridsetId = gridset.getId()
       ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
                              moduleType=LMServiceModule.LM, 
                              metadataUrl=metadataUrl, 
@@ -114,6 +109,30 @@ class Matrix(ServiceObject, ProcessObject):
                           % str(self._dlocation))
       else:
          raise LMError('Matrix File %s does not exist' % str(self._dlocation))
+
+# ...............................................
+   @property
+   def gridsetName(self):
+      name = None
+      if self._gridset is not None:
+         name = self._gridset.name
+      return name
+   
+# ...............................................
+   @property
+   def gridsetId(self):
+      gid = None
+      if self._gridset is not None:
+         gid = self._gridset.getId()
+      return gid
+
+# ...............................................
+   @property
+   def gridsetUrl(self):
+      url = None
+      if self._gridset is not None:
+         url = self._gridset.metadataUrl
+      return url
 
 # ...............................................
    def dumpMtxMetadata(self):

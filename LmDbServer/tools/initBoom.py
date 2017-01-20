@@ -450,8 +450,14 @@ def _importClimatePackageMetadata(envPackageName):
    return META, metafname
 
 # ...............................................
-def _writeConfigFile(envPackageName, userid, datasource, configMeta, minpoints,
+def _writeConfigFile(archiveName, envPackageName, userid, datasource, configMeta, minpoints,
                      mdlScen=None, prjScens=None):
+   """
+   envPackageName = args.environmental_metadata
+   datasource = args.species_source.upper()
+   archiveName = args.archive_name
+   minpoints = args.min_points
+   """
    SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
    pth, temp = os.path.split(SERVER_CONFIG_FILENAME)
    newConfigFilename = os.path.join(ENV_DATA_PATH, '{}{}'.format(envPackageName, 
@@ -462,6 +468,7 @@ def _writeConfigFile(envPackageName, userid, datasource, configMeta, minpoints,
    f.write('DATASOURCE: {}\n\n'.format(datasource))
 
    f.write('[LmServer - pipeline]\n')
+   f.write('ARCHIVE_NAME: {}\n\n'.format(archiveName))
    if configMeta['email'] is not None:
       f.write('TROUBLESHOOTERS: {}\n\n'.format(configMeta['email']))
    
@@ -591,8 +598,8 @@ if __name__ == '__main__':
       # Write config file for this archive
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
-      newConfigFilename = _writeConfigFile(envPackageName, usr, datasource,
-                                           configMeta, minpoints, 
+      newConfigFilename = _writeConfigFile(archiveName, envPackageName, usr, 
+                                           datasource, configMeta, minpoints, 
                                            mdlScen=mdlScencode, 
                                            prjScens=prjScencodes)
    except Exception, e:

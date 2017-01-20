@@ -66,12 +66,14 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                              parentId=matrixId, status=status, 
                              statusModTime=statusModTime)
+      self._colDLocation = None
+      self.setColumnDLocation(colDLocation, statusModTime)
       self.layerId = layerId
       self.squid = squid
       self.ident = ident
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
-      self.loadParamMetadata(metadata)
+#       self.loadParamMetadata(metadata)
 
 # ...............................................
    def dumpIntersectParams(self):

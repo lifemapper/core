@@ -179,36 +179,35 @@ class BorgScribe(LMObject):
 # ...............................................
    def updateShapeGrid(self, shpgrd):
       """
-      @summary: Update Shapegrid attributes: 
-         verify, dlocation, metadata, modtime, size, status, statusModTime
-      @param shpgrd: ShapeGrid to be updated.  
-      @return: True/False for successful update.
+      @copydoc LmServer.db.catalog_borg.Borg::updateShapeGrid()
       """
       success = self._borg.updateShapeGrid(shpgrd)
       return success
 
 # ...............................................
-   def getShapeGrid(self, shpgridId=None, lyrId=None, 
-                    userId=None, lyrName=None, epsg=None):
+   def getShapeGrid(self, lyrId=None, userId=None, lyrName=None, epsg=None):
       """
-      @summary: Get and fill a shapeGrid from its shapegrid or layer id, or 
-                user/name/epsgcode.  
-      @return: Shapegrid object .
+      @copydoc LmServer.db.catalog_borg.Borg::getShapeGrid()
       """
-      shpgrid = self._borg.getShapeGrid(shpgridId, lyrId, 
-                                        userId, lyrName, epsg)
+      shpgrid = self._borg.getShapeGrid(lyrId, userId, lyrName, epsg)
       return shpgrid
 
 # ...............................................
    def getLayer(self, lyrId=None, lyrVerify=None, userId=None, lyrName=None, 
                 epsg=None):
       """
-      @summary: Get and fill a Layer from its shapegrid or layer id, or 
-                user/name/epsgcode.  
-      @return: Shapegrid object .
+      @copydoc LmServer.db.catalog_borg.Borg::getLayer()
       """
       lyr = self._borg.getBaseLayer(lyrId, lyrVerify, userId, lyrName, epsg)
       return lyr
+
+# ...............................................
+   def getMatrix(self, mtx):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getMatrix()
+      """
+      fullMtx = self._borg.getMatrix(mtx)
+      return fullMtx
 
 # ...............................................
    def findTaxonSource(self, taxonSourceName):
@@ -221,21 +220,22 @@ class BorgScribe(LMObject):
       return sciname
 
 # ...............................................
-   def getScenario(self, idOrCode, user=None):
+   def getScenario(self, idOrCode, user=None, fillLayers=False):
       """
-      @summary: Get and fill a scenario from its code or database id.  If 
-                matchingLayers is given, ensure that only layers with the same
-                type as layers in the matchingLayers are filled, and that the 
-                requested scenario layers are in the same order as those in 
-                the matchingLayers.
-      @param code: The code or scenarioid for the scenario to return
-      @param user: The userid for the scenario to return.  Needed if querying by code.
-      @return: Scenario object filled with Raster objects.
+      @summary: Get and fill a scenario from its user and code or database id.   
+                If  fillLayers is true, populate the layers in the objecgt.
+      @param idOrCode: ScenarioId or code for the scenario to be fetched.
+      @param user: User id for the scenario to be fetched.
+      @param fillLayers: Boolean indicating whether to retrieve and populate 
+             layers from to be fetched.
+      @return: a LmServer.legion.scenario.Scenario object
       """
       if isinstance(idOrCode, IntType):
-         scenario = self._borg.getScenario(scenid=idOrCode)
+         scenario = self._borg.getScenario(scenid=idOrCode, 
+                                           fillLayers=fillLayers)
       else:
-         scenario = self._borg.getScenario(code=idOrCode, usrid=user)
+         scenario = self._borg.getScenario(code=idOrCode, usrid=user, 
+                                           fillLayers=fillLayers)
       return scenario
 
 # ...............................................
@@ -253,7 +253,8 @@ class BorgScribe(LMObject):
    def getOccurrenceSetsForName(self, scinameStr, userId):
       """
       @summary: get a list of occurrencesets for the given squid and User
-      @param squid: a Squid (Species Thread) string, tied to a ScientificName
+      @param scinameStr: a string associated with a 
+                        LmServer.base.taxon.ScientificName 
       @param userId: the database primary key of the LMUser
       """
       sciName = ScientificName(scinameStr, userId=userId)

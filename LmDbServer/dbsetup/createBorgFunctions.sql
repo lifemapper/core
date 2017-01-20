@@ -266,9 +266,9 @@ DECLARE
    newurl varchar;
 BEGIN
    IF grdid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.gridset WHERE gridsetid = grdid;
+      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE gridsetid = grdid;
    ELSE
-      SELECT * INTO rec FROM lm_v3.gridset WHERE userid = usr AND name = nm;
+      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE userid = usr AND name = nm;
    END IF;
    IF NOT FOUND THEN
       begin
@@ -284,7 +284,7 @@ BEGIN
             UPDATE lm_v3.Gridset SET metadataUrl = newurl WHERE gridsetId = newid;
 
             -- get updated record
-            SELECT * INTO rec from lm_v3.Gridset WHERE gridsetId = newid;
+            SELECT * INTO rec from lm_v3.lm_gridset WHERE gridsetId = newid;
          END IF;
       end;
    END IF;
@@ -339,6 +339,32 @@ BEGIN
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;    
+
+-- ----------------------------------------------------------------------------
+-- Gets a matrix with its lm_gridset (including optional shapegrid)
+CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrix(mtxid int, 
+                                              mtxtype int, 
+                                              gsid int,
+                                              gsname varchar,
+                                              usr varchar)
+   RETURNS lm_v3.lm_matrix AS
+$$
+DECLARE
+   rec lm_v3.lm_matrix%rowtype;
+BEGIN
+   IF mtxid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
+   ELSIF mtxtype IS NOT NULL AND grdid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
+                                            AND gridsetid = gsid;
+   ELSIF mtxtype IS NOT NULL AND grdname IS NOT NULL AND usr IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
+                                            AND grdname = gsname 
+                                            AND userid = usr;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;    
 
 -- ----------------------------------------------------------------------------
 -- JobChain
