@@ -49,14 +49,13 @@ Coding conventions
    standards in place.  If big inconsistencies are discovered, bring 
    it to the team's attention and we can decide on the course of action. 
    
-   * In particular, read the following sections:
+   #. In particular, read the following sections:
    
       #. Imports
       #. Comments
       #. Whitespace
-      #. 
       
-   * Some LM exceptions:
+   #. Some LM exceptions:
    
       #. Indent 3 spaces (not 4)
       #. Use mixed case as defined in the PEP 8 document for function and 
