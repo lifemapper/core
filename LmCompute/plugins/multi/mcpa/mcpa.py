@@ -49,14 +49,9 @@ def getPValues(observedValue, testValues, numPermutations=None):
    @param testValues: A list of arrays generated from randomizations that will
                          be compared to the observed
    @param numPermutations: (optional) The total number of randomizations 
-                              performed.  If this is not provided, use the 
-                              length of the testValues list.  This parameter is 
-                              available so that this can be done in chunks and 
-                              then aggregated.
+                              performed.  Divide the P-values by this if 
+                              provided.
    """
-   if not numPermutations:
-      numPermutations = len(testValues)
-      
    # Create the P-Values matrix
    pVals = np.zeros(observedValue.shape, dtype=float)
    # For each matrix in test values
@@ -65,9 +60,18 @@ def getPValues(observedValue, testValues, numPermutations=None):
       #    the value in the observed value.  Numpy comparisons will create a 
       #    matrix of boolean values for each cell, which when added to the 
       #    pVals matrix will be treated as 1 for True and 0 for False
-      pVals += testMtx >= observedValue
+      
+      # If this is a stack
+      if len(testMtx.shape) == 3:
+         for i in xrange(len(testMtx.shape[2])):
+            pVals += testMtx[:,:,i] >= observedValue
+      else:
+         pVals += testMtx >= observedValue
    # Scale and return the pVals matrix
-   return pVals / numPermutations
+   if numPermutations:
+      return pVals / numPermutations
+   else:
+      return pVals
 
 # .............................................................................
 def standardizeMatrix(mtx, weights):
