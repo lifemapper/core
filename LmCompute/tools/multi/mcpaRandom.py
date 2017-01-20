@@ -1,65 +1,91 @@
+#!/bin/bash
 """
-@summary: This script performs MCPA randomizations
+@summary: This script calculates MCPA values for a number of randomizations
+@author: CJ Grady
+@version: 4.0.0
+@status: beta
+@license: gpl2
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
+
+          Lifemapper Project, lifemapper [at] ku [dot] edu, 
+          Biodiversity Institute,
+          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
+   
+          This program is free software; you can redistribute it and/or modify 
+          it under the terms of the GNU General Public License as published by 
+          the Free Software Foundation; either version 2 of the License, or (at 
+          your option) any later version.
+  
+          This program is distributed in the hope that it will be useful, but 
+          WITHOUT ANY WARRANTY; without even the implied warranty of 
+          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+          General Public License for more details.
+  
+          You should have received a copy of the GNU General Public License 
+          along with this program; if not, write to the Free Software 
+          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
+          02110-1301, USA.
 """
 import argparse
 import numpy as np
 
-# Jeff: Fix this import to import the correct functions
-from Pedro_Analysis.MCPA.MCPA import calculateMCPA, appendENVtoBG
+from LmCompute.plugins.multi.mcpa.mcpa import mcpaRun
 
 # .............................................................................
 if __name__ == "__main__":
-   parser = argparse.ArgumentParser(description="This script performs MCPA randomizations")
+   parser = argparse.ArgumentParser(
+                   description="This script calculates MCPA for random data")
    # Inputs
-   parser.add_argument("fPartialMtxFn", help="The file path for the f matrix for partial correlations")
-   parser.add_argument("fGlobalMtxFn", help="The file path for the f global matrix")
-   parser.add_argument("incidenceMtxFn", help="Incidence matrix for the analysis (PAM) file name")
-   parser.add_argument("phyloEncodingFn", help="Encoded phylogenetic matrix file location")
-   parser.add_argument("envFn", help="Environment predictor matrix file location")
-   parser.add_argument('-b', dest='bio', help="Biogeographic predictor matrix file location")
-   parser.add_argument('-n', help="The number of randomizations to perform")
-   parser.add_argument('-c', help="The number of concurrent randomizations to perform (number of available cores or less)")
-   parser.add_argument('-d', help="Divide the sums by this")
+   parser.add_argument("incidenceMtxFn", 
+                      help="Incidence matrix for the analysis (PAM) file name")
+   parser.add_argument("phyloEncodingFn", 
+                              help="Encoded phylogenetic matrix file location")
+   parser.add_argument("envFn", 
+                             help="Environment predictor matrix file location")
+   parser.add_argument('-b', dest='bio', 
+                           help="Biogeographic predictor matrix file location")
+   parser.add_argument('-n', dest='numRandomizations', type=int,
+                    help="The number of randomizations to perform in this set")
    # Outputs
-   parser.add_argument("probSemiPartialCorFn", help="Where to store the aggregated semi-partial probabilities produced from the randomizations")
-   parser.add_argument("rSqProbFn", help="Where to store the aggregated R squared probabilities")
+   parser.add_argument("fGlobalRandomFn", 
+          help="The file path to store the (stacked) random F-Global matrices")
+   parser.add_argument("fPartialRandomFn", 
+      help="The file path for the (stacked) f matrix for partial correlations")
    
    args = parser.parse_args()
    
-   i = np.load(args.incidenceMtxFn)
-   p = np.load(args.phyloEncodingFn)
-   e = np.load(args.envFn)
-   predictor = e
-   if args.bio is not None:
-      b = np.load(args.bio)
-      # Jeff: Change as needed
-      predictor = appendENVtoBG(b,e)
-
-
-   fPartial = np.load(args.fPartialMtxFn)
-   fGlobal = np.load(args.fGlobalMtxFn)
-
-   if args.n is None:
-      n = 1
-   else:
-      n = int(args.n)
-      
-   if args.c is None:
-      c = 1
-   else:
-      c = int(args.c)
-      
-   if args.d is None:
-      d = None
-   else:
-      d = float(args.d)
-
-   # Jeff: Correct this as needed
-   # needs to sum n outputs  to 2 npy in module and mcpaRandomize calls fn()(list of numpy arr.) 
-   probSemiPartialCor, rSqProb = calculateMCPA(i, p, predictor, FGlobal=fGlobal, FSemiPartial=fPartial, numPermute=n, numConcurrent=c, divisor=d)
+   # Load the matrices
+   incidenceMtx = np.load(args.incidenceMtxFn)
+   envMtx = np.load(args.envFn)
+   phyloMtx = np.load(args.phyloEncodingFn)
    
-   # Write outputs to file system
-   np.save(args.probSemiPartialCorFn, probSemiPartialCor)
+   if args.bio:
+      # If a biogeographic matrix is supplied, concatenate environment matrix
+      bgMtx = np.load(args.bio)
+      predictorMtx = np.concatenate([bgMtx, envMtx], axis=1)
+   else:
+      predictorMtx = envMtx
+   
+   numNodes = phyloMtx.shape[1]
+   numPredictors = predictorMtx.shape[1]
+   
+   fGlobalsStack = np.empty((numNodes, 1, 0), dtype=float)
+   fSemiPartialStack = np.empty((numNodes, numPredictors, 0), dtype=float)
+   
+   if args.numRandomizations:
+      numRandomizations = args.numRandomizations
+   else:
+      numRandomizations = 1
+   
+   for i in xrange(numRandomizations):
+      _, fGlobal, _, fSemiPartial = mcpaRun(incidenceMtx, predictorMtx, phyloMtx)
+      # Add values to stacks
+      fGlobalsStack = np.append(fGlobalsStack, 
+                                fGlobal.reshape(numNodes, 1, 1), axis=2)
+      fSemiPartialStack = np.append(fSemiPartialStack, 
+                      fSemiPartial.reshape(numNodes, numPredictors, 1), axis=2)
 
+   # Write outputs
+   np.save(args.fGlobalRandomFn, fGlobalsStack)
+   np.save(args.fPartialRandomFn, fSemiPartialStack)
 
-   np.save(args.rSqProbFn, rSqProb)

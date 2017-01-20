@@ -1,33 +1,71 @@
+#!/bin/bash
 """
-@summary: This script corrects p-values for summed and divided f values
-"""
+@summary: This script calculates corrected P-values for F-Global or 
+             F-Semi-partial
+@author: CJ Grady
+@version: 4.0.0
+@status: beta
+@license: gpl2
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
+          Lifemapper Project, lifemapper [at] ku [dot] edu, 
+          Biodiversity Institute,
+          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
+   
+          This program is free software; you can redistribute it and/or modify 
+          it under the terms of the GNU General Public License as published by 
+          the Free Software Foundation; either version 2 of the License, or (at 
+          your option) any later version.
+  
+          This program is distributed in the hope that it will be useful, but 
+          WITHOUT ANY WARRANTY; without even the implied warranty of 
+          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+          General Public License for more details.
+  
+          You should have received a copy of the GNU General Public License 
+          along with this program; if not, write to the Free Software 
+          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
+          02110-1301, USA.
+"""
 import argparse
 import numpy as np
 
-# Jeff fix import
-from Pedro_Analysis.MCPA.MCPA import correctPValue
+from LmCompute.plugins.multi.mcpa.mcpa import getPValues
+from LmCompute.plugins.multi.mcpa.pValueCorrection import correctPValues
 
-# ............................................................................
+# .............................................................................
 if __name__ == "__main__":
-   desc = """\
-This script takes a summed f value as an argument and does a p-value \
-correction."""
+   parser = argparse.ArgumentParser(
+                   description="This script calculates and corrects P-Values")
 
-   parser = argparse.ArgumentParser(description=desc)
-
-   # Inputs
-   parser.add_argument('PValues', help="P-value matrix")
-
-   # Outputs
-   parser.add_argument('correctedP', help="The output location for the corrected p-value")
-
+   parser.add_argument("observedFn", 
+                               help="File location of observed values to test")
+   parser.add_argument("pValuesFn", help="File location to store the P-Values")
+   parser.add_argument("fValueFn", nargs='+', 
+                              help="A file of F-values or a stack of F-Values")
+   
    args = parser.parse_args()
    
-   arr = np.load(args.PValues)
+   # Load the matrices
+   testValues = []
+   numValues = 0
    
-   # Jeff: Fix as necessary
-   corrected = correctPValue(arr)
+   for fVal in args.fValueFn:
+      testMtx = np.load(fVal)
+      
+      # Add the values to the test values list
+      testValues.append(testMtx)
+      
+      # Add to the number of values
+      if len(testMtx.shape) == 3: # Stack of values
+         numValues += testMtx.shape[2]
+      else:
+         numValues += 1
    
-   np.save(args.correctedP, corrected)
+   obsVals = np.load(args.observedFn)
+   pValues = getPValues(obsVals, testValues, numPermutations=numValues)
+   
+   correctedPvals = correctPValues(pValues)
+   
+   np.save(args.pValuesFn, correctedPvals)
    
