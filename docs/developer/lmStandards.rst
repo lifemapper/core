@@ -51,9 +51,10 @@ Coding conventions
    
    #. In particular, read the following sections:
    
-      #. Imports
+      #. Programming Recommendations
       #. Comments
       #. Whitespace
+      #. Imports
       
    #. Some LM exceptions:
    
@@ -73,7 +74,7 @@ Coding conventions
       getter-setter).  Use properties to hide functional implementations behind 
       attribute access syntax: 
       http://www.python.org/download/releases/2.2.3/descrintro/#property
-      
+       
 #. Do not hardcode parameters - use existing constants in common.lmconstants 
    modules.  If constants are needed in new modules that will never be shared, 
    create a common.lmconstants file in the new module
