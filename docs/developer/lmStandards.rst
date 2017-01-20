@@ -93,7 +93,7 @@ Documentation
    http://engtech.wordpress.com/2007/03/20/automatic_documentation_python_doxygen/ 
    for doxygen documentation generation
    
-Source Control - Github
+Source Control
 ***********************
 
 #. Use Github for source control
