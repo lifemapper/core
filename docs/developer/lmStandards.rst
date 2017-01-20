@@ -97,7 +97,14 @@ Documentation
 Source Control - Github
 ***********************
 
-#. https://github.com/lifemapper/
+#. Use Github for source control
+#. Check in every logical or functional chunk of code you work on, but never
+   less than once per day if coding, generally many times.  
+#. Check code into the main trunk of code, or a branch.
+#. Branch if you are working on unfinished or broken code that will impact 
+   other team members.
+#. If code is self-contained, or not called, it may be checked in unfinished.
+#. Primary lifemapper code repositories are at https://github.com/lifemapper/
 #. Basic git explanations:  https://git-scm.com/book/en/v2/
 
 Databases
