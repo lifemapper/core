@@ -5,6 +5,8 @@ Basic Lifemapper BOOM Testing Approach
 ======================================
 .. contents::  
 
+.. _Lifemapper Install : docs/adminUser/installLifemapperSystem.rst
+.. _Development Environment Setup: docs/developer/developEnv.rst
 
 ************************
 Initial testing coverage
@@ -56,9 +58,7 @@ repository checked out from Github.  Testing code should be written on a
 development machine, checked into Github, then checked out onto the testing VM 
 for testing at the command line.  Full instructions for each step are available 
 at:
-* Lifemapper:  
-  https://github.com/lifemapper/core/blob/master/docs/adminUser/installLifemapperSystem.rst 
-* Development Environment: 
-  https://github.com/lifemapper/core/blob/master/docs/developer/developEnv.rst
+* Lifemapper Install:  `Lifemapper Install`_ 
+* Development Environment Setup: `Development Environment Setup`_
   
   
