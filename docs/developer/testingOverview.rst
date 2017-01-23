@@ -8,6 +8,7 @@ Basic Lifemapper BOOM Testing Approach
 .. _Lifemapper Install : docs/adminUser/installLifemapperSystem.rst
 .. _Development Environment Setup: docs/developer/developEnv.rst
 .. _Testing Scope and Steps:  docs/developer/testSuite.rst
+.. _Coding Standards and Best Practices:  docs/developer/lmStandards.rst
 
 ************************
 Initial testing coverage
@@ -15,8 +16,11 @@ Initial testing coverage
 To avoid testing soon-to-be obsolete code, test the re-factored code which 
 integrates single- and multi-species data and computations.  Because the code 
 is in process, some sections will not be ready for testing and may be skipped 
-over temporarily.  More detailed instructions covering the scope of tests
-and expected steps are at `Testing Scope and Steps`_
+over temporarily.  
+
+#. More detailed instructions covering the scope of tests and expected steps 
+   are at `Testing Scope and Steps`_
+#. Lifemapper standards are at `Coding Standards and Best Practices`_
 
 ************
 Testing data
