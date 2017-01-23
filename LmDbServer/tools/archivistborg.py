@@ -61,6 +61,7 @@ class Archivist(Daemon):
       _ENV_CONFIG_HEADING = "LmServer - environment"
    
       user = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
+      archiveName = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_NAME')
       datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
       # Data Archive Pipeline
       algorithms = cfg.getlist(_CONFIG_HEADING, 'DEFAULT_ALGORITHMS')
@@ -97,8 +98,9 @@ class Archivist(Daemon):
       gbifProv = cfg.get(_CONFIG_HEADING, 'PROVIDER_FILENAME')
       gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          
-      return (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
-              gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+      return (archiveName, user, datasource, algorithms, minPoints, 
+              mdlScen, prjScens, epsg, gridname, userOccCSV, userOccMeta, 
+              bisonTsnFile, idigTaxonidsFile, 
               gbifTaxFile, gbifOccFile, gbifProvFile, 
               speciesExpYear, speciesExpMonth, speciesExpDay)  
 
@@ -111,8 +113,8 @@ class Archivist(Daemon):
       @note: The argument to this script/daemon contains variables to override 
              installed defaults
       """
-      (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
-       gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+      (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, 
+       epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
        gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
        speciesExpDay) = self.getArchiveSpecificConfig()
 
@@ -123,33 +125,35 @@ class Archivist(Daemon):
          taxname = None
       try:
          if datasource == 'BISON':
-            self.boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
-                            bisonTsnFile, expdate, 
-                            taxonSourceName=taxname, mdlMask=None, prjMask=None, 
-                            minPointCount=minPoints, 
-                            intersectGrid=gridname, log=self.log)
+            self.boomer = BisonBoom(archiveName, user, epsg, algorithms, 
+                           mdlScen, prjScens, bisonTsnFile, expdate, 
+                           taxonSourceName=taxname, mdlMask=None, prjMask=None, 
+                           minPointCount=minPoints, 
+                           intersectGrid=gridname, log=self.log)
             
          elif datasource == 'GBIF':
-            self.boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
-                            gbifOccFile, expdate, taxonSourceName=taxname,
-                            providerListFile=gbifProvFile,
-                            mdlMask=None, prjMask=None, 
-                            minPointCount=minPoints,  
-                            intersectGrid=gridname, log=self.log)
+            self.boomer = GBIFBoom(archiveName, user, epsg, algorithms, 
+                           mdlScen, prjScens, gbifOccFile, expdate, 
+                           taxonSourceName=taxname,
+                           providerListFile=gbifProvFile,
+                           mdlMask=None, prjMask=None, 
+                           minPointCount=minPoints,  
+                           intersectGrid=gridname, log=self.log)
             
          elif datasource == 'IDIGBIO':
-            self.boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
-                            idigTaxonidsFile, expdate, taxonSourceName=taxname,
-                            mdlMask=None, prjMask=None, 
-                            minPointCount=minPoints, 
-                            intersectGrid=gridname, log=self.log)
+            self.boomer = iDigBioBoom(archiveName, user, epsg, algorithms, 
+                           mdlScen, prjScens, idigTaxonidsFile, expdate, 
+                           taxonSourceName=taxname,
+                           mdlMask=None, prjMask=None, 
+                           minPointCount=minPoints, 
+                           intersectGrid=gridname, log=self.log)
    
          else:
-            self.boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
-                            userOccCSV, userOccMeta, expdate, 
-                            mdlMask=None, prjMask=None, 
-                            minPointCount=minPoints, 
-                            intersectGrid=gridname, log=self.log)
+            self.boomer = UserBoom(archiveName, user, epsg, algorithms, 
+                           mdlScen, prjScens, userOccCSV, userOccMeta, expdate, 
+                           mdlMask=None, prjMask=None, 
+                           minPointCount=minPoints, 
+                           intersectGrid=gridname, log=self.log)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Archivist ({})'.format(e))
       

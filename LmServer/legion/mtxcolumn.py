@@ -66,12 +66,14 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                              parentId=matrixId, status=status, 
                              statusModTime=statusModTime)
+      self._colDLocation = None
+      self.setColumnDLocation(colDLocation, statusModTime)
       self.layerId = layerId
       self.squid = squid
       self.ident = ident
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
-      self.loadParamMetadata(metadata)
+#       self.loadParamMetadata(metadata)
 
 # ...............................................
    def dumpIntersectParams(self):
@@ -132,7 +134,7 @@ class MatrixVector(MatrixColumn, Vector):
       @copydoc LmServer.base.layer2.Vector::__init__()
       """
       # ...................
-      MatrixColumn(matrixIndex, matrixId, userId, layerId=lyrId, 
+      MatrixColumn.__init__(self, matrixIndex, matrixId, userId, layerId=lyrId, 
                    processType=processType, 
                    metadata=mtxcolMetadata, intersectParams=intersectParams, 
                    squid=squid, ident=ident, matrixColumnId=matrixColumnId, 
@@ -150,6 +152,27 @@ class MatrixVector(MatrixColumn, Vector):
                       featureAttributes=featureAttributes, features=features, 
                       fidAttribute=fidAttribute)
          
+# ...............................................
+   @classmethod
+   def initFromParts(cls, mtxColumn, vector):
+      mtxVct = MatrixVector(mtxColumn.getMatrixIndex(), mtxColumn.parentId, 
+                  vector.getUserId(), vector.name, vector.epsgcode, 
+                  lyrId=vector.getId(), squid=vector.squid, 
+                  verify=vector.verify, dlocation=vector.getDLocation(),
+                  lyrMetadata=vector.lyrMetadata, dataFormat=vector.dataFormat, 
+                  ogrType=vector.gdalType, valUnits=vector.valUnits,
+                  valAttribute=vector.getValAttribute(), 
+                  nodataVal=vector.nodataVal, minVal=vector.minVal, 
+                  maxVal=vector.maxVal, mapunits=vector.mapUnits, 
+                  resolution=vector.resolution, bbox=vector.bbox,
+                  # Join table for MatrixColumn Process Object
+                  processType=mtxColumn.processType, 
+                  mtxcolMetadata=mtxColumn.paramMetadata, 
+                  intersectParams=mtxColumn.intersectParams, 
+                  ident=mtxColumn.ident, matrixColumnId=mtxColumn.getParamId(), 
+                  status=mtxColumn.status, statusModTime=mtxColumn.statusModTime)
+      return mtxVct
+
 # .............................................................................
 class MatrixRaster(MatrixColumn, Raster):
 # .............................................................................
@@ -174,7 +197,7 @@ class MatrixRaster(MatrixColumn, Raster):
       @copydoc LmServer.base.layer2.Raster::__init__()
       """
       # ...................
-      MatrixColumn(matrixIndex, matrixId, userId, layerId=lyrId,
+      MatrixColumn.__init__(self, matrixIndex, matrixId, userId, layerId=lyrId,
                    processType=processType, 
                    metadata=mtxcolMetadata, intersectParams=intersectParams, 
                    squid=squid, ident=ident, matrixColumnId=matrixColumnId, 
@@ -189,3 +212,22 @@ class MatrixRaster(MatrixColumn, Raster):
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
 
+# ...............................................
+   @classmethod
+   def initFromParts(cls, mtxColumn, raster):
+      mtxRst = MatrixRaster(mtxColumn.getMatrixIndex(), mtxColumn.parentId, 
+                  raster.getUserId(), raster.name, raster.epsgcode, 
+                  lyrId=raster.getId(), squid=raster.squid, 
+                  verify=raster.verify, dlocation=raster.getDLocation(),
+                  lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat, 
+                  gdalType=raster.gdalType, valUnits=raster.valUnits, 
+                  nodataVal=raster.nodataVal, minVal=raster.minVal, 
+                  maxVal=raster.maxVal, mapunits=raster.mapUnits, 
+                  resolution=raster.resolution, bbox=raster.bbox,
+                  # Join table for MatrixColumn Process Object
+                  processType=mtxColumn.processType, 
+                  mtxcolMetadata=mtxColumn.paramMetadata, 
+                  intersectParams=mtxColumn.intersectParams, 
+                  ident=mtxColumn.ident, matrixColumnId=mtxColumn.getParamId(), 
+                  status=mtxColumn.status, statusModTime=mtxColumn.statusModTime)
+      return mtxRst

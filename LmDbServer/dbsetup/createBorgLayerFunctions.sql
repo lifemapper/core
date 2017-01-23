@@ -444,14 +444,14 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(-- MatrixColumn
                                                              res double precision,
                                                              bboxstr varchar,
                                                              bboxwkt varchar,
-                                                             lyrmtime double precision,
-)
+                                                             lyrmtime double precision)
 RETURNS lm_v3.lm_matrixlayer AS
 $$
 DECLARE
    lyrcount int;
    mtxcount int;
    newid int;
+   rec_lyr lm_v3.layer%rowtype;
    rec_mtxlyr lm_v3.lm_matrixlayer%rowtype;
 BEGIN
    -- check existence of required referenced matrix
@@ -459,19 +459,17 @@ BEGIN
    IF mtxcount < 1 THEN
       RAISE EXCEPTION 'Matrix with id % does not exist', mtxid;
    END IF;
+
    -- insert or find optional referenced layer
    IF lyrid IS NOT NULL OR (usr IS NOT NULL AND lyrname IS NOT NULL AND epsg IS NOT NULL) THEN
       SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
          lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
          vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime);
-      
       IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to findOrInsertLayer';
+         RAISE EXCEPTION 'Unable to findOrInsertLayer with usr %, name %, epsg %', 
+                          usr, lyrname, epsg;
       ELSE
-      
-      SELECT count(*) INTO lyrcount FROM lm_v3.Layer WHERE layerid = lyrid;
-      IF lyrcount < 1 THEN
-         RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
+         lyrid = rec_lyr.layerid;
       END IF;
    END IF;
    
@@ -685,8 +683,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getShapegrid(sgid int, 
-                                                 lyrid int, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_getShapegrid(lyrid int, 
                                                  usr varchar, 
                                                  nm varchar, 
                                                  epsg int)
@@ -695,9 +692,7 @@ $$
 DECLARE
    rec lm_v3.lm_shapegrid%ROWTYPE;
 BEGIN
-   IF sgid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE shapeGridId = sgid;
-   ELSIF lyrid IS NOT NULL THEN
+   IF lyrid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE layerId = lyrid;
    ELSE
       SELECT * INTO rec FROM lm_v3.lm_shapegrid WHERE userid = usr 

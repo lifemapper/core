@@ -37,7 +37,7 @@ from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD,
-            ProcessType, JobStatus, ONE_HOUR, ONE_MIN) 
+            ProcessType, JobStatus, ONE_HOUR, ONE_MIN, MatrixType) 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import Priority, LOG_PATH
@@ -45,6 +45,8 @@ from LmServer.common.localconstants import TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.matrix import Matrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
@@ -55,7 +57,8 @@ GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
 # .............................................................................
 class _LMBoomer(LMObject):
    # .............................
-   def __init__(self, userid, epsg, priority, algLst, mdlScen, prjScenLst, 
+   def __init__(self, archiveName, userid, epsg, priority, algLst, 
+                mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
                 minPointCount=None, intersectGrid=None, log=None):
       super(_LMBoomer, self).__init__()
@@ -93,13 +96,13 @@ class _LMBoomer(LMObject):
             raise LMError(currargs='Failed to open database')
          
       self.log.info('{} opened databases'.format(self.name))
-      self._fillDefaultObjects(algLst, mdlScen, prjScenLst, mdlMask, prjMask, 
-                               intersectGrid, taxonSourceName)
+      self._fillDefaultObjects(archiveName, algLst, mdlScen, prjScenLst, 
+                               mdlMask, prjMask, intersectGrid, taxonSourceName)
          
 # ...............................................
-   def _fillDefaultObjects(self, algCodes, mdlScenarioCode, projScenarioCodes, 
-                           mdlMaskId, prjMaskId, intersectGridName,
-                           taxonSourceName):
+   def _fillDefaultObjects(self, archiveName, algCodes, mdlScenarioCode, 
+                           projScenarioCodes, mdlMaskId, prjMaskId, 
+                           intersectGridName, taxonSourceName):
       for acode in algCodes:
          alg = Algorithm(acode)
          alg.fillWithDefaults()
@@ -125,9 +128,20 @@ class _LMBoomer(LMObject):
          
          self.modelMask = self._scribe.getLayer(mdlMaskId)
          self.projMask = self._scribe.getLayer(prjMaskId)
-         self.intersectGrid = self._scribe.getShapeGrid(userId=self.userid, 
-                                                        lyrName=intersectGridName,
-                                                        epsg=self.epsg)
+         shpgrid = self._scribe.getShapeGrid(userId=self.userid, 
+                                             lyrName=intersectGridName,
+                                             epsg=self.epsg)
+         # Get gridset for Archive "Global PAM"
+         gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=self.epsg, 
+                        pam=None, userId=self.userid)
+         mtx = Matrix(None, matrixType=MatrixType.PAM, userId=self.userid,
+                       gridset=gset)
+         grdset = Gridset(name=archiveName, shapeGrid=shpgrid, 
+                          epsgcode=self.epsg, userId=self.userid)
+         gPam = self._scribe.getMatrix(grdset)
+         if self.archiveGridset is None:
+            raise LMError('Failed to retrieve Archive Gridset')
+
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -467,7 +481,7 @@ class _LMBoomer(LMObject):
                               self.modelScenario, self.projScenarios, 
                               occJobProcessType=occProcessType, 
                               mdlMask=self.modelMask, projMask=self.projMask,
-                              intersectGrid=self.intersectGrid,
+                              gridset=self.archiveGridset,
                               minPointCount=self.minPointCount)
                self.log.debug('Created {} objects for occurrenceset {}'
                               .format(len(objs), occ.getId()))
@@ -482,12 +496,13 @@ class BisonBoom(_LMBoomer):
    """
    @summary: Initializes the job chainer for BISON.
    """
-   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, tsnfilename, expDate, 
+   def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
+                tsnfilename, expDate, 
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None,
                 intersectGrid=None, log=None):
-      super(BisonBoom, self).__init__(userid, epsg, priority, algLst, 
-                                      mdlScen, prjScenLst, 
+      super(BisonBoom, self).__init__(archiveName, userid, epsg, priority, 
+                                      algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       minPointCount=minPointCount,
@@ -648,12 +663,12 @@ class UserBoom(_LMBoomer):
              The parser writes each new text chunk to a file, updates the 
              Occurrence record and inserts one or more jobs.
    """
-   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, 
+   def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
                 userOccCSV, userOccMeta, expDate, 
                 priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
-      super(UserBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, 
-                                     prjScenLst, 
+      super(UserBoom, self).__init__(archiveName, userid, epsg, priority, 
+                                     algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
                                      minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
@@ -802,15 +817,17 @@ class GBIFBoom(_LMBoomer):
              text chunk to a file, then creates an OccurrenceJob for it and 
              updates the Occurrence record and inserts a job.
    """
-   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, occfilename, expDate,
+   def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
+                occfilename, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 providerListFile=None, mdlMask=None, prjMask=None, 
                 minPointCount=None, intersectGrid=None, log=None):
-      super(GBIFBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
-                                      taxonSourceName=taxonSourceName, 
-                                      mdlMask=mdlMask, prjMask=prjMask, 
-                                      minPointCount=minPointCount,
-                                      intersectGrid=intersectGrid, log=log)               
+      super(GBIFBoom, self).__init__(archiveName, userid, epsg, priority, 
+                                     algLst, mdlScen, prjScenLst, 
+                                     taxonSourceName=taxonSourceName, 
+                                     mdlMask=mdlMask, prjMask=prjMask, 
+                                     minPointCount=minPointCount,
+                                     intersectGrid=intersectGrid, log=log)               
       self._dumpfile = None
       csv.field_size_limit(sys.maxsize)
       try:
@@ -1020,11 +1037,13 @@ class iDigBioBoom(_LMBoomer):
              creating a chain of SDM jobs for each, unless the species is 
              up-to-date. 
    """
-   def __init__(self, userid, epsg, algLst, mdlScen, prjScenLst, idigFname, expDate,
+   def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
+                idigFname, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None, 
                 intersectGrid=None, log=None):
-      super(iDigBioBoom, self).__init__(userid, epsg, priority, algLst, mdlScen, prjScenLst, 
+      super(iDigBioBoom, self).__init__(archiveName, userid, epsg, priority, 
+                                        algLst, mdlScen, prjScenLst, 
                                         taxonSourceName=taxonSourceName, 
                                         mdlMask=mdlMask, prjMask=prjMask, 
                                         minPointCount=minPointCount,
@@ -1158,8 +1177,8 @@ class iDigBioBoom(_LMBoomer):
 if __name__ == "__main__":
    from LmDbServer.tools.archivistborg import Archivist
    from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-   (user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
-    gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+   (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens,  
+    epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
     gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
     speciesExpDay) = Archivist.getArchiveSpecificConfig()
    
@@ -1168,26 +1187,26 @@ if __name__ == "__main__":
    log = ScriptLogger('testboomborg')
    
    if datasource == 'BISON':
-      boomer = BisonBoom(user, epsg, algorithms, mdlScen, prjScens,
+      boomer = BisonBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                       bisonTsnFile, expdate, 
                       taxonSourceName=taxname, mdlMask=None, prjMask=None, 
                       minPointCount=minPoints, 
                       intersectGrid=gridname, log=log)
    elif datasource == 'GBIF':
-      boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+      boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                       gbifOccFile, expdate, taxonSourceName=taxname,
                       providerListFile=gbifProvFile,
                       mdlMask=None, prjMask=None, 
                       minPointCount=minPoints,  
                       intersectGrid=gridname, log=log)
    elif datasource == 'IDIGBIO':
-      boomer = iDigBioBoom(user, epsg, algorithms, mdlScen, prjScens, 
+      boomer = iDigBioBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens, 
                       idigTaxonidsFile, expdate, taxonSourceName=taxname,
                       mdlMask=None, prjMask=None, 
                       minPointCount=minPoints, 
                       intersectGrid=gridname, log=log)
    else:
-      boomer = UserBoom(user, epsg, algorithms, mdlScen, prjScens, 
+      boomer = UserBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens, 
                       userOccCSV, userOccMeta, expdate, 
                       mdlMask=None, prjMask=None, 
                       minPointCount=minPoints, 
@@ -1212,7 +1231,7 @@ from LmDbServer.tools.archivistborg import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.mtxcolumn import MatrixRaster
 
-(user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
+(archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
  gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
  gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
  speciesExpDay) = Archivist.getArchiveSpecificConfig(envSource='10min-past-present-future')
@@ -1223,7 +1242,7 @@ taxname = TAXONOMIC_SOURCE[datasource]['name']
 log = ScriptLogger('testboomborg')
 
 # ...............................................
-boomer = GBIFBoom(user, epsg, algorithms, mdlScen, prjScens,
+boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                    gbifOccFile, expdate, taxonSourceName=taxname,
                    providerListFile=gbifProvFile,
                    mdlMask=None, prjMask=None, 
@@ -1238,27 +1257,49 @@ sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
 taxonSourceKeyVal = speciesKey
 occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
 data = dataChunk
-occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
 
-# occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
-#                squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
-#                status=JobStatus.INITIALIZE, statusModTime=currtime, 
-#                sciName=sciName)
-# occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
-# rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
-#                             data=data)
-# occ.setRawDLocation(rdloc, currtime)
-# success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount, 
+               squid=sciName.squid, ogrType=wkbPoint, processType=occProcessType,
+               status=JobStatus.INITIALIZE, statusModTime=currtime, 
+               sciName=sciName)
+occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
+# occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
 
 prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
                boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
                modtime=currtime)
 prj = prjs[0]
 gridset = boomer.intersectGrid
+modtime = currtime
+mtxrst = MatrixRaster(-1, -1, prj.getUserId(), prj.name, prj.epsgcode,  
+                     lyrId=prj.getId(), squid=prj.squid, verify=prj.verify, 
+                     dlocation=prj.getDLocation(), lyrMetadata=prj.lyrMetadata, 
+                     dataFormat=prj.dataFormat, gdalType=prj.gdalType, 
+                     valUnits=prj.valUnits, nodataVal=prj.nodataVal, 
+                     minVal=prj.minVal, maxVal=prj.maxVal, mapunits=prj.mapUnits, 
+                     resolution=prj.resolution, bbox=prj.bbox, 
+                     metadataUrl=prj.metadataUrl, modTime=prj.statusModTime,
+                     processType=ProcessType.RAD_INTERSECT, 
+                     mtxcolMetadata={}, intersectParams={}, 
+                     status=JobStatus.GENERAL, statusModTime=modtime)
+
 mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset, currtime)
 
 
-
+select * from lm_v3.lm_findOrInsertMatrixColumn(180,-1,-1,
+'63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e',
+NULL,NULL,NULL,NULL,0,57773.8372662,180,
+'kubi',NULL,
+'prj_180',
+'/share/lm/data/archive/kubi/4326/Layers/prj_180.tif',
+'http://badenov-vc1.nhm.ku.edu/services/lm/projections/180',
+'{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers", "title": "Taxa Hexarthra mira (Hudson, 1871) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min"}',
+'GTiff',
+NULL,NULL,NULL,NULL,NULL,NULL,4326,
+'dd',0.16667,
+'-180.00,-60.00,180.00,90.00',
+'POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))',
+57770.9289461);
 
 
 jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)

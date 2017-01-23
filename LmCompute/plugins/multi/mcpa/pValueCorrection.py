@@ -29,7 +29,6 @@
           02110-1301, USA.
 """
 import numpy as np
-import os
 
 # Constants
 class CorrectionTypes:
@@ -40,111 +39,77 @@ class CorrectionTypes:
    BONFERRONI = 2
    BONFERRONI_HOLM = 3
    
-
 # .............................................................................
-def pAdjustBH(p):
+def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):                
    """
-   @summary: Benjamini-Hochberg P-Value correction for multiple hypothesis 
-                testing.
-   @todo: Document input
-   @todo: Document function, what is it doing?
-   """
-   p = np.asfarray(p)
-   byDescend = p.argsort()[::-1]
-   byOrig = byDescend.argsort()
-   steps = float(len(p)) / np.arange(len(p), 0, -1)
-   q = np.minimum(1, np.minimum.accumulate(steps * p[byDescend]))
-   return q[byOrig]
-
-# .............................................................................
-def correctPValuesForMultipleTesting(pValues, 
-                            correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):                
-   """
-   @todo: Document
-   @summary: 
-   @param pValues:
+   @summary: Perform P-value correction using the specified method
+   @param pValues: An array of P-values (can be 1 or 2 dimensions)
    @param correctionType: The type of p-value correction to perform
    @see: CorrectionTypes 
    @note: consistent with R - print correct_pvalues_for_multiple_testing([0.0, 
              0.01, 0.029, 0.03, 0.031, 0.05, 0.069, 0.07, 0.071, 0.09, 0.1]) 
    """
-   # check for 2-dimensions
-   doreshape = False
-   if len(pValues.shape) == 2:
-      # flatten
-      rows, cols = pValues.shape
-      pValues = flatten(pValues)
-      doreshape = True
-      
-   n = float(pValues.shape[0])                                                                           
-   newPvalues = np.empty(n)
+   # Get the original shape, we'll convert back to this
+   origShape = pValues.shape
+   
+   # Reshape into one-dimensional array
+   pFlat = pValues.flatten()
+   
+   numVals = pFlat.shape[0]
+
+   correctedPvals = np.empty(numVals)
+   
    if correctionType == CorrectionTypes.BONFERRONI:                                                                   
-      newPvalues = n * pValues
+      correctedPvals = numVals * pFlat
    elif correctionType == CorrectionTypes.BONFERRONI_HOLM:                                                            
-      values = [ (pvalue, i) for i, pvalue in enumerate(pValues) ]                                      
+      values = [(pvalue, i) for i, pvalue in enumerate(pFlat)]                                      
       values.sort()
       for rank, vals in enumerate(values):                                                              
          pvalue, i = vals
-         newPvalues[i] = (n-rank) * pvalue                                                            
+         correctedPvals[i] = (numVals - rank) * pvalue                                                            
    elif correctionType == CorrectionTypes.BENJAMINI_HOCHBERG:                                                         
-      values = [ (pvalue, i) for i, pvalue in enumerate(pValues) ]                                      
+      values = [(pvalue, i) for i, pvalue in enumerate(pFlat)]                                      
       values.sort()
       values.reverse()                                                                                  
       newValues = []
       for i, vals in enumerate(values):                                                                 
-         rank = n - i
+         rank = numVals - i
          pvalue, index = vals                                                                          
-         newValues.append((n/rank) * pvalue)                                                          
-      for i in xrange(0, int(n)-1):  
+         newValues.append((1.0 * numVals / rank) * pvalue)                                                          
+      for i in xrange(0, numVals - 1):  
          if newValues[i] < newValues[i+1]:                                                           
             newValues[i+1] = newValues[i]                                                           
       for i, vals in enumerate(values):
          pvalue, index = vals
-         newPvalues[index] = newValues[i]
-   if doreshape:     
-      return reshape(newPvalues, rows, cols)
-   else:   
-      return newPvalues
-
-# .............................................................................
-def flatten(mtx):
-   """
-   @summary: Flatten matrix a
-   @param mtx: The numpy matrix to flatten
-   """
-   rows, cols = mtx.shape
-   return mtx.reshape((1, rows * cols))[0]
-
-# .............................................................................
-def reshape(mtx, rows, cols):
-   """
-   @summary: Reshape matrix mtx
-   @param mtx: The numpy matrix to reshape
-   @param rows: The number of rows for the new shape
-   @param cols: The number of columns for the new shape
-   """
-   return mtx.reshape(rows, cols)
+         correctedPvals[index] = newValues[i]
+   else:
+      # TODO: Throw a specific exception
+      raise Exception, "Unknown correction type"
+   
+   # Convert back to original shape
+   correctedPvals = correctedPvals.reshape(origShape)
+   return correctedPvals
    
 # .............................................................................
-if __name__ == "__main__":
+#if __name__ == "__main__":
       
    
-   p_values = np.array([.01, .004, .12, .34])
-   print correctPValuesForMultipleTesting(p_values)
+   #p_values = np.array([.01, .004, .12, .34])
+   #print correctPValuesForMultipleTesting(p_values)
    
-   print
-   p_values = np.array([[.01, .004], [.12, .34]])
-   print correctPValuesForMultipleTesting(p_values)  # good
+   #print
+   #p_values = np.array([[.01, .004], [.12, .34]])
+   #print correctPValuesForMultipleTesting(p_values)  # good
    
    
    
    #print p_adjust_bh(p_values)
    
-   base = "/home/jcavner/BiogeographyMtx_Inputs/Florida/outputs"
-   pa_e = np.load(os.path.join(base,"Env_2_P_Values.npy"))
+   #base = "/home/jcavner/BiogeographyMtx_Inputs/Florida/outputs"
+   #pa_e = np.load(os.path.join(base,"Env_2_P_Values.npy"))
    
-   c_p = correctPValuesForMultipleTesting(pa_e)
-   np.save(os.path.join(base,'Env_2_P_Corrected.npy'),c_p)
+   #c_p = correctPValuesForMultipleTesting(pa_e)
+   #np.save(os.path.join(base,'Env_2_P_Corrected.npy'),c_p)
    
    #>>> from rpy2.robjects.packages import importr
    #>>> from rpy2.robjects.vectors import FloatVector

@@ -543,6 +543,16 @@ class Borg(DbPostgresql):
 
 # ...............................................
    def getBaseLayer(self, lyrid, lyrverify, lyruser, lyrname, epsgcode):
+      """
+      @summary: Get and fill a Layer from its layer id, SHASUM hash or 
+                user/name/epsgcode.  
+      @param lyrid: Layer database id
+      @param lyrverify: SHASUM hash of layer data
+      @param lyruser: Layer user id
+      @param lyrname: Layer name
+      @param lyrid: Layer EPSG code
+      @return: LmServer.base.layer._Layer object
+      """
       row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify, 
                                                 lyruser, lyrname, epsgcode)
       lyr = self._createLayer(row, idxs)
@@ -654,6 +664,21 @@ class Borg(DbPostgresql):
       
 
 # ...............................................
+   def getMatrix(self, mtx):
+      """
+      @summary: Retrieve a Matrix with its gridset from the database
+      @param mtx: Matrix to retrieve
+      @return: Existing Matrix
+      """
+      row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtx.getId(),
+                                                mtx.matrixType,
+                                                mtx.parentId, 
+                                                mtx.gridsetName,
+                                                mtx.getUserId())
+      fullMtx = self._createMatrix(row, idxs)
+      return fullMtx
+      
+# ...............................................
    def updateShapeGrid(self, shpgrd):
       """
       @summary: Update Shapegrid attributes: 
@@ -671,14 +696,14 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def getShapeGrid(self, shpgridId, lyrId, userId, lyrName, epsg):
+   def getShapeGrid(self, lyrId, userId, lyrName, epsg):
       """
       @summary: Find or insert a ShapeGrid into the database
-      @param shpgrd: ShapeGrid to insert
+      @param shpgrdId: ShapeGrid database id
       @return: new or existing ShapeGrid.
       """
       row, idxs = self.executeInsertAndSelectOneFunction('lm_getShapeGrid',
-                           shpgridId, lyrId, userId, lyrName, epsg)
+                                                   lyrId, userId, lyrName, epsg)
       shpgrid = self._createShapeGrid(row, idxs)
       return shpgrid
    
@@ -865,9 +890,14 @@ class Borg(DbPostgresql):
 # .............................................................................
    def getScenario(self, scenid=None, code=None, usrid=None, fillLayers=False):
       """
-      @summary: Return a scenario by its db id or code, filling its layers.  
-      @param code: Code for the scenario to be fetched.
+      @summary: Get and fill a scenario from its user and code or database id.   
+                If  fillLayers is true, populate the layers in the objecgt.
       @param scenid: ScenarioId for the scenario to be fetched.
+      @param code: Code for the scenario to be fetched.
+      @param usrid: User id for the scenario to be fetched.
+      @param fillLayers: Boolean indicating whether to retrieve and populate 
+             layers from to be fetched.
+      @return: a LmServer.legion.scenario.Scenario object
       """
       row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid, usrid, code)
       scen = self._createScenario(row, idxs)

@@ -2,7 +2,7 @@
 @summary: Module containing classes for Phylogenetic and BioGeographic contrasts
 @author: CJ Grady (originally by Jeff Cavner)
 @version: 1.0
-@status: alpha
+@status: beta
 
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
@@ -209,7 +209,7 @@ class BioGeoEncoding(object):
       
       if not distinctEvents: # Empty list
          raise EncodingException(
-                  "There are no features in {0}r to encode".format(layerDL))
+                  "There are no features in {0} to encode".format(layerDL))
       
       lyr = lyrDS.GetLayer(0) # Get the full layer
       # For each distinct event
@@ -227,9 +227,9 @@ class BioGeoEncoding(object):
          feat1 = None
          feat2 = None
          
-         feat1 = lyr.GetNextFeature()#.GetGeometryRef()
+         feat1 = lyr.GetNextFeature()
          try:
-            feat2 = lyr.GetNextFeature()#.GetGeometryRef()
+            feat2 = lyr.GetNextFeature()
          except: # Second feature is optional
             pass
          
@@ -445,7 +445,7 @@ class PhyloEncoding(object):
          
       else: # We are at a tip
          blDict = {
-            clade[PhyloTreeKeys.MTX_IDX] : []#cladeBL]
+            clade[PhyloTreeKeys.MTX_IDX] : []
          }
          
       
