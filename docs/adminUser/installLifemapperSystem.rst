@@ -9,13 +9,13 @@ Install or Update a Lifemapper Server/Compute installation
 
 Current versions
 ----------------
-Current Lifemapper roll versions are:
+Download the current Lifemapper roll files and shasums:
 
-* lifemapper-compute-2016.11.21-0.x86_64
-* lifemapper-server-2016.11.21-0.x86_64
+* lifemapper-compute-2016.11.21-0.x86_64.iso (and .sha)
+* lifemapper-server-2016.11.21-0.x86_64.iso
 
 #. **Download** new LmServer and LmCompute rolls to server, then validate 
-   checksums::
+   checksums.  Replace *.* in the wget command with current filenames::
 
    # cd /state/partition1/apps/
    # wget http://lifemapper.org/dl/lifemapper*.*
