@@ -27,12 +27,14 @@ should retrieve it.
 Testing levels
 **************
 Lifemapper Testing will be done at the following levels (bottom up).  The 
-breadth of each level should be tested before moving to the next level.  
+breadth of each level should be tested before moving to the next level.
+
 #. Object:  Start at the LmServer.sdm and LmServer.legion modules (not the base 
    objects that they inherit from).  
 #. Database: tests should script inserting and retrieving data objects from the 
    database with the LmServer.db.scribe and LmServer.db.borgscribe
 #. Web services: For each of the following, tests should use test data 
+
    #. Going around CherryPy
    #. Through HTTP and CherryPy
    #. Through LmClient
@@ -42,6 +44,7 @@ breadth of each level should be tested before moving to the next level.
 Order of testing
 ****************
 At each level, test LM in the following order.  Those created by:
+
 #. Initialization (SDM and Legion)
 #. Archivist
 #. Input preparation for Compute
@@ -58,7 +61,8 @@ repository checked out from Github.  Testing code should be written on a
 development machine, checked into Github, then checked out onto the testing VM 
 for testing at the command line.  Full instructions for each step are available 
 at:
-* Lifemapper Install:  `Lifemapper Install`_ 
-* Development Environment Setup: `Development Environment Setup`_
+
+* `Lifemapper Install`_ 
+* `Development Environment Setup`_
   
   
