@@ -7,11 +7,19 @@ Install or Update a Lifemapper Server/Compute installation
 
 .. _Setup Development Environment : docs/developer/developEnv.rst
 
-Introduction
-------------
-For systems with both the LmCompute and LmServer rolls installed, you will want 
-to update the LmCompute roll and LmServer rpms (lifemapper-lmserver, rocks-lifemapper) 
-without losing data.
+Current versions
+----------------
+Current Lifemapper roll versions are:
+
+* lifemapper-compute-2016.11.21-0.x86_64
+* lifemapper-server-2016.11.21-0.x86_64
+
+#. **Download** new LmServer and LmCompute rolls to server, then validate 
+   checksums::
+
+   # cd /state/partition1/apps/
+   # wget http://lifemapper.org/dl/lifemapper*.*
+   # sha256sum -c lifemapper-*.sha
 
 (If update) Stop processes
 --------------------------
@@ -27,23 +35,14 @@ without losing data.
 #. **Caution** If want to **completely destroy** existing install, run::
 
    # bash /opt/lifemapper/rocks/bin/clean-lm-server-roll.sh
-   # rocks remove roll lifemapper-server
    # bash /opt/lifemapper/rocks/bin/clean-lm-compute-roll.sh
    # rocks remove roll lifemapper-compute
 
 Install both rolls on Frontend
 ------------------------------
 
-#. **Download** new LmServer and LmCompute rolls to server, then validate 
-   checksums::
-
-   # cd /state/partition1/apps/
-   # wget http://lifemapper.org/dl/lifemapper*.*
-   # sha256sum -c lifemapper-*.sha
-   
-
-Update existing (maintains FE data)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Update existing install
+~~~~~~~~~~~~~~~~~~~~~~~
 
 #. You may remove source code rpms (lifemapper-lmserver and 
    lifemapper-compute) to avoid error messages about file conflicts in 
@@ -57,13 +56,14 @@ Update existing (maintains FE data)
       
    # rpm -el rocks-lifemapper rocks-lmcompute
 
-New install (destroys data)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+New install
+~~~~~~~~~~~
 If you do not need to save the existing data files and database records, 
 run the cleanRoll scripts for each roll. 
    
-#. **Add a new roll and rpms**, ensuring that old rpms/files are replaced::
+#. **Add a new roll and rpms**, ensuring that old rpms/files are replaced.  
+   Replace the following roll name with the latest version, identified
+   at the top of this document::
 
    # rocks add roll lifemapper-server-6.2-0.x86_64.disk1.iso clean=1
    # rocks add roll lifemapper-compute-6.2-0.x86_64.disk1.iso clean=1
@@ -91,7 +91,7 @@ Install nodes from Frontend
 ---------------------------
 
 #. **(Optional)** When updating an existing installation, remove unchanged 
-   compute-node rpms manually to ensure that scripts are run.::  
+   compute-node configuration rpms manually to ensure that scripts are run.::  
 
       # rocks run host compute 'rpm -el rocks-lmcompute'
     
@@ -100,12 +100,6 @@ Install nodes from Frontend
    # rocks set host boot compute action=install
    # rocks run host compute reboot 
 
-(Deprecated) Add compute input layers to the Frontend (now done on install)
----------------------------------------------------------------------------
-
-#. Seed the data for LmCompute on the frontend ::
-
-   # /opt/lifemapper/rocks/bin/seedData
 
 (OPT) To change defaults
 ------------------------

@@ -14,26 +14,38 @@ LmCompute and LmServer installed (see **Install Lifemapper System**
 instructions at `Install Lifemapper System`_).  After install connect 
 code checked out from the git repository.
 
+Install Frontend and Nodes
+******************************
+
+#. Install with instructions at `Install Lifemapper System`_
+
+#. **Reboot front end** ::  
+
+   # reboot
+   
+#. Install nodes from Frontend 
+
+
 Connect development code on Frontend
 ************************************
 
-#. Clone or update lifemapper workspace git repository ::  
+#. Clone lifemapper workspace git repository ::  
 
    # mkdir /state/partition1/workspace
    # cd /state/partition1/workspace
    # git clone https://github.com/lifemapper/core
 
-#. Copy or recreate database connection file to git tree::
+#. Copy database connection file to git tree::
       
    # cd /opt/lifemapper
    # cp -p LmServer/db/connect.py /state/partition1/workspace/core/LmServer/db/
 
-  OR:: 
+  OR recreate connection file with :: 
   
    # /opt/lifemapper/rocks/bin/confDbconnect
    
-#. Copy or Recreate files with replaced variables in your git tree. 
-   Config files will be created in the non-linked config directory
+#. Copy files with script-updated variables to your git tree. 
+   Config files were created in the non-linked config directory
    correctly without intervention.  The maxent and lmMaxent executables will  
    be installed into the rocks/bin directory without intervention.::
       
@@ -46,7 +58,7 @@ Connect development code on Frontend
    # cp -p LmDbServer/dbsetup/addDBFunctions.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
    # cp -p LmDbServer/dbsetup/defineDBTables.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
 
-  OR:: 
+  OR recreate files with sed commands:: 
 
    # cd /state/partition1/workspace/core
    # sed -e 's%@LMHOME@%/opt/lifemapper%g' LmDbServer/dbsetup/addDBFunctions.sql.in > LmDbServer/dbsetup/addDBFunctions.sql
@@ -67,15 +79,6 @@ Connect development code on Frontend
    # ln -s /state/partition1/workspace/core/LmDebug
    # ln -s /state/partition1/workspace/core/LmServer
    # ln -s /state/partition1/workspace/core/LmWebServer
-   
-Complete Frontend installation
-******************************
-
-#. **Reboot front end** ::  
-
-   # reboot
-   
-#. Install nodes from Frontend (`Install Lifemapper System`_)
 
 
 Connect development code on Nodes

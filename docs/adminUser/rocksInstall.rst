@@ -89,10 +89,6 @@ Instructions at https://github.com/rocksclusters/security-updates ::
     cd /state/partition1/site-roll/rocks/src/roll 
     git clone https://github.com/rocksclusters/security-updates.git
 
-Install the KU Production (kuprod) roll. **(Temporary)** Until it is ready,
-do the following:  After the security updates roll is built, installed, and run 
-the first time, install the ku_security_updates script into the /etc/cron.daily/ 
-directory. Download and install the script ::
-
-    wget https://raw.githubusercontent.com/lifemapper/kuprod/master/src/kuprod/ku_security_updates
-    install --mode=700 ku_security_updates /etc/cron.daily/
+Install the KU Production (kuprod) roll. Download iso and sha files, current
+version is: 
+* http://svc.lifemapper.org/dl/kuprod-1.0-0.x86_64.disk1.iso
