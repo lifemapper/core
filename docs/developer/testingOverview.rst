@@ -10,6 +10,30 @@ Basic Lifemapper BOOM Testing Approach
 .. _Testing Scope and Steps:  docs/developer/testSuite.rst
 .. _Coding Standards and Best Practices:  docs/developer/lmStandards.rst
 
+***********
+Preparation
+***********
+#. Research standards and best practices for different testing strategies
+
+   #. Unit tests
+   #. Run time tests
+   #. Ecosystem tests
+   #. Run level tests
+   
+#. Determine how or if the proposed Lifemapper testing module, LmTest, needs to 
+   be modified to support best practices.  Test some, propose several 
+   alternatives for unit testing, automated tests, and more.
+   
+   #. Document findings and proposals in a file in the docs/developer/ 
+      directory, with links to supporting information.  
+   #. We will discuss options at a follow-up project meeting 
+   #. We will decide on a course of action at that meeting or shortly after.
+   
+#. Document overall strategy chosen, how it will work, organization of files,
+   and including links to supporting information in a README.rst file at the 
+   top level of the LmTest module prior to writing test code.  This document
+   will be updated as the testing suite matures.
+
 ************************
 Initial testing coverage
 ************************
