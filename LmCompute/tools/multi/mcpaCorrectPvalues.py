@@ -30,8 +30,8 @@
 import argparse
 import numpy as np
 
+from LmCommon.statistics.pValueCorrection import correctPValues
 from LmCompute.plugins.multi.mcpa.mcpa import getPValues
-from LmCompute.plugins.multi.mcpa.pValueCorrection import correctPValues
 
 # .............................................................................
 if __name__ == "__main__":
