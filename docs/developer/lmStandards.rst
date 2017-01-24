@@ -5,6 +5,8 @@ General coding standards and best practices for Lifemapper
 ==========================================================
 .. contents::  
 
+.. _Basic Lifemapper Testing Approach:  docs/developer/testingOverview.rst
+.. _Testing suite construction:  docs/developer/testSuite.rst
 
 ************
 Organization
@@ -95,7 +97,7 @@ Documentation
    for doxygen documentation generation
    
 Source Control
-***********************
+**************
 
 #. Use Github for source control
 #. Check in every logical or functional chunk of code you work on, but never
@@ -112,9 +114,10 @@ Databases
 
 #. Always create databases with encoding UTF8
 
-Testing (CJ has a new infrastructure, document it here)
-*******************************************************
+Testing
+*******
 
-#. Use the unittest module of PyUnit http://pyunit.sourceforge.net/pyunit.html
-   There is a good intro at that link 
+#. An overview for Lifemapper testing infrastructure is at 
+   `Basic Lifemapper Testing Approach`_
+#. More detailed instructions for beginning are at `Testing suite construction`_
 

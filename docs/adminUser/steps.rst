@@ -5,16 +5,19 @@ Install
 
 .. contents::
 
+.. _Rocks Install Procedure : docs/developer/rocksInstall.rst
+.. _Virtual Cluster Troubleshooting : docs/developer/virtualCluster.rst
+.. _Lifemapper Install Procedure : docs/developer/installLifemapperSystem.rst
+
+
 The following details how to install both Lifemapper rolls, LmServer and 
 LmCompute, on a single physical or virtual cluster.  Some steps may be 
 unnecessary, or already complete, for your instance.
 
 Initial Rocks Setup
 -------------------
-#. Install and configure: 
-   https://github.com/lifemapper/core/blob/master/docs/developer/rocksInstall.rst
-#. Optional troubleshooting steps for virtual clusters:  
-   https://github.com/lifemapper/core/blob/master/docs/developer/virtualCluster.rst
+#. `Rocks Install Procedure`_
+#. Optional steps `Virtual Cluster Troubleshooting`_
 
 LmServer Roll Install
 ---------------------
@@ -22,48 +25,27 @@ LmServer Roll Install
 If both rolls will be installed on the server, LmServer and LmCompute may be 
 installed at the same time to save time and reboot only once.
 
-#. Add the roll to your cluster with the following:
-   https://github.com/pragmagrid/lifemapper-server/tree/kutest#adding-a-roll-to-a-live-frontend
-#. Reboot as directed in the instructions
-#. Configure, populate, test :
-   https://github.com/pragmagrid/lifemapper-server/blob/master/docs/Using.rst
-#. Create Layer package (until this is replaced by a package used by both LmServer and LmCompute).
-#. https://github.com/lifemapper/core/blob/master/docs/using/starting.rst
+#. `Lifemapper Install Procedure`_
 
-LmCompute Roll Install
-----------------------
 
-#. Add the roll to your cluster:  
-   https://github.com/pragmagrid/lifemapper-compute/tree/kutest#adding-a-roll-to-a-live-frontend
-#. Reboot as directed in the instructions
-#. Install on compute nodes, as directed in instructions.
-#. Seed Layers (until this is replaced by a package used by both LmServer and LmCompute).
-#. Configure and test: 
-   https://github.com/pragmagrid/lifemapper-compute/tree/kutest#using-a-roll
-
-Update
-######
+Update (deprecated)
+###################
    
+The following is out-of-date, instead follow instructions at 
+`Lifemapper Install Procedure`_
+
 Updating a System with both LmCompute and LmServer
 --------------------------------------------------
-#. Update LmCompute and LmServer with new LmCompute and LmServer rolls. These
-   two rolls must have the same version of lifemapper code. The LmServer roll 
-   has code in the lifemapper-lmserver-<version>-<release>.x86_64 rpm.  
-   LmCompute has code in the lifemapper-lmcompute-<version>-<release>.x86_64 rpm.
-   Full instructions at:
+#. Update LmCompute and LmServer with new LmCompute and LmServer rolls. 
    https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/UpdatingCombinedSystem.rst
 
 Updating a System with only LmServer
 ------------------------------------
 #. Update LmServer source code with new roll for both code and configuration.
-   Full instructions at:
    https://github.com/pragmagrid/lifemapper-server/blob/kutest/docs/Updating.rst
    
    
 Updating a System with only LmCompute
 -------------------------------------
 #. Update LmCompute source code with new roll for code amd configuration.  
-   One-time configuration changes may be needed and should be implemented in the 
-   rocks-lmcompute script 'updateIP-lmcompute' in the /opt/lifemapper/rocks/bin 
-   directory.  Full instructions at:
    https://github.com/pragmagrid/lifemapper-compute/blob/kutest/docs/Updating.rst

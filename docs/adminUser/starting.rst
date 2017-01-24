@@ -27,8 +27,12 @@ near future.
 ****************
 Data computation
 ****************
-LmServer **buildBoom** assembles jobs for computation from input data and 
-parameters.  Objects and related jobs are recorded in the database.
+LmServer **initBoom** (LmDbServer.tools.initBoom.py) populates the database with 
+inputs for a BOOM archive from an input data package and parameters.  
+
+LmServer **archivistBorg** (LmDbServer.tools.archivistBorg) assembles jobs for 
+computation from a configuration file created by initBoom.  Objects and related 
+makeflow document are recorded in the database.
 
 LmCompute **JobMediator** requests jobs, retrieves them, 
 sends them to SGE for computation, then returns them to LmServer.  Currently the
@@ -55,13 +59,17 @@ of species names/ids and a web service supported by the apiquery module).
 The pipeline uses variables set in the config file.  These variables correspond 
 to values in the database and either Lifemapper code or provided data. 
 
-To start the buildBoom (previously pipeline) as user lmwriter do::
+To run the initialization script, initBoom, as user lmwriter do::
 
-    $ $PYTHON /opt/lifemapper/LmDbServer/pipeline/buildBoom.py start
+    $ $PYTHON /opt/lifemapper/LmDbServer/tools/initBoom.py
+    
+To start the archivistBorg daemon (previously pipeline) as user lmwriter do::
+
+    $ $PYTHON /opt/lifemapper/LmDbServer/tools/archivistBorg.py start
 
 To stop::
 
-    $ $PYTHON /opt/lifemapper/LmDbServer/pipeline/buildBoom.py stop
+    $ $PYTHON /opt/lifemapper/LmDbServer/tools/archivistBorg.py stop
     
     
 ##########################

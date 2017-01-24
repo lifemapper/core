@@ -6,11 +6,27 @@ Notes:
 Fresh Rocks Install:
 ********************
 
+Start/restart a virtual cluster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Make sure that the boot action is "install", then start or restart an existing 
+cluster.  Open the "virt-manager" application in order to interact with
+the installation user-interface:: 
+
+ * rocks set host boot <vm-name> action=install
+ * (opt) rocks run host <vm-name> "shutdown -h now"
+ * rocks start host vm <vm-name>
+ * virt-manager
+
 Install the rolls:
 ~~~~~~~~~~~~~~~~~~
 
-Physical and Virtual clusters::
+Make sure to get the SGE roll directly from SDSC download site (default on 
+the installation screen) and the Python roll from notyeti.lifemapper.org
+(with the updated Python roll).  All other rolls should come from the yeti or 
+notyeti sites if they are physically located there (to speed download time).
   
+For all clusters, install the following:  
+
   * area51
   * base 
   * ganglia
@@ -21,25 +37,29 @@ Physical and Virtual clusters::
   * sge (LmCompute)
   * webserver (LmServer)
 
-Physical clusters::
+Physical clusters only:
   
   * kvm
   * zfs
 
-Lawrence Geo:  N38.969  W95.245
-Public Interface: assigned by Greg for MAC address
-Private Interface:  (notyeti VMs: available internal 192.168.202.x on notyeti)
-Gateway:  129.237.201.254
-DNS:  129.237.133.1
-NTP server:  time.ku.edu
-Auto-Partitioning
+Other info:
+
+ * Lawrence Geo:  N38.969  W95.245
+ * Public Interface: assigned by Greg Smith for MAC address
+ * Private Interface:  (notyeti VMs: available internal 192.168.202.x on notyeti)
+ * Gateway:  129.237.201.254
+ * DNS:  129.237.133.1
+ * NTP server:  time.ku.edu
+ * Auto-Partitioning
 
 Update Python Roll
 ~~~~~~~~~~~~~~~~~~
 **If** the sqlite3 module is not available in python2.7:
 
-* Get an updated python roll from pc-167.calit2.optiputer.net in /root/roll/ with sqlite3.so
-* Copy the iso, then remove old rpm, add roll making sure it will override existing::
+* Get an updated python roll from pc-167.calit2.optiputer.net in /root/roll/ 
+  with sqlite3.so
+* Copy the iso, then remove old rpm, add roll making sure it will override 
+  existing::
 
         rpm -el opt-python-27-2.7.9-1.x86_64
         rocks add roll python-6.2….iso clean=1
@@ -89,10 +109,6 @@ Instructions at https://github.com/rocksclusters/security-updates ::
     cd /state/partition1/site-roll/rocks/src/roll 
     git clone https://github.com/rocksclusters/security-updates.git
 
-Install the KU Production (kuprod) roll. **(Temporary)** Until it is ready,
-do the following:  After the security updates roll is built, installed, and run 
-the first time, install the ku_security_updates script into the /etc/cron.daily/ 
-directory. Download and install the script ::
-
-    wget https://raw.githubusercontent.com/lifemapper/kuprod/master/src/kuprod/ku_security_updates
-    install --mode=700 ku_security_updates /etc/cron.daily/
+Install the KU Production (kuprod) roll. Download iso and sha files, current
+version is: 
+* http://svc.lifemapper.org/dl/kuprod-1.0-0.x86_64.disk1.iso
