@@ -35,7 +35,7 @@
 from math import sqrt
 import numpy as np
 
-from pValueCorrection import correctPValues
+from LmCommon.statistics.pValueCorrection import correctPValues
 
 # .............................................................................
 def getPValues(observedValue, testValues, numPermutations=None):
@@ -306,9 +306,11 @@ def mcpa(pam, phyloMtx, grim, bioGeoHypotheses=None, numPermutations=9999):
    fSemiPartialPVals = getPValues(obsFsemiPartialMtx, randFSemiPartials, 
                                         numPermutations)
 
-   # TODO: P-value correction?
+   # P-Value correction
+   corFGlobalPVals = correctPValues(fGlobalPVals)
+   corFSemiPartialPVals = correctPValues(fSemiPartialPVals)
    
    # Return observed adjusted R squared, semi-partials, fGlobal P-values and
    #      fSemiPartial P-values
-   return obsAdjRsq, obsSemiPartialMtx, fGlobalPVals, fSemiPartialPVals
+   return obsAdjRsq, obsSemiPartialMtx, corFGlobalPVals, corFSemiPartialPVals
 
