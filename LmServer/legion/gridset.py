@@ -274,15 +274,15 @@ class Gridset(ServiceObject):
 # .............................................................................
 # ...............................................
    def dumpGrdMetadata(self):
-      return super(Gridset, self)._dumpMetadata(self.grdMetadata)
+      return super(Gridset, self)._dumpMetadata(self, self.grdMetadata)
  
 # ...............................................
    def loadGrdMetadata(self, newMetadata):
-      self.grdMetadata = super(Gridset, self)._loadMetadata(newMetadata)
+      self.grdMetadata = super(Gridset, self)._loadMetadata(self, newMetadata)
 
 # ...............................................
    def addGrdMetadata(self, newMetadataDict):
-      self.grdMetadata = super(Gridset, self)._addMetadata(newMetadataDict, 
+      self.grdMetadata = super(Gridset, self)._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.grdMetadata)
             
 # .............................................................................

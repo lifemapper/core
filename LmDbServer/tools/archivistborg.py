@@ -61,7 +61,7 @@ class Archivist(Daemon):
       _ENV_CONFIG_HEADING = "LmServer - environment"
    
       user = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
-      archiveName = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_NAME')
+      archiveName = cfg.get(_CONFIG_HEADING, 'ARCHIVE_NAME')
       datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
       # Data Archive Pipeline
       algorithms = cfg.getlist(_CONFIG_HEADING, 'DEFAULT_ALGORITHMS')

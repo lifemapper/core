@@ -68,6 +68,10 @@ class Matrix(ServiceObject, ProcessObject):
       @param gridset: parent gridset of this Matrix
       """
       self._gridset = gridset
+      gridsetUrl = gridsetId = None
+      if gridset is not None:
+         gridsetUrl = gridset.metadataUrl
+         gridsetId = gridset.getId()
       ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
                              moduleType=LMServiceModule.LM, 
                              metadataUrl=metadataUrl, 
@@ -136,7 +140,7 @@ class Matrix(ServiceObject, ProcessObject):
 
 # ...............................................
    def dumpMtxMetadata(self):
-      return super(Matrix, self)._dumpMetadata(self.mtxMetadata)
+      return super(Matrix, self)._dumpMetadata(self, self.mtxMetadata)
  
 # ...............................................
    def loadMtxMetadata(self, newMetadata):
