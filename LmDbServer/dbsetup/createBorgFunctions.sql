@@ -354,11 +354,11 @@ DECLARE
 BEGIN
    IF mtxid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
-   ELSIF mtxtype IS NOT NULL AND grdid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
+   ELSIF mtxtype IS NOT NULL AND gsid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
                                             AND gridsetid = gsid;
-   ELSIF mtxtype IS NOT NULL AND grdname IS NOT NULL AND usr IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
+   ELSIF mtxtype IS NOT NULL AND gsname IS NOT NULL AND usr IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
                                             AND grdname = gsname 
                                             AND userid = usr;
    END IF;

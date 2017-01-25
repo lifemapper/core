@@ -74,6 +74,7 @@ class _LMBoomer(LMObject):
       self.modelMask = None
       self.projMask = None
       self.intersectGrid = None
+      self.globalPAM = None
 
       if userid is None:
          self.name = self.__class__.__name__.lower()
@@ -136,10 +137,8 @@ class _LMBoomer(LMObject):
                         pam=None, userId=self.userid)
          mtx = Matrix(None, matrixType=MatrixType.PAM, userId=self.userid,
                        gridset=gset)
-         grdset = Gridset(name=archiveName, shapeGrid=shpgrid, 
-                          epsgcode=self.epsg, userId=self.userid)
-         gPam = self._scribe.getMatrix(grdset)
-         if self.archiveGridset is None:
+         self.globalPAM = self._scribe.getMatrix(mtx)
+         if self.globalPAM is None:
             raise LMError('Failed to retrieve Archive Gridset')
 
       except Exception, e:
