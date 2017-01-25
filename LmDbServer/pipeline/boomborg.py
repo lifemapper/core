@@ -1221,7 +1221,7 @@ import time
 
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmServer.common.log import ScriptLogger
-from LmCommon.common.lmconstants import ProcessType
+from LmCommon.common.lmconstants import ProcessType, MatrixType
 from LmServer.base.taxon import ScientificName
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
@@ -1229,6 +1229,7 @@ from LmDbServer.pipeline.boomborg import *
 from LmDbServer.tools.archivistborg import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.mtxcolumn import MatrixRaster
+from LmServer.db.borgscribe import BorgScribe
 
 (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
  gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
@@ -1239,6 +1240,13 @@ expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
 currtime = dt.gmt().mjd
 taxname = TAXONOMIC_SOURCE[datasource]['name']
 log = ScriptLogger('testboomborg')
+scribe = BorgScribe(log)
+scribe.openConnections()
+shpgrid = scribe.getShapeGrid(userId=user, lyrName=gridname, epsg=epsg)
+gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=epsg, 
+               pam=None, userId=user)
+mtx = Matrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
+globalPAM = scribe.getMatrix(mtx)
 
 # ...............................................
 boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,

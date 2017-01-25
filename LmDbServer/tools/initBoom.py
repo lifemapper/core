@@ -100,8 +100,10 @@ def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbo
       scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
    else:
       newshp.updateStatus(JobStatus.COMPLETE)
-      updatedShp =  scribe.updateShapeGrid(newshp)
-   return updatedShp
+      success =  scribe.updateShapeGrid(newshp)
+      if success is False:
+         scribe.log.warning('Failed to update Shapegrid record')
+   return newshp
    
 # ...............................................
 def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize, 
@@ -584,10 +586,12 @@ if __name__ == '__main__':
       # Shapefile, Gridset, Matrix for GPAM/BOOMArchive
       logger.info('  Insert, build shapegrid {} ...'.format(configMeta['gridname']))
       updatedShp, updatedGrdset, updatedGpam = addArchive(scribeWithBorg, 
+                         configMeta['gridname'], 
                          metafname, archiveName, 
-                         configMeta['gridname'], configMeta['gridsides'], 
+                         configMeta['gridsides'], 
                          configMeta['gridsize'], configMeta['mapunits'], 
                          configMeta['epsg'], pkgMeta['bbox'], usr)
+      
 # .............................
       # Insert all taxonomic sources for now
       logger.info('  Insert taxonomy metadata ...')
@@ -676,14 +680,12 @@ addScenarioAndLayerMetadata(scribe, predScens)
 
 # ...................................................
 # Shapegrid testing
-(gridname, configFname, cellsides, cellsize, mapunits, epsg, 
-bbox) = (configMeta['gridname'], metafname, configMeta['gridsides'], 
-         configMeta['gridsize'], configMeta['mapunits'], 
-         configMeta['epsg'], pkgMeta['bbox'])
-
-
-
-
+(gridname, configFname, archiveName, cellsides, cellsize, 
+ mapunits, epsg, bbox, usr) = (configMeta['gridname'], 
+                         metafname, archiveName, 
+                         configMeta['gridsides'], 
+                         configMeta['gridsize'], configMeta['mapunits'], 
+                         configMeta['epsg'], pkgMeta['bbox'], usr)
 
 shp = _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, 
                         bbox, usr)
