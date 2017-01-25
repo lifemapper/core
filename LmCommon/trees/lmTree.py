@@ -165,6 +165,13 @@ class LmTree(object):
       return self._getMatrixIndicesInClade(clade)
 
    # ..............................
+   def getMatrixIndicesMapping(self):
+      """
+      @summary: Get a dictionary mapping of path id : matrix index 
+      """
+      return self._getMatrixIndicesMapping(self.tree)
+
+   # ..............................
    def getLabels(self):
       """
       @summary: Get tip labels for a clade
