@@ -501,6 +501,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+-- Note: returns 0 (True) or -1 (False)
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateSDMProjectLayer(prjid int, 
                                           lyrid int,
                                           lyrverify varchar,
@@ -518,16 +519,19 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_updateSDMProjectLayer(prjid int,
                                           prjmeta text,
                                           stat int,
                                           stattime double precision)
-RETURNS lm_v3.lm_sdmproject AS
+RETURNS int AS
 $$
 DECLARE
    rec lm_v3.lm_sdmproject%rowtype;
+   success int = -1;
 BEGIN
-   -- get or insert layer 
+   -- find layer 
    IF prjid IS NOT NULL then                     
       SELECT * INTO rec from lm_v3.lm_sdmproject WHERE sdmprojectId = prjid;
    ELSIF lyrid IS NOT NULL then                     
       SELECT * INTO rec from lm_v3.lm_sdmproject WHERE layerId = lyrid;
+   ELSE
+      RAISE EXCEPTION 'Missing required Layer or SDMProject ID';
 	END IF;
 	
    IF NOT FOUND THEN
@@ -550,15 +554,20 @@ BEGIN
       END IF;
       
       -- Update SDMProject record
-      UPDATE lm_v3.sdmProject SET (metadata, status, statusmodtime) 
-                                = (prjmeta, stat, statime) 
-        WHERE sdmprojectid = rec.sdmprojectid;
-        
-      -- return updated joined record
-      SELECT * INTO rec FROM lm_v3.lm_sdmproject WHERE layerid = rec.layerid;
+      IF NOT FOUND THEN 
+         RAISE EXCEPTION 'Unable to update Layer';
+      ELSE
+         -- Update SDMProject record
+         UPDATE lm_v3.sdmProject SET (metadata, status, statusmodtime) 
+                                   = (prjmeta, stat, statime) 
+            WHERE sdmprojectid = rec.sdmprojectid;
+         IF FOUND THEN
+            success = 0;
+         END IF;
+      END IF;
       
    END IF;   
-   RETURN rec;
+   RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
@@ -649,11 +658,12 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_updateShapeGrid(lyrid int,
                                           vsz int,
                                           stat int,
                                           stattime double precision)
-RETURNS lm_v3.lm_shapegrid AS
+RETURNS int AS
 $$
 DECLARE
    reclyr lm_v3.layer%ROWTYPE;
    recshpgrd lm_v3.lm_shapegrid%ROWTYPE;
+   success int = -1;
 BEGIN
    SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lyrid;
    IF NOT FOUND THEN
@@ -672,13 +682,12 @@ BEGIN
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to update shapegrid';
          ELSE
-            SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
-              WHERE layerid = lyrid;
+            success = 0;
          END IF;
       END IF;
    END IF;
    
-   RETURN recshpgrd;
+   RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
@@ -783,7 +792,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
--- (lyrid, null, lyrverify, lyrdloc, lyrmeta, null, null, null, lyrmtime)
+-- NOTE: returns a layer record
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateLayer(lyrid int,
                                           lyrsquid varchar,
                                           lyrverify varchar,

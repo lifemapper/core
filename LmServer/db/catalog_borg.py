@@ -686,12 +686,10 @@ class Borg(DbPostgresql):
       @param shpgrd: ShapeGrid to be updated.  
       @return: Updated record for successful update.
       """
-      success = False
-      currtime = mx.DateTime.utc().mjd
       meta = shpgrd.dumpLyrMetadata()
       success = self.executeModifyFunction('lm_updateShapeGrid',
                         shpgrd.getId(), shpgrd.verify, shpgrd.getDLocation(),
-                        meta, currtime, shpgrd.size, 
+                        meta, shpgrd.modTime, shpgrd.size, 
                         shpgrd.status, shpgrd.statusModTime)
       return success
 

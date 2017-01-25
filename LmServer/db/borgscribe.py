@@ -181,6 +181,9 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::updateShapeGrid()
       """
+      modTime = mx.DateTime.utc().mjd
+      shpgrd.modTime = modTime
+      shpgrd.paramModTime = modTime
       success = self._borg.updateShapeGrid(shpgrd)
       return success
 
@@ -282,14 +285,19 @@ class BorgScribe(LMObject):
    def updateOccset(self, occ, polyWkt=None, pointsWkt=None):
       """
       @summary: Update OccurrenceLayer attributes: 
-                  verify, displayName, dlocation, rawDlocation, queryCount, 
-                  bbox, metadata, status, statusModTime, geometries if valid
-      @note: Does not update userid, squid, and epsgcode
+                verify, displayName, dlocation, rawDlocation, queryCount, 
+                bbox, metadata, status, statusModTime, geometries if valid
+      @note: Does not update the userid, squid, and epsgcode (unique constraint) 
       @param occ: OccurrenceLayer to be updated.  
       @param polyWkt: geometry for the minimum polygon around these points
       @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
       """
+      # Iff OccurrenceSet is split into Layer and LayerParameter tables, 
+      # modTime and paramModTime will be relevant
+#       modTime = mx.DateTime.utc().mjd
+#       occ.modTime = modTime
+#       occ.paramModTime = modTime
       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
       return success
 
@@ -301,6 +309,9 @@ class BorgScribe(LMObject):
       @param proj the SDMProjection object to update
       @return: True/False for successful update.
       """
+      modTime = mx.DateTime.utc().mjd
+      proj.modTime = modTime
+      proj.paramModTime = modTime
       success = self._borg.updateSDMProject(proj)
       return success   
    
