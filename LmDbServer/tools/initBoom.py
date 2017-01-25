@@ -28,11 +28,14 @@ import os
 # # TODO: These should be included in the package of data
 # import LmDbServer.tools.charlieMetaExp3 as META
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
-         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
+         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, 
+         USER_OCCURRENCE_DATA, DEFAULT_MODEL_SCENARIO, 
+         DEFAULT_PROJECTION_SCENARIOS)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE, 
+                                           BISON_DATASOURCE, IDIGBIO_DATASOURCE)
+
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
@@ -467,38 +470,49 @@ def _writeConfigFile(archiveName, envPackageName, userid, datasource, configMeta
    f = open(newConfigFilename, 'w')
    f.write('[LmServer - environment]\n')
    f.write('ARCHIVE_USER: {}\n'.format(userid))
-   f.write('DATASOURCE: {}\n\n'.format(datasource))
 
    f.write('[LmServer - pipeline]\n')
+   f.write('ARCHIVE_DATASOURCE: {}\n\n'.format(datasource))
    f.write('ARCHIVE_NAME: {}\n\n'.format(archiveName))
    if configMeta['email'] is not None:
-      f.write('TROUBLESHOOTERS: {}\n\n'.format(configMeta['email']))
+      f.write('ARCHIVE_TROUBLESHOOTERS: {}\n\n'.format(configMeta['email']))
    
-   f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
-   f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
-   f.write('SPECIES_EXP_DAY: {}\n\n'.format(CURRDATE[2]))
+   f.write('ARCHIVE_SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
+   f.write('ARCHIVE_SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
+   f.write('ARCHIVE_SPECIES_EXP_DAY: {}\n\n'.format(CURRDATE[2]))
    
-   f.write('POINT_COUNT_MIN: {}\n\n'.format(minpoints))
+   f.write('ARCHIVE_POINT_COUNT_MIN: {}\n\n'.format(minpoints))
 
-   algs = ','.join(configMeta['algorithms'])
-   f.write('DEFAULT_ALGORITHMS: {}\n\n'.format(algs))
+   if len(configMeta['algorithms']) > 0:
+      algs = ','.join(configMeta['algorithms'])
+   else:
+      algs = DEFAULT_ALGORITHMS
+   f.write('ARCHIVE_ALGORITHMS: {}\n\n'.format(algs))
 
-   f.write('DEFAULT_GRID_NAME: {}\n'.format(configMeta['gridname']))
-   f.write('DEFAULT_GRID_CELLSIZE: {}\n\n'.format(configMeta['gridsize']))
+   f.write('ARCHIVE_GRID_NAME: {}\n'.format(configMeta['gridname']))
+   f.write('ARCHIVE_GRID_CELLSIZE: {}\n\n'.format(configMeta['gridsize']))
 
-   f.write('USER_OCCURRENCE_DATA: {}\n\n'.format(configMeta['speciesdata']))
-
-   f.write('SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))
-   f.write('DEFAULT_EPSG: {}\n\n'.format(configMeta['epsg']))
-   f.write('DEFAULT_MAPUNITS: {}\n\n'.format(configMeta['mapunits']))
+   if datasource == GBIF_DATASOURCE:
+      varname = 'GBIF_OCCURRENCE_FILENAME'
+   elif datasource == BISON_DATASOURCE:
+      varname = 'BISON_TSN_FILENAME'
+   elif datasource == IDIGBIO_DATASOURCE:
+      varname = 'IDIG_FILENAME'
+   else:
+      varname = 'USER_OCCURRENCE_DATA'
+   f.write('{}: {}\n\n'.format(varname, configMeta['speciesdata']))
+      
+   f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))
+   f.write('ARCHIVE_EPSG: {}\n\n'.format(configMeta['epsg']))
+   f.write('ARCHIVE_MAPUNITS: {}\n\n'.format(configMeta['mapunits']))
    
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO
-   f.write('DEFAULT_MODEL_SCENARIO: {}\n'.format(mdlScen))
+   f.write('ARCHIVE_MODEL_SCENARIO: {}\n'.format(mdlScen))
    if not prjScens:
       prjScens = DEFAULT_PROJECTION_SCENARIOS
    pcodes = ','.join(prjScens)
-   f.write('DEFAULT_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
+   f.write('ARCHIVE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    
    f.close()
    return newConfigFilename
@@ -622,7 +636,8 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS,
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE, 
+                                           BISON_DATASOURCE, IDIGBIO_DATASOURCE)
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
@@ -647,7 +662,7 @@ from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
           _addIntersectGrid)
           
 envPackageName = '10min-past-present-future'
-datasource = 'User'
+datasource = GBIF_DATASOURCE
 archiveName = ARCHIVE_NAME
 minpoints = 20
 
