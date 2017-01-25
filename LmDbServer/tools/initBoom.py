@@ -116,15 +116,15 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
    # "BOOM" Archive
    meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
            ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
-   grdset = Gridset(name=archiveName, metadata=meta, shapeGridId=shp.getId(), 
-                    configFilename=configFname, epsgcode=shp.epsgcode, 
+   grdset = Gridset(name=archiveName, metadata=meta, shapeGrid=shp, 
+                    configFilename=configFname, epsgcode=epsg, 
                     userId=usr, modTime=CURR_MJD)
    updatedGrdset = scribe.findOrInsertGridset(grdset)
    # "Global" PAM
    meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
            ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
    gpam = Matrix(None, matrixType=MatrixType.PAM, metadata=meta,
-                 userId=usr, gridsetId=updatedGrdset.getId(),
+                 userId=usr, gridset=updatedGrdset,
                  status=JobStatus.GENERAL, statusModTime=CURR_MJD)
    updatedGpam = scribe.findOrInsertMatrix(gpam)
    

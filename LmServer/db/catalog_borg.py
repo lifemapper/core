@@ -267,8 +267,8 @@ class Borg(DbPostgresql):
          mtx = Matrix(None, matrixType=mtype, processType=None, 
                       metadata=meta, dlocation=dloc, 
                       layerIndicesFilename=lyridxs, metadataUrl=murl,
-                      userId=usr, gridset=grdset, gridsetId=grdid, 
-                      matrixId=mtxid, status=stat, statusModTime=stattime)
+                      userId=usr, gridset=grdset, matrixId=mtxid, 
+                      status=stat, statusModTime=stattime)
       return mtx
    
 # ...............................................
