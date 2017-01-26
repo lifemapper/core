@@ -51,6 +51,7 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.matrix import Matrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
+from test.test_tarfile import tmpname
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
@@ -363,14 +364,6 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
 # ...............................................
 def _getConfiguredMetadata(META, pkgMeta):
    try:
-      userid = META.USER['id']
-   except:
-      userid = ARCHIVE_USER
-   try:
-      email = META.USER['email']
-   except:
-      email = None
-   try:
       epsg = META.EPSG
    except:
       epsg = DEFAULT_EPSG
@@ -394,47 +387,22 @@ def _getConfiguredMetadata(META, pkgMeta):
       gdalformat = META.ENVLYR_GDALFORMAT
    except:
       raise LMError('Failed to specify META.ENVLYR_GDALFORMAT')
-   try:
-      grdname = META.GRID_NAME
-   except:
-      grdname = DEFAULT_GRID_NAME
-   try:
-      grdsize = META.GRID_CELLSIZE
-   except:
-      if mapunits == DEFAULT_MAPUNITS:
-         grdsize = DEFAULT_GRID_CELLSIZE
-      else:
-         raise LMError('Failed to specify GRID_CELLSIZE for MAPUNITS {}'
-                       .format(mapunits))
-   try:
-      grdsides = META.GRID_NUM_SIDES
-   except:
-      grdsides = 4
    expYear = CURRDATE[0]
    expMonth = CURRDATE[1]
    expDay = CURRDATE[2]
-   try:
-      algs = META.ALGORITHM_CODES
-   except:
-      algs = DEFAULT_ALGORITHMS
-   try:
-      speciesDataName = META.SPECIES_DATA
-   except:
-      speciesDataName = USER_OCCURRENCE_DATA
+#    try:
+#       speciesDataName = META.SPECIES_DATA
+#    except:
+#       speciesDataName = USER_OCCURRENCE_DATA
 
-   configMeta = {'userid': userid,
-                 'email': email,
-                 'epsg': epsg, 
+   configMeta = {'epsg': epsg, 
                  'mapunits': mapunits, 
                  'resolution': res, 
                  'gdaltype': gdaltype, 
                  'gdalformat': gdalformat,
-                 'gridname': grdname, 
-                 'gridsides': grdsides, 
-                 'gridsize': grdsize,
                  'expdate': (expYear, expMonth, expDay),
-                 'algorithms': algs,
-                 'speciesdata': speciesDataName}
+#                  'speciesdata': speciesDataName
+                 }
    return configMeta
 
 # ...............................................
@@ -455,13 +423,22 @@ def _importClimatePackageMetadata(envPackageName):
    return META, metafname
 
 # ...............................................
-def _writeConfigFile(archiveName, envPackageName, userid, datasource, configMeta, minpoints,
+def _writeConfigFile(archiveName, envPackageName, userid, userEmail, datasource, 
+                     configMeta, minpoints, algorithms, 
+                     gridname, grid_cellsize, grid_cellsides, 
                      mdlScen=None, prjScens=None):
    """
+   archiveName = args.archive_name
+   usr = args.user
+   usrEmail = args.email
    envPackageName = args.environmental_metadata
    datasource = args.species_source.upper()
-   archiveName = args.archive_name
    minpoints = args.min_points
+   cellsize = args.grid_cellsize
+   if args.grid_shape == 'hexagon':
+      cellsides = 6
+   else:
+      cellsides = 4
    """
    SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
    pth, temp = os.path.split(SERVER_CONFIG_FILENAME)
@@ -474,24 +451,24 @@ def _writeConfigFile(archiveName, envPackageName, userid, datasource, configMeta
    f.write('[LmServer - pipeline]\n')
    f.write('ARCHIVE_DATASOURCE: {}\n\n'.format(datasource))
    f.write('ARCHIVE_NAME: {}\n\n'.format(archiveName))
-   if configMeta['email'] is not None:
-      f.write('ARCHIVE_TROUBLESHOOTERS: {}\n\n'.format(configMeta['email']))
+   if userEmail is not None:
+      f.write('ARCHIVE_TROUBLESHOOTERS: {}\n\n'.format(userEmail))
    
    f.write('ARCHIVE_SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
    f.write('ARCHIVE_SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
    f.write('ARCHIVE_SPECIES_EXP_DAY: {}\n\n'.format(CURRDATE[2]))
    
    f.write('ARCHIVE_POINT_COUNT_MIN: {}\n\n'.format(minpoints))
-
-   if len(configMeta['algorithms']) > 0:
-      algs = ','.join(configMeta['algorithms'])
+   if len(algorithms) > 0:
+      algs = ','.join(algorithms)
    else:
       algs = DEFAULT_ALGORITHMS
    f.write('ARCHIVE_ALGORITHMS: {}\n\n'.format(algs))
 
-   f.write('ARCHIVE_GRID_NAME: {}\n'.format(configMeta['gridname']))
-   f.write('ARCHIVE_GRID_CELLSIZE: {}\n\n'.format(configMeta['gridsize']))
-
+   f.write('ARCHIVE_GRID_NAME: {}\n'.format(gridname))
+   f.write('ARCHIVE_GRID_CELLSIZE: {}\n\n'.format(grid_cellsize))
+   f.write('ARCHIVE_GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
+   
    if datasource == GBIF_DATASOURCE:
       varname = 'GBIF_OCCURRENCE_FILENAME'
    elif datasource == BISON_DATASOURCE:
@@ -499,7 +476,7 @@ def _writeConfigFile(archiveName, envPackageName, userid, datasource, configMeta
    elif datasource == IDIGBIO_DATASOURCE:
       varname = 'IDIG_FILENAME'
    else:
-      varname = 'USER_OCCURRENCE_DATA'
+      varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
    f.write('{}: {}\n\n'.format(varname, configMeta['speciesdata']))
       
    f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))
@@ -519,42 +496,68 @@ def _writeConfigFile(archiveName, envPackageName, userid, datasource, configMeta
 
 # ...............................................
 if __name__ == '__main__':
+   algs=''.join(DEFAULT_ALGORITHMS)
+   allAlgs = ''.join(ALGORITHM_DATA.keys())
+   apiUrl = 'http://lifemapper.github.io/api.html'
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper database with metadata ' +
-                         'specific to the configured input data or the ' +
-                         'data package named.'))
+                         'specific to an \'archive\', populated with '
+                         'command line arguments, including values in the ' +
+                         'specified environmental data package.'))
+   parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
+            help=('Name for the archive and gridset created from these data'))
+   parser.add_argument('-u', '--user', default=ARCHIVE_USER,
+            help=('Owner of this archive this archive. The default is '
+                  'ARCHIVE_USER ({}), an existing user '.format(ARCHIVE_USER) +
+                  'not requiring an email. '))
+   parser.add_argument('-m', '--email', default=None,
+            help=('If the owner is a new user, provide an email address '))
    parser.add_argument('-e', '--environmental_metadata', default=SCENARIO_PACKAGE,
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
-   parser.add_argument('-s', '--species_source', default='User',
-            help=('Species source will be \'User\' for user-supplied CSV data, ' +
+   parser.add_argument('-s', '--species_source', default='GBIF',
+            help=('Species source will be: ' + 
                   '\'GBIF\' for GBIF-provided CSV data sorted by taxon id, ' +
                   '\'IDIGBIO\' for a list of GBIF accepted taxon ids suitable ' +
-                  'for querying the iDigBio API'))
-   parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
-            help=('Name for the archive and gridset created from these data'))
-   parser.add_argument('-p', '--min_points', default=POINT_COUNT_MIN,
+                  'for querying the iDigBio API, and ' +
+                  '\'BISON\' for a list of ITIS TSNs for querying the BISON API. ' +
+                  'Any other value will indicate that user-supplied CSV ' +
+                  'data, documented with metadata describing the fields, is ' +
+                  'to be used for the archive'))
+   parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
             help=('Minimum number of points required for SDM computation ' +
                   'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
                   'the site-specific configuration file config.site.ini' ))
+   parser.add_argument('-a', '--algorithms', default=algs,
+            help=('Comma-separated list of algorithm codes for computing  ' +
+                  'SDM experiments in this archive.  Options are described at ' +
+                  '{} and include the codes: {} '.format(apiUrl, allAlgs)))
+   parser.add_argument('-s', '--grid_cellsize', default=1,
+            help=('Size of cells in the grid used for Global PAM. ' +
+                  'Units are mapunits'))
+   parser.add_argument('-h', '--grid_shape', choices=('square', 'hexagon'),
+            default='square', help=('Shape of cells in the grid used for Global PAM.'))
 
    args = parser.parse_args()
+   archiveName = args.archive_name
+   usr = args.user
+   usrEmail = args.email
    envPackageName = args.environmental_metadata
    datasource = args.species_source.upper()
-   archiveName = args.archive_name
    minpoints = args.min_points
-   try:
-      int(minpoints)
-   except:
-      print ('Invalid points parameter {}, min_points requires an integer'
-             .format(minpoints))
-      minpoints = POINT_COUNT_MIN
+   algstring = args.algorithms
+   algorithms = [alg.strip() for alg in algstring.split(',')]
+   cellsize = args.grid_cellsize
+   gridname = '{}-Grid'.format(archiveName)
+   if args.grid_shape == 'hexagon':
+      cellsides = 6
+   else:
+      cellsides = 4
    # Imports META
    META, metafname = _importClimatePackageMetadata(envPackageName)
    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
    configMeta = _getConfiguredMetadata(META, pkgMeta)
-   usr = configMeta['userid']
    
 # # .............................
 #    try:
@@ -598,13 +601,11 @@ if __name__ == '__main__':
       addScenarioAndLayerMetadata(scribeWithBorg, predScens)
 # .............................
       # Shapefile, Gridset, Matrix for GPAM/BOOMArchive
-      logger.info('  Insert, build shapegrid {} ...'.format(configMeta['gridname']))
+      logger.info('  Insert, build shapegrid {} ...'.format(gridname))
       updatedShp, updatedGrdset, updatedGpam = addArchive(scribeWithBorg, 
-                         configMeta['gridname'], 
-                         metafname, archiveName, 
-                         configMeta['gridsides'], 
-                         configMeta['gridsize'], configMeta['mapunits'], 
-                         configMeta['epsg'], pkgMeta['bbox'], usr)
+                         gridname, metafname, archiveName, cellsides, cellsize, 
+                         configMeta['mapunits'], configMeta['epsg'], 
+                         pkgMeta['bbox'], usr)
       
 # .............................
       # Insert all taxonomic sources for now
@@ -617,9 +618,9 @@ if __name__ == '__main__':
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
       newConfigFilename = _writeConfigFile(archiveName, envPackageName, usr, 
-                                           datasource, configMeta, minpoints, 
-                                           mdlScen=mdlScencode, 
-                                           prjScens=prjScencodes)
+                           usrEmail, datasource, configMeta, minpoints, 
+                           algorithms, gridname, cellsize, cellsides, 
+                           mdlScen=mdlScencode, prjScens=prjScencodes)
    except Exception, e:
       logger.error(str(e))
       raise
