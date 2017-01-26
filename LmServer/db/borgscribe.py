@@ -323,7 +323,7 @@ class BorgScribe(LMObject):
       """
       newOrExistingMtxcol = None
       if mtx is not None and mtx.getId() is not None:
-         if lyr.dataFormat in OGRFormatCodes.keys():
+         if lyr.dataFormat in GDALFormatCodes.keys():
             mtxcol = MatrixRaster(-1, mtx.getId(), lyr.getUserId(), lyr.name, lyr.epsgcode,  
                         lyrId=lyr.getId(), squid=lyr.squid, verify=lyr.verify, 
                         dlocation=lyr.getDLocation(), lyrMetadata=lyr.lyrMetadata, 

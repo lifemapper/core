@@ -485,7 +485,7 @@ BEGIN
 
    -- insert or find optional referenced layer
    IF lyrid IS NOT NULL OR (usr IS NOT NULL AND lyrname IS NOT NULL AND epsg IS NOT NULL) THEN
-      SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
+      SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, sqd, 
          lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
          vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime);
       IF NOT FOUND THEN
