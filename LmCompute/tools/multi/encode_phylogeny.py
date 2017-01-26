@@ -34,8 +34,8 @@ import argparse
 import json
 import numpy as np
 
-from LmCommon.encoding.contrasts import BioGeoEncoding
-from LmCommon.encoding.lmTree import LmTree
+from LmCommon.encoding.phylo import PhyloEncoding
+from LmCommon.trees.lmTree import LmTree
 
 # .............................................................................
 if __name__ == "__main__":
