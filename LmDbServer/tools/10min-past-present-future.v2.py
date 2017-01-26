@@ -5,19 +5,6 @@ from osgeo import gdalconst
 # The following section contains constants, which if None or missing, 
 # will default to constants in config.lmserver.ini
 # ...............................................
-# User should be a dictionary with 'id' and 'email' keys.  
-# Default = ARCHIVE_USER
-USER = {'id': 'testinitboom', 'email': 'aimee.stewart@ku.edu'}
-
-# Default = User, ensures use of of SPECIES_DATA 
-DATASOURCE = 'GBIF'
-# SPECIES_DATA is the basename, without path, of the of the .csv file containing 
-# and .meta file describing species data for this archive/experiment.
-# Default = basename of USER_OCCURRENCE_CSV 
-#SPECIES_DATA = 'CombinedBIEN3data'
-
-# Default = POINT_COUNT_MIN
-POINT_COUNT_MIN = 20
 
 # These must be valid ALGORITHM_CODES in the Lifemapper database; 
 # Default = DEFAULT_ALGORITHMS
@@ -27,13 +14,6 @@ POINT_COUNT_MIN = 20
 EPSG = 4326
 # Default = DEFAULT_MAPUNITS IFF EPSG == DEFAULT_EPSG, otherwise exception
 MAPUNITS = 'dd'
-# Defaults = DEFAULT_GRID_CELLSIZE  IFF MAPUNITS == DEFAULT_MAPUNITS, otherwise exception
-GRID_CELLSIZE = 1
-
-# Default = DEFAULT_GRID_NAME
-GRID_NAME = '10d-grid'
-# Default = 4
-GRID_NUM_SIDES = 4
 
 # .............................................................................
 # Required
