@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -25,17 +25,17 @@ import os.path
 
 from LmServer.common.localconstants import PID_PATH
 from LmServer.common.lmconstants import SPECIES_DATA_PATH
-from LmDbServer.common.localconstants import (TAXONOMY_FILENAME, 
-     OCCURRENCE_FILENAME, PROVIDER_FILENAME, TSN_FILENAME , IDIG_FILENAME, 
-     USER_OCCURRENCE_CSV_FILENAME, USER_OCCURRENCE_META_FILENAME)                 
+from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
+     GBIF_OCCURRENCE_FILENAME, GBIF_PROVIDER_FILENAME, BISON_TSN_FILENAME , 
+     IDIG_FILENAME, USER_OCCURRENCE_CSV_FILENAME, USER_OCCURRENCE_META_FILENAME)                 
 
 # ............................................................................
 
 BOOM_PID_FILE = os.path.join(PID_PATH, 'lmboom.pid')
-GBIF_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, OCCURRENCE_FILENAME)
-TAXONOMY_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, TAXONOMY_FILENAME)
-PROVIDER_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, PROVIDER_FILENAME)
-BISON_TSN_FILE = os.path.join(SPECIES_DATA_PATH, TSN_FILENAME)
+GBIF_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_OCCURRENCE_FILENAME)
+GBIF_TAXONOMY_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_TAXONOMY_FILENAME)
+GBIF_PROVIDER_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_PROVIDER_FILENAME)
+BISON_TSN_FILE = os.path.join(SPECIES_DATA_PATH, BISON_TSN_FILENAME)
 IDIGBIO_FILE = os.path.join(SPECIES_DATA_PATH, IDIG_FILENAME)
 
 USER_OCCURRENCE_CSV = os.path.join(SPECIES_DATA_PATH, USER_OCCURRENCE_CSV_FILENAME)

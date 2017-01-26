@@ -89,21 +89,19 @@ class Archivist(Daemon):
          userOccMeta = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.METADATA)
       
       # Bison data
-      bisonTsn = Config().get(_PIPELINE_CONFIG_HEADING, 'TSN_FILENAME')
+      bisonTsn = Config().get(_PIPELINE_CONFIG_HEADING, 'BISON_TSN_FILENAME')
       bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
-      if datasource == 'BISON':
-         minPoints = BISON_MIN_POINT_COUNT
          
       # iDigBio data
       idigTaxonids = Config().get(_PIPELINE_CONFIG_HEADING, 'IDIG_FILENAME')
       idigTaxonidsFile = os.path.join(SPECIES_DATA_PATH, idigTaxonids)
       
       # GBIF data
-      gbifTax = cfg.get(_PIPELINE_CONFIG_HEADING, 'TAXONOMY_FILENAME')
+      gbifTax = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_TAXONOMY_FILENAME')
       gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
-      gbifOcc = cfg.get(_PIPELINE_CONFIG_HEADING, 'OCCURRENCE_FILENAME')
+      gbifOcc = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_OCCURRENCE_FILENAME')
       gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
-      gbifProv = cfg.get(_PIPELINE_CONFIG_HEADING, 'PROVIDER_FILENAME')
+      gbifProv = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_PROVIDER_FILENAME')
       gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          
       return (archiveName, user, datasource, algorithms, minPoints, 
