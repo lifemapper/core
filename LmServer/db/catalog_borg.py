@@ -254,9 +254,7 @@ class Borg(DbPostgresql):
          grdset = self._createGridset(row, idxs)
          mtxid = self._getColumnValue(row, idxs, ['matrixid'])
          mtype = self._getColumnValue(row, idxs, ['matrixtype'])
-         grdid = self._getColumnValue(row, idxs, ['gridsetid'])
          usr = self._getColumnValue(row, idxs, ['userid'])
-         grdid = self._getColumnValue(row, idxs, ['gridsetid'])
          dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
          lyridxs = self._getColumnValue(row, idxs, 
                                         ['mtxlayerindices', 'layerindices'])

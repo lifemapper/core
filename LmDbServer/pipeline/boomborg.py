@@ -1238,7 +1238,10 @@ from LmServer.db.borgscribe import BorgScribe
 
 expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
 currtime = dt.gmt().mjd
-taxname = TAXONOMIC_SOURCE[datasource]['name']
+try:
+   taxname = TAXONOMIC_SOURCE[datasource]['name']
+except:
+   taxname = None
 log = ScriptLogger('testboomborg')
 scribe = BorgScribe(log)
 scribe.openConnections()

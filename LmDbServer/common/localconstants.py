@@ -1,7 +1,7 @@
 """
 @summary: Local configuration constants for LmDbServer
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -48,13 +48,13 @@ except:
    USER_OCCURRENCE_META_FILENAME = Config().get(_CONFIG_HEADING, 'USER_OCCURRENCE_META')
 
 # GBIF data
-TAXONOMY_FILENAME = Config().get(_CONFIG_HEADING, 'TAXONOMY_FILENAME')
-OCCURRENCE_FILENAME = Config().get(_CONFIG_HEADING, 'OCCURRENCE_FILENAME')
-PROVIDER_FILENAME = Config().get(_CONFIG_HEADING, 'PROVIDER_FILENAME')
+GBIF_TAXONOMY_FILENAME = Config().get(_CONFIG_HEADING, 'GBIF_TAXONOMY_FILENAME')
+GBIF_OCCURRENCE_FILENAME = Config().get(_CONFIG_HEADING, 'GBIF_OCCURRENCE_FILENAME')
+GBIF_PROVIDER_FILENAME = Config().get(_CONFIG_HEADING, 'GBIF_PROVIDER_FILENAME')
 
 
 # BISON data
-TSN_FILENAME = Config().get(_CONFIG_HEADING, 'TSN_FILENAME')
+BISON_TSN_FILENAME = Config().get(_CONFIG_HEADING, 'BISON_TSN_FILENAME')
 
 # iDigBio data
 IDIG_FILENAME = Config().get(_CONFIG_HEADING, 'IDIG_FILENAME')

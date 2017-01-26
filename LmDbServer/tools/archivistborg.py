@@ -57,45 +57,51 @@ class Archivist(Daemon):
             fileList.append(cfgfile)
       cfg = Config(fns=fileList)
       
-      _CONFIG_HEADING = "LmServer - pipeline"
       _ENV_CONFIG_HEADING = "LmServer - environment"
+      _PIPELINE_CONFIG_HEADING = "LmServer - pipeline"
    
+      # Environment
       user = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
-      archiveName = cfg.get(_CONFIG_HEADING, 'ARCHIVE_NAME')
-      datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
+
       # Data Archive Pipeline
-      algorithms = cfg.getlist(_CONFIG_HEADING, 'DEFAULT_ALGORITHMS')
-      mdlScen = cfg.get(_CONFIG_HEADING, 'DEFAULT_MODEL_SCENARIO')
-      prjScens = cfg.getlist(_CONFIG_HEADING, 'DEFAULT_PROJECTION_SCENARIOS')
-      epsg = cfg.getint(_CONFIG_HEADING, 'DEFAULT_EPSG')
-      gridname = cfg.get(_CONFIG_HEADING, 'DEFAULT_GRID_NAME')
-      minPoints = cfg.getint(_CONFIG_HEADING, 'POINT_COUNT_MIN')
+      archiveName = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_NAME')
+      try:
+         datasource = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_DATASOURCE')
+      except:
+         datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
+
+      algorithms = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_ALGORITHMS')
+      mdlScen = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_MODEL_SCENARIO')
+      prjScens = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_PROJECTION_SCENARIOS')
+      epsg = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_EPSG')
+      gridname = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_GRID_NAME')
+      minPoints = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_POINT_COUNT_MIN')
       # Expiration date for retrieved species data 
-      speciesExpYear = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_YEAR')
-      speciesExpMonth = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_MONTH')
-      speciesExpDay = cfg.getint(_CONFIG_HEADING, 'SPECIES_EXP_DAY')
+      speciesExpYear = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_YEAR')
+      speciesExpMonth = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_MONTH')
+      speciesExpDay = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_DAY')
    
-      # User data   
-      userOccData = cfg.get(_CONFIG_HEADING, 'USER_OCCURRENCE_DATA')
-      userOccCSV = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.CSV)
-      userOccMeta = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.METADATA)
+      # User data  
+      userOccCSV = userOccMeta = None 
+      if datasource == 'User':
+         userOccData = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_USER_OCCURRENCE_DATA')
+         userOccCSV = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.CSV)
+         userOccMeta = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.METADATA)
       
       # Bison data
-      bisonTsn = Config().get(_CONFIG_HEADING, 'TSN_FILENAME')
+      bisonTsn = Config().get(_PIPELINE_CONFIG_HEADING, 'BISON_TSN_FILENAME')
       bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
-      if datasource == 'BISON':
-         minPoints = BISON_MIN_POINT_COUNT
          
       # iDigBio data
-      idigTaxonids = Config().get(_CONFIG_HEADING, 'IDIG_FILENAME')
+      idigTaxonids = Config().get(_PIPELINE_CONFIG_HEADING, 'IDIG_FILENAME')
       idigTaxonidsFile = os.path.join(SPECIES_DATA_PATH, idigTaxonids)
       
       # GBIF data
-      gbifTax = cfg.get(_CONFIG_HEADING, 'TAXONOMY_FILENAME')
+      gbifTax = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_TAXONOMY_FILENAME')
       gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
-      gbifOcc = cfg.get(_CONFIG_HEADING, 'OCCURRENCE_FILENAME')
+      gbifOcc = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_OCCURRENCE_FILENAME')
       gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
-      gbifProv = cfg.get(_CONFIG_HEADING, 'PROVIDER_FILENAME')
+      gbifProv = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_PROVIDER_FILENAME')
       gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          
       return (archiveName, user, datasource, algorithms, minPoints, 

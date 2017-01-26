@@ -48,12 +48,12 @@ DEFAULT_GRID_NAME: lmgrid_1d
 DEFAULT_GRID_CELLSIZE: 1
 
 ;; Used when DATASOURCE is GBIF. 
-TAXONOMY_FILENAME: gbif_taxonomy.txt
-OCCURRENCE_FILENAME: gbif_subset.txt
-PROVIDER_FILENAME: gbif_orgs.txt
+GBIF_TAXONOMY_FILENAME: gbif_taxonomy.txt
+GBIF_OCCURRENCE_FILENAME: gbif_subset.txt
+GBIF_PROVIDER_FILENAME: gbif_orgs.txt
 
 ;; Used when DATASOURCE is BISON. 
-TSN_FILENAME: bison_species_tsns.txt
+BISON_TSN_FILENAME: bison_species_tsns.txt
 
 ;; Used when DATASOURCE is IDIGBIO 
 IDIG_FILENAME: idig_gbifids.txt
