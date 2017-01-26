@@ -420,7 +420,7 @@ def _importClimatePackageMetadata(envPackageName):
 
 # ...............................................
 def _writeConfigFile(archiveName, envPackageName, userid, userEmail, 
-                     speciesSource, speciesfile, 
+                     speciesSource, speciesData, 
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, 
                      mdlScen=None, prjScens=None):
@@ -486,7 +486,7 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail,
       varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
       if speciesData is None:
          speciesData = USER_OCCURRENCE_DATA
-   f.write('{}: {}\n\n'.format(varname, speciesfile))
+   f.write('{}: {}\n\n'.format(varname, speciesData))
       
    # Input environmental data, pulled from environmental metadata  
    f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))

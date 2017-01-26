@@ -139,6 +139,14 @@ class Matrix(ServiceObject, ProcessObject):
       return url
 
 # ...............................................
+   def getGridset(self):
+      return self._gridset
+
+# ...............................................
+   def getShapegrid(self):
+      return self._gridset.getShapegrid()
+
+# ...............................................
    def dumpMtxMetadata(self):
       return super(Matrix, self)._dumpMetadata(self.mtxMetadata)
  

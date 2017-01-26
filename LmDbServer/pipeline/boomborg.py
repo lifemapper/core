@@ -129,12 +129,12 @@ class _LMBoomer(LMObject):
          
          self.modelMask = self._scribe.getLayer(mdlMaskId)
          self.projMask = self._scribe.getLayer(prjMaskId)
-         shpgrid = self._scribe.getShapeGrid(userId=self.userid, 
+         self.intersectGrid = self._scribe.getShapeGrid(userId=self.userid, 
                                              lyrName=intersectGridName,
                                              epsg=self.epsg)
          # Get gridset for Archive "Global PAM"
-         gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=self.epsg, 
-                        pam=None, userId=self.userid)
+         gset = Gridset(name=archiveName, shapeGrid=self.intersectGrid, 
+                        epsgcode=self.epsg, pam=None, userId=self.userid)
          mtx = Matrix(None, matrixType=MatrixType.PAM, userId=self.userid,
                        gridset=gset)
          self.globalPAM = self._scribe.getMatrix(mtx)
@@ -1231,6 +1231,7 @@ from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.mtxcolumn import MatrixRaster
 from LmServer.db.borgscribe import BorgScribe
 
+archiveName = 
 (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
  gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
  gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
@@ -1242,6 +1243,8 @@ try:
    taxname = TAXONOMIC_SOURCE[datasource]['name']
 except:
    taxname = None
+   
+   
 log = ScriptLogger('testboomborg')
 scribe = BorgScribe(log)
 scribe.openConnections()
@@ -1295,21 +1298,6 @@ mtxrst = MatrixRaster(-1, -1, prj.getUserId(), prj.name, prj.epsgcode,
 
 mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset, currtime)
 
-
-select * from lm_v3.lm_findOrInsertMatrixColumn(180,-1,-1,
-'63f32eb4e5661011d45300add7d7095059c7b142f0bcb3c0ed98735eee1ff92e',
-NULL,NULL,NULL,NULL,0,57773.8372662,180,
-'kubi',NULL,
-'prj_180',
-'/share/lm/data/archive/kubi/4326/Layers/prj_180.tif',
-'http://badenov-vc1.nhm.ku.edu/services/lm/projections/180',
-'{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "bioclimatic variables", "future", "Hexarthra mira (Hudson, 1871)", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Hexarthra mira (Hudson, 1871) projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers", "title": "Taxa Hexarthra mira (Hudson, 1871) modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min"}',
-'GTiff',
-NULL,NULL,NULL,NULL,NULL,NULL,4326,
-'dd',0.16667,
-'-180.00,-60.00,180.00,90.00',
-'POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))',
-57770.9289461);
 
 
 jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
