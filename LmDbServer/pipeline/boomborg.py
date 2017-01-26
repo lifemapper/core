@@ -1231,7 +1231,6 @@ from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.mtxcolumn import MatrixRaster
 from LmServer.db.borgscribe import BorgScribe
 
-archiveName = 
 (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
  gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
  gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
@@ -1252,7 +1251,7 @@ shpgrid = scribe.getShapeGrid(userId=user, lyrName=gridname, epsg=epsg)
 gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=epsg, 
                pam=None, userId=user)
 mtx = Matrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
-globalPAM = scribe.getMatrix(mtx)
+gpam = scribe.getMatrix(mtx)
 
 # ...............................................
 boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,
@@ -1284,7 +1283,7 @@ prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario,
 prj = prjs[0]
 gridset = boomer.intersectGrid
 modtime = currtime
-mtxrst = MatrixRaster(-1, -1, prj.getUserId(), prj.name, prj.epsgcode,  
+mtxrst = MatrixRaster(-1, gpam.getId(), prj.getUserId(), prj.name, prj.epsgcode,  
                      lyrId=prj.getId(), squid=prj.squid, verify=prj.verify, 
                      dlocation=prj.getDLocation(), lyrMetadata=prj.lyrMetadata, 
                      dataFormat=prj.dataFormat, gdalType=prj.gdalType, 
@@ -1296,7 +1295,7 @@ mtxrst = MatrixRaster(-1, -1, prj.getUserId(), prj.name, prj.epsgcode,
                      mtxcolMetadata={}, intersectParams={}, 
                      status=JobStatus.GENERAL, statusModTime=modtime)
 
-mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset, currtime)
+mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gpam, currtime)
 
 
 

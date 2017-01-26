@@ -31,9 +31,10 @@ from LmCommon.common.lmconstants import (JobStatus, ProcessType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
-from LmServer.common.lmconstants import  DbUser, DEFAULT_PROJECTION_FORMAT
+from LmServer.common.lmconstants import (DbUser, DEFAULT_PROJECTION_FORMAT, 
+                                         GDALFormatCodes, OGRFormatCodes)
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
-from LmServer.legion.mtxcolumn import MatrixRaster, MatrixColumn
+from LmServer.legion.mtxcolumn import MatrixRaster, MatrixVector, MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName
@@ -316,24 +317,43 @@ class BorgScribe(LMObject):
       return success   
    
 # ...............................................
-   def initOrRollbackIntersect(self, prj, gridset, modtime):
+   def initOrRollbackIntersect(self, lyr, mtx, modtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
       newOrExistingMtxcol = None
-      if gridset is not None:
-         mtxrst = MatrixRaster(-1, -1, prj.getUserId(), prj.name, prj.epsgcode,  
-                     lyrId=prj.getId(), squid=prj.squid, verify=prj.verify, 
-                     dlocation=prj.getDLocation(), lyrMetadata=prj.lyrMetadata, 
-                     dataFormat=prj.dataFormat, gdalType=prj.gdalType, 
-                     valUnits=prj.valUnits, nodataVal=prj.nodataVal, 
-                     minVal=prj.minVal, maxVal=prj.maxVal, mapunits=prj.mapUnits, 
-                     resolution=prj.resolution, bbox=prj.bbox, 
-                     metadataUrl=prj.metadataUrl, modTime=prj.statusModTime,
-                     processType=ProcessType.RAD_INTERSECT, 
-                     mtxcolMetadata={}, intersectParams={}, 
-                     status=JobStatus.GENERAL, statusModTime=modtime)
-         newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxrst)
+      if mtx is not None and mtx.getId() is not None:
+         if lyr.dataFormat in OGRFormatCodes.keys():
+            mtxcol = MatrixRaster(-1, mtx.getId(), lyr.getUserId(), lyr.name, lyr.epsgcode,  
+                        lyrId=lyr.getId(), squid=lyr.squid, verify=lyr.verify, 
+                        dlocation=lyr.getDLocation(), lyrMetadata=lyr.lyrMetadata, 
+                        dataFormat=lyr.dataFormat, gdalType=lyr.gdalType, 
+                        valUnits=lyr.valUnits, nodataVal=lyr.nodataVal, 
+                        minVal=lyr.minVal, maxVal=lyr.maxVal, mapunits=lyr.mapUnits, 
+                        resolution=lyr.resolution, bbox=lyr.bbox, 
+                        metadataUrl=lyr.metadataUrl, 
+                        parentMetadataUrl=mtx.metadataUrl, 
+                        modTime=lyr.statusModTime,
+                        processType=ProcessType.RAD_INTERSECT, 
+                        mtxcolMetadata={}, intersectParams={}, 
+                        status=JobStatus.GENERAL, statusModTime=modtime)
+         elif lyr.dataFormat in OGRFormatCodes.keys(): 
+            mtxcol = MatrixVector(-1, mtx.getId(), lyr.getUserId(), lyr.name, lyr.epsgcode,  
+                        lyrId=lyr.getId(), squid=lyr.squid, verify=lyr.verify, 
+                        dlocation=lyr.getDLocation(), lyrMetadata=lyr.lyrMetadata, 
+                        dataFormat=lyr.dataFormat, ogrType=lyr.ogrType, 
+                        valUnits=lyr.valUnits, valAttribute=lyr.valAttribute, 
+                        nodataVal=lyr.nodataVal, minVal=lyr.minVal, 
+                        maxVal=lyr.maxVal, mapunits=lyr.mapUnits, 
+                        resolution=lyr.resolution, bbox=lyr.bbox, 
+                        metadataUrl=lyr.metadataUrl, 
+                        parentMetadataUrl=mtx.metadataUrl, 
+                        modTime=lyr.statusModTime,
+                        processType=ProcessType.RAD_INTERSECT, 
+                        mtxcolMetadata={}, intersectParams={}, 
+                        status=JobStatus.GENERAL, statusModTime=modtime)
+            
+         newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxcol)
          if JobStatus.finished(newOrExistingMtxcol.status):
             newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, stattime=modtime)
             newOrExistingMtxcol = self.updateMtxcol(newOrExistingMtxcol)
