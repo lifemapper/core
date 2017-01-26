@@ -35,6 +35,9 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat,
                                          JobStatus, MatrixType)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE, 
                                            BISON_DATASOURCE, IDIGBIO_DATASOURCE)
+from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
+                                              BISON_TSN_FILENAME, IDIG_FILENAME, 
+                                              USER_OCCURRENCE_DATA)
 
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
@@ -417,7 +420,7 @@ def _importClimatePackageMetadata(envPackageName):
 
 # ...............................................
 def _writeConfigFile(archiveName, envPackageName, userid, userEmail, 
-                     speciessource, speciesfile, 
+                     speciesSource, speciesfile, 
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, 
                      mdlScen=None, prjScens=None):
@@ -426,7 +429,7 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail,
    usr = args.user
    usrEmail = args.email
    envPackageName = args.environmental_metadata
-   speciessource = args.species_source.upper()
+   speciesSource = args.species_source.upper()
    minpoints = args.min_points
    cellsize = args.grid_cellsize
    if args.grid_shape == 'hexagon':
@@ -443,15 +446,17 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('ARCHIVE_USER: {}\n'.format(userid))
 
    f.write('[LmServer - pipeline]\n')
-   f.write('ARCHIVE_DATASOURCE: {}\n\n'.format(speciessource))
+   f.write('ARCHIVE_DATASOURCE: {}\n\n'.format(speciesSource))
    f.write('ARCHIVE_NAME: {}\n\n'.format(archiveName))
    if userEmail is not None:
       f.write('ARCHIVE_TROUBLESHOOTERS: {}\n\n'.format(userEmail))
    
+   # Expiration date triggering re-query and computation
    f.write('ARCHIVE_SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
    f.write('ARCHIVE_SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
    f.write('ARCHIVE_SPECIES_EXP_DAY: {}\n\n'.format(CURRDATE[2]))
    
+   # SDM Algorithm and minimun number of required species points   
    f.write('ARCHIVE_POINT_COUNT_MIN: {}\n\n'.format(minpoints))
    if len(algorithms) > 0:
       algs = ','.join(algorithms)
@@ -459,24 +464,36 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail,
       algs = DEFAULT_ALGORITHMS
    f.write('ARCHIVE_ALGORITHMS: {}\n\n'.format(algs))
 
+   # Intersection grid
    f.write('ARCHIVE_GRID_NAME: {}\n'.format(gridname))
    f.write('ARCHIVE_GRID_CELLSIZE: {}\n\n'.format(grid_cellsize))
    f.write('ARCHIVE_GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
-   
-   if speciessource == GBIF_DATASOURCE:
+
+   # Species source type (for processing) and file
+   if speciesSource == GBIF_DATASOURCE:
       varname = 'GBIF_OCCURRENCE_FILENAME'
-   elif speciessource == BISON_DATASOURCE:
+      if speciesData is None:
+         speciesData = GBIF_OCCURRENCE_FILENAME
+   elif speciesSource == BISON_DATASOURCE:
       varname = 'BISON_TSN_FILENAME'
-   elif speciessource == IDIGBIO_DATASOURCE:
+      if speciesData is None:
+         speciesData = BISON_TSN_FILENAME
+   elif speciesSource == IDIGBIO_DATASOURCE:
       varname = 'IDIG_FILENAME'
+      if speciesData is None:
+         speciesData = IDIG_FILENAME
    else:
       varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
-   f.write('{}: {}\n\n'.format(varname, configMeta['speciesdata']))
+      if speciesData is None:
+         speciesData = USER_OCCURRENCE_DATA
+   f.write('{}: {}\n\n'.format(varname, speciesfile))
       
+   # Input environmental data, pulled from environmental metadata  
    f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))
    f.write('ARCHIVE_EPSG: {}\n\n'.format(configMeta['epsg']))
    f.write('ARCHIVE_MAPUNITS: {}\n\n'.format(configMeta['mapunits']))
    
+   # Scenario codes, created from environmental metadata  
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO
    f.write('ARCHIVE_MODEL_SCENARIO: {}\n'.format(mdlScen))
@@ -553,10 +570,16 @@ if __name__ == '__main__':
                                         -m zzeppozz@gmail.com \
                                         -e 10min-past-present-future \
                                         -s gbif \
+                                        -f 
                                         -p 25 \
                                         -a bioclim \
                                         -c 1 \
                                         -q square
+GBIF_OCCURRENCE_FILENAME: gbif_subset.txt
+BISON_TSN_FILENAME: bison_species_tsns.txt
+IDIG_FILENAME: idig_gbifids.txt
+USER_OCCURRENCE_DATA: @SPECIES_DATA@
+
    """
 
    args = parser.parse_args()
@@ -564,7 +587,7 @@ if __name__ == '__main__':
    usr = args.user
    usrEmail = args.email
    envPackageName = args.environmental_metadata
-   speciessource = args.species_source.upper()
+   speciesSource = args.species_source.upper()
    speciesData = args.species_file
    minpoints = args.min_points
    algstring = args.algorithms.upper()
@@ -639,8 +662,8 @@ if __name__ == '__main__':
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
       newConfigFilename = _writeConfigFile(archiveName, envPackageName, usr, 
-                           usrEmail, speciessource, configMeta, minpoints, 
-                           algorithms, gridname, cellsize, cellsides, 
+                           usrEmail, speciesSource, speciesData, configMeta, 
+                           minpoints, algorithms, gridname, cellsize, cellsides, 
                            mdlScen=mdlScencode, prjScens=prjScencodes)
    except Exception, e:
       logger.error(str(e))
@@ -688,7 +711,7 @@ archiveName = args.archive_name.replace(' ', '_')
 usr = args.user
 usrEmail = args.email
 envPackageName = '10min-past-present-future'
-speciessource = GBIF_DATASOURCE
+speciesSource = GBIF_DATASOURCE
 minpoints = 25
 algstring = bioclim
 algorithms = [alg.strip().upper() for alg in algstring.split(',')]
