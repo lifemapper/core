@@ -36,7 +36,7 @@
 import argparse
 import numpy as np
 
-from LmCommon.encoding.contrasts import BioGeoEncoding
+from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
 
 # .............................................................................
 if __name__ == "__main__":
