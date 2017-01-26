@@ -28,7 +28,7 @@ import os
 # # TODO: These should be included in the package of data
 # import LmDbServer.tools.charlieMetaExp3 as META
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         DEFAULT_GRID_NAME, DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, 
+         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, 
          USER_OCCURRENCE_DATA, DEFAULT_MODEL_SCENARIO, 
          DEFAULT_PROJECTION_SCENARIOS)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
@@ -51,12 +51,11 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.matrix import Matrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
-from test.test_tarfile import tmpname
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 # ...............................................
-def addUsers(scribe, configMeta):
+def addUsers(scribe, userId, userEmail):
    """
    @summary Adds ARCHIVE_USER, anon user and USER from metadata to the database
    """
@@ -64,8 +63,8 @@ def addUsers(scribe, configMeta):
                 'email': '{}@nowhere.org'.format(ARCHIVE_USER)},
                {'id': DEFAULT_POST_USER,
                 'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}]
-   if configMeta['userid'] != ARCHIVE_USER:
-      userList.append({'id': configMeta['userid'],'email': configMeta['email']})
+   if userId != ARCHIVE_USER:
+      userList.append({'id': userId,'email': userEmail})
 
    for usrmeta in userList:
       try:
@@ -390,19 +389,13 @@ def _getConfiguredMetadata(META, pkgMeta):
    expYear = CURRDATE[0]
    expMonth = CURRDATE[1]
    expDay = CURRDATE[2]
-#    try:
-#       speciesDataName = META.SPECIES_DATA
-#    except:
-#       speciesDataName = USER_OCCURRENCE_DATA
 
    configMeta = {'epsg': epsg, 
                  'mapunits': mapunits, 
                  'resolution': res, 
                  'gdaltype': gdaltype, 
                  'gdalformat': gdalformat,
-                 'expdate': (expYear, expMonth, expDay),
-#                  'speciesdata': speciesDataName
-                 }
+                 'expdate': (expYear, expMonth, expDay)}
    return configMeta
 
 # ...............................................
@@ -423,7 +416,8 @@ def _importClimatePackageMetadata(envPackageName):
    return META, metafname
 
 # ...............................................
-def _writeConfigFile(archiveName, envPackageName, userid, userEmail, datasource, 
+def _writeConfigFile(archiveName, envPackageName, userid, userEmail, 
+                     speciessource, speciesfile, 
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, 
                      mdlScen=None, prjScens=None):
@@ -432,7 +426,7 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail, datasource,
    usr = args.user
    usrEmail = args.email
    envPackageName = args.environmental_metadata
-   datasource = args.species_source.upper()
+   speciessource = args.species_source.upper()
    minpoints = args.min_points
    cellsize = args.grid_cellsize
    if args.grid_shape == 'hexagon':
@@ -449,7 +443,7 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail, datasource,
    f.write('ARCHIVE_USER: {}\n'.format(userid))
 
    f.write('[LmServer - pipeline]\n')
-   f.write('ARCHIVE_DATASOURCE: {}\n\n'.format(datasource))
+   f.write('ARCHIVE_DATASOURCE: {}\n\n'.format(speciessource))
    f.write('ARCHIVE_NAME: {}\n\n'.format(archiveName))
    if userEmail is not None:
       f.write('ARCHIVE_TROUBLESHOOTERS: {}\n\n'.format(userEmail))
@@ -469,11 +463,11 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail, datasource,
    f.write('ARCHIVE_GRID_CELLSIZE: {}\n\n'.format(grid_cellsize))
    f.write('ARCHIVE_GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
    
-   if datasource == GBIF_DATASOURCE:
+   if speciessource == GBIF_DATASOURCE:
       varname = 'GBIF_OCCURRENCE_FILENAME'
-   elif datasource == BISON_DATASOURCE:
+   elif speciessource == BISON_DATASOURCE:
       varname = 'BISON_TSN_FILENAME'
-   elif datasource == IDIGBIO_DATASOURCE:
+   elif speciessource == IDIGBIO_DATASOURCE:
       varname = 'IDIG_FILENAME'
    else:
       varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
@@ -506,7 +500,8 @@ if __name__ == '__main__':
                          'command line arguments, including values in the ' +
                          'specified environmental data package.'))
    parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
-            help=('Name for the archive and gridset created from these data'))
+            help=('Name for the archive, gridset, and grid created from ' +
+                  'these data.  Do not use special characters in this name.'))
    parser.add_argument('-u', '--user', default=ARCHIVE_USER,
             help=('Owner of this archive this archive. The default is '
                   'ARCHIVE_USER ({}), an existing user '.format(ARCHIVE_USER) +
@@ -518,13 +513,25 @@ if __name__ == '__main__':
                   'directory and be named with the arg value and .py extension'))
    parser.add_argument('-s', '--species_source', default='GBIF',
             help=('Species source will be: ' + 
-                  '\'GBIF\' for GBIF-provided CSV data sorted by taxon id, ' +
-                  '\'IDIGBIO\' for a list of GBIF accepted taxon ids suitable ' +
-                  'for querying the iDigBio API, and ' +
+                  '\'GBIF\' for GBIF-provided CSV data; ' +
+                  '\'IDIGBIO\' iDigBio queries ' +
                   '\'BISON\' for a list of ITIS TSNs for querying the BISON API. ' +
                   'Any other value will indicate that user-supplied CSV ' +
                   'data, documented with metadata describing the fields, is ' +
                   'to be used for the archive'))
+   parser.add_argument('-f', '--species_file', default=None,
+            help=('Species file (without full path) will be: ' + 
+                  '1) CSV data sorted by taxon id for \'GBIF\' species source ' +
+                  '(include extension); ' +
+                  '2) Text filename containing a list of GBIF accepted taxon ids ' +
+                  'for \'IDIGBIO\' species source (include extension); ' +
+                  '3) Text filename containing a  list of ITIS TSNs for \'BISON\' ' +
+                  'species source (include extension); '
+                  '4) Basename of the data and metadata files for ' + 
+                  'user-provided data.  They must have ' +
+                  'the same basename.  The data file must have \'.csv\' ' +
+                  'extension, metadata file must have \'.meta\' extension. ' +
+                  'Metadata describes the data fields. ' ))
    parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
             help=('Minimum number of points required for SDM computation ' +
                   'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
@@ -533,20 +540,34 @@ if __name__ == '__main__':
             help=('Comma-separated list of algorithm codes for computing  ' +
                   'SDM experiments in this archive.  Options are described at ' +
                   '{} and include the codes: {} '.format(apiUrl, allAlgs)))
-   parser.add_argument('-s', '--grid_cellsize', default=1,
+   parser.add_argument('-c', '--grid_cellsize', default=1,
             help=('Size of cells in the grid used for Global PAM. ' +
                   'Units are mapunits'))
-   parser.add_argument('-h', '--grid_shape', choices=('square', 'hexagon'),
+   parser.add_argument('-q', '--grid_shape', choices=('square', 'hexagon'),
             default='square', help=('Shape of cells in the grid used for Global PAM.'))
+   """
+   $PYTHON LmDbServer/tools/initBoom.py --help
+   
+   $PYTHON LmDbServer/tools/initBoom.py -n "Aimee test archive" \
+                                        -u aimee \
+                                        -m zzeppozz@gmail.com \
+                                        -e 10min-past-present-future \
+                                        -s gbif \
+                                        -p 25 \
+                                        -a bioclim \
+                                        -c 1 \
+                                        -q square
+   """
 
    args = parser.parse_args()
-   archiveName = args.archive_name
+   archiveName = args.archive_name.replace(' ', '_')
    usr = args.user
    usrEmail = args.email
    envPackageName = args.environmental_metadata
-   datasource = args.species_source.upper()
+   speciessource = args.species_source.upper()
+   speciesData = args.species_file
    minpoints = args.min_points
-   algstring = args.algorithms
+   algstring = args.algorithms.upper()
    algorithms = [alg.strip() for alg in algstring.split(',')]
    cellsize = args.grid_cellsize
    gridname = '{}-Grid'.format(archiveName)
@@ -579,7 +600,7 @@ if __name__ == '__main__':
       
 # .............................
       logger.info('  Insert user metadata ...')
-      addUsers(scribeWithBorg, configMeta)
+      addUsers(scribeWithBorg, usr, usrEmail)
 # .............................
       logger.info('  Insert algorithm metadata ...')
       aIds = addAlgorithms(scribeWithBorg)
@@ -618,7 +639,7 @@ if __name__ == '__main__':
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
       newConfigFilename = _writeConfigFile(archiveName, envPackageName, usr, 
-                           usrEmail, datasource, configMeta, minpoints, 
+                           usrEmail, speciessource, configMeta, minpoints, 
                            algorithms, gridname, cellsize, cellsides, 
                            mdlScen=mdlScencode, prjScens=prjScencodes)
    except Exception, e:
@@ -628,7 +649,8 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-# $PYTHON LmDbServer/tools/initBoom.py -e 10min-past-present-future -s GBIF
+$PYTHON LmDbServer/tools/initBoom.py -e 10min-past-present-future \
+        -s gbif -n 'Testing archive' -p 25
 
 import mx.DateTime
 import os
@@ -662,16 +684,26 @@ from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
           _getConfiguredMetadata, _getbioName, _getBaselineLayers, _findFileFor,
           _addIntersectGrid)
           
+archiveName = args.archive_name.replace(' ', '_')
+usr = args.user
+usrEmail = args.email
 envPackageName = '10min-past-present-future'
-datasource = GBIF_DATASOURCE
-archiveName = ARCHIVE_NAME
-minpoints = 20
+speciessource = GBIF_DATASOURCE
+minpoints = 25
+algstring = bioclim
+algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+cellsize = args.grid_cellsize
+gridname = '{}-Grid'.format(archiveName)
+if args.grid_shape == 'hexagon':
+   cellsides = 6
+else:
+   cellsides = 4
 
 META, metafname = _importClimatePackageMetadata(envPackageName)
 pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
 configMeta = _getConfiguredMetadata(META, pkgMeta)
 lyrtypeMeta = META.LAYERTYPE_META
-usr = configMeta['userid']
+usr = email
 
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
@@ -679,7 +711,7 @@ success = scribe.openConnections()
 
 # ...................................................
 # User testing
-addUsers(scribe, configMeta)
+addUsers(scribe, usr, usrEmail)
 
 # ...................................................
 # Scenario testing
