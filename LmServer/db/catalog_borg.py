@@ -986,45 +986,45 @@ class Borg(DbPostgresql):
          raise e
       return success
 
-# .............................................................................
-   def insertMatrixColumn(self, palyr, bktid):
-      """
-      @summary: Insert a MatrixColumn with optional intersect params and Layer.
-                Return the updated (or found) record.
-      @return: Method returns a new, updated object.
-      """
-      updatedlyr = None
-      currtime=mx.DateTime.gmt().mjd
-      palyr.createTime = currtime
-      palyr.modTime = currtime
-      rtype, vtype = self._getSpatialLayerType(palyr)
-      if rtype is None:
-         if vtype is not None:
-            try:
-               prsOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
-                                          palyr.attrPresence)
-            except LMError:
-               raise 
-            except Exception, e:
-               raise LMError(currargs=e.args)
-            
-            if not prsOk:
-               raise LMError('Field %s of Layer %s is not present or the wrong type' 
-                             % (palyr.attrPresence, palyr.name))
-            if palyr.attrAbsence is not None:
-               try:
-                  absOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
-                                  palyr.attrAbsence)
-               except LMError:
-                  raise 
-               except Exception, e:
-                  raise LMError(currargs=e.args)
-
-               if not absOk:
-                  raise LMError('Field %s of Layer %s is not present or the wrong type' 
-                             % (palyr.attrAbsence, palyr.name))
-         else:
-            raise LMError('GDAL or OGR data type must be provided')
+# # .............................................................................
+#    def insertMatrixColumn(self, palyr, bktid):
+#       """
+#       @summary: Insert a MatrixColumn with optional intersect params and Layer.
+#                 Return the updated (or found) record.
+#       @return: Method returns a new, updated object.
+#       """
+#       updatedlyr = None
+#       currtime=mx.DateTime.gmt().mjd
+#       palyr.createTime = currtime
+#       palyr.modTime = currtime
+#       rtype, vtype = self._getSpatialLayerType(palyr)
+#       if rtype is None:
+#          if vtype is not None:
+#             try:
+#                prsOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
+#                                           palyr.attrPresence)
+#             except LMError:
+#                raise 
+#             except Exception, e:
+#                raise LMError(currargs=e.args)
+#             
+#             if not prsOk:
+#                raise LMError('Field %s of Layer %s is not present or the wrong type' 
+#                              % (palyr.attrPresence, palyr.name))
+#             if palyr.attrAbsence is not None:
+#                try:
+#                   absOk = palyr.verifyField(palyr.getDLocation(), palyr.dataFormat, 
+#                                   palyr.attrAbsence)
+#                except LMError:
+#                   raise 
+#                except Exception, e:
+#                   raise LMError(currargs=e.args)
+# 
+#                if not absOk:
+#                   raise LMError('Field %s of Layer %s is not present or the wrong type' 
+#                              % (palyr.attrAbsence, palyr.name))
+#          else:
+#             raise LMError('GDAL or OGR data type must be provided')
 
 # ...............................................
    def findOrInsertOccurrenceSet(self, occ):
@@ -1078,7 +1078,7 @@ class Borg(DbPostgresql):
       return newOrExistingProj
 
 # ...............................................
-   def findOrInsertMtxcol(self, mtxobj, layer=None):
+   def findOrInsertMatrixColumn(self, mtxobj, layer=None):
       """
       @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
                 OR save a new SDMProjection
@@ -1125,6 +1125,22 @@ class Borg(DbPostgresql):
                      munits, res, bboxstr, bboxwkt, lyrmtime)
       newOrExistingMtxLyr = self._createMatrixLayer(row, idxs)
       return newOrExistingMtxLyr
+
+# ...............................................
+   def updateMatrixColumn(self, mtxcol):
+      """
+      @param mtxcol: the Matrix* object (MatrixColumn, MatrixRaster, MatrixVector) 
+             to update
+      """
+      meta = mtxcol.dumpParamMetadata()
+      intparams = mtxcol.dumpIntersectParams()
+      success = self.executeModifyFunction('lm_updateMatrixColumn', 
+                                           mtxcol.getId(), 
+                                           mtxcol.getMatrixIndex(),
+                                           mtxcol.getDLocation(),
+                                           meta, intparams,
+                                           mtxcol.status, mtxcol.statusModTime)
+      return success
 
 # ...............................................
    def findOrInsertMatrix(self, mtx):

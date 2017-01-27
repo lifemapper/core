@@ -524,6 +524,48 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+-- status, matrixIndex=None, metadata=None, modTime
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateMatrixColumn(mtxcolid int,
+                                                       mtxidx int,
+                                                       dloc varchar,
+                                                       mtxcolmeta varchar,
+                                                       intparams text,
+                                                       stat int,
+                                                       stattime double precision)
+RETURNS int AS
+$$
+DECLARE
+   rec lm_v3.lm_matrixcolumn%rowtype;
+   success int = -1;
+BEGIN
+   -- find layer 
+   IF mtxcolid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_matrixcolumn WHERE matrixColumnId = mtxcolid;
+   ELSE
+      RAISE EXCEPTION 'MatrixColumnId required';
+	END IF;
+	
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to find lm_matrixcolumn';      
+   ELSE
+      -- Update MatrixColumn record
+      UPDATE lm_v3.MatrixColumn
+           SET (matrixIndex, dlocation, metadata, intersectParams, 
+                status, statusmodtime) 
+             = (mtxidx, dloc, mtxcolmeta, intparams, stat, stattime) 
+           WHERE matrixColumnId = mtxcolid;
+      IF FOUND THEN 
+         success = 0;
+      ELSE
+         RAISE EXCEPTION 'Unable to update MatrixColumn';
+      END IF;
+   END IF;   
+   
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 -- Note: returns 0 (True) or -1 (False)
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateSDMProjectLayer(prjid int, 
                                           lyrid int,

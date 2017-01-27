@@ -291,8 +291,6 @@ class BorgScribe(LMObject):
       @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
       """
-      # Iff OccurrenceSet is split into Layer and LayerParameter tables, 
-      # modTime and paramModTime will be relevant
       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
       return success
 
@@ -303,7 +301,6 @@ class BorgScribe(LMObject):
                the verify hash, metadata, data extent and values, status/statusmodtime.
       @param proj the SDMProjection object to update
       @return: True/False for successful update.
-      @note: paramModTime is updated with ProcessObject.updateStatus
       """
       success = self._borg.updateSDMProject(proj)
       return success   
@@ -312,11 +309,9 @@ class BorgScribe(LMObject):
    def updateMatrixColumn(self, mtxcol):
       """
       @copydoc LmServer.db.catalog_borg.Borg::updateMatrixColumn()
-      @note: paramModTime is updated with ProcessObject.update
       """
       success = self._borg.updateMatrixColumn(mtxcol)
       return success
-
    
 # ...............................................
    def initOrRollbackIntersect(self, lyr, mtx, modtime):
@@ -355,10 +350,10 @@ class BorgScribe(LMObject):
                         mtxcolMetadata={}, intersectParams={}, 
                         status=JobStatus.GENERAL, statusModTime=modtime)
             
-         newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxcol)
+         newOrExistingMtxcol = self._borg.findOrInsertMatrixColumn(mtxcol)
          if JobStatus.finished(newOrExistingMtxcol.status):
             newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, modTime=modtime)
-            newOrExistingMtxcol = self.updateMatrixColumn(newOrExistingMtxcol)
+            success = self.updateMatrixColumn(newOrExistingMtxcol)
       return newOrExistingMtxcol
 
 # ...............................................

@@ -175,18 +175,6 @@ class MatrixVector(MatrixColumn, Vector):
                   status=mtxColumn.status, statusModTime=mtxColumn.statusModTime)
       return mtxVct
 
-   # ...............................................
-   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
-      """
-      @summary Update status, matrixIndex, metadata, modTime attributes on the 
-               Matrix layer. 
-      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
-      @copydoc LmServer.legion.mtxcolumn.MatrixColumn::updateStatus()
-      """
-      MatrixColumn.updateStatus(self, status, matrixIndex=matrixIndex, 
-                                metadata=metadata, modTime=modTime)
-      ServiceObject.updateModtime(self, modTime=modTime)
-
 # .............................................................................
 class MatrixRaster(MatrixColumn, Raster):
 # .............................................................................
@@ -246,15 +234,3 @@ class MatrixRaster(MatrixColumn, Raster):
                   status=mtxColumn.status, statusModTime=mtxColumn.statusModTime)
       return mtxRst
    
-   # ...............................................
-   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
-      """
-      @summary Update status, matrixIndex, metadata, modTime attributes on the 
-               Matrix layer. 
-      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
-      @copydoc LmServer.legion.mtxcolumn.MatrixColumn::updateStatus()
-      """
-      MatrixColumn.updateStatus(self, status, matrixIndex=matrixIndex, 
-                                metadata=metadata, modTime=modTime)
-      ServiceObject.updateModtime(self, modTime=modTime)
-
