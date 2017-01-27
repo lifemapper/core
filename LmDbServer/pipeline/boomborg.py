@@ -46,7 +46,7 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.matrix import Matrix
+from LmServer.legion.lmmatrix import Matrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
@@ -1249,6 +1249,19 @@ gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=epsg,
                pam=None, userId=user)
 mtx = Matrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
 gpam = scribe.getMatrix(mtx)
+
+lyrid = scribe._borg._getColumnValue(row,idxs,['layerid'])
+mtxIdx = scribe._borg._getColumnValue(row,idxs,['layerid']) 
+mtxId = scribe._borg._getColumnValue(row,idxs,['layerid']) 
+usr = scribe._borg._getColumnValue(row,idxs,['layerid']) 
+coldloc = scribe._borg._getColumnValue(row,idxs,['layerid'])
+meta = scribe._borg._getColumnValue(row,idxs,['layerid']) 
+intparams = scribe._borg._getColumnValue(row,idxs,['layerid'])
+squid = scribe._borg._getColumnValue(row,idxs,['layerid']) 
+ident = scribe._borg._getColumnValue(row,idxs,['layerid'])
+mtxcolid = scribe._borg._getColumnValue(row,idxs,['layerid']) 
+stat = scribe._borg._getColumnValue(row,idxs,['layerid']) 
+stattime = scribe._borg._getColumnValue(row,idxs,['layerid'])
 
 # ...............................................
 boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,

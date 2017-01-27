@@ -51,7 +51,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.matrix import Matrix            
+from LmServer.legion.lmmatrix import Matrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 
@@ -696,7 +696,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.matrix import Matrix            
+from LmServer.legion.lmmatrix import Matrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 

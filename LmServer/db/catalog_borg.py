@@ -41,7 +41,7 @@ from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.matrix import Matrix
+from LmServer.legion.lmmatrix import Matrix
 from LmServer.legion.mtxcolumn import MatrixColumn, MatrixRaster, MatrixVector
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.envlayer import EnvType, EnvLayer
@@ -258,10 +258,10 @@ class Borg(DbPostgresql):
          dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
          lyridxs = self._getColumnValue(row, idxs, 
                                         ['mtxlayerindices', 'layerindices'])
-         murl = self._getColumnValue(row, idxs, ['metadataurl'])
-         meta = self._getColumnValue(row, idxs, ['metadata'])
-         stat = self._getColumnValue(row, idxs, ['status'])
-         stattime = self._getColumnValue(row, idxs, ['statusmodtime'])
+         murl = self._getColumnValue(row, idxs, ['mtxmetadataurl', 'metadataurl'])
+         meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
+         stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
+         stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 'statusmodtime'])
          mtx = Matrix(None, matrixType=mtype, processType=None, 
                       metadata=meta, dlocation=dloc, 
                       layerIndicesFilename=lyridxs, metadataUrl=murl,
@@ -269,6 +269,36 @@ class Borg(DbPostgresql):
                       status=stat, statusModTime=stattime)
       return mtx
    
+   # ...............................................
+   def _createMatrixColumn(self, row, idxs):
+      """
+      Create an MatrixColumn, MatrixRaster or MatrixVector from a lm_envlayer or lm_scenlayer record in the Borg
+      """
+         mtxtype = self._getColumnValue(row,idxs,['matrixtype']) 
+         gridsetid = self._getColumnValue(row,idxs,['gridsetid']) 
+         mtxdloc = self._getColumnValue(row,idxs,['matrixdlocation']) 
+         layeridxs = self._getColumnValue(row,idxs,['layerindices']) 
+         mtxmetaurl = self._getColumnValue(row,idxs,['mtxmetadataurl']) 
+         mtxmeta = self._getColumnValue(row,idxs,['mtxmetadata']) 
+         mtxstat = self._getColumnValue(row,idxs,['mtxstatus']) 
+         mtxstattime = self._getColumnValue(row,idxs,['mtxstatusmodtime']) 
+
+         usr = self._getColumnValue(row,idxs,['userid']) 
+         mtxcol = MatrixColumn(mtxIdx, mtxId, usr, layerId=None,
+                processType=ProcessType.RAD_INTERSECT, colDLocation=mtxcoldloc,
+                metadata=mtxcolmeta, intersectParams=intparams, squid=squid, 
+                ident=ident, matrixColumnId=mtxcolid, 
+                status=mtxcolstat, statusModTime=mtxcolstattime)
+         lyr = self._createLayer(row, idxs)
+         if lyr is None:
+            mtxobj = mtxcol
+         else:
+            if lyr.dataFormat in OGRFormatCodes.keys():
+               mtxobj = MatrixVector.initFromParts(mtxcol, lyr)
+            elif lyr.dataFormat in GDALFormatCodes.keys():
+               mtxobj = MatrixRaster.initFromParts(mtxcol, lyr)
+      return mtxobj
+
 # ...............................................
    def _getLayerInputs(self, row, idxs):
       """
@@ -366,40 +396,6 @@ class Borg(DbPostgresql):
             envRst = EnvLayer.initFromParts(rst, etype, envLayerId=envLayerId, 
                                             scencode=scencode)
       return envRst
-
-# ...............................................
-   def _createMatrixLayer(self, row, idxs):
-      """
-      Create an EnvLayer from a lm_envlayer or lm_scenlayer record in the Borg
-      """
-      mtxobj = None
-      if row is not None:
-         lyrid = self._getColumnValue(row,idxs,['layerid'])
-         mtxIdx = self._getColumnValue(row,idxs,['layerid']) 
-         mtxId = self._getColumnValue(row,idxs,['layerid']) 
-         usr = self._getColumnValue(row,idxs,['layerid']) 
-         coldloc = self._getColumnValue(row,idxs,['layerid'])
-         meta = self._getColumnValue(row,idxs,['layerid']) 
-         intparams = self._getColumnValue(row,idxs,['layerid'])
-         squid = self._getColumnValue(row,idxs,['layerid']) 
-         ident = self._getColumnValue(row,idxs,['layerid'])
-         mtxcolid = self._getColumnValue(row,idxs,['layerid']) 
-         stat = self._getColumnValue(row,idxs,['layerid']) 
-         stattime = self._getColumnValue(row,idxs,['layerid'])
-         mtxcol = MatrixColumn(mtxIdx, mtxId, usr, layerId=lyrid,
-                               colDLocation=coldloc, metadata=meta, 
-                               intersectParams=intparams, squid=squid, 
-                               ident=ident, matrixColumnId=mtxcolid, 
-                               status=stat, statusModTime=stattime)
-         lyr = self._createLayer(row, idxs)
-         if lyr is None:
-            mtxobj = mtxcol
-         else:
-            if lyr.dataFormat in OGRFormatCodes.keys():
-               mtxobj = MatrixVector.initFromParts(mtxcol, lyr)
-            elif lyr.dataFormat in GDALFormatCodes.keys():
-               mtxobj = MatrixRaster.initFromParts(mtxcol, lyr)
-      return mtxobj
 
 # ...............................................
    def _createShapeGrid(self, row, idxs):

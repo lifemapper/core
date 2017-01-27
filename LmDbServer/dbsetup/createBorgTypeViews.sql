@@ -328,9 +328,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    LEFT JOIN lm_v3.lm_shapegrid lsg ON g.layerid = lsg.layerid; 
 
 -- ----------------
--- lm_matrix (Matrix + lm_gridset)
-DROP VIEW IF EXISTS lm_v3.lm_matrix CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_matrix (
+-- lm_matrix (Matrix + lm_gridset (Gridset + lm_shapegrid))
+DROP VIEW IF EXISTS lm_v3.lm_fullmatrix CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    -- Matrix
    matrixId,
    matrixType,
@@ -391,6 +391,38 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
           g.minVal, g.maxVal, g.epsgcode, g.mapunits, g.resolution, g.bbox, 
           g.lyrmodtime
    FROM lm_v3.matrix m, lm_v3.lm_gridset g
+   WHERE m.gridsetid = g.gridsetid;
+
+
+-- ----------------
+-- lm_matrix (Matrix + Gridset)
+DROP VIEW IF EXISTS lm_v3.lm_matrix CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_matrix (
+   -- Matrix
+   matrixId,
+   matrixType,
+   gridsetId,
+   matrixDlocation,
+   layerIndices,
+   metadataUrl,
+   metadata,
+   status,
+   statusmodtime, 
+   -- Gridset
+   userId,
+   grdname,
+   grdmetadataUrl,
+   layerId,
+   grdsiteIndices,
+   grddlocation,
+   grdepsgcode,
+   grdmetadata,
+   grdmodTime) AS
+   SELECT m.matrixId, m.matrixType, m.gridsetId, m.matrixDlocation, 
+          m.layerIndices, m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
+          g.userId, g.name, g.metadataUrl, g.layerId, 
+          g.siteIndices, g.dlocation, g.epsgcode, g.metadata, g.modTime
+   FROM lm_v3.matrix m, lm_v3.gridset g
    WHERE m.gridsetid = g.gridsetid;
 
 -- ----------------
