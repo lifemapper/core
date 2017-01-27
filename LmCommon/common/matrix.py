@@ -23,21 +23,18 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import json
 import numpy
-import ogr
 import os
 import pickle
 from types import StringType
 
 from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, 
                                          MatrixType)
-from LmServer.base.lmobj import LMObject, LMError
-from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import LMServiceType,LMServiceModule
 
 
 # .............................................................................
-class Matrix(ServiceObject, ProcessObject):
+class Matrix(object):
    """
    The Matrix class contains a 2-dimensional numeric matrix.
    """
@@ -46,47 +43,28 @@ class Matrix(ServiceObject, ProcessObject):
 # .............................................................................
    def __init__(self, matrix, 
                 matrixType=MatrixType.PAM, 
-                processType=None,
                 metadata={},
                 dlocation=None, 
-                layerIndicesFilename=None,
-                metadataUrl=None,
-                userId=None,
-                gridset=None, 
-                matrixId=None,
-                status=None, statusModTime=None):
+                columnIndices=None,
+                columnIndicesFilename=None,
+                matrixId=None):
       """
-      @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
-      @param gridsetId: parentID for ProcessObject
-      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
-      @param matrixId: dbId  for ServiceObject
       @param matrix: numpy array
       @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
       @param metadata: dictionary of metadata using Keys defined in superclasses
       @param dlocation: file location of the array
-      @param layerIndicesFilename: file location of layer indices
-      @param gridset: parent gridset of this MatrixupdateModtime
+      @param columnIndicesFilename: dictionary of column indices
+      @param columnIndicesFilename: file location of column indices
+      @param matrixId: dbId  for ServiceObject
       """
-      self._gridset = gridset
-      gridsetUrl = gridsetId = None
-      if gridset is not None:
-         gridsetUrl = gridset.metadataUrl
-         gridsetId = gridset.getId()
-      ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
-                             moduleType=LMServiceModule.LM, 
-                             metadataUrl=metadataUrl, 
-                             parentMetadataUrl=gridsetUrl,
-                             modTime=statusModTime)
-      ProcessObject.__init__(self, objId=matrixId, processType=processType,
-                             parentId=gridsetId, 
-                             status=status, statusModTime=statusModTime) 
       self._matrix = matrix
       self.matrixType = matrixType
       self._dlocation = dlocation
-      self._layerIndicesFilename = layerIndicesFilename
-      self._layerIndices = None
+      self._columnIndicesFilename = columnIndicesFilename
+      self._columnIndices = columnIndices
       self.mtxMetadata = {}
       self.loadMtxMetadata(metadata)
+      self._matrixId = matrixId
       
 
 # ..............................................................................
@@ -95,21 +73,10 @@ class Matrix(ServiceObject, ProcessObject):
       matrix = numpy.zeros([siteCount, layerCount])
       return Matrix(matrix)
    
-   # ...............................................
-   def updateStatus(self, status=None, metadata=None, modTime=None):
-      """
-      @summary: Updates matrixIndex, paramMetadata, and modTime.
-      @param metadata: Dictionary of Matrix metadata keys/values; key constants  
-                       are ServiceObject class attributes.
-      @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
-      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
-      @note: Missing keyword parameters are ignored.
-      """
-      if metadata is not None:
-         self.loadMtxMetadata(metadata)
-      ProcessObject.updateStatus(self, status, modTime=modTime)
-      ServiceObject.updateModtime(self, modTime=modTime)
-
+# .............................................................................
+   def readFromCSV(self, filename=None):
+      pass
+   
 # .............................................................................
    def readData(self, filename=None):
       # filename overrides dlocation
@@ -119,60 +86,61 @@ class Matrix(ServiceObject, ProcessObject):
          try:
             data = numpy.load(self._dlocation)
          except Exception, e:
-            raise LMError('Matrix File %s is not readable by numpy' 
-                          % str(self._dlocation))
+            raise Exception('Matrix File {} is not readable by numpy'
+                            .format(self._dlocation))
          if (isinstance(data, numpy.ndarray) and data.ndim == 2):
             self._matrix = data 
          else:
-            raise LMError('Matrix File %s does not contain a 2 dimensional array' 
-                          % str(self._dlocation))
+            raise Exception('Matrix File {} does not contain a 2 dimensional array'
+                            .format(self._dlocation))
       else:
-         raise LMError('Matrix File %s does not exist' % str(self._dlocation))
+         raise Exception('Matrix File {} does not exist'.format(self._dlocation))
 
 # ...............................................
-   @property
-   def gridsetName(self):
-      name = None
-      if self._gridset is not None:
-         name = self._gridset.name
-      return name
-   
-# ...............................................
-   @property
-   def gridsetId(self):
-      gid = None
-      if self._gridset is not None:
-         gid = self._gridset.getId()
-      return gid
-
-# ...............................................
-   @property
-   def gridsetUrl(self):
-      url = None
-      if self._gridset is not None:
-         url = self._gridset.metadataUrl
-      return url
-
-# ...............................................
-   def getGridset(self):
-      return self._gridset
-
-# ...............................................
-   def getShapegrid(self):
-      return self._gridset.getShapegrid()
-
-# ...............................................
-   def dumpMtxMetadata(self):
-      return super(Matrix, self)._dumpMetadata(self.mtxMetadata)
- 
-# ...............................................
-   def loadMtxMetadata(self, newMetadata):
-      self.mtxMetadata = super(Matrix, self)._loadMetadata(newMetadata)
+   def dumpMtxMetadata(self, metadataDict):
+      metadataStr = None
+      if metadataDict:
+         metadataStr = json.dumps(metadataDict)
+      return metadataStr
 
 # ...............................................
    def addMtxMetadata(self, newMetadataDict):
-      self.mtxMetadata = super(Matrix, self)._addMetadata(newMetadataDict, 
-                                  existingMetadataDict=self.mtxMetadata)
+      for key, val in newMetadataDict.iteritems():
+         try:
+            existingVal = self.mtxMetadata[key]
+         except:
+            self.mtxMetadata[key] = val
+         else:
+            # if metadata exists and is ...
+            if type(existingVal) is list: 
+               # a list, add to it
+               if type(val) is list:
+                  newVal = list(set(existingVal.extend(val)))
+                  self.mtxMetadata[key] = newVal
+                  
+               else:
+                  newVal = list(set(existingVal.append(val)))
+                  self.mtxMetadata[key] = newVal
+            else:
+               # not a set, replace it
+               self.mtxMetadata[key] = val
+
+# ...............................................
+   def loadMtxMetadata(self, newMetadata):
+      """
+      @note: Adds to dictionary or modifies values for existing keys
+      """
+      objMetadata = {}
+      if newMetadata is not None:
+         if type(newMetadata) is dict: 
+            objMetadata = newMetadata
+         else:
+            try:
+               objMetadata = json.loads(newMetadata)
+            except Exception, e:
+               print('Failed to load JSON object from type {} object {}'
+                     .format(type(newMetadata), newMetadata))
+      self.mtxMetadata = objMetadata
 
 # .............................................................................
    @property
@@ -180,20 +148,20 @@ class Matrix(ServiceObject, ProcessObject):
       return self._matrix
    
 # .............................................................................
-   def getValue(self, siteIdx, layerIdx):
+   def getValue(self, rowIdx, colIdx):
       try:
-         val = self._matrix[siteIdx][layerIdx]
+         val = self._matrix[rowIdx][colIdx]
       except Exception, e:
-         raise LMError('%s: site: %d, layer: %d invalid for %s' 
-                       % (str(e), siteIdx, layerIdx, str(self._matrix.shape)))
+         raise Exception('{}: row: {}, column: {} invalid for {}'.format(
+                           str(e), rowIdx, colIdx, self._matrix.shape))
       return val
 
 # .............................................................................
-   def getSiteRow(self, siteIdx):
-      return self._matrix[siteIdx]
+   def getRow(self, rowIdx):
+      return self._matrix[rowIdx]
    
 # .............................................................................
-   def getLayerColumn(self, layerIdx):
+   def getColumn(self, colIdx):
       pass
 # ..............................................................................
    def _getRowCount(self):
@@ -245,22 +213,22 @@ class Matrix(ServiceObject, ProcessObject):
    
 
       
-#..............................................................................
-   def getColumnPresence(self, sitesPresent, layersPresent, columnIdx):
-      """
-      @summary: return a list of ids from a column in a compressed PAM
-      that have presence.  The id will be in uncompressed format, i.e, the
-      real id as it would be numbered as the shpid in the shapegrid's shapefile
-      @todo: check to see if column exists against layersPresent
-      """
-      truerowcounter = 0
-      ids = []      
-      for r in sitesPresent.keys():
-         if sitesPresent[r]:
-            if self._matrix[truerowcounter,columnIdx] == True:      
-               ids.append(r)              
-            truerowcounter += 1
-      return ids
+# #..............................................................................
+#    def getColumnPresence(self, sitesPresent, layersPresent, columnIdx):
+#       """
+#       @summary: return a list of ids from a column in a compressed PAM
+#       that have presence.  The id will be in uncompressed format, i.e, the
+#       real id as it would be numbered as the shpid in the shapegrid's shapefile
+#       @todo: check to see if column exists against layersPresent
+#       """
+#       truerowcounter = 0
+#       ids = []      
+#       for r in sitesPresent.keys():
+#          if sitesPresent[r]:
+#             if self._matrix[truerowcounter,columnIdx] == True:      
+#                ids.append(r)              
+#             truerowcounter += 1
+#       return ids
       
 # ..............................................................................
    def write(self, filename=None, overwrite=True):
@@ -273,37 +241,45 @@ class Matrix(ServiceObject, ProcessObject):
          filename = self._dlocation
       self._readyFilename(filename, overwrite=overwrite)
          
-      print '  Writing matrix %s' % filename
+      print '  Writing matrix {}'.format(filename)
       try:
          fnamewoext, ext = os.path.splitext(filename)
          # Numpy automatically adds '.npy' extension
          numpy.save(fnamewoext, self._matrix)
       except Exception, e:
-         raise LMError('Error writing file %s' % filename, str(e))
+         raise Exception('Error writing file {}, ({})'.format(filename, str(e)))
          
 # ...............................................
    def clear(self):
-      success, msg = self._deleteFile(self._dlocation, deleteDir=True)
+      """
+      @note: deleting the file is done in LmServer.legion.Matrix
+      """
+      if self._dlocation is not None and os.path.exists(self._dlocation):
+         try:
+            os.remove(self._dlocation)
+         except Exception, e:
+            print('Failed to remove {}, {}'.format(self._dlocation, str(e)))
       self._matrix = None
       
 # ...............................................
-   def readIndices(self, indicesFilename=None):
+   def readColumnIndices(self, colIndicesFname=None):
       """
       @summary Fill the siteIndices from existing file
       """
       indices = None
-      if indicesFilename is None:
-         indicesFilename = self._layerIndicesFilename
-      if isinstance(indicesFilename, StringType) and os.path.exists(indicesFilename):
+      if colIndicesFname is None:
+         colIndicesFname = self._columnIndicesFilename
+      if (isinstance(colIndicesFname, StringType) and 
+          os.path.exists(colIndicesFname)):
          try:
-            f = open(indicesFilename, 'r')
+            f = open(colIndicesFname, 'r')
             indices = pickle.load(f)
          except:
-            raise LMError('Failed to read indices {}'.format(indicesFilename))
+            raise Exception('Failed to read indices {}'.format(colIndicesFname))
          finally:
             f.close()
-      self._layerIndices = indices
+      self._columnIndices = indices
       
-   def getLayerIndicesFilename(self):
+   def getColumnIndicesFilename(self):
       return self._layerIndicesFilename
       
