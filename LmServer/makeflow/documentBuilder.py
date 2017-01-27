@@ -393,7 +393,6 @@ class LMMakeflowDocument(LMObject):
    # Calculate
    # MCPA
    # Encoding (tree and biogeo)
-   # Compress?
    # Randomizations
    
          
@@ -506,48 +505,6 @@ class LMMakeflowDocument(LMObject):
                           LM_JOB_RUNNER_CMD.format(jrFn=jrFn),
                           dependencies=[jrFn], 
                           comment="Build intersect {0}".format(jobId))
-   
-   # ...........................
-   def addCalculateAndCompressPAM(self, calcJob, compJob):
-      """
-      @summary: Adds calculate and compress jobs to the workflow
-      @todo: Establish dependencies
-      """
-      # Calculate
-      calcDep = []
-      calcOutput = calcJob.outputObj.createLocalDLocation()
-      
-      calcJobId = calcJob.getId()
-      calcJrFn = JOB_REQUEST_FILENAME.format(processType=calcJob.processType, 
-                                         jobId=calcJobId)
-      calcJrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.RAD, 
-                                           jobId=calcJobId, jrFn=calcJrFn)
-      # Add job to create job request
-      self._addJobCommand([calcJrFn], calcJrCmd, dependencies=calcDep,
-                  comment='Build calculate {0} job request'.format(calcJobId))
-      
-      # Add job to calculate stats
-      self._addJobCommand([calcJob.outputObj.createLocalDLocation()], 
-                          LM_JOB_RUNNER_CMD.format(jrFn=calcJrFn),
-                          dependencies=[calcJrFn], 
-                          comment="Calculate stats {0}".format(calcJobId))
-      
-      # Compress
-      compDep = [calcOutput]
-      compJobId = compJob.getId()
-      compJrFn = JOB_REQUEST_FILENAME.format(processType=compJob.processType, 
-                                         jobId=compJobId)
-      compJrCmd = BUILD_JOB_REQUEST_CMD.format(objectFamily=JobFamily.RAD, 
-                                           jobId=compJobId, jrFn=compJrFn)
-      # Add job to create job request
-      self._addJobCommand([compJrFn], compJrCmd, dependencies=compDep,
-                  comment='Build compress {0} job request'.format(compJobId))
-      
-      # Add job to create model
-      self._addJobCommand([compJob.outputObj.createLocalDLocation()], 
-                          LM_JOB_RUNNER_CMD.format(jrFn=compJrFn),
-                          dependencies=[compJrFn], 
-                          comment="Compress {0}".format(compJobId))
    
    # ...........................
    #def randomizePAM(self, pam, method, iterations):
