@@ -1238,10 +1238,7 @@ from LmServer.db.borgscribe import BorgScribe
 
 expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
 currtime = dt.gmt().mjd
-try:
-   taxname = TAXONOMIC_SOURCE[datasource]['name']
-except:
-   taxname = None
+taxname = TAXONOMIC_SOURCE[datasource]['name']
    
    
 log = ScriptLogger('testboomborg')
@@ -1281,19 +1278,6 @@ prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario,
                boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
                modtime=currtime)
 prj = prjs[0]
-gridset = boomer.intersectGrid
-modtime = currtime
-mtxrst = MatrixRaster(-1, gpam.getId(), prj.getUserId(), prj.name, prj.epsgcode,  
-                     lyrId=prj.getId(), squid=prj.squid, verify=prj.verify, 
-                     dlocation=prj.getDLocation(), lyrMetadata=prj.lyrMetadata, 
-                     dataFormat=prj.dataFormat, gdalType=prj.gdalType, 
-                     valUnits=prj.valUnits, nodataVal=prj.nodataVal, 
-                     minVal=prj.minVal, maxVal=prj.maxVal, mapunits=prj.mapUnits, 
-                     resolution=prj.resolution, bbox=prj.bbox, 
-                     metadataUrl=prj.metadataUrl, modTime=prj.statusModTime,
-                     processType=ProcessType.RAD_INTERSECT, 
-                     mtxcolMetadata={}, intersectParams={}, 
-                     status=JobStatus.GENERAL, statusModTime=modtime)
 
 mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gpam, currtime)
 

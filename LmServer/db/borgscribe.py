@@ -355,7 +355,7 @@ class BorgScribe(LMObject):
             
          newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxcol)
          if JobStatus.finished(newOrExistingMtxcol.status):
-            newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, stattime=modtime)
+            newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, modTime=modtime)
             newOrExistingMtxcol = self.updateMtxcol(newOrExistingMtxcol)
       return newOrExistingMtxcol
 

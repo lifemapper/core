@@ -1123,8 +1123,8 @@ class Borg(DbPostgresql):
                      lyrid, usr, lyrverify, lyrname, lyrdloc, lyrmurl, lyrmeta, 
                      datafmt, rtype, vtype, vunits, vnodata, vmin, vmax, epsg, 
                      munits, res, bboxstr, bboxwkt, lyrmtime)
-      newOrExistingProj = self._createSDMProjection(row, idxs)
-      return newOrExistingProj
+      newOrExistingMtxLyr = self._createMatrixLayer(row, idxs)
+      return newOrExistingMtxLyr
 
 # ...............................................
    def findOrInsertMatrix(self, mtx):
