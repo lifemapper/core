@@ -163,6 +163,11 @@ class ServiceObject(LMObject):
       if format is not None:
          dataurl = '%s/%s' % (self.metadataUrl, format)
       return dataurl
+   
+   # ...............................................
+   def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
+      self.modTime = modTime
+
 # .............................................................................
 # Read-0nly Properties
 # .............................................................................

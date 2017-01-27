@@ -182,9 +182,6 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::updateShapeGrid()
       """
-      modTime = mx.DateTime.utc().mjd
-      shpgrd.modTime = modTime
-      shpgrd.paramModTime = modTime
       success = self._borg.updateShapeGrid(shpgrd)
       return success
 
@@ -296,9 +293,6 @@ class BorgScribe(LMObject):
       """
       # Iff OccurrenceSet is split into Layer and LayerParameter tables, 
       # modTime and paramModTime will be relevant
-#       modTime = mx.DateTime.utc().mjd
-#       occ.modTime = modTime
-#       occ.paramModTime = modTime
       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
       return success
 
@@ -309,12 +303,20 @@ class BorgScribe(LMObject):
                the verify hash, metadata, data extent and values, status/statusmodtime.
       @param proj the SDMProjection object to update
       @return: True/False for successful update.
+      @note: paramModTime is updated with ProcessObject.updateStatus
       """
-      modTime = mx.DateTime.utc().mjd
-      proj.modTime = modTime
-      proj.paramModTime = modTime
       success = self._borg.updateSDMProject(proj)
       return success   
+   
+# ...............................................
+   def updateMatrixColumn(self, mtxcol):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::updateMatrixColumn()
+      @note: paramModTime is updated with ProcessObject.update
+      """
+      success = self._borg.updateMatrixColumn(mtxcol)
+      return success
+
    
 # ...............................................
    def initOrRollbackIntersect(self, lyr, mtx, modtime):
@@ -356,7 +358,7 @@ class BorgScribe(LMObject):
          newOrExistingMtxcol = self._borg.findOrInsertMtxcol(mtxcol)
          if JobStatus.finished(newOrExistingMtxcol.status):
             newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, modTime=modtime)
-            newOrExistingMtxcol = self.updateMtxcol(newOrExistingMtxcol)
+            newOrExistingMtxcol = self.updateMatrixColumn(newOrExistingMtxcol)
       return newOrExistingMtxcol
 
 # ...............................................
@@ -382,7 +384,7 @@ class BorgScribe(LMObject):
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
          if JobStatus.finished(newOrExistingPrj.status):
-            newOrExistingPrj.updateStatus(JobStatus.GENERAL, stattime=modtime)
+            newOrExistingPrj.updateStatus(JobStatus.GENERAL, modTime=modtime)
             newOrExistingPrj = self.updateSDMProject(newOrExistingPrj)
          
          prjs.append(newOrExistingPrj)

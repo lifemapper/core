@@ -294,15 +294,16 @@ class SDMProjection(_ProjectionType, Raster):
 # .............................................................................
 # Public methods
 # .............................................................................
-   def updateStatus(self, status, stattime=mx.DateTime.utc().mjd):
+   def updateStatus(self, status, metadata=None, modTime=None):
       """
-      @summary Updates status objects on the Projection. 
-      @param status: The new job status for the projection
+      @summary Update status, metadata, modTime attributes on the SDMProjection. 
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
+      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+      @copydoc LmServer.base.layer2._LayerParameters::updateParams()
       """
-      if status is not None:
-         self._status = status
-         self._statusmodtime = stattime
-         self.modTime = self._statusmodtime
+      ProcessObject.updateStatus(self, status, modTime=modTime)
+      ServiceObject.updateModtime(self, modTime=modTime)
+      _LayerParameters.updateParams(self, metadata=metadata, modTime=modTime)
          
 # ...............................................
    def clearProjectionFiles(self):

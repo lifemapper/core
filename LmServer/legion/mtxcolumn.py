@@ -26,7 +26,7 @@ import json
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.layer2 import Raster, Vector, _LayerParameters
 from LmServer.base.lmobj import LMError, LMObject
-from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule
 
 # .............................................................................
@@ -97,14 +97,16 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       self.paramModTime = modTime
    
    # ...............................................
-   def updateStatus(self, status, modTime=None, queryCount=None):
+   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
       """
-      @note: Overrides ProcessObject.updateStatus
+      @summary Update status, matrixIndex, metadata, modTime attributes on the 
+               Matrix layer. 
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
+      @copydoc LmServer.base.layer2._LayerParameters::updateParams()
       """
       ProcessObject.updateStatus(self, status, modTime=modTime)
-      if queryCount is not None: 
-         self.queryCount = queryCount
-         self.paramModTime = self.statusModTime
+      _LayerParameters.updateParams(self, matrixIndex=matrixIndex, 
+                                    metadata=metadata, modTime=modTime)
 
 # .............................................................................
 # .............................................................................
@@ -173,6 +175,18 @@ class MatrixVector(MatrixColumn, Vector):
                   status=mtxColumn.status, statusModTime=mtxColumn.statusModTime)
       return mtxVct
 
+   # ...............................................
+   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
+      """
+      @summary Update status, matrixIndex, metadata, modTime attributes on the 
+               Matrix layer. 
+      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+      @copydoc LmServer.legion.mtxcolumn.MatrixColumn::updateStatus()
+      """
+      MatrixColumn.updateStatus(self, status, matrixIndex=matrixIndex, 
+                                metadata=metadata, modTime=modTime)
+      ServiceObject.updateModtime(self, modTime=modTime)
+
 # .............................................................................
 class MatrixRaster(MatrixColumn, Raster):
 # .............................................................................
@@ -231,3 +245,16 @@ class MatrixRaster(MatrixColumn, Raster):
                   ident=mtxColumn.ident, matrixColumnId=mtxColumn.getParamId(), 
                   status=mtxColumn.status, statusModTime=mtxColumn.statusModTime)
       return mtxRst
+   
+   # ...............................................
+   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
+      """
+      @summary Update status, matrixIndex, metadata, modTime attributes on the 
+               Matrix layer. 
+      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+      @copydoc LmServer.legion.mtxcolumn.MatrixColumn::updateStatus()
+      """
+      MatrixColumn.updateStatus(self, status, matrixIndex=matrixIndex, 
+                                metadata=metadata, modTime=modTime)
+      ServiceObject.updateModtime(self, modTime=modTime)
+

@@ -33,7 +33,7 @@ from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS,
                                          DEFAULT_OGR_FORMAT, ProcessType)
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
-from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 
 # .............................................................................
@@ -120,6 +120,18 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                           fidAttribute=vector.fidAttribute,
                           status=status, statusModTime=statusModTime)
       return shpGrid
+
+   # ...............................................
+   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
+      """
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
+      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+      @copydoc LmServer.base.layer2._LayerParameters::updateParams()
+      """
+      ProcessObject.updateStatus(self, status, modTime=modTime)
+      ServiceObject.updateModtime(self, modTime=modTime)
+      _LayerParameters.updateParams(self, matrixIndex=matrixIndex, 
+                                    metadata=metadata, modTime=modTime)
 
 # ...............................................
    def readIndices(self, indicesFilename=None):

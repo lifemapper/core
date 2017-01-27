@@ -65,7 +65,7 @@ class Matrix(ServiceObject, ProcessObject):
       @param metadata: dictionary of metadata using Keys defined in superclasses
       @param dlocation: file location of the array
       @param layerIndicesFilename: file location of layer indices
-      @param gridset: parent gridset of this Matrix
+      @param gridset: parent gridset of this MatrixupdateModtime
       """
       self._gridset = gridset
       gridsetUrl = gridsetId = None
@@ -95,6 +95,21 @@ class Matrix(ServiceObject, ProcessObject):
       matrix = numpy.zeros([siteCount, layerCount])
       return Matrix(matrix)
    
+   # ...............................................
+   def updateStatus(self, status=None, metadata=None, modTime=None):
+      """
+      @summary: Updates matrixIndex, paramMetadata, and modTime.
+      @param metadata: Dictionary of Matrix metadata keys/values; key constants  
+                       are ServiceObject class attributes.
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
+      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+      @note: Missing keyword parameters are ignored.
+      """
+      if metadata is not None:
+         self.loadMtxMetadata(metadata)
+      ProcessObject.updateStatus(self, status, modTime=modTime)
+      ServiceObject.updateModtime(self, modTime=modTime)
+
 # .............................................................................
    def readData(self, filename=None):
       # filename overrides dlocation
