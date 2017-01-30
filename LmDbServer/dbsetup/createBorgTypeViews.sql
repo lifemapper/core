@@ -199,15 +199,19 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    mtxmetadataUrl,
    mtxmetadata,
    mtxstatus,
-   mtxstatusmodtime
+   mtxstatusmodtime,
+   
+   -- Gridset.userid
+   userid
 ) AS 
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.squid, mc.ident, mc.dlocation, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.matrixDlocation, m.columnIndices, 
-             m.metadataUrl, m.metadata, m.status, m.statusmodtime
-        FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m
-        WHERE mc.matrixId = m.matrixId;
+             m.metadataUrl, m.metadata, m.status, m.statusmodtime,
+             g.userid
+        FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
+        WHERE mc.matrixId = m.matrixId AND m.gridsetid = g.gridsetid;
 
 -- ----------------------------------------------------------------------------
 -- lm_matrixlayer (lm_matrixcolumn + Layer)
@@ -234,9 +238,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    mtxmetadata,
    mtxstatus,
    mtxstatusmodtime,
+   userid,
    
    -- Layer.* 
-   userid,
    lyrsquid,
    lyrverify,
    lyrname,
@@ -262,8 +266,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
              mc.intersectParams, mc.mtxcolstatus, mc.mtxcolstatusmodtime,
              mc.matrixType, mc.gridsetId, mc.matrixDlocation, mc.columnIndices, 
              mc.mtxmetadataUrl, mc.mtxmetadata, mc.mtxstatus, 
-             mc.mtxstatusmodtime,
-             l.userid, l.squid, l.verify, l.name, l.dlocation, 
+             mc.mtxstatusmodtime, mc.userid, 
+             l.squid, l.verify, l.name, l.dlocation, 
              l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, 
              l.ogrType, l.valUnits, l.valAttribute, l.nodataVal, l.minVal,
              l.maxVal, l.epsgcode, l.mapunits, l.resolution, l.bbox, 

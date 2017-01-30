@@ -286,18 +286,21 @@ class Borg(DbPostgresql):
       """
       mtxobj = None
       if row is not None:
-         baseMtx = self._createBaseMatrix(row, idxs)
-         mtxtype = self._getColumnValue(row,idxs,['matrixtype']) 
-         gridsetid = self._getColumnValue(row,idxs,['gridsetid']) 
-         mtxdloc = self._getColumnValue(row,idxs,['matrixdlocation']) 
-         layeridxs = self._getColumnValue(row,idxs,['layerindices']) 
-         mtxmetaurl = self._getColumnValue(row,idxs,['mtxmetadataurl']) 
-         mtxmeta = self._getColumnValue(row,idxs,['mtxmetadata']) 
-         mtxstat = self._getColumnValue(row,idxs,['mtxstatus']) 
-         mtxstattime = self._getColumnValue(row,idxs,['mtxstatusmodtime']) 
+         mtx = self._createLMMatrix(row, idxs)
+         mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
+         mtxid = self._getColumnValue(row,idxs,['matrixid']) 
+         mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
+         squid = self._getColumnValue(row,idxs,['mtxcolsquid'])
+         ident = self._getColumnValue(row,idxs,['mtxcolident'])
+         mtxcoldloc = self._getColumnValue(row,idxs,['mtxcoldlocation'])
+         mtxcolmeta = self._getColumnValue(row,idxs,['mtxcolmetatadata'])
+         lyrid = self._getColumnValue(row,idxs,['matrixid'])         
+         intparams = self._getColumnValue(row,idxs,['intersectparams'])
+         mtxcolstat = self._getColumnValue(row,idxs,['mtxcolstatus']) 
+         mtxcolstattime = self._getColumnValue(row,idxs,['mtxcolstatusmodtime']) 
+         usr = self._getColumnValue(row,idxs,['userid'])
 
-         usr = self._getColumnValue(row,idxs,['userid']) 
-         mtxcol = MatrixColumn(mtxIdx, mtxId, usr, layerId=None,
+         mtxcol = MatrixColumn(mtxIndex, mtxid, usr, layerId=lyrid,
                 processType=ProcessType.RAD_INTERSECT, colDLocation=mtxcoldloc,
                 metadata=mtxcolmeta, intersectParams=intparams, squid=squid, 
                 ident=ident, matrixColumnId=mtxcolid, 

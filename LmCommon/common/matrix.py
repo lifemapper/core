@@ -1,6 +1,8 @@
 """
 @summary Module that contains the Matrix class
-@author Aimee Stewart
+@author Aimee Stewart / CJ Grady
+@status: alpha
+@version: 1.0
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
 
@@ -22,59 +24,57 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Use https://docs.scipy.org/doc/numpy/user/basics.subclassing.html when
+          changing this to subclass numpy.ndarray
+@todo: Handle multiple rows / columns / etc of metadata (like PAM x, y, site ids)
+@todo: Consider adding constants for easy reference to rows and columns
+@note: Not tested.  First iteration
 """
+from copy import deepcopy
 import json
-import numpy
+import numpy as np
 import os
-import pickle
-from types import StringType
 
-from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, 
-                                         MatrixType)
-
+METADATA_KEY = 'metadata'
+DATA_KEY = 'data'
 
 # .............................................................................
 class Matrix(object):
    """
-   The Matrix class contains a 2-dimensional numeric matrix.
+   @summary: Lifemapper wrapper for Numpy ndarrays that adds metadata
    """
-# .............................................................................
-# Constructor
-# .............................................................................
-   def __init__(self, matrix, 
-                matrixType=MatrixType.PAM, 
-                metadata={},
-                dlocation=None, 
-                columnIndices=None,
-                columnIndicesFilename=None,
-                matrixId=None):
+   # ...........................
+   def __init__(self, mtx, metadata=None):
       """
-      @param matrix: numpy array
-      @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
-      @param metadata: dictionary of metadata using Keys defined in superclasses
-      @param dlocation: file location of the array
-      @param columnIndicesFilename: dictionary of column indices
-      @param columnIndicesFilename: file location of column indices
-      @param matrixId: dbId  for ServiceObject
+      @summary: Constructor
+      @param mtx: A matrix (like) object to use as the base data for the Matrix.
+                     This can be None if the data has not been initialized
+      @param metadata: Optional headers for this matrix.  This may be either a
+                          list of lists, where the index of a list in the lists 
+                          will be treated as the axis 
+                          (ex. [['Row 1', 'Row 2', 'Row 3'], 
+                                ['Column 1', 'Column 2']])
+                          Or this could be a dictionary where the key is used
+                          for the axis.  (Ex:
+                          {
+                             1 : ['Column 1', 'Column 2'],
+                             0 : ['Row 1', 'Row 2', 'Row 3']
+                          }
+      @note: If the headers for an axis are a string and not a list, it will be
+                treated as a file name
       """
-      self._matrix = matrix
-      self.matrixType = matrixType
-      self._dlocation = dlocation
-      self._columnIndicesFilename = columnIndicesFilename
-      self._columnIndices = columnIndices
-      self.mtxMetadata = {}
-      self.loadMtxMetadata(metadata)
-      self._matrixId = matrixId
+      self.data = mtx
+      self.metadata = None
+      if metadata is not None:
+         self.setMetadata(metadata)
       
-
-# ..............................................................................
-   @staticmethod
-   def initEmpty(siteCount, layerCount):
-      matrix = numpy.zeros([siteCount, layerCount])
-      return Matrix(matrix)
-   
-# .............................................................................
-   def readFromCSV(self, filename=None):
+   # ...........................
+   @classmethod
+   def loadFromCSV(cls, flo):
+      """
+      @summary: Loads a Matrix from a CSV file
+      @param flo: A string (filename) or file-like object containing a CSV
+      """
       pass
    
 # .............................................................................
@@ -88,11 +88,11 @@ class Matrix(object):
          self._dlocation = filename
       if os.path.exists(self._dlocation):
          try:
-            data = numpy.load(self._dlocation)
+            data = np.load(self._dlocation)
          except Exception, e:
             raise Exception('Matrix File {} is not readable by numpy'
                             .format(self._dlocation))
-         if (isinstance(data, numpy.ndarray) and data.ndim == 2):
+         if (isinstance(data, np.ndarray) and data.ndim == 2):
             self._matrix = data 
          else:
             raise Exception('Matrix File {} does not contain a 2 dimensional array'
@@ -145,147 +145,226 @@ class Matrix(object):
                print('Failed to load JSON object from type {} object {}'
                      .format(type(newMetadata), newMetadata))
       self.mtxMetadata = objMetadata
-
-# .............................................................................
-   @property
-   def data(self):
-      return self._matrix
-   
-# .............................................................................
-   def getValue(self, rowIdx, colIdx):
-      try:
-         val = self._matrix[rowIdx][colIdx]
-      except Exception, e:
-         raise Exception('{}: row: {}, column: {} invalid for {}'.format(
-                           str(e), rowIdx, colIdx, self._matrix.shape))
-      return val
-
-# .............................................................................
-   def getRow(self, rowIdx):
-      return self._matrix[rowIdx]
-   
-# .............................................................................
-   def getColumn(self, colIdx):
-      pass
-# ..............................................................................
-   def _getRowCount(self):
-      return self._matrix.shape[0]
-   
-# ..............................................................................
-   def _getColumnCount(self):
-      return self._matrix.shape[1]
-   
-   def _getNumpyDataType(self):
-      return self._matrix.dtype
-
-   def _getOGRDataType(self):
-      if self._matrix.dtype in (numpy.float32, numpy.float64, numpy.float128):
-         return OFTReal
-      elif self._matrix.dtype in (numpy.int8, numpy.int16, numpy.int32):
-         return OFTInteger
-      elif self._matrix.dtype == numpy.bool:
-         return OFTBinary
-
-   rowCount = property(_getRowCount)
-   columnCount = property(_getColumnCount)
-   numpyDataType = property(_getNumpyDataType)
-   ogrDataType = property(_getOGRDataType)
-
-# ..............................................................................
-   def getDLocation(self): 
-      return self._dlocation
-   
-   def setDLocation(self, dlocation):
-      self._dlocation = dlocation
-
-# ..............................................................................
-   def convertToBool(self): 
-      self._matrix = numpy.bool_(self._matrix)
       
-# ..............................................................................
-
-   def transpose(self, axes=None):
-      if axes == None:
-         self._matrix = numpy.transpose(self._matrix)
-      
-# ..............................................................................
-#   def addColumn(self, data, rows, colIndx):
-#      for r in rows.keys():
-   def addColumn(self, data, colIdx):
-      for row in range(0,len(data)):
-         self._matrix[row][colIdx] = data[row]
+   # ...........................
+   @classmethod
+   def loadFromJsonOrDictionary(cls, obj):
+      metadata = obj[METADATA_KEY]
+      data = np.array(obj[DATA_KEY])
+      return cls(data, metadata=metadata)
    
-
+   # ...........................
+   @classmethod
+   def concatenate(cls, mtxList, axis=0):
+      """
+      @summary: Concatenates multiple Matrix objects together to form a new 
+                   Matrix object
+      @param mtxList: A List of Matrix objects to concatenate together
+      @param axis: The axis to concatenate these Matrix objects on
+      @note: Assumes that metadata for other axes are the same
+      """
+      mtxObjs = []
+      axisMetadata = []
+      for mtx in mtxList:
+         axisMetadata.append(mtx.getMetadata(axis=axis))
+         mtxObjs.extend(mtx.data)
+      # Create a new data matrix
+      # TODO: Consider adding capability to append on new axis
+      newData = np.concatenate(mtxObjs, axis=axis)
+      # Use the first Matrix's metadata as the base
+      newMetadata = mtxList[0].getMetadata()
+      # Replace the axis of metadata with the concatenated version
+      newMetadata[axis] = axisMetadata
+      return cls(newData, metadata=newMetadata)
+   
+   # ...........................
+   def append(self, mtx, axis=0):
+      """
+      @summary: Appends the provided Matrix object to this one
+      @param mtx: The Matrix object to append to this one
+      @param axis: The axis to append this matrix on
+      @note: Only keeps the metadata for the append axis, assumes the other 
+                axes are the same
+      """
+      self.data = np.append(self.data, mtx, axis=axis)
+      self.metadata[axis].append(mtx.getMetadata(axis=axis))
+   
+   # ...........................
+   def getColumnMetadata(self):
+      """
+      @summary: Shortcut to get column metadata
+      @todo: Throw a different exception if no column metadat?
+      """
+      return self.getMetadata(axis=1)
+   
+   # ...........................
+   def getMetadata(self, axis=None):
+      """
+      @summary: Get the metadata associated with this Matrix, optionally 
+                   limited to a specific axis
+      @param axis: If provided, return metadata for this axis, else, return all
+      """
+      if axis is None:
+         return self.metadata
+      else:
+         return self.metadata[axis]
+   
+   # ...........................
+   def getRowMetadata(self):
+      """
+      @summary: Shortcut to get row metadata
+      @todo: Throw a different exception if no row metadata?
+      """
+      return self.getMetadata(axis=0)
+   
+   # ...........................
+   def save(self, flo):
+      """
+      @summary: Saves the Matrix object as a JSON document to the file-like 
+                   object
+      @param flo: The file-like object to write to
+      """
+      writeObj = {}
+      writeObj[METADATA_KEY] = self.metadata
+      writeObj[DATA_KEY] = self.data.tolist()
       
-# #..............................................................................
-#    def getColumnPresence(self, sitesPresent, layersPresent, columnIdx):
-#       """
-#       @summary: return a list of ids from a column in a compressed PAM
-#       that have presence.  The id will be in uncompressed format, i.e, the
-#       real id as it would be numbered as the shpid in the shapegrid's shapefile
-#       @todo: check to see if column exists against layersPresent
-#       """
-#       truerowcounter = 0
-#       ids = []      
-#       for r in sitesPresent.keys():
-#          if sitesPresent[r]:
-#             if self._matrix[truerowcounter,columnIdx] == True:      
-#                ids.append(r)              
-#             truerowcounter += 1
-#       return ids
-      
-# ..............................................................................
-   def write(self, filename=None, overwrite=True):
+      json.dump(writeObj, flo, indent=3)
+   
+   # ...........................
+   def setColumnMetadata(self, metadata):
       """
-      @summary: Write the matrix out to a file
-      @param filename: The location on disk to write the file
-      @todo: test this - there could be a more appropriate numpy method
+      @summary: Shortcut to set column metadata
       """
-      if filename is None:
-         filename = self._dlocation
-      self._readyFilename(filename, overwrite=overwrite)
-         
-      print '  Writing matrix {}'.format(filename)
-      try:
-         fnamewoext, ext = os.path.splitext(filename)
-         # Numpy automatically adds '.npy' extension
-         numpy.save(fnamewoext, self._matrix)
-      except Exception, e:
-         raise Exception('Error writing file {}, ({})'.format(filename, str(e)))
-         
-# ...............................................
-   def clear(self):
+      self.setMetadata(metadata, axis=1)
+   
+   # ...........................
+   def setMetadata(self, metadata, axis=None):
       """
-      @note: deleting the file is done in LmServer.legion.Matrix
+      @summary: Set the metadata for this Matrix, optionally for a specific axis
+      @param metadata: Matrix metadata.  Can be a list of lists, a dictionary
+                          of lists, or if axis is provided, a single list
+      @param axis: If provided, set the metadata for a specific axis, else, 
+                      process as if it is for the entire Matrix
+      @todo: Validate input for single axis operation?
+      @note: Resets metadata dictionary when setting values for all metadata
+      @note: Duck types to use list of lists or dictionary to set values for
+                different axes
       """
-      if self._dlocation is not None and os.path.exists(self._dlocation):
+      if axis is not None:
+         self.metadata[axis] = metadata
+      else:
+         self.metadata = {}
          try:
-            os.remove(self._dlocation)
-         except Exception, e:
-            print('Failed to remove {}, {}'.format(self._dlocation, str(e)))
-      self._matrix = None
-      
-# ...............................................
-   def readColumnIndices(self, colIndicesFname=None):
+            metadataKeys = metadata.keys()
+         except: # Not a dictionary
+            # Check if first item is a list
+            if isinstance(metadata[0], list):
+               # Assume list of lists
+               metadataKeys = range(len(metadata))
+            else:
+               # Convert to a list
+               metadata = [metadata]
+               metadataKeys = [0]
+         
+         # We should have a list of keys, which could be either dictionary 
+         #    keys or list indices
+         for k in metadataKeys:
+            self.metadata[k] = metadata[k]
+   
+   # ...........................
+   def setRowMetadata(self, metadata):
       """
-      @summary Fill the siteIndices from existing file
+      @summary: Shortcut to set row metadata
       """
-      indices = None
-      if colIndicesFname is None:
-         colIndicesFname = self._columnIndicesFilename
-      if (isinstance(colIndicesFname, StringType) and 
-          os.path.exists(colIndicesFname)):
+      self.setMetadata(metadata, axis=0)
+   
+   # ...........................
+   def slice(self, *args):
+      """
+      @summary: Subsets the matrix and returns a new instance
+      @param *args: These are iterables for the indices to retrieve
+      @note: The first parameter will be for axis 0, second for axis 1, etc
+      """
+      newData = np.copy(self.data)
+      newMetadata = deepcopy(self.metadata)
+      # For each arg in the list
+      for i in range(len(args)):
+         # Subset the data matrix
+         newData = newData.take(args[i], axis=i)
+         # Subset the metadata
+         tmp = []
+         for j in args[i]:
+            tmp.append(newMetadata[j])
+         newMetadata[i] = tmp
+      return Matrix(newData, metadata=newMetadata)
+   
+   # ...........................
+   def writeCSV(self, flo):
+      """
+      @summary: Write the Matrix object to a CSV file-like object
+      @param flo: The file-like object to write to
+      @todo: Flatten 3 or more dimensions?
+      @todo: Handle header overlap (where the header for one axis is for another 
+                axis header
+      @todo: Multiple headers along an axis (think site id, x, y for PAMs)
+      @note: Currently only works for 2-D tables
+      """
+      # .....................
+      # Inner function
+      def csvGenerator():
+         """
+         @summary: This function is a generator that yields rows of values to 
+                      be output as CSV
+         """
          try:
-            f = open(colIndicesFname, 'r')
-            indices = pickle.load(f)
+            rowMetadata = self.metadata[0]
          except:
-            raise Exception('Failed to read indices {}'.format(colIndicesFname))
-         finally:
-            f.close()
-      self._columnIndices = indices
+            # No row metadata
+            rowMetadata = []
+         
+         # Start with the header row, if we have one
+         if self.metadata.has_key(1) and self.metadata[1]:
+            # Add a blank entry if we have row metadata
+            headerRow = [''] if rowMetadata else []
+            headerRow.extend(self.metadata[1])
+            yield headerRow
+         # For each row in the data set
+         for i in xrange(self.data.shape[0]):
+            # Add the row metadata if exists
+            row = [rowMetadata[i]] if rowMetadata else []
+            # Get the data from the data array
+            row.extend(self.data[i].tolist())
+            yield row
+            
+      # .....................
+      # Main writeCSV function
+      for row in csvGenerator():
+         flo.write("{0}\n".format(','.join([str(v) for v in row])))
+         
       
+   # ...........................
    def getColumnIndicesFilename(self):
       return self._columnIndicesFilename
       
+   # ...........................
    def getColumnIndices(self):
       return self._columnIndices
+
+   
+   # Initialize an array
+   # Update headers
+   # Insert row
+   # Get row / column shortcuts
+   # Insert column / etc
+   # Update row / column / etc by index or by header name
+   
+   
+   # To consider
+   #   Data could be none?
+   #   PAVs
+   #   How to read row indices from a shapegrid?
+   #   Missing headers?
+   #   Multiple header columns
+   #   Should headers overlap?
+   #   What happens when headers don't match?
+   
