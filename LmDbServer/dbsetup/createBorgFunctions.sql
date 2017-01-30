@@ -322,7 +322,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
                                                        mtxtype int,
                                                        grdid int,
                                                        dloc text,
-                                                       lyridxs text,
+                                                       colidxs text,
                                                        metaurlprefix varchar,
                                                        meta varchar, 
                                                        stat int,
@@ -344,9 +344,9 @@ BEGIN
    IF NOT FOUND THEN
       begin
          INSERT INTO lm_v3.matrix (matrixType, gridsetId, matrixDlocation, 
-                                   layerIndices, metadata, status, statusmodtime) 
+                                   columnIndices, metadata, status, statusmodtime) 
                            VALUES (mtxtype, grdid, dloc, 
-                                   lyridxs, meta, stat, stattime);
+                                   colidxs, meta, stat, stattime);
          IF FOUND THEN
             -- update metadataUrl
             SELECT INTO newid last_value FROM lm_v3.matrix_matrixid_seq;

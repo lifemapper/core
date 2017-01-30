@@ -195,7 +195,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    matrixType,
    gridsetId,
    matrixDlocation,
-   layerIndices,
+   columnIndices,
    mtxmetadataUrl,
    mtxmetadata,
    mtxstatus,
@@ -204,7 +204,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.squid, mc.ident, mc.dlocation, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
-             m.matrixType, m.gridsetId, m.matrixDlocation, m.layerIndices, 
+             m.matrixType, m.gridsetId, m.matrixDlocation, m.columnIndices, 
              m.metadataUrl, m.metadata, m.status, m.statusmodtime
         FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m
         WHERE mc.matrixId = m.matrixId;
@@ -229,7 +229,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
    matrixType,
    gridsetId,
    matrixDlocation,
-   layerIndices,
+   columnIndices,
    mtxmetadataUrl,
    mtxmetadata,
    mtxstatus,
@@ -260,7 +260,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, mc.mtxcolsquid, 
              mc.mtxcolident, mc.mtxcoldlocation, mc.mtxcolmetadata, mc.layerId, 
              mc.intersectParams, mc.mtxcolstatus, mc.mtxcolstatusmodtime,
-             mc.matrixType, mc.gridsetId, mc.matrixDlocation, mc.layerIndices, 
+             mc.matrixType, mc.gridsetId, mc.matrixDlocation, mc.columnIndices, 
              mc.mtxmetadataUrl, mc.mtxmetadata, mc.mtxstatus, 
              mc.mtxstatusmodtime,
              l.userid, l.squid, l.verify, l.name, l.dlocation, 
@@ -336,7 +336,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    matrixType,
    gridsetId,
    matrixDlocation,
-   layerIndices,
+   columnIndices,
    metadataUrl,
    metadata,
    status,
@@ -380,7 +380,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    bbox,
    lyrmodtime) AS
    SELECT m.matrixId, m.matrixType, m.gridsetId, m.matrixDlocation, 
-          m.layerIndices, m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
+          m.columnIndices, m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
           g.userId, g.grdname, g.grdmetadataUrl, g.layerId, 
           g.grdsiteIndices, g.grddlocation, g.grdepsgcode, g.grdmetadata, 
           g.grdmodTime, g.cellsides, g.cellsize, g.vsize, g.idAttribute, 
@@ -403,7 +403,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    matrixType,
    gridsetId,
    matrixDlocation,
-   layerIndices,
+   columnIndices,
    metadataUrl,
    metadata,
    status,
@@ -419,7 +419,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    grdmetadata,
    grdmodTime) AS
    SELECT m.matrixId, m.matrixType, m.gridsetId, m.matrixDlocation, 
-          m.layerIndices, m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
+          m.columnIndices, m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
           g.userId, g.name, g.metadataUrl, g.layerId, 
           g.siteIndices, g.dlocation, g.epsgcode, g.metadata, g.modTime
    FROM lm_v3.matrix m, lm_v3.gridset g

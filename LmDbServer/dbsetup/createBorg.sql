@@ -399,7 +399,7 @@ create table lm_v3.Matrix
    matrixType int NOT NULL,
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    matrixDlocation text,
-   layerIndices text,
+   columnIndices text,
    metadataUrl text UNIQUE,
    metadata text,
    status int,
