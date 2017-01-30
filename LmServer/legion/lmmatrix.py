@@ -66,7 +66,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
       @param metadata: dictionary of metadata using Keys defined in superclasses
       @param dlocation: file location of the array
-      @param layerIndicesFilename: file location of layer indices
+      @param columnIndicesFilename: file location of layer indices
       @param gridset: parent gridset of this MatrixupdateModtime
       """
       self._gridset = gridset
@@ -86,6 +86,21 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       ProcessObject.__init__(self, objId=matrixId, processType=processType,
                              parentId=gridsetId, 
                              status=status, statusModTime=statusModTime)       
+
+# ...............................................
+   @classmethod
+   def initFromParts(cls, baseMtx, gridset=None, 
+                     processType=None, metadataUrl=None, userId=None,
+                     status=None, statusModTime=None):
+      mtxobj = LMMatrix(None, matrixType=baseMtx.matrixType, 
+                        processType=processType, metadata=baseMtx.mtxMetadata,
+                        dlocation=baseMtx.getDLocation(), 
+                        columnIndices=baseMtx.getColumnIndices(),
+                        columnIndicesFilename=baseMtx.getColumnIndicesFilename(),
+                        metadataUrl=metadataUrl, userId=userId, gridset=gridset, 
+                        matrixId=baseMtx.getMatrixId(), status=baseMtx.status, 
+                        statusModTime=baseMtx.statusModTime)
+      return mtxobj
 
    # ...............................................
    def updateStatus(self, status=None, metadata=None, modTime=None):

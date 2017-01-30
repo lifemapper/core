@@ -78,6 +78,10 @@ class Matrix(object):
       pass
    
 # .............................................................................
+   def getMatrixId(self):
+      return self._matrixId
+
+# .............................................................................
    def readData(self, filename=None):
       # filename overrides dlocation
       if filename is not None:
@@ -281,5 +285,7 @@ class Matrix(object):
       self._columnIndices = indices
       
    def getColumnIndicesFilename(self):
-      return self._layerIndicesFilename
+      return self._columnIndicesFilename
       
+   def getColumnIndices(self):
+      return self._columnIndices

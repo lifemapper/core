@@ -25,7 +25,7 @@ import mx.DateTime
 import os 
    
 from LmCommon.common.lmconstants import JobStatus, ProcessType
-
+from LmCommon.common.matrix import Matrix
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
@@ -41,7 +41,7 @@ from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import Matrix
+from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn, MatrixRaster, MatrixVector
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.envlayer import EnvType, EnvLayer
@@ -245,28 +245,38 @@ class Borg(DbPostgresql):
       return grdset
    
 # ...............................................
-   def _createMatrix(self, row, idxs):
+   def _createBaseMatrix(self, row, idxs):
       """
-      @summary: Create a Matrix from a database Matrix record or lm_gridset view
+      @summary: Create an LMMatrix from a database Matrix record or lm_gridset view
       """
       mtx = None
       if row is not None:
-         grdset = self._createGridset(row, idxs)
          mtxid = self._getColumnValue(row, idxs, ['matrixid'])
          mtype = self._getColumnValue(row, idxs, ['matrixtype'])
-         usr = self._getColumnValue(row, idxs, ['userid'])
          dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
-         lyridxs = self._getColumnValue(row, idxs, 
-                                        ['mtxlayerindices', 'layerindices'])
-         murl = self._getColumnValue(row, idxs, ['mtxmetadataurl', 'metadataurl'])
+         colidxs = self._getColumnValue(row, idxs, 
+                                        ['mtxcolumnindices', 'columnindices'])
          meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
+         mtx = Matrix(None, matrixType=mtype, metadata=meta, dlocation=dloc, 
+                      columnIndicesFilename=colidxs, matrixId=mtxid)
+      return mtx
+
+# ...............................................
+   def _createLMMatrix(self, row, idxs):
+      """
+      @summary: Create an LMMatrix from a database Matrix record or lm_gridset view
+      """
+      mtx = None
+      if row is not None:
+         baseMtx = self._createBaseMatrix(row, idxs)
+         grdset = self._createGridset(row, idxs)
+         usr = self._getColumnValue(row, idxs, ['userid'])
+         murl = self._getColumnValue(row, idxs, ['mtxmetadataurl', 'metadataurl'])
          stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
          stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 'statusmodtime'])
-         mtx = Matrix(None, matrixType=mtype, processType=None, 
-                      metadata=meta, dlocation=dloc, 
-                      layerIndicesFilename=lyridxs, metadataUrl=murl,
-                      userId=usr, gridset=grdset, matrixId=mtxid, 
-                      status=stat, statusModTime=stattime)
+         mtx = LMMatrix.initFromParts(baseMtx, gridset=grdset, processType=None, metadataUrl=None, userId=None,
+                                      metadataUrl=murl, userId=usr, 
+                                      status=stat, statusModTime=stattime)
       return mtx
    
    # ...............................................
@@ -274,6 +284,9 @@ class Borg(DbPostgresql):
       """
       Create an MatrixColumn, MatrixRaster or MatrixVector from a lm_envlayer or lm_scenlayer record in the Borg
       """
+      mtxobj = None
+      if row is not None:
+         baseMtx = self._createBaseMatrix(row, idxs)
          mtxtype = self._getColumnValue(row,idxs,['matrixtype']) 
          gridsetid = self._getColumnValue(row,idxs,['gridsetid']) 
          mtxdloc = self._getColumnValue(row,idxs,['matrixdlocation']) 
