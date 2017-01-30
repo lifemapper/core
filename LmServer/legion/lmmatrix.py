@@ -29,10 +29,8 @@ import os
 import pickle
 from types import StringType
 
-from LmCommon.common.lmconstants import (OFTInteger, OFTReal, OFTBinary, 
-                                         MatrixType)
+from LmCommon.common.lmconstants import MatrixType
 from LmCommon.common.matrix import Matrix
-from LmServer.base.lmobj import LMObject, LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMServiceType,LMServiceModule
 
@@ -45,13 +43,11 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, matrix, 
-                matrixType=None, 
+   def __init__(self, matrix, headers=None,
+                matrixType=MatrixType.PAM, 
                 processType=None,
                 metadata={},
                 dlocation=None, 
-                columnIndices=None,
-                columnIndicesFilename=None,
                 metadataUrl=None,
                 userId=None,
                 gridset=None, 
@@ -61,23 +57,24 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       @copydoc LmCommon.common.matrix.Matrix::__init__()
       @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
       @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
-      @param matrixId: dbId  for ServiceObject
-      @param matrix: numpy array
+      @param matrix: data (numpy) array for Matrix base object
       @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
       @param metadata: dictionary of metadata using Keys defined in superclasses
       @param dlocation: file location of the array
-      @param columnIndicesFilename: file location of layer indices
       @param gridset: parent gridset of this MatrixupdateModtime
+      @param matrixId: dbId  for ServiceObject
       """
+      self.matrixType = matrixType
+      self._dlocation = dlocation
+      self.mtxMetadata = {}
+      self.loadMtxMetadata(metadata)
       self._gridset = gridset
+      # parent values
       gridsetUrl = gridsetId = None
       if gridset is not None:
          gridsetUrl = gridset.metadataUrl
          gridsetId = gridset.getId()
-      Matrix.__init__(self, matrix, matrixType=matrixType, metadata=metadata,
-                      dlocation=dlocation, columnIndices=columnIndices,
-                      columnIndicesFilename=columnIndicesFilename,
-                      matrixId=matrixId)
+      Matrix.__init__(self, matrix, headers=headers)
       ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
                              moduleType=LMServiceModule.LM, 
                              metadataUrl=metadataUrl, 
@@ -142,9 +139,29 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return url
 
 # ...............................................
+   def getDLocation(self):
+      return self._dlocation
+   
+   def setDLocation(self, dlocation):
+      self._dlocation = dlocation
+
+# ...............................................
    def getGridset(self):
       return self._gridset
 
 # ...............................................
    def getShapegrid(self):
       return self._gridset.getShapegrid()   
+   
+# ...............................................
+   def dumpMtxMetadata(self, metadataDict):
+      return super(LMMatrix, self)._dumpMetadata(self.mtxMetadata)
+
+# ...............................................
+   def addMtxMetadata(self, newMetadataDict):
+      self.mtxMetadata = super(LMMatrix, self)._addMetadata(newMetadataDict, 
+                                  existingMetadataDict=self.mtxMetadata)
+
+# ...............................................
+   def loadMtxMetadata(self, newMetadata):
+      self.mtxMetadata = super(LMMatrix, self)._loadMetadata(newMetadata)

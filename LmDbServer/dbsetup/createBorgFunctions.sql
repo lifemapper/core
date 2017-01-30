@@ -275,7 +275,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertGridset(grdid int,
                                                         nm varchar,
                                                         metaurlprefix varchar,
                                                         lyrid int,
-                                                        siteidxs text,
                                                         dloc text,
                                                         epsg int,
                                                         meta varchar, 
@@ -295,10 +294,9 @@ BEGIN
    END IF;
    IF NOT FOUND THEN
       begin
-         INSERT INTO lm_v3.gridset (userId, name, layerId, siteIndices, 
+         INSERT INTO lm_v3.gridset (userId, name, layerId, 
                                     dlocation, epsgcode, metadata, modTime) 
-                             VALUES (usr, nm, lyrid, siteidxs, 
-                                     dloc, epsg, meta, mtime);
+                             VALUES (usr, nm, lyrid, dloc, epsg, meta, mtime);
          IF FOUND THEN
             -- update metadataUrl
             SELECT INTO newid last_value FROM lm_v3.gridset_gridsetid_seq;
@@ -322,7 +320,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
                                                        mtxtype int,
                                                        grdid int,
                                                        dloc text,
-                                                       colidxs text,
                                                        metaurlprefix varchar,
                                                        meta varchar, 
                                                        stat int,
@@ -344,9 +341,9 @@ BEGIN
    IF NOT FOUND THEN
       begin
          INSERT INTO lm_v3.matrix (matrixType, gridsetId, matrixDlocation, 
-                                   columnIndices, metadata, status, statusmodtime) 
+                                   metadata, status, statusmodtime) 
                            VALUES (mtxtype, grdid, dloc, 
-                                   colidxs, meta, stat, stattime);
+                                   meta, stat, stattime);
          IF FOUND THEN
             -- update metadataUrl
             SELECT INTO newid last_value FROM lm_v3.matrix_matrixid_seq;

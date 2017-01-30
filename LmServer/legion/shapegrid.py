@@ -47,11 +47,10 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
 # .............................................................................
    def __init__(self, name, userId, epsgcode, cellsides, cellsize, mapunits, bbox, 
                 siteId='siteid', siteX='centerX', siteY='centerY', size=None,
-                siteIndicesFilename=None, lyrId=None, verify=None, 
-                dlocation=None, metadata={}, resolution=None, 
-                metadataUrl=None, parentMetadataUrl=None, modTime=None,
-                featureCount=0, featureAttributes={}, features={}, fidAttribute=None,
-                status=None, statusModTime=None):
+                lyrId=None, verify=None, dlocation=None, metadata={}, 
+                resolution=None, metadataUrl=None, parentMetadataUrl=None, 
+                modTime=None, featureCount=0, featureAttributes={}, 
+                features={}, fidAttribute=None, status=None, statusModTime=None):
       """
       @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
@@ -67,8 +66,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       @param size: Total number of cells in shapegrid
       """
       # siteIndices are a dictionary of {siteIndex: (FID, centerX, centerY)}
+      # created from the data file and passed to LmCommon.common.Matrix for headers
       self._siteIndices = None
-      self._siteIndicesFilename = siteIndicesFilename
       # field with unique values identifying each site
       self.siteId = siteId
       # field with longitude of the centroid of a site
@@ -134,28 +133,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                                     metadata=metadata, modTime=modTime)
 
 # ...............................................
-   def readIndices(self, indicesFilename=None):
-      """
-      @summary Fill the siteIndices from existing file
-      """
-      indices = None
-      if indicesFilename is None:
-         indicesFilename = self._siteIndicesFilename
-      if isinstance(indicesFilename, StringType) and os.path.exists(indicesFilename):
-         try:
-            f = open(indicesFilename, 'r')
-            indices = pickle.load(f)
-         except:
-            raise LMError('Failed to read indices {}'.format(indicesFilename))
-         finally:
-            f.close()
-      self._siteIndices = indices
-      
-
-   def getSiteIndicesFilename(self):
-      return self._siteIndicesFilename
-
-# ...............................................
    def _createMapPrefix(self):
       """
       @summary: Construct the endpoint of a Lifemapper WMS URL for 
@@ -198,15 +175,15 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    def size(self):
       return self._size
             
-# ...............................................
-   def initSitesPresent(self):
-      sitesPresent = {}
-      if self._siteIndices is None:
-         self.setSiteIndices()
-      if self._siteIndices is not None:
-         for s in self._siteIndices.keys():
-            sitesPresent[s] = True
-      return sitesPresent
+# # ...............................................
+#    def initSitesPresent(self):
+#       sitesPresent = {}
+#       if self._siteIndices is None:
+#          self.setSiteIndices()
+#       if self._siteIndices is not None:
+#          for s in self._siteIndices.keys():
+#             sitesPresent[s] = True
+#       return sitesPresent
    
 # ...............................................
    def setSiteIndices(self):

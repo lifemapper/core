@@ -328,7 +328,6 @@ create table lm_v3.ShapeGrid
    idAttribute varchar(20),
    xAttribute varchar(20),
    yAttribute varchar(20),
-   siteIndices text,
    status int,
    statusModTime double precision,
    PRIMARY KEY (layerid)
@@ -361,9 +360,8 @@ create table lm_v3.Gridset
    name varchar(100) NOT NULL,
    metadataUrl text UNIQUE,
    
-   -- Must have shapegrid or siteIndices (siteId, centerX, centerY)
+   -- optional shapegrid 
    layerId int REFERENCES lm_v3.ShapeGrid,
-   siteIndices text,
    
    -- Optional metadata and configuration file for initArchive and archivist workflow
    dlocation text,
@@ -399,7 +397,6 @@ create table lm_v3.Matrix
    matrixType int NOT NULL,
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
    matrixDlocation text,
-   columnIndices text,
    metadataUrl text UNIQUE,
    metadata text,
    status int,

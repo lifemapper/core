@@ -153,28 +153,6 @@ class Gridset(ServiceObject):
       return self._path
 
 # ...............................................
-   def readIndices(self, indicesFilename=None):
-      """
-      @summary Fill the siteIndices from existing file
-      """
-      indices = None
-      if indicesFilename is None:
-         indicesFilename = self._siteIndicesFilename
-      if isinstance(indicesFilename, StringType) and os.path.exists(indicesFilename):
-         try:
-            f = open(indicesFilename, 'r')
-            indices = pickle.load(f)
-         except:
-            raise LMError('Failed to read indices {}'.format(indicesFilename))
-         finally:
-            f.close()
-      self._siteIndices = indices
-      
-
-   def getSiteIndicesFilename(self):
-      return self._siteIndicesFilename
-
-# ...............................................
    def setMatrix(self, mtxType, mtxFileOrObj=None, doRead=False):
       """
       @summary Fill a Matrix object from Matrix or existing file

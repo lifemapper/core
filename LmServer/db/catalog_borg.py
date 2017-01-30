@@ -232,35 +232,15 @@ class Borg(DbPostgresql):
          usr = self._getColumnValue(row, idxs, ['userid'])
          name = self._getColumnValue(row, idxs, ['grdname', 'name'])
          murl = self._getColumnValue(row, idxs, ['grdmetadataurl', 'metadataurl'])
-         siteidxsdloc = self._getColumnValue(row, idxs, 
-                                 ['grdsiteindices', 'siteindices'])
          dloc = self._getColumnValue(row, idxs, ['grddlocation', 'dlocation'])
          epsg = self._getColumnValue(row, idxs, ['grdepsgcode', 'epsgcode'])
          meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
          mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
          grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
-                          shapeGridId=shpId, siteIndicesFilename=siteidxsdloc, 
-                          configFilename=dloc, epsgcode=epsg, userId=usr, 
+                          shapeGridId=shpId, configFilename=dloc, epsgcode=epsg, userId=usr, 
                           gridsetId=grdid, metadataUrl=murl, modTime=mtime)
       return grdset
    
-# ...............................................
-   def _createBaseMatrix(self, row, idxs):
-      """
-      @summary: Create an LMMatrix from a database Matrix record or lm_gridset view
-      """
-      mtx = None
-      if row is not None:
-         mtxid = self._getColumnValue(row, idxs, ['matrixid'])
-         mtype = self._getColumnValue(row, idxs, ['matrixtype'])
-         dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
-         colidxs = self._getColumnValue(row, idxs, 
-                                        ['mtxcolumnindices', 'columnindices'])
-         meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
-         mtx = Matrix(None, matrixType=mtype, metadata=meta, dlocation=dloc, 
-                      columnIndicesFilename=colidxs, matrixId=mtxid)
-      return mtx
-
 # ...............................................
    def _createLMMatrix(self, row, idxs):
       """
@@ -268,15 +248,18 @@ class Borg(DbPostgresql):
       """
       mtx = None
       if row is not None:
-         baseMtx = self._createBaseMatrix(row, idxs)
          grdset = self._createGridset(row, idxs)
+         mtxid = self._getColumnValue(row, idxs, ['matrixid'])
+         mtype = self._getColumnValue(row, idxs, ['matrixtype'])
+         dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
+         meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
          usr = self._getColumnValue(row, idxs, ['userid'])
          murl = self._getColumnValue(row, idxs, ['mtxmetadataurl', 'metadataurl'])
          stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
          stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 'statusmodtime'])
-         mtx = LMMatrix.initFromParts(baseMtx, gridset=grdset, processType=None, metadataUrl=None, userId=None,
-                                      metadataUrl=murl, userId=usr, 
-                                      status=stat, statusModTime=stattime)
+         mtx = LMMatrix(None, matrixType=mtype, metadata=meta, dlocation=dloc, 
+                        metadataUrl=murl, userId=usr, gridset=grdset, 
+                        matrixId=mtxid, status=stat, statusModTime=stattime)
       return mtx
    
    # ...............................................
@@ -430,8 +413,6 @@ class Borg(DbPostgresql):
                      siteX = self._getColumnValue(row,idxs,['xattribute']), 
                      siteY = self._getColumnValue(row,idxs,['yattribute']), 
                      size = self._getColumnValue(row,idxs,['vsize']),
-                     siteIndicesFilename = self._getColumnValue(row,idxs,
-                                       ['shpgrdsiteindices', 'siteindices']),
                      # todo: will these ever be accessed without 'shpgrd' prefix?
                      status = self._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
                      statusModTime = self._getColumnValue(row,idxs,
@@ -664,7 +645,6 @@ class Borg(DbPostgresql):
                                                          grdset.name,
                                                          grdset.metadataUrl,
                                                          grdset.shapeGridId,
-                                                         grdset.getSiteIndicesFilename(),
                                                          grdset.configFilename,
                                                          grdset.epsgcode,
                                                          meta,
@@ -1164,8 +1144,8 @@ class Borg(DbPostgresql):
       meta = mtx.dumpMtxMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix', 
                      mtx.getId(), mtx.matrixType, mtx.parentId, 
-                     mtx.getDLocation(), mtx.getLayerIndicesFilename(),
-                     mtx.metadataUrl, meta, mtx.status, mtx.statusModTime)
+                     mtx.getDLocation(), mtx.metadataUrl, meta, mtx.status, 
+                     mtx.statusModTime)
       newOrExistingMtx = self._createMatrix(row, idxs)
       return newOrExistingMtx
 
