@@ -154,7 +154,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return self._gridset.getShapegrid()   
    
 # ...............................................
-   def dumpMtxMetadata(self, metadataDict):
+   def dumpMtxMetadata(self):
       return super(LMMatrix, self)._dumpMetadata(self.mtxMetadata)
 
 # ...............................................

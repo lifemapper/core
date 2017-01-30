@@ -290,7 +290,7 @@ BEGIN
    IF grdid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_gridset WHERE gridsetid = grdid;
    ELSE
-      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE userid = usr AND name = nm;
+      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE userid = usr AND grdname = nm;
    END IF;
    IF NOT FOUND THEN
       begin

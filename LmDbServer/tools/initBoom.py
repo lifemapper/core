@@ -28,9 +28,7 @@ import os
 # # TODO: These should be included in the package of data
 # import LmDbServer.tools.charlieMetaExp3 as META
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, 
-         USER_OCCURRENCE_DATA, DEFAULT_MODEL_SCENARIO, 
-         DEFAULT_PROJECTION_SCENARIOS)
+         SCENARIO_PACKAGE, DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE, 
@@ -51,7 +49,7 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import Matrix            
+from LmServer.legion.lmmatrix import LMMatrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 
@@ -129,7 +127,7 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
    # "Global" PAM
    meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
            ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
-   gpam = Matrix(None, matrixType=MatrixType.PAM, metadata=meta,
+   gpam = LMMatrix(None, matrixType=MatrixType.PAM, metadata=meta,
                  userId=usr, gridset=updatedGrdset,
                  status=JobStatus.GENERAL, statusModTime=CURR_MJD)
    updatedGpam = scribe.findOrInsertMatrix(gpam)

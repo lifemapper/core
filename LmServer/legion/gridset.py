@@ -70,8 +70,6 @@ class Gridset(ServiceObject):
             userId = shapeGrid.getUserId()
          if shapeGridId is None:
             shapeGridId = shapeGrid.getId()
-         if siteIndicesFilename is None:
-            siteIndicesFilename = shapeGrid.getSiteIndicesFilename()
          if epsgcode is None:
             epsgcode = shapeGrid.epsgcode
          elif epsgcode != shapeGrid.epsgcode:
@@ -86,8 +84,6 @@ class Gridset(ServiceObject):
       self.loadGrdMetadata(metadata)
       self._shapeGrid = shapeGrid
       self._shapeGridId = shapeGridId
-      self._siteIndicesFilename = siteIndicesFilename
-      self._siteIndices = None
       self.configFilename = configFilename
       self._setEPSG(epsgcode)
       # Optional Matrices
