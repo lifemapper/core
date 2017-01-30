@@ -26,7 +26,7 @@
           02110-1301, USA.
 @todo: Use https://docs.scipy.org/doc/numpy/user/basics.subclassing.html when
           changing this to subclass numpy.ndarray
-@todo: Handle multiple rows / columns / etc of metadata (like PAM x, y, site ids)
+@todo: Handle multiple rows / columns / etc of headers (like PAM x, y, site ids)
 @todo: Consider adding constants for easy reference to rows and columns
 @note: Not tested.  First iteration
 """
@@ -35,21 +35,21 @@ import json
 import numpy as np
 import os
 
-METADATA_KEY = 'metadata'
+HEADERS_KEY = 'headers'
 DATA_KEY = 'data'
 
 # .............................................................................
 class Matrix(object):
    """
-   @summary: Lifemapper wrapper for Numpy ndarrays that adds metadata
+   @summary: Lifemapper wrapper for Numpy ndarrays that adds headers
    """
    # ...........................
-   def __init__(self, mtx, metadata=None):
+   def __init__(self, mtx, headers=None):
       """
       @summary: Constructor
       @param mtx: A matrix (like) object to use as the base data for the Matrix.
                      This can be None if the data has not been initialized
-      @param metadata: Optional headers for this matrix.  This may be either a
+      @param headers: Optional headers for this matrix.  This may be either a
                           list of lists, where the index of a list in the lists 
                           will be treated as the axis 
                           (ex. [['Row 1', 'Row 2', 'Row 3'], 
@@ -64,9 +64,9 @@ class Matrix(object):
                 treated as a file name
       """
       self.data = mtx
-      self.metadata = None
-      if metadata is not None:
-         self.setMetadata(metadata)
+      self.headers = None
+      if headers is not None:
+         self.setHeaders(headers)
       
    # ...........................
    @classmethod
@@ -77,81 +77,12 @@ class Matrix(object):
       """
       pass
    
-# .............................................................................
-   def getMatrixId(self):
-      return self._matrixId
-
-# .............................................................................
-   def readData(self, filename=None):
-      # filename overrides dlocation
-      if filename is not None:
-         self._dlocation = filename
-      if os.path.exists(self._dlocation):
-         try:
-            data = np.load(self._dlocation)
-         except Exception, e:
-            raise Exception('Matrix File {} is not readable by numpy'
-                            .format(self._dlocation))
-         if (isinstance(data, np.ndarray) and data.ndim == 2):
-            self._matrix = data 
-         else:
-            raise Exception('Matrix File {} does not contain a 2 dimensional array'
-                            .format(self._dlocation))
-      else:
-         raise Exception('Matrix File {} does not exist'.format(self._dlocation))
-
-# ...............................................
-   def dumpMtxMetadata(self, metadataDict):
-      metadataStr = None
-      if metadataDict:
-         metadataStr = json.dumps(metadataDict)
-      return metadataStr
-
-# ...............................................
-   def addMtxMetadata(self, newMetadataDict):
-      for key, val in newMetadataDict.iteritems():
-         try:
-            existingVal = self.mtxMetadata[key]
-         except:
-            self.mtxMetadata[key] = val
-         else:
-            # if metadata exists and is ...
-            if type(existingVal) is list: 
-               # a list, add to it
-               if type(val) is list:
-                  newVal = list(set(existingVal.extend(val)))
-                  self.mtxMetadata[key] = newVal
-                  
-               else:
-                  newVal = list(set(existingVal.append(val)))
-                  self.mtxMetadata[key] = newVal
-            else:
-               # not a set, replace it
-               self.mtxMetadata[key] = val
-
-# ...............................................
-   def loadMtxMetadata(self, newMetadata):
-      """
-      @note: Adds to dictionary or modifies values for existing keys
-      """
-      objMetadata = {}
-      if newMetadata is not None:
-         if type(newMetadata) is dict: 
-            objMetadata = newMetadata
-         else:
-            try:
-               objMetadata = json.loads(newMetadata)
-            except Exception, e:
-               print('Failed to load JSON object from type {} object {}'
-                     .format(type(newMetadata), newMetadata))
-      self.mtxMetadata = objMetadata
-      
    # ...........................
    @classmethod
    def loadFromJsonOrDictionary(cls, obj):
-      metadata = obj[METADATA_KEY]
+      headers = obj[HEADERS_KEY]
       data = np.array(obj[DATA_KEY])
-      return cls(data, metadata=metadata)
+      return cls(data, headers=headers)
    
    # ...........................
    @classmethod
@@ -161,21 +92,21 @@ class Matrix(object):
                    Matrix object
       @param mtxList: A List of Matrix objects to concatenate together
       @param axis: The axis to concatenate these Matrix objects on
-      @note: Assumes that metadata for other axes are the same
+      @note: Assumes that headers for other axes are the same
       """
       mtxObjs = []
-      axisMetadata = []
+      axisHeaders = []
       for mtx in mtxList:
-         axisMetadata.append(mtx.getMetadata(axis=axis))
+         axisHeaders.append(mtx.getHeaders(axis=axis))
          mtxObjs.extend(mtx.data)
       # Create a new data matrix
       # TODO: Consider adding capability to append on new axis
       newData = np.concatenate(mtxObjs, axis=axis)
-      # Use the first Matrix's metadata as the base
-      newMetadata = mtxList[0].getMetadata()
-      # Replace the axis of metadata with the concatenated version
-      newMetadata[axis] = axisMetadata
-      return cls(newData, metadata=newMetadata)
+      # Use the first Matrix's headers as the base
+      newHeaders = mtxList[0].getHeaders()
+      # Replace the axis of headers with the concatenated version
+      newHeaders[axis] = axisHeaders
+      return cls(newData, headers=newHeaders)
    
    # ...........................
    def append(self, mtx, axis=0):
@@ -183,39 +114,39 @@ class Matrix(object):
       @summary: Appends the provided Matrix object to this one
       @param mtx: The Matrix object to append to this one
       @param axis: The axis to append this matrix on
-      @note: Only keeps the metadata for the append axis, assumes the other 
+      @note: Only keeps the headers for the append axis, assumes the other 
                 axes are the same
       """
       self.data = np.append(self.data, mtx, axis=axis)
-      self.metadata[axis].append(mtx.getMetadata(axis=axis))
+      self.headers[axis].append(mtx.getHeaders(axis=axis))
    
    # ...........................
-   def getColumnMetadata(self):
+   def getColumnHeaders(self):
       """
-      @summary: Shortcut to get column metadata
-      @todo: Throw a different exception if no column metadat?
+      @summary: Shortcut to get column headers
+      @todo: Throw a different exception if no column header?
       """
-      return self.getMetadata(axis=1)
+      return self.getHeaders(axis=1)
    
    # ...........................
-   def getMetadata(self, axis=None):
+   def getHeaders(self, axis=None):
       """
-      @summary: Get the metadata associated with this Matrix, optionally 
+      @summary: Get the headers associated with this Matrix, optionally 
                    limited to a specific axis
-      @param axis: If provided, return metadata for this axis, else, return all
+      @param axis: If provided, return headers for this axis, else, return all
       """
       if axis is None:
-         return self.metadata
+         return self.headers
       else:
-         return self.metadata[axis]
+         return self.headers[axis]
    
    # ...........................
-   def getRowMetadata(self):
+   def getRowHeaders(self):
       """
-      @summary: Shortcut to get row metadata
-      @todo: Throw a different exception if no row metadata?
+      @summary: Shortcut to get row headers
+      @todo: Throw a different exception if no row headers?
       """
-      return self.getMetadata(axis=0)
+      return self.getHeaders(axis=0)
    
    # ...........................
    def save(self, flo):
@@ -225,58 +156,58 @@ class Matrix(object):
       @param flo: The file-like object to write to
       """
       writeObj = {}
-      writeObj[METADATA_KEY] = self.metadata
+      writeObj[HEADERS_KEY] = self.headers
       writeObj[DATA_KEY] = self.data.tolist()
       
       json.dump(writeObj, flo, indent=3)
    
    # ...........................
-   def setColumnMetadata(self, metadata):
+   def setColumnHeaders(self, headers):
       """
-      @summary: Shortcut to set column metadata
+      @summary: Shortcut to set column headers
       """
-      self.setMetadata(metadata, axis=1)
+      self.setHeaders(headers, axis=1)
    
    # ...........................
-   def setMetadata(self, metadata, axis=None):
+   def setHeaders(self, headers, axis=None):
       """
-      @summary: Set the metadata for this Matrix, optionally for a specific axis
-      @param metadata: Matrix metadata.  Can be a list of lists, a dictionary
+      @summary: Set the headers for this Matrix, optionally for a specific axis
+      @param headers: Matrix headers.  Can be a list of lists, a dictionary
                           of lists, or if axis is provided, a single list
-      @param axis: If provided, set the metadata for a specific axis, else, 
+      @param axis: If provided, set the headers for a specific axis, else, 
                       process as if it is for the entire Matrix
       @todo: Validate input for single axis operation?
-      @note: Resets metadata dictionary when setting values for all metadata
+      @note: Resets headers dictionary when setting values for all headers
       @note: Duck types to use list of lists or dictionary to set values for
                 different axes
       """
       if axis is not None:
-         self.metadata[axis] = metadata
+         self.headers[axis] = headers
       else:
-         self.metadata = {}
+         self.headers = {}
          try:
-            metadataKeys = metadata.keys()
+            headersKeys = headers.keys()
          except: # Not a dictionary
             # Check if first item is a list
-            if isinstance(metadata[0], list):
+            if isinstance(headers[0], list):
                # Assume list of lists
-               metadataKeys = range(len(metadata))
+               headersKeys = range(len(headers))
             else:
                # Convert to a list
-               metadata = [metadata]
-               metadataKeys = [0]
+               headers = [headers]
+               headersKeys = [0]
          
          # We should have a list of keys, which could be either dictionary 
          #    keys or list indices
-         for k in metadataKeys:
-            self.metadata[k] = metadata[k]
+         for k in headersKeys:
+            self.headers[k] = headers[k]
    
    # ...........................
-   def setRowMetadata(self, metadata):
+   def setRowHeaders(self, headers):
       """
-      @summary: Shortcut to set row metadata
+      @summary: Shortcut to set row headers
       """
-      self.setMetadata(metadata, axis=0)
+      self.setHeaders(headers, axis=0)
    
    # ...........................
    def slice(self, *args):
@@ -286,17 +217,17 @@ class Matrix(object):
       @note: The first parameter will be for axis 0, second for axis 1, etc
       """
       newData = np.copy(self.data)
-      newMetadata = deepcopy(self.metadata)
+      newHeaders = deepcopy(self.headers)
       # For each arg in the list
       for i in range(len(args)):
          # Subset the data matrix
          newData = newData.take(args[i], axis=i)
-         # Subset the metadata
+         # Subset the headers
          tmp = []
          for j in args[i]:
-            tmp.append(newMetadata[j])
-         newMetadata[i] = tmp
-      return Matrix(newData, metadata=newMetadata)
+            tmp.append(newHeaders[j])
+         newHeaders[i] = tmp
+      return Matrix(newData, headers=newHeaders)
    
    # ...........................
    def writeCSV(self, flo):
@@ -317,21 +248,21 @@ class Matrix(object):
                       be output as CSV
          """
          try:
-            rowMetadata = self.metadata[0]
+            rowHeaders = self.headers[0]
          except:
-            # No row metadata
-            rowMetadata = []
+            # No row headers
+            rowHeaders = []
          
          # Start with the header row, if we have one
-         if self.metadata.has_key(1) and self.metadata[1]:
-            # Add a blank entry if we have row metadata
-            headerRow = [''] if rowMetadata else []
-            headerRow.extend(self.metadata[1])
+         if self.headers.has_key(1) and self.headers[1]:
+            # Add a blank entry if we have row headers
+            headerRow = [''] if rowHeaders else []
+            headerRow.extend(self.headers[1])
             yield headerRow
          # For each row in the data set
          for i in xrange(self.data.shape[0]):
-            # Add the row metadata if exists
-            row = [rowMetadata[i]] if rowMetadata else []
+            # Add the row headers if exists
+            row = [rowHeaders[i]] if rowHeaders else []
             # Get the data from the data array
             row.extend(self.data[i].tolist())
             yield row
@@ -341,15 +272,6 @@ class Matrix(object):
       for row in csvGenerator():
          flo.write("{0}\n".format(','.join([str(v) for v in row])))
          
-      
-   # ...........................
-   def getColumnIndicesFilename(self):
-      return self._columnIndicesFilename
-      
-   # ...........................
-   def getColumnIndices(self):
-      return self._columnIndices
-
    
    # Initialize an array
    # Update headers
