@@ -665,7 +665,7 @@ class Borg(DbPostgresql):
                                                 mtx.parentId, 
                                                 mtx.gridsetName,
                                                 mtx.getUserId())
-      fullMtx = self._createMatrix(row, idxs)
+      fullMtx = self._createLMMatrix(row, idxs)
       return fullMtx
       
 # ...............................................

@@ -505,8 +505,8 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail,
 
 # ...............................................
 if __name__ == '__main__':
-   algs=''.join(DEFAULT_ALGORITHMS)
-   allAlgs = ''.join(ALGORITHM_DATA.keys())
+   algs=','.join(DEFAULT_ALGORITHMS)
+   allAlgs = ','.join(ALGORITHM_DATA.keys())
    apiUrl = 'http://lifemapper.github.io/api.html'
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(

@@ -1228,6 +1228,7 @@ from LmServer.legion.sdmproj import SDMProjection
 from LmDbServer.pipeline.boomborg import *
 from LmDbServer.tools.archivistborg import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixRaster
 from LmServer.db.borgscribe import BorgScribe
 
@@ -1247,21 +1248,8 @@ scribe.openConnections()
 shpgrid = scribe.getShapeGrid(userId=user, lyrName=gridname, epsg=epsg)
 gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=epsg, 
                pam=None, userId=user)
-mtx = Matrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
+mtx = LMMatrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
 gpam = scribe.getMatrix(mtx)
-
-lyrid = scribe._borg._getColumnValue(row,idxs,['layerid'])
-mtxIdx = scribe._borg._getColumnValue(row,idxs,['layerid']) 
-mtxId = scribe._borg._getColumnValue(row,idxs,['layerid']) 
-usr = scribe._borg._getColumnValue(row,idxs,['layerid']) 
-coldloc = scribe._borg._getColumnValue(row,idxs,['layerid'])
-meta = scribe._borg._getColumnValue(row,idxs,['layerid']) 
-intparams = scribe._borg._getColumnValue(row,idxs,['layerid'])
-squid = scribe._borg._getColumnValue(row,idxs,['layerid']) 
-ident = scribe._borg._getColumnValue(row,idxs,['layerid'])
-mtxcolid = scribe._borg._getColumnValue(row,idxs,['layerid']) 
-stat = scribe._borg._getColumnValue(row,idxs,['layerid']) 
-stattime = scribe._borg._getColumnValue(row,idxs,['layerid'])
 
 # ...............................................
 boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,
