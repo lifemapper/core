@@ -46,7 +46,7 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import Matrix
+from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
@@ -135,7 +135,7 @@ class _LMBoomer(LMObject):
          # Get gridset for Archive "Global PAM"
          gset = Gridset(name=archiveName, shapeGrid=self.intersectGrid, 
                         epsgcode=self.epsg, pam=None, userId=self.userid)
-         mtx = Matrix(None, matrixType=MatrixType.PAM, userId=self.userid,
+         mtx = LMMatrix(None, matrixType=MatrixType.PAM, userId=self.userid,
                        gridset=gset)
          self.globalPAM = self._scribe.getMatrix(mtx)
          if self.globalPAM is None:

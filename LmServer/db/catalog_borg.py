@@ -269,7 +269,6 @@ class Borg(DbPostgresql):
       """
       mtxobj = None
       if row is not None:
-         mtx = self._createLMMatrix(row, idxs)
          mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
@@ -1075,7 +1074,7 @@ class Borg(DbPostgresql):
                      lyrid, usr, lyrverify, lyrname, lyrdloc, lyrmurl, lyrmeta, 
                      datafmt, rtype, vtype, vunits, vnodata, vmin, vmax, epsg, 
                      munits, res, bboxstr, bboxwkt, lyrmtime)
-      newOrExistingMtxLyr = self._createMatrixLayer(row, idxs)
+      newOrExistingMtxLyr = self._createMatrixColumn(row, idxs)
       return newOrExistingMtxLyr
 
 # ...............................................
