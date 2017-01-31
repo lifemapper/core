@@ -260,6 +260,10 @@ class _Layer(LMSpatialObject, ServiceObject):
          self._verify = value
 
 # ...............................................
+   def clearVerify(self):
+      self._verify = None
+
+# ...............................................
    @property
    def verify(self):
       return self._verify

@@ -423,7 +423,7 @@ class _LMBoomer(LMObject):
              (occ.status == JobStatus.COMPLETE and 
               occ.statusModTime > 0 and occ.statusModTime < self._obsoleteTime)):
             # Reset verify hash, name, count, status 
-            occ.verify = None
+            occ.clearVerify()
             occ.displayName = sciName.scientificName
             occ.queryCount = dataCount
             occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
@@ -478,9 +478,9 @@ class _LMBoomer(LMObject):
             try:
                objs = self._scribe.initOrRollbackSDMChain(self.userid, occ, self.algs, 
                               self.modelScenario, self.projScenarios, 
-                              occJobProcessType=occProcessType, 
                               mdlMask=self.modelMask, projMask=self.projMask,
-                              gridset=self.archiveGridset,
+                              occJobProcessType=occProcessType, 
+                              gridset=self.globalPAM,
                               minPointCount=self.minPointCount)
                self.log.debug('Created {} objects for occurrenceset {}'
                               .format(len(objs), occ.getId()))
@@ -1273,8 +1273,6 @@ occ = OccurrenceLayer(sciName.scientificName, user, epsg, dataCount,
                status=JobStatus.INITIALIZE, statusModTime=currtime, 
                sciName=sciName)
 occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
-# occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=user, epsg=epsg)
-
 prjs = boomer._scribe.initOrRollbackSDMProjects(occ, boomer.modelScenario, 
                boomer.projScenarios, boomer.algs[0], mdlMask=None, projMask=None, 
                modtime=currtime)
