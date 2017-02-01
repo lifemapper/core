@@ -24,29 +24,25 @@
 import mx.DateTime
 import os 
    
-from LmCommon.common.lmconstants import JobStatus, ProcessType
-from LmCommon.common.matrix import Matrix
+from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
-from LmServer.base.layerset import MapLayerSet                                  
 from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
-                  ALGORITHM_DATA, ARCHIVE_PATH, 
-                  LMServiceModule, DEFAULT_PROJECTION_FORMAT, JobFamily, 
-                  DB_STORE, ReferenceType, LM_SCHEMA_BORG)
+                                         DB_STORE, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.envlayer import EnvType, EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn, MatrixRaster, MatrixVector
-from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.legion.envlayer import EnvType, EnvLayer
-from LmServer.sdm.occlayer import OccurrenceLayer
+from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
+from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
 
 # .............................................................................
@@ -427,20 +423,23 @@ class Borg(DbPostgresql):
       """
       occ = None
       if row is not None:
-         occ = OccurrenceLayer(self._getColumnValue(row,idxs,['displayname']), 
-               occId=self._getColumnValue(row,idxs,['occurrencesetid']),
-               occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']),
-               squid=self._getColumnValue(row,idxs,['squid']),
-               verify=self._getColumnValue(row,idxs,['occverify','verify']),
-               userId=self._getColumnValue(row,idxs,['occuserid','userid']),
-               metadataUrl=self._getColumnValue(row,idxs,['occmetadataurl','metadataurl']),
-               dlocation=self._getColumnValue(row,idxs,['occdlocation','dlocation']),
+         name = self._getColumnValue(row,idxs,['displayname'])
+         usr = self._getColumnValue(row,idxs,['occuserid','userid'])
+         epsg = self._getColumnValue(row,idxs,['epsgcode']),
+         qcount = self._getColumnValue(row,idxs,['querycount'])
+         occ = OccurrenceLayer(name, usr, epsg, qcount,
+               squid=self._getColumnValue(row,idxs,['squid']), 
+               verify=self._getColumnValue(row,idxs,['occverify','verify']), 
+               dlocation=self._getColumnValue(row,idxs,['occdlocation','dlocation']), 
                rawDLocation=self._getColumnValue(row,idxs,['rawdlocation']),
-               queryCount=self._getColumnValue(row,idxs,['querycount']),
-               bbox=self._getColumnValue(row,idxs,['occbbox','bbox']),
-               epsgcode=self._getColumnValue(row,idxs,['epsgcode']),
-               status=self._getColumnValue(row,idxs,['occstatus','status']),
-               statusModTime=self._getColumnValue(row,idxs,['occstatusmodtime','statusmodtime']))
+               bbox=self._getColumnValue(row,idxs,['occbbox','bbox']), 
+               occurrenceSetId=self._getColumnValue(row,idxs,['occurrencesetid']), 
+               metadataUrl=self._getColumnValue(row,idxs,['occmetadataurl',
+                                                          'metadataurl']), 
+               occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']), 
+               status=self._getColumnValue(row,idxs,['occstatus','status']), 
+               statusModTime=self._getColumnValue(row,idxs,['occstatusmodtime',
+                                                            'statusmodtime']))
       return occ
 
 # ...............................................

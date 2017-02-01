@@ -1257,10 +1257,8 @@ boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                    minPointCount=minPoints,  
                    intersectGrid=gridname, log=log)
 
-speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
-speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
-speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
-speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+for i in range(5):
+   speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
 taxonSourceKeyVal = speciesKey
 occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE
