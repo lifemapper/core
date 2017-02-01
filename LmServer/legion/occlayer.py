@@ -25,7 +25,8 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import (LM_NAMESPACE, ProcessType)
+from LmCommon.common.lmconstants import (LM_NAMESPACE, ProcessType, 
+                                         DEFAULT_OGR_FORMAT)
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject
@@ -112,8 +113,9 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
    def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None, 
                 squid=None, verify=None, dlocation=None, rawDLocation=None,
-                lyrMetadata={}, dataFormat=None, ogrType=None, valUnits=None, 
-                valAttribute=None, nodataVal=None, minVal=None, maxVal=None, 
+                lyrMetadata={}, dataFormat=DEFAULT_OGR_FORMAT, ogrType=None, 
+                valUnits=None, valAttribute=None, 
+                nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, bbox=None, occurrenceSetId=None, 
                 serviceType=LMServiceType.OCCURRENCES, 
                 moduleType=LMServiceModule.LM,

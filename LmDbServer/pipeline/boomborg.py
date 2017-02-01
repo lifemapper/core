@@ -37,7 +37,7 @@ from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
             GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD,
-            ProcessType, JobStatus, ONE_HOUR, ONE_MIN, MatrixType) 
+            ProcessType, JobStatus, ONE_HOUR, ONE_MIN) 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import Priority, LOG_PATH
