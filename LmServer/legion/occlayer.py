@@ -113,7 +113,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
    def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None, 
                 squid=None, verify=None, dlocation=None, rawDLocation=None,
-                lyrMetadata={}, dataFormat=DEFAULT_OGR_FORMAT, ogrType=None, 
+                lyrMetadata={}, dataFormat=None, ogrType=None, 
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, bbox=None, occurrenceSetId=None, 
@@ -132,9 +132,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
       @todo: Remove count?
       @note: Vector.name is constructed in OccurrenceLayer.setId()
       """
-      # TODO: since this is raw format, is it necessary?
-      if dataFormat is None and processType == ProcessType.GBIF_TAXA_OCCURRENCE:
-         dataFormat = 'CSV'
       OccurrenceType.__init__(self, displayName, queryCount, statusModTime, 
                 userId, occurrenceSetId, metadata=occMetadata, sciName=sciName, 
                 rawDLocation=rawDLocation, processType=processType, 

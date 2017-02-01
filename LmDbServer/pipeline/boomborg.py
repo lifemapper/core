@@ -1259,6 +1259,8 @@ boomer = GBIFBoom(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 
 for i in range(5):
    speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
+   
+   
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
 taxonSourceKeyVal = speciesKey
 occProcessType = ProcessType.GBIF_TAXA_OCCURRENCE

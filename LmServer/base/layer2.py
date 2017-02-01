@@ -973,7 +973,6 @@ class Vector(_Layer):
       @param fidAttribute: Attribute containing the unique identifier or 
                     feature ID (FID) for this layer/shapefile.
       """
-      self._verifyDataDescription(ogrType, dataFormat)
       self._geomIdx = None
       self._geomFieldName = OccurrenceFieldNames.GEOMETRY_WKT[0]
       self._geomFieldType = OFTString      
@@ -2294,7 +2293,7 @@ class Vector(_Layer):
          dlocation = self._dlocation
       if dataFormat is None:
          dataFormat = self._dataFormat
-      if os.path.exists(dlocation):
+      if dlocation is not None and os.path.exists(dlocation):
          if dataFormat == DEFAULT_OGR_FORMAT:
             (thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
              featureCount) = self.readWithOGR(dlocation, dataFormat, 
