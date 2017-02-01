@@ -25,8 +25,7 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import (LM_NAMESPACE, ProcessType, 
-                                         DEFAULT_OGR_FORMAT)
+from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT)
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject
