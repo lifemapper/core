@@ -136,8 +136,8 @@ class _LMBoomer(LMObject):
          boomGridset = Gridset(name=archiveName, shapeGrid=self.intersectGrid, 
                         epsgcode=self.epsg, userId=self.userid)
          self.boomGridset = self._scribe.getGridset(boomGridset, fillMatrices=True)
-         if self.boomGridset is None:
-            raise LMError('Failed to retrieve Global PAM')
+         if self.boomGridset is None or self.boomGridset.pam is None:
+            raise LMError('Failed to retrieve Gridset or Global PAM')
 
       except Exception, e:
          if not isinstance(e, LMError):

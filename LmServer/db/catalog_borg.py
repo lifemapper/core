@@ -664,8 +664,8 @@ class Borg(DbPostgresql):
       """
       row, idxs = self.executeSelectOneFunction('lm_getGridset', 
                                                 gridset.getId(),
-                                                gridset.name,
-                                                gridset.getUserId())
+                                                gridset.getUserId(),
+                                                gridset.name)
       fullGset = self._createGridset(row, idxs)
       if fullGset is not None and fillMatrices:
          rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset',

@@ -31,10 +31,10 @@ import subprocess
 from types import StringType
 
 from LmCommon.common.lmconstants import MatrixType
-from LmServer.base.lmobj import LMError, LMObject
+from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
-from LmServer.rad.matrix import Matrix                                  
+from LmServer.legion.lmmatrix import LMMatrix                                  
 
 # .............................................................................
 class Gridset(ServiceObject):
@@ -162,7 +162,7 @@ class Gridset(ServiceObject):
             mtx = Matrix(matrixType=mtxType, dlocation=mtxFileOrObj)
             if doRead:
                mtx.readData()            
-         elif isinstance(mtxFileOrObj, Matrix):
+         elif isinstance(mtxFileOrObj, LMMatrix):
             mtx = mtxFileOrObj
             
       if mtxType == MatrixType.PAM:
