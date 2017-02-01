@@ -425,7 +425,7 @@ class Borg(DbPostgresql):
       if row is not None:
          name = self._getColumnValue(row,idxs,['displayname'])
          usr = self._getColumnValue(row,idxs,['occuserid','userid'])
-         epsg = self._getColumnValue(row,idxs,['epsgcode']),
+         epsg = self._getColumnValue(row,idxs,['epsgcode'])
          qcount = self._getColumnValue(row,idxs,['querycount'])
          occ = OccurrenceLayer(name, usr, epsg, qcount,
                squid=self._getColumnValue(row,idxs,['squid']), 

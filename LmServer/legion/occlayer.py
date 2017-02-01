@@ -113,7 +113,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
    def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None, 
                 squid=None, verify=None, dlocation=None, rawDLocation=None,
-                lyrMetadata={}, dataFormat=None, ogrType=None, 
+                lyrMetadata={}, dataFormat=DEFAULT_OGR_FORMAT, ogrType=None, 
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, bbox=None, occurrenceSetId=None, 
