@@ -29,12 +29,14 @@
 @todo: Should pruning a tree collapse clades automatically?
 """
 from copy import deepcopy
-import os
 import json
+import numpy as np
+import os
 from random import shuffle
 
 from LmCommon.common.lmconstants import FileFormats, OutputFormat, PhyloTreeKeys
-from LmCommon.encoding.newickToJson import Parser
+from LmCommon.common.matrix import Matrix
+from LmCommon.trees.convert.newickToJson import Parser
 
 # .............................................................................
 class LmTreeException(Exception):
@@ -150,6 +152,41 @@ class LmTree(object):
          return clade
       else:
          raise LmTreeException("Could not find clade: %s" % pathId)
+
+   # ..............................
+   def getDistanceMatrix(self, squidLabels=False):
+      """
+      @summary: Build a Euclidean Distance Matrix for the clades in the tree
+                   with matrix indices.  The values of each cell will be the 
+                   distance between the two clades
+      @todo: Consider expanding this method for the entire tree instead of only
+                clades with matrix indices
+      """
+      # We can ignore distance to nodes since we are not adding
+      _, distances, labelsDict = self._getDistanceDictionary(self.tree)
+      
+      numMtxIdxs = len(labelsDict.keys())
+      # Assume that the n nodes with matrix indices are continuous from zero to 
+      #    n-1
+
+      # Create a numpy matrix full of zeros
+      distMtx = np.zeros((numMtxIdxs, numMtxIdxs), dtype=float)
+      for mtxIdx1 in distances.keys():
+         for mtxIdx2 in distances[mtxIdx1].keys():
+            distMtx[mtxIdx1, mtxIdx2] = distances[mtxIdx1][mtxIdx2]
+      
+      if squidLabels:
+         labelKey = PhyloTreeKeys.SQUID
+      else:
+         labelKey = PhyloTreeKeys.NAME
+      
+      # Get labels by sorting the matrix index keys and getting the label
+      labels = [labelsDict[k][labelKey] for k in sorted(labelsDict.keys())]
+
+      # Create a Lifemapper Matrix object where the headers for both rows and 
+      #    columns are the tip labels
+      distanceMatrix = Matrix(distMtx, headers={0: labels, 1: labels})
+      return distanceMatrix
 
    # ..............................
    def getMatrixIndicesInClade(self, clade=None):
@@ -421,6 +458,60 @@ class LmTree(object):
          branchLengths.extend(self._getBranchLengths(child))
       return branchLengths
    
+   # ..............................
+   def _getDistanceDictionary(self, clade):
+      """
+      @summary: Recursively build a dictionary of distances between clades with
+                   matrix indices
+      """
+      # Initialize dictionaries
+      distanceToNodes = {}
+      distanceBetweenNodes = {}
+      labels = {}
+      
+      # Handle this node
+      if clade.has_key(PhyloTreeKeys.MTX_IDX):
+         cladeMtxIdx = clade[PhyloTreeKeys.MTX_IDX]
+         # Add entry for label
+         labels[cladeMtxIdx] = {
+            PhyloTreeKeys.SQUID : clade[PhyloTreeKeys.SQUID] \
+                    if clade.has_key(PhyloTreeKeys.SQUID) else '',
+            PhyloTreeKeys.NAME: clade[PhyloTreeKeys.NAME]
+         }
+         distanceToNodes[cladeMtxIdx] = 0.0 # Distance to self is zero
+         distanceBetweenNodes[cladeMtxIdx] = {
+            cladeMtxIdx : 0.0 # Distance to self is zero
+         }
+      
+      # Recurse into children
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         childToNodes, childBetweenNodes, \
+                  childLabels = self._getDistanceDictionary(child)
+         
+         # Update distance to nodes with these from child
+         distanceToNodes.update(childToNodes)
+
+         # Update labels
+         labels.update(childLabels)
+
+         # Add to distances between nodes
+         for k1 in distanceBetweenNodes.keys():
+            # For each in this child
+            for k2 in childBetweenNodes.keys():
+               distK1K2 = distanceToNodes[k1] + distanceToNodes[k2]
+               distanceBetweenNodes[k1][k2] = distK1K2
+               childBetweenNodes[k2][k1] = distK1K2
+
+         # Update dictionary
+         distanceBetweenNodes.update(childBetweenNodes)
+      
+      # Need to add distance to this clade on the way up the tree
+      for k in distanceToNodes.keys():
+         distanceToNodes[k] += clade[PhyloTreeKeys.BRANCH_LENGTH]
+      
+      # Check if we have a matrix index
+      return distanceToNodes, distanceBetweenNodes, labels
+
    # ..............................
    def _getLabels(self, clade):
       """

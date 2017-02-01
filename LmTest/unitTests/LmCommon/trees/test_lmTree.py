@@ -36,8 +36,8 @@ from tempfile import gettempdir
 import unittest
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
-from LmCommon.encoding.lmTree import LmTree, LmTreeException
-from LmCommon.tests.helpers.testConstants import TREES_PATH
+from LmCommon.trees.lmTree import LmTree, LmTreeException
+from LmTest.helpers.testConstants import TREES_PATH
 
 BASE_TEST_TREE = {
    "name": "0",
@@ -269,6 +269,16 @@ class TestLmTree(unittest.TestCase):
       with self.assertRaises(LmTreeException):
          clade = lmt.getClade(-9873) # Should not exist
 
+   # ............................
+   def test_get_distance_matrix(self):
+      """
+      @summary: Test that we can successfully generate a distance matrix
+      """
+      print BASE_TEST_TREE
+      lmt = LmTree(BASE_TEST_TREE)
+      mtx = lmt.getDistanceMatrix()
+      print mtx.data
+   
    # ............................
    def test_get_matrix_indices_in_existing_clade(self):
       """
