@@ -25,25 +25,23 @@ import argparse
 import mx.DateTime
 import os
 
-# # TODO: These should be included in the package of data
-# import LmDbServer.tools.charlieMetaExp3 as META
-from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         SCENARIO_PACKAGE, DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
+from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
+         SCENARIO_PACKAGE, DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE, 
                                            BISON_DATASOURCE, IDIGBIO_DATASOURCE)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                                               BISON_TSN_FILENAME, IDIG_FILENAME, 
                                               USER_OCCURRENCE_DATA)
-
 from LmServer.base.lmobj import LMError
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
+         GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
-from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
+from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
@@ -423,22 +421,11 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail,
                      gridname, grid_cellsize, grid_cellsides, 
                      mdlScen=None, prjScens=None):
    """
-   archiveName = args.archive_name
-   usr = args.user
-   usrEmail = args.email
-   envPackageName = args.environmental_metadata
-   speciesSource = args.species_source.upper()
-   minpoints = args.min_points
-   cellsize = args.grid_cellsize
-   if args.grid_shape == 'hexagon':
-      cellsides = 6
-   else:
-      cellsides = 4
    """
-   SERVER_CONFIG_FILENAME = os.getenv('LIFEMAPPER_SERVER_CONFIG_FILE') 
-   pth, temp = os.path.split(SERVER_CONFIG_FILENAME)
-   newConfigFilename = os.path.join(ENV_DATA_PATH, '{}{}'.format(envPackageName, 
-                                                       OutputFormat.CONFIG))
+   earl = EarlJr()
+   pth = earl.createDataPath(userid, LMFileType.BOOM_CONFIG)
+   newConfigFilename = os.path.join(pth, 
+                              '{}{}'.format(archiveName, OutputFormat.CONFIG))
    f = open(newConfigFilename, 'w')
    f.write('[LmServer - environment]\n')
    f.write('ARCHIVE_USER: {}\n'.format(userid))

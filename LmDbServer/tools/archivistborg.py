@@ -26,45 +26,53 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
+from LmCommon.common.lmconstants import OutputFormat
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE)
 from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import LMFileType, ARCHIVE_NAME
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import DEFAULT_CONFIG
+from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.log import ScriptLogger
 
 # .............................................................................
 class Archivist(Daemon):
    # .............................
-   def __init__(self, pidfile, log=None, envSource=None, speciesSource=None):      
+   def __init__(self, pidfile, userId, archiveName, log=None):      
       Daemon.__init__(self, pidfile, log=log)
       self.name = self.__class__.__name__.lower()
-      if envSource == DEFAULT_CONFIG:
-         from LmDbServer.common.localconstants import SCENARIO_PACKAGE
-         envSource = SCENARIO_PACKAGE
-      self.envSource = envSource
-      self.speciesSource = speciesSource
+      self.userId = userId
+      self.archiveName = archiveName
                         
    # .............................
    @staticmethod
-   def getArchiveSpecificConfig(envSource=None):
+   def getArchiveSpecificConfig(userId, archiveName):
       from LmCommon.common.config import Config
-      from LmCommon.common.lmconstants import BISON_MIN_POINT_COUNT, OutputFormat
-      from LmServer.common.lmconstants import ENV_DATA_PATH, SPECIES_DATA_PATH
+      from LmServer.common.lmconstants import SPECIES_DATA_PATH
+      
       fileList = []
-      if envSource is not None:
-         cfgfile = os.path.join(ENV_DATA_PATH, '{}.ini'.format(envSource))
-         if os.path.exists(cfgfile):
-            fileList.append(cfgfile)
+      earl = EarlJr()
+      pth = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+      archiveConfigFile = os.path.join(pth, 
+                                 '{}{}'.format(archiveName, OutputFormat.CONFIG))
+      if os.path.exists(archiveConfigFile):
+         fileList.append(archiveConfigFile)
       cfg = Config(fns=fileList)
       
       _ENV_CONFIG_HEADING = "LmServer - environment"
       _PIPELINE_CONFIG_HEADING = "LmServer - pipeline"
    
       # Environment
-      user = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
+      userCfg = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
+      if userId != userCfg:
+         raise LMError('Archive User argument {} does not match configured {}'
+                       .format(userId, userCfg))
 
       # Data Archive Pipeline
-      archiveName = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_NAME')
+      archiveNameCfg = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_NAME')
+      if archiveName != archiveNameCfg:
+         raise LMError('ArchiveName argument {} does not match configured {}'
+                       .format(archiveName, archiveNameCfg))
       try:
          datasource = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_DATASOURCE')
       except:
@@ -104,7 +112,7 @@ class Archivist(Daemon):
       gbifProv = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_PROVIDER_FILENAME')
       gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          
-      return (archiveName, user, datasource, algorithms, minPoints, 
+      return (datasource, algorithms, minPoints, 
               mdlScen, prjScens, epsg, gridname, userOccCSV, userOccMeta, 
               bisonTsnFile, idigTaxonidsFile, 
               gbifTaxFile, gbifOccFile, gbifProvFile, 
@@ -119,10 +127,11 @@ class Archivist(Daemon):
       @note: The argument to this script/daemon contains variables to override 
              installed defaults
       """
-      (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, 
+      (datasource, algorithms, minPoints, mdlScen, prjScens, 
        epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
        gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
-       speciesExpDay) = self.getArchiveSpecificConfig()
+       speciesExpDay) = self.getArchiveSpecificConfig(self.userId, 
+                                                      self.archiveName)
 
       expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay).mjd 
       try:
@@ -131,35 +140,40 @@ class Archivist(Daemon):
          taxname = None
       try:
          if datasource == 'BISON':
-            self.boomer = BisonBoom(archiveName, user, epsg, algorithms, 
-                           mdlScen, prjScens, bisonTsnFile, expdate, 
-                           taxonSourceName=taxname, mdlMask=None, prjMask=None, 
-                           minPointCount=minPoints, 
-                           intersectGrid=gridname, log=self.log)
+            self.boomer = BisonBoom(self.archiveName, self.userId, epsg, 
+                                    algorithms, mdlScen, prjScens, bisonTsnFile, 
+                                    expdate, 
+                                    taxonSourceName=taxname, mdlMask=None, 
+                                    prjMask=None, 
+                                    minPointCount=minPoints, 
+                                    intersectGrid=gridname, log=self.log)
             
          elif datasource == 'GBIF':
-            self.boomer = GBIFBoom(archiveName, user, epsg, algorithms, 
-                           mdlScen, prjScens, gbifOccFile, expdate, 
-                           taxonSourceName=taxname,
-                           providerListFile=gbifProvFile,
-                           mdlMask=None, prjMask=None, 
-                           minPointCount=minPoints,  
-                           intersectGrid=gridname, log=self.log)
+            self.boomer = GBIFBoom(self.archiveName, self.userId, epsg, 
+                                   algorithms, mdlScen, prjScens, gbifOccFile, 
+                                   expdate, 
+                                   taxonSourceName=taxname,
+                                   providerListFile=gbifProvFile,
+                                   mdlMask=None, prjMask=None, 
+                                   minPointCount=minPoints,  
+                                   intersectGrid=gridname, log=self.log)
             
          elif datasource == 'IDIGBIO':
-            self.boomer = iDigBioBoom(archiveName, user, epsg, algorithms, 
-                           mdlScen, prjScens, idigTaxonidsFile, expdate, 
-                           taxonSourceName=taxname,
-                           mdlMask=None, prjMask=None, 
-                           minPointCount=minPoints, 
-                           intersectGrid=gridname, log=self.log)
+            self.boomer = iDigBioBoom(self.archiveName, self.userId, epsg, 
+                                      algorithms, mdlScen, prjScens, 
+                                      idigTaxonidsFile, expdate, 
+                                      taxonSourceName=taxname,
+                                      mdlMask=None, prjMask=None, 
+                                      minPointCount=minPoints, 
+                                      intersectGrid=gridname, log=self.log)
    
          else:
-            self.boomer = UserBoom(archiveName, user, epsg, algorithms, 
-                           mdlScen, prjScens, userOccCSV, userOccMeta, expdate, 
-                           mdlMask=None, prjMask=None, 
-                           minPointCount=minPoints, 
-                           intersectGrid=gridname, log=self.log)
+            self.boomer = UserBoom(self.archiveName, self.userId, epsg, 
+                                   algorithms, mdlScen, prjScens, userOccCSV, 
+                                   userOccMeta, expdate, 
+                                   mdlMask=None, prjMask=None, 
+                                   minPointCount=minPoints, 
+                                   intersectGrid=gridname, log=self.log)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Archivist ({})'.format(e))
       
@@ -216,18 +230,17 @@ if __name__ == "__main__":
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-e', '--env_source', default=DEFAULT_CONFIG,
-            help=('Input config file should exist in the ENV_DATA_PATH ' +
-                  'directory and be named with the arg value and .ini extension'))
-   parser.add_argument('-s', '--species_source', default='User',
-            help=('Species source will be \'User\' for user-supplied CSV data, ' +
-                  '\'GBIF\' for GBIF-provided CSV data sorted by taxon id, ' +
-                  '\'IDIGBIO\' for a list of GBIF accepted taxon ids suitable ' +
-                  'for querying the iDigBio API'))
+   parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
+            help=('Name for the existing archive, gridset, and grid created for ' +
+                  'these data.  This name was created in initBoom.'))
+   parser.add_argument('-u', '--user', default=ARCHIVE_USER,
+            help=('Owner of this archive this archive. The default is '
+                  'ARCHIVE_USER ({}), an existing user '.format(ARCHIVE_USER) +
+                  'not requiring an email. This name was specified in initBoom.'))
 
    args = parser.parse_args()
-   envSource = args.env_source
-   speciesSource = args.species_source
+   archiveName = args.archive_name
+   userId = args.user
    if os.path.exists(BOOM_PID_FILE):
       pid = open(BOOM_PID_FILE).read().strip()
    else:
@@ -241,8 +254,7 @@ if __name__ == "__main__":
    tuple = time.localtime(secs)
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
    logger = ScriptLogger('archivist.{}'.format(timestamp))
-   boomer = Archivist(BOOM_PID_FILE, log=logger, envSource=envSource, 
-                      speciesSource=speciesSource)
+   boomer = Archivist(BOOM_PID_FILE, userId, archiveName, log=logger)
      
    if len(sys.argv) == 2:
       if sys.argv[1].lower() == 'start':

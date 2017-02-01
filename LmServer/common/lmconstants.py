@@ -337,6 +337,7 @@ class LMFileType:
    USER_ATTRIBUTE_MATRIX = 520
    USER_TREE = 530
    MF_DOCUMENT = 540
+   BOOM_CONFIG = 550
    
    # Experiment Level (maybe a pruned user-level object)
    UNSPECIFIED_RAD = 200
