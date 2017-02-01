@@ -291,6 +291,7 @@ LINE_SIZE = 3
 # Outline Width
 POLYGON_SIZE = 0.91
 
+# Gridset
 RAD_EXPERIMENT_DIR_PREFIX = 'RAD'
 
 class MapPrefix:
@@ -440,14 +441,19 @@ class LMFileType:
    
    @staticmethod
    def isUserSpace(rtype):
-      if rtype in [LMFileType.UNSPECIFIED_USER, LMFileType.OTHER_MAP, 
-                   LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SCENARIO_MAP, 
-                   LMFileType.SHAPEGRID, 
-                   LMFileType.USER_LAYER, LMFileType.USER_SHAPEGRID, 
-                   LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE]:
+      if rtype in [LMFileType.UNSPECIFIED_USER, 
+                   LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE, 
+                   LMFileType.MF_DOCUMENT, LMFileType.BOOM_CONFIG]:
          return True
       return False
          
+   @staticmethod
+   def isUserLayer(rtype):
+      if rtype in [LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID,
+                   LMFileType.USER_LAYER, LMFileType.USER_SHAPEGRID]:
+         return True
+      return False
+
    @staticmethod
    def isMap(rtype):
       if rtype in [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 
@@ -455,12 +461,6 @@ class LMFileType:
          return True
       return False
    
-   @staticmethod
-   def isUserLayer(rtype):
-      if rtype in [LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID,
-                   LMFileType.USER_LAYER, LMFileType.USER_SHAPEGRID]:
-         return True
-      return False
    
 
 

@@ -98,7 +98,7 @@ class EarlJr(LMObject):
                       gridsetId=None,
                       matrixId=None, matrixType=None, treeId=None,
                       # TODO: delete
-                      radexpId=None, isLayers=False, isMaps=False, bucketId=None):
+                      radexpId=None, bucketId=None):
       """
       @note: /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
@@ -109,11 +109,10 @@ class EarlJr(LMObject):
              /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/
                  contains computed data for RAD gridset xxx
              /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/<yyy>
-                 contains computed data for RAD experiment xxx, Matrix yyy
+                 contains computed data for RAD gridset xxx, Matrix yyy
       """
-      if (usr is None or 
-          (not isMaps and (epsg is None and occsetId is None))):
-         raise LMError('createDataPath requires userId and (maps xor occurrenceSetId xor EPSG)')
+      if usr is None :
+         raise LMError('createDataPath requires userId')
 
       pth = os.path.join(ARCHIVE_PATH, usr)
       
@@ -127,16 +126,17 @@ class EarlJr(LMObject):
          else:
             raise LMError('Need OccurrenceSetId for SDM filepath')
          
-      # General makeflow documents go directly in user directory
-      elif filetype == LMFileType.MF_DOCUMENT:
+      # General user documents go directly in user directory
+      elif LMFileType.isUserSpace(filetype):
          pass
 
-      elif isMaps:
+      elif LMFileType.isMap(filetype):
          pth = os.path.join(pth, MAP_DIR)
                         
       elif epsg is not None:    
          pthparts = [pth, str(epsg)]
-         if LMFileType.isUserSpace(filetype):
+         
+         if LMFileType.isUserLayer(filetype):
             pthparts.append(USER_LAYER_DIR)
          elif LMFileType.isRAD(filetype):
             # New
@@ -144,6 +144,7 @@ class EarlJr(LMObject):
                pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(gridsetId))
                if matrixId is not None:
                   pthparts.append(str(matrixId))
+                  
             # TODO: delete
             elif radexpId is not None:
                pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(radexpId))
@@ -166,8 +167,7 @@ class EarlJr(LMObject):
       @param lyrName: Name of the layer.
       @param ext: File extentsion of this layer.
       """
-      pth = self.createDataPath(usr, LMFileType.USER_LAYER, epsg=epsg, 
-                                isLayers=True)
+      pth = self.createDataPath(usr, LMFileType.USER_LAYER, epsg=epsg)
       lyrName = lyrName + ext
       return os.path.join(pth, lyrName)
 
@@ -266,7 +266,6 @@ class EarlJr(LMObject):
       @param usr: User database Id
       @param epsg: File or object EPSG code
       """
-      isMaps = isLayers = False
       basename = self.createBasename(ftype, scenarioCode=scenarioCode,
                   occsetId=occsetId, subset=subset, modelId=modelId, 
                   projId=projId, radexpId=radexpId, bucketId=bucketId,
@@ -274,14 +273,9 @@ class EarlJr(LMObject):
                   pamsumId=pamsumId, lyrname=lyrname, usr=usr, epsg=epsg)
       
       if pth is None:
-         if ftype in (LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 
-                      LMFileType.SDM_MAP, LMFileType.BUCKET_MAP):
-            isMaps = True
-         elif ftype in (LMFileType.ENVIRONMENTAL_LAYER, LMFileType.SHAPEGRID):
-            isLayers = True
             
          pth = self.createDataPath(usr, ftype, 
-            isMaps=isMaps, isLayers=isLayers, bucketId=bucketId,
+            bucketId=bucketId,
             epsg=epsg, occsetId=occsetId, radexpId=radexpId, 
             matrixId=matrixId, matrixType=matrixType, treeId=treeId)
          
@@ -303,11 +297,11 @@ class EarlJr(LMObject):
             pth = self.createDataPath(usr, LMFileType.SDM_MAP, 
                                       occsetId=occsetId)
          elif scencode is not None:
-            pth = self.createDataPath(usr, LMFileType.SCENARIO_MAP, isMaps=True)
+            pth = self.createDataPath(usr, LMFileType.SCENARIO_MAP)
          elif ancillary:
             pth = self._createStaticMapPath()
          else:
-            pth = self.createDataPath(usr, LMFileType.OTHER_MAP, isMaps=True)
+            pth = self.createDataPath(usr, LMFileType.OTHER_MAP)
       if not mapname.endswith(OutputFormat.MAP):
          mapname = mapname+OutputFormat.MAP
       mapfname = os.path.join(pth, mapname)
@@ -554,7 +548,6 @@ class EarlJr(LMObject):
 # ...............................................
    def _parseDataPathParts(self, parts):
       occsetId = epsg = radId = bckId = None
-      isLayers = isMaps = False
       usr = parts[0]
       rem = parts[1:]
       if len(rem) == 4:
@@ -562,8 +555,6 @@ class EarlJr(LMObject):
             occsetId = int(''.join(parts))
          except:
             pass
-      elif rem[0] == MAP_DIR:
-         isMaps = True
       else:
          # Everything else begins with epsgcode (returned as string)
          epsg = rem[0]
@@ -582,7 +573,7 @@ class EarlJr(LMObject):
                      bktId = int(rem[1])
                   except:
                      raise LMError('Invalid RAD bucket id %s' % rem[1])
-      return usr, occsetId, epsg, radId, bckId, isLayers, isMaps
+      return usr, occsetId, epsg, radId, bckId 
 
 # ...............................................
    def _parseNewDataPath(self, fullpath):
@@ -602,8 +593,6 @@ class EarlJr(LMObject):
                  contains bucket level data (pam, statistics, etc)
       """
       usr = occsetId = epsg = radId = bckId = None
-      isLayers = isMaps = False
-
       ancPth = self._createStaticMapPath()
       
       if fullpath.startswith(ancPth):
@@ -619,18 +608,16 @@ class EarlJr(LMObject):
          if last == '':
             parts = parts[:-1]
             
-         usr, occsetId, epsg, radId, bckId, isLayers, isMaps = \
-                                          self._parseDataPathParts(parts)
+         usr, occsetId, epsg, radId, bckId = self._parseDataPathParts(parts)
             
-      return usr, occsetId, epsg, radId, bckId, isLayers, isMaps
+      return usr, occsetId, epsg, radId, bckId
 
 # ...............................................
    def parseMapFilename(self, mapfname):
       fullpath, fname = os.path.split(mapfname)
       mapname, ext = os.path.splitext(fname)
 
-      usr, occsetId, epsg, radexpId, bucketId, isLayers, isMaps \
-               = self._parseNewDataPath(fullpath) 
+      usr, occsetId, epsg, radexpId, bucketId = self._parseNewDataPath(fullpath) 
       scencode, occsetId, radexpId, bucketId, usr2, ancillary, num \
                = self._parseMapname(mapname)
       if usr is None: usr = usr2
