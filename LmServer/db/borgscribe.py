@@ -211,6 +211,14 @@ class BorgScribe(LMObject):
       return fullMtx
 
 # ...............................................
+   def getGridset(self, gridset, fillMatrices=False):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getGridset()
+      """
+      existingGridset = self._borg.getGridset(gridset, fillMatrices)
+      return existingGridset
+
+# ...............................................
    def findTaxonSource(self, taxonSourceName):
       txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
@@ -224,7 +232,7 @@ class BorgScribe(LMObject):
    def getScenario(self, idOrCode, user=None, fillLayers=False):
       """
       @summary: Get and fill a scenario from its user and code or database id.   
-                If  fillLayers is true, populate the layers in the objecgt.
+                If  fillLayers is true, populate the layers in the object.
       @param idOrCode: ScenarioId or code for the scenario to be fetched.
       @param user: User id for the scenario to be fetched.
       @param fillLayers: Boolean indicating whether to retrieve and populate 
@@ -357,11 +365,22 @@ class BorgScribe(LMObject):
       return newOrExistingMtxcol
 
 # ...............................................
-   def initOrRollbackSDMProjects(self, occset, mdlScen, prjScenList, alg,  
+   def initOrRollbackSDMProjects(self, occ, mdlScen, prjScenList, alg,  
                           mdlMask=None, projMask=None, 
                           modtime=mx.DateTime.gmt().mjd, email=None):
       """
-      @summary: Initialize model, projections for inputs/algorithm.
+      @summary: Initialize or rollback existing LMArchive SDMProjection
+               dependent on this occurrenceset and algorithm.
+      @param occ: OccurrenceSet for which to initialize or rollback all 
+                  dependent objects
+      @param mdlScen: Scenario for SDM model computations
+      @param prjScenList: Scenarios for SDM project computations
+      @param alg: List of algorithm objects for SDM computations on this 
+                      OccurrenceSet
+      @param mdlMask: Layer mask for SDM model computations
+      @param projMask: Layer mask for SDM project computations
+      @param modtime: timestamp of modification, in MJD format 
+      @param email: email address for notifications 
       """
       prjs = []
       try:
@@ -373,7 +392,7 @@ class BorgScribe(LMObject):
       except:
          pmaskid = None
       for prjScen in prjScenList:
-         prj = SDMProjection(occset, alg, mdlScen, prjScen, 
+         prj = SDMProjection(occ, alg, mdlScen, prjScen, 
                         modelMaskId=mmaskid, projMaskId=pmaskid, 
                         dataFormat=DEFAULT_PROJECTION_FORMAT,
                         status=JobStatus.GENERAL, statusModTime=modtime)
@@ -386,13 +405,25 @@ class BorgScribe(LMObject):
       return prjs
 
 # ...............................................
-   def initOrRollbackSDMChain(self, usr, occ, algList, mdlScen, prjScenList, 
+   def initOrRollbackSDMChain(self, occ, algList, mdlScen, prjScenList, 
                     mdlMask=None, projMask=None,
                     occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
                     gridset=None, minPointCount=None):
       """
       @summary: Initialize or rollback existing LMArchive SDM chain 
                 (SDMProjection, Intersection) dependent on this occurrenceset.
+      @param occ: OccurrenceSet for which to initialize or rollback all 
+                  dependent objects
+      @param algList: List of algorithm objects for SDM computations on this 
+                      OccurrenceSet
+      @param mdlScen: Scenario for SDM model computations
+      @param prjScenList: Scenarios for SDM project computations
+      @param mdlMask: Layer mask for SDM model computations
+      @param projMask: Layer mask for SDM project computations
+      @param occJobProcessType: LmCommon.common.lmconstants.ProcessType for 
+                                OccurrenceSet creation 
+      @param gridset: Gridset containing Global PAM for output of intersections
+      @param minPointCount: Minimum number of points required for SDM 
       """
       objs = [occ]
       currtime = mx.DateTime.gmt().mjd
@@ -405,10 +436,10 @@ class BorgScribe(LMObject):
                               modtime=currtime)
             objs.extend(prjs)
             # Intersect if intersectGrid is provided
-            if gridset is not None:
+            if gridset is not None and gridset.pam is not None:
                mtxcols = []
                for prj in prjs:
-                  mtxcol = self.initOrRollbackIntersect(prj, gridset, currtime)
+                  mtxcol = self.initOrRollbackIntersect(prj, gridset.pam, currtime)
                   mtxcols.append(mtxcol)
                objs.extend(mtxcols)
       return objs

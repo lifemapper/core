@@ -287,17 +287,15 @@ DECLARE
    idstr varchar;
    newurl varchar;
 BEGIN
-   IF grdid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE gridsetid = grdid;
-   ELSE
-      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE userid = usr AND grdname = nm;
-   END IF;
-   IF NOT FOUND THEN
+   SELECT * INTO rec FROM lm_v3.lm_getGridset(grdid, usr, nm);
+   IF rec.gridsetid IS NULL THEN
       begin
          INSERT INTO lm_v3.gridset (userId, name, layerId, 
                                     dlocation, epsgcode, metadata, modTime) 
                              VALUES (usr, nm, lyrid, dloc, epsg, meta, mtime);
-         IF FOUND THEN
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to find or insert Gridset';
+         ELSE
             -- update metadataUrl
             SELECT INTO newid last_value FROM lm_v3.gridset_gridsetid_seq;
             idstr = cast(newid as varchar);
@@ -312,6 +310,30 @@ BEGIN
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;    
+
+-- ----------------------------------------------------------------------------
+-- Get an existing gridset
+CREATE OR REPLACE FUNCTION lm_v3.lm_getGridset(grdid int,
+                                               usr varchar, 
+                                               nm varchar)
+   RETURNS lm_v3.lm_gridset AS
+$$
+DECLARE
+   rec lm_v3.lm_gridset%rowtype;
+BEGIN
+   IF grdid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE gridsetid = grdid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.lm_gridset WHERE userid = usr AND grdname = nm;
+   END IF;
+
+   IF NOT FOUND THEN
+      RAISE NOTICE 'Gridset with id: %, user: %, name: % not found', grdid, usr, nm;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;    
+
 
 -- ----------------------------------------------------------------------------
 -- Matrix
@@ -383,6 +405,22 @@ BEGIN
                                             AND userid = usr;
    END IF;
    RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;    
+
+-- ----------------------------------------------------------------------------
+-- Gets all (bare) matrices for a gridset 
+CREATE OR REPLACE FUNCTION lm_v3.lm_getMatricesForGridset(gsid int)
+   RETURNS SETOF lm_v3.matrix AS
+$$
+DECLARE
+   rec lm_v3.matrix%rowtype;
+BEGIN
+   FOR rec IN SELECT * FROM lm_v3.Matrix WHERE gridsetId = gsid
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 

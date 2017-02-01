@@ -244,7 +244,8 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createLMMatrix(self, row, idxs):
       """
-      @summary: Create an LMMatrix from a database Matrix record or lm_gridset view
+      @summary: Create an LMMatrix from a database Matrix record, or lm_matrix,
+                lm_fullMatrix or lm_gridset view
       """
       mtx = None
       if row is not None:
@@ -265,7 +266,8 @@ class Borg(DbPostgresql):
    # ...............................................
    def _createMatrixColumn(self, row, idxs):
       """
-      Create an MatrixColumn, MatrixRaster or MatrixVector from a lm_envlayer or lm_scenlayer record in the Borg
+      @summary: Create an MatrixColumn, MatrixRaster or MatrixVector from a 
+                lm_envlayer or lm_scenlayer view
       """
       mtxobj = None
       if row is not None:
@@ -651,6 +653,27 @@ class Borg(DbPostgresql):
       updatedGrdset = self._createGridset(row, idxs)
       return updatedGrdset
       
+# ...............................................
+   def getGridset(self, gridset, fillMatrices):
+      """
+      @summary: Retrieve a Gridset from the database
+      @param gridset: Gridset to retrieve
+      @param fillMatrices: True/False indicating whether to find and attach any 
+             matrices associated with this Gridset
+      @return: Existing LmServer.legion.gridset.Gridset
+      """
+      row, idxs = self.executeSelectOneFunction('lm_getGridset', 
+                                                gridset.getId(),
+                                                gridset.name,
+                                                gridset.getUserId())
+      fullGset = self._createGridset(row, idxs)
+      if fullGset is not None and fillMatrices:
+         rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset',
+                                                     fullGset.getId())
+         for r in rows:
+            mtx = self._createLMMatrix(r, idxs)
+            fullGset.setMatrix(mtx.matrixType, mtxFileOrObj=mtx)
+      return fullGset
 
 # ...............................................
    def getMatrix(self, mtx):

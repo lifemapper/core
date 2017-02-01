@@ -23,12 +23,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import numpy
-import ogr
-import os
-import pickle
-from types import StringType
-
 from LmCommon.common.lmconstants import MatrixType
 from LmCommon.common.matrix import Matrix
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject

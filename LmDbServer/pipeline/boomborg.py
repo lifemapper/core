@@ -133,13 +133,11 @@ class _LMBoomer(LMObject):
                                              lyrName=intersectGridName,
                                              epsg=self.epsg)
          # Get gridset for Archive "Global PAM"
-         gset = Gridset(name=archiveName, shapeGrid=self.intersectGrid, 
-                        epsgcode=self.epsg, pam=None, userId=self.userid)
-         mtx = LMMatrix(None, matrixType=MatrixType.PAM, userId=self.userid,
-                       gridset=gset)
-         self.globalPAM = self._scribe.getMatrix(mtx)
-         if self.globalPAM is None:
-            raise LMError('Failed to retrieve Archive Gridset')
+         boomGridset = Gridset(name=archiveName, shapeGrid=self.intersectGrid, 
+                        epsgcode=self.epsg, userId=self.userid)
+         self.boomGridset = self._scribe.getGridset(boomGridset, fillMatrices=True)
+         if self.boomGridset is None:
+            raise LMError('Failed to retrieve Global PAM')
 
       except Exception, e:
          if not isinstance(e, LMError):
@@ -480,7 +478,7 @@ class _LMBoomer(LMObject):
                               self.modelScenario, self.projScenarios, 
                               mdlMask=self.modelMask, projMask=self.projMask,
                               occJobProcessType=occProcessType, 
-                              gridset=self.globalPAM,
+                              gridset=self.boomGridset,
                               minPointCount=self.minPointCount)
                self.log.debug('Created {} objects for occurrenceset {}'
                               .format(len(objs), occ.getId()))

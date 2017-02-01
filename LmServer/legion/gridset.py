@@ -87,6 +87,9 @@ class Gridset(ServiceObject):
       self.configFilename = configFilename
       self._setEPSG(epsgcode)
       # Optional Matrices
+      self._pam = None
+      self._grim = None
+      self._biogeo = None
       self.setMatrix(MatrixType.PAM, mtxFileOrObj=pam)
       self.setMatrix(MatrixType.GRIM, mtxFileOrObj=grim)
       self.setMatrix(MatrixType.BIOGEO_HYPOTHESES, mtxFileOrObj=biogeo)
@@ -169,6 +172,18 @@ class Gridset(ServiceObject):
       elif mtxType == MatrixType.BIOGEO_HYPOTHESES:
          self._biogeo = mtx
                   
+   @property
+   def pam(self):
+      return self._pam
+
+   @property
+   def grim(self):
+      return self._grim
+
+   @property
+   def biogeographicHypotheses(self):
+      return self._biogeo
+
 # ................................................
    def createLayerShapefileFromMatrix(self, shpfilename, isPresenceAbsence=True):
       """
