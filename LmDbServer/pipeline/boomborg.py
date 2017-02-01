@@ -474,7 +474,7 @@ class _LMBoomer(LMObject):
             # Create jobs for Archive Chain; 'reset' to existing occset will be 
             # saved here
             try:
-               objs = self._scribe.initOrRollbackSDMChain(self.userid, occ, self.algs, 
+               objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
                               self.modelScenario, self.projScenarios, 
                               mdlMask=self.modelMask, projMask=self.projMask,
                               occJobProcessType=occProcessType, 
@@ -794,7 +794,7 @@ class UserBoom(_LMBoomer):
          # Create jobs for Archive Chain: occurrence population, 
          # model, projection, and (later) intersect computation
          if occ is not None:
-            objs = self._scribe.initOrRollbackSDMChain(self.userid, occ, self.algs, 
+            objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
                                  self.modelScenario, self.projScenarios, 
                                  mdlMask=self.modelMask, projMask=self.projMask,
                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
@@ -1289,7 +1289,7 @@ occ = boomer._createOrResetOccurrenceset(taxonName, None,
                                        ProcessType.USER_TAXA_OCCURRENCE,
                                        dataCount, data=dataChunk)
 
-jobs = boomer._scribe.initOrRollbackSDMChain(boomer.userid, occ, boomer.algs, 
+jobs = boomer._scribe.initOrRollbackSDMChain(occ, boomer.algs, 
                           boomer.modelScenario, 
                           boomer.projScenarios, 
                           occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
