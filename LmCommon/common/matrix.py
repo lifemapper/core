@@ -33,7 +33,6 @@
 from copy import deepcopy
 import json
 import numpy as np
-import os
 
 HEADERS_KEY = 'headers'
 DATA_KEY = 'data'
