@@ -34,7 +34,7 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS,
          DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
          SPECIES_EXP_YEAR, SPECIES_EXP_MONTH, SPECIES_EXP_DAY)
 
-from LmDbServer.pipeline.boom import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
+from LmDbServer.boom.boomOld import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
 from LmServer.base.lmobj import LMError
 from LmServer.common.localconstants import ARCHIVE_USER, DATASOURCE
 

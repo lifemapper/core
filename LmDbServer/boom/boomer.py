@@ -28,7 +28,7 @@ import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import OutputFormat
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE)
-from LmDbServer.pipeline.boomborg import BisonBoom, GBIFBoom, iDigBioBoom, UserBoom
+from LmDbServer.boom.chain import BisonChainer, GBIFChainer, iDigBioChainer, UserChainer
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType, ARCHIVE_NAME
 from LmServer.base.lmobj import LMError
@@ -140,7 +140,7 @@ class Archivist(Daemon):
          taxname = None
       try:
          if datasource == 'BISON':
-            self.boomer = BisonBoom(self.archiveName, self.userId, epsg, 
+            self.boomer = BisonChainer(self.archiveName, self.userId, epsg, 
                                     algorithms, mdlScen, prjScens, bisonTsnFile, 
                                     expdate, 
                                     taxonSourceName=taxname, mdlMask=None, 
@@ -149,7 +149,7 @@ class Archivist(Daemon):
                                     intersectGrid=gridname, log=self.log)
             
          elif datasource == 'GBIF':
-            self.boomer = GBIFBoom(self.archiveName, self.userId, epsg, 
+            self.boomer = GBIFChainer(self.archiveName, self.userId, epsg, 
                                    algorithms, mdlScen, prjScens, gbifOccFile, 
                                    expdate, 
                                    taxonSourceName=taxname,
@@ -159,7 +159,7 @@ class Archivist(Daemon):
                                    intersectGrid=gridname, log=self.log)
             
          elif datasource == 'IDIGBIO':
-            self.boomer = iDigBioBoom(self.archiveName, self.userId, epsg, 
+            self.boomer = iDigBioChainer(self.archiveName, self.userId, epsg, 
                                       algorithms, mdlScen, prjScens, 
                                       idigTaxonidsFile, expdate, 
                                       taxonSourceName=taxname,
@@ -168,7 +168,7 @@ class Archivist(Daemon):
                                       intersectGrid=gridname, log=self.log)
    
          else:
-            self.boomer = UserBoom(self.archiveName, self.userId, epsg, 
+            self.boomer = UserChainer(self.archiveName, self.userId, epsg, 
                                    algorithms, mdlScen, prjScens, userOccCSV, 
                                    userOccMeta, expdate, 
                                    mdlMask=None, prjMask=None, 
@@ -239,11 +239,14 @@ if __name__ == "__main__":
             help=('Owner of this archive this archive. The default is '
                   'ARCHIVE_USER ({}), an existing user '.format(ARCHIVE_USER) +
                   'not requiring an email. This name was specified in initBoom.'))
+   parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
+              help="The action that should be performed by the Boomer daemon")
+
    """
    $PYTHON LmDbServer/tools/archivistborg.py --help
    
    $PYTHON LmDbServer/tools/archivistborg.py -n "Aimee test archive" \
-                                        -u aimee
+                                             -u aimee
    """
    args = parser.parse_args()
    archiveName = args.archive_name

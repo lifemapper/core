@@ -35,7 +35,7 @@ from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE,
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                                               BISON_TSN_FILENAME, IDIG_FILENAME, 
                                               USER_OCCURRENCE_DATA)
-from LmDbServer.tools.archivistborg import Archivist
+from LmDbServer.boom.boomer import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
