@@ -1174,7 +1174,7 @@ class iDigBioChainer(_LMChainer):
 if __name__ == "__main__":
    from LmDbServer.boom.boom import Archivist
    from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-   (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens,  
+   (user, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens,  
     epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
     gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
     speciesExpDay) = Archivist.getArchiveSpecificConfig()

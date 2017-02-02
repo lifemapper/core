@@ -28,11 +28,12 @@ import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import OutputFormat
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE)
-from LmDbServer.boom.sdmchainer import BisonChainer, GBIFChainer, iDigBioChainer, UserChainer
+from LmDbServer.boom.sdmchainer import (BisonChainer, GBIFChainer, 
+                                        iDigBioChainer, UserChainer)
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import LMFileType, ARCHIVE_NAME
+from LmServer.common.lmconstants import LMFileType
 from LmServer.base.lmobj import LMError
-from LmServer.common.localconstants import ARCHIVE_USER
+# from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.log import ScriptLogger
 
 # .............................................................................
@@ -46,7 +47,7 @@ class Archivist(Daemon):
                         
    # .............................
    @staticmethod
-   def getArchiveSpecificConfig(userId, archiveName):
+   def getArchiveSpecificConfig(userId=None, archiveName=None):
       from LmCommon.common.config import Config
       from LmServer.common.lmconstants import SPECIES_DATA_PATH
       
@@ -55,6 +56,7 @@ class Archivist(Daemon):
       pth = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
       archiveConfigFile = os.path.join(pth, 
                                  '{}{}'.format(archiveName, OutputFormat.CONFIG))
+      print 'Config file at {}'.format(archiveConfigFile)
       if os.path.exists(archiveConfigFile):
          fileList.append(archiveConfigFile)
       cfg = Config(fns=fileList)
@@ -62,17 +64,14 @@ class Archivist(Daemon):
       _ENV_CONFIG_HEADING = "LmServer - environment"
       _PIPELINE_CONFIG_HEADING = "LmServer - pipeline"
    
-      # Environment
       userCfg = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
-      if userId != userCfg:
-         raise LMError('Archive User argument {} does not match configured {}'
-                       .format(userId, userCfg))
-
-      # Data Archive Pipeline
       archiveNameCfg = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_NAME')
-      if archiveName != archiveNameCfg:
-         raise LMError('ArchiveName argument {} does not match configured {}'
-                       .format(archiveName, archiveNameCfg))
+      print 'Config file at {}'.format(archiveConfigFile)
+      if userId is None:
+         userId = userCfg
+      if archiveName is None:
+         archiveName = archiveNameCfg
+
       try:
          datasource = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_DATASOURCE')
       except:
@@ -112,7 +111,7 @@ class Archivist(Daemon):
       gbifProv = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_PROVIDER_FILENAME')
       gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          
-      return (datasource, algorithms, minPoints, 
+      return (userId, archiveName, datasource, algorithms, minPoints, 
               mdlScen, prjScens, epsg, gridname, userOccCSV, userOccMeta, 
               bisonTsnFile, idigTaxonidsFile, 
               gbifTaxFile, gbifOccFile, gbifProvFile, 
@@ -127,12 +126,15 @@ class Archivist(Daemon):
       @note: The argument to this script/daemon contains variables to override 
              installed defaults
       """
-      (datasource, algorithms, minPoints, mdlScen, prjScens, 
+      (userId, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens, 
        epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
        gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
        speciesExpDay) = self.getArchiveSpecificConfig(self.userId, 
                                                       self.archiveName)
-
+      # Reset attributes in case they were not sent, relying on defaults
+      self.userId = userId
+      self.archiveName = archiveName
+      
       expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay).mjd 
       try:
          taxname = TAXONOMIC_SOURCE[datasource]['name']
@@ -232,13 +234,12 @@ if __name__ == "__main__":
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
+   parser.add_argument('-n', '--archive_name', default=None,
             help=('Name for the existing archive, gridset, and grid created for ' +
                   'these data.  This name was created in initBoom.'))
-   parser.add_argument('-u', '--user', default=ARCHIVE_USER,
-            help=('Owner of this archive this archive. The default is '
-                  'ARCHIVE_USER ({}), an existing user '.format(ARCHIVE_USER) +
-                  'not requiring an email. This name was specified in initBoom.'))
+   parser.add_argument('-u', '--user', default=None,
+            help=('Owner of this archive this archive. The default is the '
+                  'configured ARCHIVE_USER.'))
    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
               help="The action that should be performed by the Boomer daemon")
 
