@@ -211,16 +211,18 @@ class Archivist(Daemon):
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
-def isCorrectUser():
-   """ find current user """
-   import subprocess
-   cmd = "/usr/bin/whoami"
-   info, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
-                                stderr=subprocess.PIPE).communicate()
-   usr = info.split()[0]
-   if usr == 'lmwriter':
-      return True
-   return False
+   # .............................
+   @staticmethod
+   def isCorrectUser():
+      """ find current user """
+      import subprocess
+      cmd = "/usr/bin/whoami"
+      info, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+                                   stderr=subprocess.PIPE).communicate()
+      usr = info.split()[0]
+      if usr == 'lmwriter':
+         return True
+      return False
 
 # .............................................................................
 if __name__ == "__main__":
@@ -237,7 +239,12 @@ if __name__ == "__main__":
             help=('Owner of this archive this archive. The default is '
                   'ARCHIVE_USER ({}), an existing user '.format(ARCHIVE_USER) +
                   'not requiring an email. This name was specified in initBoom.'))
-
+   """
+   $PYTHON LmDbServer/tools/archivistborg.py --help
+   
+   $PYTHON LmDbServer/tools/archivistborg.py -n "Aimee test archive" \
+                                        -u aimee
+   """
    args = parser.parse_args()
    archiveName = args.archive_name
    userId = args.user
@@ -246,7 +253,7 @@ if __name__ == "__main__":
    else:
       pid = os.getpid()
       
-   if not isCorrectUser():
+   if not Archivist.isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
      

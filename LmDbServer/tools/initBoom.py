@@ -24,6 +24,7 @@
 import argparse
 import mx.DateTime
 import os
+import sys
 
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
@@ -34,6 +35,7 @@ from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE,
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                                               BISON_TSN_FILENAME, IDIG_FILENAME, 
                                               USER_OCCURRENCE_DATA)
+from LmDbServer.tools.archivistborg import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
@@ -492,6 +494,10 @@ def _writeConfigFile(archiveName, envPackageName, userid, userEmail,
 
 # ...............................................
 if __name__ == '__main__':
+   if not Archivist.isCorrectUser():
+      print("Run this script as `lmwriter`")
+      sys.exit(2)
+
    algs=','.join(DEFAULT_ALGORITHMS)
    allAlgs = ','.join(ALGORITHM_DATA.keys())
    apiUrl = 'http://lifemapper.github.io/api.html'
@@ -555,18 +561,28 @@ if __name__ == '__main__':
                                         -m zzeppozz@gmail.com \
                                         -e 10min-past-present-future \
                                         -s gbif \
-                                        -f 
                                         -p 25 \
                                         -a bioclim \
                                         -c 1 \
                                         -q square
+archiveName = 'Aimee test archive'.replace(' ', '_')
+usr = 'aimee'
+usrEmail = 'zzeppozz@gmail.com'
+envPackageName = '10min-past-present-future'
+speciesSource = 'gbif'.upper()
+speciesData = None
+minpoints = 25
+algstring = 'BIOCLIM'
+algorithms = [alg.strip() for alg in algstring.split(',')]
+cellsize = 1
+gridname = '{}-Grid'.format(archiveName)
+cellsides = 4
+
 GBIF_OCCURRENCE_FILENAME: gbif_subset.txt
 BISON_TSN_FILENAME: bison_species_tsns.txt
 IDIG_FILENAME: idig_gbifids.txt
 USER_OCCURRENCE_DATA: @SPECIES_DATA@
-
    """
-
    args = parser.parse_args()
    archiveName = args.archive_name.replace(' ', '_')
    usr = args.user
@@ -587,25 +603,19 @@ USER_OCCURRENCE_DATA: @SPECIES_DATA@
    META, metafname = _importClimatePackageMetadata(envPackageName)
    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
    configMeta = _getConfiguredMetadata(META, pkgMeta)
-   
-# # .............................
-#    try:
-#       taxSource = TAXONOMIC_SOURCE[DATASOURCE] 
-#    except:
-#       taxSource = None
       
 # .............................
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
-   try:
-      logger = ScriptLogger(basename+'_borg')
-      scribeWithBorg = BorgScribe(logger)
-      success = scribeWithBorg.openConnections()
+   logger = ScriptLogger(basename+'_borg')
+   scribeWithBorg = BorgScribe(logger)
+   success = scribeWithBorg.openConnections()
 
-      if not success: 
-         logger.critical('Failed to open database')
-         exit(0)
-      
+   if not success: 
+      logger.critical('Failed to open database')
+      exit(0)
+   
+   try:      
 # .............................
       logger.info('  Insert user metadata ...')
       addUsers(scribeWithBorg, usr, usrEmail)
@@ -657,9 +667,6 @@ USER_OCCURRENCE_DATA: @SPECIES_DATA@
       scribeWithBorg.closeConnections()
        
 """
-$PYTHON LmDbServer/tools/initBoom.py -e 10min-past-present-future \
-        -s gbif -n 'Testing archive' -p 25
-
 import mx.DateTime
 import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
@@ -690,28 +697,12 @@ CURR_MJD = mx.DateTime.gmt().mjd
 from LmDbServer.tools.initBoom import *
 from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
           _getConfiguredMetadata, _getbioName, _getBaselineLayers, _findFileFor,
-          _addIntersectGrid)
+          _addIntersectGrid, _writeConfigFile)
           
-archiveName = args.archive_name.replace(' ', '_')
-usr = args.user
-usrEmail = args.email
-envPackageName = '10min-past-present-future'
-speciesSource = GBIF_DATASOURCE
-minpoints = 25
-algstring = bioclim
-algorithms = [alg.strip().upper() for alg in algstring.split(',')]
-cellsize = args.grid_cellsize
-gridname = '{}-Grid'.format(archiveName)
-if args.grid_shape == 'hexagon':
-   cellsides = 6
-else:
-   cellsides = 4
-
 META, metafname = _importClimatePackageMetadata(envPackageName)
 pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
 configMeta = _getConfiguredMetadata(META, pkgMeta)
 lyrtypeMeta = META.LAYERTYPE_META
-usr = email
 
 logger = ScriptLogger('testing')
 scribe = BorgScribe(logger)
