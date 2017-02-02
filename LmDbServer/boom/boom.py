@@ -28,7 +28,7 @@ import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import OutputFormat
 from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE)
-from LmDbServer.boom.chain import BisonChainer, GBIFChainer, iDigBioChainer, UserChainer
+from LmDbServer.boom.sdmchainer import BisonChainer, GBIFChainer, iDigBioChainer, UserChainer
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType, ARCHIVE_NAME
 from LmServer.base.lmobj import LMError
@@ -251,6 +251,8 @@ if __name__ == "__main__":
    args = parser.parse_args()
    archiveName = args.archive_name
    userId = args.user
+   cmd = args.cmd.lower()
+   
    if os.path.exists(BOOM_PID_FILE):
       pid = open(BOOM_PID_FILE).read().strip()
    else:
@@ -266,18 +268,17 @@ if __name__ == "__main__":
    logger = ScriptLogger('archivist.{}'.format(timestamp))
    boomer = Archivist(BOOM_PID_FILE, userId, archiveName, log=logger)
      
-   if len(sys.argv) == 2:
-      if sys.argv[1].lower() == 'start':
-         boomer.start()
-      elif sys.argv[1].lower() == 'stop':
-         boomer.stop()
-      elif sys.argv[1].lower() == 'restart':
-         boomer.restart()
-      elif sys.argv[1].lower() == 'status':
-         boomer.status()
-      else:
-         print("Unknown command: {}".format(sys.argv[1].lower()))
-         sys.exit(2)
+   if cmd == 'start':
+      boomer.start()
+   elif cmd == 'stop':
+      boomer.stop()
+   elif cmd == 'restart':
+      boomer.restart()
+   elif cmd == 'status':
+      boomer.status()
    else:
-      print("usage: {} start|stop|update".format(sys.argv[0]))
+      print("Unknown command: {}".format(cmd))
       sys.exit(2)
+#    else:
+#       print("usage: {} start|stop|update".format(sys.argv[0]))
+#       sys.exit(2)

@@ -35,7 +35,7 @@ from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE,
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                                               BISON_TSN_FILENAME, IDIG_FILENAME, 
                                               USER_OCCURRENCE_DATA)
-from LmDbServer.boom.boomer import Archivist
+from LmDbServer.boom.boom import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
@@ -417,7 +417,7 @@ def _importClimatePackageMetadata(envPackageName):
    return META, metafname
 
 # ...............................................
-def _writeConfigFile(archiveName, envPackageName, userid, userEmail, 
+def writeConfigFile(archiveName, envPackageName, userid, userEmail, 
                      speciesSource, speciesData, 
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, 
@@ -553,36 +553,7 @@ if __name__ == '__main__':
                   'Units are mapunits'))
    parser.add_argument('-q', '--grid_shape', choices=('square', 'hexagon'),
             default='square', help=('Shape of cells in the grid used for Global PAM.'))
-   """
-   $PYTHON LmDbServer/tools/initBoom.py --help
-   
-   $PYTHON LmDbServer/tools/initBoom.py -n "Aimee test archive" \
-                                        -u aimee \
-                                        -m zzeppozz@gmail.com \
-                                        -e 10min-past-present-future \
-                                        -s gbif \
-                                        -p 25 \
-                                        -a bioclim \
-                                        -c 1 \
-                                        -q square
-archiveName = 'Aimee test archive'.replace(' ', '_')
-usr = 'aimee'
-usrEmail = 'zzeppozz@gmail.com'
-envPackageName = '10min-past-present-future'
-speciesSource = 'gbif'.upper()
-speciesData = None
-minpoints = 25
-algstring = 'BIOCLIM'
-algorithms = [alg.strip() for alg in algstring.split(',')]
-cellsize = 1
-gridname = '{}-Grid'.format(archiveName)
-cellsides = 4
 
-GBIF_OCCURRENCE_FILENAME: gbif_subset.txt
-BISON_TSN_FILENAME: bison_species_tsns.txt
-IDIG_FILENAME: idig_gbifids.txt
-USER_OCCURRENCE_DATA: @SPECIES_DATA@
-   """
    args = parser.parse_args()
    archiveName = args.archive_name.replace(' ', '_')
    usr = args.user
@@ -656,7 +627,7 @@ USER_OCCURRENCE_DATA: @SPECIES_DATA@
       # Write config file for this archive
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
-      newConfigFilename = _writeConfigFile(archiveName, envPackageName, usr, 
+      newConfigFilename = writeConfigFile(archiveName, envPackageName, usr, 
                            usrEmail, speciesSource, speciesData, configMeta, 
                            minpoints, algorithms, gridname, cellsize, cellsides, 
                            mdlScen=mdlScencode, prjScens=prjScencodes)
@@ -667,6 +638,11 @@ USER_OCCURRENCE_DATA: @SPECIES_DATA@
       scribeWithBorg.closeConnections()
        
 """
+$PYTHON LmDbServer/tools/initboom.py --help
+$PYTHON LmDbServer/tools/initboom.py -n "Aimee test archive" \
+  -u aimee -m zzeppozz@gmail.com -e 10min-past-present-future \
+  -s gbif -p 25 -a bioclim -c 1 -q square
+
 import mx.DateTime
 import os
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
@@ -691,6 +667,20 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import Matrix            
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
+
+archiveName = 'Aimee test archive'.replace(' ', '_')
+usr = 'aimee'
+usrEmail = 'zzeppozz@gmail.com'
+envPackageName = '10min-past-present-future'
+speciesSource = 'gbif'.upper()
+speciesData = None
+minpoints = 25
+algstring = 'BIOCLIM'
+algorithms = [alg.strip() for alg in algstring.split(',')]
+cellsize = 1
+gridname = '{}-Grid'.format(archiveName)
+cellsides = 4
+
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd

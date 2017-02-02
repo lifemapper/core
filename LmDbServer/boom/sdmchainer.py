@@ -1172,7 +1172,7 @@ class iDigBioChainer(_LMChainer):
 # .............................................................................
 # .............................................................................
 if __name__ == "__main__":
-   from LmDbServer.boom.boomer import Archivist
+   from LmDbServer.boom.boom import Archivist
    from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
    (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens,  
     epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
@@ -1224,7 +1224,7 @@ from LmServer.base.taxon import ScientificName
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
 from LmDbServer.boom.boomborg import *
-from LmDbServer.boom.boomer import Archivist
+from LmDbServer.boom.boom import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixRaster
