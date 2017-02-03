@@ -104,7 +104,7 @@ class OccDataParser(object):
          # Read metadata file and close
          self._getMetadata(metadata, self.header)
       except Exception, e:
-         raise Exception(currargs='Failed to read header or metadata, ({})'
+         raise Exception('Failed to read header or metadata, ({})'
                          .format(str(e.args))) 
          
       # populates key, currLine and currRecnum
@@ -247,8 +247,8 @@ class OccDataParser(object):
       elif typestr == 'real':
          return OFTReal
       else:
-         raise Exception('Unsupported field type %s (use integer, string, or real)' 
-                         % typeString)
+         raise Exception('Unsupported field type {} (requires int, string, real)'
+                         .format(typeString))
    
    # ...............................................
    def _testLine(self, line):
@@ -509,3 +509,30 @@ if __name__ == '__main__':
    op.readAllRecs()
    op.printStats()
    op.close()
+
+"""
+import ast
+import csv
+import os
+import sys
+import StringIO
+from types import DictionaryType, DictType, ListType, TupleType
+
+from LmBackend.common.occparse import OccDataParser, _getMetadata
+from LmCommon.common.lmconstants import (OutputFormat, ENCODING,
+                                         OFTInteger, OFTReal, OFTString)
+from LmCompute.common.log import TestLogger
+from LmServer.common.localconstants import APP_PATH
+
+relpath = 'LmTest/data/sdm'
+dataname = 'user_heuchera_all'
+
+pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
+log = TestLogger('occparse_checkInput')
+op = OccDataParser(log, pthAndBasename + OutputFormat.CSV, 
+                   pthAndBasename + OutputFormat.METADATA, delimiter=',')
+op.readAllRecs()
+op.printStats()
+op.close()
+
+"""
