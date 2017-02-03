@@ -1,11 +1,10 @@
 """
 @summary: Module containing methods used to intersect a layer with a shapegrid
-
-@version: 3.0.0
+@author: CJ Grady (original Jeff Cavner)
+@version: 4.0.0
 @status: beta
-
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
  
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -27,133 +26,34 @@
           02110-1301, USA.
 """
 import numpy as np
-import os
 from osgeo import ogr
 import rtree
 
-from LmCommon.common.lmconstants import (JobStatus, OutputFormat, 
-                                         DEFAULT_OGR_FORMAT)
+from LmCommon.common.lmconstants import DEFAULT_OGR_FORMAT
+from LmCommon.common.matrix import Matrix
+
 from LmCompute.common.agoodle import AGoodle
 
-from LmBackend.common.subprocessManager import SubprocessManager, \
-                                             VariableContainer
- 
-# Relative path (inside plugin directory) to intersect single layer script
-INTERSECT_LAYER_SCRIPT = "rad/intersect/radIntersect.py"
- 
-# .............................................................................
-class IntersectLayerObj(object):
+#................................................              
+def _openVectorLayer(dlocation):
    """
-   @summary: Intersect Layer object that goes inside of a VariableContainer for 
-                serialization and then passed to a subprocess
+   @summary: Open a vector layer and return the dataset
+   @param dlocation: The file location of the vector layer
    """
-   def __init__(self, shapegrid, lyrVals, fileName):
-      self.shapegrid = shapegrid
-      self.layerVals = lyrVals
-      self.fileName = fileName
-
-# .............................................................................
-def intersect(lyrset, shapegrid, env, outputDir=None):
-   """
-   @summary: Method used to calculate a RADIntersectJob
-   @param lyrset: a dictionary of layer matrix index keys, each with a 
-                  dictionary of values including dlocation and intersection 
-                  parameters
-   @param shapegrid: dlocation of a shapegrid
-   @param env: The environment this will run in
-   @return: a dictionary of matrixIndex keys with a vector for each 
-            representing the layer intersection for all sites in the shapegrid 
-   """
-   scriptLocation = os.path.join(env.getPluginsPath(), INTERSECT_LAYER_SCRIPT)
-   lyrArrays = {}
+   ogr.RegisterAll()
+   drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
    try:
-      if len(lyrset) == 0:
-         status = JobStatus.RAD_INTERSECT_ZERO_LAYERS_ERROR
-      else:
-         cmds = []
-         layerArrayFns = {}
-         
-         for mtxIdx, lyrvals in lyrset.iteritems():
-            fn = env.getTemporaryFilename(OutputFormat.NUMPY, base=outputDir)
-            
-            vc = VariableContainer(IntersectLayerObj(shapegrid, lyrvals, fn))
-            layerArrayFns[mtxIdx] = fn
-            
-            cmd = "{python} {scriptLocation} \"{args}\"".format(
-                     python=env.getPythonCmd(),
-                     scriptLocation=scriptLocation,
-                     args=str(vc))
-            cmds.append(cmd)
-         
-         spm = SubprocessManager(commandList=cmds)
-         spm.runProcesses()
-            
-         for key in layerArrayFns.keys():
-            fn = layerArrayFns[key]
-            lyrArrays[key] = fn
-            #lyrArrays[key] = np.load(fn)
-            #os.remove(fn)
-            
-         status = JobStatus.COMPLETE
+      ds = drv.Open(dlocation)
    except Exception, e:
-      print str(e)
-      status = JobStatus.RAD_INTERSECT_ERROR
-   
-   return status, lyrArrays
- 
- 
-# ...............................................
-def intersectLayer(shapegrid, layerVals):
-   """
-   @summary: Open a PresenceAbsenceRaster or PresenceAbsenceVector and 
-             intersect data with ShapeGrid cells using values defining
-             presence, absence, and percent overlap to calculate presence or
-             absence for each cell. 
-   """
-   # Raster intersect
-   if layerVals['isRaster']:
-      areaDict = _rasterIntersect(shapegrid['dlocation'], 
-                                  shapegrid['localIdIdx'], 
-                                  layerVals['dlocation'], 
-                                  layerVals['resolution'])
-      
-      if layerVals.has_key('attrPresence'):
-         lyrarray = _calcRasterPresenceAbsenceColumn(areaDict, 
-                                          layerVals['attrPresence'],
-                                          layerVals['minPresence'],
-                                          layerVals['maxPresence'],
-                                          layerVals['percentPresence'],
-                                          layerVals['attrAbsence'],
-                                          layerVals['minAbsence'],
-                                          layerVals['maxAbsence'],
-                                          layerVals['percentAbsence'])
-      else:
-         if layerVals['weightedMean']:
-            lyrarray = _calcRasterWeightedMeanColumn(areaDict)
-         elif layerVals['largestClass']:
-            lyrarray = _calcRasterLargestClassColumn(areaDict, 
-                                                     layerVals['minPercent'])
-   # Vector intersect
-   elif layerVals.has_key('attrPresence'):
-      lyrarray = _vectorIntersect(shapegrid['dlocation'], 
-                                  shapegrid['localIdIdx'], 
-                                  layerVals['dlocation'], 
-                                  layerVals['attrPresence'],
-                                  layerVals['minPresence'],
-                                  layerVals['maxPresence'],
-                                  layerVals['percentPresence'],
-                                  layerVals['attrAbsence'],
-                                  layerVals['minAbsence'],
-                                  layerVals['maxAbsence'],
-                                  layerVals['percentAbsence'])
-   else:
-      raise Exception('Ancillary Vector intersection is not yet supported')
+      raise Exception, 'Invalid datasource, %s: %s' % (dlocation, str(e))
+   return ds
 
-   return lyrarray
-          
 #................................................      
-def _openShapefile(dlocation, localIdIdx):
+def _getShapegridGeomDict(dlocation):
    """
+   @summary: Opens a shapegrid shapefile and returns a dictionary of feature id,
+                geometry WKT
+   @param dlocation: The file location of the shapefile 
    """
    ds = _openVectorLayer(dlocation)
    lyr = ds.GetLayer(0)
@@ -163,18 +63,14 @@ def _openShapefile(dlocation, localIdIdx):
    minx, maxx, miny, maxy = lyr.GetExtent()
    for j in range(featCount):
       currFeat = lyr.GetFeature(j)
-      if localIdIdx is not None:
-         siteidx = currFeat.GetField(localIdIdx)      
-      else:
-         siteidx = currFeat.GetFID()
+      siteidx = currFeat.GetFID()
       # same as Shapegrid.siteIndices
       siteGeomDict[siteidx] = currFeat.geometry().ExportToWkt()
    
-   return lyr, siteGeomDict, (minx, maxx, miny, maxy)
+   return siteGeomDict
       
-
-#................................................      
-def _rasterIntersect(sgDLocation, sgLocalIdIdx, lyrDLocation, lyrResolution):
+#..............................................................................
+def _getRasterAreaDictionary(sgFn, rasterFn, resolution):
    """
    @summary: Intersects a Raster dataset by reading as a AGoodle raster 
              object.  Compares the shapegrid cell resolution against the 
@@ -188,113 +84,148 @@ def _rasterIntersect(sgDLocation, sgLocalIdIdx, lyrDLocation, lyrResolution):
                * otherwise, each raster pixel is treated as a polygon in real 
                  coords and is intersected with the shapegrid cell polygons.  
              Returns an array of presence (1), and absence(0) for each site
-   @param layer: the PresenceAbsenceRaster object
-   """     
-   sgLyr, sgSiteGeomDict, sgExtent = _openShapefile(sgDLocation, sgLocalIdIdx)
-   raster =  AGoodle(lyrDLocation)
+   @todo: Evaluate this, could we do this all better?
+   """
+   sgSiteGeomDict = _getShapegridGeomDict(sgFn)
+   raster =  AGoodle(rasterFn)
           
    areaDict = {}
    for siteIdx, geom in sgSiteGeomDict.iteritems():
       cellgeom = ogr.CreateGeometryFromWkt(geom)
       cellarea = cellgeom.GetArea() 
-      if cellarea > (lyrResolution**2) * 25:                  
+      if cellarea > (resolution**2) * 25:                  
          summary = raster.summarize_wkt(geom)
       else:        
          summary = raster.raster_as_poly(geom)
       areaDict[siteIdx] = (summary, cellarea)
-   return areaDict    
+   return areaDict
 
-#................................................
-def _calcRasterPresenceAbsenceColumn(areaDict, attrPresence, minPresence, 
-                                     maxPresence, percentPresence,
-                                     attrAbsence, minAbsence, maxAbsence, 
-                                     percentAbsence):
-   percentPresenceDec = percentPresence/100.0
+# .............................................................................
+# .                             Public functions                              .
+# .............................................................................
+# .............................................................................
+def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None, 
+                        ident=None):
+   """
+   @summary: Intersects an environment raster layer with a shapegrid to create
+                a GRIM vector, returned as a Matrix
+   @param sgFn: The file location of the shapegrid
+   @param rasterFn: The file location of the input environment raster
+   @param resolution: The resolution of the raster
+   @param minPercent: If provided, use the largest class method, otherwise use
+                         the weighted mean method [0-100]
+   @param ident: An identifier to be used as column metadata for the resulting
+                    GRIM vector Matrix
+   @todo: Do we need resolution?  Couldn't we get that from the raster?
+   """
+   # Get the area dictionary
+   areaDict = _getRasterAreaDictionary(sgFn, rasterFn, resolution)
+
+   layerArray = np.zeros((len(areaDict.keys()), 1), dtype=float)
+   
+   if minPercent is not None:
+      # Largest class method
+      minPercent = minPercent / 100.0
+      for siteidx, (summary, cellarea) in areaDict.iteritems():
+         maxArea = max(summary.values())
+         if maxArea / cellarea >= minPercent:
+            layerArray[siteidx, 0] = summary.keys()[summary.values().index(maxArea)]
+         else:
+            layerArray[siteidx, 0] = np.nan
+   else:
+      # Weighted mean method
+      for siteidx, (summary, cellarea) in areaDict.iteritems():
+         numerator = 0
+         denominator = 0
+         for pixelvalue in summary.keys():
+            numerator += float(summary[pixelvalue]) * pixelvalue
+            denominator += float(summary[pixelvalue])
+         weightedMean = numerator / denominator
+         layerArray[siteidx, 0] = weightedMean
+   
+   if ident is not None:
+      headers = {1: [ident]}
+   else:
+      headers = None
+      
+   grimVector = Matrix(layerArray, headers=headers)
+   
+   return grimVector
+
+# .............................................................................
+def pavRasterIntersect(sgFn, rasterFn, resolution, minPresence, maxPresence, 
+                       percentPresence, squid=None):
+   """
+   @summary: Intersects a raster layer with a shapegrid to create a PAV Matrix
+                column
+   @param sgFn: The file location of the shapegrid used for intersection
+   @param rasterFn: The raster file to use for intersection
+   @param resolution: The resolution of the raster
+   @param minPresence: The minimum value to be considered presence
+   @param maxPresence: The maximum value to be considered presence
+   @param percentPresence: The percentage of shapgrid cell coverage required to
+                              be considered presence [0,100]
+   @param squid: Species identifier used for metadata
+   @todo: Evaluate
+   @todo: Do we need resolution?  Couldn't we get that from the raster?
+   """
+   # Get the area dictionary
+   areaDict = _getRasterAreaDictionary(sgFn, rasterFn, resolution)
+   percentPresenceDec = percentPresence / 100.0
    rowcount = len(areaDict)
-   layerArray = np.zeros(rowcount, dtype=bool)
+   layerArray = np.zeros((rowcount, 1), dtype=bool)
    counter = 0
-   for siteidx, (summary, cellarea) in sorted(areaDict.iteritems()):
-      sum = 0
+   for _, (summary, cellarea) in sorted(areaDict.iteritems()):
+      mySum = 0
       for pixelvalue in summary.keys():
          if (pixelvalue >= minPresence) and (pixelvalue <= maxPresence):
-            sum = sum + summary[pixelvalue]
-      if sum > (cellarea * percentPresenceDec):
-         # don't use siteidx, in case there are missing site ids
-         # array is indexed purely by position
-         layerArray[counter] = True 
-      counter += 1  
-   return layerArray
- 
-#................................................
-def _calcRasterLargestClassColumn(areaDict, minPercent):
-   layerArray = np.zeros(len(areaDict), dtype=float)
-   minPercent = minPercent / 100.0
-   for siteidx, (summary, cellarea) in areaDict.iteritems():
-      maxArea = max(summary.values())
-      if maxArea / cellarea >= minPercent:
-         layerArray[siteidx] = summary.keys()[summary.values().index(maxArea)]
-      else:
-         layerArray[siteidx] = np.nan
-   return layerArray      
-       
-#................................................  
-def _calcRasterWeightedMeanColumn(areaDict):
-   """
-   @summary: calculates weighted mean for pixels within each cell
-   of the shapegrid and returns a column (1-dimensional array) of floating 
-   point numbers for the GRIM
-   """
-   layerArray = np.zeros(len(areaDict), dtype=float)
-   for siteidx, (summary, cellarea) in areaDict.iteritems():
-      numerator = 0
-      denominator = 0
-      for pixelvalue in summary.keys():
-         numerator += float(summary[pixelvalue]) * pixelvalue
-         denominator += float(summary[pixelvalue])
-      weightedMean = numerator / denominator
-      layerArray[siteidx] = weightedMean
-   return layerArray
+            mySum += + summary[pixelvalue]
+      if mySum > (cellarea * percentPresenceDec):
+         layerArray[counter, 0] = True
+      counter += 1
+   
+   if squid is not None:
+      headers = {1: [squid]}
+   else:
+      headers = None
+      
+   pav = Matrix(layerArray, headers=headers)
+   
+   return pav
 
-#................................................                             
-def _getSpatialFilterBounds(layer, sgminx, sgmaxx, sgminy, sgmaxy):   
-   minx = max(sgminx, layer.minX)
-   miny = max(sgminy, layer.minY)
-   maxx = min(sgmaxx, layer.maxX)
-   maxy = min(sgmaxy, layer.maxY)
-   return minx, miny, maxx,  maxy
-       
-#................................................              
-def _openVectorLayer(dlocation):
-   ogr.RegisterAll()
-   drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
-   try:
-      ds = drv.Open(dlocation)
-   except Exception, e:
-      raise Exception, 'Invalid datasource, %s: %s' % (dlocation, str(e))
-   return ds
-
-#................................................              
-def _vectorIntersect(sgDLocation, sgLocalIdIdx, lyrDLocation, attrPresence, 
-                     minPresence, maxPresence, percentPresence, attrAbsence, 
-                     minAbsence, maxAbsence, percentAbsence):
+# .............................................................................
+def pavVectorIntersect(sgFn, vectFn, presenceAttrib, minPresence, maxPresence, 
+                    percentPresence, squid=None):
    """
-   @summary: Intersect a vector species layer input with cells in a 
-             shapegrid.  Returns an array of presence (1), and absence(0)
-             for each site
+   @summary: Intersects a vector layer with a shapegrid
+   @param sgFn: File location of the shapegrid shapefile
+   @param vectFn: The file location of the vector file to intersect with the 
+                     shapegrid
+   @param presenceAttrib: The attribute in the vector's attribute table that 
+                             indicates presence
+   @param minPresence: The minimum value of the field to signify presence
+   @param maxPresence: The maximum value of the field to signify presence
+   @param percentPresence: The percent of the shapegrid polygon that must be
+                              considered present for the cell value to be 
+                              present
+   @param squid: An identifier to use as a header for the PAV Matrix column that
+                    connects back to the species
+   @return: A Matrix object with one column
+   @todo: Evaluate this function to see if it should be rewritten
    """
    # Note: this must be disabled later, 
    # UseExceptions causes failures in AGoodle, possibly elsewhere
    ogr.UseExceptions()
 
-   ds1 = _openVectorLayer(sgDLocation)
+   ds1 = _openVectorLayer(sgFn)
    sgLyr = ds1.GetLayer(0)
    sgMinx, sgMaxx, sgMiny, sgMaxy = sgLyr.GetExtent()
-   ds2 = _openVectorLayer(lyrDLocation)
+   ds2 = _openVectorLayer(vectFn)
    vLyr = ds2.GetLayer(0)
    vMinx, vMaxx, vMiny, vMaxy = vLyr.GetExtent()
-   percentPresenceDec = percentPresence/100.0
+   percentPresenceDec = percentPresence / 100.0
 
-   layerArray = np.zeros(sgLyr.GetFeatureCount(), dtype=bool)     
+   layerArray = np.zeros((sgLyr.GetFeatureCount(), 1), dtype=bool)     
    
    # make a polygon for broad intersection from the extent of the shapegrid
    points = "{minX} {minY}, \
@@ -329,7 +260,7 @@ def _vectorIntersect(sgDLocation, sgLocalIdIdx, lyrDLocation, attrPresence,
    # For Vector layer ...
    feat = vLyr.GetNextFeature()
    # Find presence attribute
-   presIdx = feat.GetFieldIndex(attrPresence)
+   presIdx = feat.GetFieldIndex(presenceAttrib)
    while feat is not None:
       pval = feat.GetFieldAsDouble(presIdx)
       if pval >= minPresence and pval <= maxPresence:
@@ -375,67 +306,15 @@ def _vectorIntersect(sgDLocation, sgLocalIdIdx, lyrDLocation, attrPresence,
    for fid, areas in areaDict.iteritems():
       if len(areas[0]) > 0: 
          if (sum(areas[0]) > (areas[1][0] * percentPresenceDec)):  
-            layerArray[fid] = True
+            layerArray[fid, 0] = True
    # Disable so doesn't cause AGoodle failures
    ogr.DontUseExceptions()
-   return layerArray
-
-# .............................................................................
-def boolStr(val):
-   if val.strip().lower() == "false":
-      return False
+   
+   if squid is not None:
+      headers = {1: [squid]}
    else:
-      return True
-
-# .............................................................................
-def getAttributeOrDefault(obj, attribute, default=None, func=str):
-   try:
-      return func(obj.__getattribute__(attribute).strip())
-   except:
-      return default
-
-# .............................................................................
-if __name__ == "__main__":
-   import sys
-   from LmCommon.common.lmXml import deserialize, fromstring
-   if len(sys.argv) >= 2:
-      obj = deserialize(fromstring(sys.argv[1]))
-      lvs = obj.IntersectLayerObj.layerVals
-      sg = obj.IntersectLayerObj.shapegrid
-      fn = obj.IntersectLayerObj.fileName
-        
-      layerVals = {}
-      shapegrid = {}
-        
-      lvKeys = [
-                ('attrAbsence', str),
-                ('attrPresence', str), 
-                ('dlocation', str),
-                ('isRaster', boolStr),
-                ('isOrganism', boolStr),
-                ('largestClass', str),
-                ('maxAbsence', float),
-                ('maxPresence', float),
-                ('minAbsence', float),
-                ('minPercent', float),
-                ('minPresence', float),
-                ('percentAbsence', float),
-                ('percentPresence', int),
-                ('resolution', float),
-                ('weightedMean', boolStr)
-               ]
-       
-      sgKeys = [
-                ('dlocation', str),
-                ('localIdIdx', int)
-               ]
-       
-      for key, func in lvKeys:
-         layerVals[key] = getAttributeOrDefault(lvs, key, func=func)
-        
-      for key, func in sgKeys:
-         shapegrid[key] = getAttributeOrDefault(sg, key, func=func)
- 
-      layerArray = intersectLayer(shapegrid, layerVals)
-       
-      np.save(fn, layerArray)
+      headers = None
+   
+   pav = Matrix(layerArray, headers=headers)
+   
+   return pav
