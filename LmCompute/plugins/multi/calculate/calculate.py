@@ -25,6 +25,7 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Keep PAM headers when PAMs are wrapped as Matrix objects
 """
 from math import sqrt
 import numpy as np
@@ -73,8 +74,10 @@ class PamStats(object):
       """
       @summary: Get the (beta) diversity statistics as a Matrix object with
                    column headers indicating which column is which
+      @todo: Avoid hard code in reshape
       """
-      return Matrix(np.array([self.whittaker, self.lande, self.legendre]),
+      return Matrix(
+         np.array([self.whittaker, self.lande, self.legendre]).reshape((1, 3)),
                     headers={0: ['value'],
                              1: [PamStatKeys.WHITTAKERS_BETA,
                                  PamStatKeys.LANDES_ADDATIVE_BETA,
@@ -84,6 +87,7 @@ class PamStats(object):
    def getSchluterCovariances(self):
       """
       @summary: Calculate and return the Schluter variance ratio statistics
+      @todo: Avoid hard code in reshape
       """
       # Try to use already computed co-variance matrices, if that fails, 
       #    calculate them too
@@ -96,7 +100,7 @@ class PamStats(object):
          spVarRatio = float(self.sigmaSpecies.sum()) / self.sigmaSpecies.trace()
          siteVarRatio = float(self.sigmaSites.sum()) / self.sigmaSites.trace()
       
-      return Matrix(np.concatenate([spVarRatio, siteVarRatio], axis=1),
+      return Matrix(np.array([spVarRatio, siteVarRatio]).reshape((1, 2)),
                     headers={0: ['Value'],
                              1: [PamStatKeys.SPECIES_VARIANCE_RATIO,
                                  PamStatKeys.SITES_VARIANCE_RATIO]})
