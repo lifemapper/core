@@ -105,20 +105,22 @@ class OccDataParser(object):
          except Exception, e:
             raise Exception('Failed to read or open {}'.format(data))
       
-      # Assume header in first row of data
-      self.header = self._csvreader.next()
+      # Assume header in first row of data, strip any whitespace
+      tmpHeader = self._csvreader.next()
+      self.header = [fldname.strip() for fldname in tmpHeader]
 
       try:
          # Read metadata file and close
          self._getMetadata(metadata, self.header)
       except Exception, e:
+         self.log.warning(str(e))
          try:
             self._getMetadataDeprecated(metadata, self.header)
          except Exception, e:
             raise Exception('Failed to read header or metadata, ({})'
-                            .format(str(e.args))) 
+                            .format(str(e))) 
          
-      # populates key, currLine and currRecnum
+      # Start by pulling line 1; populates key, currLine and currRecnum
       self.pullNextValidRec()
 
    # .............................................................................
@@ -584,7 +586,7 @@ import sys
 import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
-from LmBackend.common.occparse import OccDataParser, _getMetadata
+from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (OutputFormat, ENCODING,
                                          OFTInteger, OFTReal, OFTString)
 from LmCompute.common.log import TestLogger
@@ -598,10 +600,44 @@ log = TestLogger('occparse_checkInput')
 data = pthAndBasename + OutputFormat.CSV
 metadata = pthAndBasename + OutputFormat.METADATA
 
+# get header
+csv.field_size_limit(sys.maxsize)
+f = open(data, 'r')
+csvreader = csv.reader(f, delimiter=',')
+header = csvreader.next()
+
 f = open(metadata, 'r')
 metaStr = f.read()
 fldmeta = ast.literal_eval(metaStr)
 f.close()
+
+fldLon = fldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
+fldLat = fldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
+fldGrp = fldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
+fldTaxa = fldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
+
+fieldNames = []
+fieldTypes = []
+for i in range(len(header)):         
+   oname = header[i]
+   shortname = fldmeta[oname][0]
+   ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
+   fieldNames.append(shortname)
+   fieldTypes.append(ogrtype)
+   # Find column index of important fields
+   # Id, lat, long will always be separate fields
+   if oname == fldId:
+      idIdx = i
+   elif oname == fldLon:
+      xIdx = i
+   elif oname == fldLat:
+      yIdx = i
+   # May group by Taxa
+   elif oname == fldTaxa:
+      nameIdx = i
+   if oname == fldGrp:
+      sortIdx = i         
+fieldCount = len(fieldNames)
 
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
