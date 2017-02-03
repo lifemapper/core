@@ -925,7 +925,8 @@ class GBIFChainer(_LMChainer):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
          objs = self._processChunk(speciesKey, dataCount, dataChunk)
-         self._createMakeflow(objs)
+         # TODO: add this back
+#          self._createMakeflow(objs)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
 

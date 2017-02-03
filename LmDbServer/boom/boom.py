@@ -251,6 +251,8 @@ if __name__ == "__main__":
    """
    args = parser.parse_args()
    archiveName = args.archive_name
+   if archiveName is not None:
+      archiveName = archiveName.replace(' ', '_')
    userId = args.user
    cmd = args.cmd.lower()
    
