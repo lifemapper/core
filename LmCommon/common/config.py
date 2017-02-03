@@ -2,11 +2,8 @@
 @summary: Location of local configuration options
 @author: CJ Grady
 @contact: cjgrady [at] ku [dot] edu
-@version: 1.0
-@status: beta
-
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -29,7 +26,6 @@
 """
 import ConfigParser
 import os
-from types import StringType, UnicodeType, ListType, TupleType
 
 from LmCommon.common.singleton import singleton
 

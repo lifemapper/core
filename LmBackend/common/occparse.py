@@ -488,12 +488,24 @@ class OccDataParser(object):
 
 if __name__ == '__main__':
    from LmCompute.common.log import TestLogger
-   metafname = '/tank/data/input/species/gbif_borneo_simple.meta'
-   datafname = '/tank/data/input/species/sorted_gbif_borneo_simple.csv'
-#    datafname = '/tank/data/input/species/gbif_borneo_simple.csv'
+   from LmCommon.common.lmconstants import OutputFormat
    
+   try:
+      from LmServer.common.localconstants import APP_PATH
+   except:
+      try:
+         from LmCompute.common.localconstants import LM_PATH as APP_PATH
+      except:
+         raise Exception('Testing must be done on a Lifemapper instance')
+   relpath = 'LmTest/data/sdm'
+      
+#    dataname = 'gbif_borneo_simple'
+   dataname = 'user_heuchera_all'
+
+   pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
    log = TestLogger('occparse_checkInput')
-   op = OccDataParser(log, datafname, metafname)
+   op = OccDataParser(log, pthAndBasename + OutputFormat.CSV, 
+                      pthAndBasename + OutputFormat.METADATA)
    op.readAllRecs()
    op.printStats()
    op.close()
