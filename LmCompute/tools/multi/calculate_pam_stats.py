@@ -6,7 +6,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,10 +26,12 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Consider removing jobXml in favor of direct parameterization
 """
 import argparse
-from LmCompute.plugins.multi.calculate.calculateRunner import CalculateRunner
+
+from LmCommon.common.matrix import Matrix
+from LmCommon.trees.lmTree import LmTree
+from LmCompute.plugins.multi.calculate.calculate import PamStats
 
 # .............................................................................
 if __name__ == "__main__":
@@ -38,32 +40,71 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script calculates statistics for the PAM") 
    
-   parser.add_argument('-n', '--job_name', dest='jobName', type=str,
-                               help="Use this as the name of the job (for logging and work directory creation).  If omitted, one will be generated")
-   parser.add_argument('-o', '--out_dir', dest='outDir', type=str, 
-                               help="Write the final outputs to this directory")
-   parser.add_argument('-w', '--work_dir', dest='workDir', type=str, 
-                               help="The workspace directory where the work directory should be created.  If omitted, will use current directory")
-   parser.add_argument('-l', '--log_file', dest='logFn', type=str, 
-                               help="Where to log outputs (don't if omitted)")
-   parser.add_argument('-ll', '--log_level', dest='logLevel', type=str, 
-                               help="What level to log at", 
-                               choices=['info', 'debug', 'warn', 'error', 'critical'])
-   parser.add_argument('-s', '--status_fn', dest='statusFn', type=str,
-                       help="If this is not None, output the status of the job here")
-   parser.add_argument('--metrics', type=str, dest='metricsFn', 
-                               help="If provided, write metrics to this file")
-   parser.add_argument('--cleanup', type=bool, dest='cleanUp', 
-                               help="Clean up outputs or not", 
-                               choices=[True, False])
-   parser.add_argument('jobXml', type=str, 
-                               help="Job configuration information XML file")
+   parser.add_argument('pamFn', type=str, help="File location of PAM")
+   parser.add_argument('sitesFn', type=str, 
+                       help="File location to store sites statistics Matrix")
+   parser.add_argument('speciesFn', type=str, 
+                       help="File location to store species statistics Matrix")
+   parser.add_argument('diversityFn', type=str,
+                     help="File location to store diversity statistics Matrix")
+   
+   parser.add_argument('-t', '--tree_file', dest='treeFn', type=str, 
+                 help="File location of tree if tree stats should be computed")
+
+   parser.add_argument('--schluter', dest='schluter', action='store_true',
+             help="If this argument exists, compute Schluter statistics and append them to diversity stats")
+   
+   parser.add_argument('--speciesCovFn', dest='spCovFn', type=str,
+                       help="If provided, write species covariance matrix here")
+   parser.add_argument('--siteCovFn', dest='siteCovFn', type=str,
+                       help="If provided, write site covariance matrix here")
    
    args = parser.parse_args()
+
+   # Load PAM
+   pam = Matrix.load(args.pamFn)
    
-   job = CalculateRunner(args.jobXml, jobName=args.jobName, 
-               outDir=args.outDir, workDir=args.workDir, 
-               metricsFn=args.metricsFn, logFn=args.logFn, 
-               logLevel=args.logLevel, statusFn=args.statusFn)
-   job.run()
+   # Load tree if exists
+   if args.treeFn is not None:
+      tree = LmTree.fromFile(args.treeFn)
+   else:
+      tree = None
    
+   calculator = PamStats(pam, tree=tree)
+   
+   # Write site statistics
+   siteStats = calculator.getSiteStatistics()
+   with open(args.sitesFn, 'w') as sitesOut:
+      siteStats.save(sitesOut)
+      
+   # Write species statistics
+   speciesStats = calculator.getSpeciesStatistics()
+   with open(args.speciesFn, 'w') as speciesOut:
+      speciesStats.save(speciesOut)
+      
+   # Write diversity statistics
+   diversityStats = calculator.getDiversityStatistics()
+   # Check if Schluter should be calculated
+   if args.schluter:
+      schluterStats = calculator.getSchluterCovariances()
+      diversityStats.append(schluterStats, axis=1)
+   with open(args.diversityFn, 'w') as diversityOut:
+      diversityStats.save(diversityOut)
+      
+   # Check if covariance matrices should be computed
+   if args.spCovFn is not None or args.siteCovFn is not None:
+      sigmaSites, sigmaSpecies = calculator.getCovarianceMatrices()
+      
+      # Try writing covariance matrices.  Will throw exception and pass if None
+      try:
+         with open(args.spCovFn, 'w') as spCovOut:
+            sigmaSpecies.save(spCovOut)
+      except:
+         pass
+
+      try:
+         with open(args.siteCovFn, 'w') as siteCovOut:
+            sigmaSites.save(siteCovOut)
+      except:
+         pass
+      
