@@ -37,6 +37,14 @@ class OccDataParser(object):
    @summary: Object with metadata and open file.  OccDataParser maintains 
              file position and most recently read data chunk
    """
+   FIELD_ROLE_IDENTIFIER = 'UniqueID'
+   FIELD_ROLE_LONGITUDE = 'Longitude'
+   FIELD_ROLE_LATITUDE = 'Latitude'
+   FIELD_ROLE_GROUPBY = 'GroupBy'
+   FIELD_ROLE_TAXANAME = 'Taxa'
+   REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
+                           FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
+
    def __init__(self, logger, data, metadata, delimiter='\t'):
       """
       @summary Reader for arbitrary user CSV data file with header record and 
@@ -104,8 +112,11 @@ class OccDataParser(object):
          # Read metadata file and close
          self._getMetadata(metadata, self.header)
       except Exception, e:
-         raise Exception('Failed to read header or metadata, ({})'
-                         .format(str(e.args))) 
+         try:
+            self._getMetadataDeprecated(metadata, self.header)
+         except Exception, e:
+            raise Exception('Failed to read header or metadata, ({})'
+                            .format(str(e.args))) 
          
       # populates key, currLine and currRecnum
       self.pullNextValidRec()
@@ -194,11 +205,11 @@ class OccDataParser(object):
       return fldmeta
          
    # .............................................................................
-   def _getMetadata(self, metadata, origfldnames):
+   def _getMetadataDeprecated(self, metadata, header):
       fldmeta = self._readMetadata(metadata)
       
-      for i in range(len(origfldnames)):         
-         oname = origfldnames[i]
+      for i in range(len(header)):         
+         oname = header[i]
          shortname = fldmeta[oname][0]
          ogrtype = self.getOgrFieldType(fldmeta[oname][1])
          self.fieldNames.append(shortname)
@@ -235,6 +246,48 @@ class OccDataParser(object):
       if self._nameIdx == None:
          raise Exception('Missing \'dataname\' dataset name field')
 
+   # .............................................................................
+   def _getMetadata(self, metadata, header):
+      fldmeta = self._readMetadata(metadata)
+      try:
+         fldId = fldmeta[self.FIELD_ROLE_IDENTIFIER]
+      except:
+         fldId = None
+         
+      try:
+         fldLon = fldmeta[self.FIELD_ROLE_LONGITUDE]
+         fldLat = fldmeta[self.FIELD_ROLE_LATITUDE]
+         fldGrp = fldmeta[self.FIELD_ROLE_GROUPBY]
+         fldTaxa = fldmeta[self.FIELD_ROLE_TAXANAME]
+      except:
+         raise Exception('Missing one of required field roles ({}) in metadata'
+                         .format(','.join(self.REQUIRED_FIELD_ROLES)))
+      
+      for i in range(len(header)):         
+         oname = header[i]
+         shortname = fldmeta[oname][0]
+         ogrtype = self.getOgrFieldType(fldmeta[oname][1])
+         self.fieldNames.append(shortname)
+         self.fieldTypes.append(ogrtype)
+         # Find column index of important fields
+         # Id, lat, long will always be separate fields
+         if oname == fldId:
+            self._idIdx = i
+         elif oname == fldLon:
+            self._xIdx = i
+         elif oname == fldLat:
+            self._yIdx = i
+         # May group by Taxa
+         elif oname == fldTaxa:
+            self._nameIdx = i
+         if oname == fldGrp:
+            self._sortIdx = i         
+      self.fieldCount = len(self.fieldNames)
+      
+      if (self._xIdx == None or self._yIdx == None or self._sortIdx == None or 
+          self._nameIdx == None):
+         raise Exception('Missing one of required field roles ({}) in header'
+                         .format(','.join(self.REQUIRED_FIELD_ROLES)))
 
    # .............................................................................
    @staticmethod
@@ -444,13 +497,26 @@ class OccDataParser(object):
          self.currLine = self.key = None
 
    # ...............................................
+   def readAllChunks(self):
+      """
+      @note: Does not check for goodEnough line
+      """
+      chunkCount = 0
+      while self.currLine is not None:
+         chunk = self.pullCurrentChunk()
+         self.log.info('Pulled chunk with {} records'.format(len(chunk)))
+         chunkCount += 1
+      self.log.info('Pulled {} total chunks'.format(chunkCount))
+      return chunkCount
+
+   # ...............................................
    def getSizeChunk(self, maxsize):
       """
       Returns chunk for self.key, updates with next key and currline 
       """
       complete = False
-      currCount = 0
-      firstLineno = self.currRecnum
+#       currCount = 0
+#       firstLineno = self.currRecnum
       chunk = []
 
       try:
@@ -529,8 +595,15 @@ dataname = 'user_heuchera_all'
 
 pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
 log = TestLogger('occparse_checkInput')
-op = OccDataParser(log, pthAndBasename + OutputFormat.CSV, 
-                   pthAndBasename + OutputFormat.METADATA, delimiter=',')
+data = pthAndBasename + OutputFormat.CSV
+metadata = pthAndBasename + OutputFormat.METADATA
+
+f = open(metadata, 'r')
+metaStr = f.read()
+fldmeta = ast.literal_eval(metaStr)
+f.close()
+
+op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
 op.printStats()
 op.close()
