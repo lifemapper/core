@@ -27,8 +27,6 @@
 @todo: Use https://docs.scipy.org/doc/numpy/user/basics.subclassing.html when
           changing this to subclass numpy.ndarray
 @todo: Handle multiple rows / columns / etc of headers (like PAM x, y, site ids)
-@todo: Consider adding constants for easy reference to rows and columns
-@note: Not tested.  First iteration
 """
 from copy import deepcopy
 import json
@@ -67,6 +65,25 @@ class Matrix(object):
       if headers is not None:
          self.setHeaders(headers)
       
+   # ...........................
+   @classmethod
+   def load(cls, fn):
+      """
+      @summary: Attempt to load a Matrix object from a file
+      @param fn: File location of a stored Matrix, Numpy array, or ?
+      """
+      # Try loading Matrix
+      try:
+         obj = json.load(fn)
+         return cls.loadFromJsonOrDictionary(obj)
+      except:
+         # Try loading numpy array
+         try:
+            data = np.load(fn)
+            return cls(data)
+         except:
+            raise Exception("Cannot load file: {0}".format(fn))
+         
    # ...........................
    @classmethod
    def loadFromCSV(cls, flo):
