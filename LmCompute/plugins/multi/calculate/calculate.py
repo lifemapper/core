@@ -44,8 +44,16 @@ class PamStats(object):
       @summary: Constructor
       @param pam: A Present / Absence Matrix to compute statistics for
       @param tree: An optional LmTree object to use for additional statistics
+      @todo: Do something with PAM headers
       """
-      self.pam = pam
+      # Ensure PAM is a Matrix object.  PAM data will be shortcut to data
+      if isinstance(pam, Matrix):
+         self.pam = pam
+         self.pamData = pam.data
+      else:
+         self.pam = Matrix(pam)
+         self.pamData = pam
+
       self.tree = tree
       
       self._calculateCoreStats()
@@ -60,14 +68,14 @@ class PamStats(object):
    def getCovarianceMatrices(self):
       """
       @summary: Returns the covariance matrices for the PAM
-      @todo: Wrap the returns as matrices and add headers
+      @todo: Add headers
       """
       try:
          return self.sigmaSites, self.sigmaSpecies
       except:
          # We haven't calculated them yet
          self._calculateCovarianceMatrices()
-         return self.sigmaSites, self.sigmaSpecies
+         return Matrix(self.sigmaSites), Matrix(self.sigmaSpecies)
 
    # ...........................
    def getDiversityStatistics(self):
@@ -149,26 +157,26 @@ class PamStats(object):
       @summary: This function calculates the standard PAM statistics
       """
       # Number of species at each site
-      self.alpha = np.sum(self.pam, axis=1)
+      self.alpha = np.sum(self.pamData, axis=1)
       
       # Number of sites for each species
-      self.omega = np.sum(self.pam, axis=0)
+      self.omega = np.sum(self.pamData, axis=0)
       
       # Calculate the number of species by looking for columns that have any 
       #    presences.  This will let the stats ignore empty columns
-      self.numSpecies = np.sum(np.any(self.pam, axis=0))
+      self.numSpecies = np.sum(np.any(self.pamData, axis=0))
 
       # Calculate the number of sites that have at least one species present
-      self.numSites = np.sum(np.any(self.pam, axis=1))
+      self.numSites = np.sum(np.any(self.pamData, axis=1))
       
       # Site statistics
       self.alphaProp = self.alpha.astype(float) / self.numSpecies
-      self.phi = self.pam.dot(self.omega)
+      self.phi = self.pamData.dot(self.omega)
       self.phiAvgProp = self.phi.astype(float) / (self.numSites * self.alpha)
       
       # Species statistics
       self.omegaProp = self.omega.astype(float) / self.numSites
-      self.psi = self.alpha.dot(self.pam)
+      self.psi = self.alpha.dot(self.pamData)
       self.psiAvgProp = self.psi.astype(float) / (self.numSpecies * self.omega)
    
    # ...........................
@@ -176,8 +184,8 @@ class PamStats(object):
       """
       @summary: Calculates the sigmaSpecies and sigmaSites covariance matrices
       """
-      alphaMtx = self.pam.dot(self.pam.T).astype(float) # Site by site
-      omegaMtx = self.pam.T.dot(self.pam).astype(float) # species by species
+      alphaMtx = self.pamData.dot(self.pamData.T).astype(float) # Site by site
+      omegaMtx = self.pamData.T.dot(self.pamData).astype(float) # species by species
       self.sigmaSites = (alphaMtx / self.numSpecies) - np.outer(self.alphaProp, 
                                                            self.alphaProp)
       self.sigmaSpecies = (omegaMtx / self.numSites) - np.outer(self.omegaProp,
@@ -201,7 +209,7 @@ class PamStats(object):
       """
       mntd = []
       
-      for site in self.pam:
+      for site in self.pamData:
          sp = np.where(site == 1)[0]
          
          numSp = len(sp)
@@ -230,7 +238,7 @@ class PamStats(object):
       mpd = []
       pearson = []
       
-      for site in self.pam:
+      for site in self.pamData:
          sp = np.where(site == 1)[0].tolist()
          numSp = len(sp)
          numPairs = numSp * (numSp - 1) / 2
@@ -244,7 +252,7 @@ class PamStats(object):
                for i2 in sp:
                   cmpVal = pdMtx.data[i1, i2]
                   pairDistance.append(cmpVal)
-                  pairSitesShared.append(self.pam[:,i1].dot(self.pam[:,i2]))
+                  pairSitesShared.append(self.pamData[:,i1].dot(self.pamData[:,i2]))
          
          if numPairs >= 2:
             # Multiple denominator by 2 because we add pairs twice above
