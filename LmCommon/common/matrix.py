@@ -33,7 +33,6 @@
 from copy import deepcopy
 import json
 import numpy as np
-import os
 
 HEADERS_KEY = 'headers'
 DATA_KEY = 'data'
@@ -229,6 +228,34 @@ class Matrix(object):
          newHeaders[i] = tmp
       return Matrix(newData, headers=newHeaders)
    
+   # ...........................
+   def sliceByHeader(self, header, axis):
+      """
+      @summary: Gets a slice of the Matrix matching the header provided
+      @param header: The name of a header to use for slicing
+      @param axis: The axis to find this header
+      @raise ValueError: If the header is not found for the specified axis
+      @todo: Add capability to slice over multiple axes and multiple headers
+                Maybe combine with other slice method and provide method to 
+                search for header indices
+      """
+      idx = self.headers[axis].index(header)
+      
+      newData = np.copy(np.take(self.data, idx, axis=axis))
+      
+      # Need to reshape the result.  Take the existing shape and change the 
+      #    query axis to 1
+      newShape = list(self.data.shape)
+      newShape[axis] = 1
+      
+      # Copy the headers and set the header for the axis to just be the search 
+      #    header
+      newHeaders = deepcopy(self.headers)
+      newHeaders[axis] = [header]
+      
+      # Return a new Matrix
+      return Matrix(newData, headers=newHeaders)
+      
    # ...........................
    def writeCSV(self, flo):
       """

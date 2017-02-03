@@ -1196,6 +1196,66 @@ LOGFILE_MAX_BYTES = 52000000
 #    discarded.
 LOGFILE_BACKUP_COUNT = 5
 
+# .............................................................................
+# .                               PAM Statisitcs                              .
+# .............................................................................
+class PamStatKeys(object):
+   """
+   @summary: Class containing PAM statistics keys
+   @todo: Link to literature
+   """
+   # Site statistics
+   # ..................
+   # Alpha is the species richness (number present) per site
+   ALPHA = 'alpha'
+   # Alpha prop. is the proportion of the entire set of species present per site
+   ALPHA_PROP = 'alphaProp'
+   # Phi is the range size per site
+   PHI = 'phi'
+   # PHI_AVG_PROP is the mean proportional range size per site
+   PHI_AVG_PROP = 'phiProp'
+   
+   # Tree (site) statistics
+   # ..................
+   # MNTD is mean nearest taxon distance per site.  The average distance to the
+   #    nearest taxon for every species present at a site
+   MNTD = 'mntd'
+   # MPD is the mean pairwise distance per site.  This is the average distance
+   #    to all other species for each species at each site
+   MPD = 'mpd'
+   # PEARSON is Pearson's Correlation Coefficient 
+   PEARSON = 'pearson'
+   
+   # Species statistics
+   # ..................
+   # OMEGA is the range size for each species
+   OMEGA = 'omega'
+   # OMEGA_PROP is the range size of each species as a proportion of the total 
+   #    number of sites
+   OMEGA_PROP = 'omegaProp'
+   # PSI is the range richness of each species
+   PSI = 'psi'
+   # PSI_AVG_PROP is the mean proportional species diversity
+   PSI_AVG_PROP = 'psiAvgProp'
+   
+   # Beta Diversity statistics
+   # ..................
+   WHITTAKERS_BETA = 'whittakersBeta'
+   LANDES_ADDATIVE_BETA = 'landesAddativeBeta'
+   LEGENDRES_BETA = 'legendresBeta'
+
+   # Covariance matrices
+   # ..................
+   # Covariance matrices for the composition of sites and the range of species
+   SITES_COVARIANCE = 'sitesCovariance'
+   SPECIES_COVARIANCE = 'speciesCovariance'
+
+   # Schluter's statistics
+   # ..................
+   # These are Schluter's statistics for site and species variance ratios in a PAM
+   SPECIES_VARIANCE_RATIO = 'varSpeciesRatio'
+   SITES_VARIANCE_RATIO = 'varSitesRatio'
+
 
 # .............................................................................
 # .                     Phylogenetic Tree Module Constants                    .
