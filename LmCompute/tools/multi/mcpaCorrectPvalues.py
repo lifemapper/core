@@ -28,8 +28,8 @@
           02110-1301, USA.
 """
 import argparse
-import numpy as np
 
+from LmCommon.common.matrix import Matrix
 from LmCommon.statistics.pValueCorrection import correctPValues
 from LmCompute.plugins.multi.mcpa.mcpa import getPValues
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
    numValues = 0
    
    for fVal in args.fValueFn:
-      testMtx = np.load(fVal)
+      testMtx = Matrix.load(fVal)
       
       # Add the values to the test values list
       testValues.append(testMtx)
@@ -62,10 +62,12 @@ if __name__ == "__main__":
       else:
          numValues += 1
    
-   obsVals = np.load(args.observedFn)
+   obsVals = Matrix.load(args.observedFn)
    pValues = getPValues(obsVals, testValues, numPermutations=numValues)
    
    correctedPvals = correctPValues(pValues)
    
-   np.save(args.pValuesFn, correctedPvals)
+   with open(args.pValuesFn, 'w') as pValF:
+      correctedPvals.save(pValF)
+
    

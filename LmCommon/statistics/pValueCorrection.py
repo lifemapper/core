@@ -30,7 +30,10 @@
 """
 import numpy as np
 
+from LmCommon.common.matrix import Matrix
+
 # Constants
+#..............................................................................
 class CorrectionTypes:
    """
    @summary: Class constant holding available P-Value correction types
@@ -47,7 +50,8 @@ def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):
    @param correctionType: The type of p-value correction to perform
    @see: CorrectionTypes 
    @note: consistent with R - print correct_pvalues_for_multiple_testing([0.0, 
-             0.01, 0.029, 0.03, 0.031, 0.05, 0.069, 0.07, 0.071, 0.09, 0.1]) 
+             0.01, 0.029, 0.03, 0.031, 0.05, 0.069, 0.07, 0.071, 0.09, 0.1])
+   @todo: Consider how we might add metadata to this 
    """
    # Get the original shape, we'll convert back to this
    origShape = pValues.shape
@@ -88,5 +92,5 @@ def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):
    
    # Convert back to original shape
    correctedPvals = correctedPvals.reshape(origShape)
-   return correctedPvals
+   return Matrix(correctedPvals)
    

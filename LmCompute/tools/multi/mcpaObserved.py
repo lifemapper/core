@@ -27,8 +27,8 @@
           02110-1301, USA.
 """
 import argparse
-import numpy as np
 
+from LmCommon.common.matrix import Matrix
 from LmCompute.plugins.multi.mcpa.mcpa import mcpaRun
 
 # .............................................................................
@@ -45,7 +45,7 @@ if __name__ == "__main__":
    parser.add_argument('-b', dest='bio', 
                            help="Biogeographic predictor matrix file location")
    # Outputs
-   parser.add_argument("r2vectorFn", 
+   parser.add_argument("adjRsqFn", 
                    help="The file path to store the adjusted R squared vector")
    parser.add_argument("partCorMtxFn", 
                   help="Where the partial correlation matrix should be stored")
@@ -57,14 +57,14 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    # Load the matrices
-   incidenceMtx = np.load(args.incidenceMtxFn)
-   envMtx = np.load(args.envFn)
-   phyloMtx = np.load(args.phyloEncodingFn)
+   incidenceMtx = Matrix.load(args.incidenceMtxFn)
+   envMtx = Matrix.load(args.envFn)
+   phyloMtx = Matrix.load(args.phyloEncodingFn)
    
    if args.bio:
       # If a biogeographic matrix is supplied, concatenate environment matrix
-      bgMtx = np.load(args.bio)
-      predictorMtx = np.concatenate([bgMtx, envMtx], axis=1)
+      bgMtx = Matrix.load(args.bio)
+      predictorMtx = Matrix.concatenate([bgMtx, envMtx], axis=1)
    else:
       predictorMtx = envMtx
    
@@ -72,7 +72,15 @@ if __name__ == "__main__":
                                                         predictorMtx, phyloMtx)
 
    # Write outputs
-   np.save(args.r2vectorFn, adjRsq)
-   np.save(args.partCorMtxFn, semiPartialMtx)
-   np.save(args.fGlobalMtxFn, fGlobal)
-   np.save(args.fPartialMtxFn, fSemiPartial)
+   with open(args.adjRsqFn, 'w') as adjRsqF:
+      adjRsq.save(adjRsqF)
+
+   with open(args.partCorMtxFn, 'w') as outPartCorF:
+      semiPartialMtx.save(outPartCorF)
+
+   with open(args.fGlobalMtxFn, 'w') as fGlobalF:
+      fGlobal.write(fGlobalF)
+
+   with open(args.fPartialMtxFn, 'w') as fPartialF:
+      fSemiPartial.save(fPartialF)
+      

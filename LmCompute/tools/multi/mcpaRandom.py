@@ -27,8 +27,8 @@
           02110-1301, USA.
 """
 import argparse
-import numpy as np
 
+from LmCommon.common.matrix import Matrix
 from LmCompute.plugins.multi.mcpa.mcpa import mcpaRun
 
 # .............................................................................
@@ -55,22 +55,22 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    # Load the matrices
-   incidenceMtx = np.load(args.incidenceMtxFn)
-   envMtx = np.load(args.envFn)
-   phyloMtx = np.load(args.phyloEncodingFn)
+   incidenceMtx = Matrix.load(args.incidenceMtxFn)
+   envMtx = Matrix.load(args.envFn)
+   phyloMtx = Matrix.load(args.phyloEncodingFn)
    
    if args.bio:
       # If a biogeographic matrix is supplied, concatenate environment matrix
-      bgMtx = np.load(args.bio)
-      predictorMtx = np.concatenate([bgMtx, envMtx], axis=1)
+      bgMtx = Matrix.load(args.bio)
+      predictorMtx = Matrix.concatenate([bgMtx, envMtx], axis=1)
    else:
       predictorMtx = envMtx
    
    numNodes = phyloMtx.shape[1]
    numPredictors = predictorMtx.shape[1]
    
-   fGlobalsStack = np.empty((numNodes, 1, 0), dtype=float)
-   fSemiPartialStack = np.empty((numNodes, numPredictors, 0), dtype=float)
+   fGlobals = []
+   fSemiPartials = []
    
    if args.numRandomizations:
       numRandomizations = args.numRandomizations
@@ -78,14 +78,19 @@ if __name__ == "__main__":
       numRandomizations = 1
    
    for i in xrange(numRandomizations):
-      _, fGlobal, _, fSemiPartial = mcpaRun(incidenceMtx, predictorMtx, phyloMtx)
+      # TODO: Update when this returns Matrix objects
+      _, fGlobalRand, _, fSemiPartialRand = mcpaRun(incidenceMtx, 
+                                                    predictorMtx, phyloMtx)
       # Add values to stacks
-      fGlobalsStack = np.append(fGlobalsStack, 
-                                fGlobal.reshape(numNodes, 1, 1), axis=2)
-      fSemiPartialStack = np.append(fSemiPartialStack, 
-                      fSemiPartial.reshape(numNodes, numPredictors, 1), axis=2)
+      fGlobals.append(fGlobalRand)
+      fSemiPartials.append(fSemiPartialRand)
+
+   fGlobalsStack = Matrix.concatenate(fGlobals, axis=2)
+   fSemiPartialStack = Matrix.concatenate(fSemiPartials, axis=2)
 
    # Write outputs
-   np.save(args.fGlobalRandomFn, fGlobalsStack)
-   np.save(args.fPartialRandomFn, fSemiPartialStack)
-
+   with open(args.fGlobalRandomFn, 'w') as fGlobalF:
+      fGlobalsStack.save(fGlobalF)
+   with open(args.fPartialRandomFn, 'w') as fPartF:
+      fSemiPartialStack.save(fPartF)
+      

@@ -31,6 +31,8 @@
 """
 import numpy as np
 
+from LmCommon.common.matrix import Matrix
+
 NODATA_VALUE = -999
 
 # .............................................................................
@@ -62,38 +64,44 @@ def createMCPAReport(adjRsq, fGlobal, semiPartialMtx, fSemiPartialMtx, tree,
              node row
    @note: The data of the second matrix are boolean values indicating if that 
              cell is significant
+   @todo: Matrix
+   @note: The matrix objects are assumed to be Matrix not plain Numpy
    """
    # Get the observed values and a sorted version
-   observedValues = np.concatenate([semiPartialMtx, adjRsq], axis=1)
-   sortedObservedValues = sortRowsByNodeId(observedValues, tree)
+   observedValues = Matrix.concatenate([semiPartialMtx, adjRsq], axis=1)
+   # TODO: Add metadata
+   sortedObservedValues = Matrix(sortRowsByNodeId(observedValues, tree))
 
    # Get the frequency values and sort them
-   frequencyValues = np.concatenate([fSemiPartialMtx, fGlobal], axis=1)
-   sortedFreqValues = sortRowsByNodeId(frequencyValues, tree)
+   frequencyValues = Matrix.concatenate([fSemiPartialMtx, fGlobal], axis=1)
+   # TODO: Add metadata
+   sortedFreqValues = Matrix(sortRowsByNodeId(frequencyValues, tree))
    
    # Find the significant values
    significantValues = findSignificantValues(sortedFreqValues, alpha=alpha)
    
    # Check if we should subset
    if subsetSignificant:
-      sortedObservedValues = np.where(significantValues, sortedObservedValues, 
-                                      NODATA_VALUE)
+      sortedObservedValues = np.where(significantValues, 
+                                      sortedObservedValues.data, NODATA_VALUE)
    
+   # TODO: This should be on the semi-partial matrix already
    # TODO: Get this from metadata
    headerRow = ["Node Id"]
    headerRow.extend(["Predictor {0}".format(
-                                   x) for x in range(semiPartialMtx.shape[1])])
+                              x) for x in range(semiPartialMtx.data.shape[1])])
    headerRow.append("Adj. Rsq")
 
    # Sorted list of node ids that have matrix indices   
    headerColumn = sorted(tree.getMatrixIndicesMapping().keys())
    
-   decoratedObserved = makeDecoratedCSV(sortedObservedValues, headerRow, 
-                                      headerColumn)
-   decoratedSignificant = makeDecoratedCSV(significantValues, headerRow, 
-                                         headerColumn)
-   
-   return decoratedObserved, decoratedSignificant
+   sortedObservedValues.setHeaders({0: headerColumn,
+                                    1: headerRow})
+
+   significantValues.setHeaders({0: headerColumn,
+                                 1: headerRow})
+
+   return sortedObservedValues, significantValues
 
 # .............................................................................
 def findSignificantValues(freqMtx, alpha=0.05):
@@ -110,32 +118,7 @@ def findSignificantValues(freqMtx, alpha=0.05):
    @note: Numpy will generate a boolean matrix when we apply a boolean operator 
              to a Numpy array 
    """
-   return freqMtx <= alpha
-
-# .............................................................................
-def makeDecoratedCSV(mtx, headerRow, headerColumn):
-   """
-   @summary: Create a CSV text string from the provided inputs
-   @param mtx: The matrix to use for the data of the CSV
-   @param headerRow: A row (list) of headers for the CSV
-   @param headerColumn: A column (list) of headers for each row of data 
-   @todo: This could probably be done with Numpy directly by using structured 
-             arrays
-   @todo: Consider optionally including no data values
-   """
-   csvStr = ""
-   headers = "{0}\n".format(','.join(["\"{0}\"".format(x) for x in headerRow]))
-   csvStr.append(headers)
-   
-   if len(headerColumn) != mtx.shape[0]:
-      raise Exception(
-                   "Header column and matrix rows do not have the same length")
-   
-   for i in xrange(len(headerColumn)):
-      rowStr = "\"{0}\",{1}\n".format(headerColumn[i],
-                               ','.join(["\"{0}\"".format(x) for x in mtx[i]]))
-      csvStr.append(rowStr)
-   return csvStr
+   return freqMtx.data <= alpha.data
 
 # .............................................................................
 def sortRowsByNodeId(mtx, tree):
@@ -147,6 +130,6 @@ def sortRowsByNodeId(mtx, tree):
    nodeToMtxIdx = tree.getMatrixIndicesMapping()
    # Get the new order by sorting the path ids and creating a list of matching 
    # matrix indices
-   rowOrder = [noeToMtxIdx[pathId] for pathId in sorted(nodeToMtxIdx.keys())]
+   rowOrder = [nodeToMtxIdx[pathId] for pathId in sorted(nodeToMtxIdx.keys())]
    # Fancy index the matrix
-   return mtx[rowOrder,:]
+   return mtx.data[rowOrder,:]

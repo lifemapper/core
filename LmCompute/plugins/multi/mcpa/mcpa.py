@@ -35,6 +35,7 @@
 from math import sqrt
 import numpy as np
 
+from LmCommon.common.matrix import Matrix
 from LmCommon.statistics.pValueCorrection import correctPValues
 
 # .............................................................................
@@ -51,9 +52,11 @@ def getPValues(observedValue, testValues, numPermutations=None):
    @param numPermutations: (optional) The total number of randomizations 
                               performed.  Divide the P-values by this if 
                               provided.
+   @note: This method assumes the inputs are Matrix objects, not plain Numpy
+   @todo: How to add metadata
    """
    # Create the P-Values matrix
-   pVals = np.zeros(observedValue.shape, dtype=float)
+   pVals = np.zeros(observedValue.data.shape, dtype=float)
    # For each matrix in test values
    for testMtx in testValues:
       # Add 1 where every value in the test matrix is greater than or equal to
@@ -63,15 +66,15 @@ def getPValues(observedValue, testValues, numPermutations=None):
       
       # If this is a stack
       if len(testMtx.shape) == 3:
-         for i in xrange(len(testMtx.shape[2])):
-            pVals += testMtx[:,:,i] >= observedValue
+         for i in xrange(len(testMtx.data.shape[2])):
+            pVals += testMtx.data[:,:,i] >= observedValue.data
       else:
-         pVals += testMtx >= observedValue
+         pVals += testMtx.data >= observedValue.data
    # Scale and return the pVals matrix
    if numPermutations:
-      return pVals / numPermutations
+      return Matrix(pVals / numPermutations)
    else:
-      return pVals
+      return Matrix(pVals)
 
 # .............................................................................
 def standardizeMatrix(mtx, weights):
@@ -93,6 +96,7 @@ def standardizeMatrix(mtx, weights):
    @note: "*" indicates Hadamard multiplication
    @see: Literature supplemental materials
    @note: Code adopted from supplemental material MATLAB code
+   @note: This function assumes that mtx and weights are Numpy arrays
    """
    # Create a row of ones, we'll transpose for a column
    ones = np.ones((1, weights.shape[0]), dtype=float)
@@ -126,10 +130,13 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
    @param randomize: If this is true, randomize the incidence matrix so that
                         the observed values can be tested against different 
                         permutations to determine significance
+   @note: Inputs are assumed to be Matrix objects and outputs are converted to
+             Matrix
+   @todo: Add metadata to outputs
    """
    # Initialization
-   numPredictors = predictorMtx.shape[1]
-   numNodes = phyloMtx.shape[1]
+   numPredictors = predictorMtx.data.shape[1]
+   numNodes = phyloMtx.data.shape[1]
    
    # Adjusted R-squared
    adjRsq = np.zeros((numNodes, 1), dtype=float)
@@ -146,14 +153,14 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
    # For each node
    for j in xrange(numNodes):
       # Get species present in clade
-      speciesPresentAtNode = np.where(phyloMtx[:,j] != 0)[0]
+      speciesPresentAtNode = np.where(phyloMtx.data[:,j] != 0)[0]
       
       if randomize:
          # Shuffle species around
          speciesPresentAtNode = np.random.permutation(speciesPresentAtNode)
          
       # Incidence full matrix is subset of PAM where clade species are present
-      incidenceFull = pam[:,speciesPresentAtNode]
+      incidenceFull = pam.data[:,speciesPresentAtNode]
       
       # Check to see if a site has any presence values
       sitePresent = np.any(incidenceFull, axis=1)
@@ -165,7 +172,7 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       incidence = np.delete(incidenceFull, emptySites, axis=0)
       
       # Remove sites from predictor matrix
-      predictors = np.delete(predictorMtx, emptySites, axis=0)
+      predictors = np.delete(predictorMtx.data, emptySites, axis=0)
       
       # Get the number of sites and predictors from the shape of the predictors 
       #    matrix
@@ -185,7 +192,7 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       predStd = standardizeMatrix(predictors, siteWeights)
       
       # Standardized P-matrix
-      pStd = standardizeMatrix(phyloMtx[speciesPresentAtNode, j], 
+      pStd = standardizeMatrix(phyloMtx.data[speciesPresentAtNode, j], 
                                                                speciesWeights)
       
       # Get standardized P-Sigma
@@ -256,7 +263,7 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
          # Calculate F semi-partial
          fSemiPartialMtx[j, i] = (rSq - remainingRsq) / totalPsigmaResidual
                                  
-   return adjRsq, fGlobal, semiPartialMtx, fSemiPartialMtx
+   return Matrix(adjRsq), Matrix(fGlobal), Matrix(semiPartialMtx), Matrix(fSemiPartialMtx)
 
 # .............................................................................
 def mcpa(pam, phyloMtx, grim, bioGeoHypotheses=None, numPermutations=9999):
@@ -278,10 +285,12 @@ def mcpa(pam, phyloMtx, grim, bioGeoHypotheses=None, numPermutations=9999):
    @note: This function won't scale well, use tools to parallelize 
              randomizations, such as concurrent.futures, Pool, or 
              Makeflow / WorkQueue
+   @note: This is really more of an example
+   @note: This method assumes that inputs are Matrix objects
    """
    # If biogeographic hypotheses are provided, concatenate them with the grim
    if bioGeoHypotheses:
-      predictorMtx = np.concatenate([bioGeoHypotheses, grim], axis=1)
+      predictorMtx = Matrix.concatenate([bioGeoHypotheses, grim], axis=1)
    else:
       # If not, just use the grim 
       predictorMtx = grim
