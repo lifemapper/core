@@ -494,6 +494,7 @@ class ShapeShifter(object):
          try:
             self.op.pullNextValidRec()
             if not self.op.eof():
+               # Unique identifier field is not required, default to FID
                # ignore records without valid lat/long; all occ jobs contain these fields
                tmpDict[self.op.xFieldName] = float(self.op.xValue)
                tmpDict[self.op.yFieldName] = float(self.op.yValue)

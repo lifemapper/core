@@ -56,6 +56,7 @@ class OccDataParser(object):
       self.metadataFname = metadatafile
       self.dataFname = datafile
       self.delimiter = delimiter
+      self._file = None
       
       self.log = logger
       self.fieldNames = [] 
@@ -72,7 +73,7 @@ class OccDataParser(object):
       
       self.currLine = None 
       # record number of the chunk of current key     
-      self.keyFirstRec = 0      
+      self.groupFirstRec = 0      
       self.currIsGoodEnough = True
       
       # Overall stats
@@ -88,22 +89,12 @@ class OccDataParser(object):
       self.badFilterVals = set()
 
       self.chunk = []
-      self.key = None
+      self.groupVal = None
       self.currLine = None
       
-      csv.field_size_limit(sys.maxsize)
-      try:
-         self._file = open(datafile, 'r')
-         self._csvreader = csv.reader(self._file, delimiter=self.delimiter)
-      except Exception, e:
-         try:
-            self.dataFname = None
-            csvData = StringIO.StringIO()
-            csvData.write(datafile.encode(ENCODING))
-            csvData.seek(0)
-            self._csvreader = csv.reader(csvData, delimiter=self.delimiter)
-         except Exception, e:
-            raise Exception('Failed to read or open {}'.format(datafile))
+      self._csvreader, self._file = self.getReader(datafile, delimiter)
+      if self._file is None:
+         self.dataFname = None
       
       # Read CSV header
       tmpHeader = self._csvreader.next()
@@ -115,8 +106,26 @@ class OccDataParser(object):
       
       self._populateMetadata(fieldmeta, self.header)
          
-      # Start by pulling line 1; populates key, currLine and currRecnum
+      # Start by pulling line 1; populates groupVal, groupFirstRec, currLine and currRecnum
       self.pullNextValidRec()
+
+   # .............................................................................
+   @staticmethod
+   def getReader(datafile, delimiter):
+      f = None  
+      csv.field_size_limit(sys.maxsize)
+      try:
+         f = open(datafile, 'r')
+         csvreader = csv.reader(f, delimiter=delimiter)
+      except Exception, e:
+         try:
+            csvData = StringIO.StringIO()
+            csvData.write(datafile.encode(ENCODING))
+            csvData.seek(0)
+            csvreader = csv.reader(csvData, delimiter=delimiter)
+         except Exception, e:
+            raise Exception('Failed to read or open {}'.format(datafile))
+      return csvreader, f
 
    # .............................................................................
    def _populateMetadata(self, fieldmeta, header):
@@ -158,7 +167,7 @@ class OccDataParser(object):
    @property
    def idValue(self):
       idVal = None
-      if self.currLine is not None:
+      if self.currLine is not None and self._idIdx is not None:
          idVal = self.currLine[self._idIdx]
       return idVal
    
@@ -192,7 +201,10 @@ class OccDataParser(object):
    
    @property
    def idFieldName(self):
-      return self.fieldNames[self._idIdx]
+      if self._idIdx is None:
+         return None
+      else:
+         return self.fieldNames[self._idIdx]
    
    @property
    def xFieldName(self):
@@ -204,7 +216,7 @@ class OccDataParser(object):
       
    # .............................................................................
    @staticmethod
-   def readMetadata(self, metadata):
+   def readMetadata(metadata):
       fieldmeta = metadataFname = None
       try:
          f = open(metadata, 'r')
@@ -367,22 +379,23 @@ class OccDataParser(object):
             self.badFilters += 1
             goodEnough = False
 
-      # Sort/Group value
+      # Sort/Group value; may be a string or integer
       try:
-         gval = int(line[self._sortIdx])
+         gval = self._getGroupByValue(line)
       except Exception, e:
          self.badGroups += 1
          goodEnough = False
       else:
          self.groupVals.add(gval)
          
-      # Unique ID value
-      try:
-         int(line[self._idIdx])
-      except Exception, e:
-         if line[self._idIdx] == '':
-            self.badIds += 1
-            goodEnough = False
+      # If present, unique ID value
+      if self._idIdx is not None:
+         try:
+            int(line[self._idIdx])
+         except Exception, e:
+            if line[self._idIdx] == '':
+               self.badIds += 1
+               goodEnough = False
          
       # Lat/long values
       try:
@@ -448,18 +461,26 @@ class OccDataParser(object):
          line, goodEnough = self._getLine()
 
    # ...............................................
+   def _getGroupByValue(self, line):
+      try:
+         value = int(line[self._sortIdx])
+      except:
+         value = str(line[self._sortIdx])
+      return value
+
+   # ...............................................
    def pullNextValidRec(self):
       """
-      Fills in self.key and self.currLine
+      Fills in self.groupVal and self.currLine
       """
       complete = False
-      self.key = None
+      self.groupVal = None
       line, goodEnough = self._getLine()
       try:
          while self._csvreader is not None and not complete:
             if line and goodEnough:
                self.currLine = line
-               self.key = int(line[self._sortIdx])
+               self.groupVal = self._getGroupByValue(line)
                complete = True
                      
             if not complete:
@@ -467,12 +488,12 @@ class OccDataParser(object):
                if line is None:
                   complete = True
                   self.currLine = None
-                  self.key = None
+                  self.groupVal = None
                   
       except Exception, e:
          self.log.error('Failed in pullNextValidRec, currRecnum=%s, e=%s' 
                    % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
+         self.currLine = self.groupVal = None
 
    # ...............................................
    def printStats(self):
@@ -506,11 +527,12 @@ class OccDataParser(object):
    # ...............................................
    def pullCurrentChunk(self):
       """
-      Returns chunk for self.key, updates with next key and currline 
+      @summary: Returns chunk for self.groupVal, updates with groupFirstRec  
+                for next chunk and currline 
       """
       complete = False
       currCount = 0
-      currkey = self.key
+      currgroup = self.groupVal
       chunk = []
 
       # first line of chunk is currLine
@@ -526,12 +548,12 @@ class OccDataParser(object):
             self.pullNextValidRec()
             
             # Add to or complete chunk
-            if self.key == currkey:
+            if self.groupVal == currgroup:
                currCount += 1
                chunk.append(self.currLine)
             else:
                complete = True
-               self.keyFirstRec = self.currRecnum
+               self.groupFirstRec = self.currRecnum
                
             if self.currLine is None:
                complete = True
@@ -541,7 +563,7 @@ class OccDataParser(object):
       except Exception, e:
          self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
                    % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
+         self.currLine = self.groupVal = None
 
    # ...............................................
    def readAllChunks(self):
@@ -559,13 +581,11 @@ class OccDataParser(object):
    # ...............................................
    def getSizeChunk(self, maxsize):
       """
-      Returns chunk for self.key, updates with next key and currline 
+      @summary: Returns chunk for self.groupVal, updates with groupFirstRec  
+                for next chunk and currline 
       """
       complete = False
-#       currCount = 0
-#       firstLineno = self.currRecnum
       chunk = []
-
       try:
          while self._csvreader is not None and not complete:
             chunk.append(self.currLine)
@@ -573,13 +593,11 @@ class OccDataParser(object):
                complete = True
             else:
                self.pullNextValidRec()
-               
-         return chunk
-                  
       except Exception, e:
          self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
                    % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
+         self.currLine = self.groupVal = None      
+      return chunk
 
    # ...............................................
    def eof(self):
@@ -644,52 +662,7 @@ pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
 log = TestLogger('occparse_checkInput')
 data = pthAndBasename + OutputFormat.CSV
 metadata = pthAndBasename + OutputFormat.METADATA
-
-# Read data header
-csv.field_size_limit(sys.maxsize)
-f = open(data, 'r')
-csvreader = csv.reader(f, delimiter=',')
-tmp = csvreader.next()
-header = [fldname.strip() for fldname in header]
-f.close()
-
-# Read metadata file
-fldmeta, tmp = OccDataParser.readMetadata(metadata)
-
-(fieldNames, fieldTypes, filters, 
-idIdx, xIdx, yIdx, sortIdx, nameIdx) = OccDataParser.getMetadata(fldmeta, header)
-
-
-
-fldId = None
-fldLon = fldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
-fldLat = fldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
-fldGrp = fldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
-fldTaxa = fldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
-
-fieldNames = []
-fieldTypes = []
-for i in range(len(header)):         
-   oname = header[i]
-   shortname = fldmeta[oname][0]
-   ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
-   fieldNames.append(shortname)
-   fieldTypes.append(ogrtype)
-   # Find column index of important fields
-   # Id, lat, long will always be separate fields
-   if oname == fldId:
-      idIdx = i
-   elif oname == fldLon:
-      xIdx = i
-   elif oname == fldLat:
-      yIdx = i
-   # May group by Taxa
-   elif oname == fldTaxa:
-      nameIdx = i
-   if oname == fldGrp:
-      sortIdx = i         
-fieldCount = len(fieldNames)
-
+        
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
 op.printStats()
