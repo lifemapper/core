@@ -42,12 +42,12 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script encodes a biogeographic hypothesis shapegrid") 
 
-   parser.add_argument('e', '--eventField', dest='eventField', type=str,
+   parser.add_argument('-e', '--eventField', dest='eventField', type=str,
                     help="Use this field in the shapegrid to determine events")
-   parser.add_argument("outFn", type=str, 
-                        help="The file location to write the resulting matrix")
    parser.add_argument('shapegridFn', type=str, 
                  help="The file location of the shapegrid to use for encoding")
+   parser.add_argument("outFn", type=str, 
+                        help="The file location to write the resulting matrix")
    parser.add_argument("lyr", type=str, nargs='+', 
       help="A file location of a shapegrid with one or more BioGeo hypotheses")
    

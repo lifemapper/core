@@ -4,9 +4,8 @@
 @author: CJ Grady
 @version: 4.0.0
 @status: beta
-
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,10 +25,10 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Consider removing jobXml in favor of direct parameterization
 """
 import argparse
-from LmCompute.plugins.multi.buildShapegrid.buildShapegridRunner import BuildShapegridRunner
+
+from LmCompute.plugins.multi.buildShapegrid import buildShapegrid
 
 # .............................................................................
 if __name__ == "__main__":
@@ -38,32 +37,31 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script attempts to build a shapegrid") 
    
-   parser.add_argument('-n', '--job_name', dest='jobName', type=str,
-                               help="Use this as the name of the job (for logging and work directory creation).  If omitted, one will be generated")
-   parser.add_argument('-o', '--out_dir', dest='outDir', type=str, 
-                               help="Write the final outputs to this directory")
-   parser.add_argument('-w', '--work_dir', dest='workDir', type=str, 
-                               help="The workspace directory where the work directory should be created.  If omitted, will use current directory")
-   parser.add_argument('-l', '--log_file', dest='logFn', type=str, 
-                               help="Where to log outputs (don't if omitted)")
-   parser.add_argument('-ll', '--log_level', dest='logLevel', type=str, 
-                               help="What level to log at", 
-                               choices=['info', 'debug', 'warn', 'error', 'critical'])
-   parser.add_argument('-s', '--status_fn', dest='statusFn', type=str,
-                       help="If this is not None, output the status of the job here")
-   parser.add_argument('--metrics', type=str, dest='metricsFn', 
-                               help="If provided, write metrics to this file")
-   parser.add_argument('--cleanup', type=bool, dest='cleanUp', 
-                               help="Clean up outputs or not", 
-                               choices=[True, False])
-   parser.add_argument('jobXml', type=str, 
-                               help="Job configuration information XML file")
+   parser.add_argument('shapegridFn', type=str, 
+                       help="File location for new shapegrid")
+   parser.add_argument('minX', type=float, 
+                       help="The minimum X value for the shapegrid")
+   parser.add_argument('minY', type=float, 
+                       help="The minimum Y value for the shapegrid")
+   parser.add_argument('maxX', type=float, 
+                       help="The maximum X value for the shapegrid")
+   parser.add_argument('maxY', type=float, 
+                       help="The maximum Y value for the shapegrid")
+   parser.add_argument('cellSize', type=float, 
+                       help="The size of each cell in the appropriate units")
+   parser.add_argument('epsg', type=int, 
+                       help="The EPSG code to use for this shapegrid")
+   parser.add_argument('cellSides', type=int, choices=[4,6],
+                       help="The number of cides for each cell")
+   parser.add_argument('--cutoutWktFn', dest='cutoutFn', type=str,
+                       help="File location of a cutout WKT")
    
    args = parser.parse_args()
    
-   job = BuildShapegridRunner(args.jobXml, jobName=args.jobName, 
-               outDir=args.outDir, workDir=args.workDir, 
-               metricsFn=args.metricsFn, logFn=args.logFn, 
-               logLevel=args.logLevel, statusFn=args.statusFn)
-   job.run()
+   cutout = None
+   if args.cutoutFn is not None:
+      cutout = args.cutoutFn
+
+   buildShapegrid(args.shapegridFn, args.minX, args.minY, args.maxX, args.maxY,
+                  args.cellSize, args.epsg, args.cellSides, cutoutWKT=cutout)
    
