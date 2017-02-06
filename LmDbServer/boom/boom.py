@@ -27,7 +27,8 @@ import os, sys, time
 
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import OutputFormat
-from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE)
+from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE, 
+                                           SpeciesDatasource)
 from LmDbServer.boom.sdmchainer import (BisonChainer, GBIFChainer, 
                                         iDigBioChainer, UserChainer)
 from LmServer.common.datalocator import EarlJr
@@ -89,7 +90,7 @@ class Archivist(Daemon):
    
       # User data  
       userOccCSV = userOccMeta = None 
-      if datasource == 'User':
+      if SpeciesDatasource.isUser(datasource):
          userOccData = cfg.get(_PIPELINE_CONFIG_HEADING, 
                                'ARCHIVE_USER_OCCURRENCE_DATA')
          userOccCSV = os.path.join(pth, userOccData + OutputFormat.CSV)

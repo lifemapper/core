@@ -52,6 +52,14 @@ class SpeciesDatasource:
    BISON = "BISON"
    GBIF = "GBIF"
    USER = "USER"
+# ...............................................
+   @staticmethod
+   def isUser(datasource):
+      if datasource in (SpeciesDatasource.BISON, SpeciesDatasource.GBIF, 
+                        SpeciesDatasource.IDIGBIO):
+         return False
+      return True
+      
 
 # Key must match DATASOURCE in config/config.ini
 TAXONOMIC_SOURCE = {
