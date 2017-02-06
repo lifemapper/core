@@ -35,6 +35,7 @@ import os
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import DEFAULT_OGR_FORMAT, FileFormats
+from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.encodingExcpetion import EncodingException
 
 SITE_FIELD = 'siteid'
@@ -82,6 +83,7 @@ class BioGeoEncoding(object):
    def encodeHypotheses(self):
       """
       @summary: Encodes the provided layers into a matrix (B in the literature)
+      @todo: Determine how we can add a label to each layer
       @raise IOError: Raised if a layer file does not exist
       """
       encodedLayers = []
@@ -94,12 +96,12 @@ class BioGeoEncoding(object):
             features = self._getFeaturesWithEvent(dloc, eventField)
          for featureTuple in features:
             encodedLayers.append(self._encodeFeatures(featureTuple))
-         
-      matrix = np.concatenate(encodedLayers, axis=1)
+      
+      matrix = Matrix.concatenate(encodedLayers, axis=1)
       return matrix
 
    # ..............................
-   def _encodeFeatures(self, featureTuple):
+   def _encodeFeatures(self, featureTuple, label=None):
       """
       @summary: Encode the feature tuple by intersecting the features within
                    with the shapegrid sites.  If there is only one features, 
@@ -107,6 +109,7 @@ class BioGeoEncoding(object):
                    will be coded as -1.  If there are two features, intersecting
                    with one will be coded as 1, the other -1, and 
                    non-intersecting sites will be coded as 0.
+      @todo: Add a label 
       """
       feat1, feat2 = featureTuple
       if feat2 is None: # Only one feature
@@ -114,6 +117,7 @@ class BioGeoEncoding(object):
       else: # Two values
          defaultValue = 0
       contrast = []
+      siteIds = []
       for siteId, site in self.sortedSites:
          val = defaultValue
          intersectedArea = 0.0
@@ -125,10 +129,17 @@ class BioGeoEncoding(object):
             area2 = siteGeom.Intersection(feat2.GetGeometryRef()).GetArea()
             if area2 > intersectedArea:
                val = -1
+         siteIds.append(siteId)
          contrast.append(val)
+      # Assemble headers
+      if label is None:
+         label = ''
+      headers = {0: siteIds,
+                 1: [label]}
+         
       # Make a list of this list and transpose the resulting numpy array so it
       #    is one column wide and number of site rows
-      return np.array([contrast]).T
+      return Matrix(np.array([contrast]).T, headers=headers)
          
    # ..............................
    def _getFeaturesNoEvent(self, layerDL):
