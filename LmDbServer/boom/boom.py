@@ -66,7 +66,6 @@ class Archivist(Daemon):
    
       userCfg = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
       archiveNameCfg = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_NAME')
-      print 'Config file at {}'.format(archiveConfigFile)
       if userId is None:
          userId = userCfg
       if archiveName is None:
@@ -91,9 +90,10 @@ class Archivist(Daemon):
       # User data  
       userOccCSV = userOccMeta = None 
       if datasource == 'User':
-         userOccData = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_USER_OCCURRENCE_DATA')
-         userOccCSV = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.CSV)
-         userOccMeta = os.path.join(SPECIES_DATA_PATH, userOccData + OutputFormat.METADATA)
+         userOccData = cfg.get(_PIPELINE_CONFIG_HEADING, 
+                               'ARCHIVE_USER_OCCURRENCE_DATA')
+         userOccCSV = os.path.join(pth, userOccData + OutputFormat.CSV)
+         userOccMeta = os.path.join(pth, userOccData + OutputFormat.METADATA)
       
       # Bison data
       bisonTsn = Config().get(_PIPELINE_CONFIG_HEADING, 'BISON_TSN_FILENAME')
@@ -244,10 +244,11 @@ if __name__ == "__main__":
               help="The action that should be performed by the Boomer daemon")
 
    """
-   $PYTHON LmDbServer/tools/archivistborg.py --help
+   $PYTHON LmDbServer/boom/boom.py --help
    
-   $PYTHON LmDbServer/tools/archivistborg.py -n "Aimee test archive" \
-                                             -u aimee
+   $PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive" \
+                                   --user aimee \
+                                   start
    """
    args = parser.parse_args()
    archiveName = args.archive_name
@@ -285,3 +286,16 @@ if __name__ == "__main__":
 #    else:
 #       print("usage: {} start|stop|update".format(sys.argv[0]))
 #       sys.exit(2)
+"""
+from LmDbServer.boom.boom import Archivist
+name = "Heuchera archive"
+name = name.replace(' ', '_')
+usr = 'ryan'
+
+(userId, archiveName, datasource, algorithms, minPoints, 
+ mdlScen, prjScens, epsg, gridname, userOccCSV, userOccMeta, 
+ bisonTsnFile, idigTaxonidsFile, 
+ gbifTaxFile, gbifOccFile, gbifProvFile, 
+ speciesExpYear, speciesExpMonth, 
+ speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=usr, archiveName=name)
+"""

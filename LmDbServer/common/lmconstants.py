@@ -41,15 +41,23 @@ IDIGBIO_FILE = os.path.join(SPECIES_DATA_PATH, IDIG_FILENAME)
 USER_OCCURRENCE_CSV = os.path.join(SPECIES_DATA_PATH, USER_OCCURRENCE_CSV_FILENAME)
 USER_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH, USER_OCCURRENCE_META_FILENAME)
 
-GBIF_DATASOURCE = 'GBIF'
-BISON_DATASOURCE = 'BISON'
-IDIGBIO_DATASOURCE = 'IDIGBIO'
+class SpeciesDatasource:
+   """
+   @summary: These are species data sources with defined data formats.
+             IDIGBIO and BISON are queryable APIs, GBIF is a CSV file,
+             sorted by TaxonId, User is a CSV file with metadata describing 
+             each field.
+   """
+   IDIGBIO = "IDIGBIO"
+   BISON = "BISON"
+   GBIF = "GBIF"
+   USER = "USER"
 
 # Key must match DATASOURCE in config/config.ini
 TAXONOMIC_SOURCE = {
-   GBIF_DATASOURCE: {'name': 'GBIF Backbone Taxonomy',
+   SpeciesDatasource.GBIF: {'name': 'GBIF Backbone Taxonomy',
             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'},
-   BISON_DATASOURCE: {'name':  'ITIS Taxonomy',
+   SpeciesDatasource.BISON: {'name':  'ITIS Taxonomy',
             'url': 'http://www.itis.gov'},
-   IDIGBIO_DATASOURCE: {'name': 'GBIF Backbone Taxonomy',
+   SpeciesDatasource.IDIGBIO: {'name': 'GBIF Backbone Taxonomy',
             'url': 'http://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c'}}

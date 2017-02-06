@@ -70,12 +70,7 @@ class OccDataParser(object):
       self._yIdx = None
       self._sortIdx = None
       self._nameIdx = None
-      
-      self.currLine = None 
-      # record number of the chunk of current key     
-      self.groupFirstRec = 0      
-      self.currIsGoodEnough = True
-      
+            
       # Overall stats
       self.recTotal = 0
       self.recTotalGood = 0
@@ -90,6 +85,7 @@ class OccDataParser(object):
 
       self.chunk = []
       self.groupVal = None
+      self.groupFirstRec = 0      
       self.currLine = None
       
       self._csvreader, self._file = self.getReader(datafile, delimiter)
@@ -106,8 +102,11 @@ class OccDataParser(object):
       
       self._populateMetadata(fieldmeta, self.header)
          
-      # Start by pulling line 1; populates groupVal, groupFirstRec, currLine and currRecnum
+      # Start by pulling line 1; populates groupVal, currLine and currRecnum
       self.pullNextValidRec()
+      # record number of the chunk of current key
+      self.groupFirstRec = self.currRecnum     
+      self.currIsGoodEnough = True
 
    # .............................................................................
    @staticmethod

@@ -32,26 +32,27 @@ from types import (BooleanType, DictionaryType, FloatType, IntType, ListType,
 import urllib, urllib2
 import xml.etree.ElementTree as ET
 
-from LmCommon.common.lmconstants import (BISON_COUNT_KEYS, BISON_FILTERS,
-         BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_NAME_KEY, 
-         BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_LIST_KEYS,
-         BISON_OCCURRENCE_URL, BISON_BINOMIAL_REGEX, BISON_TSN_FILTERS, 
-         BISON_OCC_FILTERS,
-         
-         GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
-         
-         IDIGBIO_FILTERS, IDIGBIO_QFILTERS, 
-         IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
-         IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_SEARCH_PREFIX, 
-         IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
-         IDIGBIO_GBIFID_FIELD, 
-         
-         ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY,  
-         ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
-         ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
-         ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
-         
+from LmCommon.common.lmconstants import (BISON, GBIF, ITIS, IDIGBIO,
          URL_ESCAPES, HTTPStatus, DWCNames)
+#          BISON.COUNT_KEYS, BISON_FILTERS,
+#          BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_NAME_KEY, 
+#          BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_LIST_KEYS,
+#          BISON_OCCURRENCE_URL, BISON_BINOMIAL_REGEX, BISON_TSN_FILTERS, 
+#          BISON_OCC_FILTERS,
+         
+#          GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
+         
+#          IDIGBIO_FILTERS, IDIGBIO_QFILTERS, 
+#          IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
+#          IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_SEARCH_PREFIX, 
+#          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
+#          IDIGBIO_GBIFID_FIELD, 
+         
+#          ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY,  
+#          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
+#          ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
+#          ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
+         
 
 # .............................................................................
 class APIQuery(object):
@@ -286,16 +287,16 @@ class BisonAPI(APIQuery):
       """
       @summary: Constructor for BisonAPI class      
       """
-      allQFilters = BISON_QFILTERS.copy()
+      allQFilters = BISON.QFILTERS.copy()
       for key, val in qFilters.iteritems():
          allQFilters[key] = val
          
       # Add/replace other filters to defaults for this instance
-      allOtherFilters = BISON_FILTERS.copy()
+      allOtherFilters = BISON.FILTERS.copy()
       for key, val in otherFilters.iteritems():
          allOtherFilters[key] = val
          
-      APIQuery.__init__(self, BISON_OCCURRENCE_URL, qKey='q', qFilters=allQFilters, 
+      APIQuery.__init__(self, BISON.OCCURRENCE_URL, qKey='q', qFilters=allQFilters, 
                         otherFilters=allOtherFilters, filterString=filterString, 
                         headers=headers)
       
@@ -303,11 +304,11 @@ class BisonAPI(APIQuery):
    @classmethod
    def initFromUrl(cls, url, headers={'Content-Type': 'application/json'}):
       base, filters = url.split('?')
-      if base.strip().startswith(BISON_OCCURRENCE_URL):
+      if base.strip().startswith(BISON.OCCURRENCE_URL):
          qry = BisonAPI(filterString=filters)
       else:
          raise Exception('Bison occurrence API must start with {}' 
-                        .format(BISON_OCCURRENCE_URL))
+                        .format(BISON.OCCURRENCE_URL))
       return qry
 
 # ...............................................
@@ -336,8 +337,8 @@ class BisonAPI(APIQuery):
       """
       @summary: Returns a list of sequences containing tsn and tsnCount
       """
-      bisonQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
-                            otherFilters=BISON_TSN_FILTERS)
+      bisonQuery = BisonAPI(qFilters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX}, 
+                            otherFilters=BISON.TSN_FILTERS)
       tsnList = bisonQuery._getBinomialTSNs()
       return tsnList
 
@@ -346,8 +347,8 @@ class BisonAPI(APIQuery):
       dataList = None
       self.query()
       if self.output is not None:
-         dataCount = self._burrow(BISON_COUNT_KEYS)
-         dataList = self._burrow(BISON_TSN_LIST_KEYS)
+         dataCount = self._burrow(BISON.COUNT_KEYS)
+         dataList = self._burrow(BISON.TSN_LIST_KEYS)
          print 'Reported count = {}, actual count = {}'.format(dataCount, 
                                                                len(dataList))
       return dataList
@@ -361,11 +362,11 @@ class BisonAPI(APIQuery):
       """
       itisname = king = tsnHier = None
       try:
-         occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(itisTSN)}, 
+         occAPI = BisonAPI(qFilters={BISON.HIERARCHY_KEY: '*-{}-'.format(itisTSN)}, 
                            otherFilters={'rows': 1})
-         tsnHier = occAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
-         itisname = occAPI.getFirstValueFor(BISON_NAME_KEY)
-         king = occAPI.getFirstValueFor(BISON_KINGDOM_KEY)
+         tsnHier = occAPI.getFirstValueFor(BISON.HIERARCHY_KEY)
+         itisname = occAPI.getFirstValueFor(BISON.NAME_KEY)
+         king = occAPI.getFirstValueFor(BISON.KINGDOM_KEY)
       except Exception, e:
          print str(e)
          raise
@@ -380,8 +381,8 @@ class BisonAPI(APIQuery):
       if self.output is None:
          self.query()
       if self.output is not None:
-         dataCount = self._burrow(BISON_COUNT_KEYS)
-         dataList = self._burrow(BISON_RECORD_KEYS)
+         dataCount = self._burrow(BISON.COUNT_KEYS)
+         dataList = self._burrow(BISON.RECORD_KEYS)
       return dataList
       
 # ...............................................
@@ -413,16 +414,16 @@ class ItisAPI(APIQuery):
       """
       @summary: Constructor for ItisAPI class      
       """
-      APIQuery.__init__(self, ITIS_TAXONOMY_HIERARCHY_URL, 
+      APIQuery.__init__(self, ITIS.TAXONOMY_HIERARCHY_URL, 
                         otherFilters=otherFilters)
    
 # ...............................................
    def _findTaxonByRank(self, root, rankKey):
-      for tax in root.iter('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_HIERARCHY_TAG)):
-         rank = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_RANK_TAG)).text
+      for tax in root.iter('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.HIERARCHY_TAG)):
+         rank = tax.find('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.RANK_TAG)).text
          if rank == rankKey:
-            name = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXON_TAG)).text
-            tsn = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY)).text
+            name = tax.find('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.TAXON_TAG)).text
+            tsn = tax.find('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.TAXONOMY_KEY)).text
          return (tsn, name)
       
 # ...............................................
@@ -438,10 +439,10 @@ class ItisAPI(APIQuery):
       @note: for 
       """
       taxPath = []
-      for tax in self.output.iter('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_HIERARCHY_TAG)):
-         rank = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_RANK_TAG)).text
-         name = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXON_TAG)).text
-         tsn = tax.find('{{}}{}'.format(ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY)).text
+      for tax in self.output.iter('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.HIERARCHY_TAG)):
+         rank = tax.find('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.RANK_TAG)).text
+         name = tax.find('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.TAXON_TAG)).text
+         tsn = tax.find('{{}}{}'.format(ITIS.DATA_NAMESPACE, ITIS.TAXONOMY_KEY)).text
          taxPath.append((rank, tsn, name))
       return taxPath
 
@@ -451,9 +452,9 @@ class ItisAPI(APIQuery):
          APIQuery.query(self, outputType='xml')
       taxPath = self._returnHierarchy()
       hierarchy = {}
-      for rank in (ITIS_KINGDOM_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_CLASS_KEY, 
-                   ITIS_ORDER_KEY, ITIS_FAMILY_KEY, ITIS_GENUS_KEY,
-                   ITIS_SPECIES_KEY):
+      for rank in (ITIS.KINGDOM_KEY, ITIS.PHYLUM_DIVISION_KEY, ITIS.CLASS_KEY, 
+                   ITIS.ORDER_KEY, ITIS.FAMILY_KEY, ITIS.GENUS_KEY,
+                   ITIS.SPECIES_KEY):
          hierarchy[rank] = self._getRankFromPath(taxPath, rank)
       return hierarchy      
    
@@ -471,11 +472,11 @@ class GbifAPI(APIQuery):
    Class to query GBIF APIs and return results
    """
 # ...............................................
-   def __init__(self, service=GBIF_SPECIES_SERVICE, key=None, otherFilters={}):
+   def __init__(self, service=GBIF.SPECIES_SERVICE, key=None, otherFilters={}):
       """
       @summary: Constructor for GbifAPI class      
       """
-      url = '/'.join((GBIF_REST_URL, service))
+      url = '/'.join((GBIF.REST_URL, service))
       if key is not None:
          url = '/'.join((url, str(key)))
          APIQuery.__init__(self, url)
@@ -500,7 +501,7 @@ class GbifAPI(APIQuery):
       @summary: Return ITISScientificName, kingdom, and TSN hierarchy from one 
                 occurrence record ending in this TSN (species rank) 
       """
-      taxAPI = GbifAPI(service=GBIF_SPECIES_SERVICE, key=taxonKey)
+      taxAPI = GbifAPI(service=GBIF.SPECIES_SERVICE, key=taxonKey)
       try:
          taxAPI.query()
          scinameStr = taxAPI._getOutputVal(taxAPI.output, 'scientificName')
@@ -548,7 +549,7 @@ class GbifAPI(APIQuery):
       @summary: Return title from one organization record with this key  
       @param puborgKey: GBIF identifier for this publishing organization
       """
-      orgAPI = GbifAPI(service=GBIF_ORGANIZATION_SERVICE, key=puborgKey)
+      orgAPI = GbifAPI(service=GBIF.ORGANIZATION_SERVICE, key=puborgKey)
       try:
          orgAPI.query()
          puborgName = orgAPI._getOutputVal(orgAPI.output, 'title')
@@ -576,16 +577,16 @@ class IdigbioAPI(APIQuery):
       """
       @summary: Constructor for IdigbioAPI class      
       """
-      idigSearchUrl = '/'.join((IDIGBIO_SEARCH_PREFIX, IDIGBIO_SEARCH_POSTFIX, 
-                                IDIGBIO_OCCURRENCE_POSTFIX))
+      idigSearchUrl = '/'.join((IDIGBIO.SEARCH_PREFIX, IDIGBIO.SEARCH_POSTFIX, 
+                                IDIGBIO.OCCURRENCE_POSTFIX))
 
-      # Add/replace Q filters to defaults for this instance
-      allQFilters = IDIGBIO_QFILTERS.copy()
+      # Add/replace Q filters to defaults for this instance 
+      allQFilters = IDIGBIO.QFILTERS.copy()
       for key, val in qFilters.iteritems():
          allQFilters[key] = val
          
       # Add/replace other filters to defaults for this instance
-      allOtherFilters = IDIGBIO_FILTERS.copy()
+      allOtherFilters = IDIGBIO.FILTERS.copy()
       for key, val in otherFilters.iteritems():
          allOtherFilters[key] = val
          
@@ -597,11 +598,11 @@ class IdigbioAPI(APIQuery):
    @classmethod
    def initFromUrl(cls, url):
       base, filters = url.split('?')
-      if base.strip().startswith(IDIGBIO_SEARCH_PREFIX):
+      if base.strip().startswith(IDIGBIO.SEARCH_PREFIX):
          qry = IdigbioAPI(filterString=filters)
       else:
          raise Exception('iDigBio occurrence API must start with {}' 
-                        .format(IDIGBIO_SEARCH_PREFIX))
+                        .format(IDIGBIO.SEARCH_PREFIX))
       return qry
 
 # ...............................................
@@ -621,16 +622,16 @@ class IdigbioAPI(APIQuery):
       """
       @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
       """
-      self._qFilters[IDIGBIO_GBIFID_FIELD] = taxonKey
+      self._qFilters[IDIGBIO.GBIFID_FIELD] = taxonKey
       self.query()
       specimenList = []
       if self.output is not None:
          fullCount = self.output['itemCount']
-         for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
+         for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
             newitem = {}
-            for dataFld, dataVal in item[IDIGBIO_RECORD_CONTENT_KEY].iteritems():
+            for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
                newitem[dataFld] = dataVal
-            for idxFld, idxVal in item[IDIGBIO_RECORD_INDEX_KEY].iteritems():
+            for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
                if idxFld == 'geopoint':
                   newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
                   newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
@@ -648,11 +649,11 @@ class IdigbioAPI(APIQuery):
          self.query()
       specimenList = []
       if self.output is not None:
-         for item in self.output[IDIGBIO_OCCURRENCE_ITEMS_KEY]:
+         for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
             newitem = {}
-            for dataFld, dataVal in item[IDIGBIO_RECORD_CONTENT_KEY].iteritems():
+            for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
                newitem[dataFld] = dataVal
-            for idxFld, idxVal in item[IDIGBIO_RECORD_INDEX_KEY].iteritems():
+            for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
                if idxFld == 'geopoint':
                   newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
                   newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
@@ -720,8 +721,8 @@ if __name__ == '__main__':
    
    if bison:
       # ******************* BISON ********************************
-#       tsnQuery = BisonAPI(qFilters={BISON_NAME_KEY: BISON_BINOMIAL_REGEX}, 
-#                           otherFilters=BISON_TSN_FILTERS)
+#       tsnQuery = BisonAPI(qFilters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX}, 
+#                           otherFilters=BISON.TSN_FILTERS)
 #     
 #       qfilters = {'decimalLongitude': (-125, -66), 'decimalLatitude': (24, 50), 
 #                   'ITISscientificName': '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/', 
@@ -748,8 +749,8 @@ if __name__ == '__main__':
          tsn = int(tsnPair[0])
          count = int(tsnPair[1])
                  
-         newQ = {BISON_HIERARCHY_KEY: '*-{}-*'.format(tsn)}
-         occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_OCC_FILTERS)
+         newQ = {BISON.HIERARCHY_KEY: '*-{}-*'.format(tsn)}
+         occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON.OCC_FILTERS)
          thisurl = occAPI.url
          occList = occAPI.getTSNOccurrences()
          count = None if not occList else len(occList)
@@ -760,10 +761,10 @@ if __name__ == '__main__':
          count = None if not occList2 else len(occList2)
          print 'Received {} occurrences from url init'.format(count)
           
-         tsnAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
+         tsnAPI = BisonAPI(qFilters={BISON.HIERARCHY_KEY: '*-{}-'.format(tsn)}, 
                            otherFilters={'rows': 1})
-         hier = tsnAPI.getFirstValueFor(BISON_HIERARCHY_KEY)
-         name = tsnAPI.getFirstValueFor(BISON_NAME_KEY)
+         hier = tsnAPI.getFirstValueFor(BISON.HIERARCHY_KEY)
+         name = tsnAPI.getFirstValueFor(BISON.NAME_KEY)
          print name, hier
    
    if gbif:
