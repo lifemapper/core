@@ -45,7 +45,7 @@ class OccDataParser(object):
    REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
                            FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
 
-   def __init__(self, logger, data, metadata, delimiter='\t'):
+   def __init__(self, logger, datafile, metadatafile, delimiter='\t'):
       """
       @summary Reader for arbitrary user CSV data file with header record and 
                metadata file
@@ -53,8 +53,8 @@ class OccDataParser(object):
       @param data: raw data or filename for CSV data
       @param metadata: dictionary or filename containing dictionary of metadata
       """
-      self.metadataFname = None
-      self.dataFname = None
+      self.metadataFname = metadatafile
+      self.dataFname = datafile
       self.delimiter = delimiter
       
       self.log = logger
@@ -93,35 +93,53 @@ class OccDataParser(object):
       
       csv.field_size_limit(sys.maxsize)
       try:
-         self._file = open(data, 'r')
+         self._file = open(datafile, 'r')
          self._csvreader = csv.reader(self._file, delimiter=self.delimiter)
-         self.dataFname = data
       except Exception, e:
          try:
+            self.dataFname = None
             csvData = StringIO.StringIO()
-            csvData.write(data.encode(ENCODING))
+            csvData.write(datafile.encode(ENCODING))
             csvData.seek(0)
             self._csvreader = csv.reader(csvData, delimiter=self.delimiter)
          except Exception, e:
-            raise Exception('Failed to read or open {}'.format(data))
+            raise Exception('Failed to read or open {}'.format(datafile))
       
-      # Assume header in first row of data, strip any whitespace
+      # Read CSV header
       tmpHeader = self._csvreader.next()
       self.header = [fldname.strip() for fldname in tmpHeader]
-
-      try:
-         # Read metadata file and close
-         self._getMetadata(metadata, self.header)
-      except Exception, e:
-         self.log.warning(str(e))
-         try:
-            self._getMetadataDeprecated(metadata, self.header)
-         except Exception, e:
-            raise Exception('Failed to read header or metadata, ({})'
-                            .format(str(e))) 
+      # Read metadata file/stream
+      fieldmeta, metadataFname = self.readMetadata(metadatafile)
+      if metadataFname is None:
+         self.metadataFname = metadataFname
+      
+      self._populateMetadata(fieldmeta, self.header)
          
       # Start by pulling line 1; populates key, currLine and currRecnum
       self.pullNextValidRec()
+
+   # .............................................................................
+   def _populateMetadata(self, fieldmeta, header):
+      try:
+         (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
+          nameIdx) = self.getMetadata(fieldmeta, self.header)
+      except Exception, e:
+         self.log.warning(str(e))
+         try:
+            (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
+             nameIdx) = self.getMetadataDeprecated(fieldmeta, self.header)
+         except Exception, e:
+            raise Exception('Failed to read header or metadata, ({})'
+                            .format(str(e))) 
+      self.fieldNames = fieldNames
+      self.fieldCount = len(fieldNames)
+      self.fieldTypes = fieldTypes
+      self.filters = filters
+      self._idIdx = idIdx
+      self._xIdx = xIdx
+      self._yIdx = yIdx
+      self._sortIdx = sortIdx
+      self._nameIdx = nameIdx
 
    # .............................................................................
    @property
@@ -185,112 +203,139 @@ class OccDataParser(object):
       return self.fieldNames[self._yIdx]
       
    # .............................................................................
-   def _readMetadata(self, metadata):
-      fldmeta = None
+   @staticmethod
+   def readMetadata(self, metadata):
+      fieldmeta = metadataFname = None
       try:
          f = open(metadata, 'r')
       except Exception, e:
-         fldmeta = metadata            
+         fieldmeta = metadata            
       else:
-         self.metadataFname = metadata
+         metadataFname = metadata
          try:
             metaStr = f.read()
-            fldmeta = ast.literal_eval(metaStr)
+            fieldmeta = ast.literal_eval(metaStr)
          except Exception, e:
             raise Exception('Failed to evaluate contents of metadata file {}'
-                            .format(self.metadataFname))
+                            .format(metadataFname))
          finally:
             f.close()
             
-      if type(fldmeta) not in (DictionaryType, DictType):
+      if type(fieldmeta) not in (DictionaryType, DictType):
          raise Exception('Failed to read or open {}'.format(metadata))
-      return fldmeta
+      return fieldmeta, metadataFname
          
    # .............................................................................
-   def _getMetadataDeprecated(self, metadata, header):
-      fldmeta = self._readMetadata(metadata)
-      
+   @staticmethod
+   def getMetadataDeprecated(fldmeta, header):
+      """
+      @copydoc LmBackend.common.occparse.OccDataParser::getMetadata()
+      """
+      fieldNames = []
+      fieldTypes = []
+      filters = {}
+      idIdx = xIdx = yIdx = sortIdx = nameIdx = None
+
       for i in range(len(header)):         
          oname = header[i]
          shortname = fldmeta[oname][0]
-         ogrtype = self.getOgrFieldType(fldmeta[oname][1])
-         self.fieldNames.append(shortname)
-         self.fieldTypes.append(ogrtype)
+         ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
+         fieldNames.append(shortname)
+         fieldTypes.append(ogrtype)
          
          if len(fldmeta[oname]) == 3:
             if type(fldmeta[oname][2]) in (ListType, TupleType):
                acceptedVals = fldmeta[oname][2]
                if ogrtype == OFTString:
                   acceptedVals = [val.lower() for val in fldmeta[oname][2]]
-               self.filters[i] = acceptedVals 
+               OccDataParser.filters[i] = acceptedVals 
             else:
                role = fldmeta[oname][2].lower()
                if role == 'id':
-                  self._idIdx = i
+                  idIdx = i
                elif role == 'longitude':
-                  self._xIdx = i
+                  xIdx = i
                elif role == 'latitude':
-                  self._yIdx = i
+                  yIdx = i
                elif role == 'groupby':
-                  self._sortIdx = i
+                  sortIdx = i
                elif role == 'dataname':
-                  self._nameIdx = i
-      self.fieldCount = len(self.fieldNames)
+                  nameIdx = i
       
-      if self._idIdx == None:
-         raise Exception('Missing \'id\' unique identifier field')
-      if self._xIdx == None:
-         raise Exception('Missing \'longitude\' georeference field')
-      if self._yIdx == None:
-         raise Exception('Missing \'latitude\' georeference field')
-      if self._sortIdx == None:
-         raise Exception('Missing \'groupby\' sorting field')
-      if self._nameIdx == None:
-         raise Exception('Missing \'dataname\' dataset name field')
+      if (xIdx == None or yIdx == None or sortIdx == None or nameIdx == None):
+         raise Exception('Missing one of required field roles ({}) in header'
+                         .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
+      return (fieldNames, fieldTypes, filters, 
+              idIdx, xIdx, yIdx, sortIdx, nameIdx)
 
    # .............................................................................
-   def _getMetadata(self, metadata, header):
-      fldmeta = self._readMetadata(metadata)
+   @staticmethod
+   def getMetadata(fldmeta, header):
+      """
+      @summary: Identify data columns from metadata dictionary and data header
+      @param fldmeta: Dictionary of field names, types, and filter values.
+                      Keywords identify which fields are the x, y, id, grouping 
+                      field, taxa name.
+      @param header: First row of data file containing field names for values 
+                     in subsequent rows. Field names match those in fldmeta 
+                     dictionary
+      @return: list of: fieldName list (order of data columns)
+                        fieldType list (order of data columns)
+                        dictionary of filters for accepted values for one or 
+                            more fields 
+                        integer indexes for id, x, y, groupBy, and name fields
+      """
+      fieldNames = []
+      fieldTypes = []
+      filters = {}
+      idIdx = xIdx = yIdx = sortIdx = nameIdx = None
       try:
-         fldId = fldmeta[self.FIELD_ROLE_IDENTIFIER]
+         fldId = fldmeta[OccDataParser.FIELD_ROLE_IDENTIFIER]
       except:
          fldId = None
          
       try:
-         fldLon = fldmeta[self.FIELD_ROLE_LONGITUDE]
-         fldLat = fldmeta[self.FIELD_ROLE_LATITUDE]
-         fldGrp = fldmeta[self.FIELD_ROLE_GROUPBY]
-         fldTaxa = fldmeta[self.FIELD_ROLE_TAXANAME]
+         fldLon = fldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
+         fldLat = fldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
+         fldGrp = fldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
+         fldTaxa = fldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
       except:
          raise Exception('Missing one of required field roles ({}) in metadata'
-                         .format(','.join(self.REQUIRED_FIELD_ROLES)))
+                         .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
       
       for i in range(len(header)):         
          oname = header[i]
          shortname = fldmeta[oname][0]
-         ogrtype = self.getOgrFieldType(fldmeta[oname][1])
-         self.fieldNames.append(shortname)
-         self.fieldTypes.append(ogrtype)
+         ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
+         fieldNames.append(shortname)
+         fieldTypes.append(ogrtype)
+         # Check for optional filter AcceptedValues.  Records without an
+         # AcceptedValue value will be ignored
+         if len(fldmeta[oname]) == 3:
+            if type(fldmeta[oname][2]) in (ListType, TupleType):
+               acceptedVals = fldmeta[oname][2]
+               if ogrtype == OFTString:
+                  acceptedVals = [val.lower() for val in fldmeta[oname][2]]
+               filters[i] = acceptedVals 
          # Find column index of important fields
          # Id, lat, long will always be separate fields
          if oname == fldId:
-            self._idIdx = i
+            idIdx = i
          elif oname == fldLon:
-            self._xIdx = i
+            xIdx = i
          elif oname == fldLat:
-            self._yIdx = i
+            yIdx = i
          # May group by Taxa
          elif oname == fldTaxa:
-            self._nameIdx = i
+            nameIdx = i
          if oname == fldGrp:
-            self._sortIdx = i         
-      self.fieldCount = len(self.fieldNames)
+            sortIdx = i         
       
-      if (self._xIdx == None or self._yIdx == None or self._sortIdx == None or 
-          self._nameIdx == None):
+      if (xIdx == None or yIdx == None or sortIdx == None or nameIdx == None):
          raise Exception('Missing one of required field roles ({}) in header'
-                         .format(','.join(self.REQUIRED_FIELD_ROLES)))
-
+                         .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
+      return (fieldNames, fieldTypes, filters, 
+              idIdx, xIdx, yIdx, sortIdx, nameIdx)
    # .............................................................................
    @staticmethod
    def getOgrFieldType(typeString):
@@ -600,17 +645,23 @@ log = TestLogger('occparse_checkInput')
 data = pthAndBasename + OutputFormat.CSV
 metadata = pthAndBasename + OutputFormat.METADATA
 
-# get header
+# Read data header
 csv.field_size_limit(sys.maxsize)
 f = open(data, 'r')
 csvreader = csv.reader(f, delimiter=',')
-header = csvreader.next()
-
-f = open(metadata, 'r')
-metaStr = f.read()
-fldmeta = ast.literal_eval(metaStr)
+tmp = csvreader.next()
+header = [fldname.strip() for fldname in header]
 f.close()
 
+# Read metadata file
+fldmeta, tmp = OccDataParser.readMetadata(metadata)
+
+(fieldNames, fieldTypes, filters, 
+idIdx, xIdx, yIdx, sortIdx, nameIdx) = OccDataParser.getMetadata(fldmeta, header)
+
+
+
+fldId = None
 fldLon = fldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
 fldLat = fldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
 fldGrp = fldmeta[OccDataParser.FIELD_ROLE_GROUPBY]

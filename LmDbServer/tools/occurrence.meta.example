@@ -3,13 +3,15 @@
 # 
 # This file must contain a Python dictionary with:
 #     Key = field name or field role
-#     Value = if field heading, tuple: (Shortname, Type)
+#     Value = if field heading, tuple: (Shortname, Type [, AcceptedValues])
 #             if field role, string: one of the existing field headings
 # 
 # Key field name in the first row of the CSV data file
 # Shortname must be 10 characters or fewer and will be used in the shapefile 
 #   created for each dataset.  
 # Type must be 'integer', 'string', or 'real'
+# AcceptedValues (optional) is a list of accepted values for this field.  
+#   Records with non-accepted values will be discarded.
 #
 # Key field role (case-insensitive) MUST identify four or five of the fields: 
 #   UniqueID, Longitude, Latitude, GroupBy, TaxaName 
@@ -37,7 +39,7 @@
   'genus': ('genus', 'string'),
   'species': ('species', 'string'),
   'infraspecificepithet': ('isepithet', 'string'), 
-  'taxonrank': ('taxonrank', 'string'),
+  'taxonrank': ('taxonrank', 'string', ['SUBSPECIES', 'SPECIES']),
   'scientificname': ('sciname', 'string'),
   'countrycode': ('cntrycode', 'string'),
   'locality': ('locality', 'string'),
