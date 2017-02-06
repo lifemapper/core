@@ -7,7 +7,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -27,10 +27,13 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Consider removing jobXml in favor of direct parameterization
+@todo: Consider just calculating stats and writing those rather than 
+          intermediate matrix
 """
 import argparse
-from LmCompute.plugins.multi.randomize.randomizeRunners import RandomizeGradyRunner
+
+from LmCommon.common.matrix import Matrix
+from LmCompute.plugins.multi.randomize.grady import gradyRandomize
 
 # .............................................................................
 if __name__ == "__main__":
@@ -38,33 +41,17 @@ if __name__ == "__main__":
    # Set up the argument parser
    parser = argparse.ArgumentParser(
       description="This script randomizes a PAM using the parallel Grady method while maintaining marginal totals") 
-   
-   parser.add_argument('-n', '--job_name', dest='jobName', type=str,
-                               help="Use this as the name of the job (for logging and work directory creation).  If omitted, one will be generated")
-   parser.add_argument('-o', '--out_dir', dest='outDir', type=str, 
-                               help="Write the final outputs to this directory")
-   parser.add_argument('-w', '--work_dir', dest='workDir', type=str, 
-                               help="The workspace directory where the work directory should be created.  If omitted, will use current directory")
-   parser.add_argument('-l', '--log_file', dest='logFn', type=str, 
-                               help="Where to log outputs (don't if omitted)")
-   parser.add_argument('-ll', '--log_level', dest='logLevel', type=str, 
-                               help="What level to log at", 
-                               choices=['info', 'debug', 'warn', 'error', 'critical'])
-   parser.add_argument('-s', '--status_fn', dest='statusFn', type=str,
-                       help="If this is not None, output the status of the job here")
-   parser.add_argument('--metrics', type=str, dest='metricsFn', 
-                               help="If provided, write metrics to this file")
-   parser.add_argument('--cleanup', type=bool, dest='cleanUp', 
-                               help="Clean up outputs or not", 
-                               choices=[True, False])
-   parser.add_argument('jobXml', type=str, 
-                               help="Job configuration information XML file")
+
+   parser.add_argument('pamFn', type=str, help="File location for PAM data")
+   parser.add_argument('outRandomFn', type=str, 
+                       help="File location to write randomized PAM")
    
    args = parser.parse_args()
    
-   job = RandomizeGradyRunner(args.jobXml, jobName=args.jobName, 
-               outDir=args.outDir, workDir=args.workDir, 
-               metricsFn=args.metricsFn, logFn=args.logFn, 
-               logLevel=args.logLevel, statusFn=args.statusFn)
-   job.run()
+   pam = Matrix.load(args.pamFn)
+   
+   randPam = gradyRandomize(pam)
+   
+   with open(args.outRandomFn, 'w') as outPamF:
+      randPam.save(outPamF)
    
