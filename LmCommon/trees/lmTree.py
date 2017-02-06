@@ -34,7 +34,7 @@ import numpy as np
 import os
 from random import shuffle
 
-from LmCommon.common.lmconstants import FileFormats, OutputFormat, PhyloTreeKeys
+from LmCommon.common.lmconstants import FileFormats, PhyloTreeKeys
 from LmCommon.common.matrix import Matrix
 from LmCommon.trees.convert.newickToJson import Parser
 
@@ -220,6 +220,24 @@ class LmTree(object):
       labels.reverse()
       
       return labels
+      
+   # ..............................
+   def getMatrixIndexLabelPairs(self, useSquids=True, sorted=True):
+      """
+      @summary: Returns a list of (matrix index, clade label) pairs
+      @param useSquids: If true, use squids for labels, else use name
+      @param sorted: If true, sort the list by matrix index before return
+      """
+      if useSquids:
+         labelKey = PhyloTreeKeys.SQUID
+      else:
+         labelKey = PhyloTreeKeys.NAME
+         
+      pairs = self._getMatrixIndexLabelPairs(self.tree, labelKey)
+      if sorted:
+         return sorted(pairs)
+      else:
+         return pairs
       
    # ..............................
    def hasBranchLengths(self):
@@ -527,6 +545,22 @@ class LmTree(object):
          localLabels.append((clade[PhyloTreeKeys.NAME], clade[PhyloTreeKeys.PATH_ID]))
 
       return localLabels
+   
+   # ..............................
+   def _getMatrixIndexLabelPairs(self, clade, labelKey):
+      """
+      @summary: Recursively build a list of matrix index, label pairs
+      @param clade: The clade to check for matrix index and recurse
+      @param labelKey: The key to use as a label for this clade
+      """
+      pairs = []
+      if clade.has_key(PhyloTreeKeys.MTX_IDX):
+         pairs.append((clade[PhyloTreeKeys.MTX_IDX], clade[labelKey]))
+      
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         pairs.extend(self._getMatrixIndexLabelPairs(child, labelKey))
+      
+      return pairs
    
    # ..............................
    def _getMatrixIndicesInClade(self, clade):
