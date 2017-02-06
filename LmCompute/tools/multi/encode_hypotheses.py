@@ -30,11 +30,9 @@
 @note: If you want to encode multiple layers with different event fields, call
           this script for each set of layers and then use the 
           concatenate_matrices script to stitch the results togther.
-@todo: Consider providing a status parameter in case things go poorly
 @todo: Consider providing option other than shapegrid, ex. (site id, x, y)
 """
 import argparse
-import numpy as np
 
 from LmCommon.encoding.bioGeoContrasts import BioGeoEncoding
 
@@ -59,4 +57,7 @@ if __name__ == "__main__":
    encoder.addLayers(args.lyr, eventField=args.eventField)
    
    bgEncoding = encoder.encodeHypotheses()
-   np.save(args.outFn, bgEncoding)
+
+   # Use Matrix save
+   with open(args.outFn, 'w') as outF:
+      bgEncoding.save(outF)
