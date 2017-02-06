@@ -757,18 +757,6 @@ DEFAULT_POST_USER = 'anon'
 LM_CLIENT_VERSION_URL = "http://svc.lifemapper.org/clients/versions.xml"
 LM_INSTANCES_URL = "http://svc.lifemapper.org/clients/instances.xml"
 
-class SpeciesInputFormat:
-   """
-   @summary: These are species data sources with defined data formats.
-             IDIGBIO and BISON are queryable APIs, GBIF is a CSV file,
-             sorted by TaxonId, User is a CSV file with metadata describing 
-             each field.
-   """
-   IDIGBIO = "IDIGBIO"
-   BISON = "BISON"
-   GBIF = "GBIF"
-   USER = "USER"
-
 class Instances:
    """
    @summary: These are Lifemapper instances that we know how to work with 
