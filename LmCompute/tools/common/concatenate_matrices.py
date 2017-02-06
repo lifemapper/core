@@ -1,7 +1,6 @@
 #!/bin/bash
 """
-@summary: This script concatenates two (or more) Numpy matrices along a 
-             specified axis
+@summary: This script concatenates two (or more) matrices along a specified axis
 @author: CJ Grady
 @version: 4.0.0
 @status: beta
@@ -26,23 +25,23 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Consider adding status to this
 """
 import argparse
-import numpy as np
+
+from LmCommon.common.matrix import Matrix
 
 # .............................................................................
 if __name__ == "__main__":
    # Set up the argument parser
    parser = argparse.ArgumentParser(
-      description="This script concatenates two (or more) Numpy matrices along an axis")
+      description="This script concatenates two (or more) matrices along an axis")
    
    #parser.add_argument('-s', '--status_fn', dest='statusFn', type=str,
    #              help="If this is not None, output the status of the job here")
    parser.add_argument("outFn", type=str, 
                         help="The file location to write the resulting matrix")
    parser.add_argument("axis", type=int, 
-                      help="The (Numpy) axis to concatenate these matrices on")
+                      help="The (Matrix) axis to concatenate these matrices on")
    parser.add_argument("mtx1Fn", type=str, 
                        help="The file location of the first matrix")
    parser.add_argument("mtxFn", type=str, nargs='+', 
@@ -51,11 +50,12 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    joinAxis = args.axis
-   mtxs = [np.load(args.mtx1Fn)]
+   mtxs = [Matrix.load(args.mtx1Fn)]
    for mtxFn in args.mtxFn:
-      mtxs.append(np.load(mtxFn))
+      mtxs.append(Matrix.load(args.mtxFn))
    
-   joinedMtx = np.concatenate(mtxs, axis=args.axis)
+   joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
    
-   np.save(args.outFn, joinedMtx)
+   with open(args.outFn, 'w') as outF:
+      joinedMtx.save(outF)
 
