@@ -40,14 +40,15 @@ def _getOPFilename(datapath, prefix, base, run=None):
 # ...............................................
 def _getSmallestKeyAndPosition(sortedFiles):
    """
-   Get smallest data key and index of file containing that record
+   Get smallest groupVal (grouping data key) and index of file containing 
+   that record
    """
    idxOfSmallest = 0
-   smallest = sortedFiles[idxOfSmallest].key
+   smallest = sortedFiles[idxOfSmallest].groupVal
    for idx in range(len(sortedFiles)):
-      if sortedFiles[idx].key is not None:
-         if smallest is None or sortedFiles[idx].key < smallest:
-            smallest = sortedFiles[idx].key
+      if sortedFiles[idx].groupVal is not None:
+         if smallest is None or sortedFiles[idx].groupVal < smallest:
+            smallest = sortedFiles[idx].groupVal
             idxOfSmallest = idx
    if smallest is None:
       return None, None
@@ -58,23 +59,23 @@ def _getSmallestKeyAndPosition(sortedFiles):
 def checkMergedFile(log, mergefname, metafname):
    chunkCount = recCount = failSortCount = failChunkCount = 0
    bigSortedData = OccDataParser(log, mergefname, metafname)
-   prevKey = bigSortedData.key
+   prevKey = bigSortedData.groupVal
    
    chunk = bigSortedData.pullCurrentChunk()
    try:
       while not bigSortedData.eof() and len(chunk) > 0:
-         if bigSortedData.key > prevKey: 
+         if bigSortedData.groupVal > prevKey: 
             chunkCount += 1
             recCount += len(chunk)
-         elif bigSortedData.key < prevKey:
+         elif bigSortedData.groupVal < prevKey:
             log.debug('Failure to sort prevKey {},  currKey {}'.format( 
-                      prevKey, bigSortedData.key))
+                      prevKey, bigSortedData.groupVal))
             failSortCount += 1
          else:
             log.debug('Current chunk key = prev key %d' % (prevKey))
             failChunkCount += 1
             
-         prevKey = bigSortedData.key
+         prevKey = bigSortedData.groupVal
          chunk = bigSortedData.pullCurrentChunk()
 
    except Exception, e:
@@ -174,7 +175,7 @@ def _switchFiles(openFile, csvwriter, datapath, prefix, basename, run=None):
 # ...............................................
 def _popChunkAndWrite(csvwriter, occPrsr):
    # first get chunk
-   thiskey = occPrsr.key
+   thiskey = occPrsr.groupVal
    chunk = occPrsr.pullCurrentChunk()
    for rec in chunk:
       csvwriter.writerow(rec)

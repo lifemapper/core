@@ -73,7 +73,7 @@ class OccDataParser(object):
       
       self.currLine = None 
       # record number of the chunk of current key     
-      self.keyFirstRec = 0      
+      self.groupFirstRec = 0      
       self.currIsGoodEnough = True
       
       # Overall stats
@@ -89,7 +89,7 @@ class OccDataParser(object):
       self.badFilterVals = set()
 
       self.chunk = []
-      self.key = None
+      self.groupVal = None
       self.currLine = None
       
       self._csvreader, self._file = self.getReader(datafile, delimiter)
@@ -106,7 +106,7 @@ class OccDataParser(object):
       
       self._populateMetadata(fieldmeta, self.header)
          
-      # Start by pulling line 1; populates key, currLine and currRecnum
+      # Start by pulling line 1; populates groupVal, groupFirstRec, currLine and currRecnum
       self.pullNextValidRec()
 
    # .............................................................................
@@ -381,7 +381,7 @@ class OccDataParser(object):
 
       # Sort/Group value; may be a string or integer
       try:
-         gval = line[self._sortIdx]
+         gval = self._getGroupByValue(line)
       except Exception, e:
          self.badGroups += 1
          goodEnough = False
@@ -461,18 +461,26 @@ class OccDataParser(object):
          line, goodEnough = self._getLine()
 
    # ...............................................
+   def _getGroupByValue(self, line):
+      try:
+         value = int(line[self._sortIdx])
+      except:
+         value = str(line[self._sortIdx])
+      return value
+
+   # ...............................................
    def pullNextValidRec(self):
       """
-      Fills in self.key and self.currLine
+      Fills in self.groupVal and self.currLine
       """
       complete = False
-      self.key = None
+      self.groupVal = None
       line, goodEnough = self._getLine()
       try:
          while self._csvreader is not None and not complete:
             if line and goodEnough:
                self.currLine = line
-               self.key = int(line[self._sortIdx])
+               self.groupVal = self._getGroupByValue(line)
                complete = True
                      
             if not complete:
@@ -480,12 +488,12 @@ class OccDataParser(object):
                if line is None:
                   complete = True
                   self.currLine = None
-                  self.key = None
+                  self.groupVal = None
                   
       except Exception, e:
          self.log.error('Failed in pullNextValidRec, currRecnum=%s, e=%s' 
                    % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
+         self.currLine = self.groupVal = None
 
    # ...............................................
    def printStats(self):
@@ -519,11 +527,12 @@ class OccDataParser(object):
    # ...............................................
    def pullCurrentChunk(self):
       """
-      Returns chunk for self.key, updates with next key and currline 
+      @summary: Returns chunk for self.groupVal, updates with groupFirstRec  
+                for next chunk and currline 
       """
       complete = False
       currCount = 0
-      currkey = self.key
+      currgroup = self.groupVal
       chunk = []
 
       # first line of chunk is currLine
@@ -539,12 +548,12 @@ class OccDataParser(object):
             self.pullNextValidRec()
             
             # Add to or complete chunk
-            if self.key == currkey:
+            if self.groupVal == currgroup:
                currCount += 1
                chunk.append(self.currLine)
             else:
                complete = True
-               self.keyFirstRec = self.currRecnum
+               self.groupFirstRec = self.currRecnum
                
             if self.currLine is None:
                complete = True
@@ -554,7 +563,7 @@ class OccDataParser(object):
       except Exception, e:
          self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
                    % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
+         self.currLine = self.groupVal = None
 
    # ...............................................
    def readAllChunks(self):
@@ -572,13 +581,11 @@ class OccDataParser(object):
    # ...............................................
    def getSizeChunk(self, maxsize):
       """
-      Returns chunk for self.key, updates with next key and currline 
+      @summary: Returns chunk for self.groupVal, updates with groupFirstRec  
+                for next chunk and currline 
       """
       complete = False
-#       currCount = 0
-#       firstLineno = self.currRecnum
       chunk = []
-
       try:
          while self._csvreader is not None and not complete:
             chunk.append(self.currLine)
@@ -586,13 +593,11 @@ class OccDataParser(object):
                complete = True
             else:
                self.pullNextValidRec()
-               
-         return chunk
-                  
       except Exception, e:
          self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
                    % (str(self.currRecnum), str(e)))
-         self.currLine = self.key = None
+         self.currLine = self.groupVal = None      
+      return chunk
 
    # ...............................................
    def eof(self):
