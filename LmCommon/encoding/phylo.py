@@ -29,11 +29,13 @@
 @see: Leibold, m.A., E.P. Economo and P.R. Peres-Neto. 2010. Metacommunity
          phylogenetics: separating the roles of environmental filters and 
          historical biogeography. Ecology letters 13: 1290-1299.
+@todo: Use method to get labels by matrix index when available from tree
 """
 import numpy as np
 from random import shuffle
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
+from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.encodingExcpetion import EncodingException
 from LmCommon.trees.lmTree import LmTree
 
@@ -49,13 +51,16 @@ class PhyloEncoding(object):
       @summary: Base constructor
       @param treeDict: A phylogenetic tree as a dictionary that will be 
                 converted to an LmTree object
-      @param pam: A numpy array for a PAM
+      @param pam: A Matrix for a PAM
       """
       if not isinstance(treeDict, LmTree):
          self.tree = LmTree(treeDict)
       else:
          self.tree = treeDict
-      self.pam = pam
+      if isinstance(pam, Matrix):
+         self.pam = pam
+      else:
+         self.pam = Matrix(pam)
    
    # ..............................   
    @classmethod
@@ -69,7 +74,7 @@ class PhyloEncoding(object):
       """
       tree = LmTree.fromFile(treeDLoc)
       
-      pam = np.load(pamDLoc)
+      pam = Matrix.load(pamDLoc)
       
       return cls(tree, pam)
       
@@ -103,18 +108,19 @@ class PhyloEncoding(object):
                    sister tip columns have true presence at that site.
       """
       _, newColumns = self._getSisterTipsForClade(self.tree.tree, 
-                                                           self.pam.shape[1]-1)
-      newColumMtx = np.zeros((self.pam.shape[0], len(newColumns.keys())), 
+                                                           self.pam.data.shape[1]-1)
+      newColumnMtx = np.zeros((self.pam.data.shape[0], len(newColumns.keys())), 
                              dtype=np.int)
       # Extend the PAM by adding new columns to the right side
-      self.pam = np.append(self.pam, newColumMtx, axis=1)
+      self.pam.append(Matrix(newColumnMtx, axis=1))
+      # TODO: Add header?
 
       for mtxIdx in newColumns.keys():
          # Get a matrix of all of the sister tips in the PAM
-         tmp = np.take(self.pam, newColumns[mtxIdx], axis=1)
+         tmp = np.take(self.pam.data, newColumns[mtxIdx], axis=1)
          # Set the presence value for each site to true if any of the sister 
          #    tips are present
-         self.pam[:,mtxIdx] = np.any(tmp, axis=1)
+         self.pam.data[:,mtxIdx] = np.any(tmp, axis=1)
    
    # ..............................
    def validate(self):
@@ -127,7 +133,7 @@ class PhyloEncoding(object):
            self.tree.isBinary(): 
          # Check that matrix indices in tree match PAM
          # List of matrix indices (based on PAM column count)
-         pamMatrixIndices = range(self.pam.shape[1])
+         pamMatrixIndices = range(self.pam.data.shape[1])
          # All matrix indices in tree
          treeMatrixIndices = self.tree.getMatrixIndicesInClade()
          
@@ -304,7 +310,10 @@ class PhyloEncoding(object):
          for nodePathId, val in tipProp:
             matrix[rowIdx][nodeColumnIndex[nodePathId]] = val
             
-      return matrix  
+      labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
+                                                      sorted=True)
+      labels = [label for _, label in labelPairs]
+      return Matrix(matrix, headers={1: labels})  
    
    # ..............................   
    def _buildPMatrixTipProportionList(self, clade, visited=[]):
@@ -402,7 +411,10 @@ class PhyloEncoding(object):
             matrix[tipMtxIdx][nodeColumnIndex[nodePathId]] = pValDict[
                                                          nodePathId][tipMtxIdx]
             
-      return matrix  
+      labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
+                                                      sorted=True)
+      labels = [label for _, label in labelPairs]
+      return Matrix(matrix, headers={1: labels})  
    
    # ..............................
    def _getSisterTipsForClade(self, clade, lastColumn):
