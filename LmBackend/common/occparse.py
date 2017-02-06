@@ -56,6 +56,7 @@ class OccDataParser(object):
       self.metadataFname = metadatafile
       self.dataFname = datafile
       self.delimiter = delimiter
+      self._file = None
       
       self.log = logger
       self.fieldNames = [] 
@@ -91,19 +92,9 @@ class OccDataParser(object):
       self.key = None
       self.currLine = None
       
-      csv.field_size_limit(sys.maxsize)
-      try:
-         self._file = open(datafile, 'r')
-         self._csvreader = csv.reader(self._file, delimiter=self.delimiter)
-      except Exception, e:
-         try:
-            self.dataFname = None
-            csvData = StringIO.StringIO()
-            csvData.write(datafile.encode(ENCODING))
-            csvData.seek(0)
-            self._csvreader = csv.reader(csvData, delimiter=self.delimiter)
-         except Exception, e:
-            raise Exception('Failed to read or open {}'.format(datafile))
+      self._csvreader, self._file = self.getReader(datafile, delimiter)
+      if self._file is None:
+         self.dataFname = None
       
       # Read CSV header
       tmpHeader = self._csvreader.next()
@@ -117,6 +108,24 @@ class OccDataParser(object):
          
       # Start by pulling line 1; populates key, currLine and currRecnum
       self.pullNextValidRec()
+
+   # .............................................................................
+   @staticmethod
+   def getReader(datafile, delimiter):
+      f = None  
+      csv.field_size_limit(sys.maxsize)
+      try:
+         f = open(datafile, 'r')
+         csvreader = csv.reader(f, delimiter=delimiter)
+      except Exception, e:
+         try:
+            csvData = StringIO.StringIO()
+            csvData.write(datafile.encode(ENCODING))
+            csvData.seek(0)
+            csvreader = csv.reader(csvData, delimiter=delimiter)
+         except Exception, e:
+            raise Exception('Failed to read or open {}'.format(datafile))
+      return csvreader, f
 
    # .............................................................................
    def _populateMetadata(self, fieldmeta, header):
@@ -370,9 +379,9 @@ class OccDataParser(object):
             self.badFilters += 1
             goodEnough = False
 
-      # Sort/Group value
+      # Sort/Group value; may be a string or integer
       try:
-         gval = int(line[self._sortIdx])
+         gval = line[self._sortIdx]
       except Exception, e:
          self.badGroups += 1
          goodEnough = False
@@ -648,22 +657,6 @@ pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
 log = TestLogger('occparse_checkInput')
 data = pthAndBasename + OutputFormat.CSV
 metadata = pthAndBasename + OutputFormat.METADATA
-
-# Read data header
-csv.field_size_limit(sys.maxsize)
-f = open(data, 'r')
-csvreader = csv.reader(f, delimiter=',')
-tmp = csvreader.next()
-header = [fldname.strip() for fldname in tmp]
-f.close()
-
-# Read metadata file
-fldmeta, tmp = OccDataParser.readMetadata(metadata)
-
-
-(fieldNames, fieldTypes, filters, 
-idIdx, xIdx, yIdx, sortIdx, nameIdx) = OccDataParser.getMetadata(fldmeta, header)
-
         
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
