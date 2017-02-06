@@ -1,12 +1,10 @@
 """
-@summary: Module containing methods to perform a splotch randomization of a 
-             layer
-
-@version: 3.0.0
+@summary: Module containing methods to perform a splotch randomization of a PAM
+@version: 4.0.0
+@author: CJ Grady
 @status: beta
-
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
  
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -27,104 +25,73 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import numpy
+import numpy as np
 import pysal
-from random import randrange
+from random import choice, randrange
+
+from LmCommon.common.matrix import Matrix
 
 # .............................................................................
-def splotchLayer(neighborMtx, totalAreaInCells, 
-                 cellCount, cellsideCount, siteCount, fileName):
+def splotchRandomize(mtx, shapegridFn, numSides):
    """
-   @summary: Randomize an uncompressed matrix using the Splotch method
-   @param matrix: the uncompressed matrix to be Splotched
-   @param cellsideCount: number of sides in each shapefile cell, either 4 or 6
-   @param shapefile: location of gridded shapefile (written as a temporary ESRI  
-                     shapefile to the filesystem) describing the area to be 
-                     randomized with the splotch algorithm
-   @param siteCount: a count of all polygons in the shapegrid used to create 
-                     the matrix
-   @param layersPresent: a dictionary of layer matrix indexes, corresponding 
-                        to the layers used to create the matrix, with 
-                        values = True/False, corresponding with layer
-                        presence in the compressed matrix
-   @return: An uncompressed, splotched matrix
+   @summary: Randomize a matrix using the Splotch method
+   @param mtx: A Matrix object for a PAM
+   @param shapegridFn: File location of shapegrid shapefile
+   @param numSides: The number of sides for each shapegrid cell, used to build
+                       connectivity matrix
+   @note: Use Pysal to build an adjacency matrix for the cells in the shapegrid
    """
-   edges = {}
-   if totalAreaInCells <> siteCount:
-      newColumn = numpy.zeros(siteCount, dtype=numpy.dtype(bool))
-      if totalAreaInCells > 0:
-         id = randrange(0, cellCount)
-         newColumn[id] = True
-         n1 = neighborMtx.neighbors[id]
-         firstlength = len(n1)
-         edges[id] = cellsideCount - firstlength
-         area = 1
-         while area < (totalAreaInCells):
-            n2 =  neighborMtx.neighbors[id]
-            neighborlength = len(n2)
-            move = 0
-            while move == 0:
-               r = randrange(0, neighborlength)
-               nextid = n2[r]
-               feature = newColumn[nextid]
-               if feature ^ True:
-                  newColumn[nextid] = True
-                  n3 = neighborMtx.neighbors[nextid]
-                  nlength = len(n3)
-                  edges[nextid] = cellsideCount - nlength
-                  for neighbor in n3:
-                     feature = newColumn[neighbor]
-                     if feature and True:
-                        edges[nextid] +=1
-                        edges[neighbor] += 1                                             
-                        if edges[neighbor] == cellsideCount:
-                           del edges[neighbor] 
-      
-                  if edges[nextid] == cellsideCount:
-                     del edges[nextid]       
-                  items = edges.items()
-                  id = items[randrange(0,len(edges))][0]
-                  move = 1
-                  area += 1
-   else:
-      newColumn = numpy.ones(siteCount,dtype=numpy.dtype(bool))
-   return newColumn
+   mtxHeaders = mtx.getHeaders()
+   columnSums = np.sum(mtx.data, axis=0)
 
-# .............................................................................
-def boolStr(val):
-   if val.strip().lower() == "false":
-      return False
+   if numSides == 4:
+      neighborMtx = pysal.rook_from_shapefile(shapegridFn)
+   elif numSides == 6:
+      neighborMtx = pysal.queen_from_shapefile(shapegridFn)
    else:
-      return True
-
-# .............................................................................
-def getAttributeOrDefault(obj, attribute, default=None, func=str):
-   try:
-      return func(obj.__getattribute__(attribute).strip())
-   except:
-      return default
+      raise Exception("Invalid number of cell sides")
    
-# .............................................................................
-if __name__ == "__main__":
-   import sys
-   from LmCommon.common.lmXml import deserialize, fromstring
-   if len(sys.argv) >= 2:
-      obj = deserialize(fromstring(sys.argv[1]))
-      
-      cellSideCount = int(obj.SplotchLayerObj.cellsideCount)
-      
-      if cellSideCount == 4:
-         neighborMtx = pysal.rook_from_shapefile(obj.SplotchLayerObj.shapegridLocation)
-      elif cellSideCount == 6:
-         neighborMtx = pysal.queen_from_shapefile(obj.SplotchLayerObj.shapegridLocation)
+   randomColumns = []
+   for colSum in columnSums:
+      randomColumns.append(_splotchColumn(neighborMtx, colSum))
+   
+   randPam = Matrix.concatenate(randomColumns)
+   randPam.setHeaders(mtxHeaders)
+   return randPam
 
-      cellCount = neighborMtx.n
+# .............................................................................
+def _splotchColumn(neighborMtx, numPresent):
+   """
+   @summary: Generates a splotch randomized column
+   @param neighborMtx: A PySal generated adjacency matrix (n x n) where n is 
+             number of cells
+   @param numPresent: The number of cells to set as present
+   """
+   npCol = np.zeros((neighborMtx.n, 1), dtype=np.bool)
+   
+   # Need a connected set
+   connected = set([])
+   
+   # Need an explored set
+   explored = set([])
+   
+   # Pick a random start id
+   rowId = randrange(0, neighborMtx.n)
+   numExplored = 0
+   
+   # While we have more to explore
+   while numExplored < numPresent:
+      explored.add(rowId)
+      numExplored += 1
+      npCol[rowId, 0] = True
       
-      layerArray = splotchLayer(neighborMtx, 
-                                int(obj.SplotchLayerObj.totalAreaInCells), 
-                                cellCount, 
-                                cellSideCount, 
-                                int(obj.SplotchLayerObj.siteCount),
-                                obj.SplotchLayerObj.fileName)
-       
-      numpy.save(obj.SplotchLayerObj.fileName, layerArray)
+      # Add new ids to connected set
+      newConnections = set(neighborMtx.neighbors[rowId]).difference(explored)
+      connected = connected.union(newConnections)
+
+      # Pick a new row id
+      rowId = choice(tuple(connected))
+      connected.remove(rowId)
+      
+   return Matrix(npCol)
+   
