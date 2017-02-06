@@ -158,7 +158,7 @@ class OccDataParser(object):
    @property
    def idValue(self):
       idVal = None
-      if self.currLine is not None:
+      if self.currLine is not None and self._idIdx is not None:
          idVal = self.currLine[self._idIdx]
       return idVal
    
@@ -192,7 +192,10 @@ class OccDataParser(object):
    
    @property
    def idFieldName(self):
-      return self.fieldNames[self._idIdx]
+      if self._idIdx is None:
+         return None
+      else:
+         return self.fieldNames[self._idIdx]
    
    @property
    def xFieldName(self):
@@ -204,7 +207,7 @@ class OccDataParser(object):
       
    # .............................................................................
    @staticmethod
-   def readMetadata(self, metadata):
+   def readMetadata(metadata):
       fieldmeta = metadataFname = None
       try:
          f = open(metadata, 'r')
@@ -376,13 +379,14 @@ class OccDataParser(object):
       else:
          self.groupVals.add(gval)
          
-      # Unique ID value
-      try:
-         int(line[self._idIdx])
-      except Exception, e:
-         if line[self._idIdx] == '':
-            self.badIds += 1
-            goodEnough = False
+      # If present, unique ID value
+      if self._idIdx is not None:
+         try:
+            int(line[self._idIdx])
+         except Exception, e:
+            if line[self._idIdx] == '':
+               self.badIds += 1
+               goodEnough = False
          
       # Lat/long values
       try:
@@ -650,46 +654,17 @@ csv.field_size_limit(sys.maxsize)
 f = open(data, 'r')
 csvreader = csv.reader(f, delimiter=',')
 tmp = csvreader.next()
-header = [fldname.strip() for fldname in header]
+header = [fldname.strip() for fldname in tmp]
 f.close()
 
 # Read metadata file
 fldmeta, tmp = OccDataParser.readMetadata(metadata)
 
+
 (fieldNames, fieldTypes, filters, 
 idIdx, xIdx, yIdx, sortIdx, nameIdx) = OccDataParser.getMetadata(fldmeta, header)
 
-
-
-fldId = None
-fldLon = fldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
-fldLat = fldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
-fldGrp = fldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
-fldTaxa = fldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
-
-fieldNames = []
-fieldTypes = []
-for i in range(len(header)):         
-   oname = header[i]
-   shortname = fldmeta[oname][0]
-   ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
-   fieldNames.append(shortname)
-   fieldTypes.append(ogrtype)
-   # Find column index of important fields
-   # Id, lat, long will always be separate fields
-   if oname == fldId:
-      idIdx = i
-   elif oname == fldLon:
-      xIdx = i
-   elif oname == fldLat:
-      yIdx = i
-   # May group by Taxa
-   elif oname == fldTaxa:
-      nameIdx = i
-   if oname == fldGrp:
-      sortIdx = i         
-fieldCount = len(fieldNames)
-
+        
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
 op.printStats()
