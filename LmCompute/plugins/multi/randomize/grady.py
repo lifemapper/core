@@ -4,10 +4,10 @@
              a fill-based approach so as to prevent a bias caused by starting
              with an initial condition of a populated matrix.
 @author: CJ Grady
-@version: 1.0
+@version: 4.0
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -28,15 +28,12 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-
-from random import random, choice, randint#shuffle, randint
+from random import random, choice, randint
 import numpy as np
-import time
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.matrix import Matrix
 
 SEARCH_THRESHOLD = 100000 # Number of times to look for a match when fixing problems
-
 
 # .............................................................................
 def randPresAbs(threshold):
@@ -49,6 +46,7 @@ def randPresAbs(threshold):
    else:
       return 0
 
+# .............................................................................
 def colAndRowPlusRbyC(rowTots, colTots, nRows, nCols):
    """
    @summary: This method treats the row and column as one array and uses the 
@@ -61,6 +59,7 @@ def colAndRowPlusRbyC(rowTots, colTots, nRows, nCols):
    
    return ((rowWeights + colWeights) / (nRows + nCols -1)) + ((rowWeights*colWeights)/(nRows*nCols))
 
+# .............................................................................
 def maxColOrRow(rowTots, colTots, nRows, nCols):
    """
    @summary: This method returns a matrix of weights where the weight of each
@@ -84,15 +83,18 @@ def maxColOrRow(rowTots, colTots, nRows, nCols):
 def gradyRandomize(mtx):
    """
    @summary: Main function for creating a random matrix
+   @param mtx: A Matrix object representation of a PAM
    """
+   mtxData = mtx.data
+   mtxHeaders = mtx.getHeaders()
+   
    # Step 1: Get the marginal totals of the matrix
    # ...........................
-   t1s = time.clock()
-   rowTots = np.sum(mtx, axis=1)
-   colTots = np.sum(mtx, axis=0)
-   nRows, nCols = mtx.shape
+   rowTots = np.sum(mtxData, axis=1)
+   colTots = np.sum(mtxData, axis=0)
+   nRows, nCols = mtxData.shape
    
-   initialTotal = np.sum(rowTots)
+   #initialTotal = np.sum(rowTots)
    
    #weights = colAndRowPlusRbyC(rowTots, colTots, nRows, nCols)
    weights = maxColOrRow(rowTots, colTots, nRows, nCols)
@@ -100,19 +102,15 @@ def gradyRandomize(mtx):
    
    rowTots = rowTots.reshape((nRows, 1))
    colTots = colTots.reshape((1, nCols))
-   t1e = time.clock()
    
    # Step 2: Get initial random matrix
    # ...........................
-   t2s = time.clock()
    getInitialRandomMatrix = np.vectorize(randPresAbs)
    
    mtx1 = getInitialRandomMatrix(weights)
-   t2e = time.clock()
    
    # Step 3: Fix broken marginals
    # ...........................
-   t3s = time.clock()
    fixAttempts = 0
    numFixed = 0
    
@@ -132,12 +130,10 @@ def gradyRandomize(mtx):
             mtx1[myChoice, j] = 0
             numFixed += 1
             
-   filledTotal = np.sum(mtx1)
-   t3e = time.clock()
+   #filledTotal = np.sum(mtx1)
    
    # Step 4: Fill
    # ...........................
-   t4s = time.clock()
    problemRows = []
    problemColumns = []
    
@@ -168,12 +164,9 @@ def gradyRandomize(mtx):
             unfilledCols.remove(c)
    
    problemColumns = unfilledCols
-   t4e = time.clock()
-   
    
    # Step 5: Fix problems
    # ...........................
-   t5s = time.clock()
    j = 0
    while problemRows:
       #shuffle(problemRows)
@@ -207,12 +200,5 @@ def gradyRandomize(mtx):
       if cSum == int(colTots[0,c]):
          problemColumns.remove(c)
    
-   status = JobStatus.COMPUTED
-   t5e = time.clock()
+   return Matrix(mtx1, headers=mtxHeaders)
    
-   print("Step 1: %s seconds" % (t1e - t1s))
-   print("Step 2: %s seconds" % (t2e - t2s))
-   print("Step 3: %s seconds" % (t3e - t3s))
-   print("Step 4: %s seconds" % (t4e - t4s))
-   print("Step 5: %s seconds" % (t5e - t5s))
-   return status, mtx1
