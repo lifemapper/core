@@ -26,14 +26,13 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Consider providing a status parameter in case things go poorly
 @note: If no indices mapping file is provided, assume that the tree already has 
           matrix indices in it
 """
 import argparse
 import json
-import numpy as np
 
+from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.phylo import PhyloEncoding
 from LmCommon.trees.lmTree import LmTree
 
@@ -46,12 +45,12 @@ if __name__ == "__main__":
    parser.add_argument("-m", "--matrixIndicesFn", dest="mtxIdxFn", type=str,
       help="""File location of a JSON document where the keys are tip labels 
       and values are matrix indices for this PAM""")
-   parser.add_argument("outFn", type=str, 
-                        help="The file location to write the resulting matrix")
    parser.add_argument("treeFn", type=str, 
                        help="The location of the Phylogenetic tree")
    parser.add_argument("pamFn", type=str, 
                        help="The location of the PAM (numpy)")
+   parser.add_argument("outFn", type=str, 
+                        help="The file location to write the resulting matrix")
    
    args = parser.parse_args()
    
@@ -59,11 +58,12 @@ if __name__ == "__main__":
    if args.mtxIdxFn:
       pamMetadata = json.load(args.mtxIdxFn)
       tree.addMatrixIndices(pamMetadata)
-   pam = np.load(args.pamFn)
+   pam = Matrix.load(args.pamFn)
    
    encoder = PhyloEncoding(tree, pam)
 
    pMtx = encoder.encodePhylogeny()
    
-   np.save(args.outFn, pMtx)
+   with open(args.outFn, 'w') as outF:
+      pMtx.save(outF)
    
