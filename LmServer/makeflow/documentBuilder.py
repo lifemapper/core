@@ -48,7 +48,8 @@ from LmServer.makeflow.makeJobCommand import (makeBisonOccurrenceSetCommand,
                                              makeMaxentSdmModelCommand,
                                              makeMaxentSdmProjectionCommand,
                                              makeOmSdmModelCommand,
-                                             makeOmSdmProjectionCommand)
+                                             makeOmSdmProjectionCommand, 
+                                             SINGLE_SPECIES_SCRIPTS_PATH)
 
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
@@ -301,7 +302,7 @@ class LMMakeflowDocument(LMObject):
       # Determine which type of projection to add
       
       # TODO: Use a constant!
-      if prj.getModel().algorithmCode == 'ATT_MAXENT':
+      if prj.algorithmCode == 'ATT_MAXENT':
          self.addMaxentProjection(prj)
       else:
          self.addOmProjection(prj)

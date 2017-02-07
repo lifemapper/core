@@ -315,7 +315,7 @@ class _LMChainer(LMObject):
       
 # ...............................................
    def _createMakeflow(self, objs):
-      mfchainId = filename = None
+      jobchainId = filename = None
       if objs:
          mfdoc = LMMakeflowDocument()
          for o in objs:
