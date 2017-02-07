@@ -753,9 +753,10 @@ class UserChainer(_LMChainer):
    def chainOne(self):
       dataChunk, dataCount, taxonName  = self._getChunk()
       if dataChunk:
-         sciName = self._getInsertSciNameForUser(taxonName)
-         jobs = self._processInputSpecies(dataChunk, dataCount, sciName)
-         self._createMakeflow(jobs)
+#          sciName = self._getInsertSciNameForUser(taxonName)
+#          jobs = self._processInputSpecies(dataChunk, dataCount, sciName)
+         objs = self._processUserChunk(dataChunk, dataCount, taxonName)
+#          self._createMakeflow(objs)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
 
@@ -779,32 +780,39 @@ class UserChainer(_LMChainer):
 # ...............................................
    def _getInsertSciNameForUser(self, taxonName):
       bbsciName = ScientificName(taxonName, userId=self.userid)
-      sciName = self.findOrInsertTaxon(sciName=bbsciName)
+      sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
       return sciName
 
 # ...............................................
-   def _processInputSpecies(self, dataChunk, dataCount, sciName):
+   def _processUserChunk(self, dataChunk, dataCount, taxonName):
       objs = []
-      if dataChunk:
-         occ = self._createOrResetOccurrenceset(sciName, None, 
-                                          ProcessType.USER_TAXA_OCCURRENCE,
-                                          dataCount, data=dataChunk)
-   
-         # Create jobs for Archive Chain: occurrence population, 
-         # model, projection, and (later) intersect computation
-         if occ is not None:
-            objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
-                                 self.modelScenario, self.projScenarios, 
-                                 mdlMask=self.modelMask, projMask=self.projMask,
-                                 occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-                                 intersectGrid=None,
-                                 minPointCount=self.minPointCount)
-            self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
-                           len(objs), sciName.scientificName, len(dataChunk), 
-                           occ.getId()))
-      else:
-         self.log.debug('No data in chunk')
+      sciName = self._getInsertSciNameForUser(taxonName)
+      if sciName:       
+         objs = self._processSDMChain(sciName, None, 
+                            ProcessType.USER_TAXA_OCCURRENCE, 
+                            dataCount, data=dataChunk)
       return objs
+
+#       if dataChunk:
+#          occ = self._createOrResetOccurrenceset(sciName, None, 
+#                                           ProcessType.USER_TAXA_OCCURRENCE,
+#                                           dataCount, data=dataChunk)
+#    
+#          # Create jobs for Archive Chain: occurrence population, 
+#          # model, projection, and (later) intersect computation
+#          if occ is not None:
+#             objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
+#                                  self.modelScenario, self.projScenarios, 
+#                                  mdlMask=self.modelMask, projMask=self.projMask,
+#                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
+#                                  gridset=None,
+#                                  minPointCount=self.minPointCount)
+#             self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
+#                            len(objs), sciName.scientificName, len(dataChunk), 
+#                            occ.getId()))
+#       else:
+#          self.log.debug('No data in chunk')
+#       return objs
 
 # ..............................................................................
 class GBIFChainer(_LMChainer):
@@ -910,7 +918,7 @@ class GBIFChainer(_LMChainer):
       return providers, provKeyCol
          
 # ...............................................
-   def _processChunk(self, speciesKey, dataCount, dataChunk):
+   def _processGBIFChunk(self, speciesKey, dataCount, dataChunk):
       objs = []
       sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
       if sciName:       
@@ -923,7 +931,7 @@ class GBIFChainer(_LMChainer):
    def chainOne(self):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
-         objs = self._processChunk(speciesKey, dataCount, dataChunk)
+         objs = self._processGBIFChunk(speciesKey, dataCount, dataChunk)
          # TODO: add this back
 #          self._createMakeflow(objs)
          self.log.info('Processed gbif key {} with {} records; next start {}'
@@ -1286,7 +1294,7 @@ mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gpam, currtime)
 
 
 
-jobs = boomer._processChunk(speciesKey, dataCount, dataChunk)
+jobs = boomer._processGBIFChunk(speciesKey, dataCount, dataChunk)
 self._createMakeflow(jobs)
 
 
