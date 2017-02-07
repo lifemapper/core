@@ -2,7 +2,7 @@
 @summary: Module containing common Lifemapper constants
 
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -711,6 +711,27 @@ class RandomizeMethods:
 # .............................................................................
 # .                             Service constants                             .
 # .............................................................................
+class API_SERVICE:
+   BUCKETS = 'buckets'
+   EXPERIMENTS = 'experiments'
+   RAD_EXPERIMENTS = 'radexperiments'
+   SDM_EXPERIMENTS = 'sdmexperiments'
+   LAYERS = 'layers'
+   LAYERTYPES = 'typecodes'
+   MODELS = 'models'
+   OCCURRENCES = 'occurrences'
+   PAMSUMS = 'pamsums'
+   ANCILLARY_LAYERS = 'anclayers'
+   PRESENCEABSENCE_LAYERS = 'palayers'
+   MATRIX_LAYERS = 'mtxlayers'
+   PROJECTIONS = 'projections'
+   SCENARIOS = 'scenarios'
+   # Generic layersets, not Scenarios
+   LAYERSETS = 'layersets'
+   # Biogeography Tools
+   SHAPEGRIDS = 'shpgrid'
+
+# TODO: delete   
 BUCKETS_SERVICE = 'buckets'
 EXPERIMENTS_SERVICE = 'experiments'
 RAD_EXPERIMENTS_SERVICE = 'radexperiments'

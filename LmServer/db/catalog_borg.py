@@ -22,7 +22,6 @@
           02110-1301, USA.
 """
 import mx.DateTime
-import os 
    
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.dbpgsql import DbPostgresql

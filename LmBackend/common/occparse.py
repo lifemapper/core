@@ -661,7 +661,19 @@ pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
 log = TestLogger('occparse_checkInput')
 data = pthAndBasename + OutputFormat.CSV
 metadata = pthAndBasename + OutputFormat.METADATA
+delimiter = ','
         
+# Read CSV header
+csvreader, f = OccDataParser.getReader(data, delimiter)
+tmpHeader = csvreader.next()
+header = [fldname.strip() for fldname in tmpHeader]
+# Read metadata file/stream
+fieldmeta, metadataFname = OccDataParser.readMetadata(metadatafile)
+
+
+(fieldNames, fieldTypes, filters, 
+ idIdx, xIdx, yIdx, sortIdx, nameIdx) = OccDataParser.getMetadata(fieldmeta, 
+                                                                  header)       
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
 op.printStats()
