@@ -533,36 +533,36 @@ class OccDataParser(object):
       currCount = 0
       currgroup = self.groupVal
       chunk = []
-
-      # first line of chunk is currLine
-      goodEnough = self._testLine(self.currLine)
-      if goodEnough:
-         chunk.append(self.currLine)
-      else:
-         print ('Tried to append bad rec')
-         
-      try:
-         while not self.closed and not complete:
-            # get next line
-            self.pullNextValidRec()
+      
+      if self.currLine is not None:
+         # first line of chunk is currLine
+         goodEnough = self._testLine(self.currLine)
+         if goodEnough:
+            chunk.append(self.currLine)
+         else:
+            print ('Tried to append bad rec')
             
-            # Add to or complete chunk
-            if self.groupVal == currgroup:
-               currCount += 1
-               chunk.append(self.currLine)
-            else:
-               complete = True
-               self.groupFirstRec = self.currRecnum
+         try:
+            while not self.closed and not complete:
+               # get next line
+               self.pullNextValidRec()
                
-            if self.currLine is None:
-               complete = True
-               
-         return chunk
+               # Add to or complete chunk
+               if self.groupVal == currgroup:
+                  currCount += 1
+                  chunk.append(self.currLine)
+               else:
+                  complete = True
+                  self.groupFirstRec = self.currRecnum
                   
-      except Exception, e:
-         self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
-                   % (str(self.currRecnum), str(e)))
-         self.currLine = self.groupVal = None
+               if self.currLine is None:
+                  complete = True
+                                    
+         except Exception, e:
+            self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
+                      % (str(self.currRecnum), str(e)))
+            self.currLine = self.groupVal = None
+      return chunk
 
    # ...............................................
    def readAllChunks(self):
