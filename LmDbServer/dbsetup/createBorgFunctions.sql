@@ -508,9 +508,14 @@ DECLARE
    rec lm_v3.Taxon%ROWTYPE;
    tid int := -1;
 BEGIN
-   SELECT * INTO rec FROM lm_v3.Taxon
-      WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
-
+   IF tkey IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.Taxon
+         WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.Taxon
+         WHERE userid = usr and squid = sqd;
+   END IF;
+      
    IF NOT FOUND THEN
       begin
          -- if no squid, do not insert, return empty record
