@@ -229,6 +229,10 @@ class Archivist(Daemon):
 
 # .............................................................................
 if __name__ == "__main__":
+   if not Archivist.isCorrectUser():
+      print("Run this script as `lmwriter`")
+      sys.exit(2)
+
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper archive with metadata ' +
@@ -262,11 +266,7 @@ if __name__ == "__main__":
       pid = open(BOOM_PID_FILE).read().strip()
    else:
       pid = os.getpid()
-      
-   if not Archivist.isCorrectUser():
-      print("Run this script as `lmwriter`")
-      sys.exit(2)
-     
+           
    secs = time.time()
    tuple = time.localtime(secs)
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
@@ -289,9 +289,13 @@ if __name__ == "__main__":
 #       sys.exit(2)
 """
 from LmDbServer.boom.boom import Archivist
+from LmServer.common.log import ScriptLogger
+from LmBackend.common.occparse import OccDataParser
+
 name = "Heuchera archive"
 name = name.replace(' ', '_')
 usr = 'ryan'
+log = ScriptLogger('testingboom')
 
 (userId, archiveName, datasource, algorithms, minPoints, 
  mdlScen, prjScens, epsg, gridname, userOccCSV, userOccMeta, 
@@ -299,4 +303,7 @@ usr = 'ryan'
  gbifTaxFile, gbifOccFile, gbifProvFile, 
  speciesExpYear, speciesExpMonth, 
  speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=usr, archiveName=name)
+ 
+occParser = OccDataParser(log, userOccCSV, userOccMeta)
+
 """

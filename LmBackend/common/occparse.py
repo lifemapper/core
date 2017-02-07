@@ -93,8 +93,9 @@ class OccDataParser(object):
          self.dataFname = None
       
       # Read CSV header
-      tmpHeader = self._csvreader.next()
-      self.header = [fldname.strip() for fldname in tmpHeader]
+      tmp = self._csvreader.next()
+      tmpFlds = tmp.split(delimiter)
+      self.header = [fldname.strip() for fldname in tmpFlds]
       # Read metadata file/stream
       fieldmeta, metadataFname = self.readMetadata(metadatafile)
       if metadataFname is None:
@@ -668,7 +669,7 @@ csvreader, f = OccDataParser.getReader(data, delimiter)
 tmpHeader = csvreader.next()
 header = [fldname.strip() for fldname in tmpHeader]
 # Read metadata file/stream
-fieldmeta, metadataFname = OccDataParser.readMetadata(metadatafile)
+fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)
 
 
 (fieldNames, fieldTypes, filters, 

@@ -1222,7 +1222,7 @@ from LmCommon.common.lmconstants import ProcessType, MatrixType
 from LmServer.base.taxon import ScientificName
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
-from LmDbServer.boom.boomborg import *
+from LmDbServer.boom.sdmchainer import *
 from LmDbServer.boom.boom import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.lmmatrix import LMMatrix
@@ -1232,7 +1232,7 @@ from LmServer.db.borgscribe import BorgScribe
 (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
  gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
  gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
- speciesExpDay) = Archivist.getArchiveSpecificConfig(envSource='10min-past-present-future')
+ speciesExpDay) = Archivist.getArchiveSpecificConfig(userId='ryan', archiveName='Heuchera archive')
 
 expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
 currtime = dt.gmt().mjd
