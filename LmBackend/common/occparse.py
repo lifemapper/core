@@ -70,12 +70,7 @@ class OccDataParser(object):
       self._yIdx = None
       self._sortIdx = None
       self._nameIdx = None
-      
-      self.currLine = None 
-      # record number of the chunk of current key     
-      self.groupFirstRec = 0      
-      self.currIsGoodEnough = True
-      
+            
       # Overall stats
       self.recTotal = 0
       self.recTotalGood = 0
@@ -90,6 +85,7 @@ class OccDataParser(object):
 
       self.chunk = []
       self.groupVal = None
+      self.groupFirstRec = 0      
       self.currLine = None
       
       self._csvreader, self._file = self.getReader(datafile, delimiter)
@@ -106,8 +102,11 @@ class OccDataParser(object):
       
       self._populateMetadata(fieldmeta, self.header)
          
-      # Start by pulling line 1; populates groupVal, groupFirstRec, currLine and currRecnum
+      # Start by pulling line 1; populates groupVal, currLine and currRecnum
       self.pullNextValidRec()
+      # record number of the chunk of current key
+      self.groupFirstRec = self.currRecnum     
+      self.currIsGoodEnough = True
 
    # .............................................................................
    @staticmethod
@@ -662,7 +661,19 @@ pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
 log = TestLogger('occparse_checkInput')
 data = pthAndBasename + OutputFormat.CSV
 metadata = pthAndBasename + OutputFormat.METADATA
+delimiter = ','
         
+# Read CSV header
+csvreader, f = OccDataParser.getReader(data, delimiter)
+tmpHeader = csvreader.next()
+header = [fldname.strip() for fldname in tmpHeader]
+# Read metadata file/stream
+fieldmeta, metadataFname = OccDataParser.readMetadata(metadatafile)
+
+
+(fieldNames, fieldTypes, filters, 
+ idIdx, xIdx, yIdx, sortIdx, nameIdx) = OccDataParser.getMetadata(fieldmeta, 
+                                                                  header)       
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()
 op.printStats()

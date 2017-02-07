@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -29,16 +29,11 @@
 import glob
 import os
 import shutil
-from StringIO import StringIO
-from time import sleep
-import zipfile
 
-from LmCommon.common.lmconstants import JobStatus, ProcessType, \
-                                        SHAPEFILE_EXTENSIONS
-
+from LmCommon.common.lmconstants import (JobStatus, ProcessType, 
+                                         SHAPEFILE_EXTENSIONS)
 from LmCompute.common.lmObj import LmException
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
-
 from LmCompute.plugins.single.gbif.gbif import parseGBIFData
 
 # .............................................................................

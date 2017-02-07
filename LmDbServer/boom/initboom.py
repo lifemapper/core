@@ -30,8 +30,7 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat,
                                          JobStatus, MatrixType)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
          SCENARIO_PACKAGE, DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE, 
-                                           BISON_DATASOURCE, IDIGBIO_DATASOURCE)
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                                               BISON_TSN_FILENAME, IDIG_FILENAME, 
                                               USER_OCCURRENCE_DATA)
@@ -457,15 +456,15 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('ARCHIVE_GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
 
    # Species source type (for processing) and file
-   if speciesSource == GBIF_DATASOURCE:
+   if speciesSource == SpeciesDatasource.GBIF:
       varname = 'GBIF_OCCURRENCE_FILENAME'
       if speciesData is None:
          speciesData = GBIF_OCCURRENCE_FILENAME
-   elif speciesSource == BISON_DATASOURCE:
+   elif speciesSource == SpeciesDatasource.BISON:
       varname = 'BISON_TSN_FILENAME'
       if speciesData is None:
          speciesData = BISON_TSN_FILENAME
-   elif speciesSource == IDIGBIO_DATASOURCE:
+   elif speciesSource == SpeciesDatasource.IDIGBIO:
       varname = 'IDIG_FILENAME'
       if speciesData is None:
          speciesData = IDIG_FILENAME
@@ -638,8 +637,8 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-$PYTHON LmDbServer/tools/initboom.py --help
-$PYTHON LmDbServer/tools/initboom.py -n "Aimee test archive" \
+$PYTHON LmDbServer/boom/initboom.py --help
+$PYTHON LmDbServer/boom/initboom.py -n "Aimee test archive" \
   -u aimee -m zzeppozz@gmail.com -e 10min-past-present-future \
   -s gbif -p 25 -a bioclim -c 1 -q square
 
@@ -650,8 +649,7 @@ from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS,
          DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, GBIF_DATASOURCE, 
-                                           BISON_DATASOURCE, IDIGBIO_DATASOURCE)
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)

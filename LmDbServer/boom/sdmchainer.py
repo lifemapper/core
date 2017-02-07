@@ -35,9 +35,8 @@ from types import ListType, TupleType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
-from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, GBIF_PROVIDER_FIELD,
-            ProcessType, JobStatus, ONE_HOUR, ONE_MIN) 
+from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
+                                         ProcessType, JobStatus, ONE_HOUR, ONE_MIN) 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import Priority, LOG_PATH
@@ -52,7 +51,6 @@ from LmServer.makeflow.documentBuilder import LMMakeflowDocument
 from LmServer.notifications.email import EmailNotifier
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-GBIF_SERVICE_INTERVAL = 3 * ONE_MIN
 
 # .............................................................................
 class _LMChainer(LMObject):
@@ -609,8 +607,8 @@ class BisonChainer(_LMChainer):
       if taxonSourceKeyVal is None:
          raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
       occAPI = BisonAPI(qFilters=
-                        {BISON_HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
-                        otherFilters=BISON_OCC_FILTERS)
+                        {BISON.HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
+                        otherFilters=BISON_QUERY.OCC_FILTERS)
       occAPI.clearOtherFilters()
       return occAPI.url
 
@@ -838,15 +836,15 @@ class GBIFChainer(_LMChainer):
 
       self._linenum = 0
       gbifFldNames = []
-      idxs = GBIF_EXPORT_FIELDS.keys()
+      idxs = GBIF_QUERY.EXPORT_FIELDS.keys()
       idxs.sort()
       for idx in idxs:
-         gbifFldNames.append(GBIF_EXPORT_FIELDS[idx][0])
+         gbifFldNames.append(GBIF_QUERY.EXPORT_FIELDS[idx][0])
       self._fieldNames = gbifFldNames
       
       self._providers, self._provCol = self._readProviderKeys(providerListFile, 
-                                                         GBIF_PROVIDER_FIELD)
-      self._keyCol = self._fieldNames.index(GBIF_TAXONKEY_FIELD)
+                                                         GBIF.PROVIDER_FIELD)
+      self._keyCol = self._fieldNames.index(GBIF.TAXONKEY_FIELD)
       self._obsoleteTime = expDate
       self._currKeyFirstRecnum = None
       self._currRec = None
