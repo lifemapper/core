@@ -68,10 +68,10 @@ def createBisonShapefileFromUrl(url, basePath, maxPoints, outName):
 # ..............................................................................
 if __name__ == '__main__':
    
-   from LmCommon.common.lmconstants import BISON_HIERARCHY_KEY
+   from LmCommon.common.lmconstants import BISON
    tsn = 179680
    tsn = 31787
-   occAPI = BisonAPI(qFilters={BISON_HIERARCHY_KEY: '*-%d-*' % tsn}, 
+   occAPI = BisonAPI(qFilters={BISON.HIERARCHY_KEY: '*-%d-*' % tsn}, 
                      otherFilters={'rows': 400})
    createBisonShapefileFromUrl(occAPI.url, '/tmp', 100, tsn)
    

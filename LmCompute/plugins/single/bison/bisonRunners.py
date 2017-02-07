@@ -34,8 +34,8 @@ from urllib import urlencode
 import urllib2
 import zipfile
 
-from LmCommon.common.lmconstants import BISON_FILTERS, BISON_OCC_FILTERS, \
-                                   JobStatus, ProcessType, SHAPEFILE_EXTENSIONS
+from LmCommon.common.lmconstants import (BISON_QUERY, JobStatus, ProcessType, 
+                                         SHAPEFILE_EXTENSIONS)
 
 from LmCompute.jobs.runners.pythonRunner import PythonRunner
 from LmCompute.plugins.single.bison.bison import createBisonShapefileFromUrl
@@ -70,8 +70,8 @@ class BisonRetrieverRunner(PythonRunner):
    # ...................................
    def _processJobInput(self):
       
-      moreFilters = BISON_OCC_FILTERS.copy()
-      for k,v in BISON_FILTERS.iteritems():
+      moreFilters = BISON_QUERY.OCC_FILTERS.copy()
+      for k,v in BISON_QUERY.FILTERS.iteritems():
          moreFilters[k] = v
       moreUrl = urlencode(moreFilters)
       self.pointsUrl = '&'.join([self.pointsUrl, moreUrl])

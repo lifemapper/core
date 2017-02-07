@@ -788,18 +788,13 @@ class DWCNames:
    COUNTRY_CODE = {'FULL': 'countryCode', 'SHORT': 'ctrycode'}
    STATE_PROVINCE = {'FULL': 'stateprovince', 'SHORT': 'stprov'}
 
-# Bison
-BISON_COUNT_KEYS = ['response', 'numFound']
-  
-PROVIDER_NAME_FIELD = 'provider'
+PROVIDER_FIELD_COMMON = 'provider'
+# # Bison
+# BISON_COUNT_KEYS = ['response', 'numFound']
+
+# PROVIDER_NAME_FIELD = 'provider'
 # LINK_FIELD = 'point_url'
-# REQUIRED_AGGREGATOR_FIELDS = [DWCNames.CATALOG_NUMBER['SHORT'],
-#                               DWCNames.COLLECTION_CODE['SHORT'],
-#                               DWCNames.INSTITUTION_CODE['SHORT'],
-#                               PROVIDER_NAME_FIELD,
-#                               DWCNames.DECIMAL_LATITUDE['SHORT'],
-#                               DWCNames.DECIMAL_LONGITUDE['SHORT'],
-#                               LINK_FIELD]
+
 # ......................................................
 # TODO: Replace individual GBIF_* constants with this class
 class GBIF:
@@ -819,7 +814,6 @@ class GBIF:
    TAXONKEY_FIELD = 'specieskey'
    TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
    PROVIDER_FIELD = 'puborgkey'
-   PROVIDER_FIELD_COMPUTED = 'provider'
    ID_FIELD = 'gbifid'
 
    REQUEST_SIMPLE_QUERY_KEY = 'q'
@@ -852,6 +846,8 @@ class GBIF:
    LINK_FIELD = 'gbifurl'
    # Ends in / to allow appending unique id
    LINK_PREFIX = 'http://www.gbif.org/occurrence/'
+
+class GBIF_QUERY:
    TAXON_FIELDS = {0: ('taxonkey', OFTString), 
                    1: ('kingdom', OFTString),
                    2: ('phylum', OFTString),
@@ -862,8 +858,7 @@ class GBIF:
                    7: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                    8: ('genuskey', OFTInteger),
                    9: (GBIF.TAXONKEY_FIELD, OFTInteger),
-                   10:('count', OFTInteger) }
-   
+                   10:('count', OFTInteger)}
    EXPORT_FIELDS = {0: (GBIF.ID_FIELD, OFTInteger), 
                     1: (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger), 
                     2: ('taxonkey', OFTInteger),
@@ -887,106 +882,117 @@ class GBIF:
                     20: (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
                     21: (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
                     22: (DWCNames.CATALOG_NUMBER['SHORT'], OFTString)}
+   PARAMS = {GBIF.SPECIES_SERVICE: {'status': 'ACCEPTED',
+                                    GBIF.REQUEST_RANK_KEY: None,
+                                    GBIF.REQUEST_DATASET_KEY: None,
+                                    GBIF.REQUEST_NAME_QUERY_KEY: None},
+             GBIF.OCCURRENCE_SERVICE: {"GEOREFERENCED": True,
+                                       "SPATIAL_ISSUES": False,
+#                                     "BASIS_OF_RECORD": ["PRESERVED_SPECIMEN"],
+                                       GBIF.REQUEST_TAXON_KEY: None},
+             GBIF.DOWNLOAD_COMMAND: {"creator": "aimee",
+                                     "notification_address": 
+                                       ["lifemapper@mailinator.com"]}}
    
-GBIF_TAXONKEY_FIELD = 'specieskey'
-GBIF_TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
-GBIF_PROVIDER_FIELD = 'puborgkey'
-GBIF_ID_FIELD = 'gbifid'
+# GBIF_TAXONKEY_FIELD = 'specieskey'
+# GBIF_TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
+# GBIF_PROVIDER_FIELD = 'puborgkey'
+# GBIF_ID_FIELD = 'gbifid'
+# 
+# GBIF_TAXON_FIELDS = {0: ('taxonkey', OFTString), 
+#                      1: ('kingdom', OFTString),
+#                      2: ('phylum', OFTString),
+#                      3: ('class', OFTString), 
+#                      4: ('order', OFTString),
+#                      5: ('family', OFTString),
+#                      6: ('genus', OFTString),
+#                      7: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+#                      8: ('genuskey', OFTInteger),
+#                      9: (GBIF.TAXONKEY_FIELD, OFTInteger),
+#                      10:('count', OFTInteger)
+#                      }
+# 
+# GBIF_EXPORT_FIELDS = {0: (GBIF.ID_FIELD, OFTInteger), 
+#                       1: (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger), 
+#                       2: ('taxonkey', OFTInteger),
+#                       3: ('datasetkey', OFTString),
+#                       4: (GBIF.PROVIDER_FIELD, OFTString),
+#                       5: (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
+#                       6: ('kingdomkey', OFTInteger),
+#                       7: ('phylumkey', OFTInteger),
+#                       8: ('classkey', OFTInteger),
+#                       9: ('orderkey', OFTInteger),
+#                       10: ('familykey', OFTInteger), 
+#                       11: ('genuskey', OFTInteger),
+#                       12: (GBIF.TAXONKEY_FIELD, OFTInteger),
+#                       13: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+#                       14: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+#                       15: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+#                       16: (DWCNames.DAY['SHORT'], OFTInteger),
+#                       17: (DWCNames.MONTH['SHORT'], OFTInteger),
+#                       18: (DWCNames.YEAR['SHORT'], OFTInteger),
+#                       19: (DWCNames.RECORDED_BY['SHORT'], OFTString),
+#                       20: (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
+#                       21: (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
+#                       22: (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
+#                     }
 
-GBIF_TAXON_FIELDS = {0: ('taxonkey', OFTString), 
-                     1: ('kingdom', OFTString),
-                     2: ('phylum', OFTString),
-                     3: ('class', OFTString), 
-                     4: ('order', OFTString),
-                     5: ('family', OFTString),
-                     6: ('genus', OFTString),
-                     7: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                     8: ('genuskey', OFTInteger),
-                     9: (GBIF_TAXONKEY_FIELD, OFTInteger),
-                     10:('count', OFTInteger)
-                     }
+# # .............................................................................
+# # .                               GBIF constants                              .
+# # .............................................................................
+# # seconds to wait before retrying unresponsive services
+# GBIF_WAIT_TIME = 3 * ONE_MIN
+# GBIF_LIMIT = 300
+# GBIF_REST_URL = 'http://api.gbif.org/v1'
+# GBIF_SPECIES_SERVICE = 'species'
+# GBIF_OCCURRENCE_SERVICE = 'occurrence'
+# GBIF_DATASET_SERVICE = 'dataset'
+# GBIF_ORGANIZATION_SERVICE = 'organization'
+# 
+# GBIF_REQUEST_SIMPLE_QUERY_KEY = 'q'
+# GBIF_REQUEST_NAME_QUERY_KEY = 'name'
+# GBIF_REQUEST_TAXON_KEY = 'TAXON_KEY'
+# GBIF_REQUEST_RANK_KEY = 'rank'
+# GBIF_REQUEST_DATASET_KEY = 'dataset_key'                
+# 
+# GBIF_DATASET_BACKBONE_VALUE = 'GBIF Backbone Taxonomy'
+# 
+# GBIF_SEARCH_COMMAND = 'search'
+# GBIF_COUNT_COMMAND = 'count'
+# GBIF_MATCH_COMMAND = 'match'
+# GBIF_DOWNLOAD_COMMAND = 'download'
+# GBIF_DOWNLOAD_REQUEST_COMMAND = 'request'
 
-GBIF_EXPORT_FIELDS = {0: (GBIF_ID_FIELD, OFTInteger), 
-                      1: (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger), 
-                      2: ('taxonkey', OFTInteger),
-                      3: ('datasetkey', OFTString),
-                      4: (GBIF_PROVIDER_FIELD, OFTString),
-                      5: (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
-                      6: ('kingdomkey', OFTInteger),
-                      7: ('phylumkey', OFTInteger),
-                      8: ('classkey', OFTInteger),
-                      9: ('orderkey', OFTInteger),
-                      10: ('familykey', OFTInteger), 
-                      11: ('genuskey', OFTInteger),
-                      12: (GBIF_TAXONKEY_FIELD, OFTInteger),
-                      13: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                      14: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                      15: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                      16: (DWCNames.DAY['SHORT'], OFTInteger),
-                      17: (DWCNames.MONTH['SHORT'], OFTInteger),
-                      18: (DWCNames.YEAR['SHORT'], OFTInteger),
-                      19: (DWCNames.RECORDED_BY['SHORT'], OFTString),
-                      20: (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
-                      21: (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-                      22: (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
-                    }
+# GBIF_QUERY_PARAMS = {GBIF_SPECIES_SERVICE: {'status': 'ACCEPTED',
+#                                             GBIF_REQUEST_RANK_KEY: None,
+#                                             GBIF_REQUEST_DATASET_KEY: None,
+#                                             GBIF_REQUEST_NAME_QUERY_KEY: None},
+#                      GBIF_OCCURRENCE_SERVICE: {"GEOREFERENCED": True,
+#                                                "SPATIAL_ISSUES": False,
+# #                                                "BASIS_OF_RECORD": ["PRESERVED_SPECIMEN"],
+#                                                GBIF_REQUEST_TAXON_KEY: None},
+#                      GBIF_DOWNLOAD_COMMAND: {"creator": "aimee",
+#                                              "notification_address": ["lifemapper@mailinator.com"]}
+#                      }
 
-# .............................................................................
-# .                               GBIF constants                              .
-# .............................................................................
-# seconds to wait before retrying unresponsive services
-GBIF_WAIT_TIME = 3 * ONE_MIN
-GBIF_LIMIT = 300
-GBIF_REST_URL = 'http://api.gbif.org/v1'
-GBIF_SPECIES_SERVICE = 'species'
-GBIF_OCCURRENCE_SERVICE = 'occurrence'
-GBIF_DATASET_SERVICE = 'dataset'
-GBIF_ORGANIZATION_SERVICE = 'organization'
-
-GBIF_REQUEST_SIMPLE_QUERY_KEY = 'q'
-GBIF_REQUEST_NAME_QUERY_KEY = 'name'
-GBIF_REQUEST_TAXON_KEY = 'TAXON_KEY'
-GBIF_REQUEST_RANK_KEY = 'rank'
-GBIF_REQUEST_DATASET_KEY = 'dataset_key'                
-
-GBIF_DATASET_BACKBONE_VALUE = 'GBIF Backbone Taxonomy'
-
-GBIF_SEARCH_COMMAND = 'search'
-GBIF_COUNT_COMMAND = 'count'
-GBIF_MATCH_COMMAND = 'match'
-GBIF_DOWNLOAD_COMMAND = 'download'
-GBIF_DOWNLOAD_REQUEST_COMMAND = 'request'
-
-GBIF_QUERY_PARAMS = {GBIF_SPECIES_SERVICE: {'status': 'ACCEPTED',
-                                            GBIF_REQUEST_RANK_KEY: None,
-                                            GBIF_REQUEST_DATASET_KEY: None,
-                                            GBIF_REQUEST_NAME_QUERY_KEY: None},
-                     GBIF_OCCURRENCE_SERVICE: {"GEOREFERENCED": True,
-                                               "SPATIAL_ISSUES": False,
-#                                                "BASIS_OF_RECORD": ["PRESERVED_SPECIMEN"],
-                                               GBIF_REQUEST_TAXON_KEY: None},
-                     GBIF_DOWNLOAD_COMMAND: {"creator": "aimee",
-                                             "notification_address": ["lifemapper@mailinator.com"]}
-                     }
-
-
-GBIF_RESPONSE_IDENTIFIER_KEY = 'key'
-GBIF_RESPONSE_RESULT_KEY = 'results'
-GBIF_RESPONSE_END_KEY = 'endOfRecords'
-GBIF_RESPONSE_COUNT_KEY = 'count'
-GBIF_RESPONSE_GENUS_ID_KEY = 'genusKey'
-GBIF_RESPONSE_GENUS_KEY = 'genus'
-GBIF_RESPONSE_SPECIES_ID_KEY = 'speciesKey'
-GBIF_RESPONSE_SPECIES_KEY = 'species'
-GBIF_RESPONSE_MATCH_KEY = 'matchType'
-GBIF_RESPONSE_NOMATCH_VALUE = 'NONE'
-
-# For writing files from GBIF DarwinCore download, 
-# DWC translations in lmCompute/code/sdm/gbif/constants
-# We are adding the 2 fields: LM_WKT_FIELD and GBIF_LINK_FIELD
-GBIF_LINK_FIELD = 'gbifurl'
-# Ends in / to allow appending unique id
-GBIF_LINK_PREFIX = 'http://www.gbif.org/occurrence/'
+# 
+# GBIF_RESPONSE_IDENTIFIER_KEY = 'key'
+# GBIF_RESPONSE_RESULT_KEY = 'results'
+# GBIF_RESPONSE_END_KEY = 'endOfRecords'
+# GBIF_RESPONSE_COUNT_KEY = 'count'
+# GBIF_RESPONSE_GENUS_ID_KEY = 'genusKey'
+# GBIF_RESPONSE_GENUS_KEY = 'genus'
+# GBIF_RESPONSE_SPECIES_ID_KEY = 'speciesKey'
+# GBIF_RESPONSE_SPECIES_KEY = 'species'
+# GBIF_RESPONSE_MATCH_KEY = 'matchType'
+# GBIF_RESPONSE_NOMATCH_VALUE = 'NONE'
+# 
+# # For writing files from GBIF DarwinCore download, 
+# # DWC translations in lmCompute/code/sdm/gbif/constants
+# # We are adding the 2 fields: LM_WKT_FIELD and GBIF_LINK_FIELD
+# GBIF_LINK_FIELD = 'gbifurl'
+# # Ends in / to allow appending unique id
+# GBIF_LINK_PREFIX = 'http://www.gbif.org/occurrence/'
 
 # .............................................................................
 # .                               BISON/ITIS constants                              .
@@ -1005,13 +1011,17 @@ class BISON:
    HIERARCHY_KEY = 'hierarchy_homonym_string'
    KINGDOM_KEY = 'kingdom'
    TSN_KEY = 'TSNs'
+   # To limit query
    MIN_POINT_COUNT = 20
    MAX_POINT_COUNT = 5000000
    BBOX = (24, -125, 50, -66)
    BINOMIAL_REGEX = '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/'
+   
+class BISON_QUERY:
    # Expected Response Dictionary Keys
-   RECORD_KEYS = ['response', 'docs']
    TSN_LIST_KEYS = ['facet_counts', 'facet_fields', BISON.TSN_KEY]
+   RECORD_KEYS = ['response', 'docs']
+   COUNT_KEYS = ['response', 'numFound']
    TSN_FILTERS = {'facet': True,
                   'facet.limit': -1,
                   'facet.mincount': BISON.MIN_POINT_COUNT,
@@ -1025,7 +1035,6 @@ class BISON:
    # Common Other Filters
    FILTERS = {'wt': 'json', 
               'json.nl': 'arrarr'}
-   COUNT_KEYS = ['response', 'numFound']
    RESPONSE_FIELDS = {'ITIScommonName': ('comname', OFTString),
                       BISON.NAME_KEY: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                       'ITIStsn': ('itistsn', OFTInteger),
@@ -1057,7 +1066,7 @@ class BISON:
                       DWCNames.OCCURRENCE_ID['FULL']: 
                          (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
                       'ownerInstitutionCollectionCode': 
-                       (PROVIDER_NAME_FIELD, OFTString),
+                       (PROVIDER_FIELD_COMMON, OFTString),
                       'pointPath': None,
                       'providedCounty': None,
                       'providedScientificName': None,
@@ -1073,67 +1082,67 @@ class BISON:
                       # Very long integer
                      '_version_': None }
    
-BISON_TSN_FILTERS = {'facet': True,
-                     'facet.limit': -1,
-                     'facet.mincount': BISON.MIN_POINT_COUNT,
-                     'facet.field': BISON.TSN_KEY, 
-                     'rows': 0}
-BISON_OCC_FILTERS = {'rows': BISON.MAX_POINT_COUNT}
-# Common Q Filters
-BISON_QFILTERS = {'decimalLatitude': (BISON.BBOX[0], BISON.BBOX[2]),
-                   'decimalLongitude': (BISON.BBOX[1], BISON.BBOX[3]),
-                   'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
-# Common Other Filters
-BISON_FILTERS = {'wt': 'json', 
-                 'json.nl': 'arrarr'}
-BISON_RESPONSE_FIELDS = {
-                        'ITIScommonName': ('comname', OFTString),
-                        BISON.NAME_KEY: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                        'ITIStsn': ('itistsn', OFTInteger),
-                        BISON.TSN_KEY: None,
-                        'ambiguous': None,
-                        DWCNames.BASIS_OF_RECORD['FULL']: 
-                           (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
-                        'calculatedCounty': ('county', OFTString),
-                        'calculatedState': ('state', OFTString),
-                        DWCNames.CATALOG_NUMBER['FULL']: 
-                           (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
-                        'collectionID': ('coll_id', OFTString),
-                        'computedCountyFips': None,
-                        'computedStateFips': None,
-                        DWCNames.COUNTRY_CODE['FULL']: 
-                           (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
-                        DWCNames.DECIMAL_LATITUDE['FULL']: 
-                           (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                        DWCNames.DECIMAL_LONGITUDE['FULL']:
-                           (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                        'eventDate':('date', OFTString),
-                        # Space delimited, same as latlon
-                        'geo': None,
-                        BISON.HIERARCHY_KEY: ('tsn_hier', OFTString),
-                        'institutionID': ('inst_id', OFTString),
-                        BISON.KINGDOM_KEY: ('kingdom', OFTString),
-                        # Comma delimited, same as geo
-                        'latlon': ('latlon', OFTString),
-                        DWCNames.OCCURRENCE_ID['FULL']: 
-                           (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
-                        'ownerInstitutionCollectionCode': 
-                        (PROVIDER_NAME_FIELD, OFTString),
-                        'pointPath': None,
-                        'providedCounty': None,
-                        'providedScientificName': None,
-                        'providerID': None,
-                        DWCNames.RECORDED_BY['FULL']: 
-                           (DWCNames.RECORDED_BY['SHORT'], OFTString),
-                        'resourceID': None,
-                        # Use ITIS Scientific Name
-                        'scientificName': None,
-                        'stateProvince': ('stprov', OFTString),
-                        DWCNames.YEAR['SHORT']: 
-                           (DWCNames.YEAR['SHORT'], OFTInteger),
-                        # Very long integer
-                       '_version_': None
-                        }
+# BISON_TSN_FILTERS = {'facet': True,
+#                      'facet.limit': -1,
+#                      'facet.mincount': BISON.MIN_POINT_COUNT,
+#                      'facet.field': BISON.TSN_KEY, 
+#                      'rows': 0}
+# BISON_OCC_FILTERS = {'rows': BISON.MAX_POINT_COUNT}
+# # Common Q Filters
+# BISON_QFILTERS = {'decimalLatitude': (BISON.BBOX[0], BISON.BBOX[2]),
+#                    'decimalLongitude': (BISON.BBOX[1], BISON.BBOX[3]),
+#                    'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
+# # Common Other Filters
+# BISON_FILTERS = {'wt': 'json', 
+#                  'json.nl': 'arrarr'}
+# BISON_RESPONSE_FIELDS = {
+#                         'ITIScommonName': ('comname', OFTString),
+#                         BISON.NAME_KEY: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+#                         'ITIStsn': ('itistsn', OFTInteger),
+#                         BISON.TSN_KEY: None,
+#                         'ambiguous': None,
+#                         DWCNames.BASIS_OF_RECORD['FULL']: 
+#                            (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
+#                         'calculatedCounty': ('county', OFTString),
+#                         'calculatedState': ('state', OFTString),
+#                         DWCNames.CATALOG_NUMBER['FULL']: 
+#                            (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
+#                         'collectionID': ('coll_id', OFTString),
+#                         'computedCountyFips': None,
+#                         'computedStateFips': None,
+#                         DWCNames.COUNTRY_CODE['FULL']: 
+#                            (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
+#                         DWCNames.DECIMAL_LATITUDE['FULL']: 
+#                            (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+#                         DWCNames.DECIMAL_LONGITUDE['FULL']:
+#                            (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+#                         'eventDate':('date', OFTString),
+#                         # Space delimited, same as latlon
+#                         'geo': None,
+#                         BISON.HIERARCHY_KEY: ('tsn_hier', OFTString),
+#                         'institutionID': ('inst_id', OFTString),
+#                         BISON.KINGDOM_KEY: ('kingdom', OFTString),
+#                         # Comma delimited, same as geo
+#                         'latlon': ('latlon', OFTString),
+#                         DWCNames.OCCURRENCE_ID['FULL']: 
+#                            (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+#                         'ownerInstitutionCollectionCode': 
+#                         (PROVIDER_FIELD_COMMON, OFTString),
+#                         'pointPath': None,
+#                         'providedCounty': None,
+#                         'providedScientificName': None,
+#                         'providerID': None,
+#                         DWCNames.RECORDED_BY['FULL']: 
+#                            (DWCNames.RECORDED_BY['SHORT'], OFTString),
+#                         'resourceID': None,
+#                         # Use ITIS Scientific Name
+#                         'scientificName': None,
+#                         'stateProvince': ('stprov', OFTString),
+#                         DWCNames.YEAR['SHORT']: 
+#                            (DWCNames.YEAR['SHORT'], OFTInteger),
+#                         # Very long integer
+#                        '_version_': None
+#                         }
    
 # .............................................................................
 # TODO: Replace individual ITIS_* constants with this class
@@ -1155,45 +1164,45 @@ class ITIS:
    GENUS_KEY = 'Genus'
    SPECIES_KEY = 'Species'
    
-# ......................................................
-BISON_OCCURRENCE_URL = 'https://bison.usgs.gov/solr/occurrences/select'
-# Ends in : to allow appending unique id
-BISON_LINK_PREFIX = 'https://bison.usgs.gov/solr/occurrences/select/?q=occurrenceID:'
-BISON_LINK_FIELD = 'bisonurl'
-# For TSN query filtering on Binomial
-BISON_NAME_KEY = 'ITISscientificName'
-# For Occurrence query by TSN in hierarchy
-BISON_HIERARCHY_KEY = 'hierarchy_homonym_string'
-BISON_KINGDOM_KEY = 'kingdom'
-BISON_TSN_KEY = 'TSNs'
-BISON_BINOMIAL_REGEX = '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/'
-# key = returned field name; val = (lmname, ogr type)
-
-BISON_MIN_POINT_COUNT = 20
-BISON_MAX_POINT_COUNT = 5000000
-BISON_BBOX = (24, -125, 50, -66)
-
-
-# Expected Response Dictionary Keys
-BISON_RECORD_KEYS = ['response', 'docs']
-BISON_TSN_LIST_KEYS = ['facet_counts', 'facet_fields', BISON_TSN_KEY]
-
-ITIS_DATA_NAMESPACE = 'http://data.itis_service.itis.usgs.gov/xsd'
-# Basic Web Services
-ITIS_TAXONOMY_HIERARCHY_URL = 'http://www.itis.gov/ITISWebService/services/ITISService/getFullHierarchyFromTSN'
-# JSON Web Services
-# ITIS_TAXONOMY_HIERARCHY_URL = 'http://www.itis.gov/ITISService/jsonservice/getFullHierarchyFromTSN'
-ITIS_TAXONOMY_KEY = 'tsn'
-ITIS_HIERARCHY_TAG = 'hierarchyList'
-ITIS_RANK_TAG = 'rankName'
-ITIS_TAXON_TAG = 'taxonName'
-ITIS_KINGDOM_KEY = 'Kingdom'
-ITIS_PHYLUM_DIVISION_KEY = 'Division'
-ITIS_CLASS_KEY = 'Class'
-ITIS_ORDER_KEY = 'Order'
-ITIS_FAMILY_KEY = 'Family'
-ITIS_GENUS_KEY = 'Genus'
-ITIS_SPECIES_KEY = 'Species'
+# # ......................................................
+# BISON_OCCURRENCE_URL = 'https://bison.usgs.gov/solr/occurrences/select'
+# # Ends in : to allow appending unique id
+# BISON_LINK_PREFIX = 'https://bison.usgs.gov/solr/occurrences/select/?q=occurrenceID:'
+# BISON_LINK_FIELD = 'bisonurl'
+# # For TSN query filtering on Binomial
+# BISON_NAME_KEY = 'ITISscientificName'
+# # For Occurrence query by TSN in hierarchy
+# BISON_HIERARCHY_KEY = 'hierarchy_homonym_string'
+# BISON_KINGDOM_KEY = 'kingdom'
+# BISON_TSN_KEY = 'TSNs'
+# BISON_BINOMIAL_REGEX = '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/'
+# # key = returned field name; val = (lmname, ogr type)
+# 
+# BISON_MIN_POINT_COUNT = 20
+# BISON_MAX_POINT_COUNT = 5000000
+# BISON_BBOX = (24, -125, 50, -66)
+# 
+# 
+# # Expected Response Dictionary Keys
+# BISON_RECORD_KEYS = ['response', 'docs']
+# BISON_TSN_LIST_KEYS = ['facet_counts', 'facet_fields', BISON_TSN_KEY]
+# 
+# ITIS_DATA_NAMESPACE = 'http://data.itis_service.itis.usgs.gov/xsd'
+# # Basic Web Services
+# ITIS_TAXONOMY_HIERARCHY_URL = 'http://www.itis.gov/ITISWebService/services/ITISService/getFullHierarchyFromTSN'
+# # JSON Web Services
+# # ITIS_TAXONOMY_HIERARCHY_URL = 'http://www.itis.gov/ITISService/jsonservice/getFullHierarchyFromTSN'
+# ITIS_TAXONOMY_KEY = 'tsn'
+# ITIS_HIERARCHY_TAG = 'hierarchyList'
+# ITIS_RANK_TAG = 'rankName'
+# ITIS_TAXON_TAG = 'taxonName'
+# ITIS_KINGDOM_KEY = 'Kingdom'
+# ITIS_PHYLUM_DIVISION_KEY = 'Division'
+# ITIS_CLASS_KEY = 'Class'
+# ITIS_ORDER_KEY = 'Order'
+# ITIS_FAMILY_KEY = 'Family'
+# ITIS_GENUS_KEY = 'Genus'
+# ITIS_SPECIES_KEY = 'Species'
 
 # .............................................................................
 # .                           iDigBio constants                               .
@@ -1210,21 +1219,19 @@ class IDIGBIO:
    ID_FIELD = 'uuid'
    LINK_FIELD = 'idigbiourl'
    GBIFID_FIELD = 'taxonid'
-   PROVIDER_FIELD_COMPUTED = 'provider'
    BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
    OCCURRENCE_ITEMS_KEY = 'items'
    RECORD_CONTENT_KEY = 'data'
    RECORD_INDEX_KEY = 'indexTerms'
+   
+class IDIGBIO_QUERY:
    EXPORT_FIELDS = {0: (IDIGBIO.ID_FIELD, OFTString), 
-                            1: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                            2: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                            3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                            4: (PROVIDER_NAME_FIELD, OFTString) }
-   FILTERS = {#'fields': IDIGBIO.RETURN_FIELDS.keys().append('geopoint'),
-              'limit': IDIGBIO.SEARCH_LIMIT,
-              'offset': 0,
-              'no_attribution': False}
-   QFILTERS = {'basisofrecord': 'preservedspecimen',}
+                    1: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+                    2: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                    3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                    4: (PROVIDER_FIELD_COMMON, OFTString) }
+   # Geopoint.lat and Geopoint.lon are modified on return to short names
+   # Response record fields: https://search.idigbio.org/v2/meta/fields/records
    RETURN_FIELDS = {
       IDIGBIO.ID_FIELD: (IDIGBIO.ID_FIELD, OFTString),
       IDIGBIO.GBIFID_FIELD: ('taxonid', OFTString),
@@ -1259,84 +1266,93 @@ class IDIGBIO:
       DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: (DWCNames.DECIMAL_LATITUDE['SHORT'], 
                                                           OFTReal),
       DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']: (DWCNames.DECIMAL_LONGITUDE['SHORT'], 
-                                                           OFTReal)}
+                                                           OFTReal),
+      }
+   QFILTERS = {'basisofrecord': 'preservedspecimen' }
+#    queryFlds = IDIGBIO_RETURN_FIELDS.keys()
+#    queryFlds.append('geopoint')
    
-IDIGBIO_EXPORT_FIELDS = {0: (IDIGBIO.ID_FIELD, OFTString), 
-                         1: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                         2: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                         3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                         4: (PROVIDER_NAME_FIELD, OFTString)
-}
-# Geopoint.lat and Geopoint.lon are modified on return to short names
-# Response record fields: https://search.idigbio.org/v2/meta/fields/records
-IDIGBIO_RETURN_FIELDS = {
-   IDIGBIO.ID_FIELD: (IDIGBIO.ID_FIELD, OFTString),
-   IDIGBIO.GBIFID_FIELD: ('taxonid', OFTString),
-   DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: (DWCNames.SCIENTIFIC_NAME['SHORT'], 
-                                                      OFTString),   
-   DWC_QUALIFIER + DWCNames.BASIS_OF_RECORD['FULL']:  (DWCNames.BASIS_OF_RECORD['SHORT'], 
-                                                       OFTString),
-   DWC_QUALIFIER + DWCNames.CATALOG_NUMBER['FULL']: (DWCNames.CATALOG_NUMBER['SHORT'], 
-                                                     OFTString),
-   DWC_QUALIFIER + DWCNames.COLLECTION_ID['FULL']: 
-                           (DWCNames.COLLECTION_ID['SHORT'], OFTString),
-   DWC_QUALIFIER + DWCNames.COLLECTION_CODE['FULL']: 
-                           (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-   DWC_QUALIFIER + DWCNames.RECORDED_BY['FULL']: 
-                           (DWCNames.RECORDED_BY['SHORT'], OFTString),
-   'commonname': ('comname', OFTString),                  
-   DWC_QUALIFIER + DWCNames.CONTINENT['FULL']: (DWCNames.CONTINENT['SHORT'], 
-                                                OFTString),
-   DWC_QUALIFIER + DWCNames.COUNTRY_CODE['FULL']: (DWCNames.COUNTRY_CODE['SHORT'], 
-                                                   OFTString),
-   DWC_QUALIFIER + DWCNames.DAY['FULL']: (DWCNames.DAY['SHORT'], OFTString),
-   DWC_QUALIFIER + DWCNames.MONTH['FULL']: (DWCNames.MONTH['SHORT'], OFTString),
-   DWC_QUALIFIER + DWCNames.YEAR['FULL']: (DWCNames.YEAR['SHORT'], OFTString),
-   DWC_QUALIFIER + DWCNames.INSTITUTION_CODE['FULL']: (DWCNames.INSTITUTION_CODE['SHORT'], 
-                                                       OFTString),
-   DWC_QUALIFIER + DWCNames.INSTITUTION_ID['FULL']: (DWCNames.INSTITUTION_ID['SHORT'], 
-                                                     OFTString),
-   DWC_QUALIFIER + DWCNames.OCCURRENCE_ID['FULL']: (DWCNames.OCCURRENCE_ID['SHORT'], 
-                                                    OFTInteger),
-   DWC_QUALIFIER + DWCNames.STATE_PROVINCE['FULL']: (DWCNames.STATE_PROVINCE['SHORT'], 
-                                                     OFTString),
-   DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: (DWCNames.DECIMAL_LATITUDE['SHORT'], 
-                                                       OFTReal),
-   DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']: (DWCNames.DECIMAL_LONGITUDE['SHORT'], 
-                                                        OFTReal),
-   }
-IDIGBIO_QFILTERS = {
-                     'basisofrecord': 'preservedspecimen',
-                    }
-queryFlds = IDIGBIO_RETURN_FIELDS.keys()
-queryFlds.append('geopoint')
+   FILTERS = { # 'fields': queryFlds,
+               'limit': IDIGBIO.SEARCH_LIMIT,
+               'offset': 0,
+               'no_attribution': False}
 
-IDIGBIO_FILTERS = {
-#                    'fields': queryFlds,
-                   'limit': IDIGBIO.SEARCH_LIMIT,
-                   'offset': 0,
-                   'no_attribution': False}
-
-# Ends in / to allow appending unique id
-IDIGBIO_LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
-IDIGBIO_SEARCH_PREFIX = 'https://search.idigbio.org/v2'
-IDIGBIO_SEARCH_POSTFIX ='search'
-IDIGBIO_OCCURRENCE_POSTFIX = 'records'
-IDIGBIO_PUBLISHERS_POSTFIX = 'publishers'
-IDIGBIO_RECORDSETS_POSTFIX = 'recordsets'
-# IDIGBIO_RECORDSETS_SEARCH_URL_PREFIX="http://search.idigbio.org/idigbio/recordsets/_search"
-
-IDIGBIO_SEARCH_LIMIT = 5000
-
-IDIGBIO_ID_FIELD = 'uuid'
-IDIGBIO_LINK_FIELD = 'idigbiourl'
-IDIGBIO_GBIFID_FIELD = 'taxonid'
-
-IDIGBIO_BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
-
-IDIGBIO_OCCURRENCE_ITEMS_KEY = 'items'
-IDIGBIO_RECORD_CONTENT_KEY = 'data'
-IDIGBIO_RECORD_INDEX_KEY = 'indexTerms'
+# IDIGBIO_EXPORT_FIELDS = {0: (IDIGBIO.ID_FIELD, OFTString), 
+#                          1: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+#                          2: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+#                          3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+#                          4: (PROVIDER_FIELD_COMMON, OFTString)
+# }
+# # Geopoint.lat and Geopoint.lon are modified on return to short names
+# # Response record fields: https://search.idigbio.org/v2/meta/fields/records
+# IDIGBIO_RETURN_FIELDS = {
+#    IDIGBIO.ID_FIELD: (IDIGBIO.ID_FIELD, OFTString),
+#    IDIGBIO.GBIFID_FIELD: ('taxonid', OFTString),
+#    DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: (DWCNames.SCIENTIFIC_NAME['SHORT'], 
+#                                                       OFTString),   
+#    DWC_QUALIFIER + DWCNames.BASIS_OF_RECORD['FULL']:  (DWCNames.BASIS_OF_RECORD['SHORT'], 
+#                                                        OFTString),
+#    DWC_QUALIFIER + DWCNames.CATALOG_NUMBER['FULL']: (DWCNames.CATALOG_NUMBER['SHORT'], 
+#                                                      OFTString),
+#    DWC_QUALIFIER + DWCNames.COLLECTION_ID['FULL']: 
+#                            (DWCNames.COLLECTION_ID['SHORT'], OFTString),
+#    DWC_QUALIFIER + DWCNames.COLLECTION_CODE['FULL']: 
+#                            (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
+#    DWC_QUALIFIER + DWCNames.RECORDED_BY['FULL']: 
+#                            (DWCNames.RECORDED_BY['SHORT'], OFTString),
+#    'commonname': ('comname', OFTString),                  
+#    DWC_QUALIFIER + DWCNames.CONTINENT['FULL']: (DWCNames.CONTINENT['SHORT'], 
+#                                                 OFTString),
+#    DWC_QUALIFIER + DWCNames.COUNTRY_CODE['FULL']: (DWCNames.COUNTRY_CODE['SHORT'], 
+#                                                    OFTString),
+#    DWC_QUALIFIER + DWCNames.DAY['FULL']: (DWCNames.DAY['SHORT'], OFTString),
+#    DWC_QUALIFIER + DWCNames.MONTH['FULL']: (DWCNames.MONTH['SHORT'], OFTString),
+#    DWC_QUALIFIER + DWCNames.YEAR['FULL']: (DWCNames.YEAR['SHORT'], OFTString),
+#    DWC_QUALIFIER + DWCNames.INSTITUTION_CODE['FULL']: (DWCNames.INSTITUTION_CODE['SHORT'], 
+#                                                        OFTString),
+#    DWC_QUALIFIER + DWCNames.INSTITUTION_ID['FULL']: (DWCNames.INSTITUTION_ID['SHORT'], 
+#                                                      OFTString),
+#    DWC_QUALIFIER + DWCNames.OCCURRENCE_ID['FULL']: (DWCNames.OCCURRENCE_ID['SHORT'], 
+#                                                     OFTInteger),
+#    DWC_QUALIFIER + DWCNames.STATE_PROVINCE['FULL']: (DWCNames.STATE_PROVINCE['SHORT'], 
+#                                                      OFTString),
+#    DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: (DWCNames.DECIMAL_LATITUDE['SHORT'], 
+#                                                        OFTReal),
+#    DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']: (DWCNames.DECIMAL_LONGITUDE['SHORT'], 
+#                                                         OFTReal),
+#    }
+# IDIGBIO_QFILTERS = {
+#                      'basisofrecord': 'preservedspecimen',
+#                     }
+# queryFlds = IDIGBIO_RETURN_FIELDS.keys()
+# queryFlds.append('geopoint')
+# 
+# IDIGBIO_FILTERS = {
+# #                    'fields': queryFlds,
+#                    'limit': IDIGBIO.SEARCH_LIMIT,
+#                    'offset': 0,
+#                    'no_attribution': False}
+# 
+# # Ends in / to allow appending unique id
+# IDIGBIO_LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
+# IDIGBIO_SEARCH_PREFIX = 'https://search.idigbio.org/v2'
+# IDIGBIO_SEARCH_POSTFIX ='search'
+# IDIGBIO_OCCURRENCE_POSTFIX = 'records'
+# IDIGBIO_PUBLISHERS_POSTFIX = 'publishers'
+# IDIGBIO_RECORDSETS_POSTFIX = 'recordsets'
+# # IDIGBIO_RECORDSETS_SEARCH_URL_PREFIX="http://search.idigbio.org/idigbio/recordsets/_search"
+# 
+# IDIGBIO_SEARCH_LIMIT = 5000
+# 
+# IDIGBIO_ID_FIELD = 'uuid'
+# IDIGBIO_LINK_FIELD = 'idigbiourl'
+# IDIGBIO_GBIFID_FIELD = 'taxonid'
+# 
+# IDIGBIO_BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
+# 
+# IDIGBIO_OCCURRENCE_ITEMS_KEY = 'items'
+# IDIGBIO_RECORD_CONTENT_KEY = 'data'
+# IDIGBIO_RECORD_INDEX_KEY = 'indexTerms'
 
 
 # .............................................................................

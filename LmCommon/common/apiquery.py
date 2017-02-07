@@ -26,33 +26,14 @@
 """
 import json
 import requests
-# import re
 from types import (BooleanType, DictionaryType, FloatType, IntType, ListType, 
                    StringType, TupleType, UnicodeType)
-import urllib, urllib2
+import urllib
 import xml.etree.ElementTree as ET
 
-from LmCommon.common.lmconstants import (BISON, GBIF, ITIS, IDIGBIO,
-         URL_ESCAPES, HTTPStatus, DWCNames)
-#          BISON.COUNT_KEYS, BISON_FILTERS,
-#          BISON_HIERARCHY_KEY, BISON_KINGDOM_KEY, BISON_NAME_KEY, 
-#          BISON_QFILTERS, BISON_RECORD_KEYS, BISON_TSN_LIST_KEYS,
-#          BISON_OCCURRENCE_URL, BISON_BINOMIAL_REGEX, BISON_TSN_FILTERS, 
-#          BISON_OCC_FILTERS,
-         
-#          GBIF_ORGANIZATION_SERVICE, GBIF_REST_URL, GBIF_SPECIES_SERVICE, 
-         
-#          IDIGBIO_FILTERS, IDIGBIO_QFILTERS, 
-#          IDIGBIO_OCCURRENCE_ITEMS_KEY, IDIGBIO_RECORD_CONTENT_KEY,
-#          IDIGBIO_RECORD_INDEX_KEY, IDIGBIO_SEARCH_PREFIX, 
-#          IDIGBIO_OCCURRENCE_POSTFIX, IDIGBIO_SEARCH_POSTFIX, 
-#          IDIGBIO_GBIFID_FIELD, 
-         
-#          ITIS_CLASS_KEY, ITIS_DATA_NAMESPACE, ITIS_TAXONOMY_KEY,  
-#          ITIS_FAMILY_KEY, ITIS_GENUS_KEY, ITIS_HIERARCHY_TAG, ITIS_KINGDOM_KEY, 
-#          ITIS_ORDER_KEY, ITIS_PHYLUM_DIVISION_KEY, ITIS_RANK_TAG, 
-#          ITIS_SPECIES_KEY, ITIS_TAXON_TAG, ITIS_TAXONOMY_HIERARCHY_URL, 
-         
+from LmCommon.common.lmconstants import (BISON, BISON_QUERY, GBIF, ITIS, 
+                                         IDIGBIO, IDIGBIO_QUERY, 
+                                         URL_ESCAPES, HTTPStatus, DWCNames)
 
 # .............................................................................
 class APIQuery(object):
@@ -287,12 +268,12 @@ class BisonAPI(APIQuery):
       """
       @summary: Constructor for BisonAPI class      
       """
-      allQFilters = BISON.QFILTERS.copy()
+      allQFilters = BISON_QUERY.QFILTERS.copy()
       for key, val in qFilters.iteritems():
          allQFilters[key] = val
          
       # Add/replace other filters to defaults for this instance
-      allOtherFilters = BISON.FILTERS.copy()
+      allOtherFilters = BISON_QUERY.FILTERS.copy()
       for key, val in otherFilters.iteritems():
          allOtherFilters[key] = val
          
@@ -338,7 +319,7 @@ class BisonAPI(APIQuery):
       @summary: Returns a list of sequences containing tsn and tsnCount
       """
       bisonQuery = BisonAPI(qFilters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX}, 
-                            otherFilters=BISON.TSN_FILTERS)
+                            otherFilters=BISON_QUERY.TSN_FILTERS)
       tsnList = bisonQuery._getBinomialTSNs()
       return tsnList
 
@@ -347,8 +328,8 @@ class BisonAPI(APIQuery):
       dataList = None
       self.query()
       if self.output is not None:
-         dataCount = self._burrow(BISON.COUNT_KEYS)
-         dataList = self._burrow(BISON.TSN_LIST_KEYS)
+         dataCount = self._burrow(BISON_QUERY.COUNT_KEYS)
+         dataList = self._burrow(BISON_QUERY.TSN_LIST_KEYS)
          print 'Reported count = {}, actual count = {}'.format(dataCount, 
                                                                len(dataList))
       return dataList
@@ -381,8 +362,8 @@ class BisonAPI(APIQuery):
       if self.output is None:
          self.query()
       if self.output is not None:
-         dataCount = self._burrow(BISON.COUNT_KEYS)
-         dataList = self._burrow(BISON.RECORD_KEYS)
+         dataCount = self._burrow(BISON_QUERY.COUNT_KEYS)
+         dataList = self._burrow(BISON_QUERY.RECORD_KEYS)
       return dataList
       
 # ...............................................
@@ -581,12 +562,12 @@ class IdigbioAPI(APIQuery):
                                 IDIGBIO.OCCURRENCE_POSTFIX))
 
       # Add/replace Q filters to defaults for this instance 
-      allQFilters = IDIGBIO.QFILTERS.copy()
+      allQFilters = IDIGBIO_QUERY.QFILTERS.copy()
       for key, val in qFilters.iteritems():
          allQFilters[key] = val
          
       # Add/replace other filters to defaults for this instance
-      allOtherFilters = IDIGBIO.FILTERS.copy()
+      allOtherFilters = IDIGBIO_QUERY.FILTERS.copy()
       for key, val in otherFilters.iteritems():
          allOtherFilters[key] = val
          
@@ -750,7 +731,7 @@ if __name__ == '__main__':
          count = int(tsnPair[1])
                  
          newQ = {BISON.HIERARCHY_KEY: '*-{}-*'.format(tsn)}
-         occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON.OCC_FILTERS)
+         occAPI = BisonAPI(qFilters=newQ, otherFilters=BISON_QUERY.OCC_FILTERS)
          thisurl = occAPI.url
          occList = occAPI.getTSNOccurrences()
          count = None if not occList else len(occList)

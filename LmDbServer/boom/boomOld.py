@@ -34,10 +34,8 @@ from types import ListType, TupleType, StringType, UnicodeType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
-from LmCommon.common.lmconstants import (BISON_OCC_FILTERS, BISON_HIERARCHY_KEY,
-            BISON_MIN_POINT_COUNT, ProcessType, JobStatus, 
-            ONE_HOUR, ONE_MIN, GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD, 
-            GBIF_PROVIDER_FIELD)
+from LmCommon.common.lmconstants import (BISON, BISON_QUERY, ProcessType, 
+                        JobStatus, GBIF, GBIF_QUERY, ONE_HOUR, ONE_MIN)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import (Priority, PrimaryEnvironment, wkbPoint, 
@@ -55,7 +53,6 @@ from LmServer.sdm.meJob import MeProjectionJob, MeModelJob
 from LmServer.sdm.sdmJob import SDMOccurrenceJob, SDMModelJob, SDMProjectionJob
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-GBIF_SERVICE_INTERVAL = 3 * ONE_MIN            
 
 # .............................................................................
 class _LMBoomer(LMObject):
@@ -643,7 +640,7 @@ class BisonBoom(_LMBoomer):
          sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
          jobs = self._processSDMChain(sciName, tsn, 
                                ProcessType.BISON_TAXA_OCCURRENCE, 
-                               tsnCount, BISON_MIN_POINT_COUNT)
+                               tsnCount, BISON.MIN_POINT_COUNT)
       return jobs
          
 # ...............................................
@@ -660,8 +657,8 @@ class BisonBoom(_LMBoomer):
       if taxonSourceKeyVal is None:
          raise LMError(currargs='Missing taxonSourceKeyVal for BISON query url')
       occAPI = BisonAPI(qFilters=
-                        {BISON_HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
-                        otherFilters=BISON_OCC_FILTERS)
+                        {BISON.HIERARCHY_KEY: '*-{}-*'.format(taxonSourceKeyVal)}, 
+                        otherFilters=BISON_QUERY.OCC_FILTERS)
       occAPI.clearOtherFilters()
       return occAPI.url
 
@@ -874,15 +871,15 @@ class GBIFBoom(_LMBoomer):
 
       self._linenum = 0
       gbifFldNames = []
-      idxs = GBIF_EXPORT_FIELDS.keys()
+      idxs = GBIF_QUERY.EXPORT_FIELDS.keys()
       idxs.sort()
       for idx in idxs:
-         gbifFldNames.append(GBIF_EXPORT_FIELDS[idx][0])
+         gbifFldNames.append(GBIF_QUERY.EXPORT_FIELDS[idx][0])
       self._fieldNames = gbifFldNames
       
       self._providers, self._provCol = self._readProviderKeys(providerListFile, 
-                                                         GBIF_PROVIDER_FIELD)
-      self._keyCol = self._fieldNames.index(GBIF_TAXONKEY_FIELD)
+                                                         GBIF.PROVIDER_FIELD)
+      self._keyCol = self._fieldNames.index(GBIF.TAXONKEY_FIELD)
       self._obsoleteTime = expDate
       self._currKeyFirstRecnum = None
       self._currRec = None

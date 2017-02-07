@@ -1,11 +1,9 @@
 """
-@summary: Module containing GBIF functions
+@summary: Module containing functions to create a shapefile from occurrence data
 @author: Aimee Stewart
-@version: 3.0.0
-@status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -34,9 +32,10 @@ import StringIO
 from types import ListType, TupleType, UnicodeType, StringType
 
 from LmBackend.common.occparse import OccDataParser
-from LmCommon.common.lmconstants import (ENCODING, BISON, GBIF, IDIGBIO, 
-                     LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
-                     SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
+               GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
+               LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
+               SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
 from LmCompute.common.lmObj import LmException
 from LmCommon.common.unicode import fromUnicode, toUnicode
 
@@ -55,7 +54,7 @@ class ShapeShifter(object):
       @param data: Either csv blob of GBIF data or list of dictionary records
                    of BISON data
       @param processType: ProcessType constant, either GBIF_TAXA_OCCURRENCE,
-                          BISON.TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  
+                          BISON_TAXA_OCCURRENCE or IDIGBIO_TAXA_OCCURRENCE  
       """
       self._reader = None
       # If necessary, map provider dictionary keys to our field names
@@ -84,30 +83,30 @@ class ShapeShifter(object):
          self.yField = self.op.yFieldName
 
       elif processType == ProcessType.GBIF_TAXA_OCCURRENCE:
-         self.dataFields = GBIF.EXPORT_FIELDS
+         self.dataFields = GBIF_QUERY.EXPORT_FIELDS
          self.idField = GBIF.ID_FIELD
          self.linkField = GBIF.LINK_FIELD
          self.linkUrl = GBIF.LINK_PREFIX
          self.linkIdField = GBIF.ID_FIELD
          self.providerKeyField = GBIF.PROVIDER_FIELD
-         self.computedProviderField = GBIF.PROVIDER_FIELD_COMPUTED
+         self.computedProviderField = PROVIDER_FIELD_COMMON
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
          self._reader = self._getCSVReader()
          
       elif processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-         self.dataFields = IDIGBIO.RETURN_FIELDS
+         self.dataFields = IDIGBIO_QUERY.RETURN_FIELDS
          self.lookupFields = self._mapAPIResponseNames()
          self.idField = IDIGBIO.ID_FIELD
          self.linkField = IDIGBIO.LINK_FIELD
          self.linkUrl = IDIGBIO.LINK_PREFIX
          self.linkIdField = IDIGBIO.ID_FIELD
-         self.computedProviderField = IDIGBIO.PROVIDER_FIELD_COMPUTED
+         self.computedProviderField = PROVIDER_FIELD_COMMON
          self.xField = DWCNames.DECIMAL_LONGITUDE['SHORT']
          self.yField = DWCNames.DECIMAL_LATITUDE['SHORT']
 
       elif processType == ProcessType.BISON_TAXA_OCCURRENCE:
-         self.dataFields = BISON.RESPONSE_FIELDS
+         self.dataFields = BISON_QUERY.RESPONSE_FIELDS
          self.lookupFields = self._mapAPIResponseNames()
          self.linkField = BISON.LINK_FIELD
          self.linkUrl = BISON.LINK_PREFIX

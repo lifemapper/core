@@ -5,7 +5,7 @@
 @status: beta
 
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -28,7 +28,6 @@
 """
 import os
 from osgeo import ogr, osr
-import StringIO
 
 from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import OutputFormat, ProcessType, JobStatus

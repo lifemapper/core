@@ -27,7 +27,7 @@ import csv
 import os
 import sys
 
-from LmCommon.common.lmconstants import (GBIF_EXPORT_FIELDS, GBIF_TAXONKEY_FIELD) 
+from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY) 
 
 # .............................................................................
 class FileData(object):
@@ -409,8 +409,8 @@ if __name__ == '__main__':
    datapath, dumpFname = os.path.split(fullfilename)   
    csv.field_size_limit(sys.maxsize)
    keyCol = None
-   for idx, vals in GBIF_EXPORT_FIELDS.iteritems():
-      if vals[0] == GBIF_TAXONKEY_FIELD:
+   for idx, vals in GBIF_QUERY.EXPORT_FIELDS.iteritems():
+      if vals[0] == GBIF.TAXONKEY_FIELD:
          keyCol = idx
          break
    
@@ -420,7 +420,7 @@ if __name__ == '__main__':
    try:
       logfile = open(logfname, 'w')
       logfile.write('{} to be sorted on column {}, {}; logfile {}\n'
-                    .format(dumpFname, keyCol, GBIF_TAXONKEY_FIELD, logfname))
+                    .format(dumpFname, keyCol, GBIF.TAXONKEY_FIELD, logfname))
       
       # Split big, semi-sorted file, to multiple smaller sorted files
       logfile.write('Splitting ...\n')
