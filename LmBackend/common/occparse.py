@@ -539,8 +539,6 @@ class OccDataParser(object):
          goodEnough = self._testLine(self.currLine)
          if goodEnough:
             chunk.append(self.currLine)
-         else:
-            print ('Tried to append bad rec')
             
          try:
             while not self.closed and not complete:

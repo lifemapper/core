@@ -84,11 +84,11 @@ class LMMakeflowDocument(LMObject):
       @param dependencies: A list of dependencies (files that must exist before 
                               this job can run
       """
-      job = """\
+      job = ("""
 # {comment}
 {outputs}: {dependencies}
    {cmd}
-""".format(outputs=' '.join(outputs), cmd=cmd, comment=comment, 
+""").format(outputs=' '.join(outputs), cmd=cmd, comment=comment, 
            dependencies=' '.join(dependencies))
       self.jobs.append(job)
       self.outputs.extend(outputs)

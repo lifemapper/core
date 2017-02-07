@@ -756,7 +756,7 @@ class UserChainer(_LMChainer):
 #          sciName = self._getInsertSciNameForUser(taxonName)
 #          jobs = self._processInputSpecies(dataChunk, dataCount, sciName)
          objs = self._processUserChunk(dataChunk, dataCount, taxonName)
-#          self._createMakeflow(objs)
+         self._createMakeflow(objs)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
 
@@ -932,8 +932,7 @@ class GBIFChainer(_LMChainer):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
          objs = self._processGBIFChunk(speciesKey, dataCount, dataChunk)
-         # TODO: add this back
-#          self._createMakeflow(objs)
+         self._createMakeflow(objs)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
 
@@ -1244,24 +1243,37 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixRaster
 from LmServer.db.borgscribe import BorgScribe
 
-(archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
- gridname, userOccCSV, userOccDelimiter, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
- gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
- speciesExpDay) = Archivist.getArchiveSpecificConfig(userId='ryan', archiveName='Heuchera archive')
+from LmDbServer.boom.boom import Archivist
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+
+tstUserId='ryan'
+tstArchiveName='Heuchera_archive'
+
+(user, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens,  
+ epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
+ bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
+ speciesExpYear, speciesExpMonth, 
+ speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
+                                                     archiveName=tstArchiveName)
 
 expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
-currtime = dt.gmt().mjd
 taxname = TAXONOMIC_SOURCE[datasource]['name']
-   
-   
 log = ScriptLogger('testboomborg')
-scribe = BorgScribe(log)
-scribe.openConnections()
-shpgrid = scribe.getShapeGrid(userId=user, lyrName=gridname, epsg=epsg)
-gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=epsg, 
-               pam=None, userId=user)
-mtx = LMMatrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
-gpam = scribe.getMatrix(mtx)
+
+boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens, 
+                      userOccCSV, userOccMeta, expdate, 
+                      mdlMask=None, prjMask=None, 
+                      minPointCount=minPoints, 
+                      intersectGrid=gridname, log=log)
+
+
+# scribe = BorgScribe(log)
+# scribe.openConnections()
+# shpgrid = scribe.getShapeGrid(userId=user, lyrName=gridname, epsg=epsg)
+# gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=epsg, 
+#                pam=None, userId=user)
+# mtx = LMMatrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
+# gpam = scribe.getMatrix(mtx)
 
 # ...............................................
 boomer = GBIFChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
