@@ -417,7 +417,7 @@ def _importClimatePackageMetadata(envPackageName):
 
 # ...............................................
 def writeConfigFile(archiveName, envPackageName, userid, userEmail, 
-                     speciesSource, speciesData, 
+                     speciesSource, speciesData, speciesDataDelimiter,
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, 
                      mdlScen=None, prjScens=None):
@@ -472,6 +472,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
       if speciesData is None:
          speciesData = USER_OCCURRENCE_DATA
+      f.write('ARCHIVE_USER_OCCURRENCE_DATA_DELIMITER: {}\n\n'.format(speciesData))
    f.write('{}: {}\n\n'.format(varname, speciesData))
       
    # Input environmental data, pulled from environmental metadata  
@@ -539,6 +540,8 @@ if __name__ == '__main__':
                   'the same basename.  The data file must have \'.csv\' ' +
                   'extension, metadata file must have \'.meta\' extension. ' +
                   'Metadata describes the data fields. ' ))
+   parser.add_argument('-d', '--species_delimiter', default=',',
+            help=('Delimiter for user-supplied species file, defaults to \',\'. ' ))
    parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
             help=('Minimum number of points required for SDM computation ' +
                   'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
@@ -560,6 +563,7 @@ if __name__ == '__main__':
    envPackageName = args.environmental_metadata
    speciesSource = args.species_source.upper()
    speciesData = args.species_file
+   speciesDataDelimiter = args.delimiter
    minpoints = args.min_points
    algstring = args.algorithms.upper()
    algorithms = [alg.strip() for alg in algstring.split(',')]
@@ -627,7 +631,8 @@ if __name__ == '__main__':
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
       newConfigFilename = writeConfigFile(archiveName, envPackageName, usr, 
-                           usrEmail, speciesSource, speciesData, configMeta, 
+                           usrEmail, speciesSource, 
+                           speciesData, speciesDataDelimiter, configMeta, 
                            minpoints, algorithms, gridname, cellsize, cellsides, 
                            mdlScen=mdlScencode, prjScens=prjScencodes)
    except Exception, e:

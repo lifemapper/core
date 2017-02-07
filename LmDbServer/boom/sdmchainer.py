@@ -659,7 +659,7 @@ class UserChainer(_LMChainer):
              Occurrence record and inserts one or more jobs.
    """
    def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
-                userOccCSV, userOccMeta, expDate, 
+                userOccCSV, userOccMeta, expDate, userOccDelimiter=',',
                 priority=Priority.HIGH, minPointCount=None,
                 mdlMask=None, prjMask=None, intersectGrid=None, log=None):
       super(UserChainer, self).__init__(archiveName, userid, epsg, priority, 
@@ -670,7 +670,8 @@ class UserChainer(_LMChainer):
                                      intersectGrid=intersectGrid, log=log)
       self.occParser = None
       try:
-         self.occParser = OccDataParser(self.log, userOccCSV, userOccMeta) 
+         self.occParser = OccDataParser(self.log, userOccCSV, userOccMeta, 
+                                        delimiter=userOccDelimiter) 
       except Exception, e:
          raise LMError(currargs=e.args)
          
@@ -1173,10 +1174,16 @@ class iDigBioChainer(_LMChainer):
 if __name__ == "__main__":
    from LmDbServer.boom.boom import Archivist
    from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+   
+   tstUserId='ryan'
+   tstArchiveName='Heuchera archive'
+   
    (user, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens,  
-    epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
-    gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
-    speciesExpDay) = Archivist.getArchiveSpecificConfig()
+    epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
+    bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
+    speciesExpYear, speciesExpMonth, 
+    speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
+                                                        archiveName=tstArchiveName)
    
    expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
    taxname = TAXONOMIC_SOURCE[datasource]['name']
@@ -1230,7 +1237,7 @@ from LmServer.legion.mtxcolumn import MatrixRaster
 from LmServer.db.borgscribe import BorgScribe
 
 (archiveName, user, datasource, algorithms, minPoints, mdlScen, prjScens, epsg, 
- gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
+ gridname, userOccCSV, userOccDelimiter, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
  gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
  speciesExpDay) = Archivist.getArchiveSpecificConfig(userId='ryan', archiveName='Heuchera archive')
 

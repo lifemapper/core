@@ -45,7 +45,7 @@ class OccDataParser(object):
    REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
                            FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
 
-   def __init__(self, logger, datafile, metadatafile, delimiter='\t'):
+   def __init__(self, logger, datafile, metadatafile, delimiter=','):
       """
       @summary Reader for arbitrary user CSV data file with header record and 
                metadata file
@@ -93,9 +93,8 @@ class OccDataParser(object):
          self.dataFname = None
       
       # Read CSV header
-      tmp = self._csvreader.next()
-      tmpFlds = tmp.split(delimiter)
-      self.header = [fldname.strip() for fldname in tmpFlds]
+      tmpList = self._csvreader.next()
+      self.header = [fldname.strip() for fldname in tmpList]
       # Read metadata file/stream
       fieldmeta, metadataFname = self.readMetadata(metadatafile)
       if metadataFname is None:

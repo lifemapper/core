@@ -89,10 +89,12 @@ class Archivist(Daemon):
       speciesExpDay = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_DAY')
    
       # User data  
-      userOccCSV = userOccMeta = None 
+      userOccCSV = userOccMeta = userOccDelimiter = None 
       if SpeciesDatasource.isUser(datasource):
          userOccData = cfg.get(_PIPELINE_CONFIG_HEADING, 
                                'ARCHIVE_USER_OCCURRENCE_DATA')
+         userOccDelimiter = cfg.get(_PIPELINE_CONFIG_HEADING, 
+                               'ARCHIVE_USER_OCCURRENCE_DATA_DELIMITER')
          userOccCSV = os.path.join(pth, userOccData + OutputFormat.CSV)
          userOccMeta = os.path.join(pth, userOccData + OutputFormat.METADATA)
       
@@ -113,7 +115,8 @@ class Archivist(Daemon):
       gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          
       return (userId, archiveName, datasource, algorithms, minPoints, 
-              mdlScen, prjScens, epsg, gridname, userOccCSV, userOccMeta, 
+              mdlScen, prjScens, epsg, gridname, 
+              userOccCSV, userOccDelimiter, userOccMeta, 
               bisonTsnFile, idigTaxonidsFile, 
               gbifTaxFile, gbifOccFile, gbifProvFile, 
               speciesExpYear, speciesExpMonth, speciesExpDay)  
@@ -128,10 +131,10 @@ class Archivist(Daemon):
              installed defaults
       """
       (userId, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens, 
-       epsg, gridname, userOccCSV, userOccMeta, bisonTsnFile, idigTaxonidsFile, 
-       gbifTaxFile, gbifOccFile, gbifProvFile, speciesExpYear, speciesExpMonth, 
-       speciesExpDay) = self.getArchiveSpecificConfig(self.userId, 
-                                                      self.archiveName)
+       epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
+       bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
+       speciesExpYear, speciesExpMonth, 
+       speciesExpDay) = self.getArchiveSpecificConfig(self.userId, self.archiveName)
       # Reset attributes in case they were not sent, relying on defaults
       self.userId = userId
       self.archiveName = archiveName
@@ -172,8 +175,9 @@ class Archivist(Daemon):
    
          else:
             self.boomer = UserChainer(self.archiveName, self.userId, epsg, 
-                                   algorithms, mdlScen, prjScens, userOccCSV, 
-                                   userOccMeta, expdate, 
+                                   algorithms, mdlScen, prjScens, 
+                                   userOccCSV, userOccMeta, expdate, 
+                                   userOccDelimiter=userOccDelimiter,
                                    mdlMask=None, prjMask=None, 
                                    minPointCount=minPoints, 
                                    intersectGrid=gridname, log=self.log)
@@ -298,12 +302,12 @@ usr = 'ryan'
 log = ScriptLogger('testingboom')
 
 (userId, archiveName, datasource, algorithms, minPoints, 
- mdlScen, prjScens, epsg, gridname, userOccCSV, userOccMeta, 
+ mdlScen, prjScens, epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
  bisonTsnFile, idigTaxonidsFile, 
  gbifTaxFile, gbifOccFile, gbifProvFile, 
  speciesExpYear, speciesExpMonth, 
  speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=usr, archiveName=name)
  
-occParser = OccDataParser(log, userOccCSV, userOccMeta)
+occParser = OccDataParser(log, userOccCSV, userOccMeta, delimiter=',')
 
 """
