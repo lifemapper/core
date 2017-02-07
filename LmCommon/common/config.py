@@ -44,7 +44,7 @@ class Config(object):
              config.lmcompute.ini and site.ini and store values
    """
    # .....................................
-   def __init__(self, fns=[], siteFn=SITE_CONFIG_FILENAME, 
+   def __init__(self, fns=None, siteFn=SITE_CONFIG_FILENAME, 
                    defaultFns=[COMPUTE_CONFIG_FILENAME, SERVER_CONFIG_FILENAME]):
       """
       @summary: Constructor.  Uses config files in order fns then siteFn then defaultFns
@@ -60,7 +60,10 @@ class Config(object):
          fileList.append(siteFn)
          
       # Add specified config files (ex BOOM config)
-      fileList.extend(fns)
+      if fns is not None:
+         if not isinstance(fns, list):
+            fns = [fns]
+         fileList.extend(fns)
          
       # Remove Nones if they exist
       fileList = [f for f in fileList if f is not None]
