@@ -30,7 +30,7 @@ from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMFileType, ALGORITHM_DATA,
+from LmServer.common.lmconstants import (LMFileType, Algorithms,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
@@ -278,16 +278,19 @@ class SDMProjection(_ProjectionType, Raster):
       if resolution is None:
          resolution = projScenario.resolution
       if processType is None:
-         if algorithm.code == 'ATT_MAXENT':
+         if Algorithms.isATT(algorithm.code):
+#          if algorithm.code == 'ATT_MAXENT':
             processType = ProcessType.ATT_PROJECT
          else:
             processType = ProcessType.OM_PROJECT
-      isDiscreteData = ALGORITHM_DATA[algorithm.code]['isDiscreteOutput']
+#       isDiscreteData = ALGORITHM_DATA[algorithm.code]['isDiscreteOutput']
+      isDiscreteData = Algorithms.returnsDiscreteOutput(algorithm.code)
       title = occurrenceSet._earlJr.createSDMProjectTitle(
                         occurrenceSet._userId, occurrenceSet.displayName, 
                         algorithm.code, modelScenario.code, projScenario.code)
       if gdalFormat is None:
-         gdalFormat = ALGORITHM_DATA[algorithm.code]['outputFormat']
+#          gdalFormat = ALGORITHM_DATA[algorithm.code]['outputFormat']
+         gdalFormat = Algorithms.get(algorithm.code).outputFormat
       return (userId, name, squid, processType, bbox, epsgcode, mapunits, 
               resolution, isDiscreteData, gdalFormat, title)
 

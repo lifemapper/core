@@ -37,7 +37,7 @@ from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME,
 from LmDbServer.boom.boom import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
+from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
@@ -81,16 +81,22 @@ def addAlgorithms(scribe):
    @summary Adds algorithms to the database from the algorithm dictionary
    """
    ids = []
-   for algcode, algdict in ALGORITHM_DATA.iteritems():
-      algmeta = {}
-      for k, v in algdict.iteritems():
-         if k != 'parameters':
-            algmeta[k] = v
-      alg = Algorithm(algcode, metadata=algmeta)
-      scribe.log.info('  Insert algorithm {} ...'.format(algcode))
+   for algmeta in Algorithms.implemented():
+      alg = Algorithm(algmeta.code, metadata=algmeta.parameters)
+      scribe.log.info('  Insert algorithm {} ...'.format(algmeta.code))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
    return ids
+#    for algcode, algdict in ALGORITHM_DATA.iteritems():
+#       algmeta = {}
+#       for k, v in algdict.iteritems():
+#          if k != 'parameters':
+#             algmeta[k] = v
+#       alg = Algorithm(algcode, metadata=algmeta)
+#       scribe.log.info('  Insert algorithm {} ...'.format(algcode))
+#       algid = scribe.insertAlgorithm(alg)
+#       ids.append(algid)
+#    return ids
 
 # ...............................................
 def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
@@ -500,7 +506,8 @@ if __name__ == '__main__':
       sys.exit(2)
 
    algs=','.join(DEFAULT_ALGORITHMS)
-   allAlgs = ','.join(ALGORITHM_DATA.keys())
+   allAlgs = ','.join([alg.code for alg in Algorithms.implemented()])
+#    allAlgs = ','.join(ALGORITHM_DATA.keys())
    apiUrl = 'http://lifemapper.github.io/api.html'
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
@@ -657,7 +664,7 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat,
                                          JobStatus, MatrixType)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
+from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)

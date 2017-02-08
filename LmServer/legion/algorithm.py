@@ -29,7 +29,7 @@ import json
 from types import StringType, IntType, FloatType, NoneType
 
 from LmServer.base.lmobj import LMError, LMObject
-from LmServer.common.lmconstants import ALGORITHM_DATA
+from LmServer.common.lmconstants import Algorithms
 
 # .........................................................................
 class NotImplementedError( LMError ):
@@ -104,7 +104,9 @@ class Algorithm(LMObject):
    def _initParameters(self):
       self._parameters = {}
       self._parameterConstraints = {}
-      for key, constraintDict in ALGORITHM_DATA[self.code]['parameters'].iteritems():
+      algparams = Algorithms.get(self.code).parameters
+      for key, constraintDict in algparams.iteritems():
+#       for key, constraintDict in ALGORITHM_DATA[self.code]['parameters'].iteritems():
          self._parameterConstraints[key] = constraintDict
          self._parameters[key] = None
 

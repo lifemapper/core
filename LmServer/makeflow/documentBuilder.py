@@ -39,7 +39,7 @@ from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.localconstants import JOB_REQUEST_PATH, PYTHON_CMD
 
 from LmServer.base.lmobj import LMObject
-from LmServer.common.lmconstants import JobFamily
+from LmServer.common.lmconstants import JobFamily, Algorithms
 # TODO: Okay that this in server?
 from LmServer.common.localconstants import APP_PATH
 from LmServer.makeflow.makeJobCommand import (makeBisonOccurrenceSetCommand,
@@ -210,10 +210,7 @@ class LMMakeflowDocument(LMObject):
       """
       @summary: Adds all of the processes necessary for computing an SDM model
       """
-      # Determine which type of model to add
-      
-      # TODO: Use a constant!
-      if mdl.algorithmCode == 'ATT_MAXENT':
+      if Algorithms.isATT(mdl.algorithmCode):
          self.addMaxentModel(mdl)
       else:
          self.addOmModel(mdl)
@@ -299,10 +296,7 @@ class LMMakeflowDocument(LMObject):
       @summary: Adds all of the processes necessary for computing an SDM 
                    projection
       """
-      # Determine which type of projection to add
-      
-      # TODO: Use a constant!
-      if prj.algorithmCode == 'ATT_MAXENT':
+      if Algorithms.isATT(prj.algorithmCode):
          self.addMaxentProjection(prj)
       else:
          self.addOmProjection(prj)
