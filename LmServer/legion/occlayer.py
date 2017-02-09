@@ -33,7 +33,8 @@ from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
                   LMServiceType, LMServiceModule)
-from LmServer.common.localconstants import APP_PATH, POINT_COUNT_MAX
+from LmServer.common.localconstants import POINT_COUNT_MAX
+from LmServer.makeflow.cmd import LMCommand
 
 # .............................................................................
 # .............................................................................
@@ -590,7 +591,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       return (minX, minY, maxX, maxY)
 
 # ...............................................
-   def buildCommand(self):
+   def compute(self):
       """
       @summary: Assemble command create a shapefile from raw input
       """
@@ -604,8 +605,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
       
       options = {'-n' : name,
                  '-o' : dataPath,
-                 # Why not name here too?
-#                   '-l' : 'bisonPoints-{}.log'.format(self.getId()),
                  '-l' : '{}.log'.format(name),
                  '-s' : occStatusFn }
    
@@ -618,6 +617,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
       if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
          occCommandArguments.append(self.queryCount)
       occCommandArguments.extend([POINT_COUNT_MAX, basename, args])         
-      occCmd = ' '.join(occCommandArguments)
+      cmdString = ' '.join(occCommandArguments)
+      
+      occCmd = LMCommand(cmdString, occStatusFn)
       
       return occCmd, occStatusFn
