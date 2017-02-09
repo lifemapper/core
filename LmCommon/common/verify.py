@@ -52,8 +52,9 @@ def _getHexHashValue(dlocation=None, content=None):
 # .............................................................................
 def computeHash(dlocation=None, content=None):
    """
-   @summary: Computes an sha256sum on a datafile
-   @param dlocation: The file on which to compute the hash
+   @summary: Computes an sha256sum on data or a datafile 
+   @param dlocation: File on which to compute hash
+   @param content: Data or object on which to compute hash
    """
    hexhash = _getHexHashValue(dlocation=dlocation, content=content)
    return hexhash
