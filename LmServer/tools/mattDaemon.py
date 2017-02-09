@@ -27,10 +27,8 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Update documents on completion
-@todo: Handle missing documents
+@todo: Need to delete all files on delete
 @todo: Move documents to staging area? Or create extra files in place (delete them?)
-@todo: Are documents stored on file system or in DB as text
 @todo: If documents are stored in staging area, do we need to check for existing on startup?
 """
 import argparse
@@ -47,6 +45,7 @@ from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
                                     MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
 from LmServer.common.localconstants import (ARCHIVE_USER, CATALOG_SERVER_OPTIONS, 
                   MAKEFLOW_OPTIONS, MAX_MAKEFLOWS, WORKER_FACTORY_OPTIONS)
+from LmCommon.common.lmconstants import JobStatus
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -105,10 +104,14 @@ class MattDaemon(Daemon):
             #  Add mf processes for empty slots
             for mfId, mfDocFn in self.getMakeflows(self.maxMakeflows - numRunning):
                
-               cmd = self._getMakeflowCommand("lifemapper-{0}".format(mfId), 
-                                              mfDocFn)
-               self.log.debug(cmd)
-               self._mfPool.append([mfId, Popen(cmd, shell=True)])
+               if os.path.exists(mfDocFn):
+                  cmd = self._getMakeflowCommand("lifemapper-{0}".format(mfId), 
+                                                 mfDocFn)
+                  self.log.debug(cmd)
+                  self._mfPool.append([mfId, Popen(cmd, shell=True)])
+               else:
+                  # TODO: Replace with correct function
+                  self.scribe.updateMakeflow(mfId, JobStatus.IO_GENERAL_ERROR)
             # Sleep
             self.log.info("Sleep for {0} seconds".format(self.sleepTime))
             sleep(self.sleepTime)
@@ -140,15 +143,34 @@ class MattDaemon(Daemon):
    def getNumberOfRunningProcesses(self):
       """
       @summary: Returns the number of running processes
+      @todo: Catch errors and update makeflow
       """
       numRunning = 0
       for idx in xrange(len(self._mfPool)):
-         if self._mfPool[idx][1].poll() is None:
-            numRunning = numRunning +1
+         result = self._mfPool[idx][1].poll()
+         if result is None:
+            numRunning += 1
          else:
             mfId = self._mfPool[idx][0]
             self._mfPool[idx] = None
-            self.scribe.deleteJobChain(mfId)
+            
+            # Check output
+            # Standard result codes are: negative for killed by signal, 
+            #                            zero for success, positive for error
+            
+            if result == 0:
+               # Success
+               # TODO: Replace with correct command
+               self.scribe.deleteJobChain(mfId)
+            elif result < 0:
+               # Killed by signal, reset most likely
+               # TODO: Replace with correct method
+               self.scribe.updateMakeflow(mfId, JobStatus.INITIALIZE)
+            else:
+               # Error, update Makeflow status
+               # TODO: Replace with correct method
+               self.scribe.updateMakeflow(mfId, JobStatus.GENERAL_ERROR)
+
       self._mfPool = filter(None, self._mfPool)
       return numRunning
 
