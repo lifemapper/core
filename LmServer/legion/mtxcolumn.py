@@ -28,6 +28,7 @@ from LmServer.base.layer2 import Raster, Vector, _LayerParameters
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule
+from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
 # .............................................................................
@@ -52,7 +53,7 @@ class MatrixColumn(_LayerParameters, ProcessObject):
 # Constructor
 # .............................................................................
    def __init__(self, matrixIndex, matrixId, userId, layerId=None,
-                processType=ProcessType.RAD_INTERSECT, colDLocation=None,
+                processType=None, colDLocation=None,
                 metadata={}, intersectParams={}, squid=None, ident=None,
                 matrixColumnId=None, status=None, statusModTime=None):
       """
@@ -128,8 +129,10 @@ class MatrixVector(MatrixColumn, Vector):
                 featureCount=0, featureAttributes={}, features={}, 
                 fidAttribute=None,
                 # MatrixColumn
-                processType=None, mtxcolMetadata={}, intersectParams={}, 
-                ident=None, matrixColumnId=None, status=None, statusModTime=None):
+                # ProcessType could be INTERSECT_VECTOR or INTERSECT_VECTOR_GRIM (later)
+                processType=ProcessType.INTERSECT_VECTOR, mtxcolMetadata={}, 
+                intersectParams={}, ident=None, matrixColumnId=None, 
+                status=None, statusModTime=None):
       """
       @summary MatrixVector constructor
       @copydoc LmServer.legion.mtxcolumn.MatrixColumn::__init__()
@@ -182,7 +185,7 @@ class MatrixRaster(MatrixColumn, Raster):
 # .............................................................................   
    def __init__(self, matrixIndex, matrixId, userId, 
                 # Raster
-                name, epsgcode, lyrId=None, 
+                name, epsgcode, lyrId=None,
                 squid=None, verify=None, dlocation=None, 
                 lyrMetadata={}, dataFormat=None, gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
@@ -191,8 +194,10 @@ class MatrixRaster(MatrixColumn, Raster):
                 moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, modTime=None,
                 # MatrixColumn
-                processType=None, mtxcolMetadata={}, intersectParams={}, 
-                ident=None, matrixColumnId=None, status=None, statusModTime=None):
+                # process type could be INTERSECT_RASTER or INTERSECT_RASTER_GRIM
+                processType=ProcessType.INTERSECT_RASTER, mtxcolMetadata={}, 
+                intersectParams={}, ident=None, matrixColumnId=None, 
+                status=None, statusModTime=None):
       """
       @summary MatrixRaster constructor
       @copydoc LmServer.legion.mtxcolumn.MatrixColumn::__init__()
@@ -234,3 +239,67 @@ class MatrixRaster(MatrixColumn, Raster):
                   status=mtxColumn.status, statusModTime=mtxColumn.statusModTime)
       return mtxRst
    
+# # ...............................................
+#    def compute(self):
+#       """
+#       @summary: Generate a command to create a SDM projection
+#       """
+#       # projection depends on model
+#       modelRule = self._computeModel()
+#       
+#       xmlRequestFname = self.getProjRequestFilename()
+#       # projection output
+#       dataPath, fname = os.path.split(xmlRequestFname)
+#       name = '{}-{}'.format(self.processType, self.getId())
+#       statusTarget = "{}.status".format(name)
+#       
+#       options = {'-n' : name,
+#                  '-o' : dataPath,
+#                  '-l' : '{}.log'.format(name),
+#                  '-s' : statusTarget }   
+#       # Join arguments
+#       args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+#       
+#       cmdArguments = [os.getenv('PYTHON'), 
+#                       ProcessType.getJobRunner(self.processType), 
+#                       xmlRequestFname, args]
+#       cmd = ' '.join(cmdArguments)
+#       rule = MfRule(cmd, [statusTarget], dependencies=[modelRule])
+#       
+#       return rule
+# # .............................................................................
+# def makePAVIntersectRasterCommand(shapegridFn, rasterFn, pavFn, resolution, 
+#                                   minPresence, maxPresence, percentPresence,
+#                                   squid=None):
+#    """
+#    @summary: Creates a command to intersect a raster layer and a shapegrid to 
+#                 produce a PAV
+#    @param shapegridFn: The file location of the shapegrid shapefile
+#    @param rasterFn: The file location of the raster file
+#    @param pavFn: The file location to write the resulting PAV Matrix
+#    @param resolution: The resolution of the raster file
+#    @param minPresence: The minimum value of the attribute to be considered
+#                           present
+#    @param maxPresence: The maximum value of the attribute to be considered
+#                           present
+#    @param percentPresence: The portion of a cell that must be present for the 
+#                               cell to be present
+#    @param squid: A Lifemapper SQUID to be added as metadata
+#    """
+#    options = ''
+#    if squid is not None:
+#       options = "--squid={0}".format(squid)
+#       
+#    cmd = "{python} {script} {sgFn} {rFn} {pavFn} {res} {minP} {maxP} {percent} {options}".format(
+#       python=PYTHON,
+#       script=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, 'intersect_raster.py'),
+#       sgFn=shapegridFn,
+#       rFn=rasterFn,
+#       pavFn=pavFn,
+#       res=resolution,
+#       minP=minPresence,
+#       maxP=maxPresence,
+#       percent=percentPresence,
+#       options=options
+#    )
+#    return cmd
