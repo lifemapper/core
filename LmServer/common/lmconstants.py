@@ -751,162 +751,580 @@ STRING_ESCAPE_FORMATS = {
                         }
 
 
+
 # ...............................................
 # Algorithm constants
-BIOCLIM_PARAMETERS = {
-                  'name': 'Bioclimatic Envelope Algorithm',
-                  # output is 0, 0.5, 1.0
-                  'isDiscreteOutput': True,
-                  'outputFormat': 'GTiff',
-                  'acceptsCategoricalMaps': False,
-                  'parameters' : 
-   {'StandardDeviationCutoff': 
-   {'type': FloatType,
-    'min': 0.0, 'default': 0.674, 'max': None } 
-   } }
- 
-CSMBS_PARAMETERS = {'name': 'Climate Space Model - Broken-Stick Implementation',
-                # TODO: discrete output?
-                'isDiscreteOutput': False,
-                'outputFormat': 'GTiff',
-                'acceptsCategoricalMaps': False,
-                'parameters' : 
-   {
- 'Randomisations': 
-   {'type': IntType,
-    'min': 1, 'default': 8, 'max': 1000 }
- ,
- 'StandardDeviations':
-   {'type': FloatType,
-    'min': -10.0, 'default': 2.0, 'max': 10.0 } 
- ,
- 'MinComponents': 
-   {'type': IntType,
-    'min': 1, 'default': 1, 'max': 20 }
- ,
- 'VerboseDebugging': 
-   {'type': IntType,
-    'min': 0, 'default': 0, 'max': 1 }
-   } }
-ENVDIST_PARAMETERS = {'name': 'Environmental Distance',
-                  # TODO: output is??
-                  'isDiscreteOutput': False,
-                  'outputFormat': 'GTiff',
-                  'acceptsCategoricalMaps': False,
-                  'parameters': 
-   {
- 'DistanceType':
-   {'type': IntType,
-    'min': 1, 'default': 1, 'max': 4 }
-   ,
-   'NearestPoints':
-   {'type': IntType,
-    'min': 0, 'default': 1, 'max': None }
- ,
- 'MaxDistance':
-   {'type': FloatType,
-    'min': 0.1, 'default': 0.1, 'max': 1.0 }
-   } }
- 
-ENVSCORE_PARAMETERS = {'name': 'Envelope Score',
-                   # probability between 0.0 and 1.0
+BIOCLIM_PARAMS = {'StandardDeviationCutoff':  {'type': FloatType,
+                                               'min': 0.0, 'default': 0.674, 
+                                               'max': None} }
+CSMBS_PARAMS = {'Randomisations': 
+                  {'type': IntType,
+                   'min': 1, 'default': 8, 'max': 1000},
+                'StandardDeviations':
+                  {'type': FloatType,
+                   'min': -10.0, 'default': 2.0, 'max': 10.0},
+                'MinComponents': 
+                  {'type': IntType,
+                   'min': 1, 'default': 1, 'max': 20},
+                'VerboseDebugging': 
+                  {'type': IntType,
+                   'min': 0, 'default': 0, 'max': 1}}
+ENVDIST_PARAMS = {'DistanceType':
+                     {'type': IntType,
+                      'min': 1, 'default': 1, 'max': 4 },
+                  'NearestPoints':
+                     {'type': IntType,
+                      'min': 0, 'default': 1, 'max': None },
+                  'MaxDistance':
+                     {'type': FloatType,
+                      'min': 0.1, 'default': 0.1, 'max': 1.0 }}
+
+GARP_PARAMS =  {'MaxGenerations':
+                {'type': IntType,
+                 'min': 1, 'default': 400, 'max': None },
+                'ConvergenceLimit':
+                {'type': FloatType,
+                 'min': 0.0, 'default': 0.01, 'max': 1.0 },
+                'PopulationSize':
+                {'type': IntType,
+                 'min': 1, 'default': 50, 'max': 500 },
+                'Resamples':
+                {'type': IntType,
+                 'min': 1, 'default': 2500, 'max': 100000 }}
+
+GARP_BS_PARAMS = {'TrainingProportion': 
+                   {'type': FloatType,
+                    'min': 0, 'default': 50, 'max': 100 },
+                  'TotalRuns': 
+                   {'type': IntType,
+                    'min': 0, 'default': 20, 'max': 10000 },
+                  'HardOmissionThreshold': 
+                   {'type': FloatType,
+                    'min': 0, 'default': 100, 'max': 100 },
+                  'ModelsUnderOmissionThreshold': 
+                   {'type': IntType,
+                    'min': 0, 'default': 20, 'max': 10000 },
+                  'CommissionThreshold': 
+                   {'type': FloatType,
+                    'min': 0, 'default': 50, 'max': 100 },
+                  'CommissionSampleSize': 
+                   {'type': IntType,
+                    'min': 1, 'default': 10000, 'max': None },
+                  'MaxThreads': 
+                   {'type': IntType,
+                    'min': 1, 'default': 1, 'max': 1024 },
+                  'MaxGenerations': 
+                   {'type': IntType,
+                    'min': 1, 'default': 400, 'max': None },
+                  'ConvergenceLimit': 
+                   {'type': FloatType,
+                    'min': 0.0, 'default': 0.1, 'max': 1.0 },
+                  'PopulationSize': 
+                   {'type': IntType,
+                    'min': 1, 'default': 50, 'max': 500 },
+                  'Resamples': 
+                   {'type': IntType,
+                    'min': 1, 'default': 2500, 'max': 10000 } }
+
+OM_MAXENT_PARAMS = {"NumberOfBackgroundPoints":
+                      {'type' : IntType,
+                       'min': 0,
+                       'default': 10000,
+                       'max': 10000 },
+                    'UseAbsencesAsBackground':
+                      {'min': 0,
+                       'max': 1,
+                       'type': IntType,
+                       'default': 0},
+                    "IncludePresencePointsInBackground":
+                      {'min': 0,
+                       'max': 1,
+                       'type': IntType,
+                       'default': 1},
+                    "NumberOfIterations":
+                      {'min': 1,
+                       'max': None,
+                       'type': IntType,
+                       'default': 500},
+                    "TerminateTolerance":
+                      {'min': 0,
+                       'max': None,
+                       'type': FloatType,
+                       'default': 0.00001},
+                    "OutputFormat":
+                      {'min': 1,
+                       'max': 2,
+                       'type': IntType,
+                       'default': 2},
+                    "QuadraticFeatures":
+                      {'min': 0,
+                       'max': 1,
+                       'type': IntType,
+                       'default': 1},
+                    "ProductFeatures":
+                      {'min': 0,
+                       'max': 1,
+                       'type': IntType,
+                       'default': 1},
+                    "HingeFeatures":
+                      {'min': 0,
+                       'max': 1,
+                       'type': IntType,
+                       'default': 1},
+                    "ThresholdFeatures":
+                      {'min': 0,
+                       'max': 1,
+                       'type': IntType,
+                       'default': 1},
+                    "AutoFeatures":
+                      {'min': 0,
+                       'max': 1,
+                       'type': IntType,
+                       'default': 1},
+                    "MinSamplesForProductThreshold":
+                      {'min': 1,
+                       'max': None,
+                       'type': IntType,
+                       'default': 80},
+                    "MinSamplesForQuadratic":
+                      {'min': 1,
+                       'max': None,
+                       'type': IntType,
+                       'default': 10},
+                    "MinSamplesForHinge":
+                      {'min': 1,
+                       'max': None,
+                       'type': IntType,
+                       'default': 15} } 
+ATT_MAXENT_PARAMS = {'responsecurves': 
+                         {'type': IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'pictures': 
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'jackknife': 
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'outputformat': # 0 - raw, 1 - logistic, 2 - cumulative
+                         {'type' : IntType, 'min' : 0, 'max' : 2, 'default' : 1},
+                     'randomseed': 
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'logscale': 
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'removeduplicates': 
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'writeclampgrid': 
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'writemess':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'randomtestpoints':
+                         {'type' : IntType, 'min' : 0, 'max' : 100, 'default' : 0},
+                     'betamultiplier':
+                         {'type' : FloatType, 'min' : 0, 'max' : None, 'default' : 1.0},
+                     'maximumbackground':
+                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 10000},
+                     'replicates':
+                         {'type' : IntType, 'min' : 1, 'max' : None, 'default' : 1},
+                     'replicatetype': # 0 - cross validate, 1 - bootstrap, 2 - subsample
+                         {'type' : IntType, 'min' : 0, 'max' : 2, 'default' : 0},
+                     'perspeciesresults':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'writebackgroundpredictions':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'responsecurvesexponent':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'linear':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'quadratic':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'product':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'threshold':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'hinge':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'writeplotdata':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'fadebyclamping':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'extrapolate':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'autofeature':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'doclamp':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'outputgrids':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'plots':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 1},
+                     'appendtoresultsfile':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'maximumiterations':
+                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 500},
+                     'convergencethreshold':
+                         {'type' : FloatType, 'min' : 0, 'max' : None, 'default' : 0.00001},
+                     'adjustsampleradius':
+                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 0},
+                     'lq2lqptthreshold':
+                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 80},
+                     'l2lqthreshold':
+                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 10},
+                     'hingethreshold':
+                         {'type' : IntType, 'min' : 0, 'max' : None, 'default' : 15},
+                     'beta_threshold':
+                         {'type' : FloatType, 'min' : None, 'max' : None, 'default' : -1.0},
+                     'beta_categorical':
+                         {'type' : FloatType, 'min' : None,'max' : None, 'default' : -1.0},
+                     'beta_lqp':
+                         {'type' : FloatType, 'min' : None, 'max' : None, 'default' : -1.0},
+                     'beta_hinge':
+                         {'type' : FloatType, 'min' : None, 'max' : None, 'default' : -1.0},
+                     'defaultprevalence':
+                         {'type' : FloatType, 'min' : 0.0, 'max' : 1.0, 'default' : 0.5},
+                     'addallsamplestobackground':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'addsamplestobackground':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'allowpartialdata':
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0},
+                     'applythresholdrule':
+                         # 0 - None
+                         # 1 - Fixed cumulative value 1
+                         # 2 - Fixed cumulative value 5
+                         # 3 - Fixed cumulative value 10
+                         # 4 - Minimum training presence
+                         # 5 - 10 percentile training presence
+                         # 6 - Equal training sensitivity and specificity
+                         # 7 - Maximum training sensitivity plus specificity
+                         # 8 - Equal test sensitivity and specificity
+                         # 9 - Maximum test sensitivity plus specificity
+                         # 10 - Equate entropy of thresholded and origial distributions
+                         {'type' : IntType, 'min' : 0, 'max' : 10, 'default' : 0},
+                     'verbose': 
+                         {'type' : IntType, 'min' : 0, 'max' : 1, 'default' : 0}
+                     # Disabled
+                      # askoverwrite - not needed for us
+                      # autorun - we need this to always be on
+                      # logfile - The default (maxent.log) is fine for us
+                      # outputfiletype - We rely on this being set to ASCII grids
+                      # prefixes - not needed for us
+                      # skipifexists - not needed for us
+                      # visible - We don't want the GUI enabled
+                      # warnings - Would produce pop-ups and we don't have GUI
+                      # togglelayerselected - We don't need
+                      # togglespeciesselected - We don't need (for now)
+                      # tooltips - We don't have the GUI for it
+               
+                     # Hidden
+                      # cache - generate mxe files or not
+                      # threads - How many threads can maxent use
+                      # togglelayertype - For specifiying categorical layers
+                      # nodata - For SWD samples               
+                      # biasfile - Specifies relative sampling effort (grid)
+                      # testsamplesfile - Specifies presence locations for testing (points)
+                     }
+SVM_PARAMS = {'svmtype': {'type': IntType,
+                           'min': 0, 'default': 0, 'max': 2},
+              'KernelType': {'type': IntType,
+                              'min': 0, 'default': 2, 'max': 4},
+              'Degree': {'type': IntType,
+                          'min': 0, 'default': 3, 'max': None},
+              'Gamma': {'type': FloatType,
+                         'min': None, 'default': 0.0, 
+                         'max': None},
+              'Coef0': {'type': FloatType,
+                         'min': None, 'default': 0.0, 
+                         'max': None},
+              'Cost': {'type': FloatType,
+                        'min': 0.001, 'default': 1.0, 
+                        'max': None},
+              'Nu': {'type': FloatType, 
+                      'min': 0.001, 'default': 0.5, 'max': 1},
+              'ProbabilisticOutput': {'type': IntType,
+                                       'min': 0, 'default': 1, 
+                                       'max': 1 },
+              'NumberOfPseudoAbsences': {'type': IntType,
+                                          'min': 0, 
+                                          'default': 0, 
+                                          'max': None } } 
+ANN_PARAMS = {'HiddenLayerNeurons':
+                {'type': IntType,
+                 'min': 0, 'default': 8, 'max': None },
+              'LearningRate':
+                {'type': FloatType,
+                 'min': 0.0, 'default': 0.3, 'max': 1.0 },
+              'Momentum':
+                {'type': FloatType,
+                 'min': 0.0, 'default': 0.05, 'max': 1.0 },
+              'Choice':
+                {'type': IntType,
+                 'min': 0, 'default': 0, 'max': 1 },
+              'Epoch':
+                {'type': IntType,
+                 'min': 1, 'default': 100000, 'max': None },
+              'MinimumError':
+                {'type': FloatType,
+                 'min': 0.0, 'default': 0.01, 'max': 0.05} }
+
+AQUAMAPS_PARAMS = {'UseSurfaceLayers':
+                      {'type': IntType,
+                       'min': -1, 'default': -1, 'max': 1 },
+                   'UseDepthRange':
+                      {'type': IntType,
+                       'min': 0,  'default': 1, 'max': 1 },
+                   'UseIceConcentration':
+                      {'type': IntType,
+                       'min': 0, 'default': 1, 'max': 1 },
+                   'UseDistanceToLand':
+                      {'type': IntType,
+                       'min': 0, 'default': 1, 'max': 1 },
+                   'UsePrimaryProduction':
+                      {'type': IntType,
+                       'min': 0, 'default': 1, 'max': 1 },
+                   'usesalinity':
+                      {'type': IntType,
+                       'min': 0, 'default': 1, 'max': 1 },
+                   'usetemperature':
+                      {'type': IntType,
+                       'min': 0, 'default': 1, 'max': 1 }} 
+
+# .............................................................................
+class AlgQualities:
+   """
+   @summary: This class contains file format meta information
+   @todo: Add GDAL / OGR type as optional parameters
+   """
+   # ...........................
+   def __init__(self, code, name, 
+                isDiscreteOutput=False, 
+                outputFormat=DEFAULT_PROJECTION_FORMAT,
+                acceptsCategoricalMaps=False, 
+                parameters={}):
+      """
+      @summary: Constructor
+      @param extension: This is the default extension if a format has multiple, 
+                           or it could be the only extension
+      @param mimeType: The MIME-Type for this format
+      @param allExtensions: (optional) Provide a list of all possible extensions
+                               for this format
+      """
+      self.code = code
+      self.name = name
+      self.isDiscreteOutput = isDiscreteOutput
+      self.outputFormat = outputFormat
+      self.parameters = parameters
+
+class Algorithms:
+   BIOCLIM = AlgQualities('BIOCLIM', 'Bioclimatic Envelope Algorithm',
+                          # output is 0, 0.5, 1.0
+                          isDiscreteOutput=True,
+                          parameters = BIOCLIM_PARAMS)
+   CSMBS = AlgQualities('CSMBS', 
+                        'Climate Space Model - Broken-Stick Implementation',
+                        parameters=CSMBS_PARAMS)
+   ENVDIST = AlgQualities('ENVDIST', 'Environmental Distance',
+                          parameters = ENVDIST_PARAMS)
+   ENVSCORE = AlgQualities('ENVSCORE', 'Envelope Score')
+   GARP = AlgQualities('GARP', 
+                       'GARP (single run) - new openModeller implementation',
+                       isDiscreteOutput = True,
+                       parameters = GARP_PARAMS)
+   DG_GARP = AlgQualities('DG_GARP',
+                          'GARP (single run) - DesktopGARP implementation',
+                          isDiscreteOutput = True,
+                          parameters = GARP_PARAMS)
+   GARP_BS = AlgQualities('GARP_BS', 
+                          'GARP with Best Subsets - new openModeller implementation ',
+                          parameters = GARP_BS_PARAMS)
+   DG_GARP_BS = AlgQualities('DG_GARP_BS', 
+                             'GARP (single run) - DesktopGARP implementation',
+                             parameters = GARP_BS_PARAMS)
+   MAXENT = AlgQualities('MAXENT', 
+                         'Maximum Entropy (openModeller Implementation)',
+                         parameters = OM_MAXENT_PARAMS)
+   ATT_MAXENT = AlgQualities('ATT_MAXENT', 'Maximum Entropy (ATT Implementation)',
+                             acceptsCategoricalMaps = True,
+                             parameters = ATT_MAXENT_PARAMS)
+   SVM = AlgQualities('SVM', 'SVM (Support Vector Machines)',
+                      parameters = SVM_PARAMS)
+   ANN = AlgQualities('ANN', 'Artificial Neural Network',
+                      parameters = ANN_PARAMS)
+   AQUAMAPS = AlgQualities('AQUAMAPS', 'AquaMaps (beta version)',
+                           parameters = AQUAMAPS_PARAMS)
+   # Not yet implemented
+   ENFA = AlgQualities('ENFA', 'Ecological-Niche Factor Analysis')
+   # Not yet implemented
+   RNDFOREST = AlgQualities('RNDFOREST', 'Random Forests')
+   
+   @staticmethod
+   def implemented():
+      return (Algorithms.BIOCLIM, Algorithms.CSMBS, 
+               Algorithms.ENVDIST, Algorithms.ENVSCORE, Algorithms.GARP, 
+               Algorithms.DG_GARP, Algorithms.GARP_BS, Algorithms.DG_GARP_BS, 
+               Algorithms.MAXENT, Algorithms.ATT_MAXENT, Algorithms.SVM, 
+               Algorithms.ANN, Algorithms.AQUAMAPS)
+
+   @staticmethod
+   def codes():
+      return [alg.code for alg in Algorithms.implemented()]
+
+   @staticmethod
+   def isOpenModeller(code):
+      atype = Algorithms.get(code)
+      if atype == Algorithms.ATT_MAXENT:
+         return False
+      return True
+
+   @staticmethod
+   def isATT(code):
+      atype = Algorithms.get(code)
+      if atype == Algorithms.ATT_MAXENT:
+         return True
+      return False
+   
+   @staticmethod
+   def get(code):
+      for alg in Algorithms.implemented():
+         if alg.code == code:
+            return alg
+      
+   @staticmethod
+   def returnsDiscreteOutput(code):
+      atype = Algorithms.get(code)
+      return atype.isDiscreteOutput
+
+
+# ...............................................
+# Algorithm constants
+# TODO: Replace with Algorithms Class
+BIOCLIM_PARAMETERS = {'code': 'BIOCLIM',
+                      'name': 'Bioclimatic Envelope Algorithm',
+                      # output is 0, 0.5, 1.0
+                      'isDiscreteOutput': True,
+                      'outputFormat': 'GTiff',
+                      'acceptsCategoricalMaps': False,
+                      'parameters' : {'StandardDeviationCutoff': 
+                                      {'type': FloatType,
+                                       'min': 0.0, 'default': 0.674, 
+                                       'max': None} }}
+# TODO: Replace with Algorithms Class
+CSMBS_PARAMETERS = {'code': 'CSMBS',
+                    'name': 'Climate Space Model - Broken-Stick Implementation',
+                   # TODO: discrete output?
                    'isDiscreteOutput': False,
                    'outputFormat': 'GTiff',
                    'acceptsCategoricalMaps': False,
-                   'parameters': { } }
- 
-GARP_PARAMETERS =  {'name': 'GARP (single run) - new openModeller implementation',
-                'isDiscreteOutput': True,
-                'outputFormat': 'GTiff',
-                'acceptsCategoricalMaps': False,
-                'parameters': {
- 'MaxGenerations':
- {'type': IntType,
-  'min': 1, 'default': 400, 'max': None }
- ,
- 'ConvergenceLimit':
- {'type': FloatType,
-  'min': 0.0, 'default': 0.01, 'max': 1.0 }
- ,
- 'PopulationSize':
- {'type': IntType,
-  'min': 1, 'default': 50, 'max': 500 }
- ,
- 'Resamples':
- {'type': IntType,
-  'min': 1, 'default': 2500, 'max': 100000 }
- } }
- 
-GARP_BS_PARAMETERS = {'name': 'GARP with Best Subsets - new openModeller implementation ',
-                  'isDiscreteOutput': False,
-                  'outputFormat': 'GTiff',
-                  'acceptsCategoricalMaps': False,
-                  'parameters': 
-   {
- 'TrainingProportion': 
-    {'type': FloatType,
-     'min': 0, 'default': 50, 'max': 100 }
-    ,
-    'TotalRuns': 
-    {'type': IntType,
-     'min': 0, 'default': 20, 'max': 10000 }
-    ,
-    'HardOmissionThreshold': 
-    {'type': FloatType,
-     'min': 0, 'default': 100, 'max': 100 }
-    ,
-    'ModelsUnderOmissionThreshold': 
-    {'type': IntType,
-     'min': 0, 'default': 20, 'max': 10000 }
-    ,
-    'CommissionThreshold': 
-    {'type': FloatType,
-     'min': 0, 'default': 50, 'max': 100 }
-    ,
-    'CommissionSampleSize': 
-    {'type': IntType,
-     'min': 1, 'default': 10000, 'max': None }
-    ,
-    'MaxThreads': 
-    {'type': IntType,
-     'min': 1, 'default': 1, 'max': 1024 }
-    ,
-    'MaxGenerations': 
-    {'type': IntType,
-     'min': 1, 'default': 400, 'max': None }
-    ,
-    'ConvergenceLimit': 
-    {'type': FloatType,
-     'min': 0.0, 'default': 0.1, 'max': 1.0 }
-    ,
-    'PopulationSize': 
-    {'type': IntType,
-     'min': 1, 'default': 50, 'max': 500 }
-    ,
-    'Resamples': 
-    {'type': IntType,
-     'min': 1, 'default': 2500, 'max': 10000 }
-    } }
- 
-DG_GARP_PARAMETERS =  {'name': 'GARP (single run) - DesktopGARP implementation',
-                   'isDiscreteOutput': True,
-                   'outputFormat': 'GTiff',
-                   'acceptsCategoricalMaps': False,
-                   'parameters': GARP_PARAMETERS['parameters']}
- 
- 
-DG_GARP_BS_PARAMETERS = {'name': 'GARP (single run) - DesktopGARP implementation',
-                     'isDiscreteOutput': False,
-                     'outputFormat': 'GTiff',
-                     'acceptsCategoricalMaps': False,
-                     'parameters': GARP_BS_PARAMETERS['parameters']}
- 
-ATT_MAXENT_PARAMETERS = {
-      "name" : "Maximum Entropy (ATT Implementation)",
-      'isDiscreteOutput' : False,
-      'outputFormat': 'GTiff',
-      'acceptsCategoricalMaps' : True,
-      'parameters' :
+                   'parameters' : {'Randomisations': 
+                                    {'type': IntType,
+                                     'min': 1, 'default': 8, 'max': 1000},
+                                   'StandardDeviations':
+                                    {'type': FloatType,
+                                     'min': -10.0, 'default': 2.0, 'max': 10.0},
+                                   'MinComponents': 
+                                    {'type': IntType,
+                                     'min': 1, 'default': 1, 'max': 20},
+                                   'VerboseDebugging': 
+                                    {'type': IntType,
+                                     'min': 0, 'default': 0, 'max': 1}}}
+# TODO: Replace with Algorithms Class
+ENVDIST_PARAMETERS = {'code': 'ENVDIST',
+                      'name': 'Environmental Distance',
+                      # TODO: output is??
+                      'isDiscreteOutput': False,
+                      'outputFormat': 'GTiff',
+                      'acceptsCategoricalMaps': False,
+                      'parameters': {'DistanceType':
+                                       {'type': IntType,
+                                        'min': 1, 'default': 1, 'max': 4 },
+                                       'NearestPoints':
+                                       {'type': IntType,
+                                        'min': 0, 'default': 1, 'max': None },
+                                     'MaxDistance':
+                                       {'type': FloatType,
+                                        'min': 0.1, 'default': 0.1, 'max': 1.0 }}}
+# TODO: Replace with Algorithms Class
+ENVSCORE_PARAMETERS = {'code': 'ENVSCORE',
+                       'name': 'Envelope Score',
+                       # probability between 0.0 and 1.0
+                       'isDiscreteOutput': False,
+                       'outputFormat': 'GTiff',
+                       'acceptsCategoricalMaps': False,
+                       'parameters': { } }
+# TODO: Replace with Algorithms Class
+GARP_PARAMETERS =  {'code': 'GARP',
+                    'name': 'GARP (single run) - new openModeller implementation',
+                    'isDiscreteOutput': True,
+                    'outputFormat': 'GTiff',
+                    'acceptsCategoricalMaps': False,
+                    'parameters': {'MaxGenerations':
+                                     {'type': IntType,
+                                      'min': 1, 'default': 400, 'max': None },
+                                     'ConvergenceLimit':
+                                     {'type': FloatType,
+                                      'min': 0.0, 'default': 0.01, 'max': 1.0 },
+                                     'PopulationSize':
+                                     {'type': IntType,
+                                      'min': 1, 'default': 50, 'max': 500 },
+                                     'Resamples':
+                                     {'type': IntType,
+                                      'min': 1, 'default': 2500, 'max': 100000 }}}
+# TODO: Replace with Algorithms Class
+GARP_BS_PARAMETERS = {'code': 'GARP_BS',
+                      'name': 'GARP with Best Subsets - new openModeller implementation ',
+                      'isDiscreteOutput': False,
+                      'outputFormat': 'GTiff',
+                      'acceptsCategoricalMaps': False,
+                      'parameters': {'TrainingProportion': 
+                                     {'type': FloatType,
+                                      'min': 0, 'default': 50, 'max': 100 },
+                                     'TotalRuns': 
+                                     {'type': IntType,
+                                      'min': 0, 'default': 20, 'max': 10000 },
+                                     'HardOmissionThreshold': 
+                                     {'type': FloatType,
+                                      'min': 0, 'default': 100, 'max': 100 },
+                                     'ModelsUnderOmissionThreshold': 
+                                     {'type': IntType,
+                                      'min': 0, 'default': 20, 'max': 10000 },
+                                     'CommissionThreshold': 
+                                     {'type': FloatType,
+                                      'min': 0, 'default': 50, 'max': 100 },
+                                     'CommissionSampleSize': 
+                                     {'type': IntType,
+                                      'min': 1, 'default': 10000, 'max': None },
+                                     'MaxThreads': 
+                                     {'type': IntType,
+                                      'min': 1, 'default': 1, 'max': 1024 },
+                                     'MaxGenerations': 
+                                     {'type': IntType,
+                                      'min': 1, 'default': 400, 'max': None },
+                                     'ConvergenceLimit': 
+                                     {'type': FloatType,
+                                      'min': 0.0, 'default': 0.1, 'max': 1.0 },
+                                     'PopulationSize': 
+                                     {'type': IntType,
+                                      'min': 1, 'default': 50, 'max': 500 },
+                                     'Resamples': 
+                                     {'type': IntType,
+                                      'min': 1, 'default': 2500, 'max': 10000 } } }
+# TODO: Replace with Algorithms Class
+DG_GARP_PARAMETERS =  {'code': 'DG_GARP',
+                       'name': 'GARP (single run) - DesktopGARP implementation',
+                       'isDiscreteOutput': True,
+                       'outputFormat': 'GTiff',
+                       'acceptsCategoricalMaps': False,
+                       'parameters': GARP_PARAMETERS['parameters']}
+# TODO: Replace with Algorithms Class
+DG_GARP_BS_PARAMETERS = {'code': 'DG_GARP_BS',
+                         'name': 'GARP (single run) - DesktopGARP implementation',
+                         'isDiscreteOutput': False,
+                         'outputFormat': 'GTiff',
+                         'acceptsCategoricalMaps': False,
+                         'parameters': GARP_BS_PARAMETERS['parameters']}
+# TODO: Replace with Algorithms Class
+ATT_MAXENT_PARAMETERS = {'code': 'ATT_MAXENT',
+                         'name' : 'Maximum Entropy (ATT Implementation)',
+                         'isDiscreteOutput' : False,
+                         'outputFormat': 'GTiff',
+                         'acceptsCategoricalMaps' : True,
+                         'parameters' :
       {
        'responsecurves': 
           {'type': IntType, 'min' : 0, 'max' : 1, 'default' : 0},
@@ -1033,239 +1451,183 @@ ATT_MAXENT_PARAMETERS = {
        # testsamplesfile - Specifies presence locations for testing (points)
       }
    }
- 
-OM_MAXENT_PARAMETERS = {'name': 'Maximum Entropy (openModeller Implementation)',
-                 'isDiscreteOutput': False,
-                 'outputFormat': 'GTiff',
-                 'acceptsCategoricalMaps': False,
-                 'parameters': 
-   {
-    "NumberOfBackgroundPoints":
-    {
-     'type' : IntType,
-     'min': 0,
-     'default': 10000,
-     'max': 10000
-    },
-    'UseAbsencesAsBackground':
-    {
-     'min': 0,
-     'max': 1,
-     'type': IntType,
-     'default': 0
-    },
-    "IncludePresencePointsInBackground":
-    {
-     'min': 0,
-     'max': 1,
-     'type': IntType,
-     'default': 1
-    },
-    "NumberOfIterations":
-    {
-     'min': 1,
-     'max': None,
-     'type': IntType,
-     'default': 500
-    },
-    "TerminateTolerance":
-    {
-     'min': 0,
-     'max': None,
-     'type': FloatType,
-     'default': 0.00001
-    },
-    "OutputFormat":
-    {
-     'min': 1,
-     'max': 2,
-     'type': IntType,
-     'default': 2
-    },
-    "QuadraticFeatures":
-    {
-     'min': 0,
-     'max': 1,
-     'type': IntType,
-     'default': 1
-    },
-    "ProductFeatures":
-    {
-     'min': 0,
-     'max': 1,
-     'type': IntType,
-     'default': 1
-    },
-    "HingeFeatures":
-    {
-     'min': 0,
-     'max': 1,
-     'type': IntType,
-     'default': 1
-    },
-    "ThresholdFeatures":
-    {
-     'min': 0,
-     'max': 1,
-     'type': IntType,
-     'default': 1
-    },
-    "AutoFeatures":
-    {
-     'min': 0,
-     'max': 1,
-     'type': IntType,
-     'default': 1
-    },
-    "MinSamplesForProductThreshold":
-    {
-     'min': 1,
-     'max': None,
-     'type': IntType,
-     'default': 80
-    },
-    "MinSamplesForQuadratic":
-    {
-     'min': 1,
-     'max': None,
-     'type': IntType,
-     'default': 10
-    },
-    "MinSamplesForHinge":
-    {
-     'min': 1,
-     'max': None,
-     'type': IntType,
-     'default': 15
-    }
-    } }
- 
-SVM_PARAMETERS = {'name': 'SVM (Support Vector Machines)',
-              'isDiscreteOutput': False,
-              'outputFormat': 'GTiff',
-              'acceptsCategoricalMaps': False,
-              'parameters': 
-   {
-    'svmtype':
-    {'type': IntType,
-     'min': 0, 'default': 0, 'max': 2 }
-    ,
-    'KernelType':
-    {'type': IntType,
-     'min': 0, 'default': 2, 'max': 4 }
-    ,
-    'Degree':
-    {'type': IntType,
-     'min': 0, 'default': 3, 'max': None }
-    ,
-    'Gamma':
-    {'type': FloatType,
-     'min': None, 'default': 0.0, 'max': None }
-    ,
-    'Coef0':
-    {'type': FloatType,
-     'min': None, 'default': 0.0, 'max': None }
-    ,
-    'Cost':
-    {'type': FloatType,
-     'min': 0.001, 'default': 1.0, 'max': None }
-    ,
-    'Nu':
-    {'type': FloatType, 
-     'min': 0.001, 'default': 0.5, 'max': 1 }
-    ,
-    'ProbabilisticOutput':
-    {'type': IntType,
-     'min': 0, 'default': 1, 'max': 1 }
-    ,
-    'NumberOfPseudoAbsences':
-    {'type': IntType,
-     'min': 0, 'default': 0, 'max': None }
-    } }
- 
-ANN_PARAMETERS = {'name': 'Artificial Neural Network',
-              # TODO: discrete output?
-              'isDiscreteOutput': False,
-              'outputFormat': 'GTiff',
-              'acceptsCategoricalMaps': False,
-              'parameters': {
-    'HiddenLayerNeurons':
-    {'type': IntType,
-     'min': 0, 'default': 8, 'max': None }
-    ,
-    'LearningRate':
-    {'type': FloatType,
-     'min': 0.0, 'default': 0.3, 'max': 1.0 }
-    ,
-    'Momentum':
-    {'type': FloatType,
-     'min': 0.0, 'default': 0.05, 'max': 1.0 }
-    ,
-    'Choice':
-    {'type': IntType,
-     'min': 0, 'default': 0, 'max': 1 }
-    ,
-    'Epoch':
-    {'type': IntType,
-     'min': 1, 'default': 100000, 'max': None }
-    ,
-    'MinimumError':
-    {'type': FloatType,
-     'min': 0.0, 'default': 0.01, 'max': 0.05 }
-    } }
+# TODO: Replace with Algorithms Class
+OM_MAXENT_PARAMETERS = {'code': 'MAXENT',
+                        'name': 'Maximum Entropy (openModeller Implementation)',
+                        'isDiscreteOutput': False,
+                        'outputFormat': 'GTiff',
+                        'acceptsCategoricalMaps': False,
+                        'parameters': {"NumberOfBackgroundPoints":
+                                        {'type' : IntType,
+                                         'min': 0,
+                                         'default': 10000,
+                                         'max': 10000 },
+                                        'UseAbsencesAsBackground':
+                                        {'min': 0,
+                                         'max': 1,
+                                         'type': IntType,
+                                         'default': 0},
+                                        "IncludePresencePointsInBackground":
+                                        {'min': 0,
+                                         'max': 1,
+                                         'type': IntType,
+                                         'default': 1},
+                                        "NumberOfIterations":
+                                        {'min': 1,
+                                         'max': None,
+                                         'type': IntType,
+                                         'default': 500},
+                                        "TerminateTolerance":
+                                        {'min': 0,
+                                         'max': None,
+                                         'type': FloatType,
+                                         'default': 0.00001},
+                                        "OutputFormat":
+                                        {'min': 1,
+                                         'max': 2,
+                                         'type': IntType,
+                                         'default': 2},
+                                        "QuadraticFeatures":
+                                        {'min': 0,
+                                         'max': 1,
+                                         'type': IntType,
+                                         'default': 1},
+                                        "ProductFeatures":
+                                        {'min': 0,
+                                         'max': 1,
+                                         'type': IntType,
+                                         'default': 1},
+                                        "HingeFeatures":
+                                        {'min': 0,
+                                         'max': 1,
+                                         'type': IntType,
+                                         'default': 1},
+                                        "ThresholdFeatures":
+                                        {'min': 0,
+                                         'max': 1,
+                                         'type': IntType,
+                                         'default': 1},
+                                        "AutoFeatures":
+                                        {'min': 0,
+                                         'max': 1,
+                                         'type': IntType,
+                                         'default': 1},
+                                        "MinSamplesForProductThreshold":
+                                        {'min': 1,
+                                         'max': None,
+                                         'type': IntType,
+                                         'default': 80},
+                                        "MinSamplesForQuadratic":
+                                        {'min': 1,
+                                         'max': None,
+                                         'type': IntType,
+                                         'default': 10},
+                                        "MinSamplesForHinge":
+                                        {'min': 1,
+                                         'max': None,
+                                         'type': IntType,
+                                         'default': 15} } }
+# TODO: Replace with Algorithms Class
+SVM_PARAMETERS = {'code': 'SVM',
+                  'name': 'SVM (Support Vector Machines)',
+                  'isDiscreteOutput': False,
+                  'outputFormat': 'GTiff',
+                  'acceptsCategoricalMaps': False,
+                  'parameters': {'svmtype': {'type': IntType,
+                                             'min': 0, 'default': 0, 'max': 2},
+                                 'KernelType': {'type': IntType,
+                                                'min': 0, 'default': 2, 'max': 4},
+                                 'Degree': {'type': IntType,
+                                            'min': 0, 'default': 3, 'max': None},
+                                 'Gamma': {'type': FloatType,
+                                           'min': None, 'default': 0.0, 
+                                           'max': None},
+                                 'Coef0': {'type': FloatType,
+                                           'min': None, 'default': 0.0, 
+                                           'max': None},
+                                 'Cost': {'type': FloatType,
+                                          'min': 0.001, 'default': 1.0, 
+                                          'max': None},
+                                 'Nu': {'type': FloatType, 
+                                        'min': 0.001, 'default': 0.5, 'max': 1},
+                                 'ProbabilisticOutput': {'type': IntType,
+                                                         'min': 0, 'default': 1, 
+                                                         'max': 1 },
+                                 'NumberOfPseudoAbsences': {'type': IntType,
+                                                            'min': 0, 
+                                                            'default': 0, 
+                                                            'max': None } } }
+# TODO: Replace with Algorithms Class
+ANN_PARAMETERS = {'code': 'ANN',
+                  'name': 'Artificial Neural Network',
+                  # TODO: discrete output?
+                  'isDiscreteOutput': False,
+                  'outputFormat': 'GTiff',
+                  'acceptsCategoricalMaps': False,
+                  'parameters': {'HiddenLayerNeurons':
+                                  {'type': IntType,
+                                   'min': 0, 'default': 8, 'max': None },
+                                 'LearningRate':
+                                  {'type': FloatType,
+                                   'min': 0.0, 'default': 0.3, 'max': 1.0 },
+                                 'Momentum':
+                                  {'type': FloatType,
+                                   'min': 0.0, 'default': 0.05, 'max': 1.0 },
+                                 'Choice':
+                                  {'type': IntType,
+                                   'min': 0, 'default': 0, 'max': 1 },
+                                 'Epoch':
+                                  {'type': IntType,
+                                   'min': 1, 'default': 100000, 'max': None },
+                                 'MinimumError':
+                                  {'type': FloatType,
+                                   'min': 0.0, 'default': 0.01, 'max': 0.05} }}
  
 # TODO: Implement this!
-ENFA_PARAMETERS = {'name': 'Ecological-Niche Factor Analysis',
-               'isDiscreteOutput': None,
-               'outputFormat': 'GTiff',
-               'acceptsCategoricalMaps': False,
-               'parameters': 
-               {}
-} 
- 
-# TODO: Implement this!
-RNDFOREST_PARAMETERS = {'name': 'Random Forests',
-               'isDiscreteOutput': None,
-               'outputFormat': 'GTiff',
-               'acceptsCategoricalMaps': False,
-               'parameters': 
-               {}
-} 
- 
-AQUAMAPS_PARAMETERS = {'name': 'AquaMaps (beta version) ',
-                   'isDiscreteOutput': False,
+# TODO: Replace with Algorithms Class
+ENFA_PARAMETERS = {'code': 'ENFA',
+                   'name': 'Ecological-Niche Factor Analysis',
+                   'isDiscreteOutput': None,
                    'outputFormat': 'GTiff',
                    'acceptsCategoricalMaps': False,
-                   'parameters': 
-   {'UseSurfaceLayers':
-    {'type': IntType,
-     'min': -1, 'default': -1, 'max': 1 }
-    ,
-    'UseDepthRange':
-    {'type': IntType,
-     'min': 0,  'default': 1, 'max': 1 }
-    ,
-    'UseIceConcentration':
-    {'type': IntType,
-     'min': 0, 'default': 1, 'max': 1 }
-    ,
-    'UseDistanceToLand':
-    {'type': IntType,
-     'min': 0, 'default': 1, 'max': 1 }
-    ,
-    'UsePrimaryProduction':
-    {'type': IntType,
-     'min': 0, 'default': 1, 'max': 1 }
-    ,
-    'usesalinity':
-    {'type': IntType,
-     'min': 0, 'default': 1, 'max': 1 }
-    ,
-    'usetemperature':
-    {'type': IntType,
-     'min': 0, 'default': 1, 'max': 1 }
-    } }
-
+                   'parameters': {} } 
+ 
+# TODO: Implement this!
+# TODO: Replace with Algorithms Class
+RNDFOREST_PARAMETERS = {'code': 'RNDFOREST',
+                        'name': 'Random Forests',
+                        'isDiscreteOutput': None,
+                        'outputFormat': 'GTiff',
+                        'acceptsCategoricalMaps': False,
+                        'parameters': {} } 
+# TODO: Replace with Algorithms Class
+AQUAMAPS_PARAMETERS = {'code': 'AQUAMAPS',
+                       'name': 'AquaMaps (beta version) ',
+                       'isDiscreteOutput': False,
+                       'outputFormat': 'GTiff',
+                       'acceptsCategoricalMaps': False,
+                       'parameters': {'UseSurfaceLayers':
+                                        {'type': IntType,
+                                         'min': -1, 'default': -1, 'max': 1 },
+                                      'UseDepthRange':
+                                        {'type': IntType,
+                                         'min': 0,  'default': 1, 'max': 1 },
+                                      'UseIceConcentration':
+                                        {'type': IntType,
+                                         'min': 0, 'default': 1, 'max': 1 },
+                                      'UseDistanceToLand':
+                                        {'type': IntType,
+                                         'min': 0, 'default': 1, 'max': 1 },
+                                      'UsePrimaryProduction':
+                                        {'type': IntType,
+                                         'min': 0, 'default': 1, 'max': 1 },
+                                      'usesalinity':
+                                        {'type': IntType,
+                                         'min': 0, 'default': 1, 'max': 1 },
+                                      'usetemperature':
+                                        {'type': IntType,
+                                         'min': 0, 'default': 1, 'max': 1 }} }
+# TODO: Replace with Algorithms Class
 ALGORITHM_DATA  = {
 'BIOCLIM': BIOCLIM_PARAMETERS,
 'CSMBS': CSMBS_PARAMETERS,

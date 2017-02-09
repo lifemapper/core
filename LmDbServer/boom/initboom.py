@@ -37,7 +37,7 @@ from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME,
 from LmDbServer.boom.boom import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
+from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
@@ -81,16 +81,22 @@ def addAlgorithms(scribe):
    @summary Adds algorithms to the database from the algorithm dictionary
    """
    ids = []
-   for algcode, algdict in ALGORITHM_DATA.iteritems():
-      algmeta = {}
-      for k, v in algdict.iteritems():
-         if k != 'parameters':
-            algmeta[k] = v
-      alg = Algorithm(algcode, metadata=algmeta)
-      scribe.log.info('  Insert algorithm {} ...'.format(algcode))
+   for algmeta in Algorithms.implemented():
+      alg = Algorithm(algmeta.code, metadata=algmeta.parameters)
+      scribe.log.info('  Insert algorithm {} ...'.format(algmeta.code))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
    return ids
+#    for algcode, algdict in ALGORITHM_DATA.iteritems():
+#       algmeta = {}
+#       for k, v in algdict.iteritems():
+#          if k != 'parameters':
+#             algmeta[k] = v
+#       alg = Algorithm(algcode, metadata=algmeta)
+#       scribe.log.info('  Insert algorithm {} ...'.format(algcode))
+#       algid = scribe.insertAlgorithm(alg)
+#       ids.append(algid)
+#    return ids
 
 # ...............................................
 def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
@@ -417,7 +423,7 @@ def _importClimatePackageMetadata(envPackageName):
 
 # ...............................................
 def writeConfigFile(archiveName, envPackageName, userid, userEmail, 
-                     speciesSource, speciesData, 
+                     speciesSource, speciesData, speciesDataDelimiter,
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, 
                      mdlScen=None, prjScens=None):
@@ -430,31 +436,32 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f = open(newConfigFilename, 'w')
    f.write('[LmServer - environment]\n')
    f.write('ARCHIVE_USER: {}\n'.format(userid))
-
+   f.write('\n')
+   f.write('\n')
    f.write('[LmServer - pipeline]\n')
-   f.write('ARCHIVE_DATASOURCE: {}\n\n'.format(speciesSource))
-   f.write('ARCHIVE_NAME: {}\n\n'.format(archiveName))
+   f.write('ARCHIVE_DATASOURCE: {}\n'.format(speciesSource))
+   f.write('ARCHIVE_NAME: {}\n'.format(archiveName))
    if userEmail is not None:
-      f.write('ARCHIVE_TROUBLESHOOTERS: {}\n\n'.format(userEmail))
-   
+      f.write('ARCHIVE_TROUBLESHOOTERS: {}\n'.format(userEmail))
+   f.write('\n')   
    # Expiration date triggering re-query and computation
    f.write('ARCHIVE_SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
    f.write('ARCHIVE_SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
-   f.write('ARCHIVE_SPECIES_EXP_DAY: {}\n\n'.format(CURRDATE[2]))
-   
+   f.write('ARCHIVE_SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
+   f.write('\n')
    # SDM Algorithm and minimun number of required species points   
-   f.write('ARCHIVE_POINT_COUNT_MIN: {}\n\n'.format(minpoints))
+   f.write('ARCHIVE_POINT_COUNT_MIN: {}\n'.format(minpoints))
    if len(algorithms) > 0:
       algs = ','.join(algorithms)
    else:
       algs = DEFAULT_ALGORITHMS
-   f.write('ARCHIVE_ALGORITHMS: {}\n\n'.format(algs))
-
+   f.write('ARCHIVE_ALGORITHMS: {}\n'.format(algs))
+   f.write('\n')
    # Intersection grid
    f.write('ARCHIVE_GRID_NAME: {}\n'.format(gridname))
-   f.write('ARCHIVE_GRID_CELLSIZE: {}\n\n'.format(grid_cellsize))
+   f.write('ARCHIVE_GRID_CELLSIZE: {}\n'.format(grid_cellsize))
    f.write('ARCHIVE_GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
-
+   f.write('\n')
    # Species source type (for processing) and file
    if speciesSource == SpeciesDatasource.GBIF:
       varname = 'GBIF_OCCURRENCE_FILENAME'
@@ -472,13 +479,14 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
       if speciesData is None:
          speciesData = USER_OCCURRENCE_DATA
-   f.write('{}: {}\n\n'.format(varname, speciesData))
-      
+      f.write('ARCHIVE_USER_OCCURRENCE_DATA_DELIMITER: {}\n'
+              .format(speciesDataDelimiter))
+   f.write('{}: {}\n'.format(varname, speciesData))
+   f.write('\n')
    # Input environmental data, pulled from environmental metadata  
-   f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n\n'.format(envPackageName))
-   f.write('ARCHIVE_EPSG: {}\n\n'.format(configMeta['epsg']))
-   f.write('ARCHIVE_MAPUNITS: {}\n\n'.format(configMeta['mapunits']))
-   
+   f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n'.format(envPackageName))
+   f.write('ARCHIVE_EPSG: {}\n'.format(configMeta['epsg']))
+   f.write('ARCHIVE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO
@@ -498,7 +506,8 @@ if __name__ == '__main__':
       sys.exit(2)
 
    algs=','.join(DEFAULT_ALGORITHMS)
-   allAlgs = ','.join(ALGORITHM_DATA.keys())
+   allAlgs = ','.join([alg.code for alg in Algorithms.implemented()])
+#    allAlgs = ','.join(ALGORITHM_DATA.keys())
    apiUrl = 'http://lifemapper.github.io/api.html'
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
@@ -539,6 +548,8 @@ if __name__ == '__main__':
                   'the same basename.  The data file must have \'.csv\' ' +
                   'extension, metadata file must have \'.meta\' extension. ' +
                   'Metadata describes the data fields. ' ))
+   parser.add_argument('-d', '--species_delimiter', default=',',
+            help=('Delimiter for user-supplied species file, defaults to \',\'. ' ))
    parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
             help=('Minimum number of points required for SDM computation ' +
                   'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
@@ -560,6 +571,7 @@ if __name__ == '__main__':
    envPackageName = args.environmental_metadata
    speciesSource = args.species_source.upper()
    speciesData = args.species_file
+   speciesDataDelimiter = args.species_delimiter
    minpoints = args.min_points
    algstring = args.algorithms.upper()
    algorithms = [alg.strip() for alg in algstring.split(',')]
@@ -627,7 +639,8 @@ if __name__ == '__main__':
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
       newConfigFilename = writeConfigFile(archiveName, envPackageName, usr, 
-                           usrEmail, speciesSource, speciesData, configMeta, 
+                           usrEmail, speciesSource, 
+                           speciesData, speciesDataDelimiter, configMeta, 
                            minpoints, algorithms, gridname, cellsize, cellsides, 
                            mdlScen=mdlScencode, prjScens=prjScencodes)
    except Exception, e:
@@ -651,7 +664,7 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat,
                                          JobStatus, MatrixType)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import (ALGORITHM_DATA, ENV_DATA_PATH, 
+from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)

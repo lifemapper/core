@@ -45,7 +45,7 @@ class OccDataParser(object):
    REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
                            FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
 
-   def __init__(self, logger, datafile, metadatafile, delimiter='\t'):
+   def __init__(self, logger, datafile, metadatafile, delimiter=','):
       """
       @summary Reader for arbitrary user CSV data file with header record and 
                metadata file
@@ -93,8 +93,8 @@ class OccDataParser(object):
          self.dataFname = None
       
       # Read CSV header
-      tmpHeader = self._csvreader.next()
-      self.header = [fldname.strip() for fldname in tmpHeader]
+      tmpList = self._csvreader.next()
+      self.header = [fldname.strip() for fldname in tmpList]
       # Read metadata file/stream
       fieldmeta, metadataFname = self.readMetadata(metadatafile)
       if metadataFname is None:
@@ -533,36 +533,34 @@ class OccDataParser(object):
       currCount = 0
       currgroup = self.groupVal
       chunk = []
-
-      # first line of chunk is currLine
-      goodEnough = self._testLine(self.currLine)
-      if goodEnough:
-         chunk.append(self.currLine)
-      else:
-         print ('Tried to append bad rec')
-         
-      try:
-         while not self.closed and not complete:
-            # get next line
-            self.pullNextValidRec()
+      
+      if self.currLine is not None:
+         # first line of chunk is currLine
+         goodEnough = self._testLine(self.currLine)
+         if goodEnough:
+            chunk.append(self.currLine)
             
-            # Add to or complete chunk
-            if self.groupVal == currgroup:
-               currCount += 1
-               chunk.append(self.currLine)
-            else:
-               complete = True
-               self.groupFirstRec = self.currRecnum
+         try:
+            while not self.closed and not complete:
+               # get next line
+               self.pullNextValidRec()
                
-            if self.currLine is None:
-               complete = True
-               
-         return chunk
+               # Add to or complete chunk
+               if self.groupVal == currgroup:
+                  currCount += 1
+                  chunk.append(self.currLine)
+               else:
+                  complete = True
+                  self.groupFirstRec = self.currRecnum
                   
-      except Exception, e:
-         self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
-                   % (str(self.currRecnum), str(e)))
-         self.currLine = self.groupVal = None
+               if self.currLine is None:
+                  complete = True
+                                    
+         except Exception, e:
+            self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
+                      % (str(self.currRecnum), str(e)))
+            self.currLine = self.groupVal = None
+      return chunk
 
    # ...............................................
    def readAllChunks(self):
@@ -668,7 +666,7 @@ csvreader, f = OccDataParser.getReader(data, delimiter)
 tmpHeader = csvreader.next()
 header = [fldname.strip() for fldname in tmpHeader]
 # Read metadata file/stream
-fieldmeta, metadataFname = OccDataParser.readMetadata(metadatafile)
+fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)
 
 
 (fieldNames, fieldTypes, filters, 

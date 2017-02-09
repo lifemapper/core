@@ -1,10 +1,10 @@
 """
 @summary: Module containing Lifemapper Makeflow document builder
 @author: CJ Grady
-@status: alpha
-@version: 0.1
+@status: beta
+@version: 1.0
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -63,7 +63,7 @@ class LMMakeflowDocument(LMObject):
       self.jobs.append(job)
       # Add the new targets to self.targets
       self.targets.extend(outputs)
-      
+   
    # ...........................
    def addCommands(self, cmdList):
       """
