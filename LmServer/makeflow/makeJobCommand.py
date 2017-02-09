@@ -454,7 +454,7 @@ def makeConcatenateMatricesCommand(mtxFnList, outFn, axis=0):
    return cmd
 
 # .............................................................................
-def makeEncodeHypothessCommand(shapegridFn, outFn, lyrs, eventField=None):
+def makeEncodeHypothesesCommand(shapegridFn, outFn, lyrs, eventField=None):
    """
    @summary: Creates a command to encode similar biogeographic hypotheses
    @param shapegridFn: The file location of the shapegrid shapefile

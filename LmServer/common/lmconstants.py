@@ -82,6 +82,7 @@ MATT_DAEMON_PID_FILE = os.path.join(PID_PATH, 'mattDaemon.pid')
 CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
 WORKER_FACTORY_BIN = os.path.join(BIN_PATH, 'work_queue_factory')
 MAKEFLOW_BIN = os.path.join(BIN_PATH, 'makeflow')
+MAKEFLOW_WORKSPACE = os.path.join(TEMP_PATH, 'makeflows')
 
 DEFAULT_CONFIG = 'config'
 
