@@ -32,7 +32,6 @@
 @todo: Move documents to staging area? Or create extra files in place (delete them?)
 @todo: Are documents stored on file system or in DB as text
 @todo: If documents are stored in staging area, do we need to check for existing on startup?
-@todo: Daemon commands as constants
 """
 import argparse
 import os
@@ -42,8 +41,7 @@ import sys
 from time import sleep
 import traceback
 
-from LmBackend.common.daemon import Daemon
-from LmServer.common.log import ScriptLogger
+from LmBackend.common.daemon import Daemon, DaemonCommands
 from LmServer.db.scribe import Scribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
                                     MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
@@ -246,21 +244,22 @@ if __name__ == "__main__":
                            description="Controls a pool of Makeflow processes",
                            version="1.0.0")
    
-   parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
+   parser.add_argument('cmd', choices=[DaemonCommands.START, 
+                                       DaemonCommands.STOP, 
+                                       DaemonCommands.RESTART],
               help="The action that should be performed by the makeflow daemon")
 
    args = parser.parse_args()
 
-   logName = "mediator.{0}".format(pid)
-   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE, log=ScriptLogger(logName))
+   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE)
 
-   if args.cmd.lower() == 'start':
+   if args.cmd.lower() == DaemonCommands.START:
       print "Start"
       mfDaemon.start()
-   elif args.cmd.lower() == 'stop':
+   elif args.cmd.lower() == DaemonCommands.STOP:
       print "Stop"
       mfDaemon.stop()
-   elif args.cmd.lower() == 'restart':
+   elif args.cmd.lower() == DaemonCommands.RESTART:
       mfDaemon.restart()
    else:
       print "Unknown command:", args.cmd.lower()
