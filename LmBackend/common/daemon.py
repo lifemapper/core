@@ -34,6 +34,15 @@ import subprocess
 from LmCommon.common.log import DaemonLogger
 
 # ............................................................................. 
+class DaemonCommands(object):
+   """
+   @summary: Class containing command constants
+   """
+   START = 'start'
+   STOP = 'stop'
+   RESTART = 'restart'
+   
+# ............................................................................. 
 class Daemon(object):
    """
    @summary: A generic daemon class.
