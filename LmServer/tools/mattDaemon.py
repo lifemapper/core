@@ -7,7 +7,7 @@
 @status: alpha
 
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -27,14 +27,13 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-
-
+@todo: Update documents on completion
+@todo: Handle missing documents
+@todo: Move documents to staging area? Or create extra files in place (delete them?)
+@todo: Are documents stored on file system or in DB as text
+@todo: If documents are stored in staging area, do we need to check for existing on startup?
+@todo: Daemon commands as constants
 """
-#TODO: Find existing MFs
-#TODO: Logger
-#TODO: Something other than a list for pool?
-#TODO: What if document does not exist?
-
 import argparse
 import os
 import signal
@@ -44,7 +43,7 @@ from time import sleep
 import traceback
 
 from LmBackend.common.daemon import Daemon
-from LmCompute.common.log import MediatorLogger
+from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
                                     MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
@@ -54,7 +53,7 @@ from LmServer.common.localconstants import (ARCHIVE_USER, CATALOG_SERVER_OPTIONS
 # .............................................................................
 class MattDaemon(Daemon):
    """
-   @summary: The JobController class manages a pool of Makeflow subprocesses
+   @summary: The MattDaemon class manages a pool of Makeflow subprocesses
                 that workers connect to.   Once one of the Makeflow processes
                 completes, it is replaced by the next available job chain.
                 Workers can be located anywhere, but at least one should 
@@ -68,7 +67,7 @@ class MattDaemon(Daemon):
       # Makeflow pool
       self._mfPool = []
       self.csProc = None
-      self.mfProc = None
+      self.wfProc = None
       
       # Establish db connection
       self.scribe = Scribe(self.log)
@@ -94,7 +93,7 @@ class MattDaemon(Daemon):
          
          while self.keepRunning and os.path.exists(self.pidfile):
             
-            #TODO: Check if catalog server and factory are running
+            # Check if catalog server and factory are running
             # TODO: Should we attempt to restart these if they are stopped?
             if self.csProc.poll() is not None:
                raise Exception, "Catalog server has stopped"
@@ -102,22 +101,19 @@ class MattDaemon(Daemon):
             if self.wfProc.poll() is not None:
                raise Exception, "Worker factory has stopped"
             
-            
-            
             # Check if there are any empty slots
             numRunning = self.getNumberOfRunningProcesses()
             
-            #   Add mf processes for empty slots
-            for jid, mfDoc in self.getMakeflowDocs(MAX_MAKEFLOWS - numRunning):
-               cmd = self._getMakeflowCommand("lifemapper-{0}".format(jid), 
-                                              mfDoc)
+            #  Add mf processes for empty slots
+            for mfId, mfDocFn in self.getMakeflows(self.maxMakeflows - numRunning):
+               
+               cmd = self._getMakeflowCommand("lifemapper-{0}".format(mfId), 
+                                              mfDocFn)
                self.log.debug(cmd)
-               self._mfPool.append([jid, Popen(cmd, shell=True)])
+               self._mfPool.append([mfId, Popen(cmd, shell=True)])
             # Sleep
             self.log.info("Sleep for {0} seconds".format(self.sleepTime))
             sleep(self.sleepTime)
-            
-            #TODO: Keep a cache of mf docs?
             
          self.log.debug("Exiting")
       except Exception, e:
@@ -127,14 +123,20 @@ class MattDaemon(Daemon):
          self.log.error(tb)
    
    # .............................
-   def getMakeflowDocs(self, count):
+   def getMakeflows(self, count):
       """
       @summary: Use the scribe to get available makeflow documents
+      @param count: The number of Makeflows to retrieve
+      @todo: Change scribe function
+      @todo: Make sure the response is a list of makeflow id, makeflow filename 
+                pairs
       """
-      jcs = self.scribe.moveAndReturnJobChains(count, ARCHIVE_USER)
-      #mfDocs = [mf for _, mf in jcs]
-      #return mfDocs
-      return jcs
+      mfs = self.scribe.moveAndReturnJobChains(count, ARCHIVE_USER)
+      
+      # TODO: These need to be makeflow id, makeflow document file name pairs
+      
+      
+      return mfs
       
    # .............................
    def getNumberOfRunningProcesses(self):
@@ -146,14 +148,17 @@ class MattDaemon(Daemon):
          if self._mfPool[idx][1].poll() is None:
             numRunning = numRunning +1
          else:
-            jid = self._mfPool[idx][0]
+            mfId = self._mfPool[idx][0]
             self._mfPool[idx] = None
-            self.scribe.deleteJobChain(jid)
+            self.scribe.deleteJobChain(mfId)
       self._mfPool = filter(None, self._mfPool)
       return numRunning
 
    # .............................
    def onUpdate(self):
+      """
+      @summary: Called on Daemon update request
+      """
       # Read configuration
       self.readConfiguration()
       
@@ -161,11 +166,12 @@ class MattDaemon(Daemon):
       
    # .............................
    def onShutdown(self):
-
+      """
+      @summary: Called on Daemon shutdown request
+      @todo: Check that makeflows are stopped?  Or force shutdown?
+      """
       self.log.debug("Shutdown signal caught!")
       self.scribe.closeConnections()
-      
-      #TODO: Check that makeflows are stopped? or force shutdown
       
       # Stop worker factory
       self.stopWorkerFactory()
@@ -173,34 +179,47 @@ class MattDaemon(Daemon):
       # Stop catalog server
       self.stopCatalogServer()
       
-      
       Daemon.onShutdown(self)
       
    # .............................
    def readConfiguration(self):
       """
       @summary: Get the maximum number of Makeflow processes for pool
+      @todo: Read these from a configuration file
       """
       self.sleepTime = 30
+      self.maxMakeflows = MAX_MAKEFLOWS
 
    # .............................
    def startCatalogServer(self):
+      """
+      @summary: Start the local catalog server
+      """
       cmd = "{csBin} {csOptions}".format(csBin=CATALOG_SERVER_BIN, 
                                          csOptions=CATALOG_SERVER_OPTIONS)
       self.csProc = Popen(cmd, shell=True, preexec_fn=os.setsid)
    
    # .............................
    def stopCatalogServer(self):
+      """
+      @summary: Stop the local catalog server
+      """
       os.killpg(os.getpgid(self.csProc.pid), signal.SIGTERM)
    
    # .............................
    def startWorkerFactory(self):
+      """
+      @summary: Start worker factory
+      """
       cmd = "{wfBin} {wfOptions}".format(wfBin=WORKER_FACTORY_BIN, 
                                          wfOptions=WORKER_FACTORY_OPTIONS)
       self.wfProc = Popen(cmd, shell=True, preexec_fn=os.setsid)
    
    # .............................
    def stopWorkerFactory(self):
+      """
+      @summary: Kill worker factory
+      """
       os.killpg(os.getpgid(self.wfProc.pid), signal.SIGTERM)
    
    # .............................
@@ -232,7 +251,8 @@ if __name__ == "__main__":
 
    args = parser.parse_args()
 
-   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE, log=MediatorLogger(pid))
+   logName = "mediator.{0}".format(pid)
+   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE, log=ScriptLogger(logName))
 
    if args.cmd.lower() == 'start':
       print "Start"
