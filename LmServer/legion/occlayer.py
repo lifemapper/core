@@ -34,7 +34,7 @@ from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT,
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
                   LMServiceType, LMServiceModule)
 from LmServer.common.localconstants import POINT_COUNT_MAX
-from LmServer.makeflow.cmd import LMCommand
+from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
 # .............................................................................
@@ -593,7 +593,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # ...............................................
    def compute(self):
       """
-      @summary: Assemble command create a shapefile from raw input
+      @summary: Assemble command to create a shapefile from raw input
       """
       # NOTE: This may need to change to something else in the future, but for now,
       #          we'll save a step and have the outputs written to their final 
@@ -601,24 +601,23 @@ class OccurrenceLayer(OccurrenceType, Vector):
       dataPath, fname = os.path.split(self.getDLocation())
       basename, ext = os.path.splitext(fname)
       name = '{}-{}'.format(self.processType, self.getId())
-      occStatusFn = "{}.status".format(name)
+      statusTarget = "{}.status".format(name)
       
       options = {'-n' : name,
                  '-o' : dataPath,
                  '-l' : '{}.log'.format(name),
-                 '-s' : occStatusFn }
+                 '-s' : statusTarget }
    
       # Join arguments
       args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
-      
-      occCommandArguments = [os.getenv('PYTHON'), 
-                             ProcessType.getJobRunner(self.processType), 
-                             self.getRawDLocation()]
+      cmdArguments = [os.getenv('PYTHON'), 
+                      ProcessType.getJobRunner(self.processType), 
+                      self.getRawDLocation()]
       if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-         occCommandArguments.append(self.queryCount)
-      occCommandArguments.extend([POINT_COUNT_MAX, basename, args])         
-      cmdString = ' '.join(occCommandArguments)
+         cmdArguments.append(self.queryCount)
+      cmdArguments.extend([POINT_COUNT_MAX, basename, args])         
+      cmd = ' '.join(cmdArguments)
       
-      occCmd = LMCommand(cmdString, occStatusFn)
+      rule = MfRule(cmd, [statusTarget])
       
-      return occCmd, occStatusFn
+      return rule

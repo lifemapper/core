@@ -24,19 +24,19 @@
 from LmServer.base.lmobj import LMObject
 
 # ............................................................................
-class LMCommand(LMObject):
+class MfRule(LMObject):
    """
    Class to create commands for a makeflow document
    """
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, command, target, dependencies=[]):
+   def __init__(self, command, targets, dependencies=None):
       """
       @summary Constructor for commands used by Makeflow
       @param command: string used by LmCompute to compute this object
-      @param target: output (filename) for this object
-      @param dependencies: nested list of dependencies for this object
+      @param targets: list of outputs for this object
+      @param dependencies: list of dependencies for this object
       """
       self.command = command
       self.target = target

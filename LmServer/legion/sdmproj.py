@@ -26,12 +26,15 @@ import mx.DateTime
 import os
 
 from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType
+from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
+from LmServer.makeflow.cmd import MfRule
+
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
 # .............................................................................
@@ -98,9 +101,13 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
    def getProjScenarioId(self):
       return self._projScenario.getId()
-
    
-                
+   def isOpenModeller(self):
+      return Algorithms.isOpenModeller(self._algorithm.code)
+
+   def isATT(self):
+      return Algorithms.isATT(self._algorithm.code)
+
 # .............................................................................
 class SDMProjection(_ProjectionType, Raster):
    """
@@ -219,7 +226,7 @@ class SDMProjection(_ProjectionType, Raster):
       @summary Gets the absolute path to the species data
       @return Path to species points
       """
-      return self._model.getAbsolutePath()
+      return self._occurrenceSet.getAbsolutePath()
 
 # ...............................................
    def _createMetadata(self, metadata, title=None, isDiscreteData=False):
@@ -331,7 +338,7 @@ class SDMProjection(_ProjectionType, Raster):
       self.clearLocalMapfile()
 
 # ...............................................
-   def getProjRequestFilename(self, fileExtension=OutputFormat.XML):
+   def getProjRequestFilename(self):
       """
       @summary Return the request filename including absolute path for the 
                given projection id using the given occurrenceSet id
@@ -343,11 +350,54 @@ class SDMProjection(_ProjectionType, Raster):
 
 # ...............................................
    def getProjPackageFilename(self):
+      LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT
       fname = self._earlJr.createFilename(LMFileType.PROJECTION_PACKAGE, 
                 projId=self.getId(), pth=self.getAbsolutePath(), 
                 usr=self._userId, epsg=self._epsg)
       return fname
-         
+   
+#          dloc = self.occurrenceSet.createLocalDLocation(makeflow=True)
+#       else:
+#          if self._algorithm.code == 'ATT_MAXENT':
+#             ftype = LMFileType.MODEL_ATT_RESULT
+#          else:
+#             ftype = LMFileType.MODEL_RESULT
+#          dloc = self._earlJr.createFilename(ftype, modelId=self.getId(), 
+#                            pth=self.getAbsolutePath(), usr=self._userId, 
+#                            epsg=self.occurrenceSet.epsgcode)
+#       return dloc
+
+
+# ...............................................
+   def getModelTarget(self):
+      """
+      @summary: Return unique code for the model's parameters.
+      """
+      uniqueCombo = (self.getUserId(), self.getOccurrenceSetId(), 
+                     self.algorithmCode(), self.dumpAlgorithmParametersAsString(),
+                     self.getModelScenarioId(), self.getModelMaskId())
+      modelCode = computeHash(content=uniqueCombo)
+      return modelCode
+
+# ...............................................
+   def getModelFilename(self, isResult=True):
+      """
+      @summary: Return filename for the model for this projection.
+      """
+      if isResult is True:
+         if self.isATT() == 'ATT_MAXENT':
+            ftype = LMFileType.MODEL_ATT_RESULT
+         else:
+            ftype = LMFileType.MODEL_RESULT
+      else:
+         ftype = LMFileType.MODEL_REQUEST
+      modelCode = self.getModelTarget()
+      fname = self._earlJr.createFilename(ftype, modelId=modelCode, 
+                                          pth=self.getAbsolutePath(), 
+                                          usr=self._userId, 
+                                          epsg=self._epsg)
+      return fname
+
 # # ...............................................
 #    def getProjLayerFilename(self):
 #       fname = self._earlJr.createFilename(LMFileType.PROJECTION_LAYER, 
@@ -527,3 +577,64 @@ class SDMProjection(_ProjectionType, Raster):
       """
       return self._projScenario.layers
 
+   # .............................................................................
+   def _computeModel(self):
+      """
+      @summary: Generate a command to create a SDM model ruleset for this projection
+      """
+      # model depends on occurrenceSet
+      occRule = self._occurrenceSet.compute()
+      # model input - XML request for model generation
+      xmlRequestFname = self.getModelFilename(isResult=False)
+      dataPath, fname = os.path.split(xmlRequestFname)
+      
+      if self.isATT() == 'ATT_MAXENT':
+         ptype = ProcessType.ATT_MODEL
+      else:
+         ptype = ProcessType.OM_MODEL
+         
+      name = '{}-{}'.format(ptype, self.getModelTarget())
+      statusTarget = "{}.status".format(name)
+
+      options = {'-n' : name,
+                 '-o' : dataPath,
+                 '-l' : '{}.log'.format(name),
+                 '-s' : statusTarget }
+      # Join arguments
+      args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+   
+      cmdArguments = [os.getenv('PYTHON'), ProcessType.getJobRunner(ptype), 
+                      xmlRequestFname, args]
+      cmd = ' '.join(cmdArguments)
+      rule = MfRule(cmd, [statusTarget], dependencies=[occRule])
+      
+      return rule
+
+# ...............................................
+   def compute(self):
+      """
+      @summary: Generate a command to create a SDM projection
+      """
+      # projection depends on model
+      modelRule = self._computeModel()
+      
+      xmlRequestFname = self.getProjRequestFilename()
+      # projection output
+      dataPath, fname = os.path.split(xmlRequestFname)
+      name = '{}-{}'.format(self.processType, self.getId())
+      statusTarget = "{}.status".format(name)
+      
+      options = {'-n' : name,
+                 '-o' : dataPath,
+                 '-l' : '{}.log'.format(name),
+                 '-s' : statusTarget }   
+      # Join arguments
+      args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+      
+      cmdArguments = [os.getenv('PYTHON'), 
+                      ProcessType.getJobRunner(self.processType), 
+                      xmlRequestFname, args]
+      cmd = ' '.join(cmdArguments)
+      rule = MfRule(cmd, [statusTarget], dependencies=[modelRule])
+      
+      return rule
