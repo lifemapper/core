@@ -27,12 +27,11 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-@todo: Need to delete all files on delete
-@todo: Move documents to staging area? Or create extra files in place (delete them?)
-@todo: If documents are stored in staging area, do we need to check for existing on startup?
 """
 import argparse
+import glob
 import os
+import shutil
 import signal
 from subprocess import Popen
 import sys
@@ -40,12 +39,12 @@ from time import sleep
 import traceback
 
 from LmBackend.common.daemon import Daemon, DaemonCommands
+from LmCommon.common.lmconstants import JobStatus
 from LmServer.db.scribe import Scribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
-                                    MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
-from LmServer.common.localconstants import (ARCHIVE_USER, CATALOG_SERVER_OPTIONS, 
+                  MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
+from LmServer.common.localconstants import (CATALOG_SERVER_OPTIONS, 
                   MAKEFLOW_OPTIONS, MAX_MAKEFLOWS, WORKER_FACTORY_OPTIONS)
-from LmCommon.common.lmconstants import JobStatus
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -108,10 +107,10 @@ class MattDaemon(Daemon):
                   cmd = self._getMakeflowCommand("lifemapper-{0}".format(mfId), 
                                                  mfDocFn)
                   self.log.debug(cmd)
-                  self._mfPool.append([mfId, Popen(cmd, shell=True)])
+                  self._mfPool.append([mfId, mfDocFn, Popen(cmd, shell=True)])
                else:
-                  # TODO: Replace with correct function
-                  self.scribe.updateMakeflow(mfId, JobStatus.IO_GENERAL_ERROR)
+                  self._cleanupMakeflow(mfId, mfDocFn, exitStatus=2, 
+                                        lmStatus=JobStatus.IO_GENERAL_ERROR)
             # Sleep
             self.log.info("Sleep for {0} seconds".format(self.sleepTime))
             sleep(self.sleepTime)
@@ -126,50 +125,43 @@ class MattDaemon(Daemon):
    # .............................
    def getMakeflows(self, count):
       """
-      @summary: Use the scribe to get available makeflow documents
+      @summary: Use the scribe to get available makeflow documents and moves 
+                   DAG files to workspace
       @param count: The number of Makeflows to retrieve
       @todo: Change scribe function
-      @todo: Make sure the response is a list of makeflow id, makeflow filename 
-                pairs
+      @note: If the DAG exists in the workspace, assume that things failed and
+                we should try to continue
       """
-      mfs = self.scribe.moveAndReturnJobChains(count, ARCHIVE_USER)
+      rawMFs = self.scribe.getMakeflows(count)
       
-      # TODO: These need to be makeflow id, makeflow document file name pairs
-      
-      
+      mfs = []
+      for mfId, origLoc in rawMFs:
+         # New filename
+         newLoc = os.path.join(self.workspace, origLoc.basename)
+         # Move to workspace if it does not exist (see note)
+         if not os.path.exists(newLoc):
+            shutil.copyfile(origLoc, newLoc)
+         # Add to mfs list
+         mfs.append(mfId, newLoc)
+
       return mfs
       
    # .............................
    def getNumberOfRunningProcesses(self):
       """
       @summary: Returns the number of running processes
-      @todo: Catch errors and update makeflow
       """
       numRunning = 0
       for idx in xrange(len(self._mfPool)):
-         result = self._mfPool[idx][1].poll()
+         result = self._mfPool[idx][2].poll()
          if result is None:
             numRunning += 1
          else:
             mfId = self._mfPool[idx][0]
+            mfDocFn = self._mfPool[idx][1]
             self._mfPool[idx] = None
             
-            # Check output
-            # Standard result codes are: negative for killed by signal, 
-            #                            zero for success, positive for error
-            
-            if result == 0:
-               # Success
-               # TODO: Replace with correct command
-               self.scribe.deleteJobChain(mfId)
-            elif result < 0:
-               # Killed by signal, reset most likely
-               # TODO: Replace with correct method
-               self.scribe.updateMakeflow(mfId, JobStatus.INITIALIZE)
-            else:
-               # Error, update Makeflow status
-               # TODO: Replace with correct method
-               self.scribe.updateMakeflow(mfId, JobStatus.GENERAL_ERROR)
+            self._cleanupMakeflow(mfId, mfDocFn, result)
 
       self._mfPool = filter(None, self._mfPool)
       return numRunning
@@ -188,7 +180,6 @@ class MattDaemon(Daemon):
    def onShutdown(self):
       """
       @summary: Called on Daemon shutdown request
-      @todo: Check that makeflows are stopped?  Or force shutdown?
       """
       self.log.debug("Shutdown signal caught!")
       self.scribe.closeConnections()
@@ -209,6 +200,7 @@ class MattDaemon(Daemon):
       """
       self.sleepTime = 30
       self.maxMakeflows = MAX_MAKEFLOWS
+      self.workspace = MAKEFLOW_WORKSPACE
 
    # .............................
    def startCatalogServer(self):
@@ -254,6 +246,37 @@ class MattDaemon(Daemon):
                            mfName=name, mfDoc=mfDocFn)
       return mfCmd
 
+   # .............................
+   def _cleanupMakeflow(self, mfId, mfDocFn, exitStatus, lmStatus=None):
+      """
+      @summary: Clean up a makeflow that has finished, by completion, error, or
+                   signal
+      @param mfId: The id of the makeflow to update
+      @param mfDocFn: The file location of the DAG (in the workspace)
+      @param exitStatus: Unix exit status (negative: killed by signal, 
+                                           zero: successful, positive: error)
+      @param lmStatus: If provided, update the database with this status
+      @todo: Change scribe functions when known
+      """
+      # If success, delete
+      if exitStatus == 0:
+         self.scribe.deleteMakeflow(mfId)
+      else:
+         # Either killed by signal or error
+         if lmStatus is None:
+            lmStatus = JobStatus.GENERAL_ERROR
+         # Check if killed by signal
+         if exitStatus < 0:
+            lmStatus = JobStatus.INITIALIZE
+         
+         # Update
+         self.scribe.updateMakeflow(mfId, lmStatus)
+      
+      # Remove files from workspace
+      delFiles = glob.glob("{0}*".format(mfDocFn))
+      for fn in delFiles:
+         os.remove(fn)
+   
 # .............................................................................
 if __name__ == "__main__":
    
