@@ -44,6 +44,55 @@ COMMON_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/common')
 #   """
 #   pass
 
+def makeCommand(obj):
+   """
+   @summary: Assemble command for different processes
+   # .......... SDM ..........
+   ATT_MODEL = 110
+   ATT_PROJECT = 120
+   OM_MODEL = 210
+   OM_PROJECT = 220
+   # .......... RAD ..........
+   RAD_BUILDGRID = 305
+   RAD_INTERSECT = 310
+   RAD_COMPRESS = 320
+   RAD_SWAP = 331
+   RAD_SPLOTCH = 332
+   RAD_GRADY = 333
+   RAD_CALCULATE = 340
+   # .......... Occurrences ..........
+   GBIF_TAXA_OCCURRENCE = 405
+   BISON_TAXA_OCCURRENCE = 410
+   IDIGBIO_TAXA_OCCURRENCE = 415
+   # .......... User-defined ..........
+   USER_TAXA_OCCURRENCE = 420
+   # .......... Notify ..........
+   SMTP = 510
+   """
+   ptype = obj.processType
+   if ProcessType.isOccurrence(ptype):
+      if ptype == ProcessType.GBIF_TAXA_OCCURRENCE:
+         makeGbifOccurrenceSetCommand(obj)
+      elif ptype == ProcessType.BISON_TAXA_OCCURRENCE:
+         makeBisonOccurrenceSetCommand(obj)
+      elif ptype == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+         makeIdigbioOccurrenceSetCommand(obj)
+      elif ptype == ProcessType.USER_TAXA_OCCURRENCE:
+         make
+   
+   elif ProcessType.isSDM(ptype):
+      if ptype == ProcessType.ATT_PROJECT:
+         mfdoc.addMaxentProjection(o)
+      elif ptype == ProcessType.OM_PROJECT:
+         mfdoc.addOmProjection(o)
+   
+   elif ptype == ProcessType.RAD_INTERSECT:
+      mfdoc.addIntersect(o)
+         
+   elif ProcessType.isRAD(ptype):
+      
+   
+
 def makeBisonOccurrenceSetCommand(occ):
    """
    @summary: Assemble command to fill in BISON points
@@ -112,6 +161,43 @@ def makeGbifOccurrenceSetCommand(occ):
       maxPoints=maxPoints,
       outName=outName,
       options=args)
+   
+   return occCmd, occStatusFn
+
+# .............................................................................
+def makeUserOccurrenceSetCommand(occ):
+   """
+   @summary: Generate command to fill a GBIF occurrence set
+   """
+   # NOTE: This may need to change to something else in the future, but for now,
+   #          we'll save a step and have the outputs written to their final 
+   #          location
+   outDir = os.path.dirname(occ.createLocalDLocation())
+   occStatusFn = "{0}-{1}.status".format(occ.processType, occ.getId())
+   
+   options = {
+      "-n" : "{0}-{1}".format(occ.processType, occ.getId()),
+      "-o" : outDir,
+      "-l" : "userPoints-{0}.log".format(occ.getId()),
+      "-s" : occStatusFn,
+   }
+
+   # Join arguments
+   args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+   
+   rawCsvFn = occ.getRawDLocation()
+   count = occ.queryCount
+   maxPoints = POINT_COUNT_MAX
+   outName = os.path.basename(occ.createLocalDLocation()).replace('.shp', '')
+
+   occCmd = "{python} {jobRunner} {pointsCsv} {rawCount} {maxPoints} {outName} {options}"
+   .format(python=PYTHON,
+           jobRunner=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, "user_points.py"),
+           pointsCsv=rawCsvFn,
+           rawCount=count,
+           maxPoints=maxPoints,
+           outName=outName,
+           options=args)
    
    return occCmd, occStatusFn
 
@@ -567,7 +653,7 @@ def makePAVIntersectRasterCommand(shapegridFn, rasterFn, pavFn, resolution,
       
    cmd = "{python} {script} {sgFn} {rFn} {pavFn} {res} {minP} {maxP} {percent} {options}".format(
       python=PYTHON,
-      script=os.path.join(MULTI_SPECIES_SCRIPTS_PATH, 'intersect_raster.py'),
+      script=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, 'intersect_raster.py'),
       sgFn=shapegridFn,
       rFn=rasterFn,
       pavFn=pavFn,
@@ -605,7 +691,7 @@ def makePAVIntersectVectorCommand(shapegridFn, vectorFn, pavFn, presenceAttrib,
       
    cmd = "{python} {script} {sgFn} {vFn} {pavFn} {pa} {minP} {maxP} {percent} {options}".format(
       python=PYTHON,
-      script=os.path.join(MULTI_SPECIES_SCRIPTS_PATH, 'intersect_vector.py'),
+      script=os.path.join(SINGLE_SPECIES_SCRIPTS_PATH, 'intersect_vector.py'),
       sgFn=shapegridFn,
       vFn=vectorFn,
       pavFn=pavFn,

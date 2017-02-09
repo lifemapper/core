@@ -25,12 +25,15 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT)
+from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT, 
+                                         ProcessType)
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject
-from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, OccurrenceFieldNames,
-                    ID_PLACEHOLDER, LMFileType, LMServiceType, LMServiceModule)
+from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
+                  OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
+                  LMServiceType, LMServiceModule)
+from LmServer.common.localconstants import APP_PATH, POINT_COUNT_MAX
 
 # .............................................................................
 # .............................................................................
@@ -585,3 +588,36 @@ class OccurrenceLayer(OccurrenceType, Vector):
       infile.close()
       self.setFeatures(feats, featAttrs)
       return (minX, minY, maxX, maxY)
+
+# ...............................................
+   def buildCommand(self):
+      """
+      @summary: Assemble command create a shapefile from raw input
+      """
+      # NOTE: This may need to change to something else in the future, but for now,
+      #          we'll save a step and have the outputs written to their final 
+      #          location
+      dataPath, fname = os.path.split(self.getDLocation())
+      basename, ext = os.path.splitext(fname)
+      name = '{}-{}'.format(self.processType, self.getId())
+      occStatusFn = "{}.status".format(name)
+      
+      options = {'-n' : name,
+                 '-o' : dataPath,
+                 # Why not name here too?
+#                   '-l' : 'bisonPoints-{}.log'.format(self.getId()),
+                 '-l' : '{}.log'.format(name),
+                 '-s' : occStatusFn }
+   
+      # Join arguments
+      args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+      
+      occCommandArguments = [os.getenv('PYTHON'), 
+                             ProcessType.getJobRunner(self.processType), 
+                             self.getRawDLocation()]
+      if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
+         occCommandArguments.append(self.queryCount)
+      occCommandArguments.extend([POINT_COUNT_MAX, basename, args])         
+      occCmd = ' '.join(occCommandArguments)
+      
+      return occCmd, occStatusFn

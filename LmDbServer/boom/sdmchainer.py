@@ -315,7 +315,7 @@ class _LMChainer(LMObject):
       
 # ...............................................
    def _createMakeflow(self, objs):
-      jobchainId = filename = None
+      mfchainId = filename = None
       if objs:
          mfdoc = LMMakeflowDocument()
          for o in objs:
@@ -598,7 +598,7 @@ class BisonChainer(_LMChainer):
       tsn, tsnCount = self._getTsnRec()
       if tsn is not None:
          jobs = self._processTsn(tsn, tsnCount)
-         self._createMakeflow(jobs)
+#          self._createMakeflow(jobs)
          self.log.info('Processed tsn {}, with {} points; next start {}'
                        .format(tsn, tsnCount, self.nextStart))
 
@@ -756,7 +756,7 @@ class UserChainer(_LMChainer):
 #          sciName = self._getInsertSciNameForUser(taxonName)
 #          jobs = self._processInputSpecies(dataChunk, dataCount, sciName)
          objs = self._processUserChunk(dataChunk, dataCount, taxonName)
-         self._createMakeflow(objs)
+#          self._createMakeflow(objs)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
 
@@ -932,7 +932,7 @@ class GBIFChainer(_LMChainer):
       speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
          objs = self._processGBIFChunk(speciesKey, dataCount, dataChunk)
-         self._createMakeflow(objs)
+#          self._createMakeflow(objs)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
 
@@ -1071,7 +1071,7 @@ class iDigBioChainer(_LMChainer):
       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
       if taxonKey:
          jobs = self._processInputGBIFTaxonId(taxonKey, taxonCount)
-         self._createMakeflow(jobs)
+#          self._createMakeflow(jobs)
          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
                        .format(taxonKey, taxonName, taxonCount, self.nextStart))
 

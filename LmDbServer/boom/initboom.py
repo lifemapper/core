@@ -81,9 +81,13 @@ def addAlgorithms(scribe):
    @summary Adds algorithms to the database from the algorithm dictionary
    """
    ids = []
-   for algmeta in Algorithms.implemented():
-      alg = Algorithm(algmeta.code, metadata=algmeta.parameters)
-      scribe.log.info('  Insert algorithm {} ...'.format(algmeta.code))
+   for alginfo in Algorithms.implemented():
+      meta = {'name': alginfo.name, 
+              'isDiscreteOutput': alginfo.isDiscreteOutput,
+              'outputFormat': alginfo.outputFormat,
+              'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
+      alg = Algorithm(alginfo.code, metadata=meta)
+      scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
       algid = scribe.insertAlgorithm(alg)
       ids.append(algid)
    return ids

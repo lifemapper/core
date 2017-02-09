@@ -1109,6 +1109,7 @@ class AlgQualities:
       self.name = name
       self.isDiscreteOutput = isDiscreteOutput
       self.outputFormat = outputFormat
+      self.acceptsCategoricalMaps = acceptsCategoricalMaps
       self.parameters = parameters
 
 class Algorithms:

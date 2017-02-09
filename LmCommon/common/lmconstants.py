@@ -23,13 +23,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-try:
-   from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
-except:
-   OFTInteger = 0
-   OFTReal = 2
-   OFTString = 4
-   OFTBinary = 8
+import os
+from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
+from LmServer.common.localconstants import APP_PATH
    
 # .............................................................................
 # .    Directories shared between LmCompute and LmServer                              .
@@ -42,6 +38,13 @@ ENV_LAYER_DIR = 'layers'
 # DATA FORMATS
 MASK_TYPECODE = 'MASK'
 ENCODING =  'utf-8'   
+
+# Relative paths
+# For LmCompute command construction by LmServer (for Makeflow)
+SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
+MULTI_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/multi'
+COMMON_SCRIPTS_DIR = 'LmCompute/tools/common'
+
 
 # .............................................................................
 class FileFormat:
@@ -638,28 +641,119 @@ class JobStatus:
 # ............................................................................
 # Aka reqSoftware in LmJob table
 class ProcessType:
-   # .......... SDM ..........
+   # .........................
+   # SDM
+   # .........................
+   # SDM model
    ATT_MODEL = 110
-   ATT_PROJECT = 120
    OM_MODEL = 210
+   # SDM model
+   ATT_PROJECT = 120
    OM_PROJECT = 220
-   # .......... RAD ..........
-   RAD_BUILDGRID = 305
-   RAD_INTERSECT = 310
-   RAD_COMPRESS = 320
-   RAD_SWAP = 331
-   RAD_SPLOTCH = 332
-   RAD_GRADY = 333
-   RAD_CALCULATE = 340
-   # .......... Occurrences ..........
+   # Occurrences
    GBIF_TAXA_OCCURRENCE = 405
    BISON_TAXA_OCCURRENCE = 410
    IDIGBIO_TAXA_OCCURRENCE = 415
-   # .......... User-defined ..........
    USER_TAXA_OCCURRENCE = 420
-   # .......... Notify ..........
-   SMTP = 510
+   # Intersect
+   INTERSECT_RASTER = 230
+   INTERSECT_VECTOR = 240
+   INTERSECT_RASTER_GRIM = 230
+   # .........................
+   # RAD
+   # .........................
+   # RAD Prep
+   RAD_BUILDGRID = 305
+   RAD_CALCULATE = 340
+   ENCODE_HYPOTHESES = 350
+   ENCODE_PHYLOGENY = 360
+   # Randomize
+   RAD_SWAP = 331
+   RAD_SPLOTCH = 332
+   RAD_GRADY = 333
+   # MCPA
+   MCPA_CORRECT_PVALUES = 530
+   MCPA_OBSERVED = 540
+   MCPA_RANDOM = 550
+   # .........................
+   # deprecated
+   # .........................
+   RAD_INTERSECT = 310
+   RAD_COMPRESS = 320
    
+   # .......... Notify ..........
+   SMTP = 610
+   CONCATENATE_MATRICES = 620
+   UPDATE_OBJECT = 630
+   
+   @staticmethod
+   def getJobRunner(ptype):
+      if ProcessType.isSDM(ptype):
+         relpath = SINGLE_SPECIES_SCRIPTS_DIR
+         if ProcessType.isOccurrence(ptype):
+            if ptype == ProcessType.GBIF_TAXA_OCCURRENCE:
+               jr = 'gbif_points'
+            elif ptype == ProcessType.BISON_TAXA_OCCURRENCE:
+               jr = 'bison_points'
+            elif ptype == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+               jr = 'idigbio_points'
+            elif ptype == ProcessType.USER_TAXA_OCCURRENCE:
+               jr = 'user_points'
+         # SDM models
+         elif ProcessType.isModel(ptype):
+            if ptype == ProcessType.ATT_MODEL:
+               jr = 'me_model'
+            elif ptype == ProcessType.OM_MODEL:
+               jr = 'om_model'
+         # SDM projects
+         elif ProcessType.isProject(ptype):
+            if ptype == ProcessType.ATT_PROJECT:
+               jr = 'me_projection'
+            elif ptype == ProcessType.OM_PROJECT:
+               jr = 'om_projection'
+         
+         # Intersect layer
+         elif ProcessType.isIntersect(ptype):
+            if ptype == ProcessType.INTERSECT_RASTER:
+               jr = 'intersect_raster'
+            elif ptype == ProcessType.INTERSECT_VECTOR:
+               jr = 'intersect_vector'
+         
+      elif ProcessType.isRAD(ptype):
+         relpath = MULTI_SPECIES_SCRIPTS_DIR
+         if ProcessType.isRADPrep(ptype):
+            if ptype == ProcessType.RAD_BUILDGRID:
+               jr = 'build_shapegrid'
+            elif ptype == ProcessType.RAD_CALCULATE:
+               jr = 'calculate_pam_stats'
+            elif ptype == ProcessType.ENCODE_HYPOTHESES:
+               jr = 'encode_hypotheses'
+            elif ptype == ProcessType.ENCODE_PHYLOGENY:
+               jr = 'encode_phylogeny'
+         elif ProcessType.isRandom(ptype):
+            if ptype == ProcessType.RAD_GRADY:
+               jr = 'grady_randomize'
+            elif ptype == ProcessType.RAD_SWAP:
+               jr = 'swap_randomize'
+            elif ptype == ProcessType.RAD_SPLOTCH:
+               jr = 'splotch_randomize'
+         elif ProcessType.isMCPA(ptype):
+            if ptype == ProcessType.MCPA_CORRECT_PVALUES:
+               jr = 'mcpa_correct_pvalues'
+            elif ptype == ProcessType.MCPA_OBSERVED:
+               jr = 'mcpa_observed'
+            elif ptype == ProcessType.MCPA_RANDOM:
+               jr = 'mcpa_random'
+               
+      elif ptype == ProcessType.CONCATENATE_MATRICES:
+         relpath = COMMON_SCRIPTS_DIR
+         jr = 'concatenate_matrices'
+      elif ptype == ProcessType.UPDATE_OBJECT:
+         relpath = COMMON_SCRIPTS_DIR
+         jr = 'updateObjectStatus'
+         
+      return os.path.join(APP_PATH, relpath, jr)   
+
    @staticmethod
    def sdmTypes():
       return [ProcessType.SMTP, ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
@@ -676,6 +770,52 @@ class ProcessType:
       return False
       
    @staticmethod
+   def occurrenceTypes():
+      return [ProcessType.GBIF_TAXA_OCCURRENCE, 
+              ProcessType.BISON_TAXA_OCCURRENCE, 
+              ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+              ProcessType.USER_TAXA_OCCURRENCE]
+      
+   @staticmethod
+   def isOccurrence(ptype):
+      if ptype in ProcessType.occurrenceTypes():
+         return True
+      return False
+      
+   @staticmethod
+   def modelTypes():
+      return [ProcessType.ATT_MODEL, 
+              ProcessType.OM_MODEL]
+      
+   @staticmethod
+   def isModel(ptype):
+      if ptype in ProcessType.modelTypes():
+         return True
+      return False
+      
+   @staticmethod
+   def projectTypes():
+      return [ProcessType.ATT_PROJECT, 
+              ProcessType.OM_PROJECT]
+      
+   @staticmethod
+   def isProject(ptype):
+      if ptype in ProcessType.projectTypes():
+         return True
+      return False
+      
+   @staticmethod
+   def intersectTypes():
+      return [ProcessType.INTERSECT_RASTER, ProcessType.INTERSECT_VECTOR, 
+              ProcessType.INTERSECT_RASTER_GRIM]
+      
+   @staticmethod
+   def isIntersect(ptype):
+      if ptype in ProcessType.projectTypes():
+         return True
+      return False
+
+   @staticmethod
    def radTypes():
       return [ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
               ProcessType.RAD_INTERSECT, ProcessType.RAD_COMPRESS, 
@@ -687,6 +827,17 @@ class ProcessType:
       if ptype in ProcessType.radTypes():
          return True
       return False
+   
+   @staticmethod
+   def radprepTypes():
+      return [ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE, 
+              ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]
+
+   @staticmethod
+   def isRADPrep(ptype):
+      if ptype in ProcessType.radprepTypes():
+         return True
+      return False
 
    @staticmethod
    def randomTypes():
@@ -695,6 +846,27 @@ class ProcessType:
    
    @staticmethod
    def isRandom(ptype):
+      if ptype in ProcessType.randomTypes():
+         return True
+      return False
+
+   @staticmethod
+   def encodeTypes():
+      return [ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]
+   
+   @staticmethod
+   def isEncode(ptype):
+      if ptype in ProcessType.encodeTypes():
+         return True
+      return False
+
+   @staticmethod
+   def mcpaTypes():
+      return [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
+              ProcessType.MCPA_RANDOM]
+   
+   @staticmethod
+   def isMCPA(ptype):
       if ptype in ProcessType.randomTypes():
          return True
       return False
