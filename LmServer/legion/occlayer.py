@@ -618,6 +618,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
       cmdArguments.extend([POINT_COUNT_MAX, basename, args])         
       cmd = ' '.join(cmdArguments)
       
-      rule = MfRule(cmd, [statusTarget])
+      rule = MfRule(cmd, [os.path.basename(fname), statusTarget])
       
       return rule
