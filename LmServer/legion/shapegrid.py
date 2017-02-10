@@ -23,18 +23,18 @@
 """
 from osgeo import ogr, osr
 import os
-import pickle
-from types import IntType, StringType
+from types import IntType
 import math
 import numpy as np
 # import rtree
 
 from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
-                                         DEFAULT_OGR_FORMAT, ProcessType)
+                              DEFAULT_OGR_FORMAT, JobStatus, ProcessType)
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
+from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
 class ShapeGrid(_LayerParameters, Vector, ProcessObject):
@@ -432,3 +432,36 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          self._setVerify()
          self.setSiteIndices()
 
+# ...............................................
+   def computeMe(self):
+      """
+      @summary: Creates a command to intersect a layer and a shapegrid to 
+                produce a MatrixColumn.
+      """
+      rules = []
+      # TODO: Put this somewhere!
+      cutoutWktFn = None
+      # This just works for status 0, 1, assumes Processing or Complete is fine
+      # TODO: How to handle Error status 
+      if JobStatus.waiting(self.status):
+         outFile = self.shapegrid.getDLocation()
+         options = ''
+         if cutoutWktFn is not None:
+            options = "--cutoutWktFn={0}".format(cutoutWktFn)
+         
+         cmdArguments = [os.getenv('PYTHON'), 
+                         ProcessType.getJobRunner(self.processType), 
+                         self.shapegrid.getDLocation(), 
+                         outFile,
+                         self.getMinX(),
+                         self.getMinY(),
+                         self.getMaxX(),
+                         self.getMaxY(),
+                         self.cellsize,
+                         self.epsgcode,
+                         self.cellsides,
+                         options]
+
+      cmd = ' '.join(cmdArguments)
+      rules.append(MfRule(cmd, [outFile]))
+      return rules

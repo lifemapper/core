@@ -706,6 +706,7 @@ class ProcessType:
          # SDM projects
          elif ProcessType.isProject(ptype):
             jr = 'sdmproject'
+         # SDM project request file creation
          elif ptype == ProcessType.PROJECT_REQUEST:
             jr = 'makeProjectionRequest'
          
