@@ -212,10 +212,11 @@ algorithms provided by openModeller::
     MAXENT        | Maximum Entropy (openModeller Implementation)
     CSMBS         | Climate Space Model - Broken-Stick Implementation
     ANN           | Artificial Neural Network
+
     
-========================
+########################
 Running job computations
-========================
+########################
 
 Job computations are managed by the MattDaemon daemon script.  It controls the 
 active Makeflow processes and manages the Work Queue factory and Catalog Server
