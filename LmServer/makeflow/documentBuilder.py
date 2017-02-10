@@ -27,6 +27,7 @@
 """
 
 from LmServer.base.lmobj import LMObject
+from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
 class LMMakeflowDocument(LMObject):
@@ -65,24 +66,21 @@ class LMMakeflowDocument(LMObject):
       self.targets.extend(outputs)
    
    # ...........................
-   def addCommands(self, cmdList):
+   def addCommands(self, ruleList):
       """
       @summary: Adds a list of commands to the Makeflow document
-      @param cmdList: A list of command tuples 
-                         [([dependencies], command, [outputs]), ...]
-      @todo: Consider using named tuples
+      @param ruleList: A list of MfRule objects
       """
       # Check if this is just a single tuple, if so, make it a list
-      if isinstance(cmdList, tuple):
-         cmdList = [cmdList]
+      if isinstance(ruleList, MfRule):
+         ruleList = [ruleList]
          
       # For each tuple in the list
-      for cmdTuple in cmdList:
-         if len(cmdTuple) == 4:
-            deps, cmd, targets, comment = cmdTuple
-         else:
-            deps, cmd, targets = cmdTuple
-            comment = ''
+      for rule in ruleList:
+         deps = rule.dependencies
+         targets = rule.targets
+         cmd = rule.command
+         comment = rule.comment
 
          # Check to see if these targets are already defined by creating a new
          #    list of targets that are not in self.targets
