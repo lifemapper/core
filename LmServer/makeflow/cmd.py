@@ -1,4 +1,5 @@
 """
+@summary: Module containing Makeflow Rule class for Lifemapper
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
 
@@ -26,18 +27,24 @@ from LmServer.base.lmobj import LMObject
 # ............................................................................
 class MfRule(LMObject):
    """
-   Class to create commands for a makeflow document
+   @summary: Class to create commands for a makeflow document
    """
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, command, targets, dependencies=None):
+   def __init__(self, command, targets, dependencies=None, comment=''):
       """
       @summary Constructor for commands used by Makeflow
       @param command: string used by LmCompute to compute this object
       @param targets: list of outputs for this object
       @param dependencies: list of dependencies for this object
+      @param comment: A comment that can be added to a Makeflow document for 
+                         clarity
       """
       self.command = command
-      self.target = target
-      self.dependencies = dependencies
+      self.targets = targets
+      if dependencies is None:
+         self.dependencies = []
+      else:
+         self.dependencies = dependencies
+      self.comment = comment
