@@ -664,6 +664,7 @@ class SDMProjection(_ProjectionType, Raster):
          name = '{}-{}'.format(ptype, self.getModelTarget())
    
          options = {'-n' : name,
+                    '-p' : ptype,
                     '-o' : outPath,
                     '-l' : '{}.log'.format(name) }
          # Join arguments
@@ -717,6 +718,7 @@ class SDMProjection(_ProjectionType, Raster):
          tiffTarget = self.getDLocation()
          name = '{}-{}'.format(self.processType, self.getId())         
          options = {'-n' : name,
+                    '-p' : self.processType,
                     '-o' : outPath,
                     '-l' : '{}.log'.format(name) }   
          # Join arguments
