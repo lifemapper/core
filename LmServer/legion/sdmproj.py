@@ -583,7 +583,8 @@ class SDMProjection(_ProjectionType, Raster):
       @summary: Generate a command to create a SDM model ruleset for this projection
       """
       # model depends on occurrenceSet
-      occRule = self._occurrenceSet.compute()
+      #occRule = self._occurrenceSet.compute()
+      occSetFn = self._occurrenceSet.getDLocation()
       # model input - XML request for model generation
       xmlRequestFname = self.getModelFilename(isResult=False)
       dataPath, fname = os.path.split(xmlRequestFname)
@@ -606,7 +607,7 @@ class SDMProjection(_ProjectionType, Raster):
       cmdArguments = [os.getenv('PYTHON'), ProcessType.getJobRunner(ptype), 
                       xmlRequestFname, args]
       cmd = ' '.join(cmdArguments)
-      rule = MfRule(cmd, [statusTarget], dependencies=[occRule])
+      rule = MfRule(cmd, [statusTarget], dependencies=[occSetFn])
       
       return rule
 
@@ -638,3 +639,68 @@ class SDMProjection(_ProjectionType, Raster):
       rule = MfRule(cmd, [statusTarget], dependencies=[modelRule])
       
       return rule
+
+
+   # ......................................
+   def computeMe(self):
+      """
+      """
+      rules = []
+      rulesetFn = self.getModelFilename(isResult=False)
+      
+      if not os.path.exists(rulesetFn):
+         # Need to create model rule
+         if self._occurrenceSet.status != JobStatus.COMPLETE:
+            # Need to create projection rule too
+            rules.extend(self._occurrenceSet.computeMe())
+         
+         modelRules = self._computeModel()
+         rules.extend(modelRules)
+      
+      # Need to generate a projection request file
+      prjReqFn = self.getProjRequestFilename()
+      dataPath, fname = os.path.split(prjReqFn)
+      
+      # Handle the partial request
+      partReqFn = "{0}.part".format(prjReqFn)
+      # TODO: This doesn't exist
+      self.writePartialProjectionRequest(partReqFn)
+      
+      # TODO: Add the projection request tool, this is an example
+      prjReqCmdArgs = [os.getenv('PYTHON'),
+                       "makeProjectionRequest.py",
+                       partReqFn,
+                       rulesetFn,
+                       prjReqFn
+                       ]
+      prjReqCmd = ' '.join(prjReqCmdArgs)
+      
+      prjReqRule = MfRule(prjReqCmd, [prjReqFn], 
+                          dependencies=[rulesetFn, partReqFn])
+      
+      # TODO: We may need to move this to the correct location
+      tiffTarget = self.getDLocation()
+      
+      # Need to generate a projection command
+      name = '{}-{}'.format(self.processType, self.getId())
+      statusTarget = "{}.status".format(name)
+      
+      options = {'-n' : name,
+                 '-o' : dataPath,
+                 '-l' : '{}.log'.format(name),
+                 '-s' : statusTarget }   
+      # Join arguments
+      args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+      
+      cmdArguments = [os.getenv('PYTHON'), 
+                      ProcessType.getJobRunner(self.processType), 
+                      prjReqFn, args]
+      prjCmd = ' '.join(cmdArguments)
+      prjRule = MfRule(prjCmd, [tiffTarget, statusTarget], 
+                       dependencies=[prjReqFn])
+      
+      
+      rules.append(prjReqRule)
+      rules.append(prjRule)
+      return rules
+   
