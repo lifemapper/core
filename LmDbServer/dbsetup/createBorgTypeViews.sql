@@ -198,8 +198,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    mtxstatus,
    mtxstatusmodtime,
    
-   -- Gridset.userid
-   userid
+   -- Gridset userid and shapegrid-layerid
+   userid, 
+   shplayerid
 ) AS 
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.squid, mc.ident, mc.dlocation, mc.metadata, mc.layerId,
@@ -211,67 +212,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
         WHERE mc.matrixId = m.matrixId AND m.gridsetid = g.gridsetid;
 
 -- ----------------------------------------------------------------------------
--- lm_matrixlayer (lm_matrixcolumn + Layer)
-DROP VIEW IF EXISTS lm_v3.lm_matrixlayer CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_matrixlayer
-(
-   -- lm_matrixcolumn.*
-   matrixColumnId,
-   matrixId,
-   matrixIndex,
-   mtxcolsquid,
-   mtxcolident,
-   mtxcoldlocation,
-   mtxcolmetadata, 
-   layerId,
-   intersectParams,
-   mtxcolstatus,
-   mtxcolstatusmodtime,
-   matrixType,
-   gridsetId,
-   matrixDlocation,
-   mtxmetadataUrl,
-   mtxmetadata,
-   mtxstatus,
-   mtxstatusmodtime,
-   userid,
-   
-   -- Layer.* 
-   lyrsquid,
-   lyrverify,
-   lyrname,
-   lyrdlocation,
-   lyrmetadataUrl,
-   lyrmetadata,
-   dataFormat,
-   gdalType,
-   ogrType,
-   valUnits,
-   valAttribute,
-   nodataVal,
-   minVal,
-   maxVal,
-   epsgcode,
-   mapunits,
-   resolution,
-   bbox,
-   lyrmodtime
-) AS 
-      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, mc.mtxcolsquid, 
-             mc.mtxcolident, mc.mtxcoldlocation, mc.mtxcolmetadata, mc.layerId, 
-             mc.intersectParams, mc.mtxcolstatus, mc.mtxcolstatusmodtime,
-             mc.matrixType, mc.gridsetId, mc.matrixDlocation, 
-             mc.mtxmetadataUrl, mc.mtxmetadata, mc.mtxstatus, 
-             mc.mtxstatusmodtime, mc.userid, 
-             l.squid, l.verify, l.name, l.dlocation, 
-             l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, 
-             l.ogrType, l.valUnits, l.valAttribute, l.nodataVal, l.minVal,
-             l.maxVal, l.epsgcode, l.mapunits, l.resolution, l.bbox, 
-             l.modtime
-        FROM lm_v3.lm_matrixcolumn mc
-        LEFT JOIN lm_v3.layer l ON mc.layerid = l.layerid;
-
-
 -- ----------------
 -- lm_gridset  (Gridset + lm_shapegrid)
 DROP VIEW IF EXISTS lm_v3.lm_gridset CASCADE;

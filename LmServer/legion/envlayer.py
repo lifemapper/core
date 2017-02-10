@@ -56,7 +56,7 @@ class EnvLayer(EnvType, Raster):
    """
 # .............................................................................
    def __init__(self, name, userId, epsgcode, scencode=None, lyrId=None, 
-                squid=None, verify=None, dlocation=None, 
+                squid=None, ident=None, verify=None, dlocation=None, 
                 lyrMetadata={}, dataFormat=None, gdalType=None, 
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
@@ -79,7 +79,7 @@ class EnvLayer(EnvType, Raster):
       # Raster metadataUrl and serviceType override those of EnvType 
       # if it is a full EnvLayer
       Raster.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
-                squid=squid, verify=verify, dlocation=dlocation, 
+                squid=squid, ident=ident, verify=verify, dlocation=dlocation, 
                 metadata=lyrMetadata, dataFormat=dataFormat, gdalType=gdalType, 
                 valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 
@@ -96,7 +96,7 @@ class EnvLayer(EnvType, Raster):
    def initFromParts(cls, raster, envType, envLayerId=None, scencode=None):
       envLyr = EnvLayer(raster.name, raster.getUserId(), raster.epsgcode, 
                   scencode=scencode, lyrId=raster.getId(), squid=raster.squid, 
-                  verify=raster.verify, dlocation=raster.getDLocation(),
+                  ident=raster.ident, verify=raster.verify, dlocation=raster.getDLocation(),
                   lyrMetadata=raster.lyrMetadata, dataFormat=raster.dataFormat, 
                   gdalType=raster.gdalType, valUnits=raster.valUnits, 
                   nodataVal=raster.nodataVal, minVal=raster.minVal, 

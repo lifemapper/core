@@ -38,7 +38,7 @@ from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvType, EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.mtxcolumn import MatrixColumn, MatrixRaster, MatrixVector
+from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
@@ -261,11 +261,11 @@ class Borg(DbPostgresql):
    # ...............................................
    def _createMatrixColumn(self, row, idxs):
       """
-      @summary: Create an MatrixColumn, MatrixRaster or MatrixVector from a 
-                lm_envlayer or lm_scenlayer view
+      @summary: Create an MatrixColumn from a lm_envlayer or lm_scenlayer view
       """
-      mtxobj = None
+      mtxcol = None
       if row is not None:
+#          lyr = self._createLayer(row, idxs)
          mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
@@ -273,26 +273,18 @@ class Borg(DbPostgresql):
          ident = self._getColumnValue(row,idxs,['mtxcolident'])
          mtxcoldloc = self._getColumnValue(row,idxs,['mtxcoldlocation'])
          mtxcolmeta = self._getColumnValue(row,idxs,['mtxcolmetatadata'])
-         lyrid = self._getColumnValue(row,idxs,['matrixid'])         
          intparams = self._getColumnValue(row,idxs,['intersectparams'])
          mtxcolstat = self._getColumnValue(row,idxs,['mtxcolstatus']) 
          mtxcolstattime = self._getColumnValue(row,idxs,['mtxcolstatusmodtime']) 
          usr = self._getColumnValue(row,idxs,['userid'])
 
-         mtxcol = MatrixColumn(mtxIndex, mtxid, usr, layerId=lyrid,
-                processType=ProcessType.RAD_INTERSECT, colDLocation=mtxcoldloc,
-                metadata=mtxcolmeta, intersectParams=intparams, squid=squid, 
-                ident=ident, matrixColumnId=mtxcolid, 
-                status=mtxcolstat, statusModTime=mtxcolstattime)
-         lyr = self._createLayer(row, idxs)
-         if lyr is None:
-            mtxobj = mtxcol
-         else:
-            if lyr.dataFormat in OGRFormatCodes.keys():
-               mtxobj = MatrixVector.initFromParts(mtxcol, lyr)
-            elif lyr.dataFormat in GDALFormatCodes.keys():
-               mtxobj = MatrixRaster.initFromParts(mtxcol, lyr)
-      return mtxobj
+         mtxcol = MatrixColumn(mtxIndex, mtxid, usr, 
+                        layer=None, shapegrid=None, intersectParams=intparams,
+                        colDLocation=mtxcoldloc, squid=squid, ident=ident,
+                        processType=None, metadata=mtxcolmeta, 
+                        matrixColumnId=mtxcolid, status=mtxcolstat, 
+                        statusModTime=mtxcolstattime)
+      return mtxcol
 
 # ...............................................
    def _getLayerInputs(self, row, idxs):
@@ -1050,59 +1042,33 @@ class Borg(DbPostgresql):
       return newOrExistingProj
 
 # ...............................................
-   def findOrInsertMatrixColumn(self, mtxobj, layer=None):
+   def findOrInsertMatrixColumn(self, mtxcol):
       """
-      @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
-                OR save a new SDMProjection
-      @param mtxobj: the Matrix* object (MatrixColumn, MatrixRaster, MatrixVector) 
-             to get or insert
-      @return new or existing Matrix* object
+      @summary: Find existing OR save a new MatrixColumn
+      @param mtxcol: the LmServer.legion.MatrixColumn object to get or insert
+      @return new or existing MatrixColumn object
       """
       try:
-         lyrid = mtxobj.layerId
+         newOrExistingLyr = self.findOrInsertBaseLayer(mtxcol.layer)
+         lyrid = newOrExistingLyr.getId()
       except:
-         lyrid = None
-      try:
-         lyrmeta = mtxobj.dumpLyrMetadata()
-         usr = mtxobj.getUserId()
-         lyrverify = mtxobj.verify
-         lyrname = mtxobj.name
-         lyrdloc = mtxobj.getDLocation()
-         lyrmurl = mtxobj.metadataUrl
-         datafmt = mtxobj.dataFormat
-         rtype = mtxobj.gdalType
-         vtype = mtxobj.ogrType
-         vunits = mtxobj.valUnits
-         vnodata = mtxobj.nodataVal
-         vmin = mtxobj.minVal
-         vmax = mtxobj.maxVal
-         epsg = mtxobj.epsgcode
-         munits = mtxobj.mapUnits
-         res = mtxobj.resolution
-         bboxstr = mtxobj.getCSVExtentString()
-         bboxwkt = mtxobj.getWkt()
-         lyrmtime = mtxobj.modTime
-      except:
-         lyrmeta = usr = lyrverify = lyrname = lyrdloc = lyrmurl = None
-         datafmt = rtype = vtype = vunits = vnodata = vmin = vmax = epsg = None
-         munits = res = bboxstr = bboxwkt = lyrmtime = None
-      mcmeta = mtxobj.dumpParamMetadata()
-      intparams = mtxobj.dumpIntersectParams()
+         lyrid = None  
+      mcmeta = mtxcol.dumpParamMetadata()
+      intparams = mtxcol.dumpIntersectParams()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
-                     mtxobj.getId(), mtxobj.parentId, mtxobj.getMatrixIndex(),
-                     mtxobj.squid, mtxobj.ident, mtxobj.getColumnDLocation(), 
-                     mcmeta, intparams, mtxobj.status, mtxobj.statusModTime,
-                     lyrid, usr, lyrverify, lyrname, lyrdloc, lyrmurl, lyrmeta, 
-                     datafmt, rtype, vtype, vunits, vnodata, vmin, vmax, epsg, 
-                     munits, res, bboxstr, bboxwkt, lyrmtime)
-      newOrExistingMtxLyr = self._createMatrixColumn(row, idxs)
-      return newOrExistingMtxLyr
+                     mtxcol.getUserId(), mtxcol.getId(), mtxcol.parentId, 
+                     mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident, 
+                     mtxcol.getColumnDLocation(), mcmeta, intparams, 
+                     mtxcol.status, mtxcol.statusModTime, mtxcol.modTime)
+      newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
+      return newOrExistingMtxCol
 
 # ...............................................
    def updateMatrixColumn(self, mtxcol):
       """
-      @param mtxcol: the Matrix* object (MatrixColumn, MatrixRaster, MatrixVector) 
-             to update
+      @summary: Update a MatrixColumn
+      @param mtxcol: the LmServer.legion.MatrixColumn object to update
+      @return: Boolean success/failure
       """
       meta = mtxcol.dumpParamMetadata()
       intparams = mtxcol.dumpIntersectParams()

@@ -56,7 +56,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 # Constructor
 # .............................................................................
    def __init__(self, name, userId, epsgcode, lyrId=None, 
-                squid=None, verify=None, dlocation=None, 
+                squid=None, ident=None, verify=None, dlocation=None, 
                 metadata={}, dataFormat=None, gdalType=None, ogrType=None,
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
@@ -76,6 +76,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       @param name: Short name, unique with userid and epsq.  
       @param lyrId: Database id of the layer object
       @param squid: unique identifier maintaining 'Species thread' for a user
+      @param ident: unique identifier for non-species related data for a user
       @param verify: Hash of the data for verification
       @param dlocation: Data location (url, file path, ...)
       @param metadata: Dictionary of metadata key/values; uses class or 
@@ -109,6 +110,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._layerUserId = userId
       self._layerId = lyrId
       self.squid = squid
+      self.ident = ident
       self.lyrMetadata = {}
       self.loadLyrMetadata(metadata)
       self._dataFormat = dataFormat
@@ -496,7 +498,7 @@ class Raster(_Layer):
    """
    # ...............................................       
    def __init__(self, name, userId, epsgcode, lyrId=None, 
-                squid=None, verify=None, dlocation=None, 
+                squid=None, ident=None, verify=None, dlocation=None, 
                 metadata={}, dataFormat=DEFAULT_GDAL_FORMAT, gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
@@ -527,7 +529,7 @@ class Raster(_Layer):
       if msgs:
          print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
-                squid=squid, verify=verify, dlocation=dlocation, 
+                squid=squid, ident=ident, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, gdalType=gdalType, 
                 valUnits=valUnits, valAttribute='pixel', 
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
@@ -947,7 +949,7 @@ class Vector(_Layer):
    """
    # ...............................................       
    def __init__(self, name, userId, epsgcode, lyrId=None, 
-                squid=None, verify=None, dlocation=None, 
+                squid=None, ident=None, verify=None, dlocation=None, 
                 metadata={}, dataFormat=DEFAULT_OGR_FORMAT, ogrType=None,
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
@@ -987,7 +989,7 @@ class Vector(_Layer):
       self._featureCount = 0
 
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
-                squid=squid, verify=verify, dlocation=dlocation, 
+                squid=squid, ident=ident, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, ogrType=ogrType, 
                 valUnits=valUnits, valAttribute=valAttribute, 
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 

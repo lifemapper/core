@@ -27,14 +27,14 @@ from osgeo.ogr import wkbPoint
 import socket
 from types import IntType
 
-from LmCommon.common.lmconstants import (JobStatus, ProcessType)
+from LmCommon.common.lmconstants import (JobStatus, ProcessType, MatrixType)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.common.lmconstants import (DbUser, DEFAULT_PROJECTION_FORMAT, 
-                                         GDALFormatCodes, OGRFormatCodes)
+                                         GDALFormatCodes)
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
-from LmServer.legion.mtxcolumn import MatrixRaster, MatrixVector, MatrixColumn
+from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName
@@ -329,34 +329,17 @@ class BorgScribe(LMObject):
       newOrExistingMtxcol = None
       if mtx is not None and mtx.getId() is not None:
          if lyr.dataFormat in GDALFormatCodes.keys():
-            mtxcol = MatrixRaster(-1, mtx.getId(), lyr.getUserId(), lyr.name, lyr.epsgcode,  
-                        lyrId=lyr.getId(), squid=lyr.squid, verify=lyr.verify, 
-                        dlocation=lyr.getDLocation(), lyrMetadata=lyr.lyrMetadata, 
-                        dataFormat=lyr.dataFormat, gdalType=lyr.gdalType, 
-                        valUnits=lyr.valUnits, nodataVal=lyr.nodataVal, 
-                        minVal=lyr.minVal, maxVal=lyr.maxVal, mapunits=lyr.mapUnits, 
-                        resolution=lyr.resolution, bbox=lyr.bbox, 
-                        metadataUrl=lyr.metadataUrl, 
-                        parentMetadataUrl=mtx.metadataUrl, 
-                        modTime=lyr.statusModTime,
-                        processType=ProcessType.RAD_INTERSECT, 
-                        mtxcolMetadata={}, intersectParams={}, 
-                        status=JobStatus.GENERAL, statusModTime=modtime)
-         elif lyr.dataFormat in OGRFormatCodes.keys(): 
-            mtxcol = MatrixVector(-1, mtx.getId(), lyr.getUserId(), lyr.name, lyr.epsgcode,  
-                        lyrId=lyr.getId(), squid=lyr.squid, verify=lyr.verify, 
-                        dlocation=lyr.getDLocation(), lyrMetadata=lyr.lyrMetadata, 
-                        dataFormat=lyr.dataFormat, ogrType=lyr.ogrType, 
-                        valUnits=lyr.valUnits, valAttribute=lyr.valAttribute, 
-                        nodataVal=lyr.nodataVal, minVal=lyr.minVal, 
-                        maxVal=lyr.maxVal, mapunits=lyr.mapUnits, 
-                        resolution=lyr.resolution, bbox=lyr.bbox, 
-                        metadataUrl=lyr.metadataUrl, 
-                        parentMetadataUrl=mtx.metadataUrl, 
-                        modTime=lyr.statusModTime,
-                        processType=ProcessType.RAD_INTERSECT, 
-                        mtxcolMetadata={}, intersectParams={}, 
-                        status=JobStatus.GENERAL, statusModTime=modtime)
+            if mtx.matrixType == MatrixType.PAM:
+               ptype = ProcessType.INTERSECT_RASTER
+            else:
+               ptype = ProcessType.INTERSECT_RASTER_GRIM
+         else:
+            ptype = ProcessType.INTERSECT_VECTOR
+         mtxcol = MatrixColumn(-1, mtx.getId(), mtx.getUserId(), 
+                layer=lyr, shapegrid=None, intersectParams={}, 
+                colDLocation=None, squid=lyr.squid, ident=lyr.ident,
+                processType=ptype, metadata={}, matrixColumnId=None, 
+                status=JobStatus.GENERAL, statusModTime=modtime)
             
          newOrExistingMtxcol = self._borg.findOrInsertMatrixColumn(mtxcol)
          if JobStatus.finished(newOrExistingMtxcol.status):
