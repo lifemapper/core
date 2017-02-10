@@ -26,7 +26,7 @@ import os
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT, 
-                                         ProcessType)
+                                         ProcessType, JobStatus)
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject
@@ -590,66 +590,34 @@ class OccurrenceLayer(OccurrenceType, Vector):
       self.setFeatures(feats, featAttrs)
       return (minX, minY, maxX, maxY)
 
-# ...............................................
-   def compute(self):
-      """
-      @summary: Assemble command to create a shapefile from raw input
-      """
-      # NOTE: This may need to change to something else in the future, but for now,
-      #          we'll save a step and have the outputs written to their final 
-      #          location
-      dataPath, fname = os.path.split(self.getDLocation())
-      basename, ext = os.path.splitext(fname)
-      name = '{}-{}'.format(self.processType, self.getId())
-      statusTarget = "{}.status".format(name)
-      
-      options = {'-n' : name,
-                 '-o' : dataPath,
-                 '-l' : '{}.log'.format(name),
-                 '-s' : statusTarget }
-   
-      # Join arguments
-      args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
-      cmdArguments = [os.getenv('PYTHON'), 
-                      ProcessType.getJobRunner(self.processType), 
-                      self.getRawDLocation()]
-      if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-         cmdArguments.append(self.queryCount)
-      cmdArguments.extend([POINT_COUNT_MAX, basename, args])         
-      cmd = ' '.join(cmdArguments)
-      
-      rule = MfRule(cmd, [os.path.basename(fname), statusTarget])
-      
-      return rule
 
    # ................................
    def computeMe(self):
       """
       @summary: Assemble command to create a shapefile from raw input
       """
-      # NOTE: This may need to change to something else in the future, but for now,
-      #          we'll save a step and have the outputs written to their final 
-      #          location
-      dataPath, fname = os.path.split(self.getDLocation())
-      basename, ext = os.path.splitext(fname)
-      name = '{}-{}'.format(self.processType, self.getId())
-      statusTarget = "{}.status".format(name)
-      
-      options = {'-n' : name,
-                 '-o' : dataPath,
-                 '-l' : '{}.log'.format(name),
-                 '-s' : statusTarget }
-   
-      # Join arguments
-      args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
-      cmdArguments = [os.getenv('PYTHON'), 
-                      ProcessType.getJobRunner(self.processType), 
-                      self.getRawDLocation()]
-      if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-         cmdArguments.append(self.queryCount)
-      cmdArguments.extend([POINT_COUNT_MAX, basename, args])         
-      cmd = ' '.join(cmdArguments)
-      
-      rule = MfRule(cmd, [os.path.basename(fname), statusTarget])
-      
-      return [rule]
+      rules = []
+      if JobStatus.waiting(self.status): 
+         # NOTE: This may need to change to something else in the future, but for now,
+         #          we'll save a step and have the outputs written to their final 
+         #          location
+         outPath, fname = os.path.split(self.getDLocation())
+         basename, ext = os.path.splitext(fname)
+         name = '{}-{}'.format(self.processType, self.getId())
+         
+         options = {'-n' : name,
+                    '-o' : outPath,
+                    '-l' : '{}.log'.format(name) }
+         # Join arguments
+         args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+         cmdArguments = [os.getenv('PYTHON'), 
+                         ProcessType.getJobRunner(self.processType), 
+                         self.getRawDLocation()]
+         if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
+            cmdArguments.append(self.queryCount)
+         cmdArguments.extend([POINT_COUNT_MAX, basename, args])         
+         cmd = ' '.join(cmdArguments)
+         
+         rules.append(MfRule(cmd, [basename]))
+         
+      return rules

@@ -577,130 +577,157 @@ class SDMProjection(_ProjectionType, Raster):
       """
       return self._projScenario.layers
 
+#    # .............................................................................
+#    def _computeModel(self):
+#       """
+#       @summary: Generate a command to create a SDM model ruleset for this projection
+#       """
+#       # model depends on occurrenceSet
+#       #occRule = self._occurrenceSet.compute()
+#       occSetFn = self._occurrenceSet.getDLocation()
+#       # model input - XML request for model generation
+#       xmlRequestFname = self.getModelFilename(isResult=False)
+#       dataPath, fname = os.path.split(xmlRequestFname)
+#       
+#       if self.isATT() == 'ATT_MAXENT':
+#          ptype = ProcessType.ATT_MODEL
+#       else:
+#          ptype = ProcessType.OM_MODEL
+#          
+#       name = '{}-{}'.format(ptype, self.getModelTarget())
+#       statusTarget = "{}.status".format(name)
+# 
+#       options = {'-n' : name,
+#                  '-o' : dataPath,
+#                  '-l' : '{}.log'.format(name),
+#                  '-s' : statusTarget }
+#       # Join arguments
+#       args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+#    
+#       cmdArguments = [os.getenv('PYTHON'), ProcessType.getJobRunner(ptype), 
+#                       xmlRequestFname, args]
+#       cmd = ' '.join(cmdArguments)
+#       rule = MfRule(cmd, [statusTarget], dependencies=[occSetFn])
+#       
+#       return rule
+
+# # ...............................................
+#    def compute(self):
+#       """
+#       @summary: Generate a command to create a SDM projection
+#       """
+#       # projection depends on model
+#       modelRule = self._computeModel()
+#       
+#       xmlRequestFname = self.getProjRequestFilename()
+#       # projection output
+#       dataPath, fname = os.path.split(xmlRequestFname)
+#       name = '{}-{}'.format(self.processType, self.getId())
+#       statusTarget = "{}.status".format(name)
+#       
+#       options = {'-n' : name,
+#                  '-o' : dataPath,
+#                  '-l' : '{}.log'.format(name),
+#                  '-s' : statusTarget }   
+#       # Join arguments
+#       args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+#       
+#       cmdArguments = [os.getenv('PYTHON'), 
+#                       ProcessType.getJobRunner(self.processType), 
+#                       xmlRequestFname, args]
+#       cmd = ' '.join(cmdArguments)
+#       rule = MfRule(cmd, [statusTarget], dependencies=[modelRule])
+#       
+#       return rule
+
    # .............................................................................
-   def _computeModel(self):
+   def _computeMyModel(self):
       """
       @summary: Generate a command to create a SDM model ruleset for this projection
       """
-      # model depends on occurrenceSet
-      #occRule = self._occurrenceSet.compute()
-      occSetFn = self._occurrenceSet.getDLocation()
-      # model input - XML request for model generation
-      xmlRequestFname = self.getModelFilename(isResult=False)
-      dataPath, fname = os.path.split(xmlRequestFname)
-      
-      if self.isATT() == 'ATT_MAXENT':
-         ptype = ProcessType.ATT_MODEL
-      else:
-         ptype = ProcessType.OM_MODEL
-         
-      name = '{}-{}'.format(ptype, self.getModelTarget())
-      statusTarget = "{}.status".format(name)
+      rules = []
+      # Output
+      # TODO: Make sure this file is deleted on rollback  
+      rulesetFname = self.getModelFilename(isResult=True)
+      if not os.path.exists(rulesetFname):         
+         if self.isATT() == 'ATT_MAXENT':
+            ptype = ProcessType.ATT_MODEL
+         else:
+            ptype = ProcessType.OM_MODEL
+            
+         occRules = self._occurrenceSet.computeMe()
+         rules.extend(occRules)
 
-      options = {'-n' : name,
-                 '-o' : dataPath,
-                 '-l' : '{}.log'.format(name),
-                 '-s' : statusTarget }
-      # Join arguments
-      args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
+         occSetFname = self._occurrenceSet.getDLocation()
+         xmlRequestFname = self.getModelFilename(isResult=False)
+         outPath, fname = os.path.split(xmlRequestFname)
+         name = '{}-{}'.format(ptype, self.getModelTarget())
    
-      cmdArguments = [os.getenv('PYTHON'), ProcessType.getJobRunner(ptype), 
-                      xmlRequestFname, args]
-      cmd = ' '.join(cmdArguments)
-      rule = MfRule(cmd, [statusTarget], dependencies=[occSetFn])
+         options = {'-n' : name,
+                    '-o' : outPath,
+                    '-l' : '{}.log'.format(name) }
+         # Join arguments
+         args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
       
-      return rule
-
-# ...............................................
-   def compute(self):
-      """
-      @summary: Generate a command to create a SDM projection
-      """
-      # projection depends on model
-      modelRule = self._computeModel()
+         cmdArguments = [os.getenv('PYTHON'), ProcessType.getJobRunner(ptype), 
+                         xmlRequestFname, args]
+         cmd = ' '.join(cmdArguments)
+         rules.append(MfRule(cmd, [rulesetFname], dependencies=[occSetFname]))
       
-      xmlRequestFname = self.getProjRequestFilename()
-      # projection output
-      dataPath, fname = os.path.split(xmlRequestFname)
-      name = '{}-{}'.format(self.processType, self.getId())
-      statusTarget = "{}.status".format(name)
-      
-      options = {'-n' : name,
-                 '-o' : dataPath,
-                 '-l' : '{}.log'.format(name),
-                 '-s' : statusTarget }   
-      # Join arguments
-      args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
-      
-      cmdArguments = [os.getenv('PYTHON'), 
-                      ProcessType.getJobRunner(self.processType), 
-                      xmlRequestFname, args]
-      cmd = ' '.join(cmdArguments)
-      rule = MfRule(cmd, [statusTarget], dependencies=[modelRule])
-      
-      return rule
-
+      return rules
 
    # ......................................
    def computeMe(self):
       """
       """
       rules = []
-      rulesetFn = self.getModelFilename(isResult=False)
       
-      if not os.path.exists(rulesetFn):
-         # Need to create model rule
-         if self._occurrenceSet.status != JobStatus.COMPLETE:
-            # Need to create projection rule too
-            rules.extend(self._occurrenceSet.computeMe())
-         
-         modelRules = self._computeModel()
+      if JobStatus.waiting(self.status):
+         # ................................
+         # Model dependency
+         modelRules = self._computeMyModel()
          rules.extend(modelRules)
-      
-      # Need to generate a projection request file
-      prjReqFn = self.getProjRequestFilename()
-      dataPath, fname = os.path.split(prjReqFn)
-      
-      # Handle the partial request
-      partReqFn = "{0}.part".format(prjReqFn)
-      # TODO: This doesn't exist
-      self.writePartialProjectionRequest(partReqFn)
-      
-      # TODO: Add the projection request tool, this is an example
-      prjReqCmdArgs = [os.getenv('PYTHON'),
-                       "makeProjectionRequest.py",
-                       partReqFn,
-                       rulesetFn,
-                       prjReqFn
-                       ]
-      prjReqCmd = ' '.join(prjReqCmdArgs)
-      
-      prjReqRule = MfRule(prjReqCmd, [prjReqFn], 
-                          dependencies=[rulesetFn, partReqFn])
-      
-      # TODO: We may need to move this to the correct location
-      tiffTarget = self.getDLocation()
-      
-      # Need to generate a projection command
-      name = '{}-{}'.format(self.processType, self.getId())
-      statusTarget = "{}.status".format(name)
-      
-      options = {'-n' : name,
-                 '-o' : dataPath,
-                 '-l' : '{}.log'.format(name),
-                 '-s' : statusTarget }   
-      # Join arguments
-      args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
-      
-      cmdArguments = [os.getenv('PYTHON'), 
-                      ProcessType.getJobRunner(self.processType), 
-                      prjReqFn, args]
-      prjCmd = ' '.join(cmdArguments)
-      prjRule = MfRule(prjCmd, [tiffTarget, statusTarget], 
-                       dependencies=[prjReqFn])
-      
-      
-      rules.append(prjReqRule)
-      rules.append(prjRule)
+         modelFname = self.getModelFilename(isResult=True)
+         
+         # ................................
+         # Projection request file dependency
+         requestFname = self.getProjRequestFilename()
+         outPath, fname = os.path.split(requestFname)
+         # Partial projection request file
+         # TODO: Write the partial request (all but ruleset)
+         partialRequestFname = "{0}.part".format(requestFname)
+         self.writePartialProjectionRequest(partialRequestFname)
+         # TODO: Add the projection request tool, this points to
+         #       makeProjectionRequest.py in LmCompute/tools/single/ 
+         ptype = ProcessType.PROJECT_REQUEST
+         requestCmdArgs = [os.getenv('PYTHON'),
+                          ProcessType.getJobRunner(ptype),
+                          partialRequestFname,
+                          modelFname,
+                          requestFname ]
+         requestCmd = ' '.join(requestCmdArgs)
+         
+         requestRule = MfRule(requestCmd, [requestFname], 
+                              dependencies=[modelFname, partialRequestFname])
+         rules.append(requestRule)
+         
+         # ................................
+         # Projection rule
+         # TODO: We may need to move this to the correct location
+         tiffTarget = self.getDLocation()
+         name = '{}-{}'.format(self.processType, self.getId())         
+         options = {'-n' : name,
+                    '-o' : outPath,
+                    '-l' : '{}.log'.format(name) }   
+         # Join arguments
+         args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+         
+         cmdArguments = [os.getenv('PYTHON'), 
+                         ProcessType.getJobRunner(self.processType), 
+                         requestFname, args]
+         prjCmd = ' '.join(cmdArguments)
+         
+         prjRule = MfRule(prjCmd, [tiffTarget], dependencies=[requestFname])
+         rules.append(prjRule)
       return rules
    

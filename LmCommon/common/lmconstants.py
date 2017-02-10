@@ -647,9 +647,10 @@ class ProcessType:
    # SDM model
    ATT_MODEL = 110
    OM_MODEL = 210
-   # SDM model
+   # SDM project
    ATT_PROJECT = 120
    OM_PROJECT = 220
+   PROJECT_REQUEST = 105
    # Occurrences
    GBIF_TAXA_OCCURRENCE = 405
    BISON_TAXA_OCCURRENCE = 410
@@ -658,7 +659,7 @@ class ProcessType:
    # Intersect
    INTERSECT_RASTER = 230
    INTERSECT_VECTOR = 240
-   INTERSECT_RASTER_GRIM = 230
+   INTERSECT_RASTER_GRIM = 250
    # .........................
    # RAD
    # .........................
@@ -711,6 +712,8 @@ class ProcessType:
                jr = 'me_projection'
             elif ptype == ProcessType.OM_PROJECT:
                jr = 'om_projection'
+            elif ptype == ProcessType.PROJECT_REQUEST:
+               jr = 'makeProjectionRequest'
          
          # Intersect layer
          elif ProcessType.isIntersect(ptype):
@@ -795,8 +798,8 @@ class ProcessType:
       
    @staticmethod
    def projectTypes():
-      return [ProcessType.ATT_PROJECT, 
-              ProcessType.OM_PROJECT]
+      return [ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT, 
+              ProcessType.PROJECT_REQUEST]
       
    @staticmethod
    def isProject(ptype):
