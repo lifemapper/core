@@ -34,14 +34,15 @@ LmServer **archivistBorg** (LmDbServer.tools.archivistBorg) assembles jobs for
 computation from a configuration file created by initBoom.  Objects and related 
 makeflow document are recorded in the database.
 
-LmCompute **JobMediator** requests jobs, retrieves them, 
-sends them to SGE for computation, then returns them to LmServer.  Currently the
-JobMediator only communicates via http. 
-
-LmServer **JobManager** responds to requests for jobs, sending inputs and/or
-urls pointing to input data.  The JobManager also accepts completed 
-results, storing data on the filesystem and recording completed/error status 
-in the database.
+LmServer **MattDaemon** (LmServer.tootls.mattDaemon.py) pulls Makeflow documents
+from the database and manages a pool of Makeflow processes.  MattDaemon also 
+controls additional CC Tools binaries, catalog server (connecting piece between
+the Makeflow masters and the workers so they know how to find each other) and
+the work queue factory (monitors the number of running work queue workers and
+submits more when needed and kills off unneeded workers).  The workers are 
+submitted to SGE to run when the scheduler allows and they connect to the 
+Makeflow master processes to get the work to be done.  The Makeflow processes
+manage job dependencies for the workflows they are assigned.
 
 **************
 Data retrieval
@@ -212,4 +213,18 @@ algorithms provided by openModeller::
     CSMBS         | Climate Space Model - Broken-Stick Implementation
     ANN           | Artificial Neural Network
     
- 
+========================
+Running job computations
+========================
+
+Job computations are managed by the MattDaemon daemon script.  It controls the 
+active Makeflow processes and manages the Work Queue factory and Catalog Server
+processes that facilitate the computations.
+
+To run the MattDaemon, as user lmwriter do::
+
+    $ $PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py start
+
+To stop::
+
+    $ $PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py stop
