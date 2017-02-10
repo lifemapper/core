@@ -702,18 +702,12 @@ class ProcessType:
                jr = 'user_points'
          # SDM models
          elif ProcessType.isModel(ptype):
-            if ptype == ProcessType.ATT_MODEL:
-               jr = 'me_model'
-            elif ptype == ProcessType.OM_MODEL:
-               jr = 'om_model'
+            jr = 'sdmodel'
          # SDM projects
          elif ProcessType.isProject(ptype):
-            if ptype == ProcessType.ATT_PROJECT:
-               jr = 'me_projection'
-            elif ptype == ProcessType.OM_PROJECT:
-               jr = 'om_projection'
-            elif ptype == ProcessType.PROJECT_REQUEST:
-               jr = 'makeProjectionRequest'
+            jr = 'sdmproject'
+         elif ptype == ProcessType.PROJECT_REQUEST:
+            jr = 'makeProjectionRequest'
          
          # Intersect layer
          elif ProcessType.isIntersect(ptype):
@@ -798,8 +792,7 @@ class ProcessType:
       
    @staticmethod
    def projectTypes():
-      return [ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT, 
-              ProcessType.PROJECT_REQUEST]
+      return [ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT]
       
    @staticmethod
    def isProject(ptype):
