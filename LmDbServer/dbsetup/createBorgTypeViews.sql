@@ -172,7 +172,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
         WHERE l.layerid = sg.layerid;
 
 -- ----------------------------------------------------------------------------
--- lm_matrixlayer (MatrixColumn + Matrix)
+-- lm_matrixcolumn (MatrixColumn + Matrix + Gridset user/shapegrid ids)
 DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
 (
@@ -207,7 +207,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
              mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.matrixDlocation, 
              m.metadataUrl, m.metadata, m.status, m.statusmodtime,
-             g.userid
+             g.userid, g.layerid
         FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
         WHERE mc.matrixId = m.matrixId AND m.gridsetid = g.gridsetid;
 
@@ -558,7 +558,6 @@ lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixcolumn,
-lm_v3.lm_matrixlayer,
 lm_v3.lm_matrix,
 lm_v3.lm_gridset,
 lm_v3.lm_sdmProject, 
@@ -571,7 +570,6 @@ lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixcolumn,
-lm_v3.lm_matrixlayer,
 lm_v3.lm_matrix,
 lm_v3.lm_gridset,
 lm_v3.lm_sdmProject, 
