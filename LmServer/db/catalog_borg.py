@@ -40,6 +40,7 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
@@ -154,6 +155,19 @@ class Borg(DbPostgresql):
       except:
          alg = None
       return alg
+   
+# ...............................................
+   def _createMFChain(self, row, idxs):
+      mfchain = None
+      if row is not None:
+         mfchain = MFChain(self._getColumnValue(row, idxs, ['userid']), 
+                           self._getColumnValue(row, idxs, ['dlocation']), 
+                           self._getColumnValue(row, idxs, ['priority']), 
+                           self._getColumnValue(row, idxs, ['metadata']),
+                           self._getColumnValue(row, idxs, ['status']),
+                           self._getColumnValue(row, idxs, ['statusmodtime']), 
+                           self._getColumnValue(row, idxs, ['mfprocessid']))
+      return mfchain
    
 # ...............................................
    def _createScenario(self, row, idxs, isForModel=True):
@@ -1096,14 +1110,59 @@ class Borg(DbPostgresql):
       return newOrExistingMtx
 
 # ...............................................
-   def insertMFChain(self, usr, dlocation, priority, metadata, status):
+   def insertMFChain(self, mfchain):
       """
-      @summary: Inserts a Makeflow Chain (MFProcess) into database
-      @return: jobChainId
+      @summary: Inserts a MFChain into database
+      @return: updated MFChain object
       """
-      currtime = mx.DateTime.gmt().mjd
-      mfchain = self.executeInsertFunction('lm_insertMFChain', usr, 
-                                          dlocation, priority, metadata, status, 
-                                          currtime)
+      meta = mfchain.dumpMfMetadata()
+      row, idxs = self.executeInsertFunction('lm_insertMFChain', 
+                                             mfchain.getUserId(), 
+                                             mfchain.getDLocation(), 
+                                             mfchain.priority, 
+                                             meta, mfchain.status, 
+                                             mfchain.statusModTime)
+      mfchain = self._createMFChain(row, idxs)
       return mfchain
 
+# ...............................................
+   def findMFChains(self, count, userId, oldStatus, newStatus):
+      """
+      @summary: Retrieves MFChains from database, optionally filtered by status 
+                and/or user, updates their status
+      @param count: Number of MFChains to pull
+      @param userId: If not None, filter by this user 
+      @param oldStatus: Pull only MFChains at this status
+      @param newStatus: Update MFChains to this status
+      @return: list of MFChains
+      """
+      mfchainList = []
+      modtime = mx.DateTime.utc().mjd
+      rows, idxs = self.executeSelectManyFunction('lm_findMFChains', count, 
+                                                  userId, oldStatus, newStatus,
+                                                  modtime)
+      for r in rows:
+         mfchain = self._createMFChain(r, idxs)
+         mfchainList.append(mfchain)
+      return mfchainList
+      
+# ...............................................
+   def updateMFChain(self, mfchain):
+      """
+      @summary: Updates MFChain status and statusModTime in the database
+      @return: True/False for success of operation
+      """
+      success = self.executeModifyFunction('lm_updateMFChain', mfchain.objId,
+                                           mfchain.status, mfchain.statusModTime)
+      return success
+
+# ...............................................
+   def deleteMFChain(self, mfchain):
+      """
+      @summary: Deletes MFChain from database
+      @return: True/False for success of operation
+      """
+      success = self.executeModifyFunction('lm_deleteMFChain', mfchain.objId)
+      return success
+      
+      

@@ -428,12 +428,38 @@ class BorgScribe(LMObject):
       return objs
    
 # ...............................................
-   def insertMFChain(self, usr, dlocation, priority=None, metadata={}):
+   def insertMFChain(self, mfchain):
       """
-      @summary: Inserts a jobChain into database
-      @return: jobChainId
+      @copydoc LmServer.db.catalog_borg.Borg::insertMFChain()
       """
-      mfchain = self._borg.insertMFChain(usr, dlocation, priority, metadata, 
-                                         JobStatus.INITIALIZE)
-      return mfchain   
+      mfchain = self._borg.insertMFChain(mfchain)
+      return mfchain
+   
+# ...............................................
+   def findMFChains(self, count, userId=None):
+      """
+      @summary: Retrieves MFChains from database, optionally filtered by status 
+                and/or user, updates their status
+      @param count: Number of MFChains to pull
+      @param userId: If not None, filter by this user 
+      """
+      mfchainList = self._borg.findMFChains(count, userId, 
+                                 JobStatus.INITIALIZE, JobStatus.PULL_REQUESTED)
+      return mfchainList
+
+# ...............................................
+   def updateMFChain(self, mfchain):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::updateMFChain()
+      """
+      success = self._borg.updateMFChain(mfchain)
+      return success
+
+# ...............................................
+   def deleteMFChain(self, mfchain):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::deleteMFChain()
+      """
+      success = self.executeModifyFunction('lm_deleteMFChain', mfchain.objId)
+      return success
 

@@ -175,47 +175,6 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioKeyword(scenid int,
-                                                    kywd varchar)
-   RETURNS int AS
-$$
-DECLARE
-   success int := -1;
-   wdid int;
-   tmpid int;
-   poly varchar;
-BEGIN
-   -- insert keyword if it is not there 
-   SELECT k.keywordid INTO wdid FROM lm_v3.Keyword k WHERE k.keyword = kywd;
-   IF NOT FOUND THEN
-      INSERT INTO lm_v3.Keyword (keyword) VALUES (kywd);
-      IF FOUND THEN
-         SELECT INTO wdid last_value FROM lm_v3.keyword_keywordid_seq;
-      END IF;
-   END IF;
-   
-   IF FOUND THEN
-      BEGIN
-         SELECT sk.scenarioId INTO tmpid
-            FROM lm_v3.ScenarioKeywords sk
-            WHERE sk.scenarioId = scenid
-              AND sk.keywordId = wdid;
-         IF NOT FOUND THEN
-            INSERT INTO lm_v3.ScenarioKeywords (scenarioId, keywordId) VALUES (scenid, wdid);
-            IF FOUND THEN
-               success := 0;
-            END IF;
-         ELSE
-            success := 0;
-         END IF;
-      END;
-   END IF;
-   
-   RETURN success;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
 -- LmUser
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, 
@@ -675,7 +634,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_insertMFChain(usr varchar,
                                                   prior int,
                                                   meta text,  
                                                   stat int,
-                                                  currtime double precision)
+                                                  stattime double precision)
 RETURNS lm_v3.MFProcess AS
 $$
 DECLARE
@@ -692,6 +651,74 @@ BEGIN
 
    RETURN rec;
 
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findMFChains(total int, 
+                                                 usr varchar,
+                                                 oldstat int,
+                                                 newstat int,
+                                                 modtime double precision)
+RETURNS SETOF lm_v3.MFProcess AS
+$$
+DECLARE
+   rec lm_v3.MFProcess%ROWTYPE;
+   cmd varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm3.MFProcess WHERE status = ' || quote_literal(oldstat); 
+   limitcls = ' LIMIT ' || quote_literal(total);
+
+   IF usr IS NOT NULL THEN
+      cmd = cmd || ' AND userid = ' || quote_literal(usrid);
+   END IF;
+   
+   cmd := cmd || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         UPDATE lm3.MFProcess SET (status, statusmodtime) = (newstat, modtime)
+            WHERE mfProcessId = rec.mfProcessId;
+         rec.status = newstat;
+         rec.statusmodtime = modtime;
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateMFChain(mfid int, 
+                                                  stat int,
+                                                  modtime double precision)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+BEGIN
+   UPDATE lm3.MFProcess SET (status, statusmodtime) = (newstat, modtime)
+      WHERE mfProcessId = mfid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteMFChain(mfid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+BEGIN
+   DELETE FROM lm3.MFProcess WHERE mfProcessId = mfid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 

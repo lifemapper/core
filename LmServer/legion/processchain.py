@@ -21,10 +21,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import mx.DateTime
+# import mx.DateTime
 import os
 
-from LmServer.base.lmobj import LMObject
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType)
 # .........................................................................
@@ -36,28 +35,24 @@ class MFChain(ProcessObject):
    def __init__(self, userId, dlocation, priority, metadata,  
                 status, statusModTime, mfChainId):
       """
-      @summary Initialize the _ProjectionType class instance
-      @param algorithm: Algorithm object for SDM model process
-      @param modelScenario: : Scenario (environmental layer inputs) for 
-             SDM model process
-      @param modelMask: Mask for SDM model process
-      @param projScenario: Scenario (environmental layer inputs) for 
-             SDM project process
-      @param projMask: Mask for SDM project process
-      @param status: status of computation
-      @param statusModTime: Time stamp in MJD for status modification.
-      @param userId: Id for the owner of this projection
-      @param projectionId: The projectionId for the database.  
+      @summary Initialize a Makeflow chain process
+      @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
+      @param userId: Id for the owner of this process
+      @param dlocation:
+      @param priority:
+      @param metadata: Dictionary of metadata key/values; uses class or 
+                       superclass attribute constants META_* as keys
+      @param mfChainId: Database unique identifier
       """
-      if status is not None and statusModTime is None:
-         statusModTime = mx.DateTime.utc().mjd
+#       if status is not None and statusModTime is None:
+#          statusModTime = mx.DateTime.utc().mjd
       self._dlocation = dlocation
+      self._userId = userId
       self.priority = priority
       self.mfMetadata = {}
       self.loadMfMetadata(metadata)
-      ProcessObject.__init__(self, objId=None, processType=None, parentId=None,
-                             status=None, statusModTime=None)
-      
+      ProcessObject.__init__(self, objId=mfChainId, processType=None, parentId=None,
+                             status=status, statusModTime=statusModTime)
       
 # ...............................................
    def dumpMfMetadata(self):
@@ -113,3 +108,19 @@ class MFChain(ProcessObject):
       if self._dlocation is None and dlocation is None:
          dlocation = self.createLocalDLocation()
       self._dlocation = dlocation
+
+# ...............................................
+   def getUserId(self):
+      """
+      @summary Gets the User id
+      @return The User id
+      """
+      return self._userId
+
+   def setUserId(self, usr):
+      """
+      @summary: Sets the user id on the object
+      @param usr: The user id for the object
+      """
+      self._userId = usr
+
