@@ -774,27 +774,33 @@ class UserChainer(_LMChainer):
                             ProcessType.USER_TAXA_OCCURRENCE, 
                             dataCount, data=dataChunk)
       return objs
-
-#       if dataChunk:
-#          occ = self._createOrResetOccurrenceset(sciName, None, 
-#                                           ProcessType.USER_TAXA_OCCURRENCE,
-#                                           dataCount, data=dataChunk)
-#    
-#          # Create objs for Archive Chain: occurrence population, 
-#          # model, projection, and (later) intersect computation
-#          if occ is not None:
-#             objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
-#                                  self.modelScenario, self.projScenarios, 
-#                                  mdlMask=self.modelMask, projMask=self.projMask,
-#                                  occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-#                                  gridset=None,
-#                                  minPointCount=self.minPointCount)
-#             self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
-#                            len(objs), sciName.scientificName, len(dataChunk), 
-#                            occ.getId()))
-#       else:
-#          self.log.debug('No data in chunk')
-#       return objs
+      """
+      select * from lm_v3.lm_findOrInsertTaxon(NULL,NULL,'ryan',
+      'a0f5de0eabaa9f777f1a791491ecf1f501df5ac365f2b699a8f97b2455a55698',
+      NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Conimitella_williamsii',
+      NULL,NULL,NULL,NULL,57797.8363527);
+      
+      if dataChunk:
+         occ = self._createOrResetOccurrenceset(sciName, None, 
+                                          ProcessType.USER_TAXA_OCCURRENCE,
+                                          dataCount, data=dataChunk)
+    
+         # Create objs for Archive Chain: occurrence population, 
+         # model, projection, and (later) intersect computation
+         if occ is not None:
+            objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
+                                 self.modelScenario, self.projScenarios, 
+                                 mdlMask=self.modelMask, projMask=self.projMask,
+                                 occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
+                                 gridset=None,
+                                 minPointCount=self.minPointCount)
+            self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
+                           len(objs), sciName.scientificName, len(dataChunk), 
+                           occ.getId()))
+      else:
+         self.log.debug('No data in chunk')
+      return objs
+      """
 
 # ..............................................................................
 class GBIFChainer(_LMChainer):
@@ -1222,7 +1228,7 @@ from LmDbServer.boom.sdmchainer import *
 from LmDbServer.boom.boom import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.mtxcolumn import MatrixRaster
+from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.db.borgscribe import BorgScribe
 
 from LmDbServer.boom.boom import Archivist
@@ -1238,8 +1244,9 @@ tstArchiveName='Heuchera_archive'
  speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
                                                      archiveName=tstArchiveName)
 
+taxonSourceKeyVal = None
+occProcessType = ProcessType.USER_TAXA_OCCURRENCE
 expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
-taxname = TAXONOMIC_SOURCE[datasource]['name']
 log = ScriptLogger('testboomborg')
 
 boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens, 
@@ -1247,6 +1254,49 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                       mdlMask=None, prjMask=None, 
                       minPointCount=minPoints, 
                       intersectGrid=gridname, log=log)
+                      
+# ..............................................................................
+# Do this repeatedly to find a new taxa
+# ..............................................................................
+dataChunk, dataCount, taxonName  = boomer._getChunk()
+bbsciName = ScientificName(taxonName, userId=boomer.userid)
+sciName = boomer._scribe.findOrInsertTaxon(sciName=bbsciName)
+occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
+                  occProcessType, dataCount, data=dataChunk)
+# ..............................................................................
+
+# sciName = boomer._getInsertSciNameForUser(taxonName)
+# objs = boomer._processSDMChain(sciName, taxonSourceKeyVal, 
+#                    occProcessType, 
+#                    dataCount, data=dataChunk)
+# objs = boomer._scribe.initOrRollbackSDMChain(occ, boomer.algs, 
+#                   boomer.modelScenario, boomer.projScenarios, 
+#                   mdlMask=boomer.modelMask, projMask=boomer.projMask,
+#                   occJobProcessType=occProcessType, 
+#                   gridset=boomer.boomGridset,
+#                   minPointCount=boomer.minPointCount)
+#                   
+# select * from lm_v3.lm_findOrInsertMatrixColumn(NULL,NULL,1,-1,NULL,
+# '24f7eeef311d0cb6739250bc6b6a3108db61cfe9348e99817d4dd1baaefb81c4',
+# NULL,NULL,NULL,NULL,0,57797.9248472);
+
+(algList, mdlScen, prjScenList, mdlMask, projMask, gridset, 
+minPointCount) = (boomer.algs, boomer.modelScenario, boomer.projScenarios, 
+boomer.modelMask, boomer.projMask, boomer.boomGridset, boomer.minPointCount) 
+currtime = dt.gmt().mjd
+alg = algList[0]
+prjs = boomer._scribe.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
+                              mdlMask=mdlMask, projMask=projMask, 
+                              modtime=currtime)
+mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset.pam, currtime)
+lyr, mtx, modtime = prj, gridset.pam, currtime
+
+select * from lm_v3.lm_findOrInsertMatrixColumn(NULL,NULL,1,-1,NULL,
+'ee061c4364f1bfe9edf958e747be9ec99fea1e7166ff0a2f206986e751662631',
+NULL,NULL,NULL,NULL,0,57797.935034);
+                    
+# objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+boomer._createMakeflow(objs)
 
 
 # scribe = BorgScribe(log)
@@ -1258,6 +1308,15 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # gpam = scribe.getMatrix(mtx)
 
 # ...............................................
+tstUserId='ryan'
+tstArchiveName='Heuchera_archive'
+(user, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens,  
+ epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
+ bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
+ speciesExpYear, speciesExpMonth, 
+ speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
+                                                     archiveName=tstArchiveName)
+taxname = TAXONOMIC_SOURCE[datasource]['name']
 boomer = GBIFChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                    gbifOccFile, expdate, taxonSourceName=taxname,
                    providerListFile=gbifProvFile,
