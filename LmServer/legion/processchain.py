@@ -179,7 +179,7 @@ class MFChain(ProcessObject):
       self.headers.extend(headers)
    
    # ...........................
-   def write(self, filename):
+   def write(self, filename=None):
       """
       @summary: Write the document to the specified location
       @param filename: The file location to write this document
@@ -189,7 +189,8 @@ class MFChain(ProcessObject):
       """
       if not self.jobs:
          raise ValueError("No jobs to be computed, fail for empty document")
-
+      if filename is None:
+         filename = self._dlocation
       with open(filename, 'w') as outF:
          for header, value in self.headers:
             outF.write("{header}={value}\n".format(header=header, value=value))

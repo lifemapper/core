@@ -453,7 +453,7 @@ class _LMChainer(LMObject):
             raise e
    
          if occ:
-            # Create jobs for Archive Chain; 'reset' to existing occset will be 
+            # Create objs for Archive Chain; 'reset' to existing occset will be 
             # saved here
             try:
                objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
@@ -569,20 +569,20 @@ class BisonChainer(_LMChainer):
 
 # ...............................................
    def _processTsn(self, tsn, tsnCount):
-      jobs = []
+      objs = []
       if tsn is not None:
          sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
-         jobs = self._processSDMChain(sciName, tsn, 
+         objs = self._processSDMChain(sciName, tsn, 
                                ProcessType.BISON_TAXA_OCCURRENCE, 
                                tsnCount)
-      return jobs
+      return objs
          
 # ...............................................
    def chainOne(self):
       tsn, tsnCount = self._getTsnRec()
       if tsn is not None:
-         jobs = self._processTsn(tsn, tsnCount)
-#          self._createMakeflow(jobs)
+         objs = self._processTsn(tsn, tsnCount)
+         self._createMakeflow(objs)
          self.log.info('Processed tsn {}, with {} points; next start {}'
                        .format(tsn, tsnCount, self.nextStart))
 
@@ -639,8 +639,8 @@ class UserChainer(_LMChainer):
    @summary: Parses a CSV file (with headers) of Occurrences using a metadata 
              file.  A template for the metadata, with instructions, is at 
              LmDbServer/tools/occurrence.meta.example.  
-             The parser writes each new text chunk to a file, updates the 
-             Occurrence record and inserts one or more jobs.
+             The parser writes each new text chunk to a file, inserts or updates  
+             the Occurrence record and inserts any dependent objects.
    """
    def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
                 userOccCSV, userOccMeta, expDate, userOccDelimiter=',',
@@ -737,10 +737,8 @@ class UserChainer(_LMChainer):
    def chainOne(self):
       dataChunk, dataCount, taxonName  = self._getChunk()
       if dataChunk:
-#          sciName = self._getInsertSciNameForUser(taxonName)
-#          jobs = self._processInputSpecies(dataChunk, dataCount, sciName)
          objs = self._processUserChunk(dataChunk, dataCount, taxonName)
-#          self._createMakeflow(objs)
+         self._createMakeflow(objs)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
 
@@ -782,7 +780,7 @@ class UserChainer(_LMChainer):
 #                                           ProcessType.USER_TAXA_OCCURRENCE,
 #                                           dataCount, data=dataChunk)
 #    
-#          # Create jobs for Archive Chain: occurrence population, 
+#          # Create objs for Archive Chain: occurrence population, 
 #          # model, projection, and (later) intersect computation
 #          if occ is not None:
 #             objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
@@ -1022,7 +1020,7 @@ class GBIFChainer(_LMChainer):
 class iDigBioChainer(_LMChainer):
    """
    @summary: Parses an iDigBio provided file of GBIF Taxon ID, count, binomial, 
-             creating a chain of SDM jobs for each, unless the species is 
+             creating a chain of SDM objs for each, unless the species is 
              up-to-date. 
    """
    def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
@@ -1054,8 +1052,8 @@ class iDigBioChainer(_LMChainer):
    def chainOne(self):
       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
       if taxonKey:
-         jobs = self._processInputGBIFTaxonId(taxonKey, taxonCount)
-#          self._createMakeflow(jobs)
+         objs = self._processInputGBIFTaxonId(taxonKey, taxonCount)
+         self._createMakeflow(objs)
          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
                        .format(taxonKey, taxonName, taxonCount, self.nextStart))
 
@@ -1152,13 +1150,13 @@ class iDigBioChainer(_LMChainer):
          
 # ...............................................
    def _processInputGBIFTaxonId(self, taxonKey, taxonCount):
-      jobs = []
+      objs = []
       if taxonKey is not None:
          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
-         jobs = self._processSDMChain(sciName, taxonKey, 
+         objs = self._processSDMChain(sciName, taxonKey, 
                                ProcessType.IDIGBIO_TAXA_OCCURRENCE,
                                taxonCount, self.minPointCount)
-      return jobs
+      return objs
 
 # .............................................................................
 # .............................................................................
@@ -1290,8 +1288,8 @@ mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gpam, currtime)
 
 
 
-jobs = boomer._processGBIFChunk(speciesKey, dataCount, dataChunk)
-self._createMakeflow(jobs)
+objs = boomer._processGBIFChunk(speciesKey, dataCount, dataChunk)
+self._createMakeflow(objs)
 
 
 dataChunk, dataCount, taxonName  = boomer._getChunk()
@@ -1299,7 +1297,7 @@ occ = boomer._createOrResetOccurrenceset(taxonName, None,
                                        ProcessType.USER_TAXA_OCCURRENCE,
                                        dataCount, data=dataChunk)
 
-jobs = boomer._scribe.initOrRollbackSDMChain(occ, boomer.algs, 
+objs = boomer._scribe.initOrRollbackSDMChain(occ, boomer.algs, 
                           boomer.modelScenario, 
                           boomer.projScenarios, 
                           occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
