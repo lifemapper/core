@@ -5,7 +5,7 @@
 @version: 3.0.0
 
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -28,6 +28,10 @@
 @todo: Add convert tool to config
 @todo: Use verify module
 @todo: Skip if exists
+
+@todo: Alphabetize
+
+
 """
 from hashlib import md5
 from mx.DateTime import gmt
@@ -460,6 +464,7 @@ class LayerManager(object):
                   createAtt=SchemaMetadata.CREATE_TIME_ATTRIBUTE,
                   createTime=gmt().mjd))
    
+   # .................................
    def getDbMetadata(self):
       """
       @summary: Gets the database metadata.  At first this will be schema 
@@ -529,6 +534,50 @@ class LayerManager(object):
          if os.path.exists(fn):
             os.remove(fn)
 
+   # .................................
+   def processLayersJSON(self, layerJSON, layerFormat=LayerFormat.GTIFF, 
+                         symDir=None):
+      """
+      @summary: Process layer JSON and return a list of file names and 
+                   a mask filename
+      @param layerJSON: A JSON object with an entry for layers (list) and a 
+                           mask.  Each layer should be an object with an 
+                           identifier and / or url
+      @param layerFormat: The format for the returned layer file names
+      @param symDir: If provided, symbolically link the layers in this 
+                        directory
+      @note: Assumes that layerJSON is an object with layers and mask
+      @todo: Use constants
+      """
+      layers = []
+      for lyrObj in layerJSON['layers']:
+         lyrId = None
+         lyrUrl = None
+
+         if lyrObj.has_key('identifier'):
+            lyrId = lyrObj['identifier']
+         
+         if lyrObj.has_key('url'):
+            lyrUrl = lyrObj['url']
+         layers.append(self.getLayerFilename(lyrId, layerFormat, lyrUrl))
+      maskId = None
+      maskUrl = None
+      if layerJSON['mask'].has_key(['identifier']):
+         maskId = layerJSON['mask']['identifier']
+      if layerJSON['mask'].has_key('url'):
+         maskUrl = layerJSON['mask']['url']
+      maskFn = self.getLayerFilename(maskId, layerFormat, maskUrl)
+      
+      if symDir is not None:
+         newLayers = []
+         for i in range(len(layers)):
+            newFn = os.path.join(symDir, "layer{0}{1}".format(i, layerFormat))
+            os.symlink(layers[i], newFn)
+            newLayers.append(newFn)
+         newMaskFn = os.path.join(symDir, "mask{1}".format(layerFormat))
+         return newLayers, newMaskFn
+      else:
+         return layers, maskFn
 # .............................................................................
 def convertAndModifyAsciiToTiff(ascFn, tiffFn, scale=None, multiplier=None,
                                 noDataVal=127, dataType='int'):
