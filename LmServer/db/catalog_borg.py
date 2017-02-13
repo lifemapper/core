@@ -161,12 +161,13 @@ class Borg(DbPostgresql):
       mfchain = None
       if row is not None:
          mfchain = MFChain(self._getColumnValue(row, idxs, ['userid']), 
-                           self._getColumnValue(row, idxs, ['dlocation']), 
-                           self._getColumnValue(row, idxs, ['priority']), 
-                           self._getColumnValue(row, idxs, ['metadata']),
-                           self._getColumnValue(row, idxs, ['status']),
-                           self._getColumnValue(row, idxs, ['statusmodtime']), 
-                           self._getColumnValue(row, idxs, ['mfprocessid']))
+                     dlocation=self._getColumnValue(row, idxs, ['dlocation']), 
+                     priority=self._getColumnValue(row, idxs, ['priority']), 
+                     metadata=self._getColumnValue(row, idxs, ['metadata']),  
+                     status=self._getColumnValue(row, idxs, ['status']), 
+                     statusModTime=self._getColumnValue(row, idxs, 
+                                                        ['statusmodtime']), 
+                     mfChainId=self._getColumnValue(row, idxs, ['mfprocessid']))
       return mfchain
    
 # ...............................................

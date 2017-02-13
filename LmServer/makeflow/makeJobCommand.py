@@ -43,56 +43,7 @@ COMMON_SCRIPTS_PATH = os.path.join(APP_PATH, 'LmCompute/tools/common')
 #                with LmCompute
 #   """
 #   pass
-
-def makeCommand(obj):
-   """
-   @summary: Assemble command for different processes
-   # .......... SDM ..........
-   ATT_MODEL = 110
-   ATT_PROJECT = 120
-   OM_MODEL = 210
-   OM_PROJECT = 220
-   # .......... RAD ..........
-   RAD_BUILDGRID = 305
-   RAD_INTERSECT = 310
-   RAD_COMPRESS = 320
-   RAD_SWAP = 331
-   RAD_SPLOTCH = 332
-   RAD_GRADY = 333
-   RAD_CALCULATE = 340
-   # .......... Occurrences ..........
-   GBIF_TAXA_OCCURRENCE = 405
-   BISON_TAXA_OCCURRENCE = 410
-   IDIGBIO_TAXA_OCCURRENCE = 415
-   # .......... User-defined ..........
-   USER_TAXA_OCCURRENCE = 420
-   # .......... Notify ..........
-   SMTP = 510
-   """
-   ptype = obj.processType
-   if ProcessType.isOccurrence(ptype):
-      if ptype == ProcessType.GBIF_TAXA_OCCURRENCE:
-         makeGbifOccurrenceSetCommand(obj)
-      elif ptype == ProcessType.BISON_TAXA_OCCURRENCE:
-         makeBisonOccurrenceSetCommand(obj)
-      elif ptype == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-         makeIdigbioOccurrenceSetCommand(obj)
-      elif ptype == ProcessType.USER_TAXA_OCCURRENCE:
-         make
-   
-   elif ProcessType.isSDM(ptype):
-      if ptype == ProcessType.ATT_PROJECT:
-         mfdoc.addMaxentProjection(o)
-      elif ptype == ProcessType.OM_PROJECT:
-         mfdoc.addOmProjection(o)
-   
-   elif ptype == ProcessType.RAD_INTERSECT:
-      mfdoc.addIntersect(o)
-         
-   elif ProcessType.isRAD(ptype):
       
-   
-
 def makeBisonOccurrenceSetCommand(occ):
    """
    @summary: Assemble command to fill in BISON points

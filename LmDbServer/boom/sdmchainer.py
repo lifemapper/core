@@ -47,7 +47,9 @@ from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.processchain import MFChain
 from LmServer.makeflow.documentBuilder import LMMakeflowDocument
+
 from LmServer.notifications.email import EmailNotifier
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
@@ -315,39 +317,21 @@ class _LMChainer(LMObject):
       
 # ...............................................
    def _createMakeflow(self, objs):
-      mfchainId = filename = None
-      if objs:
-         mfdoc = LMMakeflowDocument()
-         for o in objs:
-            if filename is None:
-               filename = o.makeflowFilename
-               
-            if o.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
-               mfdoc.addGbifOccurrenceSet(o)
-            elif o.processType == ProcessType.BISON_TAXA_OCCURRENCE:
-               mfdoc.addBisonOccurrenceSet(o)
-            elif o.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-               mfdoc.addIdigbioOccurrenceSet(o)
-            elif o.processType == ProcessType.USER_TAXA_OCCURRENCE:
-               mfdoc.addUserOccurrenceSet(o)
-            elif o.processType == ProcessType.ATT_PROJECT:
-               mfdoc.addMaxentProjection(o)
-            elif o.processType == ProcessType.OM_PROJECT:
-               mfdoc.addOmProjection(o)
-            elif o.processType == ProcessType.RAD_INTERSECT:
-               mfdoc.addIntersect(o)
-               
-         self.log.info('Writing makeflow document {} ...'.format(filename))
-         success = mfdoc.write(filename)
-         if not success:
-            self.log.error('Failed to write {}'.format(filename))
-          
+      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
+      mfchain = MFChain(self.userid, priority=self.priority, 
+                        metadata=meta, status=JobStatus.INITIALIZE, 
+                        statusModTime=dt.gmt().mjd)
+      for o in objs:
          try:
-            jobchainId = self._scribe.insertJobChain(self.userid, filename, self.priority)
+            rules = o.compute()
+            mfchain.addCommands(rules)
          except Exception, e:
-            raise LMError(currargs='Failed to insert jobChain for {}; ({})'
-                          .format(filename, e))
-      return jobchainId
+            self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
+                                                                     str(e)))
+      mfchain.write()
+      
+      updatedMFChain = self._scribe.insertMFChain(mfchain)
+      return updatedMFChain
 
 # ...............................................
    def chainOne(self):

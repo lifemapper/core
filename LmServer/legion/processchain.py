@@ -21,31 +21,33 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-# import mx.DateTime
-import os
-
-from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMFileType)
+from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.common.lmconstants import LMFileType
+from LmServer.makeflow.cmd import MfRule
 # .........................................................................
 class MFChain(ProcessObject):
 # .............................................................................
-   """
-   """
+   META_CREATED_BY = 'createdBy'
 # .............................................................................
-   def __init__(self, userId, dlocation, priority, metadata,  
-                status, statusModTime, mfChainId):
+   def __init__(self, userId, dlocation=None, priority=None, metadata=None,  
+                status=None, statusModTime=None, headers=None, mfChainId=None):
       """
-      @summary Initialize a Makeflow chain process
+      @summary Class used to generate a Makeflow document with Lifemapper 
+               computational jobs
       @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
       @param userId: Id for the owner of this process
-      @param dlocation:
-      @param priority:
+      @param dlocation: location for Makeflow file
+      @param priority: relative priority for jobs contained within
       @param metadata: Dictionary of metadata key/values; uses class or 
                        superclass attribute constants META_* as keys
+      @param headers: Optional list of (header, value) tuples
       @param mfChainId: Database unique identifier
       """
-#       if status is not None and statusModTime is None:
-#          statusModTime = mx.DateTime.utc().mjd
+      self.jobs = []
+      self.targets = []
+      self.headers = []
+      if headers is not None:
+         self.addHeaders(headers)
       self._dlocation = dlocation
       self._userId = userId
       self.priority = priority
@@ -71,22 +73,21 @@ class MFChain(ProcessObject):
 # .............................................................................
 # Superclass methods overridden
 ## .............................................................................
-   def setId(self, lyrid):
+   def setId(self, mfid):
       """
       @summary: Sets the database id on the object, and sets the 
-                SDMProjection.mapPrefix of the file if it is None.
-      @param id: The database id for the object
+                dlocation of the file if it is None.
+      @param mfid: The database id for the object
       """
-      ServiceObject.setId(self, lyrid)
-      if lyrid is not None:
-         self.name = self._earlJr.createLayername(projId=lyrid)
-         if self._dlocation is None:
-            filename = self.createLocalDLocation()
-            if os.path.exists(filename):
-               self._dlocation = filename
-         
-         self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
-         self._setMapPrefix()
+      self.objId = mfid
+      self.setDLocation()
+
+   def getId(self):
+      """
+      @summary Returns the database id from the object table
+      @return integer database id of the object
+      """
+      return self.objId
    
 # ...............................................
    def createLocalDLocation(self):
@@ -94,7 +95,7 @@ class MFChain(ProcessObject):
       @summary: Create data location
       """
       dloc = None
-      if self.getId() is not None:
+      if self.objId is not None:
          dloc = self._earlJr.createFilename(LMFileType.MF_DOCUMENT, 
                                        mfchainId=self.objId, usr=self._userId)
       return dloc
@@ -124,3 +125,75 @@ class MFChain(ProcessObject):
       """
       self._userId = usr
 
+   # ...........................
+   def _addJobCommand(self, outputs, cmd, dependencies=[], comment=''):
+      """
+      @summary: Adds a job command to the document
+      @param outputs: A list of output files created by this job
+      @param cmd: The command to execute
+      @param dependencies: A list of dependencies (files that must exist before 
+                              this job can run
+      """
+      job = "# {comment}\n{outputs}: {dependencies}\n   {cmd}\n".format(
+         outputs=' '.join(outputs), 
+         cmd=cmd, comment=comment, 
+         dependencies=' '.join(dependencies))
+      self.jobs.append(job)
+      # Add the new targets to self.targets
+      self.targets.extend(outputs)
+   
+   # ...........................
+   def addCommands(self, ruleList):
+      """
+      @summary: Adds a list of commands to the Makeflow document
+      @param ruleList: A list of MfRule objects
+      """
+      # Check if this is just a single tuple, if so, make it a list
+      if isinstance(ruleList, MfRule):
+         ruleList = [ruleList]
+         
+      # For each tuple in the list
+      for rule in ruleList:
+         deps = rule.dependencies
+         targets = rule.targets
+         cmd = rule.command
+         comment = rule.comment
+
+         # Check to see if these targets are already defined by creating a new
+         #    list of targets that are not in self.targets
+         newTargets = [t for t in targets if t not in self.targets]
+         
+         # If there are targets that have not been defined before
+         if len(newTargets) > 0:
+            self._addJobCommand(newTargets, cmd, dependencies=deps, 
+                                comment=comment)
+   
+   # ...........................
+   def addHeaders(self, headers):
+      """
+      @summary: Adds headers to the document
+      @param headers: A list of (header, value) tuples
+      """
+      if isinstance(headers, tuple):
+         headers = [headers]
+      self.headers.extend(headers)
+   
+   # ...........................
+   def write(self, filename):
+      """
+      @summary: Write the document to the specified location
+      @param filename: The file location to write this document
+      @raise ValueError: If no jobs exist to be computed (list is right type, 
+                            empty is bad value)
+      @note: May fail with IOError if there is a problem writing to a location
+      """
+      if not self.jobs:
+         raise ValueError("No jobs to be computed, fail for empty document")
+
+      with open(filename, 'w') as outF:
+         for header, value in self.headers:
+            outF.write("{header}={value}\n".format(header=header, value=value))
+         for job in self.jobs:
+            # These have built-in newlines
+            outF.write(job) 
+      
