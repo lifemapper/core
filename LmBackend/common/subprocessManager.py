@@ -27,7 +27,7 @@
           02110-1301, USA.
 """
 
-from subprocess import Popen
+from subprocess import Popen, PIPE
 from time import sleep
 import multiprocessing
 CONCURRENT_PROCESSES = max(1, multiprocessing.cpu_count() - 2)
@@ -122,3 +122,42 @@ class SubprocessManager(object):
             self._runningProcs[idx] = None
       self._runningProcs = filter(None, self._runningProcs)
       return numRunning
+
+# .............................................................................
+class SubprocessRunner(object):
+   """
+   @summary: This class manages a subprocess
+   """
+   # .............................
+   def __init__(self, cmd, waitSeconds=WAIT_TIME):
+      """
+      @summary: Constructor for single command runner
+      @param cmd: The command to run
+      @param waitSeconds: The number of seconds to wait between polls
+      """
+      self.cmd = cmd
+      self.waitTime = waitSeconds
+   
+   # .............................
+   def run(self):
+      """
+      @summary: Run the command
+      @return: exit status code, standard error
+      """
+      stdErr = None
+      myProc = Popen(self.cmd, shell=True, stderr=PIPE)
+      self._wait()
+      while myProc.poll() is not None:
+         self._wait()
+      # Get output
+      exitCode = myProc.poll()
+      if myProc.stderr is not None:
+         stdErr = myProc.stderr.read()
+      return exitCode, stdErr
+   
+   # .............................
+   def _wait(self):
+      """
+      @summary: Sleeps the specified amount of time
+      """
+      sleep(self.waitTime)
