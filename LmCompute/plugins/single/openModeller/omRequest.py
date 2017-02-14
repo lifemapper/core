@@ -8,7 +8,7 @@
 @note: Possibly backwards compatible
 
 @license: gpl2
-@copyright: Copyright (C) 2016, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -29,14 +29,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import ListType
+from LmCommon.common.lmXml import (Element, SubElement, fromstring, tostring)
 
-from LmCommon.common.lmXml import (Element, SubElement, fromstring, 
-                                   tostring)
-
-from LmCompute.common.layerManager import LayerManager
-from LmCompute.common.lmconstants import LayerFormat
-from LmCompute.plugins.sdm.openModeller.constants import DEFAULT_FILE_TYPE 
+from LmCompute.plugins.single.openModeller.constants import DEFAULT_FILE_TYPE 
 
 # .............................................................................
 class OmRequest(object):
@@ -59,12 +54,18 @@ class OmModelRequest(OmRequest):
    """
    
    # .................................
-   def __init__(self, model, dataDir):
+   def __init__(self, points, pointsLabel, coordSys, layerFns, algoJson, 
+                maskFn=None):
       """
       @summary: openModeller model request constructor
-      @param model: The model object to use
-      @param dataDir: The directory to store layers in
+      @param points: A list of point (id, x, y) tuples
+      @param pointsLabel: A label for these points (taxon name)
+      @param coordSys: WKT representing the coordinate system of the points
+      @param layerFns: A list of layer file names
+      @param algoJson: A JSON dictionary of algorithm parameters
+      @param maskFn: A mask file name (could be None)
       @todo: Take options and statistic options as inputs
+      @todo: Constants
       """
       self.options = [
                   #("OccurrencesFilter", "SpatiallyUnique"), # Ignore duplicate points (same coordinates)
@@ -81,41 +82,13 @@ class OmModelRequest(OmRequest):
                                         }
                  }
 
-      self.lyrs = []
-      
-      lyrMgr = LayerManager(dataDir)
-      for lyr in model.layers:
-         try:
-            lyrUrl = lyr.layerUrl
-         except:
-            lyrUrl = None
-         self.lyrs.append(lyrMgr.getLayerFilename(lyr.identifier, 
-                                          LayerFormat.GTIFF, layerUrl=lyrUrl))
-
-      try:
-         try:
-            maskUrl = model.mask.layerUrl
-         except:
-            maskUrl = None
-         
-         self.mask = lyrMgr.getLayerFilename(model.mask.identifier, 
-                                             LayerFormat.GTIFF, 
-                                             layerUrl=maskUrl)
-      except:
-         if len(self.lyrs) > 0:
-            self.mask = self.lyrs[0]
-         else:
-            self.mask = ""
-      lyrMgr.close()
-      self.model = model
-      
-      if model.algorithm.parameter is not None:
-         if isinstance(model.algorithm.parameter, ListType):
-            self.algoParams = model.algorithm.parameter
-         else:
-            self.algoParams = [model.algorithm.parameter]
-      else:
-         self.algoParams = []
+      self.points = points
+      self.pointsLabel = pointsLabel
+      self.csWKT = coordSys
+      self.layerFns = layerFns
+      self.algoCode = algoJson['algorithmCode']
+      self.algoParams = algoJson['parameters']
+      self.maskFn = maskFn
       
    # .................................
    def generate(self):
@@ -129,26 +102,26 @@ class OmModelRequest(OmRequest):
       # Sampler Element
       samplerEl = SubElement(reqEl, "Sampler")
       envEl = SubElement(samplerEl, "Environment", 
-                                  attrib={"NumLayers": str(len(self.lyrs))})
-      for lyr in self.lyrs:
-         SubElement(envEl, "Map", attrib={"Id": lyr, "IsCategorical": "0"})
-      SubElement(envEl, "Mask", attrib={"Id": self.mask})
+                                 attrib={"NumLayers": str(len(self.layerFns))})
+      for lyrFn in self.layerFns:
+         SubElement(envEl, "Map", attrib={"Id": lyrFn, "IsCategorical": "0"})
+      if self.maskFn is not None:
+         SubElement(envEl, "Mask", attrib={"Id": self.maskFn})
       
       presenceEl = SubElement(samplerEl, "Presence", 
-                              attrib={"Label": self.model.points.displayName})
-      SubElement(presenceEl, "CoordinateSystem", value=self.model.points.wkt)
-      for pt in self.model.points.point:
-         SubElement(presenceEl, "Point", attrib={"Id": pt.id, 
-                                                  "X": pt.x, 
-                                                  "Y": pt.y})
+                                          attrib={"Label": self.pointsLabel})
+      SubElement(presenceEl, "CoordinateSystem", value=self.csWKT)
+      
+      for ptId, x, y in self.points:
+         SubElement(presenceEl, "Point", attrib={"Id": ptId, "X": x, "Y": y})
 
       # Algorithm Element
-      algoEl = SubElement(reqEl, "Algorithm", 
-                          attrib={"Id": self.model.algorithm.code})
+      algoEl = SubElement(reqEl, "Algorithm", attrib={"Id": self.algoCode})
+      
       algoParamsEl = SubElement(algoEl, "Parameters")
       for param in self.algoParams:
          SubElement(algoParamsEl, "Parameter", 
-                    attrib={"Id": param.id, "Value": param.value})
+                    attrib={"Id": param["name"], "Value": param["value"]})
       
       # Options Element
       optionsEl = SubElement(reqEl, "Options")
@@ -173,43 +146,22 @@ class OmProjectionRequest(OmRequest):
    """
    
    # .................................
-   def __init__(self, projection, dataDir):
+   def __init__(self, rulesetFn, layerFns, maskFn=None):
       """
       @summary: Constructor for OmProjectionRequest class
-      @param projection: The projection object to use
-      @param dataDir: The directory to store layers in
+      @param rulesetFn: A ruleset file generated by a model
+      @param layerFns: A list of layers to project the ruleset on to
+      @param maskFn: An optional mask layer for the projection
       """
-      self.lyrs = []
+      self.layerFns = layerFns
+      self.maskFn = maskFn
       
-      lyrMgr = LayerManager(dataDir)
-      for lyr in projection.layers:
-         try:
-            lyrUrl = lyr.layerUrl
-         except:
-            lyrUrl = None
-         self.lyrs.append(lyrMgr.getLayerFilename(lyr.identifier, 
-                                          LayerFormat.GTIFF, layerUrl=lyrUrl))
-
-      try:
-         try:
-            maskUrl = projection.mask.layerUrl
-         except:
-            maskUrl = None
-         
-         self.mask = lyrMgr.getLayerFilename(projection.mask.identifier, 
-                                             LayerFormat.GTIFF, 
-                                             layerUrl=maskUrl)
-      except:
-         if len(self.lyrs) > 0:
-            self.mask = self.lyrs[0]
-         else:
-            self.mask = ""
-      lyrMgr.close()
-      
-      self.algorithmSection = projection.algorithm
-      self.layers = self.lyrs
-      self.fileType = DEFAULT_FILE_TYPE
-      self.templateLayer = self.mask
+      # Get the algorithm section out of the ruleset
+      with open(rulesetFn) as rulesetIn:
+         ruleset = rulesetIn.read()
+         mdlEl = fromstring(ruleset)
+         # Find the algorithm element, and pull it out
+         self.algEl = mdlEl.find("Algorithm")
       
    # .................................
    def generate(self):
@@ -219,19 +171,23 @@ class OmProjectionRequest(OmRequest):
       """
       reqEl = Element("ProjectionParameters")
       # Append algorithm section
-      reqEl.append(fromstring(self.algorithmSection))
+      reqEl.append(self.algEl)
       
       # Environment section
       envEl = SubElement(reqEl, "Environment",  
-                         attrib={"NumLayers": str(len(self.layers))})
-      for lyr in self.layers:
-         SubElement(envEl, "Map", attrib={"Id": lyr, "IsCategorical": "0"})
-      SubElement(envEl, "Mask", attrib={"Id": self.mask})
+                         attrib={"NumLayers": str(len(self.layerFns))})
+      for lyrFn in self.layerFns:
+         SubElement(envEl, "Map", attrib={"Id": lyrFn, "IsCategorical": "0"})
+      
+      if self.maskFn is None:
+         self.maskFn = self.layerFns[0]
+
+      SubElement(envEl, "Mask", attrib={"Id": self.maskFn})
       
       # OutputParameters Element
       opEl = SubElement(reqEl, "OutputParameters",  
-                                         attrib={"FileType": self.fileType})
-      SubElement(opEl, "TemplateLayer", attrib={"Id": self.templateLayer})
+                                         attrib={"FileType": DEFAULT_FILE_TYPE})
+      SubElement(opEl, "TemplateLayer", attrib={"Id": self.maskFn})
       
       return tostring(reqEl)
 
