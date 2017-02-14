@@ -69,10 +69,7 @@ class MFChain(ProcessObject):
       self.mfMetadata = super(MFChain, self)._addMetadata(newMetadataDict, 
                                   existingMetadataDict=self.mtxColMetadata)
 
-
-# .............................................................................
-# Superclass methods overridden
-## .............................................................................
+# ...............................................
    def setId(self, mfid):
       """
       @summary: Sets the database id on the object, and sets the 
@@ -82,6 +79,7 @@ class MFChain(ProcessObject):
       self.objId = mfid
       self.setDLocation()
 
+# ...............................................
    def getId(self):
       """
       @summary Returns the database id from the object table
@@ -89,6 +87,9 @@ class MFChain(ProcessObject):
       """
       return self.objId
    
+# .............................................................................
+# Superclass methods overridden
+## .............................................................................
 # ...............................................
    def createLocalDLocation(self):
       """
@@ -106,9 +107,17 @@ class MFChain(ProcessObject):
       return self._dlocation
 
    def setDLocation(self, dlocation=None):
-      if self._dlocation is None and dlocation is None:
-         dlocation = self.createLocalDLocation()
-      self._dlocation = dlocation
+      """
+      @note: Does NOT override existing dlocation, use clearDLocation for that
+      """
+      if self._dlocation is None:
+         if dlocation is None:
+            dlocation = self.createLocalDLocation()
+         self._dlocation = dlocation
+
+   def clearDLocation(self): 
+      self._dlocation = None
+
 
 # ...............................................
    def getUserId(self):

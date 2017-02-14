@@ -54,7 +54,7 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import (JobStatus, OutputFormat)
+from LmCommon.common.lmconstants import (JobStatus, OutputFormat, MatrixType)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
                                             SCRATCH_PATH, TEMP_PATH, PID_PATH,
                                             DEFAULT_EPSG)
@@ -345,30 +345,31 @@ class LMFileType:
    UNSPECIFIED_RAD = 200
    ATTR_MATRIX = 210    # not yet used
    ATTR_TREE = 211     # TODO: delete
-   # Bucket level
-   BUCKET_MAP = 221     # TODO: delete
    # Matrices
    PAM = 222
    GRIM = 223
-   # Species and Site indices  
-   PRESENCE_INDICES = 225     # TODO: delete
    # PamSum level
    # Calculations on PAM (Original or Randomized Swap)
-   COMPRESSED_PAM = 240     # TODO: delete
    SUM_CALCS = 241
    SUM_SHAPE = 242
-   # Randomized Splotch  PamSums
-   SPLOTCH_PAM = 243     # TODO: delete
-   SPLOTCH_SITES = 244     # TODO: delete
    # ..............................
-   # New Borg, Associated with RAD Experiment
+   # New Borg, Associated with RAD Gridset
    # Matrix
+   # User level
    BIOGEO_HYPOTHESES = 322
-   # Associated with an Experiment-Matrix
+   # Associated with RAD Gridset
+   PADDED_PAM = 323
+   MCPA_OUTPUTS = 324
+   # Associated with an Gridset-Matrix
    MATRIX_COLUMN = 340
+   # TODO: delete   
    LAYER_INDICES = 350
-   # Experiment wide
-   SITE_INDICES = 360
+   SITE_INDICES = 360 
+   BUCKET_MAP = 221
+   COMPRESSED_PAM = 240
+   PRESENCE_INDICES = 225
+   SPLOTCH_PAM = 243
+   SPLOTCH_SITES = 244
    
    @staticmethod
    def isSDM(rtype):
@@ -428,17 +429,23 @@ class LMFileType:
 
    @staticmethod
    def isMatrix(rtype):
-      if rtype in [LMFileType.UNSPECIFIED_RAD,
-                   LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, LMFileType.BUCKET_MAP, 
-                   LMFileType.PAM, LMFileType.GRIM, 
-                   LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES, 
-                   LMFileType.COMPRESSED_PAM, 
-                   LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
-                   LMFileType.SPLOTCH_PAM, LMFileType.SPLOTCH_SITES, 
-                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.MATRIX_COLUMN, 
-                   LMFileType.LAYER_INDICES, LMFileType.SITE_INDICES]:
+      if rtype in [LMFileType.PAM, LMFileType.GRIM, 
+                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.MATRIX_COLUMN]:
          return True
       return False
+
+   @staticmethod
+   def getMatrixFiletype(mtype):
+      if mtype == MatrixType.PAM:
+         return LMFileType.PAM
+      elif mtype == MatrixType.GRIM:
+         return LMFileType.GRIM
+      elif mtype == MatrixType.BIOGEO_HYPOTHESES:
+         return LMFileType.BIOGEO_HYPOTHESES
+      elif mtype == MatrixType.PADDED_PAM:
+         return LMFileType.PADDED_PAM
+      elif mtype == MatrixType.MCPA_OUTPUTS:
+         return LMFileType.MCPA_OUTPUTS
    
    @staticmethod
    def isUserSpace(rtype):
@@ -517,8 +524,10 @@ class FileFix:
              LMFileType.USER_TREE: 'tree',
              LMFileType.MF_DOCUMENT: 'mf',
              LMFileType.BIOGEO_HYPOTHESES: 'biogeo',
-             LMFileType.MATRIX_COLUMN: 'col',
+             LMFileType.MATRIX_COLUMN: 'pav',
              LMFileType.SITE_INDICES: 'siteidx',
+             LMFileType.PADDED_PAM: 'ppam',
+             LMFileType.MCPA_OUTPUTS: 'mcpa'
 }
    # Postfix
    EXTENSION = {LMFileType.OTHER_MAP: OutputFormat.MAP,
@@ -563,6 +572,8 @@ class FileFix:
                 LMFileType.BIOGEO_HYPOTHESES: OutputFormat.NUMPY,
                 LMFileType.MATRIX_COLUMN: OutputFormat.NUMPY,
                 LMFileType.SITE_INDICES: OutputFormat.PICKLE,
+                LMFileType.PADDED_PAM: OutputFormat.NUMPY,
+                LMFileType.MCPA_OUTPUTS: OutputFormat.NUMPY
    }
    
 NAME_SEPARATOR = '_'

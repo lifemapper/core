@@ -206,17 +206,17 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                 usr=self._userId, epsg=self._epsg)
       return dloc
 
-# ...............................................
-   def setDLocation(self, dloc=None):
-      """
-      @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
-                if provided, otherwise calculate it.
-      @note: If _dlocation is already present, this does nothing.
-      """
-      if self.getDLocation() is None:
-         if dloc is None:
-            dloc = self.createLocalDLocation()
-         Vector.setDLocation(self, dloc)
+# # ...............................................
+#    def setDLocation(self, dloc=None):
+#       """
+#       @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
+#                 if provided, otherwise calculate it.
+#       @note: If _dlocation is already present, this does nothing.
+#       """
+#       if self._dlocation is None:
+#          if dloc is None:
+#             dloc = self.createLocalDLocation()
+#          Vector.setDLocation(self, dloc)
 
 # ...............................................
    def checkbbox(self,minx,miny,maxx,maxy,resol):

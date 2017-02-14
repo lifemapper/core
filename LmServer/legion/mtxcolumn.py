@@ -27,6 +27,7 @@ import os
 from LmCommon.common.lmconstants import ProcessType, JobStatus
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.common.lmconstants import LMFileType
 from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
@@ -54,9 +55,9 @@ class MatrixColumn(_LayerParameters, ProcessObject):
    def __init__(self, matrixIndex, matrixId, userId, 
                 # inputs if this is connected to a layer and shapegrid 
                 layer=None, shapegrid=None, intersectParams={}, 
-                colDLocation=None, squid=None, ident=None,
+                dlocation=None, squid=None, ident=None,
                 processType=None, metadata={}, matrixColumnId=None, 
-                status=None, statusModTime=None):
+                status=None, statusModTime=None, overridePath=None):
       """
       @summary MatrixColumn constructor
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
@@ -81,11 +82,29 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       self.shapegrid = shapegrid
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
-      self._colDLocation = None
-      self.setColumnDLocation(colDLocation, statusModTime)
+      self._dlocation = None
+      self.setDLocation(dlocation, pth=overridePath)
       self.squid = squid
       self.ident = ident
 
+# ...............................................
+   def setId(self, mfid):
+      """
+      @summary: Sets the database id on the object, and sets the 
+                dlocation of the file if it is None.
+      @param mfid: The database id for the object
+      """
+      self.objId = mfid
+      self.setColumnDLocation()
+
+# ...............................................
+   def getId(self):
+      """
+      @summary Returns the database id from the object table
+      @return integer database id of the object
+      """
+      return self.objId
+   
 # ...............................................
    def dumpIntersectParams(self):
       return super(MatrixColumn, self)._dumpMetadata(self.intersectParams)
@@ -100,12 +119,33 @@ class MatrixColumn(_LayerParameters, ProcessObject):
                                   existingMetadataDict=self.intersectParams)
    
 # ...............................................
-   def getColumnDLocation(self):
-      return self._colDLocation
-   
-   def setColumnDLocation(self, colDLocation, modTime):
-      self._colDLocation = colDLocation
-      self.paramModTime = modTime
+# ...............................................
+   def createLocalDLocation(self, pth=None):
+      """
+      @summary: Create data location
+      """
+      dloc = None
+      if self.objId is not None:
+         dloc = self._earlJr.createFilename(LMFileType.MATRIX_COLUMN,
+                                            mfchainId=self.objId, 
+                                            usr=self._userId, pth=pth)
+      return dloc
+
+   def getDLocation(self, pth=None):
+      self.setDLocation(pth=pth)
+      return self._dlocation
+
+   def setDLocation(self, dlocation=None, pth=None):
+      """
+      @note: Does NOT override existing dlocation, use clearDLocation for that
+      """
+      if self._dlocation is None:
+         if dlocation is None:
+            dlocation = self.createLocalDLocation(pth=pth)
+         self._dlocation = dlocation
+
+   def clearDLocation(self): 
+      self._dlocation = None
    
    # ...............................................
    def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):

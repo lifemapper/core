@@ -179,8 +179,7 @@ class SDMProjection(_ProjectionType, Raster):
                           minVal=layer.minVal, maxVal=layer.maxVal, 
                           mapunits=layer.mapUnits, resolution=layer.resolution, 
                           bbox=layer.bbox, metadataUrl=layer.metadataUrl, 
-                          parentMetadataUrl=layer.parentMetadataUrl, 
-                          modTime=layer.modTime)
+                          parentMetadataUrl=layer.parentMetadataUrl)
       return prj
 
 # .............................................................................
@@ -201,13 +200,7 @@ class SDMProjection(_ProjectionType, Raster):
                self._dlocation = filename
          self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
          self._setMapPrefix()
-
-# # ...............................................
-#    @property
-#    def makeflowFilename(self):
-#       dloc = self.createLocalDLocation(makeflow=True)
-#       return dloc
-   
+         
 # ...............................................
    def createLocalDLocation(self):
       """
