@@ -448,7 +448,10 @@ create table lm_v3.MatrixColumn
    status int,
    statusmodtime double precision,
    
-   UNIQUE (matrixId, matrixIndex)
+   -- matrixIndex is NULL for Global PAM 
+   UNIQUE (matrixId, matrixIndex),
+   -- TODO: will Global PAM only reference a layer once? 
+   UNIQUE (matrixId, layerid, intersectParams)
 );
 CREATE INDEX idx_mtxcolStatusModTime ON lm_v3.MatrixColumn(statusModTime);
 CREATE INDEX idx_mtxcolStatus ON lm_v3.MatrixColumn(status);

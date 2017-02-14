@@ -1288,12 +1288,39 @@ alg = algList[0]
 prjs = boomer._scribe.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
                               mdlMask=mdlMask, projMask=projMask, 
                               modtime=currtime)
-mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset.pam, currtime)
+prj = prjs[0]
+# mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset.pam, currtime)
 lyr, mtx, modtime = prj, gridset.pam, currtime
+ptype = ProcessType.INTERSECT_RASTER
+mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
+                layer=lyr, shapegrid=None, intersectParams={}, 
+                colDLocation=None, squid=lyr.squid, ident=lyr.ident,
+                processType=ptype, metadata={}, matrixColumnId=None, 
+                status=JobStatus.GENERAL, statusModTime=modtime)
+                
+select * from lm_v3.lm_findOrInsertLayer(206,
+'ryan',
+'cbcf73221ed59940e72ec0ebd92b91422843992e6af249c733019424c6b1a476',
+NULL,
+'prj_206',
+'/share/lm/data/archive/ryan/4326/Layers/prj_206.tif',
+'http://badenov-vc1.nhm.ku.edu/services/lm/projections/206',
+'{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "Heuchera_acutifolia", "bioclimatic variables", "future", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Heuchera_acutifolia projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers", "title": "Taxa Heuchera_acutifolia modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min"}',
+'{"keywords": ["climate", "elevation", "likely temperature increase 2.6 to 4.8 C by 2081-2100", "BIOCLIM", "Heuchera_acutifolia", "bioclimatic variables", "future", "predicted", "potential habitat", "SDM", "radiative forcing +8.5"], "isDiscrete": true, "description": "Modeled habitat for Heuchera_acutifolia projected onto AR5-CCSM4-RCP8.5-2050-10min datalayers", "title": "Taxa Heuchera_acutifolia modeled with BIOCLIM and observed-10min projected onto AR5-CCSM4-RCP8.5-2050-10min"}',
+'GTiff',
+NULL,NULL,NULL,NULL,NULL,NULL,
+4326,
+'dd',
+0.16667,
+'-180.00,-60.00,180.00,90.00',
+'POLYGON((-180.0 -60.0,-180.0 90.0,180.0 90.0,180.0 -60.0,-180.0 -60.0))',
+NULL);
 
-select * from lm_v3.lm_findOrInsertMatrixColumn(NULL,NULL,1,-1,NULL,
-'ee061c4364f1bfe9edf958e747be9ec99fea1e7166ff0a2f206986e751662631',
-NULL,NULL,NULL,NULL,0,57797.935034);
+# newOrExistingLyr = boomer._scribe._borg.findOrInsertBaseLayer(mtxcol.layer)
+
+select * from lm_v3.lm_findOrInsertMatrixColumn('ryan',NULL,1,-1,NULL,
+'5a7edff00622f12ec7c07f48802a348ae57282d5500dafc17e8317910ea1f6f9',
+NULL,NULL,NULL,NULL,0,57797.9595867);
                     
 # objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 boomer._createMakeflow(objs)

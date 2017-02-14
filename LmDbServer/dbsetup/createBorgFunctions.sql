@@ -792,20 +792,20 @@ BEGIN
       IF FOUND THEN
          RAISE NOTICE 'Returning existing MatrixColumn for Matrix % and Column %',
             mtxid, mtxidx;
-      -- or insert this
+      END IF;
+   -- or insert new column at location or undefined location for gpam
+   ELSE
+      INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
+            dlocation, metadata, layerId, intersectParams, status, 
+            statusmodtime)
+         VALUES (mtxid, mtxidx, sqd, idnt, dloc, meta, lyrid, intparams, stat, 
+            stattime);
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
       ELSE
-         INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
-               dlocation, metadata, layerId, intersectParams, status, 
-               statusmodtime)
-            VALUES (mtxid, mtxidx, sqd, idnt, dloc, meta, lyrid, intparams, stat, 
-               stattime);
-         IF NOT FOUND THEN
-            RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
-         ELSE
-            SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
-            SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
-               WHERE matrixColumnId = newid;
-         END IF;
+         SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
+         SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+            WHERE matrixColumnId = newid;
       END IF;
    END IF;
    

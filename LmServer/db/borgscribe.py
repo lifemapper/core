@@ -335,7 +335,7 @@ class BorgScribe(LMObject):
                ptype = ProcessType.INTERSECT_RASTER_GRIM
          else:
             ptype = ProcessType.INTERSECT_VECTOR
-         mtxcol = MatrixColumn(-1, mtx.getId(), mtx.getUserId(), 
+         mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
                 layer=lyr, shapegrid=None, intersectParams={}, 
                 colDLocation=None, squid=lyr.squid, ident=lyr.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 
