@@ -127,7 +127,7 @@ class SDMProjection(_ProjectionType, Raster):
                 dlocation=None, lyrMetadata={}, dataFormat=None, gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, bbox=None,
-                metadataUrl=None, parentMetadataUrl=None, modTime=None):
+                metadataUrl=None, parentMetadataUrl=None):
       """
       @summary Constructor for the SDMProjection class
       @copydoc LmServer.legion.sdmproj._ProjectionType::__init__()
@@ -152,7 +152,7 @@ class SDMProjection(_ProjectionType, Raster):
                 maxVal=maxVal, mapunits=mapunits, resolution=resolution, 
                 bbox=bbox, svcObjId=lyrId, serviceType=LMServiceType.PROJECTIONS, 
                 moduleType=LMServiceModule.LM, metadataUrl=metadataUrl, 
-                parentMetadataUrl=parentMetadataUrl, modTime=modTime)
+                parentMetadataUrl=parentMetadataUrl, modTime=statusModTime)
       self.setId(lyrId)
       self.setLocalMapFilename()
       self._setMapPrefix()

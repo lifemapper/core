@@ -510,11 +510,12 @@ class Borg(DbPostgresql):
       @param lyr: Raster or Vector to insert
       @return: new or existing Raster or Vector object 
       """
-      min = max = nodata = wkt = None
-      if isinstance(lyr, Raster):
+      try:
          min = lyr.minVal
          max = lyr.maxVal
          nodata = lyr.nodataVal
+      except:
+         min = max = nodata = wkt = None
       meta = lyr.dumpLyrMetadata()
       if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
@@ -525,7 +526,7 @@ class Borg(DbPostgresql):
                            lyr.verify,
                            lyr.name,
                            lyr.getDLocation(),
-                           lyr.metadataUrl, meta,                                       meta,
+                           lyr.metadataUrl, meta,
                            lyr.dataFormat,
                            lyr.gdalType,
                            lyr.ogrType,
@@ -1063,12 +1064,16 @@ class Borg(DbPostgresql):
       @summary: Find existing OR save a new MatrixColumn
       @param mtxcol: the LmServer.legion.MatrixColumn object to get or insert
       @return new or existing MatrixColumn object
+      @note: Assumes that any layer on the mtxcol is already in the database
       """
-      try:
-         newOrExistingLyr = self.findOrInsertBaseLayer(mtxcol.layer)
-         lyrid = newOrExistingLyr.getId()
-      except:
-         lyrid = None  
+      lyrid = None
+      if mtxcol.layer is not None:
+         # Check for existing id before pulling from db
+         # This will usually be in the DB already
+         lyrid = mtxcol.layer.getId()
+         if lyrid is None:
+            newOrExistingLyr = self.findOrInsertBaseLayer(mtxcol.layer)
+            lyrid = newOrExistingLyr.getId()
       mcmeta = mtxcol.dumpParamMetadata()
       intparams = mtxcol.dumpIntersectParams()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 

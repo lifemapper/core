@@ -61,6 +61,9 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       @summary MatrixColumn constructor
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
       @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
+      @param matrixIndex: index for column within a matrix.  For the Global 
+             PAM, assembled dynamically, this will be None.
+      @param matrixId: 
       @param layer: layer input to intersect
       @param shapegrid: grid input to intersect 
       @param intersectParams: parameters input to intersect
