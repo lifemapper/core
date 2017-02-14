@@ -604,23 +604,31 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # NOTE: This may need to change to something else in the future, but for now,
          #          we'll save a step and have the outputs written to their final 
          #          location
-         outPath, fname = os.path.split(self.getDLocation())
-         basename, ext = os.path.splitext(fname)
-         name = '{}-{}'.format(self.processType, self.getId())
+         # TODO: Update with correct data locations
+         outFile = self.getDLocation()
+         bigFile = self.getDLocation(big=True)
+         raise NotImplementedError("Need to update the file names")
          
-         options = {'-n' : name,
-                    '-o' : outPath,
-                    '-l' : '{}.log'.format(name) }
-         # Join arguments
-         args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
-         cmdArguments = [os.getenv('PYTHON'), 
-                         ProcessType.getJobRunner(self.processType), 
-                         self.getRawDLocation()]
-         if self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-            cmdArguments.append(self.queryCount)
-         cmdArguments.extend([POINT_COUNT_MAX, basename, args])         
-         cmd = ' '.join(cmdArguments)
+         cmdArgs = [os.getenv('PYTHON'),
+                    ProcessType.getJobRunner(self.processType),
+                    self.getRawDLocation()]
          
-         rules.append(MfRule(cmd, [basename]))
+         # Process type specific arguments
+         if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
+            cmdArgs.append(self.queryCount)
+         elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
+            # TODO: Write the occurrence set metadata
+            raise NotImplementedError("Need to write metadata and have file name")
+            metadataFn = None
+            cmdArgs.append(metadataFn)
+         
+         cmdArgs.extend([outFile, 
+                         bigFile,
+                         POINT_COUNT_MAX])
+         cmd = ' '.join(cmdArgs)
+         
+         # Don't add big file to targets since it may not be created
+         # TODO: Address this if we don't write to final location
+         rules.append(MfRule(cmd, [outFile]))
          
       return rules
