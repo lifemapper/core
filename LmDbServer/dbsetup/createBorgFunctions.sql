@@ -747,3 +747,110 @@ BEGIN
    
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(-- MatrixColumn
+                                                             usr varchar,
+                                                             mtxcolid int,
+                                                             mtxid int,
+                                                             mtxidx int,
+                                                             lyrid int,
+                                                             sqd varchar,
+                                                             idnt varchar,
+                                                             dloc varchar,
+                                                             meta text,
+                                                             intparams text,
+                                                             stat int,
+                                                             stattime double precision)
+RETURNS lm_v3.lm_matrixcolumn AS
+$$
+DECLARE
+   lyrcount int;
+   mtxcount int;
+   newid int;
+   rec_lyr lm_v3.layer%rowtype;
+   rec_mtxcol lm_v3.lm_matrixcolumn%rowtype;
+BEGIN
+   -- check existence of required referenced matrix
+   SELECT count(*) INTO mtxcount FROM lm_v3.Matrix WHERE matrixid = mtxid;
+   IF mtxcount < 1 THEN
+      RAISE EXCEPTION 'Matrix with id % does not exist', mtxid;
+   END IF;
+
+   -- check existence of optional referenced layer
+   IF lyrid IS NOT NULL THEN
+      SELECT * INTO rec_lyr FROM lm_v3.layer WHERE layerid = lyrid;
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Layer with id %, does not exist', lyrid; 
+      END IF;
+   END IF;
+   
+   -- Find existing column at position in matrix
+   IF mtxidx IS NOT NULL AND mtxidx > -1 THEN
+      SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+         WHERE matrixid = mtxid AND matrixIndex = mtxidx;
+      IF FOUND THEN
+         RAISE NOTICE 'Returning existing MatrixColumn for Matrix % and Column %',
+            mtxid, mtxidx;
+      -- or insert this
+      ELSE
+         INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
+               dlocation, metadata, layerId, intersectParams, status, 
+               statusmodtime)
+            VALUES (mtxid, mtxidx, sqd, idnt, dloc, meta, lyrid, intparams, stat, 
+               stattime);
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
+         ELSE
+            SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
+            SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+               WHERE matrixColumnId = newid;
+         END IF;
+      END IF;
+   END IF;
+   
+   RETURN rec_mtxcol;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- status, matrixIndex=None, metadata=None, modTime
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateMatrixColumn(mtxcolid int,
+                                                       mtxidx int,
+                                                       dloc varchar,
+                                                       mtxcolmeta varchar,
+                                                       intparams text,
+                                                       stat int,
+                                                       stattime double precision)
+RETURNS int AS
+$$
+DECLARE
+   rec lm_v3.lm_matrixcolumn%rowtype;
+   success int = -1;
+BEGIN
+   -- find layer 
+   IF mtxcolid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.lm_matrixcolumn WHERE matrixColumnId = mtxcolid;
+   ELSE
+      RAISE EXCEPTION 'MatrixColumnId required';
+	END IF;
+	
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to find lm_matrixcolumn';      
+   ELSE
+      -- Update MatrixColumn record
+      UPDATE lm_v3.MatrixColumn
+           SET (matrixIndex, dlocation, metadata, intersectParams, 
+                status, statusmodtime) 
+             = (mtxidx, dloc, mtxcolmeta, intparams, stat, stattime) 
+           WHERE matrixColumnId = mtxcolid;
+      IF FOUND THEN 
+         success = 0;
+      ELSE
+         RAISE EXCEPTION 'Unable to update MatrixColumn';
+      END IF;
+   END IF;   
+   
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;

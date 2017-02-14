@@ -677,6 +677,7 @@ class Borg(DbPostgresql):
                                                      fullGset.getId())
          for r in rows:
             mtx = self._createLMMatrix(r, idxs)
+            # setMatrix sets userid
             fullGset.setMatrix(mtx.matrixType, mtxFileOrObj=mtx)
       return fullGset
 
@@ -1071,10 +1072,10 @@ class Borg(DbPostgresql):
       mcmeta = mtxcol.dumpParamMetadata()
       intparams = mtxcol.dumpIntersectParams()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
-                     mtxcol.getUserId(), mtxcol.getId(), mtxcol.parentId, 
+                     mtxcol.getParamUserId(), mtxcol.getParamId(), mtxcol.parentId, 
                      mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident, 
                      mtxcol.getColumnDLocation(), mcmeta, intparams, 
-                     mtxcol.status, mtxcol.statusModTime, mtxcol.modTime)
+                     mtxcol.status, mtxcol.statusModTime)
       newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
       return newOrExistingMtxCol
 
