@@ -158,13 +158,15 @@ class Gridset(ServiceObject):
       """
       mtx = None
       if mtxFileOrObj is not None:
+         usr = self.getUserId()
          if isinstance(mtxFileOrObj, StringType) and os.path.exists(mtxFileOrObj):
             mtx = LMMatrix(matrixType=mtxType, dlocation=mtxFileOrObj, 
-                           userId=self.getUserId())
+                           userId=usr)
             if doRead:
                mtx.readData()            
          elif isinstance(mtxFileOrObj, LMMatrix):
             mtx = mtxFileOrObj
+            mtx.setUserId(usr)
             
       if mtxType == MatrixType.PAM:
          self._pam = mtx
