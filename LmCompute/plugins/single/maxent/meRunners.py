@@ -315,9 +315,9 @@ class MaxentProjection(object):
    # ...................................
    def __init__(self, jobName, rulesetFn, layersFn, outAsciiFn, paramsFn=None, 
                 workDir=None, metricsFn=None, logFn=None, 
-                logLevel=None, statusFn=None):
+                logLevel=None, statusFn=None, packageFn=None):
       """
-      @summary: Constructor for ME model
+      @summary: Constructor for ME projection
       @param pointsFn: The file location of the shapefile containing points
       @param layersFn: The file location of the JSON layers file
       @param rulesetFn: The location to write the resulting ruleset
@@ -364,6 +364,7 @@ class MaxentProjection(object):
 
       self.metricsFn = metricsFn
       self.statusFn = statusFn
+      self.pkgFn = packageFn
       
    # .......................................
    def _buildCommand(self):
@@ -483,7 +484,7 @@ optional args can contain any flags understood by Maxent -- for example, a
    # ...................................
    def run(self):
       """
-      @summary: Run Maxent, create the model, write outputs appropriately
+      @summary: Run Maxent, create the projection, write outputs appropriately
       """
       try:
          cmd = self._buildCommand()
@@ -513,4 +514,17 @@ optional args can contain any flags understood by Maxent -- for example, a
          with open(self.metricsFn, 'w') as outMetrics:
             for k, v in self.metrics.iteritems():
                outMetrics.write("{0}: {1}\n".format(k, v))
-      
+ 
+       # Package
+      if self.pkgFn is not None:
+         with zipfile.ZipFile(self.pkgFn, 'w', compression=zipfile.ZIP_DEFLATED,
+                               allowZip64=True) as zf:
+            for base, _, files in os.walk(self.workDir):
+               # Add everything but layers
+               if base.find('layers') == -1:
+                  for f in files:
+                     zf.write(os.path.join(base, f), 
+                              os.path.relpath(os.path.join(base, f), 
+                                              self.workDir))
+
+     
