@@ -313,10 +313,10 @@ class LMFileType:
    SCENARIO_MAP = 102
    # Occurrence level (SDM data are organized by OccurrenceSets)
    UNSPECIFIED_OCC = 100
+   SDM_MAP = 110
    OCCURRENCE_FILE = 111
    OCCURRENCE_RAW_FILE = 112
-   # Experiment Level
-   SDM_MAP = 110
+   OCCURRENCE_LARGE_FILE = 114
    SDM_MAKEFLOW_FILE = 113
    MODEL_REQUEST = 120
    MODEL_STATS = 121
@@ -374,7 +374,9 @@ class LMFileType:
    @staticmethod
    def isSDM(rtype):
       if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-                   LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE, 
+                   LMFileType.OCCURRENCE_RAW_FILE, 
+                   LMFileType.OCCURRENCE_LARGE_FILE,
+                   LMFileType.SDM_MAKEFLOW_FILE, 
                    LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
                    LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT, 
                    LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
@@ -386,7 +388,9 @@ class LMFileType:
    @staticmethod
    def isOccurrence(rtype):
       if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-                   LMFileType.OCCURRENCE_RAW_FILE, LMFileType.SDM_MAKEFLOW_FILE]:
+                   LMFileType.OCCURRENCE_RAW_FILE, 
+                   LMFileType.OCCURRENCE_LARGE_FILE, 
+                   LMFileType.SDM_MAKEFLOW_FILE]:
          return True
       return False
 
@@ -492,6 +496,7 @@ class FileFix:
              LMFileType.SDM_MAKEFLOW_FILE: OCC_NAME_PREFIX,
              LMFileType.OCCURRENCE_FILE: OCC_PREFIX,
              LMFileType.OCCURRENCE_RAW_FILE: OCC_PREFIX,
+             LMFileType.OCCURRENCE_LARGE_FILE: 'big' + OCC_PREFIX,
              LMFileType.MODEL_REQUEST: 'modReq',
              LMFileType.MODEL_STATS: None,
              LMFileType.MODEL_RESULT: None,
@@ -537,6 +542,7 @@ class FileFix:
                 LMFileType.SDM_MAKEFLOW_FILE: OutputFormat.MAKEFLOW,
                 LMFileType.OCCURRENCE_FILE: OutputFormat.SHAPE,
                 LMFileType.OCCURRENCE_RAW_FILE: OutputFormat.CSV,
+                LMFileType.OCCURRENCE_LARGE_FILE: OutputFormat.SHAPE,
                 LMFileType.MODEL_REQUEST: OutputFormat.XML,
                 LMFileType.MODEL_STATS: OutputFormat.ZIP,
                 LMFileType.MODEL_RESULT: OutputFormat.XML,

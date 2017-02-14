@@ -271,7 +271,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       return dloc
 
 # ...............................................
-   def createLocalDLocation(self, raw=False, subset=False, makeflow=False):
+   def createLocalDLocation(self, raw=False, largeFile=False, makeflow=False):
       """
       @summary: Create filename for this layer.
       @param raw: If true, this indicates a raw dump of occurrences (CSV for
@@ -288,10 +288,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
             ftype = LMFileType.OCCURRENCE_RAW_FILE
          elif makeflow:
             ftype = LMFileType.SDM_MAKEFLOW_FILE
+         elif largeFile:
+            ftype = LMFileType.OCCURRENCE_LARGE_FILE
          else:
             ftype = LMFileType.OCCURRENCE_FILE
          dloc = self._earlJr.createFilename(ftype, occsetId=self.getId(), 
-                   subset=subset, usr=self._userId)
+                                            usr=self._userId)
       return dloc
    
 # ...............................................
