@@ -55,6 +55,7 @@ class MaxentModel(object):
    """
    @summary: Class containing methods to create an SDM model using Maxent
    """
+   PROCESS_TYPE = ProcessType.ATT_MODEL
    # ...................................
    def __init__(self, jobName, pointsFn, layersFn, rulesetFn, paramsFn=None, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
@@ -72,11 +73,10 @@ class MaxentModel(object):
       @param logFn: If provide, write the output log to this location
       @param logLevel: The log level to use when logging
       @param statusFn: If provided, write the status to this location
-      @todo: Add package back in or some other mechanism for replicates
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
-      self.metrics['processType'] = ProcessType.ATT_MODEL
+      self.metrics['processType'] = self.PROCESS_TYPE
       # Process inputs
       if workDir is not None:
          self.workDir = workDir
@@ -308,8 +308,10 @@ class MaxentModel(object):
 # .............................................................................
 class MaxentProjection(object):
    """
-   @summary: Class containing methods to create an SDM model using Maxent
+   @summary: Class containing methods to create an SDM projection using Maxent
    """
+   PROCESS_TYPE = ProcessType.ATT_PROJECT
+   
    # ...................................
    def __init__(self, jobName, rulesetFn, layersFn, outAsciiFn, paramsFn=None, 
                 workDir=None, metricsFn=None, logFn=None, 
@@ -329,7 +331,7 @@ class MaxentProjection(object):
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
-      self.metrics['processType'] = ProcessType.ATT_PROJECT
+      self.metrics['processType'] = self.PROCESS_TYPE
       # Process inputs
       if workDir is not None:
          self.workDir = workDir
