@@ -44,12 +44,18 @@ class LmComputeLogger(LmLogger):
    @param addFile: (optional) Should a file logger be added
    """
    def __init__(self, name, level=logging.DEBUG, addConsole=False, 
-                      addFile=False):
+                      addFile=False, logFilename=None):
+      # In case level was set to None
+      if level is None:
+         level = logging.DEBUG
       LmLogger.__init__(self, name, level)
       if addConsole:
          self._addConsoleHandler()
       if addFile:
-         fn = os.path.join(COMPUTE_LOG_PATH, '%s.log' % (name))
+         if logFilename is not None:
+            fn = logFilename
+         else:
+            fn = os.path.join(COMPUTE_LOG_PATH, '%s.log' % (name))
          self._addFileHandler(fn)
 
 # .............................................................................
