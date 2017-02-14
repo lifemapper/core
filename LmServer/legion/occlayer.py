@@ -305,17 +305,18 @@ class OccurrenceLayer(OccurrenceType, Vector):
          self.setDLocation()
       return self._dlocation
 
-   def setDLocation(self, dlocation=None):
-      """
-      @summary: Sets the OccurrenceSet._dlocation of the shapefile.  If it is 
-                None and the _dbid is present, it calculates and assigns 
-                the _dlocation.
-      """
-      if self._dlocation is None:
-         if dlocation is None:
-            dlocation = self.createLocalDLocation()
-            
-         Vector.setDLocation(self, dlocation)
+#    Use superclass method, which will call the overridden createLocalDLocation
+#    def setDLocation(self, dlocation=None):
+#       """
+#       @summary: Sets the OccurrenceSet._dlocation of the shapefile.  If it is 
+#                 None and the _dbid is present, it calculates and assigns 
+#                 the _dlocation.
+#       @note: Does NOT override existing dlocation, use clearDLocation for that
+#       """
+#       if self._dlocation is None:
+#          if dlocation is None:
+#             dlocation = self.createLocalDLocation()
+#          Vector.setDLocation(self, dlocation)
 
 # ...............................................
    def isValidDataset(self, subset=False):

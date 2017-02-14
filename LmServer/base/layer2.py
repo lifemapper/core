@@ -276,9 +276,7 @@ class _Layer(LMSpatialObject, ServiceObject):
 
 # ...............................................
    def createLocalDLocation(self, extension):
-      from LmServer.common.datalocator import EarlJr
-      earlJr = EarlJr()
-      dloc = earlJr.createOtherLayerFilename(self._layerUserId, self._epsg, 
+      dloc = self._earlJr.createOtherLayerFilename(self._layerUserId, self._epsg, 
                                              self.name, ext=extension)
       return dloc
    
@@ -294,7 +292,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       """
       @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
                 if provided, otherwise calculate it.
-      @note: If _dlocation is already present, this does nothing.
+      @note: Does NOT override existing dlocation, use clearDLocation for that
       """
       # Only set DLocation if it is currently None
       if self._dlocation is None:

@@ -26,7 +26,8 @@
 from LmCommon.common.lmconstants import MatrixType
 from LmCommon.common.matrix import Matrix
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import LMServiceType,LMServiceModule
+from LmServer.common.lmconstants import (LMServiceType, LMServiceModule, 
+                                         LMFileType)
 
 
 # .............................................................................
@@ -133,11 +134,30 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return url
 
 # ...............................................
+# ...............................................
+   def createLocalDLocation(self, extension):
+      ftype = LMFileType.getMatrixFiletype(self.matrixType)         
+      dloc = self.earlJr.createFilename(ftype, matrixId=self.getId(), 
+                                        matrixType=self.matrixType,
+                                        usr=self.getUserId())
+      return dloc
+
    def getDLocation(self):
       return self._dlocation
    
    def setDLocation(self, dlocation):
-      self._dlocation = dlocation
+      """
+      @summary: Set the _dlocation attribute if it is None.  Use dlocation
+                if provided, otherwise calculate it.
+      @note: Does NOT override existing dlocation, use clearDLocation for that
+      """
+      if self._dlocation is None:
+         if dlocation is None: 
+            dlocation = self.createLocalDLocation()
+         self._dlocation = dlocation
+
+   def clearDLocation(self): 
+      self._dlocation = None
 
 # ...............................................
    def getGridset(self):
