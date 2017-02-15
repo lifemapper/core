@@ -83,6 +83,10 @@ class MaxentModel(object):
       else:
          self.workDir = os.getcwd()
 
+      # Create the work directory if it does not exist
+      if not os.path.exists(self.workDir):
+         os.makedirs(self.workDir)
+
       # Logs
       if logFn is not None:
          addFile=True

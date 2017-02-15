@@ -58,23 +58,20 @@ class OpenModellerModel(object):
    @summary: Class containing methods to create an SDM model using openModeller
    """
    # ...................................
-   def __init__(self, jobName, pointsFn, layersFn, rulesetFn, paramsFn=None, 
+   def __init__(self, jobName, pointsFn, layersFn, rulesetFn, paramsFn, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
-                logLevel=None, statusFn=None):
+                statusFn=None):
       """
       @summary: Constructor for OM model
       @param pointsFn: The file location of the shapefile containing points
       @param layersFn: The file location of the JSON layers file
       @param rulesetFn: The location to write the resulting ruleset
-      @param paramsFn: The JSON file location of algorithm parameters, if not
-                          provided, use defaults
+      @param paramsFn: The JSON file location of algorithm parameters
       @param packageFn: If provided, write the package output here
       @param workDir: If provided, use this directory for work
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
-      @param logLevel: The log level to use when logging
       @param statusFn: If provided, write the status to this location
-      @todo: Assess
       """
       self.metrics = {}
       self.metrics['processType'] = self.PROCESS_TYPE
@@ -83,6 +80,10 @@ class OpenModellerModel(object):
          self.workDir = workDir
       else:
          self.workDir = os.getcwd()
+
+      # Create the work directory if it does not exist
+      if not os.path.exists(self.workDir):
+         os.makedirs(self.workDir)
 
       # Logs
       if logFn is not None:
