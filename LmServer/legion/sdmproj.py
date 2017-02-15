@@ -725,13 +725,13 @@ class SDMProjection(_ProjectionType, Raster):
 
          mdlCmdArgs = [os.getenv('PYTHON'),
                        ProcessType.getJobRunner(ptype),
+                       args,
                        str(ptype),
                        mdlName,
                        occSetFname,
                        layersJson,
                        rulesetFname,
-                       paramsJson,
-                       args
+                       paramsJson
                        ]
          cmd = ' '.join(mdlCmdArgs)
          
@@ -815,11 +815,11 @@ class SDMProjection(_ProjectionType, Raster):
 
          prjCmdArgs = [os.getenv('PYTHON'),
                        ProcessType.getJobRunner(self.processType),
+                       prjArgs,
                        str(self.processType),
                        modelFname,
                        layersJson,
-                       outputRaster,
-                       prjArgs
+                       outputRaster
                        ]
          prjCmd = ' '.join(prjCmdArgs)
          rules.append(MfRule(prjCmd, [outputRaster, statusFn, packageFn], 
@@ -831,12 +831,12 @@ class SDMProjection(_ProjectionType, Raster):
          updateDbArgs = ["LOCAL", # Run on server side for DB
                          os.getenv('PYTHON'),
                          ProcessType.getJobRunner(ProcessType.UPDATE_OBJECT),
+                         "-f {0}".format(statusFn),
                          str(self.processType),
                          str(self.getId()),
                          updateSuccessFn,
                          outTiff,
-                         packageFn,
-                         "-f {0}".format(statusFn)
+                         packageFn
                          ]
          updateCmd = ' '.join(updateDbArgs)
          rules.append(MfRule(updateCmd, [updateSuccessFn],
