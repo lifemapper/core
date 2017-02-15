@@ -59,7 +59,7 @@ class MaxentModel(object):
    # ...................................
    def __init__(self, jobName, pointsFn, layersFn, rulesetFn, paramsFn=None, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
-                logLevel=None, statusFn=None):
+                statusFn=None):
       """
       @summary: Constructor for ME model
       @param pointsFn: The file location of the shapefile containing points
@@ -71,7 +71,6 @@ class MaxentModel(object):
       @param workDir: If provided, use this directory for work
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
-      @param logLevel: The log level to use when logging
       @param statusFn: If provided, write the status to this location
       """
       self.metrics = {}
@@ -319,7 +318,7 @@ class MaxentProjection(object):
    # ...................................
    def __init__(self, jobName, rulesetFn, layersFn, outAsciiFn, paramsFn=None, 
                 workDir=None, metricsFn=None, logFn=None, 
-                logLevel=None, statusFn=None, packageFn=None):
+                statusFn=None, packageFn=None):
       """
       @summary: Constructor for ME projection
       @param pointsFn: The file location of the shapefile containing points
@@ -330,7 +329,6 @@ class MaxentProjection(object):
       @param workDir: If provided, use this directory for work
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
-      @param logLevel: The log level to use when logging
       @param statusFn: If provided, write the status to this location
       """
       self.metrics = {}

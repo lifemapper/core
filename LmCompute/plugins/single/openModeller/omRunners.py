@@ -316,8 +316,7 @@ class OpenModellerProjection(object):
    
    # ...................................
    def __init__(self, jobName, rulesetFn, layersFn, outTiffFn, workDir=None, 
-                metricsFn=None, logFn=None, logLevel=None, statusFn=None,
-                packageFn=None):
+                metricsFn=None, logFn=None, statusFn=None, packageFn=None):
       """
       @summary: Constructor for ME model
       @param pointsFn: The file location of the shapefile containing points
@@ -328,9 +327,7 @@ class OpenModellerProjection(object):
       @param workDir: If provided, use this directory for work
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
-      @param logLevel: The log level to use when logging
       @param statusFn: If provided, write the status to this location
-      @todo: Assess
       """
       self.metrics = {}
       self.metrics['algorithmCode'] = 'ATT_MAXENT'
