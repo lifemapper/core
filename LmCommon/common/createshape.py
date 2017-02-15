@@ -82,7 +82,7 @@ class ShapeShifter(object):
          if not metadata:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                               'Failed to get metadata')
-         self.op = OccDataParser(logger, rawdata, metadata, delimiter=',')
+         self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
          self.idField = self.op.idFieldName
          self.xField = self.op.xFieldName
          self.yField = self.op.yFieldName
