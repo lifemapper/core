@@ -126,9 +126,11 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       """
       dloc = None
       if self.objId is not None:
-         dloc = self._earlJr.createFilename(LMFileType.MATRIX_COLUMN,
-                                            mfchainId=self.objId, 
-                                            usr=self._userId, pth=pth)
+         from LmServer.common.datalocator import EarlJr
+         earlJr = EarlJr()
+         dloc = earlJr.createFilename(LMFileType.MATRIX_COLUMN,
+                                      mfchainId=self.objId, 
+                                      usr=self._userId, pth=pth)
       return dloc
 
    def getDLocation(self, pth=None):

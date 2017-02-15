@@ -276,11 +276,13 @@ class Borg(DbPostgresql):
    # ...............................................
    def _createMatrixColumn(self, row, idxs):
       """
-      @summary: Create an MatrixColumn from a lm_envlayer or lm_scenlayer view
+      @summary: Create an MatrixColumn from a lm_matrixcolumn view
       """
       mtxcol = None
       if row is not None:
-#          lyr = self._createLayer(row, idxs)
+         # Ids of joined inputs, not used yet
+         lyrid = self._getColumnValue(row,idxs,['layerid']) 
+         shpgrdid = self._getColumnValue(row,idxs,['shplayerid']) 
          mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
@@ -295,7 +297,7 @@ class Borg(DbPostgresql):
 
          mtxcol = MatrixColumn(mtxIndex, mtxid, usr, 
                         layer=None, shapegrid=None, intersectParams=intparams,
-                        colDLocation=mtxcoldloc, squid=squid, ident=ident,
+                        dlocation=mtxcoldloc, squid=squid, ident=ident,
                         processType=None, metadata=mtxcolmeta, 
                         matrixColumnId=mtxcolid, status=mtxcolstat, 
                         statusModTime=mtxcolstattime)
@@ -1079,7 +1081,7 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
                      mtxcol.getParamUserId(), mtxcol.getParamId(), mtxcol.parentId, 
                      mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident, 
-                     mtxcol.getColumnDLocation(), mcmeta, intparams, 
+                     mtxcol.getDLocation(), mcmeta, intparams, 
                      mtxcol.status, mtxcol.statusModTime)
       newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
       return newOrExistingMtxCol

@@ -1294,9 +1294,10 @@ lyr, mtx, modtime = prj, gridset.pam, currtime
 ptype = ProcessType.INTERSECT_RASTER
 mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
                 layer=lyr, shapegrid=None, intersectParams={}, 
-                colDLocation=None, squid=lyr.squid, ident=lyr.ident,
+                dlocation=None, squid=lyr.squid, ident=lyr.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 
                 status=JobStatus.GENERAL, statusModTime=modtime)
+                
 newOrExistingMtxcol = boomer._scribe._borg.findOrInsertMatrixColumn(mtxcol)
 newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, modTime=modtime)
 success = boomer._scribe._borg.updateMatrixColumn(newOrExistingMtxcol)
