@@ -41,12 +41,12 @@ if __name__ == '__main__':
    parser.add_argument('jobName', type=str, help="A name for this model")
    parser.add_argument('pointsFn', type=str, 
           help="File location of occurrence set shapefile to use for modeling")
-   parser.add_argument('layersFn', type=str, 
-          help="File location of JSON document containing layer information for modeling")
+   parser.add_argument('layersJson', type=str, 
+          help="JSON string containing layer information for modeling")
    parser.add_argument('rulesetFn', type=str, 
                        help="File location to write the output ruleset")
-   parser.add_argument('paramsFn', type=str, 
-          help="File location of JSON document containing algorithm parameter information")
+   parser.add_argument('paramsJson', type=str, 
+          help="JSON string containing algorithm parameter information")
 
    # Optional arguments
    parser.add_argument('-p', '--package_file', type=str, 
@@ -63,14 +63,14 @@ if __name__ == '__main__':
    args = parser.parse_args()
    
    if args.processType == ProcessType.ATT_MODEL:
-      job = MaxentModel(args.jobName, args.pointsFn, args.layersFn, 
-                        args.rulesetFn, paramsFn=args.paramsFn, 
+      job = MaxentModel(args.jobName, args.pointsFn, args.layersJson, 
+                        args.rulesetFn, paramsJson=args.paramsJson, 
                         packageFn=args.package_file, workDir=args.work_dir,
                         metricsFn=args.metrics_file, logFn=args.log_file,
                         statusFn=args.status_file)
    else:
-      job = OpenModellerModel(args.jobName, args.pointsFn, args.layersFn, 
-                        args.rulesetFn, args.paramsFn, 
+      job = OpenModellerModel(args.jobName, args.pointsFn, args.layersJson, 
+                        args.rulesetFn, args.paramsJson, 
                         packageFn=args.package_file, workDir=args.work_dir,
                         metricsFn=args.metrics_file, logFn=args.log_file,
                         statusFn=args.status_file)

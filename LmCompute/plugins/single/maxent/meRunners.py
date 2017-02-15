@@ -57,15 +57,15 @@ class MaxentModel(object):
    """
    PROCESS_TYPE = ProcessType.ATT_MODEL
    # ...................................
-   def __init__(self, jobName, pointsFn, layersFn, rulesetFn, paramsFn=None, 
+   def __init__(self, jobName, pointsFn, layersJson, rulesetFn, paramsJson=None, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
                 statusFn=None):
       """
       @summary: Constructor for ME model
       @param pointsFn: The file location of the shapefile containing points
-      @param layersFn: The file location of the JSON layers file
+      @param layersJson: JSON string containing layer information
       @param rulesetFn: The location to write the resulting ruleset
-      @param paramsFn: The JSON file location of algorithm parameters, if not
+      @param paramsJson: JSON string of algorithm parameters, if not
                           provided, use defaults
       @param packageFn: If provided, write the package output here
       @param workDir: If provided, use this directory for work
@@ -103,10 +103,10 @@ class MaxentModel(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      self._processLayers(layersFn, self.layersDir)
+      self._processLayers(layersJson, self.layersDir)
 
       # parameters
-      self.params = self._processParameters(paramsFn)
+      self.params = self._processParameters(paramsJson)
       
       # Need species name?
       self.occName = os.path.splitext(os.path.basename(pointsFn))[0]
@@ -192,42 +192,36 @@ class MaxentModel(object):
       return status
    
    # ...................................
-   def _processLayers(self, layersFn, layersDir):
+   def _processLayers(self, layersJson, layersDir):
       """
       @summary: Read the layers JSON and process the layers accordingly
-      @param layersFn: Location of JSON file with layer information
+      @param layersJson: JSON string with layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      with open(layersFn) as inLayers:
-         lyrJson = json.load(inLayers)
-         
       lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(lyrJson, 
+      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
                                  layerFormat=LayerFormat.MXE, symDir=layersDir)
       return lyrs, mask
    
    # .................................
-   def _processParameters(self, paramsFn):
+   def _processParameters(self, paramsJson):
       """
       @summary: Process provided algorithm parameters JSON and return string
       @param paramsFn: File location of algorithm parameters JSON
       @todo: Use constants
       """
       algoParams = []
-      if paramsFn is not None:
-         with open(paramsFn) as inParams:
-            paramsJson = json.load(inParams)
-            for param in paramsJson['parameters']:
-               paramName = param['name']
-               paramValue = param['value']
-               defParam = PARAMETERS[paramName]
-               if paramValue is not None and paramValue == 'None':
-                  v = defParam['process'](paramValue)
-                  # Check for options
-                  if defParam.has_key('options'):
-                     v = defParam['options'][v]
-                  if v != defParam['default']:
-                     algoParams.append("{0}={1}".format(paramName, v))
+      for param in paramsJson['parameters']:
+         paramName = param['name']
+         paramValue = param['value']
+         defParam = PARAMETERS[paramName]
+         if paramValue is not None and paramValue == 'None':
+            v = defParam['process'](paramValue)
+            # Check for options
+            if defParam.has_key('options'):
+               v = defParam['options'][v]
+            if v != defParam['default']:
+               algoParams.append("{0}={1}".format(paramName, v))
       return ' '.join(algoParams)
                
    # ...................................
@@ -316,15 +310,15 @@ class MaxentProjection(object):
    PROCESS_TYPE = ProcessType.ATT_PROJECT
    
    # ...................................
-   def __init__(self, jobName, rulesetFn, layersFn, outAsciiFn, paramsFn=None, 
-                workDir=None, metricsFn=None, logFn=None, 
+   def __init__(self, jobName, rulesetFn, layersJson, outAsciiFn, 
+                paramsJson=None, workDir=None, metricsFn=None, logFn=None, 
                 statusFn=None, packageFn=None):
       """
       @summary: Constructor for ME projection
       @param pointsFn: The file location of the shapefile containing points
-      @param layersFn: The file location of the JSON layers file
+      @param layersJson: JSON string of layer information
       @param rulesetFn: The location to write the resulting ruleset
-      @param paramsFn: The JSON file location of algorithm parameters, if not
+      @param paramsJson: JSON string of algorithm parameters, if not
                           provided, use defaults
       @param workDir: If provided, use this directory for work
       @param metricsFn: If provided, write the metrics to this location
@@ -354,10 +348,10 @@ class MaxentProjection(object):
          os.makedirs(self.layersDir)
       except:
          pass
-      self._processLayers(layersFn, self.layersDir)
+      self._processLayers(layersJson, self.layersDir)
 
       # parameters
-      self.params = self._processParameters(paramsFn)
+      self.params = self._processParameters(paramsJson)
       
       # Other
       self.asciiOut = outAsciiFn
@@ -445,42 +439,36 @@ optional args can contain any flags understood by Maxent -- for example, a
       return status
    
    # ...................................
-   def _processLayers(self, layersFn, layersDir):
+   def _processLayers(self, layersJson, layersDir):
       """
       @summary: Read the layers JSON and process the layers accordingly
-      @param layersFn: Location of JSON file with layer information
+      @param layersJson: JSON string with layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      with open(layersFn) as inLayers:
-         lyrJson = json.load(inLayers)
-         
       lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(lyrJson, 
+      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
                                  layerFormat=LayerFormat.MXE, symDir=layersDir)
       return lyrs, mask
    
    # .................................
-   def _processParameters(self, paramsFn):
+   def _processParameters(self, paramsJson):
       """
       @summary: Process provided algorithm parameters JSON and return string
-      @param paramsFn: File location of algorithm parameters JSON
+      @param paramsJson: JSON string of algorithm parameters
       @todo: Use constants
       """
       algoParams = []
-      if paramsFn is not None:
-         with open(paramsFn) as inParams:
-            paramsJson = json.load(inParams)
-            for param in paramsJson['parameters']:
-               paramName = param['name']
-               paramValue = param['value']
-               defParam = PARAMETERS[paramName]
-               if paramValue is not None and paramValue == 'None':
-                  v = defParam['process'](paramValue)
-                  # Check for options
-                  if defParam.has_key('options'):
-                     v = defParam['options'][v]
-                  if v != defParam['default']:
-                     algoParams.append("{0}={1}".format(paramName, v))
+      for param in paramsJson['parameters']:
+         paramName = param['name']
+         paramValue = param['value']
+         defParam = PARAMETERS[paramName]
+         if paramValue is not None and paramValue == 'None':
+            v = defParam['process'](paramValue)
+            # Check for options
+            if defParam.has_key('options'):
+               v = defParam['options'][v]
+            if v != defParam['default']:
+               algoParams.append("{0}={1}".format(paramName, v))
       return ' '.join(algoParams)
    
    # ...................................

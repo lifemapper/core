@@ -58,15 +58,15 @@ class OpenModellerModel(object):
    @summary: Class containing methods to create an SDM model using openModeller
    """
    # ...................................
-   def __init__(self, jobName, pointsFn, layersFn, rulesetFn, paramsFn, 
+   def __init__(self, jobName, pointsFn, layersJson, rulesetFn, paramsJson, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 
                 statusFn=None):
       """
       @summary: Constructor for OM model
       @param pointsFn: The file location of the shapefile containing points
-      @param layersFn: The file location of the JSON layers file
+      @param layersJson: JSON string of layer information
       @param rulesetFn: The location to write the resulting ruleset
-      @param paramsFn: The JSON file location of algorithm parameters
+      @param paramsJson: JSON string of algorithm parameter information
       @param packageFn: If provided, write the package output here
       @param workDir: If provided, use this directory for work
       @param metricsFn: If provided, write the metrics to this location
@@ -96,10 +96,10 @@ class OpenModellerModel(object):
       points, pointsWKT = self._processPoints(pointsFn)
 
       # layers
-      layerFns, maskFn = self._processLayers(layersFn)
+      layerFns, maskFn = self._processLayers(layersJson)
 
       # parameters
-      algoParams = self._processParameters(paramsFn)
+      algoParams = self._processParameters(paramsJson)
       self.metrics['algorithmCode'] = self.algoCode
       
       # Command inputs
@@ -207,31 +207,25 @@ class OpenModellerModel(object):
       return status
    
    # ...................................
-   def _processLayers(self, layersFn):
+   def _processLayers(self, layersJson):
       """
       @summary: Read the layers JSON and process the layers accordingly
-      @param layersFn: Location of JSON file with layer information
+      @param layersJson: JSON string with layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      with open(layersFn) as inLayers:
-         lyrJson = json.load(inLayers)
-         
       lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(lyrJson, 
+      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
                                  layerFormat=LayerFormat.GTIFF)
       return lyrs, mask
    
    # .................................
-   def _processParameters(self, paramsFn):
+   def _processParameters(self, paramsJson):
       """
       @summary: Process provided algorithm parameters JSON and return string
-      @param paramsFn: File location of algorithm parameters JSON
-      @raise IOError: If algorithm JSON does not exist
+      @param paramsJson: Json string of algorithm information
       @todo: Use constants
       """
-      with open(paramsFn) as inParams:
-         paramsJson = json.load(inParams)
-         self.algoCode = paramsJson['algorithmCode']
+      self.algoCode = paramsJson['algorithmCode']
 
       return paramsJson
       
@@ -315,15 +309,13 @@ class OpenModellerProjection(object):
    PROCESS_TYPE = ProcessType.OM_PROJECT
    
    # ...................................
-   def __init__(self, jobName, rulesetFn, layersFn, outTiffFn, workDir=None, 
+   def __init__(self, jobName, rulesetFn, layersJson, outTiffFn, workDir=None, 
                 metricsFn=None, logFn=None, statusFn=None, packageFn=None):
       """
       @summary: Constructor for ME model
       @param pointsFn: The file location of the shapefile containing points
-      @param layersFn: The file location of the JSON layers file
+      @param layersJson: JSON string of layer information
       @param rulesetFn: The location to write the resulting ruleset
-      @param paramsFn: The JSON file location of algorithm parameters, if not
-                          provided, use defaults
       @param workDir: If provided, use this directory for work
       @param metricsFn: If provided, write the metrics to this location
       @param logFn: If provide, write the output log to this location
@@ -347,7 +339,7 @@ class OpenModellerProjection(object):
                                  logFilename=logFn)
    
       # layers
-      layerFns, maskFn = self._processLayers(layersFn)
+      layerFns, maskFn = self._processLayers(layersJson)
       
       # Other
       self.outTiffFn = outTiffFn
@@ -435,17 +427,14 @@ class OpenModellerProjection(object):
       return status
    
    # ...................................
-   def _processLayers(self, layersFn):
+   def _processLayers(self, layersJson):
       """
       @summary: Read the layers JSON and process the layers accordingly
-      @param layersFn: Location of JSON file with layer information
+      @param layersJson: JSON string of layer information
       @param layersDir: The directory to create layer symbolic links
       """
-      with open(layersFn) as inLayers:
-         lyrJson = json.load(inLayers)
-         
       lyrMgr = LayerManager(SHARED_DATA_PATH)
-      lyrs, mask = lyrMgr.processLayersJSON(lyrJson, 
+      lyrs, mask = lyrMgr.processLayersJSON(layersJson, 
                                  layerFormat=LayerFormat.GTIFF)
       return lyrs, mask
    

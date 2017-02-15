@@ -43,14 +43,14 @@ if __name__ == "__main__":
    parser.add_argument('jobName', type=str, help="A name for this projection")
    parser.add_argument('rulesetFn', type=str, 
                        help="File location of the model ruleset to use")
-   parser.add_argument('layersFn', type=str, 
-          help="File location of JSON document containing layer information for projecting")
+   parser.add_argument('layersJson', type=str, 
+          help="JSON string containing layer information for projecting")
    parser.add_argument('outputRaster', type=str, 
                        help="File location to write the resulting raster")
    
    # Optional arguments
-   parser.add_argument('-algo', '--params_file', dest='params_file', type=str, 
-          help="File location of JSON document containing algorithm parameter information (only Maxent)")
+   parser.add_argument('-algo', '--params', dest='paramsJson', type=str, 
+          help="JSON string containing algorithm parameter information (only Maxent)")
    parser.add_argument('-w', '--work_dir', type=str, 
                        help='Path for work directory creation. Defaults to current directory')
    parser.add_argument('--metrics_file', type=str, 
@@ -65,13 +65,13 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    if args.processType == ProcessType.ATT_PROJECT:
-      job = MaxentProjection(args.jobName, args.rulesetFn, args.layersFn, 
-                             args.outputRaster, paramsFn=args.params_file,
+      job = MaxentProjection(args.jobName, args.rulesetFn, args.layersJson, 
+                             args.outputRaster, paramsJson=args.paramsJson,
                              workDir=args.work_dir, metricsFn=args.metrics_file,
                              logFn=args.log_file, statusFn=args.status_file, 
                              packageFn=args.package_file)
    else:
-      job = OpenModellerProjection(args.jobName, args.rulesetFn, args.layersFn, 
+      job = OpenModellerProjection(args.jobName, args.rulesetFn, args.layersJson, 
                              args.outputRaster, workDir=args.work_dir, 
                              metricsFn=args.metrics_file, logFn=args.log_file, 
                              statusFn=args.status_file, 
