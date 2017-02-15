@@ -29,6 +29,7 @@ import json
 import os
 from osgeo import ogr, osr
 import StringIO
+import subprocess
 from types import ListType, TupleType, UnicodeType, StringType
 
 from LmBackend.common.occparse import OccDataParser
@@ -38,6 +39,10 @@ from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
 from LmCompute.common.lmObj import LmException
 from LmCommon.common.unicode import fromUnicode, toUnicode
+try:
+   from LmServer.common.lmconstants import BIN_PATH
+except:
+   from LmCompute.common.lmconstants import BIN_PATH
 
 # .............................................................................
 class ShapeShifter(object):
@@ -77,7 +82,7 @@ class ShapeShifter(object):
          if not metadata:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                               'Failed to get metadata')
-         self.op = OccDataParser(logger, rawdata, metadata, delimiter=',')
+         self.op = OccDataParser(logger, rawdata, metadata, delimiter=delimiter)
          self.idField = self.op.idFieldName
          self.xField = self.op.xFieldName
          self.yField = self.op.yFieldName
@@ -181,7 +186,9 @@ class ShapeShifter(object):
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Missing \'dataname\' dataset name field')
 
-
+# .............................................................................
+# Public functions
+# .............................................................................
    # .............................................................................
    @staticmethod
    def getOgrFieldType(typeString):
@@ -196,81 +203,6 @@ class ShapeShifter(object):
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Unsupported field type {} (integer, string, or real)'
                            .format(typeString))
-
-# .............................................................................
-# Public functions
-# .............................................................................
-   def writeUserOccurrences(self, outfname, maxPoints=None, subsetfname=None):      
-      if subsetfname is not None:
-         if maxPoints is not None and self._recCount > maxPoints: 
-            from random import shuffle
-            subsetIndices = range(self._recCount)
-            shuffle(subsetIndices)
-            subsetIndices = subsetIndices[:maxPoints]
-
-      subsetDs = None
-      try:
-         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
-         newDs = drv.CreateDataSource(outfname)
-         if newDs is None:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                              'Dataset creation failed for {}'.format(outfname))
-         if subsetfname is not None and subsetIndices:
-            subsetDs = drv.CreateDataSource(subsetfname)
-            subsetMetaDict = {'ogrFormat': DEFAULT_OGR_FORMAT}
-            if subsetDs is None:
-               raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
-                                 'Dataset creation failed for {}'.format(subsetfname))
-         
-         newLyr = self._addUserFieldDef(newDs)
-         if subsetDs is not None:
-            subsetLyr = self._addUserFieldDef(subsetDs)
-         # same lyrDef for both datasets
-         lyrDef = newLyr.GetLayerDefn()
-         
-         # Loop through records
-         recDict = self._getRecord()
-         while recDict:
-            try:
-               self._createFillFeat(lyrDef, recDict, newLyr)
-               if subsetDs is not None and self._currRecum in subsetIndices:
-                  self._createFillFeat(lyrDef, recDict, subsetLyr)
-            except Exception, e:
-               print('Failed to create record ({})'.format(fromUnicode(toUnicode(e))))
-            recDict = self._getRecord()
-                              
-         # Return metadata
-         (minX, maxX, minY, maxY) = newLyr.GetExtent()
-         geomtype = lyrDef.GetGeomType()
-         fcount = newLyr.GetFeatureCount()
-         # Close dataset and flush to disk
-         newDs.Destroy()
-         print('Closed/wrote []-feature dataset {}'.format(fcount, outfname))
-         basename, ext = os.path.splitext(outfname)
-         self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
-                             fcount, minX, minY, maxX, maxY)
-         
-         if subsetDs is not None:
-            sfcount = subsetLyr.GetFeatureCount()
-            subsetDs.Destroy()
-            print('Closed/wrote {}-feature dataset {}'.format(sfcount, subsetfname))
-            basename, ext = os.path.splitext(subsetfname)
-            self._writeMetadata(basename, DEFAULT_OGR_FORMAT, geomtype, 
-                                sfcount, minX, minY, maxX, maxY)
-      except Exception, e:
-         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
-                           'Unable to read or write data ({})'
-                           .format(fromUnicode(toUnicode(e))))
-      
-      self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount,
-                        subsetFname=subsetfname, subsetCount=sfcount)
-   #    try:
-   #       shpTreeCmd = os.path.join(appPath, "shptree")
-   #       retcode = subprocess.call([shpTreeCmd, "%s" % outfname])
-   #       if retcode != 0: 
-   #          print 'Unable to create shapetree index on %s' % outfname
-   #    except Exception, e:
-   #       print 'Unable to create shapetree index on %s: %s' % (outfname, str(e))
 
 # ...............................................
    @staticmethod
@@ -300,91 +232,110 @@ class ShapeShifter(object):
       return goodData, featCount
 
    # .............................................................................
-   def writeOccurrences(self, outfname, maxPoints=None, subsetfname=None):
-      if subsetfname is not None:
-         if maxPoints is not None and self._recCount > maxPoints: 
-            from random import shuffle
-            subsetIndices = range(self._recCount)
-            shuffle(subsetIndices)
-            subsetIndices = subsetIndices[:maxPoints]
+   def writeOccurrences(self, outfname, maxPoints=None, bigfname=None, isUser=False):
+      discardIndices = self._getSubset(maxPoints)
 
-      newDs = subsetDs = sfcount = None
+      outDs = bigDs = None
       try:
-         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
-         newDs = drv.CreateDataSource(outfname)
-         if newDs is None:
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
-                              'Dataset creation failed for {}'.format(outfname))
+         outDs = self._createDataset(outfname)
+         if isUser:
+            outLyr = self._addUserFieldDef(outDs)
+         else:
+            outLyr = self._addFieldDef(outDs)
+         lyrDef = outLyr.GetLayerDefn()
             
-         if subsetfname is not None and subsetIndices:
-            subsetDs = drv.CreateDataSource(subsetfname)
-            if subsetDs is None:
-               raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
-                                 'Dataset creation failed for {}'.format(subsetfname))
-         
-         newLyr = self._addFieldDef(newDs)
-         if subsetDs is not None:
-            subsetLyr = self._addFieldDef(subsetDs)
-         # same lyrDef for both datasets
-         lyrDef = newLyr.GetLayerDefn()
-         
+         # Do we need a BIG dataset?
+         if len(discardIndices) > 0 and bigfname is not None:
+            bigDs = self._createDataset(bigfname)
+            if isUser:
+               bigLyr = self._addUserFieldDef(bigDs)
+            else:
+               bigLyr = self._addFieldDef(bigDs)
+                        
          # Loop through records
          recDict = self._getRecord()
          while recDict is not None:
             try:
-               self._createFillFeat(lyrDef, recDict, newLyr)
-               if subsetDs is not None and self._currRecum in subsetIndices:
-                  self._createFillFeat(lyrDef, recDict, subsetLyr)
+               # Add non-discarded features to regular layer
+               if self._currRecum not in discardIndices:
+                  self._createFillFeat(lyrDef, recDict, outLyr)
+               # Add all features to optional "Big" layer
+               if bigDs is not None:
+                  self._createFillFeat(lyrDef, recDict, bigLyr)
             except Exception, e:
                print('Failed to create record ({})'.format(fromUnicode(toUnicode(e))))
             recDict = self._getRecord()
                               
          # Return metadata
-         (minX, maxX, minY, maxY) = newLyr.GetExtent()
+         (minX, maxX, minY, maxY) = outLyr.GetExtent()
          geomtype = lyrDef.GetGeomType()
-         fcount = newLyr.GetFeatureCount()
+         fcount = outLyr.GetFeatureCount()
          # Close dataset and flush to disk
-         newDs.Destroy()
-         print('Closed/wrote {}-feature dataset {}'.format(fcount, outfname))
+         outDs.Destroy()
+         self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount)
                            
-         if subsetDs is not None:
-            sfcount = subsetLyr.GetFeatureCount()
-            subsetDs.Destroy()
-            print('Closed/wrote {}-feature dataset {}'.format(sfcount, subsetfname))
+         # Close Big dataset and flush to disk
+         if bigDs is not None:
+            bigcount = bigLyr.GetFeatureCount()
+            bigDs.Destroy()
+            self._finishWrite(bigfname, minX, maxX, minY, maxY, geomtype, bigcount)
             
       except Exception, e:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                            'Unable to read or write data ({})'
                            .format(fromUnicode(toUnicode(e))))
-      
-      self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount,
-                        subsetFname=subsetfname, subsetCount=sfcount)
 
-   # .............................................................................
-   def _finishWrite(self, outFname, minX, maxX, minY, maxY, geomtype, fcount,
-                    subsetFname=None, subsetCount=None):
-      # Test output data
-      goodData, featCount = self.testShapefile(outFname)
-
-      # Write metadata as JSON
-      basename, ext = os.path.splitext(outFname)
-      self._writeMetadata(basename, geomtype, fcount, minX, minY, maxX, maxY)
-
-      if subsetFname is not None:
-         basename, ext = os.path.splitext(subsetFname)
-         self._writeMetadata(basename, geomtype, subsetCount, minX, minY, maxX, maxY)
-         
-         goodData, featCount = self.testShapefile(subsetFname)
-         if not goodData: 
-            raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
-                              'Failed to create shapefile {}'.format(subsetFname))
-         elif featCount == 0:
-            raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
-                              'Failed to create shapefile {}'.format(subsetFname))
             
 # .............................................................................
 # Private functions
 # .............................................................................
+   # .............................................................................
+   def _createDataset(self, fname):
+      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+      newDs = drv.CreateDataSource(fname)
+      if newDs is None:
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                           'Dataset creation failed for {}'.format(fname))
+      return newDs
+
+   # .............................................................................
+   def _getSubset(self, maxPoints):  
+      discardIndices = []
+      if maxPoints is not None and self._recCount > maxPoints: 
+         from random import shuffle
+         discardCount = self._recCount - maxPoints
+         allIndices = range(self._recCount)
+         shuffle(allIndices)
+         discardIndices = allIndices[:discardCount]
+      return discardIndices
+   
+   # .............................................................................
+   def _finishWrite(self, outfname, minX, maxX, minY, maxY, geomtype, fcount):
+      print('Closed/wrote {}-feature dataset {}'.format(fcount, outfname))
+      
+      # Write shapetree index for faster access
+      try:
+         shpTreeCmd = os.path.join(BIN_PATH, "shptree")
+         retcode = subprocess.call([shpTreeCmd, "%s" % outfname])
+         if retcode != 0: 
+            print 'Unable to create shapetree index on %s' % outfname
+      except Exception, e:
+         print 'Unable to create shapetree index on %s: %s' % (outfname, str(e))
+      
+      # Test output data
+      goodData, featCount = self.testShapefile(outfname)
+      if not goodData: 
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
+                           'Failed to create shapefile {}'.format(outfname))
+      elif featCount == 0:
+         raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
+                           'Failed to create shapefile {}'.format(outfname))
+      
+      # Write metadata as JSON
+      basename, ext = os.path.splitext(outfname)
+      self._writeMetadata(basename, geomtype, fcount, minX, minY, maxX, maxY)
+            
+   # .............................................................................
    def _mapAPIResponseNames(self):
       lookupDict = {}
       for bisonkey, flddesc in self.dataFields.iteritems():

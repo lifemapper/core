@@ -106,11 +106,11 @@ def createUserShapefile(pointCsvFn, metadataFn, outFile, bigFile, maxPoints):
    # Assume there is a header, could be sniffed if we want to
    count = len(csvInputBlob.split('\n')) -1 
    return parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-                       bigFile, count, maxPoints, metadata=metadata)
+                       bigFile, count, maxPoints, metadata=metadata, isUser=True)
       
 # .............................................................................
 def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
-                 metadata=None):
+                 metadata=None, isUser=False):
    """
    @summary: Parses a CSV-format dataset and saves it to a shapefile in the 
                 specified location
@@ -125,6 +125,6 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @todo: Fullfname needs to be handled by shaper
    """
    shaper = ShapeShifter(processType, rawData, count, metadata=metadata)
-   shaper.writeOccurrences(outFile, maxPoints=maxPoints,
-                           bigfname=bigFile)
+   shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
+                           isUser=isUser)
    

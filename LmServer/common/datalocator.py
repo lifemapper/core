@@ -243,42 +243,46 @@ class EarlJr(LMObject):
       return basename
 
 # ...............................................
-   def createFilename(self, ftype, scenarioCode=None, modelId=None, projId=None,
-                      occsetId=None, subset=False, 
-                      # new 
-                      matrixId=None, matrixType=MatrixType.PAM,
-                      treeId=None, mfchainId=None,
-                      # TODO: remove bucketId, pamsumId
-                      bucketId=None, pamsumId=None, radexpId=None, 
-                      lyrname=None, pth=None, usr=None, epsg=None):
+   def createFilename(self, ftype, scenarioCode=None, occsetId=None, projId=None,
+                      matrixId=None, matrixType=None, treeId=None, 
+                      mfchainId=None, gridsetId=None,
+                      lyrname=None, pth=None, usr=None, epsg=None,
+                      # TODO: remove all of the following
+                      modelId=None, bucketId=None, pamsumId=None, radexpId=None, 
+                      subset=False):
       """
       @summary: Return the filename for given filetype and objects 
       @param ftype: LmServer.common.lmconstants.LMFileType
+      @param scenarioCode: Code for layerset used in SDM
       @param occsetId: SDM OccurrenceLayer database Id
-      @param subset: True if this is a subset of available occurrences
-      @param modelId: SDM Model database Id
       @param projId: SDM Projection database Id
+      @param matrixId: RAD Matrix database Id
+      @param radexpType: RAD Matrix type
+      @param treeId: RAD Tree database Id
+      @param mfchainId: Makeflow chain database Id
+      @param gridsetId: RAD Gridset database Id
+      @param lyrname: Layer name 
+      @param pth: File storage path, overrides calculated path
+      @param usr: User database Id
+      @param epsg: File or object EPSG code
+      # TODO: delete all these
+      @param modelId: SDM Model database Id
       @param radexpId: RAD Experiment database Id
       @param bucketId: RAD Bucket database Id (deprecated)
       @param pamsumId: RAD PamSum database Id (deprecated)
-      @param lyrname: Layer name 
-      @param pth: File storage path
-      @param usr: User database Id
-      @param epsg: File or object EPSG code
+      @param subset: True if this is a subset of available occurrences
       """
       basename = self.createBasename(ftype, scenarioCode=scenarioCode,
                   occsetId=occsetId, subset=subset, modelId=modelId, 
                   projId=projId, radexpId=radexpId, bucketId=bucketId,
-                  matrixId=matrixId, matrixType=matrixType, treeId=treeId,mfchainId=mfchainId,
-                  pamsumId=pamsumId, lyrname=lyrname, usr=usr, epsg=epsg)
-      
+                  matrixId=matrixId, matrixType=matrixType, treeId=treeId,
+                  mfchainId=mfchainId, pamsumId=pamsumId, 
+                  lyrname=lyrname, usr=usr, epsg=epsg)      
       if pth is None:
-            
          pth = self.createDataPath(usr, ftype, 
             bucketId=bucketId,
             epsg=epsg, occsetId=occsetId, radexpId=radexpId, 
             matrixId=matrixId, matrixType=matrixType, treeId=treeId)
-         
       filename = os.path.join(pth, basename + FileFix.EXTENSION[ftype])
       return filename
    
