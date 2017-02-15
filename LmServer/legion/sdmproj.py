@@ -22,18 +22,25 @@
           02110-1301, USA.
 """
 import glob 
+import json
 import mx.DateTime
 import os
 
-from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType
+from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType,\
+   DEFAULT_POST_USER
 from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms,
-            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
+            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule,
+   BIN_PATH)
 from LmServer.makeflow.cmd import MfRule
+from LmServer.common.localconstants import ARCHIVE_USER
+from LmWebServer.common.lmconstants import SCALE_PROJECTION_MINIMUM,\
+   SCALE_PROJECTION_MAXIMUM, GEOTIFF_INTERFACE
+   
 
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
@@ -335,6 +342,7 @@ class SDMProjection(_ProjectionType, Raster):
       """
       @summary Return the request filename including absolute path for the 
                given projection id using the given occurrenceSet id
+      @todo: Should be able to remove this
       """
       fname = self._earlJr.createFilename(LMFileType.PROJECTION_REQUEST, 
                 projId=self.getId(), pth=self.getAbsolutePath(), 
@@ -360,7 +368,58 @@ class SDMProjection(_ProjectionType, Raster):
 #                            epsg=self.occurrenceSet.epsgcode)
 #       return dloc
 
+   # ...............................................
+   def getAlgorithmParametersJson(self, algorithm):
+      """
+      @summary: Return a JSON string of algorithm information
+      @param algorithm: An algorithm object
+      """
+      algoObj = {
+         "algorithmCode" : algorithm.code,
+         "parameters" : []
+      }
+         
+      for param in algorithm._parameters.keys():
+         algoObj["parameters"].append(
+            {"name" : param, 
+             "value" : str(algorithm._parameters[param])})
+      
+      return json.dumps(algoObj)
 
+   # ...............................................
+   def getLayersJson(self, scenario, mask):
+      """
+      @summary: Return a JSON string of layer information
+      @param scenario: The scenario to get the JSON file for
+      @param mask: The mask to use for this projection
+      """
+      layersObj = {
+         "layers" : [],
+         "mask" : {
+            "identifier" : mask.verify
+         }
+      }
+      
+      # Add mask URL
+      try:
+         layersObj["mask"]["url"] = mask.getURL(format=GEOTIFF_INTERFACE)
+      except:
+         # If we don't have a URL
+         pass
+      
+      for lyr in scenario.layers:
+         lyrObj = {
+            "identifier" : lyr.verify
+         }
+         try:
+            lyrObj["url"] = lyr.getURL(format=GEOTIFF_INTERFACE)
+         except:
+            # Don't have URL
+            pass
+         layersObj["layers"].append(lyrObj)
+      
+      return json.dumps(layersObj)
+   
 # ...............................................
    def getModelTarget(self):
       """
@@ -651,28 +710,40 @@ class SDMProjection(_ProjectionType, Raster):
          occRules = self._occurrenceSet.computeMe()
          rules.extend(occRules)
 
+         mdlName = self.getModelTarget()
          occSetFname = self._occurrenceSet.getDLocation()
-         xmlRequestFname = self.getModelFilename(isResult=False)
-         outPath, fname = os.path.split(xmlRequestFname)
-         name = '{}-{}'.format(ptype, self.getModelTarget())
-   
-         options = {'-n' : name,
-                    '-p' : ptype,
-                    '-o' : outPath,
-                    '-l' : '{}.log'.format(name) }
-         # Join arguments
-         args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
-      
-         cmdArguments = [os.getenv('PYTHON'), ProcessType.getJobRunner(ptype), 
-                         xmlRequestFname, args]
-         cmd = ' '.join(cmdArguments)
-         rules.append(MfRule(cmd, [rulesetFname], dependencies=[occSetFname]))
-      
+         
+         mdlOpts = {
+            '-w' : mdlName
+         }
+
+         args = ' '.join(["{opt} {val}".format(opt=o, val=v
+                                            ) for o, v in mdlOpts.iteritems()])
+
+         layersJson = self.getLayersJson(self.modelScenario, self.modelMask)
+         paramsJson = self.getAlgorithmParametersJson(self._algorithm)
+
+         mdlCmdArgs = [os.getenv('PYTHON'),
+                       ProcessType.getJobRunner(ptype),
+                       str(ptype),
+                       mdlName,
+                       occSetFname,
+                       layersJson,
+                       rulesetFname,
+                       paramsJson,
+                       args
+                       ]
+         cmd = ' '.join(mdlCmdArgs)
+         
+         rules.append(MfRule(cmd, [rulesetFname], 
+                             dependencies=[occSetFname]))
+         
       return rules
 
    # ......................................
    def computeMe(self):
       """
+      @todo: Consider producing layersFn and paramsFn with script
       """
       rules = []
       
@@ -682,47 +753,93 @@ class SDMProjection(_ProjectionType, Raster):
          modelRules = self._computeMyModel()
          rules.extend(modelRules)
          modelFname = self.getModelFilename(isResult=True)
+
+         prjName = "prj{0}".format(self.getId())
+         layersJson = self.getLayersJson(self.projScenario, self.projMask)
+         workDir = prjName
+         statusFn = os.path.join(workDir, "prj{0}.status".format(self.getId()))
+         packageFn = self.getProjPackageFilename()
+
+         prjOpts = {
+            '-w' : workDir,
+            '-p' : packageFn,
+            '-s' : statusFn
+         }
          
-         # ................................
-         # Projection request file dependency
-         requestFname = self.getProjRequestFilename()
-         outPath, fname = os.path.split(requestFname)
-         # Partial projection request file
-         # TODO: Write the partial request (all but ruleset)
-         partialRequestFname = "{0}.part".format(requestFname)
-         self.writePartialProjectionRequest(partialRequestFname)
-         # TODO: Add the projection request tool, this points to
-         #       makeProjectionRequest.py in LmCompute/tools/single/ 
-         ptype = ProcessType.PROJECT_REQUEST
-         requestCmdArgs = [os.getenv('PYTHON'),
-                          ProcessType.getJobRunner(ptype),
-                          partialRequestFname,
-                          modelFname,
-                          requestFname ]
-         requestCmd = ' '.join(requestCmdArgs)
+         outputRaster = self.getDLocation()
+         outTiff = outputRaster
          
-         requestRule = MfRule(requestCmd, [requestFname], 
-                              dependencies=[modelFname, partialRequestFname])
-         rules.append(requestRule)
+         if self.processType == ProcessType.ATT_PROJECT:
+            paramsJson = self.getAlgorithmParametersFile(self._algorithm)
+            prjOpts['-algo'] = paramsJson
+            outputRaster = os.path.join(workDir, "output.asc")
+            
+            gdalTranslateCmd = os.path.join(BIN_PATH, "gdal_translate")
+            
+            # If archive or default, scale
+            if self.getUserId() in [ARCHIVE_USER, DEFAULT_POST_USER]:
+               convertCmdArgs = [
+                  gdalTranslateCmd,
+                  "-scale 0 1 {0} {1}".format(SCALE_PROJECTION_MINIMUM,
+                                              SCALE_PROJECTION_MAXIMUM),
+                  "-ot Int16",
+                  "-of GTiff",
+                  outputRaster,
+                  outTiff
+               ]
+            # If Charlie, multiply
+            elif self.getUserId() == 'cgwillis':
+               convertCmdArgs = [
+                  gdalTranslateCmd,
+                  "-scale 0 1 0 10000",
+                  "-ot Int16",
+                  "-of GTiff",
+                  outputRaster,
+                  outTiff
+               ]
+            # Else, just convert
+            else:
+               convertCmdArgs = [
+                  gdalTranslateCmd,
+                  "-of GTiff",
+                  outputRaster,
+                  outTiff
+               ]
+            
+            convertCmd = ' '.join(convertCmdArgs)
+            rules.append(MfRule(convertCmd, [outTiff], 
+                                dependencies=[outputRaster]))
          
-         # ................................
-         # Projection rule
-         # TODO: We may need to move this to the correct location
-         tiffTarget = self.getDLocation()
-         name = '{}-{}'.format(self.processType, self.getId())         
-         options = {'-n' : name,
-                    '-p' : self.processType,
-                    '-o' : outPath,
-                    '-l' : '{}.log'.format(name) }   
-         # Join arguments
-         args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
+         prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
+                                            ) for o, v in prjOpts.iteritems()])
+
+         prjCmdArgs = [os.getenv('PYTHON'),
+                       ProcessType.getJobRunner(self.processType),
+                       str(self.processType),
+                       modelFname,
+                       layersJson,
+                       outputRaster,
+                       prjArgs
+                       ]
+         prjCmd = ' '.join(prjCmdArgs)
+         rules.append(MfRule(prjCmd, [outputRaster, statusFn, packageFn], 
+                             dependencies=[modelFname]))
          
-         cmdArguments = [os.getenv('PYTHON'), 
-                         ProcessType.getJobRunner(self.processType), 
-                         requestFname, args]
-         prjCmd = ' '.join(cmdArguments)
-         
-         prjRule = MfRule(prjCmd, [tiffTarget], dependencies=[requestFname])
-         rules.append(prjRule)
+         # Need command to update database
+         updateSuccessFn = os.path.join(workDir, "{0}{0}.success".format(
+                                               self.processType, self.getId()))
+         updateDbArgs = ["LOCAL", # Run on server side for DB
+                         os.getenv('PYTHON'),
+                         ProcessType.getJobRunner(ProcessType.UPDATE_OBJECT),
+                         str(self.processType),
+                         str(self.getId()),
+                         updateSuccessFn,
+                         outTiff,
+                         packageFn,
+                         "-f {0}".format(statusFn)
+                         ]
+         updateCmd = ' '.join(updateDbArgs)
+         rules.append(MfRule(updateCmd, [updateSuccessFn],
+                             dependencies=[outTiff, packageFn]))
       return rules
    
