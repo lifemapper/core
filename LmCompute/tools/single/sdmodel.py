@@ -27,49 +27,53 @@
 """
 import argparse
 from LmCommon.common.lmconstants import ProcessType
-from LmCompute.plugins.single.maxent.meRunners import MEModelRunner
-from LmCompute.plugins.single.openModeller.omRunners import OMModelRunner
+from LmCompute.plugins.single.maxent.meRunners import MaxentModel
+from LmCompute.plugins.single.openModeller.omRunners import OpenModellerModel
 
 # .............................................................................
-if __name__ == '__main__':   
+if __name__ == '__main__':
    parser = argparse.ArgumentParser(
       description='This script generates a SDM ruleset from Lifemapper inputs') 
    
-   parser.add_argument('-n', '--job_name', type=str,
-                       help='Use this as the name of the job (for logging and work directory creation).  If omitted, one will be generated')
-   parser.add_argument('-p', '--process_type', type=int,
+   parser.add_argument('processType', type=int, 
                        choices=[ProcessType.ATT_MODEL, ProcessType.OM_MODEL],
-                       help='Type of SDM to run, ProcessType.ATT_MODEL or ProcessType.OM_MODEL')
-   parser.add_argument('-o', '--out_dir', type=str, 
-                       help='Write the final outputs to this directory')
+                       help="The Lifemapper process type of this model")
+   parser.add_argument('jobName', type=str, help="A name for this model")
+   parser.add_argument('pointsFn', type=str, 
+          help="File location of occurrence set shapefile to use for modeling")
+   parser.add_argument('layersFn', type=str, 
+          help="File location of JSON document containing layer information for modeling")
+   parser.add_argument('rulesetFn', type=str, 
+                       help="File location to write the output ruleset")
+   parser.add_argument('paramsFn', type=str, 
+          help="File location of JSON document containing algorithm parameter information")
+
+   # Optional arguments
+   parser.add_argument('-p', '--package_file', type=str, 
+                  help="If provided, write the model package to this location")
    parser.add_argument('-w', '--work_dir', type=str, 
                        help='Path for work directory creation. Defaults to current directory')
-   parser.add_argument('-l', '--log_file', type=str, 
-                       help='Optional output logfile')
-   parser.add_argument('-ll', '--log_level', type=str, 
-                       help='Log level for optional logging', 
-                       choices=['info', 'debug', 'warn', 'error', 'critical'])
-   parser.add_argument('-s', '--status_file', type=str,
-                       help='Optional output job status file')
    parser.add_argument('--metrics_file', type=str, 
                        help='Optional output metrics file')
-   parser.add_argument('--cleanup', type=bool, 
-                       help='Clean up outputs or not', choices=[True, False])
-   parser.add_argument('jobXml', type=str, 
-                       help='Job configuration information XML file')
+   parser.add_argument('-l', '--log_file', type=str, 
+                       help='Optional output logfile')
+   parser.add_argument('-s', '--status_file', type=str,
+                       help='Optional output job status file')
    
    args = parser.parse_args()
    
-   if args.process_type == ProcessType.ATT_MODEL:
-      job = MEModelRunner(args.jobXml, jobName=args.job_name, outDir=args.out_dir, 
-                          workDir=args.work_dir, metricsFn=args.metrics_file, 
-                          logFn=args.log_file, logLevel=args.log_level, 
-                          statusFn=args.status_file)
+   if args.processType == ProcessType.ATT_MODEL:
+      job = MaxentModel(args.jobName, args.pointsFn, args.layersFn, 
+                        args.rulesetFn, paramsFn=args.paramsFn, 
+                        packageFn=args.package_file, workDir=args.work_dir,
+                        metricsFn=args.metrics_file, logFn=args.log_file,
+                        statusFn=args.status_file)
    else:
-      job = OMModelRunner(args.jobXml, jobName=args.job_name, outDir=args.out_dir, 
-                          workDir=args.work_dir, metricsFn=args.metrics_file, 
-                          logFn=args.log_file, logLevel=args.log_level, 
-                          statusFn=args.status_file)
-
+      job = OpenModellerModel(args.jobName, args.pointsFn, args.layersFn, 
+                        args.rulesetFn, args.paramsFn, 
+                        packageFn=args.package_file, workDir=args.work_dir,
+                        metricsFn=args.metrics_file, logFn=args.log_file,
+                        statusFn=args.status_file)
+   
    job.run()
    
