@@ -27,6 +27,7 @@
           02110-1301, USA.
 """
 import json
+import os
 
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.common.createshape import ShapeShifter
@@ -122,9 +123,15 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
    @param metadata: Metadata that can be used for processing the CSV
-   @todo: Fullfname needs to be handled by shaper
+   @todo: handle write exception before writing dummy file? 
    """
    shaper = ShapeShifter(processType, rawData, count, metadata=metadata)
    shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
                            isUser=isUser)
+   if not os.path.exists(bigFile):
+      f = open(bigFile, 'w')
+      f.write('No excess data')
+      f.close()
+      
+      
    
