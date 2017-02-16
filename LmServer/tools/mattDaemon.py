@@ -101,15 +101,15 @@ class MattDaemon(Daemon):
             numRunning = self.getNumberOfRunningProcesses()
             
             #  Add mf processes for empty slots
-            for mfId, mfDocFn in self.getMakeflows(self.maxMakeflows - numRunning):
+            for mfObj, mfDocFn in self.getMakeflows(self.maxMakeflows - numRunning):
                
                if os.path.exists(mfDocFn):
-                  cmd = self._getMakeflowCommand("lifemapper-{0}".format(mfId), 
+                  cmd = self._getMakeflowCommand("lifemapper-{0}".format(mfObj), 
                                                  mfDocFn)
                   self.log.debug(cmd)
-                  self._mfPool.append([mfId, mfDocFn, Popen(cmd, shell=True)])
+                  self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True)])
                else:
-                  self._cleanupMakeflow(mfId, mfDocFn, exitStatus=2, 
+                  self._cleanupMakeflow(mfObj, mfDocFn, exitStatus=2, 
                                         lmStatus=JobStatus.IO_GENERAL_ERROR)
             # Sleep
             self.log.info("Sleep for {0} seconds".format(self.sleepTime))
@@ -128,21 +128,21 @@ class MattDaemon(Daemon):
       @summary: Use the scribe to get available makeflow documents and moves 
                    DAG files to workspace
       @param count: The number of Makeflows to retrieve
-      @todo: Change scribe function
       @note: If the DAG exists in the workspace, assume that things failed and
                 we should try to continue
       """
-      rawMFs = self.scribe.getMakeflows(count)
+      rawMFs = self.scribe.findMFChains(count)
       
       mfs = []
-      for mfId, origLoc in rawMFs:
+      for mfObj in rawMFs:
          # New filename
+         origLoc = mfObj.getDLocation()
          newLoc = os.path.join(self.workspace, origLoc.basename)
          # Move to workspace if it does not exist (see note)
          if not os.path.exists(newLoc):
             shutil.copyfile(origLoc, newLoc)
          # Add to mfs list
-         mfs.append(mfId, newLoc)
+         mfs.append(mfObj, newLoc)
 
       return mfs
       
@@ -157,11 +157,11 @@ class MattDaemon(Daemon):
          if result is None:
             numRunning += 1
          else:
-            mfId = self._mfPool[idx][0]
+            mfObj = self._mfPool[idx][0]
             mfDocFn = self._mfPool[idx][1]
             self._mfPool[idx] = None
             
-            self._cleanupMakeflow(mfId, mfDocFn, result)
+            self._cleanupMakeflow(mfObj, mfDocFn, result)
 
       self._mfPool = filter(None, self._mfPool)
       return numRunning
@@ -247,20 +247,19 @@ class MattDaemon(Daemon):
       return mfCmd
 
    # .............................
-   def _cleanupMakeflow(self, mfId, mfDocFn, exitStatus, lmStatus=None):
+   def _cleanupMakeflow(self, mfObj, mfDocFn, exitStatus, lmStatus=None):
       """
       @summary: Clean up a makeflow that has finished, by completion, error, or
                    signal
-      @param mfId: The id of the makeflow to update
+      @param mfObj: Makeflow chain object
       @param mfDocFn: The file location of the DAG (in the workspace)
       @param exitStatus: Unix exit status (negative: killed by signal, 
                                            zero: successful, positive: error)
       @param lmStatus: If provided, update the database with this status
-      @todo: Change scribe functions when known
       """
       # If success, delete
       if exitStatus == 0:
-         self.scribe.deleteMakeflow(mfId)
+         self.scribe.deleteObject(mfObj)
       else:
          # Either killed by signal or error
          if lmStatus is None:
@@ -270,7 +269,8 @@ class MattDaemon(Daemon):
             lmStatus = JobStatus.INITIALIZE
          
          # Update
-         self.scribe.updateMakeflow(mfId, lmStatus)
+         mfObj.status = lmStatus
+         self.scribe.updateMFChain(mfObj)
       
       # Remove files from workspace
       delFiles = glob.glob("{0}*".format(mfDocFn))
