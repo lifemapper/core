@@ -57,7 +57,7 @@ class MatrixColumn(_LayerParameters, ProcessObject):
                 layer=None, shapegrid=None, intersectParams={}, 
                 dlocation=None, squid=None, ident=None,
                 processType=None, metadata={}, matrixColumnId=None, 
-                status=None, statusModTime=None, overridePath=None):
+                status=None, statusModTime=None):
       """
       @summary MatrixColumn constructor
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
@@ -68,7 +68,6 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       @param layer: layer input to intersect
       @param shapegrid: grid input to intersect 
       @param intersectParams: parameters input to intersect
-      @param colDLocation: location of MatrixColumn (vector) 
       @param squid: species unique identifier for column
       @param ident: (non-species) unique identifier for column
       """
@@ -82,8 +81,6 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       self.shapegrid = shapegrid
       self.intersectParams = {}
       self.loadIntersectParams(intersectParams)
-      self._dlocation = None
-      self.setDLocation(dlocation, pth=overridePath)
       self.squid = squid
       self.ident = ident
 
@@ -95,7 +92,6 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       @param mfid: The database id for the object
       """
       self.objId = mfid
-      self.setColumnDLocation()
 
 # ...............................................
    def getId(self):
@@ -119,37 +115,6 @@ class MatrixColumn(_LayerParameters, ProcessObject):
                                   existingMetadataDict=self.intersectParams)
    
 # ...............................................
-# ...............................................
-   def createLocalDLocation(self, pth=None):
-      """
-      @summary: Create data location
-      """
-      dloc = None
-      if self.objId is not None:
-         from LmServer.common.datalocator import EarlJr
-         earlJr = EarlJr()
-         dloc = earlJr.createFilename(LMFileType.MATRIX_COLUMN,
-                                      mfchainId=self.objId, 
-                                      usr=self._userId, pth=pth)
-      return dloc
-
-   def getDLocation(self, pth=None):
-      self.setDLocation(pth=pth)
-      return self._dlocation
-
-   def setDLocation(self, dlocation=None, pth=None):
-      """
-      @note: Does NOT override existing dlocation, use clearDLocation for that
-      """
-      if self._dlocation is None:
-         if dlocation is None:
-            dlocation = self.createLocalDLocation(pth=pth)
-         self._dlocation = dlocation
-
-   def clearDLocation(self): 
-      self._dlocation = None
-   
-   # ...............................................
    def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
       """
       @summary Update status, matrixIndex, metadata, modTime attributes on the 
@@ -191,7 +156,8 @@ class MatrixColumn(_LayerParameters, ProcessObject):
             options = "--squid={0}".format(self.squid)
          elif self.ident is not None:
             options = "--ident={0}".format(self.ident)
-         pavFname = self.getColumnDLocation()
+         # TODO: CJ - how do we return these columns?
+         pavFname = self.getTempDLocation()
          
          cmdArguments = [os.getenv('PYTHON'), 
                          ProcessType.getJobRunner(self.processType), 
@@ -209,4 +175,7 @@ class MatrixColumn(_LayerParameters, ProcessObject):
         
       return rules
 
-
+# ...............................................
+   def getTempDLocation(self):
+#       What?
+      pass

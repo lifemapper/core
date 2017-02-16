@@ -324,8 +324,9 @@ class MapLayerSet(_LayerSet, ServiceObject):
    
    def setMapPrefix(self, mapprefix=None):
       if mapprefix is None:
-         mapprefix = self._earlJr.constructMapPrefix(ftype=LMFileType.OTHER_MAP, 
-                     mapname=self.mapName, usr=self._userId)
+         mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.OTHER_MAP, 
+                                    objCode=self.getId(), mapname=self.mapName, 
+                                    usr=self._userId, epsg=self.epsgcode)
       self._mapPrefix = mapprefix
       
 # ...............................................

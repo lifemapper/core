@@ -325,132 +325,55 @@ class LMFileType:
    PROJECTION_REQUEST = 130
    PROJECTION_PACKAGE = 131
    PROJECTION_LAYER = 132
-   PROJECTION_ATT_LAYER = 133
-   # Associated with an SDM experiment-projection (and default shapegrid), 
-   # but not a RAD experiment
-   PROJECTION_INTERSECT = 140
    # ..............................
    # RAD
    # User level
    UNSPECIFIED_USER = 500
-   SHAPEGRID = 201     # TODO: delete
+   SHAPEGRID = 201     # TODO: delete??
    USER_LAYER = 510
    USER_SHAPEGRID = 511
    USER_ATTRIBUTE_MATRIX = 520
    USER_TREE = 530
    MF_DOCUMENT = 540
    BOOM_CONFIG = 550
-   
-   # Experiment Level (maybe a pruned user-level object)
    UNSPECIFIED_RAD = 200
    ATTR_MATRIX = 210    # not yet used
    ATTR_TREE = 211     # TODO: delete
-   # Matrices
+   # Matrices - associated with RAD Gridset
    PAM = 222
    GRIM = 223
-   # PamSum level
+   BIOGEO_HYPOTHESES = 322
+   PADDED_PAM = 323
+   MCPA_OUTPUTS = 324
    # Calculations on PAM (Original or Randomized Swap)
    SUM_CALCS = 241
    SUM_SHAPE = 242
    # ..............................
-   # New Borg, Associated with RAD Gridset
-   # Matrix
-   # User level
-   BIOGEO_HYPOTHESES = 322
-   # Associated with RAD Gridset
-   PADDED_PAM = 323
-   MCPA_OUTPUTS = 324
-   # Associated with an Gridset-Matrix
-   MATRIX_COLUMN = 340
-   # TODO: delete   
-   LAYER_INDICES = 350
-   SITE_INDICES = 360 
-   BUCKET_MAP = 221
-   COMPRESSED_PAM = 240
-   PRESENCE_INDICES = 225
-   SPLOTCH_PAM = 243
-   SPLOTCH_SITES = 244
    
    @staticmethod
    def isSDM(rtype):
-      if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
+      if rtype in [LMFileType.SDM_MAP, 
+                   LMFileType.OCCURRENCE_FILE, 
                    LMFileType.OCCURRENCE_RAW_FILE, 
                    LMFileType.OCCURRENCE_LARGE_FILE,
                    LMFileType.SDM_MAKEFLOW_FILE, 
                    LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
                    LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT, 
                    LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
-                   LMFileType.PROJECTION_LAYER, LMFileType.PROJECTION_ATT_LAYER, 
-                   LMFileType.PROJECTION_INTERSECT]:
-         return True
-      return False
-   
-   @staticmethod
-   def isOccurrence(rtype):
-      if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-                   LMFileType.OCCURRENCE_RAW_FILE, 
-                   LMFileType.OCCURRENCE_LARGE_FILE, 
-                   LMFileType.SDM_MAKEFLOW_FILE]:
-         return True
-      return False
-
-   @staticmethod
-   def isModel(rtype):
-      if rtype in [LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
-                   LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT]:
-         return True
-      return False
-
-   @staticmethod
-   def isProjection(rtype):
-      if rtype in [LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
-                   LMFileType.PROJECTION_LAYER, LMFileType.PROJECTION_ATT_LAYER, 
-                   LMFileType.PROJECTION_INTERSECT]:
+                   LMFileType.PROJECTION_LAYER]:
          return True
       return False
    
    @staticmethod
    def isRAD(rtype):
       if rtype in [LMFileType.UNSPECIFIED_RAD,
-                   LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, LMFileType.BUCKET_MAP, 
+                   LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, 
                    LMFileType.PAM, LMFileType.GRIM, 
-                   LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES, 
-                   LMFileType.COMPRESSED_PAM, 
                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
-                   LMFileType.SPLOTCH_PAM, LMFileType.SPLOTCH_SITES, 
-                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.MATRIX_COLUMN, 
-                   LMFileType.LAYER_INDICES, LMFileType.SITE_INDICES]:
+                   LMFileType.BIOGEO_HYPOTHESES]:
          return True
       return False
 
-   @staticmethod
-   def isRADExperiment(rtype):
-      if rtype in [LMFileType.PAM, LMFileType.GRIM, 
-                   LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
-                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.SITE_INDICES]:
-         return True
-      return False
-
-   @staticmethod
-   def isMatrix(rtype):
-      if rtype in [LMFileType.PAM, LMFileType.GRIM, 
-                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.MATRIX_COLUMN]:
-         return True
-      return False
-
-   @staticmethod
-   def getMatrixFiletype(mtype):
-      if mtype == MatrixType.PAM:
-         return LMFileType.PAM
-      elif mtype == MatrixType.GRIM:
-         return LMFileType.GRIM
-      elif mtype == MatrixType.BIOGEO_HYPOTHESES:
-         return LMFileType.BIOGEO_HYPOTHESES
-      elif mtype == MatrixType.PADDED_PAM:
-         return LMFileType.PADDED_PAM
-      elif mtype == MatrixType.MCPA_OUTPUTS:
-         return LMFileType.MCPA_OUTPUTS
-   
    @staticmethod
    def isUserSpace(rtype):
       if rtype in [LMFileType.UNSPECIFIED_USER, 
@@ -469,14 +392,62 @@ class LMFileType:
    @staticmethod
    def isMap(rtype):
       if rtype in [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 
-                   LMFileType.SDM_MAP, LMFileType.BUCKET_MAP]:
+                   LMFileType.SDM_MAP]:
          return True
       return False
-   
-   
 
+#    @staticmethod
+#    def isOccurrence(rtype):
+#       if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
+#                    LMFileType.OCCURRENCE_RAW_FILE, 
+#                    LMFileType.OCCURRENCE_LARGE_FILE, 
+#                    LMFileType.SDM_MAKEFLOW_FILE]:
+#          return True
+#       return False
 
+#    @staticmethod
+#    def isModel(rtype):
+#       if rtype in [LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
+#                    LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT]:
+#          return True
+#       return False
+# 
+#    @staticmethod
+#    def isProjection(rtype):
+#       if rtype in [LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
+#                    LMFileType.PROJECTION_LAYER]:
+#          return True
+#       return False
+
+#    @staticmethod
+#    def isRADExperiment(rtype):
+#       if rtype in [LMFileType.PAM, LMFileType.GRIM, 
+#                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
+#                    LMFileType.BIOGEO_HYPOTHESES]:
+# #                    LMFileType.SITE_INDICES]:
+#          return True
+# #       return False
+# 
+#    @staticmethod
+#    def isMatrix(rtype):
+#       if rtype in [LMFileType.PAM, LMFileType.GRIM, 
+#                    LMFileType.BIOGEO_HYPOTHESES]:
+#          return True
+#       return False
    
+   @staticmethod
+   def getMatrixFiletype(mtype):
+      if mtype == MatrixType.PAM:
+         return LMFileType.PAM
+      elif mtype == MatrixType.GRIM:
+         return LMFileType.GRIM
+      elif mtype == MatrixType.BIOGEO_HYPOTHESES:
+         return LMFileType.BIOGEO_HYPOTHESES
+      elif mtype == MatrixType.PADDED_PAM:
+         return LMFileType.PADDED_PAM
+      elif mtype == MatrixType.MCPA_OUTPUTS:
+         return LMFileType.MCPA_OUTPUTS
+
 NAME_SEPARATOR = '_'
 
 # Mapfile layer name
@@ -504,21 +475,14 @@ class FileFix:
              LMFileType.PROJECTION_REQUEST: 'projReq',
              LMFileType.PROJECTION_PACKAGE: PRJ_PREFIX,
              LMFileType.PROJECTION_LAYER: PRJ_PREFIX,
-             LMFileType.PROJECTION_INTERSECT: 'int',         
              
              LMFileType.SHAPEGRID: 'shpgrid',
              LMFileType.ATTR_MATRIX: 'attrMtx',
              LMFileType.ATTR_TREE: 'attrTree',
-             LMFileType.BUCKET_MAP: MapPrefix.RAD, 
              LMFileType.PAM: 'pam',
              LMFileType.GRIM: 'grim',
-             LMFileType.LAYER_INDICES: 'lyridx',
-             LMFileType.PRESENCE_INDICES: 'indices',
-             LMFileType.COMPRESSED_PAM: PAMSUM_PREFIX,
              LMFileType.SUM_CALCS: PAMSUM_PREFIX,
              LMFileType.SUM_SHAPE: PAMSUM_PREFIX,
-             LMFileType.SPLOTCH_PAM: SPLOTCH_PREFIX,
-             LMFileType.SPLOTCH_SITES: SPLOTCH_PREFIX,
 
              LMFileType.UNSPECIFIED_USER: None,
              LMFileType.UNSPECIFIED_RAD: None,
@@ -529,8 +493,6 @@ class FileFix:
              LMFileType.USER_TREE: 'tree',
              LMFileType.MF_DOCUMENT: 'mf',
              LMFileType.BIOGEO_HYPOTHESES: 'biogeo',
-             LMFileType.MATRIX_COLUMN: 'pav',
-             LMFileType.SITE_INDICES: 'siteidx',
              LMFileType.PADDED_PAM: 'ppam',
              LMFileType.MCPA_OUTPUTS: 'mcpa'
 }
@@ -550,8 +512,6 @@ class FileFix:
                 LMFileType.PROJECTION_REQUEST: OutputFormat.XML,
                 LMFileType.PROJECTION_PACKAGE: OutputFormat.ZIP,
                 LMFileType.PROJECTION_LAYER: OutputFormat.GTIFF,
-#                 LMFileType.PROJECTION_ATT_LAYER: OutputFormat.ASCII,
-                LMFileType.PROJECTION_INTERSECT: OutputFormat.NUMPY,
                 
                 LMFileType.SHAPEGRID:  OutputFormat.SHAPE,
                 LMFileType.ATTR_MATRIX: OutputFormat.NUMPY,
@@ -576,7 +536,6 @@ class FileFix:
                 LMFileType.USER_TREE: OutputFormat.JSON,
                 LMFileType.MF_DOCUMENT: OutputFormat.MAKEFLOW,
                 LMFileType.BIOGEO_HYPOTHESES: OutputFormat.NUMPY,
-                LMFileType.MATRIX_COLUMN: OutputFormat.NUMPY,
                 LMFileType.SITE_INDICES: OutputFormat.PICKLE,
                 LMFileType.PADDED_PAM: OutputFormat.NUMPY,
                 LMFileType.MCPA_OUTPUTS: OutputFormat.NUMPY

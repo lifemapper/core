@@ -95,12 +95,11 @@ class EarlJr(LMObject):
    
 # ...............................................
    def createDataPath(self, usr, filetype, occsetId=None, epsg=None, 
-                      gridsetId=None,
-                      matrixId=None, matrixType=None, treeId=None,
-                      # TODO: delete
-                      radexpId=None, bucketId=None):
+                      gridsetId=None):
       """
-      @note: /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
+      @note: /ARCHIVE_PATH/userId/
+                 contains config files, MF docs, trees, attributes ...
+             /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
              /ARCHIVE_PATH/userId/MAP_DIR/
                  contains maps
@@ -108,53 +107,48 @@ class EarlJr(LMObject):
                  contains user layers common to epsg 
              /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/
                  contains computed data for RAD gridset xxx
-             /ARCHIVE_PATH/userId/<epsg>/RAD_<xxx>/<yyy>
-                 contains computed data for RAD gridset xxx, Matrix yyy
       """
       if usr is None :
          raise LMError('createDataPath requires userId')
-
       pth = os.path.join(ARCHIVE_PATH, usr)
       
-      # OccurrenceSet overrides basic maps
-      if LMFileType.isSDM(filetype):
+      # General user documents go directly in user directory
+      if LMFileType.isUserSpace(filetype):
+         pass
+      
+      # OccurrenceSet path overrides general map path for SDM maps
+      elif LMFileType.isSDM(filetype):
          if occsetId is not None:
             dirparts = self._parseSDMId(str(occsetId), [])
             for i in range(MODEL_DEPTH - len(dirparts)):
                dirparts.insert(0, '000')
             pth = os.path.join(pth, *dirparts)
          else:
-            raise LMError('Need OccurrenceSetId for SDM filepath')
+            raise LMError('Missing occurrenceSetId for SDM filepath')
          
-      # General user documents go directly in user directory
-      elif LMFileType.isUserSpace(filetype):
-         pass
-
+      # Maps go under user dir
       elif LMFileType.isMap(filetype):
          pth = os.path.join(pth, MAP_DIR)
-                        
-      elif epsg is not None:    
+                             
+      elif not (LMFileType.isUserLayer(filetype) or LMFileType.isRAD(filetype)):
+         raise LMError('Unknown filetype {}'.format(filetype))
+
+      # Rest, User Layer and RAD data, are separated by epsg
+      if epsg is None:
+         raise LMError('Missing epsg for filetype {}'.format(filetype))
+      else:
          pthparts = [pth, str(epsg)]
-         
+         # multi-purpose layers
          if LMFileType.isUserLayer(filetype):
             pthparts.append(USER_LAYER_DIR)
+         # RAD gridsets
          elif LMFileType.isRAD(filetype):
-            # New
             if gridsetId is not None:
                pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(gridsetId))
-               if matrixId is not None:
-                  pthparts.append(str(matrixId))
-                  
-            # TODO: delete
-            elif radexpId is not None:
-               pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(radexpId))
-               if bucketId is not None:
-                  pthparts.append(str(bucketId))
             else:
-               raise LMError('Missing RAD Gridset/Experiment ID for LMFileType {}'
-                             .format(filetype))
-         pth = os.path.join(*pthparts)
+               raise LMError('Missing gridsetId {}'.format(filetype))
 
+      pth = os.path.join(*pthparts)
       return pth
 
 # ...............................................
@@ -172,68 +166,32 @@ class EarlJr(LMObject):
       return os.path.join(pth, lyrName)
 
 # ...............................................
-   def createBasename(self, ftype, scenarioCode=None,
-                      occsetId=None, subset=False, modelId=None, projId=None,
-                      radexpId=None, bucketId=None, pamsumId=None,
-                      matrixId=None, matrixType=MatrixType.PAM, treeId=None, 
-                      mfchainId=None,
+   def createBasename(self, ftype, 
+                      gridsetId=None, objCode=None, 
                       lyrname=None, usr=None, epsg=None):
       """
-      @summary: Return the filename for given filetype and objects 
+      @summary: Return the base filename for given filetype and parameters 
       @param ftype: LmServer.common.lmconstants.LMFileType
-      @param occsetId: SDM OccurrenceLayer database Id
-      @param subset: True if this is a subset of available occurrences
-      @param modelId: SDM Model database Id
-      @param projId: SDM Projection database Id
-      @param radexpId: RAD Experiment database Id
-      @param bucketId: RAD Bucket database Id
-      @param pamsumId: RAD PamSum database Id
+      @param objCode: Object database Id or unique code for non-db items
       @param lyrname: Layer name 
-      @param pth: File storage path
       @param usr: User database Id
       @param epsg: File or object EPSG code
       """
       basename = None
       
       nameparts = []
+      # Prefix
       if FileFix.PREFIX[ftype] is not None:
          nameparts.append(FileFix.PREFIX[ftype])
-         
-      if ftype == LMFileType.MF_DOCUMENT:
-         nameparts.append(mfchainId)
-      
-      if ftype == LMFileType.SCENARIO_MAP:
-         nameparts.append(scenarioCode)
-      elif ftype == LMFileType.OTHER_MAP:
+      # Non-auto-generated Maps (not scenario or SDM)
+      if ftype == LMFileType.OTHER_MAP:
          nameparts.extend([usr, epsg])
-      elif ftype == LMFileType.BUCKET_MAP:
-         nameparts.extend([radexpId, bucketId])
-         
+      # User layers
       elif LMFileType.isUserLayer(ftype):
          nameparts.append(lyrname)
-         
-      elif LMFileType.isOccurrence(ftype):
-         nameparts.append(occsetId)
-         if subset:
-            nameparts.append('subset')
-      elif LMFileType.isModel(ftype):
-         nameparts.append(modelId)
-         
-      elif LMFileType.isProjection(ftype):
-         nameparts.append(projId)
-         
-      # TODO: Delete
-      elif ftype in (LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE):
-         nameparts.append(radexpId)
-      elif ftype in (LMFileType.PAM, LMFileType.GRIM,
-                    LMFileType.LAYER_INDICES, LMFileType.PRESENCE_INDICES):
-         nameparts.append(bucketId)
-      elif ftype in (LMFileType.COMPRESSED_PAM, LMFileType.SUM_CALCS,
-                    LMFileType.SUM_SHAPE, LMFileType.SPLOTCH_PAM, 
-                    LMFileType.SPLOTCH_SITES):
-         nameparts.append(pamsumId)
+      # All non-map, non-user-layer files use objectCode 
       else:
-         raise LMError('Unknown LMFileType %s' % str(ftype))
+         nameparts.append(objCode)
          
       fileparts = [str(p) for p in nameparts if p is not None ]
       try:
@@ -243,46 +201,21 @@ class EarlJr(LMObject):
       return basename
 
 # ...............................................
-   def createFilename(self, ftype, scenarioCode=None, occsetId=None, projId=None,
-                      matrixId=None, matrixType=None, treeId=None, 
-                      mfchainId=None, gridsetId=None,
-                      lyrname=None, pth=None, usr=None, epsg=None,
-                      # TODO: remove all of the following
-                      modelId=None, bucketId=None, pamsumId=None, radexpId=None, 
-                      subset=False):
+   def createFilename(self, ftype, 
+                      occsetId=None, gridsetId=None, objCode=None, 
+                      lyrname=None, usr=None, epsg=None, pth=None):
       """
-      @summary: Return the filename for given filetype and objects 
-      @param ftype: LmServer.common.lmconstants.LMFileType
-      @param scenarioCode: Code for layerset used in SDM
-      @param occsetId: SDM OccurrenceLayer database Id
-      @param projId: SDM Projection database Id
-      @param matrixId: RAD Matrix database Id
-      @param radexpType: RAD Matrix type
-      @param treeId: RAD Tree database Id
-      @param mfchainId: Makeflow chain database Id
-      @param gridsetId: RAD Gridset database Id
-      @param lyrname: Layer name 
+      @summary: Return the absolute filename for given filetype and parameters 
+      @copydoc LmServer.common.datalocator.EarlJr::createBasename()
+      @param occsetId: SDM OccurrenceLayer database Id, used for path
+      @param gridsetId: RAD Gridset database Id, used for path
       @param pth: File storage path, overrides calculated path
-      @param usr: User database Id
-      @param epsg: File or object EPSG code
-      # TODO: delete all these
-      @param modelId: SDM Model database Id
-      @param radexpId: RAD Experiment database Id
-      @param bucketId: RAD Bucket database Id (deprecated)
-      @param pamsumId: RAD PamSum database Id (deprecated)
-      @param subset: True if this is a subset of available occurrences
       """
-      basename = self.createBasename(ftype, scenarioCode=scenarioCode,
-                  occsetId=occsetId, subset=subset, modelId=modelId, 
-                  projId=projId, radexpId=radexpId, bucketId=bucketId,
-                  matrixId=matrixId, matrixType=matrixType, treeId=treeId,
-                  mfchainId=mfchainId, pamsumId=pamsumId, 
-                  lyrname=lyrname, usr=usr, epsg=epsg)      
+      basename = self.createBasename(ftype, objCode=objCode, lyrname=lyrname, 
+                                     usr=usr, epsg=epsg)      
       if pth is None:
-         pth = self.createDataPath(usr, ftype, 
-            bucketId=bucketId,
-            epsg=epsg, occsetId=occsetId, radexpId=radexpId, 
-            matrixId=matrixId, matrixType=matrixType, treeId=treeId)
+         pth = self.createDataPath(usr, ftype, gridsetId=gridsetId,
+                                   epsg=epsg, occsetId=occsetId)
       filename = os.path.join(pth, basename + FileFix.EXTENSION[ftype])
       return filename
    
@@ -499,10 +432,10 @@ class EarlJr(LMObject):
          if mapname.endswith(OutputFormat.MAP):
             mapname = mapname[:-1*len(OutputFormat.MAP)]
       else:
-         if ftype in (LMFileType.SCENARIO_MAP, LMFileType.BUCKET_MAP, 
+         if ftype in (LMFileType.SCENARIO_MAP,
                       LMFileType.OTHER_MAP, LMFileType.SDM_MAP, 
                       LMFileType.SHAPEGRID):
-            mapname = self.createBasename(ftype, scenarioCode=scenarioCode, 
+            mapname = self.createBasename(ftype, objectCode=scenarioCode, 
                                           occsetId=occsetId, bucketId=bucketId, 
                                           usr=usr, epsg=epsg)
          else:
@@ -516,33 +449,40 @@ class EarlJr(LMObject):
       return prefix
 
 # ...............................................
-   def constructMapPrefixNew(self, metadataurl, mapname=None, ftype=None, 
-                  scenarioCode=None, occsetId=None, projId=None, bucketId=None, 
-                  lyrname=None, usr=None, epsg=None):
+   def constructMapPrefixNew(self, urlprefix=None, mapname=None, ftype=None, 
+                             objCode=None, lyrname=None, usr=None, epsg=None):
       """
       @summary: Construct a Lifemapper URL (prefix) for a map or map layer, 
                 including 'ogc' format, '?', map=<mapname> key/value pair, and
                 optional layers=<layername> pair.
+      @param urlprefix: optional urlprefix
+      @param mapname: optional mapname
+      @param ftype: LmServer.common.lmconstants.LMFileType
+      @param occsetId: SDM OccurrenceLayer database Id, used for path/filename
+      @param objCode: Object database Id or unique code for non-db items
+      @param lyrname: Layer name 
+      @param usr: User database Id
+      @note: ignoring shapegrid maps for now
+      @note: optional layer name must be provided fully formed
       """
       if mapname is not None:
          if mapname.endswith(OutputFormat.MAP):
             mapname = mapname[:-1*len(OutputFormat.MAP)]
       else:
-         if ftype in (LMFileType.SCENARIO_MAP, LMFileType.BUCKET_MAP, 
-                      LMFileType.OTHER_MAP, LMFileType.SDM_MAP, 
-                      LMFileType.SHAPEGRID):
-            mapname = self.createBasename(ftype, scenarioCode=scenarioCode, 
-                                          occsetId=occsetId, bucketId=bucketId, 
-                                          usr=usr, epsg=epsg)
+         if LMFileType.isMap(ftype):
+            mapname = self.createBasename(ftype, objectCode=objCode, usr=usr, 
+                                          epsg=epsg)
          else:
             raise LMError('Invalid LMFileType %s' % ftype)
+      
+      if urlprefix is None:
+         urlprefix = self.ogcUrl
+      fullprefix = '?map={}'.format(mapname)
          
-      prefix = '{}/ogc?map={}'.format(metadataurl, mapname)
-      if lyrname is None and (occsetId is not None or projId is not None):
-         lyrname = self.createLayername(occsetId=occsetId, projId=projId)
       if lyrname is not None:
-         prefix += '&layers={}'.format(lyrname)
-      return prefix
+         fullprefix += '&layers={}'.format(lyrname)
+         
+      return fullprefix
 
 # ...............................................
    def _createStaticMapPath(self):

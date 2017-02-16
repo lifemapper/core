@@ -132,25 +132,25 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       _LayerParameters.updateParams(self, matrixIndex=matrixIndex, 
                                     metadata=metadata, modTime=modTime)
 
-# ...............................................
-   def _createMapPrefix(self):
-      """
-      @summary: Construct the endpoint of a Lifemapper WMS URL for 
-                this object.
-      """
-      mapprefix = self._earlJr.constructMapPrefix(ftype=LMFileType.SHAPEGRID,
-                     usr=self._userId, epsg=self._epsg, lyrname=self.name)
-      return mapprefix
-    
-# ...............................................
-   @property
-   def mapPrefix(self): 
-      return self._mapPrefix
-    
-   def _setMapPrefix(self, mapprefix=None):
-      if mapprefix is None:
-         mapprefix = self._createMapPrefix()
-      self._mapPrefix = mapprefix
+# # ...............................................
+#    def _createMapPrefix(self):
+#       """
+#       @summary: Construct the endpoint of a Lifemapper WMS URL for 
+#                 this object.
+#       """
+#       mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SHAPEGRID,
+#                      usr=self._userId, epsg=self._epsg, lyrname=self.name)
+#       return mapprefix
+#     
+# # ...............................................
+#    @property
+#    def mapPrefix(self): 
+#       return self._mapPrefix
+#     
+#    def _setMapPrefix(self, mapprefix=None):
+#       if mapprefix is None:
+#          mapprefix = self._createMapPrefix()
+#       self._mapPrefix = mapprefix
           
 # ...............................................
    def _setCellsides(self, cellsides):

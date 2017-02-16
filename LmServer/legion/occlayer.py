@@ -347,8 +347,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
       occid = self.getId()
       if occid is None:
          occid = ID_PLACEHOLDER
-      mapprefix = self._earlJr.constructMapPrefix(ftype=LMFileType.SDM_MAP, 
-                     mapname=self.mapName, occsetId=occid, usr=self._userId)
+      lyrname = self._earlJr.createBasename(LMFileType.OCCURRENCE_FILE, 
+                                            objCode=occid, usr=self._userId, 
+                                            epsg=self.epsgcode)
+      mapprefix = self._earlJr.constructMapPrefixNew(urlprefix=self.metadataUrl(),
+                              ftype=LMFileType.SDM_MAP, mapname=self.mapName, 
+                              lyrname=lyrname, usr=self._userId)
       return mapprefix
    
    def _setMapPrefix(self):
@@ -372,8 +376,10 @@ class OccurrenceLayer(OccurrenceType, Vector):
       """
       @summary: Find mapfile containing this layer.  
       """
+      occid = self.getId()
       mapfilename = self._earlJr.createFilename(LMFileType.SDM_MAP, 
-                                    usr=self._userId, occsetId=self.getId())
+                                                occsetId=occid, objCode=occid,
+                                                usr=self._userId)
       return mapfilename     
    
 # ...............................................
@@ -383,7 +389,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       @summary: Find mapfile containing layers for this model's occurrenceSet.
       @param mapfname: Previously constructed mapfilename
       """
-      if mapfname is None and self.getId() is not None:
+      if self._mapFilename is None:
          mapfname = self.createLocalMapFilename()
       self._mapFilename = mapfname
 
@@ -396,7 +402,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # ...............................................
    @property
    def mapName(self):
-      mapname = None
       if self._mapFilename is None:
          self.setLocalMapFilename()      
       pth, fname = os.path.split(self._mapFilename)

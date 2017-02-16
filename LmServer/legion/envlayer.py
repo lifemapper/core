@@ -122,18 +122,19 @@ class EnvLayer(EnvType, Raster):
       """
       @summary: Construct the endpoint of a Lifemapper WMS URL for 
                 this object.
+      @param scencode: override scenario associated with this layer
       @note: Uses the metatadataUrl for this object, plus 'ogc' format, 
              map=<mapname>, and layers=<layername> key/value pairs.  
       @note: If the object has not yet been inserted into the database, a 
              placeholder is used until replacement after database insertion.
       """
-      if scencode is not None:
-         ftype = LMFileType.SCENARIO_MAP
-      else:
-         ftype = LMFileType.OTHER_MAP
-      mapprefix = self._earlJr.constructMapPrefix(ftype=ftype, 
-                     scenarioCode=self._scenCode, lyrname=self.name, 
-                     usr=self._userId, epsg=self._epsg)      
+      if scencode is None:
+         scencode = self._scenCode
+      mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP,
+                                                     objCode=scencode,
+                                                     lyrname=self.name, 
+                                                     usr=self._userId, 
+                                                     epsg=self._epsg)      
       return mapprefix
 
 # ...............................................
@@ -162,26 +163,28 @@ class EnvLayer(EnvType, Raster):
 # ...............................................
    def createLocalMapFilename(self, scencode=None):
       """
-      @summary: Find mapfile containing this layer.  
+      @summary: Find mapfile containing this layer.
+      @param scencode: override scenario associated with this layer
       """
-      if scencode is not None:
-         ftype = LMFileType.SCENARIO_MAP
-      else:
-         ftype = LMFileType.OTHER_MAP
-      mapfname = self._earlJr.createFilename(ftype, scenarioCode=self._scenCode, 
+      if scencode is None:
+         scencode = self._scenCode
+      mapfname = self._earlJr.createFilename(LMFileType.SCENARIO_MAP, 
+                                             objCode=scencode, 
                                              usr=self._userId, epsg=self._epsg)
       return mapfname
    
 # ...............................................
-   def setLocalMapFilename(self, mapfname=None):
+   def setLocalMapFilename(self, mapfname=None, scencode=None):
       """
       @note: Overrides existing _mapFilename
       @summary: Find mapfile containing layers for this model's occurrenceSet.
       @param mapfname: Previously constructed mapfilename
-      @param scencode: Scenario code for initial construction of mapfilename. 
+      @param scencode: override scenario associated with this layer
       """
+      if scencode is None:
+         scencode = self._scenCode
       if mapfname is None:
-         mapfname = self.createLocalMapFilename(scencode=self._scenCode)
+         mapfname = self.createLocalMapFilename(scencode=scencode)
       self._mapFilename = mapfname
 
 # ...............................................

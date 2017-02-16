@@ -351,7 +351,6 @@ class SDMProjection(_ProjectionType, Raster):
 
 # ...............................................
    def getProjPackageFilename(self):
-      LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT
       fname = self._earlJr.createFilename(LMFileType.PROJECTION_PACKAGE, 
                 projId=self.getId(), pth=self.getAbsolutePath(), 
                 usr=self._userId, epsg=self._epsg)
@@ -532,12 +531,16 @@ class SDMProjection(_ProjectionType, Raster):
              placeholder is used until replacement after database insertion.
       """
       # Recompute in case we have a new db ID 
-      if self.getId() is None:
+      projid = self.getId()
+      if projid is None:
          projid = ID_PLACEHOLDER
-      else:
-         projid = self.getId()
-      mapprefix = self._earlJr.constructMapPrefix(ftype=LMFileType.SDM_MAP, 
-                     mapname=self.mapName, projId=projid, usr=self._userId)
+      lyrname = self._earlJr.createBasename(LMFileType.PROJECTION_LAYER, 
+                                            objCode=projid, 
+                                            usr=self._userId, 
+                                            epsg=self.epsgcode)
+      mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SDM_MAP, 
+                     mapname=self._occurrenceSet.mapName, lyrname=lyrname, 
+                     usr=self._userId)
       return mapprefix
 
 # ...............................................

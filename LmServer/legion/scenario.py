@@ -184,9 +184,9 @@ class Scenario(MapLayerSet):
       @summary Gets the OGC service URL prefix for this object
       @return URL string representing a webservice request for maps of this object
       """
-      mapprefix = self._earlJr.constructMapPrefix(ftype=LMFileType.SCENARIO_MAP, 
-                     scenarioCode=self.code, lyrname=lyrname, usr=self._userId, 
-                     epsg=self._epsg)
+      mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP, 
+                                          objCode=self.code, lyrname=lyrname, 
+                                          usr=self._userId, epsg=self._epsg)
       return mapprefix
     
    def _setMapPrefix(self, mapprefix=None):

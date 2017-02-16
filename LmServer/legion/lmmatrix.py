@@ -137,7 +137,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 # ...............................................
    def createLocalDLocation(self, extension):
       ftype = LMFileType.getMatrixFiletype(self.matrixType)         
-      dloc = self.earlJr.createFilename(ftype, matrixId=self.getId(), 
+      dloc = self.earlJr.createFilename(ftype, objCode=self.getId(), 
                                         matrixType=self.matrixType,
                                         usr=self.getUserId())
       return dloc
