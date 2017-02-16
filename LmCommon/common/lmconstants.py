@@ -667,18 +667,17 @@ class ProcessType:
    # MCPA
    MCPA_CORRECT_PVALUES = 530
    MCPA_OBSERVED = 540
-   MCPA_RANDOM = 550
-   # .........................
-   # deprecated
-   # .........................
-   RAD_INTERSECT = 310
-   RAD_COMPRESS = 320
-   
+   MCPA_RANDOM = 550      
    # .......... Notify ..........
    SMTP = 610
    CONCATENATE_MATRICES = 620
    UPDATE_OBJECT = 630
-   
+   # .........................
+   # TODO: deleteMe
+   # .........................
+   RAD_INTERSECT = 310
+   RAD_COMPRESS = 320
+
    @staticmethod
    def getJobRunner(ptype):
       if ProcessType.isSDM(ptype):
@@ -745,88 +744,71 @@ class ProcessType:
       return os.path.join(APP_PATH, relpath, jr)   
 
    @staticmethod
-   def sdmTypes():
-      return [ProcessType.SMTP, ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
-              ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 
-              ProcessType.GBIF_TAXA_OCCURRENCE, 
-              ProcessType.BISON_TAXA_OCCURRENCE, 
-              ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-              ProcessType.USER_TAXA_OCCURRENCE]
-      
-   @staticmethod
    def isSDM(ptype):
-      if ptype in ProcessType.sdmTypes():
+      if ptype in [ProcessType.SMTP, 
+                   ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
+                   ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 
+                   ProcessType.GBIF_TAXA_OCCURRENCE, 
+                   ProcessType.BISON_TAXA_OCCURRENCE, 
+                   ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                   ProcessType.USER_TAXA_OCCURRENCE]:
          return True
       return False
-      
-   @staticmethod
-   def occurrenceTypes():
-      return [ProcessType.GBIF_TAXA_OCCURRENCE, 
-              ProcessType.BISON_TAXA_OCCURRENCE, 
-              ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-              ProcessType.USER_TAXA_OCCURRENCE]
       
    @staticmethod
    def isOccurrence(ptype):
-      if ptype in ProcessType.occurrenceTypes():
+      if ptype in [ProcessType.GBIF_TAXA_OCCURRENCE, 
+                   ProcessType.BISON_TAXA_OCCURRENCE, 
+                   ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+                   ProcessType.USER_TAXA_OCCURRENCE]:
          return True
       return False
-      
-   @staticmethod
-   def modelTypes():
-      return [ProcessType.ATT_MODEL, 
-              ProcessType.OM_MODEL]
       
    @staticmethod
    def isModel(ptype):
-      if ptype in ProcessType.modelTypes():
+      if ptype in [ProcessType.ATT_MODEL, ProcessType.OM_MODEL]:
          return True
       return False
-      
-   @staticmethod
-   def projectTypes():
-      return [ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT]
       
    @staticmethod
    def isProject(ptype):
-      if ptype in ProcessType.projectTypes():
+      if ptype in [ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT]:
          return True
       return False
-      
-   @staticmethod
-   def intersectTypes():
-      return [ProcessType.INTERSECT_RASTER, ProcessType.INTERSECT_VECTOR, 
-              ProcessType.INTERSECT_RASTER_GRIM]
       
    @staticmethod
    def isIntersect(ptype):
-      if ptype in ProcessType.projectTypes():
+      if ptype in [ProcessType.INTERSECT_RASTER, ProcessType.INTERSECT_VECTOR, 
+                   ProcessType.INTERSECT_RASTER_GRIM]:
          return True
       return False
 
    @staticmethod
-   def radTypes():
-      return [ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
-              ProcessType.RAD_INTERSECT, ProcessType.RAD_COMPRESS, 
-              ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-              ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY]
-
-   @staticmethod
    def isRAD(ptype):
-      if ptype in ProcessType.radTypes():
+      if ptype in [ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
+                   ProcessType.RAD_INTERSECT, ProcessType.RAD_COMPRESS, 
+                   ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
+                   ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY]:
          return True
       return False
    
    @staticmethod
-   def radprepTypes():
-      return [ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE, 
-              ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]
-
-   @staticmethod
    def isRADPrep(ptype):
-      if ptype in ProcessType.radprepTypes():
+      if ptype in [ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE, 
+              ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]:
          return True
       return False
+   
+   @staticmethod
+   def isMatrix(ptype):
+      if ptype in [ProcessType.RAD_CALCULATE, 
+                   ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY, 
+                   ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
+                   ProcessType.RAD_GRADY, 
+                   ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
+                   ProcessType.MCPA_RANDOM]:
+         return True
+      return False  
 
    @staticmethod
    def randomTypes():

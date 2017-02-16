@@ -36,7 +36,7 @@ from types import ListType, TupleType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
-                                         ProcessType, JobStatus, ONE_HOUR, ONE_MIN) 
+                                         ProcessType, JobStatus, ONE_HOUR) 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import Priority, LOG_PATH
@@ -48,7 +48,7 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.processchain import MFChain
-from LmServer.makeflow.documentBuilder import LMMakeflowDocument
+
 
 from LmServer.notifications.email import EmailNotifier
 

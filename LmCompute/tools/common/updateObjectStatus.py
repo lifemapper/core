@@ -28,45 +28,117 @@
 """
 import argparse
 
+from LmCommon.common.lmconstants import ProcessType
 from LmServer.common.log import ConsoleLogger
-from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
+
+# .............................................................................
+class Ear(object):
+   """
+   @summary: Object to construct and parse filenames and URLs.
+   """
+# .............................................................................
+# Constructor
+# .............................................................................
+   def __init__(self):
+      """
+      @summary: Constructor for the Updater object.  
+      """
+      pass
+
+   # ...............................................
+   @classmethod
+   def receive(cls, ptype, objId, status, successFname, outputFnameList):
+      scribe = BorgScribe(ConsoleLogger())
+      scribe.openConnections()
+      
+      # All db updates
+      try:
+         if ProcessType.isOccurrence(ptype):
+            obj = scribe.getOccurrenceSet(occid=objId)
+         elif ProcessType.isProject(ptype):
+            obj = scribe.getSDMProject(objId)
+         elif ptype == ProcessType.RAD_BUILDGRID:
+            obj = scribe.getShapeGrid(lyrId=objId)
+         elif ProcessType.isMatrix(ptype):
+            obj = scribe.getMatrix(mtxId=objId)
+      except Exception, e:
+         scribe.log.error('Failed to get object {} for processType {}'
+                          .format(objId, ptype))
+      try:
+         obj.updateStatus(status)
+         scribe.updateObject(obj)
+      except Exception, e:
+         scribe.log.error('Failed to update object {} for processType {}'
+                          .format(objId, ptype))
+         
+      scribe.closeConnections()
+      
+   # ...............................................
+   @staticmethod
+   def occur(scribe, objId, status, successFname, outputFnameList):
+      try:
+         occ = scribe.getOccurrenceSet(occid=objId)
+         occ.updateStatus(status)
+         scribe.updateOccset()
+      except Exception, e:
+         scribe.log.error('Failed to get or update Occurrenceset {}')
+   # ...............................................
+   @staticmethod
+   def project(scribe, objId, status, successFname, outputFnameList):
+      pass
+   
+   # ...............................................
+   @staticmethod
+   def shape(scribe, objId, status, successFname, outputFnameList):
+      pass
+   
+   # ...............................................
+   @staticmethod
+   def matrix(scribe, objId, status, successFname, outputFnameList):
+      pass
+
+   # ...............................................
+   @staticmethod
+   def mtxVector(scribe, objId, status, successFname, outputFnameList):
+      pass
+
 
 # .............................................................................
 if __name__ == "__main__":
-   parser = argparse.ArgumentParser(description="This script updates a Lifemapper object")
+   parser = argparse.ArgumentParser(description='This script updates a Lifemapper object')
    # Inputs
-   parser.add_argument("processType", type=str, 
-                       help="The process type of the object to update")
-   parser.add_argument("objectId", type=str, 
-                       help="The id of the object to update")
-   parser.add_argument("successFile", type=str, 
-            help="This file is created if the job was completed successfully.  Otherwise, it is not.")
-
-   parser.add_argument("objectOutput", type=str, nargs="*", 
-            help="These files are the outputs for an object to sanity check.  Each process type should know how many there are")
-
+   parser.add_argument('processType', type=int, 
+                       help='The process type of the object to update')
+   parser.add_argument('objectId', type=int, 
+                       help='The id of the object to update')
+   parser.add_argument('successFile', type=str, 
+                       help=('File to be created only if the job was ' + 
+                             'completed successfully.'))
+   parser.add_argument('objectOutput', type=str, nargs='*', 
+                       help=('Output files for sanity checks. Each process ' +
+                             'type should know what these should be'))
    # Status arguments
-   parser.add_argument("-s", dest="status", type=int, 
-                       help="The status to update the object with")
-   parser.add_argument("-f", dest="status_file", type=str, 
-                       help="A file containing the new object status")
+   parser.add_argument('-s', dest='status', type=int, 
+                       help='The status to update the object with')
+   parser.add_argument('-f', dest='status_file', type=str, 
+                       help='A file containing the new object status')
    args = parser.parse_args()
    
+   # Status comes in as an integer or file 
    status = None
    if args.status is not None:
       status = args.status
    elif args.status_file is not None:
       with open(args.status_file) as statusIn:
          status = int(statusIn.read())
-
+   ptype = args.processType
+   objId = args.objectId
+   successFname = args.successFile
+   outputFnameList = args.objectOutput
+   
    if status is not None:
-      scribe = Scribe(ConsoleLogger())
-      scribe.openConnections()
-      
-      success = False
-      # Aimee: Handle each object type here
-      
-      # args.objectOutput will contain file paths for created files
+      success = Ear.receive(ptype, objId, status, successFname, outputFnameList)
       
       if success:
          # Only write success file if successfully updated an object with 
@@ -74,8 +146,6 @@ if __name__ == "__main__":
          #    happen without this file
          with open(args.successFile, 'w') as successOut:
             successOut.write('1')
-      
-      scribe.closeConnections()
    else:
-      raise Exception("Must provide status or status file")
+      raise Exception('Must provide status or status file')
    

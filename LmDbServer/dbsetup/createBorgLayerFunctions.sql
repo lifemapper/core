@@ -319,6 +319,25 @@ END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
                                                                         
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getSDMProjectLayer(lyrid int)
+RETURNS lm_v3.lm_sdmproject AS
+$$
+DECLARE
+   rec lm_v3.lm_sdmproject%rowtype;
+BEGIN
+   begin
+      SELECT * INTO STRICT rec from lm_v3.lm_sdmproject WHERE layerId = lyrid;
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'OccurrenceSet % not found', occsetid;
+         WHEN TOO_MANY_ROWS THEN
+            RAISE EXCEPTION 'OccurrenceSet % not unique', occsetid;
+   end;
+   RETURN rec;                                              
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProjectLayer(prjid int, 
                                           lyrid int,
                                           usr varchar,

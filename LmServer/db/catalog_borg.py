@@ -685,17 +685,22 @@ class Borg(DbPostgresql):
       return fullGset
 
 # ...............................................
-   def getMatrix(self, mtx):
+   def getMatrix(self, mtx, mtxId):
       """
       @summary: Retrieve a Matrix with its gridset from the database
       @param mtx: Matrix to retrieve
       @return: Existing Matrix
       """
-      row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtx.getId(),
-                                                mtx.matrixType,
-                                                mtx.parentId, 
-                                                mtx.gridsetName,
-                                                mtx.getUserId())
+      row = None
+      if mtx is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtx.getId(),
+                                                   mtx.matrixType,
+                                                   mtx.parentId, 
+                                                   mtx.gridsetName,
+                                                   mtx.getUserId())
+      elif mtxId is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtxId,
+                                                   None, None, None, None)
       fullMtx = self._createLMMatrix(row, idxs)
       return fullMtx
       
@@ -978,6 +983,16 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
+   def getSDMProject(self, projid):
+      """
+      @summary: get a projection for the given id
+      @param projid: Database id for the SDMProject
+      """
+      row, idxs = self.executeSelectOneFunction('lm_getSDMProjectLayer', projid)
+      proj = self._createSDMProjection(row, idxs)
+      return proj
+
+# ...............................................
    def updateSDMProject(self, proj):
       """
       @summary Method to update an SDMProjection object in the database with 
@@ -1103,6 +1118,19 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
+   def updateMatrix(self, mtx):
+      """
+      @summary: Update a LMMatrix
+      @param mtxcol: the LmServer.legion.LMMatrix object to update
+      @return: Boolean success/failure
+      """
+      meta = mtx.dumpMtxMetadata()
+      success = self.executeModifyFunction('lm_updateMatrix', 
+                                           mtx.getId(), meta, 
+                                           mtx.status, mtx.statusModTime)
+      return success
+
+# ...............................................
    def findOrInsertMatrix(self, mtx):
       """
       @summary: Find existing OR save a new Matrix
@@ -1163,6 +1191,25 @@ class Borg(DbPostgresql):
       success = self.executeModifyFunction('lm_updateMFChain', mfchain.objId,
                                            mfchain.status, mfchain.statusModTime)
       return success
+
+# ...............................................
+   def updateObject(self, obj):
+      """
+      @summary: Updates object in database
+      @return: True/False for success of operation
+      """
+      if type(obj) == type(OccurrenceLayer):
+         success = self.updateOccurrenceSet(obj)
+      elif type(obj) == type(SDMProjection):
+         success = self.updateSDMProject(obj)
+      elif type(obj) == type(ShapeGrid):
+         success = self.updateShapeGrid(obj)
+      elif type(obj) == type(MFChain):
+         success = self.executeModifyFunction('lm_updateMFChain', objid)
+      else:
+         raise LMError('Unsupported delete for object {}'.format(type(obj)))
+      return success
+      
 
 # ...............................................
    def deleteObject(self, obj):

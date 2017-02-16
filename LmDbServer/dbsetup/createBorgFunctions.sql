@@ -850,3 +850,25 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateMatrix(mtxid int,
+                                                 meta varchar,
+                                                 stat int,
+                                                 stattime double precision)
+RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   UPDATE lm_v3.Matrix SET (metadata, status, statusmodtime) 
+                         = (meta, stat, stattime) WHERE matrixId = mtxid;
+   IF FOUND THEN 
+      success = 0;
+   ELSE
+      RAISE EXCEPTION 'Unable to update MatrixColumn';
+   END IF;
+      
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;

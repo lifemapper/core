@@ -203,11 +203,11 @@ class BorgScribe(LMObject):
       return lyr
 
 # ...............................................
-   def getMatrix(self, mtx):
+   def getMatrix(self, mtx=None, mtxId=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getMatrix()
       """
-      fullMtx = self._borg.getMatrix(mtx)
+      fullMtx = self._borg.getMatrix(mtx, mtxId)
       return fullMtx
 
 # ...............................................
@@ -250,13 +250,12 @@ class BorgScribe(LMObject):
 # ...............................................
    def getOccurrenceSet(self, occid=None, squid=None, userId=None, epsg=None):
       """
-      @summary: get a list of occurrencesets for the given squid and User
+      @summary: get an occurrenceset for the given id or squid and User
       @param squid: a Squid (Species Thread) string, tied to a ScientificName
       @param userId: the database primary key of the LMUser
       """
       occset = self._borg.getOccurrenceSet(occid, squid, userId, epsg)
       return occset
-
 
 # ...............................................
    def getOccurrenceSetsForName(self, scinameStr, userId):
@@ -301,6 +300,15 @@ class BorgScribe(LMObject):
       """
       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
       return success
+
+# ...............................................
+   def getSDMProject(self, projid):
+      """
+      @summary: get a projection for the given id
+      @param projid: Database id for the SDMProject
+      """
+      proj = self._borg.getSDMProject(projid)
+      return proj
 
 # ...............................................
    def updateSDMProject(self, proj):
@@ -456,6 +464,14 @@ class BorgScribe(LMObject):
       @copydoc LmServer.db.catalog_borg.Borg::updateMFChain()
       """
       success = self._borg.updateMFChain(mfchain)
+      return success
+
+# ...............................................
+   def updateObject(self, obj):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::updateObject()
+      """
+      success = self._borg.updateObject(obj)
       return success
 
 # ...............................................
