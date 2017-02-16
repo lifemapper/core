@@ -128,7 +128,6 @@ class MattDaemon(Daemon):
       @summary: Use the scribe to get available makeflow documents and moves 
                    DAG files to workspace
       @param count: The number of Makeflows to retrieve
-      @todo: Change scribe function
       @note: If the DAG exists in the workspace, assume that things failed and
                 we should try to continue
       """
@@ -257,11 +256,10 @@ class MattDaemon(Daemon):
       @param exitStatus: Unix exit status (negative: killed by signal, 
                                            zero: successful, positive: error)
       @param lmStatus: If provided, update the database with this status
-      @todo: Change scribe functions when known
       """
       # If success, delete
       if exitStatus == 0:
-         self.scribe.deleteMakeflow(mfObj)
+         self.scribe.deleteObject(mfObj)
       else:
          # Either killed by signal or error
          if lmStatus is None:
