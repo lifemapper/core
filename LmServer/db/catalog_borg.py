@@ -1081,7 +1081,7 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
                      mtxcol.getParamUserId(), mtxcol.getParamId(), mtxcol.parentId, 
                      mtxcol.getMatrixIndex(), lyrid, mtxcol.squid, mtxcol.ident, 
-                     mtxcol.getDLocation(), mcmeta, intparams, 
+                     mcmeta, intparams, 
                      mtxcol.status, mtxcol.statusModTime)
       newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
       return newOrExistingMtxCol
@@ -1098,7 +1098,6 @@ class Borg(DbPostgresql):
       success = self.executeModifyFunction('lm_updateMatrixColumn', 
                                            mtxcol.getId(), 
                                            mtxcol.getMatrixIndex(),
-                                           mtxcol.getDLocation(),
                                            meta, intparams,
                                            mtxcol.status, mtxcol.statusModTime)
       return success
@@ -1166,12 +1165,22 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def deleteMFChain(self, mfchain):
+   def deleteObject(self, obj):
       """
-      @summary: Deletes MFChain from database
+      @summary: Deletes object from database
       @return: True/False for success of operation
       """
-      success = self.executeModifyFunction('lm_deleteMFChain', mfchain.objId)
+      try:
+         objid = obj.getId()
+      except:
+         try:
+            obj = obj.objId
+         except:
+            raise LMError('Failed getting ID for {} object'.format(type(obj)))
+      if type(obj) == type(MFChain):
+         success = self.executeModifyFunction('lm_deleteMFChain', objid)
+      else:
+         raise LMError('Unsupported delete for object {}'.format(type(obj)))
       return success
       
       

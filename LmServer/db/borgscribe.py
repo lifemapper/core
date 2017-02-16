@@ -459,10 +459,10 @@ class BorgScribe(LMObject):
       return success
 
 # ...............................................
-   def deleteMFChain(self, mfchain):
+   def deleteObject(self, obj):
       """
-      @copydoc LmServer.db.catalog_borg.Borg::deleteMFChain()
+      @copydoc LmServer.db.catalog_borg.Borg::deleteObject()
       """
-      success = self.executeModifyFunction('lm_deleteMFChain', mfchain.objId)
+      success = self._borg.deleteObject(obj)
       return success
 

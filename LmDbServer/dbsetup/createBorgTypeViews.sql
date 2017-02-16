@@ -182,7 +182,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    matrixIndex,
    mtxcolsquid,
    mtxcolident,
-   mtxcoldlocation,
    mtxcolmetadata, 
    layerId,
    intersectParams,
@@ -203,7 +202,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    shplayerid
 ) AS 
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
-             mc.squid, mc.ident, mc.dlocation, mc.metadata, mc.layerId,
+             mc.squid, mc.ident, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.matrixDlocation, 
              m.metadataUrl, m.metadata, m.status, m.statusmodtime,

@@ -439,7 +439,6 @@ create table lm_v3.MatrixColumn
 	
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    ident varchar(64),
-   dlocation text,
    metadata text, 
    
    -- if process

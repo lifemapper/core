@@ -757,7 +757,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(-- MatrixColumn
                                                              lyrid int,
                                                              sqd varchar,
                                                              idnt varchar,
-                                                             dloc varchar,
                                                              meta text,
                                                              intparams text,
                                                              stat int,
@@ -796,10 +795,8 @@ BEGIN
    -- or insert new column at location or undefined location for gpam
    ELSE
       INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
-            dlocation, metadata, layerId, intersectParams, status, 
-            statusmodtime)
-         VALUES (mtxid, mtxidx, sqd, idnt, dloc, meta, lyrid, intparams, stat, 
-            stattime);
+            metadata, layerId, intersectParams, status, statusmodtime)
+         VALUES (mtxid, mtxidx, sqd, idnt, meta, lyrid, intparams, stat, stattime);
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
       ELSE
@@ -817,7 +814,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- status, matrixIndex=None, metadata=None, modTime
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateMatrixColumn(mtxcolid int,
                                                        mtxidx int,
-                                                       dloc varchar,
                                                        mtxcolmeta varchar,
                                                        intparams text,
                                                        stat int,
@@ -840,9 +836,9 @@ BEGIN
    ELSE
       -- Update MatrixColumn record
       UPDATE lm_v3.MatrixColumn
-           SET (matrixIndex, dlocation, metadata, intersectParams, 
+           SET (matrixIndex, metadata, intersectParams, 
                 status, statusmodtime) 
-             = (mtxidx, dloc, mtxcolmeta, intparams, stat, stattime) 
+             = (mtxidx, mtxcolmeta, intparams, stat, stattime) 
            WHERE matrixColumnId = mtxcolid;
       IF FOUND THEN 
          success = 0;

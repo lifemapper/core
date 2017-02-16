@@ -22,9 +22,8 @@
           02110-1301, USA.
 """
 from LmServer.base.layerset import MapLayerSet
-from LmServer.base.lmobj import LMError, LMObject
+from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
-from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.legion.envlayer import EnvLayer
 
 # .........................................................................

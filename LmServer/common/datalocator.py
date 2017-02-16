@@ -24,7 +24,7 @@
 from types import StringType, UnicodeType
 import os
 
-from LmCommon.common.lmconstants import OutputFormat, MatrixType
+from LmCommon.common.lmconstants import OutputFormat
 
 from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
