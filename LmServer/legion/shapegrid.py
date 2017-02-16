@@ -131,26 +131,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       ServiceObject.updateModtime(self, modTime=modTime)
       _LayerParameters.updateParams(self, matrixIndex=matrixIndex, 
                                     metadata=metadata, modTime=modTime)
-
-# # ...............................................
-#    def _createMapPrefix(self):
-#       """
-#       @summary: Construct the endpoint of a Lifemapper WMS URL for 
-#                 this object.
-#       """
-#       mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SHAPEGRID,
-#                      usr=self._userId, epsg=self._epsg, lyrname=self.name)
-#       return mapprefix
-#     
-# # ...............................................
-#    @property
-#    def mapPrefix(self): 
-#       return self._mapPrefix
-#     
-#    def _setMapPrefix(self, mapprefix=None):
-#       if mapprefix is None:
-#          mapprefix = self._createMapPrefix()
-#       self._mapPrefix = mapprefix
           
 # ...............................................
    def _setCellsides(self, cellsides):
@@ -174,20 +154,10 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    @property       
    def size(self):
       return self._size
-            
-# # ...............................................
-#    def initSitesPresent(self):
-#       sitesPresent = {}
-#       if self._siteIndices is None:
-#          self.setSiteIndices()
-#       if self._siteIndices is not None:
-#          for s in self._siteIndices.keys():
-#             sitesPresent[s] = True
-#       return sitesPresent
    
 # ...............................................
-   def setSiteIndices(self):
-      self._siteIndices = {}
+   def getSiteIndices(self):
+      siteIndices = {}
       if not(self._features) and self.getDLocation() is not None:
          self.readData()
       if self._features: 
@@ -195,8 +165,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             if siteidx is None:
                print 'WTF?'
             geom = self._features[siteidx][self._geomIdx]
-            self._siteIndices[siteidx] = geom
-
+            siteIndices[siteidx] = geom
+      return siteIndices
+   
 # ...............................................
    def createLocalDLocation(self):
       """
@@ -205,18 +176,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       dloc = self._earlJr.createFilename(LMFileType.SHAPEGRID, lyrname=self.name, 
                 usr=self._userId, epsg=self._epsg)
       return dloc
-
-# # ...............................................
-#    def setDLocation(self, dloc=None):
-#       """
-#       @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
-#                 if provided, otherwise calculate it.
-#       @note: If _dlocation is already present, this does nothing.
-#       """
-#       if self._dlocation is None:
-#          if dloc is None:
-#             dloc = self.createLocalDLocation()
-#          Vector.setDLocation(self, dloc)
 
 # ...............................................
    def checkbbox(self,minx,miny,maxx,maxy,resol):
@@ -287,24 +246,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          origFeature = origLayer.GetNextFeature()
       ds.Destroy()
       return minx,miny,maxx,maxy
-
-# # ...................................................
-#    def cutoutNew(self, cutoutWKT):
-#       """
-#       @summary: Remove any features that do not intersect the cutoutWKT
-#       """
-#       # create geom from wkt
-#       selectedpoly = ogr.CreateGeometryFromWkt(cutoutWKT)
-#       minx, maxx, miny, maxy = selectedpoly.GetEnvelope()
-#       intersectingFeatures = {}
-#       for siteId, featVals in self._features.iteritems():
-#          wkt = featVals[self._geomIdx]
-#          currgeom = ogr.CreateGeometryFromWkt(wkt)
-#          if currgeom.Intersects(selectedpoly):
-#             intersectingFeatures[siteId] = featVals
-#       self.clearFeatures()
-#       self.addFeatures(intersectingFeatures)
-#       self._setBBox(minx, miny, maxx, maxy)
       
 # ...................................................
    def buildShape(self, cutout=None, overwrite=False):
