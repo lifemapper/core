@@ -1204,11 +1204,11 @@ class Borg(DbPostgresql):
       elif type(obj) == type(ShapeGrid):
          success = self.updateShapeGrid(obj)
       elif type(obj) == type(MFChain):
-         success = self.executeModifyFunction('lm_updateMFChain', objid)
+         success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
+                                              obj.status, obj.statusModTime)
       else:
          raise LMError('Unsupported delete for object {}'.format(type(obj)))
       return success
-      
 
 # ...............................................
    def deleteObject(self, obj):
