@@ -27,8 +27,12 @@
           02110-1301, USA.
 """
 import argparse
+import os
+from osgeo import gdal, ogr
 
-from LmCommon.common.lmconstants import ProcessType
+from LmCommon.common.lmconstants import ProcessType, LMFormat
+from LmServer.base.layer2 import Vector, Raster
+from LmServer.base.lmobj import LMError
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
@@ -38,71 +42,96 @@ class Ear(object):
    @summary: Object to construct and parse filenames and URLs.
    """
 # .............................................................................
-# Constructor
-# .............................................................................
-   def __init__(self):
-      """
-      @summary: Constructor for the Updater object.  
-      """
-      pass
-
-   # ...............................................
    @classmethod
    def receive(cls, ptype, objId, status, successFname, outputFnameList):
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
+      outputInfo = []      
+      # ...............................
+      # Database update
+      try:
+         try:
+            # Get object
+            if ProcessType.isOccurrence(ptype):
+               obj = scribe.getOccurrenceSet(occid=objId)
+            elif ProcessType.isProject(ptype):
+               obj = scribe.getSDMProject(objId)
+            elif ptype == ProcessType.RAD_BUILDGRID:
+               obj = scribe.getShapeGrid(lyrId=objId)
+            elif ProcessType.isMatrix(ptype):
+               obj = scribe.getMatrix(mtxId=objId)
+         except Exception, e:
+            msg = 'Failed to get object {} for process {}'.format(objId, ptype)
+            outputInfo.append(msg)
+            raise LMError(currargs=msg)
+         # Update object and db record
+         try:
+            obj.updateStatus(status)
+            scribe.updateObject(obj)
+         except Exception, e:
+            msg = 'Failed to update object {} for process {}'.format(objId, ptype)
+            outputInfo.append(msg)
+            raise LMError(currargs=msg)
+      except:
+         # TODO: raise exception, or write info to file?
+         pass
+      finally:
+         # Close DB   
+         scribe.closeConnections()
+      # ...............................
+      # Test outputs
+      success = True
+      for fname in outputFnameList:
+         currSuccess, msg = cls.testFile(fname)
+         if not currSuccess:
+            success = False
+            outputInfo.append(msg)
+      # ...............................
+      # Write status file
+      # TODO: What do we want this file to contain
+      f = open(successFname, 'w')
+      f.write(str(success))
+      for msg in outputInfo:
+         f.write('# {}'.format(msg))
+      f.close()
       
-      # All db updates
-      try:
-         if ProcessType.isOccurrence(ptype):
-            obj = scribe.getOccurrenceSet(occid=objId)
-         elif ProcessType.isProject(ptype):
-            obj = scribe.getSDMProject(objId)
-         elif ptype == ProcessType.RAD_BUILDGRID:
-            obj = scribe.getShapeGrid(lyrId=objId)
-         elif ProcessType.isMatrix(ptype):
-            obj = scribe.getMatrix(mtxId=objId)
-      except Exception, e:
-         scribe.log.error('Failed to get object {} for processType {}'
-                          .format(objId, ptype))
-      try:
-         obj.updateStatus(status)
-         scribe.updateObject(obj)
-      except Exception, e:
-         scribe.log.error('Failed to update object {} for processType {}'
-                          .format(objId, ptype))
-         
-      scribe.closeConnections()
-      
    # ...............................................
-   @staticmethod
-   def occur(scribe, objId, status, successFname, outputFnameList):
-      try:
-         occ = scribe.getOccurrenceSet(occid=objId)
-         occ.updateStatus(status)
-         scribe.updateOccset()
-      except Exception, e:
-         scribe.log.error('Failed to get or update Occurrenceset {}')
-   # ...............................................
-   @staticmethod
-   def project(scribe, objId, status, successFname, outputFnameList):
-      pass
-   
-   # ...............................................
-   @staticmethod
-   def shape(scribe, objId, status, successFname, outputFnameList):
-      pass
-   
-   # ...............................................
-   @staticmethod
-   def matrix(scribe, objId, status, successFname, outputFnameList):
-      pass
-
-   # ...............................................
-   @staticmethod
-   def mtxVector(scribe, objId, status, successFname, outputFnameList):
-      pass
-
+   @classmethod
+   def testFile(outputFname):
+      success = True
+      msg = None
+      basename, ext = os.path.splitext(outputFname)
+      if not os.path.exists(outputFname):
+         msg = 'File {} does not exist'.format(outputFname)
+         success = False
+      elif LMFormat.isTestable(ext):
+         if LMFormat.isGeo(ext):
+            fileFormat = LMFormat.getFormatByExtension(ext)
+            if LMFormat.isOGR(ext):
+               success, featCount = Vector.testVector(outputFname, 
+                                                      driver=fileFormat.driver)
+               if not success:
+                  msg = 'File {} is not a valid {} file'.format(outputFname, 
+                                                                fileFormat.driver)
+               elif featCount < 1:
+                  msg = 'Vector {} has no features'.format(outputFname)
+                  
+            elif LMFormat.isGDAL(ext):
+               success = Raster.testRaster(outputFname)
+               if not success:
+                  msg = 'File {} is not a valid GDAL file'.format(outputFname)
+         else:
+            f = open(outputFname, 'r')
+            data = f.read()
+            f.close()
+            if LMFormat.isJSON(ext):
+               import json
+               try:
+                  json.loads(data)
+               except:
+                  success = False
+                  msg = 'File {} does not contain valid JSON'.format(outputFname)
+      return success, msg
 
 # .............................................................................
 if __name__ == "__main__":

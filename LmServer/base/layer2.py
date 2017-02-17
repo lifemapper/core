@@ -573,6 +573,28 @@ class Raster(_Layer):
       dloc = super(Raster, self).createLocalDLocation(ext)
       return dloc
 
+# ...............................................
+   @staticmethod
+   def testRaster(dlocation, bandnum=1):
+      """
+      @return: a GDAL dataset object
+      """
+      success = True
+      try:
+         try:
+            dataset = gdal.Open(str(dlocation), gdalconst.GA_ReadOnly)
+         except Exception, e:
+            raise LMError(currargs='Unable to open dataset {} with GDAL ({})'
+                           .format(dlocation, str(e)))
+         try:
+            band = dataset.GetRasterBand(1)
+         except Exception, e:
+            raise LMError(currargs='No band {} in dataset {} ({})'
+                           .format(band, dlocation, str(e)))
+      except:
+         success = False
+      return success
+
 # .............................................................................
 # Private methods
 # .............................................................................
@@ -2025,12 +2047,12 @@ class Vector(_Layer):
       
 # ...............................................
    @staticmethod
-   def testShapefile(dlocation):
+   def testVector(dlocation, driver=DEFAULT_OGR_FORMAT):
       goodData = True
       featCount = 0
       if dlocation is not None and os.path.exists(dlocation):
          ogr.RegisterAll()
-         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+         drv = ogr.GetDriverByName(driver)
          try:
             ds = drv.Open(dlocation)
          except Exception, e:
@@ -2044,7 +2066,7 @@ class Vector(_Layer):
                featCount = slyr.GetFeatureCount()
                   
       return goodData, featCount
-      
+
 # ...............................................
    @staticmethod
    def indexShapefile(dlocation):
@@ -2247,7 +2269,6 @@ class Vector(_Layer):
       else:
          raise LMError('dlocation %s does not exist' % str(dlocation))
       return thisBBox, localIdIdx, geomIdx, feats, featAttrs, featCount
-
       
 # ...............................................
    def _transformBBox(self, origEpsg=None, origBBox=None):
