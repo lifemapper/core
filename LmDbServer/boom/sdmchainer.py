@@ -323,7 +323,7 @@ class _LMChainer(LMObject):
                         statusModTime=dt.gmt().mjd)
       for o in objs:
          try:
-            rules = o.compute()
+            rules = o.computeMe()
             mfchain.addCommands(rules)
          except Exception, e:
             self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
@@ -1260,53 +1260,6 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 dataChunk, dataCount, taxonName  = boomer._getChunk()
 objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
-
-
-bbsciName = ScientificName(taxonName, userId=boomer.userid)
-sciName = boomer._scribe.findOrInsertTaxon(sciName=bbsciName)
-occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
-                  occProcessType, dataCount, data=dataChunk)
-# ..............................................................................
-
-# sciName = boomer._getInsertSciNameForUser(taxonName)
-# objs = boomer._processSDMChain(sciName, taxonSourceKeyVal, 
-#                    occProcessType, 
-#                    dataCount, data=dataChunk)
-# objs = boomer._scribe.initOrRollbackSDMChain(occ, boomer.algs, 
-#                   boomer.modelScenario, boomer.projScenarios, 
-#                   mdlMask=boomer.modelMask, projMask=boomer.projMask,
-#                   occJobProcessType=occProcessType, 
-#                   gridset=boomer.boomGridset,
-#                   minPointCount=boomer.minPointCount)
-#                   
-# select * from lm_v3.lm_findOrInsertMatrixColumn(NULL,NULL,1,-1,NULL,
-# '24f7eeef311d0cb6739250bc6b6a3108db61cfe9348e99817d4dd1baaefb81c4',
-# NULL,NULL,NULL,NULL,0,57797.9248472);
-
-(algList, mdlScen, prjScenList, mdlMask, projMask, gridset, 
-minPointCount) = (boomer.algs, boomer.modelScenario, boomer.projScenarios, 
-boomer.modelMask, boomer.projMask, boomer.boomGridset, boomer.minPointCount) 
-currtime = dt.gmt().mjd
-alg = algList[0]
-prjs = boomer._scribe.initOrRollbackSDMProjects(occ, mdlScen, prjScenList, alg, 
-                              mdlMask=mdlMask, projMask=projMask, 
-                              modtime=currtime)
-prj = prjs[0]
-# mtxcol = boomer._scribe.initOrRollbackIntersect(prj, gridset.pam, currtime)
-lyr, mtx, modtime = prj, gridset.pam, currtime
-ptype = ProcessType.INTERSECT_RASTER
-mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
-                layer=lyr, shapegrid=None, intersectParams={}, 
-                squid=lyr.squid, ident=lyr.ident,
-                processType=ptype, metadata={}, matrixColumnId=None, 
-                status=JobStatus.GENERAL, statusModTime=modtime)
-                
-newOrExistingMtxcol = boomer._scribe._borg.findOrInsertMatrixColumn(mtxcol)
-newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, modTime=modtime)
-success = boomer._scribe._borg.updateMatrixColumn(newOrExistingMtxcol)
-
-                    
-# objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 boomer._createMakeflow(objs)
 
 
