@@ -330,7 +330,7 @@ class BorgScribe(LMObject):
       return success
    
 # ...............................................
-   def initOrRollbackIntersect(self, lyr, mtx, modtime, overridePath=None):
+   def initOrRollbackIntersect(self, lyr, mtx, modtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
@@ -345,10 +345,9 @@ class BorgScribe(LMObject):
             ptype = ProcessType.INTERSECT_VECTOR
          mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
                 layer=lyr, shapegrid=None, intersectParams={}, 
-                colDLocation=None, squid=lyr.squid, ident=lyr.ident,
+                squid=lyr.squid, ident=lyr.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 
-                status=JobStatus.GENERAL, statusModTime=modtime,
-                overridePath=overridePath)
+                status=JobStatus.GENERAL, statusModTime=modtime)
             
          newOrExistingMtxcol = self._borg.findOrInsertMatrixColumn(mtxcol)
          if JobStatus.finished(newOrExistingMtxcol.status):
@@ -431,9 +430,8 @@ class BorgScribe(LMObject):
             if gridset is not None and gridset.pam is not None:
                mtxcols = []
                for prj in prjs:
-                  overridePath = prj.getAbsolutePath()
                   mtxcol = self.initOrRollbackIntersect(prj, gridset.pam, 
-                                          currtime, overridePath=overridePath)
+                                                        currtime)
                   mtxcols.append(mtxcol)
                objs.extend(mtxcols)
       return objs

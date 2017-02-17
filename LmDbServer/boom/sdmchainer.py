@@ -1259,6 +1259,9 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # Do this repeatedly to find a new taxa
 # ..............................................................................
 dataChunk, dataCount, taxonName  = boomer._getChunk()
+objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+
+
 bbsciName = ScientificName(taxonName, userId=boomer.userid)
 sciName = boomer._scribe.findOrInsertTaxon(sciName=bbsciName)
 occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
