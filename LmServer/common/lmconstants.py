@@ -343,8 +343,8 @@ class LMFileType:
    USER_TREE = 530
    MF_DOCUMENT = 540
    BOOM_CONFIG = 550
-# ..............................
    
+# ..............................
    @staticmethod
    def isSDM(rtype):
       if rtype in [LMFileType.SDM_MAP, 

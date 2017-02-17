@@ -1263,6 +1263,8 @@ bbsciName = ScientificName(taxonName, userId=boomer.userid)
 sciName = boomer._scribe.findOrInsertTaxon(sciName=bbsciName)
 occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
                   occProcessType, dataCount, data=dataChunk)
+row, idxs = boomer._scribe._borg.executeSelectOneFunction('lm_getOccurrenceSet', 
+             None, boomer.userid, sciName.squid, boomer.epsg)
 # ..............................................................................
 
 # sciName = boomer._getInsertSciNameForUser(taxonName)

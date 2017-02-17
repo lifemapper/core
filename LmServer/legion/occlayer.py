@@ -255,9 +255,9 @@ class OccurrenceLayer(OccurrenceType, Vector):
          if self.name is None:
             self.name = self._earlJr.createLayername(occsetId=self.getId())
          self.setDLocation()
+         self.resetMetadataUrl()
          self.setLocalMapFilename()
          self._setMapPrefix()
-         self.resetMetadataUrl()
 
 # ...............................................
    def getAbsolutePath(self):
@@ -293,7 +293,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          else:
             ftype = LMFileType.OCCURRENCE_FILE
          occid = self.getId()
-         dloc = self._earlJr.createFilename(ftype, occsetId=occid, objId=occid,
+         dloc = self._earlJr.createFilename(ftype, occsetId=occid, objCode=occid,
                                             usr=self._userId)
       return dloc
    
@@ -351,7 +351,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       lyrname = self._earlJr.createBasename(LMFileType.OCCURRENCE_FILE, 
                                             objCode=occid, usr=self._userId, 
                                             epsg=self.epsgcode)
-      mapprefix = self._earlJr.constructMapPrefixNew(urlprefix=self.metadataUrl(),
+      mapprefix = self._earlJr.constructMapPrefixNew(urlprefix=self.metadataUrl,
                               ftype=LMFileType.SDM_MAP, mapname=self.mapName, 
                               lyrname=lyrname, usr=self._userId)
       return mapprefix
