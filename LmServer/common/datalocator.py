@@ -189,7 +189,7 @@ class EarlJr(LMObject):
       # User layers
       elif LMFileType.isUserLayer(ftype):
          nameparts.append(lyrname)
-      # All non-map, non-user-layer files use objectCode 
+      # All non-map, non-user-layer files use objCode 
       else:
          nameparts.append(objCode)
          
@@ -435,7 +435,7 @@ class EarlJr(LMObject):
          if ftype in (LMFileType.SCENARIO_MAP,
                       LMFileType.OTHER_MAP, LMFileType.SDM_MAP, 
                       LMFileType.SHAPEGRID):
-            mapname = self.createBasename(ftype, objectCode=scenarioCode, 
+            mapname = self.createBasename(ftype, objCode=scenarioCode, 
                                           occsetId=occsetId, bucketId=bucketId, 
                                           usr=usr, epsg=epsg)
          else:
@@ -470,7 +470,7 @@ class EarlJr(LMObject):
             mapname = mapname[:-1*len(OutputFormat.MAP)]
       else:
          if LMFileType.isMap(ftype):
-            mapname = self.createBasename(ftype, objectCode=objCode, usr=usr, 
+            mapname = self.createBasename(ftype, objCode=objCode, usr=usr, 
                                           epsg=epsg)
          else:
             raise LMError('Invalid LMFileType %s' % ftype)

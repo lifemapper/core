@@ -98,7 +98,8 @@ class MFChain(ProcessObject):
       dloc = None
       if self.objId is not None:
          dloc = self._earlJr.createFilename(LMFileType.MF_DOCUMENT, 
-                                       mfchainId=self.objId, usr=self._userId)
+                                            objCode=self.objId, 
+                                            usr=self._userId)
       return dloc
 
 # ...............................................

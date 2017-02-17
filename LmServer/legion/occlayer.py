@@ -292,7 +292,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
             ftype = LMFileType.OCCURRENCE_LARGE_FILE
          else:
             ftype = LMFileType.OCCURRENCE_FILE
-         dloc = self._earlJr.createFilename(ftype, occsetId=self.getId(), 
+         occid = self.getId()
+         dloc = self._earlJr.createFilename(ftype, occsetId=occid, objId=occid,
                                             usr=self._userId)
       return dloc
    

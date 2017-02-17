@@ -216,7 +216,7 @@ class SDMProjection(_ProjectionType, Raster):
       dloc = None
       if self.getId() is not None:
          dloc = self._earlJr.createFilename(LMFileType.PROJECTION_LAYER, 
-                   projId=self.getId(), pth=self.getAbsolutePath(), 
+                   objCode=self.getId(), occsetId=self._occurrenceSet.getId(), 
                    usr=self._userId, epsg=self._epsg)
       return dloc
 
@@ -345,27 +345,16 @@ class SDMProjection(_ProjectionType, Raster):
       @todo: Should be able to remove this
       """
       fname = self._earlJr.createFilename(LMFileType.PROJECTION_REQUEST, 
-                projId=self.getId(), pth=self.getAbsolutePath(), 
+                objCode=self.getId(), occsetId=self._occurrenceSet.getId(), 
                 usr=self._userId, epsg=self._epsg)
       return fname
 
 # ...............................................
    def getProjPackageFilename(self):
       fname = self._earlJr.createFilename(LMFileType.PROJECTION_PACKAGE, 
-                projId=self.getId(), pth=self.getAbsolutePath(), 
+                objCode=self.getId(), occsetId=self._occurrenceSet.getId(), 
                 usr=self._userId, epsg=self._epsg)
       return fname
-   
-#          dloc = self.occurrenceSet.createLocalDLocation(makeflow=True)
-#       else:
-#          if self._algorithm.code == 'ATT_MAXENT':
-#             ftype = LMFileType.MODEL_ATT_RESULT
-#          else:
-#             ftype = LMFileType.MODEL_RESULT
-#          dloc = self._earlJr.createFilename(ftype, modelId=self.getId(), 
-#                            pth=self.getAbsolutePath(), usr=self._userId, 
-#                            epsg=self.occurrenceSet.epsgcode)
-#       return dloc
 
    # ...............................................
    def getAlgorithmParametersJson(self, algorithm):
@@ -443,18 +432,11 @@ class SDMProjection(_ProjectionType, Raster):
       else:
          ftype = LMFileType.MODEL_REQUEST
       modelCode = self.getModelTarget()
-      fname = self._earlJr.createFilename(ftype, modelId=modelCode, 
-                                          pth=self.getAbsolutePath(), 
+      fname = self._earlJr.createFilename(ftype, objCode=modelCode, 
+                                          occsetId=self._occurrenceSet.getId(), 
                                           usr=self._userId, 
                                           epsg=self._epsg)
       return fname
-
-# # ...............................................
-#    def getProjLayerFilename(self):
-#       fname = self._earlJr.createFilename(LMFileType.PROJECTION_LAYER, 
-#                 projId=self.getId(), pth=self.getAbsolutePath(), 
-#                 usr=self._userId, epsg=self._epsg)
-#       return fname
 
 # ...............................................
    def writeProjection(self, rasterData, fname=None, srs=None, epsgcode=None, 

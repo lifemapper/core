@@ -203,6 +203,6 @@ class Scenario(MapLayerSet):
       @summary: Find mapfile containing this layer.  
       """
       mapfname = self._earlJr.createFilename(LMFileType.SCENARIO_MAP, 
-                    scenarioCode=self.code, usr=self._userId, epsg=self._epsg)
+                    objCode=self.code, usr=self._userId, epsg=self._epsg)
       return mapfname
    

@@ -307,12 +307,10 @@ class LMFileType:
    # User level
    OTHER_MAP = 1
    # ..............................
-   # SDM
-   # User level
+   # Single species
    ENVIRONMENTAL_LAYER = 101
    SCENARIO_MAP = 102
    # Occurrence level (SDM data are organized by OccurrenceSets)
-   UNSPECIFIED_OCC = 100
    SDM_MAP = 110
    OCCURRENCE_FILE = 111
    OCCURRENCE_RAW_FILE = 112
@@ -326,29 +324,26 @@ class LMFileType:
    PROJECTION_PACKAGE = 131
    PROJECTION_LAYER = 132
    # ..............................
-   # RAD
-   # User level
-   UNSPECIFIED_USER = 500
+   # Multi-species
+   UNSPECIFIED_RAD = 200
+   ATTR_MATRIX = 210    # not yet used
    SHAPEGRID = 201     # TODO: delete??
+   PAM = 222
+   GRIM = 223
+   SUM_CALCS = 241
+   SUM_SHAPE = 242
+   
+   BIOGEO_HYPOTHESES = 322
+   PADDED_PAM = 323
+   MCPA_OUTPUTS = 324
+
    USER_LAYER = 510
    USER_SHAPEGRID = 511
    USER_ATTRIBUTE_MATRIX = 520
    USER_TREE = 530
    MF_DOCUMENT = 540
    BOOM_CONFIG = 550
-   UNSPECIFIED_RAD = 200
-   ATTR_MATRIX = 210    # not yet used
-   ATTR_TREE = 211     # TODO: delete
-   # Matrices - associated with RAD Gridset
-   PAM = 222
-   GRIM = 223
-   BIOGEO_HYPOTHESES = 322
-   PADDED_PAM = 323
-   MCPA_OUTPUTS = 324
-   # Calculations on PAM (Original or Randomized Swap)
-   SUM_CALCS = 241
-   SUM_SHAPE = 242
-   # ..............................
+# ..............................
    
    @staticmethod
    def isSDM(rtype):
@@ -367,7 +362,7 @@ class LMFileType:
    @staticmethod
    def isRAD(rtype):
       if rtype in [LMFileType.UNSPECIFIED_RAD,
-                   LMFileType.ATTR_MATRIX, LMFileType.ATTR_TREE, 
+                   LMFileType.ATTR_MATRIX, 
                    LMFileType.PAM, LMFileType.GRIM, 
                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
                    LMFileType.BIOGEO_HYPOTHESES]:
@@ -376,8 +371,7 @@ class LMFileType:
 
    @staticmethod
    def isUserSpace(rtype):
-      if rtype in [LMFileType.UNSPECIFIED_USER, 
-                   LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE, 
+      if rtype in [LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE, 
                    LMFileType.MF_DOCUMENT, LMFileType.BOOM_CONFIG]:
          return True
       return False
@@ -478,15 +472,12 @@ class FileFix:
              
              LMFileType.SHAPEGRID: 'shpgrid',
              LMFileType.ATTR_MATRIX: 'attrMtx',
-             LMFileType.ATTR_TREE: 'attrTree',
              LMFileType.PAM: 'pam',
              LMFileType.GRIM: 'grim',
              LMFileType.SUM_CALCS: PAMSUM_PREFIX,
              LMFileType.SUM_SHAPE: PAMSUM_PREFIX,
 
-             LMFileType.UNSPECIFIED_USER: None,
              LMFileType.UNSPECIFIED_RAD: None,
-             LMFileType.UNSPECIFIED_OCC: None,
              LMFileType.USER_LAYER: GENERIC_LAYER_NAME_PREFIX,
              LMFileType.USER_SHAPEGRID: None,
              LMFileType.USER_ATTRIBUTE_MATRIX: 'attributes',
@@ -515,28 +506,18 @@ class FileFix:
                 
                 LMFileType.SHAPEGRID:  OutputFormat.SHAPE,
                 LMFileType.ATTR_MATRIX: OutputFormat.NUMPY,
-                LMFileType.ATTR_TREE: OutputFormat.JSON,
-                LMFileType.BUCKET_MAP: OutputFormat.MAP, 
                 LMFileType.PAM: OutputFormat.NUMPY,
                 LMFileType.GRIM: OutputFormat.NUMPY,
-                LMFileType.LAYER_INDICES: OutputFormat.PICKLE,
-                LMFileType.PRESENCE_INDICES: OutputFormat.PICKLE,
-                LMFileType.COMPRESSED_PAM: OutputFormat.NUMPY,
                 LMFileType.SUM_CALCS: OutputFormat.PICKLE,
                 LMFileType.SUM_SHAPE: OutputFormat.SHAPE,
-                LMFileType.SPLOTCH_PAM: OutputFormat.NUMPY,
-                LMFileType.SPLOTCH_SITES: OutputFormat.PICKLE,
-                
-                LMFileType.UNSPECIFIED_USER: None,
+
                 LMFileType.UNSPECIFIED_RAD: None,
-                LMFileType.UNSPECIFIED_OCC: None,
                 LMFileType.USER_LAYER: None,
                 LMFileType.USER_SHAPEGRID:  OutputFormat.SHAPE,
                 LMFileType.USER_ATTRIBUTE_MATRIX: OutputFormat.NUMPY,
                 LMFileType.USER_TREE: OutputFormat.JSON,
                 LMFileType.MF_DOCUMENT: OutputFormat.MAKEFLOW,
                 LMFileType.BIOGEO_HYPOTHESES: OutputFormat.NUMPY,
-                LMFileType.SITE_INDICES: OutputFormat.PICKLE,
                 LMFileType.PADDED_PAM: OutputFormat.NUMPY,
                 LMFileType.MCPA_OUTPUTS: OutputFormat.NUMPY
    }
