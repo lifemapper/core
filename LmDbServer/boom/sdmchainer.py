@@ -1263,8 +1263,6 @@ bbsciName = ScientificName(taxonName, userId=boomer.userid)
 sciName = boomer._scribe.findOrInsertTaxon(sciName=bbsciName)
 occ = boomer._createOrResetOccurrenceset(sciName, taxonSourceKeyVal, 
                   occProcessType, dataCount, data=dataChunk)
-row, idxs = boomer._scribe._borg.executeSelectOneFunction('lm_getOccurrenceSet', 
-             None, boomer.userid, sciName.squid, boomer.epsg)
 # ..............................................................................
 
 # sciName = boomer._getInsertSciNameForUser(taxonName)
@@ -1296,7 +1294,7 @@ lyr, mtx, modtime = prj, gridset.pam, currtime
 ptype = ProcessType.INTERSECT_RASTER
 mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
                 layer=lyr, shapegrid=None, intersectParams={}, 
-                dlocation=None, squid=lyr.squid, ident=lyr.ident,
+                squid=lyr.squid, ident=lyr.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 
                 status=JobStatus.GENERAL, statusModTime=modtime)
                 

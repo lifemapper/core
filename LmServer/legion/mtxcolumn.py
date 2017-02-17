@@ -55,7 +55,7 @@ class MatrixColumn(_LayerParameters, ProcessObject):
    def __init__(self, matrixIndex, matrixId, userId, 
                 # inputs if this is connected to a layer and shapegrid 
                 layer=None, shapegrid=None, intersectParams={}, 
-                dlocation=None, squid=None, ident=None,
+                squid=None, ident=None,
                 processType=None, metadata={}, matrixColumnId=None, 
                 status=None, statusModTime=None):
       """

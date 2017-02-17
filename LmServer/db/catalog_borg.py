@@ -288,7 +288,6 @@ class Borg(DbPostgresql):
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
          squid = self._getColumnValue(row,idxs,['mtxcolsquid'])
          ident = self._getColumnValue(row,idxs,['mtxcolident'])
-         mtxcoldloc = self._getColumnValue(row,idxs,['mtxcoldlocation'])
          mtxcolmeta = self._getColumnValue(row,idxs,['mtxcolmetatadata'])
          intparams = self._getColumnValue(row,idxs,['intersectparams'])
          mtxcolstat = self._getColumnValue(row,idxs,['mtxcolstatus']) 
@@ -297,7 +296,7 @@ class Borg(DbPostgresql):
 
          mtxcol = MatrixColumn(mtxIndex, mtxid, usr, 
                         layer=None, shapegrid=None, intersectParams=intparams,
-                        dlocation=mtxcoldloc, squid=squid, ident=ident,
+                        squid=squid, ident=ident,
                         processType=None, metadata=mtxcolmeta, 
                         matrixColumnId=mtxcolid, status=mtxcolstat, 
                         statusModTime=mtxcolstattime)
