@@ -130,25 +130,24 @@ class EarlJr(LMObject):
       elif LMFileType.isMap(filetype):
          pth = os.path.join(pth, MAP_DIR)
                              
-      elif not (LMFileType.isUserLayer(filetype) or LMFileType.isRAD(filetype)):
-         raise LMError('Unknown filetype {}'.format(filetype))
-
-      # Rest, User Layer and RAD data, are separated by epsg
-      if epsg is None:
-         raise LMError('Missing epsg for filetype {}'.format(filetype))
       else:
-         pthparts = [pth, str(epsg)]
-         # multi-purpose layers
-         if LMFileType.isUserLayer(filetype):
-            pthparts.append(USER_LAYER_DIR)
-         # RAD gridsets
-         elif LMFileType.isRAD(filetype):
-            if gridsetId is not None:
-               pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(gridsetId))
-            else:
-               raise LMError('Missing gridsetId {}'.format(filetype))
+         if not (LMFileType.isUserLayer(filetype) or LMFileType.isRAD(filetype)):
+            raise LMError('Unknown filetype {}'.format(filetype))
 
-      pth = os.path.join(*pthparts)
+         # Rest, User Layer and RAD data, are separated by epsg
+         if epsg is not None:
+            pthparts = [pth, str(epsg)]
+            # multi-purpose layers
+            if LMFileType.isUserLayer(filetype):
+               pthparts.append(USER_LAYER_DIR)
+            # RAD gridsets
+            elif LMFileType.isRAD(filetype):
+               if gridsetId is not None:
+                  pthparts.append(RAD_EXPERIMENT_DIR_PREFIX + str(gridsetId))
+               else:
+                  raise LMError('Missing gridsetId {}'.format(filetype))
+            pth = os.path.join(*pthparts)
+            
       return pth
 
 # ...............................................

@@ -89,10 +89,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                              processType=ProcessType.RAD_BUILDGRID,
                              parentId=None,
                              status=status, statusModTime=statusModTime)
-      # Don't necessarily need centroids (requires reading shapegrid), can 
-      # explicitly call public method initSites to initialize centroids and
-      # sitesPresent dictionary if they are needed.
-      self._setMapPrefix()
+      # Don't necessarily need centroids (requires reading shapegrid)
+#       self._setMapPrefix()
       self._setCellsides(cellsides)
       self.cellsize = cellsize
       self._size = None
