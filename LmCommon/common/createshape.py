@@ -207,6 +207,9 @@ class ShapeShifter(object):
 # ...............................................
    @staticmethod
    def testShapefile(dlocation):
+      """
+      @todo: This should go into a LmCommon base layer class
+      """
       goodData = True
       featCount = 0
       if dlocation is not None and os.path.exists(dlocation):

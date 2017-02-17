@@ -53,17 +53,18 @@ class FileFormat:
    @todo: Add GDAL / OGR type as optional parameters
    """
    # ...........................
-   def __init__(self, extension, mimeType, allExtensions=None):
+   def __init__(self, extension, mimeType, allExtensions=None, driver=None):
       """
       @summary: Constructor
-      @param extension: This is the default extension if a format has multiple, 
-                           or it could be the only extension
+      @param extension: This is the primary extension if a format has multiple 
+                        files
       @param mimeType: The MIME-Type for this format
-      @param allExtensions: (optional) Provide a list of all possible extensions
-                               for this format
+      @param allExtensions: List of all possible extensions for this format
+      @param driver: GDAL or OGR driver to use when reading this format
       """
       self._mimeType = mimeType
       self.ext = extension
+      self.driver = driver
       self._extensions = allExtensions
       if self._extensions is None:
          self._extensions = []
@@ -80,14 +81,14 @@ class FileFormat:
       return self._mimeType
    
 # .............................................................................
-class FileFormats:
+class LMFormat:
    """
    @summary: Class containing known formats to Lifemapper
    @todo: Deprecate OutputFormat and instead use this
    """
    ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'])
    CSV = FileFormat('.csv', 'text/csv')
-   GTIFF = FileFormat('.tif', 'image/tiff')
+   GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff')
    HFA = FileFormat('.img', 'image/octet-stream')
    JSON = FileFormat('.json', 'application/json')
    KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
@@ -102,12 +103,54 @@ class FileFormats:
                       allExtensions=[".shp", ".shx", ".dbf", ".prj", ".sbn", 
                                      ".sbx", ".fbn", ".fbx", ".ain", ".aih", 
                                      ".ixs", ".mxs", ".atx", ".shp.xml", 
-                                     ".cpg", ".qix"])
+                                     ".cpg", ".qix"],
+                      driver='ESRI Shapefile')
    TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
    TMP = FileFormat('.tmp', 'application/octet-stream')
    TXT = FileFormat('.txt', 'text/plain')
    XML = FileFormat('.xml', 'application/xml')
    ZIP = FileFormat('.zip', 'application/zip')
+   
+   @staticmethod
+   def getFormatByExtension(ext):
+      for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GTIFF, LMFormat.HFA, 
+                 LMFormat.JSON, LMFormat.KML, LMFormat.LOG, LMFormat.MAKEFLOW, 
+                 LMFormat.MAP, LMFormat.MXE, LMFormat.NEWICK, LMFormat.NUMPY, 
+                 LMFormat.PICKLE, LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, 
+                 LMFormat.TXT, LMFormat.XML, LMFormat.ZIP):
+         if ext == ff.ext:
+            return ff
+
+   @staticmethod
+   def isGeo(ext):
+      if ext in (LMFormat.SHAPE.ext, LMFormat.ASCII.ext, LMFormat.GTIFF.ext):
+         return True
+      return False
+
+   @staticmethod
+   def isOGR(ext):
+      if ext == LMFormat.SHAPE.ext:
+         return True
+      return False
+      
+   @staticmethod
+   def isGDAL(ext):
+      if ext in (LMFormat.ASCII.ext, LMFormat.GTIFF.ext):
+         return True
+      return False
+   
+   @staticmethod
+   def isJSON(ext):
+      if ext == LMFormat.JSON.ext:
+         return True
+      return False
+   
+   @staticmethod
+   def isTestable(ext):
+      if ext in (LMFormat.ASCII.ext, LMFormat.GTIFF.ext,
+                 LMFormat.SHAPE.ext, LMFormat.JSON.ext):
+         return True
+      return False
 
    
 # .............................................................................

@@ -34,9 +34,9 @@ import numpy as np
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import DEFAULT_OGR_FORMAT, FileFormats
+from LmCommon.common.lmconstants import DEFAULT_OGR_FORMAT, LMFormat
 from LmCommon.common.matrix import Matrix
-from LmCommon.encoding.encodingExcpetion import EncodingException
+from LmCommon.encoding.encodingException import EncodingException
 
 SITE_FIELD = 'siteid'
 
@@ -187,7 +187,7 @@ class BioGeoEncoding(object):
       # Find distinct events
       distinctEvents = []
       # Get the data set name (file base name without extension)
-      dsName = os.path.basename(layerDL).replace(FileFormats.SHAPE.ext, '')
+      dsName = os.path.basename(layerDL).replace(LMFormat.SHAPE.ext, '')
       lyrDS = self._openShapefile(layerDL)
       
       # Look for event field

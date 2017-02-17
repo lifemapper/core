@@ -34,7 +34,7 @@ import numpy as np
 import os
 from random import shuffle
 
-from LmCommon.common.lmconstants import FileFormats, PhyloTreeKeys
+from LmCommon.common.lmconstants import LMFormat, PhyloTreeKeys
 from LmCommon.common.matrix import Matrix
 from LmCommon.trees.convert.newickToJson import Parser
 
@@ -91,9 +91,9 @@ class LmTree(object):
          content = inF.read()
       
       ext = os.path.splitext(filename)[1]
-      if ext in FileFormats.JSON.getExtensions(): # JSON
+      if ext in LMFormat.JSON.getExtensions(): # JSON
          return cls(json.loads(content))
-      elif ext in FileFormats.NEWICK.getExtensions(): # Newick
+      elif ext in LMFormat.NEWICK.getExtensions(): # Newick
          newickParser = Parser(content)
          jsonTree, _ = newickParser.parse()
          return cls(jsonTree)
