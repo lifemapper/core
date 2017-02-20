@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.makeflow.cmd import MfRule
 # .........................................................................
@@ -97,7 +98,8 @@ class MFChain(ProcessObject):
       """
       dloc = None
       if self.objId is not None:
-         dloc = self._earlJr.createFilename(LMFileType.MF_DOCUMENT, 
+         earlJr = EarlJr()
+         dloc = earlJr.createFilename(LMFileType.MF_DOCUMENT, 
                                             objCode=self.objId, 
                                             usr=self._userId)
       return dloc
