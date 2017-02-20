@@ -41,8 +41,8 @@ if __name__ == "__main__":
    
    parser.add_argument('pointsCsvFn', type=str,
                        help="A path to a raw user CSV file")
-   parser.add_argument('metadataFn', type=str, 
-                       help="File path to occurrence set metadata")
+   parser.add_argument('metadata', type=str, 
+                       help="JSON string of occurrence set metadata")
    parser.add_argument('outFile', type=str, 
                   help="The file location to write the shapefile for modeling")
    parser.add_argument('bigFile', type=str, 
@@ -51,6 +51,6 @@ if __name__ == "__main__":
                help="The maximum number of points for the modelable shapefile")
    args = parser.parse_args()
    
-   createUserShapefile(args.pointsCsvFn, args.metadataFn, args.outFile, 
+   createUserShapefile(args.pointsCsvFn, args.metadata, args.outFile, 
                        args.bigFile, args.maxPoints)
    

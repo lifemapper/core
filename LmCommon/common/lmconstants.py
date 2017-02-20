@@ -99,6 +99,7 @@ class LMFormat:
    NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
    NUMPY = FileFormat('.npy', 'application/octet-stream')
    PICKLE = FileFormat('.pkl', 'application/octet-stream')
+   PYTHON = FileFormat('.py', 'text/plain')
    SHAPE = FileFormat('.shp', 'application/x-gzip', 
                       allExtensions=[".shp", ".shx", ".dbf", ".prj", ".sbn", 
                                      ".sbx", ".fbn", ".fbx", ".ain", ".aih", 
@@ -786,7 +787,7 @@ class ProcessType:
          relpath = COMMON_SCRIPTS_DIR
          jr = 'updateObjectStatus'
          
-      return os.path.join(APP_PATH, relpath, jr)   
+      return os.path.join(APP_PATH, relpath, jr+'.py')   
 
    @staticmethod
    def isSingle(ptype):

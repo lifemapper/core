@@ -1240,7 +1240,7 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 # Do this repeatedly to find a new taxa
 # ..............................................................................
-for i in range(47):
+for i in range(49):
    dataChunk, dataCount, taxonName  = boomer._getChunk()
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 
@@ -1259,6 +1259,19 @@ meta = {MFChain.META_CREATED_BY: 'crap'}
 mfchain = MFChain(boomer.userid, priority=boomer.priority, 
                   metadata=meta, status=JobStatus.INITIALIZE, 
                   statusModTime=dt.gmt().mjd)
+mfchain.objId = 1
+mfchain.getDLocation()
+for o in objs:
+   try:
+      rules = o.computeMe()
+   except Exception, e:
+      print('Failed on object.computeMe {}'.format(type(o)))
+   else:
+      mfchain.addCommands(rules)
+
+mfchain.write()
+
+
 
 updatedMFChain = boomer._createMakeflow(objs)
 

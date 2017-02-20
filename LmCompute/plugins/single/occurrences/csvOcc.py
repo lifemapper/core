@@ -88,11 +88,11 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
                        bigFile, count, maxPoints)
    
 # .............................................................................
-def createUserShapefile(pointCsvFn, metadataFn, outFile, bigFile, maxPoints):
+def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
    """
    @summary: Processes a user-provided CSV dataset
    @param pointCsvFn: CSV file of points
-   @param metadataFn: A JSON file location of metadata for these occurrences
+   @param meta: A JSON string of metadata for these occurrences
    @param outFile: The file location to write the modelable occurrence set
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
@@ -101,8 +101,7 @@ def createUserShapefile(pointCsvFn, metadataFn, outFile, bigFile, maxPoints):
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.read()
       
-   with open(metadataFn) as metaIn:
-      metadata = json.load(metaIn)
+   metadata = json.loads(meta)
    
    # Assume there is a header, could be sniffed if we want to
    count = len(csvInputBlob.split('\n')) -1 
