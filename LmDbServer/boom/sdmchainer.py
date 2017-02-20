@@ -402,9 +402,6 @@ class _LMChainer(LMObject):
               # out-of-date
              (occ.status == JobStatus.COMPLETE and 
               occ.statusModTime > 0 and occ.statusModTime < self._obsoleteTime)):
-            # Set processType and metadata location (from config, not saved in DB)
-            occ.processType = occProcessType
-            occ.rawMetaLocation = self.metaFname
             # Reset verify hash, name, count, status 
             occ.clearVerify()
             occ.displayName = sciName.scientificName
@@ -421,7 +418,7 @@ class _LMChainer(LMObject):
          occ = OccurrenceLayer(sciName.scientificName, self.userid, self.epsg, 
                dataCount, squid=sciName.squid, ogrType=wkbPoint, 
                processType=occProcessType, status=JobStatus.INITIALIZE, 
-               statusModTime=currtime, sciName=sciName, rawMetaLocation=self.metaFname)
+               statusModTime=currtime, sciName=sciName, rawMetaDLocation=self.metaFname)
          try:
             occ = self._scribe.findOrInsertOccurrenceSet(occ)
             self.log.info('Inserted occset for taxonname {}'.format(sciName.scientificName))
@@ -431,6 +428,10 @@ class _LMChainer(LMObject):
             raise e
       # Set raw data and update status
       if occ and not ignore:
+         # Set processType and metadata location (from config, not saved in DB)
+         occ.processType = occProcessType
+         occ.rawMetaDLocation = self.metaFname
+         # Set raw data location
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
                                      data=data)
          if not rdloc:
@@ -1236,27 +1237,27 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # Do this repeatedly to find a new taxa
 # ..............................................................................
 dataChunk, dataCount, taxonName  = boomer._getChunk()
-# objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
-
-sciName = boomer._getInsertSciNameForUser(taxonName)
-(taxonSourceKeyVal, occProcessType, data) = (None, 
-     ProcessType.USER_TAXA_OCCURRENCE, dataChunk)
-                      
-occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=boomer.userid, 
-      epsg=boomer.epsg)
-      
-occ = OccurrenceLayer(sciName.scientificName, boomer.userid, boomer.epsg, 
-      dataCount, squid=sciName.squid, ogrType=wkbPoint, 
-      processType=occProcessType, status=JobStatus.INITIALIZE, 
-      statusModTime=currtime, sciName=sciName, rawMetaLocation=boomer.metaFname)
-      
-occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
-rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
-                                     data=data)
-occ.setRawDLocation(rdloc, currtime)
-success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 
 
+# o = objs[0]
+# sciName = boomer._getInsertSciNameForUser(taxonName)
+# (taxonSourceKeyVal, occProcessType, data) = (None, 
+#      ProcessType.USER_TAXA_OCCURRENCE, dataChunk)
+#                       
+# occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=boomer.userid, 
+#       epsg=boomer.epsg)
+#       
+# occ = OccurrenceLayer(sciName.scientificName, boomer.userid, boomer.epsg, 
+#       dataCount, squid=sciName.squid, ogrType=wkbPoint, 
+#       processType=occProcessType, status=JobStatus.INITIALIZE, 
+#       statusModTime=currtime, sciName=sciName, rawMetaDLocation=boomer.metaFname)
+#       
+# occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
+# rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
+#                                      data=data)
+# occ.setRawDLocation(rdloc, currtime)
+# success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
 boomer._createMakeflow(objs)
 
