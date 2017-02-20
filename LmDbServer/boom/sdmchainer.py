@@ -324,10 +324,11 @@ class _LMChainer(LMObject):
       for o in objs:
          try:
             rules = o.computeMe()
-            mfchain.addCommands(rules)
          except Exception, e:
             self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
                                                                      str(e)))
+         else:
+            mfchain.addCommands(rules)
       mfchain.write()
       
       updatedMFChain = self._scribe.insertMFChain(mfchain)
@@ -1237,7 +1238,7 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 # Do this repeatedly to find a new taxa
 # ..............................................................................
-for i in range(31):
+for i in range(40):
    dataChunk, dataCount, taxonName  = boomer._getChunk()
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 

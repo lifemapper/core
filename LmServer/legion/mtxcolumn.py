@@ -24,7 +24,7 @@
 import json
 import os
 
-from LmCommon.common.lmconstants import ProcessType, JobStatus
+from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.lmconstants import LMFileType
@@ -127,6 +127,14 @@ class MatrixColumn(_LayerParameters, ProcessObject):
                                     metadata=metadata, modTime=modTime)
 
 # ...............................................
+   def getTargetFilename(self):
+      """
+      @summary: Return unique code for the model's parameters.
+      """
+      relFname = 'mtxcol_{}{}'.format(self.getId(), LMFormat.NUMPY.ext)
+      return relFname
+
+# ...............................................
    def computeMe(self):
       """
       @summary: Creates a command to intersect a layer and a shapegrid to 
@@ -135,8 +143,9 @@ class MatrixColumn(_LayerParameters, ProcessObject):
       rules = []
       # Layer object may be an SDMProject
       if self.layer is not None:
+         inputLayerFname = self.layer.getDLocation()
          # Layer input
-         dependentFiles = [self.layer.getDLocation()]
+         dependentFiles = [inputLayerFname]
          try:
             status = self.layer.status
          except:
@@ -157,14 +166,14 @@ class MatrixColumn(_LayerParameters, ProcessObject):
          elif self.ident is not None:
             options = "--ident={0}".format(self.ident)
          # TODO: CJ - how do we return these columns?
-         pavFname = self.getTempDLocation()
+         pavFname = self.getTargetFilename()
          
          cmdArguments = [os.getenv('PYTHON'), 
                          ProcessType.getTool(self.processType), 
                          self.shapegrid.getDLocation(), 
-                         self.getDLocation(),
+                         inputLayerFname,
                          pavFname,
-                         self.resolution,
+                         self.layer.resolution,
                          self.intersectParams[self.INTERSECT_PARAM_MIN_PRESENCE],
                          self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE],
                          self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT],
@@ -175,7 +184,3 @@ class MatrixColumn(_LayerParameters, ProcessObject):
         
       return rules
 
-# ...............................................
-   def getTempDLocation(self):
-#       What?
-      pass
