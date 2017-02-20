@@ -255,9 +255,8 @@ if __name__ == "__main__":
    """
    $PYTHON LmDbServer/boom/boom.py --help
    
-   $PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive" \
-                                   --user aimee \
-                                   start
+   $PYTHON LmDbServer/boom/boom.py  --archive_name "Heuchera archive" --user ryan start
+   $PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive"  --user aimee start
    """
    args = parser.parse_args()
    archiveName = args.archive_name

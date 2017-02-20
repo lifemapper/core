@@ -74,7 +74,7 @@ class OccurrenceType(_LayerParameters, ProcessObject):
       self.displayName = displayName
       self.queryCount = queryCount
       self._rawDLocation = rawDLocation
-      self._subsetDLocation = None
+      self._bigDLocation = None
       self._scientificName = sciName
       
 # ...............................................
@@ -276,9 +276,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       @summary: Create filename for this layer.
       @param raw: If true, this indicates a raw dump of occurrences (CSV for
                     GBIF dump or User file, a URL for a BISON or iDigBio query).
-      @param subset: If true, this indicates a subset of occurrences, limiting
-                     the number of points to ease map display and model 
-                     computation.  
+      @param largeFile: If true, this indicates a too-big file of occurrences
       @param makeflow: If true, this indicates a makeflow document of jobs 
                        related to this object
       """
@@ -299,11 +297,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
    
 # ...............................................
    # Overrides layer.getDLocation, allowing optional keyword 
-   def getDLocation(self, subset=False):
-      if subset:
-         if self._subsetDLocation is None:
-            self._subsetDLocation = self.createLocalDLocation(subset=True)
-         return self._subsetDLocation
+   def getDLocation(self, largeFile=False):
+      if largeFile:
+         if self._bigDLocation is None:
+            self._bigDLocation = self.createLocalDLocation(largeFile=largeFile)
+         return self._bigDLocation
       else:
          self.setDLocation()
       return self._dlocation
@@ -322,15 +320,14 @@ class OccurrenceLayer(OccurrenceType, Vector):
 #          Vector.setDLocation(self, dlocation)
 
 # ...............................................
-   def isValidDataset(self, subset=False):
+   def isValidDataset(self, largeFile=False):
       """
       @summary: Check to see if the dataset at self.dlocations is a valid 
                 occurrenceset readable by OGR.  If dlocation is None, fill
                 it in first.
       @return: True if dlocation is a valid occurrenceset; False if not
       """
-      dlocation = self.getDLocation(subset=subset)
-#       self.setDLocation()
+      dlocation = self.getDLocation(largeFile=largeFile)
       valid = Vector.isValidDataset(self, dlocation=dlocation)
       return valid
 
@@ -480,17 +477,17 @@ class OccurrenceLayer(OccurrenceType, Vector):
       return wkt
 
 # ...............................................
-   def readShapefile(self, subset=False, dlocation=None):
+   def readShapefile(self, largeFile=False, dlocation=None):
       """
       @note: calls Vector.readData to create points from features. This
              will be removed when we switch to only using features
-      @param subset: Indicates if the subset should be retrieved
+      @param largeFile: Indicates if the largeFile should be retrieved
       @param dlocation: Overrides the object's dlocation (possibly for 
                            temporary file)
       """
       self.clearFeatures()
       if dlocation is None:
-         dlocation = self.getDLocation(subset=subset)
+         dlocation = self.getDLocation(largeFile=largeFile)
       Vector.readData(self, dlocation=dlocation)
 
 # ...............................................
@@ -536,7 +533,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       @note: We are saving only latitude, longitude and localid if it exists.  
              If localid does not exist, we create one.
       @todo: Save the rest of the fields using Vector.splitCSVPointsToShapefiles
-      @todo: remove featureLimit, read subsetDLocation if there is a limit 
+      @todo: remove featureLimit? 
       """
       import csv
       minX = minY = maxX = maxY = None

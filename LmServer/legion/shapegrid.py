@@ -155,6 +155,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    
 # ...............................................
    def getSiteIndices(self):
+      """
+      @TODO: make sure to add this to base object
+      """
       siteIndices = {}
       if not(self._features) and self.getDLocation() is not None:
          self.readData()
@@ -253,7 +256,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       @todo: Check this, it may fail on newer versions of OGR - 
              old: CreateFeature vs new: SetFeature
       """ 
-      # After build, setDLocation, write shapefile, and setSiteIndices
+      # After build, setDLocation, write shapefile
       if os.path.exists(self._dlocation):
          print "Shapegrid file already exists at: %s" % self._dlocation
          self.readData(doReadData=False)
@@ -369,7 +372,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          # update size and verify attributes
          self._setCellMeasurements()
          self._setVerify()
-         self.setSiteIndices()
+#          self.setSiteIndices()
 
 # ...............................................
    def computeMe(self):

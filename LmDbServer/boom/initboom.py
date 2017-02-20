@@ -654,6 +654,9 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
+$PYTHON LmDbServer/boom/initboom.py  --archive_name "Heuchera archive" --user ryan --email rfolk@flmnh.ufl.edu --environmental_metadata 10min-past-present-future  --species_source user --species_file heuchera_all --species_delimiter "," --min_points 25  --algorithms bioclim   --grid_cellsize 1  --grid_shape square
+
+
 $PYTHON LmDbServer/boom/initboom.py --help
 $PYTHON LmDbServer/boom/initboom.py -n "Aimee test archive" \
   -u aimee -m zzeppozz@gmail.com -e 10min-past-present-future \
