@@ -982,7 +982,7 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def getSDMProject(self, projid, fillMasks=False):
+   def getSDMProject(self, projid):
       """
       @summary: get a projection for the given id
       @param projid: Database id for the SDMProject
@@ -990,15 +990,14 @@ class Borg(DbPostgresql):
       modelMask = projMask = None
       row, idxs = self.executeSelectOneFunction('lm_getSDMProjectLayer', projid)
       proj = self._createSDMProjection(row, idxs)
-      if fillMasks:
-         modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid'])
-         projMaskId=self._getColumnValue(row, idxs, ['prjmaskid'])
-         if modelMaskId is not None:
-            modelMask = self.getBaseLayer(modelMaskId, None, None, None, None)
-            proj.setModelMask(modelMask)
-         if projMaskId is not None:
-            projMask = self.getBaseLayer(projMaskId, None, None, None, None)
-            proj.setProjMask(projMask)
+      modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid'])
+      projMaskId=self._getColumnValue(row, idxs, ['prjmaskid'])
+      if modelMaskId is not None:
+         modelMask = self.getBaseLayer(modelMaskId, None, None, None, None)
+         proj.setModelMask(modelMask)
+      if projMaskId is not None:
+         projMask = self.getBaseLayer(projMaskId, None, None, None, None)
+         proj.setProjMask(projMask)
       return proj
 
 # ...............................................
@@ -1066,6 +1065,7 @@ class Borg(DbPostgresql):
                 OR save a new SDMProjection
       @param proj: the SDMProjection object to update
       @return new or existing SDMProjection 
+      @note: assumes that modelMask and projMask have already been inserted
       """
       lyrmeta = proj.dumpLyrMetadata()
       prjmeta = proj.dumpParamMetadata()
@@ -1078,10 +1078,18 @@ class Borg(DbPostgresql):
                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
                      proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
                      proj.getOccurrenceSetId(), proj.algorithmCode, algparams,
-                     proj.getModelScenarioId(), proj.modelMask,
-                     proj.getProjScenarioId(), proj.projMask, prjmeta,
+                     proj.getModelScenarioId(), proj.getModelMaskId(),
+                     proj.getProjScenarioId(), proj.getProjMaskId(), prjmeta,
                      proj.processType, proj.status, proj.statusModTime)
       newOrExistingProj = self._createSDMProjection(row, idxs)
+      modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid'])
+      projMaskId=self._getColumnValue(row, idxs, ['prjmaskid'])
+      if modelMaskId is not None:
+         modelMask = self.getBaseLayer(modelMaskId, None, None, None, None)
+         newOrExistingProj.setModelMask(modelMask)
+      if projMaskId is not None:
+         projMask = self.getBaseLayer(projMaskId, None, None, None, None)
+         newOrExistingProj.setProjMask(projMask)
       return newOrExistingProj
 
 # ...............................................
@@ -1090,12 +1098,10 @@ class Borg(DbPostgresql):
       @summary: Find existing OR save a new MatrixColumn
       @param mtxcol: the LmServer.legion.MatrixColumn object to get or insert
       @return new or existing MatrixColumn object
-      @note: Assumes that any layer on the mtxcol is already in the database
       """
       lyrid = None
       if mtxcol.layer is not None:
          # Check for existing id before pulling from db
-         # This will usually be in the DB already
          lyrid = mtxcol.layer.getId()
          if lyrid is None:
             newOrExistingLyr = self.findOrInsertBaseLayer(mtxcol.layer)
@@ -1108,6 +1114,9 @@ class Borg(DbPostgresql):
                      mcmeta, intparams, 
                      mtxcol.status, mtxcol.statusModTime)
       newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
+      if lyrid:
+         inputLayer = self.getBaseLayer(lyrid, None, None, None, None)
+         newOrExistingMtxCol.layer = inputLayer
       return newOrExistingMtxCol
 
 # ...............................................

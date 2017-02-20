@@ -1237,7 +1237,7 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 # Do this repeatedly to find a new taxa
 # ..............................................................................
-for i in range(22):
+for i in range(26):
    dataChunk, dataCount, taxonName  = boomer._getChunk()
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 
@@ -1248,11 +1248,6 @@ o = objs[0]
 o2 = objs[1]
 r = o.computeMe()
 r2 = o2.computeMe()
-
-uniqueCombo = (o2.getUserId(), o2.getOccurrenceSetId(), 
-               o2.algorithmCode, o2.dumpAlgorithmParametersAsString(),
-               o2.getModelScenarioId(), o2.getModelMaskId())
-modelCode = computeHash(content=uniqueCombo)
 
 updatedMFChain = boomer._createMakeflow(objs)
 
