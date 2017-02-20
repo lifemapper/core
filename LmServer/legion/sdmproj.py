@@ -26,8 +26,8 @@ import json
 import mx.DateTime
 import os
 
-from LmCommon.common.lmconstants import OutputFormat, JobStatus, ProcessType,\
-   DEFAULT_POST_USER
+from LmCommon.common.lmconstants import (OutputFormat, JobStatus, ProcessType,
+                                         DEFAULT_POST_USER)
 from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
@@ -38,8 +38,8 @@ from LmServer.common.lmconstants import (LMFileType, Algorithms,
    BIN_PATH)
 from LmServer.makeflow.cmd import MfRule
 from LmServer.common.localconstants import ARCHIVE_USER
-from LmWebServer.common.lmconstants import SCALE_PROJECTION_MINIMUM,\
-   SCALE_PROJECTION_MAXIMUM, GEOTIFF_INTERFACE
+from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
+   SCALE_PROJECTION_MAXIMUM, GEOTIFF_INTERFACE)
    
 
 # .........................................................................
@@ -48,8 +48,8 @@ class _ProjectionType(_LayerParameters, ProcessObject):
    """
    """
 # .............................................................................
-   def __init__(self, occurrenceSet, algorithm, modelScenario, modelMaskId, 
-                projScenario, projMaskId, processType, projMetadata,
+   def __init__(self, occurrenceSet, algorithm, modelScenario, modelMask, 
+                projScenario, projMask, processType, projMetadata,
                 status, statusModTime, userId, projectId):
       """
       @summary Initialize the _ProjectionType class instance
@@ -59,10 +59,10 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       @param algorithm: Algorithm object for SDM model process
       @param modelScenario: : Scenario (environmental layer inputs) for 
              SDM model process
-      @param modelMaskId: Mask for SDM model process
+      @param modelMask: Mask for SDM model process
       @param projScenario: Scenario (environmental layer inputs) for 
              SDM project process
-      @param projMaskId: Mask for SDM project process
+      @param projMask: Mask for SDM project process
       @param processType: LmCommon.common.lmconstants.ProcessType for computation
       @param projMetadata: Metadata for this projection 
       """
@@ -76,9 +76,9 @@ class _ProjectionType(_LayerParameters, ProcessObject):
                              status=status, statusModTime=statusModTime)
       self._occurrenceSet = occurrenceSet
       self._algorithm = algorithm
-      self._modelMaskId = modelMaskId
+      self._modelMask = modelMask
       self._modelScenario = modelScenario
-      self._projMaskId = projMaskId
+      self._projMask = projMask
       self._projScenario = projScenario
       
 # ...............................................
@@ -98,13 +98,13 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       return self._algorithm.code
    
    def getModelMaskId(self):
-      return self._modelMaskId
+      return self._modelMask.getId()
 
    def getModelScenarioId(self):
       return self._modelScenario.getId()
 
    def getProjMaskId(self):
-      return self._projMaskId
+      return self._projMask.getId()
 
    def getProjScenarioId(self):
       return self._projScenario.getId()
@@ -127,7 +127,7 @@ class SDMProjection(_ProjectionType, Raster):
 # Constructor
 # .............................................................................
    def __init__(self, occurrenceSet, algorithm, modelScenario, projScenario, 
-                processType=None, modelMaskId=None, projMaskId=None, 
+                processType=None, modelMask=None, projMask=None, 
                 projMetadata={}, status=None, statusModTime=None, 
                 sdmProjectionId=None,
                 name=None, epsgcode=None, lyrId=None, squid=None, verify=None, 
@@ -146,8 +146,8 @@ class SDMProjection(_ProjectionType, Raster):
                            name, squid, processType, bbox, epsgcode, mapunits, 
                            resolution, dataFormat)
       _ProjectionType.__init__(self, occurrenceSet, algorithm, 
-                               modelScenario, modelMaskId, 
-                               projScenario, projMaskId, processType, 
+                               modelScenario, modelMask, 
+                               projScenario, projMask, processType, 
                                projMetadata,
                                status, statusModTime, userId, sdmProjectionId)
       lyrMetadata = self._createMetadata(lyrMetadata, title=title,
@@ -169,12 +169,12 @@ class SDMProjection(_ProjectionType, Raster):
 ## .............................................................................
    @classmethod
    def initFromParts(cls, occurrenceSet, algorithm, modelScenario, projScenario,
-                     layer, processType=None, modelMaskId=None, projMaskId=None, 
+                     layer, processType=None, modelMask=None, projMask=None, 
                      projMetadata={}, status=None, statusModTime=None, 
                      sdmProjectionId=None):
       prj = SDMProjection(occurrenceSet, algorithm, modelScenario, projScenario, 
-                          processType=processType, modelMaskId=modelMaskId, 
-                          projMaskId=projMaskId, projMetadata=projMetadata, 
+                          processType=processType, modelMask=modelMask, 
+                          projMask=projMask, projMetadata=projMetadata, 
                           status=status, statusModTime=statusModTime, 
                           sdmProjectionId=sdmProjectionId,
                           name=layer.name, epsgcode=layer.epsgcode, 
@@ -414,9 +414,9 @@ class SDMProjection(_ProjectionType, Raster):
       @summary: Return unique code for the model's parameters.
       """
       uniqueCombo = (self.getUserId(), self.getOccurrenceSetId(), 
-                     self.algorithmCode(), self.dumpAlgorithmParametersAsString(),
+                     self.algorithmCode, self.dumpAlgorithmParametersAsString(),
                      self.getModelScenarioId(), self.getModelMaskId())
-      modelCode = computeHash(content=uniqueCombo)
+      modelCode = computeHash(content=str(uniqueCombo))
       return modelCode
 
 # ...............................................
@@ -687,13 +687,13 @@ class SDMProjection(_ProjectionType, Raster):
       # TODO: Make sure this file is deleted on rollback  
       rulesetFname = self.getModelFilename(isResult=True)
       if not os.path.exists(rulesetFname):         
-         if self.isATT() == 'ATT_MAXENT':
+         if self.isATT():
             ptype = ProcessType.ATT_MODEL
          else:
             ptype = ProcessType.OM_MODEL
             
-         occRules = self._occurrenceSet.computeMe()
-         rules.extend(occRules)
+#          occRules = self._occurrenceSet.computeMe()
+#          rules.extend(occRules)
 
          mdlName = self.getModelTarget()
          occSetFname = self._occurrenceSet.getDLocation()

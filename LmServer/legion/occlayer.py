@@ -620,14 +620,14 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          # Process type specific arguments
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
-            cmdArgs.append(self.queryCount)
+            cmdArgs.append(str(self.queryCount))
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
             cmdArgs.append(self.rawMetaDLocation)
             deps = [self.rawMetaDLocation]
          
          cmdArgs.extend([outFile, 
                          bigFile,
-                         POINT_COUNT_MAX])
+                         str(POINT_COUNT_MAX)])
          cmd = ' '.join(cmdArgs)
          
          # Don't add big file to targets since it may not be created

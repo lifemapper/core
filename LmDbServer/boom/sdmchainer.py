@@ -1207,6 +1207,7 @@ from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.db.borgscribe import BorgScribe
+from LmCommon.common.verify import computeHash
 
 from LmDbServer.boom.boom import Archivist
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
@@ -1239,36 +1240,18 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 dataChunk, dataCount, taxonName  = boomer._getChunk()
 objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 
+o = objs[0]
+o2 = objs[1]
+r = o.computeMe()
+r2 = o2.computeMe()
 
-# o = objs[0]
-# sciName = boomer._getInsertSciNameForUser(taxonName)
-# (taxonSourceKeyVal, occProcessType, data) = (None, 
-#      ProcessType.USER_TAXA_OCCURRENCE, dataChunk)
-#                       
-# occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=boomer.userid, 
-#       epsg=boomer.epsg)
-#       
-# occ = OccurrenceLayer(sciName.scientificName, boomer.userid, boomer.epsg, 
-#       dataCount, squid=sciName.squid, ogrType=wkbPoint, 
-#       processType=occProcessType, status=JobStatus.INITIALIZE, 
-#       statusModTime=currtime, sciName=sciName, rawMetaDLocation=boomer.metaFname)
-#       
-# occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
-# rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
-#                                      data=data)
-# occ.setRawDLocation(rdloc, currtime)
-# success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+uniqueCombo = (o2.getUserId(), o2.getOccurrenceSetId(), 
+               o2.algorithmCode, o2.dumpAlgorithmParametersAsString(),
+               o2.getModelScenarioId(), o2.getModelMaskId())
+modelCode = computeHash(content=uniqueCombo)
 
-boomer._createMakeflow(objs)
+updatedMFChain = boomer._createMakeflow(objs)
 
-
-# scribe = BorgScribe(log)
-# scribe.openConnections()
-# shpgrid = scribe.getShapeGrid(userId=user, lyrName=gridname, epsg=epsg)
-# gset = Gridset(name=archiveName, shapeGrid=shpgrid, epsgcode=epsg, 
-#                pam=None, userId=user)
-# mtx = LMMatrix(None, matrixType=MatrixType.PAM, userId=user, gridset=gset)
-# gpam = scribe.getMatrix(mtx)
 
 # ...............................................
 tstUserId='ryan'
