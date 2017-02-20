@@ -1077,9 +1077,9 @@ class Borg(DbPostgresql):
                      proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
                      proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
-                     proj.getOccurrenceSetId(), proj.getAlgorithmCode(), algparams,
-                     proj.getModelScenarioId(), proj.getModelMask(),
-                     proj.getProjScenarioId(), proj.getProjMask(), prjmeta,
+                     proj.getOccurrenceSetId(), proj.algorithmCode, algparams,
+                     proj.getModelScenarioId(), proj.modelMask,
+                     proj.getProjScenarioId(), proj.projMask, prjmeta,
                      proj.processType, proj.status, proj.statusModTime)
       newOrExistingProj = self._createSDMProjection(row, idxs)
       return newOrExistingProj

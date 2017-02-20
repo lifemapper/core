@@ -92,13 +92,19 @@ class _ProjectionType(_LayerParameters, ProcessObject):
       return self._algorithm.dumpAlgParameters()
    
    def getModelMaskId(self):
-      return self._modelMask.getId()
+      try:
+         return self._modelMask.getId()
+      except:
+         return None
 
    def getModelScenarioId(self):
       return self._modelScenario.getId()
 
    def getProjMaskId(self):
-      return self._projMask.getId()
+      try:
+         return self._projMask.getId()
+      except:
+         return None
 
    def getProjScenarioId(self):
       return self._projScenario.getId()
@@ -109,11 +115,11 @@ class _ProjectionType(_LayerParameters, ProcessObject):
    def isATT(self):
       return Algorithms.isATT(self._algorithm.code)
 
-  @property
+   @property
    def displayName(self):
       return self._occurrenceSet.displayName
 
-  @property
+   @property
    def projScenario(self):
       return self._projScenario
 
@@ -131,10 +137,6 @@ class _ProjectionType(_LayerParameters, ProcessObject):
    @property
    def occurrenceSet(self):
       return self._occurrenceSet
-
-   @property
-   def displayName(self):
-      return self._occurrenceSet.displayName
 
    @property
    def status(self):
@@ -434,7 +436,7 @@ class SDMProjection(_ProjectionType, Raster):
       return json.dumps(algoObj)
 
    # ...............................................
-   def getLayersJson(self, scenario, mask):
+   def getLayersJson(self, scenario, mask=None):
       """
       @summary: Return a JSON string of layer information
       @param scenario: The scenario to get the JSON file for
@@ -442,16 +444,15 @@ class SDMProjection(_ProjectionType, Raster):
       """
       layersObj = {
          "layers" : [],
-         "mask" : {
-            "identifier" : mask.verify
-         }
       }
       
-      # Add mask URL
+      # Add mask
       try:
+         layersObj["mask"] = {
+            "identifier" : mask.verify
+         }
          layersObj["mask"]["url"] = mask.getURL(format=GEOTIFF_INTERFACE)
       except:
-         # If we don't have a URL
          pass
       
       for lyr in scenario.layers:
