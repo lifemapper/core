@@ -418,7 +418,7 @@ class _LMChainer(LMObject):
          occ = OccurrenceLayer(sciName.scientificName, self.userid, self.epsg, 
                dataCount, squid=sciName.squid, ogrType=wkbPoint, 
                processType=occProcessType, status=JobStatus.INITIALIZE, 
-               statusModTime=currtime, sciName=sciName)
+               statusModTime=currtime, sciName=sciName, rawMetaLocation=self.metaFname)
          try:
             occ = self._scribe.findOrInsertOccurrenceSet(occ)
             self.log.info('Inserted occset for taxonname {}'.format(sciName.scientificName))
@@ -652,6 +652,7 @@ class UserChainer(_LMChainer):
                                      minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      intersectGrid=intersectGrid, log=log)
+      self.metaFname = userOccMeta
       self.occParser = None
       try:
          self.occParser = OccDataParser(self.log, userOccCSV, userOccMeta, 
@@ -1260,6 +1261,9 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 dataChunk, dataCount, taxonName  = boomer._getChunk()
 objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+
+
+
 boomer._createMakeflow(objs)
 
 

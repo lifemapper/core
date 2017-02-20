@@ -115,7 +115,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # Constructor
 # .............................................................................
    def __init__(self, displayName, userId, epsgcode, queryCount, lyrId=None, 
-                squid=None, verify=None, dlocation=None, rawDLocation=None,
+                squid=None, verify=None, dlocation=None, 
+                rawDLocation=None, rawMetaLocation=None,
                 lyrMetadata={}, dataFormat=DEFAULT_OGR_FORMAT, ogrType=None, 
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
@@ -152,6 +153,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 modTime=statusModTime,
                 featureCount=featureCount, featureAttributes=featureAttributes, 
                 features=features, fidAttribute=fidAttribute)
+      self.rawMetaDLocation = rawMetaLocation
       self.setId(occurrenceSetId)
                    
 # .............................................................................
@@ -603,14 +605,14 @@ class OccurrenceLayer(OccurrenceType, Vector):
       @summary: Assemble command to create a shapefile from raw input
       """
       rules = []
+      deps = None
       if JobStatus.waiting(self.status): 
          # NOTE: This may need to change to something else in the future, but for now,
          #          we'll save a step and have the outputs written to their final 
          #          location
          # TODO: Update with correct data locations
          outFile = self.getDLocation()
-         bigFile = self.getDLocation(big=True)
-         raise NotImplementedError("Need to update the file names")
+         bigFile = self.getDLocation(largeFile=True)
          
          cmdArgs = [os.getenv('PYTHON'),
                     ProcessType.getJobRunner(self.processType),
@@ -620,10 +622,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             cmdArgs.append(self.queryCount)
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-            # TODO: Write the occurrence set metadata
-            raise NotImplementedError("Need to write metadata and have file name")
-            metadataFn = None
-            cmdArgs.append(metadataFn)
+            cmdArgs.append(self.rawMetaDLocation)
+            deps = [self.rawMetaDLocation]
          
          cmdArgs.extend([outFile, 
                          bigFile,
@@ -632,6 +632,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          # Don't add big file to targets since it may not be created
          # TODO: Address this if we don't write to final location
-         rules.append(MfRule(cmd, [outFile]))
+         rules.append(MfRule(cmd, [outFile], dependencies=deps))
          
       return rules
