@@ -723,7 +723,7 @@ class ProcessType:
 
    @staticmethod
    def getTool(ptype):
-      if ProcessType.isSDM(ptype):
+      if ProcessType.isSingle(ptype):
          relpath = SINGLE_SPECIES_SCRIPTS_DIR
          if ProcessType.isOccurrence(ptype):
             if ptype == ProcessType.GBIF_TAXA_OCCURRENCE:
@@ -750,6 +750,8 @@ class ProcessType:
                jr = 'intersect_raster'
             elif ptype == ProcessType.INTERSECT_VECTOR:
                jr = 'intersect_vector'
+            elif ptype == ProcessType.INTERSECT_RASTER_GRIM:
+               jr = 'grim_raster'
          
       elif ProcessType.isRAD(ptype):
          relpath = MULTI_SPECIES_SCRIPTS_DIR
@@ -787,14 +789,17 @@ class ProcessType:
       return os.path.join(APP_PATH, relpath, jr)   
 
    @staticmethod
-   def isSDM(ptype):
+   def isSingle(ptype):
       if ptype in [ProcessType.SMTP, 
                    ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
                    ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 
                    ProcessType.GBIF_TAXA_OCCURRENCE, 
                    ProcessType.BISON_TAXA_OCCURRENCE, 
                    ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                   ProcessType.USER_TAXA_OCCURRENCE]:
+                   ProcessType.USER_TAXA_OCCURRENCE, 
+                   ProcessType.INTERSECT_RASTER, 
+                   ProcessType.INTERSECT_VECTOR, 
+                   ProcessType.INTERSECT_RASTER_GRIM]:
          return True
       return False
       

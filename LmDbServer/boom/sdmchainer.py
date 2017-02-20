@@ -1237,7 +1237,7 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 # Do this repeatedly to find a new taxa
 # ..............................................................................
-for i in range(26):
+for i in range(31):
    dataChunk, dataCount, taxonName  = boomer._getChunk()
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 
