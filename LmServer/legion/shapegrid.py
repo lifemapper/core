@@ -392,7 +392,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             options = "--cutoutWktFn={0}".format(cutoutWktFn)
          
          cmdArguments = [os.getenv('PYTHON'), 
-                         ProcessType.getJobRunner(self.processType), 
+                         ProcessType.getTool(self.processType), 
                          self.shapegrid.getDLocation(), 
                          outFile,
                          self.getMinX(),

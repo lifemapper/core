@@ -615,7 +615,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          bigFile = self.getDLocation(largeFile=True)
          
          cmdArgs = [os.getenv('PYTHON'),
-                    ProcessType.getJobRunner(self.processType),
+                    ProcessType.getTool(self.processType),
                     self.getRawDLocation()]
          
          # Process type specific arguments

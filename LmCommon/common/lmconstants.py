@@ -722,7 +722,7 @@ class ProcessType:
    RAD_COMPRESS = 320
 
    @staticmethod
-   def getJobRunner(ptype):
+   def getTool(ptype):
       if ProcessType.isSDM(ptype):
          relpath = SINGLE_SPECIES_SCRIPTS_DIR
          if ProcessType.isOccurrence(ptype):

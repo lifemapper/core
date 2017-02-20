@@ -398,7 +398,6 @@ class BorgScribe(LMObject):
 # ...............................................
    def initOrRollbackSDMChain(self, occ, algList, mdlScen, prjScenList, 
                     mdlMask=None, projMask=None,
-                    occJobProcessType=ProcessType.GBIF_TAXA_OCCURRENCE,
                     gridset=None, minPointCount=None):
       """
       @summary: Initialize or rollback existing LMArchive SDM chain 
@@ -411,8 +410,6 @@ class BorgScribe(LMObject):
       @param prjScenList: Scenarios for SDM project computations
       @param mdlMask: Layer mask for SDM model computations
       @param projMask: Layer mask for SDM project computations
-      @param occJobProcessType: LmCommon.common.lmconstants.ProcessType for 
-                                OccurrenceSet creation 
       @param gridset: Gridset containing Global PAM for output of intersections
       @param minPointCount: Minimum number of points required for SDM 
       """

@@ -641,7 +641,7 @@ class SDMProjection(_ProjectionType, Raster):
 #       # Join arguments
 #       args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
 #    
-#       cmdArguments = [os.getenv('PYTHON'), ProcessType.getJobRunner(ptype), 
+#       cmdArguments = [os.getenv('PYTHON'), ProcessType.getTool(ptype), 
 #                       xmlRequestFname, args]
 #       cmd = ' '.join(cmdArguments)
 #       rule = MfRule(cmd, [statusTarget], dependencies=[occSetFn])
@@ -670,7 +670,7 @@ class SDMProjection(_ProjectionType, Raster):
 #       args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
 #       
 #       cmdArguments = [os.getenv('PYTHON'), 
-#                       ProcessType.getJobRunner(self.processType), 
+#                       ProcessType.getTool(self.processType), 
 #                       xmlRequestFname, args]
 #       cmd = ' '.join(cmdArguments)
 #       rule = MfRule(cmd, [statusTarget], dependencies=[modelRule])
@@ -709,7 +709,7 @@ class SDMProjection(_ProjectionType, Raster):
          paramsJson = self.getAlgorithmParametersJson(self._algorithm)
 
          mdlCmdArgs = [os.getenv('PYTHON'),
-                       ProcessType.getJobRunner(ptype),
+                       ProcessType.getTool(ptype),
                        args,
                        str(ptype),
                        mdlName,
@@ -799,7 +799,7 @@ class SDMProjection(_ProjectionType, Raster):
                                             ) for o, v in prjOpts.iteritems()])
 
          prjCmdArgs = [os.getenv('PYTHON'),
-                       ProcessType.getJobRunner(self.processType),
+                       ProcessType.getTool(self.processType),
                        prjArgs,
                        str(self.processType),
                        modelFname,
@@ -815,7 +815,7 @@ class SDMProjection(_ProjectionType, Raster):
                                                self.processType, self.getId()))
          updateDbArgs = ["LOCAL", # Run on server side for DB
                          os.getenv('PYTHON'),
-                         ProcessType.getJobRunner(ProcessType.UPDATE_OBJECT),
+                         ProcessType.getTool(ProcessType.UPDATE_OBJECT),
                          "-f {0}".format(statusFn),
                          str(self.processType),
                          str(self.getId()),

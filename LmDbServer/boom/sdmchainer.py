@@ -402,6 +402,9 @@ class _LMChainer(LMObject):
               # out-of-date
              (occ.status == JobStatus.COMPLETE and 
               occ.statusModTime > 0 and occ.statusModTime < self._obsoleteTime)):
+            # Set processType and metadata location (from config, not saved in DB)
+            occ.processType = occProcessType
+            occ.rawMetaLocation = self.metaFname
             # Reset verify hash, name, count, status 
             occ.clearVerify()
             occ.displayName = sciName.scientificName
@@ -459,7 +462,6 @@ class _LMChainer(LMObject):
                objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
                               self.modelScenario, self.projScenarios, 
                               mdlMask=self.modelMask, projMask=self.projMask,
-                              occJobProcessType=occProcessType, 
                               gridset=self.boomGridset,
                               minPointCount=self.minPointCount)
                self.log.debug('Created {} objects for occurrenceset {}'
@@ -775,33 +777,6 @@ class UserChainer(_LMChainer):
                             ProcessType.USER_TAXA_OCCURRENCE, 
                             dataCount, data=dataChunk)
       return objs
-      """
-      select * from lm_v3.lm_findOrInsertTaxon(NULL,NULL,'ryan',
-      'a0f5de0eabaa9f777f1a791491ecf1f501df5ac365f2b699a8f97b2455a55698',
-      NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Conimitella_williamsii',
-      NULL,NULL,NULL,NULL,57797.8363527);
-      
-      if dataChunk:
-         occ = self._createOrResetOccurrenceset(sciName, None, 
-                                          ProcessType.USER_TAXA_OCCURRENCE,
-                                          dataCount, data=dataChunk)
-    
-         # Create objs for Archive Chain: occurrence population, 
-         # model, projection, and (later) intersect computation
-         if occ is not None:
-            objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
-                                 self.modelScenario, self.projScenarios, 
-                                 mdlMask=self.modelMask, projMask=self.projMask,
-                                 occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
-                                 gridset=None,
-                                 minPointCount=self.minPointCount)
-            self.log.debug('Init {} objects for {} ({} points, occid {})'.format(
-                           len(objs), sciName.scientificName, len(dataChunk), 
-                           occ.getId()))
-      else:
-         self.log.debug('No data in chunk')
-      return objs
-      """
 
 # ..............................................................................
 class GBIFChainer(_LMChainer):
@@ -1245,6 +1220,7 @@ tstArchiveName='Heuchera_archive'
  speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
                                                      archiveName=tstArchiveName)
 
+currtime = dt.gmt().mjd
 taxonSourceKeyVal = None
 occProcessType = ProcessType.USER_TAXA_OCCURRENCE
 expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
@@ -1260,7 +1236,25 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # Do this repeatedly to find a new taxa
 # ..............................................................................
 dataChunk, dataCount, taxonName  = boomer._getChunk()
-objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+# objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+
+sciName = boomer._getInsertSciNameForUser(taxonName)
+(taxonSourceKeyVal, occProcessType, data) = (None, 
+     ProcessType.USER_TAXA_OCCURRENCE, dataChunk)
+                      
+occ = boomer._scribe.getOccurrenceSet(squid=sciName.squid, userId=boomer.userid, 
+      epsg=boomer.epsg)
+      
+occ = OccurrenceLayer(sciName.scientificName, boomer.userid, boomer.epsg, 
+      dataCount, squid=sciName.squid, ogrType=wkbPoint, 
+      processType=occProcessType, status=JobStatus.INITIALIZE, 
+      statusModTime=currtime, sciName=sciName, rawMetaLocation=boomer.metaFname)
+      
+occ = boomer._scribe.findOrInsertOccurrenceSet(occ)
+rdloc = boomer._locateRawData(occ, taxonSourceKeyVal=taxonSourceKeyVal, 
+                                     data=data)
+occ.setRawDLocation(rdloc, currtime)
+success = boomer._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
 
 
@@ -1327,7 +1321,6 @@ occ = boomer._createOrResetOccurrenceset(taxonName, None,
 objs = boomer._scribe.initOrRollbackSDMChain(occ, boomer.algs, 
                           boomer.modelScenario, 
                           boomer.projScenarios, 
-                          occJobProcessType=ProcessType.USER_TAXA_OCCURRENCE,
                           intersectGrid=None,
                           minPointCount=POINT_COUNT_MIN)
 

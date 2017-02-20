@@ -160,7 +160,7 @@ class MatrixColumn(_LayerParameters, ProcessObject):
          pavFname = self.getTempDLocation()
          
          cmdArguments = [os.getenv('PYTHON'), 
-                         ProcessType.getJobRunner(self.processType), 
+                         ProcessType.getTool(self.processType), 
                          self.shapegrid.getDLocation(), 
                          self.getDLocation(),
                          pavFname,
