@@ -462,8 +462,8 @@ class Borg(DbPostgresql):
          prjscen = self._createScenario(row, idxs, isForModel=False)
          layer = self._createLayer(row, idxs)
          prj = SDMProjection.initFromParts(occ, alg, mdlscen, prjscen, layer,
-                  modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
-                  projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
+#                   modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
+#                   projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
                   projMetadata=self._getColumnValue(row, idxs, ['prjmetadata']), 
                   status=self._getColumnValue(row,idxs,['prjstatus']), 
                   statusModTime=self._getColumnValue(row,idxs,['prjstatusmodtime']), 
@@ -982,13 +982,23 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def getSDMProject(self, projid):
+   def getSDMProject(self, projid, fillMasks=False):
       """
       @summary: get a projection for the given id
       @param projid: Database id for the SDMProject
       """
+      modelMask = projMask = None
       row, idxs = self.executeSelectOneFunction('lm_getSDMProjectLayer', projid)
       proj = self._createSDMProjection(row, idxs)
+      if fillMasks:
+         modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid'])
+         projMaskId=self._getColumnValue(row, idxs, ['prjmaskid'])
+         if modelMaskId is not None:
+            modelMask = self.getBaseLayer(modelMaskId, None, None, None, None)
+            proj.setModelMask(modelMask)
+         if projMaskId is not None:
+            projMask = self.getBaseLayer(projMaskId, None, None, None, None)
+            proj.setProjMask(projMask)
       return proj
 
 # ...............................................
@@ -1068,8 +1078,8 @@ class Borg(DbPostgresql):
                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
                      proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
                      proj.getOccurrenceSetId(), proj.getAlgorithmCode(), algparams,
-                     proj.getModelScenarioId(), proj.getModelMaskId(),
-                     proj.getProjScenarioId(), proj.getProjMaskId(), prjmeta,
+                     proj.getModelScenarioId(), proj.getModelMask(),
+                     proj.getProjScenarioId(), proj.getProjMask(), prjmeta,
                      proj.processType, proj.status, proj.statusModTime)
       newOrExistingProj = self._createSDMProjection(row, idxs)
       return newOrExistingProj

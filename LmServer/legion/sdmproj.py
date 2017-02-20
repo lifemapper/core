@@ -88,14 +88,8 @@ class _ProjectionType(_LayerParameters, ProcessObject):
    def getOccurrenceSetId(self):
       return self._occurrenceSet.getId()
 
-   def getDisplayName(self):
-      return self._occurrenceSet.displayName
-
    def dumpAlgorithmParametersAsString(self):
       return self._algorithm.dumpAlgParameters()
-
-   def getAlgorithmCode(self):
-      return self._algorithm.code
    
    def getModelMaskId(self):
       return self._modelMask.getId()
@@ -114,6 +108,71 @@ class _ProjectionType(_LayerParameters, ProcessObject):
 
    def isATT(self):
       return Algorithms.isATT(self._algorithm.code)
+
+  @property
+   def displayName(self):
+      return self._occurrenceSet.displayName
+
+  @property
+   def projScenario(self):
+      return self._projScenario
+
+   @property
+   def projScenarioCode(self):
+      return self._projScenario.code
+
+   @property
+   def projMask(self):
+      return self._projMask
+   
+   def setProjMask(self, lyr):
+      self._projMask = lyr
+   
+   @property
+   def occurrenceSet(self):
+      return self._occurrenceSet
+
+   @property
+   def displayName(self):
+      return self._occurrenceSet.displayName
+
+   @property
+   def status(self):
+      return self._status
+
+   @property
+   def statusModTime(self):
+      return self._statusmodtime
+
+   @property
+   def speciesName(self):
+      return self._occurrenceSet.displayName
+
+   @property
+   def algorithmCode(self):
+      return self._algorithm.code
+   
+   @property
+   def modelScenario(self):
+      return self._modelScenario
+
+   @property
+   def modelScenarioCode(self):
+      return self._modelScenario.code
+   
+   @property
+   def modelMask(self):
+      return self._modelMask
+   
+   def setModelMask(self, lyr):
+      self._modelMask = lyr
+   
+   @property
+   def projInputLayers(self):
+      """
+      @summary Gets the layers of the projection Scenario
+      """
+      return self._projScenario.layers
 
 # .............................................................................
 class SDMProjection(_ProjectionType, Raster):
@@ -559,60 +618,60 @@ class SDMProjection(_ProjectionType, Raster):
       return wmsUrl   
 
 # ...............................................
-   @property
-   def projScenario(self):
-      return self._projScenario
-
-   @property
-   def projScenarioCode(self):
-      return self._projScenario.code
-
-   @property
-   def projMask(self):
-      return self._projMask
-   
-   @property
-   def occurrenceSet(self):
-      return self._occurrenceSet
-
-   @property
-   def displayName(self):
-      return self._occurrenceSet.displayName
-
-   @property
-   def status(self):
-      return self._status
-
-   @property
-   def statusModTime(self):
-      return self._statusmodtime
-
-   @property
-   def speciesName(self):
-      return self._occurrenceSet.displayName
-
-   @property
-   def algorithmCode(self):
-      return self._algorithm.code
-   
-   @property
-   def modelScenario(self):
-      return self._modelScenario
-
-   @property
-   def modelScenarioCode(self):
-      return self._modelScenario.code
-   
-   @property
-   def modelMask(self):
-      return self._modelMask
-   
-   @property
-   def projInputLayers(self):
-      """
-      @summary Gets the layers of the projection Scenario
-      """
-      return self._projScenario.layers
+#    @property
+#    def projScenario(self):
+#       return self._projScenario
+# 
+#    @property
+#    def projScenarioCode(self):
+#       return self._projScenario.code
+# 
+#    @property
+#    def projMask(self):
+#       return self._projMask
+#    
+#    @property
+#    def occurrenceSet(self):
+#       return self._occurrenceSet
+# 
+#    @property
+#    def displayName(self):
+#       return self._occurrenceSet.displayName
+# 
+#    @property
+#    def status(self):
+#       return self._status
+# 
+#    @property
+#    def statusModTime(self):
+#       return self._statusmodtime
+# 
+#    @property
+#    def speciesName(self):
+#       return self._occurrenceSet.displayName
+# 
+#    @property
+#    def algorithmCode(self):
+#       return self._algorithm.code
+#    
+#    @property
+#    def modelScenario(self):
+#       return self._modelScenario
+# 
+#    @property
+#    def modelScenarioCode(self):
+#       return self._modelScenario.code
+#    
+#    @property
+#    def modelMask(self):
+#       return self._modelMask
+#    
+#    @property
+#    def projInputLayers(self):
+#       """
+#       @summary Gets the layers of the projection Scenario
+#       """
+#       return self._projScenario.layers
 
 #    # .............................................................................
 #    def _computeModel(self):

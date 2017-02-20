@@ -374,17 +374,9 @@ class BorgScribe(LMObject):
       @param email: email address for notifications 
       """
       prjs = []
-      try:
-         mmaskid = mdlMask.getId()
-      except:
-         mmaskid = None
-      try:
-         pmaskid = projMask.getId()
-      except:
-         pmaskid = None
       for prjScen in prjScenList:
          prj = SDMProjection(occ, alg, mdlScen, prjScen, 
-                        modelMaskId=mmaskid, projMaskId=pmaskid, 
+                        modelMask=mdlMask, projMask=projMask, 
                         dataFormat=DEFAULT_PROJECTION_FORMAT,
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
