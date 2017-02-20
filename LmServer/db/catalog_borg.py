@@ -283,6 +283,10 @@ class Borg(DbPostgresql):
          # Ids of joined inputs, not used yet
          lyrid = self._getColumnValue(row,idxs,['layerid']) 
          shpgrdid = self._getColumnValue(row,idxs,['shplayerid']) 
+         if lyrid:
+            inputLayer = self.getBaseLayer(lyrid, None, None, None, None)
+         if shpgrdid:
+            shpgrid = self.getShapeGrid(shpgrdid, None, None, None)
          mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
@@ -295,7 +299,8 @@ class Borg(DbPostgresql):
          usr = self._getColumnValue(row,idxs,['userid'])
 
          mtxcol = MatrixColumn(mtxIndex, mtxid, usr, 
-                        layer=None, shapegrid=None, intersectParams=intparams,
+                        layer=inputLayer, shapegrid=shpgrid, 
+                        intersectParams=intparams,
                         squid=squid, ident=ident,
                         processType=None, metadata=mtxcolmeta, 
                         matrixColumnId=mtxcolid, status=mtxcolstat, 
@@ -1106,6 +1111,10 @@ class Borg(DbPostgresql):
          if lyrid is None:
             newOrExistingLyr = self.findOrInsertBaseLayer(mtxcol.layer)
             lyrid = newOrExistingLyr.getId()
+
+            # Shapegrid is already in db
+            shpid = mtxcol.shapegrid.getId()
+
       mcmeta = mtxcol.dumpParamMetadata()
       intparams = mtxcol.dumpIntersectParams()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrixColumn', 
@@ -1114,9 +1123,6 @@ class Borg(DbPostgresql):
                      mcmeta, intparams, 
                      mtxcol.status, mtxcol.statusModTime)
       newOrExistingMtxCol = self._createMatrixColumn(row, idxs)
-      if lyrid:
-         inputLayer = self.getBaseLayer(lyrid, None, None, None, None)
-         newOrExistingMtxCol.layer = inputLayer
       return newOrExistingMtxCol
 
 # ...............................................
