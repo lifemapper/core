@@ -1246,8 +1246,11 @@ objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 
 o = objs[0]
 o2 = objs[1]
+o3 = objs[10]
+
 r = o.computeMe()
 r2 = o2.computeMe()
+r3 = o3.computeMe()
 
 updatedMFChain = boomer._createMakeflow(objs)
 

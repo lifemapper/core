@@ -336,6 +336,7 @@ class BorgScribe(LMObject):
       """
       newOrExistingMtxcol = None
       if mtx is not None and mtx.getId() is not None:
+         # TODO: Save this into the DB??
          if lyr.dataFormat in GDALFormatCodes.keys():
             if mtx.matrixType == MatrixType.PAM:
                ptype = ProcessType.INTERSECT_RASTER
@@ -343,13 +344,16 @@ class BorgScribe(LMObject):
                ptype = ProcessType.INTERSECT_RASTER_GRIM
          else:
             ptype = ProcessType.INTERSECT_VECTOR
+
          mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
                 layer=lyr, shapegrid=None, intersectParams={}, 
                 squid=lyr.squid, ident=lyr.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 
                 status=JobStatus.GENERAL, statusModTime=modtime)
-            
          newOrExistingMtxcol = self._borg.findOrInsertMatrixColumn(mtxcol)
+         # Reset processType (not in db)
+         newOrExistingMtxcol.processType = ptype
+         
          if JobStatus.finished(newOrExistingMtxcol.status):
             newOrExistingMtxcol.updateStatus(JobStatus.GENERAL, modTime=modtime)
             success = self.updateMatrixColumn(newOrExistingMtxcol)
