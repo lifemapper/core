@@ -317,21 +317,23 @@ class _LMChainer(LMObject):
       
 # ...............................................
    def _createMakeflow(self, objs):
-      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
-      mfchain = MFChain(self.userid, priority=self.priority, 
-                        metadata=meta, status=JobStatus.INITIALIZE, 
-                        statusModTime=dt.gmt().mjd)
-      for o in objs:
-         try:
-            rules = o.computeMe()
-         except Exception, e:
-            self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
-                                                                     str(e)))
-         else:
-            mfchain.addCommands(rules)
-      mfchain.write()
-      
-      updatedMFChain = self._scribe.insertMFChain(mfchain)
+      if objs:
+         meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
+         mfchain = MFChain(self.userid, priority=self.priority, 
+                           metadata=meta, status=JobStatus.INITIALIZE, 
+                           statusModTime=dt.gmt().mjd)
+         updatedMFChain = self._scribe.insertMFChain(mfchain)
+
+         for o in objs:
+            try:
+               rules = o.computeMe()
+            except Exception, e:
+               self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
+                                                                        str(e)))
+            else:
+               mfchain.addCommands(rules)
+         
+         mfchain.write()
       return updatedMFChain
 
 # ...............................................
@@ -1238,7 +1240,7 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 # Do this repeatedly to find a new taxa
 # ..............................................................................
-for i in range(40):
+for i in range(47):
    dataChunk, dataCount, taxonName  = boomer._getChunk()
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
 
@@ -1252,6 +1254,11 @@ o3 = objs[10]
 r = o.computeMe()
 r2 = o2.computeMe()
 r3 = o3.computeMe()
+
+meta = {MFChain.META_CREATED_BY: 'crap'}
+mfchain = MFChain(boomer.userid, priority=boomer.priority, 
+                  metadata=meta, status=JobStatus.INITIALIZE, 
+                  statusModTime=dt.gmt().mjd)
 
 updatedMFChain = boomer._createMakeflow(objs)
 

@@ -21,13 +21,11 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
 import os
 
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
-from LmServer.common.lmconstants import LMFileType
 from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................

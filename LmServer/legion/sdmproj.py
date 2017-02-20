@@ -765,8 +765,8 @@ class SDMProjection(_ProjectionType, Raster):
          args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in mdlOpts.iteritems()])
 
-         layersJson = self.getLayersJson(self.modelScenario, self.modelMask)
-         paramsJson = self.getAlgorithmParametersJson(self._algorithm)
+         layersJson = repr(self.getLayersJson(self.modelScenario, self.modelMask))
+         paramsJson = repr(self.getAlgorithmParametersJson(self._algorithm))
 
          mdlCmdArgs = [os.getenv('PYTHON'),
                        ProcessType.getTool(ptype),
@@ -800,7 +800,7 @@ class SDMProjection(_ProjectionType, Raster):
          modelFname = self.getModelFilename(isResult=True)
 
          prjName = "prj{0}".format(self.getId())
-         layersJson = self.getLayersJson(self.projScenario, self.projMask)
+         layersJson = repr(self.getLayersJson(self.projScenario, self.projMask))
          workDir = prjName
          statusFn = os.path.join(workDir, "prj{0}.status".format(self.getId()))
          packageFn = self.getProjPackageFilename()
@@ -816,7 +816,8 @@ class SDMProjection(_ProjectionType, Raster):
          
          if self.processType == ProcessType.ATT_PROJECT:
             paramsJson = self.getAlgorithmParametersFile(self._algorithm)
-            prjOpts['-algo'] = paramsJson
+            # TODO: make sure this works consistently for quoting JSON
+            prjOpts['-algo'] = repr(paramsJson)
             outputRaster = os.path.join(workDir, "output.asc")
             
             gdalTranslateCmd = os.path.join(BIN_PATH, "gdal_translate")
