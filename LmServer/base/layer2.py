@@ -281,6 +281,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       return dloc
    
    def getDLocation(self): 
+      self.setDLocation()
       return self._dlocation
    
    def clearDLocation(self): 

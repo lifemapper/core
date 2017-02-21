@@ -283,6 +283,24 @@ class SDMProjection(_ProjectionType, Raster):
       return dloc
 
 # ...............................................
+   def getDLocation(self): 
+      self.setDLocation()
+      return self._dlocation
+
+# ...............................................
+   def setDLocation(self, dlocation=None):
+      """
+      @summary: Set the Layer._dlocation attribute if it is None.  Use dlocation
+                if provided, otherwise calculate it.
+      @note: Does NOT override existing dlocation, use clearDLocation for that
+      """
+      # Only set DLocation if it is currently None
+      if self._dlocation is None:
+         if dlocation is None: 
+            dlocation = self.createLocalDLocation()
+         self._dlocation = dlocation
+
+# ...............................................
    def getAbsolutePath(self):
       """
       @summary Gets the absolute path to the species data
