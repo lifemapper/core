@@ -1246,6 +1246,11 @@ while count < 5:
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
    count = len(objs)
 
+dataChunk, dataCount, taxonName  = boomer._getChunk()
+objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+print dataCount
+
+
 meta = {MFChain.META_CREATED_BY: 'crap'}
 mfchain = MFChain(boomer.userid, priority=boomer.priority, 
                   metadata=meta, status=JobStatus.INITIALIZE, 
@@ -1266,6 +1271,12 @@ mfchain.write()
 
 updatedMFChain = boomer._createMakeflow(objs)
 
+/opt/python/bin/python2.7 \
+/opt/lifemapper/LmCompute/tools/single/user_points.py \
+/share/lm/data/archive/ryan/000/000/000/053/pt_53.csv \
+'{\"decimallatitude\": [\"dec_lat\", \"real\"], \"Taxa\": \"species\", \"Longitude\": \"decimallongitude\", \"GroupBy\": \"species\", \"decimallongitude\": [\"dec_long\", \"real\"], \"Latitude\": \"decimallatitude\", \"species\": [\"species\", \"string\"]}' \
+/share/lm/data/archive/ryan/000/000/000/053/pt_53.shp \
+/share/lm/data/archive/ryan/000/000/000/053/bigpt_53.shp
 
 # ...............................................
 tstUserId='ryan'

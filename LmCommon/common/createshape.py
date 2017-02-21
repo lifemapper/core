@@ -597,20 +597,21 @@ class ShapeShifter(object):
       """
       try:
          # Set LM added fields, geometry, geomwkt
-         wkt = 'POINT (%s  %s)' % (str(recDict[self.xField]), 
-                                   str(recDict[self.yField]))
+         wkt = 'POINT ({} {})'.format(recDict[self.xField], recDict[self.yField])
          feat.SetField(LM_WKT_FIELD, wkt)
          geom = ogr.CreateGeometryFromWkt(wkt)
          feat.SetGeometryDirectly(geom)
          
-         try:
-            ptid = recDict[self.idField]
-         except:
-            # Set LM added id field
-            ptid = self._currRecum 
-            feat.SetField(self.idField, ptid)
+         # If data has a unique id for each point
+         if self.idField is not None:
+            try:
+               ptid = recDict[self.idField]
+            except:
+               # Set LM added id field
+               ptid = self._currRecum 
+               feat.SetField(self.idField, ptid)
 
-         # Set linked Url field
+         # If data has a Url link field
          if self.linkField is not None:
             try:
                searchid = recDict[self.linkIdField]
@@ -620,7 +621,7 @@ class ShapeShifter(object):
                pturl = '{}{}'.format(self.linkUrl, str(searchid))
                feat.SetField(self.linkField, pturl)
                      
-         # Set linked Url field
+         # If data has a provider field and value to be resolved
          if self.computedProviderField is not None:
             prov = ''
             try:
@@ -688,12 +689,82 @@ if __name__ == '__main__':
       occList = occAPI.getTSNOccurrences()
       shaper = ShapeShifter(ProcessType.BISON_TAXA_OCCURRENCE, occList, len(occList))
 """
-from LmCommon.common.createshape import ShapeShifter
-from LmCommon.common.apiquery import IdigbioAPI
-from LmCommon.common.lmconstants import ProcessType
+from osgeo import ogr, osr
+import StringIO
+import subprocess
+from types import ListType, TupleType, UnicodeType, StringType
 
-outfilename = '/tmp/testidigpoints.shp'
-subsetOutfilename = '/tmp/testidigpoints_sub.shp'
+from LmBackend.common.occparse import OccDataParser
+from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
+               GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
+               LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
+               SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+import ast
+
+csvfname = '/share/lm/data/archive/ryan/000/000/000/059/pt_59.csv'
+metafname = '/share/lm/data/archive/ryan/heuchera_all.meta'
+outFname = '/tmp/testpoints.shp'
+bigFname = '/tmp/testpoints_big.shp'
+logger = ScriptLogger('testing')
+
+with open(csvfname, 'r') as f:
+   blob = f.read()
+   
+
+with open(metafname, 'r') as f:
+   metad = ast.literal_eval(f.read())
+
+shaper = ShapeShifter(ptype, blob, 32, logger=logger, metadata=metad)
+shaper.writeOccurrences(outFname, maxPoints=50, bigfname=bigFname, 
+                           isUser=True)
+
+
+drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+newDs = drv.CreateDataSource(outFname)
+bigDs = drv.CreateDataSource(bigFname)
+
+spRef = osr.SpatialReference()
+spRef.ImportFromEPSG(4326)
+
+newLyr = newDs.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
+ 
+for pos in range(len(shaper.op.fieldNames)):
+   fldname = shaper.op.fieldNames[pos]
+   fldtype = shaper.op.fieldTypes[pos]
+   fldDef = ogr.FieldDefn(fldname, fldtype)
+   if fldtype == ogr.OFTString:
+      fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+   returnVal = newLyr.CreateField(fldDef)
+      
+# Add wkt field
+fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
+fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+returnVal = newLyr.CreateField(fldDef)
+if returnVal != 0:
+   print 'Failed to create field {}'.format(fldname)
+
+discardIndices = []
+# Loop through records
+recDict = shaper._getRecord()
+while recDict is not None:
+   try:
+      # Add non-discarded features to regular layer
+      if shaper._currRecum not in discardIndices:
+         shaper._createFillFeat(lyrDef, recDict, outLyr)
+   except Exception, e:
+      print('Failed to create record ({})'.format((e)))
+   recDict = shaper._getRecord()
+                     
+# Return metadata
+(minX, maxX, minY, maxY) = outLyr.GetExtent()
+geomtype = lyrDef.GetGeomType()
+fcount = outLyr.GetFeatureCount()
+# Close dataset and flush to disk
+outDs.Destroy()
+self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount)
+
+
+
 taxid = 2427616
 
 if os.path.exists(outfilename):
