@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 import mx.DateTime
+import json
 import os
 from osgeo import ogr
 
@@ -622,9 +623,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             cmdArgs.append(str(self.queryCount))
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-            cmdArgs.append(self.rawMetaDLocation)
-            deps = [self.rawMetaDLocation]
-         
+            with open(self.rawMetaDLocation, 'r') as f:
+               tmp = json.load(f)
+            meta = repr(json.dumps(tmp))
+            cmdArgs.append(meta)
+               
          cmdArgs.extend([outFile, 
                          bigFile,
                          str(POINT_COUNT_MAX)])
@@ -632,6 +635,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          # Don't add big file to targets since it may not be created
          # TODO: Address this if we don't write to final location
-         rules.append(MfRule(cmd, [outFile], dependencies=deps))
+         rules.append(MfRule(cmd, [outFile]))
          
       return rules
