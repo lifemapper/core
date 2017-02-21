@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -607,7 +607,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
       """
       rules = []
       deps = None
-      import ast
       if JobStatus.waiting(self.status): 
          # NOTE: This may need to change to something else in the future, but for now,
          #          we'll save a step and have the outputs written to their final 
@@ -615,7 +614,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # TODO: Update with correct data locations
          outFile = self.getDLocation()
          bigFile = self.getDLocation(largeFile=True)
-         
+         deps = []
          cmdArgs = [os.getenv('PYTHON'),
                     ProcessType.getTool(self.processType),
                     self.getRawDLocation()]
@@ -623,12 +622,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # Process type specific arguments
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             cmdArgs.append(str(self.queryCount))
+            deps.append(self.getRawDLocation()
          # Read user-supplied metadata into string
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
-            with open(self.rawMetaDLocation, 'r') as f:
-               tmp = ast.literal_eval(f.read())
-            meta = json.dumps(tmp)
-            cmdArgs.append("'{}'".format(meta))
+            cmdArgs.append(self.rawMetaDLocation)
+            deps.extend([self.getRawDLocation(), self.rawMetaDLocation])
                
          cmdArgs.extend([outFile, 
                          bigFile,
@@ -637,6 +635,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          # Don't add big file to targets since it may not be created
          # TODO: Address this if we don't write to final location
-         rules.append(MfRule(cmd, [outFile]))
+         rules.append(MfRule(cmd, [outFile], dependencies=deps))
          
       return rules
