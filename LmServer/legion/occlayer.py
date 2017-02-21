@@ -607,6 +607,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       """
       rules = []
       deps = None
+      import ast
       if JobStatus.waiting(self.status): 
          # NOTE: This may need to change to something else in the future, but for now,
          #          we'll save a step and have the outputs written to their final 
@@ -622,10 +623,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # Process type specific arguments
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             cmdArgs.append(str(self.queryCount))
+         # Read user-supplied metadata into string
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
             with open(self.rawMetaDLocation, 'r') as f:
-               tmp = json.load(f)
-            meta = repr(json.dumps(tmp))
+               tmp = ast.literal_eval(f.read())
+            meta = json.dumps(tmp)
             cmdArgs.append(meta)
                
          cmdArgs.extend([outFile, 

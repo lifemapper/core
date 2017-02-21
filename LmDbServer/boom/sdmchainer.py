@@ -1240,12 +1240,11 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # ..............................................................................
 # Do this repeatedly to find a new taxa
 # ..............................................................................
-for i in range(51):
+count = 0
+while count < 5:
    dataChunk, dataCount, taxonName  = boomer._getChunk()
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
-
-dataChunk, dataCount, taxonName  = boomer._getChunk()
-objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+   count = len(objs)
 
 meta = {MFChain.META_CREATED_BY: 'crap'}
 mfchain = MFChain(boomer.userid, priority=boomer.priority, 

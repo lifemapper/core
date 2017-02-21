@@ -33,6 +33,7 @@ from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.lmObj import LmException
+from LmCompute.common.log import LmComputeLogger
 
 # .............................................................................
 def createBisonShapefile(url, outFile, bigFile, maxPoints):
@@ -124,7 +125,9 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @param metadata: Metadata that can be used for processing the CSV
    @todo: handle write exception before writing dummy file? 
    """
-   shaper = ShapeShifter(processType, rawData, count, metadata=metadata)
+   logger = LmComputeLogger(os.path.basename(__file__))
+   shaper = ShapeShifter(processType, rawData, count, logger=logger, 
+                         metadata=metadata)
    shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
                            isUser=isUser)
    if not os.path.exists(bigFile):
