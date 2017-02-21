@@ -29,6 +29,7 @@
           02110-1301, USA.
 """
 import argparse
+import ast
 
 from LmCompute.plugins.single.occurrences.csvOcc import createUserShapefile
 
@@ -41,8 +42,8 @@ if __name__ == "__main__":
    
    parser.add_argument('pointsCsvFn', type=str,
                        help="A path to a raw user CSV file")
-   parser.add_argument('metadata', type=str, 
-                       help="JSON string of occurrence set metadata")
+   parser.add_argument('metadataFile', type=str, 
+                       help="JSON file of occurrence set metadata")
    parser.add_argument('outFile', type=str, 
                   help="The file location to write the shapefile for modeling")
    parser.add_argument('bigFile', type=str, 
@@ -51,6 +52,10 @@ if __name__ == "__main__":
                help="The maximum number of points for the modelable shapefile")
    args = parser.parse_args()
    
-   createUserShapefile(args.pointsCsvFn, args.metadata, args.outFile, 
+   with open(args.metadataFile) as metaIn:
+      tmp = metaIn.read()
+      meta = ast.literal_eval(tmp)
+   
+   createUserShapefile(args.pointsCsvFn, meta, args.outFile, 
                        args.bigFile, args.maxPoints)
    

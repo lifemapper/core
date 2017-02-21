@@ -26,6 +26,7 @@
           02110-1301, USA.
 """
 import argparse
+import json
 from LmCommon.common.lmconstants import ProcessType
 from LmCompute.plugins.single.maxent.meRunners import MaxentModel
 from LmCompute.plugins.single.openModeller.omRunners import OpenModellerModel
@@ -41,12 +42,12 @@ if __name__ == '__main__':
    parser.add_argument('jobName', type=str, help="A name for this model")
    parser.add_argument('pointsFn', type=str, 
           help="File location of occurrence set shapefile to use for modeling")
-   parser.add_argument('layersJson', type=str, 
-          help="JSON string containing layer information for modeling")
+   parser.add_argument('layersJsonFile', type=str, 
+          help="JSON file containing layer information for modeling")
    parser.add_argument('rulesetFn', type=str, 
                        help="File location to write the output ruleset")
-   parser.add_argument('paramsJson', type=str, 
-          help="JSON string containing algorithm parameter information")
+   parser.add_argument('paramsJsonFile', type=str, 
+          help="JSON file containing algorithm parameter information")
 
    # Optional arguments
    parser.add_argument('-p', '--package_file', type=str, 
@@ -62,15 +63,22 @@ if __name__ == '__main__':
    
    args = parser.parse_args()
    
+   # Get algorithm parameters
+   with open(args.paramsJson) as paramsIn:
+      paramsJson = json.load(paramsIn)
+   
+   with open(args.layersJsonFile) as layersIn:
+      layersJson = json.load(layersIn)
+   
    if args.processType == ProcessType.ATT_MODEL:
-      job = MaxentModel(args.jobName, args.pointsFn, args.layersJson, 
-                        args.rulesetFn, paramsJson=args.paramsJson, 
+      job = MaxentModel(args.jobName, args.pointsFn, layersJson, 
+                        args.rulesetFn, paramsJson=paramsJson, 
                         packageFn=args.package_file, workDir=args.work_dir,
                         metricsFn=args.metrics_file, logFn=args.log_file,
                         statusFn=args.status_file)
    else:
-      job = OpenModellerModel(args.jobName, args.pointsFn, args.layersJson, 
-                        args.rulesetFn, args.paramsJson, 
+      job = OpenModellerModel(args.jobName, args.pointsFn, layersJson, 
+                        args.rulesetFn, paramsJson, 
                         packageFn=args.package_file, workDir=args.work_dir,
                         metricsFn=args.metrics_file, logFn=args.log_file,
                         statusFn=args.status_file)
