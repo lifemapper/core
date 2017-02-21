@@ -436,37 +436,49 @@ class SDMProjection(_ProjectionType, Raster):
       return json.dumps(algoObj)
 
    # ...............................................
-   def getLayersJson(self, scenario, mask=None):
+   def getLayersJsonFilename(self, scenario, mask=None):
       """
-      @summary: Return a JSON string of layer information
+      @summary: Return a file name for a JSON file of layer information
+      @note: Writes the file if it does not exists
       @param scenario: The scenario to get the JSON file for
       @param mask: The mask to use for this projection
       """
-      layersObj = {
-         "layers" : [],
-      }
+      if mask is not None:
+         baseName = "scn{0}mask{1}.json".format(scenario.getId(), mask.getId())
+      else:
+         baseName = "scn{0}.json".format(scenario.getId())
+      layerJsonFilename = os.path.join(LAYER_JSON_PATH, baseName)
       
-      # Add mask
-      try:
-         layersObj["mask"] = {
-            "identifier" : mask.verify
+      # If the file does not exist, write it
+      if not os.path.exists(layerJsonFilename):
+         layersObj = {
+            "layers" : [],
          }
-         layersObj["mask"]["url"] = mask.getURL(format=GEOTIFF_INTERFACE)
-      except:
-         pass
       
-      for lyr in scenario.layers:
-         lyrObj = {
-            "identifier" : lyr.verify
-         }
+         # Add mask
          try:
-            lyrObj["url"] = lyr.getURL(format=GEOTIFF_INTERFACE)
+            layersObj["mask"] = {
+               "identifier" : mask.verify
+            }
+            layersObj["mask"]["url"] = mask.getURL(format=GEOTIFF_INTERFACE)
          except:
-            # Don't have URL
             pass
-         layersObj["layers"].append(lyrObj)
       
-      return json.dumps(layersObj)
+         for lyr in scenario.layers:
+            lyrObj = {
+               "identifier" : lyr.verify
+            }
+            try:
+               lyrObj["url"] = lyr.getURL(format=GEOTIFF_INTERFACE)
+            except:
+               # Don't have URL
+               pass
+            layersObj["layers"].append(lyrObj)
+      
+         # Write out the JSON
+         with open(layerJsonFilename, 'w') as layersOut:
+            json.dump(layersObj, layersOut)
+      return layerJsonFilename
    
 # ...............................................
    def getModelTarget(self):
@@ -765,7 +777,7 @@ class SDMProjection(_ProjectionType, Raster):
          args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in mdlOpts.iteritems()])
 
-         layersJson = repr(self.getLayersJson(self.modelScenario, self.modelMask))
+         layersJson = self.getLayersJsonFilename(self.modelScenario, self.modelMask)
          paramsJson = repr(self.getAlgorithmParametersJson(self._algorithm))
 
          mdlCmdArgs = [os.getenv('PYTHON'),
@@ -800,7 +812,7 @@ class SDMProjection(_ProjectionType, Raster):
          modelFname = self.getModelFilename(isResult=True)
 
          prjName = "prj{0}".format(self.getId())
-         layersJson = repr(self.getLayersJson(self.projScenario, self.projMask))
+         layersJson = self.getLayersJsonFilename(self.projScenario, self.projMask)
          workDir = prjName
          statusFn = os.path.join(workDir, "prj{0}.status".format(self.getId()))
          packageFn = self.getProjPackageFilename()
