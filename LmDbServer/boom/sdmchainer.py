@@ -1256,12 +1256,6 @@ while count < 5:
 
 
 
-
-
-
-
-
-
 meta = {MFChain.META_CREATED_BY: 'crap'}
 mfchain = MFChain(boomer.userid, priority=boomer.priority, 
                   metadata=meta, status=JobStatus.INITIALIZE, 

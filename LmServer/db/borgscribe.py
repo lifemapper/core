@@ -360,7 +360,7 @@ class BorgScribe(LMObject):
       return newOrExistingMtxcol
 
 # ...............................................
-   def initOrRollbackSDMProjects(self, occ, mdlScen, prjScenList, alg,  
+   def initOrRollbackSDMProjects(self, occ, mdlScen, projScenList, alg,  
                           mdlMask=None, projMask=None, 
                           modtime=mx.DateTime.gmt().mjd, email=None):
       """
@@ -378,12 +378,19 @@ class BorgScribe(LMObject):
       @param email: email address for notifications 
       """
       prjs = []
-      for prjScen in prjScenList:
-         prj = SDMProjection(occ, alg, mdlScen, prjScen, 
+      for projScen in projScenList:
+         prj = SDMProjection(occ, alg, mdlScen, projScen, 
                         modelMask=mdlMask, projMask=projMask, 
                         dataFormat=DEFAULT_PROJECTION_FORMAT,
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
+         # Instead of re-pulling unchanged scenario layers, masks, update 
+         # with input arguments
+         newOrExistingPrj._modelScenario = mdlScen
+         newOrExistingPrj.setModelMask(mdlMask)
+         newOrExistingPrj._projScenario = projScen
+         newOrExistingPrj.setProjMask(projMask)
+         # Rollback if finished
          if JobStatus.finished(newOrExistingPrj.status):
             newOrExistingPrj.updateStatus(JobStatus.GENERAL, modTime=modtime)
             newOrExistingPrj = self.updateSDMProject(newOrExistingPrj)

@@ -931,7 +931,7 @@ class Borg(DbPostgresql):
       scen = self._createScenario(row, idxs)
       if scen is not None and fillLayers:
          lyrs = self.getScenarioLayers(scen.getId())
-         scen.layers = lyrs
+         scen.setLayers(lyrs)
       return scen
 
 # .............................................................................
@@ -944,7 +944,7 @@ class Borg(DbPostgresql):
       lyrs = []
       rows, idxs = self.executeSelectManyFunction('lm_getEnvLayersForScenario', scenid)
       for r in rows:
-         lyr = self._createEnvironmentalLayer(r, idxs)
+         lyr = self._createEnvLayer(r, idxs)
          lyrs.append(lyr)
       return lyrs
    

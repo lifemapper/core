@@ -161,7 +161,7 @@ class Scenario(MapLayerSet):
       """
       @summary: Add a layer to the scenario.  
       @param lyr: Layer (layer.Raster) to add to this scenario.
-      @raise LMError: on layer that is not Raster 
+      @raise LMError: on layer that is not EnvLayer 
       """
       if lyr is not None:
          if lyr.getId() is None or self.getLayer(lyr.metadataUrl) is None:
@@ -175,7 +175,20 @@ class Scenario(MapLayerSet):
                mapfname = self.createLocalMapFilename()
                lyr.setLocalMapFilename(mapfname=mapfname)
             else:
-               raise LMError(['Attempt to add non-Raster layer'])
+               raise LMError(['Attempt to add non-EnvLayer'])
+
+# ...............................................
+   def setLayers(self, lyrs):
+      """
+      @summary: Add layers to the scenario.  
+      @param lyrs: List of Layers (layer.Raster) to add to this scenario.
+      @raise LMError: on layer that is not an EnvLayer 
+      """
+      for lyr in lyrs:
+         if not isinstance(lyr, EnvLayer):
+            raise LMError('Incompatible Layer type {}'.format(type(lyr)))
+      self._layers = lyrs
+      self._bbox = MapLayerSet._getIntersectBounds(self)
 
 # ...............................................
    def createMapPrefix(self, lyrname=None):
