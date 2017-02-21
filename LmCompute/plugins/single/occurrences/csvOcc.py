@@ -102,12 +102,10 @@ def createUserShapefile(pointCsvFn, meta, outFile, bigFile, maxPoints):
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.read()
       
-   metadata = json.loads(meta)
-   
    # Assume there is a header, could be sniffed if we want to
    count = len(csvInputBlob.split('\n')) - 2
    return parseCsvData(csvInputBlob, ProcessType.USER_TAXA_OCCURRENCE, outFile, 
-                       bigFile, count, maxPoints, metadata=metadata, isUser=True)
+                       bigFile, count, maxPoints, metadata=meta, isUser=True)
       
 # .............................................................................
 def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,

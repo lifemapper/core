@@ -57,6 +57,7 @@ class OpenModellerModel(object):
    """
    @summary: Class containing methods to create an SDM model using openModeller
    """
+   PROCESS_TYPE = ProcessType.OM_MODEL
    # ...................................
    def __init__(self, jobName, pointsFn, layersJson, rulesetFn, paramsJson, 
                 packageFn=None, workDir=None, metricsFn=None, logFn=None, 

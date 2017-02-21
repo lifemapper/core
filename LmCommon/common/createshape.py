@@ -132,7 +132,7 @@ class ShapeShifter(object):
       try:
          self._fillFeature(feat, recDict)
       except Exception, e:
-         print('Failed to fillOGRFeature, e = {}'.format(fromUnicode(toUnicode(e))))
+         print('Failed to _createFillFeat, e = {}'.format(fromUnicode(toUnicode(e))))
          raise e
       else:
          # Create new feature, setting FID, in this layer
@@ -714,8 +714,8 @@ import ast
 
 csvfname = '/share/lm/data/archive/ryan/000/000/000/059/pt_59.csv'
 metafname = '/share/lm/data/archive/ryan/heuchera_all.meta'
-outFname = '/tmp/testpoints.shp'
-bigFname = '/tmp/testpoints_big.shp'
+outfname = '/tmp/testpoints.shp'
+bigfname = '/tmp/testpoints_big.shp'
 logger = ScriptLogger('testing')
 
 with open(csvfname, 'r') as f:
@@ -729,80 +729,7 @@ ptype = ProcessType.USER_TAXA_OCCURRENCE
 
 
 shaper = ShapeShifter(ptype, blob, 32, logger=logger, metadata=metad)
-shaper.writeOccurrences(outFname, maxPoints=50, bigfname=bigFname, 
-                           isUser=True)
-
-
-drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
-newDs = drv.CreateDataSource(outFname)
-bigDs = drv.CreateDataSource(bigFname)
-
-spRef = osr.SpatialReference()
-spRef.ImportFromEPSG(4326)
-
-newLyr = newDs.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
-lyrDef = newLyr.GetLayerDefn()
-
-for pos in range(len(shaper.op.fieldNames)):
-   fldname = shaper.op.fieldNames[pos]
-   fldtype = shaper.op.fieldTypes[pos]
-   fldDef = ogr.FieldDefn(fldname, fldtype)
-   if fldtype == ogr.OFTString:
-      fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
-   returnVal = newLyr.CreateField(fldDef)
-      
-# Add wkt field
-fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
-fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
-returnVal = newLyr.CreateField(fldDef)
-if returnVal != 0:
-   print 'Failed to create field {}'.format(fldname)
-
-discardIndices = []
-# ..............................................................................
-# Do this repeatedly to loop through records
-# ..............................................................................
-recDict = shaper._getRecord()
-if recDict is not None:
-   feat = ogr.Feature(lyrDef)
-   # Set LM added fields, geometry, geomwkt
-   wkt = 'POINT ({} {})'.format(recDict[shaper.xField], recDict[shaper.yField])
-   feat.SetField(LM_WKT_FIELD, wkt)
-   geom = ogr.CreateGeometryFromWkt(wkt)
-   feat.SetGeometryDirectly(geom)
-   
-   # Add values out of the line of data
-   for name in recDict.keys():
-      fldname = shaper._lookup(name)
-      if fldname is not None:
-         val = recDict[name]
-         if val is not None and val != 'None':
-            if isinstance(val, UnicodeType):
-               val = fromUnicode(val)
-            feat.SetField(fldname, val)
-
-
-
-
-
-
-
-
-
-while recDict is not None:
-   try:
-      shaper._createFillFeat(lyrDef, recDict, newLyr)
-   except Exception, e:
-      print('Failed to create record ({})'.format((e)))
-   recDict = shaper._getRecord()
-                     
-# Return metadata
-(minX, maxX, minY, maxY) = outLyr.GetExtent()
-geomtype = lyrDef.GetGeomType()
-fcount = outLyr.GetFeatureCount()
-# Close dataset and flush to disk
-outDs.Destroy()
-self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount)
+shaper.writeOccurrences(outfname, maxPoints=50, bigfname=bigfname, isUser=True)
 
 
 

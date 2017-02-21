@@ -562,11 +562,15 @@ class LayerManager(object):
          layers.append(self.getLayerFilename(lyrId, layerFormat, lyrUrl))
       maskId = None
       maskUrl = None
-      if layerJSON['mask'].has_key(['identifier']):
+      try:
          maskId = layerJSON['mask']['identifier']
-      if layerJSON['mask'].has_key('url'):
          maskUrl = layerJSON['mask']['url']
-      maskFn = self.getLayerFilename(maskId, layerFormat, maskUrl)
+      except KeyError:
+         pass
+      
+      maskFn = None
+      if maskId is not None:
+         maskFn = self.getLayerFilename(maskId, layerFormat, maskUrl)
       
       if symDir is not None:
          newLayers = []

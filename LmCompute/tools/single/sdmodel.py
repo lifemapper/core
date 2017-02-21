@@ -64,7 +64,7 @@ if __name__ == '__main__':
    args = parser.parse_args()
    
    # Get algorithm parameters
-   with open(args.paramsJson) as paramsIn:
+   with open(args.paramsJsonFile) as paramsIn:
       paramsJson = json.load(paramsIn)
    
    with open(args.layersJsonFile) as layersIn:
