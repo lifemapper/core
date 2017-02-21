@@ -113,13 +113,15 @@ class _LMChainer(LMObject):
          txSourceId, url, moddate = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
          
-         mscen = self._scribe.getScenario(mdlScenarioCode, user=self.userid)
+         mscen = self._scribe.getScenario(mdlScenarioCode, user=self.userid, 
+                                          fillLayers=True)
          if mscen is not None:
             self.modelScenario = mscen
             if mdlScenarioCode not in projScenarioCodes:
                self.projScenarios.append(self.modelScenario)
             for pcode in projScenarioCodes:
-               scen = self._scribe.getScenario(pcode, user=self.userid)
+               scen = self._scribe.getScenario(pcode, user=self.userid, 
+                                               fillLayers=True)
                if scen is not None:
                   self.projScenarios.append(scen)
                else:
@@ -1246,9 +1248,18 @@ while count < 5:
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
    count = len(objs)
 
-dataChunk, dataCount, taxonName  = boomer._getChunk()
-objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
-print dataCount
+# boomer._createMakeflow(objs)
+# Fix db insertMFChain
+
+
+
+
+
+
+
+
+
+
 
 
 meta = {MFChain.META_CREATED_BY: 'crap'}
