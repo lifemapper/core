@@ -26,6 +26,7 @@
           02110-1301, USA.
 """
 import argparse
+import json
 from LmCommon.common.lmconstants import ProcessType
 from LmCompute.plugins.single.maxent.meRunners import MaxentProjection
 from LmCompute.plugins.single.openModeller.omRunners import OpenModellerProjection
@@ -43,14 +44,14 @@ if __name__ == "__main__":
    parser.add_argument('jobName', type=str, help="A name for this projection")
    parser.add_argument('rulesetFn', type=str, 
                        help="File location of the model ruleset to use")
-   parser.add_argument('layersJson', type=str, 
-          help="JSON string containing layer information for projecting")
+   parser.add_argument('layersJsonFile', type=str, 
+          help="JSON file containing layer information for projecting")
    parser.add_argument('outputRaster', type=str, 
                        help="File location to write the resulting raster")
    
    # Optional arguments
-   parser.add_argument('-algo', '--params', dest='paramsJson', type=str, 
-          help="JSON string containing algorithm parameter information (only Maxent)")
+   parser.add_argument('-algo', '--params', dest='paramsJsonFile', type=str, 
+          help="JSON file containing algorithm parameter information (only Maxent)")
    parser.add_argument('-w', '--work_dir', type=str, 
                        help='Path for work directory creation. Defaults to current directory')
    parser.add_argument('--metrics_file', type=str, 
@@ -64,14 +65,24 @@ if __name__ == "__main__":
    
    args = parser.parse_args()
    
+   with open(args.layersJsonFile) as layersIn:
+      layersJson = json.load(layersIn)
+   
    if args.processType == ProcessType.ATT_PROJECT:
-      job = MaxentProjection(args.jobName, args.rulesetFn, args.layersJson, 
-                             args.outputRaster, paramsJson=args.paramsJson,
+   
+      if args.paramsJsonFile is not None:
+         with open(args.paramsJsonFile) as paramsIn:
+            paramsJson = json.load(paramsIn)
+      else:
+         paramsJson = None
+   
+      job = MaxentProjection(args.jobName, args.rulesetFn, layersJson, 
+                             args.outputRaster, paramsJson=paramsJson,
                              workDir=args.work_dir, metricsFn=args.metrics_file,
                              logFn=args.log_file, statusFn=args.status_file, 
                              packageFn=args.package_file)
    else:
-      job = OpenModellerProjection(args.jobName, args.rulesetFn, args.layersJson, 
+      job = OpenModellerProjection(args.jobName, args.rulesetFn, layersJson, 
                              args.outputRaster, workDir=args.work_dir, 
                              metricsFn=args.metrics_file, logFn=args.log_file, 
                              statusFn=args.status_file, 
