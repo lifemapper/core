@@ -601,7 +601,11 @@ class ShapeShifter(object):
          feat.SetField(LM_WKT_FIELD, wkt)
          geom = ogr.CreateGeometryFromWkt(wkt)
          feat.SetGeometryDirectly(geom)
+      except Exception, e:
+         print('Failed to create/set geometry, e = {}'.format(e))
+         raise e
          
+      try:
          # If data has a unique id for each point
          if self.idField is not None:
             try:
@@ -632,6 +636,11 @@ class ShapeShifter(object):
                prov = ''
             feat.SetField(self.computedProviderField, prov)
 
+      except Exception, e:
+         print('Failed to set optional field in rec {}, e = {}'.format(str(recDict), e))
+         raise e
+
+      try:
          # Add values out of the line of data
          for name in recDict.keys():
             # Handles reverse lookup for BISON metadata
@@ -644,7 +653,7 @@ class ShapeShifter(object):
                      val = fromUnicode(val)
                   feat.SetField(fldname, val)
       except Exception, e:
-         print('Failed to fillFeature, e = {}'.format(fromUnicode(toUnicode(e))))
+         print('Failed to fillFeature with recDict {}, e = {}'.format(str(recDict), e))
          raise e
       
 # ...............................................
@@ -695,10 +704,12 @@ import subprocess
 from types import ListType, TupleType, UnicodeType, StringType
 
 from LmBackend.common.occparse import OccDataParser
+from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
                SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+from LmServer.common.log import ScriptLogger
 import ast
 
 csvfname = '/share/lm/data/archive/ryan/000/000/000/059/pt_59.csv'
@@ -714,6 +725,9 @@ with open(csvfname, 'r') as f:
 with open(metafname, 'r') as f:
    metad = ast.literal_eval(f.read())
 
+ptype = ProcessType.USER_TAXA_OCCURRENCE
+
+
 shaper = ShapeShifter(ptype, blob, 32, logger=logger, metadata=metad)
 shaper.writeOccurrences(outFname, maxPoints=50, bigfname=bigFname, 
                            isUser=True)
@@ -727,7 +741,8 @@ spRef = osr.SpatialReference()
 spRef.ImportFromEPSG(4326)
 
 newLyr = newDs.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
- 
+lyrDef = newLyr.GetLayerDefn()
+
 for pos in range(len(shaper.op.fieldNames)):
    fldname = shaper.op.fieldNames[pos]
    fldtype = shaper.op.fieldTypes[pos]
@@ -744,13 +759,39 @@ if returnVal != 0:
    print 'Failed to create field {}'.format(fldname)
 
 discardIndices = []
-# Loop through records
+# ..............................................................................
+# Do this repeatedly to loop through records
+# ..............................................................................
 recDict = shaper._getRecord()
+if recDict is not None:
+   feat = ogr.Feature(lyrDef)
+   # Set LM added fields, geometry, geomwkt
+   wkt = 'POINT ({} {})'.format(recDict[shaper.xField], recDict[shaper.yField])
+   feat.SetField(LM_WKT_FIELD, wkt)
+   geom = ogr.CreateGeometryFromWkt(wkt)
+   feat.SetGeometryDirectly(geom)
+   
+   # Add values out of the line of data
+   for name in recDict.keys():
+      fldname = shaper._lookup(name)
+      if fldname is not None:
+         val = recDict[name]
+         if val is not None and val != 'None':
+            if isinstance(val, UnicodeType):
+               val = fromUnicode(val)
+            feat.SetField(fldname, val)
+
+
+
+
+
+
+
+
+
 while recDict is not None:
    try:
-      # Add non-discarded features to regular layer
-      if shaper._currRecum not in discardIndices:
-         shaper._createFillFeat(lyrDef, recDict, outLyr)
+      shaper._createFillFeat(lyrDef, recDict, newLyr)
    except Exception, e:
       print('Failed to create record ({})'.format((e)))
    recDict = shaper._getRecord()
