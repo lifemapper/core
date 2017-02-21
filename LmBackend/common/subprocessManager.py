@@ -134,6 +134,7 @@ class SubprocessRunner(object):
       @summary: Constructor for single command runner
       @param cmd: The command to run
       @param waitSeconds: The number of seconds to wait between polls
+      @todo: Add max wait time before giving up
       """
       self.cmd = cmd
       self.waitTime = waitSeconds
@@ -147,7 +148,7 @@ class SubprocessRunner(object):
       stdErr = None
       myProc = Popen(self.cmd, shell=True, stderr=PIPE)
       self._wait()
-      while myProc.poll() is not None:
+      while myProc.poll() is None:
          self._wait()
       # Get output
       exitCode = myProc.poll()

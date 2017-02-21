@@ -44,6 +44,7 @@ ENCODING =  'utf-8'
 SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
 MULTI_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/multi'
 COMMON_SCRIPTS_DIR = 'LmCompute/tools/common'
+SERVER_SCRIPTS_DIR = 'LmServer/tools/common'
 
 
 # .............................................................................
@@ -784,8 +785,8 @@ class ProcessType:
          relpath = COMMON_SCRIPTS_DIR
          jr = 'concatenate_matrices'
       elif ptype == ProcessType.UPDATE_OBJECT:
-         relpath = COMMON_SCRIPTS_DIR
-         jr = 'updateObjectStatus'
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'ear'
          
       return os.path.join(APP_PATH, relpath, jr+'.py')   
 

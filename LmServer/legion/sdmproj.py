@@ -880,6 +880,7 @@ class SDMProjection(_ProjectionType, Raster):
                        ProcessType.getTool(self.processType),
                        prjArgs,
                        str(self.processType),
+                       prjName,
                        modelFname,
                        layersJsonFname,
                        outputRaster
@@ -894,7 +895,7 @@ class SDMProjection(_ProjectionType, Raster):
          updateDbArgs = ["LOCAL", # Run on server side for DB
                          os.getenv('PYTHON'),
                          ProcessType.getTool(ProcessType.UPDATE_OBJECT),
-                         "-f {0}".format(statusFn),
+                         "-f {}".format(statusFn),
                          str(self.processType),
                          str(self.getId()),
                          updateSuccessFn,

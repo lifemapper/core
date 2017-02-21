@@ -284,7 +284,7 @@ class OpenModellerModel(object):
       # Status
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
-            outStatus.write(status)
+            outStatus.write(str(status))
       
       # Metrics
       if self.metricsFn is not None:
@@ -330,6 +330,10 @@ class OpenModellerProjection(object):
          self.workDir = workDir
       else:
          self.workDir = os.getcwd()
+
+      # Create the work directory if it does not exist
+      if not os.path.exists(self.workDir):
+         os.makedirs(self.workDir)
 
       # Logs
       if logFn is not None:
@@ -456,7 +460,7 @@ class OpenModellerProjection(object):
          status = JobStatus.COMPUTED
          
          # Check outputs            
-         if procExitStatus > 0 or not os.path.exists(self.asciiOut):
+         if procExitStatus > 0 or not os.path.exists(self.projectionFile):
             # Error
             status = self._findError(procStdErr)
       except LmException, lme:
@@ -469,7 +473,7 @@ class OpenModellerProjection(object):
       # Status
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
-            outStatus.write(status)
+            outStatus.write(str(status))
       
       # Metrics
       if self.metricsFn is not None:

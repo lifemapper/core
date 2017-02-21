@@ -282,7 +282,7 @@ class MaxentModel(object):
       # Status
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
-            outStatus.write(status)
+            outStatus.write(str(status))
       
       # Metrics
       if self.metricsFn is not None:
@@ -333,6 +333,10 @@ class MaxentProjection(object):
          self.workDir = workDir
       else:
          self.workDir = os.getcwd()
+
+      # Create the work directory if it does not exist
+      if not os.path.exists(self.workDir):
+         os.makedirs(self.workDir)
 
       # Logs
       if logFn is not None:
@@ -497,7 +501,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       # Status
       if self.statusFn is not None:
          with open(self.statusFn, 'w') as outStatus:
-            outStatus.write(status)
+            outStatus.write(str(status))
       
       # Metrics
       if self.metricsFn is not None:
