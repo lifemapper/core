@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 import glob 
+from hashlib import md5
 import json
 import mx.DateTime
 import os
@@ -418,11 +419,16 @@ class SDMProjection(_ProjectionType, Raster):
       return fname
 
    # ...............................................
-   def getAlgorithmParametersJson(self, algorithm):
+   def getAlgorithmParametersJsonFilename(self, algorithm):
       """
-      @summary: Return a JSON string of algorithm information
+      @summary: Return a file name for algorithm parameters JSON.  Write if 
+                   necessary
       @param algorithm: An algorithm object
       """
+      # This is a list of algorithm information that will be used for hashing
+      algoInfo = []
+      algoInfo.append(algorithm.code)
+      
       algoObj = {
          "algorithmCode" : algorithm.code,
          "parameters" : []
@@ -432,8 +438,19 @@ class SDMProjection(_ProjectionType, Raster):
          algoObj["parameters"].append(
             {"name" : param, 
              "value" : str(algorithm._parameters[param])})
+         algoInfo.append((param, str(algorithm._parameters[param]))
       
-      return json.dumps(algoObj)
+      paramsSet = set(algoInfo)
+      paramsHash = md5(str(paramsSet)).hexdigest()
+      
+      paramsFname = os.path.join(PARAMS_JSON_PATH, "{0}.json".format(paramsHash[:16])
+
+      # Write if it does not exist      
+      if not os.path.exists(paramsFname):
+         with open(paramsFname, 'w') as paramsOut:
+            json.dump(algoObj, paramsOut)
+
+      return paramsFname
 
    # ...............................................
    def getLayersJsonFilename(self, scenario, mask=None):
@@ -777,8 +794,8 @@ class SDMProjection(_ProjectionType, Raster):
          args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in mdlOpts.iteritems()])
 
-         layersJson = self.getLayersJsonFilename(self.modelScenario, self.modelMask)
-         paramsJson = repr(self.getAlgorithmParametersJson(self._algorithm))
+         layersJsonFname = self.getLayersJsonFilename(self.modelScenario, self.modelMask)
+         paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
 
          mdlCmdArgs = [os.getenv('PYTHON'),
                        ProcessType.getTool(ptype),
@@ -786,9 +803,9 @@ class SDMProjection(_ProjectionType, Raster):
                        str(ptype),
                        mdlName,
                        occSetFname,
-                       layersJson,
+                       layersJsonFname,
                        rulesetFname,
-                       paramsJson
+                       paramsJsonFname
                        ]
          cmd = ' '.join(mdlCmdArgs)
          
@@ -812,7 +829,7 @@ class SDMProjection(_ProjectionType, Raster):
          modelFname = self.getModelFilename(isResult=True)
 
          prjName = "prj{0}".format(self.getId())
-         layersJson = self.getLayersJsonFilename(self.projScenario, self.projMask)
+         layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
          workDir = prjName
          statusFn = os.path.join(workDir, "prj{0}.status".format(self.getId()))
          packageFn = self.getProjPackageFilename()
@@ -827,9 +844,9 @@ class SDMProjection(_ProjectionType, Raster):
          outTiff = outputRaster
          
          if self.processType == ProcessType.ATT_PROJECT:
-            paramsJson = self.getAlgorithmParametersFile(self._algorithm)
+            paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
             # TODO: make sure this works consistently for quoting JSON
-            prjOpts['-algo'] = repr(paramsJson)
+            prjOpts['-algo'] = paramsJsonFname
             outputRaster = os.path.join(workDir, "output.asc")
             
             gdalTranslateCmd = os.path.join(BIN_PATH, "gdal_translate")
@@ -876,7 +893,7 @@ class SDMProjection(_ProjectionType, Raster):
                        prjArgs,
                        str(self.processType),
                        modelFname,
-                       layersJson,
+                       layersJsonFname,
                        outputRaster
                        ]
          prjCmd = ' '.join(prjCmdArgs)
