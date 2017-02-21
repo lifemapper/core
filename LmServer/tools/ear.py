@@ -97,7 +97,7 @@ class Ear(object):
       
    # ...............................................
    @classmethod
-   def testFile(outputFname):
+   def testFile(cls, outputFname):
       success = True
       msg = None
       basename, ext = os.path.splitext(outputFname)

@@ -44,7 +44,7 @@ ENCODING =  'utf-8'
 SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
 MULTI_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/multi'
 COMMON_SCRIPTS_DIR = 'LmCompute/tools/common'
-SERVER_SCRIPTS_DIR = 'LmServer/tools/common'
+SERVER_SCRIPTS_DIR = 'LmServer/tools'
 
 
 # .............................................................................
