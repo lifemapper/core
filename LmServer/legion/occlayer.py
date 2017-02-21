@@ -628,7 +628,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
             with open(self.rawMetaDLocation, 'r') as f:
                tmp = ast.literal_eval(f.read())
             meta = json.dumps(tmp)
-            cmdArgs.append(meta)
+            cmdArgs.append("'{}'".format(meta))
                
          cmdArgs.extend([outFile, 
                          bigFile,

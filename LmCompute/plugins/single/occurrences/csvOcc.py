@@ -125,6 +125,7 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @param metadata: Metadata that can be used for processing the CSV
    @todo: handle write exception before writing dummy file? 
    """
+   # TODO: evaluate logging here
    logger = LmComputeLogger(os.path.basename(__file__))
    shaper = ShapeShifter(processType, rawData, count, logger=logger, 
                          metadata=metadata)

@@ -255,6 +255,11 @@ class ShapeShifter(object):
             else:
                bigLyr = self._addFieldDef(bigDs)
                         
+      except Exception, e:
+         raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                           'Unable to create field definitions ({})'.format(e))
+
+      try:
          # Loop through records
          recDict = self._getRecord()
          while recDict is not None:
@@ -266,7 +271,7 @@ class ShapeShifter(object):
                if bigDs is not None:
                   self._createFillFeat(lyrDef, recDict, bigLyr)
             except Exception, e:
-               print('Failed to create record ({})'.format(fromUnicode(toUnicode(e))))
+               print('Failed to create record ({})'.format((e)))
             recDict = self._getRecord()
                               
          # Return metadata
@@ -286,8 +291,7 @@ class ShapeShifter(object):
       except Exception, e:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                            'Unable to read or write data ({})'
-                           .format(fromUnicode(toUnicode(e))))
-
+                           .format(e))
             
 # .............................................................................
 # Private functions
