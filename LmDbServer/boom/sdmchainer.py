@@ -333,9 +333,9 @@ class _LMChainer(LMObject):
                self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
                                                                         str(e)))
             else:
-               mfchain.addCommands(rules)
+               updatedMFChain.addCommands(rules)
          
-         mfchain.write()
+         updatedMFChain.write()
       return updatedMFChain
 
 # ...............................................

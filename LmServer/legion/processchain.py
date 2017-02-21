@@ -202,7 +202,7 @@ class MFChain(ProcessObject):
       if not self.jobs:
          raise ValueError("No jobs to be computed, fail for empty document")
       if filename is None:
-         filename = self._dlocation
+         filename = self.getDLocation()
       with open(filename, 'w') as outF:
          for header, value in self.headers:
             outF.write("{header}={value}\n".format(header=header, value=value))
