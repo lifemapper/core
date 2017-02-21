@@ -1248,8 +1248,9 @@ while count < 5:
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
    count = len(objs)
 
-# boomer._createMakeflow(objs)
-# Fix db insertMFChain
+boomer._createMakeflow(objs)
+
+
 
 
 

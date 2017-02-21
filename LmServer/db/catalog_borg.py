@@ -1176,7 +1176,7 @@ class Borg(DbPostgresql):
       @return: updated MFChain object
       """
       meta = mfchain.dumpMfMetadata()
-      row, idxs = self.executeInsertFunction('lm_insertMFChain', 
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_insertMFChain', 
                                              mfchain.getUserId(), 
                                              mfchain.getDLocation(), 
                                              mfchain.priority, 

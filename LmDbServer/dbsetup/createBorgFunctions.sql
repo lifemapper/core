@@ -645,7 +645,7 @@ BEGIN
              (userid, dlocation, priority, metadata, status, statusmodtime)
       VALUES (usr, dloc, prior, meta, stat, stattime);
    IF FOUND THEN 
-      SELECT INTO mfid last_value FROM lm3.mfprocess_mfprocessid_seq;
+      SELECT INTO mfid last_value FROM lm_v3.mfprocess_mfprocessid_seq;
       SELECT * INTO rec FROM lm_v3.MFProcess WHERE mfProcessId = mfid;      
    END IF;
 
