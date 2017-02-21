@@ -622,7 +622,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # Process type specific arguments
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             cmdArgs.append(str(self.queryCount))
-            deps.append(self.getRawDLocation()
+            deps.append(self.getRawDLocation())
          # Read user-supplied metadata into string
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
             cmdArgs.append(self.rawMetaDLocation)

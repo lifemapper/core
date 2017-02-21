@@ -306,6 +306,7 @@ class MapPrefix:
 class LMFileType:
    # User level
    OTHER_MAP = 1
+   TMP_JSON = 2
    # ..............................
    # Single species
    ENVIRONMENTAL_LAYER = 101
@@ -372,7 +373,8 @@ class LMFileType:
    @staticmethod
    def isUserSpace(rtype):
       if rtype in [LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE, 
-                   LMFileType.MF_DOCUMENT, LMFileType.BOOM_CONFIG]:
+                   LMFileType.MF_DOCUMENT, LMFileType.BOOM_CONFIG, 
+                   LMFileType.TMP_JSON]:
          return True
       return False
          
@@ -455,6 +457,7 @@ PAMSUM_PREFIX = 'pamsum'
 
 class FileFix:
    PREFIX = {LMFileType.OTHER_MAP: MapPrefix.USER,
+             LMFileType.TMP_JSON: None,
              LMFileType.ENVIRONMENTAL_LAYER: None,
              LMFileType.SCENARIO_MAP: MapPrefix.SCEN,
              LMFileType.SDM_MAP: MapPrefix.SDM,
@@ -489,6 +492,7 @@ class FileFix:
 }
    # Postfix
    EXTENSION = {LMFileType.OTHER_MAP: OutputFormat.MAP,
+                LMFileType.TMP_JSON: OutputFormat.JSON,
                 LMFileType.ENVIRONMENTAL_LAYER: OutputFormat.GTIFF,
                 LMFileType.SCENARIO_MAP: OutputFormat.MAP,
                 LMFileType.SDM_MAP: OutputFormat.MAP,

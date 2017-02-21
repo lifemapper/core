@@ -400,18 +400,6 @@ class SDMProjection(_ProjectionType, Raster):
       self.clearLocalMapfile()
 
 # ...............................................
-   def getProjRequestFilename(self):
-      """
-      @summary Return the request filename including absolute path for the 
-               given projection id using the given occurrenceSet id
-      @todo: Should be able to remove this
-      """
-      fname = self._earlJr.createFilename(LMFileType.PROJECTION_REQUEST, 
-                objCode=self.getId(), occsetId=self._occurrenceSet.getId(), 
-                usr=self._userId, epsg=self._epsg)
-      return fname
-
-# ...............................................
    def getProjPackageFilename(self):
       fname = self._earlJr.createFilename(LMFileType.PROJECTION_PACKAGE, 
                 objCode=self.getId(), occsetId=self._occurrenceSet.getId(), 
@@ -438,13 +426,14 @@ class SDMProjection(_ProjectionType, Raster):
          algoObj["parameters"].append(
             {"name" : param, 
              "value" : str(algorithm._parameters[param])})
-         algoInfo.append((param, str(algorithm._parameters[param]))
+         algoInfo.append((param, str(algorithm._parameters[param])))
       
       paramsSet = set(algoInfo)
       paramsHash = md5(str(paramsSet)).hexdigest()
-      
-      paramsFname = os.path.join(PARAMS_JSON_PATH, "{0}.json".format(paramsHash[:16])
 
+      paramsFname = self._earlJr.createFilename(LMFileType.TMP_JSON,
+                                       objCode=paramsHash[:16], usr=self.getUserId())
+      
       # Write if it does not exist      
       if not os.path.exists(paramsFname):
          with open(paramsFname, 'w') as paramsOut:
@@ -461,10 +450,12 @@ class SDMProjection(_ProjectionType, Raster):
       @param mask: The mask to use for this projection
       """
       if mask is not None:
-         baseName = "scn{0}mask{1}.json".format(scenario.getId(), mask.getId())
+         baseName = "scn{0}mask{1}".format(scenario.getId(), mask.getId())
       else:
-         baseName = "scn{0}.json".format(scenario.getId())
-      layerJsonFilename = os.path.join(LAYER_JSON_PATH, baseName)
+         baseName = "scn{0}".format(scenario.getId())
+         
+      layerJsonFilename = self._earlJr.createFilename(LMFileType.TMP_JSON,
+                                       objCode=baseName, usr=self.getUserId())
       
       # If the file does not exist, write it
       if not os.path.exists(layerJsonFilename):
@@ -509,17 +500,14 @@ class SDMProjection(_ProjectionType, Raster):
       return modelCode
 
 # ...............................................
-   def getModelFilename(self, isResult=True):
+   def getModelFilename(self):
       """
       @summary: Return filename for the model for this projection.
       """
-      if isResult is True:
-         if self.isATT() == 'ATT_MAXENT':
-            ftype = LMFileType.MODEL_ATT_RESULT
-         else:
-            ftype = LMFileType.MODEL_RESULT
+      if self.isATT() == 'ATT_MAXENT':
+         ftype = LMFileType.MODEL_ATT_RESULT
       else:
-         ftype = LMFileType.MODEL_REQUEST
+         ftype = LMFileType.MODEL_RESULT
       modelCode = self.getModelTarget()
       fname = self._earlJr.createFilename(ftype, objCode=modelCode, 
                                           occsetId=self._occurrenceSet.getId(), 
@@ -774,7 +762,7 @@ class SDMProjection(_ProjectionType, Raster):
       rules = []
       # Output
       # TODO: Make sure this file is deleted on rollback  
-      rulesetFname = self.getModelFilename(isResult=True)
+      rulesetFname = self.getModelFilename()
       if not os.path.exists(rulesetFname):         
          if self.isATT():
             ptype = ProcessType.ATT_MODEL
@@ -826,7 +814,7 @@ class SDMProjection(_ProjectionType, Raster):
          # Model dependency
          modelRules = self._computeMyModel()
          rules.extend(modelRules)
-         modelFname = self.getModelFilename(isResult=True)
+         modelFname = self.getModelFilename()
 
          prjName = "prj{0}".format(self.getId())
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
