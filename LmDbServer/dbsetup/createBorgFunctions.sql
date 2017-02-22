@@ -561,11 +561,11 @@ BEGIN
          IF FOUND THEN
             -- add geometries if valid
             IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
-               UPDATE lm3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
+               UPDATE .OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
                   WHERE occurrenceSetId = occid;
             END IF;
             IF ST_IsValid(ST_GeomFromText(pointswkt, epsg)) THEN
-               UPDATE lm3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
+               UPDATE .OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
                   WHERE occurrenceSetId = occid;
             END IF;
 
@@ -667,7 +667,7 @@ DECLARE
    cmd varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm3.MFProcess WHERE status = ' || quote_literal(oldstat); 
+   cmd = 'SELECT * FROM .MFProcess WHERE status = ' || quote_literal(oldstat); 
    limitcls = ' LIMIT ' || quote_literal(total);
 
    IF usr IS NOT NULL THEN
@@ -679,7 +679,7 @@ BEGIN
 
    FOR rec in EXECUTE cmd
       LOOP
-         UPDATE lm3.MFProcess SET (status, statusmodtime) = (newstat, modtime)
+         UPDATE .MFProcess SET (status, statusmodtime) = (newstat, modtime)
             WHERE mfProcessId = rec.mfProcessId;
          rec.status = newstat;
          rec.statusmodtime = modtime;
@@ -698,7 +698,7 @@ $$
 DECLARE
    success int := -1;
 BEGIN
-   UPDATE lm3.MFProcess SET (status, statusmodtime) = (newstat, modtime)
+   UPDATE .MFProcess SET (status, statusmodtime) = (newstat, modtime)
       WHERE mfProcessId = mfid;
    IF FOUND THEN
       success = 0;
@@ -714,7 +714,7 @@ $$
 DECLARE
    success int := -1;
 BEGIN
-   DELETE FROM lm3.MFProcess WHERE mfProcessId = mfid;
+   DELETE FROM .MFProcess WHERE mfProcessId = mfid;
    IF FOUND THEN
       success = 0;
    END IF;
