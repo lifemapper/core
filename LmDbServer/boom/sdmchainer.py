@@ -257,11 +257,11 @@ class _LMChainer(LMObject):
          MatrixColumn.INTERSECT_PARAM_VAL_NAME: 
             Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_VALNAME'),
          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: 
-            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPRESENCE'),
+            Config().getint(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPRESENCE'),
          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: 
-            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MAXPRESENCE'),
+            Config().getint(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MAXPRESENCE'),
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 
-            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPERCENT')}
+            Config().getint(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPERCENT')}
 
       # Expiration date for retrieved species data 
       speciesExpYear = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_YEAR')

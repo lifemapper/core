@@ -168,18 +168,18 @@ class MatrixColumn(_LayerParameters, ProcessObject):
          pavFname = self.getTargetFilename()
          
          cmdArguments = [os.getenv('PYTHON'), 
-                         ProcessType.getTool(self.processType), 
+                         ProcessType.getTool(self.processType),
+                         options, 
                          self.shapegrid.getDLocation(), 
                          inputLayerFname,
                          pavFname,
-                         self.layer.resolution,
-                         self.intersectParams[self.INTERSECT_PARAM_MIN_PRESENCE],
-                         self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE],
-                         self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT],
-                         options ]
+                         str(self.layer.resolution),
+                         str(self.intersectParams[self.INTERSECT_PARAM_MIN_PRESENCE]),
+                         str(self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE]),
+                         str(self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT])]
 
       cmd = ' '.join(cmdArguments)
-      rules.append(MfRule(cmd, [pavFname], dependencies=[dependentFiles]))
+      rules.append(MfRule(cmd, [pavFname], dependencies=dependentFiles))
         
       return rules
 
