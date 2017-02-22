@@ -691,6 +691,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateMFChain(mfid int, 
+                                                  dloc varchar,
                                                   stat int,
                                                   modtime double precision)
 RETURNS int AS
@@ -698,7 +699,8 @@ $$
 DECLARE
    success int := -1;
 BEGIN
-   UPDATE lm_v3.MFProcess SET (status, statusmodtime) = (newstat, modtime)
+   UPDATE lm_v3.MFProcess SET (dlocation, status, statusmodtime) 
+                            = (dloc, stat, modtime)
       WHERE mfProcessId = mfid;
    IF FOUND THEN
       success = 0;

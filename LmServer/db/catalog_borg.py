@@ -1213,6 +1213,7 @@ class Borg(DbPostgresql):
       @return: True/False for success of operation
       """
       success = self.executeModifyFunction('lm_updateMFChain', mfchain.objId,
+                                           mfchain.getDLocation(), 
                                            mfchain.status, mfchain.statusModTime)
       return success
 
@@ -1230,6 +1231,7 @@ class Borg(DbPostgresql):
          success = self.updateShapeGrid(obj)
       elif type(obj) == type(MFChain):
          success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
+                                              obj.getDLocation(), 
                                               obj.status, obj.statusModTime)
       else:
          raise LMError('Unsupported delete for object {}'.format(type(obj)))

@@ -477,10 +477,10 @@ class _LMChainer(LMObject):
    def _createMakeflow(self, objs):
       if objs:
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
-         mfchain = MFChain(self.userid, priority=self.priority, 
+         newMFC = MFChain(self.userid, priority=self.priority, 
                            metadata=meta, status=JobStatus.INITIALIZE, 
                            statusModTime=dt.gmt().mjd)
-         updatedMFChain = self._scribe.insertMFChain(mfchain)
+         updatedMFChain = self._scribe.insertMFChain(newMFC)
 
          for o in objs:
             try:
@@ -492,6 +492,8 @@ class _LMChainer(LMObject):
                updatedMFChain.addCommands(rules)
          
          updatedMFChain.write()
+         self._scribe.updateObject(updatedMFChain)
+         
       return updatedMFChain
 
 # ...............................................
@@ -1361,10 +1363,15 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
 # Do this repeatedly to find a new taxa
 # ..............................................................................
 count = 0
-while count < 5:
-   dataChunk, dataCount, taxonName  = boomer._getChunk()
-   objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
-   count = len(objs)
+for i in range(63):
+   boomer.chainOne()
+   
+   
+   
+   
+#    dataChunk, dataCount, taxonName  = boomer._getChunk()
+#    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
+#    count = len(objs)
 
 
 updatedMFChain = boomer._createMakeflow(objs)
