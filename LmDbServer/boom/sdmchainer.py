@@ -639,13 +639,14 @@ class BisonChainer(_LMChainer):
                 tsnfilename, expDate, 
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None,
-                intersectGrid=None, log=None):
+                intersectGrid=None, intersectParams=None, log=None):
       super(BisonChainer, self).__init__(archiveName, userid, epsg, priority, 
                                       algLst, mdlScen, prjScenLst, 
                                       taxonSourceName=taxonSourceName, 
                                       mdlMask=mdlMask, prjMask=prjMask, 
                                       minPointCount=minPointCount,
-                                      intersectGrid=intersectGrid, log=log)
+                                      intersectGrid=intersectGrid, 
+                                      intersectParams=intersectParams, log=log)
       self._tsnfile = None      
       if taxonSourceName is None:
          raise LMError(currargs='Missing taxonomic source')
@@ -805,13 +806,15 @@ class UserChainer(_LMChainer):
    def __init__(self, archiveName, userid, epsg, algLst, mdlScen, prjScenLst, 
                 userOccCSV, userOccMeta, expDate, userOccDelimiter=',',
                 priority=Priority.HIGH, minPointCount=None,
-                mdlMask=None, prjMask=None, intersectGrid=None, log=None):
+                mdlMask=None, prjMask=None, intersectGrid=None, 
+                intersectParams=None, log=None):
       super(UserChainer, self).__init__(archiveName, userid, epsg, priority, 
                                      algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=None, 
                                      minPointCount=minPointCount,
                                      mdlMask=mdlMask, prjMask=prjMask, 
-                                     intersectGrid=intersectGrid, log=log)
+                                     intersectGrid=intersectGrid, 
+                                     intersectParams=intersectParams, log=log)
       self.metaFname = userOccMeta
       self.occParser = None
       try:
@@ -947,13 +950,15 @@ class GBIFChainer(_LMChainer):
                 occfilename, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 providerListFile=None, mdlMask=None, prjMask=None, 
-                minPointCount=None, intersectGrid=None, log=None):
+                minPointCount=None, intersectGrid=None, intersectParams=None, 
+                log=None):
       super(GBIFChainer, self).__init__(archiveName, userid, epsg, priority, 
                                      algLst, mdlScen, prjScenLst, 
                                      taxonSourceName=taxonSourceName, 
                                      mdlMask=mdlMask, prjMask=prjMask, 
                                      minPointCount=minPointCount,
-                                     intersectGrid=intersectGrid, log=log)               
+                                     intersectGrid=intersectGrid, 
+                                     intersectParams=intersectParams, log=log)               
       self._dumpfile = None
       csv.field_size_limit(sys.maxsize)
       try:
@@ -1167,13 +1172,14 @@ class iDigBioChainer(_LMChainer):
                 idigFname, expDate,
                 priority=Priority.NORMAL, taxonSourceName=None, 
                 mdlMask=None, prjMask=None, minPointCount=None, 
-                intersectGrid=None, log=None):
+                intersectGrid=None, intersectParams=None, log=None):
       super(iDigBioChainer, self).__init__(archiveName, userid, epsg, priority, 
                                         algLst, mdlScen, prjScenLst, 
                                         taxonSourceName=taxonSourceName, 
                                         mdlMask=mdlMask, prjMask=prjMask, 
                                         minPointCount=minPointCount,
-                                        intersectGrid=intersectGrid, log=log)
+                                        intersectGrid=intersectGrid, 
+                                        intersectParams=intersectParams, log=log)
       if taxonSourceName is None:
          raise LMError(currargs='Missing taxonomic source')
          
@@ -1330,7 +1336,7 @@ tstArchiveName='Heuchera_archive'
  epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
  bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
  speciesExpYear, speciesExpMonth, 
- speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
+ speciesExpDay, intersectParams) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
                                                      archiveName=tstArchiveName)
 
 currtime = dt.gmt().mjd
@@ -1343,7 +1349,8 @@ boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                       userOccCSV, userOccMeta, expdate, 
                       mdlMask=None, prjMask=None, 
                       minPointCount=minPoints, 
-                      intersectGrid=gridname, log=log)
+                      intersectGrid=gridname, intersectParams=intersectParams,
+                      log=log)
                       
 # ..............................................................................
 # Do this repeatedly to find a new taxa
@@ -1354,41 +1361,12 @@ while count < 5:
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
    count = len(objs)
 
-boomer._createMakeflow(objs)
-
-
-
-
-
-
-
-
-meta = {MFChain.META_CREATED_BY: 'crap'}
-mfchain = MFChain(boomer.userid, priority=boomer.priority, 
-                  metadata=meta, status=JobStatus.INITIALIZE, 
-                  statusModTime=dt.gmt().mjd)
-mfchain.objId = 1
-mfchain.getDLocation()
-for o in objs:
-   try:
-      rules = o.computeMe()
-   except Exception, e:
-      print('Failed on object.computeMe {}'.format(type(o)))
-   else:
-      mfchain.addCommands(rules)
-
-mfchain.write()
-
-
-
 updatedMFChain = boomer._createMakeflow(objs)
+print updatedMFChain.getDLocation()
 
-/opt/python/bin/python2.7 \
-/opt/lifemapper/LmCompute/tools/single/user_points.py \
-/share/lm/data/archive/ryan/000/000/000/053/pt_53.csv \
-'{\"decimallatitude\": [\"dec_lat\", \"real\"], \"Taxa\": \"species\", \"Longitude\": \"decimallongitude\", \"GroupBy\": \"species\", \"decimallongitude\": [\"dec_long\", \"real\"], \"Latitude\": \"decimallatitude\", \"species\": [\"species\", \"string\"]}' \
-/share/lm/data/archive/ryan/000/000/000/053/pt_53.shp \
-/share/lm/data/archive/ryan/000/000/000/053/bigpt_53.shp
+
+
+
 
 # ...............................................
 tstUserId='ryan'
@@ -1407,8 +1385,6 @@ boomer = GBIFChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
                    minPointCount=minPoints,  
                    intersectGrid=gridname, log=log)
 
-for i in range(5):
-   speciesKey, dataCount, dataChunk = boomer._getOccurrenceChunk()
    
    
 sciName = boomer._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
