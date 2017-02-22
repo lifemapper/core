@@ -64,13 +64,14 @@ class MattDaemon(Daemon):
       self._mfPool = []
       self.csProc = None
       self.wfProc = None
+
+      self.sleepTime = 30
+      self.maxMakeflows = MAX_MAKEFLOWS
+      self.workspace = MAKEFLOW_WORKSPACE
       
       # Establish db connection
       self.scribe = Scribe(self.log)
       self.scribe.openConnections()
-      
-      # Read configuration
-      self.readConfiguration()
       
       # Start catalog server
       self.startCatalogServer()
@@ -192,16 +193,6 @@ class MattDaemon(Daemon):
       
       Daemon.onShutdown(self)
       
-   # .............................
-   def readConfiguration(self):
-      """
-      @summary: Get the maximum number of Makeflow processes for pool
-      @todo: Read these from a configuration file
-      """
-      self.sleepTime = 30
-      self.maxMakeflows = MAX_MAKEFLOWS
-      self.workspace = MAKEFLOW_WORKSPACE
-
    # .............................
    def startCatalogServer(self):
       """

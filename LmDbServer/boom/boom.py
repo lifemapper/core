@@ -31,11 +31,11 @@ from LmDbServer.common.lmconstants import (BOOM_PID_FILE, TAXONOMIC_SOURCE,
                                            SpeciesDatasource)
 from LmDbServer.boom.sdmchainer import (BisonChainer, GBIFChainer, 
                                         iDigBioChainer, UserChainer)
+from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
-from LmServer.base.lmobj import LMError
-# from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.log import ScriptLogger
+from LmServer.legion.mtxcolumn import MatrixColumn          
 
 # .............................................................................
 class Archivist(Daemon):
@@ -46,6 +46,33 @@ class Archivist(Daemon):
       self.userId = userId
       self.archiveName = archiveName
                         
+   # .............................
+   @staticmethod
+   def getDefaultArchiveVals(userId=None, archiveName=None):      
+      from LmCommon.common.config import Config
+      fileList = []
+      earl = EarlJr()
+      pth = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+      archiveConfigFile = os.path.join(pth, '{}{}'.format
+                                       (archiveName, OutputFormat.CONFIG))
+      print 'Config file at {}'.format(archiveConfigFile)
+      if os.path.exists(archiveConfigFile):
+         fileList.append(archiveConfigFile)
+      cfg = Config(fns=fileList)
+      _ENV_HEADING = "LmServer - environment"
+      _PIPELINE_HEADING = "LmServer - pipeline"
+      
+      if userId is None:
+         userId = cfg.get(_ENV_HEADING, 'ARCHIVE_USER')
+      if archiveName is None:
+         archiveName = cfg.get(_PIPELINE_HEADING, 'ARCHIVE_NAME')
+      try:
+         datasource = cfg.get(_PIPELINE_HEADING, 'ARCHIVE_DATASOURCE')
+      except:
+         datasource = cfg.get(_ENV_HEADING, 'DATASOURCE')
+
+      return userId, archiveName, datasource
+
    # .............................
    @staticmethod
    def getArchiveSpecificConfig(userId=None, archiveName=None):
@@ -83,6 +110,17 @@ class Archivist(Daemon):
       epsg = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_EPSG')
       gridname = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_GRID_NAME')
       minPoints = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_POINT_COUNT_MIN')
+      
+      intersectParams = {
+         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_FILTERSTRING'),
+         MatrixColumn.INTERSECT_PARAM_VAL_NAME: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_VALNAME'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPERCENT'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPRESENCE')}
+
       # Expiration date for retrieved species data 
       speciesExpYear = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_YEAR')
       speciesExpMonth = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_MONTH')
@@ -119,7 +157,7 @@ class Archivist(Daemon):
               userOccCSV, userOccDelimiter, userOccMeta, 
               bisonTsnFile, idigTaxonidsFile, 
               gbifTaxFile, gbifOccFile, gbifProvFile, 
-              speciesExpYear, speciesExpMonth, speciesExpDay)  
+              speciesExpYear, speciesExpMonth, speciesExpDay, intersectParams)  
 
    # .............................
    def initialize(self):
@@ -133,8 +171,8 @@ class Archivist(Daemon):
       (userId, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens, 
        epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
        bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
-       speciesExpYear, speciesExpMonth, 
-       speciesExpDay) = self.getArchiveSpecificConfig(self.userId, self.archiveName)
+       speciesExpYear, speciesExpMonth, speciesExpDay,
+       intersectParams) = self.getArchiveSpecificConfig(self.userId, self.archiveName)
       # Reset attributes in case they were not sent, relying on defaults
       self.userId = userId
       self.archiveName = archiveName
@@ -152,7 +190,9 @@ class Archivist(Daemon):
                                     taxonSourceName=taxname, mdlMask=None, 
                                     prjMask=None, 
                                     minPointCount=minPoints, 
-                                    intersectGrid=gridname, log=self.log)
+                                    intersectGrid=gridname, 
+                                    intersectParams=intersectParams,
+                                    log=self.log)
             
          elif datasource == 'GBIF':
             self.boomer = GBIFChainer(self.archiveName, self.userId, epsg, 
@@ -162,7 +202,9 @@ class Archivist(Daemon):
                                    providerListFile=gbifProvFile,
                                    mdlMask=None, prjMask=None, 
                                    minPointCount=minPoints,  
-                                   intersectGrid=gridname, log=self.log)
+                                   intersectGrid=gridname, 
+                                   intersectParams=intersectParams,
+                                   log=self.log)
             
          elif datasource == 'IDIGBIO':
             self.boomer = iDigBioChainer(self.archiveName, self.userId, epsg, 
@@ -171,7 +213,9 @@ class Archivist(Daemon):
                                       taxonSourceName=taxname,
                                       mdlMask=None, prjMask=None, 
                                       minPointCount=minPoints, 
-                                      intersectGrid=gridname, log=self.log)
+                                      intersectGrid=gridname, 
+                                      intersectParams=intersectParams,
+                                      log=self.log)
    
          else:
             self.boomer = UserChainer(self.archiveName, self.userId, epsg, 
@@ -180,7 +224,9 @@ class Archivist(Daemon):
                                    userOccDelimiter=userOccDelimiter,
                                    mdlMask=None, prjMask=None, 
                                    minPointCount=minPoints, 
-                                   intersectGrid=gridname, log=self.log)
+                                   intersectGrid=gridname, 
+                                   intersectParams=intersectParams,
+                                   log=self.log)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Archivist ({})'.format(e))
       
@@ -264,6 +310,10 @@ if __name__ == "__main__":
       archiveName = archiveName.replace(' ', '_')
    userId = args.user
    cmd = args.cmd.lower()
+   
+   # Get defaults if either are None
+   userId, archiveName, datasource = Archivist.getDefaultArchiveVals(userId, 
+                                                                     archiveName)
    
    if os.path.exists(BOOM_PID_FILE):
       pid = open(BOOM_PID_FILE).read().strip()

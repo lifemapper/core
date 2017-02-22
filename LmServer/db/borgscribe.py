@@ -330,7 +330,7 @@ class BorgScribe(LMObject):
       return success
    
 # ...............................................
-   def initOrRollbackIntersect(self, lyr, mtx, modtime):
+   def initOrRollbackIntersect(self, lyr, mtx, intersectParams, modtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
@@ -346,7 +346,7 @@ class BorgScribe(LMObject):
             ptype = ProcessType.INTERSECT_VECTOR
 
          mtxcol = MatrixColumn(None, mtx.getId(), mtx.getUserId(), 
-                layer=lyr, shapegrid=None, intersectParams={}, 
+                layer=lyr, shapegrid=None, intersectParams=intersectParams, 
                 squid=lyr.squid, ident=lyr.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 
                 status=JobStatus.GENERAL, statusModTime=modtime)
@@ -401,7 +401,7 @@ class BorgScribe(LMObject):
 # ...............................................
    def initOrRollbackSDMChain(self, occ, algList, mdlScen, prjScenList, 
                     mdlMask=None, projMask=None,
-                    gridset=None, minPointCount=None):
+                    gridset=None, intersectParams=None, minPointCount=None):
       """
       @summary: Initialize or rollback existing LMArchive SDM chain 
                 (SDMProjection, Intersection) dependent on this occurrenceset.
@@ -431,6 +431,7 @@ class BorgScribe(LMObject):
                mtxcols = []
                for prj in prjs:
                   mtxcol = self.initOrRollbackIntersect(prj, gridset.pam, 
+                                                        intersectParams, 
                                                         currtime)
                   mtxcols.append(mtxcol)
                objs.extend(mtxcols)
@@ -455,14 +456,6 @@ class BorgScribe(LMObject):
       mfchainList = self._borg.findMFChains(count, userId, 
                                  JobStatus.INITIALIZE, JobStatus.PULL_REQUESTED)
       return mfchainList
-
-# ...............................................
-   def updateMFChain(self, mfchain):
-      """
-      @copydoc LmServer.db.catalog_borg.Borg::updateMFChain()
-      """
-      success = self._borg.updateMFChain(mfchain)
-      return success
 
 # ...............................................
    def updateObject(self, obj):

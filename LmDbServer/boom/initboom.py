@@ -48,7 +48,8 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix            
+from LmServer.legion.lmmatrix import LMMatrix  
+from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 
@@ -429,7 +430,7 @@ def _importClimatePackageMetadata(envPackageName):
 def writeConfigFile(archiveName, envPackageName, userid, userEmail, 
                      speciesSource, speciesData, speciesDataDelimiter,
                      configMeta, minpoints, algorithms, 
-                     gridname, grid_cellsize, grid_cellsides, 
+                     gridname, grid_cellsize, grid_cellsides, intersectParams,
                      mdlScen=None, prjScens=None):
    """
    """
@@ -500,6 +501,9 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    pcodes = ','.join(prjScens)
    f.write('ARCHIVE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    
+   for k, v in intersectParams.iteritems():
+      f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
+      
    f.close()
    return newConfigFilename
 
@@ -567,6 +571,15 @@ if __name__ == '__main__':
                   'Units are mapunits'))
    parser.add_argument('-q', '--grid_shape', choices=('square', 'hexagon'),
             default='square', help=('Shape of cells in the grid used for Global PAM.'))
+   # Intersect Parameters
+   parser.add_argument('-if', '--intersect_filter', default=None,  
+            help=('SQL Filter to limit features/pixels for intersect'))
+   parser.add_argument('-in', '--intersect_attribute name', default='pixel', 
+            help=('Attribute feature name for intersect (Vector) or pixel (Raster)'))
+   parser.add_argument('-im', '--intersect_min_presence', type=int, default=50, 
+            help=('Minimum value for for intersect of features/pixels'))
+   parser.add_argument('-ip', '--intersect_percent', type=int, default=25, 
+            help=('Minimum spatial coverage of desired values for intersect of features/pixels'))
 
    args = parser.parse_args()
    archiveName = args.archive_name.replace(' ', '_')
@@ -585,6 +598,11 @@ if __name__ == '__main__':
       cellsides = 6
    else:
       cellsides = 4
+   intersectParams = {
+         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
+         MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute,
+         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: args.intersect_min_presence,
+         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
    # Imports META
    META, metafname = _importClimatePackageMetadata(envPackageName)
    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
@@ -646,7 +664,8 @@ if __name__ == '__main__':
                            usrEmail, speciesSource, 
                            speciesData, speciesDataDelimiter, configMeta, 
                            minpoints, algorithms, gridname, cellsize, cellsides, 
-                           mdlScen=mdlScencode, prjScens=prjScencodes)
+                           intersectParams, mdlScen=mdlScencode, 
+                           prjScens=prjScencodes)
    except Exception, e:
       logger.error(str(e))
       raise

@@ -40,13 +40,14 @@ class MatrixColumn(_LayerParameters, ProcessObject):
    INTERSECT_PARAM_VAL_UNITS = 'valUnits'
    # Minimum spatial coverage for gridcell intersect computation
    INTERSECT_PARAM_MIN_PERCENT = 'minPercent'
-   # Types of GRIM gridcell intersect computation
-   INTERSECT_PARAM_WEIGHTED_MEAN = 'weightedMean'
-   INTERSECT_PARAM_LARGEST_CLASS = 'largestClass'
    # Minimum percentage of acceptable value for PAM gridcell intersect computation 
    INTERSECT_PARAM_MIN_PRESENCE = 'minPresence'
    # Maximum percentage of acceptable value for PAM gridcell intersect computation 
    INTERSECT_PARAM_MAX_PRESENCE = 'maxPresence'
+
+   # Types of GRIM gridcell intersect computation
+   INTERSECT_PARAM_WEIGHTED_MEAN = 'weightedMean'
+   INTERSECT_PARAM_LARGEST_CLASS = 'largestClass'
 # .............................................................................
 # Constructor
 # .............................................................................

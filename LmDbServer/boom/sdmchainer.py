@@ -39,7 +39,8 @@ from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY,
                                          ProcessType, JobStatus, ONE_HOUR) 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import Priority, LOG_PATH
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import Priority, LOG_PATH, LMFileType
 from LmServer.common.localconstants import TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -60,7 +61,8 @@ class _LMChainer(LMObject):
    def __init__(self, archiveName, userid, epsg, priority, algLst, 
                 mdlScen, prjScenLst, 
                 taxonSourceName=None, mdlMask=None, prjMask=None, 
-                minPointCount=None, intersectGrid=None, log=None):
+                minPointCount=None, intersectGrid=None, intersectParams=None, 
+                log=None):
       super(_LMChainer, self).__init__()
       import socket
       self.hostname = socket.gethostname().lower()
@@ -74,6 +76,7 @@ class _LMChainer(LMObject):
       self.modelMask = None
       self.projMask = None
       self.intersectGrid = None
+      self.intersectParams = intersectParams
       self.globalPAM = None
 
       if userid is None:
@@ -101,9 +104,71 @@ class _LMChainer(LMObject):
                                mdlMask, prjMask, intersectGrid, taxonSourceName)
          
 # ...............................................
+   def _fillConfiguredObjects(self, usr, archiveName, algCodes, mdlScenarioCode, 
+                              projScenarioCodes, mdlMaskId, prjMaskId, 
+                              intersectGridName, taxonSourceName):
+      (userId, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens, 
+       epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
+       bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
+       speciesExpYear, speciesExpMonth, speciesExpDay,
+       intersectParams) = self.getArchiveSpecificConfig(usr, archiveName)
+       
+      algs = prjscens = []
+      mscen = None
+      
+      for acode in algorithms:
+         alg = Algorithm(acode)
+         alg.fillWithDefaults()
+         algs.append(alg)
+
+      try:
+         txSourceId, url, moddate = self._scribe.findTaxonSource(taxonSourceName)
+         
+         mscen = self._scribe.getScenario(mdlScenarioCode, user=self.userid, 
+                                          fillLayers=True)
+         if mscen is not None:
+            if mdlScenarioCode not in projScenarioCodes:
+               prjscens.append(mscen)
+            for pcode in projScenarioCodes:
+               scen = self._scribe.getScenario(pcode, user=self.userid, 
+                                               fillLayers=True)
+               if scen is not None:
+                  prjscens.append(scen)
+               else:
+                  raise LMError('Failed to retrieve scenario {}'.format(pcode))
+         else:
+            raise LMError('Failed to retrieve scenario {}'.format(mdlScenarioCode))
+         
+         modelMask = self._scribe.getLayer(mdlMaskId)
+         projMask = self._scribe.getLayer(prjMaskId)
+         intersectGrid = self._scribe.getShapeGrid(userId=self.userid, 
+                                             lyrName=intersectGridName,
+                                             epsg=self.epsg)
+         # Get gridset for Archive "Global PAM"
+         newGridset = Gridset(name=archiveName, shapeGrid=self.intersectGrid, 
+                        epsgcode=self.epsg, userId=self.userid)
+         boomGridset = self._scribe.getGridset(newGridset, fillMatrices=True)
+         if boomGridset is None or boomGridset.pam is None:
+            raise LMError('Failed to retrieve Gridset or Global PAM')
+
+      except Exception, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         raise e
+      
+      return (userId, archiveName, algs, txSourceId, mscen, prjscens, modelMask, 
+              projMask, intersectGrid, intersectParams, boomGridset)
+
+# ...............................................
    def _fillDefaultObjects(self, archiveName, algCodes, mdlScenarioCode, 
                            projScenarioCodes, mdlMaskId, prjMaskId, 
                            intersectGridName, taxonSourceName):
+      # TODO: get config values here, don't pass
+#       (userId, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens, 
+#        epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
+#        bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
+#        speciesExpYear, speciesExpMonth, speciesExpDay,
+#        intersectParams) = self.getArchiveSpecificConfig(self.userId, self.archiveName)
       for acode in algCodes:
          alg = Algorithm(acode)
          alg.fillWithDefaults()
@@ -145,6 +210,92 @@ class _LMChainer(LMObject):
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
+
+   # .............................
+   def getArchiveSpecificConfig(self, userId=None, archiveName=None):
+      from LmCommon.common.config import Config
+      from LmServer.common.lmconstants import SPECIES_DATA_PATH
+      
+      fileList = []
+      earl = EarlJr()
+      pth = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
+      archiveConfigFile = os.path.join(pth, 
+                                 '{}{}'.format(archiveName, OutputFormat.CONFIG))
+      print 'Config file at {}'.format(archiveConfigFile)
+      if os.path.exists(archiveConfigFile):
+         fileList.append(archiveConfigFile)
+      cfg = Config(fns=fileList)
+      
+      _ENV_CONFIG_HEADING = "LmServer - environment"
+      _PIPELINE_CONFIG_HEADING = "LmServer - pipeline"
+   
+      userCfg = cfg.get(_ENV_CONFIG_HEADING, 'ARCHIVE_USER')
+      archiveNameCfg = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_NAME')
+      if userId is None:
+         userId = userCfg
+      if archiveName is None:
+         archiveName = archiveNameCfg
+
+      try:
+         datasource = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_DATASOURCE')
+      except:
+         datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
+
+      algorithms = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_ALGORITHMS')
+      mdlScen = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_MODEL_SCENARIO')
+      prjScens = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_PROJECTION_SCENARIOS')
+      epsg = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_EPSG')
+      gridname = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_GRID_NAME')
+      minPoints = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_POINT_COUNT_MIN')
+      
+      intersectParams = {
+         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_FILTERSTRING'),
+         MatrixColumn.INTERSECT_PARAM_VAL_NAME: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_VALNAME'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPERCENT'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPRESENCE')}
+
+      # Expiration date for retrieved species data 
+      speciesExpYear = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_YEAR')
+      speciesExpMonth = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_MONTH')
+      speciesExpDay = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_DAY')
+   
+      # User data  
+      userOccCSV = userOccMeta = userOccDelimiter = None 
+      if SpeciesDatasource.isUser(datasource):
+         userOccData = cfg.get(_PIPELINE_CONFIG_HEADING, 
+                               'ARCHIVE_USER_OCCURRENCE_DATA')
+         userOccDelimiter = cfg.get(_PIPELINE_CONFIG_HEADING, 
+                               'ARCHIVE_USER_OCCURRENCE_DATA_DELIMITER')
+         userOccCSV = os.path.join(pth, userOccData + OutputFormat.CSV)
+         userOccMeta = os.path.join(pth, userOccData + OutputFormat.METADATA)
+      
+      # Bison data
+      bisonTsn = Config().get(_PIPELINE_CONFIG_HEADING, 'BISON_TSN_FILENAME')
+      bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
+         
+      # iDigBio data
+      idigTaxonids = Config().get(_PIPELINE_CONFIG_HEADING, 'IDIG_FILENAME')
+      idigTaxonidsFile = os.path.join(SPECIES_DATA_PATH, idigTaxonids)
+      
+      # GBIF data
+      gbifTax = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_TAXONOMY_FILENAME')
+      gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
+      gbifOcc = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_OCCURRENCE_FILENAME')
+      gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
+      gbifProv = cfg.get(_PIPELINE_CONFIG_HEADING, 'GBIF_PROVIDER_FILENAME')
+      gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
+         
+      return (userId, archiveName, datasource, algorithms, minPoints, 
+              mdlScen, prjScens, epsg, gridname, 
+              userOccCSV, userOccDelimiter, userOccMeta, 
+              bisonTsnFile, idigTaxonidsFile, 
+              gbifTaxFile, gbifOccFile, gbifProvFile, 
+              speciesExpYear, speciesExpMonth, speciesExpDay, intersectParams)  
+
 
 # ...............................................
    def _failGracefully(self, lmerr=None):
@@ -468,7 +619,8 @@ class _LMChainer(LMObject):
                objs = self._scribe.initOrRollbackSDMChain(occ, self.algs, 
                               self.modelScenario, self.projScenarios, 
                               mdlMask=self.modelMask, projMask=self.projMask,
-                              gridset=self.boomGridset,
+                              gridset=self.boomGridset, 
+                              intersectParams=self.intersectParams,
                               minPointCount=self.minPointCount)
                self.log.debug('Created {} objects for occurrenceset {}'
                               .format(len(objs), occ.getId()))
@@ -1147,52 +1299,6 @@ class iDigBioChainer(_LMChainer):
       return objs
 
 # .............................................................................
-# .............................................................................
-if __name__ == "__main__":
-   from LmDbServer.boom.boom import Archivist
-   from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-   
-   tstUserId='ryan'
-   tstArchiveName='Heuchera archive'
-   
-   (user, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens,  
-    epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
-    bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
-    speciesExpYear, speciesExpMonth, 
-    speciesExpDay) = Archivist.getArchiveSpecificConfig(userId=tstUserId, 
-                                                        archiveName=tstArchiveName)
-   
-   expdate = dt.DateTime(speciesExpYear, speciesExpMonth, speciesExpDay)
-   taxname = TAXONOMIC_SOURCE[datasource]['name']
-   log = ScriptLogger('testboomborg')
-   
-   if datasource == 'BISON':
-      boomer = BisonChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
-                      bisonTsnFile, expdate, 
-                      taxonSourceName=taxname, mdlMask=None, prjMask=None, 
-                      minPointCount=minPoints, 
-                      intersectGrid=gridname, log=log)
-   elif datasource == 'GBIF':
-      boomer = GBIFChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens,
-                      gbifOccFile, expdate, taxonSourceName=taxname,
-                      providerListFile=gbifProvFile,
-                      mdlMask=None, prjMask=None, 
-                      minPointCount=minPoints,  
-                      intersectGrid=gridname, log=log)
-   elif datasource == 'IDIGBIO':
-      boomer = iDigBioChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens, 
-                      idigTaxonidsFile, expdate, taxonSourceName=taxname,
-                      mdlMask=None, prjMask=None, 
-                      minPointCount=minPoints, 
-                      intersectGrid=gridname, log=log)
-   else:
-      boomer = UserChainer(archiveName, user, epsg, algorithms, mdlScen, prjScens, 
-                      userOccCSV, userOccMeta, expdate, 
-                      mdlMask=None, prjMask=None, 
-                      minPointCount=minPoints, 
-                      intersectGrid=gridname, log=log)
-         
-   boomer.chainOne()
 
 
 """
