@@ -45,6 +45,7 @@ from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
                   MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
 from LmServer.common.localconstants import (CATALOG_SERVER_OPTIONS, 
                   MAKEFLOW_OPTIONS, MAX_MAKEFLOWS, WORKER_FACTORY_OPTIONS)
+from LmServer.common.log import LmServerLogger
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -287,7 +288,8 @@ if __name__ == "__main__":
 
    args = parser.parse_args()
 
-   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE)
+   mfDaemon = MattDaemon(MATT_DAEMON_PID_FILE, 
+               log=LmServerLogger("mattDaemon", addConsole=True, addFile=True))
 
    if args.cmd.lower() == DaemonCommands.START:
       print "Start"
