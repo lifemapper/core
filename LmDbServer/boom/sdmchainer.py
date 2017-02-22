@@ -475,6 +475,7 @@ class _LMChainer(LMObject):
       
 # ...............................................
    def _createMakeflow(self, objs):
+      updatedMFChain = None
       if objs:
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
          newMFC = MFChain(self.userid, priority=self.priority, 

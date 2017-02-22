@@ -1223,18 +1223,18 @@ class Borg(DbPostgresql):
       @summary: Updates object in database
       @return: True/False for success of operation
       """
-      if type(obj) == type(OccurrenceLayer):
+      if isinstance(obj, OccurrenceLayer):
          success = self.updateOccurrenceSet(obj)
-      elif type(obj) == type(SDMProjection):
+      elif isinstance(obj, SDMProjection):
          success = self.updateSDMProject(obj)
-      elif type(obj) == type(ShapeGrid):
+      elif isinstance(obj, ShapeGrid):
          success = self.updateShapeGrid(obj)
-      elif type(obj) == type(MFChain):
+      elif isinstance(obj, MFChain):
          success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
                                               obj.getDLocation(), 
                                               obj.status, obj.statusModTime)
       else:
-         raise LMError('Unsupported delete for object {}'.format(type(obj)))
+         raise LMError('Unsupported update for object {}'.format(type(obj)))
       return success
 
 # ...............................................

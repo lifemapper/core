@@ -140,12 +140,12 @@ class MattDaemon(Daemon):
       for mfObj in rawMFs:
          # New filename
          origLoc = mfObj.getDLocation()
-         newLoc = os.path.join(self.workspace, origLoc.basename)
+         newLoc = os.path.join(self.workspace, os.path.basename(origLoc))
          # Move to workspace if it does not exist (see note)
          if not os.path.exists(newLoc):
             shutil.copyfile(origLoc, newLoc)
          # Add to mfs list
-         mfs.append(mfObj, newLoc)
+         mfs.append((mfObj, newLoc))
 
       return mfs
       
@@ -262,8 +262,8 @@ class MattDaemon(Daemon):
             lmStatus = JobStatus.INITIALIZE
          
          # Update
-         mfObj.status = lmStatus
-         self.scribe.updateMFChain(mfObj)
+         mfObj.updateObject(lmStatus)
+         self.scribe.updateObject(mfObj)
       
       # Remove files from workspace
       delFiles = glob.glob("{0}*".format(mfDocFn))
