@@ -222,6 +222,9 @@ class SDMProjection(_ProjectionType, Raster):
                 bbox=bbox, svcObjId=lyrId, serviceType=LMServiceType.PROJECTIONS, 
                 moduleType=LMServiceModule.LM, metadataUrl=metadataUrl, 
                 parentMetadataUrl=parentMetadataUrl, modTime=statusModTime)
+      # Do not allow layer to calculate dlocation, subclass SDMProjection must 
+      # override
+      self.clearDLocation()
       self.setId(lyrId)
       self.setLocalMapFilename()
       self._setMapPrefix()
@@ -242,8 +245,6 @@ class SDMProjection(_ProjectionType, Raster):
                           name=layer.name, epsgcode=layer.epsgcode, 
                           lyrId=layer.getId(), squid=layer.squid, 
                           verify=layer.verify, 
-                          # Take db dlocation, but do not allow 
-                          # layer to calculate dlocation, subclass must override
                           dlocation=layer._dlocation, 
                           lyrMetadata=layer.lyrMetadata, 
                           dataFormat=layer.dataFormat, gdalType=layer.gdalType,
