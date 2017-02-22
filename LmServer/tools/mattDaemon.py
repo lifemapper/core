@@ -107,8 +107,8 @@ class MattDaemon(Daemon):
             for mfObj, mfDocFn in self.getMakeflows(self.maxMakeflows - numRunning):
                
                if os.path.exists(mfDocFn):
-                  cmd = self._getMakeflowCommand("lifemapper-{0}".format(mfObj), 
-                                                 mfDocFn)
+                  cmd = self._getMakeflowCommand("lifemapper-{0}".format(
+                                             mfObj.getId()), mfDocFn)
                   self.log.debug(cmd)
                   self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True)])
                else:
@@ -124,6 +124,8 @@ class MattDaemon(Daemon):
          self.log.error("An error occurred")
          self.log.error(str(e))
          self.log.error(tb)
+         self.stopWorkerFactory()
+         self.stopCatalogServer()
    
    # .............................
    def getMakeflows(self, count):
@@ -262,7 +264,7 @@ class MattDaemon(Daemon):
             lmStatus = JobStatus.INITIALIZE
          
          # Update
-         mfObj.updateObject(lmStatus)
+         mfObj.updateStatus(lmStatus)
          self.scribe.updateObject(mfObj)
       
       # Remove files from workspace
