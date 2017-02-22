@@ -241,7 +241,10 @@ class SDMProjection(_ProjectionType, Raster):
                           sdmProjectionId=sdmProjectionId,
                           name=layer.name, epsgcode=layer.epsgcode, 
                           lyrId=layer.getId(), squid=layer.squid, 
-                          verify=layer.verify, dlocation=layer.getDLocation(), 
+                          verify=layer.verify, 
+                          # Take db dlocation, but do not allow 
+                          # layer to calculate dlocation, subclass must override
+                          dlocation=layer._dlocation, 
                           lyrMetadata=layer.lyrMetadata, 
                           dataFormat=layer.dataFormat, gdalType=layer.gdalType,
                           valUnits=layer.valUnits, nodataVal=layer.nodataVal, 
