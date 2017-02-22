@@ -161,10 +161,10 @@ class MatrixColumn(_LayerParameters, ProcessObject):
        
          options = ''
          if self.squid is not None:
-            options = "--squid={0}".format(self.squid)
+            options = "--squid {0}".format(self.squid)
          elif self.ident is not None:
-            options = "--ident={0}".format(self.ident)
-         # TODO: CJ - how do we return these columns?
+            options = "--ident {0}".format(self.ident)
+
          pavFname = self.getTargetFilename()
          
          cmdArguments = [os.getenv('PYTHON'), 
