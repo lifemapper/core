@@ -58,6 +58,7 @@ class Daemon(object):
       if log is not None:
          self.log = log
       else:
+         #TODO: Change this, the PID file doesn't exist when we are here
          pid = open(pidfile).read().strip()
          self.log = DaemonLogger(pid)
       
