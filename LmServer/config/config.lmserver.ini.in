@@ -118,7 +118,7 @@ MAX_MAKEFLOWS: 5
 CS_PID_FILE: @LMSCRATCHDISK@/run/catalog_server.pid
 CS_LOG_FILE: @LMSCRATCHDISK@/log/catalog_server.log
 CS_PORT: 9097
-CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LOG_FILE)s -O 100M -H @TEMPDIR@/catalog.history 
+CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LOG_FILE)s -O 100M -H @LMSCRATCHDISK@/catalog.history 
 
 ;Use: ./catalog_server [options]
 ;where options are:
@@ -145,7 +145,7 @@ CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LO
 
 ; Worker Factory constants
 WORKER_OPTIONS: -C @PUBLIC_FQDN@:%(CS_PORT)s
-WF_OPTIONS: -M lifemapper* -T sge -w 2 -W 5 -E "%(WORKER_OPTIONS)s" -S @TEMPDIR@/wq-pool-$uid
+WF_OPTIONS: -M lifemapper* -T sge -w 2 -W 5 -E "%(WORKER_OPTIONS)s" -S @LMSCRATCHDISK@/wq-pool-\$uid
 
 ;Use: work_queue_factory [options]
 ;where options are:
