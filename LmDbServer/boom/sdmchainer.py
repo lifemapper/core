@@ -36,7 +36,8 @@ from types import ListType, TupleType
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
-                                         ProcessType, JobStatus, ONE_HOUR) 
+                                    ProcessType, JobStatus, ONE_HOUR, OutputFormat) 
+from LmDbServer.common.lmconstants import (SpeciesDatasource)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.datalocator import EarlJr
@@ -47,8 +48,10 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.processchain import MFChain
+
 
 
 from LmServer.notifications.email import EmailNotifier
@@ -254,9 +257,11 @@ class _LMChainer(LMObject):
          MatrixColumn.INTERSECT_PARAM_VAL_NAME: 
             Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_VALNAME'),
          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: 
-            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPERCENT'),
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPRESENCE'),
+         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: 
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MAXPRESENCE'),
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 
-            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPRESENCE')}
+            Config().get(_PIPELINE_CONFIG_HEADING, 'INTERSECT_MINPERCENT')}
 
       # Expiration date for retrieved species data 
       speciesExpYear = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_SPECIES_EXP_YEAR')
@@ -1360,6 +1365,7 @@ while count < 5:
    dataChunk, dataCount, taxonName  = boomer._getChunk()
    objs = boomer._processUserChunk(dataChunk, dataCount, taxonName)
    count = len(objs)
+
 
 updatedMFChain = boomer._createMakeflow(objs)
 print updatedMFChain.getDLocation()

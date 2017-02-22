@@ -576,8 +576,10 @@ if __name__ == '__main__':
             help=('SQL Filter to limit features/pixels for intersect'))
    parser.add_argument('-in', '--intersect_attribute name', default='pixel', 
             help=('Attribute feature name for intersect (Vector) or pixel (Raster)'))
-   parser.add_argument('-im', '--intersect_min_presence', type=int, default=50, 
+   parser.add_argument('-im', '--intersect_min_presence', type=int, default=1, 
             help=('Minimum value for for intersect of features/pixels'))
+   parser.add_argument('-ix', '--intersect_max_presence', type=int, default=254, 
+            help=('Maximum value for for intersect of features/pixels'))
    parser.add_argument('-ip', '--intersect_percent', type=int, default=25, 
             help=('Minimum spatial coverage of desired values for intersect of features/pixels'))
 
@@ -602,6 +604,7 @@ if __name__ == '__main__':
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
          MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute,
          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: args.intersect_min_presence,
+         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: args.intersect_max_presence,
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
    # Imports META
    META, metafname = _importClimatePackageMetadata(envPackageName)
