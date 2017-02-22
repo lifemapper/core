@@ -40,7 +40,8 @@ import traceback
 
 from LmBackend.common.daemon import Daemon, DaemonCommands
 from LmCommon.common.lmconstants import JobStatus
-from LmServer.db.scribe import Scribe
+#from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
                   MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
 from LmServer.common.localconstants import (CATALOG_SERVER_OPTIONS, 
@@ -71,7 +72,7 @@ class MattDaemon(Daemon):
       self.workspace = MAKEFLOW_WORKSPACE
       
       # Establish db connection
-      self.scribe = Scribe(self.log)
+      self.scribe = BorgScribe(self.log)
       self.scribe.openConnections()
       
       # Start catalog server
