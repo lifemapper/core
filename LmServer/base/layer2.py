@@ -281,7 +281,10 @@ class _Layer(LMSpatialObject, ServiceObject):
       return dloc
    
    def getDLocation(self): 
-      self.setDLocation()
+      """
+      @summary: Return the _dlocation attribute
+      @note: Do not create and populate value by default. 
+      """
       return self._dlocation
    
    def clearDLocation(self): 
@@ -510,23 +513,14 @@ class Raster(_Layer):
       @copydoc LmServer.base.layer2._Layer::__init__()
       """
       self._verifyDataDescription(gdalType, dataFormat)
-      self.size = None
-      self.srs = None
-      self.geoTransform = None
-      # Only used to read from external sources, then return or write to disk,
-      # in the same or alternate GDAL-supported format 
-      self._data = None
-      # Update layer parameters values if not provided
-      (srs, geoTransform, size, dataFormat, gdalType, dlocation, resolution, 
-       minVal, maxVal, nodataVal, msgs) = self.populateStats(dlocation, 
-                                             gdalType, dataFormat, bbox, 
-                                             resolution, 
-                                             minVal, maxVal, nodataVal)
-      self.srs = srs
-      self.geoTransform = geoTransform
-      self.size = size
-      if msgs:
-         print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
+#      # Update layer parameters values if not provided
+#       (srs, geoTransform, size, dataFormat, gdalType, dlocation, resolution, 
+#        minVal, maxVal, nodataVal, msgs) = self.populateStats(dlocation, 
+#                                              gdalType, dataFormat, bbox, 
+#                                              resolution, 
+#                                              minVal, maxVal, nodataVal)
+#       if msgs:
+#          print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, ident=ident, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, gdalType=gdalType, 
@@ -678,9 +672,10 @@ class Raster(_Layer):
       srs = geoTransform = size = msgs = None
       if dlocation is not None:
          msgs = []
-         if not os.path.exists(dlocation):
-            msgs.append('File does not exist: {}'.format(dlocation))
-         else:
+         if (os.path.exists(dlocation) and 
+             (resolution is None or bbox is None or gdalType is None or 
+              minVal is None or maxVal is None or nodataVal is None)) :
+#             msgs.append('File does not exist: {}'.format(dlocation))
             dataset, band = self._openWithGDAL(dlocation=dlocation, bandnum=bandnum)
             srs = dataset.GetProjection()
             size = (dataset.RasterXSize, dataset.RasterYSize)
@@ -698,7 +693,7 @@ class Raster(_Layer):
                msgs.append('Invalid gdalFormat {}, changing to {} for layer {}'
                            .format(dataFormat, gdalFormat, dlocation))
                dataFormat = gdalFormat
-            # Fix extension if incorrect
+            # Rename with correct extension if incorrect
             head, ext = os.path.splitext(dlocation)
             correctExt = GDALFormatCodes[dataFormat]['FILE_EXT']
             if ext != correctExt:
