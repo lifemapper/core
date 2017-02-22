@@ -224,21 +224,9 @@ class SDMProjection(_ProjectionType, Raster):
                 parentMetadataUrl=parentMetadataUrl, modTime=statusModTime)
       # TODO: clean this up.  Do not allow layer to calculate dlocation,  
       #       subclass SDMProjection must override
-      self.clearDLocation()
-      # TODO: call populateStats with correct dlocation  
       self.setId(lyrId)
       self.setLocalMapFilename()
       self._setMapPrefix()
-      if (resolution is None or bbox is None or gdalType is None or 
-          minVal is None or maxVal is None or nodataVal):
-         (srs, geoTransform, size, self.dataFormat, self.gdalType, 
-          self.dlocation, self.resolution, self.minVal, self.maxVal, 
-          self.nodataVal, msgs) = self.populateStats(dlocation, 
-                                                gdalType, dataFormat, bbox, 
-                                                resolution, 
-                                                minVal, maxVal, nodataVal)
-      if msgs:
-         print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
    
 # .............................................................................
 # another Constructor

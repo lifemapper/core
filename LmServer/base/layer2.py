@@ -521,6 +521,14 @@ class Raster(_Layer):
 #                                              minVal, maxVal, nodataVal)
 #       if msgs:
 #          print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
+      if (resolution is None or bbox is None or gdalType is None or 
+          minVal is None or maxVal is None or nodataVal):
+         (dataFormat, gdalType, dlocation, resolution, minVal, maxVal, 
+          nodataVal, msgs) = self.populateStats(dlocation, gdalType, dataFormat, 
+                                                bbox, resolution, minVal, maxVal, 
+                                                nodataVal)
+      if msgs:
+         print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, ident=ident, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, gdalType=gdalType, 
@@ -723,8 +731,8 @@ class Raster(_Layer):
                maxVal = bmax
             if nodataVal is None:
                nodataVal = band.GetNoDataValue()
-      return (srs, geoTransform, size, dataFormat, gdalType, dlocation, 
-              resolution, minVal, maxVal, nodataVal, msgs)
+      return (dataFormat, gdalType, dlocation, resolution, minVal, maxVal, 
+              nodataVal, msgs)
          
 # ...............................................
    def readFromUploadedData(self, datacontent, overwrite=False, 

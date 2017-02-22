@@ -88,14 +88,6 @@ class EnvLayer(EnvType, Raster):
                 moduleType=LMServiceModule.LM, 
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
-      if (resolution is None or bbox is None or gdalType is None or 
-          minVal is None or maxVal is None or nodataVal):
-         (srs, geoTransform, size, self.dataFormat, self.gdalType, 
-          self.dlocation, self.resolution, self.minVal, self.maxVal, 
-          self.nodataVal, msgs) = self.populateStats(dlocation, 
-                                                gdalType, dataFormat, bbox, 
-                                                resolution, 
-                                                minVal, maxVal, nodataVal)
       self._scenCode = scencode
       self._setMapPrefix(scencode=scencode)
 
