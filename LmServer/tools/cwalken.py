@@ -27,6 +27,20 @@ import os
 from LmServer.base.lmobj import LMObject
 from LmServer.common.log import ScriptLogger
 
+def itemGenerator(items):
+   """
+   @summary: Makes everything an iterable.  One item acts like a list with one
+                item
+   """
+   # If it is already iterable, iterate over it
+   if hasattr(items, '__iter__'):
+      for item in items:
+         yield item
+   else:
+      # Not iterable, so just return the item at the first iteration
+      yield item
+
+# .............................................................................
 class ChristopherWalken(LMObject):
    """
    Class to ChristopherWalken.
@@ -53,9 +67,53 @@ class ChristopherWalken(LMObject):
       @param dbHost: hostname for database machine
       @param dbPort: port for database connection
       """
+      self.rules = []
+      
       if logger is None:
          log = ScriptLogger(os.path.basename(self.__class__.__name__.lower()))
 
-# ...............................................
-   def getRequest(self):
+   # ...............................
+   def startWalken(objList):
+      """
+      @summary: Walks a list of Lifemapper objects for computation
+      """
+      for woc in objList:
+         if isinstance(woc, IntersectWoC):
+            self.processIntersect(woc)
+         elif isinstance(woc, ProjectionWoC):
+            self.processProjection(woc)
+         elif isinstance(woc, OccurrenceSetWoC):
+            self.processOccurrenceSet(woc)
+         else:
+            raise Exception, "Don't know how to process {0}".format(type(woc))
+
+   # ...............................
+   def processIntersect(self, intersectWoC):
       pass
+
+   # ...............................
+   def processProjection(self, projWoC):
+      """
+      @summary: Process a projection request
+      """
+      projections = []
+      for occ in itemGenerator(projWoC.occurrenceSet):
+         occSet = self.processOccurrenceSet(occ)
+         for algo in itemGenerator(projWoC.algorithm):
+            for prjScn in itemGenerator(projWoC.prjScenarios):
+               # Probably need to get the scenario objects
+               prj = SDMProjection(occSet, algo, projWoC.modelScenario, prjScn)
+               self.rules.extend(prj.computeMe())
+               projections.append(prj)
+      return projections
+                    
+   # ...............................
+   def processOccurrenceSet(self, occWoC):
+      """
+      @summary: This expects that occWoC will contain information necessary for processing an occurrence set
+      """
+      occ = None
+      self.rules.extend(occ.computeMe())
+      return occ
+
+# ...............................
