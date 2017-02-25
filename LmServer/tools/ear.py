@@ -32,12 +32,12 @@ from osgeo import gdal, ogr
 
 from LmCommon.common.lmconstants import ProcessType, LMFormat
 from LmServer.base.layer2 import Vector, Raster
-from LmServer.base.lmobj import LMError
+from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
-class Ear(object):
+class Ear(LMObject):
    """
    @summary: Object to construct and parse filenames and URLs.
    """
@@ -116,7 +116,7 @@ class Ear(object):
                elif featCount < 1:
                   msg = 'Vector {} has no features'.format(outputFname)
                   
-            elif LMFormat.isGDAL(ext):
+            elif LMFormat.isGDAL(ext=ext):
                success = Raster.testRaster(outputFname)
                if not success:
                   msg = 'File {} is not a valid GDAL file'.format(outputFname)

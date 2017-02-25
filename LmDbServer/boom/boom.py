@@ -35,7 +35,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.mtxcolumn import MatrixColumn
 
 # .............................................................................
 class Archivist(Daemon):

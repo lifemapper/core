@@ -330,6 +330,16 @@ class BorgScribe(LMObject):
       return success
    
 # ...............................................
+   def findOrInsertMatrixColumn(self, mtxcol):
+      """
+      @summary: Find existing OR save a new MatrixColumn
+      @param mtxcol: the LmServer.legion.MatrixColumn object to get or insert
+      @return new or existing MatrixColumn object
+      """
+      mtxcol = self._borg.findOrInsertMatrixColumn(mtxcol)
+      return mtxcol
+      
+# ...............................................
    def initOrRollbackIntersect(self, lyr, mtx, intersectParams, modtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.

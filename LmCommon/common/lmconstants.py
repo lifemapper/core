@@ -87,7 +87,8 @@ class LMFormat:
    @summary: Class containing known formats to Lifemapper
    @todo: Deprecate OutputFormat and instead use this
    """
-   ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'])
+   ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'],
+                      driver='AAIGrid')
    CSV = FileFormat('.csv', 'text/csv')
    GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff')
    HFA = FileFormat('.img', 'image/octet-stream')
@@ -130,14 +131,19 @@ class LMFormat:
       return False
 
    @staticmethod
-   def isOGR(ext):
+   def isOGR(ext=None, format=None):
       if ext == LMFormat.SHAPE.ext:
+         return True
+      elif format == LMFormat.SHAPE.driver:
          return True
       return False
       
    @staticmethod
-   def isGDAL(ext):
-      if ext in (LMFormat.ASCII.ext, LMFormat.GTIFF.ext):
+   def isGDAL(ext=None, format=None):
+      gdal_fformats = (LMFormat.ASCII, LMFormat.GTIFF)
+      if ext in [lmff.ext for lmff in gdal_fformats]:
+         return True
+      elif format in [lmff.driver for lmff in gdal_fformats]:
          return True
       return False
    

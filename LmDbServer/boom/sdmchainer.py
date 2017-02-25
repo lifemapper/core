@@ -47,13 +47,9 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.processchain import MFChain
-
-
-
 from LmServer.notifications.email import EmailNotifier
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
@@ -106,62 +102,6 @@ class _LMChainer(LMObject):
       self._fillDefaultObjects(archiveName, algLst, mdlScen, prjScenLst, 
                                mdlMask, prjMask, intersectGrid, taxonSourceName)
          
-# ...............................................
-   def _fillConfiguredObjects(self, usr, archiveName, algCodes, mdlScenarioCode, 
-                              projScenarioCodes, mdlMaskId, prjMaskId, 
-                              intersectGridName, taxonSourceName):
-      (userId, archiveName, datasource, algorithms, minPoints, mdlScen, prjScens, 
-       epsg, gridname, userOccCSV, userOccDelimiter, userOccMeta, 
-       bisonTsnFile, idigTaxonidsFile, gbifTaxFile, gbifOccFile, gbifProvFile, 
-       speciesExpYear, speciesExpMonth, speciesExpDay,
-       intersectParams) = self.getArchiveSpecificConfig(usr, archiveName)
-       
-      algs = prjscens = []
-      mscen = None
-      
-      for acode in algorithms:
-         alg = Algorithm(acode)
-         alg.fillWithDefaults()
-         algs.append(alg)
-
-      try:
-         txSourceId, url, moddate = self._scribe.findTaxonSource(taxonSourceName)
-         
-         mscen = self._scribe.getScenario(mdlScenarioCode, user=self.userid, 
-                                          fillLayers=True)
-         if mscen is not None:
-            if mdlScenarioCode not in projScenarioCodes:
-               prjscens.append(mscen)
-            for pcode in projScenarioCodes:
-               scen = self._scribe.getScenario(pcode, user=self.userid, 
-                                               fillLayers=True)
-               if scen is not None:
-                  prjscens.append(scen)
-               else:
-                  raise LMError('Failed to retrieve scenario {}'.format(pcode))
-         else:
-            raise LMError('Failed to retrieve scenario {}'.format(mdlScenarioCode))
-         
-         modelMask = self._scribe.getLayer(mdlMaskId)
-         projMask = self._scribe.getLayer(prjMaskId)
-         intersectGrid = self._scribe.getShapeGrid(userId=self.userid, 
-                                             lyrName=intersectGridName,
-                                             epsg=self.epsg)
-         # Get gridset for Archive "Global PAM"
-         newGridset = Gridset(name=archiveName, shapeGrid=self.intersectGrid, 
-                        epsgcode=self.epsg, userId=self.userid)
-         boomGridset = self._scribe.getGridset(newGridset, fillMatrices=True)
-         if boomGridset is None or boomGridset.pam is None:
-            raise LMError('Failed to retrieve Gridset or Global PAM')
-
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         raise e
-      
-      return (userId, archiveName, algs, txSourceId, mscen, prjscens, modelMask, 
-              projMask, intersectGrid, intersectParams, boomGridset)
-
 # ...............................................
    def _fillDefaultObjects(self, archiveName, algCodes, mdlScenarioCode, 
                            projScenarioCodes, mdlMaskId, prjMaskId, 
