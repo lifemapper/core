@@ -96,11 +96,11 @@ class ChristopherWalken(LMObject):
          raise LMError('JSON Walken is not yet implemented')
       else:       
          pass
-#          (self.weaponOfChoice, self.epsg, self.algs, 
-#           self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
-#           boomGridset, self.intersectParams) = self.getConfiguredObjects()
-#       self.globalPAM = boomGridset.pam
-#       self.boomShapegrid = boomGridset.getShapegrid()
+         (self.weaponOfChoice, self.epsg, self.algs, 
+          self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
+          boomGridset, self.intersectParams) = self.getConfiguredObjects()
+      self.globalPAM = boomGridset.pam
+      self.boomShapegrid = boomGridset.getShapegrid()
 
 # ...............................................
    def moveToStart(self):
@@ -180,7 +180,8 @@ class ChristopherWalken(LMObject):
 
 # .............................................................................
    def _getSDMParams(self, cfg, envHeading, pipelineHeading, epsg):
-      algorithms = prjScens = []
+      algorithms = []
+      prjScens = []
       mdlMask = prjMask = None
 
       # Get algorithms for SDM modeling
@@ -198,7 +199,7 @@ class ChristopherWalken(LMObject):
       if mdlScen is not None:
          if mdlScenCode not in prjScenCodes:
             prjScens.append(mdlScen)
-         for pcode in prjScens:
+         for pcode in prjScenCodes:
             scen = self._scribe.getScenario(pcode, user=self.userId, 
                                             fillLayers=True)
             if scen is not None:
@@ -229,7 +230,7 @@ class ChristopherWalken(LMObject):
       # Get existing intersect grid, gridset and parameters for Global PAM
       gridname = cfg.get(pipelineHeading, 'GRID_NAME')
       intersectGrid = self._scribe.getShapeGrid(userId=self.userId, 
-                                 lyrName=gridname, epsg=self.epsg)
+                                 lyrName=gridname, epsg=epsg)
       # Get  for Archive "Global PAM"
       tmpGS = Gridset(name=self.archiveName, shapeGrid=intersectGrid, 
                      epsgcode=epsg, userId=self.userId)
@@ -431,30 +432,6 @@ archiveName='Heuchera_archive'
 
 logger = ScriptLogger('testChris')
 chris = ChristopherWalken(userId, archiveName, logger=logger)
-
-
-earl = EarlJr()
-boompath = earl.createDataPath(chris.userId, LMFileType.BOOM_CONFIG)
-archiveConfigFile = os.path.join(boompath, '{}{}'
-                     .format(chris.archiveName, OutputFormat.CONFIG))
-print 'Config file at {}'.format(archiveConfigFile)
-cfg = Config(fns=[archiveConfigFile])
-envHeading = "LmServer - environment"
-pipelineHeading = "LmServer - pipeline"
-
-epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
-weaponOfChoice = chris._getOccWeaponOfChoice(cfg, envHeading, 
-                                       pipelineHeading, epsg, boompath)
-(algorithms, mdlScen, mdlMask, prjScens, prjMask) = chris._getSDMParams(cfg, 
-                                       envHeading, pipelineHeading, epsg)
-# Global PAM inputs
-(boomGridset, intersectParams) = self._getGlobalPamObjects(cfg, envHeading, 
-                                                   pipelineHeading, epsg)
-
-return (weaponOfChoice, epsg, algorithms, 
-        mdlScen, mdlMask, prjScens, prjMask, 
-        boomGridset, intersectParams)  
-
 
 chris.moveToStart()
 chris.startWalken()
