@@ -486,7 +486,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
               .format(speciesDataDelimiter))
    f.write('{}: {}\n'.format(varname, speciesData))
    f.write('\n')
-   # Input environmental data, pulled from environmental metadata  
+   # Input environmental data, pulled from SCENARIO_PACKAGE metadata
    f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
    f.write('PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
    f.write('PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))

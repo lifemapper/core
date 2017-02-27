@@ -82,8 +82,8 @@ class ChristopherWalken(LMObject):
       self.log = logger
       # Database connection
       try:
-         scribe = BorgScribe(self.log)
-         success = scribe.openConnections()
+         self._scribe = BorgScribe(self.log)
+         success = self._scribe.openConnections()
       except Exception, e:
          raise LMError(currargs='Exception opening database', prevargs=e.args)
       else:
