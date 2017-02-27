@@ -431,7 +431,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
                      speciesSource, speciesData, speciesDataDelimiter,
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, intersectParams,
-                     mdlScen=None, prjScens=None):
+                     mdlScen=None, prjScens=None, mdlMask=None, prjMask=None):
    """
    """
    earl = EarlJr()
@@ -439,33 +439,31 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    newConfigFilename = os.path.join(pth, 
                               '{}{}'.format(archiveName, OutputFormat.CONFIG))
    f = open(newConfigFilename, 'w')
-   f.write('[LmServer - environment]\n')
-   f.write('ARCHIVE_USER: {}\n'.format(userid))
-   f.write('\n')
-   f.write('\n')
    f.write('[LmServer - pipeline]\n')
-   f.write('ARCHIVE_DATASOURCE: {}\n'.format(speciesSource))
+   f.write('ARCHIVE_USER: {}\n'.format(userid))
    f.write('ARCHIVE_NAME: {}\n'.format(archiveName))
+
+   f.write('DATASOURCE: {}\n'.format(speciesSource))
    if userEmail is not None:
-      f.write('ARCHIVE_TROUBLESHOOTERS: {}\n'.format(userEmail))
+      f.write('TROUBLESHOOTERS: {}\n'.format(userEmail))
    f.write('\n')   
    # Expiration date triggering re-query and computation
-   f.write('ARCHIVE_SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
-   f.write('ARCHIVE_SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
-   f.write('ARCHIVE_SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
+   f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
+   f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
+   f.write('SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
    f.write('\n')
    # SDM Algorithm and minimun number of required species points   
-   f.write('ARCHIVE_POINT_COUNT_MIN: {}\n'.format(minpoints))
+   f.write('POINT_COUNT_MIN: {}\n'.format(minpoints))
    if len(algorithms) > 0:
       algs = ','.join(algorithms)
    else:
       algs = DEFAULT_ALGORITHMS
-   f.write('ARCHIVE_ALGORITHMS: {}\n'.format(algs))
+   f.write('ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
    # Intersection grid
-   f.write('ARCHIVE_GRID_NAME: {}\n'.format(gridname))
-   f.write('ARCHIVE_GRID_CELLSIZE: {}\n'.format(grid_cellsize))
-   f.write('ARCHIVE_GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
+   f.write('GRID_NAME: {}\n'.format(gridname))
+   f.write('GRID_CELLSIZE: {}\n'.format(grid_cellsize))
+   f.write('GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
    f.write('\n')
    # Species source type (for processing) and file
    if speciesSource == SpeciesDatasource.GBIF:
@@ -481,25 +479,30 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       if speciesData is None:
          speciesData = IDIG_FILENAME
    else:
-      varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
+      varname = 'USER_OCCURRENCE_DATA'
       if speciesData is None:
          speciesData = USER_OCCURRENCE_DATA
-      f.write('ARCHIVE_USER_OCCURRENCE_DATA_DELIMITER: {}\n'
+      f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
               .format(speciesDataDelimiter))
    f.write('{}: {}\n'.format(varname, speciesData))
    f.write('\n')
    # Input environmental data, pulled from environmental metadata  
-   f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n'.format(envPackageName))
-   f.write('ARCHIVE_EPSG: {}\n'.format(configMeta['epsg']))
-   f.write('ARCHIVE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
+   f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
+   f.write('PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
+   f.write('PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO
-   f.write('ARCHIVE_MODEL_SCENARIO: {}\n'.format(mdlScen))
+   f.write('PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
    if not prjScens:
       prjScens = DEFAULT_PROJECTION_SCENARIOS
    pcodes = ','.join(prjScens)
-   f.write('ARCHIVE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
+   f.write('PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
+   
+   if mdlMask is not None:
+      f.write('MODEL_MASK_NAME: {}\n'.format(mdlMask))
+   if prjMask is not None:
+      f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMask))
    
    for k, v in intersectParams.iteritems():
       f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
@@ -685,8 +688,8 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
                                      -sd ','       \
                                      -p 25        \
                                      -a bioclim   \
-                                     -c 1         \
-                                     -q square
+                                     -gz 1         \
+                                     -gp square
 
 $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
                                      --user ryan                  \

@@ -30,7 +30,7 @@ import os
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
                                          OutputFormat, MatrixType) 
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, BOOM_PID_FILE
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LOG_PATH, LMFileType, SPECIES_DATA_PATH)
@@ -79,6 +79,7 @@ class ChristopherWalken(LMObject):
       # Optionally use parent process logger
       if logger is None:
          logger = ScriptLogger(self.name)
+      self.log = logger
       # Database connection
       try:
          scribe = BorgScribe(self.log)
@@ -118,7 +119,7 @@ class ChristopherWalken(LMObject):
                              boompath):
       # Get datasource and optional taxonomy source
       try:
-         datasource = cfg.get(pipelineHeading, 'ARCHIVE_DATASOURCE')
+         datasource = cfg.get(pipelineHeading, 'DATASOURCE')
       except:
          datasource = cfg.get(envHeading, 'DATASOURCE')
       try:
@@ -127,11 +128,11 @@ class ChristopherWalken(LMObject):
          taxonSourceName = None
          
       # Minimum number of points required for SDM modeling 
-      minPoints = cfg.getint(pipelineHeading, 'ARCHIVE_POINT_COUNT_MIN')
+      minPoints = cfg.getint(pipelineHeading, 'POINT_COUNT_MIN')
       # Expiration date for retrieved species data 
-      expDate = dt.DateTime(cfg.getint(pipelineHeading, 'ARCHIVE_SPECIES_EXP_YEAR'), 
-                            cfg.getint(pipelineHeading, 'ARCHIVE_SPECIES_EXP_MONTH'), 
-                            cfg.getint(pipelineHeading, 'ARCHIVE_SPECIES_EXP_DAY')).mjd
+      expDate = dt.DateTime(cfg.getint(pipelineHeading, 'SPECIES_EXP_YEAR'), 
+                            cfg.getint(pipelineHeading, 'SPECIES_EXP_MONTH'), 
+                            cfg.getint(pipelineHeading, 'SPECIES_EXP_DAY')).mjd
       # Get Weapon of Choice depending on type of Occurrence data to parse
       # Bison data
       if datasource == 'BISON':
@@ -165,9 +166,9 @@ class ChristopherWalken(LMObject):
       # User data, anything not above
       else:
          userOccData = cfg.get(pipelineHeading, 
-                               'ARCHIVE_USER_OCCURRENCE_DATA')
+                               'USER_OCCURRENCE_DATA')
          userOccDelimiter = cfg.get(pipelineHeading, 
-                               'ARCHIVE_USER_OCCURRENCE_DATA_DELIMITER')
+                               'USER_OCCURRENCE_DATA_DELIMITER')
          userOccCSV = os.path.join(boompath, userOccData + OutputFormat.CSV)
          userOccMeta = os.path.join(boompath, userOccData + OutputFormat.METADATA)
          weaponOfChoice = UserWoC(self._scribe, self.userId, self.archiveName, 
@@ -182,15 +183,15 @@ class ChristopherWalken(LMObject):
       mdlMask = prjMask = None
 
       # Get algorithms for SDM modeling
-      algCodes = cfg.getlist(pipelineHeading, 'ARCHIVE_ALGORITHMS')
+      algCodes = cfg.getlist(pipelineHeading, 'ALGORITHMS')
       for acode in algCodes:
          alg = Algorithm(acode)
          alg.fillWithDefaults()
          algorithms.append(alg)
 
       # Get environmental data model and projection scenarios
-      mdlScenCode = cfg.get(pipelineHeading, 'ARCHIVE_MODEL_SCENARIO')
-      prjScenCodes = cfg.getlist(pipelineHeading, 'ARCHIVE_PROJECTION_SCENARIOS')
+      mdlScenCode = cfg.get(pipelineHeading, 'PACKAGE_MODEL_SCENARIO')
+      prjScenCodes = cfg.getlist(pipelineHeading, 'PACKAGE_PROJECTION_SCENARIOS')
       mdlScen = self._scribe.getScenario(mdlScenCode, user=self.userId, 
                                          fillLayers=True)
       if mdlScen is not None:
@@ -208,13 +209,13 @@ class ChristopherWalken(LMObject):
 
       # Get optional model and project masks
       try:
-         mdlMaskName = cfg.get(pipelineHeading, 'ARCHIVE_MODEL_MASK_NAME')
+         mdlMaskName = cfg.get(pipelineHeading, 'MODEL_MASK_NAME')
          mdlMask = self._scribe.getLayer(userId=self.userId, 
                                          lyrName=mdlMaskName, epsg=self.epsg)
       except:
          pass
       try:
-         prjMaskName = cfg.get(pipelineHeading, 'ARCHIVE_PROJECT_MASK_NAME')
+         prjMaskName = cfg.get(pipelineHeading, 'PROJECTION_MASK_NAME')
          prjMask = self._scribe.getLayer(userId=self.userId, 
                                          lyrName=prjMaskName, epsg=self.epsg)
       except:
@@ -225,7 +226,7 @@ class ChristopherWalken(LMObject):
 # .............................................................................
    def _getGlobalPamObjects(self, cfg, envHeading, pipelineHeading, epsg):
       # Get existing intersect grid, gridset and parameters for Global PAM
-      gridname = cfg.get(pipelineHeading, 'ARCHIVE_GRID_NAME')
+      gridname = cfg.get(pipelineHeading, 'GRID_NAME')
       intersectGrid = self._scribe.getShapeGrid(userId=self.userId, 
                                  lyrName=gridname, epsg=self.epsg)
       # Get  for Archive "Global PAM"
@@ -248,6 +249,10 @@ class ChristopherWalken(LMObject):
 
 # .............................................................................
    def getConfiguredObjects(self):
+      """
+      @summary: Get configured string values and any corresponding db objects 
+      @TODO: Make all archive/default config keys consistent
+      """
       # Get user-archive configuration file
       if self.userId is not None and self.archiveName is not None:
          earl = EarlJr()
@@ -263,13 +268,19 @@ class ChristopherWalken(LMObject):
 
       # Fill with default values if missing
       if self.userId is None:
-         self.userId = cfg.get(envHeading, 'ARCHIVE_USER')
+         try:
+            self.userId = cfg.get(pipelineHeading, 'ARCHIVE_USER')
+         except:
+            # TODO: move default to pipeline section
+            self.userId = cfg.get(envHeading, 'ARCHIVE_USER')
          boompath = earl.createDataPath(self.userId, LMFileType.BOOM_CONFIG)
       if self.archiveName is None:
          self.archiveName = cfg.get(pipelineHeading, 'ARCHIVE_NAME')
       # Get EPSG of environmental data
-      epsg = cfg.getint(pipelineHeading, 'ARCHIVE_EPSG')
-
+      try:
+         epsg = cfg.getint(pipelineHeading, 'PACKAGE_EPSG')
+      except:
+         epsg = cfg.getint(pipelineHeading, 'DEFAULT_EPSG')
       # Species parser/puller
       weaponOfChoice = self._getOccWeaponOfChoice(cfg, envHeading, 
                                              pipelineHeading, epsg, boompath)
@@ -402,9 +413,7 @@ import time
 from LmCommon.common.apiquery import BisonAPI, GbifAPI, IdigbioAPI
 from LmCommon.common.lmconstants import ProcessType, MatrixType
 from LmCommon.common.verify import computeHash
-
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-
 from LmServer.base.taxon import ScientificName
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -416,12 +425,12 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 
 userId='ryan'
 archiveName='Heuchera_archive'
+# currtime = dt.gmt().mjd
+# taxonSourceKeyVal = None
+# occProcessType = ProcessType.USER_TAXA_OCCURRENCE
 
-currtime = dt.gmt().mjd
-taxonSourceKeyVal = None
-occProcessType = ProcessType.USER_TAXA_OCCURRENCE
 logger = ScriptLogger('testChris')
-chris = Walker(BOOM_PID_FILE, userId, archiveName, log=logger)
+chris = ChristopherWalken(userId, archiveName, logger=logger)
 
 chris.moveToStart()
 chris.startWalken()
