@@ -1250,7 +1250,7 @@ class Borg(DbPostgresql):
             obj = obj.objId
          except:
             raise LMError('Failed getting ID for {} object'.format(type(obj)))
-      if type(obj) == type(MFChain):
+      if isinstance(obj, MFChain):
          success = self.executeModifyFunction('lm_deleteMFChain', objid)
       else:
          raise LMError('Unsupported delete for object {}'.format(type(obj)))
