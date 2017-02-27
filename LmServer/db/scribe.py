@@ -37,7 +37,7 @@ from LmServer.base.layer import Vector
 from LmServer.base.lmobj import LMError, LMMissingDataError
 from LmServer.common.lmconstants import (DbUser, JobFamily, Priority, 
                                         ReferenceType)
-from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN, 
+from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN, 
                                             DATASOURCE)
 from LmServer.common.notifyJob import NotifyJob
 from LmServer.db.peruser import Peruser
@@ -191,7 +191,7 @@ class Scribe(Peruser):
       
       if occ.status <= JobStatus.COMPLETE:
          try:
-            jobs = self.initSDMChain(ARCHIVE_USER, occ, self.algs, 
+            jobs = self.initSDMChain(PUBLIC_USER, occ, self.algs, 
                                       self.modelScenario, 
                                       self.projScenarios, 
                                       occJobProcessType=processtype,
@@ -1122,8 +1122,8 @@ class Scribe(Peruser):
          occ = self.getOccurrenceSet(occ.getId())
          pth = occ.getAbsolutePath()
          
-      # ARCHIVE_USER dependent experiments are all in occurrenceId-based path 
-      if occ.getUserId() == ARCHIVE_USER:
+      # PUBLIC_USER dependent experiments are all in occurrenceId-based path 
+      if occ.getUserId() == PUBLIC_USER:
          if os.path.exists(pth):
             import glob
             fnames = glob.glob(os.path.join(pth, '*'))

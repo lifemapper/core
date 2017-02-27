@@ -41,7 +41,7 @@ from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
 from LmServer.common.lmconstants import (DbUser, LOG_PATH, CHERRYPY_CONFIG_FILE)
-from LmServer.common.localconstants import (ARCHIVE_USER, WEBSERVICES_ROOT)
+from LmServer.common.localconstants import (PUBLIC_USER, WEBSERVICES_ROOT)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
                                  UserLogger)
@@ -285,7 +285,7 @@ class svc(object):
       pword = getUrlParameter("pword", parameters)
       sessionUser = getUserName()
       
-      if sessionUser != ARCHIVE_USER and sessionUser != DEFAULT_POST_USER:
+      if sessionUser != PUBLIC_USER and sessionUser != DEFAULT_POST_USER:
          # Already logged in
          raise cherrypy.HTTPRedirect("/")
       elif username is None or pword is None:
@@ -662,7 +662,7 @@ def getUserName():
    """
    log = LmPublicLogger()
    if cherrypy.request.method.lower() == "get":
-      user = ARCHIVE_USER
+      user = PUBLIC_USER
    else:
       user = DEFAULT_POST_USER
    temp = None
@@ -764,7 +764,7 @@ def getUserLog(userId):
    @summary: Gets a logger for the specified user.  Returns the regular 
                 LmPublicLogger if the user is the archive (public) user
    """
-   if userId is not None and userId not in [ARCHIVE_USER, DEFAULT_POST_USER]:
+   if userId is not None and userId not in [PUBLIC_USER, DEFAULT_POST_USER]:
       return UserLogger(userId)
    else:
       return LmPublicLogger()

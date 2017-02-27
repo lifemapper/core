@@ -29,7 +29,7 @@ from LmBackend.common.daemon import Daemon
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ARCHIVE_NAME
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.tools.cwalken import ChristopherWalken
 
@@ -120,9 +120,9 @@ if __name__ == "__main__":
    parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
             help=('Name for the existing archive, gridset, and grid created for ' +
                   'these data.  This name was created in initBoom.'))
-   parser.add_argument('-u', '--user', default=ARCHIVE_USER,
+   parser.add_argument('-u', '--user', default=PUBLIC_USER,
             help=('Owner of this archive this archive. The default is the '
-                  'configured ARCHIVE_USER.'))
+                  'configured PUBLIC_USER.'))
    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
               help="The action that should be performed by the Boomer daemon")
 

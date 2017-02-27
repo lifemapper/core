@@ -30,7 +30,7 @@ from types import ListType
 
 
 from LmServer.base.utilities import formatTimeUrl, getMjdTimeFromISO8601
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.base.servicesBaseClass import buildAttListResponse, \
@@ -132,7 +132,7 @@ class SDMLayersRestService(RestService):
             public, typeCode, fullObjs = \
                       getQueryParameters(self.queryParameters, self.parameters)
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
       count = self.conn.countLayers(userId=user, 
@@ -167,7 +167,7 @@ class SDMLayersRestService(RestService):
          fullObjs = False
 
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
       items = self.conn.listLayers(startRec, 

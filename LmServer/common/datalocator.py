@@ -26,7 +26,7 @@ import os
 
 from LmCommon.common.lmconstants import OutputFormat
 
-from LmServer.common.localconstants import (APP_PATH, ARCHIVE_USER, 
+from LmServer.common.localconstants import (APP_PATH, PUBLIC_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
 from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
    LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX,
@@ -618,7 +618,7 @@ class EarlJr(LMObject):
 
       elif mapname.startswith(MapPrefix.ANC):
          ancillary = True
-         usr = ARCHIVE_USER 
+         usr = PUBLIC_USER 
          
       else:
          msg = 'Improper mapname %s - ' % mapname

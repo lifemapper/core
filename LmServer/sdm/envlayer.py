@@ -24,7 +24,7 @@
 import json
 
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
-from LmServer.common.localconstants import ARCHIVE_USER, SCENARIO_PACKAGE_EPSG
+from LmServer.common.localconstants import PUBLIC_USER, SCENARIO_PACKAGE_EPSG
 from LmServer.base.layer import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject
@@ -103,7 +103,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                 layerType=None, layerTypeId=None, envMetadata={},
                 layerTypeModTime=None,
                 gcmCode=None, altpredCode=None, dateCode=None,
-                userId=ARCHIVE_USER, layerId=None, 
+                userId=PUBLIC_USER, layerId=None, 
                 modTime=None, metadataUrl=None,
                 #TODO: remove these for Borg
                 title=None, isCategorical=False, metalocation=None, author=None, 

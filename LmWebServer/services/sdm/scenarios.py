@@ -30,7 +30,7 @@ from types import ListType, StringType, UnicodeType
 
 
 from LmServer.base.utilities import formatTimeUrl, getMjdTimeFromISO8601
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.base.servicesBaseClass import buildAttListResponse, \
@@ -145,7 +145,7 @@ class SDMScenariosRestService(RestService):
       if isinstance(kws, (StringType, UnicodeType)):
          kws = [kws]
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
       count = self.conn.countScenarios(userId=user,
@@ -182,7 +182,7 @@ class SDMScenariosRestService(RestService):
          fullObjs = False
 
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
 

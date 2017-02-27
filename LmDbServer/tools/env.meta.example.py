@@ -27,7 +27,7 @@ files: a dictionary containing
 from osgeo import gdalconst
  
 # User should be a dictionary with 'id' and 'email' keys.  
-# If this is None, data is assigned to the ARCHIVE_USER
+# If this is None, data is assigned to the PUBLIC_USER
 USER = None
 
 # SPECIES_DATA is the basename, without path, of the of the .csv file containing 

@@ -36,7 +36,7 @@ from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.base.utilities import (getMjdTimeFromISO8601, getUrlParameter, 
                getXmlListFromTree, getXmlValueFromTree)
 from LmServer.common.lmconstants import Priority, LMServiceModule
-from LmServer.common.localconstants import ARCHIVE_USER, SCENARIO_PACKAGE_EPSG
+from LmServer.common.localconstants import PUBLIC_USER, SCENARIO_PACKAGE_EPSG
 from LmServer.db.scribe import Scribe
 from LmServer.rad.anclayer import AncillaryRaster, AncillaryVector
 from LmServer.rad.palayer import PresenceAbsenceRaster, PresenceAbsenceVector
@@ -144,7 +144,7 @@ class DataPoster(object):
       """
       """
       self.log = logger
-      if userId == ARCHIVE_USER:
+      if userId == PUBLIC_USER:
          userId = DEFAULT_POST_USER
       self.userId = userId
       self.scribe = Scribe(self.log)
@@ -1005,8 +1005,8 @@ class DataPoster(object):
                cherrypy.response.headers['LM-message'] = msg
             except Exception, e:
                self.log.debug("Failed to add message to headers: %s" % str(e))
-      # if occ = ARCHIVE_USER or (occ = anon and user != anon), copy to new occ 
-      if (occ.getUserId() == ARCHIVE_USER or 
+      # if occ = PUBLIC_USER or (occ = anon and user != anon), copy to new occ 
+      if (occ.getUserId() == PUBLIC_USER or 
           (occ.getUserId() == DEFAULT_POST_USER and 
            self.userId != DEFAULT_POST_USER)):
          
@@ -1390,7 +1390,7 @@ class DataPoster(object):
                               msg="EPSG code of layer %s does not match the scenario.  %s not equal to %s" % (lyrId, lyr.epsgcode, epsgCode))
          
          # Check user
-         if lyr.getUserId() != self.userId and lyr.getUserId() != DEFAULT_POST_USER and lyr.getUserId() != ARCHIVE_USER:
+         if lyr.getUserId() != self.userId and lyr.getUserId() != DEFAULT_POST_USER and lyr.getUserId() != PUBLIC_USER:
             raise LmHTTPError(HTTPStatus.FORBIDDEN, msg="Permission denied")
          
          layers.append(lyr)

@@ -25,7 +25,7 @@ import json
 from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.sdm.envlayer import EnvironmentalLayer
 
 # .........................................................................
@@ -48,7 +48,7 @@ class Scenario(MapLayerSet):
                 units=None, res=None, 
                 gcmCode=None, altpredCode=None, dateCode=None,
                 bbox=None, modTime=None, keywords=None, epsgcode=None,
-                layers=None, userId=ARCHIVE_USER, scenarioid=None):
+                layers=None, userId=PUBLIC_USER, scenarioid=None):
       """
       @summary Constructor for the scenario class 
       @param code: The code for this set of layers

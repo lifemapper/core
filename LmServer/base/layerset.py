@@ -36,7 +36,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, LMServiceType,
          DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
          CT_SPECIES_KEYWORD, PROJ_LIB)
-from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MAX,
+from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX,
                                             SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
 from LmServer.common.lmconstants import CT_USER
 from LmServer.sdm.occlayer import OccurrenceLayer
@@ -704,7 +704,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       dataspecs = None
       # limit to 1000 features for archive point data
       if (isinstance(sdlLyr, OccurrenceLayer) and
-          sdlLyr.getUserId() == ARCHIVE_USER and 
+          sdlLyr.getUserId() == PUBLIC_USER and 
           sdlLyr.queryCount > POINT_COUNT_MAX):
          dlocation = sdlLyr.getDLocation(subset=True)
          if not os.path.exists(dlocation):

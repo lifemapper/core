@@ -33,7 +33,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ProcessObject
 
 from LmServer.common.lmconstants import ReferenceType, RAD_STORE, LMServiceModule
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 
 from LmServer.common.notifyJob import NotifyJob
 
@@ -1027,7 +1027,7 @@ class RAD(DbPostgresql):
    def addAncillaryLayerToExperiment(self, anclyr, expid):
       matrixidx = self.executeModifyReturnValue('lm_addAncLayerToExperiment', 
                         anclyr.getId(), anclyr.getAncillaryId(), expid,
-                        anclyr.getUserId(), ARCHIVE_USER)
+                        anclyr.getUserId(), PUBLIC_USER)
       anclyr.setMatrixIndex(matrixidx)
       return anclyr
 
@@ -1331,7 +1331,7 @@ class RAD(DbPostgresql):
                                                 palyr.getParametersId(),
                                                 expid, 
                                                 palyr.getUserId(),
-                                                ARCHIVE_USER)
+                                                PUBLIC_USER)
       if matrixidx != -1:
          palyr.setMatrixIndex(matrixidx)
       return palyr

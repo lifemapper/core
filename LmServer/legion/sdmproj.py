@@ -38,7 +38,7 @@ from LmServer.common.lmconstants import (LMFileType, Algorithms,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule,
    BIN_PATH)
 from LmServer.makeflow.cmd import MfRule
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM, GEOTIFF_INTERFACE)
    
@@ -861,7 +861,7 @@ class SDMProjection(_ProjectionType, Raster):
             gdalTranslateCmd = os.path.join(BIN_PATH, "gdal_translate")
             
             # If archive or default, scale
-            if self.getUserId() in [ARCHIVE_USER, DEFAULT_POST_USER]:
+            if self.getUserId() in [PUBLIC_USER, DEFAULT_POST_USER]:
                convertCmdArgs = [
                   gdalTranslateCmd,
                   "-scale 0 1 {0} {1}".format(SCALE_PROJECTION_MINIMUM,

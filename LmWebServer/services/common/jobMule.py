@@ -39,7 +39,7 @@ from LmCommon.common.lmconstants import JobStatus, HTTPStatus, ProcessType
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.lmconstants import DbUser, JobFamily, RECOVERABLE_ERRORS
-from LmServer.common.localconstants import ARCHIVE_USER, TROUBLESHOOTERS
+from LmServer.common.localconstants import PUBLIC_USER, TROUBLESHOOTERS
 from LmServer.common.log import JobMuleLogger
 
 from LmServer.db.scribe import Scribe
@@ -273,7 +273,7 @@ class JobMule(object):
              and status >= JobStatus.GENERAL_ERROR:
          job = self.scribe.getJob(jobFamily, jobId)
          expComplete = self._experimentComplete(job)
-         if expComplete and job.getUserId() == ARCHIVE_USER:
+         if expComplete and job.getUserId() == PUBLIC_USER:
             self.scribe.updateExperimentMapfile(proj=job.outputObj)
       return ret
 
@@ -304,7 +304,7 @@ class JobMule(object):
          try:
             self.scribe.moveDependentJobs(job)
             expComplete = self._experimentComplete(job)
-            if expComplete and job.getUserId() == ARCHIVE_USER:
+            if expComplete and job.getUserId() == PUBLIC_USER:
                self.scribe.updateExperimentMapfile(proj=job.dataObj)
          except LMError, e1:
             self.log.debug("-------------------------------------------------")

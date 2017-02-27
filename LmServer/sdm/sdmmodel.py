@@ -30,7 +30,7 @@ from LmCommon.common.lmconstants import JobStatus
 from LmServer.base.atom import Atom
 from LmServer.base.serviceobject import ServiceObject, ProcessObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 
 # .............................................................................
 class SDMModel(ServiceObject, ProcessObject):
@@ -45,7 +45,7 @@ class SDMModel(ServiceObject, ProcessObject):
                 name=None, description=None, 
                 mask=None, maskId=None, email=None, createTime=None, 
                 status=None, statusModTime=None, ruleset=None, 
-                qc=None, userId=ARCHIVE_USER, modelId=None):
+                qc=None, userId=PUBLIC_USER, modelId=None):
       """
       @summary Constructor for the Model class
       @param priority: The run priority for the Model

@@ -31,7 +31,7 @@ from types import ListType
 from LmCommon.common.lmconstants import JobStatus
 
 from LmServer.base.utilities import formatTimeUrl, getMjdTimeFromISO8601
-from LmServer.common.localconstants import ARCHIVE_USER, POINT_COUNT_MAX
+from LmServer.common.localconstants import PUBLIC_USER, POINT_COUNT_MAX
 from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.base.servicesBaseClass import buildAttListResponse, \
@@ -180,7 +180,7 @@ class SDMOccurrenceSetsRestService(RestService):
       if minPoints is None or minPoints < 0:
          minPoints = 1
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
       #TODO: Make status an optional parameter
@@ -222,7 +222,7 @@ class SDMOccurrenceSetsRestService(RestService):
       if minPoints is None or minPoints < 0:
          minPoints = 1
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
       #TODO: Make status an optional parameter

@@ -37,7 +37,7 @@ from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
                   DEFAULT_PROJECTION_FORMAT, JobFamily, MAL_STORE, ReferenceType)
 from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.notifyJob import NotifyJob
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.sdm.envlayer import EnvironmentalType, EnvironmentalLayer
@@ -161,7 +161,7 @@ class MAL(DbPostgresql):
 #       occurrenceSetLst = []
 #       
 #       rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSetsToUpdate', 
-#                                                   count, ARCHIVE_USER, expDate)
+#                                                   count, PUBLIC_USER, expDate)
 #       for r in rows:
 #          occ = self._createOccurrenceSet(r, idxs)
 #          occurrenceSetLst.append(occ)
@@ -228,7 +228,7 @@ class MAL(DbPostgresql):
       @note: function returns setof int
       """
       rows, idxs = self.executeSelectManyFunction('lm_findOldUnmodeledOccurrencesets',
-                                                  ARCHIVE_USER, expDate, count, offset)
+                                                  PUBLIC_USER, expDate, count, offset)
       occsetids = [r[0] for r in rows]
       return occsetids      
    
@@ -241,7 +241,7 @@ class MAL(DbPostgresql):
       """
       occs = []
       rows, idxs = self.executeSelectManyFunction('lm_findUnfinishedJoblessOccurrenceSets', 
-                                       ARCHIVE_USER, count, JobStatus.COMPLETE)
+                                       PUBLIC_USER, count, JobStatus.COMPLETE)
       for r in rows:
          occ = self._createOccurrenceSet(r, idxs)
          occs.append(occ)
@@ -282,7 +282,7 @@ class MAL(DbPostgresql):
       """
       mdls = []
       rows, idxs = self.executeSelectManyFunction('lm_getArchiveModelsNotProjectedOntoScen', 
-                                                  ARCHIVE_USER, count, algcode, 
+                                                  PUBLIC_USER, count, algcode, 
                                                   mdlscenarioId, prjscenarioId)
       for r in rows:
          mdls.append(self._createModel(r, idxs, doFillScenario=False))
@@ -880,7 +880,7 @@ class MAL(DbPostgresql):
 #       currCount = count
 #       modelJobs = []
 #       if not userids:
-#          userids = [ARCHIVE_USER]
+#          userids = [PUBLIC_USER]
 #       if currCount > 0:
 #          for userid in userids:
 #             for algcode in algorithmCodes:
@@ -978,7 +978,7 @@ class MAL(DbPostgresql):
       """
       occSets = []
       rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceSetsForGenus', 
-                                                  genusname, ARCHIVE_USER)
+                                                  genusname, PUBLIC_USER)
       if rows:
          for row in rows:
             occSets.append(self._createOccurrenceSet(row, idxs))
@@ -1002,7 +1002,7 @@ class MAL(DbPostgresql):
       return occSets
 
 # ...............................................
-#    def getGBIFOccurrenceSetsForName(self, taxName, usrid=ARCHIVE_USER):
+#    def getGBIFOccurrenceSetsForName(self, taxName, usrid=PUBLIC_USER):
    def getOccurrenceSetsForNameAndUser(self, taxName, usrid):
       """
       @summary: Return OccurrenceLayers for the given name
@@ -1018,7 +1018,7 @@ class MAL(DbPostgresql):
       return occSets
 
 # ...............................................
-#    def getGBIFOccurrenceSetsLikeName(self, taxName, usrid=ARCHIVE_USER):
+#    def getGBIFOccurrenceSetsLikeName(self, taxName, usrid=PUBLIC_USER):
    def getOccurrenceSetsLikeNameAndUser(self, taxName, usrid):
       """
       @summary: Return OccurrenceLayers starting with the given name
@@ -1131,9 +1131,9 @@ class MAL(DbPostgresql):
       @note: lm_getOccurrenceNumbers(varchar, int) returns setof lm_occStats
       """
       rows, idxs = self.executeSelectManyFunction('lm_getOccurrenceWOModelNumbers',
-                                                  ARCHIVE_USER)
+                                                  PUBLIC_USER)
       rows2, idxs = self.executeSelectManyFunction('lm_getModelNumbers',
-                                                  ARCHIVE_USER, 
+                                                  PUBLIC_USER, 
                                                   JobStatus.COMPLETE)
       rows.extend(rows2)
       return rows
@@ -1487,7 +1487,7 @@ class MAL(DbPostgresql):
       return mapSvc
 
 # .............................................................................
-   def getOccMapservice(self, occsetid, userid=ARCHIVE_USER):
+   def getOccMapservice(self, occsetid, userid=PUBLIC_USER):
       """
       @summary: Create a mapservice from an OccurrenceLayer and all Projections
                 associated with it.

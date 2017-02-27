@@ -3,7 +3,7 @@
              scribe / peruser to fill in values for URLs
 """
 from LmCommon.common.lmconstants import JobStatus
-from LmServer.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
+from LmServer.common.localconstants import PUBLIC_USER, WEBSERVICES_ROOT
 from LmServer.common.log import LmServerLogger
 from LmServer.db.scribe import Scribe
 from LmWebServer.tools.testing.envMethods.base import LmEnv
@@ -36,8 +36,8 @@ class LmServerEnv(LmEnv):
       return self.values[valKey]
    
    # .......................
-   def _getSdmValues(self, userId=ARCHIVE_USER):
-      if userId == ARCHIVE_USER:
+   def _getSdmValues(self, userId=PUBLIC_USER):
+      if userId == PUBLIC_USER:
          prefix = "PUB"
          forUser = "public"
       else:

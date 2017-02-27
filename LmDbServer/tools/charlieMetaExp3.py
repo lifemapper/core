@@ -33,7 +33,7 @@ from osgeo import gdalconst
 # will default to constants in config.lmserver.ini
 # ...............................................
 # User should be a dictionary with 'id' and 'email' keys.  
-# Default = ARCHIVE_USER
+# Default = PUBLIC_USER
 USER = {'id': 'charlie', 'email': 'aimee.stewart@ku.edu'}
 
 # Default = User, ensures use of of SPECIES_DATA 

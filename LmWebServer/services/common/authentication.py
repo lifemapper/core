@@ -28,7 +28,7 @@
 """
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.scribe import Scribe
 
@@ -50,7 +50,7 @@ def checkUserPermission(urlUser, sessionUser, method, service=None, id=None):
    log.debug(' '.join(("Service:", str(service))))
    log.debug(' '.join(("Id:", str(id))))
    
-   if urlUser == sessionUser or urlUser == ARCHIVE_USER or urlUser == DEFAULT_POST_USER:
+   if urlUser == sessionUser or urlUser == PUBLIC_USER or urlUser == DEFAULT_POST_USER:
       return True
    else:
       return False

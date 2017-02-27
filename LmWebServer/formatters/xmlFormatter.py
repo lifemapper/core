@@ -37,7 +37,7 @@ from LmCommon.common.lmconstants import (ENCODING, LM_NAMESPACE, LM_NS_PREFIX,
 from LmServer.base.layerset import _LayerSet
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.base.utilities import escapeString, ObjectAttributeIterator
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 
 from LmWebServer.common.lmconstants import XSI_NAMESPACE
 from LmWebServer.formatters.formatter import Formatter, FormatterResponse
@@ -92,7 +92,7 @@ class XmlFormatter(Formatter):
             name = name
          else:
             fn = "lmFeed.xml"
-            user = ARCHIVE_USER
+            user = PUBLIC_USER
             name = "items"
 
          cnt = formatXml(ObjectAttributeIterator(name, self.obj), user, 

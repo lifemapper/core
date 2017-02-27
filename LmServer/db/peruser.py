@@ -38,7 +38,7 @@ from LmServer.db.connect import HL_NAME
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import  DbUser, JobFamily, ReferenceType
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME, 
-                                 POINT_COUNT_MIN, POINT_COUNT_MAX, ARCHIVE_USER)
+                                 POINT_COUNT_MIN, POINT_COUNT_MAX, PUBLIC_USER)
 from LmServer.sdm.sdmexperiment import SDMExperiment
 
 # .............................................................................
@@ -233,7 +233,7 @@ class Peruser(LMObject):
 # Layers (SDM)
 # ...............................................
    def listLayers(self, firstRecNum, maxCount, 
-                  userId=ARCHIVE_USER, 
+                  userId=PUBLIC_USER, 
                   typecode=None,
                   beforeTime=None, 
                   afterTime=None, 
@@ -249,7 +249,7 @@ class Peruser(LMObject):
       return objs
       
 # ...............................................
-   def countLayers(self, userId=ARCHIVE_USER, typecode=None, beforeTime=None, 
+   def countLayers(self, userId=PUBLIC_USER, typecode=None, beforeTime=None, 
                    afterTime=None, epsg=None, isCategorical=None, scenarioId=None):
       """
       @copydoc LmServer.db.catalog_model.MAL::countLayers()
@@ -269,7 +269,7 @@ class Peruser(LMObject):
       return etype
       
 # ...............................................
-   def listLayerTypeCodes(self, firstRecNum, maxCount, userId=ARCHIVE_USER, 
+   def listLayerTypeCodes(self, firstRecNum, maxCount, userId=PUBLIC_USER, 
                           beforeTime=None, afterTime=None, atom=True):
       """
       @summary: Return all layer type codes for a user, starting at the 
@@ -288,7 +288,7 @@ class Peruser(LMObject):
       return objs
       
 # ...............................................
-   def countLayerTypeCodes(self, userId=ARCHIVE_USER, 
+   def countLayerTypeCodes(self, userId=PUBLIC_USER, 
                            beforeTime=None, afterTime=None):
       """
       @param userid: userid of the desired EnvironmentalType 
@@ -428,12 +428,12 @@ class Peruser(LMObject):
 
 # ...............................................
    def getReadyModelsWithoutJobs(self, count, readyStat):
-      mdls = self._mal.getModelsNeedingJobs(count, ARCHIVE_USER, readyStat)
+      mdls = self._mal.getModelsNeedingJobs(count, PUBLIC_USER, readyStat)
       return mdls
 
 # ...............................................
    def getReadyProjectionsWithoutJobs(self, count, readyStat, completeStat):
-      mdls = self._mal.getProjectionsNeedingJobs(count, ARCHIVE_USER, 
+      mdls = self._mal.getProjectionsNeedingJobs(count, PUBLIC_USER, 
                                                  readyStat, completeStat)
       return mdls
 
@@ -453,7 +453,7 @@ class Peruser(LMObject):
       return email
    
 # ...............................................
-   def listModels(self, firstRecNum, maxCount, userId=ARCHIVE_USER, 
+   def listModels(self, firstRecNum, maxCount, userId=PUBLIC_USER, 
                   displayName=None, beforeTime=None, afterTime=None, epsg=None,
                   status=None, inProcess=False, occSetId=None, algParamId=None, 
                   algCode=None, atom=True):
@@ -474,7 +474,7 @@ class Peruser(LMObject):
       return models
    
 # ...............................................
-   def countModels(self, userId=ARCHIVE_USER, displayName=None, beforeTime=None, 
+   def countModels(self, userId=PUBLIC_USER, displayName=None, beforeTime=None, 
                    afterTime=None, epsg=None, status=None, inProcess=False, 
                    occSetId=None, algCode=None):
       if inProcess:
@@ -553,7 +553,7 @@ class Peruser(LMObject):
       return occs
 
 # ...............................................
-   def getOccurrenceSetsForNameAndUser(self, taxName, usrid=ARCHIVE_USER):
+   def getOccurrenceSetsForNameAndUser(self, taxName, usrid=PUBLIC_USER):
       """
       @copydoc LmServer.db.catalog_model.MAL::getOccurrenceSetsForName()
       """
@@ -561,7 +561,7 @@ class Peruser(LMObject):
       return occs
 
 # ...............................................
-   def getOccurrenceSetsLikeNameAndUser(self, taxName, usrid=ARCHIVE_USER):
+   def getOccurrenceSetsLikeNameAndUser(self, taxName, usrid=PUBLIC_USER):
       """
       @copydoc LmServer.db.catalog_model.MAL::getOccurrenceSetsLikeName()
       """
@@ -610,7 +610,7 @@ class Peruser(LMObject):
    
 # ...............................................
    def listOccurrenceSets(self, firstRecNum, maxCount, minOccurrenceCount=0,
-                          hasProjections=False, userId=ARCHIVE_USER, 
+                          hasProjections=False, userId=PUBLIC_USER, 
                           displayName=None, beforeTime=None, afterTime=None,
                           epsg=None, status=None, completestat=None, atom=True):
       """
@@ -626,7 +626,7 @@ class Peruser(LMObject):
 # ...............................................
    def getOutdatedSDMArchiveExperiments(self, count):
       sdmExps = [] 
-      models = self._mal.getOutdatedModels(count, ARCHIVE_USER, 
+      models = self._mal.getOutdatedModels(count, PUBLIC_USER, 
                                            JobStatus.COMPLETE)
       for mdl in models:
          projs = self.getProjectionsForModel(mdl, None)
@@ -635,7 +635,7 @@ class Peruser(LMObject):
    
 # ...............................................
    def countOccurrenceSets(self, minOccurrenceCount=0, hasProjections=False,
-                           userId=ARCHIVE_USER, displayName=None,
+                           userId=PUBLIC_USER, displayName=None,
                            beforeTime=None, afterTime=None, epsg=None,
                            status=None, completestat=None):
       """
@@ -667,7 +667,7 @@ class Peruser(LMObject):
 # ...............................................
 # Projection
 # ...............................................
-   def listProjections(self, firstRecNum, maxCount, userId=ARCHIVE_USER, 
+   def listProjections(self, firstRecNum, maxCount, userId=PUBLIC_USER, 
                   displayName=None, beforeTime=None, afterTime=None, 
                   epsg=None, status=None, inProcess=False, occSetId=None, 
                   mdlId=None, algCode=None, scenarioId=None,
@@ -689,7 +689,7 @@ class Peruser(LMObject):
       return objs
 
 # ...............................................
-   def countProjections(self, userId=ARCHIVE_USER, displayName=None, 
+   def countProjections(self, userId=PUBLIC_USER, displayName=None, 
                         beforeTime=None, afterTime=None, epsg=None, status=None, 
                         inProcess=False, occSetId=None, mdlId=None, 
                         algCode=None, scenarioId=None):
@@ -795,7 +795,7 @@ class Peruser(LMObject):
       return scenarios
 
 # ...............................................
-   def countScenarios(self, userId=ARCHIVE_USER, beforeTime=None, afterTime=None, 
+   def countScenarios(self, userId=PUBLIC_USER, beforeTime=None, afterTime=None, 
                       epsg=None, matchingId=None, kywdLst=[]):
       kywds = ','.join(kywdLst)
       count = self._mal.countScenarios(userId, beforeTime, afterTime, epsg, 
@@ -803,7 +803,7 @@ class Peruser(LMObject):
       return count
    
 # ...............................................
-   def listScenarios(self, firstRecNum, maxCount, userId=ARCHIVE_USER, 
+   def listScenarios(self, firstRecNum, maxCount, userId=PUBLIC_USER, 
                      beforeTime=None, afterTime=None, epsg=None,
                      matchingId=None, kywdLst=[], atom=True):
       """

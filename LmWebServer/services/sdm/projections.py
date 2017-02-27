@@ -27,7 +27,7 @@
           02110-1301, USA.
 """
 from LmServer.base.utilities import formatTimeUrl, getMjdTimeFromISO8601
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 
 from LmWebServer.base.servicesBaseClass import (buildAttListResponse, 
                                      getQueryParameters, RestService, WebObject)
@@ -144,7 +144,7 @@ class SDMProjectionsRestService(RestService):
                                                       self.parameters)
 
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
       count = self.conn.countProjections(userId=user, 
@@ -183,7 +183,7 @@ class SDMProjectionsRestService(RestService):
          fullObjs = False
 
       if public:
-         user = ARCHIVE_USER
+         user = PUBLIC_USER
       else:
          user = self.user
          

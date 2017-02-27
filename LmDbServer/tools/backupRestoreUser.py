@@ -34,7 +34,7 @@ import tarfile
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, OutputFormat
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import MAL_STORE, RAD_STORE, LM_SCHEMA
-from LmServer.common.localconstants import APP_PATH, ARCHIVE_USER
+from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
  
 DEBUG = False
 USER_REPLACE_STR = '#USERS#'
@@ -373,7 +373,7 @@ def getUsersToBackup(backupChoice, dbuser, dbname, dbschema,
    if backupChoice not in ('users', 'all'):
       backupusers = [backupChoice]
    elif backupChoice == 'users':
-      ignoreUsers.extend([ARCHIVE_USER, DEFAULT_POST_USER])
+      ignoreUsers.extend([PUBLIC_USER, DEFAULT_POST_USER])
       if len(onlyUsers) > 0:
          backupusers = onlyUsers
       else: 
@@ -468,7 +468,7 @@ def backupDBAndData(backupChoice, outpath, dbschema, dbname,
    helpLines.extend(tableHelp)
 
    # Compress user data in ARCHIVE_PATH/<user>  
-   if backupChoice != ARCHIVE_USER:
+   if backupChoice != PUBLIC_USER:
       tarballHelp = dumpFileData(outpath, basefname, datapath, backupusers)
    helpLines.extend(tarballHelp)
    
@@ -520,7 +520,7 @@ if __name__ == '__main__':
       elif args.all:
          backupChoice = 'all'
       elif args.archive:
-         backupChoice = ARCHIVE_USER
+         backupChoice = PUBLIC_USER
       elif args.singleUser:
          backupChoice = args.singleUser
       outpath = args.outpath

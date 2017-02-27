@@ -27,7 +27,7 @@
 """
 from LmServer.db.scribe import Scribe
 from LmServer.common.lmconstants import DbUser
-from LmServer.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
+from LmServer.common.localconstants import PUBLIC_USER, WEBSERVICES_ROOT
 from LmServer.common.log import LmPublicLogger
 
 from LmWebServer.common.lmconstants import SERVICE_MOUNTS
@@ -101,7 +101,7 @@ class LMServiceGroup(ServiceGroup):
                   }
                  ]
 
-   def __init__(self, method, conn, userId=ARCHIVE_USER, body=None, vpath=[], 
+   def __init__(self, method, conn, userId=PUBLIC_USER, body=None, vpath=[], 
                                          parameters={}, basePath=WEBSERVICES_ROOT,
                                          ipAddress=None):
       """

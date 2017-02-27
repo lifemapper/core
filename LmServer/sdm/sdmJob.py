@@ -43,7 +43,7 @@ from LmServer.base.job import _Job, _JobData
 from LmServer.base.layer import Vector
 from LmServer.base.lmobj import LMError, LMMissingDataError
 from LmServer.common.lmconstants import JobFamily, ReferenceType
-from LmServer.common.localconstants import POINT_COUNT_MAX, ARCHIVE_USER
+from LmServer.common.localconstants import POINT_COUNT_MAX, PUBLIC_USER
 
 # .............................................................................
 class SDMOccurrenceJob(_Job):
@@ -503,7 +503,7 @@ class SDMModelJobData(_JobData):
       @copydoc LmServer.base.job._Job::__init__()
       """
       pointLimit = None
-      if (model.getUserId() == ARCHIVE_USER and 
+      if (model.getUserId() == PUBLIC_USER and 
           model.occurrenceSet.queryCount > POINT_COUNT_MAX):
          subset = True
       else:

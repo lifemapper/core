@@ -27,7 +27,7 @@ from types import ListType, TupleType
 from LmCommon.common.lmconstants import JobStatus, ONE_HOUR
 
 from LmServer.base.lmobj import LMError
-from LmServer.common.localconstants import ARCHIVE_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.db.scribe import Scribe
 from LmServer.notifications.email import EmailNotifier
 
@@ -68,7 +68,7 @@ class Troubleshooter(object):
       try:
          models, projs = self._scribe.findProblemObjects(oldtime, 
                                        startStat=startStatus, endStat=endStatus, 
-                                       ignoreUser=ARCHIVE_USER)
+                                       ignoreUser=PUBLIC_USER)
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -108,7 +108,7 @@ class Troubleshooter(object):
             self.log.info('Check for error jobs of non-archive users')
             self._notifyOfStalledExperiments(oldtime, cmd,
                                              startStatus=JobStatus.GENERAL_ERROR, 
-                                             ignoreUser=ARCHIVE_USER)
+                                             ignoreUser=PUBLIC_USER)
 
 ### Main ###
 # ...............................................

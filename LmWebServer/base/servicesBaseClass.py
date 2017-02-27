@@ -35,7 +35,7 @@ from LmCommon.common.lmXml import Element, PI, QName, register_namespace, setDef
 
 from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.base.utilities import formatTimeHuman
-from LmServer.common.localconstants import ARCHIVE_USER, WEBSERVICES_ROOT
+from LmServer.common.localconstants import PUBLIC_USER, WEBSERVICES_ROOT
 
 LIST_INTERFACES = ['atom', 'html', 'json', 'list', 'xml']
 META_INTERFACES = ['atom', 'html', 'json', 'xml']
@@ -51,7 +51,7 @@ class WebServiceBaseClass(object):
    @summary: Base class for all web service objects
    """
    # ............................................
-   def __init__(self, method, conn, userId=ARCHIVE_USER, body=None, vpath=[], 
+   def __init__(self, method, conn, userId=PUBLIC_USER, body=None, vpath=[], 
                          parameters={}, basePath=WEBSERVICES_ROOT, ipAddress=None):
       """
       @summary: Constructor
@@ -321,7 +321,7 @@ class WebObject(WebServiceBaseClass):
    subServices = []
    interfaces = []
    # ............................................
-   def __init__(self, method, conn, userId=ARCHIVE_USER, body=None, vpath=[], 
+   def __init__(self, method, conn, userId=PUBLIC_USER, body=None, vpath=[], 
                          parameters={}, basePath=WEBSERVICES_ROOT, ipAddress=None):
       """
       @summary: Constructor
@@ -363,7 +363,7 @@ class WebObject(WebServiceBaseClass):
       @summary: Check that the current user has permissions for the object
       """
       if self.method.lower() == 'get':
-         return item.user in [ARCHIVE_USER, DEFAULT_POST_USER, 
+         return item.user in [PUBLIC_USER, DEFAULT_POST_USER, 
                               "changeThinking", self.user] or \
                      self._checkIP(self.ipAddress)
       else: # DELETE, PUT

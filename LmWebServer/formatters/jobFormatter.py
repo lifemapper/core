@@ -32,7 +32,7 @@ from LmCommon.common.lmconstants import DEFAULT_POST_USER, JobStatus, ProcessTyp
 from LmCommon.common.lmXml import CDATA, Element, SubElement, fromstring, tostring
 
 from LmServer.base.lmobj import LMError
-from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MAX,
+from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX,
                WEBSERVICES_ROOT)
 from LmServer.rad.radJob import (RADBuildGridJob, RADCompressJob, 
                RADIntersectJob, RADSplotchJob, RADSwapJob, RADCalculateJob, 
@@ -179,8 +179,8 @@ class JobFormatter(Formatter):
             #SubElement(lambdasEl, '![CDATA[', value=rawModel)
             #SubElement(tree, 'lambdas', value=rawModel)
          
-            # If ARCHIVE_USER job, add post processing instruction to scale
-            if dObj.user in [ARCHIVE_USER, DEFAULT_POST_USER]:
+            # If PUBLIC_USER job, add post processing instruction to scale
+            if dObj.user in [PUBLIC_USER, DEFAULT_POST_USER]:
                scaleEl = SubElement(postPEl, "scale", 
                               attrib={"scaleMin" : SCALE_PROJECTION_MINIMUM,
                                       "scaleMax" : SCALE_PROJECTION_MAXIMUM,
