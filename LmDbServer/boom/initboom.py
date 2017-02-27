@@ -29,7 +29,8 @@ import sys
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
 from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         SCENARIO_PACKAGE, DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS)
+         SCENARIO_PACKAGE, SCENARIO_PACKAGE_MODEL_SCENARIO, 
+         SCENARIO_PACKAGE_PROJECTION_SCENARIOS)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                                               BISON_TSN_FILENAME, IDIG_FILENAME, 
@@ -38,9 +39,9 @@ from LmDbServer.boom.boom import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
-from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
-                                            DEFAULT_EPSG, DEFAULT_MAPUNITS)
+         GPAM_KEYWORD, PUBLIC_ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
+from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN,
+                           SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -58,13 +59,13 @@ CURR_MJD = mx.DateTime.gmt().mjd
 # ...............................................
 def addUsers(scribe, userId, userEmail):
    """
-   @summary Adds ARCHIVE_USER, anon user and USER from metadata to the database
+   @summary Adds PUBLIC_USER, anon user and USER from metadata to the database
    """
-   userList = [{'id': ARCHIVE_USER,
-                'email': '{}@nowhere.org'.format(ARCHIVE_USER)},
+   userList = [{'id': PUBLIC_USER,
+                'email': '{}@nowhere.org'.format(PUBLIC_USER)},
                {'id': DEFAULT_POST_USER,
                 'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}]
-   if userId != ARCHIVE_USER:
+   if userId != PUBLIC_USER:
       userList.append({'id': userId,'email': userEmail})
 
    for usrmeta in userList:
@@ -376,13 +377,13 @@ def _getConfiguredMetadata(META, pkgMeta):
    try:
       epsg = META.EPSG
    except:
-      epsg = DEFAULT_EPSG
+      epsg = SCENARIO_PACKAGE_EPSG
       
    try:
       mapunits = META.MAPUNITS
    except:
-      if epsg == DEFAULT_EPSG:
-         mapunits = DEFAULT_MAPUNITS
+      if epsg == SCENARIO_PACKAGE_EPSG:
+         mapunits = SCENARIO_PACKAGE_MAPUNITS
       else:
          raise LMError('Failed to specify MAPUNITS for EPSG {}'.format(epsg))
    try:
@@ -498,10 +499,10 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
    if mdlScen is None:
-      mdlScen = DEFAULT_MODEL_SCENARIO
+      mdlScen = SCENARIO_PACKAGE_MODEL_SCENARIO
    f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
    if not prjScens:
-      prjScens = DEFAULT_PROJECTION_SCENARIOS
+      prjScens = SCENARIO_PACKAGE_PROJECTION_SCENARIOS
    pcodes = ','.join(prjScens)
    f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    
@@ -540,12 +541,12 @@ if __name__ == '__main__':
                          'specific to an \'archive\', populated with '
                          'command line arguments, including values in the ' +
                          'specified environmental data package.'))
-   parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
+   parser.add_argument('-n', '--archive_name', default=PUBLIC_ARCHIVE_NAME,
             help=('Name for the archive, gridset, and grid created from ' +
                   'these data.  Do not use special characters in this name.'))
-   parser.add_argument('-u', '--user', default=ARCHIVE_USER,
+   parser.add_argument('-u', '--user', default=PUBLIC_USER,
             help=('Owner of this archive this archive. The default is '
-                  'ARCHIVE_USER ({}), an existing user '.format(ARCHIVE_USER) +
+                  'PUBLIC_USER ({}), an existing user '.format(PUBLIC_USER) +
                   'not requiring an email. '))
    parser.add_argument('-m', '--email', default=None,
             help=('If the owner is a new user, provide an email address '))
@@ -734,7 +735,7 @@ from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
-from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MIN,
+from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN,
                                             DEFAULT_EPSG, DEFAULT_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
