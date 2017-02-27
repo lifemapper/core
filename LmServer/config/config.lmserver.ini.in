@@ -156,7 +156,7 @@ CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LO
 
 ; Worker Factory constants
 WORKER_OPTIONS: -C @PUBLIC_FQDN@:%(CS_PORT)s
-WF_OPTIONS: -M lifemapper* -T sge -w 2 -W 5 -E "%(WORKER_OPTIONS)s" -S @LMSCRATCHDISK@/wq-pool-\$uid
+WF_OPTIONS: -M lifemapper.\\* -T sge -w 2 -W 5 -E \"%(WORKER_OPTIONS)s\" -S @LMSCRATCHDISK@/wq-pool-\$uid
 
 ;Use: work_queue_factory [options]
 ;where options are:
