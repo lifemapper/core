@@ -442,11 +442,13 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('[LmServer - pipeline]\n')
    f.write('ARCHIVE_USER: {}\n'.format(userid))
    f.write('ARCHIVE_NAME: {}\n'.format(archiveName))
-
-   f.write('DATASOURCE: {}\n'.format(speciesSource))
    if userEmail is not None:
       f.write('TROUBLESHOOTERS: {}\n'.format(userEmail))
    f.write('\n')   
+
+   f.write('; ...................')
+   f.write('; SDM Params')
+   f.write('; ...................')
    # Expiration date triggering re-query and computation
    f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
    f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
@@ -460,11 +462,11 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       algs = DEFAULT_ALGORITHMS
    f.write('ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
-   # Intersection grid
-   f.write('GRID_NAME: {}\n'.format(gridname))
-   f.write('GRID_CELLSIZE: {}\n'.format(grid_cellsize))
-   f.write('GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
-   f.write('\n')
+   
+   f.write('; ...................')
+   f.write('; Species data vals')
+   f.write('; ...................')
+   f.write('DATASOURCE: {}\n'.format(speciesSource))
    # Species source type (for processing) and file
    if speciesSource == SpeciesDatasource.GBIF:
       varname = 'GBIF_OCCURRENCE_FILENAME'
@@ -486,24 +488,36 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
               .format(speciesDataDelimiter))
    f.write('{}: {}\n'.format(varname, speciesData))
    f.write('\n')
+
+   f.write('; ...................')
+   f.write('; Env Package Vals')
+   f.write('; ...................')
    # Input environmental data, pulled from SCENARIO_PACKAGE metadata
    f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
-   f.write('PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
-   f.write('PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
+   f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
+   f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO
-   f.write('PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
+   f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
    if not prjScens:
       prjScens = DEFAULT_PROJECTION_SCENARIOS
    pcodes = ','.join(prjScens)
-   f.write('PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
+   f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    
    if mdlMask is not None:
       f.write('MODEL_MASK_NAME: {}\n'.format(mdlMask))
    if prjMask is not None:
       f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMask))
    
+   f.write('; ...................')
+   f.write('; Global PAM vals')
+   f.write('; ...................')
+   # Intersection grid
+   f.write('GRID_NAME: {}\n'.format(gridname))
+   f.write('GRID_CELLSIZE: {}\n'.format(grid_cellsize))
+   f.write('GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
+   f.write('\n')
    for k, v in intersectParams.iteritems():
       f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
       

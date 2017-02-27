@@ -2,7 +2,7 @@
 ; LmServer
 ; .............................................................................
 [LmServer - environment]
-ARCHIVE_USER: kubi
+PUBLIC_USER: kubi
 PUBLIC_FQDN: @PUBLIC_FQDN@
 OGC_SERVICE_URL: http://@PUBLIC_FQDN@/ogc
 WEBSERVICES_ROOT: http://@PUBLIC_FQDN@
@@ -19,7 +19,7 @@ SCRATCH_PATH: @LMSCRATCHDISK@
 PID_PATH: @LMSCRATCHDISK@/run
 SHARED_DATA_PATH: @DATADIR_SHARED@
 
-; ...............................................
+; .............................................................................
 [LmServer - registeredcompute]
 COMPUTE_NAME: 
 COMPUTE_IP: 
@@ -33,27 +33,26 @@ COMPUTE_ADDR1:
 COMPUTE_ADDR2: 
 COMPUTE_ADDR3: 
 
-; ...............................................
+; .............................................................................
 [LmServer - pipeline]
-TROUBLESHOOTERS: null@nowhere.com 
+ARCHIVE_USER: kubi
+TROUBLESHOOTERS: null@nowhere.com
+ 
+; ...................
+; SDM Params
+; ...................
 SPECIES_EXP_YEAR: 2016
 SPECIES_EXP_MONTH: 8
 SPECIES_EXP_DAY: 3
 POINT_COUNT_MIN: 30
 POINT_COUNT_MAX: 500
 WORKER_JOB_LIMIT: 50
-DEFAULT_ALGORITHMS: BIOCLIM,ATT_MAXENT
-DEFAULT_GRID_NAME: lmgrid_1d
-DEFAULT_GRID_CELLSIZE: 1
+ALGORITHMS: BIOCLIM,ATT_MAXENT
 
-INTERSECT_FILTERSTRING: None
-INTERSECT_VALNAME: pixel
-INTERSECT_MINPERCENT: 25
-INTERSECT_MINPRESENCE: 1
-INTERSECT_MAXPRESENCE: 255
-
+; ...................
+; Species data vals
+; ...................
 DATASOURCE: GBIF
-
 ;; Used when DATASOURCE is GBIF. 
 GBIF_TAXONOMY_FILENAME: gbif_taxonomy.txt
 GBIF_OCCURRENCE_FILENAME: gbif_subset.txt
@@ -71,43 +70,57 @@ IDIG_FILENAME: idig_gbifids.txt
 USER_OCCURRENCE_DATA: @SPECIES_DATA@
 USER_OCCURRENCE_DATA_DELIMITER: ,
 
+; ...................
+; Env Package Vals
+; ...................
 ;; The default SCENARIO_PACKAGE (10min-past-present-future) is filled in and  
 ;; installed during 'lifemapper-server' roll installation matches these default 
-;; scenarios. Change defaults in @LMHOME@/config/site.ini file then run 
-;; @LMHOME@/rocks/bin/updateArchiveInput.  Scenario codes for each 
-;; SCENARIO_PACKAGE are listed in @LMHOME@/LmDbServer/tools/bioclimMeta.py
-;;
-;; Default KU and iDigBio values for installed default SCENARIO_PACKAGE 10min-past-present-future
-DEFAULT_MODEL_SCENARIO: WC-10min
-DEFAULT_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
+;; scenarios. 
 ;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE_SEED
 ;; in the [LmCompute - environment] section should match SCENARIO_PACKAGE here
 SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
-PACKAGE_EPSG: @EPSG@
-PACKAGE_MAPUNITS: @MAPUNITS@
+SCENARIO_PACKAGE_EPSG: @EPSG@
+SCENARIO_PACKAGE_MAPUNITS: @MAPUNITS@
+
+;; Default KU and iDigBio values for installed default SCENARIO_PACKAGE 10min-past-present-future
+SCENARIO_PACKAGE_MODEL_SCENARIO: WC-10min
+SCENARIO_PACKAGE_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
 
 ; BISON values
-;; DEFAULT_ALGORITHMS: ATT_MAXENT
-;; DEFAULT_MODEL_SCENARIO: WC-30sec-CONUS
-;; DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-CONUS,CCSM4-RCP4.5-2050-30sec-CONUS,CCSM4-RCP4.5-2070-30sec-CONUS,CCSM4-RCP8.5-2050-30sec-CONUS
+;; ALGORITHMS: ATT_MAXENT
 ;; SCENARIO_PACKAGE: 30sec-present-future-CONUS
+;; SCENARIO_PACKAGE_MODEL_SCENARIO: WC-30sec-CONUS
+;; SCENARIO_PACKAGE_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-CONUS,CCSM4-RCP4.5-2050-30sec-CONUS,CCSM4-RCP4.5-2070-30sec-CONUS,CCSM4-RCP8.5-2050-30sec-CONUS
 
 ; PRAGMA values
-;; DEFAULT_ALGORITHMS: BIOCLIM
-;; DEFAULT_MODEL_SCENARIO: WC-30sec-SEA
-;; DEFAULT_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-SEA,CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA
+;; ALGORITHMS: BIOCLIM
 ;; SCENARIO_PACKAGE: 30sec-present-future-SEA
+;; SCENARIO_PACKAGE_MODEL_SCENARIO: WC-30sec-SEA
+;; SCENARIO_PACKAGE_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-SEA,CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA
 
-; ...............................................
+; ...................
+; Global PAM vals
+; ...................
+GRID_NAME: lmgrid_1d
+GRID_CELLSIZE: 1
+GRID_NUM_SIDES: 4
+
+INTERSECT_FILTERSTRING: None
+INTERSECT_VALNAME: pixel
+INTERSECT_MINPERCENT: 25
+INTERSECT_MINPRESENCE: 1
+INTERSECT_MAXPRESENCE: 255
+
+; .............................................................................
 [LmServer - dbserver]
 CONNECTION_PORT: 6432
 DB_HOSTNAME: @DB_FQDN@
 
-; ...............................................
+; .............................................................................
 [LmServer - webserver]
 WEB_HOSTNAME:  @WEB_FQDN@
 
-; ...............................................
+; .............................................................................
 [LmServer - Matt Daemon]
 ; MattDaemon constants
 MAX_MAKEFLOWS: 5
@@ -237,13 +250,11 @@ MAKEFLOW_OPTIONS: -T wq -t 600 -u 600 -a -C @PUBLIC_FQDN@:%(CS_PORT)s
 ;    --monitor-log-fmt=<fmt>     Format for monitor logs.             (default resource-rule-%%)
 
 ; .............................................................................
-; LmClient
-; .............................................................................
 [LmClient - Open Tree of Life]
 OTL_HINT_URL: http://api.opentreeoflife.org/v2/tnrs/autocomplete_name
 OTL_TREE_WEB_URL: http://api.opentreeoflife.org/v2/tree_of_life/subtree
 
-; ...............................................
+; .............................................................................
 [LmClient - contact]
 INSTITUTION_NAME: University of Kansas Biodiversity Institute
 ADMIN_NAME: Aimee Stewart

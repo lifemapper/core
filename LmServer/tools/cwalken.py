@@ -29,12 +29,12 @@ import os
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-                                         OutputFormat, MatrixType) 
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, BOOM_PID_FILE
+                                         OutputFormat) 
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (LOG_PATH, LMFileType, SPECIES_DATA_PATH)
-from LmServer.common.localconstants import TROUBLESHOOTERS
+from LmServer.common.lmconstants import (PUBLIC_ARCHIVE_NAME, LMFileType, 
+                                         SPECIES_DATA_PATH)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
@@ -190,8 +190,8 @@ class ChristopherWalken(LMObject):
          algorithms.append(alg)
 
       # Get environmental data model and projection scenarios
-      mdlScenCode = cfg.get(pipelineHeading, 'PACKAGE_MODEL_SCENARIO')
-      prjScenCodes = cfg.getlist(pipelineHeading, 'PACKAGE_PROJECTION_SCENARIOS')
+      mdlScenCode = cfg.get(pipelineHeading, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
+      prjScenCodes = cfg.getlist(pipelineHeading, 'SCENARIO_PACKAGE_PROJECTION_SCENARIOS')
       mdlScen = self._scribe.getScenario(mdlScenCode, user=self.userId, 
                                          fillLayers=True)
       if mdlScen is not None:
@@ -271,14 +271,16 @@ class ChristopherWalken(LMObject):
          try:
             self.userId = cfg.get(pipelineHeading, 'ARCHIVE_USER')
          except:
-            # TODO: move default to pipeline section
-            self.userId = cfg.get(envHeading, 'ARCHIVE_USER')
+            self.userId = cfg.get(envHeading, 'PUBLIC_USER')
          boompath = earl.createDataPath(self.userId, LMFileType.BOOM_CONFIG)
       if self.archiveName is None:
-         self.archiveName = cfg.get(pipelineHeading, 'ARCHIVE_NAME')
+         try:
+            self.archiveName = cfg.get(pipelineHeading, 'ARCHIVE_NAME')
+         except:
+            self.archiveName = PUBLIC_ARCHIVE_NAME
       # Get EPSG of environmental data
       try:
-         epsg = cfg.getint(pipelineHeading, 'PACKAGE_EPSG')
+         epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
       except:
          epsg = cfg.getint(pipelineHeading, 'DEFAULT_EPSG')
       # Species parser/puller

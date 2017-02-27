@@ -613,7 +613,7 @@ class LMServiceType:
    
 # Archive and Global PAM descriptions
 GPAM_KEYWORD = 'Global PAM'
-ARCHIVE_NAME = 'BOOM Archive'
+PUBLIC_ARCHIVE_NAME = 'BOOM Archive'
 ARCHIVE_KEYWORD = 'archive'
    
 # ............................................................................

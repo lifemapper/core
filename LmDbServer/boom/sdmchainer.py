@@ -179,14 +179,10 @@ class _LMChainer(LMObject):
       if archiveName is None:
          archiveName = archiveNameCfg
 
-      try:
-         datasource = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_DATASOURCE')
-      except:
-         datasource = cfg.get(_ENV_CONFIG_HEADING, 'DATASOURCE')
-
-      algorithms = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_ALGORITHMS')
-      mdlScen = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_MODEL_SCENARIO')
-      prjScens = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_PROJECTION_SCENARIOS')
+      datasource = cfg.get(_PIPELINE_CONFIG_HEADING, 'DATASOURCE')
+      algorithms = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'ALGORITHMS')
+      mdlScen = cfg.get(_PIPELINE_CONFIG_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
+      prjScens = cfg.getlist(_PIPELINE_CONFIG_HEADING, 'SCENARIO_PACKAGE_PROJECTION_SCENARIOS')
       epsg = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_EPSG')
       gridname = cfg.get(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_GRID_NAME')
       minPoints = cfg.getint(_PIPELINE_CONFIG_HEADING, 'ARCHIVE_POINT_COUNT_MIN')
