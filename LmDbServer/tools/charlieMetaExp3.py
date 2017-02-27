@@ -40,7 +40,7 @@ USER = {'id': 'charlie', 'email': 'aimee.stewart@ku.edu'}
 DATASOURCE = 'User'
 # SPECIES_DATA is the basename, without path, of the of the .csv file containing 
 # and .meta file describing species data for this archive/experiment.
-# Default = basename of USER_OCCURRENCE_CSV 
+# Default = USER_OCCURRENCE_DATA
 SPECIES_DATA = 'CombinedBIEN3data'
 
 # Default = POINT_COUNT_MIN

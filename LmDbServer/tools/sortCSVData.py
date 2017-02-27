@@ -25,8 +25,7 @@ import csv
 import os
 import sys
 
-from LmDbServer.common.lmconstants import (USER_OCCURRENCE_META, 
-                                              USER_OCCURRENCE_CSV)
+from LmCommon.common.lmconstants import OutputFormat
 from LmBackend.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
@@ -259,8 +258,7 @@ def usage():
 # .............................................................................
 if __name__ == "__main__":   
    WORKPATH = '/tank/data/input/species/'
-   USER_OCCURRENCE_META = 'seasia_gbif.meta'
-   USER_OCCURRENCE_CSV = 'seasia_gbif.csv'
+   OCCURRENCE_BASENAME = 'seasia_gbif.meta'
    USER_OCCURRENCE_CSV = 'gbif_borneo_simple.csv'
    unsortedPrefix = 'chunk'
    sortedPrefix = 'smallsort'
@@ -273,8 +271,8 @@ if __name__ == "__main__":
    else:
       usage()
     
-   datafname = os.path.join(WORKPATH, USER_OCCURRENCE_CSV)
-   metafname = os.path.join(WORKPATH, USER_OCCURRENCE_META)
+   datafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + OutputFormat.CSV)
+   metafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + OutputFormat.METADATA)
    mergefname = os.path.join(WORKPATH, '%s_%s.csv' % (mergedPrefix, basename))
 
    if sys.argv[1] == 'sort':   

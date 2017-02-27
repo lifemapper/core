@@ -431,7 +431,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
                      speciesSource, speciesData, speciesDataDelimiter,
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, intersectParams,
-                     mdlScen=None, prjScens=None):
+                     mdlScen=None, prjScens=None, mdlMask=None, prjMask=None):
    """
    """
    earl = EarlJr()
@@ -439,33 +439,31 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    newConfigFilename = os.path.join(pth, 
                               '{}{}'.format(archiveName, OutputFormat.CONFIG))
    f = open(newConfigFilename, 'w')
-   f.write('[LmServer - environment]\n')
-   f.write('ARCHIVE_USER: {}\n'.format(userid))
-   f.write('\n')
-   f.write('\n')
    f.write('[LmServer - pipeline]\n')
-   f.write('ARCHIVE_DATASOURCE: {}\n'.format(speciesSource))
+   f.write('ARCHIVE_USER: {}\n'.format(userid))
    f.write('ARCHIVE_NAME: {}\n'.format(archiveName))
+
+   f.write('DATASOURCE: {}\n'.format(speciesSource))
    if userEmail is not None:
-      f.write('ARCHIVE_TROUBLESHOOTERS: {}\n'.format(userEmail))
+      f.write('TROUBLESHOOTERS: {}\n'.format(userEmail))
    f.write('\n')   
    # Expiration date triggering re-query and computation
-   f.write('ARCHIVE_SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
-   f.write('ARCHIVE_SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
-   f.write('ARCHIVE_SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
+   f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
+   f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
+   f.write('SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
    f.write('\n')
    # SDM Algorithm and minimun number of required species points   
-   f.write('ARCHIVE_POINT_COUNT_MIN: {}\n'.format(minpoints))
+   f.write('POINT_COUNT_MIN: {}\n'.format(minpoints))
    if len(algorithms) > 0:
       algs = ','.join(algorithms)
    else:
       algs = DEFAULT_ALGORITHMS
-   f.write('ARCHIVE_ALGORITHMS: {}\n'.format(algs))
+   f.write('ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
    # Intersection grid
-   f.write('ARCHIVE_GRID_NAME: {}\n'.format(gridname))
-   f.write('ARCHIVE_GRID_CELLSIZE: {}\n'.format(grid_cellsize))
-   f.write('ARCHIVE_GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
+   f.write('GRID_NAME: {}\n'.format(gridname))
+   f.write('GRID_CELLSIZE: {}\n'.format(grid_cellsize))
+   f.write('GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
    f.write('\n')
    # Species source type (for processing) and file
    if speciesSource == SpeciesDatasource.GBIF:
@@ -481,25 +479,30 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       if speciesData is None:
          speciesData = IDIG_FILENAME
    else:
-      varname = 'ARCHIVE_USER_OCCURRENCE_DATA'
+      varname = 'USER_OCCURRENCE_DATA'
       if speciesData is None:
          speciesData = USER_OCCURRENCE_DATA
-      f.write('ARCHIVE_USER_OCCURRENCE_DATA_DELIMITER: {}\n'
+      f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
               .format(speciesDataDelimiter))
    f.write('{}: {}\n'.format(varname, speciesData))
    f.write('\n')
-   # Input environmental data, pulled from environmental metadata  
-   f.write('ARCHIVE_SCENARIO_PACKAGE: {}\n'.format(envPackageName))
-   f.write('ARCHIVE_EPSG: {}\n'.format(configMeta['epsg']))
-   f.write('ARCHIVE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
+   # Input environmental data, pulled from SCENARIO_PACKAGE metadata
+   f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
+   f.write('PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
+   f.write('PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
    if mdlScen is None:
       mdlScen = DEFAULT_MODEL_SCENARIO
-   f.write('ARCHIVE_MODEL_SCENARIO: {}\n'.format(mdlScen))
+   f.write('PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
    if not prjScens:
       prjScens = DEFAULT_PROJECTION_SCENARIOS
    pcodes = ','.join(prjScens)
-   f.write('ARCHIVE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
+   f.write('PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
+   
+   if mdlMask is not None:
+      f.write('MODEL_MASK_NAME: {}\n'.format(mdlMask))
+   if prjMask is not None:
+      f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMask))
    
    for k, v in intersectParams.iteritems():
       f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
@@ -535,7 +538,7 @@ if __name__ == '__main__':
    parser.add_argument('-e', '--environmental_metadata', default=SCENARIO_PACKAGE,
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
-   parser.add_argument('-s', '--species_source', default='GBIF',
+   parser.add_argument('-ss', '--species_source', default='GBIF',
             help=('Species source will be: ' + 
                   '\'GBIF\' for GBIF-provided CSV data; ' +
                   '\'IDIGBIO\' iDigBio queries ' +
@@ -543,7 +546,7 @@ if __name__ == '__main__':
                   'Any other value will indicate that user-supplied CSV ' +
                   'data, documented with metadata describing the fields, is ' +
                   'to be used for the archive'))
-   parser.add_argument('-f', '--species_file', default=None,
+   parser.add_argument('-sf', '--species_file', default=None,
             help=('Species file (without full path) will be: ' + 
                   '1) CSV data sorted by taxon id for \'GBIF\' species source ' +
                   '(include extension); ' +
@@ -556,7 +559,7 @@ if __name__ == '__main__':
                   'the same basename.  The data file must have \'.csv\' ' +
                   'extension, metadata file must have \'.meta\' extension. ' +
                   'Metadata describes the data fields. ' ))
-   parser.add_argument('-d', '--species_delimiter', default=',',
+   parser.add_argument('-sd', '--species_delimiter', default=',',
             help=('Delimiter for user-supplied species file, defaults to \',\'. ' ))
    parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
             help=('Minimum number of points required for SDM computation ' +
@@ -566,15 +569,15 @@ if __name__ == '__main__':
             help=('Comma-separated list of algorithm codes for computing  ' +
                   'SDM experiments in this archive.  Options are described at ' +
                   '{} and include the codes: {} '.format(apiUrl, allAlgs)))
-   parser.add_argument('-c', '--grid_cellsize', default=1,
+   parser.add_argument('-gz', '--grid_cellsize', default=1,
             help=('Size of cells in the grid used for Global PAM. ' +
                   'Units are mapunits'))
-   parser.add_argument('-q', '--grid_shape', choices=('square', 'hexagon'),
+   parser.add_argument('-gp', '--grid_shape', choices=('square', 'hexagon'),
             default='square', help=('Shape of cells in the grid used for Global PAM.'))
    # Intersect Parameters
    parser.add_argument('-if', '--intersect_filter', default=None,  
             help=('SQL Filter to limit features/pixels for intersect'))
-   parser.add_argument('-in', '--intersect_attribute name', default='pixel', 
+   parser.add_argument('-in', '--intersect_attribute_name', default='pixel', 
             help=('Attribute feature name for intersect (Vector) or pixel (Raster)'))
    parser.add_argument('-im', '--intersect_min_presence', type=int, default=1, 
             help=('Minimum value for for intersect of features/pixels'))
@@ -602,7 +605,7 @@ if __name__ == '__main__':
       cellsides = 4
    intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
-         MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute,
+         MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute_name,
          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: args.intersect_min_presence,
          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: args.intersect_max_presence,
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
@@ -676,7 +679,29 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-$PYTHON LmDbServer/boom/initboom.py  --archive_name "Heuchera archive" --user ryan --email rfolk@flmnh.ufl.edu --environmental_metadata 10min-past-present-future  --species_source user --species_file heuchera_all --species_delimiter "," --min_points 25  --algorithms bioclim   --grid_cellsize 1  --grid_shape square
+$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
+                                     -u ryan                  \
+                                     -m rfolk@flmnh.ufl.edu  \
+                                     -e 10min-past-present-future  \
+                                     -ss user      \
+                                     -sf heuchera_all  \
+                                     -sd ','       \
+                                     -p 25        \
+                                     -a bioclim   \
+                                     -gz 1         \
+                                     -gp square
+
+$PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
+                                     --user ryan                  \
+                                     --email rfolk@flmnh.ufl.edu  \
+                                     --environmental_metadata 10min-past-present-future  \
+                                     --species_source user        \
+                                     --species_file heuchera_all  \
+                                     --species_delimiter ','      \
+                                     --min_points 25              \
+                                     --algorithms bioclim         \ 
+                                     --grid_cellsize 1            \
+                                     --grid_shape square
 
 
 $PYTHON LmDbServer/boom/initboom.py --help
