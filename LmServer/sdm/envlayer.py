@@ -24,7 +24,7 @@
 import json
 
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
-from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
+from LmServer.common.localconstants import ARCHIVE_USER, SCENARIO_PACKAGE_EPSG
 from LmServer.base.layer import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ServiceObject
@@ -99,7 +99,7 @@ class EnvironmentalLayer(EnvironmentalType, Raster):
                 minVal=None, maxVal=None, nodataVal=None, valUnits=None,
                 bbox=None, dlocation=None, 
                 gdalType=None, gdalFormat=None, 
-                mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
+                mapunits=None, resolution=None, epsgcode=SCENARIO_PACKAGE_EPSG,
                 layerType=None, layerTypeId=None, envMetadata={},
                 layerTypeModTime=None,
                 gcmCode=None, altpredCode=None, dateCode=None,

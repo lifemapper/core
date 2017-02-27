@@ -35,7 +35,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.lmconstants import (ALGORITHM_DATA, LMServiceModule,
                   DEFAULT_PROJECTION_FORMAT, JobFamily, MAL_STORE, ReferenceType)
-from LmServer.common.localconstants import DEFAULT_EPSG
+from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import ARCHIVE_USER
 from LmServer.common.notifyJob import NotifyJob
@@ -199,7 +199,7 @@ class MAL(DbPostgresql):
          occ.readShapefile()
       if occ.getFeatures():
          pointtotal = occ.featureCount
-         if occ.epsgcode == DEFAULT_EPSG:
+         if occ.epsgcode == SCENARIO_PACKAGE_EPSG:
             polywkt = occ.getConvexHullWkt()
             pointswkt = occ.getWkt()
       try:
@@ -1757,7 +1757,7 @@ class MAL(DbPostgresql):
       """
       lyr.modTime = mx.DateTime.utc().mjd
       wkt = None
-      if lyr.epsgcode == DEFAULT_EPSG:
+      if lyr.epsgcode == SCENARIO_PACKAGE_EPSG:
          wkt = lyr.getFeaturesWkt()
       # This updates the metadataUrl and dlocation to new values (incl layerid)
       lyrid = self.executeInsertFunction('lm_insertAncillaryLayer', 

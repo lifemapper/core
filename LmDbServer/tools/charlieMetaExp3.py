@@ -47,19 +47,12 @@ SPECIES_DATA = 'CombinedBIEN3data'
 POINT_COUNT_MIN = 20
 
 # These must be valid ALGORITHM_CODES in the Lifemapper database; 
-# Default = DEFAULT_ALGORITHMS
 ALGORITHM_CODES = None
-
-# Default = DEFAULT_EPSG
 EPSG = 2163
-# Default = DEFAULT_MAPUNITS IFF EPSG == DEFAULT_EPSG, otherwise exception
 MAPUNITS = 'meters'
-# Defaults = DEFAULT_GRID_CELLSIZE  IFF MAPUNITS == DEFAULT_MAPUNITS, otherwise exception
 GRID_CELLSIZE = 10000
 
-# Default = DEFAULT_GRID_NAME
 GRID_NAME = '10km-grid'
-# Default = 4
 GRID_NUM_SIDES = 4
 
 # .............................................................................

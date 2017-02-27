@@ -56,7 +56,7 @@ from types import IntType, FloatType
 
 from LmCommon.common.lmconstants import (JobStatus, OutputFormat, MatrixType)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
-                                            SCRATCH_PATH, PID_PATH, DEFAULT_EPSG)
+                                            SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG)
 
 BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths
@@ -272,7 +272,7 @@ DEFAULT_LINE_COLOR = 'ffffff'
 DEFAULT_PROJECTION_PALETTE = 'red'
 DEFAULT_ENVIRONMENTAL_PALETTE = 'gray'
 
-DEFAULT_SRS = 'epsg:%s' % str(DEFAULT_EPSG)
+DEFAULT_SRS = 'epsg:%s' % str(SCENARIO_PACKAGE_EPSG)
 DEFAULT_WCS_FORMAT = 'image/tiff' 
 MAXENT_WCS_FORMAT = 'image/x-aaigrid'
 DEFAULT_WMS_FORMAT = 'image/png'

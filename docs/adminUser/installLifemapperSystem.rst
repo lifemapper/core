@@ -112,7 +112,7 @@ Install nodes from Frontend
       Variables to override for both rolls should be placed in the site.ini file.
       
    #. If you wish to change the SCENARIO_PACKAGE (and corresponding 
-      DEFAULT_SCENARIO) variables for LmServer, you must do this after the 
+      SCENARIO_PACKAGE_* variables) for LmServer, you must do this after the 
       installation is complete (after reboot).
 
    #. If you updated the SCENARIO_PACKAGE 
@@ -184,27 +184,28 @@ Change Data Defaults
 
 #. **Check default archive values (DATASOURCE, ARCHIVE_USER, OCCURRENCE_FILENAME ...)** :  
 
-   * Look at values in /opt/lifemapper/config/config.lmserver.ini
-   * Update values to be modified in /opt/lifemapper/config/site.ini
-   * Override any of the following (or other) variables by adding them to 
-     site.ini and downloading climate data if necessary.
-   
-     * Default ARCHIVE_USER is kubi.
-     * Default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU production
-       installation, override this with the latest full data dump by downloading 
-       the data from yeti into /share/lmserver/data/species/
-     * Default species file of "Accepted" GBIF Taxon Ids for iDigBio occurrences
-       is IDIG_FILENAME with a value of idig_gbifids.txt.  Download the file 
-       from yeti into /share/lmserver/data/species.
-     * Default SCENARIO_PACKAGE is 10min-past-present-future.  To change this, 
-       override the variable SCENARIO_PACKAGE (for LmServer) and 
-       SCENARIO_PACKAGE_SEED (for LmCompute).
+   * Run LmDbServer/boom/initBoom.ini with new variables 
+
+     * including a unique userId/archiveName combination.  
+     * Make sure the data package for  the **environmental_metadata** 
+       argument, a tar.gz file with layers and metadata, is installed in 
+       /share/lm/data/layers.
+     * Species data rules:
+       
+       * If user-supplied CSV and metadata files:  Make sure the species data 
+         files for the **species_file** argument is installed in the user space 
+         (/share/lm/data/archive/<userId>/).
+       * If using iDigBio web services, the default file of "Accepted" GBIF 
+         Taxon Ids for iDigBio occurrences is IDIG_FILENAME with a value of 
+         idig_gbifids.txt.  Change the value or download the file from yeti 
+         into /share/lmserver/data/species.provide a list of accepted 
+         GBIF Taxon IDs
+       * If using GBIF CSV data, with known column definitions, the
+         default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU 
+         production installation, override this with the latest full data dump 
+         by downloading the data from yeti into /share/lmserver/data/species/
      
-       * identify options for DEFAULT_MODEL_SCENARIO and 
-         DEFAULT_PROJECTION_SCENARIOS by looking at the metadata newly installed  
-         in /share/lmserver/data/climate/<SCENARIO_PACKAGE>.csv
-       * add the variables DEFAULT_MODEL_SCENARIO and 
-         DEFAULT_PROJECTION_SCENARIOS in site.ini with appropriate values
-         
+
+              
 then follow the instructions in **(OPT) To change defaults** above.
    

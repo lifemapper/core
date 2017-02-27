@@ -28,17 +28,16 @@ import glob
 import os.path
 import time
 
-from LmDbServer.common.localconstants import DEFAULT_ALGORITHMS, \
-                                  DEFAULT_MODEL_SCENARIO, \
-                                  DEFAULT_PROJECTION_SCENARIOS 
+from LmDbServer.common.localconstants import ALGORITHMS, \
+                                  SCENARIO_PACKAGE_MODEL_SCENARIO, \
+                                  SCENARIO_PACKAGE_PROJECTION_SCENARIOS 
                                   
 from LmCommon.common.lmconstants import JobStatus
 
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import (ARCHIVE_USER, APP_PATH, 
+from LmServer.common.localconstants import (PUBLIC_USER, APP_PATH, 
                                             POINT_COUNT_MIN)
-from LmServer.common.lmconstants import Priority, ARCHIVE_DELETE_YEAR, \
-                                       ARCHIVE_DELETE_MONTH, ARCHIVE_DELETE_DAY
+from LmServer.common.lmconstants import Priority
 from LmServer.common.log import ThreadLogger
 from LmServer.notifications.email import EmailNotifier
 from LmServer.sdm.algorithm import Algorithm
@@ -60,10 +59,10 @@ def deleteOldOccData(scribe, olderThan=None):
    total = 0
    limit = 200
    occList = scribe.listOccurrenceSets(0, limit, beforeTime=olderThan, 
-                                        userId=ARCHIVE_USER, atom=False)
+                                        userId=PUBLIC_USER, atom=False)
    while occList:      
       for occ in occList:
-         log.info("Deleting occurrence set: %s, %s, date: %s" % 
+         scribe.log.info("Deleting occurrence set: %s, %s, date: %s" % 
                   (occ.getId(), occ.displayName, str(occ.statusModTime)))
          success = scribe.completelyRemoveOccurrenceSet(occ)
          if not success:
@@ -73,7 +72,7 @@ def deleteOldOccData(scribe, olderThan=None):
       if os.path.exists(STOPFILE):
          break
       occList = scribe.listOccurrenceSets(0, limit, beforeTime=tooOldTime, 
-                                           userId=ARCHIVE_USER, atom=False)
+                                           userId=PUBLIC_USER, atom=False)
    scribe.log.info('Deleted %d occurrenceSets' % (total))
 
 
@@ -85,17 +84,17 @@ def reInitializeOccurrenceJobs(scribe, olderThan=None, newerThan=None,
    algList = []
    limit = 300
    # Default archive parameters
-   for acode in DEFAULT_ALGORITHMS:
+   for acode in ALGORITHMS:
       alg = Algorithm(acode)
       alg.fillWithDefaults()
       algList.append(alg)
-   mdlScen = scribe.getScenario(DEFAULT_MODEL_SCENARIO)
-   for pcode in DEFAULT_PROJECTION_SCENARIOS:
+   mdlScen = scribe.getScenario(SCENARIO_PACKAGE_MODEL_SCENARIO)
+   for pcode in SCENARIO_PACKAGE_PROJECTION_SCENARIOS:
       prjScenList.append(scribe.getScenario(pcode))
    occList = scribe.listOccurrenceSets(0, limit, 
                                        beforeTime=olderThan, 
                                        afterTime=newerThan,
-                                       userId=ARCHIVE_USER, 
+                                       userId=PUBLIC_USER, 
                                        status=status,
                                        atom=False)
    for occ in occList:
@@ -105,7 +104,7 @@ def reInitializeOccurrenceJobs(scribe, olderThan=None, newerThan=None,
                          (occ.getId(), occ.displayName, str(occ.statusModTime)))
          scribe.completelyRemoveOccurrenceSet(occ)
       else:
-         jobs = scribe.initSDMChain(ARCHIVE_USER, occ, algList, mdlScen, 
+         jobs = scribe.initSDMChain(PUBLIC_USER, occ, algList, mdlScen, 
                                     prjScenList, priority=Priority.NORMAL, 
                                     intersectGrid=None, 
                                     minPointCount=POINT_COUNT_MIN)
@@ -167,7 +166,7 @@ def completelyDeleteObsoleteOccurrenceData(logger, fname, startfname, stopfname)
          except Exception, e:
             logger.debug('Failed to interpret: %s' % line)
          else:
-            pth = earljr.createDataPath(ARCHIVE_USER, occsetId=occid)
+            pth = earljr.createDataPath(PUBLIC_USER, occsetId=occid)
             if not os.path.exists(pth):
                logger.debug('Path not found: %s' % pth)
             else:
@@ -212,6 +211,9 @@ if __name__ == "__main__":
    mal=> \q
    """
 #    tooOldTime = mx.DateTime.gmt().mjd
+   ARCHIVE_DELETE_YEAR = 2016
+   ARCHIVE_DELETE_MONTH = 1
+   ARCHIVE_DELETE_DAY = 1   
    logger = ThreadLogger('cleanupData')
    tooOldTime = mx.DateTime.DateTime(ARCHIVE_DELETE_YEAR, ARCHIVE_DELETE_MONTH, 
                                      ARCHIVE_DELETE_DAY).mjd

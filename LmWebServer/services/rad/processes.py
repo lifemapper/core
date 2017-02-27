@@ -34,8 +34,8 @@ from LmCommon.common.lmconstants import (JobStage, JobStatus, RandomizeMethods,
                                     HTTPStatus)
 from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LMError, LmHTTPError
-from LmServer.common.localconstants import (WEBSERVICES_ROOT, DEFAULT_EPSG, 
-                                            DEFAULT_MAPUNITS)
+from LmServer.common.localconstants import (WEBSERVICES_ROOT, SCENARIO_PACKAGE_EPSG, 
+                                            SCENARIO_PACKAGE_MAPUNITS)
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.scribe import Scribe
 from LmServer.rad.anclayer import AncillaryRaster, AncillaryVector
@@ -688,7 +688,7 @@ class BuildGridProcess(WPSService):
                        "title" : "The units used for measurement in the ShapeGrid",
                        "reference" : "http://www.w3.org/TR/xmlschema-2/#String",
                        "paramType" : "String",
-                       "defaultValue" : DEFAULT_MAPUNITS
+                       "defaultValue" : SCENARIO_PACKAGE_MAPUNITS
                       },
                       {
                        "minOccurs" : "0",
@@ -697,7 +697,7 @@ class BuildGridProcess(WPSService):
                        "title" : "The number of successful swaps to use with the swap algorithm",
                        "reference" : "http://www.w3.org/TR/xmlschema-2/#integer",
                        "paramType" : "integer",
-                       "defaultValue" : DEFAULT_EPSG
+                       "defaultValue" : SCENARIO_PACKAGE_EPSG
                       },
                       {
                        "minOccurs" : "0",
@@ -728,8 +728,8 @@ class BuildGridProcess(WPSService):
       cellSides = 4
       cellSize = 1
       bbox = '-180,-90,180,90'
-      mapUnits = DEFAULT_MAPUNITS
-      epsg = DEFAULT_EPSG
+      mapUnits = SCENARIO_PACKAGE_MAPUNITS
+      epsg = SCENARIO_PACKAGE_EPSG
       cutout = None
       # POST data
       if obj.DataInputs is not None:

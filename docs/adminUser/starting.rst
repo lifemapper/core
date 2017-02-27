@@ -96,8 +96,8 @@ Environmental Data
 ******************
 Available environmental data is defined by the **SCENARIO_PACKAGE** variable in the 
 config file. One scenario for modeling (for current-day species data, this is 
-usually observed environmental data), **DEFAULT_MODEL_SCENARIO**, and 
-one or more for projecting, **DEFAULT_PROJECTION_SCENARIOS**, are set in the 
+usually observed environmental data), **SCENARIO_PACKAGE_MODEL_SCENARIO**, and 
+one or more for projecting, **SCENARIO_PACKAGE_PROJECTION_SCENARIOS**, are set in the 
 config file.
 
 Currently environmental data must be one of the pre-defined options; 

@@ -40,8 +40,8 @@ from LmCommon.common.lmconstants import (JobStatus, ProcessType, Instances)
 
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.common.lmconstants import JobFamily, TEST_DATA_PATH
-from LmServer.common.localconstants import (WEBSERVICES_ROOT, DEFAULT_MAPUNITS, 
-                                            DEFAULT_EPSG)
+from LmServer.common.localconstants import (WEBSERVICES_ROOT, SCENARIO_PACKAGE_MAPUNITS, 
+                                            SCENARIO_PACKAGE_EPSG)
 from LmServer.common.log import ThreadLogger
 from LmServer.db.scribe import Scribe
 from LmServer.sdm.envlayer import EnvironmentalLayer
@@ -219,23 +219,23 @@ def insertTestJobChain(scribe, userId):
       # Need to insert data
       lyr1 = EnvironmentalLayer("testLayer1", title="Testing layer 1", 
                                 valUnits='degrees', gdalFormat='GTiff', 
-                                mapunits=DEFAULT_MAPUNITS, resolution='2.5', 
-                                epsgcode=DEFAULT_EPSG, 
+                                mapunits=SCENARIO_PACKAGE_MAPUNITS, resolution='2.5', 
+                                epsgcode=SCENARIO_PACKAGE_EPSG, 
                                 layerType='type1', userId=userId)
       lyr2 = EnvironmentalLayer("testLayer2", title="Testing layer 2", 
                                 valUnits='degrees', gdalFormat='GTiff', 
-                                mapunits=DEFAULT_MAPUNITS, resolution='2.5', 
-                                epsgcode=DEFAULT_EPSG, 
+                                mapunits=SCENARIO_PACKAGE_MAPUNITS, resolution='2.5', 
+                                epsgcode=SCENARIO_PACKAGE_EPSG, 
                                 layerType='type2', userId=userId)
       lyr3 = EnvironmentalLayer("testLayer3", title="Testing layer 3", 
                                 valUnits='degrees', gdalFormat='GTiff', 
-                                mapunits=DEFAULT_MAPUNITS, resolution='2.5', 
-                                epsgcode=DEFAULT_EPSG, 
+                                mapunits=SCENARIO_PACKAGE_MAPUNITS, resolution='2.5', 
+                                epsgcode=SCENARIO_PACKAGE_EPSG, 
                                 layerType='type3', userId=userId)
       lyr4 = EnvironmentalLayer("testLayer4", title="Testing layer 4", 
                                 valUnits='degrees', gdalFormat='GTiff', 
-                                mapunits=DEFAULT_MAPUNITS, resolution='2.5', 
-                                epsgcode=DEFAULT_EPSG, 
+                                mapunits=SCENARIO_PACKAGE_MAPUNITS, resolution='2.5', 
+                                epsgcode=SCENARIO_PACKAGE_EPSG, 
                                 layerType='type4', userId=userId)
       # Write layer data
       with open(os.path.join(TEST_DATA_PATH, 'testLayer1.tif')) as f1:

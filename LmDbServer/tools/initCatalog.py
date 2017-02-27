@@ -32,7 +32,7 @@ import LmDbServer.tools.bioclimMeta as meta
 from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ALGORITHM_DATA, ENV_DATA_PATH
 from LmServer.common.localconstants import (ARCHIVE_USER, DATASOURCE, 
-                                            DEFAULT_EPSG, DEFAULT_MAPUNITS)
+                                            SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
 from LmServer.common.log import ScriptLogger
 from LmServer.common.lmuser import LMUser
 from LmServer.db.scribe import Scribe
@@ -394,8 +394,8 @@ def createAllScenarios(usr, pkgMeta, lyrMeta, lyrtypeMeta):
 def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenPkgName):
    """
    @summary Assemble climate, taxonomy metadata and add to database  
-            lyrMeta = {'epsg': DEFAULT_EPSG, 
-                       'mapunits': DEFAULT_MAPUNITS, 
+            lyrMeta = {'epsg': SCENARIO_PACKAGE_EPSG, 
+                       'mapunits': SCENARIO_PACKAGE_MAPUNITS, 
                        'resolution': RESOLUTIONS[pkgMeta['res']], 
                        'gdaltype': ENVLYR_GDALTYPE, 
                        'gridname': DEFAULT_GRID_NAME, 
@@ -418,9 +418,9 @@ def addScenarioPackageMetadata(scribe, usr, pkgMeta, lyrMeta, lyrtypeMeta, scenP
 # ...............................................
 def _getClimateMeta(scenPkg):
    pkgMeta = meta.CLIMATE_PACKAGES[scenPkg]
-   lyrMeta = {'epsg': DEFAULT_EPSG, 
+   lyrMeta = {'epsg': SCENARIO_PACKAGE_EPSG, 
               'topdir': pkgMeta['topdir'],
-              'mapunits': DEFAULT_MAPUNITS, 
+              'mapunits': SCENARIO_PACKAGE_MAPUNITS, 
               'resolution': meta.RESOLUTIONS[pkgMeta['res']], 
               'gdaltype': meta.ENVLYR_GDALTYPE, 
               'gdalformat': meta.ENVLYR_GDALFORMAT,

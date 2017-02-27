@@ -36,7 +36,7 @@ from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.base.utilities import (getMjdTimeFromISO8601, getUrlParameter, 
                getXmlListFromTree, getXmlValueFromTree)
 from LmServer.common.lmconstants import Priority, LMServiceModule
-from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
+from LmServer.common.localconstants import ARCHIVE_USER, SCENARIO_PACKAGE_EPSG
 from LmServer.db.scribe import Scribe
 from LmServer.rad.anclayer import AncillaryRaster, AncillaryVector
 from LmServer.rad.palayer import PresenceAbsenceRaster, PresenceAbsenceVector
@@ -1290,7 +1290,7 @@ class DataPoster(object):
       if self.userId == "changeThinking":
          epsgCode = 2163
       else:
-         epsgCode = DEFAULT_EPSG
+         epsgCode = SCENARIO_PACKAGE_EPSG
 
       if epsgInput is not None:
          try:

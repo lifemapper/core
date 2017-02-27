@@ -28,7 +28,7 @@ import sys
 
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
-from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
+from LmDbServer.common.localconstants import (ALGORITHMS, 
          SCENARIO_PACKAGE, SCENARIO_PACKAGE_MODEL_SCENARIO, 
          SCENARIO_PACKAGE_PROJECTION_SCENARIOS)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
@@ -460,7 +460,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    if len(algorithms) > 0:
       algs = ','.join(algorithms)
    else:
-      algs = DEFAULT_ALGORITHMS
+      algs = ALGORITHMS
    f.write('ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
    
@@ -531,7 +531,7 @@ if __name__ == '__main__':
       print("Run this script as `lmwriter`")
       sys.exit(2)
 
-   algs=','.join(DEFAULT_ALGORITHMS)
+   algs=','.join(ALGORITHMS)
    allAlgs = ','.join([alg.code for alg in Algorithms.implemented()])
 #    allAlgs = ','.join(ALGORITHM_DATA.keys())
    apiUrl = 'http://lifemapper.github.io/api.html'
@@ -718,109 +718,6 @@ $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
                                      --grid_cellsize 1            \
                                      --grid_shape square
 
-
-$PYTHON LmDbServer/boom/initboom.py --help
-$PYTHON LmDbServer/boom/initboom.py -n "Aimee test archive" \
-  -u aimee -m zzeppozz@gmail.com -e 10min-past-present-future \
-  -s gbif -p 25 -a bioclim -c 1 -q square
-
-import mx.DateTime
-import os
-from LmDbServer.common.localconstants import (DEFAULT_ALGORITHMS, 
-         DEFAULT_MODEL_SCENARIO, DEFAULT_PROJECTION_SCENARIOS, DEFAULT_GRID_NAME, 
-         DEFAULT_GRID_CELLSIZE, SCENARIO_PACKAGE, USER_OCCURRENCE_DATA)
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
-                                         JobStatus, MatrixType)
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_NAME, ARCHIVE_KEYWORD)
-from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN,
-                                            DEFAULT_EPSG, DEFAULT_MAPUNITS)
-from LmServer.common.log import ScriptLogger
-from LmServer.common.lmuser import LMUser
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.sdm.algorithm import Algorithm
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import Matrix            
-from LmServer.legion.scenario import Scenario
-from LmServer.legion.shapegrid import ShapeGrid
-
-archiveName = 'Aimee test archive'.replace(' ', '_')
-usr = 'aimee'
-usrEmail = 'zzeppozz@gmail.com'
-envPackageName = '10min-past-present-future'
-speciesSource = 'gbif'.upper()
-speciesData = None
-minpoints = 25
-algstring = 'BIOCLIM'
-algorithms = [alg.strip() for alg in algstring.split(',')]
-cellsize = 1
-gridname = '{}-Grid'.format(archiveName)
-cellsides = 4
-
-
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
-CURR_MJD = mx.DateTime.gmt().mjd
-from LmDbServer.tools.initBoom import *
-from LmDbServer.tools.initBoom import ( _importClimatePackageMetadata,
-          _getConfiguredMetadata, _getbioName, _getBaselineLayers, _findFileFor,
-          _addIntersectGrid, _writeConfigFile)
-          
-META, metafname = _importClimatePackageMetadata(envPackageName)
-pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-configMeta = _getConfiguredMetadata(META, pkgMeta)
-lyrtypeMeta = META.LAYERTYPE_META
-
-logger = ScriptLogger('testing')
-scribe = BorgScribe(logger)
-success = scribe.openConnections()
-
-# ...................................................
-# User testing
-addUsers(scribe, usr, usrEmail)
-
-# ...................................................
-# Scenario testing
-basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
-                                                META.LAYERTYPE_META,
-                                                META.OBSERVED_PREDICTED_META,
-                                                META.CLIMATE_KEYWORDS)
-predScens = createPredictedScenarios(usr, pkgMeta, configMeta, 
-                                     META.LAYERTYPE_META, staticLayers,
-                                     META.OBSERVED_PREDICTED_META,
-                                     META.CLIMATE_KEYWORDS)
-predScens[basescen.code] = basescen
-addScenarioAndLayerMetadata(scribe, predScens)
-
-# ...................................................
-# Shapegrid testing
-(gridname, configFname, archiveName, cellsides, cellsize, 
- mapunits, epsg, bbox, usr) = (configMeta['gridname'], 
-                         metafname, archiveName, 
-                         configMeta['gridsides'], 
-                         configMeta['gridsize'], configMeta['mapunits'], 
-                         configMeta['epsg'], pkgMeta['bbox'], usr)
-
-shp = _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, 
-                        bbox, usr)
-# "BOOM" Archive
-meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
-        ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
-grdset = Gridset(name=archiveName, metadata=meta, shapeGridId=shp.getId(), 
-                 configFilename=configFname, epsgcode=shp.epsgcode, 
-                 userId=usr, modTime=CURR_MJD)
-updatedGrdset = scribe.findOrInsertGridset(grdset)
-# "Global" PAM
-meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
-        ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
-gpam = Matrix(None, matrixType=MatrixType.PAM, metadata=meta,
-              userId=usr, gridsetId=updatedGrdset.getId(),
-              status=JobStatus.GENERAL, statusModTime=CURR_MJD)
-updatedGpam = scribe.findOrInsertMatrix(gpam)
- 
 
 
 """

@@ -26,7 +26,7 @@ import os
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT)
-from LmServer.common.localconstants import ARCHIVE_USER, DEFAULT_EPSG
+from LmServer.common.localconstants import ARCHIVE_USER, SCENARIO_PACKAGE_EPSG
 
 
 from LmServer.base.layer import Vector, _LayerParameters
@@ -102,7 +102,7 @@ class OccurrenceLayer(OccurrenceType, Vector, ProcessObject):
 # .............................................................................
    def __init__(self, displayName, occMetadata={},
                 name=None, fromGbif=False, dlocation=None, 
-                metalocation=None, queryCount=-1, epsgcode=DEFAULT_EPSG, 
+                metalocation=None, queryCount=-1, epsgcode=SCENARIO_PACKAGE_EPSG, 
                 ogrType=ogr.wkbPoint, ogrFormat=DEFAULT_OGR_FORMAT, bbox=None,
                 featureAttributes={}, features={}, primaryEnv=None, sciName=None,
                 userId=ARCHIVE_USER, occId=None, metadataUrl=None,

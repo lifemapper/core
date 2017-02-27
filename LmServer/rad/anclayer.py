@@ -27,7 +27,7 @@ from LmServer.base.layer import _LayerParameters, Vector, Raster
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject import ProcessObject
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule
-from LmServer.common.localconstants import DEFAULT_EPSG
+from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 
 # .............................................................................
 class _AncillaryValue(_LayerParameters):

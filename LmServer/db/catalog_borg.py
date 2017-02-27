@@ -33,7 +33,7 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
                                          DB_STORE, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import DEFAULT_EPSG
+from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvType, EnvLayer
 from LmServer.legion.gridset import Gridset
@@ -523,7 +523,7 @@ class Borg(DbPostgresql):
       except:
          min = max = nodata = wkt = None
       meta = lyr.dumpLyrMetadata()
-      if lyr.epsgcode == DEFAULT_EPSG:
+      if lyr.epsgcode == SCENARIO_PACKAGE_EPSG:
          wkt = lyr.getWkt()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer', 
                            lyr.getId(),
@@ -571,7 +571,7 @@ class Borg(DbPostgresql):
       """
       scen.modTime = mx.DateTime.utc().mjd
       wkt = None
-      if scen.epsgcode == DEFAULT_EPSG:
+      if scen.epsgcode == SCENARIO_PACKAGE_EPSG:
          wkt = scen.getWkt()
       meta = scen.dumpScenMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
@@ -626,7 +626,7 @@ class Borg(DbPostgresql):
       @return: new or existing ShapeGrid.
       """
       wkt = None
-      if shpgrd.epsgcode == DEFAULT_EPSG:
+      if shpgrd.epsgcode == SCENARIO_PACKAGE_EPSG:
          wkt = shpgrd.getWkt()
       meta = shpgrd.dumpParamMetadata()
       gdaltype = valunits = nodataval = minval = maxval = None
@@ -744,7 +744,7 @@ class Borg(DbPostgresql):
 #       """
 #       layer.modTime = mx.DateTime.utc().mjd
 #       wkt = None
-#       if layer.epsgcode == DEFAULT_EPSG:
+#       if layer.epsgcode == SCENARIO_PACKAGE_EPSG:
 #          wkt = layer.getWkt()
 #       lyrmeta = layer.dumpLyrMetadata()
 #       row, idxs = self.executeInsertAndSelectOneFunction(
@@ -767,7 +767,7 @@ class Borg(DbPostgresql):
       """
       lyr.modTime = mx.DateTime.utc().mjd
       wkt = None
-      if lyr.epsgcode == DEFAULT_EPSG:
+      if lyr.epsgcode == SCENARIO_PACKAGE_EPSG:
          wkt = lyr.getWkt()
       envmeta = lyr.dumpParamMetadata()
       lyrmeta = lyr.dumpLyrMetadata()

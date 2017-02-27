@@ -46,7 +46,7 @@ from LmServer.base.serviceobject import ServiceObject
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
             GDALFormatCodes, GDALDataTypes, OGRFormats, OGRDataTypes, 
             OutputFormat, LMServiceType)
-from LmServer.common.localconstants import APP_PATH, DEFAULT_EPSG
+from LmServer.common.localconstants import APP_PATH, SCENARIO_PACKAGE_EPSG
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
@@ -504,7 +504,7 @@ class Raster(_Layer):
                 isCategorical=False, bbox=None, dlocation=None, 
                 metalocation=None,
                 gdalType=None, gdalFormat=None, startDate=None, endDate=None, 
-                mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
+                mapunits=None, resolution=None, epsgcode=SCENARIO_PACKAGE_EPSG,
                 keywords=None, description=None, isDiscreteData=None,
                 svcObjId=None, lyrId=None, lyrUserId=None, 
                 verify=None, squid=None,
@@ -979,7 +979,7 @@ class Vector(_Layer):
    def __init__(self, metadata={}, name=None, title=None, author=None,  
                 bbox=None, dlocation=None, metalocation=None, 
                 startDate=None, endDate=None, 
-                mapunits=None, resolution=None, epsgcode=DEFAULT_EPSG,
+                mapunits=None, resolution=None, epsgcode=SCENARIO_PACKAGE_EPSG,
                 ogrType=None, ogrFormat=None, 
                 featureCount=0, featureAttributes={}, features={}, fidAttribute=None, 
                 valAttribute=None, valUnits=None, isCategorical=False,
@@ -1586,7 +1586,7 @@ class Vector(_Layer):
 # ...............................................
    @staticmethod
    def splitCSVPointsToShapefiles(outpath, dlocation, groupByField, comboLayerName,
-                                 srsEPSGOrWkt=DEFAULT_EPSG,
+                                 srsEPSGOrWkt=SCENARIO_PACKAGE_EPSG,
                                  delimiter=';', quotechar='\"',
                                  idCol='id', xCol='lon', yCol='lat',
                                  overwrite=False):
@@ -2269,11 +2269,11 @@ class Vector(_Layer):
          origBBox = self._bbox
       minX, minY, maxX, maxY = origBBox
          
-      if origEpsg != DEFAULT_EPSG:
+      if origEpsg != SCENARIO_PACKAGE_EPSG:
          srcSRS = osr.SpatialReference()
          srcSRS.ImportFromEPSG(origEpsg)
          dstSRS = osr.SpatialReference()
-         dstSRS.ImportFromEPSG(DEFAULT_EPSG)
+         dstSRS.ImportFromEPSG(SCENARIO_PACKAGE_EPSG)
          
          spTransform = osr.CoordinateTransformation(srcSRS, dstSRS)
          # Allow for return of either (x, y) or (x, y, z) 

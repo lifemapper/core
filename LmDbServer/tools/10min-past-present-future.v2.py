@@ -7,12 +7,12 @@ from osgeo import gdalconst
 # ...............................................
 
 # These must be valid ALGORITHM_CODES in the Lifemapper database; 
-# Default = DEFAULT_ALGORITHMS
+# Default = ALGORITHMS
 #ALGORITHM_CODES = None
 
-# Default = DEFAULT_EPSG
+# Default = SCENARIO_PACKAGE_EPSG
 EPSG = 4326
-# Default = DEFAULT_MAPUNITS IFF EPSG == DEFAULT_EPSG, otherwise exception
+# Default = SCENARIO_PACKAGE_MAPUNITS IFF EPSG == SCENARIO_PACKAGE_EPSG
 MAPUNITS = 'dd'
 
 # .............................................................................

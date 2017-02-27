@@ -37,7 +37,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
          CT_SPECIES_KEYWORD, PROJ_LIB)
 from LmServer.common.localconstants import (ARCHIVE_USER, POINT_COUNT_MAX,
-                                            DEFAULT_EPSG, DEFAULT_MAPUNITS)
+                                            SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
 from LmServer.common.lmconstants import CT_USER
 from LmServer.sdm.occlayer import OccurrenceLayer
 from LmServer.sdm.sdmprojection import SDMProjection
@@ -447,14 +447,14 @@ class MapLayerSet(_LayerSet, ServiceObject):
       # changed this from self.name (which left 'scen_' prefix off scenarios)
       mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)      
                               
-      if self.epsgcode == DEFAULT_EPSG:
+      if self.epsgcode == SCENARIO_PACKAGE_EPSG:
          boundstr = '  -180  -90  180  90'
       else:
          mbbox = self.unionBounds
          boundstr = '  %.2f  %.2f  %.2f  %.2f' % (mbbox[0], mbbox[1],
                                                            mbbox[2], mbbox[3])
       mapstr = mapstr.replace('##_EXTENT_##', boundstr)
-      mapunits = DEFAULT_MAPUNITS
+      mapunits = SCENARIO_PACKAGE_MAPUNITS
 #       if self.layers and len(self.layers) > 0:
 #          mapunits = self.layers[0].mapUnits
       mapstr = mapstr.replace('##_UNITS_##',  mapunits)
@@ -519,7 +519,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
          onlineUrl = eOnlineUrl
             
       # Add bluemarble image to Data/Occurrence Map Services
-      if self.epsgcode == DEFAULT_EPSG:
+      if self.epsgcode == SCENARIO_PACKAGE_EPSG:
          backlyr = self._createBlueMarbleLayer()
          maplayers = '\n'.join([maplayers, backlyr])
          

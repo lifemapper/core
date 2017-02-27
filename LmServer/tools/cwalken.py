@@ -282,7 +282,7 @@ class ChristopherWalken(LMObject):
       try:
          epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
       except:
-         epsg = cfg.getint(pipelineHeading, 'DEFAULT_EPSG')
+         epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
       # Species parser/puller
       weaponOfChoice = self._getOccWeaponOfChoice(cfg, envHeading, 
                                              pipelineHeading, epsg, boompath)
