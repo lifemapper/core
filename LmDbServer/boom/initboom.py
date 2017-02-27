@@ -447,9 +447,9 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       f.write('TROUBLESHOOTERS: {}\n'.format(userEmail))
    f.write('\n')   
 
-   f.write('; ...................')
-   f.write('; SDM Params')
-   f.write('; ...................')
+   f.write('; ...................\n')
+   f.write('; SDM Params\n')
+   f.write('; ...................\n')
    # Expiration date triggering re-query and computation
    f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
    f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
@@ -464,9 +464,9 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
    
-   f.write('; ...................')
-   f.write('; Species data vals')
-   f.write('; ...................')
+   f.write('; ...................\n')
+   f.write('; Species data vals\n')
+   f.write('; ...................\n')
    f.write('DATASOURCE: {}\n'.format(speciesSource))
    # Species source type (for processing) and file
    if speciesSource == SpeciesDatasource.GBIF:
@@ -490,9 +490,9 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('{}: {}\n'.format(varname, speciesData))
    f.write('\n')
 
-   f.write('; ...................')
-   f.write('; Env Package Vals')
-   f.write('; ...................')
+   f.write('; ...................\n')
+   f.write('; Env Package Vals\n')
+   f.write('; ...................\n')
    # Input environmental data, pulled from SCENARIO_PACKAGE metadata
    f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
    f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
@@ -510,10 +510,11 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       f.write('MODEL_MASK_NAME: {}\n'.format(mdlMask))
    if prjMask is not None:
       f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMask))
+   f.write('\n')
    
-   f.write('; ...................')
-   f.write('; Global PAM vals')
-   f.write('; ...................')
+   f.write('; ...................\n')
+   f.write('; Global PAM vals\n')
+   f.write('; ...................\n')
    # Intersection grid
    f.write('GRID_NAME: {}\n'.format(gridname))
    f.write('GRID_CELLSIZE: {}\n'.format(grid_cellsize))

@@ -28,7 +28,7 @@ from types import ListType, TupleType
 
 from LmServer.notifications.email import EmailNotifier
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
-from LmServer.common.localconstants import ARCHIVE_USER, TROUBLESHOOTERS
+from LmServer.common.localconstants import PUBLIC_USER, TROUBLESHOOTERS
 from LmServer.common.log import ScriptLogger
 from LmServer.db.scribe import Scribe
 from LmServer.common.lmconstants import ReferenceType
@@ -51,7 +51,7 @@ def _assembleDatabaseStats(scribe):
    oneMonthAgo = DT.gmt() - 30
    display = {oneDayAgo: 'Day', oneMonthAgo: 'Month', None: 'Total'}
    
-   USERS = (DEFAULT_POST_USER, ARCHIVE_USER, None)
+   USERS = (DEFAULT_POST_USER, PUBLIC_USER, None)
    TIMES = (oneDayAgo, oneMonthAgo, None)
    OBJ_TYPES = ReferenceType.sdmTypes
    OBJ_TYPES.remove(ReferenceType.SDMExperiment)

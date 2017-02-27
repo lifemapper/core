@@ -95,11 +95,12 @@ class ChristopherWalken(LMObject):
       if jsonFname is not None:
          raise LMError('JSON Walken is not yet implemented')
       else:       
-         (self.weaponOfChoice, self.epsg, self.algs, 
-          self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
-          boomGridset, self.intersectParams) = self.getConfiguredObjects()
-      self.globalPAM = boomGridset.pam
-      self.boomShapegrid = boomGridset.getShapegrid()
+         pass
+#          (self.weaponOfChoice, self.epsg, self.algs, 
+#           self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
+#           boomGridset, self.intersectParams) = self.getConfiguredObjects()
+#       self.globalPAM = boomGridset.pam
+#       self.boomShapegrid = boomGridset.getShapegrid()
 
 # ...............................................
    def moveToStart(self):
@@ -279,10 +280,7 @@ class ChristopherWalken(LMObject):
          except:
             self.archiveName = PUBLIC_ARCHIVE_NAME
       # Get EPSG of environmental data
-      try:
-         epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
-      except:
-         epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
+      epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
       # Species parser/puller
       weaponOfChoice = self._getOccWeaponOfChoice(cfg, envHeading, 
                                              pipelineHeading, epsg, boompath)
@@ -433,6 +431,30 @@ archiveName='Heuchera_archive'
 
 logger = ScriptLogger('testChris')
 chris = ChristopherWalken(userId, archiveName, logger=logger)
+
+
+earl = EarlJr()
+boompath = earl.createDataPath(chris.userId, LMFileType.BOOM_CONFIG)
+archiveConfigFile = os.path.join(boompath, '{}{}'
+                     .format(chris.archiveName, OutputFormat.CONFIG))
+print 'Config file at {}'.format(archiveConfigFile)
+cfg = Config(fns=[archiveConfigFile])
+envHeading = "LmServer - environment"
+pipelineHeading = "LmServer - pipeline"
+
+epsg = cfg.getint(pipelineHeading, 'SCENARIO_PACKAGE_EPSG')
+weaponOfChoice = chris._getOccWeaponOfChoice(cfg, envHeading, 
+                                       pipelineHeading, epsg, boompath)
+(algorithms, mdlScen, mdlMask, prjScens, prjMask) = chris._getSDMParams(cfg, 
+                                       envHeading, pipelineHeading, epsg)
+# Global PAM inputs
+(boomGridset, intersectParams) = self._getGlobalPamObjects(cfg, envHeading, 
+                                                   pipelineHeading, epsg)
+
+return (weaponOfChoice, epsg, algorithms, 
+        mdlScen, mdlMask, prjScens, prjMask, 
+        boomGridset, intersectParams)  
+
 
 chris.moveToStart()
 chris.startWalken()
