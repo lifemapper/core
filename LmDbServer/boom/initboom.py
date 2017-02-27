@@ -535,7 +535,7 @@ if __name__ == '__main__':
    parser.add_argument('-e', '--environmental_metadata', default=SCENARIO_PACKAGE,
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
-   parser.add_argument('-s', '--species_source', default='GBIF',
+   parser.add_argument('-ss', '--species_source', default='GBIF',
             help=('Species source will be: ' + 
                   '\'GBIF\' for GBIF-provided CSV data; ' +
                   '\'IDIGBIO\' iDigBio queries ' +
@@ -543,7 +543,7 @@ if __name__ == '__main__':
                   'Any other value will indicate that user-supplied CSV ' +
                   'data, documented with metadata describing the fields, is ' +
                   'to be used for the archive'))
-   parser.add_argument('-f', '--species_file', default=None,
+   parser.add_argument('-sf', '--species_file', default=None,
             help=('Species file (without full path) will be: ' + 
                   '1) CSV data sorted by taxon id for \'GBIF\' species source ' +
                   '(include extension); ' +
@@ -556,7 +556,7 @@ if __name__ == '__main__':
                   'the same basename.  The data file must have \'.csv\' ' +
                   'extension, metadata file must have \'.meta\' extension. ' +
                   'Metadata describes the data fields. ' ))
-   parser.add_argument('-d', '--species_delimiter', default=',',
+   parser.add_argument('-sd', '--species_delimiter', default=',',
             help=('Delimiter for user-supplied species file, defaults to \',\'. ' ))
    parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
             help=('Minimum number of points required for SDM computation ' +
@@ -566,15 +566,15 @@ if __name__ == '__main__':
             help=('Comma-separated list of algorithm codes for computing  ' +
                   'SDM experiments in this archive.  Options are described at ' +
                   '{} and include the codes: {} '.format(apiUrl, allAlgs)))
-   parser.add_argument('-c', '--grid_cellsize', default=1,
+   parser.add_argument('-gz', '--grid_cellsize', default=1,
             help=('Size of cells in the grid used for Global PAM. ' +
                   'Units are mapunits'))
-   parser.add_argument('-q', '--grid_shape', choices=('square', 'hexagon'),
+   parser.add_argument('-gp', '--grid_shape', choices=('square', 'hexagon'),
             default='square', help=('Shape of cells in the grid used for Global PAM.'))
    # Intersect Parameters
    parser.add_argument('-if', '--intersect_filter', default=None,  
             help=('SQL Filter to limit features/pixels for intersect'))
-   parser.add_argument('-in', '--intersect_attribute name', default='pixel', 
+   parser.add_argument('-in', '--intersect_attribute_name', default='pixel', 
             help=('Attribute feature name for intersect (Vector) or pixel (Raster)'))
    parser.add_argument('-im', '--intersect_min_presence', type=int, default=1, 
             help=('Minimum value for for intersect of features/pixels'))
@@ -602,7 +602,7 @@ if __name__ == '__main__':
       cellsides = 4
    intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
-         MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute,
+         MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute_name,
          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: args.intersect_min_presence,
          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: args.intersect_max_presence,
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
@@ -676,7 +676,29 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-$PYTHON LmDbServer/boom/initboom.py  --archive_name "Heuchera archive" --user ryan --email rfolk@flmnh.ufl.edu --environmental_metadata 10min-past-present-future  --species_source user --species_file heuchera_all --species_delimiter "," --min_points 25  --algorithms bioclim   --grid_cellsize 1  --grid_shape square
+$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
+                                     -u ryan                  \
+                                     -m rfolk@flmnh.ufl.edu  \
+                                     -e 10min-past-present-future  \
+                                     -ss user      \
+                                     -sf heuchera_all  \
+                                     -sd ','       \
+                                     -p 25        \
+                                     -a bioclim   \
+                                     -c 1         \
+                                     -q square
+
+$PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
+                                     --user ryan                  \
+                                     --email rfolk@flmnh.ufl.edu  \
+                                     --environmental_metadata 10min-past-present-future  \
+                                     --species_source user        \
+                                     --species_file heuchera_all  \
+                                     --species_delimiter ','      \
+                                     --min_points 25              \
+                                     --algorithms bioclim         \ 
+                                     --grid_cellsize 1            \
+                                     --grid_shape square
 
 
 $PYTHON LmDbServer/boom/initboom.py --help
