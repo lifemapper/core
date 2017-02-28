@@ -23,8 +23,7 @@
           02110-1301, USA.
 """
 from LmCommon.common.config import Config
-
-_CONFIG_HEADING = "LmServer - webserver"
+from LmCommon.common.lmconstants import SERVER_WEB_HEADING
 
 # LmWebServer
-WEB_HOSTNAME = Config().get(_CONFIG_HEADING, 'WEB_HOSTNAME')
+WEB_HOSTNAME = Config().get(SERVER_WEB_HEADING, 'WEB_HOSTNAME')

@@ -28,6 +28,28 @@ from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 from LmServer.common.localconstants import APP_PATH
    
 # .............................................................................
+# .    Configuration file headings
+# .............................................................................
+SERVER_ENV_HEADING = 'LmServer - environment'
+SERVER_PIPELINE_HEADING = 'LmServer - pipeline'
+SERVER_DB_HEADING = 'LmServer - dbserver'
+SERVER_COMPUTE_HEADING = 'LmServer - registeredcompute'
+SERVER_MATT_DAEMON_HEADING = 'LmServer - Matt Daemon'
+SERVER_WEB_HEADING = 'LmServer - webserver'
+
+COMPUTE_ENV_HEADING = 'LmCompute - environment'
+COMPUTE_CMDS_HEADING = 'LmCompute - commands'
+COMPUTE_CONTACT_HEADING = 'LmCompute - contact'
+COMPUTE_OPTIONS_HEADING = 'LmCompute - options'
+COMPUTE_METRICS_HEADING = 'LmCompute - metrics'
+COMPUTE_ME_PLUGIN_HEADING = 'LmCompute - plugins - maxent'
+   
+# .............................................................................
+# .    Normal user                              .
+# .............................................................................
+LM_USER = 'lmwriter'
+
+# .............................................................................
 # .    Directories shared between LmCompute and LmServer                              .
 # .............................................................................
 ENV_LAYER_DIR = 'layers'

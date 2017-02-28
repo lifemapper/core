@@ -30,7 +30,7 @@ from types import (BuiltinFunctionType, BuiltinMethodType, CodeType,
          FloatType, FunctionType, IntType, LambdaType, MethodType, NoneType, 
          StringType, TypeType, UnicodeType)
 
-from LmCommon.common.lmconstants import (ISO_8601_TIME_FORMAT_FULL, 
+from LmCommon.common.lmconstants import (LM_USER, ISO_8601_TIME_FORMAT_FULL, 
          ISO_8601_TIME_FORMAT_TRUNCATED, LM_NAMESPACE, YMD_HH_MM_SS, ENCODING)
 from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import STRING_ESCAPE_FORMATS
@@ -375,3 +375,17 @@ def escapeString(value, format):
    except Exception, e: # Can't escape for some reason
       value = ""
    return value
+
+# .............................
+def isCorrectUser():
+   """
+   @summary: Determine if current user is the non-root Lifemapper user 
+   """
+   import subprocess
+   cmd = "/usr/bin/whoami"
+   info, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE).communicate()
+   usr = info.split()[0]
+   if usr == LM_USER:
+      return True
+   return False

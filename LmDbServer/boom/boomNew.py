@@ -31,6 +31,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import ARCHIVE_NAME
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
+from LmServer.base.utilities import isCorrectUser
 from LmServer.tools.cwalken import ChristopherWalken
 
 # .............................................................................
@@ -91,19 +92,6 @@ class Walker(Daemon):
       self.boomer.close()
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
-
-   # .............................
-   @staticmethod
-   def isCorrectUser():
-      """ find current user """
-      import subprocess
-      cmd = "/usr/bin/whoami"
-      info, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
-                                   stderr=subprocess.PIPE).communicate()
-      usr = info.split()[0]
-      if usr == 'lmwriter':
-         return True
-      return False
 
 # .............................................................................
 if __name__ == "__main__":

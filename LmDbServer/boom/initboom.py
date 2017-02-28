@@ -35,7 +35,7 @@ from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                                               BISON_TSN_FILENAME, IDIG_FILENAME, 
                                               USER_OCCURRENCE_DATA)
-from LmDbServer.boom.boom import Archivist
+# from LmDbServer.boom.boom import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
@@ -45,6 +45,7 @@ from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN,
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
@@ -528,7 +529,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
 
 # ...............................................
 if __name__ == '__main__':
-   if not Archivist.isCorrectUser():
+   if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
 
