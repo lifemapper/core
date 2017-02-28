@@ -76,38 +76,40 @@ class ChristopherWalken(LMObject):
             raise LMError(currargs='Failed to open database')
          else:
             logger.info('{} opened databases'.format(self.name))
-      # Get configuration for this pipeline
-      (self.userId, self.archiveName, 
-       boompath, cfg) = self.getConfig(userId=userId, archiveName=archiveName)
-#       # JSON or ini based configuration
-#       if jsonFname is not None:
-#          raise LMError('JSON Walken is not yet implemented')
-#       else:
-#          (self.weaponOfChoice, self.epsg, self.algs, 
-#           self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
-#           boomGridset, self.intersectParams) = self.getConfiguredObjects(boompath, cfg)
-#       self.globalPAM = boomGridset.pam
-#       self.boomShapegrid = boomGridset.getShapegrid()
+       
+      # JSON or ini based configuration
+      if jsonFname is not None:
+         raise LMError('JSON Walken is not yet implemented')
+      else:
+         # Get configuration for this pipeline
+         (self.userId, self.archiveName, 
+          boompath, cfg) = self.getConfig(userId=userId, archiveName=archiveName)
+         self.boompath = boompath
+         self.cfg = cfg
+         
+         (self.weaponOfChoice, self.epsg, self.algs, self.mdlScen, self.mdlMask, 
+          self.prjScens, self.prjMask, boomGridset, 
+          self.intersectParams) = self.getConfiguredObjects(boompath, cfg)
+         self.globalPAM = boomGridset.pam
+         self.boomShapegrid = boomGridset.getShapegrid()
 
 # ...............................................
    def moveToStart(self):
-      self.occWeapon.moveToStart()
+      self.weaponOfChoice.moveToStart()
       
 # ...............................................
    def saveNextStart(self, fail=False):
-      self.occWeapon.saveNextStart(fail=fail)
+      self.weaponOfChoice.saveNextStart(fail=fail)
       
 # ...............................................
    @property
    def complete(self):
-      self.occWeapon.complete
+      self.weaponOfChoice.complete
 
 # .............................................................................
    def _getOccWeaponOfChoice(self, cfg, epsg, boompath):
       # Get datasource and optional taxonomy source
       datasource = cfg.get(SERVER_PIPELINE_HEADING, 'DATASOURCE')
-      if datasource.lower() != 'user':
-         return cfg
       try:
          taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
       except:
@@ -241,9 +243,9 @@ class ChristopherWalken(LMObject):
       @summary: Get user, archive, path, and configuration object 
       """
       cfg = boompath = None
+      earl = EarlJr()
       # Get user-archive configuration file
       if userId is not None and archiveName is not None:
-         earl = EarlJr()
          boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
          archiveConfigFile = os.path.join(boompath, '{}{}'
                               .format(archiveName, OutputFormat.CONFIG))
@@ -302,7 +304,7 @@ class ChristopherWalken(LMObject):
       @summary: Walks a list of Lifemapper objects for computation
       """
       tmpobjs = []
-      occ = self.occWeapon.getOne()
+      occ = self.weaponOfChoice.getOne()
       tmpobjs.append(occ)
       currtime = dt.gmt().mjd
       # Sweep over input options
@@ -407,6 +409,9 @@ class ChristopherWalken(LMObject):
       return updatedMFChain
 
 """
+userId='ryan'
+archiveName='Heuchera_archive'
+
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
                      OutputFormat, SERVER_PIPELINE_HEADING, SERVER_ENV_HEADING) 
@@ -426,36 +431,12 @@ from LmServer.legion.sdmproj import SDMProjection
 from LmServer.tools.occwoc import BisonWoC, iDigBioWoC, GBIFWoC, UserWoC
 from LmServer.tools.cwalken import *
 
-userId='ryan'
-archiveName='Heuchera_archive'
-logger = ScriptLogger('testChris')
-chris = ChristopherWalken(userId, archiveName, logger=logger)
+logger = ScriptLogger('-'.join([userId, archiveName]))
+chris = ChristopherWalken(userId=userId, archiveName=archiveName, logger=logger)
 
-
-earl = EarlJr()
-boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-archiveConfigFile = os.path.join(boompath, '{}{}'
-                     .format(archiveName, OutputFormat.CONFIG))
-print 'Config file at {}'.format(archiveConfigFile)
-cfg = Config(fns=[archiveConfigFile])
-SERVER_ENV_HEADING = "LmServer - environment"
-SERVER_PIPELINE_HEADING = "LmServer - pipeline"
-epsg = cfg.getint(SERVER_PIPELINE_HEADING, 'SCENARIO_PACKAGE_EPSG')
-datasource = cfg.get(SERVER_PIPELINE_HEADING, 'DATASOURCE')
-
-weaponOfChoice = chris._getOccWeaponOfChoice(cfg, SERVER_ENV_HEADING, 
-                                       SERVER_PIPELINE_HEADING, epsg, boompath)
-(algorithms, mdlScen, mdlMask, prjScens, prjMask) = chris._getSDMParams(cfg, 
-                                       SERVER_ENV_HEADING, SERVER_PIPELINE_HEADING, epsg)
-# Global PAM inputs
-(boomGridset, intersectParams) = chris._getGlobalPamObjects(cfg, SERVER_ENV_HEADING, 
-                                                   SERVER_PIPELINE_HEADING, epsg)
-
-return (weaponOfChoice, epsg, algorithms, 
-        mdlScen, mdlMask, prjScens, prjMask, 
-        boomGridset, intersectParams)  
-
-
+(userId, archiveName, boompath, cfg) = chris.getConfig(userId=userId, 
+archiveName=archiveName)
+       
 chris.moveToStart()
 chris.startWalken()
 

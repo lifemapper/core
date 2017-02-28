@@ -25,7 +25,6 @@
 """
 import os
 from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
-# from LmServer.common.localconstants import APP_PATH
    
 # .............................................................................
 # .    Configuration file headings
