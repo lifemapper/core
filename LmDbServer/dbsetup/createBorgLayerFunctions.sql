@@ -512,7 +512,7 @@ BEGIN
       ELSE
          -- Update SDMProject record
          UPDATE lm_v3.sdmProject SET (metadata, status, statusmodtime) 
-                                   = (prjmeta, stat, statime) 
+                                   = (prjmeta, stat, stattime) 
             WHERE sdmprojectid = rec.sdmprojectid;
          IF FOUND THEN
             success = 0;

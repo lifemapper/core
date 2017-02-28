@@ -311,6 +311,14 @@ class BorgScribe(LMObject):
       return proj
 
 # ...............................................
+   def findOrInsertSDMProject(self, proj):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertSDMProject()
+      """
+      newOrExistingProj = self._borg.findOrInsertSDMProject(proj)
+      return newOrExistingProj
+
+# ...............................................
    def updateSDMProject(self, proj):
       """
       @summary Method to update an SDMProjection object in the database with 

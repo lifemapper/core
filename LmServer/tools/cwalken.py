@@ -312,7 +312,7 @@ class ChristopherWalken(LMObject):
          for prjscen in self.prjScens:
             prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime)
             tmpobjs.append(prj)
-            mtxcol = self._createOrResetIntersect(prj)
+            mtxcol = self._createOrResetIntersect(prj, currtime)
             tmpobjs.append(mtxcol)
       objs = [o for o in tmpobjs if o is not None]
       
@@ -385,7 +385,7 @@ class ChristopherWalken(LMObject):
             if self._doReset(prj.status, prj.statusModTime):
                self.log.info('Reseting SDMProject {}'.format(prj.getId()))
                prj.updateStatus(JobStatus.GENERAL, modTime=currtime)
-               prj = self._scribe.updateSDMProject(prj)
+               success = self._scribe.updateSDMProject(prj)
       return prj
 
 # ...............................................
@@ -393,7 +393,7 @@ class ChristopherWalken(LMObject):
       updatedMFChain = None
       if objs:
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
-         newMFC = MFChain(self.userid, priority=self.priority, 
+         newMFC = MFChain(self.userId, priority=self.priority, 
                            metadata=meta, status=JobStatus.INITIALIZE, 
                            statusModTime=dt.gmt().mjd)
          updatedMFChain = self._scribe.insertMFChain(newMFC)
