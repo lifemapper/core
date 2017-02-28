@@ -28,7 +28,7 @@ import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import ARCHIVE_NAME
+from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.base.utilities import isCorrectUser
@@ -53,34 +53,35 @@ class Walker(Daemon):
              installed defaults
       """
       try:
-         self.chris = ChristopherWalken(self.userId, self.archiveName, 
-                                         jsonFname=None, priority=None, 
-                                         logger=self.log)
+         self.christopher = ChristopherWalken(self.userId, self.archiveName, 
+                                 jsonFname=None, priority=None, logger=self.log)
+         self.keepWalken = False
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       
    # .............................
    def run(self):
       try:
-         self.chris.moveToStart()
-         self.log.debug('Starting walker at location {} ... '
-                        .format(self.chris.currRecnum))
-         while self.keepRunning:
+         self.christopher.moveToStart()
+         self.log.debug('Starting Walker at location {} ... '
+                        .format(self.christopher.currRecnum))
+         self.keepWalken = True
+         while self.keepWalken:
             try:
                self.log.info('Next species ...')
-               self.chris.startWalken()
-               if self.keepRunning:
-                  self.keepRunning = not self.boomer.complete
+               self.christopher.startWalken()
+               if self.keepWalken:
+                  self.keepWalken = not self.boomer.complete
             except:
                self.log.info('Saving next start {} ...'
                              .format(self.boomer.nextStart))
-               self.chris.saveNextStart()
+               self.christopher.saveNextStart()
                raise
             else:
                time.sleep(10)
       finally:
-         self.boomer.close()
-      self.log.debug('Stopped Archivist')
+         self.christopher.close()
+      self.log.debug('Stopped Walker')
     
    # .............................
    def onUpdate(self):
@@ -88,14 +89,14 @@ class Walker(Daemon):
        
    # .............................
    def onShutdown(self):
-      self.boomer.saveNextStart()
-      self.boomer.close()
+      self.christopher.saveNextStart()
+      self.christopher.close()
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
 # .............................................................................
 if __name__ == "__main__":
-   if not Walker.isCorrectUser():
+   if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
 
@@ -105,14 +106,14 @@ if __name__ == "__main__":
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-n', '--archive_name', default=ARCHIVE_NAME,
+   parser.add_argument('-n', '--archive_name', default=PUBLIC_ARCHIVE_NAME,
             help=('Name for the existing archive, gridset, and grid created for ' +
                   'these data.  This name was created in initBoom.'))
    parser.add_argument('-u', '--user', default=PUBLIC_USER,
             help=('Owner of this archive this archive. The default is the '
                   'configured PUBLIC_USER.'))
    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
-              help="The action that should be performed by the Boomer daemon")
+              help="The action that should be performed by the Walker daemon")
 
    args = parser.parse_args()
    archiveName = args.archive_name
@@ -125,7 +126,7 @@ if __name__ == "__main__":
       pid = open(BOOM_PID_FILE).read().strip()
    else:
       pid = os.getpid()
-           
+   
    secs = time.time()
    tuple = time.localtime(secs)
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))

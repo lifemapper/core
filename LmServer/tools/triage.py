@@ -28,6 +28,16 @@ from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
 class EMT(LMObject):
+   """
+   @summary: Class to assess the outputs of a list of single-species-workflows
+             which are inputs to a multi-species workflow 
+   @note: Failed single-species workflows will be ignored, only successful 
+          ones are moved into a multi-species workflow 
+   @note: Failed single-species workflows are updated in the database and not
+          deleted 
+   @note: This class will be called with a multi-species workflow, dependencies 
+          
+   """
    # .............................
    def __init__(self, logger=None):      
       super(EMT, self).__init__()

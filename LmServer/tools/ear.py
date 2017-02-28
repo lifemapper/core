@@ -28,9 +28,8 @@
 """
 import argparse
 import os
-from osgeo import gdal, ogr
 
-from LmCommon.common.lmconstants import ProcessType, LMFormat
+from LmCommon.common.lmconstants import ProcessType, LMFormat, JobStatus
 from LmServer.base.layer2 import Vector, Raster
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.log import ConsoleLogger
@@ -39,62 +38,104 @@ from LmServer.db.borgscribe import BorgScribe
 # .............................................................................
 class Ear(LMObject):
    """
-   @summary: Object to construct and parse filenames and URLs.
+   @summary: Object to test results of MF commands, update database with 
+             success status.
    """
 # .............................................................................
    @classmethod
    def receive(cls, ptype, objId, status, successFname, outputFnameList):
+      """
+      @summary: Test output files and update DB with status.  Only success for
+                all outputs = JobStatus.COMPLETE 
+      @param ptype: LmCommon.common.lmconstants.ProcessType for the process
+             being examined
+      @param objId: Unique database ID for the object to update
+      @param status: Status returned by the computational process
+      @param successFname: Filename to be written IFF success=True. Contains  
+             final status and testing results 
+      @param outputFnameList: List of output files returned by the computational 
+             process
+      """
+      outputInfo = []
+      testedStatus = cls._testAllFiles(successFname, outputFnameList, outputInfo)
+
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
-      outputInfo = []      
-      # ...............................
-      # Database update
       try:
-         try:
-            # Get object
-            if ProcessType.isOccurrence(ptype):
-               obj = scribe.getOccurrenceSet(occid=objId)
-            elif ProcessType.isProject(ptype):
-               obj = scribe.getSDMProject(objId)
-            elif ptype == ProcessType.RAD_BUILDGRID:
-               obj = scribe.getShapeGrid(lyrId=objId)
-            elif ProcessType.isMatrix(ptype):
-               obj = scribe.getMatrix(mtxId=objId)
-         except Exception, e:
-            msg = 'Failed to get object {} for process {}'.format(objId, ptype)
-            outputInfo.append(msg)
-            raise LMError(currargs=msg)
-         # Update object and db record
-         try:
-            obj.updateStatus(status)
-            scribe.updateObject(obj)
-         except Exception, e:
-            msg = 'Failed to update object {} for process {}'.format(objId, ptype)
-            outputInfo.append(msg)
-            raise LMError(currargs=msg)
+         cls._updateObject(cls, scribe, ptype, objId, testedStatus)
       except:
          # TODO: raise exception, or write info to file?
          pass
       finally:
-         # Close DB   
          scribe.closeConnections()
+      
+# .............................................................................
+   @classmethod
+   def _updateObject(cls, scribe, ptype, objId, status):
+      """
+      @summary: Get object and update DB with status.  
+      """
+      msgs = []
+      try:
+         # Get object
+         if ProcessType.isOccurrence(ptype):
+            obj = scribe.getOccurrenceSet(occid=objId)
+         elif ProcessType.isProject(ptype):
+            obj = scribe.getSDMProject(objId)
+         elif ptype == ProcessType.RAD_BUILDGRID:
+            obj = scribe.getShapeGrid(lyrId=objId)
+         elif ProcessType.isMatrix(ptype):
+            obj = scribe.getMatrix(mtxId=objId)
+      except Exception, e:
+         msg = 'Failed to get object {} for process {}'.format(objId, ptype)
+         msgs.append(msg)
+         raise LMError(currargs=msg)
+      
+      # Update object and db record
+      try:
+         obj.updateStatus(status)
+         scribe.updateObject(obj)
+      except Exception, e:
+         msg = 'Failed to update object {} for process {}'.format(objId, ptype)
+         msgs.append(msg)
+         raise LMError(currargs=msg)
+
+# .............................................................................
+   @classmethod
+   def _testAllFiles(cls, status, successFname, outputFnameList, outputInfo):
+      """
+      @summary: Test output files and write original and tested status to a 
+                file, along with explanatory messages
+      """
       # ...............................
-      # Test outputs
+      # Test each file
       success = True
       for fname in outputFnameList:
          currSuccess, msg = cls.testFile(fname)
          if not currSuccess:
             success = False
             outputInfo.append(msg)
+      # TODO: Do we override provided status if there is a failure on read?
+      if not success:
+         testedStatus = JobStatus.GENERAL_ERROR
+      else:
+         testedStatus = status
       # ...............................
       # Write status file
-      # TODO: What do we want this file to contain
-      f = open(successFname, 'w')
-      f.write(str(success))
-      for msg in outputInfo:
-         f.write('# {}'.format(msg))
-      f.close()
-      
+      # TODO: What do we want this file to contain?
+      if success:
+         f = open(successFname, 'w')
+         f.write('# Compute returned status: {}\n'.format(status))
+         f.write('# Tested output status: {}\n'.format(testedStatus))
+         f.write('\n')
+         f.write(str(success))
+         f.write('\n')
+         for msg in outputInfo:
+            f.write('# {}\n'.format(msg))
+         f.close()
+            
+      return testedStatus
+
    # ...............................................
    @classmethod
    def testFile(cls, outputFname):
@@ -153,6 +194,11 @@ if __name__ == "__main__":
    parser.add_argument('-f', dest='status_file', type=str, 
                        help='A file containing the new object status')
    args = parser.parse_args()
+   
+   """
+   Call like:
+   $PYTHON ear.py <ptype>  <objId>  <successFname>  <outputFnameList>  <-s status OR -f statusFname>
+   """
    
    # Status comes in as an integer or file 
    status = None
