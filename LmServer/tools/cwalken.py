@@ -338,10 +338,12 @@ class ChristopherWalken(LMObject):
                 processType=ptype, metadata={}, matrixColumnId=None, 
                 status=JobStatus.GENERAL, statusModTime=currtime)
          mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
+         self.log.info('Found or inserted MatrixColumn {}'.format(mtxcol.getId()))
          # Reset processType (not in db)
          mtxcol.processType = ptype
          
          if self._doReset(mtxcol.status, mtxcol.statusModTime):
+            self.log.info('Reseting MatrixColumn {}'.format(mtxcol.getId()))
             mtxcol.updateStatus(JobStatus.GENERAL, modTime=currtime)
             success = self._scribe.updateMatrixColumn(mtxcol)
       return mtxcol
@@ -367,11 +369,12 @@ class ChristopherWalken(LMObject):
       prj = None
       if occ is not None:
          tmpPrj = SDMProjection(occ, alg, self.mdlScen, prjscen, 
-                        modelMask=self.mdlMask, projMask=self.projMask, 
+                        modelMask=self.mdlMask, projMask=self.prjMask, 
                         dataFormat=LMFormat.GTIFF.driver,
                         status=JobStatus.GENERAL, statusModTime=currtime)
          prj = self._scribe.findOrInsertSDMProject(tmpPrj)
          if prj is not None:
+            self.log.info('Found or inserted SDMProject {}'.format(prj.getId()))
             # Instead of re-pulling unchanged scenario layers, masks, update 
             # with input objects
             prj._modelScenario = self.mdlScen
@@ -380,6 +383,7 @@ class ChristopherWalken(LMObject):
             prj.setProjMask(self.prjMask)
             # Rollback if finished (new is already at initial status)
             if self._doReset(prj.status, prj.statusModTime):
+               self.log.info('Reseting SDMProject {}'.format(prj.getId()))
                prj.updateStatus(JobStatus.GENERAL, modTime=currtime)
                prj = self._scribe.updateSDMProject(prj)
       return prj
@@ -434,9 +438,6 @@ from LmServer.tools.cwalken import *
 logger = ScriptLogger('-'.join([userId, archiveName]))
 chris = ChristopherWalken(userId=userId, archiveName=archiveName, logger=logger)
 
-(userId, archiveName, boompath, cfg) = chris.getConfig(userId=userId, 
-archiveName=archiveName)
-       
 chris.moveToStart()
 chris.startWalken()
 

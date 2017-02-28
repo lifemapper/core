@@ -167,6 +167,60 @@ class _SpeciesWeaponOfChoice(LMObject):
       @param dataCount: reported number of points for taxon in input dataset
       @param taxonSourceKey: unique identifier for this name in source 
              taxonomy database
+      @param data: raw point data 
+      """
+      currtime = dt.gmt().mjd
+      occ = None
+      # Find existing
+      tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg, 
+            dataCount, squid=sciName.squid, ogrType=wkbPoint, 
+            processType=self.processType, status=JobStatus.INITIALIZE, 
+            statusModTime=currtime, sciName=sciName, 
+            rawMetaDLocation=self.metaFname)
+      try:
+         occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
+         self.log.info('Found or inserted OccLayer {}'.format(occ.getId()))
+      except Exception, e:
+         if not isinstance(e, LMError):
+            e = LMError(currargs=e.args, lineno=self.getLineno())
+         raise e
+
+      # Reset existing
+      if self._doReset(occ.status, occ.statusModTime, occ.getRawDLocation()):
+         self.log.info('Reseting OccLayer {}'.format(occ.getId()))
+         # Reset verify hash, name, count, status 
+         occ.clearVerify()
+         occ.displayName = sciName.scientificName
+         occ.queryCount = dataCount
+         occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
+      else:
+         # Ignore existing
+         self.log.debug('Ignoring up to date OccLayer {}'.format(occ.getId()))
+         occ = None
+         
+      # Update  raw data in new or reset object
+      if occ is not None:
+         self.log.info('Updating raw data for OccLayer {}'.format(occ.getId()))
+         rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKey, 
+                                     data=data)
+         if not rdloc:
+            raise LMError(currargs='Failed to set raw data location')
+         occ.setRawDLocation(rdloc, currtime)
+         # Set processType and metadata location (from config, not saved in DB)
+         occ.processType = self.processType
+         occ.rawMetaDLocation = self.metaFname
+         success = self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+
+      return occ
+   
+# ...............................................
+   def _createOrResetOccurrencesetOLD(self, sciName, dataCount, 
+                                   taxonSourceKey=None, data=None):
+      """
+      @param sciName: ScientificName object
+      @param dataCount: reported number of points for taxon in input dataset
+      @param taxonSourceKey: unique identifier for this name in source 
+             taxonomy database
       @param data: raw point data
       @note: Updates to existing occset are not saved until 
       """
@@ -192,9 +246,9 @@ class _SpeciesWeaponOfChoice(LMObject):
             self.log.info('Found and reseting occset {} ({})'
                           .format(occ.getId(), sciName.scientificName))
          else:
-            occ = None
             self.log.debug('Ignoring occset {} ({}) is up to date'
                            .format(occ.getId(), sciName.scientificName))
+            occ = None
       # or create new
       else:
          occ = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg, 
@@ -218,11 +272,12 @@ class _SpeciesWeaponOfChoice(LMObject):
             raise LMError(currargs='Unable to set raw data location')
          occ.setRawDLocation(rdloc, currtime)
          # Set processType and metadata location (from config, not saved in DB)
-         occ.processType = self.occProcessType
+         occ.processType = self.processType
          occ.rawMetaDLocation = self.metaFname
          success = self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
       return occ
+
 # ...............................................
    def _raiseSubclassError(self):
       raise LMError(currargs='Function must be implemented in subclass')
@@ -520,7 +575,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
          bbsciName = ScientificName(taxonName, userId=self.userId)
          sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
          if sciName is not None:
-            occ = self._createOrResetOccurrenceset(sciName, None, dataCount, data=dataChunk)
+            occ = self._createOrResetOccurrenceset(sciName, None, dataCount, 
+                                                   data=dataChunk)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
       return occ
