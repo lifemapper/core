@@ -26,6 +26,7 @@ import os
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.common.localconstants import APP_PATH
 from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
@@ -166,9 +167,9 @@ class MatrixColumn(_LayerParameters, ProcessObject):
             options = "--ident {0}".format(self.ident)
 
          pavFname = self.getTargetFilename()
-         
+         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          cmdArguments = [os.getenv('PYTHON'), 
-                         ProcessType.getTool(self.processType),
+                         scriptFname,
                          options, 
                          self.shapegrid.getDLocation(), 
                          inputLayerFname,

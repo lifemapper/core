@@ -25,7 +25,7 @@
 """
 import os
 from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
-from LmServer.common.localconstants import APP_PATH
+# from LmServer.common.localconstants import APP_PATH
    
 # .............................................................................
 # .    Configuration file headings
@@ -753,6 +753,9 @@ class ProcessType:
 
    @staticmethod
    def getTool(ptype):
+      """
+      @summary: returns relative path and filename to script for processType
+      """
       if ProcessType.isSingle(ptype):
          relpath = SINGLE_SPECIES_SCRIPTS_DIR
          if ProcessType.isOccurrence(ptype):
@@ -815,8 +818,9 @@ class ProcessType:
       elif ptype == ProcessType.UPDATE_OBJECT:
          relpath = SERVER_SCRIPTS_DIR
          jr = 'ear'
-         
-      return os.path.join(APP_PATH, relpath, jr+'.py')   
+        
+      return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
+#       return os.path.join(APP_PATH, relpath, jr+'.py')   
 
    @staticmethod
    def isSingle(ptype):

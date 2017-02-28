@@ -34,6 +34,7 @@ from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
+from LmServer.common.localconstants import APP_PATH
 from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
@@ -390,9 +391,9 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          options = ''
          if cutoutWktFn is not None:
             options = "--cutoutWktFn={0}".format(cutoutWktFn)
-         
+         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          cmdArguments = [os.getenv('PYTHON'), 
-                         ProcessType.getTool(self.processType), 
+                         scriptFname, 
                          self.shapegrid.getDLocation(), 
                          outFile,
                          self.getMinX(),

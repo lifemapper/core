@@ -34,11 +34,10 @@ from LmCommon.common.verify import computeHash
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMFileType, Algorithms,
-            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule,
-   BIN_PATH)
+from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
+            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
+from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
 from LmServer.makeflow.cmd import MfRule
-from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM, GEOTIFF_INTERFACE)
    
@@ -790,37 +789,28 @@ class SDMProjection(_ProjectionType, Raster):
          else:
             ptype = ProcessType.OM_MODEL
             
-#          occRules = self._occurrenceSet.computeMe()
-#          rules.extend(occRules)
-
          mdlName = self.getModelTarget()
-         occSetFname = self._occurrenceSet.getDLocation()
-         
-         mdlOpts = {
-            '-w' : mdlName
-         }
-
+         occSetFname = self._occurrenceSet.getDLocation()         
+         mdlOpts = {'-w' : mdlName}
          args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in mdlOpts.iteritems()])
 
          layersJsonFname = self.getLayersJsonFilename(self.modelScenario, self.modelMask)
          paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
-
+         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(ptype))
          mdlCmdArgs = [os.getenv('PYTHON'),
-                       ProcessType.getTool(ptype),
+                       scriptFname,
                        args,
                        str(ptype),
                        mdlName,
                        occSetFname,
                        layersJsonFname,
                        rulesetFname,
-                       paramsJsonFname
-                       ]
+                       paramsJsonFname]
          cmd = ' '.join(mdlCmdArgs)
          
          rules.append(MfRule(cmd, [rulesetFname], 
                              dependencies=[occSetFname]))
-         
       return rules
 
    # ......................................
@@ -896,9 +886,10 @@ class SDMProjection(_ProjectionType, Raster):
          
          prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in prjOpts.iteritems()])
+         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
 
          prjCmdArgs = [os.getenv('PYTHON'),
-                       ProcessType.getTool(self.processType),
+                       scriptFname,
                        prjArgs,
                        str(self.processType),
                        prjName,
@@ -913,9 +904,11 @@ class SDMProjection(_ProjectionType, Raster):
          # Need command to update database
          updateSuccessFn = os.path.join(workDir, "{0}{0}.success".format(
                                                self.processType, self.getId()))
+         updateScriptFname = os.path.join(APP_PATH, 
+                                 ProcessType.getTool(ProcessType.UPDATE_OBJECT))
          updateDbArgs = ["LOCAL", # Run on server side for DB
                          os.getenv('PYTHON'),
-                         ProcessType.getTool(ProcessType.UPDATE_OBJECT),
+                         updateScriptFname,
                          "-f {}".format(statusFn),
                          str(self.processType),
                          str(self.getId()),

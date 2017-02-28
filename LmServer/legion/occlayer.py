@@ -34,7 +34,7 @@ from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
                   LMServiceType, LMServiceModule)
-from LmServer.common.localconstants import POINT_COUNT_MAX
+from LmServer.common.localconstants import POINT_COUNT_MAX, APP_PATH
 from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
@@ -614,9 +614,10 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # TODO: Update with correct data locations
          outFile = self.getDLocation()
          bigFile = self.getDLocation(largeFile=True)
+         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          deps = []
          cmdArgs = [os.getenv('PYTHON'),
-                    ProcessType.getTool(self.processType),
+                    scriptFname,
                     self.getRawDLocation()]
          
          # Process type specific arguments
