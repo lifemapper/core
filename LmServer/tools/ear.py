@@ -57,17 +57,30 @@ class Ear(LMObject):
              process
       """
       outputInfo = []
-      testedStatus = cls._testAllFiles(successFname, outputFnameList, outputInfo)
+      success = True
+      # Test each file
+      for fname in outputFnameList:
+         currSuccess, msg = cls.testFile(fname)
+         if not currSuccess:
+            success = False
+            outputInfo.append(msg)
+            
+      # TODO: Override status on failure?
+      if not success:
+         status = JobStatus.GENERAL_ERROR
 
+      # Update database
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
       try:
-         cls._updateObject(cls, scribe, ptype, objId, testedStatus)
+         cls._updateObject(cls, scribe, ptype, objId, status)
       except:
          # TODO: raise exception, or write info to file?
          pass
       finally:
          scribe.closeConnections()
+         
+      return success
       
 # .............................................................................
    @classmethod
@@ -99,42 +112,6 @@ class Ear(LMObject):
          msg = 'Failed to update object {} for process {}'.format(objId, ptype)
          msgs.append(msg)
          raise LMError(currargs=msg)
-
-# .............................................................................
-   @classmethod
-   def _testAllFiles(cls, status, successFname, outputFnameList, outputInfo):
-      """
-      @summary: Test output files and write original and tested status to a 
-                file, along with explanatory messages
-      """
-      # ...............................
-      # Test each file
-      success = True
-      for fname in outputFnameList:
-         currSuccess, msg = cls.testFile(fname)
-         if not currSuccess:
-            success = False
-            outputInfo.append(msg)
-      # TODO: Do we override provided status if there is a failure on read?
-      if not success:
-         testedStatus = JobStatus.GENERAL_ERROR
-      else:
-         testedStatus = status
-      # ...............................
-      # Write status file
-      # TODO: What do we want this file to contain?
-      if success:
-         f = open(successFname, 'w')
-         f.write('# Compute returned status: {}\n'.format(status))
-         f.write('# Tested output status: {}\n'.format(testedStatus))
-         f.write('\n')
-         f.write(str(success))
-         f.write('\n')
-         for msg in outputInfo:
-            f.write('# {}\n'.format(msg))
-         f.close()
-            
-      return testedStatus
 
    # ...............................................
    @classmethod
@@ -195,11 +172,6 @@ if __name__ == "__main__":
                        help='A file containing the new object status')
    args = parser.parse_args()
    
-   """
-   Call like:
-   $PYTHON ear.py <ptype>  <objId>  <successFname>  <outputFnameList>  <-s status OR -f statusFname>
-   """
-   
    # Status comes in as an integer or file 
    status = None
    if args.status is not None:
@@ -223,4 +195,10 @@ if __name__ == "__main__":
             successOut.write('1')
    else:
       raise Exception('Must provide status or status file')
+
+   
+"""
+Call like:
+$PYTHON ear.py <ptype>  <objId>  <successFname>  <outputFnameList>  <-s status OR -f statusFname>
+"""
    
