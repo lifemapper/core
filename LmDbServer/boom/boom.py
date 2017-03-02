@@ -43,6 +43,7 @@ class Walker(Daemon):
       self.userId = userId
       self.archiveName = archiveName
       self.christopher = None
+      self.potatoes = None
       self.keepWalken = False
 
    # .............................
@@ -59,7 +60,15 @@ class Walker(Daemon):
                                  jsonFname=None, priority=None, logger=self.log)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
-      
+      else:
+         potatoFilenames = self.christopher.getPotatoFilenames()
+         self.potatoes = []
+         for potatoFname in potatoFilenames:
+            f = open(potatoFname, 'w')
+            self.potatoes.append(f)
+         masterPotatoFilename = self.christopher.getMasterPotatoHeadFilename()
+         self.masterPotato = open(masterPotatoFilename, 'w')
+         
    # .............................
    def run(self):
       try:
@@ -70,7 +79,8 @@ class Walker(Daemon):
          while self.keepWalken:
             try:
                self.log.info('Next species ...')
-               spud = self.christopher.startWalken()
+               spud, spudArf = self.christopher.startWalken()
+               self.writeToPotatoes(spudArf)
                if self.keepWalken:
                   self.keepWalken = not self.christopher.complete
             except:
@@ -81,8 +91,8 @@ class Walker(Daemon):
             else:
                time.sleep(10)
       finally:
-         self.christopher.stopWalken()
-         self.christopher.close()
+         potatoArfs = self.christopher.stopWalken()
+         self.writePotatoes(potatoArfs)
       self.log.debug('Stopped Walker')
     
    # .............................
@@ -91,10 +101,27 @@ class Walker(Daemon):
        
    # .............................
    def onShutdown(self):
-      self.christopher.saveNextStart()
-      self.christopher.close()
+      potatoArfs = self.christopher.stopWalken()
+      self.writePotatoes(potatoArfs)
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
+
+   # .............................
+   def writeToPotatoes(self, spudArf):
+      """
+      @TODO: This is a stub for writing a spud target and command to a potato MF
+      """
+      for f in self.potatoes:
+         f.write('{}\n'.format(spudArf))      
+      
+   # .............................
+   def closePotatoes(self):
+      """
+      @summary: Close all open potato files
+      """
+      for f in self.potatoes:
+         f.close()
+      self.masterPotato.close()
 
 # .............................................................................
 if __name__ == "__main__":

@@ -200,12 +200,12 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       self._potato.append(spudArfFname)
       
 # ...............................................
-   def getPotatoFilename(self):
+   def getArfFilename(self):
       """
       @summary: Return temporary filename to indicate completion of spud 
                 (single-species) MF.
       """
-      relFname = 'potato_{}{}'.format(self.getId(), LMFormat.CSV.ext)
+      relFname = 'potato_{}.arf'.format(self.getId())
       return relFname
 
 # ...............................................

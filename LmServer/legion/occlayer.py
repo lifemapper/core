@@ -268,7 +268,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       return Vector.getAbsolutePath(self)
 
 # ...............................................
-   def getTriageFilename(self):
+   def getArfFilename(self):
       """
       @summary: Return temporary filename to indicate completion of spud 
                 (single-species) MF.

@@ -99,7 +99,6 @@ class ChristopherWalken(LMObject):
       
       # There is one Potato MF which creates a Global PAM for each scenario
       for prjscen in self.prjScens:
-         self.potato[prjscen.code] = []
          self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
                         prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
 
@@ -111,6 +110,22 @@ class ChristopherWalken(LMObject):
    def saveNextStart(self, fail=False):
       self.weaponOfChoice.saveNextStart(fail=fail)
       
+# ...............................................
+   def getPotatoFilenames(self):
+      potatoes = []
+      # There is one Potato MF which creates a Global PAM for each scenario
+      for prjscen in self.prjScens:
+         potatoFname = self.globalPAMs[prjscen.code].getPotatoFilename()
+         potatoes.append(potatoFname)
+      return potatoes
+   
+# ...............................................
+   def getMasterPotatoHeadFilename(self):
+      """
+      @summary: Get the MF filename for this Master MF process
+      @todo: Create a Master MF process and add to DB
+      """
+      pass
 # ...............................................
    @property
    def complete(self):
@@ -317,7 +332,7 @@ class ChristopherWalken(LMObject):
       occ = self.weaponOfChoice.getOne()
       objs.append(occ)
 
-      spudTriageFname = occ.getTriageFilename()
+      spudArf = occ.getArfFilename()
       currtime = dt.gmt().mjd
       # Sweep over input options
       for alg in self.algs:
@@ -328,27 +343,29 @@ class ChristopherWalken(LMObject):
             mtx = self.globalPAMs[prjscen.code]
             mtxcol = self._createOrResetIntersect(prj, mtx, currtime)
             objs.append(mtxcol)
-            # Add Spud completion temp file as input to Triage for each Potato 
-            mtx.addSpud(spudTriageFname)
+#             # Add Spud completion temp file as input to Triage for each Potato 
+#             mtx.addSpud(spudTriageFname)
 
       spudObjs = [o for o in objs if o is not None]
       spud = self._createMakeflow(spudObjs)
-      # Add spud to MasterPotatoHead
-      self.writeSpudToMasterPotatoHead(spud)
+      return spud, spudArf
+#       # Add spud to MasterPotatoHead
+#       self.writeSpudToMasterPotatoHead(spud)
       
    # ...............................
    def stopWalken(self):
       """
       @summary: Walks a list of Lifemapper objects for computation
       """
-      if self.complete():
-         # Add potato to MasterPotatoHead
-         for prjscen in self.prjScens:
-            mtx = self.globalPAMs[prjscen.code]
-            # TODO: This assumes that the ChristopherWalken is run from 
-            #       start to finish.  Handle interrupts later.
-            mtx.writeTriageInput(overwrite=True)
-         self.writeMasterPotatoHead()
+      self.saveNextStart()
+      self.weaponOfChoice.close()
+      arfs = []
+      # Add potato to MasterPotatoHead
+      for prjscen in self.prjScens:
+         mtx = self.globalPAMs[prjscen.code]
+         potatoArf = mtx.getArfFilename()
+         arfs.append(potatoArf)
+      return arfs
       
 # ...............................................
    def _createTriageForPotato(self, scencode):
