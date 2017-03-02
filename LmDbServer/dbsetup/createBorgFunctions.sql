@@ -300,6 +300,9 @@ $$  LANGUAGE 'plpgsql' STABLE;
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
                                                        mtxtype int,
                                                        grdid int,
+                                                       gcm varchar,
+                                                       altpred varchar,
+                                                       dt varchar,
                                                        dloc text,
                                                        metaurlprefix varchar,
                                                        meta varchar, 
@@ -317,13 +320,17 @@ BEGIN
       SELECT * INTO rec FROM lm_v3.matrix WHERE matrixid = mtxid;
    ELSE
       SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
-                                            AND gridsetid = grdid;
+                                            AND gridsetid = grdid
+                                            AND gcmCode = gcm
+                                            AND altpredCode = altpred
+                                            AND dateCode = dt;
    END IF;
    IF NOT FOUND THEN
       begin
          INSERT INTO lm_v3.matrix (matrixType, gridsetId, matrixDlocation, 
-                                   metadata, status, statusmodtime) 
-                           VALUES (mtxtype, grdid, dloc, 
+                                   gcmCode, altpredCode, dateCode, metadata, 
+                                   status, statusmodtime) 
+                           VALUES (mtxtype, grdid, dloc, gcm, altpred, dt,
                                    meta, stat, stattime);
          IF FOUND THEN
             -- update metadataUrl
@@ -343,16 +350,25 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Gets a matrix with its lm_gridset (including optional shapegrid)
+-- Unique: gridsetId, matrixType, gcmCode, altpredCode, dateCode
 CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrix(mtxid int, 
                                               mtxtype int, 
                                               gsid int,
+                                              gcm varchar,
+                                              altpred varchar,
+                                              dt varchar,
                                               gsname varchar,
                                               usr varchar)
    RETURNS lm_v3.lm_matrix AS
 $$
 DECLARE
    rec lm_v3.lm_matrix%rowtype;
+   rec grdstid int;
 BEGIN
+   IF gsid IS NULL THEN
+      SELECT * INTO grdstid FROM lm_v3.gridset WHERE grdname = gsname 
+                                                 AND userid = usr;
+
    IF mtxid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
    ELSIF mtxtype IS NOT NULL AND gsid IS NOT NULL THEN

@@ -1152,6 +1152,7 @@ class Borg(DbPostgresql):
       @summary: Update a LMMatrix
       @param mtxcol: the LmServer.legion.LMMatrix object to update
       @return: Boolean success/failure
+      @TODO: allow update of MatrixType, gcmCode, altpredCode, dateCode?
       """
       meta = mtx.dumpMtxMetadata()
       success = self.executeModifyFunction('lm_updateMatrix', 
@@ -1169,6 +1170,7 @@ class Borg(DbPostgresql):
       meta = mtx.dumpMtxMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix', 
                      mtx.getId(), mtx.matrixType, mtx.parentId, 
+                     mtx.gcmCode, mtx.altpredCode, mtx.dateCode,
                      mtx.getDLocation(), mtx.metadataUrl, meta, mtx.status, 
                      mtx.statusModTime)
       newOrExistingMtx = self._createLMMatrix(row, idxs)
