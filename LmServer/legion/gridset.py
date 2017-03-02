@@ -59,9 +59,7 @@ class Gridset(ServiceObject):
              unique/record identifiers and values the x, y coordinates of the 
              sites in a Matrix (if shapeGrid is not provided)
       @param epsgcode: The EPSG code of the spatial reference system of data.
-      @param pam: A Presence Absence Matrix (MatrixType.PAM)
-      @param grim: A Matrix of Environmental Values (MatrixType.GRIM)
-      @param biogeo: A Matrix of Biogeographic Hypotheses (MatrixType.BIOGEO_HYPOTHESES)
+      @param matrices: list of matrices for this gridset
       @param tree: A Tree with taxa matching those in the PAM 
       """
       if shapeGrid is not None:
@@ -85,10 +83,9 @@ class Gridset(ServiceObject):
       self._shapeGridId = shapeGridId
       self.configFilename = configFilename
       self._setEPSG(epsgcode)
-      # Optional Matrices
       self._matrices = []
-      for mtx in matrices:
-         self.addMatrix(mtx)
+      self.setMatrices(matrices, doRead=False)
+      self.tree = tree
       
 # ...............................................
    @classmethod
@@ -146,6 +143,18 @@ class Gridset(ServiceObject):
       if self._path is None:
          self.setPath()
       return self._path
+
+# ...............................................
+   def setMatrices(self, matrices, doRead=False):
+      """
+      @summary Fill a Matrix object from Matrix or existing file
+      """
+      if matrices is not None:
+         for mtx in matrices:
+            try:
+               self.addMatrix(mtx)
+            except Exception, e:
+               raise LMError('Failed to add matrix {}'.format(mtx))
 
 # ...............................................
    def addMatrix(self, mtxFileOrObj, doRead=False):
