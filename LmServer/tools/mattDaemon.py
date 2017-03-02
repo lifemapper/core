@@ -190,10 +190,16 @@ class MattDaemon(Daemon):
       self.scribe.closeConnections()
       
       # Stop worker factory
-      self.stopWorkerFactory()
+      try:
+         self.stopWorkerFactory()
+      except:
+         pass
       
       # Stop catalog server
-      self.stopCatalogServer()
+      try:
+         self.stopCatalogServer()
+      except:
+         pass
       
       Daemon.onShutdown(self)
       
