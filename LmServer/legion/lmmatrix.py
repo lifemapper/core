@@ -263,24 +263,6 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return rule
 
 # ...............................................
-   def _createAssembleRule(self):
-      """
-      @summary: Creates a command to assemble a matrix from MatrixColumns
-      """
-      scriptFname = os.path.join(APP_PATH, 
-                                 ProcessType.getTool(ProcessType.CONCATENATE_MATRICES))
-      depFname = self.getMashedFilename()
-      targetFname = self.getDLocation()
-      cmdArguments = [os.getenv('PYTHON'), 
-                      scriptFname,
-                      '--mashedPotato={}'.format(depFname),
-                      '--axis=1',
-                      targetFname]
-      cmd = ' '.join(cmdArguments)
-      rule = MfRule(cmd, [targetFname], dependencies=[depFname])
-      return rule
-
-# ...............................................
    def computeMe(self):
       """
       @summary: Creates a command to triage possible MatrixColumn inputs

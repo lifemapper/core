@@ -42,8 +42,13 @@ class Walker(Daemon):
       self.name = self.__class__.__name__.lower()
       self.userId = userId
       self.archiveName = archiveName
+      # iterator tool for species
       self.christopher = None
+      # Dictionary of potatoName: open MF file
       self.potatoes = None
+      # Dummy files indicating completion of a species Spud MF needed for Potato MF
+      self.speciesArfs = []
+      # Stop indicator
       self.keepWalken = False
 
    # .............................
@@ -62,10 +67,12 @@ class Walker(Daemon):
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       else:
          potatoFilenames = self.christopher.getPotatoFilenames()
-         self.potatoes = []
+         self.potatoes = {}
          for potatoFname in potatoFilenames:
+            fname, ext = os.path.splitext(potatoFname)
+            basePotatoName = os.path.basename(fname)
             f = open(potatoFname, 'w')
-            self.potatoes.append(f)
+            self.potatoes[basePotatoName] = f
          masterPotatoFilename = self.christopher.getMasterPotatoHeadFilename()
          self.masterPotato = open(masterPotatoFilename, 'w')
          
@@ -80,7 +87,8 @@ class Walker(Daemon):
             try:
                self.log.info('Next species ...')
                spud, spudArf = self.christopher.startWalken()
-               self.writeToPotatoes(spudArf)
+               self.speciesArfs.append(spudArf)
+               self.writeToPotatoes(spud)
                if self.keepWalken:
                   self.keepWalken = not self.christopher.complete
             except:
@@ -102,25 +110,35 @@ class Walker(Daemon):
    # .............................
    def onShutdown(self):
       potatoArfs = self.christopher.stopWalken()
-      self.writePotatoes(potatoArfs)
+      self.writeToPotatoes(potatoArfs=potatoArfs)
+      self.closePotatoes()
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
    # .............................
-   def writeToPotatoes(self, spudArf):
+   def writeToPotatoes(self, spud, potatoArfs=[]):
       """
-      @TODO: This is a stub for writing a spud target and command to a potato MF
+      @TODO: This is a stub for writing a spud target and command to potato MFs
+             and masterPotatoHead MF.
       """
-      for f in self.potatoes:
-         f.write('{}\n'.format(spudArf))      
+      if spud is not None:
+         for potatoName, f in self.potatoes.iteritems():
+            # Write commands from spud MFRule
+            f.write('{}\n'.format(spud))
+         self.masterPotato.write('{}\n'.format(spud))
+      for arf in potatoArfs:
+         self.masterPotato.write('{}\n'.format(arf)) 
       
    # .............................
    def closePotatoes(self):
       """
+      @TODO: This is a stub for writing the final Potatoes to the 
+             masterPotatoHead MF.
       @summary: Close all open potato files
       """
       for f in self.potatoes:
          f.close()
+         
       self.masterPotato.close()
 
 # .............................................................................
