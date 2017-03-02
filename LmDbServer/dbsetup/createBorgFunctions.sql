@@ -363,21 +363,20 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrix(mtxid int,
 $$
 DECLARE
    rec lm_v3.lm_matrix%rowtype;
-   rec grdstid int;
 BEGIN
-   IF gsid IS NULL THEN
-      SELECT * INTO grdstid FROM lm_v3.gridset WHERE grdname = gsname 
-                                                 AND userid = usr;
-
    IF mtxid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
-   ELSIF mtxtype IS NOT NULL AND gsid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
-                                            AND gridsetid = gsid;
-   ELSIF mtxtype IS NOT NULL AND gsname IS NOT NULL AND usr IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
-                                            AND grdname = gsname 
-                                            AND userid = usr;
+   ELSE
+	   IF gsid IS NULL THEN
+         SELECT * INTO gsid FROM lm_v3.gridset WHERE grdname = gsname 
+                                                 AND userid = usr;
+      END IF;
+      
+      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
+                                            AND gridsetid = gsid
+                                            AND gcmCode = gcm
+                                            AND altpredCode = altpred
+                                            AND dateCode = dt;
    END IF;
    RETURN rec;
 END;
