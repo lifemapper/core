@@ -21,10 +21,12 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import argparse
+import os
+
 from LmCommon.common.lmconstants import JobStatus
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
 class EMT(LMObject):
@@ -45,37 +47,30 @@ class EMT(LMObject):
       # Optionally use parent process logger
       if logger is None:
          logger = ScriptLogger(self.name)
-      # Database connection
-      try:
-         scribe = BorgScribe(self.log)
-         success = scribe.openConnections()
-      except Exception, e:
-         raise LMError(currargs='Exception opening database', prevargs=e.args)
-      else:
-         if not success:
-            raise LMError(currargs='Failed to open database')
-         else:
-            logger.info('{} opened databases'.format(self.name))
-      return logger, scribe
 
    # .............................
-   def triage(self, potato):
+   def triage(self, infname, outfname):
       """
-      @summary: Get a potato, read all targets, assess if they are ok
-      """
-      mashed = self._removeFailures(potato.targets)
-      return mashed
-
-   # .............................
-   def _removeFailures(self, targets):
-      """
-      @TODO: figure out what is good
+      @summary: Get a potato (CSV filename), read all targets, assess if they are ok
+      @param infname: a filename containing filenames indicating completion
+             of a Spud (single-species MF). Files are created regardless of 
+             success or failure of Spud
+      @param outfname: a filename containing filenames indicating **successful**
+             completion of a Spud (single-species MF). 
       """
       goodTargets = []
-      for tgt in targets:
-         if self._isGoodTarget(tgt):
-            goodTargets.append(tgt)
-      return goodTargets
+      for target in open(infname, 'r'):
+         if self._isGood(target):
+            goodTargets.append(target)
+            
+      try:
+         f = open(outfname, 'w')
+         for target in goodTargets:
+            f.write('{}\n'.format(target))
+      except Exception, e:
+         raise
+      finally:
+         f.close()
          
    # .............................
    def _isGoodTarget(self, target):
@@ -85,3 +80,30 @@ class EMT(LMObject):
       if target.status == JobStatus.COMPLETE:
          return True
       return False
+   
+   
+# .............................................................................
+if __name__ == "__main__":
+   parser = argparse.ArgumentParser(description='This script takes a list of ' +
+                             'filenames showing single-species workflow completion.')
+   # Inputs
+   parser.add_argument('input_filename', type=str, 
+                       help='Input file containing a list of target filenames ' +
+                            'indicating single-species workflow completion')
+   parser.add_argument('output_filename', type=str, 
+                       help='Output file containing a subset of target '  +
+                            'filenames indicating successful completion')
+   args = parser.parse_args()
+   
+   # Status comes in as an integer or file 
+   infname = args.input_filename
+   outfname = args.output_filename   
+   
+   success = EMT.triage(infname, outfname)
+      
+   
+"""
+Call like:
+$PYTHON triage.py potatoFname  mashedFname
+"""
+   

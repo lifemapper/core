@@ -23,12 +23,16 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.lmconstants import MatrixType
+import os
+
+from LmCommon.common.lmconstants import MatrixType, ProcessType, LMFormat
 from LmCommon.common.matrix import Matrix
+from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMServiceModule, 
                                          LMFileType)
-
+from LmServer.common.localconstants import APP_PATH
+from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
 class LMMatrix(Matrix, ServiceObject, ProcessObject):
@@ -78,6 +82,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       if gridset is not None:
          gridsetUrl = gridset.metadataUrl
          gridsetId = gridset.getId()
+      self._potato = []
       Matrix.__init__(self, matrix, headers=headers)
       ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
                              moduleType=LMServiceModule.LM, 
@@ -145,16 +150,17 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 # ...............................................
 # ...............................................
    def createLocalDLocation(self):
-      ftype = LMFileType.getMatrixFiletype(self.matrixType)         
+      ftype = LMFileType.getMatrixFiletype(self.matrixType)
       dloc = self.earlJr.createFilename(ftype, gridsetId=self.parentId, 
                                         objCode=self.getId(), 
                                         usr=self.getUserId())
       return dloc
 
    def getDLocation(self):
+      self.setDLocation()
       return self._dlocation
    
-   def setDLocation(self, dlocation):
+   def setDLocation(self, dlocation=None):
       """
       @summary: Set the _dlocation attribute if it is None.  Use dlocation
                 if provided, otherwise calculate it.
@@ -188,3 +194,112 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 # ...............................................
    def loadMtxMetadata(self, newMetadata):
       self.mtxMetadata = super(LMMatrix, self)._loadMetadata(newMetadata)
+
+# ...............................................
+   def addSpud(self, spudArfFname):
+      self._potato.append(spudArfFname)
+      
+# ...............................................
+   def getPotatoFilename(self):
+      """
+      @summary: Return temporary filename to indicate completion of spud 
+                (single-species) MF.
+      """
+      relFname = 'potato_{}{}'.format(self.getId(), LMFormat.CSV.ext)
+      return relFname
+
+# ...............................................
+   def getMashedFilename(self):
+      """
+      @summary: Return temporary filename to indicate completion of spud 
+                (single-species) MF.
+      """
+      relFname = 'mashed_{}{}'.format(self.getId(), LMFormat.CSV.ext)
+      return relFname
+
+# ...............................................
+   def getTriageFilename(self):
+      """
+      @summary: Return temporary filename to indicate completion of spud 
+                (single-species) MF.
+      """
+      relFname = 'potato_{}.arf'.format(self.getId())
+      return relFname
+
+# ...............................................
+   def writeTriageInput(self, overwrite=False):
+      """
+      @summary:
+      """
+      potatoFname = self.getPotatoFilename()
+      if os.path.exists(potatoFname):
+         if overwrite:
+            os.remove(potatoFname)
+         else:
+            raise LMError('File {} already exists'.format(potatoFname))
+      try:
+         f = open(potatoFname, 'w')
+         for spudArf in self._potato:
+            f.write(spudArf)
+      except Exception, e:
+         raise
+      finally:
+         f.close()
+      
+# ...............................................
+   def _createMatrixRule(self, processType, dependentFname, targetFname, 
+                         options=[]):
+      """
+      @summary: Creates a MF Rule from parameters. 
+      @note: This assumes a single target file and single dependency file
+      """
+      scriptFname = os.path.join(APP_PATH, ProcessType.getTool(processType))
+      cmdArguments = [os.getenv('PYTHON'), 
+                      scriptFname]
+      cmdArguments.extend(options)
+      cmdArguments.extend([dependentFname, targetFname])
+      cmd = ' '.join(cmdArguments)
+      rule = MfRule(cmd, [targetFname], dependencies=[dependentFname])
+      return rule
+
+# ...............................................
+   def _createAssembleRule(self):
+      """
+      @summary: Creates a command to assemble a matrix from MatrixColumns
+      """
+      scriptFname = os.path.join(APP_PATH, 
+                                 ProcessType.getTool(ProcessType.CONCATENATE_MATRICES))
+      depFname = self.getMashedFilename()
+      targetFname = self.getDLocation()
+      cmdArguments = [os.getenv('PYTHON'), 
+                      scriptFname,
+                      '--mashedPotato={}'.format(depFname),
+                      '--axis=1',
+                      targetFname]
+      cmd = ' '.join(cmdArguments)
+      rule = MfRule(cmd, [targetFname], dependencies=[depFname])
+      return rule
+
+# ...............................................
+   def computeMe(self):
+      """
+      @summary: Creates a command to triage possible MatrixColumn inputs
+                for assembly into a LMMatrix.
+      """
+      rules = []
+      # Triage rule
+      tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
+                                     self.getPotatoFilename(),
+                                     self.getMashedFilename())
+      rules.append(tRule)
+      # Assemble Matrix rule
+      depFname = self.getMashedFilename()
+      options = ['--mashedPotato={}'.format(depFname),
+                 '--axis=1']
+      cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
+                                     depFname, self.getDLocation(), 
+                                     options=options)
+      rules.append(cRule)
+      # Save Rule
+        
+      return rules

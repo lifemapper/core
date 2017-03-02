@@ -165,8 +165,7 @@ class EarlJr(LMObject):
       return os.path.join(pth, lyrName)
 
 # ...............................................
-   def createBasename(self, ftype, 
-                      gridsetId=None, objCode=None, 
+   def createBasename(self, ftype, objCode=None, 
                       lyrname=None, usr=None, epsg=None):
       """
       @summary: Return the base filename for given filetype and parameters 

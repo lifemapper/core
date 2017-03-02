@@ -744,6 +744,8 @@ class ProcessType:
    SMTP = 610
    CONCATENATE_MATRICES = 620
    UPDATE_OBJECT = 630
+   MF_TRIAGE = 640
+   
    # .........................
    # TODO: deleteMe
    # .........................
@@ -814,10 +816,14 @@ class ProcessType:
       elif ptype == ProcessType.CONCATENATE_MATRICES:
          relpath = COMMON_SCRIPTS_DIR
          jr = 'concatenate_matrices'
+                  
       elif ptype == ProcessType.UPDATE_OBJECT:
          relpath = SERVER_SCRIPTS_DIR
          jr = 'ear'
-        
+      elif ptype == ProcessType.MF_TRIAGE:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'triage'
+
       return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
 #       return os.path.join(APP_PATH, relpath, jr+'.py')   
 

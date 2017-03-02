@@ -90,15 +90,18 @@ class ChristopherWalken(LMObject):
          (self.weaponOfChoice, self.epsg, self.algs, self.mdlScen, self.mdlMask, 
           self.prjScens, self.prjMask, boomGridset, 
           self.intersectParams) = self.getConfiguredObjects(boompath, cfg)
-         self.globalPAM = boomGridset.pam
-         self.boomShapegrid = boomGridset.getShapegrid()
+         self.boomGridset = boomGridset
 
       # Master BOOM workflow
       self.masterPotatoHead = []
-      # Multi-species workflows
-      self.potatoes = {}
+      # Global PAM Matrix for each scenario
+      self.globalPAMs = {}
+      
+      # There is one Potato MF which creates a Global PAM for each scenario
       for prjscen in self.prjScens:
-         self.potatoes[prjscen.code] = []
+         self.potato[prjscen.code] = []
+         self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
+                        prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
 
 # ...............................................
    def moveToStart(self):
@@ -313,38 +316,52 @@ class ChristopherWalken(LMObject):
       objs = []
       occ = self.weaponOfChoice.getOne()
       objs.append(occ)
+
+      spudTriageFname = occ.getTriageFilename()
       currtime = dt.gmt().mjd
       # Sweep over input options
       for alg in self.algs:
          for prjscen in self.prjScens:
-            # Projection
+            # Add to Spud - SDM Project and MatrixColumn
             prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime)
             objs.append(prj)
-            # PAV
-            mtxcol = self._createOrResetIntersect(prj, currtime)
+            mtx = self.globalPAMs[prjscen.code]
+            mtxcol = self._createOrResetIntersect(prj, mtx, currtime)
             objs.append(mtxcol)
-            # Add to correct Potato
-#             self.globalPAM.append(mtxcol)
-            self.potatoes[prjscen.code].append(mtxcol)
+            # Add Spud completion temp file as input to Triage for each Potato 
+            mtx.addSpud(spudTriageFname)
+
       spudObjs = [o for o in objs if o is not None]
       spud = self._createMakeflow(spudObjs)
       # Add spud to MasterPotatoHead
-      self.masterPotatoHead.append(spud)
+      self.writeSpudToMasterPotatoHead(spud)
       
    # ...............................
    def stopWalken(self):
       """
       @summary: Walks a list of Lifemapper objects for computation
       """
-      # Add potato to MasterPotatoHead
-      for prjscen in self.prjScens:
-         self.potatoes[prjscen.code]
-      self._createMakeflow()
-      self.writeMasterPotatoHead()
-      spud = self._createMakeflow(spudObjs)
+      if self.complete():
+         # Add potato to MasterPotatoHead
+         for prjscen in self.prjScens:
+            mtx = self.globalPAMs[prjscen.code]
+            # TODO: This assumes that the ChristopherWalken is run from 
+            #       start to finish.  Handle interrupts later.
+            mtx.writeTriageInput(overwrite=True)
+         self.writeMasterPotatoHead()
       
 # ...............................................
-   def _createOrResetIntersect(self, prj, currtime):
+   def _createTriageForPotato(self, scencode):
+      potatoMtx = self.globalPAMs[scencode]
+      potatoMtx.writeTriageInput()
+#       potatoMtx.computeMe()
+      
+# ...............................................
+   def writeSpudToMasterPotatoHead(self):
+      pass
+
+# ...............................................
+   def _createOrResetIntersect(self, prj, mtx, currtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
@@ -356,8 +373,8 @@ class ChristopherWalken(LMObject):
          else:
             ptype = ProcessType.INTERSECT_VECTOR
    
-         tmpCol = MatrixColumn(None, self.globalPAM.getId(), self.userId, 
-                layer=prj, shapegrid=self.boomShapegrid, 
+         tmpCol = MatrixColumn(None, mtx.getId(), self.userId, 
+                layer=prj, shapegrid=self.boomGridset.getShapegrid(), 
                 intersectParams=self.intersectParams, 
                 squid=prj.squid, ident=prj.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 

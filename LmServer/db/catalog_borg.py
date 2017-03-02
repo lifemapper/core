@@ -689,8 +689,8 @@ class Borg(DbPostgresql):
                                                      fullGset.getId())
          for r in rows:
             mtx = self._createLMMatrix(r, idxs)
-            # setMatrix sets userid
-            fullGset.setMatrix(mtx.matrixType, mtxFileOrObj=mtx)
+            # addMatrix sets userid
+            fullGset.addMatrix(mtx)
       return fullGset
 
 # ...............................................

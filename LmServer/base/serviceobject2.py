@@ -25,9 +25,14 @@
           02110-1301, USA.
 """
 import mx.DateTime 
+import os
+
+from LmCommon.common.lmconstants import ProcessType
 from LmServer.base.lmobj import LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER
+from LmServer.common.localconstants import APP_PATH
+from LmServer.makeflow.cmd import MfRule
 
 # .............................................................................
 class ServiceObject(LMObject):
@@ -218,3 +223,18 @@ class ProcessObject(LMObject):
    def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd):
       self._status = status
       self._statusmodtime = modTime
+
+   # ...............................................
+   def getUpdateRule(self, status, successFname, outputFnameList):
+      scriptFname = os.path.join(APP_PATH, 
+                                 ProcessType.getTool(ProcessType.UPDATE_OBJECT))
+      args = [os.getenv('PYTHON'),
+              scriptFname,
+              self.processType,
+              self.objId,
+              successFname,
+              outputFnameList]
+      cmd = ' '.join(args)
+      
+      rule = MfRule(cmd, [successFname], dependencies=outputFnameList)
+      return rule

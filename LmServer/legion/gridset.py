@@ -116,8 +116,6 @@ class Gridset(ServiceObject):
       return self._shapeGrid
 
 # ...............................................
-
-# ...............................................
    def setId(self, expid):
       """
       Overrides ServiceObject.setId.  
@@ -188,6 +186,14 @@ class Gridset(ServiceObject):
 
    def getBiogeographicHypotheses(self):
       return self._getMatrixTypes(MatrixType.BIOGEO_HYPOTHESES)
+
+   def getPAMForCodes(self, gcmCode, altpredCode, dateCode):
+      for pam in self.getPAMs():
+         if (pam.gcmCode == gcmCode and 
+             pam.altpredCode == altpredCode and 
+             pam.dateCode == dateCode):
+            return pam
+      return None
 
 # ................................................
    def createLayerShapefileFromMatrix(self, shpfilename, isPresenceAbsence=True):

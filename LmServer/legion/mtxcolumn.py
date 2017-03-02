@@ -131,7 +131,7 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
 # ...............................................
    def getTargetFilename(self):
       """
-      @summary: Return unique code for the model's parameters.
+      @summary: Return temporary filename for output.
       """
       relFname = 'mtxcol_{}{}'.format(self.getId(), LMFormat.NUMPY.ext)
       return relFname
