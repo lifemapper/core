@@ -121,10 +121,9 @@ create table lm_v3.EnvType
    dateCode varchar(20),
    
    metadata text,
-   modTime double precision
+   modTime double precision,
+   UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode)
 );
-ALTER TABLE lm_v3.EnvType ADD CONSTRAINT unique_envType 
-   UNIQUE (userid, envCode, gcmCode, altpredCode, dateCode);
    
 -- -------------------------------
 -- Object
@@ -165,7 +164,6 @@ create table lm_v3.Layer
  ALTER TABLE lm_v3.Layer ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
  ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
  ALTER TABLE lm_v3.layer ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
- ALTER TABLE lm_v3.layer ADD CONSTRAINT unique_usr_name CHECK (st_ndims(geom) = 2);
  CREATE INDEX spidx_layer ON lm_v3.Layer USING GIST ( geom );
  CREATE INDEX idx_lyrSquid on lm_v3.Layer(squid);
  CREATE INDEX idx_lyrVerify on lm_v3.Layer(verify);
@@ -396,12 +394,19 @@ create table lm_v3.Matrix
    -- Constants in LmCommon.common.lmconstants.MatrixType
    matrixType int NOT NULL,
    gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
+
+   -- ONLY relevant for PAM
+   -- Codes for GCM, RCP, past/current/projected Date
+   gcmCode varchar(20),
+   altpredCode varchar(20),
+   dateCode varchar(20),
+
    matrixDlocation text,
    metadataUrl text UNIQUE,
    metadata text,
    status int,
    statusmodtime double precision,
-   UNIQUE (matrixType, gridsetId)
+   UNIQUE (gridsetId, matrixType, gcmCode, altpredCode, dateCode)
 );
 
 -- -------------------------------

@@ -262,13 +262,18 @@ class Borg(DbPostgresql):
          grdset = self._createGridset(row, idxs)
          mtxid = self._getColumnValue(row, idxs, ['matrixid'])
          mtype = self._getColumnValue(row, idxs, ['matrixtype'])
+         gcm = self._getColumnValue(row, idxs, ['gcmcode']) 
+         rcp  = self._getColumnValue(row, idxs, ['altpredcode'])
+         dt =  self._getColumnValue(row, idxs, ['datecode'])
          dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
          meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
          usr = self._getColumnValue(row, idxs, ['userid'])
          murl = self._getColumnValue(row, idxs, ['mtxmetadataurl', 'metadataurl'])
          stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
          stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 'statusmodtime'])
-         mtx = LMMatrix(None, matrixType=mtype, metadata=meta, dlocation=dloc, 
+         mtx = LMMatrix(None, matrixType=mtype, 
+                        gcmCode=gcm, altpredCode=rcp, dateCode=dt,
+                        metadata=meta, dlocation=dloc, 
                         metadataUrl=murl, userId=usr, gridset=grdset, 
                         matrixId=mtxid, status=stat, statusModTime=stattime)
       return mtx

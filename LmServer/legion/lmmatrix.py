@@ -41,6 +41,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
    def __init__(self, matrix, headers=None,
                 matrixType=MatrixType.PAM, 
                 processType=None,
+                gcmCode=None, altpredCode=None, dateCode=None,
                 metadata={},
                 dlocation=None, 
                 metadataUrl=None,
@@ -54,6 +55,11 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
       @param matrix: data (numpy) array for Matrix base object
       @param matrixType: Constant from LmCommon.common.lmconstants.MatrixType
+      @param gcmCode: Code for the Global Climate Model used to create these data
+      @param altpredCode: Code for the alternate prediction (i.e. IPCC scenario 
+             or Representative Concentration Pathways/RCPs) used to create 
+             these data
+      @param dateCode: Code for the time period for which these data are predicted.
       @param metadata: dictionary of metadata using Keys defined in superclasses
       @param dlocation: file location of the array
       @param gridset: parent gridset of this MatrixupdateModtime
@@ -61,6 +67,9 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       """
       self.matrixType = matrixType
       self._dlocation = dlocation
+      self.gcmCode = gcmCode
+      self.altpredCode = altpredCode
+      self.dateCode = dateCode
       self.mtxMetadata = {}
       self.loadMtxMetadata(metadata)
       self._gridset = gridset

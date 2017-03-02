@@ -191,6 +191,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    -- Matrix.*
    matrixType,
    gridsetId,
+   gcmCode,
+   altpredCode,
+   dateCode,
    matrixDlocation,
    mtxmetadataUrl,
    mtxmetadata,
@@ -204,8 +207,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.squid, mc.ident, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
-             m.matrixType, m.gridsetId, m.matrixDlocation, 
-             m.metadataUrl, m.metadata, m.status, m.statusmodtime,
+             m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, m.dateCode, 
+             m.matrixDlocation, m.metadataUrl, m.metadata, m.status, 
+             m.statusmodtime,
              g.userid, g.layerid
         FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
         WHERE mc.matrixId = m.matrixId AND m.gridsetid = g.gridsetid;
@@ -272,6 +276,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    matrixId,
    matrixType,
    gridsetId,
+   gcmCode,
+   altpredCode,
+   dateCode,
    matrixDlocation,
    metadataUrl,
    metadata,
@@ -313,8 +320,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    resolution,
    bbox,
    lyrmodtime) AS
-   SELECT m.matrixId, m.matrixType, m.gridsetId, m.matrixDlocation, 
-          m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
+   SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, 
+   		 m.dateCode, m.matrixDlocation, m.metadataUrl, m.metadata, m.status, 
+   		 m.statusmodtime, 
           g.userId, g.grdname, g.grdmetadataUrl, g.layerId, 
           g.grddlocation, g.grdepsgcode, g.grdmetadata, 
           g.grdmodTime, g.cellsides, g.cellsize, g.vsize, g.idAttribute, 
@@ -336,6 +344,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    matrixId,
    matrixType,
    gridsetId,
+   gcmCode,
+   altpredCode,
+   dateCode,
    matrixDlocation,
    metadataUrl,
    metadata,
@@ -350,8 +361,9 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    grdepsgcode,
    grdmetadata,
    grdmodTime) AS
-   SELECT m.matrixId, m.matrixType, m.gridsetId, m.matrixDlocation, 
-          m.metadataUrl, m.metadata, m.status, m.statusmodtime, 
+   SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode,
+          m.dateCode, m.matrixDlocation, m.metadataUrl, m.metadata, m.status, 
+          m.statusmodtime, 
           g.userId, g.name, g.metadataUrl, g.layerId, 
           g.dlocation, g.epsgcode, g.metadata, g.modTime
    FROM lm_v3.matrix m, lm_v3.gridset g

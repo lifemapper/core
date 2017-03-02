@@ -42,6 +42,8 @@ class Walker(Daemon):
       self.name = self.__class__.__name__.lower()
       self.userId = userId
       self.archiveName = archiveName
+      self.christopher = None
+      self.keepWalken = False
 
    # .............................
    def initialize(self):
@@ -55,7 +57,6 @@ class Walker(Daemon):
       try:
          self.christopher = ChristopherWalken(self.userId, self.archiveName, 
                                  jsonFname=None, priority=None, logger=self.log)
-         self.keepWalken = False
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       
@@ -69,17 +70,18 @@ class Walker(Daemon):
          while self.keepWalken:
             try:
                self.log.info('Next species ...')
-               self.christopher.startWalken()
+               spud = self.christopher.startWalken()
                if self.keepWalken:
-                  self.keepWalken = not self.boomer.complete
+                  self.keepWalken = not self.christopher.complete
             except:
                self.log.info('Saving next start {} ...'
-                             .format(self.boomer.nextStart))
+                             .format(self.christopher.nextStart))
                self.christopher.saveNextStart()
                raise
             else:
                time.sleep(10)
       finally:
+         self.christopher.stopWalken()
          self.christopher.close()
       self.log.debug('Stopped Walker')
     

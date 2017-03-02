@@ -47,8 +47,7 @@ class Gridset(ServiceObject):
 # .............................................................................
    def __init__(self, name=None, metadata={}, 
                 shapeGrid=None, shapeGridId=None, siteIndicesFilename=None, 
-                configFilename=None, epsgcode=None, 
-                pam=None, grim=None, biogeo=None, tree=None,
+                configFilename=None, epsgcode=None, matrices=None, tree=None,
                 userId=None, gridsetId=None, metadataUrl=None, modTime=None):
       """
       @summary Constructor for the Gridset class
@@ -87,12 +86,9 @@ class Gridset(ServiceObject):
       self.configFilename = configFilename
       self._setEPSG(epsgcode)
       # Optional Matrices
-      self._pam = None
-      self._grim = None
-      self._biogeo = None
-      self.setMatrix(MatrixType.PAM, mtxFileOrObj=pam)
-      self.setMatrix(MatrixType.GRIM, mtxFileOrObj=grim)
-      self.setMatrix(MatrixType.BIOGEO_HYPOTHESES, mtxFileOrObj=biogeo)
+      self._matrices = []
+      for mtx in matrices:
+         self.addMatrix(mtx)
       
 # ...............................................
    @classmethod
@@ -152,7 +148,7 @@ class Gridset(ServiceObject):
       return self._path
 
 # ...............................................
-   def setMatrix(self, mtxType, mtxFileOrObj=None, doRead=False):
+   def addMatrix(self, mtxFileOrObj, doRead=False):
       """
       @summary Fill a Matrix object from Matrix or existing file
       """
@@ -160,32 +156,29 @@ class Gridset(ServiceObject):
       if mtxFileOrObj is not None:
          usr = self.getUserId()
          if isinstance(mtxFileOrObj, StringType) and os.path.exists(mtxFileOrObj):
-            mtx = LMMatrix(matrixType=mtxType, dlocation=mtxFileOrObj, 
-                           userId=usr)
+            mtx = LMMatrix(dlocation=mtxFileOrObj, userId=usr)
             if doRead:
                mtx.readData()            
          elif isinstance(mtxFileOrObj, LMMatrix):
             mtx = mtxFileOrObj
             mtx.setUserId(usr)
-            
-      if mtxType == MatrixType.PAM:
-         self._pam = mtx
-      elif mtxType == MatrixType.GRIM:
-         self._grim = mtx
-      elif mtxType == MatrixType.BIOGEO_HYPOTHESES:
-         self._biogeo = mtx
-                  
-   @property
-   def pam(self):
-      return self._pam
+         
+                              
+   def _getMatrixTypes(self, mtype):
+      mtxs = []
+      for mtx in self._matrices:
+         if mtx.matrixType == mtype:
+            mtxs.append(mtx)
+      return mtxs
 
-   @property
-   def grim(self):
-      return self._grim
+   def getPAMs(self):
+      return self._getMatrixTypes(MatrixType.PAM)
 
-   @property
-   def biogeographicHypotheses(self):
-      return self._biogeo
+   def getGRIMs(self):
+      return self._getMatrixTypes(MatrixType.GRIM)
+
+   def getBiogeographicHypotheses(self):
+      return self._getMatrixTypes(MatrixType.BIOGEO_HYPOTHESES)
 
 # ................................................
    def createLayerShapefileFromMatrix(self, shpfilename, isPresenceAbsence=True):

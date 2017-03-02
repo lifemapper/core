@@ -122,7 +122,7 @@ def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbo
    return newshp
    
 # ...............................................
-def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize, 
+def addArchive(scribe, predScens, gridname, configFname, archiveName, cellsides, cellsize, 
                mapunits, epsg, bbox, usr):
    """
    @summary: Create a Shapegrid, PAM, and Gridset for this archive's Global PAM
@@ -136,15 +136,24 @@ def addArchive(scribe, gridname, configFname, archiveName, cellsides, cellsize,
                     configFilename=configFname, epsgcode=epsg, 
                     userId=usr, modTime=CURR_MJD)
    updatedGrdset = scribe.findOrInsertGridset(grdset)
-   # "Global" PAM
-   meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
-           ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
-   gpam = LMMatrix(None, matrixType=MatrixType.PAM, metadata=meta,
-                 userId=usr, gridset=updatedGrdset,
-                 status=JobStatus.GENERAL, statusModTime=CURR_MJD)
-   updatedGpam = scribe.findOrInsertMatrix(gpam)
+   # "Global" PAMs (one per scenario)
+   globalPAMs = []
+   for scen in predScens.values():
+      scen.gcmCode
+      scen.altpredCode
+      scen.dateCode
+
+      meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
+              ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
+      tmpGpam = LMMatrix(None, matrixType=MatrixType.PAM, 
+                         gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
+                         dateCode=scen.dateCode, metadata=meta, userId=usr, 
+                         gridset=updatedGrdset, 
+                         status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+      gpam = scribe.findOrInsertMatrix(tmpGpam)
+      globalPAMs.append(gpam)
    
-   return shp, updatedGrdset, updatedGpam
+   return shp, updatedGrdset, globalPAMs
    
 # ...............................................
 def _getbioName(obsOrPred, res, 
@@ -668,8 +677,9 @@ if __name__ == '__main__':
 # .............................
       # Shapefile, Gridset, Matrix for GPAM/BOOMArchive
       logger.info('  Insert, build shapegrid {} ...'.format(gridname))
-      updatedShp, updatedGrdset, updatedGpam = addArchive(scribeWithBorg, 
-                         gridname, metafname, archiveName, cellsides, cellsize, 
+      shpGrid, archiveGridset, globalPAMs = addArchive(scribeWithBorg, 
+                         predScens, gridname, metafname, archiveName, 
+                         cellsides, cellsize, 
                          configMeta['mapunits'], configMeta['epsg'], 
                          pkgMeta['bbox'], usr)
       

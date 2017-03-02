@@ -93,6 +93,13 @@ class ChristopherWalken(LMObject):
          self.globalPAM = boomGridset.pam
          self.boomShapegrid = boomGridset.getShapegrid()
 
+      # Master BOOM workflow
+      self.masterPotatoHead = []
+      # Multi-species workflows
+      self.potatoes = {}
+      for prjscen in self.prjScens:
+         self.potatoes[prjscen.code] = []
+
 # ...............................................
    def moveToStart(self):
       self.weaponOfChoice.moveToStart()
@@ -303,21 +310,39 @@ class ChristopherWalken(LMObject):
       """
       @summary: Walks a list of Lifemapper objects for computation
       """
-      tmpobjs = []
+      objs = []
       occ = self.weaponOfChoice.getOne()
-      tmpobjs.append(occ)
+      objs.append(occ)
       currtime = dt.gmt().mjd
       # Sweep over input options
       for alg in self.algs:
          for prjscen in self.prjScens:
+            # Projection
             prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime)
-            tmpobjs.append(prj)
+            objs.append(prj)
+            # PAV
             mtxcol = self._createOrResetIntersect(prj, currtime)
-            tmpobjs.append(mtxcol)
-      objs = [o for o in tmpobjs if o is not None]
+            objs.append(mtxcol)
+            # Add to correct Potato
+#             self.globalPAM.append(mtxcol)
+            self.potatoes[prjscen.code].append(mtxcol)
+      spudObjs = [o for o in objs if o is not None]
+      spud = self._createMakeflow(spudObjs)
+      # Add spud to MasterPotatoHead
+      self.masterPotatoHead.append(spud)
       
-      mfchain = self._createMakeflow(objs)
-
+   # ...............................
+   def stopWalken(self):
+      """
+      @summary: Walks a list of Lifemapper objects for computation
+      """
+      # Add potato to MasterPotatoHead
+      for prjscen in self.prjScens:
+         self.potatoes[prjscen.code]
+      self._createMakeflow()
+      self.writeMasterPotatoHead()
+      spud = self._createMakeflow(spudObjs)
+      
 # ...............................................
    def _createOrResetIntersect(self, prj, currtime):
       """
