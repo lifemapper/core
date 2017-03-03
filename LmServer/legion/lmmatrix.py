@@ -245,43 +245,49 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
          raise
       finally:
          f.close()
-      
+   
 # ...............................................
-   def _createMatrixRule(self, processType, dependentFname, targetFname, 
-                         options=[]):
+   def _createMatrixRule(self, processType, dependentFnameList, targetFnameList, 
+                         cmdArgs=[]):
       """
       @summary: Creates a MF Rule from parameters. 
-      @note: This assumes a single target file and single dependency file
+      @note: This assumes a single target file
       """
       scriptFname = os.path.join(APP_PATH, ProcessType.getTool(processType))
-      cmdArguments = [os.getenv('PYTHON'), 
-                      scriptFname]
-      cmdArguments.extend(options)
-      cmdArguments.extend([dependentFname, targetFname])
+      cmdArguments = [os.getenv('PYTHON'), scriptFname]
+      cmdArguments.extend(cmdArgs)
       cmd = ' '.join(cmdArguments)
-      rule = MfRule(cmd, [targetFname], dependencies=[dependentFname])
+      rule = MfRule(cmd, targetFnameList, dependencies=dependentFnameList)
       return rule
 
 # ...............................................
    def computeMe(self):
       """
-      @summary: Creates a command to triage possible MatrixColumn inputs
-                for assembly into a LMMatrix.
+      @summary: Creates a command to triage possible MatrixColumn inputs,
+                assemble into a LMMatrix, then test and catalog results.
       """
       rules = []
-      # Triage rule
+      mashedFname = self.getMashedFilename()
+      matrixOutputFname = self.getDLocation()
+      # Triage "Mash the potato" rule 
       tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
-                                     self.getPotatoFilename(),
-                                     self.getMashedFilename())
+                                     [self.getPotatoFilename()],
+                                     [mashedFname],
+                                     cmdArgs=[self.getPotatoFilename(), 
+                                              mashedFname])
       rules.append(tRule)
       # Assemble Matrix rule
-      depFname = self.getMashedFilename()
-      options = ['--mashedPotato={}'.format(depFname),
-                 '--axis=1']
       cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
-                                     depFname, self.getDLocation(), 
-                                     options=options)
+                     [mashedFname], [matrixOutputFname], 
+                     cmdArgs=['--mashedPotato={}'.format(mashedFname),
+                              '--axis=1', 
+                              matrixOutputFname])
       rules.append(cRule)
-      # Save Rule
+      # Store Matrix Rule
+      status = None
+      successFileBasename, _ = os.path.splitext(matrixOutputFname)
+      uRule = self.getUpdateRule(status, successFileBasename, [matrixOutputFname])
+      rules.append(uRule)
+      rules.append(cRule)
         
       return rules

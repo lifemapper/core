@@ -224,17 +224,44 @@ class ProcessObject(LMObject):
       self._status = status
       self._statusmodtime = modTime
 
+# ...............................................
+   def _getUpdateSuccessFilename(self):
+      """
+      @summary: Return temporary filename to indicate completion of update 
+                command.
+      """
+      prefix = self.processType
+      relFname = 'potato_{}.success'.format(self.objId)
+      return relFname
+
    # ...............................................
-   def getUpdateRule(self, status, successFname, outputFnameList):
-      scriptFname = os.path.join(APP_PATH, 
-                                 ProcessType.getTool(ProcessType.UPDATE_OBJECT))
-      args = [os.getenv('PYTHON'),
-              scriptFname,
-              self.processType,
-              self.objId,
-              successFname,
-              outputFnameList]
+   def getUpdateRule(self, status, successFileBasename, filesToCheck):
+      """
+      @summary: Return temporary filename to indicate completion of spud 
+                (single-species) MF.
+      @param status: Output value or file containing value of object process
+             results.  Currently unused. 
+      @param successFileBasename: basename of file which will be written to  
+             indicate success of update operation 
+      @param filesToCheck: List of files to be tested for validity.  
+      """
+      opts = []
+      if status is not None:
+         try:
+            int(status)
+            opts.append('-s {}'.format(status))
+         except:
+            opts.append('-f {}'.format(status))
+      scriptFname = os.path.join(APP_PATH, ProcessType.getTool(
+                                                   ProcessType.UPDATE_OBJECT))
+      successFname = successFileBasename + '.success'
+      # Assemble command - configured python and script
+      args = [os.getenv('PYTHON'), scriptFname]
+      # options
+      args.extend(opts)
+      # positional arguments
+      args.extend([self.processType, self.objId, successFname, filesToCheck])
       cmd = ' '.join(args)
       
-      rule = MfRule(cmd, [successFname], dependencies=outputFnameList)
+      rule = MfRule(cmd, [successFname], dependencies=filesToCheck)
       return rule
