@@ -82,7 +82,6 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       if gridset is not None:
          gridsetUrl = gridset.metadataUrl
          gridsetId = gridset.getId()
-      self._potato = []
       Matrix.__init__(self, matrix, headers=headers)
       ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
                              moduleType=LMServiceModule.LM, 
@@ -151,7 +150,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 # ...............................................
    def createLocalDLocation(self):
       ftype = LMFileType.getMatrixFiletype(self.matrixType)
-      dloc = self.earlJr.createFilename(ftype, gridsetId=self.parentId, 
+      dloc = self._earlJr.createFilename(ftype, gridsetId=self.parentId, 
                                         objCode=self.getId(), 
                                         usr=self.getUserId())
       return dloc
@@ -196,55 +195,22 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       self.mtxMetadata = super(LMMatrix, self)._loadMetadata(newMetadata)
 
 # ...............................................
-   def addSpud(self, spudArfFname):
-      self._potato.append(spudArfFname)
-      
-# ...............................................
-   def getArfFilename(self):
+   def _getPotatoFilename(self):
       """
       @summary: Return temporary filename to indicate completion of spud 
                 (single-species) MF.
       """
-      relFname = 'potato_{}.arf'.format(self.getId())
+      relFname = 'potato_{}{}'.format(self.getId(), LMFormat.TXT.ext)
       return relFname
-
+ 
 # ...............................................
-   def getMashedFilename(self):
+   def _getMashedFilename(self):
       """
       @summary: Return temporary filename to indicate completion of spud 
                 (single-species) MF.
       """
-      relFname = 'mashed_{}{}'.format(self.getId(), LMFormat.CSV.ext)
+      relFname = 'mashed_{}{}'.format(self.getId(), LMFormat.TXT.ext)
       return relFname
-
-# ...............................................
-   def getTriageFilename(self):
-      """
-      @summary: Return temporary filename to indicate completion of spud 
-                (single-species) MF.
-      """
-      relFname = 'potato_{}.arf'.format(self.getId())
-      return relFname
-
-# ...............................................
-   def writeTriageInput(self, overwrite=False):
-      """
-      @summary:
-      """
-      potatoFname = self.getPotatoFilename()
-      if os.path.exists(potatoFname):
-         if overwrite:
-            os.remove(potatoFname)
-         else:
-            raise LMError('File {} already exists'.format(potatoFname))
-      try:
-         f = open(potatoFname, 'w')
-         for spudArf in self._potato:
-            f.write(spudArf)
-      except Exception, e:
-         raise
-      finally:
-         f.close()
    
 # ...............................................
    def _createMatrixRule(self, processType, dependentFnameList, targetFnameList, 
@@ -267,27 +233,25 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                 assemble into a LMMatrix, then test and catalog results.
       """
       rules = []
-      mashedFname = self.getMashedFilename()
+      potatoFname = self._getPotatoFilename()
+      mashedFname = self._getMashedFilename()
       matrixOutputFname = self.getDLocation()
       # Triage "Mash the potato" rule 
       tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
-                                     [self.getPotatoFilename()],
-                                     [mashedFname],
-                                     cmdArgs=[self.getPotatoFilename(), 
-                                              mashedFname])
+                                     [potatoFname], [mashedFname],
+                                     cmdArgs=[potatoFname, mashedFname])
       rules.append(tRule)
       # Assemble Matrix rule
       cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
-                     [mashedFname], [matrixOutputFname], 
-                     cmdArgs=['--mashedPotato={}'.format(mashedFname),
-                              '--axis=1', 
-                              matrixOutputFname])
+                                     [mashedFname], [matrixOutputFname], 
+                                     cmdArgs=['--mashedPotato={}'.format(mashedFname),
+                                              '--axis=1', 
+                                               matrixOutputFname])
       rules.append(cRule)
       # Store Matrix Rule
       status = None
       successFileBasename, _ = os.path.splitext(matrixOutputFname)
       uRule = self.getUpdateRule(status, successFileBasename, [matrixOutputFname])
       rules.append(uRule)
-      rules.append(cRule)
         
       return rules

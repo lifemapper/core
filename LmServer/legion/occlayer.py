@@ -268,17 +268,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
       return Vector.getAbsolutePath(self)
 
 # ...............................................
-   def getArfFilename(self):
-      """
-      @summary: Return temporary filename to indicate completion of spud 
-                (single-species) MF.
-      """
-      basename = self._earlJr.createBasename(LMFileType.OCCURRENCE_FILE, 
-                                             objCode=self.getId())
-      relFname = '{}.arf'.format(basename)
-      return relFname
-
-# ...............................................
    @property
    def makeflowFilename(self):
       dloc = self.createLocalDLocation(makeflow=True)

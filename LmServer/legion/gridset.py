@@ -24,7 +24,6 @@
           02110-1301, USA.
 """
 import mx.DateTime
-import pickle
 import os
 from osgeo import ogr
 import subprocess
@@ -169,8 +168,14 @@ class Gridset(ServiceObject):
          elif isinstance(mtxFileOrObj, LMMatrix):
             mtx = mtxFileOrObj
             mtx.setUserId(usr)
-         
-                              
+         if mtx is not None:
+            if mtx.getId() is None:
+               self._matrices.append(mtx)
+            else:
+               existingIds = [m.getId() for m in self._matrices]
+               if mtx.getId() not in existingIds:
+                  self._matrices.append(mtx)
+                                       
    def _getMatrixTypes(self, mtype):
       mtxs = []
       for mtx in self._matrices:

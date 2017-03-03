@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
@@ -29,6 +30,7 @@ from LmServer.makeflow.cmd import MfRule
 class MFChain(ProcessObject):
 # .............................................................................
    META_CREATED_BY = 'createdBy'
+   META_DESC = 'description'
 # .............................................................................
    def __init__(self, userId, dlocation=None, priority=None, metadata=None,  
                 status=None, statusModTime=None, headers=None, mfChainId=None):
@@ -121,6 +123,24 @@ class MFChain(ProcessObject):
    def clearDLocation(self): 
       self._dlocation = None
 
+# ...............................................
+   def getArfFilename(self, prefix='mf'):
+      """
+      @summary: Return temporary dummy filename written to indicate completion  
+                of this MFChain.
+      """
+      relFname = '{}_{}.arf'.format(prefix, self.objId)
+      return relFname
+
+# ...............................................
+   def getTriageFilename(self, prefix='mf'):
+      """
+      @summary: Return filename to contain list of temporary dummy (Arf) files.
+                This file is used as input for triage to jettison failures
+                from inputs to another MF.
+      """
+      relFname = '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext)
+      return relFname
 
 # ...............................................
    def getUserId(self):
