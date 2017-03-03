@@ -819,7 +819,7 @@ class ProcessType:
                   
       elif ptype == ProcessType.UPDATE_OBJECT:
          relpath = SERVER_SCRIPTS_DIR
-         jr = 'ear'
+         jr = 'stockpile'
       elif ptype == ProcessType.MF_TRIAGE:
          relpath = SERVER_SCRIPTS_DIR
          jr = 'triage'

@@ -36,25 +36,27 @@ from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
-class Ear(LMObject):
+class Stockpile(LMObject):
    """
-   @summary: Object to test results of MF commands, update database with 
+   @summary: Object to receive results of MF commands, update database with 
              success status.
    """
 # .............................................................................
    @classmethod
-   def receive(cls, ptype, objId, status, successFname, outputFnameList):
+   def testAndStash(cls, ptype, objId, status, successFname, outputFnameList):
       """
       @summary: Test output files and update DB with status.  Only success for
                 all outputs = JobStatus.COMPLETE 
       @param ptype: LmCommon.common.lmconstants.ProcessType for the process
              being examined
       @param objId: Unique database ID for the object to update
-      @param status: Status returned by the computational process
+      @param status: Status returned by the computational process??
       @param successFname: Filename to be written IFF success=True. Contains  
              final status and testing results 
       @param outputFnameList: List of output files returned by the computational 
              process
+      @TODO: 'status' is currently unused. Are we getting a status file or 
+             integer for updated object?
       """
       outputInfo = []
       success = True
@@ -68,6 +70,8 @@ class Ear(LMObject):
       # TODO: Override status on failure?
       if not success:
          status = JobStatus.GENERAL_ERROR
+      else:
+         status = JobStatus.COMPLETE
 
       # Update database
       scribe = BorgScribe(ConsoleLogger())
@@ -159,12 +163,11 @@ if __name__ == "__main__":
                        help='The process type of the object to update')
    parser.add_argument('objectId', type=int, 
                        help='The id of the object to update')
-   parser.add_argument('successFile', type=str, 
+   parser.add_argument('successFilename', type=str, 
                        help=('File to be created only if the job was ' + 
                              'completed successfully.'))
    parser.add_argument('objectOutput', type=str, nargs='*', 
-                       help=('Output files for sanity checks. Each process ' +
-                             'type should know what these should be'))
+                       help=('Files to sanity check. '))
    # Status arguments
    parser.add_argument('-s', dest='status', type=int, 
                        help='The status to update the object with')
@@ -181,24 +184,23 @@ if __name__ == "__main__":
          status = int(statusIn.read())
    ptype = args.processType
    objId = args.objectId
-   successFname = args.successFile
+   successFname = args.successFilename
    outputFnameList = args.objectOutput
    
-   if status is not None:
-      success = Ear.receive(ptype, objId, status, successFname, outputFnameList)
+   success = Stockpile.testAndStash(ptype, objId, status, successFname, 
+                                    outputFnameList)
       
-      if success:
-         # Only write success file if successfully updated an object with 
-         #    non-error status.  Otherwise, Makeflow should stop and that will 
-         #    happen without this file
-         with open(args.successFile, 'w') as successOut:
-            successOut.write('1')
-   else:
-      raise Exception('Must provide status or status file')
+   if success:
+      # Only write success file if successfully updated an object with 
+      #    non-error status.  Otherwise, Makeflow should stop and that will 
+      #    happen without this file
+      with open(args.successFile, 'w') as successOut:
+         successOut.write('1')
 
    
 """
 Call like:
-$PYTHON ear.py <ptype>  <objId>  <successFname>  <outputFnameList>  <-s status OR -f statusFname>
+$PYTHON ear.py <ptype>  <objId>  <successFname>  <outputFnameList>  
+               <-s status OR -f statusFname>
 """
    
