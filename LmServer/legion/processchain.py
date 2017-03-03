@@ -21,6 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import os
+
 from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.datalocator import EarlJr
@@ -129,8 +131,10 @@ class MFChain(ProcessObject):
       @summary: Return temporary dummy filename written to indicate completion  
                 of this MFChain.
       """
-      relFname = '{}_{}.arf'.format(prefix, self.objId)
-      return relFname
+      earlJr = EarlJr()
+      pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
+      fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
+      return fname
 
 # ...............................................
    def getTriageFilename(self, prefix='mf'):
@@ -139,8 +143,11 @@ class MFChain(ProcessObject):
                 This file is used as input for triage to jettison failures
                 from inputs to another MF.
       """
-      relFname = '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext)
-      return relFname
+      earlJr = EarlJr()
+      pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
+      fname = os.path.join(pth, '{}_{}{}'.format
+                           (prefix, self.objId, LMFormat.TXT.ext))
+      return fname
 
 # ...............................................
    def getUserId(self):
