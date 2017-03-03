@@ -46,7 +46,8 @@ from LmServer.tools.occwoc import BisonWoC, iDigBioWoC, GBIFWoC, UserWoC
 # .............................................................................
 class ChristopherWalken(LMObject):
    """
-   Class to ChristopherWalken.
+   Class to ChristopherWalken with a species iterator through a sequence of 
+   species data creating a Spud for each species.
    """
 # .............................................................................
 # Constructor
@@ -54,10 +55,10 @@ class ChristopherWalken(LMObject):
    def __init__(self, userId=None, archiveName=None, jsonFname=None, 
                 priority=None, logger=None):
       """
-      @summary Constructor for ChristopherWalken class
+      @summary Constructor for ChristopherWalken class which creates a Spud 
+               (Single-species Makeflow chain) for a species.
       """
       super(ChristopherWalken, self).__init__()
-      self.rules = []
       self.priority = priority
       self.name = '{}_{}_{}'.format(userId, self.__class__.__name__.lower(), 
                                     archiveName)      
@@ -89,15 +90,13 @@ class ChristopherWalken(LMObject):
          
          (self.weaponOfChoice, self.epsg, self.algs, self.mdlScen, self.mdlMask, 
           self.prjScens, self.prjMask, boomGridset, 
-          self.intersectParams) = self.getConfiguredObjects(boompath, cfg)
+          self.intersectParams) = self._getConfiguredObjects(boompath, cfg)
          self.boomGridset = boomGridset
 
-      # Master BOOM workflow
-      self.masterPotatoHead = []
       # Global PAM Matrix for each scenario
       self.globalPAMs = {}
       
-      # There is one Potato MF which creates a Global PAM for each scenario
+      # One Global PAM for each scenario
       for prjscen in self.prjScens:
          self.globalPAMs[prjscen.code] = self.boomGridset.getPAMForCodes(
                         prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
@@ -109,23 +108,7 @@ class ChristopherWalken(LMObject):
 # ...............................................
    def saveNextStart(self, fail=False):
       self.weaponOfChoice.saveNextStart(fail=fail)
-      
-# ...............................................
-   def getPotatoFilenames(self):
-      potatoes = []
-      # There is one Potato MF which creates a Global PAM for each scenario
-      for prjscen in self.prjScens:
-         potatoFname = self.globalPAMs[prjscen.code].getPotatoFilename()
-         potatoes.append(potatoFname)
-      return potatoes
    
-# ...............................................
-   def getMasterPotatoHeadFilename(self):
-      """
-      @summary: Get the MF filename for this Master MF process
-      @todo: Create a Master MF process and add to DB
-      """
-      pass
 # ...............................................
    @property
    def complete(self):
@@ -292,7 +275,7 @@ class ChristopherWalken(LMObject):
       return userId, archiveName, boompath, cfg
          
 # .............................................................................
-   def getConfiguredObjects(self, boompath, cfg):
+   def _getConfiguredObjects(self, boompath, cfg):
       """
       @summary: Get configured string values and any corresponding db objects 
       @TODO: Make all archive/default config keys consistent
@@ -311,7 +294,7 @@ class ChristopherWalken(LMObject):
               boomGridset, intersectParams)  
 
    # ...............................
-   def getJSONObjects(self):
+   def _getJSONObjects(self):
       """
       @summary: Get provided values from JSON and any corresponding db objects 
       {
@@ -332,7 +315,6 @@ class ChristopherWalken(LMObject):
       occ = self.weaponOfChoice.getOne()
       objs.append(occ)
 
-      spudArf = occ.getArfFilename()
       currtime = dt.gmt().mjd
       # Sweep over input options
       for alg in self.algs:
@@ -343,14 +325,10 @@ class ChristopherWalken(LMObject):
             mtx = self.globalPAMs[prjscen.code]
             mtxcol = self._createOrResetIntersect(prj, mtx, currtime)
             objs.append(mtxcol)
-#             # Add Spud completion temp file as input to Triage for each Potato 
-#             mtx.addSpud(spudTriageFname)
 
       spudObjs = [o for o in objs if o is not None]
-      spud = self._createMakeflow(spudObjs)
-      return spud, spudArf
-#       # Add spud to MasterPotatoHead
-#       self.writeSpudToMasterPotatoHead(spud)
+      spud = self._createSpudMakeflow(spudObjs)
+      return spud
       
    # ...............................
    def stopWalken(self):
@@ -359,24 +337,7 @@ class ChristopherWalken(LMObject):
       """
       self.saveNextStart()
       self.weaponOfChoice.close()
-      arfs = []
-      # Add potato to MasterPotatoHead
-      for prjscen in self.prjScens:
-         mtx = self.globalPAMs[prjscen.code]
-         potatoArf = mtx.getArfFilename()
-         arfs.append(potatoArf)
-      return arfs
       
-# ...............................................
-   def _createTriageForPotato(self, scencode):
-      potatoMtx = self.globalPAMs[scencode]
-      potatoMtx.writeTriageInput()
-#       potatoMtx.computeMe()
-      
-# ...............................................
-   def writeSpudToMasterPotatoHead(self):
-      pass
-
 # ...............................................
    def _createOrResetIntersect(self, prj, mtx, currtime):
       """
@@ -448,7 +409,7 @@ class ChristopherWalken(LMObject):
       return prj
 
 # ...............................................
-   def _createMakeflow(self, objs):
+   def _createSpudMakeflow(self, objs):
       updatedMFChain = None
       if objs:
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}

@@ -26,28 +26,45 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
+from LmCommon.common.lmconstants import JobStatus
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
-from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
 from LmServer.base.utilities import isCorrectUser
+from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
+from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN
+from LmServer.common.log import ScriptLogger
+from LmServer.legion.processchain import MFChain
+from LmServer.makeflow.cmd import MfRule
 from LmServer.tools.cwalken import ChristopherWalken
 
 # .............................................................................
 class Walker(Daemon):
+   """
+   Class to iterate with a ChristopherWalken through a sequence of species data
+   creating individual species (Spud) MFChains, multi-species (Potato) MFChains, 
+   aggregated by projection scenario, and a master (MasterPotatoHead) MFChain
+   until it is complete.  If the daemon is interrupted, it will write out the 
+   current MFChains, and pick up where it left off to create new MFChains for 
+   unprocessed species data.
+   @todo: Next instance of boom.Walker will create new MFChains, but add data
+   to the existing Global PAM matrices.  Make sure LMMatrix.computeMe handles 
+   appending new PAVs or re-assembling. 
+   """
    # .............................
-   def __init__(self, pidfile, userId, archiveName, log=None):      
+   def __init__(self, pidfile, userId, archiveName, priority=None, log=None):      
       Daemon.__init__(self, pidfile, log=log)
       self.name = self.__class__.__name__.lower()
       self.userId = userId
       self.archiveName = archiveName
+      self.priority = priority
       # iterator tool for species
       self.christopher = None
-      # Dictionary of potatoName: open MF file
+      # dictionary of MFChains for each potato MF, key = projScenarioCode
       self.potatoes = None
-      # Dummy files indicating completion of a species Spud MF needed for Potato MF
-      self.speciesArfs = []
+      # MFChain for masterPotatoHead MF
+      self.masterPotato = None
+      # open file for writing Spud Arf filenames for Potato triage
+      self.spudArfFile = None
       # Stop indicator
       self.keepWalken = False
 
@@ -66,15 +83,10 @@ class Walker(Daemon):
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       else:
-         potatoFilenames = self.christopher.getPotatoFilenames()
-         self.potatoes = {}
-         for potatoFname in potatoFilenames:
-            fname, ext = os.path.splitext(potatoFname)
-            basePotatoName = os.path.basename(fname)
-            f = open(potatoFname, 'w')
-            self.potatoes[basePotatoName] = f
-         masterPotatoFilename = self.christopher.getMasterPotatoHeadFilename()
-         self.masterPotato = open(masterPotatoFilename, 'w')
+         self.potatoes = self._createPotatoMakeflows()
+         self.masterPotato = self._createMasterMakeflow()
+         potatoFname = self.masterPotato.getTriageFilename(prefix='potato')
+         self.spudArfFile = open(potatoFname, 'w')
          
    # .............................
    def run(self):
@@ -86,9 +98,16 @@ class Walker(Daemon):
          while self.keepWalken:
             try:
                self.log.info('Next species ...')
-               spud, spudArf = self.christopher.startWalken()
-               self.speciesArfs.append(spudArf)
-               self.writeToPotatoes(spud)
+               # Get a Spud MFChain and Spud Arf (single-species MF target - 
+               # dummy completion file)
+               # Spud MF is written by christopher
+               spud = self.christopher.startWalken()
+               # Add MF rule for Spud execution to Master MF
+               self._addRuleToMasterPotatoHead(spud, prefix='spud')
+               # Write species Spud target as input to potato triage
+               spudArf = spud.getArfFilename(prefix='spud')
+               self.spudArfFile.write('{}\n'.format(spudArf))
+               
                if self.keepWalken:
                   self.keepWalken = not self.christopher.complete
             except:
@@ -109,37 +128,62 @@ class Walker(Daemon):
        
    # .............................
    def onShutdown(self):
-      potatoArfs = self.christopher.stopWalken()
-      self.writeToPotatoes(potatoArfs=potatoArfs)
-      self.closePotatoes()
+      # Stop Walken the archive
+      self.christopher.stopWalken()
+      # Write each potato MFChain, then add the MFRule to execute it to the Master
+      for potato in self.potatoes:
+         potato.write()
+         self.addRuleToMasterPotatoHead(potato, prefix='potato')
+      # Write the masterPotatoHead MFChain
+      self.masterPotato.write()
+      # Close the spud Arf file (list of spud MFChain targets)
+      self.spudArfFile.close()
+      
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
+# ...............................................
+   def _createMasterMakeflow(self):
+      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+              MFChain.META_DESC: 'MasterPotatoHead for User {}, Archive {}'
+      .format(self.userId, self.archiveName)}
+      newMFC = MFChain(self.userId, priority=self.priority, 
+                       metadata=meta, status=JobStatus.INITIALIZE, 
+                       statusModTime=dt.gmt().mjd)
+      mfChain = self._scribe.insertMFChain(newMFC)
+      return mfChain
+
+# ...............................................
+   def _createPotatoMakeflows(self):
+      chains = {}
+      for prjScencode in self.christopher.globalPAMs.keys():
+         meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+                 MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
+         .format(self.userId, self.archiveName, prjScencode)}
+         newMFC = MFChain(self.userId, priority=self.priority, 
+                          metadata=meta, status=JobStatus.INITIALIZE, 
+                          statusModTime=dt.gmt().mjd)
+         mfChain = self._scribe.insertMFChain(newMFC)
+         chains[prjScencode] = mfChain
+      return chains
+
    # .............................
-   def writeToPotatoes(self, spud, potatoArfs=[]):
+   def _addRuleToMasterPotatoHead(self, mfchain, prefix='spud'):
       """
-      @TODO: This is a stub for writing a spud target and command to potato MFs
-             and masterPotatoHead MF.
+      @summary: Create a Spud rule for the MasterPotatoHead MF 
       """
-      if spud is not None:
-         for potatoName, f in self.potatoes.iteritems():
-            # Write commands from spud MFRule
-            f.write('{}\n'.format(spud))
-         self.masterPotato.write('{}\n'.format(spud))
-      for arf in potatoArfs:
-         self.masterPotato.write('{}\n'.format(arf)) 
-      
-   # .............................
-   def closePotatoes(self):
-      """
-      @TODO: This is a stub for writing the final Potatoes to the 
-             masterPotatoHead MF.
-      @summary: Close all open potato files
-      """
-      for f in self.potatoes:
-         f.close()
-         
-      self.masterPotato.close()
+      targetFname = mfchain.getArfFilename(prefix=prefix)
+      outputFname = mfchain.getDLocation()
+      cmdArgs = ['LOCAL makeflow',
+                 '-T wq', 
+                 '-C {}:9097'.format(PUBLIC_FQDN),
+                 '-a {}'.format(outputFname)]
+      mfCmd = ' '.join(cmdArgs)
+      arfCmd = 'touch {}'.format(targetFname)
+      cmd = '{} ; {}'.format(mfCmd, arfCmd)
+      # Create a rule from the MF and Arf file creation
+      rule = MfRule(cmd, [targetFname], dependencies=[])
+      self.masterPotato.addCommands([rule])
 
 # .............................................................................
 if __name__ == "__main__":
