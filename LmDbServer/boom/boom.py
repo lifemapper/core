@@ -85,6 +85,7 @@ class Walker(Daemon):
       else:
          self.potatoes = self._createPotatoMakeflows()
          self.masterPotato = self._createMasterMakeflow()
+         # All spuds are written to Potato
          potatoFname = self.masterPotato.getTriageFilename(prefix='potato')
          self.spudArfFile = open(potatoFname, 'w')
          
@@ -118,8 +119,7 @@ class Walker(Daemon):
             else:
                time.sleep(10)
       finally:
-         potatoArfs = self.christopher.stopWalken()
-         self.writePotatoes(potatoArfs)
+         self.christopher.stopWalken()
       self.log.debug('Stopped Walker')
     
    # .............................

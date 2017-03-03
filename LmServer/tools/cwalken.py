@@ -111,6 +111,17 @@ class ChristopherWalken(LMObject):
    
 # ...............................................
    @property
+   def currRecnum(self):
+      return self.weaponOfChoice.currRecnum
+
+# ...............................................
+   @property
+   def nextStart(self):
+      return self.weaponOfChoice.nextStart
+   
+
+# ...............................................
+   @property
    def complete(self):
       self.weaponOfChoice.complete
 
