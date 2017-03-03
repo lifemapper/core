@@ -338,6 +338,15 @@ class ChristopherWalken(LMObject):
       self.saveNextStart()
       self.weaponOfChoice.close()
       
+   # ...............................
+   def insertMFChain(self, mfchain):
+      """
+      @summary: Inserts a MFChain (Potato or MasterPotatoHead, for aggregating 
+                Spud MFChains)
+      """
+      updatedMFChain = self._scribe.insertMFChain(mfchain)
+      return updatedMFChain
+         
 # ...............................................
    def _createOrResetIntersect(self, prj, mtx, currtime):
       """

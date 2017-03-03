@@ -150,7 +150,7 @@ class Walker(Daemon):
       newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.INITIALIZE, 
                        statusModTime=dt.gmt().mjd)
-      mfChain = self._scribe.insertMFChain(newMFC)
+      mfChain = self.christopher.insertMFChain(newMFC)
       return mfChain
 
 # ...............................................
@@ -163,7 +163,7 @@ class Walker(Daemon):
          newMFC = MFChain(self.userId, priority=self.priority, 
                           metadata=meta, status=JobStatus.INITIALIZE, 
                           statusModTime=dt.gmt().mjd)
-         mfChain = self._scribe.insertMFChain(newMFC)
+         mfChain = self.christopher.insertMFChain(newMFC)
          chains[prjScencode] = mfChain
       return chains
 
