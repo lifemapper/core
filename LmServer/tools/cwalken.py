@@ -28,7 +28,7 @@ import os
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-                     OutputFormat, SERVER_PIPELINE_HEADING, SERVER_ENV_HEADING) 
+         OutputFormat, SERVER_PIPELINE_HEADING, SERVER_ENV_HEADING, MatrixType) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
@@ -123,7 +123,7 @@ class ChristopherWalken(LMObject):
 # ...............................................
    @property
    def complete(self):
-      self.weaponOfChoice.complete
+      return self.weaponOfChoice.complete
 
 # .............................................................................
    def _getOccWeaponOfChoice(self, cfg, epsg, boompath):
@@ -241,6 +241,8 @@ class ChristopherWalken(LMObject):
       tmpGS = Gridset(name=self.archiveName, shapeGrid=intersectGrid, 
                      epsgcode=epsg, userId=self.userId)
       boomGridset = self._scribe.getGridset(tmpGS, fillMatrices=True)
+      boomGridset.setMatrixProcessType(ProcessType.CONCATENATE_MATRICES, 
+                                       matrixType=MatrixType.PAM)
       intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: 
             Config().get(SERVER_PIPELINE_HEADING, 'INTERSECT_FILTERSTRING'),

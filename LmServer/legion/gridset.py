@@ -200,6 +200,18 @@ class Gridset(ServiceObject):
             return pam
       return None
 
+   def setMatrixProcessType(self, processType, matrixType=None, matrixId=None):
+      matching = []
+      for mtx in self._matrices:
+         if matrixType is not None:
+            if mtx.matrixType == matrixType:
+               matching.append(mtx)
+         elif matrixId is not None:
+            matching.append(mtx)
+            break
+      for mtx in matching:
+         mtx.processType = processType
+
 # ................................................
    def createLayerShapefileFromMatrix(self, shpfilename, isPresenceAbsence=True):
       """

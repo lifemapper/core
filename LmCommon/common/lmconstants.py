@@ -888,7 +888,7 @@ class ProcessType:
    
    @staticmethod
    def isMatrix(ptype):
-      if ptype in [ProcessType.RAD_CALCULATE, 
+      if ptype in [ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE, 
                    ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY, 
                    ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
                    ProcessType.RAD_GRADY, 

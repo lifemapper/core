@@ -131,7 +131,10 @@ class Walker(Daemon):
       # Stop Walken the archive
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
-      for potato in self.potatoes:
+      for prjScencode, potato in self.potatoes.iteritems():
+         mtx = self.christopher.globalPAMs[prjScencode]
+         rules = mtx.computeMe()
+         potato.addCommands(rules)
          potato.write()
          self.addRuleToMasterPotatoHead(potato, prefix='potato')
       # Write the masterPotatoHead MFChain
@@ -240,4 +243,47 @@ if __name__ == "__main__":
 $PYTHON LmDbServer/boom/boom.py --help
 $PYTHON LmDbServer/boom/boom.py  --archive_name "Heuchera archive" --user ryan start
 $PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive"  --user aimee start
+
+
+
+import mx.DateTime as dt
+import os, sys, time
+
+from LmBackend.common.daemon import Daemon
+from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmDbServer.common.lmconstants import BOOM_PID_FILE
+from LmServer.base.lmobj import LMError
+from LmServer.base.utilities import isCorrectUser
+from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
+from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN, APP_PATH
+from LmServer.common.log import ScriptLogger
+from LmServer.legion.processchain import MFChain
+from LmServer.makeflow.cmd import MfRule
+from LmServer.tools.cwalken import ChristopherWalken
+
+userId = 'ryan'
+archiveName = 'Heuchera_archive'
+secs = time.time()
+tuple = time.localtime(secs)
+timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
+logger = ScriptLogger('archivist.{}'.format(timestamp))
+
+boomer = Walker(BOOM_PID_FILE, userId, archiveName, log=logger)
+boomer.initialize()
+
+spud = boomer.christopher.startWalken()
+boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
+spudArf = spud.getArfFilename(prefix='spud')
+boomer.spudArfFile.write('{}\n'.format(spudArf))
+
+
+for prjScencode, potato in boomer.potatoes.iteritems():
+   mtx = boomer.christopher.globalPAMs[prjScencode]
+   rules = mtx.computeMe()
+   potato.addCommands(rules)
+   potato.write() 
+   boomer.addRuleToMasterPotatoHead(potato, prefix='potato')
+
+boomer.christopher.stopWalken()
+
 """

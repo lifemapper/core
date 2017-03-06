@@ -678,6 +678,8 @@ class Borg(DbPostgresql):
       @param fillMatrices: True/False indicating whether to find and attach any 
              matrices associated with this Gridset
       @return: Existing LmServer.legion.gridset.Gridset
+      @note: ProcessType is not held in DB record and must be set after
+             retrieval
       """
       row, idxs = self.executeSelectOneFunction('lm_getGridset', 
                                                 gridset.getId(),
