@@ -260,7 +260,8 @@ class ProcessObject(LMObject):
       # options
       args.extend(opts)
       # positional arguments
-      args.extend([self.processType, self.objId, successFname, filesToCheck])
+      args.extend([str(self.processType), str(self.objId), successFname, 
+                   filesToCheck])
       cmd = ' '.join(args)
       
       rule = MfRule(cmd, [successFname], dependencies=filesToCheck)

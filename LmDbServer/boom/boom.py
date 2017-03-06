@@ -136,7 +136,7 @@ class Walker(Daemon):
          rules = mtx.computeMe()
          potato.addCommands(rules)
          potato.write()
-         self.addRuleToMasterPotatoHead(potato, prefix='potato')
+         self._addRuleToMasterPotatoHead(potato, prefix='potato')
       # Write the masterPotatoHead MFChain
       self.masterPotato.write()
       # Close the spud Arf file (list of spud MFChain targets)
@@ -248,7 +248,7 @@ $PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive"  --user aime
 
 import mx.DateTime as dt
 import os, sys, time
-
+from LmDbServer.boom.boom import Walker
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
@@ -272,18 +272,20 @@ boomer = Walker(BOOM_PID_FILE, userId, archiveName, log=logger)
 boomer.initialize()
 
 spud = boomer.christopher.startWalken()
+while spud is None:
+   spud = boomer.christopher.startWalken()
+
 boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
 spudArf = spud.getArfFilename(prefix='spud')
 boomer.spudArfFile.write('{}\n'.format(spudArf))
 
 
+boomer.christopher.stopWalken()
 for prjScencode, potato in boomer.potatoes.iteritems():
    mtx = boomer.christopher.globalPAMs[prjScencode]
    rules = mtx.computeMe()
    potato.addCommands(rules)
    potato.write() 
-   boomer.addRuleToMasterPotatoHead(potato, prefix='potato')
-
-boomer.christopher.stopWalken()
+   boomer._addRuleToMasterPotatoHead(potato, prefix='potato')
 
 """
