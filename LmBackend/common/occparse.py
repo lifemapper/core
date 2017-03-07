@@ -118,10 +118,10 @@ class OccDataParser(object):
          csvreader = csv.reader(f, delimiter=delimiter)
       except Exception, e:
          try:
-            csvData = StringIO.StringIO()
-            csvData.write(datafile.encode(ENCODING))
-            csvData.seek(0)
-            csvreader = csv.reader(csvData, delimiter=delimiter)
+            f = StringIO.StringIO()
+            f.write(datafile.encode(ENCODING))
+            f.seek(0)
+            csvreader = csv.reader(f, delimiter=delimiter)
          except Exception, e:
             raise Exception('Failed to read or open {}'.format(datafile))
       return csvreader, f
