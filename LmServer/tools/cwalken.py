@@ -327,6 +327,10 @@ class ChristopherWalken(LMObject):
       """
       objs = []
       occ = self.weaponOfChoice.getOne()
+      try:
+         speciesName = occ.displayName
+      except:
+         speciesName = None
       objs.append(occ)
 
       currtime = dt.gmt().mjd
@@ -341,7 +345,7 @@ class ChristopherWalken(LMObject):
             objs.append(mtxcol)
 
       spudObjs = [o for o in objs if o is not None]
-      spud = self._createSpudMakeflow(spudObjs, occ.displayName)
+      spud = self._createSpudMakeflow(spudObjs, speciesName)
       return spud
       
    # ...............................
