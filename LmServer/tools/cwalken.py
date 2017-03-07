@@ -430,7 +430,7 @@ class ChristopherWalken(LMObject):
          newMFC = MFChain(self.userId, priority=self.priority, 
                            metadata=meta, status=JobStatus.GENERAL, 
                            statusModTime=dt.gmt().mjd)
-         updatedMFChain = self.insertMFChain(newMFC)
+         updatedMFChain = self._scribe.insertMFChain(newMFC)
 
          for o in objs:
             try:
@@ -442,7 +442,7 @@ class ChristopherWalken(LMObject):
                updatedMFChain.addCommands(rules)
          updatedMFChain.write()
 #          updatedMFChain.updateStatus(JobStatus.INITIALIZE)
-         self.updateMFChain(updatedMFChain)
+         self._scribe.updateObject(updatedMFChain)
          
       return updatedMFChain
 
