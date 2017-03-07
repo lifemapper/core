@@ -142,6 +142,8 @@ class Boomer(Daemon):
    def onShutdown(self):
       self.keepWalken = False
       self.log.debug('Shutdown!')
+      triageIn = self.spudArfFile.name
+      triageOut = self.masterPotato.getTriageFilename(prefix='mashed')
       # Close the spud Arf file (list of spud MFChain targets)
       self.spudArfFile.close()
       # Stop Walken the archive
@@ -149,7 +151,7 @@ class Boomer(Daemon):
       # Write each potato MFChain, then add the MFRule to execute it to the Master
       for prjScencode, potato in self.potatoes.iteritems():
          mtx = self.christopher.globalPAMs[prjScencode]
-         rules = mtx.computeMe()
+         rules = mtx.computeMe(triageIn, triageOut)
          potato.addCommands(rules)
          potato.write()
 #          potato.updateStatus(JobStatus.INITIALIZE)

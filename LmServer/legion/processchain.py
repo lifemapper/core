@@ -137,7 +137,20 @@ class MFChain(ProcessObject):
       return fname
 
 # ...............................................
-   def getTriageFilename(self, prefix='mf'):
+   def getTriageFilename(self, prefix='potato'):
+      """
+      @summary: Return filename to contain list of temporary dummy (Arf) files.
+                This file is used as input for triage to jettison failures
+                from inputs to another MF.
+      """
+      earlJr = EarlJr()
+      pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
+      fname = os.path.join(pth, '{}_{}{}'.format
+                           (prefix, self.objId, LMFormat.TXT.ext))
+      return fname
+
+# ...............................................
+   def getTriageOutputname(self, prefix='mashed'):
       """
       @summary: Return filename to contain list of temporary dummy (Arf) files.
                 This file is used as input for triage to jettison failures

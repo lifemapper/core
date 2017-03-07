@@ -195,24 +195,6 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       self.mtxMetadata = super(LMMatrix, self)._loadMetadata(newMetadata)
 
 # ...............................................
-   def _getPotatoFilename(self):
-      """
-      @summary: Return temporary filename to indicate completion of spud 
-                (single-species) MF.
-      """
-      relFname = 'potato_{}{}'.format(self.getId(), LMFormat.TXT.ext)
-      return relFname
- 
-# ...............................................
-   def _getMashedFilename(self):
-      """
-      @summary: Return temporary filename to indicate completion of spud 
-                (single-species) MF.
-      """
-      relFname = 'mashed_{}{}'.format(self.getId(), LMFormat.TXT.ext)
-      return relFname
-   
-# ...............................................
    def _createMatrixRule(self, processType, dependentFnameList, targetFnameList, 
                          cmdArgs=[]):
       """
@@ -227,24 +209,22 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return rule
 
 # ...............................................
-   def computeMe(self):
+   def computeMe(self, triageInFname, triageOutFname):
       """
       @summary: Creates a command to triage possible MatrixColumn inputs,
                 assemble into a LMMatrix, then test and catalog results.
       """
       rules = []
-      potatoFname = self._getPotatoFilename()
-      mashedFname = self._getMashedFilename()
       matrixOutputFname = self.getDLocation()
       # Triage "Mash the potato" rule 
       tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
-                                     [potatoFname], [mashedFname],
-                                     cmdArgs=[potatoFname, mashedFname])
+                                     [triageInFname], [triageOutFname],
+                                     cmdArgs=[triageInFname, triageOutFname])
       rules.append(tRule)
       # Assemble Matrix rule
       cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
-                                     [mashedFname], [matrixOutputFname], 
-                                     cmdArgs=['--mashedPotato={}'.format(mashedFname),
+                                     [triageOutFname], [matrixOutputFname], 
+                                     cmdArgs=['--mashedPotato={}'.format(triageOutFname),
                                               '--axis=1', 
                                                matrixOutputFname])
       rules.append(cRule)
