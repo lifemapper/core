@@ -264,7 +264,7 @@ $PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive"  --user aime
 
 import mx.DateTime as dt
 import os, sys, time
-from LmDbServer.boom.boom import Walker
+from LmDbServer.boom.boom import *
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmDbServer.common.lmconstants import BOOM_PID_FILE

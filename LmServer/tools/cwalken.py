@@ -341,7 +341,7 @@ class ChristopherWalken(LMObject):
             objs.append(mtxcol)
 
       spudObjs = [o for o in objs if o is not None]
-      spud = self._createSpudMakeflow(spudObjs)
+      spud = self._createSpudMakeflow(spudObjs, occ.displayName)
       return spud
       
    # ...............................
@@ -423,10 +423,12 @@ class ChristopherWalken(LMObject):
       return prj
 
 # ...............................................
-   def _createSpudMakeflow(self, objs):
+   def _createSpudMakeflow(self, objs, speciesName):
       updatedMFChain = None
       if objs:
-         meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
+         meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+                 MFChain.META_DESC: 'Spud for User {}, Archive {}, Species {}'
+         .format(self.userId, self.archiveName, speciesName)}
          newMFC = MFChain(self.userId, priority=self.priority, 
                            metadata=meta, status=JobStatus.GENERAL, 
                            statusModTime=dt.gmt().mjd)
