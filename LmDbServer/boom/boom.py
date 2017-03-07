@@ -132,7 +132,7 @@ class Boomer(Daemon):
                time.sleep(10)
       finally:
          self.onShutdown()
-      self.log.debug('Stopped Walker')
+      self.log.debug('Shutdown myself!')
     
    # .............................
    def onUpdate(self):
@@ -140,6 +140,8 @@ class Boomer(Daemon):
        
    # .............................
    def onShutdown(self):
+      self.keepWalken = False
+      self.log.debug('Shutdown!')
       # Stop Walken the archive
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
