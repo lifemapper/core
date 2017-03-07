@@ -456,7 +456,7 @@ class ChristopherWalken(LMObject):
             else:
                updatedMFChain.addCommands(rules)
          updatedMFChain.write()
-         updatedMFChain.updateStatus(JobStatus.INITIALIZE)
+#          updatedMFChain.updateStatus(JobStatus.INITIALIZE)
          self.updateMFChain(updatedMFChain)
          
       return updatedMFChain
