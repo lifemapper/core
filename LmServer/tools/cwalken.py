@@ -436,7 +436,7 @@ class ChristopherWalken(LMObject):
       if objs:
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__)}
          newMFC = MFChain(self.userId, priority=self.priority, 
-                           metadata=meta, status=JobStatus.INITIALIZE, 
+                           metadata=meta, status=JobStatus.GENERAL, 
                            statusModTime=dt.gmt().mjd)
          updatedMFChain = self._scribe.insertMFChain(newMFC)
 

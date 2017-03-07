@@ -164,7 +164,7 @@ class Walker(Daemon):
                  MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
          .format(self.userId, self.archiveName, prjScencode)}
          newMFC = MFChain(self.userId, priority=self.priority, 
-                          metadata=meta, status=JobStatus.INITIALIZE, 
+                          metadata=meta, status=JobStatus.GENERAL, 
                           statusModTime=dt.gmt().mjd)
          mfChain = self.christopher.insertMFChain(newMFC)
          chains[prjScencode] = mfChain
