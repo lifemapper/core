@@ -53,7 +53,7 @@ class ChristopherWalken(LMObject):
 # Constructor
 # .............................................................................
    def __init__(self, userId=None, archiveName=None, jsonFname=None, 
-                priority=None, logger=None):
+                priority=None, scribe=None):
       """
       @summary Constructor for ChristopherWalken class which creates a Spud 
                (Single-species Makeflow chain) for a species.
@@ -61,22 +61,23 @@ class ChristopherWalken(LMObject):
       super(ChristopherWalken, self).__init__()
       self.priority = priority
       self.name = '{}_{}_{}'.format(userId, self.__class__.__name__.lower(), 
-                                    archiveName)      
-      # Optionally use parent process logger
-      if logger is None:
-         logger = ScriptLogger(self.name)
-      self.log = logger
-      # Database connection
-      try:
-         self._scribe = BorgScribe(self.log)
-         success = self._scribe.openConnections()
-      except Exception, e:
-         raise LMError(currargs='Exception opening database', prevargs=e.args)
+                                    archiveName)   
+      # Optionally use parent process Database connection
+      if scribe is not None:
+         self.log = scribe.log
+         self._scribe = scribe
       else:
-         if not success:
-            raise LMError(currargs='Failed to open database')
+         self.log = ScriptLogger(self.name)
+         try:
+            self._scribe = BorgScribe(self.log)
+            success = self._scribe.openConnections()
+         except Exception, e:
+            raise LMError(currargs='Exception opening database', prevargs=e.args)
          else:
-            logger.info('{} opened databases'.format(self.name))
+            if not success:
+               raise LMError(currargs='Failed to open database')
+            else:
+               self.log.info('{} opened databases'.format(self.name))
        
       # JSON or ini based configuration
       if jsonFname is not None:
@@ -351,22 +352,6 @@ class ChristopherWalken(LMObject):
       self.saveNextStart()
       self.weaponOfChoice.close()
       
-   # ...............................
-   def insertMFChain(self, mfchain):
-      """
-      @summary: Inserts a MFChain in the database
-      """
-      updatedMFChain = self._scribe.insertMFChain(mfchain)
-      return updatedMFChain
-         
-   # ...............................
-   def updateMFChain(self, mfchain):
-      """
-      @summary: Updates a MFChain in the database
-      """
-      updatedMFChain = self._scribe.updateObject(mfchain)
-      return updatedMFChain
-         
 # ...............................................
    def _createOrResetIntersect(self, prj, mtx, currtime):
       """

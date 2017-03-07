@@ -33,12 +33,13 @@ from LmServer.base.utilities import isCorrectUser
 from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
 from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN
 from LmServer.common.log import ScriptLogger
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.processchain import MFChain
 from LmServer.makeflow.cmd import MfRule
 from LmServer.tools.cwalken import ChristopherWalken
 
 # .............................................................................
-class Walker(Daemon):
+class Boomer(Daemon):
    """
    Class to iterate with a ChristopherWalken through a sequence of species data
    creating individual species (Spud) MFChains, multi-species (Potato) MFChains, 
@@ -57,6 +58,8 @@ class Walker(Daemon):
       self.userId = userId
       self.archiveName = archiveName
       self.priority = priority
+      # Send Database connection
+      self._scribe = BorgScribe(self.log)
       # iterator tool for species
       self.christopher = None
       # dictionary of MFChains for each potato MF, key = projScenarioCode
@@ -77,9 +80,21 @@ class Walker(Daemon):
       @note: The argument to this script/daemon contains variables to override 
              installed defaults
       """
+      # Send Database connection
+      try:
+         success = self._scribe.openConnections()
+      except Exception, e:
+         raise LMError(currargs='Exception opening database', prevargs=e.args)
+      else:
+         if not success:
+            raise LMError(currargs='Failed to open database')
+         else:
+            self.log.info('{} opened databases'.format(self.name))
+            
       try:
          self.christopher = ChristopherWalken(self.userId, self.archiveName, 
-                                 jsonFname=None, priority=None, logger=self.log)
+                                              jsonFname=None, priority=None, 
+                                              scribe=self._scribe)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       else:
@@ -134,12 +149,12 @@ class Walker(Daemon):
          potato.addCommands(rules)
          potato.write()
 #          potato.updateStatus(JobStatus.INITIALIZE)
-         self.updateMFChain(potato)
+         self._scribe.updateObject(potato)
          self._addRuleToMasterPotatoHead(potato, prefix='potato')
       # Write the masterPotatoHead MFChain
       self.masterPotato.write()
       self.masterPotato.updateStatus(JobStatus.INITIALIZE)
-      self.updateMFChain(self.masterPotato)
+      self._scribe.updateObject(self.masterPotato)
       # Close the spud Arf file (list of spud MFChain targets)
       self.spudArfFile.close()
       
@@ -154,7 +169,7 @@ class Walker(Daemon):
       newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=dt.gmt().mjd)
-      mfChain = self.christopher.insertMFChain(newMFC)
+      mfChain = self._scribe.insertMFChain(newMFC)
       return mfChain
 
 # ...............................................
@@ -167,7 +182,7 @@ class Walker(Daemon):
          newMFC = MFChain(self.userId, priority=self.priority, 
                           metadata=meta, status=JobStatus.GENERAL, 
                           statusModTime=dt.gmt().mjd)
-         mfChain = self.christopher.insertMFChain(newMFC)
+         mfChain = self._scribe.insertMFChain(newMFC)
          chains[prjScencode] = mfChain
       return chains
 
@@ -226,7 +241,7 @@ if __name__ == "__main__":
    tuple = time.localtime(secs)
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
    logger = ScriptLogger('archivist.{}'.format(timestamp))
-   boomer = Walker(BOOM_PID_FILE, userId, archiveName, log=logger)
+   boomer = Boomer(BOOM_PID_FILE, userId, archiveName, log=logger)
      
    if cmd == 'start':
       boomer.start()
@@ -269,24 +284,44 @@ tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
 logger = ScriptLogger('archivist.{}'.format(timestamp))
 
-boomer = Walker(BOOM_PID_FILE, userId, archiveName, log=logger)
+boomer = Boomer(BOOM_PID_FILE, userId, archiveName, log=logger)
 boomer.initialize()
 
 spud = boomer.christopher.startWalken()
-while spud is None:
-   spud = boomer.christopher.startWalken()
+if spud:
+   boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
+   spudArf = spud.getArfFilename(prefix='spud')
+   boomer.spudArfFile.write('{}\n'.format(spudArf))
 
-boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
-spudArf = spud.getArfFilename(prefix='spud')
-boomer.spudArfFile.write('{}\n'.format(spudArf))
+for i in range(61):
+   spud = boomer.christopher.startWalken()
+   if spud:
+      boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
+      spudArf = spud.getArfFilename(prefix='spud')
+      boomer.spudArfFile.write('{}\n'.format(spudArf))
+   
 
 
 boomer.christopher.stopWalken()
+
+pcodes = ['AR5-CCSM4-RCP8.5-2050-10min', 'CMIP5-CCSM4-lgm-10min', 
+          'CMIP5-CCSM4-mid-10min', 'observed-10min', 
+          'AR5-CCSM4-RCP4.5-2050-10min', 'AR5-CCSM4-RCP4.5-2070-10min', 
+          'AR5-CCSM4-RCP8.5-2070-10min']
 for prjScencode, potato in boomer.potatoes.iteritems():
-   mtx = boomer.christopher.globalPAMs[prjScencode]
-   rules = mtx.computeMe()
-   potato.addCommands(rules)
-   potato.write() 
-   boomer._addRuleToMasterPotatoHead(potato, prefix='potato')
+   if prjScencode != 'AR5-CCSM4-RCP8.5-2050-10min':
+      print prjScencode
+      mtx = boomer.christopher.globalPAMs[prjScencode]
+      rules = mtx.computeMe()
+      potato.addCommands(rules)
+      potato.write() 
+      boomer._scribe.updateObject(potato)
+      boomer._addRuleToMasterPotatoHead(potato, prefix='potato')
+   
+boomer.masterPotato.write()
+boomer.masterPotato.updateStatus(JobStatus.INITIALIZE)
+boomer._scribe.updateObject((boomer.masterPotato)
+boomer.spudArfFile.close()
+Daemon.onShutdown(boomer)
 
 """
