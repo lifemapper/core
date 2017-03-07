@@ -76,10 +76,10 @@ class MattDaemon(Daemon):
       self.scribe.openConnections()
       
       # Start catalog server
-      self.startCatalogServer()
+      #self.startCatalogServer()
       
       # Start worker factory
-      self.startWorkerFactory()
+      #self.startWorkerFactory()
    
    # .............................
    def run(self):
@@ -94,11 +94,11 @@ class MattDaemon(Daemon):
             
             # Check if catalog server and factory are running
             # TODO: Should we attempt to restart these if they are stopped?
-            if self.csProc.poll() is not None:
-               raise Exception, "Catalog server has stopped"
+            #if self.csProc.poll() is not None:
+            #   raise Exception, "Catalog server has stopped"
             
-            if self.wfProc.poll() is not None:
-               raise Exception, "Worker factory has stopped"
+            #if Proc.poll() is not None:
+            #   raise Exception, "Worker factory has stopped"
             
             # Check if there are any empty slots
             numRunning = self.getNumberOfRunningProcesses()
@@ -124,8 +124,8 @@ class MattDaemon(Daemon):
          self.log.error("An error occurred")
          self.log.error(str(e))
          self.log.error(tb)
-         self.stopWorkerFactory()
-         self.stopCatalogServer()
+         #self.stopWorkerFactory()
+         #self.stopCatalogServer()
    
    # .............................
    def getMakeflows(self, count):
@@ -190,16 +190,16 @@ class MattDaemon(Daemon):
       self.scribe.closeConnections()
       
       # Stop worker factory
-      try:
-         self.stopWorkerFactory()
-      except:
-         pass
+      #try:
+      #   self.stopWorkerFactory()
+      #except:
+      #   pass
       
       # Stop catalog server
-      try:
-         self.stopCatalogServer()
-      except:
-         pass
+      #try:
+      #   self.stopCatalogServer()
+      #except:
+      #   pass
       
       Daemon.onShutdown(self)
       
