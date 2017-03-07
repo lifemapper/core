@@ -570,7 +570,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
    def getOne(self):
       occ = None
       dataChunk, dataCount, taxonName  = self._getChunk()
-      if dataChunk:
+      if dataChunk and taxonName:
          # Get or insert ScientificName (squid)
          bbsciName = ScientificName(taxonName, userId=self.userId)
          sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)

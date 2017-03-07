@@ -475,8 +475,10 @@ class OccDataParser(object):
       complete = False
       self.groupVal = None
       line, goodEnough = self._getLine()
+      if self.closed:
+         self.currLine = self.groupVal = None
       try:
-         while self._csvreader is not None and not complete:
+         while self._csvreader is not None and not self.closed and not complete:
             if line and goodEnough:
                self.currLine = line
                self.groupVal = self._getGroupByValue(line)
