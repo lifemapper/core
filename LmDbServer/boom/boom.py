@@ -131,8 +131,8 @@ class Boomer(Daemon):
             else:
                time.sleep(10)
       finally:
+         self.log.debug('Done walken')
          self.onShutdown()
-      self.log.debug('Shutdown myself!')
     
    # .............................
    def onUpdate(self):
@@ -142,6 +142,8 @@ class Boomer(Daemon):
    def onShutdown(self):
       self.keepWalken = False
       self.log.debug('Shutdown!')
+      # Close the spud Arf file (list of spud MFChain targets)
+      self.spudArfFile.close()
       # Stop Walken the archive
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
@@ -157,8 +159,6 @@ class Boomer(Daemon):
       self.masterPotato.write()
       self.masterPotato.updateStatus(JobStatus.INITIALIZE)
       self._scribe.updateObject(self.masterPotato)
-      # Close the spud Arf file (list of spud MFChain targets)
-      self.spudArfFile.close()
       
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
