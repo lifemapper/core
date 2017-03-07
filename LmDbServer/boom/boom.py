@@ -99,18 +99,15 @@ class Walker(Daemon):
          while self.keepWalken:
             try:
                self.log.info('Next species ...')
-               # Get a Spud MFChain and Spud Arf (single-species MF target - 
-               # dummy completion file)
-               # Spud MF is written by christopher
+               # Get a Spud MFChain (single-species MF)
                spud = self.christopher.startWalken()
-               # Add MF rule for Spud execution to Master MF
-               self._addRuleToMasterPotatoHead(spud, prefix='spud')
-               # Write species Spud target as input to potato triage
-               spudArf = spud.getArfFilename(prefix='spud')
-               self.spudArfFile.write('{}\n'.format(spudArf))
-               
-               if self.keepWalken:
-                  self.keepWalken = not self.christopher.complete
+               self.keepWalken = not self.christopher.complete
+               if spud:
+                  # Add MF rule for Spud execution to Master MF
+                  self._addRuleToMasterPotatoHead(spud, prefix='spud')
+                  # Write species Spud target as input to potato triage
+                  spudArf = spud.getArfFilename(prefix='spud')
+                  self.spudArfFile.write('{}\n'.format(spudArf))               
             except:
                self.log.info('Saving next start {} ...'
                              .format(self.christopher.nextStart))
@@ -173,7 +170,7 @@ class Walker(Daemon):
    # .............................
    def _addRuleToMasterPotatoHead(self, mfchain, prefix='spud'):
       """
-      @summary: Create a Spud rule for the MasterPotatoHead MF 
+      @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
       """
       targetFname = mfchain.getArfFilename(prefix=prefix)
       outputFname = mfchain.getDLocation()
