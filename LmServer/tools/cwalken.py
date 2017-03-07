@@ -354,10 +354,17 @@ class ChristopherWalken(LMObject):
    # ...............................
    def insertMFChain(self, mfchain):
       """
-      @summary: Inserts a MFChain (Potato or MasterPotatoHead, for aggregating 
-                Spud MFChains)
+      @summary: Inserts a MFChain in the database
       """
       updatedMFChain = self._scribe.insertMFChain(mfchain)
+      return updatedMFChain
+         
+   # ...............................
+   def updateMFChain(self, mfchain):
+      """
+      @summary: Updates a MFChain in the database
+      """
+      updatedMFChain = self._scribe.updateObject(mfchain)
       return updatedMFChain
          
 # ...............................................
@@ -438,7 +445,7 @@ class ChristopherWalken(LMObject):
          newMFC = MFChain(self.userId, priority=self.priority, 
                            metadata=meta, status=JobStatus.GENERAL, 
                            statusModTime=dt.gmt().mjd)
-         updatedMFChain = self._scribe.insertMFChain(newMFC)
+         updatedMFChain = self.insertMFChain(newMFC)
 
          for o in objs:
             try:
@@ -448,9 +455,9 @@ class ChristopherWalken(LMObject):
                                                                         str(e)))
             else:
                updatedMFChain.addCommands(rules)
-         
          updatedMFChain.write()
-         self._scribe.updateObject(updatedMFChain)
+         updatedMFChain.updateStatus(JobStatus.INITIALIZE)
+         self.updateMFChain(updatedMFChain)
          
       return updatedMFChain
 

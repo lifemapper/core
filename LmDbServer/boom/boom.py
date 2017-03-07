@@ -133,9 +133,13 @@ class Walker(Daemon):
          rules = mtx.computeMe()
          potato.addCommands(rules)
          potato.write()
+#          potato.updateStatus(JobStatus.INITIALIZE)
+         self.updateMFChain(potato)
          self._addRuleToMasterPotatoHead(potato, prefix='potato')
       # Write the masterPotatoHead MFChain
       self.masterPotato.write()
+      self.masterPotato.updateStatus(JobStatus.INITIALIZE)
+      self.updateMFChain(self.masterPotato)
       # Close the spud Arf file (list of spud MFChain targets)
       self.spudArfFile.close()
       
@@ -148,7 +152,7 @@ class Walker(Daemon):
               MFChain.META_DESC: 'MasterPotatoHead for User {}, Archive {}'
       .format(self.userId, self.archiveName)}
       newMFC = MFChain(self.userId, priority=self.priority, 
-                       metadata=meta, status=JobStatus.INITIALIZE, 
+                       metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=dt.gmt().mjd)
       mfChain = self.christopher.insertMFChain(newMFC)
       return mfChain
