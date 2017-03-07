@@ -616,7 +616,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
          bigFile = self.getDLocation(largeFile=True)
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          deps = []
-         cmdArgs = [os.getenv('PYTHON'),
+         cmdArgs = ["LOCAL",
+                    os.getenv('PYTHON'),
                     scriptFname,
                     self.getRawDLocation()]
          
