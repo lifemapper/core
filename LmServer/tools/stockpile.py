@@ -194,7 +194,7 @@ if __name__ == "__main__":
       # Only write success file if successfully updated an object with 
       #    non-error status.  Otherwise, Makeflow should stop and that will 
       #    happen without this file
-      with open(args.successFile, 'w') as successOut:
+      with open(args.successFilename, 'w') as successOut:
          successOut.write('1')
 
    
