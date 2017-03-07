@@ -131,7 +131,7 @@ class Boomer(Daemon):
             else:
                time.sleep(10)
       finally:
-         self.christopher.stopWalken()
+         self.onShutdown()
       self.log.debug('Stopped Walker')
     
    # .............................
