@@ -1240,7 +1240,8 @@ class Borg(DbPostgresql):
       @return: True/False for success of operation
       """
       if isinstance(obj, OccurrenceLayer):
-         success = self.updateOccurrenceSet(obj)
+         polyWkt = pointsWkt = None
+         success = self.updateOccurrenceSet(obj, None, None)
       elif isinstance(obj, SDMProjection):
          success = self.updateSDMProject(obj)
       elif isinstance(obj, ShapeGrid):

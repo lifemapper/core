@@ -77,7 +77,7 @@ class Stockpile(LMObject):
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
       try:
-         cls._updateObject(cls, scribe, ptype, objId, status)
+         cls._updateObject(scribe, ptype, objId, status)
       except:
          # TODO: raise exception, or write info to file?
          pass
@@ -113,7 +113,8 @@ class Stockpile(LMObject):
          obj.updateStatus(status)
          scribe.updateObject(obj)
       except Exception, e:
-         msg = 'Failed to update object {} for process {}'.format(objId, ptype)
+         msg = ('Failed to update object {} for process {}, ({})'
+                .format(objId, ptype, str(e)))
          msgs.append(msg)
          raise LMError(currargs=msg)
 
@@ -129,7 +130,7 @@ class Stockpile(LMObject):
       elif LMFormat.isTestable(ext):
          if LMFormat.isGeo(ext):
             fileFormat = LMFormat.getFormatByExtension(ext)
-            if LMFormat.isOGR(ext):
+            if LMFormat.isOGR(ext=ext):
                success, featCount = Vector.testVector(outputFname, 
                                                       driver=fileFormat.driver)
                if not success:
@@ -203,7 +204,34 @@ Call like:
 $PYTHON stockpile.py <ptype>  <objId>  <successFname>  <outputFnameList>  
                <-s status OR -f statusFname>
 
-$PYTHON LmServer/tools/stockpile.py 420 872 pt_872.success /share/lm/data/archive/ryan/000/000/000/872/pt_872.shp
+$PYTHON /opt/lifemapper/LmServer/tools/stockpile.py 420 504 pt_504.success /share/lm/data/archive/ryan/000/000/000/504/pt_504.shp
+
+
+import os
+from LmCommon.common.lmconstants import ProcessType, LMFormat, JobStatus
+from LmServer.base.layer2 import Vector, Raster
+from LmServer.base.lmobj import LMError, LMObject
+from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.tools.stockpile import *
+
+ptype = ProcessType.USER_TAXA_OCCURRENCE
+objId = 504
+status = 200
+successFname = 'pt_504.success'
+outputFnameList = ['/share/lm/data/archive/ryan/000/000/000/504/pt_504.shp']
+
+stp = Stockpile()
+
+scribe = BorgScribe(ConsoleLogger())
+scribe.openConnections()
+
+Stockpile._updateObject(scribe, ptype, objId, status)
+
+scribe.closeConnections()
+
+stp.testAndStash(ptype, objId, status, successFname, 
+                                    outputFnameList)
 
 
 """
