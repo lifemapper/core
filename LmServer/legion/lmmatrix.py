@@ -25,14 +25,13 @@
 """
 import os
 
-from LmCommon.common.lmconstants import MatrixType, ProcessType, LMFormat
+from LmCommon.common.lmconstants import MatrixType, ProcessType
 from LmCommon.common.matrix import Matrix
-from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMServiceModule, 
                                          LMFileType)
 from LmServer.common.localconstants import APP_PATH
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 
 # .............................................................................
 class LMMatrix(Matrix, ServiceObject, ProcessObject):

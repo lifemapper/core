@@ -32,7 +32,7 @@ from LmServer.base.lmobj import LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER
 from LmServer.common.localconstants import APP_PATH
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 
 # .............................................................................
 class ServiceObject(LMObject):

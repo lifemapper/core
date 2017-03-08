@@ -34,8 +34,8 @@ from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
 from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.cmd import MfRule
 from LmServer.legion.processchain import MFChain
-from LmServer.makeflow.cmd import MfRule
 from LmServer.tools.cwalken import ChristopherWalken
 
 # .............................................................................
@@ -319,7 +319,7 @@ from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
 from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN, APP_PATH
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.processchain import MFChain
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 from LmServer.tools.cwalken import ChristopherWalken
 
 userId = 'ryan'

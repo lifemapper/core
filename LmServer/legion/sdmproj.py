@@ -37,7 +37,7 @@ from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
 from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM, GEOTIFF_INTERFACE)
    

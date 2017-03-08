@@ -200,7 +200,11 @@ if __name__ == "__main__":
    
 """
 Call like:
-$PYTHON ear.py <ptype>  <objId>  <successFname>  <outputFnameList>  
+$PYTHON stockpile.py <ptype>  <objId>  <successFname>  <outputFnameList>  
                <-s status OR -f statusFname>
+
+$PYTHON LmServer/tools/stockpile.py 420 872 pt_872.success /share/lm/data/archive/ryan/000/000/000/872/pt_872.shp
+
+
 """
    

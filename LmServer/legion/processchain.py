@@ -27,7 +27,7 @@ from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 # .........................................................................
 class MFChain(ProcessObject):
 # .............................................................................

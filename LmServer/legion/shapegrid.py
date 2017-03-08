@@ -35,7 +35,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.common.localconstants import APP_PATH
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 
 # .............................................................................
 class ShapeGrid(_LayerParameters, Vector, ProcessObject):

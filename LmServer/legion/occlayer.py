@@ -22,7 +22,6 @@
           02110-1301, USA.
 """
 import mx.DateTime
-import json
 import os
 from osgeo import ogr
 
@@ -35,7 +34,7 @@ from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT,
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
                   LMServiceType, LMServiceModule)
 from LmServer.common.localconstants import POINT_COUNT_MAX, APP_PATH
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 
 # .............................................................................
 # .............................................................................

@@ -28,7 +28,7 @@ from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.localconstants import APP_PATH
-from LmServer.makeflow.cmd import MfRule
+from LmServer.legion.cmd import MfRule
 
 # .............................................................................
 # .............................................................................
