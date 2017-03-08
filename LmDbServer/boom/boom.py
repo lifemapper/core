@@ -216,6 +216,8 @@ class Boomer(Daemon):
       """
       targetFname = mfchain.getArfFilename(prefix=prefix)
       outputFname = mfchain.getDLocation()
+      # Add MF doc (existence) as dependency to run MF doc
+      dependencies.append(outputFname)
       cmdArgs = ['LOCAL makeflow',
                  '-T wq', 
                  '-N lifemapper-{}b'.format(mfchain.getId()),
