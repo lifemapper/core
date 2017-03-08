@@ -42,17 +42,22 @@ if __name__ == "__main__":
                         help="The file location to write the resulting matrix")
    parser.add_argument("axis", type=int, 
                       help="The (Matrix) axis to concatenate these matrices on")
-   parser.add_argument("mtx1Fn", type=str, 
+   parser.add_argument("mtxFn", type=str, nargs='*',
                        help="The file location of the first matrix")
-   parser.add_argument("mtxFn", type=str, nargs='+', 
-                     help="A file location of a matrix to append to the first")
+   parser.add_argument("--mashedPotato", type=str, dest="mashedPotato",
+                       help="A mashed potato file of file names to concatenate")
    
    args = parser.parse_args()
    
    joinAxis = args.axis
-   mtxs = [Matrix.load(args.mtx1Fn)]
-   for mtxFn in args.mtxFn:
-      mtxs.append(Matrix.load(args.mtxFn))
+   mtxs = []
+   if args.mashedPotato is not None:
+      with open(args.mashedPotato, 'r') as mashIn:
+         for line in mashIn:
+            mtxs.append(Matrix.load(line.strip()))
+   if args.mtxFn:
+      for mtxFn in args.mtxFn:
+         mtxs.append(Matrix.load(args.mtxFn))
    
    joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
    
