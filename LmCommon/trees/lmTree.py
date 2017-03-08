@@ -303,6 +303,17 @@ class LmTree(object):
          return False
    
    # ..............................
+   def pruneTipsWithoutMatrixIndices(self):
+      """
+      @summary: Prunes the tree of any tips that don't have a matrix index
+      """
+      if self._pruneTipsWithoutMtxIdx(self.tree):
+         # If true, prune root
+         self.tree = {}
+      # Clean up the tree after we prune
+      self._processTree()
+   
+   # ..............................
    def pruneTree(self, labels, onlyTips=True):
       """
       @summary: Prunes the tree of any clade in the labels list
@@ -669,6 +680,41 @@ class LmTree(object):
          return False
       
    # ..............................
+   def _mergeClades(self, clade1, clade2):
+      """
+      @summary: Merge clade2 with clade1 (clade 1 is primary)
+      @param clade1: The primary clade
+      @param clade2: The sub clade
+      """
+      try:
+         # Add branch lengths
+         clade1[PhyloTreeKeys.BRANCH_LENGTH] += clade2[
+            PhyloTreeKeys.BRANCH_LENGTH]
+      except:
+         pass
+      
+      try:
+         # Merge squid
+         clade1[PhyloTreeKeys.SQUID] = clade2[PhyloTreeKeys.SQUID]
+      except:
+         pass
+      
+      try:
+         # Matrix index
+         clade1[PhyloTreeKeys.MTX_IDX] = clade2[PhyloTreeKeys.MTX_IDX]
+      except:
+         pass
+      
+      try:
+         # Label
+         if not clade1.has_key(PhyloTreeKeys.NAME) or not clade1[PhyloTreeKeys.NAME]:
+            clade1[PhyloTreeKeys.NAME] = clade2[PhyloTreeKeys.NAME]
+      except:
+         pass
+      
+      return clade1
+
+   # ..............................
    def _processTree(self):
       """
       @summary: Process the provided tree, fill in missing information, and 
@@ -680,6 +726,35 @@ class LmTree(object):
          
       # Fill in paths and populate tips
       self._cleanUpClade()
+
+   # ..............................
+   def _pruneTipsWithoutMtxIdx(self, clade):
+      """
+      @summary: Recursively prune the tree of any tips without a matrix index
+                   and merge branches as necessary to maintain a binary, 
+                   ultrametric tree
+      @param clade: The clade to prune
+      @return: Boolean indicating if this branch should be pruned
+      """
+      # If at a child, check to see if matrix index
+      if not clade[PhyloTreeKeys.CHILDREN]: # Boolean like
+         return not clade.has_key(PhyloTreeKeys.MTX_IDX)
+      else:
+         child0 = clade[PhyloTreeKeys.CHILDREN][0]
+         child1 = clade[PhyloTreeKeys.CHILDREN][1]
+         
+         prune0 = self._pruneTipsWithoutMtxIdx(child0)
+         prune1 = self._pruneTipsWithoutMtxIdx(child1)
+         
+         if prune0 and prune1:
+            return True
+         elif prune0:
+            # Merge child1 and node
+            self._mergeClades(clade, child1)
+         else:
+            # Merge child0 and node
+            self._mergeClades(clade, child0)
+         return False
 
    # ..............................
    def _pruneTree(self, clade, labels, onlyTips):
