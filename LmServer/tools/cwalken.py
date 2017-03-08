@@ -329,24 +329,25 @@ class ChristopherWalken(LMObject):
                MFChains (potatoInputs)
       """
       objs = []
-      occ = self.weaponOfChoice.getOne()
-      objs.append(occ)
-
       currtime = dt.gmt().mjd
       potatoInputs = {}
-      # Sweep over input options
-      # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
-      #       Change this for BOOM jobs!! 
-      for alg in self.algs:
-         for prjscen in self.prjScens:
-            # Add to Spud - SDM Project and MatrixColumn
-            prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime)
-            objs.append(prj)
-            mtx = self.globalPAMs[prjscen.code]
-            mtxcol = self._createOrResetIntersect(prj, mtx, currtime)
-            objs.append(mtxcol)
-            potatoInputs[prjscen] = mtxcol.getTargetFilename()
-
+      
+      occ = self.weaponOfChoice.getOne()
+      if occ:
+         objs.append(occ)   
+         # Sweep over input options
+         # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
+         #       Change this for BOOM jobs!! 
+         for alg in self.algs:
+            for prjscen in self.prjScens:
+               # Add to Spud - SDM Project and MatrixColumn
+               prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime)
+               objs.append(prj)
+               mtx = self.globalPAMs[prjscen.code]
+               mtxcol = self._createOrResetIntersect(prj, mtx, currtime)
+               objs.append(mtxcol)
+               potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
+   
       spudObjs = [o for o in objs if o is not None]
       spud = self._createSpudMakeflow(spudObjs)
       return spud, potatoInputs
@@ -441,7 +442,6 @@ class ChristopherWalken(LMObject):
                   # Present on OccurrenceLayer, SDMProjection, MatrixColumn
                   squid = o.squid
                   speciesName = o.displayName
-                  break
                except:
                   pass
                else:

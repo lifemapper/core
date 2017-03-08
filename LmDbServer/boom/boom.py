@@ -123,11 +123,11 @@ class Boomer(Daemon):
                   self._addRuleToMasterPotatoHead(spud, prefix='spud')
                   # Gather species ARF dependency to delay start of multi-species MF
                   spudArf = spud.getArfFilename(prefix='spud')
-                  self.spudArfFiles.append(spudArf)
+                  self.spudArfFnames.append(spudArf)
                   # Add PAV outputs to raw potato files for triabe input
-                  for prjscen, f in self.rawPotatoFiles.keys():
+                  for scencode, f in self.rawPotatoFiles.iteritems():
                      squid = spud.mfMetadata[MFChain.META_SQUID]
-                     fname = potatoInputs[prjscen]
+                     fname = potatoInputs[scencode]
                      f.write('{}: {}\n'.format(squid, fname))
             except:
                self.log.info('Saving next start {} ...'
@@ -151,17 +151,17 @@ class Boomer(Daemon):
       # Stop Walken the archive
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
-      for prjScencode, potato in self.potatoes.iteritems():
-         mtx = self.christopher.globalPAMs[prjScencode]
-         potatoMF = self.potatoes[prjScencode]
-         triageIn = self.rawPotatoFiles[prjScencode].name
+      for scencode, potato in self.potatoes.iteritems():
+         mtx = self.christopher.globalPAMs[scencode]
+         potatoMF = self.potatoes[scencode]
+         triageIn = self.rawPotatoFiles[scencode].name
          triageOut = potatoMF.getTriageFilename(prefix='mashedPotato')
          # Create Potato rules and write
          rules = mtx.computeMe(triageIn, triageOut)
          potato.addCommands(rules)
          potato.write()
          # Close this rawPotato file (containing GPAM PAVs)
-         self.rawPotatoFiles[prjScencode].close()
+         self.rawPotatoFiles[scencode].close()
 #          potato.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(potato)
          self._addRuleToMasterPotatoHead(potato, prefix='potato')
@@ -188,16 +188,16 @@ class Boomer(Daemon):
    def _createPotatoMakeflows(self):
       chains = {}
       rawPotatoFiles = {}
-      for prjScencode in self.christopher.globalPAMs.keys():
+      for scencode in self.christopher.globalPAMs.keys():
          # Create MFChain for this GPAM
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
                  MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
-         .format(self.userId, self.archiveName, prjScencode)}
+         .format(self.userId, self.archiveName, scencode)}
          newMFC = MFChain(self.userId, priority=self.priority, 
                           metadata=meta, status=JobStatus.GENERAL, 
                           statusModTime=dt.gmt().mjd)
          mfChain = self._scribe.insertMFChain(newMFC)
-         chains[prjScencode] = mfChain
+         chains[scencode] = mfChain
          # Get rawPotato input file from MFChain
          rawPotatoFname = mfChain.getTriageFilename(prefix='rawPotato')
          try:
@@ -205,7 +205,7 @@ class Boomer(Daemon):
          except Exception, e:
             raise LMError(currargs='Failed to open {} for writing ({})'
                           .format(rawPotatoFname, str(e)))
-         rawPotatoFiles[prjScencode] = f
+         rawPotatoFiles[scencode] = f
       return chains, rawPotatoFiles
 
    # .............................
@@ -339,10 +339,10 @@ for i in range(61):
    if spud:
       boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
       spudArf = spud.getArfFilename(prefix='spud')
-      boomer.spudArfFiles.append(spudArf)
-      for prjscen, f in boomer.rawPotatoFiles.keys():
+      boomer.spudArfFnames.append(spudArf)
+      for scencode, f in boomer.rawPotatoFiles.keys():
          squid = spud.mfMetadata[MFChain.META_SQUID]
-         fname = potatoInputs[prjscen]
+         fname = potatoInputs[scencode]
          f.write('{}: {}\n'.format(squid, fname))
 
 
@@ -352,10 +352,10 @@ pcodes = ['AR5-CCSM4-RCP8.5-2050-10min', 'CMIP5-CCSM4-lgm-10min',
           'CMIP5-CCSM4-mid-10min', 'observed-10min', 
           'AR5-CCSM4-RCP4.5-2050-10min', 'AR5-CCSM4-RCP4.5-2070-10min', 
           'AR5-CCSM4-RCP8.5-2070-10min']
-for prjScencode, potato in boomer.potatoes.iteritems():
-   if prjScencode != 'AR5-CCSM4-RCP8.5-2050-10min':
-      print prjScencode
-      mtx = boomer.christopher.globalPAMs[prjScencode]
+for scencode, potato in boomer.potatoes.iteritems():
+   if scencode != 'AR5-CCSM4-RCP8.5-2050-10min':
+      print scencode
+      mtx = boomer.christopher.globalPAMs[scencode]
       rules = mtx.computeMe()
       potato.addCommands(rules)
       potato.write() 
