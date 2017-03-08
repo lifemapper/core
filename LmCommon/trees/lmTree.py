@@ -113,6 +113,15 @@ class LmTree(object):
       self._addMatrixIndices(self.tree, pamMetadata)
    
    # ..............................
+   def addSquidMatrixIndices(self, pamMetadata):
+      """
+      @summary: Add matrix indices to the tree
+      @param pamMetadata: A dictionary of (squid, matrix index) pairs for a PAM
+      @todo: Should this fail if not all of the columns are found?
+      """
+      self._addSquidMatrixIndices(self.tree, pamMetadata)
+   
+   # ..............................
    def addSQUIDs(self, squidDict):
       """
       @summary: Add Lifemapper SQUIDs to the tree
@@ -374,6 +383,20 @@ class LmTree(object):
    
       for child in clade[PhyloTreeKeys.CHILDREN]:
          self._addMatrixIndices(child, pamMetadata)
+
+   # ..............................
+   def _addSquidMatrixIndices(self, clade, pamMetadata):
+      """
+      @summary: Recursively adds matrix indices to a clade
+      @param clade: The clade to add matrix indices to
+      @param pamMetadata: A dictionary of (squid, matrix index) pairs for a PAM
+      """
+      # If the name of this clade is in the PAM metadata, add the matrix index
+      if pamMetadata.has_key(clade[PhyloTreeKeys.SQUID]):
+         clade[PhyloTreeKeys.MTX_IDX] = pamMetadata[clade[PhyloTreeKeys.SQUID]] 
+   
+      for child in clade[PhyloTreeKeys.CHILDREN]:
+         self._addSquidMatrixIndices(child, pamMetadata)
 
    # ..............................
    def _addSQUIDs(self, clade, squidDict):
