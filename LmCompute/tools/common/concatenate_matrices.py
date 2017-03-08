@@ -54,6 +54,7 @@ if __name__ == "__main__":
    if args.mashedPotato is not None:
       with open(args.mashedPotato, 'r') as mashIn:
          for line in mashIn:
+            squid, pav = line.split(':')
             mtxs.append(Matrix.load(line.strip()))
    if args.mtxFn:
       for mtxFn in args.mtxFn:
