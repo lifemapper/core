@@ -187,7 +187,7 @@ class MFChain(ProcessObject):
       @param dependencies: A list of dependencies (files that must exist before 
                               this job can run
       """
-      job = "# {comment}\n{outputs}: {dependencies}\n   {cmd}\n".format(
+      job = "# {comment}\n{outputs}: {dependencies}\n\t{cmd}\n".format(
          outputs=' '.join(outputs), 
          cmd=cmd, comment=comment, 
          dependencies=' '.join(dependencies))
