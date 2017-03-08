@@ -65,7 +65,7 @@ class Boomer(Daemon):
       # Dictionary of MFChains for each projScenarioCode
       self.potatoes = None
       # Dictionary of PAV input filenames for each projScenarioCode 
-      self.rawPotatoInputs = None
+      self.rawPotatoFiles = None
       # MFChain for masterPotatoHead MF
       self.masterPotato = None
       # open file for writing Spud Arf filenames for Potato triage
@@ -101,7 +101,7 @@ class Boomer(Daemon):
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       else:
          (self.potatoes, 
-          self.rawPotatoInputs) = self._createPotatoMakeflows()
+          self.rawPotatoFiles) = self._createPotatoMakeflows()
          self.masterPotato = self._createMasterMakeflow()
          self.spudArfFnames = []
          
@@ -125,7 +125,7 @@ class Boomer(Daemon):
                   spudArf = spud.getArfFilename(prefix='spud')
                   self.spudArfFiles.append(spudArf)
                   # Add PAV outputs to raw potato files for triabe input
-                  for prjscen, f in self.rawPotatoInputs.keys():
+                  for prjscen, f in self.rawPotatoFiles.keys():
                      squid = spud.mfMetadata[MFChain.META_SQUID]
                      fname = potatoInputs[prjscen]
                      f.write('{}: {}\n'.format(squid, fname))
@@ -148,19 +148,20 @@ class Boomer(Daemon):
    def onShutdown(self):
       self.keepWalken = False
       self.log.debug('Shutdown!')
-      # Close the spud Arf file (list of spud MFChain targets)
-      self.spudArfFile.close()
       # Stop Walken the archive
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
       for prjScencode, potato in self.potatoes.iteritems():
          mtx = self.christopher.globalPAMs[prjScencode]
          potatoMF = self.potatoes[prjScencode]
-         triageIn = self.rawPotatoInputs[prjScencode].name
+         triageIn = self.rawPotatoFiles[prjScencode].name
          triageOut = potatoMF.getTriageFilename(prefix='mashedPotato')
+         # Create Potato rules and write
          rules = mtx.computeMe(triageIn, triageOut)
          potato.addCommands(rules)
          potato.write()
+         # Close this rawPotato file (containing GPAM PAVs)
+         self.rawPotatoFiles[prjScencode].close()
 #          potato.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(potato)
          self._addRuleToMasterPotatoHead(potato, prefix='potato')
@@ -186,7 +187,7 @@ class Boomer(Daemon):
 # ...............................................
    def _createPotatoMakeflows(self):
       chains = {}
-      rawPotatoes = {}
+      rawPotatoFiles = {}
       for prjScencode in self.christopher.globalPAMs.keys():
          # Create MFChain for this GPAM
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
@@ -204,8 +205,8 @@ class Boomer(Daemon):
          except Exception, e:
             raise LMError(currargs='Failed to open {} for writing ({})'
                           .format(rawPotatoFname, str(e)))
-         rawPotatoes[prjScencode] = f
-      return chains, rawPotatoes
+         rawPotatoFiles[prjScencode] = f
+      return chains, rawPotatoFiles
 
    # .............................
    def _addRuleToMasterPotatoHead(self, mfchain, prefix='spud'):
@@ -332,16 +333,17 @@ boomer.initialize()
 spud = boomer.christopher.startWalken()
 if spud:
    boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
-   spudArf = spud.getArfFilename(prefix='spud')
-   boomer.spudArfFile.write('{}\n'.format(spudArf))
 
 for i in range(61):
-   spud = boomer.christopher.startWalken()
+   spud, potatoInputs = boomer.christopher.startWalken()
    if spud:
       boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
       spudArf = spud.getArfFilename(prefix='spud')
-      boomer.spudArfFile.write('{}\n'.format(spudArf))
-   
+      boomer.spudArfFiles.append(spudArf)
+      for prjscen, f in boomer.rawPotatoFiles.keys():
+         squid = spud.mfMetadata[MFChain.META_SQUID]
+         fname = potatoInputs[prjscen]
+         f.write('{}: {}\n'.format(squid, fname))
 
 
 boomer.christopher.stopWalken()

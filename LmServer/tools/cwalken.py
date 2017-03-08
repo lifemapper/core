@@ -324,6 +324,9 @@ class ChristopherWalken(LMObject):
    def startWalken(self):
       """
       @summary: Walks a list of Lifemapper objects for computation
+      @return: Single-species MFChain (spud), dictionary of 
+               scenarioCode: PAV filename for input into multi-species
+               MFChains (potatoInputs)
       """
       objs = []
       occ = self.weaponOfChoice.getOne()
