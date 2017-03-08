@@ -57,9 +57,9 @@ if __name__ == "__main__":
    squidDict = {}
    
    for label in tree.getLabels():
-      squid = scribe.getSquid(userId, label)
-      if squid is not None:
-         squidDict[label] = squid
+      sno = scribe.getTaxon(userId=userId, taxonName=label)
+      if sno is not None:
+         squidDict[label] = sno.squid
    
    tree.addSQUIDs(squidDict)
    
