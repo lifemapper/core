@@ -74,7 +74,8 @@ class Matrix(object):
       """
       # Try loading Matrix
       try:
-         obj = json.load(fn)
+         with open(fn) as inF:
+            obj = json.load(inF)
          return cls.loadFromJsonOrDictionary(obj)
       except:
          # Try loading numpy array
@@ -116,14 +117,14 @@ class Matrix(object):
          if not isinstance(mtx, Matrix):
             mtx = Matrix(mtx)
          # Make sure we reshape if necessary if adding new axis (stacking)
-         if len(mtx.data.shape) < axis + 1: # Add 1 since zero-based
+         if mtx.data.ndim < axis + 1: # Add 1 since zero-based
             newShape = list(mtx.data.shape) + [1]
-            mtx.data.reshape(newShape)
+            mtx.data = mtx.data.reshape(newShape)
             mtx.setHeaders([''], axis=axis)
          
          # TODO: Handle when there are no headers for an axis
          axisHeaders.append(mtx.getHeaders(axis=axis))
-         mtxObjs.extend(mtx.data)
+         mtxObjs.append(mtx.data)
          
       # Create a new data matrix
       newData = np.concatenate(mtxObjs, axis=axis)
