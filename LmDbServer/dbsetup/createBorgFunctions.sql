@@ -445,7 +445,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findTaxon(tsourceid int,
-                                            tkey int)
+                                              tkey int)
 RETURNS lm_v3.Taxon AS
 $$
 DECLARE
@@ -453,6 +453,27 @@ DECLARE
 BEGIN
    SELECT * INTO rec FROM lm_v3.Taxon
       WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getTaxon(tsourceid int,
+                                             tkey int, 
+                                             usr varchar,
+                                             tname varchar)
+RETURNS lm_v3.Taxon AS
+$$
+DECLARE
+   rec lm_v3.Taxon%ROWTYPE;
+BEGIN
+   IF tsourceid IS NOT NULL AND tkey IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.Taxon
+          WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.Taxon
+          WHERE userid = usr and sciname = tname;
+   END IF;   
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;

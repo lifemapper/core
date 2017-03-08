@@ -921,6 +921,13 @@ class Borg(DbPostgresql):
       
       return scientificname
 
+# ...............................................
+   def getTaxon(self, taxonSourceId, taxonKey, userId, taxonName):
+      row, idxs = self.executeSelectOneFunction('lm_getTaxon', 
+                                    taxonSourceId, taxonKey, userId, taxonName)
+      scientificname = self._createScientificName(row, idxs)
+      
+      return scientificname
 
 # .............................................................................
    def getScenario(self, scenid=None, code=None, usrid=None, fillLayers=False):

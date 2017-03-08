@@ -229,6 +229,12 @@ class BorgScribe(LMObject):
       return sciname
 
 # ...............................................
+   def getTaxon(self, taxonSourceId=None, taxonKey=None,
+                userId=None, taxonName=None):
+      sciname = self._borg.getTaxon(taxonSourceId, taxonKey, userId, taxonName)
+      return sciname
+
+# ...............................................
    def getScenario(self, idOrCode, user=None, fillLayers=False):
       """
       @summary: Get and fill a scenario from its user and code or database id.   
