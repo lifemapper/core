@@ -255,7 +255,7 @@ class ProcessObject(LMObject):
                                                    ProcessType.UPDATE_OBJECT))
       successFname = successFileBasename + '.success'
       # Assemble command - configured python and script
-      args = [os.getenv('PYTHON'), scriptFname]
+      args = ['LOCAL', os.getenv('PYTHON'), scriptFname]
       # options
       args.extend(opts)
       # positional arguments
