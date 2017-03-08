@@ -224,21 +224,20 @@ class ProcessObject(LMObject):
       self._status = status
       self._statusmodtime = modTime
 
-# ...............................................
-   def _getUpdateSuccessFilename(self):
-      """
-      @summary: Return temporary filename to indicate completion of update 
-                command.
-      """
-      prefix = self.processType
-      relFname = 'potato_{}.success'.format(self.objId)
-      return relFname
+# # ...............................................
+#    def _getUpdateSuccessFilename(self):
+#       """
+#       @summary: Return temporary filename to indicate completion of update 
+#                 command.
+#       """
+#       prefix = self.processType
+#       relFname = 'potato_{}.success'.format(self.objId)
+#       return relFname
 
    # ...............................................
    def getUpdateRule(self, status, successFileBasename, filesToCheck):
       """
-      @summary: Return temporary filename to indicate completion of spud 
-                (single-species) MF.
+      @summary: Creates a rule to test output files and update the database
       @param status: Output value or file containing value of object process
              results.  Currently unused. 
       @param successFileBasename: basename of file which will be written to  

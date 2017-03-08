@@ -639,4 +639,10 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # TODO: Address this if we don't write to final location
          rules.append(MfRule(cmd, [outFile], dependencies=deps))
          
+         # Rule for Test/Update 
+         status = None
+         basename = os.path.basename(os.path.splitext(outFile)[0])
+         uRule = self.getUpdateRule(status, basename, [outFile])
+         rules.append(uRule)
+         
       return rules

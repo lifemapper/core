@@ -821,103 +821,75 @@ class SDMProjection(_ProjectionType, Raster):
       rules = []
       
       if JobStatus.waiting(self.status):
-         # ................................
-         # Model dependency
-         modelRules = self._computeMyModel()
-         rules.extend(modelRules)
-         modelFname = self.getModelFilename()
-
-         prjName = "prj{0}".format(self.getId())
-         layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
-         workDir = prjName
-         statusFn = os.path.join(workDir, "prj{0}.status".format(self.getId()))
-         packageFn = self.getProjPackageFilename()
-
-         prjOpts = {
-            '-w' : workDir,
-            '-p' : packageFn,
-            '-s' : statusFn
-         }
-         
          outputRaster = self.getDLocation()
          outTiff = outputRaster
+         # Used for both base filenames and relative work directory
+         basename = os.path.basename(os.path.splitext(outputRaster)[0])
+
+         # Rule for Model dependency
+         modelRules = self._computeMyModel()
+         rules.extend(modelRules)
+
+         # Rule for Model dependency
+         statusFname = os.path.join(basename, "{}.status".format(basename))
+         packageFname = self.getProjPackageFilename()
+         # options for both GDALTranslate and SDMProject
+         prjOpts = {'-w' : basename,
+                    '-p' : packageFname,
+                    '-s' : statusFname}
          
+         # Rule for GDALTranslate from ASCII to TIFF for ATT_MAXENT only
          if self.processType == ProcessType.ATT_PROJECT:
             paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
             # TODO: make sure this works consistently for quoting JSON
             prjOpts['-algo'] = paramsJsonFname
-            outputRaster = os.path.join(workDir, "output.asc")
+            # override output name with temp ascii filename for ATT_MAXENT
+            outputRaster = os.path.join(basename, "output.asc")
             
-            gdalTranslateCmd = os.path.join(BIN_PATH, "gdal_translate")
-            
+            convertCmdArgs = [os.path.join(BIN_PATH, "gdal_translate")]
             # If archive or default, scale
             if self.getUserId() in [PUBLIC_USER, DEFAULT_POST_USER]:
-               convertCmdArgs = [
-                  gdalTranslateCmd,
-                  "-scale 0 1 {0} {1}".format(SCALE_PROJECTION_MINIMUM,
+               convertCmdArgs.extend(["-scale 0 1 {} {}"
+                                      .format(SCALE_PROJECTION_MINIMUM,
                                               SCALE_PROJECTION_MAXIMUM),
-                  "-ot Int16",
-                  "-of GTiff",
-                  outputRaster,
-                  outTiff
-               ]
+                                      "-ot Int16", 
+                                      "-of GTiff"])
             # If Charlie, multiply
+            # TODO: put these scaling params in SCALE_PROJECTION_MINIMUM and MAX
             elif self.getUserId() == 'cgwillis':
-               convertCmdArgs = [
-                  gdalTranslateCmd,
-                  "-scale 0 1 0 10000",
-                  "-ot Int16",
-                  "-of GTiff",
-                  outputRaster,
-                  outTiff
-               ]
+               convertCmdArgs.extend(["-scale 0 1 0 10000",
+                                      "-ot Int16",
+                                      "-of GTiff"])
             # Else, just convert
             else:
-               convertCmdArgs = [
-                  gdalTranslateCmd,
-                  "-of GTiff",
-                  outputRaster,
-                  outTiff
-               ]
-            
+               convertCmdArgs.extend(["-of GTiff"])
+            convertCmdArgs.extend([outputRaster, outTiff])
             convertCmd = ' '.join(convertCmdArgs)
             rules.append(MfRule(convertCmd, [outTiff], 
                                 dependencies=[outputRaster]))
          
+         # Rule for SDMProject process 
          prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in prjOpts.iteritems()])
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
-
+         modelFname = self.getModelFilename()
+         layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
          prjCmdArgs = [os.getenv('PYTHON'),
                        scriptFname,
                        prjArgs,
                        str(self.processType),
-                       prjName,
+                       basename,
                        modelFname,
                        layersJsonFname,
-                       outputRaster
-                       ]
+                       outputRaster]
          prjCmd = ' '.join(prjCmdArgs)
-         rules.append(MfRule(prjCmd, [outputRaster, statusFn, packageFn], 
+         rules.append(MfRule(prjCmd, [outputRaster, statusFname, packageFname], 
                              dependencies=[modelFname]))
+
+         # Rule for Test/Update 
+         status = None
+         uRule = self.getUpdateRule(status, basename, [outTiff, packageFname])
+         rules.append(uRule)
          
-         # Need command to update database
-         updateSuccessFn = os.path.join(workDir, "{0}{0}.success".format(
-                                               self.processType, self.getId()))
-         updateScriptFname = os.path.join(APP_PATH, 
-                                 ProcessType.getTool(ProcessType.UPDATE_OBJECT))
-         updateDbArgs = ["LOCAL", # Run on server side for DB
-                         os.getenv('PYTHON'),
-                         updateScriptFname,
-                         "-f {}".format(statusFn),
-                         str(self.processType),
-                         str(self.getId()),
-                         updateSuccessFn,
-                         outTiff,
-                         packageFn
-                         ]
-         updateCmd = ' '.join(updateDbArgs)
-         rules.append(MfRule(updateCmd, [updateSuccessFn],
-                             dependencies=[outTiff, packageFn]))
       return rules
    
