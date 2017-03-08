@@ -30,7 +30,6 @@
           matrix indices in it
 """
 import argparse
-import json
 
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.phylo import PhyloEncoding
@@ -42,9 +41,9 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(
       description="This script encodes a Phylogenetic tree with a PAM") 
 
-   parser.add_argument("-m", "--matrixIndicesFn", dest="mtxIdxFn", type=str,
-      help="""File location of a JSON document where the keys are tip labels 
-      and values are matrix indices for this PAM""")
+   parser.add_argument("-m", "--mashedPotato", dest="mashedPotato", type=str,
+      help="""File location of a mashed potato of SQUID : pav file lines, used
+      to determine matrix indices""")
    parser.add_argument("treeFn", type=str, 
                        help="The location of the Phylogenetic tree")
    parser.add_argument("pamFn", type=str, 
@@ -55,9 +54,25 @@ if __name__ == "__main__":
    args = parser.parse_args()
    
    tree = LmTree.fromFile(args.treeFn)
-   if args.mtxIdxFn:
-      pamMetadata = json.load(args.mtxIdxFn)
-      tree.addMatrixIndices(pamMetadata)
+   
+   # Check ultrametric
+   if not tree.isUltrametric():
+      raise Exception, "Tree must be ultrametric for encoding"
+
+   # If we should insert matrix indices
+   if args.mashedPotato is not None:
+      idx = 0
+      squidDict = {}
+      with open(args.mashedPotato, 'r') as mashIn:
+         for line in mashIn:
+            squid, pav = line.split(':')
+            squidDict[squid.strip()] = idx
+            idx += 1
+      tree.addSquidMatrixIndices(squidDict)
+   
+   # Prune tree
+   tree.pruneTipsWithoutMatrixIndices()
+   
    pam = Matrix.load(args.pamFn)
    
    encoder = PhyloEncoding(tree, pam)
