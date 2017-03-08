@@ -199,6 +199,7 @@ class Boomer(Daemon):
       outputFname = mfchain.getDLocation()
       cmdArgs = ['LOCAL makeflow',
                  '-T wq', 
+                 '-N lifemapper-{}b'.format(mfchain.getId()),
                  '-C {}:9097'.format(PUBLIC_FQDN),
                  '-a {}'.format(outputFname)]
       mfCmd = ' '.join(cmdArgs)
