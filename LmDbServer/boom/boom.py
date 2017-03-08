@@ -164,7 +164,8 @@ class Boomer(Daemon):
          self.rawPotatoFiles[scencode].close()
 #          potato.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(potato)
-         self._addRuleToMasterPotatoHead(potato, prefix='potato')
+         self._addRuleToMasterPotatoHead(potato, dependencies=self.spudArfFnames, 
+                                         prefix='potato')
       # Write the masterPotatoHead MFChain
       self.masterPotato.write()
       self.masterPotato.updateStatus(JobStatus.INITIALIZE)
@@ -209,7 +210,7 @@ class Boomer(Daemon):
       return chains, rawPotatoFiles
 
    # .............................
-   def _addRuleToMasterPotatoHead(self, mfchain, prefix='spud'):
+   def _addRuleToMasterPotatoHead(self, mfchain, dependencies=[], prefix='spud'):
       """
       @summary: Create a Spud or Potato rule for the MasterPotatoHead MF 
       """
@@ -225,7 +226,7 @@ class Boomer(Daemon):
       cmd = '{} ; {}'.format(mfCmd, arfCmd)
       # Create a rule from the MF and Arf file creation
       # TODO: Replace these dependencies with Delay rule
-      rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
+      rule = MfRule(cmd, [targetFname], dependencies=dependencies)
       self.masterPotato.addCommands([rule])
 
    # .............................
@@ -237,7 +238,6 @@ class Boomer(Daemon):
       @TODO: Replace adding all dependencies to the Potato makeflow command
              with this Delay rule
       """
-      self.spudArfFnames
       targetFname = self.masterPotato.getArfFilename(prefix='goPotato')
       cmdArgs = ['LOCAL checkArfFiles'].extend(self.spudArfFnames)
       mfCmd = ' '.join(cmdArgs)
