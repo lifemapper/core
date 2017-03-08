@@ -62,12 +62,14 @@ class Boomer(Daemon):
       self._scribe = BorgScribe(self.log)
       # iterator tool for species
       self.christopher = None
-      # dictionary of MFChains for each potato MF, key = projScenarioCode
+      # Dictionary of MFChains for each projScenarioCode
       self.potatoes = None
+      # Dictionary of PAV input filenames for each projScenarioCode 
+      self.rawPotatoInputs = None
       # MFChain for masterPotatoHead MF
       self.masterPotato = None
       # open file for writing Spud Arf filenames for Potato triage
-      self.spudArfFile = None
+      self.spudArfFnames = None
       # Stop indicator
       self.keepWalken = False
 
@@ -98,11 +100,10 @@ class Boomer(Daemon):
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       else:
-         self.potatoes = self._createPotatoMakeflows()
+         (self.potatoes, 
+          self.rawPotatoInputs) = self._createPotatoMakeflows()
          self.masterPotato = self._createMasterMakeflow()
-         # All spuds are written to Potato
-         potatoFname = self.masterPotato.getTriageFilename(prefix='potato')
-         self.spudArfFile = open(potatoFname, 'w')
+         self.spudArfFnames = []
          
    # .............................
    def run(self):
@@ -115,14 +116,19 @@ class Boomer(Daemon):
             try:
                self.log.info('Next species ...')
                # Get a Spud MFChain (single-species MF)
-               spud = self.christopher.startWalken()
+               spud, potatoInputs = self.christopher.startWalken()
                self.keepWalken = not self.christopher.complete
                if spud:
                   # Add MF rule for Spud execution to Master MF
                   self._addRuleToMasterPotatoHead(spud, prefix='spud')
-                  # Write species Spud target as input to potato triage
+                  # Gather species ARF dependency to delay start of multi-species MF
                   spudArf = spud.getArfFilename(prefix='spud')
-                  self.spudArfFile.write('{}\n'.format(spudArf))               
+                  self.spudArfFiles.append(spudArf)
+                  # Add PAV outputs to raw potato files for triabe input
+                  for prjscen, f in self.rawPotatoInputs.keys():
+                     squid = spud.mfMetadata[MFChain.META_SQUID]
+                     fname = potatoInputs[prjscen]
+                     f.write('{}: {}\n'.format(squid, fname))
             except:
                self.log.info('Saving next start {} ...'
                              .format(self.christopher.nextStart))
@@ -142,8 +148,6 @@ class Boomer(Daemon):
    def onShutdown(self):
       self.keepWalken = False
       self.log.debug('Shutdown!')
-      triageIn = self.spudArfFile.name
-      triageOut = self.masterPotato.getTriageFilename(prefix='mashed')
       # Close the spud Arf file (list of spud MFChain targets)
       self.spudArfFile.close()
       # Stop Walken the archive
@@ -151,6 +155,9 @@ class Boomer(Daemon):
       # Write each potato MFChain, then add the MFRule to execute it to the Master
       for prjScencode, potato in self.potatoes.iteritems():
          mtx = self.christopher.globalPAMs[prjScencode]
+         potatoMF = self.potatoes[prjScencode]
+         triageIn = self.rawPotatoInputs[prjScencode].name
+         triageOut = potatoMF.getTriageFilename(prefix='mashedPotato')
          rules = mtx.computeMe(triageIn, triageOut)
          potato.addCommands(rules)
          potato.write()
@@ -179,7 +186,9 @@ class Boomer(Daemon):
 # ...............................................
    def _createPotatoMakeflows(self):
       chains = {}
+      rawPotatoes = {}
       for prjScencode in self.christopher.globalPAMs.keys():
+         # Create MFChain for this GPAM
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
                  MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
          .format(self.userId, self.archiveName, prjScencode)}
@@ -188,7 +197,15 @@ class Boomer(Daemon):
                           statusModTime=dt.gmt().mjd)
          mfChain = self._scribe.insertMFChain(newMFC)
          chains[prjScencode] = mfChain
-      return chains
+         # Get rawPotato input file from MFChain
+         rawPotatoFname = mfChain.getTriageFilename(prefix='rawPotato')
+         try:
+            f = open(rawPotatoFname, 'w')
+         except Exception, e:
+            raise LMError(currargs='Failed to open {} for writing ({})'
+                          .format(rawPotatoFname, str(e)))
+         rawPotatoes[prjScencode] = f
+      return chains, rawPotatoes
 
    # .............................
    def _addRuleToMasterPotatoHead(self, mfchain, prefix='spud'):
@@ -206,7 +223,27 @@ class Boomer(Daemon):
       arfCmd = 'touch {}'.format(targetFname)
       cmd = '{} ; {}'.format(mfCmd, arfCmd)
       # Create a rule from the MF and Arf file creation
-      rule = MfRule(cmd, [targetFname], dependencies=[])
+      # TODO: Replace these dependencies with Delay rule
+      rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
+      self.masterPotato.addCommands([rule])
+
+   # .............................
+   def _addDelayRuleToMasterPotatoHead(self, mfchain):
+      """
+      @summary: Create an intermediate rule for the MasterPotatoHead MF to check
+                for the existence of all single-species dependencies (ARF files)  
+                of the multi-species makeflows.
+      @TODO: Replace adding all dependencies to the Potato makeflow command
+             with this Delay rule
+      """
+      self.spudArfFnames
+      targetFname = self.masterPotato.getArfFilename(prefix='goPotato')
+      cmdArgs = ['LOCAL checkArfFiles'].extend(self.spudArfFnames)
+      mfCmd = ' '.join(cmdArgs)
+      arfCmd = 'touch {}'.format(targetFname)
+      cmd = '{} ; {}'.format(mfCmd, arfCmd)
+      # Create a rule from the MF and Arf file creation
+      rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       self.masterPotato.addCommands([rule])
 
 # .............................................................................
