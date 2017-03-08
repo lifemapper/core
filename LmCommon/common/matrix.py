@@ -74,7 +74,8 @@ class Matrix(object):
       """
       # Try loading Matrix
       try:
-         obj = json.load(fn)
+         with open(fn) as inF:
+            obj = json.load(inF)
          return cls.loadFromJsonOrDictionary(obj)
       except:
          # Try loading numpy array
