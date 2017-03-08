@@ -327,14 +327,13 @@ class ChristopherWalken(LMObject):
       """
       objs = []
       occ = self.weaponOfChoice.getOne()
-      try:
-         speciesName = occ.displayName
-      except:
-         speciesName = None
       objs.append(occ)
 
       currtime = dt.gmt().mjd
+      potatoInputs = {}
       # Sweep over input options
+      # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
+      #       Change this for BOOM jobs!! 
       for alg in self.algs:
          for prjscen in self.prjScens:
             # Add to Spud - SDM Project and MatrixColumn
@@ -343,10 +342,11 @@ class ChristopherWalken(LMObject):
             mtx = self.globalPAMs[prjscen.code]
             mtxcol = self._createOrResetIntersect(prj, mtx, currtime)
             objs.append(mtxcol)
+            potatoInputs[prjscen] = mtxcol.getTargetFilename()
 
       spudObjs = [o for o in objs if o is not None]
-      spud = self._createSpudMakeflow(spudObjs, speciesName)
-      return spud
+      spud = self._createSpudMakeflow(spudObjs)
+      return spud, potatoInputs
       
    # ...............................
    def stopWalken(self):
@@ -427,25 +427,36 @@ class ChristopherWalken(LMObject):
       return prj
 
 # ...............................................
-   def _createSpudMakeflow(self, objs, speciesName):
+   def _createSpudMakeflow(self, objs):
       updatedMFChain = None
+      rules = []
       if objs:
-         meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
-                 MFChain.META_DESC: 'Spud for User {}, Archive {}, Species {}'
-         .format(self.userId, self.archiveName, speciesName)}
-         newMFC = MFChain(self.userId, priority=self.priority, 
-                           metadata=meta, status=JobStatus.GENERAL, 
-                           statusModTime=dt.gmt().mjd)
-         updatedMFChain = self._scribe.insertMFChain(newMFC)
-
          for o in objs:
+            # Create MFChain with metadata
+            if updatedMFChain is None:
+               try:
+                  # Present on OccurrenceLayer, SDMProjection, MatrixColumn
+                  squid = o.squid
+                  speciesName = o.displayName
+                  break
+               except:
+                  pass
+               else:
+                  meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+                          MFChain.META_DESC: 'Spud for User {}, Archive {}, Species {}'
+                          .format(self.userId, self.archiveName, speciesName),
+                          MFChain.META_SQUID: squid}
+                  newMFC = MFChain(self.userId, priority=self.priority, 
+                                    metadata=meta, status=JobStatus.GENERAL, 
+                                    statusModTime=dt.gmt().mjd)
+                  updatedMFChain = self._scribe.insertMFChain(newMFC)
+            # Get rules
             try:
-               rules = o.computeMe()
+               rules.extend(o.computeMe())
             except Exception, e:
                self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
                                                                         str(e)))
-            else:
-               updatedMFChain.addCommands(rules)
+         updatedMFChain.addCommands(rules)
          updatedMFChain.write()
 #          updatedMFChain.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(updatedMFChain)

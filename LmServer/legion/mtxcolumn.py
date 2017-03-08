@@ -104,6 +104,18 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
       return self.objId
    
 # ...............................................
+   @property
+   def displayName(self):
+      try:
+         dname = self.layer.displayName
+      except:
+         try:
+            dname = self.layer.name
+         except:
+            dname = self.squid
+      return dname
+
+# ...............................................
    def dumpIntersectParams(self):
       return super(MatrixColumn, self)._dumpMetadata(self.intersectParams)
  
