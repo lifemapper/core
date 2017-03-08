@@ -54,7 +54,8 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import (JobStatus, OutputFormat, MatrixType)
+from LmCommon.common.lmconstants import (JobStatus, OutputFormat, MatrixType,
+   LMFormat)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
                                             SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG)
 
@@ -336,9 +337,11 @@ class LMFileType:
    BIOGEO_HYPOTHESES = 322
    PADDED_PAM = 323
    MCPA_OUTPUTS = 324
+   TREE = 325
 
    USER_LAYER = 510
    USER_SHAPEGRID = 511
+   # TODO: delete?
    USER_ATTRIBUTE_MATRIX = 520
    USER_TREE = 530
    MF_DOCUMENT = 540
@@ -365,7 +368,7 @@ class LMFileType:
                    LMFileType.ATTR_MATRIX, 
                    LMFileType.PAM, LMFileType.GRIM, 
                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
-                   LMFileType.BIOGEO_HYPOTHESES]:
+                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.TREE]:
          return True
       return False
 
@@ -388,6 +391,13 @@ class LMFileType:
    def isMap(rtype):
       if rtype in [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 
                    LMFileType.SDM_MAP]:
+         return True
+      return False
+
+   @staticmethod
+   def isMatrix(rtype):
+      if rtype in [LMFileType.PAM, LMFileType.GRIM, LMFileType.BIOGEO_HYPOTHESES, 
+                   LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS]:
          return True
       return False
 
@@ -438,6 +448,8 @@ class LMFileType:
          return LMFileType.GRIM
       elif mtype == MatrixType.BIOGEO_HYPOTHESES:
          return LMFileType.BIOGEO_HYPOTHESES
+      elif mtype == MatrixType.TREE:
+         return LMFileType.TREE
       elif mtype == MatrixType.PADDED_PAM:
          return LMFileType.PADDED_PAM
       elif mtype == MatrixType.MCPA_OUTPUTS:
@@ -454,6 +466,8 @@ PRJ_PREFIX = 'prj'
 SPLOTCH_PREFIX = 'splotch'
 PAMSUM_PREFIX = 'pamsum'
 
+(LMFileType.PAM, LMFileType.GRIM, LMFileType.BIOGEO_HYPOTHESES, 
+                   LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS)
 class FileFix:
    PREFIX = {LMFileType.OTHER_MAP: MapPrefix.USER,
              LMFileType.TMP_JSON: None,
@@ -486,43 +500,45 @@ class FileFix:
              LMFileType.USER_TREE: 'tree',
              LMFileType.MF_DOCUMENT: 'mf',
              LMFileType.BIOGEO_HYPOTHESES: 'biogeo',
+             LMFileType.TREE: 'tree',
              LMFileType.PADDED_PAM: 'ppam',
              LMFileType.MCPA_OUTPUTS: 'mcpa'
 }
    # Postfix
-   EXTENSION = {LMFileType.OTHER_MAP: OutputFormat.MAP,
-                LMFileType.TMP_JSON: OutputFormat.JSON,
-                LMFileType.ENVIRONMENTAL_LAYER: OutputFormat.GTIFF,
-                LMFileType.SCENARIO_MAP: OutputFormat.MAP,
-                LMFileType.SDM_MAP: OutputFormat.MAP,
-                LMFileType.SDM_MAKEFLOW_FILE: OutputFormat.MAKEFLOW,
-                LMFileType.OCCURRENCE_FILE: OutputFormat.SHAPE,
-                LMFileType.OCCURRENCE_RAW_FILE: OutputFormat.CSV,
-                LMFileType.OCCURRENCE_LARGE_FILE: OutputFormat.SHAPE,
-                LMFileType.MODEL_REQUEST: OutputFormat.XML,
-                LMFileType.MODEL_STATS: OutputFormat.ZIP,
-                LMFileType.MODEL_RESULT: OutputFormat.XML,
-                LMFileType.MODEL_ATT_RESULT: OutputFormat.TXT,
-                LMFileType.PROJECTION_REQUEST: OutputFormat.XML,
-                LMFileType.PROJECTION_PACKAGE: OutputFormat.ZIP,
-                LMFileType.PROJECTION_LAYER: OutputFormat.GTIFF,
+   EXTENSION = {LMFileType.OTHER_MAP: LMFormat.MAP.ext,
+                LMFileType.TMP_JSON: LMFormat.JSON.ext,
+                LMFileType.ENVIRONMENTAL_LAYER: LMFormat.GTIFF.ext,
+                LMFileType.SCENARIO_MAP: LMFormat.MAP.ext,
+                LMFileType.SDM_MAP: LMFormat.MAP.ext,
+                LMFileType.SDM_MAKEFLOW_FILE: LMFormat.MAKEFLOW.ext,
+                LMFileType.OCCURRENCE_FILE: LMFormat.SHAPE.ext,
+                LMFileType.OCCURRENCE_RAW_FILE: LMFormat.CSV.ext,
+                LMFileType.OCCURRENCE_LARGE_FILE: LMFormat.SHAPE.ext,
+                LMFileType.MODEL_REQUEST: LMFormat.XML.ext,
+                LMFileType.MODEL_STATS: LMFormat.ZIP.ext,
+                LMFileType.MODEL_RESULT: LMFormat.XML.ext,
+                LMFileType.MODEL_ATT_RESULT: LMFormat.TXT.ext,
+                LMFileType.PROJECTION_REQUEST: LMFormat.XML.ext,
+                LMFileType.PROJECTION_PACKAGE: LMFormat.ZIP.ext,
+                LMFileType.PROJECTION_LAYER: LMFormat.GTIFF.ext,
                 
-                LMFileType.SHAPEGRID:  OutputFormat.SHAPE,
-                LMFileType.ATTR_MATRIX: OutputFormat.NUMPY,
-                LMFileType.PAM: OutputFormat.NUMPY,
-                LMFileType.GRIM: OutputFormat.NUMPY,
-                LMFileType.SUM_CALCS: OutputFormat.PICKLE,
-                LMFileType.SUM_SHAPE: OutputFormat.SHAPE,
+                LMFileType.SHAPEGRID:  LMFormat.SHAPE.ext,
+                LMFileType.ATTR_MATRIX: LMFormat.NUMPY.ext,
+                LMFileType.PAM: LMFormat.JSON.ext,
+                LMFileType.GRIM: LMFormat.JSON.ext,
+                LMFileType.SUM_CALCS: LMFormat.PICKLE.ext,
+                LMFileType.SUM_SHAPE: LMFormat.SHAPE.ext,
 
                 LMFileType.UNSPECIFIED_RAD: None,
                 LMFileType.USER_LAYER: None,
-                LMFileType.USER_SHAPEGRID:  OutputFormat.SHAPE,
-                LMFileType.USER_ATTRIBUTE_MATRIX: OutputFormat.NUMPY,
-                LMFileType.USER_TREE: OutputFormat.JSON,
-                LMFileType.MF_DOCUMENT: OutputFormat.MAKEFLOW,
-                LMFileType.BIOGEO_HYPOTHESES: OutputFormat.NUMPY,
-                LMFileType.PADDED_PAM: OutputFormat.NUMPY,
-                LMFileType.MCPA_OUTPUTS: OutputFormat.NUMPY
+                LMFileType.USER_SHAPEGRID:  LMFormat.SHAPE.ext,
+                LMFileType.USER_ATTRIBUTE_MATRIX: LMFormat.NUMPY.ext,
+                LMFileType.USER_TREE: LMFormat.JSON.ext,
+                LMFileType.MF_DOCUMENT: LMFormat.MAKEFLOW.ext,
+                LMFileType.BIOGEO_HYPOTHESES: LMFormat.JSON.ext,
+                LMFileType.TREE: LMFormat.JSON.ext,
+                LMFileType.PADDED_PAM: LMFormat.JSON.ext,
+                LMFileType.MCPA_OUTPUTS: LMFormat.JSON.ext
    }
    
 NAME_SEPARATOR = '_'
