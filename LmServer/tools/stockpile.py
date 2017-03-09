@@ -215,12 +215,20 @@ from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.tools.stockpile import *
 
+status = 999
+
 ptype = ProcessType.USER_TAXA_OCCURRENCE
 objId = 504
-status = 200
 successFname = 'pt_504.success'
 outputFnameList = ['/share/lm/data/archive/ryan/000/000/000/504/pt_504.shp']
 
+
+ptype = ProcessType.OM_PROJECT
+objId = 3523
+successFname = 'prj_3658.success'
+outputFnameList = ['/share/lm/data/archive/ryan/4326/Layers/prj_3658.tif', 
+                   '/share/lm/data/archive/ryan/000/000/000/504/prj_3658.zip']
+/opt/lifemapper/LmServer/tools/stockpile.py 220 3523 
 stp = Stockpile()
 
 scribe = BorgScribe(ConsoleLogger())

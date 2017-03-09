@@ -183,6 +183,7 @@ class SDMProjection(_ProjectionType, Raster):
    that openModeller or ATT Maxent needs to model and project SDM inputs.
    @todo: make Models and Projections consistent for data member access 
           between public/private members, properties, get/set/update
+   @note: Uses layerid for filename, layername construction
    """
 # .............................................................................
 # Constructor
@@ -265,10 +266,8 @@ class SDMProjection(_ProjectionType, Raster):
       super(SDMProjection, self).setId(lyrid)
       if lyrid is not None:
          self.name = self._earlJr.createLayername(projId=lyrid)
-         if self._dlocation is None:
-            filename = self.createLocalDLocation()
-            if os.path.exists(filename):
-               self._dlocation = filename
+         self.clearDLocation()
+         self.setDLocation()
          self.title = '%s Projection %s' % (self.speciesName, str(lyrid))
          self._setMapPrefix()
          
