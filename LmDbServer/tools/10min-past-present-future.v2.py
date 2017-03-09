@@ -39,9 +39,14 @@ OBSERVED_PREDICTED_META = {
       # Short title for this scenario
       'title': 'Worldclim1.4, Soil, SpatialDistance', 
       # Author of these data
-      'author': ' Hijmans, R.J., S.E. Cameron, J.L. Parra, P.G. Jones and A. Jarvis, 2005. Very high resolution interpolated climate surfaces for global land areas. International Journal of Climatology 25: 1965-1978',
+      'author': 'Hijmans, R.J., S.E. Cameron, J.L. Parra, P.G. Jones and ' + 
+                'A. Jarvis, 2005. Very high resolution interpolated climate ' + 
+                'surfaces for global land areas. International Journal of ' + 
+                'Climatology 25: 1965-1978',
       # Extended description of the data  
-      'description': 'WorldClim 1.4  bioclimatic variables computed from interpolated observation data collected between 1950 and 2000 (http://www.worldclim.org/), 5 min resolution',
+      'description': 'WorldClim 1.4  bioclimatic variables computed from ' + 
+                     'interpolated observation data collected between 1950 ' + 
+                     'and 2000 (http://www.worldclim.org/), 5 min resolution',
    },
    # Past Report
    'CMIP5': {'name': 'Coupled Model Intercomparison Project Phase 5',              
@@ -51,7 +56,8 @@ OBSERVED_PREDICTED_META = {
              'models': {'CCSM4':
                         {'name': 'Community Climate System Model, 4.0',
                          'shortcode': 'cc',
-                         'author': 'National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/'
+                         'author': 'National Center for Atmospheric Research ' + 
+                                   '(NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/'
                          }},
              'alternatePredictions': None },
    # Future Report
@@ -67,13 +73,32 @@ OBSERVED_PREDICTED_META = {
        'HadGEM2-ES': {'name': 'Hadley Centre Global Environment Model v2 - Earth System',
                       # Short code for GCM model, for filenames 
                       'shortcode': 'he', 
-                      'author': 'Collins, W.J., N. Bellouin, M. Doutriaux-Boucher, N. Gedney, T. Hinton, C. D. Jones, S. Liddicoat, G. Martin, F. OConnor, J. Rae, C. Senior, I. Totterdell, S. Woodward, T. Reichler, J. Kim, 2008: Evaluation of the HadGEM2 model. Met Office Hadley Centre Technical Note no. HCTN 74, available from Met Office, FitzRoy Road, Exeter EX1 3PB http://www.metoffice.gov.uk/publications/HCTN/index.html'
+                      'author': 'Collins, W.J., N. Bellouin, M. ' + 
+                     'Doutriaux-Boucher, N. Gedney, T. Hinton, C. D. Jones, ' + 
+                     'S. Liddicoat, G. Martin, F. OConnor, J. Rae, C. Senior, ' + 
+                     'I. Totterdell, S. Woodward, T. Reichler, J. Kim, 2008: ' + 
+                     'Evaluation of the HadGEM2 model. Met Office Hadley ' + 
+                     'Centre Technical Note no. HCTN 74, available from Met ' + 
+                     'Office, FitzRoy Road, Exeter EX1 3PB ' + 
+                     'http://www.metoffice.gov.uk/publications/HCTN/index.html'
                       },
        # AKA gs
        'GISS-E2-R': {'name': 'NASA GISS GCM ModelE',
                      # Short code for GCM model, for filenames 
                      'shortcode': 'gs', 
-                     'author': 'Nazarenko, L., G.A. Schmidt, R.L. Miller, N. Tausnev, M. Kelley, R. Ruedy, G.L. Russell, I. Aleinov, M. Bauer, S. Bauer, R. Bleck, V. Canuto, Y. Cheng, T.L. Clune, A.D. Del Genio, G. Faluvegi, J.E. Hansen, R.J. Healy, N.Y. Kiang, D. Koch, A.A. Lacis, A.N. LeGrande, J. Lerner, K.K. Lo, S. Menon, V. Oinas, J.P. Perlwitz, M.J. Puma, D. Rind, A. Romanou, M. Sato, D.T. Shindell, S. Sun, K. Tsigaridis, N. Unger, A. Voulgarakis, M.-S. Yao, and J. Zhang, 2015: Future climate change under RCP emission scenarios with GISS ModelE2. J. Adv. Model. Earth Syst., early on-line, doi:10.1002/2014MS000403, http://data.giss.nasa.gov/modelE/ar5/'
+                     'author': 'Nazarenko, L., G.A. Schmidt, R.L. Miller, ' + 
+                     'N. Tausnev, M. Kelley, R. Ruedy, G.L. Russell, ' + 
+                     'I. Aleinov, M. Bauer, S. Bauer, R. Bleck, V. Canuto, ' + 
+                     'Y. Cheng, T.L. Clune, A.D. Del Genio, G. Faluvegi, ' + 
+                     'J.E. Hansen, R.J. Healy, N.Y. Kiang, D. Koch, ' + 
+                     'A.A. Lacis, A.N. LeGrande, J. Lerner, K.K. Lo, ' + 
+                     'S. Menon, V. Oinas, J.P. Perlwitz, M.J. Puma, D. Rind, ' + 
+                     'A. Romanou, M. Sato, D.T. Shindell, S. Sun, ' + 
+                     'K. Tsigaridis, N. Unger, A. Voulgarakis, M.-S. Yao, ' + 
+                     'and J. Zhang, 2015: Future climate change under RCP ' + 
+                     'emission scenarios with GISS ModelE2. J. Adv. Model. ' + 
+                     'Earth Syst., early on-line, doi:10.1002/2014MS000403, ' + 
+                     'http://data.giss.nasa.gov/modelE/ar5/'
                      },
        # AKA ac
        'ACCESS1-0': {'name': 'ACCESS1-0 CSIRO, Commonwealth Scientific and Industrial Research Organisation, Australia',

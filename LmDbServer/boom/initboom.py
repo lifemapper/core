@@ -122,13 +122,13 @@ def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbo
    return newshp
    
 # ...............................................
-def addArchive(scribe, predScens, gridname, configFname, archiveName, cellsides, cellsize, 
-               mapunits, epsg, bbox, usr):
+def addArchive(scribe, predScens, gridname, configFname, archiveName, 
+               cellsides, cellsize, mapunits, epsg, gridbbox, usr):
    """
    @summary: Create a Shapegrid, PAM, and Gridset for this archive's Global PAM
    """
    shp = _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, 
-                           bbox, usr)
+                           gridbbox, usr)
    # "BOOM" Archive
    meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
            ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
@@ -324,7 +324,11 @@ def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers
    @summary Assemble predicted future scenarios defined by IPCC report
    """
    predScenarios = {}
-   predScens = pkgMeta['predicted']
+   try:
+      predScens = pkgMeta['predicted']
+   except:
+      return predScenarios
+   
    for predRpt in predScens.keys():
       for modelDef in predScens[predRpt]:
          gcm = modelDef[0]
@@ -605,6 +609,9 @@ if __name__ == '__main__':
                   'Units are mapunits'))
    parser.add_argument('-gp', '--grid_shape', choices=('square', 'hexagon'),
             default='square', help=('Shape of cells in the grid used for Global PAM.'))
+   parser.add_argument('-gb', '--grid_bbox', choices=('square', 'hexagon'),
+            default=[-180, -60, 180, 90], 
+            help=('Extent of the grid used for Global PAM.'))
    # Intersect Parameters
    parser.add_argument('-if', '--intersect_filter', default=None,  
             help=('SQL Filter to limit features/pixels for intersect'))
@@ -629,11 +636,12 @@ if __name__ == '__main__':
    algstring = args.algorithms.upper()
    algorithms = [alg.strip() for alg in algstring.split(',')]
    cellsize = args.grid_cellsize
-   gridname = '{}-Grid'.format(archiveName)
+   gridname = '{}-Grid-{}'.format(archiveName, cellsize)
    if args.grid_shape == 'hexagon':
       cellsides = 6
    else:
       cellsides = 4
+   gridbbox = args.grid_bbox
    intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
          MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute_name,
@@ -686,7 +694,7 @@ if __name__ == '__main__':
                          predScens, gridname, metafname, archiveName, 
                          cellsides, cellsize, 
                          configMeta['mapunits'], configMeta['epsg'], 
-                         pkgMeta['bbox'], usr)
+                         gridbbox, usr)
       
 # .............................
       # Insert all taxonomic sources for now
@@ -711,17 +719,18 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
-                                     -u ryan                  \
-                                     -m rfolk@flmnh.ufl.edu  \
+$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive'  \
+                                     -u ryan                \
+                                     -m rfolk@flmnh.ufl.edu \
                                      -e 10min-past-present-future  \
-                                     -ss user      \
+                                     -ss user          \
                                      -sf heuchera_all  \
-                                     -sd ','       \
-                                     -p 25        \
-                                     -a bioclim   \
-                                     -gz 1         \
-                                     -gp square
+                                     -sd ','           \
+                                     -p 25             \
+                                     -a bioclim        \
+                                     -gz 1             \
+                                     -gp square        \
+                                     -gb [-180, -60, 180, 90]
 
 $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
                                      --user ryan                  \
@@ -733,8 +742,21 @@ $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
                                      --min_points 25              \
                                      --algorithms bioclim         \ 
                                      --grid_cellsize 1            \
-                                     --grid_shape square
+                                     --grid_shape square          \
+                                     --grid_bbox [-180, -60, 180, 90]
 
+$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
+                                     -u ryan                  \
+                                     -m rfolk@flmnh.ufl.edu  \
+                                     -e Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover  \
+                                     -ss user      \
+                                     -sf heuchera_all  \
+                                     -sd ','       \
+                                     -p 25        \
+                                     -a bioclim   \
+                                     -gz 2        \
+                                     -gp square   \
+                                     -gb [-180, 10, 180, 90]
 
 
 """
