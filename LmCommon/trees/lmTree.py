@@ -403,7 +403,7 @@ class LmTree(object):
       @param pamMetadata: A dictionary of (squid, matrix index) pairs for a PAM
       """
       # If the name of this clade is in the PAM metadata, add the matrix index
-      if pamMetadata.has_key(clade[PhyloTreeKeys.SQUID]):
+      if clade.has_key(PhyloTreeKeys.SQUID) and pamMetadata.has_key(clade[PhyloTreeKeys.SQUID]):
          clade[PhyloTreeKeys.MTX_IDX] = pamMetadata[clade[PhyloTreeKeys.SQUID]] 
    
       for child in clade[PhyloTreeKeys.CHILDREN]:
