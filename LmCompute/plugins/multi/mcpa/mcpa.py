@@ -132,7 +132,7 @@ def predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd):
    
    for i in xrange(nrows):
       # Get row from (A)
-      aRow = np.array([tmp[i].dot(psT[:,c]) * siteWeights[c] for c in xrange(ncols)])
+      aRow = tmp[i].dot(psT) * siteWeights
       predicted[i] = aRow.dot(pSigmaStd)
          
    return predicted
@@ -173,6 +173,7 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
    
    # For each node
    for j in xrange(numNodes):
+      print j, "of", numNodes
       # Get species present in clade
       speciesPresentAtNode = np.where(phyloMtx.data[:,j] != 0)[0]
       
@@ -234,11 +235,11 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       # np.einsum('ij,j->ij', eStd.dot(rDivQT).dot(predStd.T), siteWeights
       # I haven't seen any documentation about that.  Switch if necessary
       #h = predStd.dot(rDivQT).dot(predStd.T).dot(siteWeights)
-      #h = predStd.dot(rDivQT).dot(predStd.T) * siteWeights
+      h = predStd.dot(rDivQT).dot(predStd.T) * siteWeights
 
-      #predicted = h.dot(pSigmaStd)
+      predicted = h.dot(pSigmaStd)
       
-      predicted = predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd)
+      #predicted = predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd)
       
       totalPsigmaResidual = np.sum((pSigmaStd - predicted).T.dot(
                                                        pSigmaStd - predicted))
@@ -259,6 +260,7 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       
       # For each predictor
       for i in range(numPredictors):
+         print " - Predictor", i, "of", numPredictors
          # Get ith predictor, needs to be a column
          ithPredictor = predictors[:,i].reshape(predictors.shape[0], 1)
          # Get predictors without ith
@@ -274,9 +276,9 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
          q, r = np.linalg.qr((woIthPredictor.T * siteWeights).dot(
                                                                woIthPredictor))
          woIthRdivQT = np.linalg.lstsq(r, q.T)[0]
-         #h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T) * siteWeights
-         #predicted = h.dot(pSigmaStd)
-         predicted = predictedCalc(woIthPredictor, woIthRdivQT, siteWeights, pSigmaStd)
+         h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T) * siteWeights
+         predicted = h.dot(pSigmaStd)
+         #predicted = predictedCalc(woIthPredictor, woIthRdivQT, siteWeights, pSigmaStd)
          # Get remaining R squared
          remainingRsq = np.sum(predicted.T.dot(predicted)) / np.sum(
                                                    pSigmaStd.T.dot(pSigmaStd))
