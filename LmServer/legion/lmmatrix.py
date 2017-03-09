@@ -224,8 +224,9 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
                                      [triageOutFname], [matrixOutputFname], 
                                      cmdArgs=['--mashedPotato={}'.format(triageOutFname),
-                                              '1', # Axis 
-                                               matrixOutputFname])
+                                               matrixOutputFname,
+                                               '1' # Axis
+                                               ])
       rules.append(cRule)
       # Store Matrix Rule
       status = None
