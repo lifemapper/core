@@ -746,12 +746,15 @@ class LmTree(object):
          prune0 = self._pruneTipsWithoutMtxIdx(child0)
          prune1 = self._pruneTipsWithoutMtxIdx(child1)
          
+         if prune0 or prune1:
+            clade[PhyloTreeKeys.CHILDREN] = []
+         
          if prune0 and prune1:
             return True
          elif prune0:
             # Merge child1 and node
             self._mergeClades(clade, child1)
-         else:
+         elif prune1:
             # Merge child0 and node
             self._mergeClades(clade, child0)
          return False
