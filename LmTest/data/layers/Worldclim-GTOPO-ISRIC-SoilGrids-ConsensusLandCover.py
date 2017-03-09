@@ -186,29 +186,25 @@ from osgeo import gdalconstEPSG = 4326MAPUNITS = 'dd'ENVLYR_GDALTYPE = gdalc
                 },
    'fragment': {
       'title': 'SoilGrids 1km: Coarse fragments volumetric in percent (mean estimate)',
-      'description': 'Average calculated in qGIS of layers for core depths ' +                      '2.5, 10, 22.5, 45 cm; data from ISRIC – World Soil ' +                      'Information, 2013. SoilGrids: an automated system for ' +                      'global soil mapping. Available for download at ' +                      'http://soilgrids1km.isric.org.',
-      'valunits': 'percent (volume per volume)',
+      'description': 'Average calculated in qGIS of layers for core depths ' +                      '2.5, 10, 22.5, 45 cm; data from ISRIC World Soil ' +                      'Information, 2013. SoilGrids: an automated system for ' +                      'global soil mapping. Available for download at ' +                      'http://soilgrids1km.isric.org.',      'valunits': 'percent (volume per volume)',
       'keywords': ['soil', 'coarse fragment'],
       'files': {'ISRICSOILGRIDS_average_coarsefragmentpercent.tif': ['observed']},
                 },
    'bulkdensity': {
       'title': 'SoilGrids 1km: Bulk density in kg / cubic-meter (mean estimate)',
-      'description': 'Average calculated in qGIS of layers for core depths ' +                      '2.5, 10, 22.5, 45 cm; data from ISRIC – World Soil ' +                      'Information, 2013. SoilGrids: an automated system for ' +                      'global soil mapping. Available for download at ' +                      'http://soilgrids1km.isric.org.',
-      'valunits': 'kg/m^3',
+      'description': 'Average calculated in qGIS of layers for core depths ' +                      '2.5, 10, 22.5, 45 cm; data from ISRIC World Soil ' +                      'Information, 2013. SoilGrids: an automated system for ' +                      'global soil mapping. Available for download at ' +                      'http://soilgrids1km.isric.org.',      'valunits': 'kg/m^3',
       'keywords': ['soil', 'bulk density'],
       'files': {'ISRICSOILGRIDS_average_bulkdensity.tif': ['observed']},
                 },
    'clay': {
       'title': 'SoilGrids 1km: Soil texture fraction clay in percent (mean estimate)',
-      'description': 'Average calculated in qGIS of layers for core depths ' +                      '2.5, 10, 22.5, 45 cm; data from ISRIC – World Soil ' +                      'Information, 2013. SoilGrids: an automated system for ' +                      'global soil mapping. Available for download at ' +                      'http://soilgrids1km.isric.org.',
-      'valunits': 'percent',
+      'description': 'Average calculated in qGIS of layers for core depths ' +                      '2.5, 10, 22.5, 45 cm; data from ISRIC World Soil ' +                      'Information, 2013. SoilGrids: an automated system for ' +                      'global soil mapping. Available for download at ' +                      'http://soilgrids1km.isric.org.',      'valunits': 'percent',
       'keywords': ['soil', 'clay'],
       'files': {'ISRICSOILGRIDS_average_claypercent.tif': ['observed']},
                 },
    'silt': {
       'title': 'SoilGrids 1km: Soil texture fraction silt in percent (mean estimate)',
-      'description': 'Average calculated in qGIS of layers for core depths 2.5, 10, 22.5, 45 cm; data from ISRIC – World Soil Information, 2013. SoilGrids: an automated system for global soil mapping. Available for download at http://soilgrids1km.isric.org.',
-      'valunits': 'percent',
+      'description': 'Average calculated in qGIS of layers for core depths ' +                      '2.5, 10, 22.5, 45 cm; data from ISRIC World Soil ' +                      'Information, 2013. SoilGrids: an automated system for ' +                      'global soil mapping. Available for download at ' +                      'http://soilgrids1km.isric.org.',      'valunits': 'percent',
       'keywords': ['soil', 'silt'],
       'files': {'ISRICSOILGRIDS_average_siltpercent.tif': ['observed']},
                 },
