@@ -231,7 +231,7 @@ class LmTree(object):
       return labels
       
    # ..............................
-   def getMatrixIndexLabelPairs(self, useSquids=True, sorted=True):
+   def getMatrixIndexLabelPairs(self, useSquids=True, sort=True):
       """
       @summary: Returns a list of (matrix index, clade label) pairs
       @param useSquids: If true, use squids for labels, else use name

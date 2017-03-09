@@ -311,7 +311,7 @@ class PhyloEncoding(object):
             matrix[rowIdx][nodeColumnIndex[nodePathId]] = val
             
       labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
-                                                      sorted=True)
+                                                      sort=True)
       labels = [label for _, label in labelPairs]
       return Matrix(matrix, headers={1: labels})  
    
@@ -412,7 +412,7 @@ class PhyloEncoding(object):
                                                          nodePathId][tipMtxIdx]
             
       labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
-                                                      sorted=True)
+                                                      sort=True)
       labels = [label for _, label in labelPairs]
       return Matrix(matrix, headers={1: labels})  
    
