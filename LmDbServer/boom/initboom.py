@@ -609,8 +609,7 @@ if __name__ == '__main__':
                   'Units are mapunits'))
    parser.add_argument('-gp', '--grid_shape', choices=('square', 'hexagon'),
             default='square', help=('Shape of cells in the grid used for Global PAM.'))
-   parser.add_argument('-gb', '--grid_bbox', choices=('square', 'hexagon'),
-            default=[-180, -60, 180, 90], 
+   parser.add_argument('-gb', '--grid_bbox', default='[-180, -60, 180, 90]', 
             help=('Extent of the grid used for Global PAM.'))
    # Intersect Parameters
    parser.add_argument('-if', '--intersect_filter', default=None,  
@@ -641,7 +640,7 @@ if __name__ == '__main__':
       cellsides = 6
    else:
       cellsides = 4
-   gridbbox = args.grid_bbox
+   gridbbox = eval(args.grid_bbox)
    intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
          MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute_name,
@@ -741,9 +740,9 @@ $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
                                      --species_delimiter ','      \
                                      --min_points 25              \
                                      --algorithms bioclim         \ 
-                                     --grid_cellsize 1            \
+                                     --grid_cellsize 2            \
                                      --grid_shape square          \
-                                     --grid_bbox [-180, -60, 180, 90]
+                                     -gb '[-180, 10, 180, 90]'
 
 $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
                                      -u ryan                  \
@@ -756,7 +755,7 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
                                      -a bioclim   \
                                      -gz 2        \
                                      -gp square   \
-                                     -gb [-180, 10, 180, 90]
+                                     -gb '[-180, 10, 180, 90]'
 
 
 """
