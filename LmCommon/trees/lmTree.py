@@ -712,6 +712,11 @@ class LmTree(object):
       except:
          pass
       
+      try:
+         clade1[PhyloTreeKeys.CHILDREN] = clade2[PhyloTreeKeys.CHILDREN]
+      except:
+         clade1[PhyloTreeKeys.CHILDREN] = []
+      
       return clade1
 
    # ..............................
