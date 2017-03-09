@@ -117,6 +117,27 @@ def standardizeMatrix(mtx, weights):
    return stdMtx
 
 # .............................................................................
+def predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd):
+   """
+   @summary: This function calculates the 'predicted' matrix but uses less 
+                memory by not storing large temporary matrices.  It will run 
+                slower because of that
+   """
+   nrows = predStd.shape[0]
+   ncols = pSigmaStd.shape[0]
+   predicted = np.empty((nrows,), dtype=float)
+   
+   tmp = predStd.dot(rDivQT)
+   psT = predStd.T
+   
+   for i in xrange(nrows):
+      # Get row from (A)
+      aRow = np.array([tmp[i].dot(psT[:,c]) * siteWeights[c] for c in xrange(ncols)])
+      predicted[i] = aRow.dot(pSigmaStd)
+         
+   return predicted
+
+# .............................................................................
 def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
    """
    @summary: Perform an MCPA run on a PAM, predictor matrix, and phylo matrix
@@ -199,7 +220,6 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       
       # Get standardized P-Sigma
       pSigmaStd = np.dot(incidence, pStd)
-      
       # Regression
       #q, r = np.linalg.qr(np.dot(np.dot(predStd.T, siteWeights), predStd))
       #q, r = np.linalg.qr(predStd.T.dot(siteWeights).dot(predStd))
@@ -214,9 +234,12 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       # np.einsum('ij,j->ij', eStd.dot(rDivQT).dot(predStd.T), siteWeights
       # I haven't seen any documentation about that.  Switch if necessary
       #h = predStd.dot(rDivQT).dot(predStd.T).dot(siteWeights)
-      h = predStd.dot(rDivQT).dot(predStd.T) * siteWeights
+      #h = predStd.dot(rDivQT).dot(predStd.T) * siteWeights
 
-      predicted = h.dot(pSigmaStd)
+      #predicted = h.dot(pSigmaStd)
+      
+      predicted = predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd)
+      
       totalPsigmaResidual = np.sum((pSigmaStd - predicted).T.dot(
                                                        pSigmaStd - predicted))
       
@@ -251,8 +274,9 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
          q, r = np.linalg.qr((woIthPredictor.T * siteWeights).dot(
                                                                woIthPredictor))
          woIthRdivQT = np.linalg.lstsq(r, q.T)[0]
-         h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T) * siteWeights
-         predicted = h.dot(pSigmaStd)
+         #h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T) * siteWeights
+         #predicted = h.dot(pSigmaStd)
+         predicted = predictedCalc(woIthPredictor, woIthRdivQT, siteWeights, pSigmaStd)
          # Get remaining R squared
          remainingRsq = np.sum(predicted.T.dot(predicted)) / np.sum(
                                                    pSigmaStd.T.dot(pSigmaStd))
