@@ -235,9 +235,10 @@ class ProcessObject(LMObject):
 #       return relFname
 
    # ...............................................
-   def getUpdateRule(self, status, successFileBasename, filesToCheck):
+   def getUpdateRule(self, objId, status, successFileBasename, filesToCheck):
       """
       @summary: Creates a rule to test output files and update the database
+      @param objId: Identifier used to query the database for this object
       @param status: Output value or file containing value of object process
              results.  Currently unused. 
       @param successFileBasename: basename of file which will be written to  
@@ -245,6 +246,8 @@ class ProcessObject(LMObject):
       @param filesToCheck: List of files to be tested for validity.  
       """
       opts = []
+      if objId is None:
+         objId = self.objId
       if status is not None:
          try:
             int(status)
@@ -259,7 +262,7 @@ class ProcessObject(LMObject):
       # options
       args.extend(opts)
       # positional arguments
-      args.extend([str(self.processType), str(self.objId), successFname])
+      args.extend([str(self.processType), str(objId), successFname])
       args.extend(filesToCheck)
       cmd = ' '.join(args)
       

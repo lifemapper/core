@@ -641,7 +641,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # Rule for Test/Update 
          status = None
          basename = os.path.basename(os.path.splitext(outFile)[0])
-         uRule = self.getUpdateRule(status, basename, [outFile])
+         uRule = self.getUpdateRule(self.getId(), status, basename, [outFile])
          rules.append(uRule)
          
       return rules

@@ -887,7 +887,7 @@ class SDMProjection(_ProjectionType, Raster):
 
          # Rule for Test/Update 
          status = None
-         uRule = self.getUpdateRule(status, basename, [outTiff, packageFname])
+         uRule = self.getUpdateRule(self.getId(), status, basename, [outTiff, packageFname])
          rules.append(uRule)
          
       return rules

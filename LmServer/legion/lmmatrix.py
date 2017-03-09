@@ -230,7 +230,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       # Store Matrix Rule
       status = None
       successFileBasename, _ = os.path.splitext(matrixOutputFname)
-      uRule = self.getUpdateRule(status, successFileBasename, [matrixOutputFname])
+      uRule = self.getUpdateRule(self.getId(), status, successFileBasename, [matrixOutputFname])
       rules.append(uRule)
         
       return rules

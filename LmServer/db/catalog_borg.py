@@ -1001,13 +1001,13 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def getSDMProject(self, projid):
+   def getSDMProject(self, layerid):
       """
       @summary: get a projection for the given id
-      @param projid: Database id for the SDMProject
+      @param layerid: Database id for the SDMProject layer record
       """
       modelMask = projMask = None
-      row, idxs = self.executeSelectOneFunction('lm_getSDMProjectLayer', projid)
+      row, idxs = self.executeSelectOneFunction('lm_getSDMProjectLayer', layerid)
       proj = self._createSDMProjection(row, idxs)
       modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid'])
       projMaskId=self._getColumnValue(row, idxs, ['prjmaskid'])

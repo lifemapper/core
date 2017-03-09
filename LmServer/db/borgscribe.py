@@ -308,12 +308,11 @@ class BorgScribe(LMObject):
       return success
 
 # ...............................................
-   def getSDMProject(self, projid):
+   def getSDMProject(self, layerid):
       """
-      @summary: get a projection for the given id
-      @param projid: Database id for the SDMProject
+      @copydoc LmServer.db.catalog_borg.Borg::getSDMProject()
       """
-      proj = self._borg.getSDMProject(projid)
+      proj = self._borg.getSDMProject(layerid)
       return proj
 
 # ...............................................
