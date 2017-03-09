@@ -58,7 +58,7 @@ if __name__ == "__main__":
             mtxs.append(Matrix.load(pav.strip()))
    if args.mtxFn:
       for mtxFn in args.mtxFn:
-         mtxs.append(Matrix.load(args.mtxFn))
+         mtxs.append(Matrix.load(mtxFn))
    
    joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
    
