@@ -65,7 +65,7 @@ def getPValues(observedValue, testValues, numPermutations=None):
       #    pVals matrix will be treated as 1 for True and 0 for False
       
       # If this is a stack
-      if len(testMtx.shape) == 3:
+      if testMtx.data.ndim == 3:
          for i in xrange(len(testMtx.data.shape[2])):
             pVals += testMtx.data[:,:,i] >= observedValue.data
       else:
@@ -81,7 +81,7 @@ def standardizeMatrix(mtx, weights):
    """
    @summary: Standardizes either a phylogenetic or environment matrix
    @param mtx: The matrix to be standardized
-   @param weights: A diagonal matrix of weights to use for standardization
+   @param weights: A one dimensional array of sums to use for standardization
    @note: Formula for standardization:
            Mstd = M - 1c.1r.W.M(1/trace(W)) ./ 1c(1r.W(M*M) 
                        - ((1r.W.M)*(1r.W.M))(1/trace(W))(1/trace(W)-1))^0.5
@@ -104,9 +104,9 @@ def standardizeMatrix(mtx, weights):
    totalSum = np.sum(weights)
    
    # s1 = 1r.W.M
-   s1 = ones.dot(weights).dot(mtx)
+   s1 = (ones * weights).dot(mtx)
    # s2 = 1r.W.(M*M)
-   s2 = ones.dot(weights).dot(mtx*mtx)
+   s2 = (ones * weights).dot(mtx*mtx)
    
    meanWeighted = s1 / totalSum
    
@@ -183,10 +183,12 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
          incidence = np.random.permutation(incidence)
    
       # Get site weights
-      siteWeights = np.diag(np.sum(incidence, axis=1))
+      #siteWeights = np.diag(np.sum(incidence, axis=1))
+      siteWeights = np.sum(incidence, axis=1)
       
       # Get species weights
-      speciesWeights = np.diag(np.sum(incidence, axis=0))
+      #speciesWeights = np.diag(np.sum(incidence, axis=0))
+      speciesWeights = np.sum(incidence, axis=0)
       
       # Standardized environmental matrix
       predStd = standardizeMatrix(predictors, siteWeights)
@@ -200,7 +202,8 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       
       # Regression
       #q, r = np.linalg.qr(np.dot(np.dot(predStd.T, siteWeights), predStd))
-      q, r = np.linalg.qr(predStd.T.dot(siteWeights).dot(predStd))
+      #q, r = np.linalg.qr(predStd.T.dot(siteWeights).dot(predStd))
+      q, r = np.linalg.qr((predStd.T * siteWeights).dot(predStd))
       
       # r / q.T
       rDivQT = np.linalg.lstsq(r, q.T)[0]
@@ -210,7 +213,8 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       #    Einstein sum with eStd.dot(rDivQT).dot(predStd.T) and siteWeights
       # np.einsum('ij,j->ij', eStd.dot(rDivQT).dot(predStd.T), siteWeights
       # I haven't seen any documentation about that.  Switch if necessary
-      h = predStd.dot(rDivQT).dot(predStd.T).dot(siteWeights)
+      #h = predStd.dot(rDivQT).dot(predStd.T).dot(siteWeights)
+      h = predStd.dot(rDivQT).dot(predStd.T) * siteWeights
 
       predicted = h.dot(pSigmaStd)
       totalPsigmaResidual = np.sum((pSigmaStd - predicted).T.dot(
@@ -238,17 +242,16 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
          woIthPredictor = np.delete(predictors, i, axis=1)
          
          # Slope for ith predictor
-         q, r = np.linalg.qr(ithPredictor.T.dot(siteWeights).dot(ithPredictor))
+         q, r = np.linalg.qr((ithPredictor.T * siteWeights).dot(ithPredictor))
          ithRdivQT = np.linalg.lstsq(r, q.T)[0]
-         ithSlope = ithRdivQT.dot(ithPredictor.T).dot(siteWeights).dot(
+         ithSlope = (ithRdivQT.dot(ithPredictor.T) * siteWeights).dot(
                                                                      pSigmaStd)
          
          # Regression for remaining predictors
-         q, r = np.linalg.qr(woIthPredictor.T.dot(siteWeights).dot(
+         q, r = np.linalg.qr((woIthPredictor.T * siteWeights).dot(
                                                                woIthPredictor))
          woIthRdivQT = np.linalg.lstsq(r, q.T)[0]
-         h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T).dot(
-                                                                   siteWeights)
+         h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T) * siteWeights
          predicted = h.dot(pSigmaStd)
          # Get remaining R squared
          remainingRsq = np.sum(predicted.T.dot(predicted)) / np.sum(
