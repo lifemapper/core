@@ -36,7 +36,7 @@ from random import shuffle
 
 from LmCommon.common.lmconstants import PhyloTreeKeys
 from LmCommon.common.matrix import Matrix
-from LmCommon.encoding.encodingExcpetion import EncodingException
+from LmCommon.encoding.encodingException import EncodingException
 from LmCommon.trees.lmTree import LmTree
 
 # .............................................................................
