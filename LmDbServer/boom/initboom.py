@@ -422,9 +422,14 @@ def _getConfiguredMetadata(META, pkgMeta):
 
 # ...............................................
 def _importClimatePackageMetadata(envPackageName):
-   # TODO: Remove `v2`
-   metafname = os.path.join(ENV_DATA_PATH, '{}.v2{}'.format(envPackageName, 
+   # TODO: Remove `v2` Debug
+   debugMetaname = os.path.join(ENV_DATA_PATH, '{}.v2{}'.format(envPackageName, 
                                                             OutputFormat.PYTHON))
+   if os.path.exists(debugMetaname):
+      metafname = debugMetaname
+   else:
+      metafname = os.path.join(ENV_DATA_PATH, '{}{}'.format(envPackageName, 
+                                                            OutputFormat.PYTHON))      
    if not os.path.exists(metafname):
       raise LMError(currargs='Climate metadata {} does not exist'
                     .format(metafname))
