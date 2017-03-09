@@ -246,8 +246,6 @@ class ProcessObject(LMObject):
       @param filesToCheck: List of files to be tested for validity.  
       """
       opts = []
-      if objId is None:
-         objId = self.objId
       if status is not None:
          try:
             int(status)

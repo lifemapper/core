@@ -222,7 +222,7 @@ objId = 504
 successFname = 'pt_504.success'
 outputFnameList = ['/share/lm/data/archive/ryan/000/000/000/504/pt_504.shp']
 
-
+220 3721 prj_3856.success /share/lm/data/archive/ryan/000/000/000/532/prj_3856.tif /share/lm/data/archive/ryan/000/000/000/532/prj_3856.zip
 ptype = ProcessType.OM_PROJECT
 objId = 3523
 successFname = 'prj_3658.success'
