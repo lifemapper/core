@@ -58,28 +58,22 @@ class EMT(LMObject):
       @param outfname: a filename containing filenames indicating **successful**
              completion of a Spud (single-species MF). 
       """
-      goodTargets = []
-      for target in open(infname, 'r'):
-         if self._isGood(target):
-            goodTargets.append(target)
-            
-      try:
-         f = open(outfname, 'w')
-         for target in goodTargets:
-            f.write('{}\n'.format(target))
-      except Exception, e:
-         raise
-      finally:
-         f.close()
+      with open(infname, 'r') as inPotato:
+         with open(outfname, 'w') as outMashed:
+            for line in inPotato:
+               # Split out squid to get PAV file path
+               _, pav = line.split(':')
+               if self._isGoodTarget(pav.strip()):
+                  # If good target, write the line to the mashed potato
+                  outMashed.write(line)
          
    # .............................
-   def _isGoodTarget(self, target):
+   def _isGoodTarget(self, targetFilename):
       """
-      @TODO: figure out what is good
+      @summary: Checks to see if the target file exists on the file system
+      @param targetFile: The target file path to check for
       """
-      if target.status == JobStatus.COMPLETE:
-         return True
-      return False
+      return os.path.exists(targetFilename)
    
    
 # .............................................................................
@@ -99,7 +93,7 @@ if __name__ == "__main__":
    infname = args.input_filename
    outfname = args.output_filename   
    
-   success = EMT.triage(infname, outfname)
+   success = EMT().triage(infname, outfname)
       
    
 """

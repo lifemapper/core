@@ -55,10 +55,10 @@ if __name__ == "__main__":
       with open(args.mashedPotato, 'r') as mashIn:
          for line in mashIn:
             squid, pav = line.split(':')
-            mtxs.append(Matrix.load(line.strip()))
+            mtxs.append(Matrix.load(pav.strip()))
    if args.mtxFn:
       for mtxFn in args.mtxFn:
-         mtxs.append(Matrix.load(args.mtxFn))
+         mtxs.append(Matrix.load(mtxFn))
    
    joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
    

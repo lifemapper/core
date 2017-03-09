@@ -54,10 +54,10 @@ def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):
    @todo: Consider how we might add metadata to this 
    """
    # Get the original shape, we'll convert back to this
-   origShape = pValues.shape
+   origShape = pValues.data.shape
    
    # Reshape into one-dimensional array
-   pFlat = pValues.flatten()
+   pFlat = pValues.data.flatten()
    
    numVals = pFlat.shape[0]
 

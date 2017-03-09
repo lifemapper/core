@@ -231,7 +231,7 @@ class LmTree(object):
       return labels
       
    # ..............................
-   def getMatrixIndexLabelPairs(self, useSquids=True, sorted=True):
+   def getMatrixIndexLabelPairs(self, useSquids=True, sort=True):
       """
       @summary: Returns a list of (matrix index, clade label) pairs
       @param useSquids: If true, use squids for labels, else use name
@@ -403,7 +403,7 @@ class LmTree(object):
       @param pamMetadata: A dictionary of (squid, matrix index) pairs for a PAM
       """
       # If the name of this clade is in the PAM metadata, add the matrix index
-      if pamMetadata.has_key(clade[PhyloTreeKeys.SQUID]):
+      if clade.has_key(PhyloTreeKeys.SQUID) and pamMetadata.has_key(clade[PhyloTreeKeys.SQUID]):
          clade[PhyloTreeKeys.MTX_IDX] = pamMetadata[clade[PhyloTreeKeys.SQUID]] 
    
       for child in clade[PhyloTreeKeys.CHILDREN]:
@@ -712,6 +712,11 @@ class LmTree(object):
       except:
          pass
       
+      try:
+         clade1[PhyloTreeKeys.CHILDREN] = clade2[PhyloTreeKeys.CHILDREN]
+      except:
+         clade1[PhyloTreeKeys.CHILDREN] = []
+      
       return clade1
 
    # ..............................
@@ -746,12 +751,15 @@ class LmTree(object):
          prune0 = self._pruneTipsWithoutMtxIdx(child0)
          prune1 = self._pruneTipsWithoutMtxIdx(child1)
          
+         if prune0 or prune1:
+            clade[PhyloTreeKeys.CHILDREN] = []
+         
          if prune0 and prune1:
             return True
          elif prune0:
             # Merge child1 and node
             self._mergeClades(clade, child1)
-         else:
+         elif prune1:
             # Merge child0 and node
             self._mergeClades(clade, child0)
          return False

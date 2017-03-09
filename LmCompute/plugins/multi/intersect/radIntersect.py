@@ -140,7 +140,10 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
          for pixelvalue in summary.keys():
             numerator += float(summary[pixelvalue]) * pixelvalue
             denominator += float(summary[pixelvalue])
-         weightedMean = numerator / denominator
+         try:
+            weightedMean = numerator / denominator
+         except:
+            weightedMean = 0
          layerArray[siteidx, 0] = weightedMean
    
    if ident is not None:

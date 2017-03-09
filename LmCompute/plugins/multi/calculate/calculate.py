@@ -118,10 +118,11 @@ class PamStats(object):
       @summary: Retrieves the site statistics as a Matrix of site statistic 
                    columns
       """
-      statColumns = [self.alpha.reshape(self.numSites, 1),
-                     self.alphaProp.reshape(self.numSites, 1),
-                     self.phi.reshape(self.numSites, 1),
-                     self.phiAvgProp.reshape(self.numSites, 1)]
+      numRows = self.alpha.shape[0]
+      statColumns = [self.alpha.reshape(numRows, 1),
+                     self.alphaProp.reshape(numRows, 1),
+                     self.phi.reshape(numRows, 1),
+                     self.phiAvgProp.reshape(numRows, 1)]
       sitesHeaders = [PamStatKeys.ALPHA, PamStatKeys.ALPHA_PROP, 
                       PamStatKeys.PHI, PamStatKeys.PHI_AVG_PROP]
       

@@ -44,9 +44,9 @@ if __name__ == "__main__":
                        help="Location to write the GRIM column Matrix object")
    parser.add_argument("resolution", type=float, 
                                            help="The resolution of the raster")
-   parser.add_argument("--minPercent", dest="minPercent", type=int,
-             "If provided, use the largest class method, otherwise, use weighted mean [0,100]")
-   parser.add_argument("--ident", type=str, dest="ident", 
+   parser.add_argument("-m", "--minPercent", dest="minPercent", type=int,
+      help="If provided, use the largest class method, otherwise, use weighted mean [0,100]")
+   parser.add_argument('-i', "--ident", type=str, dest="ident", 
                     help="An identifer to be used as metadata for this column")
 
    args = parser.parse_args()
