@@ -192,9 +192,14 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
                          str(self.intersectParams[self.INTERSECT_PARAM_MIN_PRESENCE]),
                          str(self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE]),
                          str(self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT])]
+         cmd = ' '.join(cmdArguments)
+         rules.append(MfRule(cmd, [pavFname], dependencies=dependentFiles))
+         
+         # Rule for Test/Update 
+         status = None
+         basename = os.path.basename(pavFname)
+         uRule = self.getUpdateRule(self.getId(), status, basename, [pavFname])
+         rules.append(uRule)
 
-      cmd = ' '.join(cmdArguments)
-      rules.append(MfRule(cmd, [pavFname], dependencies=dependentFiles))
-        
       return rules
 
