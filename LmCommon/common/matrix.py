@@ -164,7 +164,10 @@ class Matrix(object):
       if axis is None:
          return self.headers
       else:
-         return self.headers[axis]
+         if self.headers.has_key(axis):
+            return self.headers[axis]
+         else:
+            return None
    
    # ...........................
    def getRowHeaders(self):
