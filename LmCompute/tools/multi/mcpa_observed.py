@@ -79,7 +79,7 @@ if __name__ == "__main__":
       semiPartialMtx.save(outPartCorF)
 
    with open(args.fGlobalMtxFn, 'w') as fGlobalF:
-      fGlobal.write(fGlobalF)
+      fGlobal.save(fGlobalF)
 
    with open(args.fPartialMtxFn, 'w') as fPartialF:
       fSemiPartial.save(fPartialF)
