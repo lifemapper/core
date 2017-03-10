@@ -235,11 +235,11 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       # np.einsum('ij,j->ij', eStd.dot(rDivQT).dot(predStd.T), siteWeights
       # I haven't seen any documentation about that.  Switch if necessary
       #h = predStd.dot(rDivQT).dot(predStd.T).dot(siteWeights)
-      h = predStd.dot(rDivQT).dot(predStd.T) * siteWeights
+      #h = predStd.dot(rDivQT).dot(predStd.T) * siteWeights
 
-      predicted = h.dot(pSigmaStd)
+      #predicted = h.dot(pSigmaStd)
       
-      #predicted = predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd)
+      predicted = predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd)
       
       totalPsigmaResidual = np.sum((pSigmaStd - predicted).T.dot(
                                                        pSigmaStd - predicted))
@@ -276,9 +276,9 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
          q, r = np.linalg.qr((woIthPredictor.T * siteWeights).dot(
                                                                woIthPredictor))
          woIthRdivQT = np.linalg.lstsq(r, q.T)[0]
-         h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T) * siteWeights
-         predicted = h.dot(pSigmaStd)
-         #predicted = predictedCalc(woIthPredictor, woIthRdivQT, siteWeights, pSigmaStd)
+         #h = woIthPredictor.dot(woIthRdivQT).dot(woIthPredictor.T) * siteWeights
+         #predicted = h.dot(pSigmaStd)
+         predicted = predictedCalc(woIthPredictor, woIthRdivQT, siteWeights, pSigmaStd)
          # Get remaining R squared
          remainingRsq = np.sum(predicted.T.dot(predicted)) / np.sum(
                                                    pSigmaStd.T.dot(pSigmaStd))
