@@ -54,8 +54,8 @@ class Matrix(object):
                           Or this could be a dictionary where the key is used
                           for the axis.  (Ex:
                           {
-                             1 : ['Column 1', 'Column 2'],
-                             0 : ['Row 1', 'Row 2', 'Row 3']
+                             '1' : ['Column 1', 'Column 2'],
+                             '0' : ['Row 1', 'Row 2', 'Row 3']
                           }
       @note: If the headers for an axis are a string and not a list, it will be
                 treated as a file name
@@ -144,7 +144,7 @@ class Matrix(object):
                 axes are the same
       """
       self.data = np.append(self.data, mtx, axis=axis)
-      self.headers[axis].append(mtx.getHeaders(axis=axis))
+      self.headers[str(axis)].append(mtx.getHeaders(axis=axis))
    
    # ...........................
    def getColumnHeaders(self):
@@ -164,8 +164,8 @@ class Matrix(object):
       if axis is None:
          return self.headers
       else:
-         if self.headers.has_key(axis):
-            return self.headers[axis]
+         if self.headers.has_key(str(axis)):
+            return self.headers[str(axis)]
          else:
             return None
    
@@ -211,14 +211,14 @@ class Matrix(object):
                 different axes
       """
       if axis is not None:
-         self.headers[axis] = headers
+         self.headers[str(axis)] = headers
       else:
          self.headers = {}
          try:
             headersKeys = headers.keys()
          except: # Not a dictionary
             # Check if first item is a list
-            if isinstance(headers[0], list):
+            if isinstance(headers[str(0)], list):
                # Assume list of lists
                headersKeys = range(len(headers))
             else:
@@ -229,7 +229,7 @@ class Matrix(object):
          # We should have a list of keys, which could be either dictionary 
          #    keys or list indices
          for k in headersKeys:
-            self.headers[k] = headers[k]
+            self.headers[str(k)] = headers[str(k)]
    
    # ...........................
    def setRowHeaders(self, headers):
@@ -254,8 +254,8 @@ class Matrix(object):
          # Subset the headers
          tmp = []
          for j in args[i]:
-            tmp.append(newHeaders[j])
-         newHeaders[i] = tmp
+            tmp.append(newHeaders[str(j)])
+         newHeaders[str(i)] = tmp
       return Matrix(newData, headers=newHeaders)
    
    # ...........................
@@ -269,7 +269,7 @@ class Matrix(object):
                 Maybe combine with other slice method and provide method to 
                 search for header indices
       """
-      idx = self.headers[axis].index(header)
+      idx = self.headers[str(axis)].index(header)
       
       newData = np.copy(np.take(self.data, idx, axis=axis))
       
@@ -281,7 +281,7 @@ class Matrix(object):
       # Copy the headers and set the header for the axis to just be the search 
       #    header
       newHeaders = deepcopy(self.headers)
-      newHeaders[axis] = [header]
+      newHeaders[str(axis)] = [header]
       
       # Return a new Matrix
       return Matrix(newData, headers=newHeaders)
@@ -305,16 +305,16 @@ class Matrix(object):
                       be output as CSV
          """
          try:
-            rowHeaders = self.headers[0]
+            rowHeaders = self.headers['0']
          except:
             # No row headers
             rowHeaders = []
          
          # Start with the header row, if we have one
-         if self.headers.has_key(1) and self.headers[1]:
+         if self.headers.has_key('1') and self.headers['1']:
             # Add a blank entry if we have row headers
             headerRow = [''] if rowHeaders else []
-            headerRow.extend(self.headers[1])
+            headerRow.extend(self.headers['1'])
             yield headerRow
          # For each row in the data set
          for i in xrange(self.data.shape[0]):
