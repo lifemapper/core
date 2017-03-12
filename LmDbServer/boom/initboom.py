@@ -451,7 +451,8 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
                      speciesSource, speciesData, speciesDataDelimiter,
                      configMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, intersectParams,
-                     mdlScen=None, prjScens=None, mdlMask=None, prjMask=None):
+                     mdlScen=None, prjScens=None, mdlMask=None, prjMask=None,
+                     assemblePams=True):
    """
    """
    earl = EarlJr()
@@ -541,6 +542,8 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('\n')
    for k, v in intersectParams.iteritems():
       f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
+   f.write('ASSEMBLE_PAMS: {}\n'.format(str(assemblePams)))
+   f.write('\n')
       
    f.close()
    return newConfigFilename
@@ -604,6 +607,9 @@ if __name__ == '__main__':
             help=('Comma-separated list of algorithm codes for computing  ' +
                   'SDM experiments in this archive.  Options are described at ' +
                   '{} and include the codes: {} '.format(apiUrl, allAlgs)))
+   parser.add_argument('-ap', '--assemblePams', default=False,
+            help=('Assemble the intersected projections into Global PAMs  ' +
+                  'for multi-species analyses '))
    parser.add_argument('-gz', '--grid_cellsize', default=1,
             help=('Size of cells in the grid used for Global PAM. ' +
                   'Units are mapunits'))
@@ -633,6 +639,7 @@ if __name__ == '__main__':
    speciesDataDelimiter = args.species_delimiter
    minpoints = args.min_points
    algstring = args.algorithms.upper()
+   assemblePams = args.assemblePams
    algorithms = [alg.strip() for alg in algstring.split(',')]
    cellsize = args.grid_cellsize
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
@@ -710,7 +717,7 @@ if __name__ == '__main__':
                            speciesData, speciesDataDelimiter, configMeta, 
                            minpoints, algorithms, gridname, cellsize, cellsides, 
                            intersectParams, mdlScen=mdlScencode, 
-                           prjScens=prjScencodes)
+                           prjScens=prjScencodes, assemblePams=assemblePams)
    except Exception, e:
       logger.error(str(e))
       raise
@@ -726,6 +733,7 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive'  \
                                      -sf heuchera_all  \
                                      -sd ','           \
                                      -p 25             \
+                                     -ap True          \
                                      -a bioclim        \
                                      -gz 1             \
                                      -gp square        \
@@ -740,6 +748,7 @@ $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
                                      --species_delimiter ','      \
                                      --min_points 25              \
                                      --algorithms bioclim         \
+                                     --assemblePams True          \
                                      --grid_cellsize 2            \
                                      --grid_shape square          \
                                      -gb '[-180, 10, 180, 90]'
@@ -753,6 +762,7 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
                                      -sd ','       \
                                      -p 25        \
                                      -a bioclim   \
+                                     -ap True          \
                                      -gz 2        \
                                      -gp square   \
                                      -gb '[-180, 10, 180, 90]'
@@ -764,6 +774,7 @@ $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Biotaphy iDigBio archive' \
                                      --species_source IDIGBIO        \
                                      --min_points 25              \
                                      --algorithms bioclim         \
+                                     --assemblePams False          \
                                      --grid_cellsize 2            \
                                      --grid_shape square          \
                                      -gb '[-180, -90, 180, 90]'

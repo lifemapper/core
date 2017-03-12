@@ -52,11 +52,13 @@ class Boomer(Daemon):
    appending new PAVs or re-assembling. 
    """
    # .............................
-   def __init__(self, pidfile, userId, archiveName, priority=None, log=None):      
+   def __init__(self, pidfile, userId, archiveName, 
+                assemblePams=True, priority=None, log=None):      
       Daemon.__init__(self, pidfile, log=log)
       self.name = self.__class__.__name__.lower()
       self.userId = userId
       self.archiveName = archiveName
+      self.assemblePams = assemblePams
       self.priority = priority
       # Send Database connection
       self._scribe = BorgScribe(self.log)
@@ -94,16 +96,27 @@ class Boomer(Daemon):
             self.log.info('{} opened databases'.format(self.name))
             
       try:
-         self.christopher = ChristopherWalken(self.userId, self.archiveName, 
+         self.christopher = ChristopherWalken(userId=self.userId, 
+                                              archiveName=self.archiveName,
                                               jsonFname=None, priority=None, 
                                               scribe=self._scribe)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
-      else:
-         (self.potatoes, 
-          self.rawPotatoFiles) = self._createPotatoMakeflows()
-         self.masterPotato = self._createMasterMakeflow()
-         self.spudArfFnames = []
+      
+      self.spudArfFnames = []
+      (self.potatoes, 
+       self.rawPotatoFiles) = self._createPotatoMakeflows()
+      self.masterPotato = self._createMasterMakeflow()
+         
+#       if self.assemblePams:
+#          (self.potatoes, 
+#           self.rawPotatoFiles) = self._createPotatoMakeflows()
+#          self.masterPotato = self._createMasterMakeflow()
+#       else:
+#          self.potatoes = None
+#          self.rawPotatoFiles = None
+#          self.masterPotato = None
+         
          
    # .............................
    def run(self):

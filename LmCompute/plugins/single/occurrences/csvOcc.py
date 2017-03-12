@@ -32,6 +32,7 @@ import os
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
 from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 
@@ -127,6 +128,8 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @todo: handle write exception before writing dummy file? 
    """
    # TODO: evaluate logging here
+   readyFilename(outFile, overwrite=True)
+   readyFilename(bigFile, overwrite=True)
    if count <= 0:
       f = open(outFile, 'w')
       f.write('Zero data points')
@@ -145,23 +148,78 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
          f.write('No excess data')
          f.close()
       
+# ...............................................
+def _readyFilename(self, fullfilename, overwrite=False):
+   """
+   @summary: On existing file, 
+                if overwrite true: delete
+                            false: return false
+             Non-existing file:
+                create parent directories if needed
+                return true if parent directory exists
+   """
+   if fullfilename is None:
+      raise LMError('Full filename is None')
+   
+   import os
+   
+   if os.path.exists(fullfilename):
+      if overwrite:
+         success, msg = self._deleteFile(fullfilename)
+         if not success:
+            raise LMError('Unable to delete {}'.format(fullfilename))
+         else:
+            return True
+      else:
+         return False
+   else:
+      pth, basename = os.path.split(fullfilename)
+      try:
+         os.makedirs(pth, 0775)
+      except:
+         pass
+         
+      if os.path.isdir(pth):
+         return True
+      else:
+         raise LMError('Failed to create directories {}'.format(pth))
+
 """
 import json
 import os
 
-from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.apiquery import *
 from LmCommon.common.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 from LmServer.db.borgscribe import BorgScribe
 
+logger = LmComputeLogger('crap')
+
 from LmCompute.plugins.single.occurrences.csvOcc import *
-scribe = BorgScribe(self.log)
+scribe = BorgScribe(logger)
 success = scribe.openConnections()
 
-keys = [63971, 129988, 65932, 50533, 45864, 45815, 44859, 41130, 34175, 31973, 
-        29427, 27090, 26683, 23897, 23792, 23063, 22723, 22175, 21934, 21454]
+keys = {1967: 'Trichotria pocillum', 1034: 'Antiphonus conatus', 
+2350: 'Antheromorpha', 8133: 'Scytonotus piger', 1422: 'Helichus suturalis', 
+3799: 'Anacaena debilis', 1393: 'Discoderus papagonis', 653: 'Cicindela repanda', 
+896: 'Cicindela purpurea', 1762: 'Cicindela tranquebarica', 
+1419: 'Cicindela duodecimguttata', 3641: 'Cicindela punctulata', 
+1818: 'Cicindela oregona', 895: 'Cicindela hirticollis', 
+1298: 'Cicindela sexguttata', 1507: 'Cicindela ocellata', 
+1219: 'Cicindela formosa', 1042: 'Amara obesa', 927: 'Brachinus elongatulus', 
+1135: 'Brachinus mexicanus'}
+
+lmapi = IdigbioAPI()
+
+olist = lmapi.queryBySciname('Trichotria pocillum')
+   
+for key, name in keys.iteritems():
+   olist = lmapi.queryByGBIFTaxonId(key)
+   countkey = api.count_records(rq={'taxonid':key, 'basisofrecord': 'preservedspecimen'})
+   countname = api.count_records(rq={'scientificname':name, 'basisofrecord': 'preservedspecimen'})
+   print '{}: lm={}, iTaxonkey={}, iName={}'.format(key, len(olist), countkey, countname) 
 
 occAPI = IdigbioAPI()
 for taxonKey in keys:
