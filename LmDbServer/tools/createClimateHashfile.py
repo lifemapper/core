@@ -61,6 +61,7 @@ if __name__ == "__main__":
          for fname in filenames:
             fullname = os.path.join(dirpath, fname)
             if fullname.endswith(OutputFormat.GTIFF):
+               print('Computing hash for {}'.format(outfname))
                hashval = computeHash(dlocation=fullname)
                relname = fullname.strip(basepath)
                outf.write('{},  {}\n'.format(hashval, relname))
@@ -69,3 +70,10 @@ if __name__ == "__main__":
    finally:
       outf.close()
       
+"""
+$PYTHON LmDbServer/tools/createClimateHashfile.py Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover /share/lm/data/layers/ryan
+
+$PYTHON LmDbServer/tools/createClimateHashfile.py 10min-past-present-future /share/lm/data/layers
+
+
+"""

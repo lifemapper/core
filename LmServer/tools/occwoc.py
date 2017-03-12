@@ -81,6 +81,9 @@ class _SpeciesWeaponOfChoice(LMObject):
       if taxonSourceName is not None:
          txSourceId, x, x = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
+      # Common metadata description for csv points
+      # TODO: Add this for others?
+      self.metaFname = None
       # Beginning of iteration
       self.startFile = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name))
       self._linenum = 0
@@ -864,7 +867,7 @@ class iDigBioWoC(_SpeciesWeaponOfChoice):
                sname = ScientificName(scinameStr, 
                                rank=rankStr, 
                                canonicalName=canonicalStr,
-                               userId=self.userid, squid=None,
+                               userId=self.userId, squid=None,
                                lastOccurrenceCount=taxonCount,
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 

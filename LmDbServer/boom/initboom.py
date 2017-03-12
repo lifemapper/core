@@ -732,14 +732,14 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive'  \
                                      -gb [-180, -60, 180, 90]
 
 $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
-                                     --user ryan                  \
-                                     --email rfolk@flmnh.ufl.edu  \
+                                     --user ryan2                  \
+                                     --email ryanfolk@ufl.edu  \
                                      --environmental_metadata 10min-past-present-future  \
                                      --species_source user        \
                                      --species_file heuchera_all  \
                                      --species_delimiter ','      \
                                      --min_points 25              \
-                                     --algorithms bioclim         \ 
+                                     --algorithms bioclim         \
                                      --grid_cellsize 2            \
                                      --grid_shape square          \
                                      -gb '[-180, 10, 180, 90]'
@@ -757,5 +757,15 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
                                      -gp square   \
                                      -gb '[-180, 10, 180, 90]'
 
+$PYTHON LmDbServer/boom/initboom.py  --archive_name 'Biotaphy iDigBio archive' \
+                                     --user idigbio                  \
+                                     --email aimee.stewart@ku.edu  \
+                                     --environmental_metadata 10min-past-present-future  \
+                                     --species_source IDIGBIO        \
+                                     --min_points 25              \
+                                     --algorithms bioclim         \
+                                     --grid_cellsize 2            \
+                                     --grid_shape square          \
+                                     -gb '[-180, -90, 180, 90]'
 
 """
