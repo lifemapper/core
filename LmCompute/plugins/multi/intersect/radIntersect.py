@@ -134,9 +134,11 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
             layerArray[siteidx, 0] = np.nan
    else:
       # Weighted mean method
+      siteIds = []
       for siteidx, (summary, cellarea) in areaDict.iteritems():
          numerator = 0
          denominator = 0
+         siteIds.append(siteidx)
          for pixelvalue in summary.keys():
             numerator += float(summary[pixelvalue]) * pixelvalue
             denominator += float(summary[pixelvalue])
@@ -146,10 +148,9 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
             weightedMean = 0
          layerArray[siteidx, 0] = weightedMean
    
+   headers = {0: siteIds}
    if ident is not None:
-      headers = {1: [ident]}
-   else:
-      headers = None
+      headers[1] = [ident]
       
    grimVector = Matrix(layerArray, headers=headers)
    
@@ -305,18 +306,19 @@ def pavVectorIntersect(sgFn, vectFn, presenceAttrib, minPresence, maxPresence,
          # .....................................................
             
       feat = vLyr.GetNextFeature()
-                         
+   
+   siteIds = []
    for fid, areas in areaDict.iteritems():
+      siteIds.append(fid)
       if len(areas[0]) > 0: 
          if (sum(areas[0]) > (areas[1][0] * percentPresenceDec)):  
             layerArray[fid, 0] = True
    # Disable so doesn't cause AGoodle failures
    ogr.DontUseExceptions()
    
+   headers = {0 : siteIds}
    if squid is not None:
-      headers = {1: [squid]}
-   else:
-      headers = None
+      headers[1] = [squid]
    
    pav = Matrix(layerArray, headers=headers)
    

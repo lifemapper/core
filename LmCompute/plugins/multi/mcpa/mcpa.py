@@ -132,7 +132,7 @@ def predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd):
    
    for i in xrange(nrows):
       # Get row from (A)
-      aRow = np.array([tmp[i].dot(psT[:,c]) * siteWeights[c] for c in xrange(ncols)])
+      aRow = tmp[i].dot(psT) * siteWeights
       predicted[i] = aRow.dot(pSigmaStd)
          
    return predicted
@@ -173,6 +173,7 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
    
    # For each node
    for j in xrange(numNodes):
+      print j, "of", numNodes
       # Get species present in clade
       speciesPresentAtNode = np.where(phyloMtx.data[:,j] != 0)[0]
       
@@ -259,6 +260,7 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
       
       # For each predictor
       for i in range(numPredictors):
+         print " - Predictor", i, "of", numPredictors
          # Get ith predictor, needs to be a column
          ithPredictor = predictors[:,i].reshape(predictors.shape[0], 1)
          # Get predictors without ith
