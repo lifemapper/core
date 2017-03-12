@@ -195,13 +195,16 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
 # ...............................................
    def _createMatrixRule(self, processType, dependentFnameList, targetFnameList, 
-                         cmdArgs=[]):
+                         cmdArgs=[], local=False):
       """
       @summary: Creates a MF Rule from parameters. 
       @note: This assumes a single target file
       """
       scriptFname = os.path.join(APP_PATH, ProcessType.getTool(processType))
-      cmdArguments = [os.getenv('PYTHON'), scriptFname]
+      cmdArguments = []
+      if local:
+         cmdArguments.append('LOCAL')
+      cmdArguments.extend([os.getenv('PYTHON'), scriptFname])
       cmdArguments.extend(cmdArgs)
       cmd = ' '.join(cmdArguments)
       rule = MfRule(cmd, targetFnameList, dependencies=dependentFnameList)
@@ -218,7 +221,8 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       # Triage "Mash the potato" rule 
       tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
                                      [triageInFname], [triageOutFname],
-                                     cmdArgs=[triageInFname, triageOutFname])
+                                     cmdArgs=[triageInFname, triageOutFname],
+                                     local=True)
       rules.append(tRule)
       # Assemble Matrix rule
       cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
