@@ -66,7 +66,7 @@ def getPValues(observedValue, testValues, numPermutations=None):
       
       # If this is a stack
       if testMtx.data.ndim == 3:
-         for i in xrange(len(testMtx.data.shape[2])):
+         for i in xrange(testMtx.data.shape[2]):
             pVals += testMtx.data[:,:,i] >= observedValue.data
       else:
          pVals += testMtx.data >= observedValue.data
