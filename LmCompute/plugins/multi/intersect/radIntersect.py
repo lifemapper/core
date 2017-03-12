@@ -148,9 +148,9 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
             weightedMean = 0
          layerArray[siteidx, 0] = weightedMean
    
-   headers = {0: siteIds}
+   headers = {'0': siteIds}
    if ident is not None:
-      headers[1] = [ident]
+      headers['1'] = [ident]
       
    grimVector = Matrix(layerArray, headers=headers)
    
@@ -189,7 +189,7 @@ def pavRasterIntersect(sgFn, rasterFn, resolution, minPresence, maxPresence,
       counter += 1
    
    if squid is not None:
-      headers = {1: [squid]}
+      headers = {'1': [squid]}
    else:
       headers = None
       
@@ -316,9 +316,9 @@ def pavVectorIntersect(sgFn, vectFn, presenceAttrib, minPresence, maxPresence,
    # Disable so doesn't cause AGoodle failures
    ogr.DontUseExceptions()
    
-   headers = {0 : siteIds}
+   headers = {'0' : siteIds}
    if squid is not None:
-      headers[1] = [squid]
+      headers['1'] = [squid]
    
    pav = Matrix(layerArray, headers=headers)
    
