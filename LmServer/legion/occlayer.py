@@ -626,7 +626,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          # TODO: This is a hack using canonical name instead of GBIFTaxonId for iDigBio
          if self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
-            rawdloc = self.getScientificName().canonicalName
+            name = self.getScientificName().canonicalName
+            rawdloc = '\"{}\"'.format(name)
          else:
             rawdloc = self.getRawDLocation()
          cmdArgs.append(rawdloc)
