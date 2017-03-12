@@ -62,10 +62,10 @@ class Stockpile(LMObject):
       success = True
       # Test each file
       for fname in outputFnameList:
-         currSuccess, msg = cls.testFile(fname)
+         currSuccess, msgs = cls.testFile(fname)
          if not currSuccess:
             success = False
-            outputInfo.append(msg)
+            outputInfo.extend(msgs)
             
       # TODO: Override status on failure?
       if not success:
@@ -122,10 +122,10 @@ class Stockpile(LMObject):
    @classmethod
    def testFile(cls, outputFname):
       success = True
-      msg = None
+      msgs = []
       basename, ext = os.path.splitext(outputFname)
       if not os.path.exists(outputFname):
-         msg = 'File {} does not exist'.format(outputFname)
+         msg.append('File {} does not exist'.format(outputFname))
          success = False
       elif LMFormat.isTestable(ext):
          if LMFormat.isGeo(ext):
@@ -134,15 +134,22 @@ class Stockpile(LMObject):
                success, featCount = Vector.testVector(outputFname, 
                                                       driver=fileFormat.driver)
                if not success:
-                  msg = 'File {} is not a valid {} file'.format(outputFname, 
-                                                                fileFormat.driver)
+                  try:
+                     f = open(outputFname, 'r')
+                     msg = f.read()
+                     f.close()
+                     msgs.append(msg)
+                  except:
+                     pass
+                  msgs.append('File {} is not a valid {} file'.format(outputFname, 
+                                                                fileFormat.driver))
                elif featCount < 1:
-                  msg = 'Vector {} has no features'.format(outputFname)
+                  msgs.append('Vector {} has no features'.format(outputFname))
                   
             elif LMFormat.isGDAL(ext=ext):
                success = Raster.testRaster(outputFname)
                if not success:
-                  msg = 'File {} is not a valid GDAL file'.format(outputFname)
+                  msgs.append('File {} is not a valid GDAL file'.format(outputFname))
          else:
             f = open(outputFname, 'r')
             data = f.read()
@@ -153,8 +160,9 @@ class Stockpile(LMObject):
                   json.loads(data)
                except:
                   success = False
-                  msg = 'File {} does not contain valid JSON'.format(outputFname)
-      return success, msg
+                  msgs.append('File {} does not contain valid JSON'
+                              .format(outputFname))
+      return success, msgs
 
 # .............................................................................
 if __name__ == "__main__":
