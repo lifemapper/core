@@ -80,7 +80,8 @@ if __name__ == "__main__":
    for i in xrange(numRandomizations):
       # TODO: Update when this returns Matrix objects
       _, fGlobalRand, _, fSemiPartialRand = mcpaRun(incidenceMtx, 
-                                                    predictorMtx, phyloMtx)
+                                                    predictorMtx, phyloMtx,
+                                                    randomize=True)
       # Add values to stacks
       fGlobals.append(fGlobalRand)
       fSemiPartials.append(fSemiPartialRand)
