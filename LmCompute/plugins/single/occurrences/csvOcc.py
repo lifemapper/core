@@ -124,15 +124,51 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
    @todo: handle write exception before writing dummy file? 
    """
    # TODO: evaluate logging here
-   logger = LmComputeLogger(os.path.basename(__file__))
-   shaper = ShapeShifter(processType, rawData, count, logger=logger, 
-                         metadata=metadata)
-   shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
-                           isUser=isUser)
-   if not os.path.exists(bigFile):
-      f = open(bigFile, 'w')
-      f.write('No excess data')
+   if count <= 0:
+      f = open(outFile, 'w')
+      f.write('Zero data points')
       f.close()
+      f = open(bigFile, 'w')
+      f.write('Zero data points')
+      f.close()
+   else:
+      logger = LmComputeLogger(os.path.basename(__file__))
+      shaper = ShapeShifter(processType, rawData, count, logger=logger, 
+                            metadata=metadata)
+      shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, 
+                              isUser=isUser)
+      if not os.path.exists(bigFile):
+         f = open(bigFile, 'w')
+         f.write('No excess data')
+         f.close()
       
-      
+"""
+import json
+import os
+
+from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
+from LmCommon.common.createshape import ShapeShifter
+from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCompute.common.lmObj import LmException
+from LmCompute.common.log import LmComputeLogger
+from LmServer.db.borgscribe import BorgScribe
+
+from LmCompute.plugins.single.occurrences.csvOcc import *
+scribe = BorgScribe(self.log)
+success = scribe.openConnections()
+
+keys = [63971, 129988, 65932, 50533, 45864, 45815, 44859, 41130, 34175, 31973, 
+        29427, 27090, 26683, 23897, 23792, 23063, 22723, 22175, 21934, 21454]
+
+occAPI = IdigbioAPI()
+for taxonKey in keys:
+   occList = occAPI.queryByGBIFTaxonId(taxonKey)
+   count = len(occList)
+   print '{}: {}'.format(taxonKey, count)
+   
+   
+return parseCsvData(occList, ProcessType.IDIGBIO_TAXA_OCCURRENCE, outFile, 
+                    bigFile, count, maxPoints)
+ 
+"""
    
