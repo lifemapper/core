@@ -15,7 +15,7 @@ instructions at `Install Lifemapper System`_).  After install connect
 code checked out from the git repository.
 
 Install Frontend and Nodes
-******************************
+**************************
 
 #. Install with instructions at `Install Lifemapper System`_
 
@@ -51,10 +51,8 @@ Connect development code on Frontend
       
    # cd /opt/lifemapper
    # find . -name "*.in"  | grep -v config | grep -v axent
-     ./LmCompute/tools/lmJobScript.in
      ./LmDbServer/dbsetup/addDBFunctions.sql.in
      ./LmDbServer/dbsetup/defineDBTables.sql.in
-   # cp -p LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/lmJobScript
    # cp -p LmDbServer/dbsetup/addDBFunctions.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
    # cp -p LmDbServer/dbsetup/defineDBTables.sql /state/partition1/workspace/core/LmDbServer/dbsetup/
 
@@ -88,19 +86,10 @@ Connect development code on Nodes
 
    # rocks run host compute "(cd /state/partition1/; mkdir workspace; git clone http://github.com/lifemapper/core)"
 
-#. Copy files with replaced variables into your git tree. 
-   Config files will be created in the non-linked config directory
-   correctly without intervention.  The maxent and lmMaxent executables will  
-   be installed into the rocks/bin directory without intervention.::
-      
-   # rocks run host compute "(cd /opt/lifemapper; \
-     cp LmCompute/tools/lmJobScript /state/partition1/workspace/core/LmCompute/tools/lmJobScript)"
- 
-#. **Or** recreate files with replaced variables in your git tree.::
-      
-   # rocks run host compute "(cd /state/partition1/workspace/core/; \
-     sed -e 's%@LMHOME@%/opt/lifemapper%g' LmCompute/tools/lmJobScript.in > LmCompute/tools/lmJobScript)"
- 
+#. Currently there are no *.in files for which to fill variables on nodes
+   The maxent and lmMaxent executables will be installed into the rocks/bin 
+   directory without intervention.
+  
 #. Delete installed lifemapper component directories and symlink to your git tree ::  
 
    #  rocks run host compute "(cd /opt/lifemapper; rm -rf Lm*)"
@@ -133,7 +122,8 @@ restart, so:
    #. Restart pgbouncer
    
 If you are installing on a new machine, you will    
-   #. Re-run the failed command::          
+   #. Re-run the failed command::  
+           
       # /rocks/bin/initLM
          
    #. Check the output in /tmp/initLM.log
