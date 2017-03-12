@@ -66,8 +66,8 @@ if __name__ == "__main__":
    else:
       predictorMtx = envMtx
    
-   numNodes = phyloMtx.shape[1]
-   numPredictors = predictorMtx.shape[1]
+   numNodes = phyloMtx.data.shape[1]
+   numPredictors = predictorMtx.data.shape[1]
    
    fGlobals = []
    fSemiPartials = []
