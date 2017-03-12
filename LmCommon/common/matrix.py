@@ -61,7 +61,7 @@ class Matrix(object):
                 treated as a file name
       """
       self.data = mtx
-      self.headers = None
+      self.headers = {}
       if headers is not None:
          self.setHeaders(headers)
       
