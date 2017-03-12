@@ -134,8 +134,8 @@ class BioGeoEncoding(object):
       # Assemble headers
       if label is None:
          label = ''
-      headers = {0: siteIds,
-                 1: [label]}
+      headers = {'0': siteIds,
+                 '1': [label]}
          
       # Make a list of this list and transpose the resulting numpy array so it
       #    is one column wide and number of site rows
