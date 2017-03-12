@@ -84,9 +84,13 @@ class OccurrenceType(_LayerParameters, ProcessObject):
       else:
          return None
 
-# ...............................................ProcessType
+# ...............................................
    def getScientificName(self):
       return self._scientificName
+
+# ...............................................
+   def setScientificName(self, sciName):
+      self._scientificName = sciName
 
 # ...............................................
    def getRawDLocation(self):

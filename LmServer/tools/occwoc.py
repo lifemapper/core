@@ -188,7 +188,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             e = LMError(currargs=e.args, lineno=self.getLineno())
          raise e
 
-      # Reset existing
+      # Reset found or inserted Occ
       if self._doReset(occ.status, occ.statusModTime, occ.getRawDLocation()):
          self.log.info('Reseting OccLayer {}'.format(occ.getId()))
          # Reset verify hash, name, count, status 
@@ -212,6 +212,9 @@ class _SpeciesWeaponOfChoice(LMObject):
          # Set processType and metadata location (from config, not saved in DB)
          occ.processType = self.processType
          occ.rawMetaDLocation = self.metaFname
+         # TODO: remove Hack
+         # Set scientificName, not pulled from DB, for alternate iDigBio query
+         occ.setScientificName(sciName)
          success = self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
 
       return occ
