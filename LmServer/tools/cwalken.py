@@ -52,8 +52,8 @@ class ChristopherWalken(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, userId=None, archiveName=None, jsonFname=None, 
-                priority=None, scribe=None):
+   def __init__(self, userId=None, archiveName=None, 
+                jsonFname=None, priority=None, scribe=None):
       """
       @summary Constructor for ChristopherWalken class which creates a Spud 
                (Single-species Makeflow chain) for a species.
@@ -461,7 +461,7 @@ class ChristopherWalken(LMObject):
                                                                         str(e)))
          updatedMFChain.addCommands(rules)
          updatedMFChain.write()
-#          updatedMFChain.updateStatus(JobStatus.INITIALIZE)
+         updatedMFChain.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(updatedMFChain)
          
       return updatedMFChain
