@@ -313,7 +313,7 @@ class PhyloEncoding(object):
       labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
                                                       sort=True)
       labels = [label for _, label in labelPairs]
-      return Matrix(matrix, headers={1: labels})  
+      return Matrix(matrix, headers={'1': labels})  
    
    # ..............................   
    def _buildPMatrixTipProportionList(self, clade, visited=[]):
@@ -414,7 +414,7 @@ class PhyloEncoding(object):
       labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
                                                       sort=True)
       labels = [label for _, label in labelPairs]
-      return Matrix(matrix, headers={1: labels})  
+      return Matrix(matrix, headers={'1': labels})  
    
    # ..............................
    def _getSisterTipsForClade(self, clade, lastColumn):
