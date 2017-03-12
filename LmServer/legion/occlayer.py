@@ -617,8 +617,15 @@ class OccurrenceLayer(OccurrenceType, Vector):
          deps = []
          cmdArgs = ["LOCAL",
                     os.getenv('PYTHON'),
-                    scriptFname,
-                    self.getRawDLocation()]
+                    scriptFname]
+#                     self.getRawDLocation()]
+         
+         # TODO: This is a hack using canonical name instead of GBIFTaxonId for iDigBio
+         if self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+            rawdloc = self.getScientificName().canonicalName
+         else:
+            rawdloc = self.getRawDLocation()
+         cmdArgs.append(rdloc)
          
          # Process type specific arguments
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:

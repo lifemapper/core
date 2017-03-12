@@ -81,9 +81,12 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
    @param bigFile: The file location to write the full occurrence set 
    @param maxPoints: The maximum number of points to be included in the regular
                         shapefile
+   @todo: Change this back to GBIF TaxonID when iDigBio API is fixed!
    """
    occAPI = IdigbioAPI()
-   occList = occAPI.queryByGBIFTaxonId(taxonKey)
+#    occList = occAPI.queryByGBIFTaxonId(taxonKey)
+   # TODO: Un-hack this - here using canonical name instead
+   occList = occAPI.queryBySciname(taxonKey)
    count = len(occList)
    return parseCsvData(occList, ProcessType.IDIGBIO_TAXA_OCCURRENCE, outFile, 
                        bigFile, count, maxPoints)

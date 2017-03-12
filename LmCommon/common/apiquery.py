@@ -622,6 +622,29 @@ class IdigbioAPI(APIQuery):
       return specimenList
 
 # ...............................................
+   def queryBySciname(self, sciname):
+      """
+      @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
+      """
+      self._qFilters['scientificname'] = sciname
+      self.query()
+      specimenList = []
+      if self.output is not None:
+         fullCount = self.output['itemCount']
+         for item in self.output[IDIGBIO.OCCURRENCE_ITEMS_KEY]:
+            newitem = {}
+            for dataFld, dataVal in item[IDIGBIO.RECORD_CONTENT_KEY].iteritems():
+               newitem[dataFld] = dataVal
+            for idxFld, idxVal in item[IDIGBIO.RECORD_INDEX_KEY].iteritems():
+               if idxFld == 'geopoint':
+                  newitem[DWCNames.DECIMAL_LONGITUDE['SHORT']] = idxVal['lon']
+                  newitem[DWCNames.DECIMAL_LATITUDE['SHORT']] = idxVal['lat']
+               else:
+                  newitem[idxFld] = idxVal
+            specimenList.append(newitem)
+      return specimenList
+
+# ...............................................
    def getOccurrences(self, asShapefile=False):
       """
       @summary: Returns a list of dictionaries.  Each dictionary is an occurrence record
@@ -787,3 +810,32 @@ if __name__ == '__main__':
          print '   ', api._otherFilters
          print '   ', api._qFilters
          print
+         
+"""
+from LmCommon.common.apiquery import *
+import idigbio
+
+
+keys = {1967: 'Trichotria pocillum', 1034: 'Antiphonus conatus', 
+2350: 'Antheromorpha', 8133: 'Scytonotus piger', 1422: 'Helichus suturalis', 
+3799: 'Anacaena debilis', 1393: 'Discoderus papagonis', 653: 'Cicindela repanda', 
+896: 'Cicindela purpurea', 1762: 'Cicindela tranquebarica', 
+1419: 'Cicindela duodecimguttata', 3641: 'Cicindela punctulata', 
+1818: 'Cicindela oregona', 895: 'Cicindela hirticollis', 
+1298: 'Cicindela sexguttata', 1507: 'Cicindela ocellata', 
+1219: 'Cicindela formosa', 1042: 'Amara obesa', 927: 'Brachinus elongatulus', 
+1135: 'Brachinus mexicanus'}
+
+lmapi = IdigbioAPI()
+api = idigbio.json()
+
+for taxonKey in keys:
+   occList = lmapi.queryByGBIFTaxonId(taxonKey)
+   
+for key, name in keys.iteritems():
+   olist = lmapi.queryByGBIFTaxonId(key)
+   countkey = api.count_records(rq={'taxonid':key, 'basisofrecord': 'preservedspecimen'})
+   countname = api.count_records(rq={'scientificname':name, 'basisofrecord': 'preservedspecimen'})
+   print '{}: lm={}, iTaxonkey={}, iName={}'.format(key, len(olist), countkey, countname) 
+
+"""
