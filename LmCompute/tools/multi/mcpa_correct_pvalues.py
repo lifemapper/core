@@ -57,8 +57,8 @@ if __name__ == "__main__":
       testValues.append(testMtx)
       
       # Add to the number of values
-      if len(testMtx.shape) == 3: # Stack of values
-         numValues += testMtx.shape[2]
+      if testMtx.data.ndim == 3: # Stack of values
+         numValues += testMtx.data.shape[2]
       else:
          numValues += 1
    
