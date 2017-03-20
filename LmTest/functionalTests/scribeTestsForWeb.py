@@ -47,7 +47,7 @@ def test_environmental_layers(scribe, userId):
    fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
 
    postName = 'testLyr{0}'.format(randint(0, 10000))
-   postLyr = EnvLayer(postName, userId, epsg, dlocation=fn)
+   postLyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
    postedLyr = scribe.insertLayer(postLyr)
    assert postedLyr.getId() is not None
    
