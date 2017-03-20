@@ -23,6 +23,9 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+
+@todo: Count and list functions may not be created yet as they were not needed
+          previously
 """
 import os
 from random import randint
@@ -48,6 +51,9 @@ def test_environmental_layers(scribe, userId):
 
    postName = 'testLyr{0}'.format(randint(0, 10000))
    postLyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
+   
+   # This function does not exist, should we insert with 'insertScenarioLayer'?
+   #    We may not have a scenario to add it to so that didn't seem right
    postedLyr = scribe.insertLayer(postLyr)
    assert postedLyr.getId() is not None
    
@@ -58,7 +64,7 @@ def test_environmental_layers(scribe, userId):
    assert getLyr.getId() == lyrId
    
    # Count
-   lyrCountUsr = scribe.countLyaers(userId=userId)
+   lyrCountUsr = scribe.countLayers(userId=userId)
    lyrCountPub = scribe.countLayers()
    assert lyrCountUsr >= 1 # Posted a layer in this function
    assert lyrCountPub >= 0
