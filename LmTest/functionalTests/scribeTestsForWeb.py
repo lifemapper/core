@@ -195,12 +195,13 @@ def test_scenarios(scribe, userId):
 
 # .............................................................................
 if __name__ == '__main__':
+   userId = 'anon'
    scribe = BorgScribe(UnittestLogger())
    scribe.openConnections()
    # Run each of the tests, they will throw exceptions if they are not correct
-   test_environmental_layers(scribe)
-   test_occurrence_sets(scribe)
-   test_projections(scribe)
-   test_scenarios(scribe)
+   test_environmental_layers(scribe, userId)
+   test_occurrence_sets(scribe, userId)
+   test_projections(scribe, userId)
+   test_scenarios(scribe, userId)
    scribe.closeConnections()
    
