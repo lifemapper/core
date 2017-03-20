@@ -245,7 +245,7 @@ $$
 DECLARE
    reclyr lm_v3.layer%ROWTYPE;
    rec_etype lm_v3.EnvType%ROWTYPE;
-   rec_envlyr lm_v3.lm_scenlayer%ROWTYPE;
+   rec_scenlyr lm_v3.lm_scenlayer%ROWTYPE;
 BEGIN
    -- get or insert envType 
    SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvType(etypeid, 
@@ -261,8 +261,69 @@ BEGIN
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to findOrInsertLayer';
       ELSE
-         SELECT * INTO rec_envlyr FROM lm_v3.lm_joinScenarioLayer(scenid, 
-                                 reclyr.layerId, rec_etype.envTypeId);
+         SELECT * INTO rec_scenlyr FROM lm_v3.lm_joinScenarioLayer(scenid, 
+                                        reclyr.layerId, rec_etype.envTypeId);
+      END IF;
+   END IF;
+   
+   RETURN rec_scenlyr;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrid int,
+                                          usr varchar,
+                                          lyrsquid varchar,
+                                          lyrverify varchar,
+                                          lyrname varchar, 
+                                          lyrdloc varchar,
+                                          lyrmurlprefix varchar,
+                                          lyrmeta varchar,
+                                          datafmt varchar,
+                                          rtype int,
+                                          vtype int,
+                                          vunits varchar,
+                                          vnodata double precision,
+                                          vmin double precision,
+                                          vmax double precision,
+                                          epsg int,
+                                          munits varchar,
+                                          res double precision,
+                                          bboxstr varchar,
+                                          bboxwkt varchar,
+                                          lyrmtime double precision,
+                                          
+                                          etypeid int, 
+                                          env varchar,
+                                          gcm varchar,
+                                          altpred varchar,
+                                          tm varchar,
+                                          etypemeta text,
+                                          etypemodtime double precision)
+RETURNS lm_v3.lm_envlayer AS
+$$
+DECLARE
+   reclyr lm_v3.layer%ROWTYPE;
+   rec_etype lm_v3.EnvType%ROWTYPE;
+   rec_envlyr lm_v3.lm_envlayer%ROWTYPE;
+BEGIN
+   -- get or insert envType 
+   SELECT * INTO rec_etype FROM lm_v3.lm_findOrInsertEnvType(etypeid, 
+                    usr, env, gcm, altpred, tm, etypemeta, etypemodtime);
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to findOrInsertEnvType';
+   ELSE
+      -- get or insert layer 
+      SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
+         lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
+         vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
+         
+      -- join layer to envType 
+      IF FOUND THEN
+         SELECT * INTO rec_envlyr 
+            FROM lm_v3.lm_joinEnvLayer(reclyr.layerid, rec_etype.envTypeId);
+      ELSE
+         RAISE EXCEPTION 'Unable to findOrInsertLayer';
       END IF;
    END IF;
    

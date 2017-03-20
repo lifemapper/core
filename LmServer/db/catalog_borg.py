@@ -779,7 +779,7 @@ class Borg(DbPostgresql):
       envmeta = lyr.dumpParamMetadata()
       lyrmeta = lyr.dumpLyrMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction(
-                           'lm_findOrInsertScenLayer', scenarioId, lyr.getId(), 
+                           'lm_findOrInsertEnvLayer', lyr.getId(), 
                            lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
                            lyr.getDLocation(), 
                            lyr.metadataUrl,
@@ -790,6 +790,12 @@ class Borg(DbPostgresql):
                            lyr.getParamId(), lyr.envCode, lyr.gcmCode,
                            lyr.altpredCode, lyr.dateCode, envmeta, 
                            lyr.paramModTime)
+      if scenarioId is not None:
+         etid = self._getColumnValue(row, idxs, ['envtypeid'])
+         lyrid = self._getColumnValue(row, idxs, ['layerid'])
+         row, idxs = self.executeInsertAndSelectOneFunction(
+                     'lm_v3.lm_joinScenarioLayer', scenarioId, lyrid, etid)
+      # Use row from first or second query      
       newOrExistingLyr = self._createEnvLayer(row, idxs)
       return newOrExistingLyr
 

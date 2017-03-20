@@ -312,7 +312,7 @@ class BorgScribe(LMObject):
       @param polyWkt: geometry for the minimum polygon around these points
       @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
-      """lm_deleteShapeGrid
+      """
       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
       return success
 
