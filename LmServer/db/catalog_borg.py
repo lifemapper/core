@@ -794,6 +794,16 @@ class Borg(DbPostgresql):
       return newOrExistingLyr
 
 # ...............................................
+   def deleteEnvLayer(self, envlyr, scenarioId):
+      """
+      @summary: Deletes object from database
+      @return: True/False for success of operation
+      """
+      success = self.executeModifyFunction('lm_deleteScenarioLayer', 
+                                           envlyr.getId(), scenarioId)         
+      return success
+
+# ...............................................
    def findOrInsertComputeResource(self, compResource):
       """
       @summary: Insert a compute resource of this Lifemapper system.  
@@ -1269,6 +1279,17 @@ class Borg(DbPostgresql):
             raise LMError('Failed getting ID for {} object'.format(type(obj)))
       if isinstance(obj, MFChain):
          success = self.executeModifyFunction('lm_deleteMFChain', objid)
+      elif isinstance(obj, OccurrenceLayer):
+         success = self.executeModifyFunction('lm_deleteOccurrenceSet', objid)
+      elif isinstance(obj, SDMProjection):
+         success = self.executeModifyFunction('lm_deleteSDMProjectLayer', objid)
+      elif isinstance(obj, ShapeGrid):
+         success = self.executeModifyFunction('lm_deleteShapeGrid', objid)
+      elif isinstance(obj, Scenario):
+         # Deletes ScenarioLayer join; only deletes layers if they are orphaned
+         for lyr in obj.layers:
+            self.deleteEnvLayer(lyr, objid)
+         success = self.executeModifyFunction('lm_deleteScenario', objid)
       else:
          raise LMError('Unsupported delete for object {}'.format(type(obj)))
       return success

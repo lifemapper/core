@@ -124,6 +124,31 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteScenario(scenid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+   lyr_success int := -1;
+   elyrid int;
+   
+BEGIN
+   FOR elyrid IN 
+      SELECT envLayerId FROM lm_v3.ScenarioLayer WHERE scenarioId = scenid
+   LOOP
+      SELECT * INTO lyr_success FROM lm_v3.lm_deleteScenarioLayer(elyrid, scenid);
+      RAISE NOTICE 'Deleted EnvLayer % from scenario', elyrid;
+   END LOOP;
+   
+   DELETE FROM lm_v3.Scenario WHERE scenarioId = scenid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
                                              code varchar, 
                                              metaUrlprefix text,
@@ -660,6 +685,21 @@ BEGIN
          WHERE occurrenceSetId = occid;
    END IF;
 
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteOccurrenceSet(occid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+BEGIN
+   DELETE FROM lm_v3.OccurrenceSet WHERE occurrencesetid = occid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;

@@ -128,6 +128,11 @@ class BorgScribe(LMObject):
       return updatedLyr
 
 # ...............................................
+   def deleteScenarioLayer(self, envlyr, scenarioid):
+      success = self._borg.deleteEnvLayer(envlyr, scenarioid)
+      return success
+
+# ...............................................
    def insertLayerTypeCode(self, envType):
       if isinstance(envType, EnvType):
          newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
@@ -137,7 +142,6 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def insertScenario(self, scen):
-      updatedLayers = []
       updatedScen = self._borg.findOrInsertScenario(scen)
       scenId = updatedScen.getId()
       for lyr in scen.layers:
@@ -148,12 +152,17 @@ class BorgScribe(LMObject):
 # ...............................................
    def insertUser(self, usr):
       """
-      @summary: Insert a user of the Lifemapper system.  
-      @param usr: LMUser object to insert
-      @return: True on success, False on failure (i.e. userid is not unique)
-      @note: since inserting the same record in both databases, userid is identical
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertUser()
       """
       borgUser = self._borg.findOrInsertUser(usr)
+      return borgUser
+
+# ...............................................
+   def findUser(self, userId=None, email=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findUser()
+      """
+      borgUser = self._borg.findUser(userId, email)
       return borgUser
 
 # ...............................................
@@ -303,7 +312,7 @@ class BorgScribe(LMObject):
       @param polyWkt: geometry for the minimum polygon around these points
       @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
-      """
+      """lm_deleteShapeGrid
       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
       return success
 

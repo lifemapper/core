@@ -161,6 +161,51 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+-- ----------------------------------------------------------------------------
+-- Note: delete ScenarioLayer join, 
+--       possibly EnvLayer join, EnvType, Layer
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteScenarioLayer(elyrid int, scenid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+   delLayerSuccess int;
+   scentotal int;
+   typetotal int;
+   etypeid int;
+BEGIN
+   -- Delete from joined ScenarioLayer table, success based on this
+   DELETE FROM lm_v3.ScenarioLayer 
+      WHERE envLayerId = elyrid AND scenarioid = scenid;
+   -- Success based on ScenarioLayer deletion
+   IF FOUND THEN
+      success = 0;
+   END IF;
+      
+   -- If not used in other Scenarios, delete from joined EnvLayer table
+   SELECT count(*) INTO scentotal FROM lm_v3.ScenarioLayer WHERE envLayerId = elyrid;
+   RAISE NOTICE 'EnvLayer found in % other scenarios', scentotal;
+   IF scentotal = 0 THEN
+      DELETE FROM lm_v3.EnvLayer WHERE envLayerId = elyrid;
+
+      -- If EnvType is orphaned, delete
+      SELECT envTypeId INTO etypeid FROM lm_v3.EnvType 
+         WHERE envTypeId = etypeid AND layerId = lyrId;
+      RAISE NOTICE 'EnvType id %', etypeid;
+      SELECT count(*) INTO typetotal FROM lm_v3.EnvLayer 
+         WHERE envTypeId = etypeid;
+      IF typetotal = 0 THEN
+         DELETE FROM lm_v3.EnvType WHERE envTypeId = etypeid; 
+      END IF;
+      
+      -- Delete from Layer table (only if orphaned)
+      SELECT * INTO delLayerSuccess FROM lm_v3.lm_deleteLayer(lyrid);
+      RAISE NOTICE 'Deleted layer result %', delLayerSuccess;
+   END IF;
+   
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- EnvLayer
@@ -454,6 +499,25 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+-- Note: deleting layer cascades to delete 1-to-1 joined SDMProject record
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteSDMProjectLayer(prjid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+   lyrid int;
+BEGIN
+   SELECT layerid INTO lyrid FROM lm_sdmproject WHERE sdmprojectid = prjid;
+   DELETE FROM lm_v3.Layer WHERE layerid = lyrid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+
+-- ----------------------------------------------------------------------------
 -- Note: returns 0 (True) or -1 (False)
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateSDMProjectLayer(prjid int, 
                                           lyrid int,
@@ -599,6 +663,22 @@ BEGIN
    END IF;
    
    RETURN recshpgrd;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- Note: deleting layer cascades to delete 1-to-1 joined ShapeGrid record
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteShapeGrid(lyrid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+BEGIN
+   DELETE FROM lm_v3.Layer WHERE layerid = lyrid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
@@ -843,3 +923,52 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- Foreign layerid keys in: sdmproject, shapegrid, envlayer, gridset, matrixcolumn
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countLayerReferences(lyrid int)
+RETURNS int AS
+$$
+DECLARE
+   total int := 0;
+   currTotal int;
+BEGIN
+   SELECT count(*) INTO currTotal FROM lm_v3.envlayer WHERE layerid = lyrid;
+   total = total + currTotal;
+   SELECT count(*) INTO currTotal FROM lm_v3.sdmproject WHERE layerid = lyrid 
+                                                           OR mdlmaskId = lyrid 
+                                                           OR mdlmaskId = lyrid;
+   total = total + currTotal;
+   SELECT count(*) INTO currTotal FROM lm_v3.shapegrid WHERE layerid = lyrid;
+   total = total + currTotal;
+   SELECT count(*) INTO currTotal FROM lm_v3.gridset WHERE layerid = lyrid;
+   total = total + currTotal;
+   SELECT count(*) INTO currTotal FROM lm_v3.matrixcolumn WHERE layerid = lyrid;
+   total = total + currTotal;
+
+   RETURN total;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteLayer(lyrid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+   refCount int;
+BEGIN
+   SELECT * from lm_v3.lm_countLayerReferences INTO refCount;
+   IF refCount = 0 THEN
+      DELETE FROM lm_v3.Layer WHERE layerid = lyrid;
+      IF FOUND THEN
+         success = 0;
+      END IF;
+   END IF;
+   
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+

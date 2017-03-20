@@ -27,6 +27,7 @@
 import os
 from random import randint
 
+from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import APP_PATH
 from LmServer.common.log import UnittestLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -35,10 +36,16 @@ from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.sdmproj import SDMProjection
+from LmServer.base.lmobj import LMError
 
 # .............................................................................
 # Environmental layers
 def test_environmental_layers(scribe, userId):
+   """
+   @note: Environmental layers are inserted after a scenario, and require the
+          scenarioId
+   @todo: Fix and uncomment this in Main
+   """
    # Post
    epsg = 4326
    
@@ -48,7 +55,8 @@ def test_environmental_layers(scribe, userId):
 
    postName = 'testLyr{0}'.format(randint(0, 10000))
    postLyr = EnvLayer(postName, userId, epsg, dlocation=fn)
-   postedLyr = scribe.insertLayer(postLyr)
+   # TODO: CJ - add scenario prior to calling this
+   postedLyr = scribe.insertScenarioLayer(postLyr, scenarioId)
    assert postedLyr.getId() is not None
    
    # Get
@@ -71,7 +79,7 @@ def test_environmental_layers(scribe, userId):
    
    # Delete
    # Assert we successfully delete the layer we retrieved
-   assert scribe.deleteObject(getLyr)
+   assert scribe.deleteScenarioLayer(getLyr, scenarioId)
 
 # .............................................................................
 # Occurrence sets
@@ -194,13 +202,46 @@ def test_scenarios(scribe, userId):
    assert scribe.deleteObject(getScn)
 
 # .............................................................................
+# user
+def test_user(scribe):
+   # Post
+   postCode = 'testUser{}'.format(randint(0, 10000))
+   userId = 'tester'
+   email = 'tester@null.nowhere'
+   usr = LMUser(userId, email, 'testing', isEncrypted=False)
+   postedUser = scribe.insertUser(usr)
+   if postedUser is not None:
+      # Find by userId
+      getById = scribe.findUser(usrid=userId)
+      # Find by email
+      getByEmail = scribe.findUser(email=email)
+   else:
+      raise LMError(currargs='Failed to insert User {}'.format(userId))
+   return postedUser
+
+# .............................................................................
+# user
+def delete_user(scribe, user):
+   # Delete
+   # Assert that we successfully delete the retrieved scenario (that we posted)
+   assert scribe.deleteObject(user)
+
+# .............................................................................
 if __name__ == '__main__':
    scribe = BorgScribe(UnittestLogger())
    scribe.openConnections()
+   
+   # Create Test user
+   user = test_user(scribe)
+   
    # Run each of the tests, they will throw exceptions if they are not correct
-   test_environmental_layers(scribe)
-   test_occurrence_sets(scribe)
-   test_projections(scribe)
-   test_scenarios(scribe)
+   test_scenarios(scribe, user.userid)
+#    test_environmental_layers(scribe, userId)
+   test_occurrence_sets(scribe, user.userid)
+   test_projections(scribe, user.userid)
+   
+   # Delete Test user
+   delete_user(scribe, user)
+   
    scribe.closeConnections()
    
