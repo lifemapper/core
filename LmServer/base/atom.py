@@ -29,19 +29,17 @@ class Atom(LMObject):
    Used for returning simple objects for REST url construction 
    """
    
-   def __init__(self, id, title, modTime, desc, epsg=None):
+   def __init__(self, id, name, modTime, epsg=None):
       """
       @summary: Constructor for the Atom class
       @param id: database id of the object
-      @param title: human readable title of the object
+      @param name: name of the object
       @param modTime: time/date last modified
-      @param description: description
       """
       LMObject.__init__(self)
       self.id = id
-      self.title = title
+      self.name = name
       self.modTime = modTime
-      self.description = desc
       self.epsgcode = epsg
 
 # ...............................................

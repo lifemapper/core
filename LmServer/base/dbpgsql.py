@@ -400,8 +400,8 @@ class DbPostgresql(_DbConn):
       if row is not None:
          if idxs.has_key('epsgcode'):
             epsg = row[idxs['epsgcode']]
-         atom = Atom(row[idxs['id']], row[idxs['title']], row[idxs['modtime']],
-                     row[idxs['description']], epsg=epsg)
+         atom = Atom(row[idxs['id']], row[idxs['name']], row[idxs['modtime']],
+                     epsg=epsg)
       return atom
       
 # ............................................................................ 
