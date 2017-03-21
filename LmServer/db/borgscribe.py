@@ -33,7 +33,8 @@ from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.common.lmconstants import (DbUser, DEFAULT_PROJECTION_FORMAT, 
                                          GDALFormatCodes)
-from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME)
+from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
+                                            PUBLIC_USER)
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
@@ -116,7 +117,7 @@ class BorgScribe(LMObject):
       return total
 
 # ...............................................
-   def insertScenarioLayer(self, lyr, scenarioid):
+   def insertScenarioLayer(self, lyr, scenarioid=None):
       updatedLyr = None
       if isinstance(lyr, EnvLayer):
          if lyr.isValidDataset():
@@ -246,13 +247,7 @@ class BorgScribe(LMObject):
 # ...............................................
    def getScenario(self, idOrCode, user=None, fillLayers=False):
       """
-      @summary: Get and fill a scenario from its user and code or database id.   
-                If  fillLayers is true, populate the layers in the object.
-      @param idOrCode: ScenarioId or code for the scenario to be fetched.
-      @param user: User id for the scenario to be fetched.
-      @param fillLayers: Boolean indicating whether to retrieve and populate 
-             layers from to be fetched.
-      @return: a LmServer.legion.scenario.Scenario object
+      @copydoc LmServer.db.catalog_borg.Borg::getScenario()
       """
       if isinstance(idOrCode, IntType):
          scenario = self._borg.getScenario(scenid=idOrCode, 
@@ -261,13 +256,33 @@ class BorgScribe(LMObject):
          scenario = self._borg.getScenario(code=idOrCode, usrid=user, 
                                            fillLayers=fillLayers)
       return scenario
+   
+# .............................................................................
+   def countScenarios(self, userId=PUBLIC_USER, beforeTime=None, afterTime=None, 
+                      epsg=None, gcmCode=None, altpredCode=None, dateCode=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countScenarios()
+      """
+      count = self._borg.countScenarios(userId, beforeTime, afterTime, epsg,
+                                            gcmCode, altpredCode, dateCode)
+      return count
+
+# .............................................................................
+   def listScenarios(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                     beforeTime=None, afterTime=None, epsg=None, gcmCode=None, 
+                     altpredCode=None, dateCode=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countScenarios()
+      """
+      count = self._borg.listScenarios(firstRecNum, maxNum, userId, 
+                                       beforeTime, afterTime, epsg, gcmCode, 
+                                       altpredCode, dateCode, atom)
+      return count
 
 # ...............................................
    def getOccurrenceSet(self, occid=None, squid=None, userId=None, epsg=None):
       """
-      @summary: get an occurrenceset for the given id or squid and User
-      @param squid: a Squid (Species Thread) string, tied to a ScientificName
-      @param userId: the database primary key of the LMUser
+      @copydoc LmServer.db.catalog_borg.Borg::getOccurrenceSet()
       """
       occset = self._borg.getOccurrenceSet(occid, squid, userId, epsg)
       return occset
@@ -282,7 +297,7 @@ class BorgScribe(LMObject):
       """
       sciName = ScientificName(scinameStr, userId=userId)
       updatedSciName = self.findOrInsertTaxon(sciName=sciName)
-      occsets = self._borg.getOccurrenceSetsForSquid(updatedSciName.squid,userId)
+      occsets = self._borg.getOccurrenceSetsForSquid(updatedSciName.squid, userId)
       return occsets
 
 # ...............................................
@@ -301,17 +316,34 @@ class BorgScribe(LMObject):
                         .format(occ.getId()))
       return newOcc
          
+# .............................................................................
+   def countOccurrenceSets(self, userId=PUBLIC_USER, minOccurrenceCount=None, 
+               displayName=None, afterTime=None, beforeTime=None, epsg=None, 
+               afterStatus=None, beforeStatus=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countOccurrenceSets()
+      """
+      count = self._borg.countOccurrenceSets(userId, minOccurrenceCount, 
+            displayName, afterTime, beforeTime, epsg, afterStatus, beforeStatus)
+      return count
+
+# .............................................................................
+   def listOccurrenceSets(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                          minOccurrenceCount=None, displayName=None, 
+                          afterTime=None, beforeTime=None, epsg=None, 
+                          afterStatus=None, beforeStatus=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listOccurrenceSets()
+      """
+      objs = self._borg.listOccurrenceSets(userId, minOccurrenceCount, 
+                                           displayName, afterTime, beforeTime, 
+                                           epsg, afterStatus, beforeStatus)
+      return objs
+
 # ...............................................
    def updateOccset(self, occ, polyWkt=None, pointsWkt=None):
       """
-      @summary: Update OccurrenceLayer attributes: 
-                verify, displayName, dlocation, rawDlocation, queryCount, 
-                bbox, metadata, status, statusModTime, geometries if valid
-      @note: Does not update the userid, squid, and epsgcode (unique constraint) 
-      @param occ: OccurrenceLayer to be updated.  
-      @param polyWkt: geometry for the minimum polygon around these points
-      @param pointsWkt: multipoint geometry for these points
-      @return: True/False for successful update.
+      @copydoc LmServer.db.catalog_borg.Borg::updateOccurrenceSet()
       """
       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
       return success

@@ -216,7 +216,7 @@ def test_user(scribe):
    postedUser = scribe.insertUser(usr)
    if postedUser is not None:
       # Find by userId
-      getById = scribe.findUser(usrid=userId)
+      getById = scribe.findUser(userId=userId)
       # Find by email
       getByEmail = scribe.findUser(email=email)
    else:

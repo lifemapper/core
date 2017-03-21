@@ -587,6 +587,58 @@ class Borg(DbPostgresql):
                            scen.getCSVExtentString(), wkt, scen.modTime)
       newOrExistingScen = self._createScenario(row, idxs)
       return newOrExistingScen
+   
+# .............................................................................
+   def countScenarios(self, userId, afterTime, beforeTime, epsg, 
+                      gcmCode, altpredCode, dateCode):
+      """
+      @summary: Return the number of scenarios fitting the given filter conditions
+      @param userId: filter by LMUser 
+      @param beforeTime: filter by modified at or before this time
+      @param afterTime: filter by modified at or after this time
+      @param epsg: filter by the EPSG spatial reference system code 
+      @param gcmCode: filter by the Global Climate Model code
+      @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
+      @param dateCode: filter by the date code
+      @return: number of scenarios fitting the given filter conditions
+      """
+      row, idxs = self.executeSelectOneFunction('lm_countScenarios', userId, 
+                                                afterTime, beforeTime, epsg,
+                                                gcmCode, altpredCode, dateCode)
+      return self._getCount(row)
+
+# .............................................................................
+   def listScenarios(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
+                     epsg, gcmCode, altpredCode, dateCode, atom):
+      """
+      @summary: Return scenario Objects or Atoms fitting the given filters 
+      @param firstRecNum: start at this record
+      @param maxNum: maximum number of records to return
+      @param userId: filter by LMUser 
+      @param beforeTime: filter by modified at or before this time
+      @param afterTime: filter by modified at or after this time
+      @param epsg: filter by the EPSG spatial reference system code 
+      @param gcmCode: filter by the Global Climate Model code
+      @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
+      @param dateCode: filter by the date code
+      @param atom: True if return objects will be Atoms, False if full Scenario
+                   objects
+      """
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listScenarioAtoms', 
+                                                     firstRecNum, maxNum, userId, 
+                                                     afterTime, beforeTime, epsg,
+                                                     gcmCode, altpredCode, dateCode)
+         objs = self._getAtoms(rows, idxs)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listScenarioObjects', 
+                                                     firstRecNum, maxNum, userId, 
+                                                     afterTime, beforeTime, epsg,
+                                                     gcmCode, altpredCode, dateCode)
+         for r in rows:
+            objs.append(self._createScenario(r, idxs))
+      return objs
 
 # ...............................................
    def getEnvironmentalType(self, typeid, typecode, usrid):
@@ -980,6 +1032,13 @@ class Borg(DbPostgresql):
    
 # .............................................................................
    def getOccurrenceSet(self, occid, squid, userId, epsg):
+      """
+      @summary: get an occurrenceset for the given id or squid and User
+      @param occid: the database primary key of the Occurrence record
+      @param squid: a Squid (Species Thread) string, tied to a ScientificName
+      @param userId: the database primary key of the LMUser
+      @param epsg: Spatial reference system code from EPSG
+      """
       row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
                                                   occid, userId, squid, epsg)
       occ = self._createOccurrenceLayer(row, idxs)
@@ -988,12 +1047,14 @@ class Borg(DbPostgresql):
 # ...............................................
    def updateOccurrenceSet(self, occ, polyWkt, pointsWkt):
       """
-      @summary Method to update an occurrenceSet object in the MAL database with 
-               the verify hash, displayname, dlocation, queryCount, bbox, geom, 
-               status/statusmodtime.
-      @param occ the occurrences object to update
-      @note: queryCount should be updated on the object before calling this;
-             geometries should be calculated and sent separately. 
+      @summary: Update OccurrenceLayer attributes: 
+                verify, displayName, dlocation, rawDlocation, queryCount, 
+                bbox, metadata, status, statusModTime, geometries if valid
+      @note: Does not update the userid, squid, and epsgcode (unique constraint) 
+      @param occ: OccurrenceLayer to be updated.  
+      @param polyWkt: geometry for the minimum polygon around these points
+      @param pointsWkt: multipoint geometry for these points
+      @return: True/False for successful update.
       """
       success = False
       metadata = occ.dumpLyrMetadata()
@@ -1092,6 +1153,68 @@ class Borg(DbPostgresql):
                               occ.status, occ.statusModTime, polywkt, pointswkt)
       newOrExistingOcc = self._createOccurrenceLayer(row, idxs)
       return newOrExistingOcc
+
+# .............................................................................
+   def countOccurrenceSets(self, userId, minOccurrenceCount, displayName, 
+                        afterTime, beforeTime, epsg, afterStatus, beforeStatus):
+      """
+      @summary: Count all OccurrenceSets matching the filter conditions 
+      @param userId: User (owner) for which to return occurrencesets.  
+      @param minOccurrenceCount: filter by minimum number of points in set.
+      @param displayName: filter by display name *starting with* this string
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param afterStatus: filter by status >= value
+      @param beforeStatus: filter by status <= value
+      @return: a list of OccurrenceSet atoms or full objects
+      """
+      if displayName is not None:
+         displayName = displayName.strip() + '%'
+      row, idxs = self.executeSelectOneFunction('lm_countOccurrenceSets', 
+                                                minOccurrenceCount,
+                                                userId, displayName,
+                                                afterTime, beforeTime, epsg,
+                                                afterStatus, beforeStatus)
+      return self._getCount(row)
+
+# .............................................................................
+   def listOccurrenceSets(self, firstRecNum, maxNum, userId, 
+                          minOccurrenceCount, displayName, afterTime, beforeTime, 
+                          epsg, afterStatus, beforeStatus, atom):
+      """
+      @summary: Return OccurrenceSet Objects or Atoms matching filter conditions 
+      @param firstRecNum: The first record to return, 0 is the first record
+      @param maxNum: Maximum number of records to return
+      @param userId: User (owner) for which to return occurrencesets.  
+      @param minOccurrenceCount: filter by minimum number of points in set.
+      @param displayName: filter by display name
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param afterStatus: filter by status >= value
+      @param beforeStatus: filter by status <= value
+      @param atom: True if return objects will be Atoms, False if full 
+                   OccurrenceLayer objects
+      @return: a list of OccurrenceSet atoms or full objects
+      """
+      if displayName is not None:
+         displayName = displayName.strip() + '%'
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listOccSetAtoms', 
+                              firstRecNum, maxNum, userId, minOccurrenceCount,
+                              displayName, afterTime, beforeTime, epsg, 
+                              afterStatus, beforeStatus)
+         objs = self._getAtoms(rows, idxs)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listOccSetObjects', 
+                              firstRecNum, maxNum, userId, minOccurrenceCount,
+                              displayName, afterTime, beforeTime, epsg, 
+                              afterStatus, beforeStatus)
+         for r in rows:
+            objs.append(self._createOccurrenceSet(r, idxs))
+      return objs
 
 # ...............................................
    def findOrInsertSDMProject(self, proj):

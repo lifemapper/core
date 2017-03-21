@@ -122,6 +122,152 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenariosWhere(usrid varchar,
+                                                  aftertime double precision,
+                                                  beforetime double precision,
+                                                  epsg int,
+                                                  gcm varchar,
+                                                  altpred varchar,
+                                                  dt varchar)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid =  ' || quote_literal(usrid) || ' ';
+   
+   -- filter by scenarios modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND modTime >=  ' || quote_literal(aftertime);
+   END IF;
+
+   -- filter by scenarios modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND modTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by epsg code
+   IF epsg is not null THEN
+      wherecls = wherecls || ' AND epsgcode =  ' || epsg;
+   END IF;
+
+   -- filter by gcm code
+   IF gcm is not null THEN
+      wherecls = wherecls || ' AND gcmcode =  ' || quote_literal(gcm);
+   END IF;
+
+   -- filter by alternate predictor code
+   IF altpred is not null THEN
+      wherecls = wherecls || ' AND altpredcode =  ' || quote_literal(altpred);
+   END IF;
+
+   -- filter by date code
+   IF dt is not null THEN
+      wherecls = wherecls || ' AND datecode =  ' || quote_literal(dt);
+   END IF;
+
+   RETURN wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countScenarios(usrid varchar,
+                                                   aftertime double precision,
+                                                   beforetime double precision,
+                                                   epsg int,
+                                                   gcm varchar,
+                                                   altpred varchar,
+                                                   dt varchar)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   fromcls varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.scenario ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+                          aftertime, beforetime, epsg, gcm, altpred, dt);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by modTime descending
+CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioObjects(firstRecNum int, 
+                                                   maxNum int,
+                                                   usrid varchar,
+                                                   aftertime double precision,
+                                                   beforetime double precision,
+                                                   epsg int,
+                                                   gcm varchar,
+                                                   altpred varchar,
+                                                   dt varchar)
+   RETURNS SETOF lm_v3.scenario AS
+$$
+DECLARE
+   rec lm_v3.scenario;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.scenario ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+                          aftertime, beforetime, epsg, gcm, altpred, dt);
+   ordercls = ' ORDER BY modTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by modTime descending
+CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioAtoms(firstRecNum int, 
+                                                   maxNum int,
+                                                   usrid varchar,
+                                                   aftertime double precision,
+                                                   beforetime double precision,
+                                                   epsg int,
+                                                   gcm varchar,
+                                                   altpred varchar,
+                                                   dt varchar)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT scenarioid, scenarioCode, epsgcode, modTime FROM lm_v3.scenario ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+                          aftertime, beforetime, epsg, gcm, altpred, dt);
+
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteScenario(scenid int)
@@ -703,6 +849,179 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- lm_getFilterOccurrenceSetsWhere
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccurrenceSetsWhere(usr varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid = ' || quote_literal(usr);
+                
+   -- filter by count
+   IF minOccCount is not null THEN
+      wherecls = wherecls || ' AND querycount >= ' || minOccCount;
+   END IF;
+
+   -- filter by displayname
+   IF dispname is not null THEN
+      wherecls = wherecls || ' AND displayname like ' || quote_literal(dispname);
+   END IF;
+
+   -- filter by layers modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND statusModTime >=  ' || quote_literal(aftertime);
+   END IF;
+   
+   -- filter by layers modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND statusModTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by epsgcode
+   IF epsg is not null THEN
+      wherecls = wherecls || ' AND  epsgcode =  ' || epsg;
+   END IF;
+
+   -- filter by status
+   IF afterstat is not null OR beforestat is not null THEN
+      begin
+         IF afterstat = beforestat THEN
+            wherecls = wherecls || ' AND status =  ' || afterstat;
+         ELSE
+            -- filter by status >= given value
+            IF afterstat is not null THEN
+                wherecls = wherecls || ' AND status >=  ' || afterstat;
+            END IF;
+   
+            -- filter by status <= given value
+            IF beforestat is not null THEN
+               wherecls = wherecls || ' AND status <=  ' || beforestat;
+            END IF;
+         END IF;
+      end;
+   END IF;
+   
+   return wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countOccSets(usr varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.occurrenceset ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+                        minOccCount, dispname, aftertime, beforetime, epsg, 
+                        afterstat, beforestat);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   -- run command
+   EXECUTE cmd INTO num;
+   return num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by statusModTime desc
+CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetObjects(firstRecNum int, 
+                                                    maxNum int,
+                                                    usr varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int)
+   RETURNS SETOF lm_v3.OccurrenceSet AS
+$$
+DECLARE
+   rec lm_v3.OccurrenceSet;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.occurrenceset ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+                        minOccCount, dispname, aftertime, beforetime, epsg, 
+                        afterstat, beforestat);
+   ordercls = ' ORDER BY statusModTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by statusModTime desc
+CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetAtoms(firstRecNum int, 
+                                                    maxNum int,
+                                                    usr varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT occurrencesetid, displayname, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+                        minOccCount, dispname, aftertime, beforetime, epsg, 
+                        afterstat, beforestat);
+   ordercls = ' ORDER BY statusModTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_insertMFChain(usr varchar,
