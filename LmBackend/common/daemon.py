@@ -181,6 +181,7 @@ class Daemon(object):
       
       # Try killing the daemon process       
       try:
+         #TODO: Put in a maximum wait time or maximum tries to kill
          while os.path.exists(self.pidfile):
             os.kill(pid, signal.SIGTERM)
             time.sleep(3)
