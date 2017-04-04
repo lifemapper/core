@@ -106,7 +106,7 @@ def test_occurrence_sets(scribe, userId):
    
    # Get
    occId = postedOcc.getId()
-   getOcc = scribe.getOccurrenceSet(occId)
+   getOcc = scribe.getOccurrenceSet(occId=occId)
    assert getOcc is not None
    assert getOcc.getId() == occId
    

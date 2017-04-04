@@ -685,10 +685,10 @@ class Borg(DbPostgresql):
       return objs
 
 # ...............................................
-   def getEnvironmentalType(self, typeid, typecode, usrid):
+   def getEnvironmentalType(self, typeId, typecode, usrid):
       try:
-         if typeid is not None:
-            row, idxs = self.executeSelectOneFunction('lm_getLayerType', typeid)
+         if typeId is not None:
+            row, idxs = self.executeSelectOneFunction('lm_getLayerType', typeId)
          else:
             row, idxs = self.executeSelectOneFunction('lm_getLayerType', 
                                                       usrid, typecode)
@@ -1176,16 +1176,16 @@ class Borg(DbPostgresql):
       return lyrs
    
 # .............................................................................
-   def getOccurrenceSet(self, occid, squid, userId, epsg):
+   def getOccurrenceSet(self, occId, squid, userId, epsg):
       """
       @summary: get an occurrenceset for the given id or squid and User
-      @param occid: the database primary key of the Occurrence record
+      @param occId: the database primary key of the Occurrence record
       @param squid: a species identifier, tied to a ScientificName
       @param userId: the database primary key of the LMUser
       @param epsg: Spatial reference system code from EPSG
       """
       row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
-                                                  occid, userId, squid, epsg)
+                                                  occId, userId, squid, epsg)
       occ = self._createOccurrenceLayer(row, idxs)
       return occ
    
