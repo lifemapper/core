@@ -26,13 +26,19 @@
           02110-1301, USA.
 """
 import os
+from LmServer.base.utilities import getMjdTimeFromISO8601
 from LmServer.common.lmconstants import SESSION_DIR, WEB_DIR
 from LmServer.common.localconstants import APP_PATH, SCRATCH_PATH
 
 # Service path constants (some of these are still in LmServer.common.lmconstants
 STATIC_DIR = 'static'
 
+# CherryPy constants
 SESSION_PATH = os.path.join(SCRATCH_PATH, SESSION_DIR)
+SESSION_KEY = '_cp_username'
+REFERER_KEY = 'lm_referer'
+
+
 STATIC_PATH = os.path.join(APP_PATH, WEB_DIR, STATIC_DIR)
 
 # External namespaces
@@ -41,6 +47,66 @@ STMML_NS_PREFIX = "stmml"
 
 XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance"
 XSI_NS_PREFIX = "xsi" # This is a well-known namespace in ElementTree and will automatically be set to xsi
+
+# This constant is used for processing query parameters.  If no 'processIn' 
+#    key, just take the parameter as it comes in
+QUERY_PARAMETERS = {
+   'aftertime' : {
+      'name' : 'afterTime',
+      'processIn' : getMjdTimeFromISO8601
+   },
+   'algorithmcode' : {
+      'name' : 'algorithmCode',
+   },
+   'beforetime' : {
+      'name' : 'beforeTime',
+      'processIn' : getMjdTimeFromISO8601
+   },
+   'cellsides' : {
+      'name' : 'cellSides',
+      'processIn' : int
+   },
+   'displayname' : {
+      'name' : 'displayName'
+   },
+   'epsgcode' : {
+      'name' : 'epsgCode',
+      'processIn' : int
+   },
+   'iscategorical' : {
+      'name' : 'isCategorical',
+      'processIn' : lambda x: bool(int(x)) # zero is False, one is True
+   },
+   'limit' : {
+      'name' : 'limit',
+      'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
+   },
+   'minimumnumberofpoints' : {
+      'name' : 'minimumNumberOfPoints',
+      'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
+   },
+   'occurrencesetid' : {
+      'name' : 'occurrenceSetId',
+      'processIn' : int
+   },
+   'offset' : {
+      'name' : 'offset',
+      'processIn' : lambda x: max(0, int(x)) # Integer, minimum is zero
+   },
+   'public' : {
+      'name' : 'public',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
+   'scenarioid' : {
+      'name' : 'scenarioId',
+      'processIn' : int
+   },
+   'status' : {
+      'name' : 'status',
+      'processIn' : int
+   },
+}
+
 
 class QueryParamNames:
    AFTER_TIME = {
