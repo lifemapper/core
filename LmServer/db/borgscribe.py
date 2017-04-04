@@ -240,21 +240,21 @@ class BorgScribe(LMObject):
       return lyr
 
 # .............................................................................
-   def countLayers(self, userId=PUBLIC_USER, afterTime=None, beforeTime=None, 
+   def countLayers(self, userId=PUBLIC_USER, squid=None, afterTime=None, beforeTime=None, 
                    epsg=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countLayers()
       """
-      count = self._borg.countLayers(userId, afterTime, beforeTime, epsg)
+      count = self._borg.countLayers(userId, squid, afterTime, beforeTime, epsg)
       return count
 
 # .............................................................................
-   def listLayers(self, firstRecNum, maxNum, userId=PUBLIC_USER, afterTime=None, 
-                  beforeTime=None, epsg=None, atom=True):
+   def listLayers(self, firstRecNum, maxNum, userId=PUBLIC_USER, squid=None, 
+                  afterTime=None, beforeTime=None, epsg=None, atom=True):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listLayers()
       """
-      objs = self._borg.listLayers(firstRecNum, maxNum, userId, 
+      objs = self._borg.listLayers(firstRecNum, maxNum, userId, squid, 
                         afterTime, beforeTime, epsg, atom)
       return objs
 
