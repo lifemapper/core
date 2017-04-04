@@ -37,179 +37,6 @@
 -- ----------------------------------------------------------------------------
 -- LayerType (EnvLayer)
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvType(etypeid int, 
-                                                usr varchar, 
-                                                ecode varchar, 
-                                                gcode varchar, 
-                                                apcode varchar, 
-                                                dtcode varchar)
-   RETURNS lm_v3.EnvType AS
-$$
-DECLARE
-   rec lm_v3.EnvType%rowtype;
-   cmd varchar;
-   wherecls varchar;
-BEGIN
-   IF etypeid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.EnvType WHERE EnvTypeid = etypeid;
-   ELSE
-      begin
-         cmd = 'SELECT * FROM lm_v3.EnvType ';
-         wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
-
-         IF ecode is not null THEN
-            wherecls = wherecls || ' AND envcode =  ' || quote_literal(ecode);
-         ELSE
-            wherecls = wherecls || ' AND envcode IS NULL ';
-         END IF;
-
-         IF gcode is not null THEN
-            wherecls = wherecls || ' AND gcmcode =  ' || quote_literal(gcode);
-         ELSE
-            wherecls = wherecls || ' AND gcmcode IS NULL ';
-         END IF;
-         
-         IF apcode is not null THEN
-            wherecls = wherecls || ' AND altpredcode =  ' || quote_literal(apcode);
-         ELSE
-            wherecls = wherecls || ' AND altpredcode IS NULL ';
-         END IF;
-         
-         IF dtcode is not null THEN
-            wherecls = wherecls || ' AND datecode =  ' || quote_literal(dtcode);
-         ELSE
-            wherecls = wherecls || ' AND datecode IS NULL ';
-         END IF;
-
-         cmd := cmd || wherecls;
-         RAISE NOTICE 'cmd = %', cmd;
-
-         EXECUTE cmd INTO rec;
-      end;
-   END IF;
-
-   RETURN rec;
-END;
-$$  LANGUAGE 'plpgsql' STABLE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinEnvLayer(lyrid int, etypeid int)
-   RETURNS lm_v3.lm_envlayer AS
-$$
-DECLARE
-   temp1 int;
-   temp2 int;
-   rec lm_v3.lm_envlayer%ROWTYPE;
-BEGIN
-   SELECT count(*) INTO temp1 FROM lm_v3.layer WHERE layerId = lyrid;
-   SELECT count(*) INTO temp2 FROM lm_v3.envType WHERE envTypeId = etypeid;
-   IF temp1 < 1 THEN
-      RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
-   ELSIF temp2 < 1 THEN
-      RAISE EXCEPTION 'EnvType with id % does not exist', etypeid;
-   END IF;
-   
-   SELECT * INTO rec FROM lm_v3.lm_envlayer
-      WHERE layerid = lyrid AND envTypeId = etypeid;
-   IF FOUND THEN 
-      RAISE NOTICE 'Layer % and EnvType % are already joined', lyrid, etypeid;
-   ELSE   
-      INSERT INTO EnvLayer (layerid, envTypeId) VALUES (lyrid, etypeid);
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to insert/join EnvLayer';
-      ELSE
-         SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE layerid = lyrid 
-                                                    AND envTypeId = etypeid;
-      END IF;
-   END IF;
-   
-   RETURN rec;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, etypeid int)
-   RETURNS lm_v3.lm_scenlayer AS
-$$
-DECLARE
-   temp int;
-   elid int;
-   rec_scenlyr lm_v3.lm_scenlayer%ROWTYPE;
-BEGIN
-   SELECT count(*) INTO temp FROM lm_v3.scenario WHERE scenarioid = scenid;
-   IF temp < 1 THEN
-      RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
-   END IF;
-   
-   SELECT envlayerid INTO elid FROM lm_v3.lm_joinEnvLayer(lyrid, etypeid);
-   IF FOUND THEN    
-      SELECT * INTO rec_scenlyr FROM lm_v3.lm_scenlayer 
-         WHERE scenarioId = scenid AND envLayerId = elid;
-      IF rec_scenlyr.scenariolayerid IS NULL THEN
-         INSERT INTO lm_v3.ScenarioLayer (scenarioid, envlayerid) 
-                                  VALUES (scenid, elid);
-         IF NOT FOUND THEN
-            RAISE EXCEPTION 'Unable to insert/join EnvLayer';
-         ELSE
-            SELECT * INTO rec_scenlyr FROM lm_v3.ScenarioLayer 
-               WHERE scenarioId = scenid AND envLayerId = elid;
-         END IF;
-      END IF;
-   END IF;
-   
-   RETURN rec_scenlyr;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
--- Note: delete ScenarioLayer join, 
---       possibly EnvLayer join, EnvType, Layer
-CREATE OR REPLACE FUNCTION lm_v3.lm_deleteScenarioLayer(elyrid int, scenid int)
-RETURNS int AS
-$$
-DECLARE
-   success int := -1;
-   delLayerSuccess int;
-   scentotal int;
-   typetotal int;
-   etypeid int;
-BEGIN
-   -- Delete from joined ScenarioLayer table, success based on this
-   DELETE FROM lm_v3.ScenarioLayer 
-      WHERE envLayerId = elyrid AND scenarioid = scenid;
-   -- Success based on ScenarioLayer deletion
-   IF FOUND THEN
-      success = 0;
-   END IF;
-      
-   -- If not used in other Scenarios, delete from joined EnvLayer table
-   SELECT count(*) INTO scentotal FROM lm_v3.ScenarioLayer WHERE envLayerId = elyrid;
-   RAISE NOTICE 'EnvLayer found in % other scenarios', scentotal;
-   IF scentotal = 0 THEN
-      DELETE FROM lm_v3.EnvLayer WHERE envLayerId = elyrid;
-
-      -- If EnvType is orphaned, delete
-      SELECT envTypeId INTO etypeid FROM lm_v3.EnvType 
-         WHERE envTypeId = etypeid AND layerId = lyrId;
-      RAISE NOTICE 'EnvType id %', etypeid;
-      SELECT count(*) INTO typetotal FROM lm_v3.EnvLayer 
-         WHERE envTypeId = etypeid;
-      IF typetotal = 0 THEN
-         DELETE FROM lm_v3.EnvType WHERE envTypeId = etypeid; 
-      END IF;
-      
-      -- Delete from Layer table (only if orphaned)
-      SELECT * INTO delLayerSuccess FROM lm_v3.lm_deleteLayer(lyrid);
-      RAISE NOTICE 'Deleted layer result %', delLayerSuccess;
-   END IF;
-   
-   RETURN success;
-END;
-$$  LANGUAGE 'plpgsql' VOLATILE;
-
--- ----------------------------------------------------------------------------
--- EnvLayer
--- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenLayer(scenid int,
                                           lyrid int,
                                           usr varchar,
@@ -269,6 +96,120 @@ BEGIN
    RETURN rec_scenlyr;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findEnvType(etypeid int, 
+                                                usr varchar, 
+                                                ecode varchar, 
+                                                gcode varchar, 
+                                                apcode varchar, 
+                                                dtcode varchar)
+   RETURNS lm_v3.EnvType AS
+$$
+DECLARE
+   rec lm_v3.EnvType%rowtype;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   IF etypeid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.EnvType WHERE EnvTypeid = etypeid;
+   ELSE
+      begin
+         cmd = 'SELECT * FROM lm_v3.EnvType ';
+         wherecls = ' WHERE userid =  ' || quote_literal(usr) ;
+
+         IF ecode is not null THEN
+            wherecls = wherecls || ' AND envcode =  ' || quote_literal(ecode);
+         ELSE
+            wherecls = wherecls || ' AND envcode IS NULL ';
+         END IF;
+
+         IF gcode is not null THEN
+            wherecls = wherecls || ' AND gcmcode =  ' || quote_literal(gcode);
+         ELSE
+            wherecls = wherecls || ' AND gcmcode IS NULL ';
+         END IF;
+         
+         IF apcode is not null THEN
+            wherecls = wherecls || ' AND altpredcode =  ' || quote_literal(apcode);
+         ELSE
+            wherecls = wherecls || ' AND altpredcode IS NULL ';
+         END IF;
+         
+         IF dtcode is not null THEN
+            wherecls = wherecls || ' AND datecode =  ' || quote_literal(dtcode);
+         ELSE
+            wherecls = wherecls || ' AND datecode IS NULL ';
+         END IF;
+
+         cmd := cmd || wherecls;
+         RAISE NOTICE 'cmd = %', cmd;
+
+         EXECUTE cmd INTO rec;
+      end;
+   END IF;
+
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE; 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenarioLayer(scenid int, lyrid int, etypeid int)
+   RETURNS lm_v3.lm_scenlayer AS
+$$
+DECLARE
+   temp int;
+   elid int;
+   rec_scenlyr lm_v3.lm_scenlayer%ROWTYPE;
+BEGIN
+   SELECT count(*) INTO temp FROM lm_v3.scenario WHERE scenarioid = scenid;
+   IF temp < 1 THEN
+      RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
+   END IF;
+   
+   SELECT envlayerid INTO elid FROM lm_v3.lm_joinEnvLayer(lyrid, etypeid);
+   IF FOUND THEN    
+      SELECT * INTO rec_scenlyr FROM lm_v3.lm_scenlayer 
+         WHERE scenarioId = scenid AND envLayerId = elid;
+      IF rec_scenlyr.scenariolayerid IS NULL THEN
+         INSERT INTO lm_v3.ScenarioLayer (scenarioid, envlayerid) 
+                                  VALUES (scenid, elid);
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to insert/join EnvLayer';
+         ELSE
+            SELECT * INTO rec_scenlyr FROM lm_v3.ScenarioLayer 
+               WHERE scenarioId = scenid AND envLayerId = elid;
+         END IF;
+      END IF;
+   END IF;
+   
+   RETURN rec_scenlyr;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- Note: delete ScenarioLayer join only
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteScenarioLayer(elyrid int, scenid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+BEGIN
+   -- Delete from joined ScenarioLayer table, success based on this
+   DELETE FROM lm_v3.ScenarioLayer 
+      WHERE envLayerId = elyrid AND scenarioid = scenid;
+
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- EnvLayer
+-- ----------------------------------------------------------------------------
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrid int,
@@ -332,6 +273,63 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinEnvLayer(lyrid int, etypeid int)
+   RETURNS lm_v3.lm_envlayer AS
+$$
+DECLARE
+   temp1 int;
+   temp2 int;
+   rec lm_v3.lm_envlayer%ROWTYPE;
+BEGIN
+   SELECT count(*) INTO temp1 FROM lm_v3.layer WHERE layerId = lyrid;
+   SELECT count(*) INTO temp2 FROM lm_v3.envType WHERE envTypeId = etypeid;
+   IF temp1 < 1 THEN
+      RAISE EXCEPTION 'Layer with id % does not exist', lyrid;
+   ELSIF temp2 < 1 THEN
+      RAISE EXCEPTION 'EnvType with id % does not exist', etypeid;
+   END IF;
+   
+   SELECT * INTO rec FROM lm_v3.lm_envlayer
+      WHERE layerid = lyrid AND envTypeId = etypeid;
+   IF FOUND THEN 
+      RAISE NOTICE 'Layer % and EnvType % are already joined', lyrid, etypeid;
+   ELSE   
+      INSERT INTO EnvLayer (layerid, envTypeId) VALUES (lyrid, etypeid);
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to insert/join EnvLayer';
+      ELSE
+         SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE layerid = lyrid 
+                                                    AND envTypeId = etypeid;
+      END IF;
+   END IF;
+   
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- Note: if orphaned, delete EnvLayer join, EnvType, Layer
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteEnvType(etypeid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+   typetotal int;
+BEGIN
+   SELECT count(*) INTO typetotal FROM lm_v3.EnvLayer WHERE envTypeId = etypeid;
+   IF typetotal = 0 THEN
+      DELETE FROM lm_v3.EnvType WHERE envTypeId = etypeid; 
+   END IF;
+
+   IF FOUND THEN
+      success = 0;      
+   END IF;
+   
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvType(etypeid int, 
                                                         usr varchar,
                                                         env varchar,
@@ -383,6 +381,40 @@ BEGIN
    RETURN;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: if orphaned, delete EnvLayer join, EnvType, Layer
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteEnvLayer(elyrid int)
+RETURNS int AS
+$$
+DECLARE
+   lyrid int;
+   etypeid int;
+   scenCount int;
+   delLyrSuccess int := -1;
+   delETSuccess int := -1;
+BEGIN
+   -- Get LayerId, EnvTypeId
+   SELECT layerid, envtypeid INTO lyrid, etypeid FROM lm_v3.envlayer 
+      WHERE envLayerId = elyrid;
+   SELECT count(*) INTO scenCount FROM lm_v3.ScenarioLayer 
+      WHERE envLayerId = elyrid;
+   RAISE NOTICE 'LayerId, EnvTypeId, ScenCount %, %, %', lyrid, etypeid, scenCount;
+      
+   -- If no Scenarios, delete from EnvLayer join
+   IF scenCount = 0 THEN
+      DELETE FROM lm_v3.EnvLayer WHERE envLayerId = elyrid;
+      
+      -- If orphaned, delete Layer, EnvType
+      SELECT * INTO delLyrSuccess FROM lm_v3.lm_deleteLayer(lyrid);
+      SELECT * INTO delETSuccess FROM lm_v3.lm_deleteEnvType(etypeid);
+
+      RAISE NOTICE 'Deleted Layer, EnvType results %, %', delLyrSuccess, delETSuccess;
+   END IF;
+   
+   RETURN delLyrSuccess;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterEnvLayer(usr varchar, 
@@ -1493,10 +1525,9 @@ DECLARE
    currTotal int;
 BEGIN
    SELECT count(*) INTO currTotal FROM lm_v3.envlayer WHERE layerid = lyrid;
-   total = total + currTotal;
-   SELECT count(*) INTO currTotal FROM lm_v3.sdmproject WHERE layerid = lyrid 
-                                                           OR mdlmaskId = lyrid 
-                                                           OR mdlmaskId = lyrid;
+   total = currTotal;
+   SELECT count(*) INTO currTotal FROM lm_v3.sdmproject 
+      WHERE layerid = lyrid OR mdlmaskId = lyrid OR mdlmaskId = lyrid;
    total = total + currTotal;
    SELECT count(*) INTO currTotal FROM lm_v3.shapegrid WHERE layerid = lyrid;
    total = total + currTotal;
@@ -1517,7 +1548,7 @@ DECLARE
    success int := -1;
    refCount int;
 BEGIN
-   SELECT * from lm_v3.lm_countLayerReferences INTO refCount;
+   SELECT * INTO refCount FROM lm_v3.lm_countLayerReferences(lyrid);
    IF refCount = 0 THEN
       DELETE FROM lm_v3.Layer WHERE layerid = lyrid;
       IF FOUND THEN
