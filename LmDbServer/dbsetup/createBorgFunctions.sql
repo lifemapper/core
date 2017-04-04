@@ -122,7 +122,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenariosWhere(usrid varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenarios(usrid varchar,
                                                   aftertime double precision,
                                                   beforetime double precision,
                                                   epsg int,
@@ -187,7 +187,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.scenario ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usrid, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
@@ -218,7 +218,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.scenario ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usrid, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
    ordercls = ' ORDER BY modTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
@@ -255,7 +255,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT scenarioid, scenarioCode, epsgcode, modTime FROM lm_v3.scenario ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usrid, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
 
    cmd := cmd || wherecls;
@@ -851,8 +851,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
--- lm_getFilterOccurrenceSetsWhere
-CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccurrenceSetsWhere(usr varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
                                                     minOccCount int,
                                                     dispname varchar,
                                                     aftertime double precision,
@@ -932,7 +931,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    cmd := cmd || wherecls;
@@ -966,7 +965,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    ordercls = ' ORDER BY statusModTime DESC ';
@@ -1005,7 +1004,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT occurrencesetid, displayname, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    ordercls = ' ORDER BY statusModTime DESC ';
