@@ -88,10 +88,9 @@ class BorgScribe(LMObject):
       self._borg.close()
       
 # ...............................................
-   def insertAlgorithm(self, alg, modtime=None):
+   def findOrInsertAlgorithm(self, alg, modtime=None):
       """
-      @summary Inserts an Algorithm into the database
-      @param alg: The algorithm to add
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertAlgorithm()
       """
       algo = self._borg.findOrInsertAlgorithm(alg, modtime)
       return algo
@@ -117,7 +116,11 @@ class BorgScribe(LMObject):
       return total
 
 # ...............................................
-   def insertScenarioLayer(self, lyr, scenarioid=None):
+   def findOrInsertEnvLayer(self, lyr, scenarioid=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertEnvLayer()
+      @note: This inserts an EnvLayer and optionally joins it to a scenario
+      """
       updatedLyr = None
       if isinstance(lyr, EnvLayer):
          if lyr.isValidDataset():
@@ -129,8 +132,12 @@ class BorgScribe(LMObject):
       return updatedLyr
 
 # ...............................................
-   def deleteScenarioLayer(self, envlyr, scenarioid):
-      success = self._borg.deleteEnvLayer(envlyr, scenarioid)
+   def deleteScenarioLayer(self, envlyr, scenarioid=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::deleteScenarioLayer()
+      @note: This deletes the join only, not the EnvLayer
+      """
+      success = self._borg.deleteScenarioLayer(envlyr, scenarioid)
       return success
 
 # .............................................................................
@@ -161,24 +168,30 @@ class BorgScribe(LMObject):
       return objs
 
 # ...............................................
-   def insertLayerTypeCode(self, envType):
+   def findOrInsertEnvType(self, envType):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertEnvType()
+      """
       if isinstance(envType, EnvType):
-         newOrExistingET = self._borg.findOrInsertEnvironmentalType(envtype=envType)
+         newOrExistingET = self._borg.findOrInsertEnvType(envtype=envType)
       else:
          raise LMError(currargs='Invalid object for EnvType insertion')
       return newOrExistingET
 
 # ...............................................
-   def insertScenario(self, scen):
+   def findOrInsertScenario(self, scen):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenario()
+      """
       updatedScen = self._borg.findOrInsertScenario(scen)
       scenId = updatedScen.getId()
       for lyr in scen.layers:
-         updatedLyr = self.insertScenarioLayer(lyr, scenId)
+         updatedLyr = self.findOrInsertEnvLayer(lyr, scenId)
          updatedScen.addLayer(updatedLyr)
       return updatedScen
    
 # ...............................................
-   def insertUser(self, usr):
+   def findOrInsertUser(self, usr):
       """
       @copydoc LmServer.db.catalog_borg.Borg::findOrInsertUser()
       """
@@ -194,7 +207,7 @@ class BorgScribe(LMObject):
       return borgUser
 
 # ...............................................
-   def insertTaxonomySource(self, taxSourceName, taxSourceUrl):
+   def findOrInsertTaxonSource(self, taxSourceName, taxSourceUrl):
       taxSource = self._borg.findOrInsertTaxonSource(taxSourceName, 
                                                      taxSourceUrl)
       return taxSource

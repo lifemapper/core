@@ -699,10 +699,10 @@ class Borg(DbPostgresql):
       return envType
 
 # ...............................................
-   def findOrInsertEnvironmentalType(self, envtype):
+   def findOrInsertEnvType(self, envtype):
       """
-      @summary: Insert or find _EnvironmentalType values.
-      @param envtype: An EnvironmentalType or EnvironmentalLayer object
+      @summary: Insert or find EnvType values.
+      @param envtype: An EnvType or EnvLayer object
       @return: new or existing EnvironmentalType
       """
       currtime = mx.DateTime.utc().mjd
@@ -996,9 +996,10 @@ class Borg(DbPostgresql):
 
 
 # ...............................................
-   def deleteEnvLayer(self, envlyr, scenarioId):
+   def deleteScenarioLayer(self, envlyr, scenarioId):
       """
-      @summary: Deletes object from database
+      @summary: Un-joins EnvLayer from scenario (if not None) and deletes Layer 
+                if it is not in any Scenarios or MatrixColumns
       @return: True/False for success of operation
       """
       success = self.executeModifyFunction('lm_deleteScenarioLayer', 

@@ -76,7 +76,7 @@ def addUsers(scribe, userId, userEmail):
          pass
       else:
          scribe.log.info('  Insert user {} ...'.format(usrmeta['id']))
-         tmp = scribe.insertUser(user)
+         tmp = scribe.findOrInsertUser(user)
 
 # ...............................................
 def addAlgorithms(scribe):
@@ -91,7 +91,7 @@ def addAlgorithms(scribe):
               'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
       alg = Algorithm(alginfo.code, metadata=meta)
       scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
-      algid = scribe.insertAlgorithm(alg)
+      algid = scribe.findOrInsertAlgorithm(alg)
       ids.append(algid)
    return ids
 #    for algcode, algdict in ALGORITHM_DATA.iteritems():
@@ -101,7 +101,7 @@ def addAlgorithms(scribe):
 #             algmeta[k] = v
 #       alg = Algorithm(algcode, metadata=algmeta)
 #       scribe.log.info('  Insert algorithm {} ...'.format(algcode))
-#       algid = scribe.insertAlgorithm(alg)
+#       algid = scribe.findOrInsertAlgorithm(alg)
 #       ids.append(algid)
 #    return ids
 
@@ -384,7 +384,7 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
    """
    for scode, scen in scenarios.iteritems():
       scribe.log.info('Insert scenario {}'.format(scode))
-      newscen = scribe.insertScenario(scen)
+      newscen = scribe.findOrInsertScenario(scen)
 
 # ...............................................
 def _getConfiguredMetadata(META, pkgMeta):
@@ -706,7 +706,7 @@ if __name__ == '__main__':
       # Insert all taxonomic sources for now
       logger.info('  Insert taxonomy metadata ...')
       for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = scribeWithBorg.insertTaxonomySource(taxInfo['name'],
+         taxSourceId = scribeWithBorg.findOrInsertTaxonSource(taxInfo['name'],
                                                            taxInfo['url'])
 # .............................
       # Write config file for this archive
