@@ -122,7 +122,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenariosWhere(usrid varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenarios(usr varchar,
                                                   aftertime double precision,
                                                   beforetime double precision,
                                                   epsg int,
@@ -134,7 +134,7 @@ $$
 DECLARE
    wherecls varchar;
 BEGIN
-   wherecls = ' WHERE userid =  ' || quote_literal(usrid) || ' ';
+   wherecls = ' WHERE userid =  ' || quote_literal(usr) || ' ';
    
    -- filter by scenarios modified after given time
    IF aftertime is not null THEN
@@ -171,7 +171,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_countScenarios(usrid varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_countScenarios(usr varchar,
                                                    aftertime double precision,
                                                    beforetime double precision,
                                                    epsg int,
@@ -187,7 +187,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.scenario ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
@@ -201,7 +201,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- Note: order by modTime descending
 CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioObjects(firstRecNum int, 
                                                    maxNum int,
-                                                   usrid varchar,
+                                                   usr varchar,
                                                    aftertime double precision,
                                                    beforetime double precision,
                                                    epsg int,
@@ -218,7 +218,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.scenario ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
    ordercls = ' ORDER BY modTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
@@ -238,7 +238,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- Note: order by modTime descending
 CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioAtoms(firstRecNum int, 
                                                    maxNum int,
-                                                   usrid varchar,
+                                                   usr varchar,
                                                    aftertime double precision,
                                                    beforetime double precision,
                                                    epsg int,
@@ -255,7 +255,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT scenarioid, scenarioCode, epsgcode, modTime FROM lm_v3.scenario ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenariosWhere(usrid, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
 
    cmd := cmd || wherecls;
@@ -348,7 +348,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 -- LmUser
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usrid varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usr varchar, 
                                                      name1 varchar, 
                                                      name2 varchar,
                                                      inst varchar, 
@@ -365,17 +365,17 @@ DECLARE
    success int = -1;
    rec lm_v3.LMUser%rowtype;
 BEGIN
-   SELECT * into rec FROM lm_v3.LMUser WHERE lower(userid) = lower(usrid) 
+   SELECT * into rec FROM lm_v3.LMUser WHERE lower(userid) = lower(usr) 
                                           OR lower(email) = lower(emale);
    IF NOT FOUND THEN 
       INSERT INTO lm_v3.LMUser
          (userId, firstname, lastname, institution, address1, address2, address3, phone,
           email, modTime, password)
          VALUES 
-         (usrid, name1, name2, inst, addr1, addr2, addr3, fone, emale, mtime, psswd);
+         (usr, name1, name2, inst, addr1, addr2, addr3, fone, emale, mtime, psswd);
 
       IF FOUND THEN
-         SELECT INTO rec * FROM lm_v3.LMUser WHERE userid = usrid;
+         SELECT INTO rec * FROM lm_v3.LMUser WHERE userid = usr;
       END IF;
    END IF;
    
@@ -384,14 +384,14 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findUser(usrid varchar, 
+CREATE OR REPLACE FUNCTION lm_v3.lm_findUser(usr varchar, 
                                            emale varchar)
    RETURNS lm_v3.lmuser AS
 $$
 DECLARE
    rec lm_v3.lmuser%rowtype;
 BEGIN
-   SELECT * into rec FROM lm_v3.LMUser WHERE lower(userid) = lower(usrid) 
+   SELECT * into rec FROM lm_v3.LMUser WHERE lower(userid) = lower(usr) 
                                           OR lower(email) = lower(emale);
    RETURN rec;
 END;
@@ -573,7 +573,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- JobChain
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_countMFProcess(usrid varchar(20), 
+CREATE OR REPLACE FUNCTION lm_v3.lm_countMFProcess(usr varchar(20), 
     	                                             stat int)
    RETURNS int AS
 $$
@@ -582,7 +582,7 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   IF usrid IS null THEN
+   IF usr IS null THEN
       SELECT count(*) INTO num FROM lm_v3.MFProcess WHERE status = stat;
    ELSE
       SELECT count(*) INTO num FROM lm_v3.MFProcess WHERE status = stat 
@@ -851,8 +851,7 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
--- lm_getFilterOccurrenceSetsWhere
-CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccurrenceSetsWhere(usr varchar,
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
                                                     minOccCount int,
                                                     dispname varchar,
                                                     aftertime double precision,
@@ -932,7 +931,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    cmd := cmd || wherecls;
@@ -966,7 +965,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    ordercls = ' ORDER BY statusModTime DESC ';
@@ -1005,7 +1004,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT occurrencesetid, displayname, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccurrenceSetsWhere(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    ordercls = ' ORDER BY statusModTime DESC ';
@@ -1066,7 +1065,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(total);
 
    IF usr IS NOT NULL THEN
-      cmd = cmd || ' AND userid = ' || quote_literal(usrid);
+      cmd = cmd || ' AND userid = ' || quote_literal(usr);
    END IF;
    
    cmd := cmd || limitcls;

@@ -133,6 +133,33 @@ class BorgScribe(LMObject):
       success = self._borg.deleteEnvLayer(envlyr, scenarioid)
       return success
 
+# .............................................................................
+   def countEnvLayers(self, userId=PUBLIC_USER, 
+                      envCode=None, gcmcode=None, altpredCode=None, dateCode=None, 
+                      afterTime=None, beforeTime=None, epsg=None, 
+                      envTypeId=None, scenarioId=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countEnvLayers()
+      """
+      count = self._borg.countEnvLayers(userId, envCode, gcmcode, altpredCode, 
+                                        dateCode, afterTime, beforeTime, epsg, 
+                                        envTypeId, scenarioId)
+      return count
+
+# .............................................................................
+   def listEnvLayers(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                     envCode=None, gcmcode=None, altpredCode=None, dateCode=None, 
+                     afterTime=None, beforeTime=None, epsg=None, 
+                     envTypeId=None, scenarioId=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listEnvLayers()
+      """
+      objs = self._borg.listEnvLayers(firstRecNum, maxNum, userId, envCode, 
+                                      gcmcode, altpredCode, dateCode, afterTime, 
+                                      beforeTime, epsg, envTypeId, scenarioId, 
+                                      atom)
+      return objs
+
 # ...............................................
    def insertLayerTypeCode(self, envType):
       if isinstance(envType, EnvType):
@@ -211,6 +238,25 @@ class BorgScribe(LMObject):
       """
       lyr = self._borg.getBaseLayer(lyrId, lyrVerify, userId, lyrName, epsg)
       return lyr
+
+# .............................................................................
+   def countLayers(self, userId=PUBLIC_USER, squid=None, afterTime=None, beforeTime=None, 
+                   epsg=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countLayers()
+      """
+      count = self._borg.countLayers(userId, squid, afterTime, beforeTime, epsg)
+      return count
+
+# .............................................................................
+   def listLayers(self, firstRecNum, maxNum, userId=PUBLIC_USER, squid=None, 
+                  afterTime=None, beforeTime=None, epsg=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listLayers()
+      """
+      objs = self._borg.listLayers(firstRecNum, maxNum, userId, squid, 
+                        afterTime, beforeTime, epsg, atom)
+      return objs
 
 # ...............................................
    def getMatrix(self, mtx=None, mtxId=None):
@@ -335,7 +381,7 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listOccurrenceSets()
       """
-      objs = self._borg.listOccurrenceSets(userId, minOccurrenceCount, 
+      objs = self._borg.listOccurrenceSets(firstRecNum, maxNum, userId, minOccurrenceCount, 
                                            displayName, afterTime, beforeTime, 
                                            epsg, afterStatus, beforeStatus)
       return objs
@@ -363,6 +409,32 @@ class BorgScribe(LMObject):
       """
       newOrExistingProj = self._borg.findOrInsertSDMProject(proj)
       return newOrExistingProj
+
+# .............................................................................
+   def countSDMProjects(self, userId=PUBLIC_USER, displayName=None, 
+                        afterTime=None, beforeTime=None, epsg=None, 
+                        afterStatus=None, beforeStatus=None, occsetId=None, 
+                        algCode=None, mdlscenCode=None, prjscenCode=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countSDMProjects()
+      """
+      count = self._borg.countSDMProjects(userId, displayName, 
+                       afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+                       occsetId, algCode, mdlscenCode, prjscenCode)
+
+# .............................................................................
+   def listSDMProjects(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                       displayName=None, afterTime=None, beforeTime=None, 
+                       epsg=None, afterStatus=None, beforeStatus=None, 
+                       occsetId=None, algCode=None, mdlscenCode=None, 
+                       prjscenCode=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listSDMProjects()
+      """
+      objs = self._borg.listSDMProjects(firstRecNum, maxNum, userId, displayName, 
+                       afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+                       occsetId, algCode, mdlscenCode, prjscenCode, atom)
+      return objs
 
 # ...............................................
    def updateSDMProject(self, proj):
