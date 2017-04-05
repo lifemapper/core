@@ -30,6 +30,8 @@
 
 import cherrypy
 
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.scenario import Scenario
 from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
@@ -45,52 +47,128 @@ class Scenario(LmService):
       """
       @summary: Attempts to delete a scenario
       @param projectionId: The id of the scenario to delete
-      @todo: Need user id
       """
-      pass
+      scn = self.scribe.getScenario(scenarioId)
+      
+      if scn is None:
+         raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
+                                                                  scenarioId))
+      
+      if scn.getUserId() == self.userId:
+         success = self.scribe.deleteObject(scn)
+         if success:
+            cherrypy.response.status = 204
+            return
+         else:
+            raise cherrypy.HTTPError(500, 
+                             'Failed to delete scenario {}'.format(scenarioId))
+      else:
+         raise cherrypy.HTTPError(403,
+               'User {} does not have permission to delete scenario {}'.format(
+                  self.userId, scenarioId))
 
    # ................................
-   def GET(self, scenarioId=None, afterTime=None, beforeTime=None, 
-           epsgCode=None, limit=100, offset=0, public=None):
+   def GET(self, scenarioId=None, afterTime=None, alternatePredictionCode=None,
+           beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
+           limit=100, offset=0, public=None):
       """
       @summary: Performs a GET request.  If a scenario id is provided,
                    attempt to return that item.  If not, return a list of 
                    scenarios that match the provided parameters
       """
       if scenarioId is None:
-         return self._listScenarios(afterTime=afterTime, beforeTime=beforeTime, 
-                  epsgCode=epsgCode, limit=limit, offset=offset, public=public)
+         if public:
+            userId = PUBLIC_USER
+         else:
+            userId = self.userId
+            
+         return self._listScenarios(userId, afterTime=afterTime,
+                      altPredCode=alternatePredictionCode, 
+                      beforeTime=beforeTime, dateCode=dateCode, 
+                      epsgCode=epsgCode, gcmCode=gcmCode, limit=limit, 
+                      offset=offset)
       else:
          return self._getScenario(scenarioId)
    
    # ................................
    @cherrypy.json_in
-   @cherrypy.json_out
+   #@cherrypy.json_out
    def POST(self):
       """
       @summary: Posts a new scenario
-      @todo: User id
       """
-      pass
+      layers = []
+      scnModel = cherrypy.request.json
+
+      try:
+         code = scnModel['code']
+         epsgCode = int(scnModel['epsgCode'])
+         rawLayers = scnModel['layers']
+      except KeyError, ke:
+         # If one of these is missing, we have a bad request
+         raise cherrypy.HTTPError(400, 
+            'code, epsgCode, and layers are required parameters for scenarios')
+      except Exception, e:
+         # TODO: Log error
+         raise cherrypy.HTTPError(500, 'Unknown error: {}'.format(str(e)))
+      
+      metadata = scnModel.get('metadata', {})
+      units = scnModel.get('units', None)
+      resolution = scnModel.get('resolution', None)
+      gcmCode = scnModel.get('gcmCode', None)
+      altPredCode = scnModel.get('altPredCode', None)
+      dateCode = scnModel.get('dateCode', None)
+
+      # Process layers, assume they are Lifemapper IDs for now
+      for lyrId in rawLayers:
+         layers.append(int(lyrId))
+      
+      scn = Scenario(code, self.userId, epsgCode, metadata=metadata, 
+                     units=units, res=resolution, gcmCode=gcmCode, 
+                     altpredCode=altPredCode, dateCode=dateCode, layers=layers)
+      newScn = self.scribe.findOrInsertScenario(scn)
+      
+      # TODO: Return or format
+      return newScn
    
    # ................................
-   @cherrypy.json_in
-   @cherrypy.json_out
-   def PUT(self, scenarioId):
-      pass
+   #@cherrypy.json_in
+   #@cherrypy.json_out
+   #def PUT(self, scenarioId):
+   #   pass
    
    # ................................
    def _getScenario(self, scenarioId):
       """
       @summary: Attempt to get a scenario
       """
-      pass
+      scn = self.scribe.getScenario(scenarioId)
+      
+      if scn is None:
+         raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
+                                                                  scenarioId))
+      
+      if scn.getUserId() in [self.userId, PUBLIC_USER]:
+         
+         # TODO: Return or format
+         return scn
+
+      else:
+         raise cherrypy.HTTPError(403,
+               'User {} does not have permission to get scenario {}'.format(
+                  self.userId, scenarioId))
    
    # ................................
-   def _listScenarios(self, afterTime=None, beforeTime=None, epsgCode=None, 
-                      limit=100, offset=0, public=None):
+   def _listScenarios(self, userId, afterTime=None, altPredCode=None,  
+                      beforeTime=None, dateCode=None, epsgCode=None, 
+                      gcmCode=None, limit=100, offset=0):
       """
       @summary: Return a list of scenarios matching the specified criteria
       """
-      pass
-   
+      scnAtoms = self.scribe.listScenarios(offset, limit, userId=userId, 
+                                    beforeTime=beforeTime, afterTime=afterTime,
+                                    epsg=epsgCode, gcmCode=gcmCode,
+                                    altpredCode=altPredCode, dateCode=dateCode)
+      # TODO: Return or format
+      return scnAtoms
+
