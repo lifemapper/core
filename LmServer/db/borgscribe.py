@@ -132,12 +132,32 @@ class BorgScribe(LMObject):
       return updatedLyr
 
 # ...............................................
-   def deleteScenarioLayer(self, envlyr, scenarioId=None):
+   def getEnvLayer(self, envlyrId=None, lyrId=None, lyrVerify=None, userId=None, 
+                   lyrName=None, epsg=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getEnvLayer()
+      """
+      lyr = self._borg.getEnvLayer(envlyrId, lyrId, lyrVerify, userId, lyrName, epsg)
+      return lyr
+
+# ...............................................
+   def deleteScenarioLayer(self, envlyr, scenarioId):
       """
       @copydoc LmServer.db.catalog_borg.Borg::deleteScenarioLayer()
       @note: This deletes the join only, not the EnvLayer
       """
       success = self._borg.deleteScenarioLayer(envlyr, scenarioId)
+      return success
+
+# ...............................................
+   def deleteEnvLayer(self, envlyr, scenarioId=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::deleteScenarioLayer()
+      @note: This deletes the join only, not the EnvLayer
+      """
+      if scenarioId is not None:
+         scss = self.deleteScenarioLayer(envlyr, scenarioId=scenarioId)
+      success = self._borg.deleteEnvLayer(envlyr)
       return success
 
 # .............................................................................

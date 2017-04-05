@@ -308,6 +308,33 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getEnvLayer(elyrid int,
+                                             lyrid int,
+                                             lyrvfy varchar,
+                                             usr varchar,
+                                             lyrnm varchar,
+                                             epsg int)
+RETURNS lm_v3.lm_envlayer AS
+$$
+DECLARE
+   rec lm_v3.lm_envlayer%rowtype;
+BEGIN
+   IF elyrid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE envlayerid = elyrid;
+   ELSEIF lyrid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE layerid = lyrid;
+   ELSIF lyrverify IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE lyrverify = lyrvfy;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE userid = usr 
+                                           AND lyrname = lyrnm 
+                                           AND epsgcode = epsg;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
 -- Note: if orphaned, delete EnvLayer join, EnvType, Layer
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteEnvType(etypeid int)
 RETURNS int AS

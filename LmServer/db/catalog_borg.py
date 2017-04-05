@@ -895,6 +895,25 @@ class Borg(DbPostgresql):
       newOrExistingLyr = self._createEnvLayer(row, idxs)
       return newOrExistingLyr
 
+# ...............................................
+   def getEnvLayer(self, envlyrId, lyrid, lyrverify, lyruser, lyrname, epsgcode):
+      """
+      @summary: Get and fill a Layer from its layer id, SHASUM hash or 
+                user/name/epsgcode.  
+      @param envlyrId: EnvLayer join id
+      @param lyrid: Layer database id
+      @param lyrverify: SHASUM hash of layer data
+      @param lyruser: Layer user id
+      @param lyrname: Layer name
+      @param lyrid: Layer EPSG code
+      @return: LmServer.base.layer._Layer object
+      """
+      row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify, 
+                                                lyruser, lyrname, epsgcode)
+      lyr = self._createLayer(row, idxs)
+      return lyr
+
+
 # .............................................................................
    def countEnvLayers(self, userId, envCode, gcmcode, altpredCode, dateCode, 
                       afterTime, beforeTime, epsg, envTypeId):
@@ -998,12 +1017,27 @@ class Borg(DbPostgresql):
 # ...............................................
    def deleteScenarioLayer(self, envlyr, scenarioId):
       """
-      @summary: Un-joins EnvLayer from scenario (if not None) and deletes Layer 
-                if it is not in any Scenarios or MatrixColumns
+      @summary: Un-joins EnvLayer from scenario (if not None)
+      @param envlyr: EnvLayer to remove from Scenario
+      @param scenarioId: Id for scenario from which to remove EnvLayer 
       @return: True/False for success of operation
       """
       success = self.executeModifyFunction('lm_deleteScenarioLayer', 
                                            envlyr.getId(), scenarioId)         
+      return success
+
+# ...............................................
+   def deleteEnvLayer(self, envlyr):
+      """
+      @summary: Un-joins EnvLayer from scenario (if not None) and deletes Layer 
+                if it is not in any Scenarios or MatrixColumns
+      @param envlyr: EnvLayer to delete (if orphaned)
+      @return: True/False for success of operation
+      @note: The layer will not be removed if it is used in any scenarios
+      @note: If the EnvType is orphaned, it will also be removed
+      """
+      success = self.executeModifyFunction('lm_deleteEnvLayer', 
+                                           envlyr.getId())         
       return success
 
 # ...............................................
