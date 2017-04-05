@@ -908,9 +908,9 @@ class Borg(DbPostgresql):
       @param lyrid: Layer EPSG code
       @return: LmServer.base.layer._Layer object
       """
-      row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify, 
-                                                lyruser, lyrname, epsgcode)
-      lyr = self._createLayer(row, idxs)
+      row, idxs = self.executeSelectOneFunction('lm_getEnvLayer', envlyrId, 
+                                 lyrid, lyrverify, lyruser, lyrname, epsgcode)
+      lyr = self._createEnvLayer(row, idxs)
       return lyr
 
 
