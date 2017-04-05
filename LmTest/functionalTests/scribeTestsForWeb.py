@@ -30,6 +30,7 @@
 import os
 from random import randint
 
+from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import APP_PATH
 from LmServer.common.log import UnittestLogger
@@ -57,33 +58,45 @@ def test_environmental_layers(scribe, userId, scenarioId=None):
    fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
  
    postName = 'testLyr{0}'.format(randint(0, 10000))
-   # TODO: CJ - add scenario prior to calling this
-   postLyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
-   postedLyr = scribe.findOrInsertEnvLayer(postLyr, scenarioId=scenarioId)
+   postELyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
+   postedELyr = scribe.findOrInsertEnvLayer(postELyr, scenarioId=scenarioId)
     
-   assert postedLyr.getId() is not None
+   assert postedELyr.getId() is not None
     
    # Get
-   lyrId = postedLyr.getId()
-   getLyr = scribe.getLayer(lyrId=lyrId, userId=userId)
-   assert getLyr is not None
-   assert getLyr.getId() == lyrId
+   elyrId = postedELyr.getId()
+   getELyr1 = scribe.getEnvLayer(envlyrId=elyrId)
+   assert getELyr1 is not None
+   assert getELyr1.getId() == elyrId
     
+   getELyr2 = scribe.getEnvLayer(lyrId=postedELyr.getLayerId())
+   assert getELyr2 is not None
+   assert getELyr2.getId() == elyrId
+
+   getELyr3 = scribe.getEnvLayer(lyrVerify=postedELyr.verify)
+   assert getELyr3 is not None
+   assert getELyr3.getId() == elyrId
+
+   getELyr4 = scribe.getEnvLayer(userId=postedELyr.getUserId(), 
+                              lyrName=postedELyr.name, epsg=postedELyr.epsgcode)
+   assert getELyr4 is not None
+   assert getELyr4.getId() == elyrId
+
    # Count
-   lyrCountUsr = scribe.countLayers(userId=userId)
-   lyrCountPub = scribe.countLayers()
+   lyrCountUsr = scribe.countEnvLayers(userId=userId)
+   lyrCountPub = scribe.countEnvLayers()
    assert lyrCountUsr >= 1 # Posted a layer in this function
    assert lyrCountPub >= 0
     
    # List
-   lyrListUsr = scribe.listLayers(0, 100, userId=userId)
-   lyrListPub = scribe.listLayers(0, 100)
+   lyrListUsr = scribe.listEnvLayers(0, 100, userId=userId)
+   lyrListPub = scribe.listEnvLayers(0, 100)
    assert len(lyrListUsr) >= 1
    assert len(lyrListPub) >= 0 # Check that it is at least a list
     
    # Delete
    # Assert we successfully delete the layer we retrieved
-   assert scribe.deleteScenarioLayer(getLyr, scenarioId)
+   assert scribe.deleteEnvLayer(getELyr1)
 
 # .............................................................................
 # Occurrence sets
@@ -207,11 +220,9 @@ def test_scenarios(scribe, userId):
 
 # .............................................................................
 # user
-def test_user(scribe):
+def test_user(scribe, userId, email):
    # Post
    postCode = 'testUser{}'.format(randint(0, 10000))
-   userId = 'tester'
-   email = 'tester@null.nowhere'
    usr = LMUser(userId, email, 'testing', isEncrypted=False)
    postedUser = scribe.findOrInsertUser(usr)
    if postedUser is not None:
@@ -232,21 +243,20 @@ def delete_user(scribe, user):
 
 # .............................................................................
 if __name__ == '__main__':
-   userId = 'anon'
    scribe = BorgScribe(UnittestLogger())
    scribe.openConnections()
    
    # Create Test user
-   user = test_user(scribe)
+   testUser = test_user(scribe, 'tester', 'tester@null.nowhere')
    
    # Run each of the tests, they will throw exceptions if they are not correct
-   test_scenarios(scribe, user.userid)
-   test_environmental_layers(scribe, userId)
-   test_occurrence_sets(scribe, user.userid)
-   test_projections(scribe, user.userid)
+   test_scenarios(scribe, testUser.userid)
+   test_environmental_layers(scribe, DEFAULT_POST_USER)
+   test_occurrence_sets(scribe, testUser.userid)
+   test_projections(scribe, testUser.userid)
    
    # Delete Test user
-   delete_user(scribe, user)
+   delete_user(scribe, testUser)
    
    scribe.closeConnections()
    
@@ -278,22 +288,12 @@ postUser = test_user(scribe)
 fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
 postName = 'testLyr{0}'.format(randint(0, 10000))
 
-postLyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
+postLyr = EnvLayer(postName, DEFAULT_POST_USER, epsg, dlocation=fn, dataFormat='GTiff')
 postedLyr = scribe.findOrInsertEnvLayer(postLyr, scenarioId=None)
- 
 assert postedLyr.getId() is not None
     
 # Get
-lyrId = postedLyr.getId()
-getLyr = scribe.getLayer(lyrId=lyrId, userId=userId)
-assert getLyr is not None
-assert getLyr.getId() == lyrId
 
-# Count
-lyrCountUsr = scribe.countLayers(userId=userId)
-lyrCountPub = scribe.countLayers()
-assert lyrCountUsr >= 1 # Posted a layer in this function
-assert lyrCountPub >= 0
 
 # List
 lyrListUsr = scribe.listLayers(0, 100, userId=userId)
