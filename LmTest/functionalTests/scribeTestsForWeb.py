@@ -55,12 +55,11 @@ def test_environmental_layers(scribe, userId, scenarioId=None):
     
    # We will have a better way to get the data path later, this is more of a 
    #    temporary test, so I'm not worried about it
-   fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
- 
+   fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif') 
    postName = 'testLyr{0}'.format(randint(0, 10000))
+   
    postELyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
-   postedELyr = scribe.findOrInsertEnvLayer(postELyr, scenarioId=scenarioId)
-    
+   postedELyr = scribe.findOrInsertEnvLayer(postELyr, scenarioId=scenarioId)    
    assert postedELyr.getId() is not None
     
    # Get
@@ -265,6 +264,7 @@ if __name__ == '__main__':
 import os
 from random import randint
 
+from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import APP_PATH
 from LmServer.common.log import UnittestLogger
@@ -278,31 +278,53 @@ from LmServer.base.lmobj import LMError
 from LmTest.functionalTests.scribeTestsForWeb import *
 
 epsg = 4326
-userId = 'anon'
-scenarioId=None
+userId = DEFAULT_POST_USER
 scribe = BorgScribe(UnittestLogger())
 scribe.openConnections()
 
 # Create Test user
-postUser = test_user(scribe)
+postUser = test_user(scribe, 'tester', 'tester@null.nowhere')
+
 fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
 postName = 'testLyr{0}'.format(randint(0, 10000))
 
-postLyr = EnvLayer(postName, DEFAULT_POST_USER, epsg, dlocation=fn, dataFormat='GTiff')
-postedLyr = scribe.findOrInsertEnvLayer(postLyr, scenarioId=None)
-assert postedLyr.getId() is not None
-    
+postELyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
+postedELyr = scribe.findOrInsertEnvLayer(postELyr)    
+assert postedELyr.getId() is not None
+ 
 # Get
+elyrId = postedELyr.getId()
+getELyr1 = scribe.getEnvLayer(envlyrId=elyrId)
+assert getELyr1 is not None
+assert getELyr1.getId() == elyrId
+ 
+getELyr2 = scribe.getEnvLayer(lyrId=postedELyr.getLayerId())
+assert getELyr2 is not None
+assert getELyr2.getId() == elyrId
 
+getELyr3 = scribe.getEnvLayer(lyrVerify=postedELyr.verify)
+assert getELyr3 is not None
+assert getELyr3.getId() == elyrId
 
+getELyr4 = scribe.getEnvLayer(userId=postedELyr.getUserId(), 
+                           lyrName=postedELyr.name, epsg=postedELyr.epsgcode)
+assert getELyr4 is not None
+assert getELyr4.getId() == elyrId
+
+# Count
+lyrCountUsr = scribe.countEnvLayers(userId=userId)
+lyrCountPub = scribe.countEnvLayers()
+assert lyrCountUsr >= 1 # Posted a layer in this function
+assert lyrCountPub >= 0
+ 
 # List
-lyrListUsr = scribe.listLayers(0, 100, userId=userId)
-lyrListPub = scribe.listLayers(0, 100)
+lyrListUsr = scribe.listEnvLayers(0, 100, userId=userId)
+lyrListPub = scribe.listEnvLayers(0, 100)
 assert len(lyrListUsr) >= 1
 assert len(lyrListPub) >= 0 # Check that it is at least a list
-
+ 
 # Delete
 # Assert we successfully delete the layer we retrieved
-assert scribe.deleteScenarioLayer(getLyr, scenarioId)
+assert scribe.deleteEnvLayer(getELyr1)
 
 """

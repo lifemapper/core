@@ -521,11 +521,15 @@ class Raster(_Layer):
 #                                              minVal, maxVal, nodataVal)
 #       if msgs:
 #          print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
-      if (resolution is None or bbox is None or gdalType is None or 
-          minVal is None or maxVal is None or nodataVal):
-         (dataFormat, gdalType, dlocation, resolution, minVal, maxVal, 
-          nodataVal, msgs) = self.populateStats(dlocation, gdalType, dataFormat, 
-                                                bbox, resolution, minVal, maxVal, 
+      if (os.path.exists(dlocation) and 
+          (verify is None or gdalType is None or dataFormat is None or 
+           resolution is None or bbox is None or 
+           minVal is None or maxVal is None or nodataVal)):
+         
+         (dlocation, verify, gdalType, dataFormat, bbox, resolution, minVal, 
+          maxVal, nodataVal, msgs) = self.populateStats(dlocation, verify, 
+                                                gdalType, dataFormat, bbox, 
+                                                resolution, minVal, maxVal, 
                                                 nodataVal)
       if msgs:
          print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
@@ -669,7 +673,7 @@ class Raster(_Layer):
       return size
    
 # ...............................................
-   def populateStats(self, dlocation, gdalType, dataFormat, bbox, resolution,
+   def populateStats(self, dlocation, verify, gdalType, dataFormat, bbox, resolution,
                      minVal, maxVal, nodataVal, bandnum=1):
       """
       @summary: Updates or fills layer parameters by reading the data.
@@ -678,61 +682,67 @@ class Raster(_Layer):
       @postcondition: renames file with supported extension if it differs
       """
       srs = geoTransform = size = msgs = None
-      if dlocation is not None:
-         msgs = []
-         if (os.path.exists(dlocation) and 
-             (resolution is None or bbox is None or gdalType is None or 
-              minVal is None or maxVal is None or nodataVal is None)) :
-#             msgs.append('File does not exist: {}'.format(dlocation))
-            dataset, band = self._openWithGDAL(dlocation=dlocation, bandnum=bandnum)
-            srs = dataset.GetProjection()
-            size = (dataset.RasterXSize, dataset.RasterYSize)
-            geoTransform = dataset.GetGeoTransform()
-            ulx = geoTransform[0]
-            xPixelSize = geoTransform[1]
-            uly = geoTransform[3]
-            yPixelSize = geoTransform[5]
-            
-            drv = dataset.GetDriver()
-            gdalFormat = drv.GetDescription()
-            if dataFormat is None:
-               dataFormat = gdalFormat
-            elif dataFormat != gdalFormat:
-               msgs.append('Invalid gdalFormat {}, changing to {} for layer {}'
-                           .format(dataFormat, gdalFormat, dlocation))
-               dataFormat = gdalFormat
-            # Rename with correct extension if incorrect
-            head, ext = os.path.splitext(dlocation)
-            correctExt = GDALFormatCodes[dataFormat]['FILE_EXT']
-            if ext != correctExt:
-               msgs.append('Invalid extension {}, renaming to {} for layer {}'
-                           .format(ext, correctExt, dlocation))
-               oldDl = dlocation
-               dlocation = head + correctExt
-               os.rename(oldDl, dlocation)
-   
-            # Assumes square pixels
-            if resolution is None:
-               resolution = xPixelSize
-            if bbox is None:
-               lrx = ulx + xPixelSize * dataset.RasterXSize
-               lry = uly + yPixelSize * dataset.RasterYSize
-               bbox = [ulx, lry, lrx, uly]
-            if gdalType is None:
-               gdalType = band.DataType
-            elif gdalType != band.DataType:
-               msgs.append('Invalid datatype {}, changing to {} for layer {}'
-                           .format(gdalType, band.DataType, dlocation))
-               gdalType = band.DataType
-            bmin, bmax, bmean, bstddev = band.GetStatistics(False,True)
-            if minVal is None:
-               minVal = bmin
-            if maxVal is None:
-               maxVal = bmax
-            if nodataVal is None:
-               nodataVal = band.GetNoDataValue()
-      return (dataFormat, gdalType, dlocation, resolution, minVal, maxVal, 
-              nodataVal, msgs)
+      msgs = []
+#       msgs.append('File does not exist: {}'.format(dlocation))
+      dataset, band = self._openWithGDAL(dlocation=dlocation, bandnum=bandnum)
+      srs = dataset.GetProjection()
+      size = (dataset.RasterXSize, dataset.RasterYSize)
+      geoTransform = dataset.GetGeoTransform()
+      ulx = geoTransform[0]
+      xPixelSize = geoTransform[1]
+      uly = geoTransform[3]
+      yPixelSize = geoTransform[5]
+      
+      newVerify = self.computeHash(dlocation=dlocation)
+      if verify is not None and verify <> newVerify:
+         msg =('Computed hash value {} does not match reported value {}'
+               .format(newVerify, verify))
+         raise LMError(currargs=msg)
+#          msgs.append('Computed hash value {} does not match reported value {}'
+#                      .format(newVerify, verify))
+      else:
+         verify = newVerify
+      
+      drv = dataset.GetDriver()
+      gdalFormat = drv.GetDescription()
+      if dataFormat is None:
+         dataFormat = gdalFormat
+      elif dataFormat != gdalFormat:
+         msgs.append('Invalid gdalFormat {}, changing to {} for layer {}'
+                     .format(dataFormat, gdalFormat, dlocation))
+         dataFormat = gdalFormat
+      # Rename with correct extension if incorrect
+      head, ext = os.path.splitext(dlocation)
+      correctExt = GDALFormatCodes[dataFormat]['FILE_EXT']
+      if ext != correctExt:
+         msgs.append('Invalid extension {}, renaming to {} for layer {}'
+                     .format(ext, correctExt, dlocation))
+         oldDl = dlocation
+         dlocation = head + correctExt
+         os.rename(oldDl, dlocation)
+
+      # Assumes square pixels
+      if resolution is None:
+         resolution = xPixelSize
+      if bbox is None:
+         lrx = ulx + xPixelSize * dataset.RasterXSize
+         lry = uly + yPixelSize * dataset.RasterYSize
+         bbox = [ulx, lry, lrx, uly]
+      if gdalType is None:
+         gdalType = band.DataType
+      elif gdalType != band.DataType:
+         msgs.append('Invalid datatype {}, changing to {} for layer {}'
+                     .format(gdalType, band.DataType, dlocation))
+         gdalType = band.DataType
+      bmin, bmax, bmean, bstddev = band.GetStatistics(False,True)
+      if minVal is None:
+         minVal = bmin
+      if maxVal is None:
+         maxVal = bmax
+      if nodataVal is None:
+         nodataVal = band.GetNoDataValue()
+      return (dlocation, verify, gdalType, dataFormat, bbox, resolution, 
+              minVal, maxVal, nodataVal, msgs)
          
 # ...............................................
    def readFromUploadedData(self, datacontent, overwrite=False, 
