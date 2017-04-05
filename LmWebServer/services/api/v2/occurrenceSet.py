@@ -27,11 +27,12 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-
 import cherrypy
 
-from LmWebServer.services.api.v2.base import LmService
+from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.occlayer import OccurrenceLayer
+from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
 @cherrypy.expose
@@ -75,31 +76,53 @@ class OccurrenceSet(LmService):
                    occurrence sets that match the provided parameters
       """
       if occSetId is None:
-         return self._listOccurrenceSets(afterTime=afterTime, 
+         if public:
+            userId = PUBLIC_USER
+         else:
+            userId = self.userId
+            
+         return self._listOccurrenceSets(userId, afterTime=afterTime, 
                 beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
-                limit=limit, offset=offset, public=public)
+                limit=limit, offset=offset)
       else:
          return self._getOccurrenceSet(occSetId)
    
    # ................................
    @cherrypy.json_out
-   def POST(self, displayName, epsgCode, additionalMetadata=None):
+   def POST(self, displayName, epsgCode, squid=None, additionalMetadata=None):
       """
       @summary: Posts a new occurrence set
       @param displayName: The display name for the new occurrence set
       @param epsgCode: The EPSG code for the new occurrence set
       @param additionalMetadata: Additional JSON metadata to add to this 
                                     occurrence set
-      @todo: Add file type parameter or look at headers?
-      @todo: User id
       """
-      pass
+      contentType = cherrypy.request.headers['Content-Type']
+      #features = None
+      
+      # Get features
+      if contentType == 'application/octet-stream':
+         uploadType = 'shapefile'
+      elif contentType == 'text/csv':
+         uploadType = 'csv'
+      #elif contentType == 'application/json':
+      #   uploadType = None
+      #   features = json.loads(cherrypy.request.body)
+      
+      occ = OccurrenceLayer(displayName, self.userId, epsgCode, -1,
+                            squid=squid, lyrMetadata=additionalMetadata)
+      occ.readFromUploadedData(cherrypy.request.body, uploadType)
+      #if features:
+      #   occ.setFeatures(features, featureAttributes, featureCount)
+      newOcc = self.scribe.findOrInsertOccurrenceSet(occ)
+      
+      # TODO: Return or format
    
    # ................................
-   @cherrypy.json_out
-   def PUT(self, occSetId, occSetModel):
-      pass
+   #@cherrypy.json_out
+   #def PUT(self, occSetId, occSetModel):
+   #   pass
    
    # ................................
    def _getOccurrenceSet(self, occSetId):
@@ -112,28 +135,39 @@ class OccurrenceSet(LmService):
          raise cherrypy.HTTPError(404, "Occurrence set not found")
       
       # If allowed to, delete
-      if occ.getUserId() == self.userId:
+      if occ.getUserId() in [self.userId, PUBLIC_USER]:
          return occ
       else:
          raise cherrypy.HTTPError(403, 
-                 "User does not have permission to delete this occurrence set")
+               'User {} does not have permission to delete this occurrence set'.format(
+                  self.userId))
    
    # ................................
-   def _listOccurrenceSets(self, afterTime=None, beforeTime=None, 
+   def _listOccurrenceSets(self, userId, afterTime=None, beforeTime=None, 
                            displayName=None, epsgCode=None, 
                            minimumNumberOfPoints=1, limit=100, offset=0, 
-                           public=None, status=None):
+                           status=None):
       """
       @summary: Return a list of occurrence sets matching the specified 
                    criteria
       """
-      if public:
-         queryUser = PUBLIC_USER
-      else:
-         queryUser = self.userId
-         
-      return self.scribe.listOccurrenceSets(offset, limit, userId=queryUser,
+      afterStatus = None
+      beforeStatus = None
+
+      # Process status parameter
+      if status:
+         if status < JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE - 1
+         elif status == JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE + 1
+            afterStatus = JobStatus.COMPLETE - 1
+         else:
+            afterStatus = status - 1
+      
+      # TODO: Return or format      
+      return self.scribe.listOccurrenceSets(offset, limit, userId=userId,
                      minOccurrenceCount=minimumNumberOfPoints, 
                      displayName=displayName, afterTime=afterTime, 
-                     beforeTime=beforeTime, epsg=epsgCode, status=status)
+                     beforeTime=beforeTime, epsg=epsgCode, 
+                     beforeStatus=beforeStatus, afterStatus=afterStatus)
    

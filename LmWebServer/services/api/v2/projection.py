@@ -30,7 +30,12 @@
 
 import cherrypy
 
+from LmCommon.common.lmconstants import JobStatus
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.sdmproj import SDMProjection
 from LmWebServer.services.api.v2.base import LmService
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.algorithm import Algorithm
 
 # .............................................................................
 @cherrypy.expose
@@ -45,24 +50,50 @@ class Projection(LmService):
       """
       @summary: Attempts to delete a projection
       @param projectionId: The id of the projection to delete
-      @todo: Need user id
       """
-      pass
+      prj = self.scribe.getSDMProject(projectionId)
+      
+      if prj is None:
+         raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
+                                                                 projectionId))
+      
+      if prj.getUserId() == self.userId:
+         success = self.scribe.deleteObject(prj)
+         if success:
+            cherrypy.response.status = 204
+            return
+         else:
+            raise cherrypy.HTTPError(500, 
+                         'Failed to delete projection {}'.format(projectionId))
+      else:
+         raise cherrypy.HTTPError(403, 
+            'User {} does not have permission to delete projection {}'.format(
+               self.userId, projectionId))
 
    # ................................
-   def GET(self, projectionId=None, afterTime=None, beforeTime=None, 
-           displayName=None, epsgCode=None, limit=100, occurrenceSetId=None,
-           offset=0, public=None, scenarioId=None, status=None):
+   def GET(self, projectionId=None, afterTime=None, algorithmCode=None, 
+                 beforeTime=None, displayName=None, epsgCode=None, limit=100, 
+                 modelScenarioCode=None, occurrenceSetId=None, offset=0, 
+                 projectionScenarioCode=None, public=None, scenarioId=None, 
+                 status=None):
       """
       @summary: Performs a GET request.  If a projection id is provided,
                    attempt to return that item.  If not, return a list of 
                    projections that match the provided parameters
       """
       if projectionId is None:
-         return self._listProjections(afterTime=afterTime, 
-            beforeTime=beforeTime, displayName=displayName, epsgCode=epsgCode, 
-            limit=limit, occurrenceSetId=occurrenceSetId, offset=offset, 
-            public=public, scenarioId=scenarioId, status=status)
+         if public:
+            userId = PUBLIC_USER
+         else:
+            userId = self.userId
+            
+         return self._listProjections(userId, afterTime=afterTime, 
+                                 algCode=algorithmCode, beforeTime=beforeTime, 
+                                 displayName=displayName, epsgCode=epsgCode, 
+                                 limit=limit, mdlScnCode=modelScenarioCode, 
+                                 occurrenceSetId=occurrenceSetId, offset=offset,
+                                 prjScnCode=projectionScenarioCode, 
+                                 status=status)
       else:
          return self._getProjection(projectionId)
    
@@ -75,26 +106,96 @@ class Projection(LmService):
       @todo: User id
       """
       projectionData = cherrypy.request.json
+      
+      try:
+         occSetId = int(projectionData['occurrenceSetId'])
+         occ = self.scribe.getOccurrenceSet(occId=occSetId)
+         algoCode = projectionData['algorithmCode']
+         modelScenarioId = projectionData['modelScenario']
+         mdlScn = self.scribe.getScenario(modelScenarioId)
+         prjScns = []
+         for prjScn in projectionData['projectionScenario']:
+            prjScns.append(self.scribe.getScenario(int(prjScn)))
+      except KeyError, ke:
+         raise cherrypy.HTTPError(400, 
+                            'Missing projection parameter: {}'.format(str(ke)))
+
+      # TODO: Process masks and maybe others like metadata
+
+      chain = MFChain(self.userId, status=JobStatus.GENERAL)
+      insMFChain = self.scribe.insertMFChain(chain)
+      
+      rules = []
+      
+      algo = Algorithm(algoCode)
+      
+      for prjScn in prjScns:
+         prj = SDMProjection(occ, algo, mdlScn, prjScn)
+         newPrj = self.scribe.findOrInsertSDMProject(prj)
+         rules.extend(newPrj.computeMe())
+         
+      insMFChain.addCommands(rules)
+      insMFChain.write()
+      insMFChain.updateStatus(JobStatus.INITIALIZE)
+      self.scribe.updateObject(insMFChain)
+         
+      # TODO: What do we return?
+      cherrypy.response.status = 202
+      
+   
    
    # ................................
-   @cherrypy.json_in
-   @cherrypy.json_out
-   def PUT(self, projectionId):
-      pass
+   #@cherrypy.json_in
+   #@cherrypy.json_out
+   #def PUT(self, projectionId):
+   #   pass
    
    # ................................
    def _getProjection(self, projectionId):
       """
       @summary: Attempt to get a projection
       """
-      pass
-   
+      prj = self.scribe.getSDMProject(projectionId)
+      
+      if prj is None:
+         raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
+                                                                 projectionId))
+      
+      if prj.getUserId() in [self.userId, PUBLIC_USER]:
+         # TODO: Return or format
+         return prj
+      else:
+         raise cherrypy.HTTPError(403, 
+            'User {} does not have permission to delete projection {}'.format(
+               self.userId, projectionId))
+
    # ................................
-   def _listProjections(self, afterTime=None, beforeTime=None, displayName=None, 
-                        epsgCode=None, limit=100, occurrenceSetId=None, 
-                        offset=0, public=None, scenarioId=None, status=None):
+   def _listProjections(self, userId, afterTime=None, algCode=None, 
+                        beforeTime=None, displayName=None, epsgCode=None,
+                        limit=100, mdlScnCode=None, occurrenceSetId=None, 
+                        offset=0, prjScnCode=None, status=None):
       """
       @summary: Return a list of projections matching the specified criteria
       """
-      pass
+      afterStatus = None
+      beforeStatus = None
+
+      # Process status parameter
+      if status:
+         if status < JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE - 1
+         elif status == JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE + 1
+            afterStatus = JobStatus.COMPLETE - 1
+         else:
+            afterStatus = status - 1
+   
+      prjAtoms = self.scribe.listSDMProjects(offset, limit, userId=userId,
+                           displayName=displayName, afterTime=afterTime, 
+                           beforeTime=beforeTime, epsg=epsgCode, 
+                           afterStatus=afterStatus, beforeStatus=beforeStatus, 
+                           occsetId=occurrenceSetId, algCode=algCode, 
+                           mdlscnCode=mdlScnCode, prjscenCode=prjScnCode)
+      # TODO: Return or format
+      return prjAtoms
    
