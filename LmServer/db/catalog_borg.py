@@ -685,10 +685,10 @@ class Borg(DbPostgresql):
       return objs
 
 # ...............................................
-   def getEnvironmentalType(self, typeid, typecode, usrid):
+   def getEnvironmentalType(self, typeId, typecode, usrid):
       try:
-         if typeid is not None:
-            row, idxs = self.executeSelectOneFunction('lm_getLayerType', typeid)
+         if typeId is not None:
+            row, idxs = self.executeSelectOneFunction('lm_getLayerType', typeId)
          else:
             row, idxs = self.executeSelectOneFunction('lm_getLayerType', 
                                                       usrid, typecode)
@@ -699,10 +699,10 @@ class Borg(DbPostgresql):
       return envType
 
 # ...............................................
-   def findOrInsertEnvironmentalType(self, envtype):
+   def findOrInsertEnvType(self, envtype):
       """
-      @summary: Insert or find _EnvironmentalType values.
-      @param envtype: An EnvironmentalType or EnvironmentalLayer object
+      @summary: Insert or find EnvType values.
+      @param envtype: An EnvType or EnvLayer object
       @return: new or existing EnvironmentalType
       """
       currtime = mx.DateTime.utc().mjd
@@ -996,9 +996,10 @@ class Borg(DbPostgresql):
 
 
 # ...............................................
-   def deleteEnvLayer(self, envlyr, scenarioId):
+   def deleteScenarioLayer(self, envlyr, scenarioId):
       """
-      @summary: Deletes object from database
+      @summary: Un-joins EnvLayer from scenario (if not None) and deletes Layer 
+                if it is not in any Scenarios or MatrixColumns
       @return: True/False for success of operation
       """
       success = self.executeModifyFunction('lm_deleteScenarioLayer', 
@@ -1175,16 +1176,16 @@ class Borg(DbPostgresql):
       return lyrs
    
 # .............................................................................
-   def getOccurrenceSet(self, occid, squid, userId, epsg):
+   def getOccurrenceSet(self, occId, squid, userId, epsg):
       """
       @summary: get an occurrenceset for the given id or squid and User
-      @param occid: the database primary key of the Occurrence record
+      @param occId: the database primary key of the Occurrence record
       @param squid: a species identifier, tied to a ScientificName
       @param userId: the database primary key of the LMUser
       @param epsg: Spatial reference system code from EPSG
       """
       row, idxs = self.executeSelectOneFunction('lm_getOccurrenceSet',
-                                                  occid, userId, squid, epsg)
+                                                  occId, userId, squid, epsg)
       occ = self._createOccurrenceLayer(row, idxs)
       return occ
    

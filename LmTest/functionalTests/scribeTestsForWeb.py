@@ -59,7 +59,7 @@ def test_environmental_layers(scribe, userId, scenarioId=None):
    postName = 'testLyr{0}'.format(randint(0, 10000))
    # TODO: CJ - add scenario prior to calling this
    postLyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
-   postedLyr = scribe.insertScenarioLayer(postLyr, scenarioId)
+   postedLyr = scribe.findOrInsertEnvLayer(postLyr, scenarioId=scenarioId)
     
    assert postedLyr.getId() is not None
     
@@ -106,7 +106,7 @@ def test_occurrence_sets(scribe, userId):
    
    # Get
    occId = postedOcc.getId()
-   getOcc = scribe.getOccurrenceSet(occId)
+   getOcc = scribe.getOccurrenceSet(occId=occId)
    assert getOcc is not None
    assert getOcc.getId() == occId
    
@@ -147,7 +147,7 @@ def test_projections(scribe, userId):
 
    postScnCode = 'testScnForPrj{}'.format(randint(0, 10000))
    postScn = Scenario(postScnCode, userId, epsg)
-   postedScn = scribe.insertScenario(postScn)
+   postedScn = scribe.findOrInsertScenario(postScn)
 
    algo = Algorithm('ATT_MAXENT')
    
@@ -187,7 +187,7 @@ def test_scenarios(scribe, userId):
    postCode = 'testScn{}'.format(randint(0, 10000))
    epsg = 4326
    postScn = Scenario(postCode, userId, epsg)
-   postedScn = scribe.insertScenario(postScn)
+   postedScn = scribe.findOrInsertScenario(postScn)
    
    # Get
    scnId = postedScn.getId()
@@ -213,7 +213,7 @@ def test_user(scribe):
    userId = 'tester'
    email = 'tester@null.nowhere'
    usr = LMUser(userId, email, 'testing', isEncrypted=False)
-   postedUser = scribe.insertUser(usr)
+   postedUser = scribe.findOrInsertUser(usr)
    if postedUser is not None:
       # Find by userId
       getById = scribe.findUser(userId=userId)
@@ -250,3 +250,59 @@ if __name__ == '__main__':
    
    scribe.closeConnections()
    
+   
+"""
+import os
+from random import randint
+
+from LmServer.common.lmuser import LMUser
+from LmServer.common.localconstants import APP_PATH
+from LmServer.common.log import UnittestLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.scenario import Scenario
+from LmServer.legion.sdmproj import SDMProjection
+from LmServer.base.lmobj import LMError
+from LmTest.functionalTests.scribeTestsForWeb import *
+
+epsg = 4326
+userId = 'anon'
+scenarioId=None
+scribe = BorgScribe(UnittestLogger())
+scribe.openConnections()
+
+# Create Test user
+postUser = test_user(scribe)
+fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
+postName = 'testLyr{0}'.format(randint(0, 10000))
+
+postLyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
+postedLyr = scribe.findOrInsertEnvLayer(postLyr, scenarioId=None)
+ 
+assert postedLyr.getId() is not None
+    
+# Get
+lyrId = postedLyr.getId()
+getLyr = scribe.getLayer(lyrId=lyrId, userId=userId)
+assert getLyr is not None
+assert getLyr.getId() == lyrId
+
+# Count
+lyrCountUsr = scribe.countLayers(userId=userId)
+lyrCountPub = scribe.countLayers()
+assert lyrCountUsr >= 1 # Posted a layer in this function
+assert lyrCountPub >= 0
+
+# List
+lyrListUsr = scribe.listLayers(0, 100, userId=userId)
+lyrListPub = scribe.listLayers(0, 100)
+assert len(lyrListUsr) >= 1
+assert len(lyrListPub) >= 0 # Check that it is at least a list
+
+# Delete
+# Assert we successfully delete the layer we retrieved
+assert scribe.deleteScenarioLayer(getLyr, scenarioId)
+
+"""
