@@ -57,11 +57,11 @@ class ApiRootV2(object):
       pass
 
 # .............................................................................
-if __name__ == '__main__':
-   conf = {
+#if __name__ == '__main__':
+conf = {
       '/v2/' : {
          'request.dispatch' : cherrypy.dispatch.MethodDispatcher(),
       }
-   }
-   cherrypy.quickstart(ApiRootV2(), '/v2/', conf)
+}
+cherrypy.quickstart(ApiRootV2(), '/v2/', conf)
    
