@@ -91,7 +91,7 @@ class Scenario(LmService):
          return self._getScenario(scenarioId)
    
    # ................................
-   @cherrypy.tools.json_in
+   #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
    def POST(self):
       """

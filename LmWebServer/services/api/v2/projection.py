@@ -98,7 +98,7 @@ class Projection(LmService):
          return self._getProjection(projectionId)
    
    # ................................
-   @cherrypy.tools.json_in
+   #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
    def POST(self):
       """
