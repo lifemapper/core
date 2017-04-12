@@ -54,8 +54,15 @@ class LmService(object):
       self.scribe.openConnections()
       #self.log = cherrypy.session.log
       self.log = log
+   
+   # ..........................
+   def getUserId(self):
+      """
+      @summary: Attempts to get a user id from the session, falls back to the 
+                   PUBLIC_USER
+      """
       try:
-         self.userId = cherrypy.session.user
+         return cherrypy.session.user
       except:
-         self.userId = PUBLIC_USER
+         return PUBLIC_USER
       

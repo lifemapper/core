@@ -54,7 +54,7 @@ class Scenario(LmService):
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
                                                                   scenarioId))
       
-      if scn.getUserId() == self.userId:
+      if scn.getUserId() == self.getUserId():
          success = self.scribe.deleteObject(scn)
          if success:
             cherrypy.response.status = 204
@@ -65,7 +65,7 @@ class Scenario(LmService):
       else:
          raise cherrypy.HTTPError(403,
                'User {} does not have permission to delete scenario {}'.format(
-                  self.userId, scenarioId))
+                  self.getUserId(), scenarioId))
 
    # ................................
    def GET(self, scenarioId=None, afterTime=None, alternatePredictionCode=None,
@@ -80,7 +80,7 @@ class Scenario(LmService):
          if public:
             userId = PUBLIC_USER
          else:
-            userId = self.userId
+            userId = self.getUserId()
             
          return self._listScenarios(userId, afterTime=afterTime,
                       altPredCode=alternatePredictionCode, 
@@ -123,7 +123,7 @@ class Scenario(LmService):
       for lyrId in rawLayers:
          layers.append(int(lyrId))
       
-      scn = Scenario(code, self.userId, epsgCode, metadata=metadata, 
+      scn = Scenario(code, self.getUserId(), epsgCode, metadata=metadata, 
                      units=units, res=resolution, gcmCode=gcmCode, 
                      altpredCode=altPredCode, dateCode=dateCode, layers=layers)
       newScn = self.scribe.findOrInsertScenario(scn)
@@ -148,7 +148,7 @@ class Scenario(LmService):
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
                                                                   scenarioId))
       
-      if scn.getUserId() in [self.userId, PUBLIC_USER]:
+      if scn.getUserId() in [self.getUserId(), PUBLIC_USER]:
          
          # TODO: Return or format
          return scn
@@ -156,7 +156,7 @@ class Scenario(LmService):
       else:
          raise cherrypy.HTTPError(403,
                'User {} does not have permission to get scenario {}'.format(
-                  self.userId, scenarioId))
+                  self.getUserId(), scenarioId))
    
    # ................................
    def _listScenarios(self, userId, afterTime=None, altPredCode=None,  

@@ -54,7 +54,7 @@ class OccurrenceSet(LmService):
          raise cherrypy.HTTPError(404, "Occurrence set not found")
       
       # If allowed to, delete
-      if occ.getUserId() == self.userId:
+      if occ.getUserId() == self.getUserId():
          success = self.scribe.deleteObject(occ)
          if success:
             cherrypy.response.status = 204
@@ -79,7 +79,7 @@ class OccurrenceSet(LmService):
          if public:
             userId = PUBLIC_USER
          else:
-            userId = self.userId
+            userId = self.getUserId()
             
          return self._listOccurrenceSets(userId, afterTime=afterTime, 
                 beforeTime=beforeTime, displayName=displayName, 
@@ -110,7 +110,7 @@ class OccurrenceSet(LmService):
       #   uploadType = None
       #   features = json.loads(cherrypy.request.body)
       
-      occ = OccurrenceLayer(displayName, self.userId, epsgCode, -1,
+      occ = OccurrenceLayer(displayName, self.getUserId(), epsgCode, -1,
                             squid=squid, lyrMetadata=additionalMetadata)
       occ.readFromUploadedData(cherrypy.request.body, uploadType)
       #if features:
@@ -135,12 +135,12 @@ class OccurrenceSet(LmService):
          raise cherrypy.HTTPError(404, "Occurrence set not found")
       
       # If allowed to, delete
-      if occ.getUserId() in [self.userId, PUBLIC_USER]:
+      if occ.getUserId() in [self.getUserId(), PUBLIC_USER]:
          return occ
       else:
          raise cherrypy.HTTPError(403, 
                'User {} does not have permission to delete this occurrence set'.format(
-                  self.userId))
+                  self.getUserId()))
    
    # ................................
    def _listOccurrenceSets(self, userId, afterTime=None, beforeTime=None, 

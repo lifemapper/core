@@ -57,7 +57,7 @@ class Projection(LmService):
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
                                                                  projectionId))
       
-      if prj.getUserId() == self.userId:
+      if prj.getUserId() == self.getUserId():
          success = self.scribe.deleteObject(prj)
          if success:
             cherrypy.response.status = 204
@@ -68,7 +68,7 @@ class Projection(LmService):
       else:
          raise cherrypy.HTTPError(403, 
             'User {} does not have permission to delete projection {}'.format(
-               self.userId, projectionId))
+               self.getUserId(), projectionId))
 
    # ................................
    def GET(self, projectionId=None, afterTime=None, algorithmCode=None, 
@@ -85,7 +85,7 @@ class Projection(LmService):
          if public:
             userId = PUBLIC_USER
          else:
-            userId = self.userId
+            userId = self.getUserId()
             
          return self._listProjections(userId, afterTime=afterTime, 
                                  algCode=algorithmCode, beforeTime=beforeTime, 
@@ -122,7 +122,7 @@ class Projection(LmService):
 
       # TODO: Process masks and maybe others like metadata
 
-      chain = MFChain(self.userId, status=JobStatus.GENERAL)
+      chain = MFChain(self.getUserId(), status=JobStatus.GENERAL)
       insMFChain = self.scribe.insertMFChain(chain)
       
       rules = []
@@ -161,13 +161,13 @@ class Projection(LmService):
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
                                                                  projectionId))
       
-      if prj.getUserId() in [self.userId, PUBLIC_USER]:
+      if prj.getUserId() in [self.getUserId(), PUBLIC_USER]:
          # TODO: Return or format
          return prj
       else:
          raise cherrypy.HTTPError(403, 
             'User {} does not have permission to delete projection {}'.format(
-               self.userId, projectionId))
+               self.getUserId(), projectionId))
 
    # ................................
    def _listProjections(self, userId, afterTime=None, algCode=None, 
