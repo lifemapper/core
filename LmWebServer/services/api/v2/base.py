@@ -31,6 +31,7 @@ import cherrypy
 
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.common.localconstants import PUBLIC_USER
 
 # .............................................................................
 class LmService(object):
@@ -53,5 +54,8 @@ class LmService(object):
       self.scribe.openConnections()
       #self.log = cherrypy.session.log
       self.log = log
-      self.userId = cherrypy.session.user
+      try:
+         self.userId = cherrypy.session.user
+      except:
+         self.userId = PUBLIC_USER
       

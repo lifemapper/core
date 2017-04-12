@@ -70,12 +70,34 @@ class LmServiceRoot(object):
 if __name__ == '__main__':
    
    # Tell CherryPy to add headers eneded for CORS
-   cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
+   #cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
    
    # Tell CherryPy to look for authenticated users
-   cherrypy.tools.BasicAuth = cherrypy.Tool('before_handler', getUserName)
+   #cherrypy.tools.BasicAuth = cherrypy.Tool('before_handler', getUserName)
    
+   #cherrypy.config.update(CHERRYPY_CONFIG_FILE)
+   #application = cherrypy.Application(LmServiceRoot(), 
+   #                              script_name=None, config=CHERRYPY_CONFIG_FILE)
+   cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
+
+   # Tell CherryPy to look for authenticated users
+   cherrypy.tools.BasicAuth = cherrypy.Tool('before_handler', getUserName)
+
+   appConfig = {
+      '/' : {
+         'request.dispatch' : cherrypy.dispatch.MethodDispatcher(),
+         'tools.sessions.on' : True
+      }
+   }
+
    cherrypy.config.update(CHERRYPY_CONFIG_FILE)
-   application = cherrypy.Application(LmServiceRoot(), 
-                                 script_name=None)
+   #cherrypy.mount(LmServiceRoot(), config=appConfig
+
+   cherrypy.quickstart(LmServiceRoot(), '/', config=appConfig)
+
+   #application = cherrypy.Application(LmServiceRoot(),
+   #                              script_name=None)
+   #cherrypy.server.start()
+   #cherrypy.engine.start()
+
 

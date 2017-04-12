@@ -9,6 +9,7 @@ from LmWebServer.services.common.authentication import checkUserLogin
 
 
 # .............................................................................
+@cherrypy.expose
 class UserLogin(object):
    """
    @summary: This is the user login service.  Sending a GET request will return
@@ -67,6 +68,7 @@ class UserLogin(object):
    
 
 # .............................................................................
+@cherrypy.expose
 class UserLogout(object):
    """
    @summary: Log the user out of the system
@@ -79,6 +81,7 @@ class UserLogout(object):
       raise cherrypy.HTTPRedirect('/api/login')
    
 # .............................................................................
+@cherrypy.expose
 class UserSignUp(object):
    """
    @summary: Service to create a new user
