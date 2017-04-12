@@ -99,7 +99,7 @@ class Projection(LmService):
    
    # ................................
    @cherrypy.tools.json_in
-   @cherrypy.tools.json_out
+   #@cherrypy.tools.json_out
    def POST(self):
       """
       @summary: Posts a new projection
