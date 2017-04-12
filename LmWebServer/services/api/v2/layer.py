@@ -136,7 +136,7 @@ class Layer(LmService):
          # TODO: Format or return
    
    # ................................
-   #@cherrypy.json_out
+   #@cherrypy.tools.json_out
    #def PUT(self, layerId, epsgCode, envLayerType, name=None, isCategorical=None,
    #         envLayerTypeId=None, additionalMetadata=None, valUnits=None,
    #         gcmCode=None, alternatePredictionCode=None, dateCode=None):

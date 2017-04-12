@@ -91,8 +91,8 @@ class Scenario(LmService):
          return self._getScenario(scenarioId)
    
    # ................................
-   @cherrypy.json_in
-   #@cherrypy.json_out
+   @cherrypy.tools.json_in
+   #@cherrypy.tools.json_out
    def POST(self):
       """
       @summary: Posts a new scenario
@@ -132,8 +132,8 @@ class Scenario(LmService):
       return newScn
    
    # ................................
-   #@cherrypy.json_in
-   #@cherrypy.json_out
+   #@cherrypy.tools.json_in
+   #@cherrypy.tools.json_out
    #def PUT(self, scenarioId):
    #   pass
    

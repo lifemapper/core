@@ -89,7 +89,7 @@ class OccurrenceSet(LmService):
          return self._getOccurrenceSet(occSetId)
    
    # ................................
-   @cherrypy.json_out
+   @cherrypy.tools.json_out
    def POST(self, displayName, epsgCode, squid=None, additionalMetadata=None):
       """
       @summary: Posts a new occurrence set
@@ -120,7 +120,7 @@ class OccurrenceSet(LmService):
       # TODO: Return or format
    
    # ................................
-   #@cherrypy.json_out
+   #@cherrypy.tools.json_out
    #def PUT(self, occSetId, occSetModel):
    #   pass
    
