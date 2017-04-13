@@ -32,6 +32,7 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.envlayer import EnvLayer
+from LmWebServer.formatters.jsonFormatter import objectFormatter
 from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
@@ -134,6 +135,7 @@ class Layer(LmService):
          lyr.writeRaster(srcData=lyrContent)
          updatedLyr = self.scribe.findOrInsertEnvLayer(lyr)
          # TODO: Format or return
+         return objectFormatter(updatedLyr)
    
    # ................................
    #@cherrypy.tools.json_out
@@ -154,7 +156,7 @@ class Layer(LmService):
                         'Environmental layer {} was not found'.format(layerId))
       if lyr.getUserId() == self.getUserId():
          # TODO: Return or format?
-         return lyr
+         return objectFormatter(lyr)
       else:
          raise cherrypy.HTTPError(403, 
                   'User {} does not have permission to access layer {}'.format(
@@ -171,7 +173,7 @@ class Layer(LmService):
                         'Environmental layer {} was not found'.format(layerId))
       if lyr.getUserId() in [self.getUserId(), PUBLIC_USER]:
          # TODO: Return or format?
-         return lyr
+         return objectFormatter(lyr)
       else:
          raise cherrypy.HTTPError(403, 
                   'User {} does not have permission to access layer {}'.format(
@@ -210,6 +212,7 @@ class Layer(LmService):
                                    scenarioId=scenarioId)
       # Format return
       # Set headers
+      return objectFormatter(lyrAtoms)
    
    # ................................
    def _listLayers(self, userId, afterTime=None, beforeTime=None, epsgCode=None, 
@@ -232,4 +235,5 @@ class Layer(LmService):
                                         beforeTime=beforeTime, epsg=epsgCode)
       # Format return
       # Set headers
+      return objectFormatter(lyrAtoms)
    

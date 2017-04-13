@@ -32,10 +32,11 @@ import cherrypy
 
 from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.legion.sdmproj import SDMProjection
-from LmWebServer.services.api.v2.base import LmService
-from LmServer.legion.processchain import MFChain
 from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.sdmproj import SDMProjection
+from LmWebServer.formatters.jsonFormatter import objectFormatter
+from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
 @cherrypy.expose
@@ -141,7 +142,7 @@ class Projection(LmService):
          
       # TODO: What do we return?
       cherrypy.response.status = 202
-      
+      return objectFormatter(insMFChain)
    
    
    # ................................
@@ -163,7 +164,7 @@ class Projection(LmService):
       
       if prj.getUserId() in [self.getUserId(), PUBLIC_USER]:
          # TODO: Return or format
-         return prj
+         return objectFormatter(prj)
       else:
          raise cherrypy.HTTPError(403, 
             'User {} does not have permission to delete projection {}'.format(
@@ -197,5 +198,5 @@ class Projection(LmService):
                            occsetId=occurrenceSetId, algCode=algCode, 
                            mdlscnCode=mdlScnCode, prjscenCode=prjScnCode)
       # TODO: Return or format
-      return prjAtoms
+      return objectFormatter(prjAtoms)
    

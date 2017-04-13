@@ -32,6 +32,7 @@ import cherrypy
 from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.occlayer import OccurrenceLayer
+from LmWebServer.formatters.jsonFormatter import objectFormatter
 from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
@@ -118,6 +119,7 @@ class OccurrenceSet(LmService):
       newOcc = self.scribe.findOrInsertOccurrenceSet(occ)
       
       # TODO: Return or format
+      return objectFormatter(newOcc)
    
    # ................................
    #@cherrypy.tools.json_out
@@ -136,7 +138,7 @@ class OccurrenceSet(LmService):
       
       # If allowed to, delete
       if occ.getUserId() in [self.getUserId(), PUBLIC_USER]:
-         return occ
+         return objectFormatter(occ)
       else:
          raise cherrypy.HTTPError(403, 
                'User {} does not have permission to delete this occurrence set'.format(
@@ -165,9 +167,10 @@ class OccurrenceSet(LmService):
             afterStatus = status - 1
       
       # TODO: Return or format      
-      return self.scribe.listOccurrenceSets(offset, limit, userId=userId,
+      return objectFormatter(
+         self.scribe.listOccurrenceSets(offset, limit, userId=userId,
                      minOccurrenceCount=minimumNumberOfPoints, 
                      displayName=displayName, afterTime=afterTime, 
                      beforeTime=beforeTime, epsg=epsgCode, 
-                     beforeStatus=beforeStatus, afterStatus=afterStatus)
+                     beforeStatus=beforeStatus, afterStatus=afterStatus))
    

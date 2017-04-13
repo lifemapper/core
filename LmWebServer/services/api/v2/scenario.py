@@ -32,6 +32,7 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.scenario import Scenario
+from LmWebServer.formatters.jsonFormatter import objectFormatter
 from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
@@ -129,7 +130,7 @@ class Scenario(LmService):
       newScn = self.scribe.findOrInsertScenario(scn)
       
       # TODO: Return or format
-      return newScn
+      return objectFormatter(newScn)
    
    # ................................
    #@cherrypy.tools.json_in
@@ -151,7 +152,7 @@ class Scenario(LmService):
       if scn.getUserId() in [self.getUserId(), PUBLIC_USER]:
          
          # TODO: Return or format
-         return scn
+         return objectFormatter(scn)
 
       else:
          raise cherrypy.HTTPError(403,
@@ -170,5 +171,5 @@ class Scenario(LmService):
                                     epsg=epsgCode, gcmCode=gcmCode,
                                     altpredCode=altPredCode, dateCode=dateCode)
       # TODO: Return or format
-      return scnAtoms
+      return objectFormatter(scnAtoms)
 
