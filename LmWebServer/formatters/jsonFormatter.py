@@ -1,12 +1,10 @@
 """
-@summary: Module containing JSON Formatter class and helping functions
+@summary: Module functions for converting object to JSON
 @author: CJ Grady
-@version: 1.0
-@status: beta
-@note: Part of the Factory pattern
-@see: Formatter
+@version: 2.0
+@status: alpha
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -26,91 +24,293 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
+@todo: Use constants
+@todo: Can we make this more elegant?
 """
+from hashlib import md5
 from types import ListType
 
-from LmServer.base.serviceobject import ServiceObject
-from LmServer.base.utilities import escapeString, ObjectAttributeIterator
-from LmServer.common.jsonTree import JsonArray, JsonObject, tostring
+from LmServer.base.atom import Atom
+from LmServer.base.utilities import formatTimeHuman
 
-from LmWebServer.formatters.formatter import Formatter, FormatterResponse
+from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.scenario import Scenario
 
+# Format object method looks at object type and calls formatters appropriately
+# Provide methods for direct calls to formatters
+# .............................................................................
+def formatAtom(obj):
+   """
+   @summary: Format an Atom object into a dictionary
+   """
+   return {
+      'id' : obj.id,
+      'name' : obj.name,
+      'modificationTime' : formatTimeHuman(obj.modTime),
+      'epsg' : obj.epsgcode
+   }
 
 # .............................................................................
-class JsonFormatter(Formatter):
+def formatEnvLayer(lyr):
    """
-   @summary: Formatter class for JSON output
+   @summary: Convert an environmental layer into a dictionary
+   @todo: Mapping metadata
+   @todo: Min val
+   @todo: Max val
+   @todo: Value units
    """
-   # ..................................
-   def format(self):
-      """
-      @summary: Formats the object
-      @return: A response containing the content and metadata of the format 
-                  operation
-      @rtype: FormatterResponse
-      """
-      # Fill metadata properties
-      self._getMetadataProperties()
-
-      try:
-         name = self.obj.serviceType[:-1]
-      except:
-         name = "items"
-
-      jsonObj = JsonObject()
-      title = self.title if self.title is not None else ""
-      name = self.name if self.name is not None else name
-
-      if self.parameters.has_key('format') and \
-           self.parameters['format'].lower() == 'specify':
-         doSpecify = True
-      else:
-         doSpecify = False
-
-      jsonObj.addValue("title", title)
-      _addJsonValues(jsonObj, ObjectAttributeIterator(name, self.obj), 
-                       doSpecify=doSpecify)
-      ret = tostring(jsonObj)
-      
-      
-      ct = "application/json"
-      if isinstance(self.obj, ServiceObject):
-         fn = "%s%s.json" % (name, self.obj.getId())
-      else:
-         fn = "lmJsonFeed.json"
-      
-      return FormatterResponse(ret, contentType=ct, filename=fn)
+   lyrDict = _getLifemapperMetadata('environmental layer', lyr.getId(), 
+                                    lyr.metadataUrl, lyr.getUserId(), 
+                                    metadata=lyr.metdatadata)
+   lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
+                                    'layers', lyr.name)
+   dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
+   minVal = 0
+   maxVal = 0
+   valUnits = lyr.valUnits
+   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsg, lyr.bbox, 
+                                      lyr.mapUnits, dataUrl, lyr.verify,
+                                      lyr.gdalType, lyr.dataFormat, minVal, 
+                                      maxVal, valUnits, lyr.dataType, 
+                                      resolution=lyr.resolution)
+   lyrDict['envCode'] = lyr.envCode
+   lyrDict['gcmCode'] = lyr.gcmCode
+   lyrDict['alternatePredictioCode'] = lyr.altpredCode
+   lyrDict['dateCode'] = lyr.dataCode
+   
+   return lyrDict
 
 # .............................................................................
-def _addJsonValues(jsonObj, obj, doSpecify=False):
-   matchNames = []
-   if isinstance(obj.obj, ListType):
-      ary = jsonObj.addArray(obj.name)
-      matchNames.append(obj.name)
-      if obj.name.endswith('s'):
-         matchNames.append(obj.name[:-1])
-   for k in obj.attributes.keys():
-      jsonObj.addValue(k, escapeString(str(obj.attributes[k]), "json"))
-      if doSpecify:
-         if k.lower() == 'dec_lat':
-            jsonObj.addValue('lat', escapeString(str(obj.attributes[k]), "json"))
-         if k.lower() == 'dec_long':
-            jsonObj.addValue('lon', escapeString(str(obj.attributes[k]), "json"))
-   for name, value in obj:
-      if value is not None:
-         if name in matchNames:
-            if isinstance(value, ObjectAttributeIterator):
-               o = ary.addObject(name)
-               _addJsonValues(o, value, doSpecify=doSpecify)
-            else:
-               ary.addValue(escapeString(str(value), "json"))
-         else:
-            if name == "feature":
-               _addJsonValues(jsonObj, value, doSpecify=doSpecify)
-            else:
-               if isinstance(value, ObjectAttributeIterator):
-                  o = jsonObj.addObject(name)
-                  _addJsonValues(o, value, doSpecify=doSpecify)
-               else:
-                  jsonObj.addValue(name, escapeString(str(value), "json"))
+def formatOccurrenceSet(occ):
+   """
+   @summary: Convert an Occurrence Set object to a dictionary
+   @todo: Mapping metadata
+   @todo: Taxon id
+   """
+   occDict = _getLifemapperMetadata('occurrence set', occ.getId(), 
+                           occ.metadataUrl, occ.getUserId(), status=occ.status, 
+                           statusModTime=occ.statusModTime, 
+                           metadata=occ.metadata)
+   occDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
+                                    'occurrences', occ.name)
+   dataUrl = '{}/shapefile'.format(occ.metadataUrl)
+   occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsg, occ.bbox, 
+                                    occ.mapUnits, dataUrl, occ.verify, 
+                                    occ.ogrType, occ.dataFormat, occ.queryCount,
+                                    resolution=occ.resolution)
+   occDict['speciesName'] = occ.displayName
+   occDict['squid'] = occ.squid
+   
+   return occDict
 
+# .............................................................................
+def formatProjection(prj):
+   """
+   @summary: Converts a projection object into a dictionary
+   @todo: Fix map ogc endpoint
+   @todo: Fix map name
+   @todo: Min value
+   @todo: Max value
+   @todo: Value units
+   @todo: Public algorithm parameters
+   @todo: Masks
+   @todo: Taxon id
+   @todo: Occurrence set metadata url
+   """
+   prjDict = _getLifemapperMetadata('projection', prj.getId(), prj.getUserId(), 
+                                    prj.metadataUrl, status=prj.status, 
+                                    statusModTime=prj.statusModTime, 
+                                    metadata=prj.metadata)
+   prjDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
+                                    'projections', prj.name)
+   dataUrl = '{}/GTiff'.format(prj.metadataUrl)
+   minVal = 0
+   maxVal = 1
+   valUnits = 'prediction'
+   prjDict['spatialRaster'] = _getSpatialRasterMetadata(prj.epsg, prj.bbox, 
+               prj.mapUnits, dataUrl, prj.verify, prj.gdalType, prj.dataFormat, 
+               minVal, maxVal, valUnits, prj.dataType, prj.resolution)
+   
+   prjDict['algorithm'] = {
+      'code' : prj.algorithmCode,
+      'parameters' : prj._algorithm.getAlgorithmParameters()
+   }
+   
+   prjDict['modelScenario'] = {
+      'code' : prj.modelScenario.code,
+      'id' : prj.modelScenario.getId(),
+      'metadataUrl' : prj.modelScenario.metadataUrl
+   }
+   
+   prjDict['projectionScenario'] = {
+      'code' : prj.projScenario.code,
+      'id' : prj.projScenario.getId(),
+      'metadataUrl' : prj.projScenario.metadataUrl
+   }
+   
+   prjDict['speciesName'] = prj.speciesName
+   prjDict['squid'] = prj.squid
+   prjDict['occurrenceSet'] = {
+      'id' : prj.getOccurrenceSetId(),
+      'metadataUrl' : prj._occurrenceSet.metadataUrl
+   }
+   
+   return prjDict
+   
+# .............................................................................
+def formatScenario(scn):
+   """
+   @summary: Converts a scenario object into a dictionary
+   @todo: Fix map ogc endpoint
+   @todo: GCM / alt pred code / etc
+   """
+   scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
+                                    scn.getUserId(), metadata=scn.metadata)
+   scnDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
+                                    scn.code, scn.layers)
+   scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
+                                            scn.mapUnits, scn.res)
+
+   scnLayers = []
+   for lyr in scn.layers:
+      scnLayers.append(lyr.metadataUrl)
+   scnDict['layers'] = scnLayers
+   scnDict['code'] = scn.code
+   
+   return scnDict
+   
+# .............................................................................
+def objectFormatter(obj):
+   """
+   @summary: Looks at object and converts to JSON based on its type
+   """
+   if isinstance(obj, ListType):
+      response = []
+      for o in obj:
+         response.append(_formatObject(o))
+   else:
+      response = _formatObject(obj)
+   
+   return response
+
+# .............................................................................
+def _formatObject(obj):
+   """
+   @summary: Helper method to format an individual object based on its type
+   """
+   if isinstance(obj, Atom):
+      return formatAtom(obj)
+   elif isinstance(obj, SDMProjection):
+      return formatProjection(obj)
+   elif isinstance(obj, OccurrenceLayer):
+      return formatOccurrenceSet(obj)
+   elif isinstance(obj, EnvLayer):
+      return formatEnvLayer(obj)
+   elif isinstance(obj, Scenario):
+      return formatScenario(obj)
+   else:
+      # TODO: Expand these and maybe fallback to a generic formatter of public
+      #          attributes
+      raise TypeError, "Cannot format object of type: {}".format(type(obj))
+
+# .............................................................................
+def _getLifemapperMetadata(objectType, lmId, url, userId, status=None, 
+                           statusModTime=None, metadata=None):
+   """
+   @summary: Get general Lifemapper metadata that we want to return for each 
+                full object type
+   """
+   lmDict = {
+      'objectType' : objectType,
+      'id' : lmId,
+      'url' : url,
+      'user' : userId
+   }
+   if status is not None:
+      lmDict['status'] = status
+   if statusModTime is not None:
+      lmDict['statusModTime'] = formatTimeHuman(statusModTime)
+      lmDict['etag'] = md5('{}-{}'.format(url, statusModTime)).hexdigest()
+   if metadata is not None:
+      lmDict['metadata'] = metadata
+
+   return lmDict
+
+# .............................................................................
+def _getMapMetadata(baseUrl, mapName, layers):
+   """
+   @summary: Get a dictionary of mapping information
+   @note: This is very alpha.  We need to discuss exactly how we will implement 
+             maps going forward
+   """
+   mapDict = {
+      'endpoint' : baseUrl,
+      'mapName' : mapName
+   }
+   if isinstance(layers, ListType):
+      lyrs = []
+      for lyr in layers:
+         lyrs.append({
+            'metadataUrl' : lyr.metadataUrl,
+            'layerName' : lyr.name
+         })
+      mapDict['layers'] = lyrs
+   else:
+      mapDict['layerName'] = layers
+   return mapDict
+
+# .............................................................................
+def _getSpatialMetadata(epsg, bbox, mapUnits, resolution=None):
+   """
+   @summary: Get dictionary of spatial metadata
+   @note: This can be expanded by the _getSpatialRasterMetadata and 
+             _getSpatialVectorMetadata functions if the object has a data file
+   """
+   spatialDict = {
+      'epsg' : epsg,
+      'bbox' : bbox,
+      'mapUnits' : mapUnits
+   }
+   if resolution is not None:
+      spatialDict['resolution'] = resolution
+   return spatialDict
+
+# .............................................................................
+def _getSpatialRasterMetadata(epsg, bbox, mapUnits, dataUrl, sha256Val, 
+                              gdalType, dataFormat, minVal, maxVal, valUnits,
+                              dataType, resolution=None):
+   """
+   @summary: Return a dictionary of metadata about a spatial raster
+   @todo: Add file size, number of rows, number of columns?
+   """
+   srDict = _getSpatialMetadata(epsg, bbox, mapUnits, resolution=resolution)
+   srDict['dataUrl'] = dataUrl
+   srDict['sha256'] = sha256Val
+   srDict['gdalType'] = gdalType
+   srDict['dataFormat'] = dataFormat
+   srDict['minVal'] = minVal
+   srDict['maxVal'] = maxVal
+   srDict['valueUnits'] = valUnits
+   srDict['dataType'] = dataType
+   
+   return srDict
+
+# .............................................................................
+def _getSpatialVectorMetadata(epsg, bbox, mapUnits, dataUrl, sha256Val,
+                              ogrType, dataFormat, numFeatures, 
+                              resolution=None):
+   """
+   @summary: Return a dictionary of metadata about a spatial vector
+   @todo: Add features?
+   @todo: Add file size?
+   """
+   svDict = _getSpatialMetadata(epsg, bbox, mapUnits, resolution=resolution)
+   svDict['dataUrl'] = dataUrl
+   svDict['sha256'] = sha256Val
+   svDict['ogrType'] = ogrType
+   svDict['dataFormat'] = dataFormat
+   svDict['numFeatures'] = numFeatures
+
+   return svDict
