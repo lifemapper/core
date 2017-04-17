@@ -14,6 +14,8 @@ from osgeo import gdalconst
 EPSG = 4326
 # Default = SCENARIO_PACKAGE_MAPUNITS IFF EPSG == SCENARIO_PACKAGE_EPSG
 MAPUNITS = 'dd'
+# Key = resolution descriptor strings with value in mapunits
+RESOLUTIONS = {'10min': 0.16667, '5min': 0.083333, '30sec': 0.0083333}
 
 # .............................................................................
 # Required
@@ -25,7 +27,6 @@ MAPUNITS = 'dd'
 ENVLYR_GDALTYPE = gdalconst.GDT_Int16
 ENVLYR_GDALFORMAT = 'GTiff'
 
-RESOLUTIONS = {'10min': 0.16667, '5min': 0.083333, '30sec': 0.0083333}
 CLIMATE_KEYWORDS = ['bioclimatic variables', 'climate', 'elevation']
 
 OBSERVED_PREDICTED_META = {

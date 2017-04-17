@@ -175,7 +175,7 @@ def _getbioName(obsOrPred, res,
    return name
  
 # ...............................................
-def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
+def _getBaselineLayers(usr, pkgMeta, baseMeta, elyrMeta, lyrtypeMeta):
    """
    @summary Assembles layer metadata for a single layerset
    """
@@ -196,14 +196,14 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
       dloc = os.path.join(ENV_DATA_PATH, relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
-      envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
+      envlyr = EnvLayer(lyrname, usr, elyrMeta['epsg'], 
                         dlocation=dloc, 
                         lyrMetadata=lyrmeta,
-                        dataFormat=configMeta['gdalformat'], 
-                        gdalType=configMeta['gdaltype'],
+                        dataFormat=elyrMeta['gdalformat'], 
+                        gdalType=elyrMeta['gdaltype'],
                         valUnits=ltmeta['valunits'],
-                        mapunits=configMeta['mapunits'], 
-                        resolution=configMeta['resolution'], 
+                        mapunits=elyrMeta['mapunits'], 
+                        resolution=elyrMeta['resolution'], 
                         bbox=pkgMeta['bbox'], 
                         modTime=CURR_MJD, 
                         envCode=envcode, 
@@ -237,7 +237,7 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
    return None, None
       
 # ...............................................
-def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
+def _getPredictedLayers(usr, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
                         observedPredictedMeta, predRpt, tm, gcm=None, altpred=None):
    """
    @summary Assembles layer metadata for a single layerset
@@ -272,14 +272,14 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
             dloc = None
-         envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
+         envlyr = EnvLayer(lyrname, usr, elyrMeta['epsg'], 
                            dlocation=dloc, 
                            lyrMetadata=lyrmeta,
-                           dataFormat=configMeta['gdalformat'], 
+                           dataFormat=elyrMeta['gdalformat'], 
                            gdalType=rstType,
                            valUnits=ltmeta['valunits'],
-                           mapunits=configMeta['mapunits'], 
-                           resolution=configMeta['resolution'], 
+                           mapunits=elyrMeta['mapunits'], 
+                           resolution=elyrMeta['resolution'], 
                            bbox=pkgMeta['bbox'], 
                            modTime=CURR_MJD,
                            envCode=envcode, 
@@ -294,7 +294,7 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
 
 
 # ...............................................
-def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta, 
+def createBaselineScenario(usr, pkgMeta, elyrMeta, lyrtypeMeta, 
                            observedPredictedMeta, climKeywords):
    """
    @summary Assemble Worldclim/bioclim scenario
@@ -306,14 +306,14 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
    basekeywords.extend(baseMeta['keywords'])
    
    scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
-   lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, 
+   lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, elyrMeta, 
                                            lyrtypeMeta)
    scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
                'description': baseMeta['description'], 'keywords': basekeywords}
-   scen = Scenario(scencode, usr, configMeta['epsg'], 
+   scen = Scenario(scencode, usr, elyrMeta['epsg'], 
                    metadata=scenmeta, 
-                   units=configMeta['mapunits'], 
-                   res=configMeta['resolution'], 
+                   units=elyrMeta['mapunits'], 
+                   res=elyrMeta['resolution'], 
                    dateCode=pkgMeta['baseline'],
                    bbox=pkgMeta['bbox'], 
                    modTime=CURR_MJD,  
@@ -321,7 +321,7 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
    return scen, staticLayers
 
 # ...............................................
-def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
+def createPredictedScenarios(usr, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
                              observedPredictedMeta, climKeywords):
    """
    @summary Assemble predicted future scenarios defined by IPCC report
@@ -365,14 +365,14 @@ def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers
                   'and predicted climate calculated from {}'.format(scentitle)))
          scenmeta = {'title': scentitle, 'author': mdlvals['author'], 
                      'description': scendesc, 'keywords': scenkeywords}
-         lyrs = _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, 
+         lyrs = _getPredictedLayers(usr, pkgMeta, elyrMeta, lyrtypeMeta, 
                               staticLayers, observedPredictedMeta, predRpt, tm, 
                               gcm=gcm, altpred=altpred)
          
-         scen = Scenario(scencode, usr, configMeta['epsg'], 
+         scen = Scenario(scencode, usr, elyrMeta['epsg'], 
                          metadata=scenmeta, 
-                         units=configMeta['mapunits'], 
-                         res=configMeta['resolution'], 
+                         units=elyrMeta['mapunits'], 
+                         res=elyrMeta['resolution'], 
                          gcmCode=gcm, altpredCode=altpred, dateCode=tm,
                          bbox=pkgMeta['bbox'], 
                          modTime=CURR_MJD, 
@@ -390,43 +390,9 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
       newscen = scribe.findOrInsertScenario(scen)
 
 # ...............................................
-def _getConfiguredMetadata(envPackageName, META):
-   pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-   try:
-      epsg = META.EPSG
-   except:
-      raise LMError('Failed to specify EPSG for '.format(epsg))
-      
-   try:
-      mapunits = META.MAPUNITS
-   except:
-      raise LMError('Failed to specify MAPUNITS for EPSG {}'.format(epsg))
-   try:
-      res = META.RESOLUTIONS[pkgMeta['res']]
-   except:
-      raise LMError('Failed to specify res or RESOLUTIONS for CLIMATE_PACKAGE')
-   try:
-      gdaltype = META.ENVLYR_GDALTYPE
-   except:
-      raise LMError('Failed to specify ENVLYR_GDALTYPE')
-   try:
-      gdalformat = META.ENVLYR_GDALFORMAT
-   except:
-      raise LMError('Failed to specify META.ENVLYR_GDALFORMAT')
-   expYear = CURRDATE[0]
-   expMonth = CURRDATE[1]
-   expDay = CURRDATE[2]
-
-   configMeta = {'epsg': epsg, 
-                 'mapunits': mapunits, 
-                 'resolution': res, 
-                 'gdaltype': gdaltype, 
-                 'gdalformat': gdalformat,
-                 'expdate': (expYear, expMonth, expDay)}
-   return pkgMeta, configMeta
 
 # ...............................................
-def _importClimatePackageMetadata(envPackageName):
+def _findClimatePackageMetadata(envPackageName):
    # TODO: Remove `v2` Debug
    debugMetaname = os.path.join(ENV_DATA_PATH, '{}.v2{}'.format(envPackageName, 
                                                             OutputFormat.PYTHON))
@@ -448,9 +414,44 @@ def _importClimatePackageMetadata(envPackageName):
    return META, metafname
 
 # ...............................................
+def pullClimatePackageMetadata(envPackageName):
+   META, metafname = _findClimatePackageMetadata(envPackageName)
+   # Combination of scenario and layer attributes making up these data 
+   pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
+   
+   try:
+      epsg = META.EPSG
+   except:
+      raise LMError('Failed to specify EPSG for {}'.format(envPackageName))
+   try:
+      mapunits = META.MAPUNITS
+   except:
+      raise LMError('Failed to specify MAPUNITS for {}'.format(envPackageName))
+   try:
+      resInMapunits = META.RESOLUTIONS[pkgMeta['res']]
+   except:
+      raise LMError('Failed to specify res (or RESOLUTIONS values) for {}'
+                    .format(envPackageName))
+   try:
+      gdaltype = META.ENVLYR_GDALTYPE
+   except:
+      raise LMError('Failed to specify ENVLYR_GDALTYPE for {}'.format(envPackageName))
+   try:
+      gdalformat = META.ENVLYR_GDALFORMAT
+   except:
+      raise LMError('Failed to specify META.ENVLYR_GDALFORMAT for {}'.format(envPackageName))
+   # Spatial and format attributes of data files
+   elyrMeta = {'epsg': epsg, 
+                 'mapunits': mapunits, 
+                 'resolution': resInMapunits, 
+                 'gdaltype': gdaltype, 
+                 'gdalformat': gdalformat}
+   return META, metafname, pkgMeta, elyrMeta
+      
+# ...............................................
 def writeConfigFile(archiveName, envPackageName, userid, userEmail, 
                      speciesSource, speciesData, speciesDataDelimiter,
-                     configMeta, minpoints, algorithms, 
+                     elyrMeta, minpoints, algorithms, 
                      gridname, grid_cellsize, grid_cellsides, intersectParams,
                      mdlScen=None, prjScens=None, mdlMask=None, prjMask=None,
                      assemblePams=True):
@@ -516,8 +517,8 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('; ...................\n')
    # Input environmental data, pulled from SCENARIO_PACKAGE metadata
    f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
-   f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
-   f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
+   f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(elyrMeta['epsg']))
+   f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(elyrMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
    if mdlScen is None:
       mdlScen = SCENARIO_PACKAGE_MODEL_SCENARIO
@@ -660,9 +661,7 @@ if __name__ == '__main__':
          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: args.intersect_max_presence,
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
    # Imports META
-   META, metafname = _importClimatePackageMetadata(envPackageName)
-#    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-   configMeta, pkgMeta = _getConfiguredMetadata(META, envPackageName)
+   META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
       
 # .............................
    basefilename = os.path.basename(__file__)
@@ -685,13 +684,13 @@ if __name__ == '__main__':
 # .............................
       logger.info('  Insert climate {} metadata ...'.format(envPackageName))
       # Current
-      basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
+      basescen, staticLayers = createBaselineScenario(usr, pkgMeta, elyrMeta, 
                                                       META.LAYERTYPE_META,
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
       logger.info('     Created base scenario {}'.format(basescen.code))
       # Predicted Past and Future
-      predScens = createPredictedScenarios(usr, pkgMeta, configMeta, 
+      predScens = createPredictedScenarios(usr, pkgMeta, elyrMeta, 
                                            META.LAYERTYPE_META, staticLayers,
                                            META.OBSERVED_PREDICTED_META,
                                            META.CLIMATE_KEYWORDS)
@@ -704,7 +703,7 @@ if __name__ == '__main__':
       shpGrid, archiveGridset, globalPAMs = addArchive(scribeWithBorg, 
                          predScens, gridname, metafname, archiveName, 
                          cellsides, cellsize, 
-                         configMeta['mapunits'], configMeta['epsg'], 
+                         elyrMeta['mapunits'], elyrMeta['epsg'], 
                          gridbbox, usr)
       
 # .............................
@@ -719,7 +718,7 @@ if __name__ == '__main__':
       prjScencodes = predScens.keys()
       newConfigFilename = writeConfigFile(archiveName, envPackageName, usr, 
                            usrEmail, speciesSource, 
-                           speciesData, speciesDataDelimiter, configMeta, 
+                           speciesData, speciesDataDelimiter, elyrMeta, 
                            minpoints, algorithms, gridname, cellsize, cellsides, 
                            intersectParams, mdlScen=mdlScencode, 
                            prjScens=prjScencodes, assemblePams=assemblePams)
