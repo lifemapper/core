@@ -54,14 +54,14 @@ class ApiRootV2(object):
    
    # ................................
    def index(self):
-      pass
+      return "Index of v2 root"
 
 # .............................................................................
-if __name__ == '__main__':
-   conf = {
-      '/v2/' : {
-         'request.dispatch' : cherrypy.dispatch.MethodDispatcher(),
-      }
-   }
-   cherrypy.quickstart(ApiRootV2(), '/v2/', conf)
+#if __name__ == '__main__':
+#conf = {
+#      '/v2/' : {
+#         'request.dispatch' : cherrypy.dispatch.MethodDispatcher(),
+#      }
+#}
+#cherrypy.quickstart(ApiRootV2(), '/v2/', conf)
    

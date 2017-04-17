@@ -54,4 +54,5 @@ def getUserName():
       
    cherrypy.session.user = user
    cherrypy.session.log = log
+   print user
    

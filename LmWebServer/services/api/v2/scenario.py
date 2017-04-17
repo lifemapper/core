@@ -32,6 +32,7 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.scenario import Scenario
+from LmWebServer.formatters.jsonFormatter import objectFormatter
 from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
@@ -54,7 +55,7 @@ class Scenario(LmService):
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
                                                                   scenarioId))
       
-      if scn.getUserId() == self.userId:
+      if scn.getUserId() == self.getUserId():
          success = self.scribe.deleteObject(scn)
          if success:
             cherrypy.response.status = 204
@@ -65,7 +66,7 @@ class Scenario(LmService):
       else:
          raise cherrypy.HTTPError(403,
                'User {} does not have permission to delete scenario {}'.format(
-                  self.userId, scenarioId))
+                  self.getUserId(), scenarioId))
 
    # ................................
    def GET(self, scenarioId=None, afterTime=None, alternatePredictionCode=None,
@@ -80,7 +81,7 @@ class Scenario(LmService):
          if public:
             userId = PUBLIC_USER
          else:
-            userId = self.userId
+            userId = self.getUserId()
             
          return self._listScenarios(userId, afterTime=afterTime,
                       altPredCode=alternatePredictionCode, 
@@ -91,8 +92,8 @@ class Scenario(LmService):
          return self._getScenario(scenarioId)
    
    # ................................
-   @cherrypy.json_in
-   #@cherrypy.json_out
+   #@cherrypy.tools.json_in
+   #@cherrypy.tools.json_out
    def POST(self):
       """
       @summary: Posts a new scenario
@@ -123,17 +124,17 @@ class Scenario(LmService):
       for lyrId in rawLayers:
          layers.append(int(lyrId))
       
-      scn = Scenario(code, self.userId, epsgCode, metadata=metadata, 
+      scn = Scenario(code, self.getUserId(), epsgCode, metadata=metadata, 
                      units=units, res=resolution, gcmCode=gcmCode, 
                      altpredCode=altPredCode, dateCode=dateCode, layers=layers)
       newScn = self.scribe.findOrInsertScenario(scn)
       
       # TODO: Return or format
-      return newScn
+      return objectFormatter(newScn)
    
    # ................................
-   #@cherrypy.json_in
-   #@cherrypy.json_out
+   #@cherrypy.tools.json_in
+   #@cherrypy.tools.json_out
    #def PUT(self, scenarioId):
    #   pass
    
@@ -148,15 +149,15 @@ class Scenario(LmService):
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
                                                                   scenarioId))
       
-      if scn.getUserId() in [self.userId, PUBLIC_USER]:
+      if scn.getUserId() in [self.getUserId(), PUBLIC_USER]:
          
          # TODO: Return or format
-         return scn
+         return objectFormatter(scn)
 
       else:
          raise cherrypy.HTTPError(403,
                'User {} does not have permission to get scenario {}'.format(
-                  self.userId, scenarioId))
+                  self.getUserId(), scenarioId))
    
    # ................................
    def _listScenarios(self, userId, afterTime=None, altPredCode=None,  
@@ -170,5 +171,5 @@ class Scenario(LmService):
                                     epsg=epsgCode, gcmCode=gcmCode,
                                     altpredCode=altPredCode, dateCode=dateCode)
       # TODO: Return or format
-      return scnAtoms
+      return objectFormatter(scnAtoms)
 

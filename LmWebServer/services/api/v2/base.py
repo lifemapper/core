@@ -29,6 +29,10 @@
 
 import cherrypy
 
+from LmServer.common.log import LmPublicLogger
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.common.localconstants import PUBLIC_USER
+
 # .............................................................................
 class LmService(object):
    """
@@ -44,7 +48,21 @@ class LmService(object):
                    simple base class in case we decide that we need to use a 
                    different mechanism (such as a CherryPy Tool)
       """
-      self.scribe = cherrypy.thread_data.scribeRetriever.getScribe()
-      self.log = cherrypy.session.log
-      self.userId = cherrypy.session.user
+      log = LmPublicLogger()
+      #self.scribe = cherrypy.thread_data.scribeRetriever.getScribe()
+      self.scribe = BorgScribe(log)
+      self.scribe.openConnections()
+      #self.log = cherrypy.session.log
+      self.log = log
+   
+   # ..........................
+   def getUserId(self):
+      """
+      @summary: Attempts to get a user id from the session, falls back to the 
+                   PUBLIC_USER
+      """
+      try:
+         return cherrypy.session.user
+      except:
+         return PUBLIC_USER
       

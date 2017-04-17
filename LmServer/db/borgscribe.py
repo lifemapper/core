@@ -416,7 +416,7 @@ class BorgScribe(LMObject):
       """
       objs = self._borg.listOccurrenceSets(firstRecNum, maxNum, userId, minOccurrenceCount, 
                                            displayName, afterTime, beforeTime, 
-                                           epsg, afterStatus, beforeStatus)
+                                           epsg, afterStatus, beforeStatus, atom)
       return objs
 
 # ...............................................
