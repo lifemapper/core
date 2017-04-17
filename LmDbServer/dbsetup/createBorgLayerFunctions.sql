@@ -323,7 +323,7 @@ BEGIN
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE envlayerid = elyrid;
    ELSEIF lyrid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE layerid = lyrid;
-   ELSIF lyrverify IS NOT NULL THEN
+   ELSIF lyrvfy IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE lyrverify = lyrvfy;
    ELSE
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE userid = usr 
