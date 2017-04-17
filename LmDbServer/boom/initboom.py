@@ -33,15 +33,18 @@ from LmDbServer.common.localconstants import (ALGORITHMS,
          SCENARIO_PACKAGE_PROJECTION_SCENARIOS)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
-                                              BISON_TSN_FILENAME, IDIG_FILENAME, 
-                                              USER_OCCURRENCE_DATA)
+                        BISON_TSN_FILENAME, IDIG_FILENAME, USER_OCCURRENCE_DATA,
+                        GRID_CELLSIZE, GRID_NUM_SIDES, INTERSECT_FILTERSTRING, 
+                        INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
+                        INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE)
 # from LmDbServer.boom.boom import Archivist
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
          GPAM_KEYWORD, PUBLIC_ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN,
-                           SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
+                        SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS,
+                        DATASOURCE)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -573,10 +576,10 @@ if __name__ == '__main__':
                   'not requiring an email. '))
    parser.add_argument('-m', '--email', default=None,
             help=('If the owner is a new user, provide an email address '))
-   parser.add_argument('-e', '--environmental_metadata', default=SCENARIO_PACKAGE,
+   parser.add_argument('-ep', '--environmental_package', default=SCENARIO_PACKAGE,
             help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
                   'directory and be named with the arg value and .py extension'))
-   parser.add_argument('-ss', '--species_source', default='GBIF',
+   parser.add_argument('-ss', '--species_source', default=DATASOURCE,
             help=('Species source will be: ' + 
                   '\'GBIF\' for GBIF-provided CSV data; ' +
                   '\'IDIGBIO\' iDigBio queries ' +
@@ -610,24 +613,31 @@ if __name__ == '__main__':
    parser.add_argument('-ap', '--assemblePams', default=False,
             help=('Assemble the intersected projections into Global PAMs  ' +
                   'for multi-species analyses '))
-   parser.add_argument('-gz', '--grid_cellsize', default=1,
+   parser.add_argument('-gz', '--grid_cellsize', default=GRID_CELLSIZE,
             help=('Size of cells in the grid used for Global PAM. ' +
                   'Units are mapunits'))
-   parser.add_argument('-gp', '--grid_shape', choices=('square', 'hexagon'),
-            default='square', help=('Shape of cells in the grid used for Global PAM.'))
+   parser.add_argument('-gp', '--grid_num_sides', type=int, choices=(4, 6),
+            default=GRID_NUM_SIDES, help=('Number of cell sides (square=4, ' + 
+                             'hexagon=6) in the grid used for Global PAM.'))
    parser.add_argument('-gb', '--grid_bbox', default='[-180, -60, 180, 90]', 
             help=('Extent of the grid used for Global PAM.'))
    # Intersect Parameters
    parser.add_argument('-if', '--intersect_filter', default=None,  
             help=('SQL Filter to limit features/pixels for intersect'))
-   parser.add_argument('-in', '--intersect_attribute_name', default='pixel', 
-            help=('Attribute feature name for intersect (Vector) or pixel (Raster)'))
-   parser.add_argument('-im', '--intersect_min_presence', type=int, default=1, 
-            help=('Minimum value for for intersect of features/pixels'))
-   parser.add_argument('-ix', '--intersect_max_presence', type=int, default=254, 
-            help=('Maximum value for for intersect of features/pixels'))
-   parser.add_argument('-ip', '--intersect_percent', type=int, default=25, 
-            help=('Minimum spatial coverage of desired values for intersect of features/pixels'))
+   parser.add_argument('-in', '--intersect_attribute_name', 
+                       default=INTERSECT_VALNAME, 
+                       help=('Attribute feature name for intersect (Vector) ' + 
+                             'or \"pixel\" (Raster)'))
+   parser.add_argument('-im', '--intersect_min_presence', type=int, 
+                       default=INTERSECT_MINPRESENCE, 
+                       help=('Minimum value for for intersect of features/pixels'))
+   parser.add_argument('-ix', '--intersect_max_presence', type=int, 
+                       default=INTERSECT_MAXPRESENCE, 
+                       help=('Maximum value for for intersect of features/pixels'))
+   parser.add_argument('-ip', '--intersect_percent', type=int, 
+                       default=INTERSECT_MINPERCENT, 
+                       help=('Minimum spatial coverage of desired values for '+
+                             'intersect of features/pixels'))
 
    args = parser.parse_args()
    archiveName = args.archive_name.replace(' ', '_')
@@ -728,7 +738,7 @@ if __name__ == '__main__':
 $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive'  \
                                      -u ryan                \
                                      -m rfolk@flmnh.ufl.edu \
-                                     -e 10min-past-present-future  \
+                                     -ep 10min-past-present-future  \
                                      -ss user          \
                                      -sf heuchera_all  \
                                      -sd ','           \
@@ -742,7 +752,7 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive'  \
 $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
                                      --user ryan2                  \
                                      --email ryanfolk@ufl.edu  \
-                                     --environmental_metadata 10min-past-present-future  \
+                                     --environmental_package 10min-past-present-future  \
                                      --species_source user        \
                                      --species_file heuchera_all  \
                                      --species_delimiter ','      \
@@ -756,7 +766,7 @@ $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
 $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
                                      -u ryan                  \
                                      -m rfolk@flmnh.ufl.edu  \
-                                     -e Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover  \
+                                     -ep Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover  \
                                      -ss user      \
                                      -sf heuchera_all  \
                                      -sd ','       \
@@ -770,7 +780,7 @@ $PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
 $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Biotaphy iDigBio archive' \
                                      --user idigbio                  \
                                      --email aimee.stewart@ku.edu  \
-                                     --environmental_metadata 10min-past-present-future  \
+                                     --environmental_package 10min-past-present-future  \
                                      --species_source IDIGBIO        \
                                      --min_points 25              \
                                      --algorithms bioclim         \
@@ -778,5 +788,18 @@ $PYTHON LmDbServer/boom/initboom.py  --archive_name 'Biotaphy iDigBio archive' \
                                      --grid_cellsize 2            \
                                      --grid_shape square          \
                                      -gb '[-180, -90, 180, 90]'
+                                     
+$PYTHON LmDbServer/boom/initboom.py  --archive_name 'GBIF archive' \
+                                     --user kubi         \
+                                     --email lifemapper@ku.edu  \
+                                     --environmental_package 10min-past-present-future  \
+                                     --species_source gbif        \
+                                     --min_points 30              \
+                                     --algorithms bioclim         \
+                                     --assemblePams True          \
+                                     --grid_cellsize 1            \
+                                     --grid_shape square          \
+                                     --grid_bbox '[-180, -90, 180, 90]'
+
 
 """
