@@ -22,29 +22,21 @@
           02110-1301, USA.
 """
 import argparse
+import ConfigParser
 import mx.DateTime
 import os
 import sys
 
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
-from LmDbServer.common.localconstants import (ALGORITHMS, 
-         SCENARIO_PACKAGE, SCENARIO_PACKAGE_MODEL_SCENARIO, 
-         SCENARIO_PACKAGE_PROJECTION_SCENARIOS)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
-                        BISON_TSN_FILENAME, IDIG_FILENAME, USER_OCCURRENCE_DATA,
-                        GRID_CELLSIZE, GRID_NUM_SIDES, INTERSECT_FILTERSTRING, 
-                        INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
-                        INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE)
-# from LmDbServer.boom.boom import Archivist
+                        BISON_TSN_FILENAME, IDIG_FILENAME, USER_OCCURRENCE_DATA)
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
-         GPAM_KEYWORD, PUBLIC_ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
-from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN,
-                        SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS,
-                        DATASOURCE)
+         GPAM_KEYWORD, ARCHIVE_KEYWORD, LMFileType)
+from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -479,10 +471,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('\n')
    # SDM Algorithm and minimun number of required species points   
    f.write('POINT_COUNT_MIN: {}\n'.format(minpoints))
-   if len(algorithms) > 0:
-      algs = ','.join(algorithms)
-   else:
-      algs = ALGORITHMS
+   algs = ','.join(algorithms)
    f.write('ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
    
@@ -520,11 +509,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(elyrMeta['epsg']))
    f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(elyrMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
-   if mdlScen is None:
-      mdlScen = SCENARIO_PACKAGE_MODEL_SCENARIO
    f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
-   if not prjScens:
-      prjScens = SCENARIO_PACKAGE_PROJECTION_SCENARIOS
    pcodes = ','.join(prjScens)
    f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    
@@ -550,116 +535,59 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.close()
    return newConfigFilename
 
+def getConfiguredArguments(configFname):
+   section = '[BOOM Config]'
+   if configFname is not None and os.path.exists(configFname):
+      config = ConfigParser.SafeConfigParser()
+      config.read(configFname)
+   usr = config.get(section, 'ARCHIVE_USER')
+   usrEmail = config.get(section, 'ARCHIVE_USER_EMAIL')
+   archiveName = config.get(section, 'ARCHIVE_NAME')
+   envPackageName = config.get(section, 'SCENARIO_PACKAGE')
+   speciesSource = config.get(section, 'DATASOURCE').upper()
+   speciesData = config.get(section, 'USER_OCCURRENCE_DATA')
+   speciesDataDelimiter = config.get(section, 'USER_OCCURRENCE_DATA_DELIMITER')
+   minpoints = config.get(section, 'POINT_COUNT_MIN')
+   assemblePams = config.getboolean(section, 'ASSEMBLE_PAMS')
+   algstring = config.getlist(section, 'ARCHIVE_USER')
+   algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+   cellsize = args.grid_cellsize
+   cellsides = config.get(section, 'GRID_NUM_SIDES')
+   gridname = '{}-Grid-{}'.format(archiveName, cellsize)
+   gridbbox = eval(config.get(section, 'GRID_BBOX'))
+   intersectParams = {
+         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
+         MatrixColumn.INTERSECT_PARAM_VAL_NAME: config.get(section, 'INTERSECT_VALNAME'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: config.get(section, 'INTERSECT_MINPRESENCE'),
+         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: config.get(section, 'INTERSECT_MAXPRESENCE'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: config.get(section, 'INTERSECT_MINPERCENT')}
+   return (usr, usrEmail, archiveName, envPackageName, speciesSource, speciesData, 
+           speciesDataDelimiter, minpoints, assemblePams, algorithms, cellsize,
+           cellsides, gridname, gridbbox, intersectParams)
+   
 # ...............................................
 if __name__ == '__main__':
    if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
 
-   algs=','.join(ALGORITHMS)
-   allAlgs = ','.join([alg.code for alg in Algorithms.implemented()])
-#    allAlgs = ','.join(ALGORITHM_DATA.keys())
-   apiUrl = 'http://lifemapper.github.io/api.html'
+   sampleConfigFile = os.path.join(APP_PATH, 'LmDbServer/tools/boom.sample.ini')
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper database with metadata ' +
                          'specific to an \'archive\', populated with '
-                         'command line arguments, including values in the ' +
-                         'specified environmental data package.'))
-   parser.add_argument('-n', '--archive_name', default=PUBLIC_ARCHIVE_NAME,
-            help=('Name for the archive, gridset, and grid created from ' +
-                  'these data.  Do not use special characters in this name.'))
-   parser.add_argument('-u', '--user', default=PUBLIC_USER,
-            help=('Owner of this archive this archive. The default is '
-                  'PUBLIC_USER ({}), an existing user '.format(PUBLIC_USER) +
-                  'not requiring an email. '))
-   parser.add_argument('-m', '--email', default=None,
-            help=('If the owner is a new user, provide an email address '))
-   parser.add_argument('-ep', '--environmental_package', default=SCENARIO_PACKAGE,
-            help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
-                  'directory and be named with the arg value and .py extension'))
-   parser.add_argument('-ss', '--species_source', default=DATASOURCE,
-            help=('Species source will be: ' + 
-                  '\'GBIF\' for GBIF-provided CSV data; ' +
-                  '\'IDIGBIO\' iDigBio queries ' +
-                  '\'BISON\' for a list of ITIS TSNs for querying the BISON API. ' +
-                  'Any other value will indicate that user-supplied CSV ' +
-                  'data, documented with metadata describing the fields, is ' +
-                  'to be used for the archive'))
-   parser.add_argument('-sf', '--species_file', default=None,
-            help=('Species file (without full path) will be: ' + 
-                  '1) CSV data sorted by taxon id for \'GBIF\' species source ' +
-                  '(include extension); ' +
-                  '2) Text filename containing a list of GBIF accepted taxon ids ' +
-                  'for \'IDIGBIO\' species source (include extension); ' +
-                  '3) Text filename containing a  list of ITIS TSNs for \'BISON\' ' +
-                  'species source (include extension); '
-                  '4) Basename of the data and metadata files for ' + 
-                  'user-provided data.  They must have ' +
-                  'the same basename.  The data file must have \'.csv\' ' +
-                  'extension, metadata file must have \'.meta\' extension. ' +
-                  'Metadata describes the data fields. ' ))
-   parser.add_argument('-sd', '--species_delimiter', default=',',
-            help=('Delimiter for user-supplied species file, defaults to \',\'. ' ))
-   parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
-            help=('Minimum number of points required for SDM computation ' +
-                  'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
-                  'the site-specific configuration file config.site.ini' ))
-   parser.add_argument('-a', '--algorithms', default=algs,
-            help=('Comma-separated list of algorithm codes for computing  ' +
-                  'SDM experiments in this archive.  Options are described at ' +
-                  '{} and include the codes: {} '.format(apiUrl, allAlgs)))
-   parser.add_argument('-ap', '--assemblePams', default=False,
-            help=('Assemble the intersected projections into Global PAMs  ' +
-                  'for multi-species analyses '))
-   parser.add_argument('-gz', '--grid_cellsize', default=GRID_CELLSIZE,
-            help=('Size of cells in the grid used for Global PAM. ' +
-                  'Units are mapunits'))
-   parser.add_argument('-gp', '--grid_num_sides', type=int, choices=(4, 6),
-            default=GRID_NUM_SIDES, help=('Number of cell sides (square=4, ' + 
-                             'hexagon=6) in the grid used for Global PAM.'))
-   parser.add_argument('-gb', '--grid_bbox', default='[-180, -60, 180, 90]', 
-            help=('Extent of the grid used for Global PAM.'))
-   # Intersect Parameters
-   parser.add_argument('-if', '--intersect_filter', default=None,  
-            help=('SQL Filter to limit features/pixels for intersect'))
-   parser.add_argument('-in', '--intersect_attribute_name', 
-                       default=INTERSECT_VALNAME, 
-                       help=('Attribute feature name for intersect (Vector) ' + 
-                             'or \"pixel\" (Raster)'))
-   parser.add_argument('-im', '--intersect_min_presence', type=int, 
-                       default=INTERSECT_MINPRESENCE, 
-                       help=('Minimum value for for intersect of features/pixels'))
-   parser.add_argument('-ix', '--intersect_max_presence', type=int, 
-                       default=INTERSECT_MAXPRESENCE, 
-                       help=('Maximum value for for intersect of features/pixels'))
-   parser.add_argument('-ip', '--intersect_percent', type=int, 
-                       default=INTERSECT_MINPERCENT, 
-                       help=('Minimum spatial coverage of desired values for '+
-                             'intersect of features/pixels'))
-
+                         'user-specified values in the config file argument and '
+                         'configured environmental package metadata.'))
+   parser.add_argument('-', '--config_file', default=sampleConfigFile,
+            help=('Configuration file for the archive, gridset, and grid ' +
+                  'to be created from these data.'))
    args = parser.parse_args()
-   archiveName = args.archive_name.replace(' ', '_')
-   usr = args.user
-   usrEmail = args.email
-   envPackageName = args.environmental_package
-   speciesSource = args.species_source.upper()
-   speciesData = args.species_file
-   speciesDataDelimiter = args.species_delimiter
-   minpoints = args.min_points
-   algstring = args.algorithms.upper()
-   assemblePams = args.assemblePams
-   algorithms = [alg.strip() for alg in algstring.split(',')]
-   cellsize = args.grid_cellsize
-   gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-   cellsides = args.grid_num_sides
-   gridbbox = eval(args.grid_bbox)
-   intersectParams = {
-         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
-         MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute_name,
-         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: args.intersect_min_presence,
-         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: args.intersect_max_presence,
-         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
+   configFname = args.config_file
+
+   (usr, usrEmail, archiveName, envPackageName, speciesSource, speciesData, 
+    speciesDataDelimiter, minpoints, assemblePams, algorithms, cellsize,
+    cellsides, gridname, gridbbox, intersectParams) = \
+        getConfiguredArguments(configFname)
    # Imports META
    META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
       
