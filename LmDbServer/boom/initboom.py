@@ -390,19 +390,17 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
       newscen = scribe.findOrInsertScenario(scen)
 
 # ...............................................
-def _getConfiguredMetadata(META, pkgMeta):
+def _getConfiguredMetadata(envPackageName, META):
+   pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
    try:
       epsg = META.EPSG
    except:
-      epsg = SCENARIO_PACKAGE_EPSG
+      raise LMError('Failed to specify EPSG for '.format(epsg))
       
    try:
       mapunits = META.MAPUNITS
    except:
-      if epsg == SCENARIO_PACKAGE_EPSG:
-         mapunits = SCENARIO_PACKAGE_MAPUNITS
-      else:
-         raise LMError('Failed to specify MAPUNITS for EPSG {}'.format(epsg))
+      raise LMError('Failed to specify MAPUNITS for EPSG {}'.format(epsg))
    try:
       res = META.RESOLUTIONS[pkgMeta['res']]
    except:
@@ -425,7 +423,7 @@ def _getConfiguredMetadata(META, pkgMeta):
                  'gdaltype': gdaltype, 
                  'gdalformat': gdalformat,
                  'expdate': (expYear, expMonth, expDay)}
-   return configMeta
+   return pkgMeta, configMeta
 
 # ...............................................
 def _importClimatePackageMetadata(envPackageName):
@@ -643,7 +641,7 @@ if __name__ == '__main__':
    archiveName = args.archive_name.replace(' ', '_')
    usr = args.user
    usrEmail = args.email
-   envPackageName = args.environmental_metadata
+   envPackageName = args.environmental_package
    speciesSource = args.species_source.upper()
    speciesData = args.species_file
    speciesDataDelimiter = args.species_delimiter
@@ -653,10 +651,7 @@ if __name__ == '__main__':
    algorithms = [alg.strip() for alg in algstring.split(',')]
    cellsize = args.grid_cellsize
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-   if args.grid_shape == 'hexagon':
-      cellsides = 6
-   else:
-      cellsides = 4
+   cellsides = args.grid_num_sides
    gridbbox = eval(args.grid_bbox)
    intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
@@ -666,8 +661,8 @@ if __name__ == '__main__':
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
    # Imports META
    META, metafname = _importClimatePackageMetadata(envPackageName)
-   pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-   configMeta = _getConfiguredMetadata(META, pkgMeta)
+#    pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
+   configMeta, pkgMeta = _getConfiguredMetadata(META, envPackageName)
       
 # .............................
    basefilename = os.path.basename(__file__)

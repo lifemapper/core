@@ -890,7 +890,7 @@ class Borg(DbPostgresql):
          etid = self._getColumnValue(row, idxs, ['envtypeid'])
          lyrid = self._getColumnValue(row, idxs, ['layerid'])
          row, idxs = self.executeInsertAndSelectOneFunction(
-                     'lm_v3.lm_joinScenarioLayer', scenarioId, lyrid, etid)
+                     'lm_joinScenarioLayer', scenarioId, lyrid, etid)
       # Use row from first or second query      
       newOrExistingLyr = self._createEnvLayer(row, idxs)
       return newOrExistingLyr
