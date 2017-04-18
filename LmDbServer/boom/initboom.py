@@ -29,7 +29,7 @@ import sys
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
-                                         JobStatus, MatrixType)
+                                         JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
                         BISON_TSN_FILENAME, IDIG_FILENAME, USER_OCCURRENCE_DATA)
@@ -538,31 +538,30 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
 
 # ...............................................
 def readConfigArgs(configFname):
-   section = 'BOOM Config'
-   if configFname is not None and os.path.exists(configFname):
-      config = Config(siteFn=configFname)
-      config.read(configFname)
-   usr = config.get(section, 'ARCHIVE_USER')
-   usrEmail = config.get(section, 'ARCHIVE_USER_EMAIL')
-   archiveName = config.get(section, 'ARCHIVE_NAME')
-   envPackageName = config.get(section, 'SCENARIO_PACKAGE')
-   speciesSource = config.get(section, 'DATASOURCE').upper()
-   speciesData = config.get(section, 'USER_OCCURRENCE_DATA')
-   speciesDataDelimiter = config.get(section, 'USER_OCCURRENCE_DATA_DELIMITER')
-   minpoints = config.get(section, 'POINT_COUNT_MIN')
-   assemblePams = config.getboolean(section, 'ASSEMBLE_PAMS')
-   algstring = config.get(section, 'ALGORITHMS')
+   if configFname is None or not os.path.exists(configFname):
+      raise LMError(currargs='Missing config file {}'.format(configFname))
+   config = Config(siteFn=configFname)
+   usr = config.get(SERVER_BOOM_HEADING, 'ARCHIVE_USER')
+   usrEmail = config.get(SERVER_BOOM_HEADING, 'ARCHIVE_USER_EMAIL')
+   archiveName = config.get(SERVER_BOOM_HEADING, 'ARCHIVE_NAME')
+   envPackageName = config.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE')
+   speciesSource = config.get(SERVER_BOOM_HEADING, 'DATASOURCE').upper()
+   speciesData = config.get(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA')
+   speciesDataDelimiter = config.get(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER')
+   minpoints = config.get(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN')
+   assemblePams = config.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
+   algstring = config.get(SERVER_BOOM_HEADING, 'ALGORITHMS')
    algorithms = [alg.strip().upper() for alg in algstring.split(',')]
-   cellsize = config.get(section, 'GRID_CELLSIZE')
-   cellsides = config.getint(section, 'GRID_NUM_SIDES')
+   cellsize = config.get(SERVER_BOOM_HEADING, 'GRID_CELLSIZE')
+   cellsides = config.getint(SERVER_BOOM_HEADING, 'GRID_NUM_SIDES')
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-   gridbbox = eval(config.get(section, 'GRID_BBOX'))
+   gridbbox = eval(config.get(SERVER_BOOM_HEADING, 'GRID_BBOX'))
    intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
-         MatrixColumn.INTERSECT_PARAM_VAL_NAME: config.get(section, 'INTERSECT_VALNAME'),
-         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: config.get(section, 'INTERSECT_MINPRESENCE'),
-         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: config.get(section, 'INTERSECT_MAXPRESENCE'),
-         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: config.get(section, 'INTERSECT_MINPERCENT')}
+         MatrixColumn.INTERSECT_PARAM_VAL_NAME: config.get(SERVER_BOOM_HEADING, 'INTERSECT_VALNAME'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: config.get(SERVER_BOOM_HEADING, 'INTERSECT_MINPRESENCE'),
+         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: config.get(SERVER_BOOM_HEADING, 'INTERSECT_MAXPRESENCE'),
+         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: config.get(SERVER_BOOM_HEADING, 'INTERSECT_MINPERCENT')}
    return (usr, usrEmail, archiveName, envPackageName, speciesSource, speciesData, 
            speciesDataDelimiter, minpoints, assemblePams, algorithms, cellsize,
            cellsides, gridname, gridbbox, intersectParams)

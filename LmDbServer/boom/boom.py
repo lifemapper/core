@@ -52,12 +52,11 @@ class Boomer(Daemon):
    appending new PAVs or re-assembling. 
    """
    # .............................
-   def __init__(self, pidfile, userId, archiveName, 
+   def __init__(self, pidfile, configFname, 
                 assemblePams=True, priority=None, log=None):      
       Daemon.__init__(self, pidfile, log=log)
       self.name = self.__class__.__name__.lower()
-      self.userId = userId
-      self.archiveName = archiveName
+      self.configFname = configFname
       self.assemblePams = assemblePams
       self.priority = priority
       # Send Database connection
@@ -96,23 +95,19 @@ class Boomer(Daemon):
             self.log.info('{} opened databases'.format(self.name))
             
       try:
-         self.christopher = ChristopherWalken(userId=self.userId, 
-                                              archiveName=self.archiveName,
-                                              jsonFname=None, priority=None, 
+         self.christopher = ChristopherWalken(self.configFname,
                                               scribe=self._scribe)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       
-      self.spudArfFnames = []         
-      if self.assemblePams:
+      self.spudArfFnames = []
+      self.potatoes = None
+      self.rawPotatoFiles = None
+      self.masterPotato = None      
+      if self.christopher.assemblePams:
          (self.potatoes, 
           self.rawPotatoFiles) = self._createPotatoMakeflows()
-         self.masterPotato = self._createMasterMakeflow()
-      else:
-         self.potatoes = None
-         self.rawPotatoFiles = None
-         self.masterPotato = None
-         
+         self.masterPotato = self._createMasterMakeflow()         
          
    # .............................
    def run(self):
@@ -187,8 +182,8 @@ class Boomer(Daemon):
    def _createMasterMakeflow(self):
       meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
               MFChain.META_DESC: 'MasterPotatoHead for User {}, Archive {}'
-      .format(self.userId, self.archiveName)}
-      newMFC = MFChain(self.userId, priority=self.priority, 
+      .format(self.christopher.userId, self.christopher.archiveName)}
+      newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=dt.gmt().mjd)
       mfChain = self._scribe.insertMFChain(newMFC)
@@ -202,8 +197,8 @@ class Boomer(Daemon):
          # Create MFChain for this GPAM
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
                  MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
-         .format(self.userId, self.archiveName, scencode)}
-         newMFC = MFChain(self.userId, priority=self.priority, 
+         .format(self.christopher.userId, self.christopher.archiveName, scencode)}
+         newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                           metadata=meta, status=JobStatus.GENERAL, 
                           statusModTime=dt.gmt().mjd)
          mfChain = self._scribe.insertMFChain(newMFC)
@@ -258,16 +253,6 @@ class Boomer(Daemon):
       rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       self.masterPotato.addCommands([rule])
 
-# ...............................................
-def readConfigArgs(configFname):
-   section = 'BOOM Config'
-   if configFname is not None and os.path.exists(configFname):
-      config = Config(siteFn=configFname)
-      config.read(configFname)
-   usr = config.get(section, 'ARCHIVE_USER')
-   archiveName = config.get(section, 'ARCHIVE_NAME')
-   assemblePams = config.getboolean(section, 'ASSEMBLE_PAMS')
-   return (usr, archiveName, assemblePams)
 
 # .............................................................................
 if __name__ == "__main__":
@@ -290,7 +275,6 @@ if __name__ == "__main__":
 
    args = parser.parse_args()
    configFname = args.config_file
-   usr, archiveName, assemblePams = readConfigArgs(configFname)
    cmd = args.cmd.lower()
       
    if os.path.exists(BOOM_PID_FILE):
@@ -301,8 +285,7 @@ if __name__ == "__main__":
    secs = time.time()
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
    logger = ScriptLogger('archivist.{}'.format(timestamp))
-   boomer = Boomer(BOOM_PID_FILE, usr, archiveName, assemblePams=assemblePams, 
-                   log=logger)
+   boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
    if cmd == 'start':
       boomer.start()
    elif cmd == 'stop':
