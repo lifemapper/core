@@ -32,8 +32,7 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (PUBLIC_ARCHIVE_NAME, LMFileType, 
-                                         SPECIES_DATA_PATH)
+from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
@@ -128,7 +127,7 @@ class ChristopherWalken(LMObject):
       return self.weaponOfChoice.complete
 
 # .............................................................................
-   def _getOccWeaponOfChoice(self):
+   def _getOccWeaponOfChoice(self, epsg, boompath):
       # Get datasource and optional taxonomy source
       datasource = self.cfg.get(SERVER_BOOM_HEADING, 'DATASOURCE')
       try:
@@ -148,7 +147,7 @@ class ChristopherWalken(LMObject):
          bisonTsn = Config().get(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME')
          bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
          weaponOfChoice = BisonWoC(self._scribe, self.userId, self.archiveName, 
-                                   self.epsg, expDate, minPoints, bisonTsnFile, 
+                                   epsg, expDate, minPoints, bisonTsnFile, 
                                    taxonSourceName=taxonSourceName, 
                                    logger=self.log)
       # iDigBio data
@@ -156,7 +155,7 @@ class ChristopherWalken(LMObject):
          idigTaxonids = Config().get(SERVER_BOOM_HEADING, 'IDIG_FILENAME')
          idigTaxonidsFile = os.path.join(SPECIES_DATA_PATH, idigTaxonids)
          weaponOfChoice = iDigBioWoC(self._scribe, self.userId, self.archiveName, 
-                                     self.epsg, expDate, minPoints, idigTaxonidsFile,
+                                     epsg, expDate, minPoints, idigTaxonidsFile,
                                      taxonSourceName=taxonSourceName, 
                                      logger=self.log)
       # GBIF data
@@ -168,7 +167,7 @@ class ChristopherWalken(LMObject):
          gbifProv = self.cfg.get(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME')
          gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          weaponOfChoice = GBIFWoC(self._scribe, self.userId, self.archiveName, 
-                                     self.epsg, expDate, minPoints, gbifOccFile,
+                                     epsg, expDate, minPoints, gbifOccFile,
                                      providerFname=gbifProvFile, 
                                      taxonSourceName=taxonSourceName, 
                                      logger=self.log)
@@ -178,16 +177,16 @@ class ChristopherWalken(LMObject):
                                'USER_OCCURRENCE_DATA')
          userOccDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
                                'USER_OCCURRENCE_DATA_DELIMITER')
-         userOccCSV = os.path.join(self.boompath, userOccData + OutputFormat.CSV)
-         userOccMeta = os.path.join(self.boompath, userOccData + OutputFormat.METADATA)
+         userOccCSV = os.path.join(boompath, userOccData + OutputFormat.CSV)
+         userOccMeta = os.path.join(boompath, userOccData + OutputFormat.METADATA)
          weaponOfChoice = UserWoC(self._scribe, self.userId, self.archiveName, 
-                                     self.epsg, expDate, minPoints, userOccCSV,
+                                     epsg, expDate, minPoints, userOccCSV,
                                      userOccMeta, userOccDelimiter, 
                                      logger=self.log)
       return weaponOfChoice
 
 # .............................................................................
-   def _getSDMParams(self):
+   def _getSDMParams(self, epsg):
       algorithms = []
       prjScens = []
       mdlMask = prjMask = None
@@ -221,27 +220,27 @@ class ChristopherWalken(LMObject):
       try:
          mdlMaskName = self.cfg.get(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME')
          mdlMask = self._scribe.getLayer(userId=self.userId, 
-                                         lyrName=mdlMaskName, epsg=self.epsg)
+                                         lyrName=mdlMaskName, epsg=epsg)
       except:
          pass
       try:
          prjMaskName = self.cfg.get(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME')
          prjMask = self._scribe.getLayer(userId=self.userId, 
-                                         lyrName=prjMaskName, epsg=self.epsg)
+                                         lyrName=prjMaskName, epsg=epsg)
       except:
          pass
 
       return (algorithms, mdlScen, mdlMask, prjScens, prjMask)  
 
 # .............................................................................
-   def _getGlobalPamObjects(self):
+   def _getGlobalPamObjects(self, epsg):
       # Get existing intersect grid, gridset and parameters for Global PAM
       gridname = self.cfg.get(SERVER_BOOM_HEADING, 'GRID_NAME')
       intersectGrid = self._scribe.getShapeGrid(userId=self.userId, 
-                                 lyrName=gridname, epsg=self.epsg)
+                                 lyrName=gridname, epsg=epsg)
       # Get  for Archive "Global PAM"
       tmpGS = Gridset(name=self.archiveName, shapeGrid=intersectGrid, 
-                     epsgcode=self.epsg, userId=self.userId)
+                     epsgcode=epsg, userId=self.userId)
       boomGridset = self._scribe.getGridset(tmpGS, fillMatrices=True)
       boomGridset.setMatrixProcessType(ProcessType.CONCATENATE_MATRICES, 
                                        matrixType=MatrixType.PAM)
@@ -283,15 +282,15 @@ class ChristopherWalken(LMObject):
          raise LMError(currargs='Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
                        .format(self.cfg.configFiles))
       earl = EarlJr()
-      boompath = earl.createDataPath(self.userId, LMFileType.BOOM_CONFIG)
+      boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
       epsg = self.cfg.getint(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG')
       # Species parser/puller
-      weaponOfChoice = self._getOccWeaponOfChoice(self.cfg, epsg, boompath)
+      weaponOfChoice = self._getOccWeaponOfChoice(epsg, boompath)
       # SDM inputs
       (algorithms, mdlScen, mdlMask, 
-       prjScens, prjMask) = self._getSDMParams(self.cfg, epsg)
+       prjScens, prjMask) = self._getSDMParams(epsg)
       # Global PAM inputs
-      (boomGridset, intersectParams) = self._getGlobalPamObjects(self.cfg, epsg)
+      (boomGridset, intersectParams) = self._getGlobalPamObjects(epsg)
       assemblePams = self.cfg.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
 
       return (userId, archiveName, boompath, weaponOfChoice, epsg, algorithms, 
