@@ -64,7 +64,7 @@ def formatEnvLayer(lyr):
    """
    lyrDict = _getLifemapperMetadata('environmental layer', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
-                                    metadata=lyr.metadata)
+                                    metadata=lyr.lyrMetadata)
    lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'layers', lyr.name)
    dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
@@ -171,7 +171,7 @@ def formatRasterLayer(lyr):
    """
    lyrDict = _getLifemapperMetadata('raster', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
-                                    metadata=lyr.metadata)
+                                    metadata=lyr.lyrMetadata)
    #lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
    #                                 'layers', lyr.name)
    dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
