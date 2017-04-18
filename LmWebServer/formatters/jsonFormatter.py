@@ -83,7 +83,7 @@ def formatEnvLayer(lyr):
    lyrDict['alternatePredictioCode'] = lyr.altpredCode
    lyrDict['dateCode'] = lyr.dateCode
    
-   return json.dumps(lyrDict, indent=3)
+   return lyrDict
 
 # .............................................................................
 def formatOccurrenceSet(occ):
@@ -191,7 +191,7 @@ def formatRasterLayer(lyr):
    #lyrDict['alternatePredictioCode'] = lyr.altpredCode
    #lyrDict['dateCode'] = lyr.dateCode
    
-   return json.dumps(lyrDict, indent=3)
+   return lyrDict
 
 # .............................................................................
 def formatScenario(scn):
@@ -201,11 +201,11 @@ def formatScenario(scn):
    @todo: GCM / alt pred code / etc
    """
    scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
-                                    scn.getUserId(), metadata=scn.metadata)
+                                    scn.getUserId(), metadata=scn.scenMetadata)
    scnDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     scn.code, scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
-                                            scn.mapUnits, scn.res)
+                                            scn.units, scn.resolution)
 
    scnLayers = []
    for lyr in scn.layers:
@@ -227,7 +227,7 @@ def objectFormatter(obj):
    else:
       response = _formatObject(obj)
    
-   return response
+   return json.dumps(response, indent=3)
 
 # .............................................................................
 def _formatObject(obj):

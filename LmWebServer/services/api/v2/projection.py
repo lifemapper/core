@@ -196,7 +196,7 @@ class Projection(LmService):
                            beforeTime=beforeTime, epsg=epsgCode, 
                            afterStatus=afterStatus, beforeStatus=beforeStatus, 
                            occsetId=occurrenceSetId, algCode=algCode, 
-                           mdlscnCode=mdlScnCode, prjscenCode=prjScnCode)
+                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
       # TODO: Return or format
       return objectFormatter(prjAtoms)
    
