@@ -455,7 +455,7 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    newConfigFilename = os.path.join(pth, 
                               '{}{}'.format(archiveName, OutputFormat.CONFIG))
    f = open(newConfigFilename, 'w')
-   f.write('[LmServer - pipeline]\n')
+   f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
    f.write('ARCHIVE_USER: {}\n'.format(userid))
    f.write('ARCHIVE_NAME: {}\n'.format(archiveName))
    if userEmail is not None:

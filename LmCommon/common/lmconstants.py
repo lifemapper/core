@@ -29,7 +29,7 @@ from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 # .............................................................................
 # .    Configuration file headings
 # .............................................................................
-SERVER_BOOM_HEADING = 'BOOM Config'
+SERVER_BOOM_HEADING = 'BOOM'
 SERVER_ENV_HEADING = 'LmServer - environment'
 SERVER_PIPELINE_HEADING = 'LmServer - pipeline'
 SERVER_DB_HEADING = 'LmServer - dbserver'
