@@ -83,7 +83,7 @@ def formatEnvLayer(lyr):
    lyrDict['alternatePredictioCode'] = lyr.altpredCode
    lyrDict['dateCode'] = lyr.dateCode
    
-   return json.dumps(lyrDict, indent=3)
+   return lyrDict
 
 # .............................................................................
 def formatOccurrenceSet(occ):
@@ -191,7 +191,7 @@ def formatRasterLayer(lyr):
    #lyrDict['alternatePredictioCode'] = lyr.altpredCode
    #lyrDict['dateCode'] = lyr.dateCode
    
-   return json.dumps(lyrDict, indent=3)
+   return lyrDict
 
 # .............................................................................
 def formatScenario(scn):
@@ -227,7 +227,7 @@ def objectFormatter(obj):
    else:
       response = _formatObject(obj)
    
-   return response
+   return json.dumps(response, indent=3)
 
 # .............................................................................
 def _formatObject(obj):
