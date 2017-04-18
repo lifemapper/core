@@ -49,7 +49,7 @@ class Scenario(LmService):
       @summary: Attempts to delete a scenario
       @param projectionId: The id of the scenario to delete
       """
-      scn = self.scribe.getScenario(scenarioId)
+      scn = self.scribe.getScenario(int(scenarioId))
       
       if scn is None:
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
@@ -143,7 +143,7 @@ class Scenario(LmService):
       """
       @summary: Attempt to get a scenario
       """
-      scn = self.scribe.getScenario(scenarioId)
+      scn = self.scribe.getScenario(int(scenarioId), fillLayers=True)
       
       if scn is None:
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(

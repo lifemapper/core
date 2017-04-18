@@ -201,11 +201,11 @@ def formatScenario(scn):
    @todo: GCM / alt pred code / etc
    """
    scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
-                                    scn.getUserId(), metadata=scn.metadata)
+                                    scn.getUserId(), metadata=scn.scenMetadata)
    scnDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     scn.code, scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
-                                            scn.mapUnits, scn.res)
+                                            scn.units, scn.resolution)
 
    scnLayers = []
    for lyr in scn.layers:
