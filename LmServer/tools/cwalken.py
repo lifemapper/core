@@ -232,13 +232,13 @@ class ChristopherWalken(LMObject):
       return (algorithms, mdlScen, mdlMask, prjScens, prjMask)  
 
 # .............................................................................
-   def _getGlobalPamObjects(self, userId, epsg):
+   def _getGlobalPamObjects(self, userId, archiveName, epsg):
       # Get existing intersect grid, gridset and parameters for Global PAM
       gridname = self.cfg.get(SERVER_BOOM_HEADING, 'GRID_NAME')
       intersectGrid = self._scribe.getShapeGrid(userId=userId, lyrName=gridname, 
                                                 epsg=epsg)
       # Get  for Archive "Global PAM"
-      tmpGS = Gridset(name=self.archiveName, shapeGrid=intersectGrid, 
+      tmpGS = Gridset(name=archiveName, shapeGrid=intersectGrid, 
                      epsgcode=epsg, userId=userId)
       boomGridset = self._scribe.getGridset(tmpGS, fillMatrices=True)
       boomGridset.setMatrixProcessType(ProcessType.CONCATENATE_MATRICES, 
@@ -290,7 +290,8 @@ class ChristopherWalken(LMObject):
       (algorithms, mdlScen, mdlMask, 
        prjScens, prjMask) = self._getSDMParams(userId, epsg)
       # Global PAM inputs
-      (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, epsg)
+      (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
+                                                            archiveName, epsg)
       assemblePams = self.cfg.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
 
       return (userId, archiveName, boompath, weaponOfChoice, epsg, algorithms, 

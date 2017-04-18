@@ -630,13 +630,13 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
          raise LMError(currargs='Failed to init CSV reader with {}'.format(occFname))
 
       # GBIF fieldnames/column indices           
-      self._keyCol = self._fieldNames.index(GBIF.TAXONKEY_FIELD)
       gbifFldNames = []
       idxs = GBIF_QUERY.EXPORT_FIELDS.keys()
       idxs.sort()
       for idx in idxs:
          gbifFldNames.append(GBIF_QUERY.EXPORT_FIELDS[idx][0])
       self._fieldNames = gbifFldNames
+      self._keyCol = self._fieldNames.index(GBIF.TAXONKEY_FIELD)
       
       # Save known GBIF provider/IDs for lookup if available
       try:
