@@ -150,7 +150,7 @@ class Layer(LmService):
       @summary: Attempt to get an environmental layer
       @todo: Need a different function?
       """
-      lyr = self.scribe.getEnvLayer(envlyrId=layerId)
+      lyr = self.scribe.getEnvLayer(lyrId=layerId)
       if lyr is None:
          raise cherrypy.HTTPError(404, 
                         'Environmental layer {} was not found'.format(layerId))
