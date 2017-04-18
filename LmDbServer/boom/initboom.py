@@ -22,11 +22,12 @@
           02110-1301, USA.
 """
 import argparse
-import ConfigParser
+# import ConfigParser
 import mx.DateTime
 import os
 import sys
 
+from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                          JobStatus, MatrixType)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
@@ -535,10 +536,11 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.close()
    return newConfigFilename
 
-def getConfiguredArguments(configFname):
-   section = '[BOOM Config]'
+# ...............................................
+def readConfigArgs(configFname):
+   section = 'BOOM Config'
    if configFname is not None and os.path.exists(configFname):
-      config = ConfigParser.SafeConfigParser()
+      config = Config(siteFn=configFname)
       config.read(configFname)
    usr = config.get(section, 'ARCHIVE_USER')
    usrEmail = config.get(section, 'ARCHIVE_USER_EMAIL')
@@ -549,10 +551,10 @@ def getConfiguredArguments(configFname):
    speciesDataDelimiter = config.get(section, 'USER_OCCURRENCE_DATA_DELIMITER')
    minpoints = config.get(section, 'POINT_COUNT_MIN')
    assemblePams = config.getboolean(section, 'ASSEMBLE_PAMS')
-   algstring = config.getlist(section, 'ARCHIVE_USER')
+   algstring = config.get(section, 'ALGORITHMS')
    algorithms = [alg.strip().upper() for alg in algstring.split(',')]
-   cellsize = args.grid_cellsize
-   cellsides = config.get(section, 'GRID_NUM_SIDES')
+   cellsize = config.get(section, 'GRID_CELLSIZE')
+   cellsides = config.getint(section, 'GRID_NUM_SIDES')
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
    gridbbox = eval(config.get(section, 'GRID_BBOX'))
    intersectParams = {
@@ -587,7 +589,7 @@ if __name__ == '__main__':
    (usr, usrEmail, archiveName, envPackageName, speciesSource, speciesData, 
     speciesDataDelimiter, minpoints, assemblePams, algorithms, cellsize,
     cellsides, gridname, gridbbox, intersectParams) = \
-        getConfiguredArguments(configFname)
+        readConfigArgs(configFname)
    # Imports META
    META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
       
@@ -657,71 +659,6 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive'  \
-                                     -u ryan                \
-                                     -m rfolk@flmnh.ufl.edu \
-                                     -ep 10min-past-present-future  \
-                                     -ss user          \
-                                     -sf heuchera_all  \
-                                     -sd ','           \
-                                     -p 25             \
-                                     -ap True          \
-                                     -a bioclim        \
-                                     -gz 1             \
-                                     -gp square        \
-                                     -gb [-180, -60, 180, 90]
-
-$PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
-                                     --user ryan2                  \
-                                     --email ryanfolk@ufl.edu  \
-                                     --environmental_package 10min-past-present-future  \
-                                     --species_source user        \
-                                     --species_file heuchera_all  \
-                                     --species_delimiter ','      \
-                                     --min_points 25              \
-                                     --algorithms bioclim         \
-                                     --assemblePams True          \
-                                     --grid_cellsize 2            \
-                                     --grid_shape square          \
-                                     -gb '[-180, 10, 180, 90]'
-
-$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
-                                     -u ryan                  \
-                                     -m rfolk@flmnh.ufl.edu  \
-                                     -ep Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover  \
-                                     -ss user      \
-                                     -sf heuchera_all  \
-                                     -sd ','       \
-                                     -p 25        \
-                                     -a bioclim   \
-                                     -ap True          \
-                                     -gz 2        \
-                                     -gp square   \
-                                     -gb '[-180, 10, 180, 90]'
-
-$PYTHON LmDbServer/boom/initboom.py  --archive_name 'Biotaphy iDigBio archive' \
-                                     --user idigbio                  \
-                                     --email aimee.stewart@ku.edu  \
-                                     --environmental_package 10min-past-present-future  \
-                                     --species_source IDIGBIO        \
-                                     --min_points 25              \
-                                     --algorithms bioclim         \
-                                     --assemblePams False          \
-                                     --grid_cellsize 2            \
-                                     --grid_shape square          \
-                                     -gb '[-180, -90, 180, 90]'
-                                     
-$PYTHON LmDbServer/boom/initboom.py  --archive_name 'GBIF archive' \
-                                     --user kubi         \
-                                     --email lifemapper@ku.edu  \
-                                     --environmental_package 10min-past-present-future  \
-                                     --species_source gbif        \
-                                     --min_points 30              \
-                                     --algorithms bioclim         \
-                                     --assemblePams True          \
-                                     --grid_cellsize 1            \
-                                     --grid_shape square          \
-                                     --grid_bbox '[-180, -90, 180, 90]'
-
+$PYTHON LmDbServer/boom/initboom.py  --config_file /opt/lifemapper/LmDbServer/tools/boom.sample.ini
 
 """

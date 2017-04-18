@@ -26,12 +26,12 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
+from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import JobStatus
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
-from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
-from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN
+from LmServer.common.localconstants import PUBLIC_FQDN, APP_PATH
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
@@ -103,19 +103,15 @@ class Boomer(Daemon):
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       
-      self.spudArfFnames = []
-      (self.potatoes, 
-       self.rawPotatoFiles) = self._createPotatoMakeflows()
-      self.masterPotato = self._createMasterMakeflow()
-         
-#       if self.assemblePams:
-#          (self.potatoes, 
-#           self.rawPotatoFiles) = self._createPotatoMakeflows()
-#          self.masterPotato = self._createMasterMakeflow()
-#       else:
-#          self.potatoes = None
-#          self.rawPotatoFiles = None
-#          self.masterPotato = None
+      self.spudArfFnames = []         
+      if self.assemblePams:
+         (self.potatoes, 
+          self.rawPotatoFiles) = self._createPotatoMakeflows()
+         self.masterPotato = self._createMasterMakeflow()
+      else:
+         self.potatoes = None
+         self.rawPotatoFiles = None
+         self.masterPotato = None
          
          
    # .............................
@@ -131,7 +127,7 @@ class Boomer(Daemon):
                # Get a Spud MFChain (single-species MF)
                spud, potatoInputs = self.christopher.startWalken()
                self.keepWalken = not self.christopher.complete
-               if spud:
+               if self.assemblePams and spud:
                   # Add MF rule for Spud execution to Master MF
                   self._addRuleToMasterPotatoHead(spud, prefix='spud')
                   # Gather species ARF dependency to delay start of multi-species MF
@@ -262,32 +258,39 @@ class Boomer(Daemon):
       rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       self.masterPotato.addCommands([rule])
 
+# ...............................................
+def readConfigArgs(configFname):
+   section = 'BOOM Config'
+   if configFname is not None and os.path.exists(configFname):
+      config = Config(siteFn=configFname)
+      config.read(configFname)
+   usr = config.get(section, 'ARCHIVE_USER')
+   archiveName = config.get(section, 'ARCHIVE_NAME')
+   assemblePams = config.getboolean(section, 'ASSEMBLE_PAMS')
+   return (usr, archiveName, assemblePams)
+
 # .............................................................................
 if __name__ == "__main__":
    if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
 
+   sampleConfigFile = os.path.join(APP_PATH, 'LmDbServer/tools/boom.sample.ini')
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper archive with metadata ' +
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-n', '--archive_name', default=PUBLIC_ARCHIVE_NAME,
-            help=('Name for the existing archive, gridset, and grid created for ' +
-                  'these data.  This name was created in initBoom.'))
-   parser.add_argument('-u', '--user', default=PUBLIC_USER,
-            help=('Owner of this archive this archive. The default is the '
-                  'configured PUBLIC_USER.'))
+   parser.add_argument('-', '--config_file', default=sampleConfigFile,
+            help=('Configuration file for the archive, gridset, and grid ' +
+                  'to be created from these data.'))
    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
-              help="The action that should be performed by the Walker daemon")
+              help="The action that should be performed by the Boom daemon")
 
    args = parser.parse_args()
-   archiveName = args.archive_name
-   if archiveName is not None:
-      archiveName = archiveName.replace(' ', '_')
-   userId = args.user
+   configFname = args.config_file
+   usr, archiveName, assemblePams = readConfigArgs(configFname)
    cmd = args.cmd.lower()
       
    if os.path.exists(BOOM_PID_FILE):
@@ -296,11 +299,10 @@ if __name__ == "__main__":
       pid = os.getpid()
    
    secs = time.time()
-   tuple = time.localtime(secs)
-   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
+   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
    logger = ScriptLogger('archivist.{}'.format(timestamp))
-   boomer = Boomer(BOOM_PID_FILE, userId, archiveName, log=logger)
-     
+   boomer = Boomer(BOOM_PID_FILE, usr, archiveName, assemblePams=assemblePams, 
+                   log=logger)
    if cmd == 'start':
       boomer.start()
    elif cmd == 'stop':
