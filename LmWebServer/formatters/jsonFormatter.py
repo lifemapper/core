@@ -31,6 +31,7 @@ from hashlib import md5
 from types import ListType
 
 from LmServer.base.atom import Atom
+from LmServer.base.layer2 import Raster
 from LmServer.base.utilities import formatTimeHuman
 
 from LmServer.legion.sdmproj import SDMProjection
@@ -63,7 +64,7 @@ def formatEnvLayer(lyr):
    """
    lyrDict = _getLifemapperMetadata('environmental layer', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
-                                    metadata=lyr.metdatadata)
+                                    metadata=lyr.metadata)
    lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'layers', lyr.name)
    dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
@@ -160,6 +161,36 @@ def formatProjection(prj):
    return prjDict
    
 # .............................................................................
+def formatRasterLayer(lyr):
+   """
+   @summary: Convert an environmental layer into a dictionary
+   @todo: Mapping metadata
+   @todo: Min val
+   @todo: Max val
+   @todo: Value units
+   """
+   lyrDict = _getLifemapperMetadata('raster', lyr.getId(), 
+                                    lyr.metadataUrl, lyr.getUserId(), 
+                                    metadata=lyr.metadata)
+   #lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
+   #                                 'layers', lyr.name)
+   dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
+   minVal = 0
+   maxVal = 0
+   valUnits = lyr.valUnits
+   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsg, lyr.bbox, 
+                                      lyr.mapUnits, dataUrl, lyr.verify,
+                                      lyr.gdalType, lyr.dataFormat, minVal, 
+                                      maxVal, valUnits, lyr.dataType, 
+                                      resolution=lyr.resolution)
+   #lyrDict['envCode'] = lyr.envCode
+   #lyrDict['gcmCode'] = lyr.gcmCode
+   #lyrDict['alternatePredictioCode'] = lyr.altpredCode
+   #lyrDict['dateCode'] = lyr.dataCode
+   
+   return lyrDict
+
+# .............................................................................
 def formatScenario(scn):
    """
    @summary: Converts a scenario object into a dictionary
@@ -210,6 +241,8 @@ def _formatObject(obj):
       return formatEnvLayer(obj)
    elif isinstance(obj, Scenario):
       return formatScenario(obj)
+   elif isinstance(obj, Raster):
+      return formatRasterLayer(obj)
    else:
       # TODO: Expand these and maybe fallback to a generic formatter of public
       #          attributes
