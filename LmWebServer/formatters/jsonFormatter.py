@@ -28,6 +28,7 @@
 @todo: Can we make this more elegant?
 """
 from hashlib import md5
+import json
 from types import ListType
 
 from LmServer.base.atom import Atom
@@ -68,20 +69,21 @@ def formatEnvLayer(lyr):
    lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'layers', lyr.name)
    dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
-   minVal = 0
-   maxVal = 0
+   minVal = lyr.minVal
+   maxVal = lyr.maxVal
    valUnits = lyr.valUnits
-   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsg, lyr.bbox, 
+   dataType = type(lyr.minVal).__name__
+   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsgcode, lyr.bbox, 
                                       lyr.mapUnits, dataUrl, lyr.verify,
                                       lyr.gdalType, lyr.dataFormat, minVal, 
-                                      maxVal, valUnits, lyr.dataType, 
+                                      maxVal, valUnits, dataType, 
                                       resolution=lyr.resolution)
    lyrDict['envCode'] = lyr.envCode
    lyrDict['gcmCode'] = lyr.gcmCode
    lyrDict['alternatePredictioCode'] = lyr.altpredCode
-   lyrDict['dateCode'] = lyr.dataCode
+   lyrDict['dateCode'] = lyr.dateCode
    
-   return lyrDict
+   return json.dumps(lyrDict, indent=3)
 
 # .............................................................................
 def formatOccurrenceSet(occ):
@@ -97,7 +99,7 @@ def formatOccurrenceSet(occ):
    occDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'occurrences', occ.name)
    dataUrl = '{}/shapefile'.format(occ.metadataUrl)
-   occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsg, occ.bbox, 
+   occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsgcode, occ.bbox, 
                                     occ.mapUnits, dataUrl, occ.verify, 
                                     occ.ogrType, occ.dataFormat, occ.queryCount,
                                     resolution=occ.resolution)
@@ -130,7 +132,7 @@ def formatProjection(prj):
    minVal = 0
    maxVal = 1
    valUnits = 'prediction'
-   prjDict['spatialRaster'] = _getSpatialRasterMetadata(prj.epsg, prj.bbox, 
+   prjDict['spatialRaster'] = _getSpatialRasterMetadata(prj.epsgcode, prj.bbox, 
                prj.mapUnits, dataUrl, prj.verify, prj.gdalType, prj.dataFormat, 
                minVal, maxVal, valUnits, prj.dataType, prj.resolution)
    
@@ -169,26 +171,27 @@ def formatRasterLayer(lyr):
    @todo: Max val
    @todo: Value units
    """
-   lyrDict = _getLifemapperMetadata('raster', lyr.getId(), 
+   lyrDict = _getLifemapperMetadata('raster layer', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
                                     metadata=lyr.lyrMetadata)
    #lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
    #                                 'layers', lyr.name)
    dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
-   minVal = 0
-   maxVal = 0
+   minVal = lyr.minVal
+   maxVal = lyr.maxVal
    valUnits = lyr.valUnits
-   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsg, lyr.bbox, 
+   dataType = type(lyr.minVal).__name__
+   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsgcode, lyr.bbox, 
                                       lyr.mapUnits, dataUrl, lyr.verify,
                                       lyr.gdalType, lyr.dataFormat, minVal, 
-                                      maxVal, valUnits, lyr.dataType, 
+                                      maxVal, valUnits, dataType, 
                                       resolution=lyr.resolution)
    #lyrDict['envCode'] = lyr.envCode
    #lyrDict['gcmCode'] = lyr.gcmCode
    #lyrDict['alternatePredictioCode'] = lyr.altpredCode
-   #lyrDict['dateCode'] = lyr.dataCode
+   #lyrDict['dateCode'] = lyr.dateCode
    
-   return lyrDict
+   return json.dumps(lyrDict, indent=3)
 
 # .............................................................................
 def formatScenario(scn):
