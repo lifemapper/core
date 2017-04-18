@@ -59,6 +59,8 @@ class ChristopherWalken(LMObject):
       """
       super(ChristopherWalken, self).__init__()
       self.priority = priority
+      basename, ext = os.path.splitext(os.path.basename(configFname))
+      self.name = '{}_{}'.format(self.__class__.__name__.lower(), basename)       
       # Config
       if configFname is not None and os.path.exists(configFname):
          self.cfg = Config(siteFn=configFname)
@@ -69,13 +71,6 @@ class ChristopherWalken(LMObject):
       if jsonFname is not None:
          raise LMError('JSON Walken is not yet implemented')
 
-      (self.userId, self.archiveName, self.boompath, self.weaponOfChoice, 
-       self.epsg, self.algs, self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
-       self.boomGridset, self.intersectParams, self.assemblePams) = \
-                         self._getConfiguredObjects()
-
-      self.name = '{}_{}_{}'.format(userId, self.__class__.__name__.lower(), 
-                                    archiveName)       
       # Optionally use parent process Database connection
       if scribe is not None:
          self.log = scribe.log
@@ -92,6 +87,11 @@ class ChristopherWalken(LMObject):
                raise LMError(currargs='Failed to open database')
             else:
                self.log.info('{} opened databases'.format(self.name))
+
+      (self.userId, self.archiveName, self.boompath, self.weaponOfChoice, 
+       self.epsg, self.algs, self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
+       self.boomGridset, self.intersectParams, self.assemblePams) = \
+                         self._getConfiguredObjects()
 
       # Global PAM Matrix for each scenario
       self.globalPAMs = {}

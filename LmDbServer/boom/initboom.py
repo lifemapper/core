@@ -32,6 +32,7 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat,
                                          JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
+                        GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME,
                         BISON_TSN_FILENAME, IDIG_FILENAME, USER_OCCURRENCE_DATA)
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
@@ -485,6 +486,9 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
       varname = 'GBIF_OCCURRENCE_FILENAME'
       if speciesData is None:
          speciesData = GBIF_OCCURRENCE_FILENAME
+      # TODO: allow overwrite of these vars in initboom --> archive config file
+      f.write('GBIF_TAXONOMY_FILENAME: {}\n'.format(GBIF_TAXONOMY_FILENAME))
+      f.write('GBIF_PROVIDER_FILENAME: {}\n'.format(GBIF_PROVIDER_FILENAME))
    elif speciesSource == SpeciesDatasource.BISON:
       varname = 'BISON_TSN_FILENAME'
       if speciesData is None:
