@@ -938,8 +938,9 @@ class Borg(DbPostgresql):
 # .............................................................................
    def listEnvLayers(self, firstRecNum, maxNum, userId, envCode, gcmcode, 
                      altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                     envTypeId, atom):
+                     envTypeId, scenarioId, atom):
       """
+      @todo: Add scenarioId!!
       @summary: List all EnvLayer objects or atoms matching the filter conditions 
       @param firstRecNum: The first record to return, 0 is the first record
       @param maxNum: Maximum number of records to return

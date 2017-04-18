@@ -100,44 +100,6 @@ Install nodes from Frontend
    # rocks set host boot compute action=install
    # rocks run host compute reboot 
 
-
-(OPT) To change defaults
-------------------------
-
-#. **To change defaults**, for either lifemapper-compute or lifemapper-server,
-   such as DATASOURCE, ARCHIVE_USER, compute parameters,
-
-   #. create the configuration file site.ini (in /opt/lifemapper/config/) 
-      prior to reboot.  Two example files are present in that same directory.
-      Variables to override for both rolls should be placed in the site.ini file.
-      
-   #. If you wish to change the SCENARIO_PACKAGE (and corresponding 
-      SCENARIO_PACKAGE_* variables) for LmServer, you must do this after the 
-      installation is complete (after reboot).
-
-   #. If you updated the SCENARIO_PACKAGE 
-   
-      1. Create a [ LmCompute - environment ] section containing  
-         the variable SCENARIO_PACKAGE_SEED with the same value
-
-      2. Run the following to download data ::
-   
-         # rocks/bin/getClimateData
-
-      3. Run the following to catalog metadata for LmServer::
-   
-         # rocks/bin/fillDB
-
-      4. Run the following to convert and catalog data for LmCompute ::
-
-         # /opt/lifemapper/rocks/bin/seedData
-
-   #. If you ONLY updated the ARCHIVE_USER
-   
-      #. Run the following to catalog metadata for LmServer::
-   
-         # rocks/bin/fillDB
-         
    
 Look for Errors
 ---------------
@@ -179,33 +141,73 @@ LmServer
    Type "help" for help.
    mal=> select scenariocode, userid from scenario;
 
-Change Data Defaults
---------------------
+Populate archive
+----------------
+To get new data, override SCENARIO_PACKAGE in the config.lmserver.ini and 
+SCENARIO_PACKAGE_SEED in config.lmcompute.ini with a new site.ini file in the 
+same location.  Templates are available.  
 
-#. **Check default archive values (DATASOURCE, ARCHIVE_USER, OCCURRENCE_FILENAME ...)** :  
+   * The initBoom script will pick up default arguments from 
+     LmServer.common.lmconstants (PUBLIC_ARCHIVE_NAME) and
+     config.lmserver.ini/site.ini (PUBLIC_USER, SCENARIO_PACKAGE, ENV_DATA_PATH, 
+     DATASOURCE, POINT_COUNT_MIN, INTERSECT_VALNAME, INTERSECT_MINPRESENCE, 
+     INTERSECT_MAXPRESENCE, INTERSECT_MINPERCENT)
+   * Additional values will be pulled from the scenario package metadata 
+     (<SCENARIO_PACKAGE>.py) file included in <SCENARIO_PACKAGE>.tar.gz.
+   * Values for these data and this archive will be written to a new config 
+     file named <SCENARIO_PACKAGE.ini> and placed in the user's (PUBLIC_USER
+     or ARCHIVE_USER) data space (/share/lm/data/archive/user/)
 
-   * Run LmDbServer/boom/initBoom.ini with new variables 
+#. Download data ::
+   
+   # rocks/bin/getClimateData
 
-     * including a unique userId/archiveName combination.  
-     * Make sure the data package for  the **environmental_metadata** 
+#. Catalog metadata for LmServer.  This runs LmDbServer/boom/initBoom.py with 
+   no arguments::
+
+     # rocks/bin/fillDB
+   
+#. Convert and catalog data for LmCompute.  The script will pick up 
+   SCENARIO_PACKAGE_SEED from config.lmserver.ini ::
+
+   # /opt/lifemapper/rocks/bin/seedData
+
+#. **Catalog the inputs for archive** in database :  
+
+   * Or run LmDbServer/boom/initBoom.ini with new arguments.  If not using the 
+     defaults and installed scenario package, make sure:
+   
+     * to use a unique userId/archiveName combination.  
+     * the data package for  the **environmental_metadata** 
        argument, a tar.gz file with layers and metadata, is installed in 
        /share/lm/data/layers.
-     * Species data rules:
+     * If the DATASOURCE is not GBIF, IDIGBIO, or BISON :
        
-       * If user-supplied CSV and metadata files:  Make sure the species data 
-         files for the **species_file** argument is installed in the user space 
+       * Make sure the species data files (.csv and .meta) for the 
+         **species_file** argument is installed in the user space 
          (/share/lm/data/archive/<userId>/).
-       * If using iDigBio web services, the default file of "Accepted" GBIF 
-         Taxon Ids for iDigBio occurrences is IDIG_FILENAME with a value of 
-         idig_gbifids.txt.  Change the value or download the file from yeti 
-         into /share/lmserver/data/species.provide a list of accepted 
-         GBIF Taxon IDs
-       * If using GBIF CSV data, with known column definitions, the
-         default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU 
-         production installation, override this with the latest full data dump 
-         by downloading the data from yeti into /share/lmserver/data/species/
-     
 
+     * If the DATASOURCE is iDigBio, the default file of "Accepted" GBIF 
+       Taxon Ids for iDigBio occurrences is IDIG_FILENAME with a value of 
+       idig_gbifids.txt.  Change the value or download the file from yeti 
+       into /share/lmserver/data/species.provide a list of accepted 
+       GBIF Taxon IDs
+       
+     * If the DATASOURCE is GBIF, with CSV file and known column definitions, the
+       default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU 
+       production installation, override this with the latest full data dump 
+       by downloading the data from yeti into /share/lmserver/data/species/
               
-then follow the instructions in **(OPT) To change defaults** above.
+#. Download data ::
+   
+   # rocks/bin/getClimateData
+
+#. Catalog metadata for LmServer::
+   
+   # rocks/bin/fillDB
+
+#. Convert and catalog data for LmCompute ::
+
+   # /opt/lifemapper/rocks/bin/seedData
+         
    

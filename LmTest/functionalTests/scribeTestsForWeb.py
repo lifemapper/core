@@ -266,7 +266,7 @@ from random import randint
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
 from LmServer.common.log import UnittestLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
@@ -281,6 +281,9 @@ epsg = 4326
 userId = DEFAULT_POST_USER
 scribe = BorgScribe(UnittestLogger())
 scribe.openConnections()
+
+elyrs = scribe.listEnvLayers(0, 10, userId=PUBLIC_USER, atom=True)
+lyrs = scribe.listLayers(0, 10, userId=PUBLIC_USER, atom=True)
 
 # Create Test user
 postUser = test_user(scribe, 'tester', 'tester@null.nowhere')

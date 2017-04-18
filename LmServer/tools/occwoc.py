@@ -220,6 +220,60 @@ class _SpeciesWeaponOfChoice(LMObject):
       return occ
    
 # ...............................................
+   def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
+      """
+      Returns an existing or newly inserted ScientificName
+      """
+      sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
+                                               taxonKey=taxonKey)
+      if sciName is not None:
+         self.log.info('Found sciName for taxonKey {}, {}, with {} points'
+                       .format(taxonKey, sciName.scientificName, taxonCount))
+      else:
+         # Use API to get and insert species name 
+         try:
+            (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
+             nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
+             familyStr, genusStr, speciesStr, genusKey, speciesKey, 
+             loglines) = GbifAPI.getTaxonomy(taxonKey)
+         except Exception, e:
+            self.log.info('Failed lookup for key {}, ({})'.format(
+                                                   taxonKey, e))
+         else:
+            # if no species key, this is not a species
+            if taxStatus == 'ACCEPTED':
+#             if taxonKey in (retSpecieskey, acceptedkey, genuskey):
+               currtime = dt.gmt().mjd
+               sname = ScientificName(scinameStr, 
+                               rank=rankStr, 
+                               canonicalName=canonicalStr,
+                               userId=self.userId, squid=None,
+                               lastOccurrenceCount=taxonCount,
+                               kingdom=kingdomStr, phylum=phylumStr, 
+                               txClass=None, txOrder=orderStr, 
+                               family=familyStr, genus=genusStr, 
+                               createTime=currtime, modTime=currtime, 
+                               taxonomySourceId=self._taxonSourceId, 
+                               taxonomySourceKey=taxonKey, 
+                               taxonomySourceGenusKey=genusKey, 
+                               taxonomySourceSpeciesKey=speciesKey)
+               try:
+                  sciName = self._scribe.findOrInsertTaxon(sciName=sname)
+                  self.log.info('Inserted sciName for taxonKey {}, {}'
+                                .format(taxonKey, sciName.scientificName))
+               except Exception, e:
+                  if not isinstance(e, LMError):
+                     e = LMError(currargs='Failed on taxonKey {}, linenum {}'
+                                          .format(taxonKey, self._linenum), 
+                                 prevargs=e.args, lineno=self.getLineno())
+                  raise e
+            else:
+               self.log.info('taxonKey {} is not an accepted genus or species'
+                             .format(taxonKey))
+      return sciName
+         
+
+# ...............................................
    def _createOrResetOccurrencesetOLD(self, sciName, dataCount, 
                                    taxonSourceKey=None, data=None):
       """
@@ -841,61 +895,7 @@ class iDigBioWoC(_SpeciesWeaponOfChoice):
       self._currBinomial = None
       self._currGbifTaxonId = None
       self._currReportedCount = None
-        
-# ...............................................
-   def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
-      """
-      Returns an existing or newly inserted ScientificName
-      """
-      sciName = self._scribe.findOrInsertTaxon(taxonSourceId=self._taxonSourceId, 
-                                               taxonKey=taxonKey)
-      if sciName is not None:
-         self.log.info('Found sciName for taxonKey {}, {}, with {} points'
-                       .format(taxonKey, sciName.scientificName, taxonCount))
-      else:
-         # Use API to get and insert species name 
-         try:
-            (rankStr, scinameStr, canonicalStr, acceptedKey, acceptedStr, 
-             nubKey, taxStatus, kingdomStr, phylumStr, classStr, orderStr, 
-             familyStr, genusStr, speciesStr, genusKey, speciesKey, 
-             loglines) = GbifAPI.getTaxonomy(taxonKey)
-         except Exception, e:
-            self.log.info('Failed lookup for key {}, ({})'.format(
-                                                   taxonKey, e))
-         else:
-            # if no species key, this is not a species
-            if taxStatus == 'ACCEPTED':
-#             if taxonKey in (retSpecieskey, acceptedkey, genuskey):
-               currtime = dt.gmt().mjd
-               sname = ScientificName(scinameStr, 
-                               rank=rankStr, 
-                               canonicalName=canonicalStr,
-                               userId=self.userId, squid=None,
-                               lastOccurrenceCount=taxonCount,
-                               kingdom=kingdomStr, phylum=phylumStr, 
-                               txClass=None, txOrder=orderStr, 
-                               family=familyStr, genus=genusStr, 
-                               createTime=currtime, modTime=currtime, 
-                               taxonomySourceId=self._taxonSourceId, 
-                               taxonomySourceKey=taxonKey, 
-                               taxonomySourceGenusKey=genusKey, 
-                               taxonomySourceSpeciesKey=speciesKey)
-               try:
-                  sciName = self._scribe.findOrInsertTaxon(sciName=sname)
-                  self.log.info('Inserted sciName for taxonKey {}, {}'
-                                .format(taxonKey, sciName.scientificName))
-               except Exception, e:
-                  if not isinstance(e, LMError):
-                     e = LMError(currargs='Failed on taxonKey {}, linenum {}'
-                                          .format(taxonKey, self._linenum), 
-                                 prevargs=e.args, lineno=self.getLineno())
-                  raise e
-            else:
-               self.log.info('taxonKey {} is not an accepted genus or species'
-                             .format(taxonKey))
-      return sciName
          
- 
 # ...............................................
    def getOne(self):
       occ = None
