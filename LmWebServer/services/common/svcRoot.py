@@ -86,7 +86,8 @@ if __name__ == '__main__':
    appConfig = {
       '/' : {
          'request.dispatch' : cherrypy.dispatch.MethodDispatcher(),
-         'tools.sessions.on' : True
+         'tools.sessions.on' : True,
+         'tools.BasicAuth.on' : True
       }
    }
 
