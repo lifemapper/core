@@ -550,7 +550,7 @@ def writeConfigFile(usr, usrEmail, archiveName,
    return newConfigFilename
 
 # ...............................................
-def _findConfigOrDefault(config, varname, defaultValue):
+def _findConfigOrDefault(config, varname, defaultValue, isList=False):
    var = None
    try:
       var = config.get(SERVER_BOOM_HEADING, varname)
@@ -601,7 +601,10 @@ def readConfigArgs(configFname):
    assemblePams = config.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
 
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-   algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+   try:
+      algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+   except:
+      algorithms = algstring
    intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
                       MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
                       MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
@@ -625,7 +628,7 @@ if __name__ == '__main__':
                          'specific to an \'archive\', populated with '
                          'user-specified values in the config file argument and '
                          'configured environmental package metadata.'))
-   parser.add_argument('-', '--config_file', default=sampleConfigFile,
+   parser.add_argument('-', '--config_file', default=defaultConfigFile,
             help=('Configuration file for the archive, gridset, and grid ' +
                   'to be created from these data.'))
    args = parser.parse_args()
