@@ -32,7 +32,7 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.envlayer import EnvLayer
-from LmWebServer.formatters.jsonFormatter import objectFormatter
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
 from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
@@ -69,6 +69,7 @@ class Layer(LmService):
                  "User does not have permission to delete this layer")
 
    # ................................
+   @lmFormatter
    def GET(self, layerId=None, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
            envTypeId=None, gcmCode=None, layerType=None, limit=100, offset=0, 
@@ -116,6 +117,7 @@ class Layer(LmService):
             return self._getLayer(layerId, envLayer=True)
       
    # ................................
+   @lmFormatter
    def POST(self, layerType, epsgCode, layerName, 
             envLayerTypeId=None, additionalMetadata=None, valUnits=None,
             envCode=None, gcmCode=None, alternatePredictionCode=None, 
@@ -137,8 +139,8 @@ class Layer(LmService):
                         envTypeId=envLayerTypeId)
          lyr.writeRaster(srcData=lyrContent)
          updatedLyr = self.scribe.findOrInsertEnvLayer(lyr)
-         # TODO: Format or return
-         return objectFormatter(updatedLyr)
+
+         return updatedLyr
    
    # ................................
    #@cherrypy.tools.json_out
@@ -178,7 +180,7 @@ class Layer(LmService):
                                    scenarioId=scenarioId)
       # Format return
       # Set headers
-      return objectFormatter({"count" : lyrCount})
+      return {"count" : lyrCount}
 
    # ................................
    def _countLayers(self, userId, afterTime=None, beforeTime=None, epsgCode=None, 
@@ -201,7 +203,7 @@ class Layer(LmService):
                                         beforeTime=beforeTime, epsg=epsgCode)
       # Format return
       # Set headers
-      return objectFormatter({"count" : lyrCount})
+      return {"count" : lyrCount}
 
    # ................................
    def _getLayer(self, layerId, envLayer=False):
@@ -217,7 +219,7 @@ class Layer(LmService):
                         'Environmental layer {} was not found'.format(layerId))
       if lyr.getUserId() in [self.getUserId(), PUBLIC_USER]:
          # TODO: Return or format?
-         return objectFormatter(lyr)
+         return lyr
       else:
          raise cherrypy.HTTPError(403, 
                   'User {} does not have permission to access layer {}'.format(
@@ -256,7 +258,7 @@ class Layer(LmService):
                                    scenarioId=scenarioId)
       # Format return
       # Set headers
-      return objectFormatter(lyrAtoms)
+      return lyrAtoms
    
    # ................................
    def _listLayers(self, userId, afterTime=None, beforeTime=None, epsgCode=None, 
@@ -279,5 +281,5 @@ class Layer(LmService):
                                         beforeTime=beforeTime, epsg=epsgCode)
       # Format return
       # Set headers
-      return objectFormatter(lyrAtoms)
+      return lyrAtoms
    

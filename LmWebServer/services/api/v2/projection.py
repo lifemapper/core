@@ -35,8 +35,8 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
-from LmWebServer.formatters.jsonFormatter import objectFormatter
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
@@ -72,6 +72,7 @@ class Projection(LmService):
                self.getUserId(), projectionId))
 
    # ................................
+   @lmFormatter
    def GET(self, projectionId=None, afterTime=None, algorithmCode=None, 
                  beforeTime=None, displayName=None, epsgCode=None, limit=100, 
                  modelScenarioCode=None, occurrenceSetId=None, offset=0, 
@@ -109,6 +110,7 @@ class Projection(LmService):
    # ................................
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
+   @lmFormatter
    def POST(self):
       """
       @summary: Posts a new projection
@@ -150,7 +152,7 @@ class Projection(LmService):
          
       # TODO: What do we return?
       cherrypy.response.status = 202
-      return objectFormatter(insMFChain)
+      return insMFChain
    
    
    # ................................
@@ -186,9 +188,7 @@ class Projection(LmService):
                            afterStatus=afterStatus, beforeStatus=beforeStatus, 
                            occsetId=occurrenceSetId, algCode=algCode, 
                            mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
-      objectFormatter({
-         "count" : prjCount
-      })
+      return {"count" : prjCount}
 
    # ................................
    def _getProjection(self, projectionId):
@@ -202,8 +202,7 @@ class Projection(LmService):
                                                                  projectionId))
       
       if prj.getUserId() in [self.getUserId(), PUBLIC_USER]:
-         # TODO: Return or format
-         return objectFormatter(prj)
+         return prj
       else:
          raise cherrypy.HTTPError(403, 
             'User {} does not have permission to delete projection {}'.format(
@@ -236,5 +235,5 @@ class Projection(LmService):
                            afterStatus=afterStatus, beforeStatus=beforeStatus, 
                            occsetId=occurrenceSetId, algCode=algCode, 
                            mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
-      return objectFormatter(prjAtoms)
+      return prjAtoms
    
