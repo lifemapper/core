@@ -1011,7 +1011,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT projectionId, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
+   cmd = 'SELECT sdmprojectid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);

@@ -22,23 +22,27 @@
           02110-1301, USA.
 """
 import argparse
-# import ConfigParser
 import mx.DateTime
 import os
 import sys
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
-                                         JobStatus, MatrixType, SERVER_BOOM_HEADING)
+                                    JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
+from LmDbServer.common.localconstants import (ALGORITHMS, GRID_NUM_SIDES,
                         GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME,
-                        BISON_TSN_FILENAME, IDIG_FILENAME, USER_OCCURRENCE_DATA)
+                        BISON_TSN_FILENAME, 
+                        USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
+                        INTERSECT_FILTERSTRING, INTERSECT_VALNAME, 
+                        INTERSECT_MINPERCENT, INTERSECT_MINPRESENCE, 
+                        INTERSECT_MAXPRESENCE)
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_KEYWORD, LMFileType)
-from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
+from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
+         SPECIES_DATA_PATH, GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME)
+from LmServer.common.localconstants import (PUBLIC_USER, APP_PATH, DATASOURCE, 
+                                            POINT_COUNT_MIN)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -54,15 +58,17 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
+DEFAULT_EMAIL_POSTFIX = '@nowhere.org'
+
 # ...............................................
 def addUsers(scribe, userId, userEmail):
    """
    @summary Adds PUBLIC_USER, anon user and USER from metadata to the database
    """
    userList = [{'id': PUBLIC_USER,
-                'email': '{}@nowhere.org'.format(PUBLIC_USER)},
+                'email': '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX)},
                {'id': DEFAULT_POST_USER,
-                'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}]
+                'email': '{}{}'.format(DEFAULT_POST_USER, DEFAULT_EMAIL_POSTFIX)}]
    if userId != PUBLIC_USER:
       userList.append({'id': userId,'email': userEmail})
 
@@ -443,24 +449,31 @@ def pullClimatePackageMetadata(envPackageName):
    return META, metafname, pkgMeta, elyrMeta
       
 # ...............................................
-def writeConfigFile(archiveName, envPackageName, userid, userEmail, 
-                     speciesSource, speciesData, speciesDataDelimiter,
-                     elyrMeta, minpoints, algorithms, 
-                     gridname, grid_cellsize, grid_cellsides, intersectParams,
-                     mdlScen=None, prjScens=None, mdlMask=None, prjMask=None,
-                     assemblePams=True):
+def writeConfigFile(usr, usrEmail, archiveName, 
+           envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, cellsides, cellsize, gridname, 
+           intersectParams, elyrMeta, mdlScen=None, prjScens=None, 
+           mdlMask=None, prjMask=None, assemblePams=True):
+#                     archiveName, envPackageName, userid, userEmail, 
+#                      speciesSource, speciesData, speciesDataDelimiter,
+#                      elyrMeta, minpoints, algorithms, 
+#                      gridname, grid_cellsize, grid_cellsides, intersectParams,
+#                      bisonFname, userOccFname, userOccSep, 
+#                      mdlScen=None, prjScens=None, mdlMask=None, prjMask=None,
+#                      assemblePams=True):
    """
    """
    earl = EarlJr()
-   pth = earl.createDataPath(userid, LMFileType.BOOM_CONFIG)
+   pth = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
    newConfigFilename = os.path.join(pth, 
                               '{}{}'.format(archiveName, OutputFormat.CONFIG))
    f = open(newConfigFilename, 'w')
    f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
-   f.write('ARCHIVE_USER: {}\n'.format(userid))
+   f.write('ARCHIVE_USER: {}\n'.format(usr))
    f.write('ARCHIVE_NAME: {}\n'.format(archiveName))
-   if userEmail is not None:
-      f.write('TROUBLESHOOTERS: {}\n'.format(userEmail))
+   if usrEmail is not None:
+      f.write('TROUBLESHOOTERS: {}\n'.format(usrEmail))
    f.write('\n')   
 
    f.write('; ...................\n')
@@ -480,30 +493,26 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('; ...................\n')
    f.write('; Species data vals\n')
    f.write('; ...................\n')
-   f.write('DATASOURCE: {}\n'.format(speciesSource))
+   f.write('DATASOURCE: {}\n'.format(dataSource))
    # Species source type (for processing) and file
-   if speciesSource == SpeciesDatasource.GBIF:
+   if dataSource == SpeciesDatasource.GBIF:
       varname = 'GBIF_OCCURRENCE_FILENAME'
-      if speciesData is None:
-         speciesData = GBIF_OCCURRENCE_FILENAME
+      dataFname = gbifFname
       # TODO: allow overwrite of these vars in initboom --> archive config file
       f.write('GBIF_TAXONOMY_FILENAME: {}\n'.format(GBIF_TAXONOMY_FILENAME))
       f.write('GBIF_PROVIDER_FILENAME: {}\n'.format(GBIF_PROVIDER_FILENAME))
-   elif speciesSource == SpeciesDatasource.BISON:
+   elif dataSource == SpeciesDatasource.BISON:
       varname = 'BISON_TSN_FILENAME'
-      if speciesData is None:
-         speciesData = BISON_TSN_FILENAME
-   elif speciesSource == SpeciesDatasource.IDIGBIO:
+      dataFname = bisonFname
+   elif dataSource == SpeciesDatasource.IDIGBIO:
       varname = 'IDIG_FILENAME'
-      if speciesData is None:
-         speciesData = IDIG_FILENAME
+      dataFname = idigFname
    else:
       varname = 'USER_OCCURRENCE_DATA'
-      if speciesData is None:
-         speciesData = USER_OCCURRENCE_DATA
+      dataFname = userOccFname
       f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
-              .format(speciesDataDelimiter))
-   f.write('{}: {}\n'.format(varname, speciesData))
+              .format(userOccSep))
+   f.write('{}: {}\n'.format(varname, dataFname))
    f.write('\n')
 
    f.write('; ...................\n')
@@ -529,8 +538,8 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('; ...................\n')
    # Intersection grid
    f.write('GRID_NAME: {}\n'.format(gridname))
-   f.write('GRID_CELLSIZE: {}\n'.format(grid_cellsize))
-   f.write('GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
+   f.write('GRID_CELLSIZE: {}\n'.format(cellsize))
+   f.write('GRID_NUM_SIDES: {}\n'.format(cellsides))
    f.write('\n')
    for k, v in intersectParams.iteritems():
       f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
@@ -541,35 +550,67 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    return newConfigFilename
 
 # ...............................................
+def _findConfigOrDefault(config, varname, defaultValue):
+   var = None
+   try:
+      var = config.get(SERVER_BOOM_HEADING, varname)
+   except:
+      pass
+   if var is None:
+      var = defaultValue
+   return var
+
+# ...............................................
 def readConfigArgs(configFname):
    if configFname is None or not os.path.exists(configFname):
       raise LMError(currargs='Missing config file {}'.format(configFname))
    config = Config(siteFn=configFname)
-   usr = config.get(SERVER_BOOM_HEADING, 'ARCHIVE_USER')
-   usrEmail = config.get(SERVER_BOOM_HEADING, 'ARCHIVE_USER_EMAIL')
-   archiveName = config.get(SERVER_BOOM_HEADING, 'ARCHIVE_NAME')
+
+   # Fill in missing or null variables for archive.config.ini
+   usr = _findConfigOrDefault(config, 'ARCHIVE_USER', PUBLIC_USER)
+   usrEmail = _findConfigOrDefault(config, 'ARCHIVE_USER_EMAIL', 
+                              '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
+   archiveName = _findConfigOrDefault(config, 'ARCHIVE_NAME', PUBLIC_ARCHIVE_NAME)
+   dataSource = _findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
+   dataSource = dataSource.upper()
+   algstring = _findConfigOrDefault(config, 'ALGORITHMS', ALGORITHMS)
+   minpoints = _findConfigOrDefault(config, 'POINT_COUNT_MIN', POINT_COUNT_MIN)
+   bisonFname = _findConfigOrDefault(config, 'BISON_TSN_FILENAME', 
+                                    BISON_TSN_FILENAME) 
+   userOccFname = _findConfigOrDefault(config, 'USER_OCCURRENCE_DATA', 
+                                    USER_OCCURRENCE_DATA)
+   userOccSep = _findConfigOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER', 
+                                    USER_OCCURRENCE_DATA_DELIMITER)
+   cellsides = _findConfigOrDefault(config, 'GRID_NUM_SIDES', GRID_NUM_SIDES)
+   # TODO: allow filter
+   gridFilter = _findConfigOrDefault(config, 'INTERSECT_FILTERSTRING', 
+                                     INTERSECT_FILTERSTRING)
+   gridIntVal = _findConfigOrDefault(config, 'INTERSECT_VALNAME', 
+                                     INTERSECT_VALNAME)
+   gridMinPct = _findConfigOrDefault(config, 'INTERSECT_MINPERCENT', 
+                                     INTERSECT_MINPERCENT)
+   gridMinPres = _findConfigOrDefault(config, 'INTERSECT_MINPRESENCE', 
+                                      INTERSECT_MINPRESENCE)
+   gridMaxPres = _findConfigOrDefault(config, 'INTERSECT_MAXPRESENCE', 
+                                      INTERSECT_MAXPRESENCE)
+   # These must be present in the default archive and user boom config files
    envPackageName = config.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE')
-   speciesSource = config.get(SERVER_BOOM_HEADING, 'DATASOURCE').upper()
-   speciesData = config.get(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA')
-   speciesDataDelimiter = config.get(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER')
-   minpoints = config.get(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN')
-   assemblePams = config.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
-   algstring = config.get(SERVER_BOOM_HEADING, 'ALGORITHMS')
-   algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+   gbifFname = config.get(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME')
+   idigFname = config.get(SERVER_BOOM_HEADING, 'IDIG_FILENAME')
    cellsize = config.get(SERVER_BOOM_HEADING, 'GRID_CELLSIZE')
-   cellsides = config.getint(SERVER_BOOM_HEADING, 'GRID_NUM_SIDES')
+   assemblePams = config.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
+
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-   gridbbox = eval(config.get(SERVER_BOOM_HEADING, 'GRID_BBOX'))
-   intersectParams = {
-         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
-         MatrixColumn.INTERSECT_PARAM_VAL_NAME: config.get(SERVER_BOOM_HEADING, 'INTERSECT_VALNAME'),
-         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: config.get(SERVER_BOOM_HEADING, 'INTERSECT_MINPRESENCE'),
-         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: config.get(SERVER_BOOM_HEADING, 'INTERSECT_MAXPRESENCE'),
-         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: config.get(SERVER_BOOM_HEADING, 'INTERSECT_MINPERCENT')}
-   return (usr, usrEmail, archiveName, envPackageName, speciesSource, speciesData, 
-           speciesDataDelimiter, minpoints, assemblePams, algorithms, cellsize,
-           cellsides, gridname, gridbbox, intersectParams)
-   
+   algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+   intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
+                      MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
+                      MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
+                      MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
+                      MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
+   return (usr, usrEmail, archiveName, envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
+           intersectParams)
 # ...............................................
 if __name__ == '__main__':
    if not isCorrectUser():
@@ -577,6 +618,7 @@ if __name__ == '__main__':
       sys.exit(2)
 
    sampleConfigFile = os.path.join(APP_PATH, 'LmDbServer/tools/boom.sample.ini')
+   defaultConfigFile = os.path.join(SPECIES_DATA_PATH, 'archive.config.ini')
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper database with metadata ' +
@@ -589,12 +631,13 @@ if __name__ == '__main__':
    args = parser.parse_args()
    configFname = args.config_file
 
-   (usr, usrEmail, archiveName, envPackageName, speciesSource, speciesData, 
-    speciesDataDelimiter, minpoints, assemblePams, algorithms, cellsize,
-    cellsides, gridname, gridbbox, intersectParams) = \
-        readConfigArgs(configFname)
+   (usr, usrEmail, archiveName, envPackageName, dataSource,  
+    gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+    minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
+    intersectParams) = readConfigArgs(configFname)
    # Imports META
    META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
+   gridbbox = pkgMeta['bbox']
       
 # .............................
    basefilename = os.path.basename(__file__)
@@ -649,12 +692,17 @@ if __name__ == '__main__':
       # Write config file for this archive
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
-      newConfigFilename = writeConfigFile(archiveName, envPackageName, usr, 
-                           usrEmail, speciesSource, 
-                           speciesData, speciesDataDelimiter, elyrMeta, 
-                           minpoints, algorithms, gridname, cellsize, cellsides, 
-                           intersectParams, mdlScen=mdlScencode, 
-                           prjScens=prjScencodes, assemblePams=assemblePams)
+      """(usr, usrEmail, archiveName, envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
+           intersectParams)
+      """
+      newConfigFilename = writeConfigFile(usr, usrEmail, archiveName, 
+           envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, cellsides, cellsize, gridname, 
+           intersectParams, elyrMeta, mdlScen=mdlScencode, prjScens=prjScencodes, 
+           assemblePams=assemblePams)
    except Exception, e:
       logger.error(str(e))
       raise

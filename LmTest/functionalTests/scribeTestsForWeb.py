@@ -283,6 +283,7 @@ scribe = BorgScribe(UnittestLogger())
 scribe.openConnections()
 
 elyrs = scribe.listEnvLayers(0, 10, userId=PUBLIC_USER, atom=True)
+select * from lm_v3.lm_listSDMProjectAtoms(0,10,'kubi',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 lyrs = scribe.listLayers(0, 10, userId=PUBLIC_USER, atom=True)
 
 # Create Test user
