@@ -216,7 +216,7 @@ def formatScenario(scn):
    return scnDict
    
 # .............................................................................
-def objectFormatter(obj):
+def jsonObjectFormatter(obj):
    """
    @summary: Looks at object and converts to JSON based on its type
    """
