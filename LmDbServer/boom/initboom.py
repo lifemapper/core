@@ -455,13 +455,6 @@ def writeConfigFile(usr, usrEmail, archiveName,
            minpoints, algorithms, cellsides, cellsize, gridname, 
            intersectParams, elyrMeta, mdlScen=None, prjScens=None, 
            mdlMask=None, prjMask=None, assemblePams=True):
-#                     archiveName, envPackageName, userid, userEmail, 
-#                      speciesSource, speciesData, speciesDataDelimiter,
-#                      elyrMeta, minpoints, algorithms, 
-#                      gridname, grid_cellsize, grid_cellsides, intersectParams,
-#                      bisonFname, userOccFname, userOccSep, 
-#                      mdlScen=None, prjScens=None, mdlMask=None, prjMask=None,
-#                      assemblePams=True):
    """
    """
    earl = EarlJr()

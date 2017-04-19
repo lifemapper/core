@@ -26,12 +26,13 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, OutputFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
-from LmServer.common.localconstants import PUBLIC_FQDN, APP_PATH
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import PUBLIC_FQDN, PUBLIC_USER
+from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
@@ -259,15 +260,17 @@ if __name__ == "__main__":
    if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
-
-   sampleConfigFile = os.path.join(APP_PATH, 'LmDbServer/tools/boom.sample.ini')
+   earl = EarlJr()
+   pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
+   defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
+                                                       OutputFormat.CONFIG))
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper archive with metadata ' +
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-', '--config_file', default=sampleConfigFile,
+   parser.add_argument('-', '--config_file', default=defaultConfigFile,
             help=('Configuration file for the archive, gridset, and grid ' +
                   'to be created from these data.'))
    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
@@ -300,36 +303,37 @@ if __name__ == "__main__":
 
 """
 $PYTHON LmDbServer/boom/boom.py --help
-$PYTHON LmDbServer/boom/boom.py  --archive_name "Heuchera archive" --user ryan start
-$PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive"  --user aimee start
-$PYTHON LmDbServer/boom/boom.py  --archive_name "Heuchera archive" --user ryan2 start
-$PYTHON LmDbServer/boom/boom.py --archive_name 'Biotaphy iDigBio archive' --user idigbio start
+$PYTHON LmDbServer/boom/boom.py  --config_file /share/lm/data/archive/kubi/BOOM_Archive.ini start
 
+from LmDbServer.boom.boom import *
 
+import argparse
 import mx.DateTime as dt
 import os, sys, time
-from LmDbServer.boom.boom import *
+
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, OutputFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
-from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
-from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN, APP_PATH
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import PUBLIC_FQDN, PUBLIC_USER
+from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.processchain import MFChain
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
+from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 
-userId = 'ryan'
-archiveName = 'Heuchera_archive'
+configFile = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
+
 secs = time.time()
 tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
 logger = ScriptLogger('archivist.{}'.format(timestamp))
 currtime = dt.gmt().mjd
 
-boomer = Boomer(BOOM_PID_FILE, userId, archiveName, log=logger)
+boomer = Boomer(BOOM_PID_FILE, defaultConfigFile, log=logger)
 boomer.initialize()
 
 spud, potatoInputs = boomer.christopher.startWalken()
