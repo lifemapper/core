@@ -70,24 +70,29 @@ class Scenario(LmService):
 
    # ................................
    def GET(self, scenarioId=None, afterTime=None, alternatePredictionCode=None,
-           beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
-           limit=100, offset=0, public=None):
+                 beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
+                 limit=100, offset=0, public=None):
       """
       @summary: Performs a GET request.  If a scenario id is provided,
                    attempt to return that item.  If not, return a list of 
                    scenarios that match the provided parameters
       """
+      if public:
+         userId = PUBLIC_USER
+      else:
+         userId = self.getUserId()
+
       if scenarioId is None:
-         if public:
-            userId = PUBLIC_USER
-         else:
-            userId = self.getUserId()
-            
          return self._listScenarios(userId, afterTime=afterTime,
                       altPredCode=alternatePredictionCode, 
                       beforeTime=beforeTime, dateCode=dateCode, 
                       epsgCode=epsgCode, gcmCode=gcmCode, limit=limit, 
                       offset=offset)
+      elif scenarioId.lower() == 'count':
+         return self._countScenarios(userId, afterTime=afterTime,
+                      altPredCode=alternatePredictionCode, 
+                      beforeTime=beforeTime, dateCode=dateCode, 
+                      epsgCode=epsgCode, gcmCode=gcmCode)
       else:
          return self._getScenario(scenarioId)
    
@@ -139,6 +144,19 @@ class Scenario(LmService):
    #   pass
    
    # ................................
+   def _countScenarios(self, userId, afterTime=None, altPredCode=None,  
+                      beforeTime=None, dateCode=None, epsgCode=None, 
+                      gcmCode=None):
+      """
+      @summary: Return a list of scenarios matching the specified criteria
+      """
+      scnCount = self.scribe.countScenarios(userId=userId, 
+                                    beforeTime=beforeTime, afterTime=afterTime,
+                                    epsg=epsgCode, gcmCode=gcmCode,
+                                    altpredCode=altPredCode, dateCode=dateCode)
+      return objectFormatter({'count' : scnCount})
+
+   # ................................
    def _getScenario(self, scenarioId):
       """
       @summary: Attempt to get a scenario
@@ -170,6 +188,5 @@ class Scenario(LmService):
                                     beforeTime=beforeTime, afterTime=afterTime,
                                     epsg=epsgCode, gcmCode=gcmCode,
                                     altpredCode=altPredCode, dateCode=dateCode)
-      # TODO: Return or format
       return objectFormatter(scnAtoms)
 

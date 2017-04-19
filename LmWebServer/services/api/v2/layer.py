@@ -69,18 +69,14 @@ class Layer(LmService):
                  "User does not have permission to delete this layer")
 
    # ................................
-   def GET(self, layerId=None, afterTime=None, beforeTime=None, epsgCode=None, 
-           isCategorical=None, limit=100, offset=0, public=None, 
-           scenarioId=None, squid=None, gcmCode=None, altPredCode=None,
-           dateCode=None, envTypeId=None, layerType=None):
+   def GET(self, layerId=None, afterTime=None, altPredCode=None, 
+           beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
+           envTypeId=None, gcmCode=None, layerType=None, limit=100, offset=0, 
+           public=None, scenarioId=None, squid=None):
       """
       @summary: Performs a GET request.  If a layer id is provided,
                    attempt to return that item.  If not, return a list of 
                    layers that match the provided parameters
-                   
-      #TODO: Layer type, squid, gcmCode, altPredCode, dateCode, envTypeId
-      
-      @todo: Add layerType for response objects
       """
       # Layer type:
       #   0 - Anything
@@ -91,27 +87,34 @@ class Layer(LmService):
       else:
          userId = self.getUserId()
       
-      
       if layerType is None or layerType == 0:
          if layerId is None:
-            return self._listLayers(userId, )
+            return self._listLayers(userId, afterTime=afterTime, 
+                                    beforeTime=beforeTime, epsgCode=epsgCode, 
+                                    limit=limit, offset=offset, squid=squid)
+         elif layerId.lower() == 'count':
+            return self._countLayers(userId, afterTime=afterTime, 
+                                    beforeTime=beforeTime, epsgCode=epsgCode, 
+                                    squid=squid)
          else:
-            return self._getLayer(layerId)
+            return self._getLayer(layerId, envLayer=False)
       else:
          if layerId is None:
-            return self._listEnvLayers(userId, )
+            return self._listEnvLayers(userId, afterTime=afterTime, 
+                               altPredCode=altPredCode, beforeTime=beforeTime, 
+                               dateCode=dateCode, envCode=envCode, 
+                               envTypeId=envTypeId, epsgCode=epsgCode, 
+                               gcmCode=gcmCode, limit=limit, offset=offset, 
+                               scenarioId=scenarioId)
+         elif layerId.lower() == 'count':
+            return self._countEnvLayers(userId, afterTime=afterTime, 
+                               altPredCode=altPredCode, beforeTime=beforeTime, 
+                               dateCode=dateCode, envCode=envCode, 
+                               envTypeId=envTypeId, epsgCode=epsgCode, 
+                               gcmCode=gcmCode, scenarioId=scenarioId)
          else:
-            return self._getEnvLayer(layerId)
+            return self._getLayer(layerId, envLayer=True)
       
-      
-      if layerId is None:
-         return self._listLayers(afterTime=afterTime, 
-                beforeTime=beforeTime, epsgCode=epsgCode, 
-                isCategorical=isCategorical, limit=limit, offset=offset, 
-                public=public, scenarioId=scenarioId)
-      else:
-         return self._getLayer(layerId)
-   
    # ................................
    def POST(self, layerType, epsgCode, layerName, 
             envLayerTypeId=None, additionalMetadata=None, valUnits=None,
@@ -145,29 +148,70 @@ class Layer(LmService):
    #   pass
    
    # ................................
-   def _getEnvLayer(self, layerId):
+   def _countEnvLayers(self, userId, afterTime=None, altPredCode=None, 
+                            beforeTime=None, dateCode=None, envCode=None, 
+                            envTypeId=None, epsgCode=None, gcmCode=None, 
+                            scenarioId=None):
       """
-      @summary: Attempt to get an environmental layer
-      @todo: Need a different function?
+      @summary: Count environmental layer objects matching the specified 
+                   criteria
+      @param userId: The user to list environmental layers for.  Note that this
+                        may not be the same user logged into the system
+      @param afterTime: (optional) Return layers modified after this time 
+                           (Modified Julian Day)
+      @param altPredCode: (optional) Return layers with this alternate 
+                             prediction code
+      @param beforeTime: (optional) Return layers modified before this time 
+                            (Modified Julian Day)
+      @param dateCode: (optional) Return layers with this date code
+      @param envCode: (optional) Return layers with this environment code
+      @param envTypeId: (optional) Return layers with this environmental type
+      @param epsgCode: (optional) Return layers with this EPSG code
+      @param gcmCode: (optional) Return layers with this GCM code
+      @param scenarioId: (optional) Return layers from this scenario
       """
-      lyr = self.scribe.getEnvLayer(lyrId=layerId)
-      if lyr is None:
-         raise cherrypy.HTTPError(404, 
-                        'Environmental layer {} was not found'.format(layerId))
-      if lyr.getUserId() == self.getUserId():
-         # TODO: Return or format?
-         return objectFormatter(lyr)
-      else:
-         raise cherrypy.HTTPError(403, 
-                  'User {} does not have permission to access layer {}'.format(
-                     self.getUserId(), layerId))
-   
+      lyrCount = self.scribe.countEnvLayers(userId=userId, 
+                                   envCode=envCode, gcmcode=gcmCode,
+                                   altpredCode=altPredCode, dateCode=dateCode, 
+                                   afterTime=afterTime, beforeTime=beforeTime,
+                                   epsg=epsgCode, envTypeId=envTypeId,
+                                   scenarioId=scenarioId)
+      # Format return
+      # Set headers
+      return objectFormatter({"count" : lyrCount})
+
    # ................................
-   def _getLayer(self, layerId):
+   def _countLayers(self, userId, afterTime=None, beforeTime=None, epsgCode=None, 
+                         squid=None):
+      """
+      @summary: Return a count of layers matching the specified criteria
+      @param userId: The user to list layers for.  Note that this may not be
+                        the same user that is logged into the system
+      @param afterTime: (optional) List layers modified after this time 
+                           (Modified Julian Day)
+      @param beforeTime: (optional) List layers modified before this time
+                            (Modified Julian Day)
+      @param epsgCode: (optional) Return layers that have this EPSG code
+      @param limit: (optional) Return this number of layers, at most
+      @param offset: (optional) Offset the returned layers by this number
+      @param squid: (optional) Return layers with this species identifier
+      """
+      lyrCount = self.scribe.countLayers(userId=userId, 
+                                        squid=squid, afterTime=afterTime, 
+                                        beforeTime=beforeTime, epsg=epsgCode)
+      # Format return
+      # Set headers
+      return objectFormatter({"count" : lyrCount})
+
+   # ................................
+   def _getLayer(self, layerId, envLayer=False):
       """
       @summary: Attempt to get a layer
       """
-      lyr = self.scribe.getLayer(lyrId=layerId)
+      if envLayer:
+         lyr = self.scribe.getEnvLayer(lyrId=layerId)
+      else:
+         lyr = self.scribe.getLayer(lyrId=layerId)
       if lyr is None:
          raise cherrypy.HTTPError(404, 
                         'Environmental layer {} was not found'.format(layerId))

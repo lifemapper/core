@@ -76,16 +76,20 @@ class OccurrenceSet(LmService):
                    attempt to return that item.  If not, return a list of 
                    occurrence sets that match the provided parameters
       """
+      if public:
+         userId = PUBLIC_USER
+      else:
+         userId = self.getUserId()
+
       if occSetId is None:
-         if public:
-            userId = PUBLIC_USER
-         else:
-            userId = self.getUserId()
-            
          return self._listOccurrenceSets(userId, afterTime=afterTime, 
                 beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
                 limit=limit, offset=offset)
+      elif occSetId.lower() == 'count':
+         return self._countOccurrenceSets(userId, afterTime=afterTime, 
+                beforeTime=beforeTime, displayName=displayName, 
+                epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints)
       else:
          return self._getOccurrenceSet(occSetId)
    
@@ -126,6 +130,34 @@ class OccurrenceSet(LmService):
    #def PUT(self, occSetId, occSetModel):
    #   pass
    
+   # ................................
+   def _countOccurrenceSets(self, userId, afterTime=None, beforeTime=None, 
+                           displayName=None, epsgCode=None, 
+                           minimumNumberOfPoints=1, status=None):
+      """
+      @summary: Return a count of occurrence sets matching the specified 
+                   criteria
+      """
+      afterStatus = None
+      beforeStatus = None
+
+      # Process status parameter
+      if status:
+         if status < JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE - 1
+         elif status == JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE + 1
+            afterStatus = JobStatus.COMPLETE - 1
+         else:
+            afterStatus = status - 1
+      
+      occCount = self.scribe.countOccurrenceSets(userId=userId,
+                     minOccurrenceCount=minimumNumberOfPoints, 
+                     displayName=displayName, afterTime=afterTime, 
+                     beforeTime=beforeTime, epsg=epsgCode, 
+                     beforeStatus=beforeStatus, afterStatus=afterStatus)
+      return objectFormatter({'count' : occCount})
+
    # ................................
    def _getOccurrenceSet(self, occSetId):
       """

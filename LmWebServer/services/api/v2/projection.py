@@ -52,7 +52,7 @@ class Projection(LmService):
       @summary: Attempts to delete a projection
       @param projectionId: The id of the projection to delete
       """
-      prj = self.scribe.getSDMProject(projectionId)
+      prj = self.scribe.getSDMProject(int(projectionId))
       
       if prj is None:
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
@@ -82,17 +82,25 @@ class Projection(LmService):
                    attempt to return that item.  If not, return a list of 
                    projections that match the provided parameters
       """
+      if public:
+         userId = PUBLIC_USER
+      else:
+         userId = self.getUserId()
+
       if projectionId is None:
-         if public:
-            userId = PUBLIC_USER
-         else:
-            userId = self.getUserId()
-            
          return self._listProjections(userId, afterTime=afterTime, 
                                  algCode=algorithmCode, beforeTime=beforeTime, 
                                  displayName=displayName, epsgCode=epsgCode, 
                                  limit=limit, mdlScnCode=modelScenarioCode, 
                                  occurrenceSetId=occurrenceSetId, offset=offset,
+                                 prjScnCode=projectionScenarioCode, 
+                                 status=status)
+      elif projectionId.lower() == 'count':
+         return self._countProjections(userId, afterTime=afterTime, 
+                                 algCode=algorithmCode, beforeTime=beforeTime, 
+                                 displayName=displayName, epsgCode=epsgCode, 
+                                 mdlScnCode=modelScenarioCode, 
+                                 occurrenceSetId=occurrenceSetId, 
                                  prjScnCode=projectionScenarioCode, 
                                  status=status)
       else:
@@ -152,11 +160,42 @@ class Projection(LmService):
    #   pass
    
    # ................................
+   def _countProjections(self, userId, afterTime=None, algCode=None, 
+                        beforeTime=None, displayName=None, epsgCode=None,
+                        mdlScnCode=None, occurrenceSetId=None, prjScnCode=None, 
+                        status=None):
+      """
+      @summary: Return a count of projections matching the specified criteria
+      """
+      afterStatus = None
+      beforeStatus = None
+
+      # Process status parameter
+      if status:
+         if status < JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE - 1
+         elif status == JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE + 1
+            afterStatus = JobStatus.COMPLETE - 1
+         else:
+            afterStatus = status - 1
+   
+      prjCount = self.scribe.countSDMProjects(userId=userId,
+                           displayName=displayName, afterTime=afterTime, 
+                           beforeTime=beforeTime, epsg=epsgCode, 
+                           afterStatus=afterStatus, beforeStatus=beforeStatus, 
+                           occsetId=occurrenceSetId, algCode=algCode, 
+                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
+      objectFormatter({
+         "count" : prjCount
+      })
+
+   # ................................
    def _getProjection(self, projectionId):
       """
       @summary: Attempt to get a projection
       """
-      prj = self.scribe.getSDMProject(projectionId)
+      prj = self.scribe.getSDMProject(int(projectionId))
       
       if prj is None:
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
@@ -197,6 +236,5 @@ class Projection(LmService):
                            afterStatus=afterStatus, beforeStatus=beforeStatus, 
                            occsetId=occurrenceSetId, algCode=algCode, 
                            mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
-      # TODO: Return or format
       return objectFormatter(prjAtoms)
    
