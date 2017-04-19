@@ -508,14 +508,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
 -- DATA TYPES (used on multiple tables)
 -- Note: All column names are returned in lower case
 -- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
--- lm_atom returns only an a few object attributes
-DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
-CREATE TYPE lm_v3.lm_atom AS (
-  id int,
-  name varchar,
-  epsgcode int,
-  modtime double precision);
         
 -- ----------------------------------------------------------------------------
 -- lm_bloat
@@ -613,11 +605,10 @@ TO GROUP writer;
 DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
 CREATE TYPE lm_v3.lm_atom AS (
   id int,
-  title varchar,
+  name varchar,
   epsgcode int,
-  description text,
-  modtime double precision
-  );   
+  modtime double precision);
+
         
 -- ----------------------------------------------------------------------------
 DROP TYPE IF EXISTS lm_v3.lm_occStats CASCADE;

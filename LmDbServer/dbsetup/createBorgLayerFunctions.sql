@@ -578,10 +578,14 @@ $$  LANGUAGE 'plpgsql' STABLE;
 CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvLayerAtoms(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
-                                                    sqd varchar,
+                                                    env varchar,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
                                                     aftertime double precision,
                                                     beforetime double precision,
-                                                    epsg int)
+                                                    epsg int,
+                                                    etypeid int)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
 DECLARE
@@ -591,9 +595,9 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT envLayerId, lyrname, epsgcode, lyrmodtime FROM lm_v3.lm_envlayer ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterEnvLayer(usr, env, gcm, altpred, 
                                     tm, aftertime, beforetime, epsg, etypeid);
+   cmd = 'SELECT envLayerId, lyrname, epsgcode, lyrmodtime FROM lm_v3.lm_envlayer ';
    ordercls = ' ORDER BY statusModTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
