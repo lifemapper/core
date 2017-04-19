@@ -32,8 +32,8 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.scenario import Scenario
-from LmWebServer.formatters.jsonFormatter import objectFormatter
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
@@ -69,31 +69,38 @@ class Scenario(LmService):
                   self.getUserId(), scenarioId))
 
    # ................................
+   @lmFormatter
    def GET(self, scenarioId=None, afterTime=None, alternatePredictionCode=None,
-           beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
-           limit=100, offset=0, public=None):
+                 beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
+                 limit=100, offset=0, public=None):
       """
       @summary: Performs a GET request.  If a scenario id is provided,
                    attempt to return that item.  If not, return a list of 
                    scenarios that match the provided parameters
       """
+      if public:
+         userId = PUBLIC_USER
+      else:
+         userId = self.getUserId()
+
       if scenarioId is None:
-         if public:
-            userId = PUBLIC_USER
-         else:
-            userId = self.getUserId()
-            
          return self._listScenarios(userId, afterTime=afterTime,
                       altPredCode=alternatePredictionCode, 
                       beforeTime=beforeTime, dateCode=dateCode, 
                       epsgCode=epsgCode, gcmCode=gcmCode, limit=limit, 
                       offset=offset)
+      elif scenarioId.lower() == 'count':
+         return self._countScenarios(userId, afterTime=afterTime,
+                      altPredCode=alternatePredictionCode, 
+                      beforeTime=beforeTime, dateCode=dateCode, 
+                      epsgCode=epsgCode, gcmCode=gcmCode)
       else:
          return self._getScenario(scenarioId)
    
    # ................................
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
+   @lmFormatter
    def POST(self):
       """
       @summary: Posts a new scenario
@@ -129,8 +136,7 @@ class Scenario(LmService):
                      altpredCode=altPredCode, dateCode=dateCode, layers=layers)
       newScn = self.scribe.findOrInsertScenario(scn)
       
-      # TODO: Return or format
-      return objectFormatter(newScn)
+      return newScn
    
    # ................................
    #@cherrypy.tools.json_in
@@ -138,6 +144,19 @@ class Scenario(LmService):
    #def PUT(self, scenarioId):
    #   pass
    
+   # ................................
+   def _countScenarios(self, userId, afterTime=None, altPredCode=None,  
+                      beforeTime=None, dateCode=None, epsgCode=None, 
+                      gcmCode=None):
+      """
+      @summary: Return a list of scenarios matching the specified criteria
+      """
+      scnCount = self.scribe.countScenarios(userId=userId, 
+                                    beforeTime=beforeTime, afterTime=afterTime,
+                                    epsg=epsgCode, gcmCode=gcmCode,
+                                    altpredCode=altPredCode, dateCode=dateCode)
+      return {'count' : scnCount}
+
    # ................................
    def _getScenario(self, scenarioId):
       """
@@ -151,8 +170,7 @@ class Scenario(LmService):
       
       if scn.getUserId() in [self.getUserId(), PUBLIC_USER]:
          
-         # TODO: Return or format
-         return objectFormatter(scn)
+         return scn
 
       else:
          raise cherrypy.HTTPError(403,
@@ -170,6 +188,5 @@ class Scenario(LmService):
                                     beforeTime=beforeTime, afterTime=afterTime,
                                     epsg=epsgCode, gcmCode=gcmCode,
                                     altpredCode=altPredCode, dateCode=dateCode)
-      # TODO: Return or format
-      return objectFormatter(scnAtoms)
+      return scnAtoms
 

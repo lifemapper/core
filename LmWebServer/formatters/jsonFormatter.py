@@ -29,7 +29,7 @@
 """
 from hashlib import md5
 import json
-from types import ListType
+from types import ListType, DictionaryType
 
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Raster
@@ -216,7 +216,7 @@ def formatScenario(scn):
    return scnDict
    
 # .............................................................................
-def objectFormatter(obj):
+def jsonObjectFormatter(obj):
    """
    @summary: Looks at object and converts to JSON based on its type
    """
@@ -234,7 +234,9 @@ def _formatObject(obj):
    """
    @summary: Helper method to format an individual object based on its type
    """
-   if isinstance(obj, Atom):
+   if isinstance(obj, DictionaryType):
+      return obj
+   elif isinstance(obj, Atom):
       return formatAtom(obj)
    elif isinstance(obj, SDMProjection):
       return formatProjection(obj)

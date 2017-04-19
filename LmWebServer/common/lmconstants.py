@@ -50,6 +50,9 @@ XSI_NS_PREFIX = "xsi" # This is a well-known namespace in ElementTree and will a
 
 # This constant is used for processing query parameters.  If no 'processIn' 
 #    key, just take the parameter as it comes in
+# Note: The dictionary keys are the .lower() version of the parameter names.
+#          The 'name' value of each key is what it gets translated to
+# The point of this structure is to allow query parameters to be case-insensitive
 QUERY_PARAMETERS = {
    'aftertime' : {
       'name' : 'afterTime',
@@ -57,6 +60,9 @@ QUERY_PARAMETERS = {
    },
    'algorithmcode' : {
       'name' : 'algorithmCode',
+   },
+   'altpredcode' : {
+      'name' : 'altPredCode'
    },
    'beforetime' : {
       'name' : 'beforeTime',
@@ -66,20 +72,36 @@ QUERY_PARAMETERS = {
       'name' : 'cellSides',
       'processIn' : int
    },
+   'datecode' : {
+      'name' : 'dateCode'
+   },
    'displayname' : {
       'name' : 'displayName'
+   },
+   'envcode' : {
+      'name' : 'envCode'
+   },
+   'envtypeid' : {
+      'name' : 'envTypeId',
+      'processIn' : int
    },
    'epsgcode' : {
       'name' : 'epsgCode',
       'processIn' : int
    },
-   'iscategorical' : {
-      'name' : 'isCategorical',
-      'processIn' : lambda x: bool(int(x)) # zero is False, one is True
+   'gcmcode' : {
+      'name' : 'gcmCode',
+   },
+   'layertype' : {
+      'name' : 'layerType',
+      'processIn' : int
    },
    'limit' : {
       'name' : 'limit',
       'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
+   },
+   'modelscenariocode' : {
+      'name' : 'modelScenarioCode'
    },
    'minimumnumberofpoints' : {
       'name' : 'minimumNumberOfPoints',
@@ -92,6 +114,9 @@ QUERY_PARAMETERS = {
    'offset' : {
       'name' : 'offset',
       'processIn' : lambda x: max(0, int(x)) # Integer, minimum is zero
+   },
+   'projectionscenariocode' : {
+      'name' : 'projectionScenarioCode'
    },
    'public' : {
       'name' : 'public',
