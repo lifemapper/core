@@ -115,6 +115,18 @@ QUERY_PARAMETERS = {
       'name' : 'offset',
       'processIn' : lambda x: max(0, int(x)) # Integer, minimum is zero
    },
+   'pathlayerid' : {
+      'name' : 'pathLayerId'
+   },
+   'pathoccsetid' : {
+      'name' : 'pathOccSetId'
+   },
+   'pathprojectionid' : {
+      'name' : 'pathProjectionId'
+   },
+   'pathscenarioid' : {
+      'name' : 'pathScenarioId'
+   },
    'projectionscenariocode' : {
       'name' : 'projectionScenarioCode'
    },

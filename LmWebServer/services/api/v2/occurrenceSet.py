@@ -37,19 +37,19 @@ from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('occSetId')
+@cherrypy.popargs('pathOccSetId')
 class OccurrenceSet(LmService):
    """
    @summary: This class is for the occurrence sets service.  The dispatcher is
                 responsible for calling the correct method
    """
    # ................................
-   def DELETE(self, occSetId):
+   def DELETE(self, pathOccSetId):
       """
       @summary: Attempts to delete an occurrence set
-      @param occSetId: The id of the occurrence set to delete
+      @param pathOccSetId: The id of the occurrence set to delete
       """
-      occ = self.scribe.getOccurrenceSet(occid=int(occSetId))
+      occ = self.scribe.getOccurrenceSet(occid=int(pathOccSetId))
       
       if occ is None:
          raise cherrypy.HTTPError(404, "Occurrence set not found")
@@ -69,7 +69,7 @@ class OccurrenceSet(LmService):
       
    # ................................
    @lmFormatter
-   def GET(self, occSetId=None, afterTime=None, beforeTime=None, 
+   def GET(self, pathOccSetId=None, afterTime=None, beforeTime=None, 
            displayName=None, epsgCode=None, minimumNumberOfPoints=1, 
            limit=100, offset=0, public=None, status=None):
       """
@@ -82,17 +82,17 @@ class OccurrenceSet(LmService):
       else:
          userId = self.getUserId()
 
-      if occSetId is None:
+      if pathOccSetId is None:
          return self._listOccurrenceSets(userId, afterTime=afterTime, 
                 beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
                 limit=limit, offset=offset)
-      elif occSetId.lower() == 'count':
+      elif pathOccSetId.lower() == 'count':
          return self._countOccurrenceSets(userId, afterTime=afterTime, 
                 beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints)
       else:
-         return self._getOccurrenceSet(occSetId)
+         return self._getOccurrenceSet(pathOccSetId)
    
    # ................................
    #@cherrypy.tools.json_out
@@ -128,7 +128,7 @@ class OccurrenceSet(LmService):
    
    # ................................
    #@cherrypy.tools.json_out
-   #def PUT(self, occSetId, occSetModel):
+   #def PUT(self, pathOccSetId, occSetModel):
    #   pass
    
    # ................................
@@ -160,11 +160,11 @@ class OccurrenceSet(LmService):
       return {'count' : occCount}
 
    # ................................
-   def _getOccurrenceSet(self, occSetId):
+   def _getOccurrenceSet(self, pathOccSetId):
       """
       @summary: Attempt to get an occurrence set
       """
-      occ = self.scribe.getOccurrenceSet(occid=int(occSetId))
+      occ = self.scribe.getOccurrenceSet(occid=int(pathOccSetId))
       
       if occ is None:
          raise cherrypy.HTTPError(404, "Occurrence set not found")
