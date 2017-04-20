@@ -521,18 +521,17 @@ class Raster(_Layer):
 #                                              minVal, maxVal, nodataVal)
 #       if msgs:
 #          print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
-      if (os.path.exists(dlocation) and 
+      if (dlocation is not None and 
+          os.path.exists(dlocation) and 
           (verify is None or gdalType is None or dataFormat is None or 
            resolution is None or bbox is None or 
            minVal is None or maxVal is None or nodataVal)):
          
          (dlocation, verify, gdalType, dataFormat, bbox, resolution, minVal, 
-          maxVal, nodataVal, msgs) = self.populateStats(dlocation, verify, 
-                                                gdalType, dataFormat, bbox, 
-                                                resolution, minVal, maxVal, 
-                                                nodataVal)
-      if msgs:
-         print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
+          maxVal, nodataVal) = self.populateStats(dlocation, verify, 
+                                                  gdalType, dataFormat, bbox, 
+                                                  resolution, minVal, maxVal, 
+                                                  nodataVal)
       _Layer.__init__(self, name, userId, epsgcode, lyrId=lyrId, 
                 squid=squid, ident=ident, verify=verify, dlocation=dlocation, 
                 metadata=metadata, dataFormat=dataFormat, gdalType=gdalType, 
@@ -698,8 +697,6 @@ class Raster(_Layer):
          msg =('Computed hash value {} does not match reported value {}'
                .format(newVerify, verify))
          raise LMError(currargs=msg)
-#          msgs.append('Computed hash value {} does not match reported value {}'
-#                      .format(newVerify, verify))
       else:
          verify = newVerify
       
@@ -741,8 +738,12 @@ class Raster(_Layer):
          maxVal = bmax
       if nodataVal is None:
          nodataVal = band.GetNoDataValue()
+      # Print all warnings
+      if msgs:
+         print 'Layer.populateStats Warning: \n{}'.format('\n'.join(msgs))
+         
       return (dlocation, verify, gdalType, dataFormat, bbox, resolution, 
-              minVal, maxVal, nodataVal, msgs)
+              minVal, maxVal, nodataVal)
          
 # ...............................................
    def readFromUploadedData(self, datacontent, overwrite=False, 

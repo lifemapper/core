@@ -325,6 +325,14 @@ from LmServer.legion.cmd import MfRule
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.sdmproj import SDMProjection
+from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
+         OutputFormat, SERVER_BOOM_HEADING, MatrixType) 
+
 configFile = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
 
 secs = time.time()
@@ -333,28 +341,14 @@ timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
 logger = ScriptLogger('archivist.{}'.format(timestamp))
 currtime = dt.gmt().mjd
 
-boomer = Boomer(BOOM_PID_FILE, defaultConfigFile, log=logger)
+boomer = Boomer(BOOM_PID_FILE, configFile, log=logger)
 boomer.initialize()
+chris = boomer.christopher
+woc = chris.weaponOfChoice
+alg = chris.algs[0]
+prjscen = chris.prjScens[0]
 
 spud, potatoInputs = boomer.christopher.startWalken()
-if spud:
-   boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
-   spudArf = spud.getArfFilename(prefix='spud')
-   boomer.spudArfFnames.append(spudArf)
-   
-   for scencode, f in boomer.rawPotatoFiles.iteritems():
-      squid = spud.mfMetadata[MFChain.META_SQUID]
-      fname = potatoInputs[scencode]
-      f.write('{}: {}\n'.format(squid, fname))
-
-objs = []
-occ = boomer.christopher.weaponOfChoice.getOne()
-for alg in boomer.christopher.algs:
-   for prjscen in boomer.christopher.prjScens:
-      prj = boomer.christopher._createOrResetSDMProject(occ, alg, prjscen, currtime)
-      objs.append(prj)
-
-
 # for i in range(61):
 while not spud:
    spud, potatoInputs = boomer.christopher.startWalken()
