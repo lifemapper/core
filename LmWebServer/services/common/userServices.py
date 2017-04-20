@@ -116,7 +116,7 @@ class UserSignUp(LmService):
          raise cherrypy.HTTPError(400, 
                                 'Password must be between 8 and 32 characters')
          
-      checkUser = self.scribe.findUser(userId, email)
+      checkUser = self.scribe.findOrInsertUser(userId, email)
       
       if checkUser is None:
          usr = LMUser(userId, email, pword1, firstName=firstName, 
