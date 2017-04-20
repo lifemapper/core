@@ -58,10 +58,9 @@ class LmDispatcher(MethodDispatcher):
          setAccept = LMFormat.SHAPE.getMimeType()
       
       if setAccept is not None:
-         print "Setting header to:", setAccept
-         cherrypy.request.header['Accept'] = setAccept
+         cherrypy.request.headers['Accept'] = setAccept
          
-         new_path_info = '/'.join(path_info_pieces)
+         new_path_info = '/'.join(path_info_pieces[:-1])
 
       return MethodDispatcher.__call__(self, new_path_info)
 
