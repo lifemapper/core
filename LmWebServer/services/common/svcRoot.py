@@ -37,6 +37,7 @@ from LmWebServer.services.api.v2.v2Root import ApiRootV2
 from LmWebServer.services.common.userServices import (UserLogin, UserLogout, UserSignUp)
 from LmWebServer.services.cpTools.basicAuth import getUserName
 from LmWebServer.services.cpTools.cors import CORS
+from LmWebServer.services.cpTools.paramCaster import castParameters
 # .............................................................................
 @cherrypy.expose
 class LmAPI(object):
@@ -81,13 +82,17 @@ if __name__ == '__main__':
    cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
    # Tell CherryPy to look for authenticated users
-   cherrypy.tools.BasicAuth = cherrypy.Tool('before_handler', getUserName)
+   cherrypy.tools.basicAuth = cherrypy.Tool('before_handler', getUserName)
+   
+   # Add the parameter caster to the tool box
+   cherrypy.tools.paramCaster = cherrypy.Tool('before_handler', castParameters)
 
    appConfig = {
       '/' : {
          'request.dispatch' : cherrypy.dispatch.MethodDispatcher(),
          'tools.sessions.on' : True,
-         'tools.BasicAuth.on' : True
+         'tools.basicAuth.on' : True,
+         'tools.paramCaster.on' : True
       }
    }
 
