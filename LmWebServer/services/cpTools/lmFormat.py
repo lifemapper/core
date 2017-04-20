@@ -28,6 +28,10 @@
 """
 import cherrypy
 
+from LmCommon.common.lmconstants import LMFormat, HTTPStatus
+
+from LmWebServer.formatters.fileFormatter import (gtiffObjectFormatter,
+                                                  shapefileObjectFormatter)
 from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
 
 # .............................................................................
@@ -43,8 +47,26 @@ def lmFormatter(f):
       # Call the handler and get the object result
       handler_result = f(*args, **kwargs)
       
-      ah = cherrypy.request.headers.get('Accept')
-      print ah
+      acceptHeaders = cherrypy.request.headers.get('Accept')
+      
+      for ah in acceptHeaders.split(';'):
+         try:
+            # If JSON or default
+            if ah in [LMFormat.JSON.getMimeType(), '*/*']:
+               return jsonObjectFormatter(handler_result)
+            #elif ah == LMFormat.KML.getMimeType():
+            #   return kmlObjectFormatter(handler_result)
+            elif ah == LMFormat.GTIFF.getMimeType():
+               return gtiffObjectFormatter(handler_result)
+            elif ah == LMFormat.SHAPE.getMimeType():
+               return shapefileObjectFormatter(handler_result)
+         except Exception:
+            # Ignore and try next accept header
+            pass
+      # If we cannot find an acceptable formatter, raise HTTP error
+      raise cherrypy.HTTPError(HTTPStatus.NOT_ACCEPTABLE, 
+                               'Could not an acceptable format')
+            
       
       
       return jsonObjectFormatter(handler_result)

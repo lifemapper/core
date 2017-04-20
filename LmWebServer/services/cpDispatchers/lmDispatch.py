@@ -52,8 +52,6 @@ class LmDispatcher(MethodDispatcher):
          setAccept = LMFormat.KML.getMimeType()
       elif lastSegment == 'gtiff':
          setAccept = LMFormat.GTIFF.getMimeType()
-      elif lastSegment == 'csv':
-         setAccept = LMFormat.CSV.getMimeType()
       elif lastSegment == 'shapefile':
          setAccept = LMFormat.SHAPE.getMimeType()
       
