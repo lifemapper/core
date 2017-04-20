@@ -24,7 +24,7 @@
 """
 
 import os
-from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS
+from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS, OutputFormat
 
 # ...............................................
 def readyFilename(fullfilename, overwrite=False):
