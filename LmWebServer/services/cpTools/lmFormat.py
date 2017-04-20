@@ -42,6 +42,11 @@ def lmFormatter(f):
       """
       # Call the handler and get the object result
       handler_result = f(*args, **kwargs)
+      
+      ah = cherrypy.request.headers.get('Accept')
+      print ah
+      
+      
       return jsonObjectFormatter(handler_result)
    
    return wrapper
