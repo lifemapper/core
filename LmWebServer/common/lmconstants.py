@@ -142,6 +142,40 @@ QUERY_PARAMETERS = {
       'name' : 'status',
       'processIn' : int
    },
+   # Authentication parameters
+   'address1' : {
+      'name' : 'address1'
+   },
+   'address2' : {
+      'name' : 'address2'
+   },
+   'address3' : {
+      'name' : 'address3'
+   },
+   'phone' : {
+      'name' : 'phone'
+   },
+   'email' : {
+      'name' : 'email'
+   },
+   'firstname' : {
+      'name' : 'firstName'
+   },
+   'institution' : {
+      'name' : 'institution'
+   },
+   'lastname' : {
+      'name' : 'lastName'
+   },
+   'pword' : {
+      'name' : 'pword'
+   },
+   'pword1' : {
+      'name' : 'pword1'
+   },
+   'userid' : {
+      'name' : 'userId'
+   },
 }
 
 
