@@ -35,7 +35,7 @@ import cherrypy
 from LmServer.common.lmconstants import CHERRYPY_CONFIG_FILE
 from LmWebServer.services.api.v2.v2Root import ApiRootV2
 from LmWebServer.services.common.userServices import (UserLogin, UserLogout, UserSignUp)
-from LmWebServer.services.cpTools.acceptHeader import findFormatRequest
+from LmWebServer.services.cpDispatchers.lmDispatch import LmDispatcher
 from LmWebServer.services.cpTools.basicAuth import getUserName
 from LmWebServer.services.cpTools.cors import CORS
 from LmWebServer.services.cpTools.paramCaster import castParameters
@@ -89,16 +89,12 @@ if __name__ == '__main__':
    # Add the parameter caster to the tool box
    cherrypy.tools.paramCaster = cherrypy.Tool('before_handler', castParameters)
 
-   # Add accept header tool to process URLs looking for formats
-   cherrypy.tools.findFormat = cherrypy.Tool('before_handler', findFormatRequest)
-
    appConfig = {
       '/' : {
-         'request.dispatch' : cherrypy.dispatch.MethodDispatcher(),
+         'request.dispatch' : LmDispatcher(),
          'tools.sessions.on' : True,
          'tools.basicAuth.on' : True,
-         'tools.paramCaster.on' : True,
-         'tools.findFormat.on' : True
+         'tools.paramCaster.on' : True
       }
    }
 
