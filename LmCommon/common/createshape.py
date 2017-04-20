@@ -37,8 +37,8 @@ from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
                SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
-from LmCompute.common.lmObj import LmException
 from LmCommon.common.unicode import fromUnicode, toUnicode
+from LmCompute.common.lmObj import LmException
 try:
    from LmServer.common.lmconstants import BIN_PATH
 except:
@@ -391,7 +391,7 @@ class ShapeShifter(object):
          for idx in idxs:
             fldnames.append(self.dataFields[idx][0])
       csvData = StringIO.StringIO()
-      csvData.write(self.rawdata.encode(ENCODING))
+      csvData.write(toUnicode(self.rawdata, ENCODING))
       csvData.seek(0)
       reader = csv.DictReader(csvData, fieldnames=fldnames)
       return reader
