@@ -34,6 +34,14 @@ SESSION_PATH = os.path.join(SCRATCH_PATH, SESSION_DIR)
 SESSION_KEY = '_cp_username'
 REFERER_KEY = 'lm_referer'
 
+# HTTP Methods
+class HTTPMethod(object):
+   DELETE = 'DELETE'
+   GET = 'GET'
+   POST = 'POST'
+   PUT = 'PUT'
+
+
 # This constant is used for processing query parameters.  If no 'processIn' 
 #    key, just take the parameter as it comes in
 # Note: The dictionary keys are the .lower() version of the parameter names.
