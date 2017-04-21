@@ -794,7 +794,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       return line, specieskey
 
 # ...............................................
-   def parseGBIFRecord(self, line):
+   def _parseGBIFRecord(self, line):
       specieskey = provkey = None
       if line is not None and len(line) >= 16:
          try:
