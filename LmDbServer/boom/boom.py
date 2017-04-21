@@ -102,7 +102,8 @@ class Boomer(Daemon):
                                               scribe=self._scribe)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
-      
+      # Keep track of whether a process needs to finish before shutdown
+      self.spudInProcess = False
       self.spudArfFnames = []
       self.potatoes = None
       self.rawPotatoFiles = None
@@ -120,12 +121,14 @@ class Boomer(Daemon):
                         .format(self.christopher.currRecnum))
          self.keepWalken = True
          while self.keepWalken:
+            self.spudInProcess = True
             try:
                self.log.info('Next species ...')
                # Get a Spud MFChain (single-species MF)
                spud, potatoInputs = self.christopher.startWalken()
                self.keepWalken = not self.christopher.complete
                if self.assemblePams and spud:
+                  
                   # Add MF rule for Spud execution to Master MF
                   self._addRuleToMasterPotatoHead(spud, prefix='spud')
                   # Gather species ARF dependency to delay start of multi-species MF
@@ -137,12 +140,14 @@ class Boomer(Daemon):
                      fname = potatoInputs[scencode]
                      f.write('{}: {}\n'.format(squid, fname))
             except:
+               self.spudInProcess = False
                self.log.info('Saving next start {} ...'
                              .format(self.christopher.nextStart))
                self.christopher.saveNextStart()
                raise
-            else:
-               time.sleep(10)
+            
+            self.spudInProcess = False
+            time.sleep(10)
       finally:
          self.log.debug('Done walken')
          self.onShutdown()
@@ -158,6 +163,9 @@ class Boomer(Daemon):
       # Stop Walken the archive
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
+      while self.spudInProcess:
+         self.log.info('Waiting for spud to finish ...')
+         time.sleep(20)
       for scencode, potato in self.potatoes.iteritems():
          mtx = self.christopher.globalPAMs[scencode]
          potatoMF = self.potatoes[scencode]
