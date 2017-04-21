@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
+@deprecated: This is replaced by svcRoot.py.  It will be deleted once 
+                everything is confirmed to be moved over
+
 @summary: This module provides REST services for service objects
 
 @author: CJ Grady
