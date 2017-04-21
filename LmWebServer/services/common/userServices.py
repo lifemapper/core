@@ -54,8 +54,9 @@ class UserLogin(LmService):
             cookie[REFERER_KEY]['version'] = 1
       except:
          pass
-            
-      if checkUserLogin(userId, pword):
+      
+      user = self.scribe.getUser(userId)
+      if user is not None and user.checkPassword(pword):
          # Provided correct credentials
          cherrypy.session.regenerate()
          cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
