@@ -22,9 +22,3 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-# TODO: This constant doesn't seem to be used, confirm and delete
-#from LmCommon.common.config import Config
-#from LmCommon.common.lmconstants import SERVER_WEB_HEADING
-
-# LmWebServer
-#WEB_HOSTNAME = Config().get(SERVER_WEB_HEADING, 'WEB_HOSTNAME')

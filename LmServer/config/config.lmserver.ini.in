@@ -111,10 +111,6 @@ CONNECTION_PORT: 6432
 DB_HOSTNAME: @DB_FQDN@
 
 ; .............................................................................
-[LmServer - webserver]
-;WEB_HOSTNAME:  @WEB_FQDN@
-
-; .............................................................................
 [LmServer - Matt Daemon]
 ; MattDaemon constants
 MAX_MAKEFLOWS: 5
