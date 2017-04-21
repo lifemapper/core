@@ -35,6 +35,8 @@ import cherrypy
 from cherrypy._cpdispatch import MethodDispatcher
 
 from LmCommon.common.lmconstants import LMFormat
+from LmWebServer.common.lmconstants import (GEOTIFF_INTERFACE, JSON_INTERFACE, 
+                                            KML_INTERFACE, SHAPEFILE_INTERFACE)
 
 # .............................................................................
 class LmDispatcher(MethodDispatcher):
@@ -46,13 +48,13 @@ class LmDispatcher(MethodDispatcher):
       setAccept = None
       lastSegment = path_info_pieces[-1]
       
-      if lastSegment == 'json':
+      if lastSegment == JSON_INTERFACE:
          setAccept = LMFormat.JSON.getMimeType()
-      elif lastSegment == 'kml':
+      elif lastSegment == KML_INTERFACE:
          setAccept = LMFormat.KML.getMimeType()
-      elif lastSegment == 'gtiff':
+      elif lastSegment == GEOTIFF_INTERFACE:
          setAccept = LMFormat.GTIFF.getMimeType()
-      elif lastSegment == 'shapefile':
+      elif lastSegment == SHAPEFILE_INTERFACE:
          setAccept = LMFormat.SHAPE.getMimeType()
       
       if setAccept is not None:

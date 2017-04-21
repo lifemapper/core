@@ -1,7 +1,7 @@
 """
 @summary: Local configuration constants for LmWebServer
 @license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -22,8 +22,3 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import SERVER_WEB_HEADING
-
-# LmWebServer
-WEB_HOSTNAME = Config().get(SERVER_WEB_HEADING, 'WEB_HOSTNAME')
