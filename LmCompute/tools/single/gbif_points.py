@@ -70,15 +70,18 @@ from LmCompute.plugins.single.occurrences.csvOcc import *
 logger = LmComputeLogger('crap')
 
 count =  16
-outFile = '/share/lm/data/archive/kubi/000/000/000/053/pt_53.shp'
-bigFile = '/share/lm/data/archive/kubi/000/000/000/053/bigpt_53.shp'
 maxPoints = 500
 processType=ProcessType.GBIF_TAXA_OCCURRENCE
 
-
 pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.csv'
+outFile = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.shp'
+bigFile = '/share/lm/data/archive/kubi/000/000/000/041/bigpt_41.shp'
+
 pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/053/pt_53.csv'
-with open(pointCsvFn) as inF:
+outFile = '/share/lm/data/archive/kubi/000/000/000/053/pt_53.shp'
+bigFile = '/share/lm/data/archive/kubi/000/000/000/053/bigpt_53.shp'
+
+with open(pointsCsvFn) as inF:
    rawData = inF.readlines()
 
 # return parseCsvData(csvInputBlob, ProcessType.GBIF_TAXA_OCCURRENCE, outFile, 
@@ -86,8 +89,7 @@ with open(pointCsvFn) as inF:
 
 readyFilename(outFile, overwrite=True)
 readyFilename(bigFile, overwrite=True)
-shaper = ShapeShifter(processType, rawData, count, logger=logger, 
-                      metadata=metadata)
+shaper = ShapeShifter(processType, rawData, count, logger=logger, metadata=None)
 # shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=False)
 success = False
 badrecs = 0
