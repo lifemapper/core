@@ -28,9 +28,11 @@
 @todo: Can we make this more elegant?
 """
 from hashlib import md5
-from types import ListType
+import json
+from types import ListType, DictionaryType
 
 from LmServer.base.atom import Atom
+from LmServer.base.layer2 import Raster
 from LmServer.base.utilities import formatTimeHuman
 
 from LmServer.legion.sdmproj import SDMProjection
@@ -63,22 +65,23 @@ def formatEnvLayer(lyr):
    """
    lyrDict = _getLifemapperMetadata('environmental layer', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
-                                    metadata=lyr.metdatadata)
+                                    metadata=lyr.lyrMetadata)
    lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'layers', lyr.name)
    dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
-   minVal = 0
-   maxVal = 0
+   minVal = lyr.minVal
+   maxVal = lyr.maxVal
    valUnits = lyr.valUnits
-   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsg, lyr.bbox, 
+   dataType = type(lyr.minVal).__name__
+   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsgcode, lyr.bbox, 
                                       lyr.mapUnits, dataUrl, lyr.verify,
                                       lyr.gdalType, lyr.dataFormat, minVal, 
-                                      maxVal, valUnits, lyr.dataType, 
+                                      maxVal, valUnits, dataType, 
                                       resolution=lyr.resolution)
    lyrDict['envCode'] = lyr.envCode
    lyrDict['gcmCode'] = lyr.gcmCode
    lyrDict['alternatePredictioCode'] = lyr.altpredCode
-   lyrDict['dateCode'] = lyr.dataCode
+   lyrDict['dateCode'] = lyr.dateCode
    
    return lyrDict
 
@@ -96,7 +99,7 @@ def formatOccurrenceSet(occ):
    occDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'occurrences', occ.name)
    dataUrl = '{}/shapefile'.format(occ.metadataUrl)
-   occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsg, occ.bbox, 
+   occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsgcode, occ.bbox, 
                                     occ.mapUnits, dataUrl, occ.verify, 
                                     occ.ogrType, occ.dataFormat, occ.queryCount,
                                     resolution=occ.resolution)
@@ -129,7 +132,7 @@ def formatProjection(prj):
    minVal = 0
    maxVal = 1
    valUnits = 'prediction'
-   prjDict['spatialRaster'] = _getSpatialRasterMetadata(prj.epsg, prj.bbox, 
+   prjDict['spatialRaster'] = _getSpatialRasterMetadata(prj.epsgcode, prj.bbox, 
                prj.mapUnits, dataUrl, prj.verify, prj.gdalType, prj.dataFormat, 
                minVal, maxVal, valUnits, prj.dataType, prj.resolution)
    
@@ -160,6 +163,37 @@ def formatProjection(prj):
    return prjDict
    
 # .............................................................................
+def formatRasterLayer(lyr):
+   """
+   @summary: Convert an environmental layer into a dictionary
+   @todo: Mapping metadata
+   @todo: Min val
+   @todo: Max val
+   @todo: Value units
+   """
+   lyrDict = _getLifemapperMetadata('raster layer', lyr.getId(), 
+                                    lyr.metadataUrl, lyr.getUserId(), 
+                                    metadata=lyr.lyrMetadata)
+   #lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
+   #                                 'layers', lyr.name)
+   dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
+   minVal = lyr.minVal
+   maxVal = lyr.maxVal
+   valUnits = lyr.valUnits
+   dataType = type(lyr.minVal).__name__
+   lyrDict['spatialRaster'] = _getSpatialRasterMetadata(lyr.epsgcode, lyr.bbox, 
+                                      lyr.mapUnits, dataUrl, lyr.verify,
+                                      lyr.gdalType, lyr.dataFormat, minVal, 
+                                      maxVal, valUnits, dataType, 
+                                      resolution=lyr.resolution)
+   #lyrDict['envCode'] = lyr.envCode
+   #lyrDict['gcmCode'] = lyr.gcmCode
+   #lyrDict['alternatePredictioCode'] = lyr.altpredCode
+   #lyrDict['dateCode'] = lyr.dateCode
+   
+   return lyrDict
+
+# .............................................................................
 def formatScenario(scn):
    """
    @summary: Converts a scenario object into a dictionary
@@ -167,11 +201,11 @@ def formatScenario(scn):
    @todo: GCM / alt pred code / etc
    """
    scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
-                                    scn.getUserId(), metadata=scn.metadata)
+                                    scn.getUserId(), metadata=scn.scenMetadata)
    scnDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     scn.code, scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
-                                            scn.mapUnits, scn.res)
+                                            scn.units, scn.resolution)
 
    scnLayers = []
    for lyr in scn.layers:
@@ -182,7 +216,7 @@ def formatScenario(scn):
    return scnDict
    
 # .............................................................................
-def objectFormatter(obj):
+def jsonObjectFormatter(obj):
    """
    @summary: Looks at object and converts to JSON based on its type
    """
@@ -193,14 +227,16 @@ def objectFormatter(obj):
    else:
       response = _formatObject(obj)
    
-   return response
+   return json.dumps(response, indent=3)
 
 # .............................................................................
 def _formatObject(obj):
    """
    @summary: Helper method to format an individual object based on its type
    """
-   if isinstance(obj, Atom):
+   if isinstance(obj, DictionaryType):
+      return obj
+   elif isinstance(obj, Atom):
       return formatAtom(obj)
    elif isinstance(obj, SDMProjection):
       return formatProjection(obj)
@@ -210,6 +246,8 @@ def _formatObject(obj):
       return formatEnvLayer(obj)
    elif isinstance(obj, Scenario):
       return formatScenario(obj)
+   elif isinstance(obj, Raster):
+      return formatRasterLayer(obj)
    else:
       # TODO: Expand these and maybe fallback to a generic formatter of public
       #          attributes

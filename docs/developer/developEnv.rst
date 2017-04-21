@@ -133,5 +133,5 @@ Add/change Server input data/user
 *********************************
 
 #. Change the archive user  as ``root``.  Follow instructions at 
-   (`Install Lifemapper System`_) **To change defaults**
+   (`Install Lifemapper System`_) **Populate archive**
 

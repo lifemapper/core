@@ -32,68 +32,77 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.scenario import Scenario
-from LmWebServer.formatters.jsonFormatter import objectFormatter
+from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.common.accessControl import checkUserPermission
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('scenarioId')
+@cherrypy.popargs('pathScenarioId')
 class Scenario(LmService):
    """
    @summary: This class is for the scenarios service.  The dispatcher is
                 responsible for calling the correct method
    """
    # ................................
-   def DELETE(self, scenarioId):
+   def DELETE(self, pathScenarioId):
       """
       @summary: Attempts to delete a scenario
       @param projectionId: The id of the scenario to delete
       """
-      scn = self.scribe.getScenario(scenarioId)
+      scn = self.scribe.getScenario(int(pathScenarioId))
       
       if scn is None:
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
-                                                                  scenarioId))
+                                                                  pathScenarioId))
       
-      if scn.getUserId() == self.getUserId():
+      if checkUserPermission(self.getUserId(), scn, HTTPMethod.DELETE):
          success = self.scribe.deleteObject(scn)
          if success:
             cherrypy.response.status = 204
             return
          else:
             raise cherrypy.HTTPError(500, 
-                             'Failed to delete scenario {}'.format(scenarioId))
+                             'Failed to delete scenario {}'.format(pathScenarioId))
       else:
          raise cherrypy.HTTPError(403,
                'User {} does not have permission to delete scenario {}'.format(
-                  self.getUserId(), scenarioId))
+                  self.getUserId(), pathScenarioId))
 
    # ................................
-   def GET(self, scenarioId=None, afterTime=None, alternatePredictionCode=None,
-           beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
-           limit=100, offset=0, public=None):
+   @lmFormatter
+   def GET(self, pathScenarioId=None, afterTime=None, alternatePredictionCode=None,
+                 beforeTime=None, dateCode=None, epsgCode=None, gcmCode=None, 
+                 limit=100, offset=0, public=None):
       """
       @summary: Performs a GET request.  If a scenario id is provided,
                    attempt to return that item.  If not, return a list of 
                    scenarios that match the provided parameters
       """
-      if scenarioId is None:
-         if public:
-            userId = PUBLIC_USER
-         else:
-            userId = self.getUserId()
-            
+      if public:
+         userId = PUBLIC_USER
+      else:
+         userId = self.getUserId()
+
+      if pathScenarioId is None:
          return self._listScenarios(userId, afterTime=afterTime,
                       altPredCode=alternatePredictionCode, 
                       beforeTime=beforeTime, dateCode=dateCode, 
                       epsgCode=epsgCode, gcmCode=gcmCode, limit=limit, 
                       offset=offset)
+      elif pathScenarioId.lower() == 'count':
+         return self._countScenarios(userId, afterTime=afterTime,
+                      altPredCode=alternatePredictionCode, 
+                      beforeTime=beforeTime, dateCode=dateCode, 
+                      epsgCode=epsgCode, gcmCode=gcmCode)
       else:
-         return self._getScenario(scenarioId)
+         return self._getScenario(pathScenarioId)
    
    # ................................
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
+   @lmFormatter
    def POST(self):
       """
       @summary: Posts a new scenario
@@ -129,35 +138,45 @@ class Scenario(LmService):
                      altpredCode=altPredCode, dateCode=dateCode, layers=layers)
       newScn = self.scribe.findOrInsertScenario(scn)
       
-      # TODO: Return or format
-      return objectFormatter(newScn)
+      return newScn
    
    # ................................
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
-   #def PUT(self, scenarioId):
+   #def PUT(self, pathScenarioId):
    #   pass
    
    # ................................
-   def _getScenario(self, scenarioId):
+   def _countScenarios(self, userId, afterTime=None, altPredCode=None,  
+                      beforeTime=None, dateCode=None, epsgCode=None, 
+                      gcmCode=None):
+      """
+      @summary: Return a list of scenarios matching the specified criteria
+      """
+      scnCount = self.scribe.countScenarios(userId=userId, 
+                                    beforeTime=beforeTime, afterTime=afterTime,
+                                    epsg=epsgCode, gcmCode=gcmCode,
+                                    altpredCode=altPredCode, dateCode=dateCode)
+      return {'count' : scnCount}
+
+   # ................................
+   def _getScenario(self, pathScenarioId):
       """
       @summary: Attempt to get a scenario
       """
-      scn = self.scribe.getScenario(scenarioId)
+      scn = self.scribe.getScenario(int(pathScenarioId), fillLayers=True)
       
       if scn is None:
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
-                                                                  scenarioId))
+                                                                  pathScenarioId))
       
-      if scn.getUserId() in [self.getUserId(), PUBLIC_USER]:
-         
-         # TODO: Return or format
-         return objectFormatter(scn)
+      if checkUserPermission(self.getUserId(), scn, HTTPMethod.GET):
+         return scn
 
       else:
          raise cherrypy.HTTPError(403,
                'User {} does not have permission to get scenario {}'.format(
-                  self.getUserId(), scenarioId))
+                  self.getUserId(), pathScenarioId))
    
    # ................................
    def _listScenarios(self, userId, afterTime=None, altPredCode=None,  
@@ -170,6 +189,5 @@ class Scenario(LmService):
                                     beforeTime=beforeTime, afterTime=afterTime,
                                     epsg=epsgCode, gcmCode=gcmCode,
                                     altpredCode=altPredCode, dateCode=dateCode)
-      # TODO: Return or format
-      return objectFormatter(scnAtoms)
+      return scnAtoms
 

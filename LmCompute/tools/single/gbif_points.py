@@ -55,3 +55,53 @@ if __name__ == "__main__":
    createGBIFShapefile(args.pointsCsvFn, args.outFile, args.bigFile, 
                        args.pointCount, args.maxPoints)
    
+"""
+from LmCompute.plugins.single.occurrences.csvOcc import createGBIFShapefile
+from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.apiquery import *
+from LmCommon.common.createshape import ShapeShifter
+from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCompute.common.lmObj import LmException
+from LmCompute.common.log import LmComputeLogger
+from LmServer.db.borgscribe import BorgScribe
+
+from LmCommon.common.readyfile import readyFilename
+from LmCompute.plugins.single.occurrences.csvOcc import *
+logger = LmComputeLogger('crap')
+
+count =  16
+maxPoints = 500
+processType=ProcessType.GBIF_TAXA_OCCURRENCE
+
+pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.csv'
+outFile = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.shp'
+bigFile = '/share/lm/data/archive/kubi/000/000/000/041/bigpt_41.shp'
+
+pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/053/pt_53.csv'
+outFile = '/share/lm/data/archive/kubi/000/000/000/053/pt_53.shp'
+bigFile = '/share/lm/data/archive/kubi/000/000/000/053/bigpt_53.shp'
+
+with open(pointsCsvFn) as inF:
+   rawData = inF.readlines()
+
+# return parseCsvData(csvInputBlob, ProcessType.GBIF_TAXA_OCCURRENCE, outFile, 
+#                     bigFile, reportedCount, maxPoints)
+
+readyFilename(outFile, overwrite=True)
+readyFilename(bigFile, overwrite=True)
+shaper = ShapeShifter(processType, rawData, count, logger=logger, metadata=None)
+# shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=False)
+success = False
+badrecs = 0
+while not success:
+   try:
+      tmpDict = shaper._reader.next()
+      success = True
+   except StopIteration, e:
+      success = True
+   except Exception, e:
+      print str(e)
+      badrecs += 1
+
+
+"""

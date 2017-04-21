@@ -26,12 +26,13 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, OutputFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
-from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
-from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import PUBLIC_FQDN, PUBLIC_USER
+from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
@@ -52,12 +53,11 @@ class Boomer(Daemon):
    appending new PAVs or re-assembling. 
    """
    # .............................
-   def __init__(self, pidfile, userId, archiveName, 
+   def __init__(self, pidfile, configFname, 
                 assemblePams=True, priority=None, log=None):      
       Daemon.__init__(self, pidfile, log=log)
       self.name = self.__class__.__name__.lower()
-      self.userId = userId
-      self.archiveName = archiveName
+      self.configFname = configFname
       self.assemblePams = assemblePams
       self.priority = priority
       # Send Database connection
@@ -96,27 +96,19 @@ class Boomer(Daemon):
             self.log.info('{} opened databases'.format(self.name))
             
       try:
-         self.christopher = ChristopherWalken(userId=self.userId, 
-                                              archiveName=self.archiveName,
-                                              jsonFname=None, priority=None, 
+         self.christopher = ChristopherWalken(self.configFname,
                                               scribe=self._scribe)
       except Exception, e:
          raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
       
       self.spudArfFnames = []
-      (self.potatoes, 
-       self.rawPotatoFiles) = self._createPotatoMakeflows()
-      self.masterPotato = self._createMasterMakeflow()
-         
-#       if self.assemblePams:
-#          (self.potatoes, 
-#           self.rawPotatoFiles) = self._createPotatoMakeflows()
-#          self.masterPotato = self._createMasterMakeflow()
-#       else:
-#          self.potatoes = None
-#          self.rawPotatoFiles = None
-#          self.masterPotato = None
-         
+      self.potatoes = None
+      self.rawPotatoFiles = None
+      self.masterPotato = None      
+      if self.christopher.assemblePams:
+         (self.potatoes, 
+          self.rawPotatoFiles) = self._createPotatoMakeflows()
+         self.masterPotato = self._createMasterMakeflow()         
          
    # .............................
    def run(self):
@@ -131,7 +123,7 @@ class Boomer(Daemon):
                # Get a Spud MFChain (single-species MF)
                spud, potatoInputs = self.christopher.startWalken()
                self.keepWalken = not self.christopher.complete
-               if spud:
+               if self.assemblePams and spud:
                   # Add MF rule for Spud execution to Master MF
                   self._addRuleToMasterPotatoHead(spud, prefix='spud')
                   # Gather species ARF dependency to delay start of multi-species MF
@@ -191,8 +183,8 @@ class Boomer(Daemon):
    def _createMasterMakeflow(self):
       meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
               MFChain.META_DESC: 'MasterPotatoHead for User {}, Archive {}'
-      .format(self.userId, self.archiveName)}
-      newMFC = MFChain(self.userId, priority=self.priority, 
+      .format(self.christopher.userId, self.christopher.archiveName)}
+      newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=dt.gmt().mjd)
       mfChain = self._scribe.insertMFChain(newMFC)
@@ -206,8 +198,8 @@ class Boomer(Daemon):
          # Create MFChain for this GPAM
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
                  MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
-         .format(self.userId, self.archiveName, scencode)}
-         newMFC = MFChain(self.userId, priority=self.priority, 
+         .format(self.christopher.userId, self.christopher.archiveName, scencode)}
+         newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                           metadata=meta, status=JobStatus.GENERAL, 
                           statusModTime=dt.gmt().mjd)
          mfChain = self._scribe.insertMFChain(newMFC)
@@ -262,32 +254,30 @@ class Boomer(Daemon):
       rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       self.masterPotato.addCommands([rule])
 
+
 # .............................................................................
 if __name__ == "__main__":
    if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
-
+   earl = EarlJr()
+   pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
+   defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
+                                                       OutputFormat.CONFIG))
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper archive with metadata ' +
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-n', '--archive_name', default=PUBLIC_ARCHIVE_NAME,
-            help=('Name for the existing archive, gridset, and grid created for ' +
-                  'these data.  This name was created in initBoom.'))
-   parser.add_argument('-u', '--user', default=PUBLIC_USER,
-            help=('Owner of this archive this archive. The default is the '
-                  'configured PUBLIC_USER.'))
+   parser.add_argument('-', '--config_file', default=defaultConfigFile,
+            help=('Configuration file for the archive, gridset, and grid ' +
+                  'to be created from these data.'))
    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
-              help="The action that should be performed by the Walker daemon")
+              help="The action that should be performed by the Boom daemon")
 
    args = parser.parse_args()
-   archiveName = args.archive_name
-   if archiveName is not None:
-      archiveName = archiveName.replace(' ', '_')
-   userId = args.user
+   configFname = args.config_file
    cmd = args.cmd.lower()
       
    if os.path.exists(BOOM_PID_FILE):
@@ -296,11 +286,9 @@ if __name__ == "__main__":
       pid = os.getpid()
    
    secs = time.time()
-   tuple = time.localtime(secs)
-   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
+   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
    logger = ScriptLogger('archivist.{}'.format(timestamp))
-   boomer = Boomer(BOOM_PID_FILE, userId, archiveName, log=logger)
-     
+   boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
    if cmd == 'start':
       boomer.start()
    elif cmd == 'stop':
@@ -315,57 +303,52 @@ if __name__ == "__main__":
 
 """
 $PYTHON LmDbServer/boom/boom.py --help
-$PYTHON LmDbServer/boom/boom.py  --archive_name "Heuchera archive" --user ryan start
-$PYTHON LmDbServer/boom/boom.py --archive_name "Aimee test archive"  --user aimee start
-$PYTHON LmDbServer/boom/boom.py  --archive_name "Heuchera archive" --user ryan2 start
-$PYTHON LmDbServer/boom/boom.py --archive_name 'Biotaphy iDigBio archive' --user idigbio start
+$PYTHON LmDbServer/boom/boom.py  --config_file /share/lm/data/archive/kubi/BOOM_Archive.ini start
 
+from LmDbServer.boom.boom import *
 
+import argparse
 import mx.DateTime as dt
 import os, sys, time
-from LmDbServer.boom.boom import *
+
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.lmconstants import JobStatus, OutputFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
-from LmServer.common.lmconstants import PUBLIC_ARCHIVE_NAME
-from LmServer.common.localconstants import PUBLIC_USER, PUBLIC_FQDN, APP_PATH
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import PUBLIC_FQDN, PUBLIC_USER
+from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.processchain import MFChain
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
+from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
 
-userId = 'ryan'
-archiveName = 'Heuchera_archive'
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.sdmproj import SDMProjection
+from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
+         OutputFormat, SERVER_BOOM_HEADING, MatrixType) 
+
+configFile = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
+
 secs = time.time()
 tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
 logger = ScriptLogger('archivist.{}'.format(timestamp))
 currtime = dt.gmt().mjd
 
-boomer = Boomer(BOOM_PID_FILE, userId, archiveName, log=logger)
+boomer = Boomer(BOOM_PID_FILE, configFile, log=logger)
 boomer.initialize()
+chris = boomer.christopher
+woc = chris.weaponOfChoice
+alg = chris.algs[0]
+prjscen = chris.prjScens[0]
 
 spud, potatoInputs = boomer.christopher.startWalken()
-if spud:
-   boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
-   spudArf = spud.getArfFilename(prefix='spud')
-   boomer.spudArfFnames.append(spudArf)
-   
-   for scencode, f in boomer.rawPotatoFiles.iteritems():
-      squid = spud.mfMetadata[MFChain.META_SQUID]
-      fname = potatoInputs[scencode]
-      f.write('{}: {}\n'.format(squid, fname))
-
-objs = []
-occ = boomer.christopher.weaponOfChoice.getOne()
-for alg in boomer.christopher.algs:
-   for prjscen in boomer.christopher.prjScens:
-      prj = boomer.christopher._createOrResetSDMProject(occ, alg, prjscen, currtime)
-      objs.append(prj)
-
-
 # for i in range(61):
 while not spud:
    spud, potatoInputs = boomer.christopher.startWalken()

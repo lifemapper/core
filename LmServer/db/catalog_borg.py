@@ -890,7 +890,7 @@ class Borg(DbPostgresql):
          etid = self._getColumnValue(row, idxs, ['envtypeid'])
          lyrid = self._getColumnValue(row, idxs, ['layerid'])
          row, idxs = self.executeInsertAndSelectOneFunction(
-                     'lm_v3.lm_joinScenarioLayer', scenarioId, lyrid, etid)
+                     'lm_joinScenarioLayer', scenarioId, lyrid, etid)
       # Use row from first or second query      
       newOrExistingLyr = self._createEnvLayer(row, idxs)
       return newOrExistingLyr
@@ -938,8 +938,9 @@ class Borg(DbPostgresql):
 # .............................................................................
    def listEnvLayers(self, firstRecNum, maxNum, userId, envCode, gcmcode, 
                      altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                     envTypeId, atom):
+                     envTypeId, scenarioId, atom):
       """
+      @todo: Add scenarioId!!
       @summary: List all EnvLayer objects or atoms matching the filter conditions 
       @param firstRecNum: The first record to return, 0 is the first record
       @param maxNum: Maximum number of records to return
@@ -956,14 +957,14 @@ class Borg(DbPostgresql):
       @return: a list of EnvLayer objects or atoms
       """
       if atom:
-         rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms', 
+         rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerAtoms', 
                            firstRecNum, maxNum, userId, envCode, gcmcode, 
                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
                            envTypeId)
          objs = self._getAtoms(rows, idxs)
       else:
          objs = []
-         rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
+         rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerObjects', 
                            firstRecNum, maxNum, userId, envCode, gcmcode, 
                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
                            envTypeId)
@@ -972,46 +973,46 @@ class Borg(DbPostgresql):
       return objs
 
 
-# .............................................................................
-   def listSDMProjects(self, firstRecNum, maxNum, userId, displayName, 
-                       afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
-                       occsetId, algCode, mdlscenCode, prjscenCode, atom):
-      """
-      @summary: Return SDMProjects Objects or Atoms matching filter conditions 
-      @param firstRecNum: The first record to return, 0 is the first record
-      @param maxNum: Maximum number of records to return
-      @param userId: User (owner) for which to return occurrencesets.  
-      @param minOccurrenceCount: filter by minimum number of points in set.
-      @param displayName: filter by display name
-      @param afterTime: filter by modified at or after this time
-      @param beforeTime: filter by modified at or before this time
-      @param epsg: filter by this EPSG code
-      @param afterStatus: filter by status >= value
-      @param beforeStatus: filter by status <= value
-      @param occsetId: filter by occurrenceSet identifier
-      @param algCode: filter by algorithm code
-      @param mdlscenCode: filter by model scenario code
-      @param prjscenCode: filter by projection scenario code
-      @param atom: True if return objects will be Atoms, False if full objects
-      @return: a list of SDMProjects atoms or full objects
-      """
-      if displayName is not None:
-         displayName = displayName.strip() + '%'
-      if atom:
-         rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms', 
-                           firstRecNum, maxNum, userId, displayName, afterTime, 
-                           beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
-                           algCode, mdlscenCode, prjscenCode)
-         objs = self._getAtoms(rows, idxs)
-      else:
-         objs = []
-         rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
-                           firstRecNum, maxNum, userId, displayName, afterTime, 
-                           beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
-                           algCode, mdlscenCode, prjscenCode)
-         for r in rows:
-            objs.append(self._createOccurrenceSet(r, idxs))
-      return objs
+# # .............................................................................
+#    def listSDMProjects(self, firstRecNum, maxNum, userId, displayName, 
+#                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+#                        occsetId, algCode, mdlscenCode, prjscenCode, atom):
+#       """
+#       @summary: Return SDMProjects Objects or Atoms matching filter conditions 
+#       @param firstRecNum: The first record to return, 0 is the first record
+#       @param maxNum: Maximum number of records to return
+#       @param userId: User (owner) for which to return occurrencesets.  
+#       @param minOccurrenceCount: filter by minimum number of points in set.
+#       @param displayName: filter by display name
+#       @param afterTime: filter by modified at or after this time
+#       @param beforeTime: filter by modified at or before this time
+#       @param epsg: filter by this EPSG code
+#       @param afterStatus: filter by status >= value
+#       @param beforeStatus: filter by status <= value
+#       @param occsetId: filter by occurrenceSet identifier
+#       @param algCode: filter by algorithm code
+#       @param mdlscenCode: filter by model scenario code
+#       @param prjscenCode: filter by projection scenario code
+#       @param atom: True if return objects will be Atoms, False if full objects
+#       @return: a list of SDMProjects atoms or full objects
+#       """
+#       if displayName is not None:
+#          displayName = displayName.strip() + '%'
+#       if atom:
+#          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms', 
+#                            firstRecNum, maxNum, userId, displayName, afterTime, 
+#                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
+#                            algCode, mdlscenCode, prjscenCode)
+#          objs = self._getAtoms(rows, idxs)
+#       else:
+#          objs = []
+#          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
+#                            firstRecNum, maxNum, userId, displayName, afterTime, 
+#                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
+#                            algCode, mdlscenCode, prjscenCode)
+#          for r in rows:
+#             objs.append(self._createOccurrenceSet(r, idxs))
+#       return objs
 
 
 # ...............................................

@@ -62,6 +62,7 @@ from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PAT
 BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths
 USER_LAYER_DIR = 'Layers'
+USER_MAKEFLOW_DIR = 'makeflow'
 # On shared data directory (shared if lifemapper-compute is also installed)
 ENV_DATA_PATH = os.path.join(SHARED_DATA_PATH,'layers')
 ARCHIVE_PATH = os.path.join(SHARED_DATA_PATH,'archive')
@@ -375,8 +376,7 @@ class LMFileType:
    @staticmethod
    def isUserSpace(rtype):
       if rtype in [LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE, 
-                   LMFileType.MF_DOCUMENT, LMFileType.BOOM_CONFIG, 
-                   LMFileType.TMP_JSON]:
+                   LMFileType.BOOM_CONFIG, LMFileType.TMP_JSON]:
          return True
       return False
          
@@ -629,7 +629,7 @@ class LMServiceType:
    
 # Archive and Global PAM descriptions
 GPAM_KEYWORD = 'Global PAM'
-PUBLIC_ARCHIVE_NAME = 'BOOM Archive'
+PUBLIC_ARCHIVE_NAME = 'BOOM_Archive'
 ARCHIVE_KEYWORD = 'archive'
    
 # ............................................................................

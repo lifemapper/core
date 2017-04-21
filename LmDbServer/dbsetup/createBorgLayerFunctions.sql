@@ -323,7 +323,7 @@ BEGIN
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE envlayerid = elyrid;
    ELSEIF lyrid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE layerid = lyrid;
-   ELSIF lyrverify IS NOT NULL THEN
+   ELSIF lyrvfy IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE lyrverify = lyrvfy;
    ELSE
       SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE userid = usr 
@@ -562,7 +562,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -578,10 +578,14 @@ $$  LANGUAGE 'plpgsql' STABLE;
 CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvLayerAtoms(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
-                                                    sqd varchar,
+                                                    env varchar,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
                                                     aftertime double precision,
                                                     beforetime double precision,
-                                                    epsg int)
+                                                    epsg int,
+                                                    etypeid int)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
 DECLARE
@@ -591,14 +595,14 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT envLayerId, lyrname, epsgcode, lyrmodtime FROM lm_v3.lm_envlayer ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterEnvLayer(usr, env, gcm, altpred, 
                                     tm, aftertime, beforetime, epsg, etypeid);
+   cmd = 'SELECT envLayerId, lyrname, epsgcode, lyrmodtime FROM lm_v3.lm_envlayer ';
    ordercls = ' ORDER BY statusModTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -1011,7 +1015,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT projectionId, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
+   cmd = 'SELECT sdmprojectid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
@@ -1458,7 +1462,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -1494,7 +1498,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd

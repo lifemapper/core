@@ -26,22 +26,23 @@ import mx.DateTime
 import os
 import sys
 
+from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
-                                         JobStatus, MatrixType)
-from LmDbServer.common.localconstants import (ALGORITHMS, 
-         SCENARIO_PACKAGE, SCENARIO_PACKAGE_MODEL_SCENARIO, 
-         SCENARIO_PACKAGE_PROJECTION_SCENARIOS)
+                                    JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (GBIF_OCCURRENCE_FILENAME, 
-                                              BISON_TSN_FILENAME, IDIG_FILENAME, 
-                                              USER_OCCURRENCE_DATA)
-# from LmDbServer.boom.boom import Archivist
+from LmDbServer.common.localconstants import (ALGORITHMS, GRID_NUM_SIDES,
+                        GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME,
+                        BISON_TSN_FILENAME, 
+                        USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
+                        INTERSECT_FILTERSTRING, INTERSECT_VALNAME, 
+                        INTERSECT_MINPERCENT, INTERSECT_MINPRESENCE, 
+                        INTERSECT_MAXPRESENCE)
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, ENV_DATA_PATH, 
-         GPAM_KEYWORD, PUBLIC_ARCHIVE_NAME, ARCHIVE_KEYWORD, LMFileType)
-from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MIN,
-                           SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
+from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
+         SPECIES_DATA_PATH, GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME)
+from LmServer.common.localconstants import (PUBLIC_USER, APP_PATH, DATASOURCE, 
+                                            POINT_COUNT_MIN)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -57,15 +58,17 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
+DEFAULT_EMAIL_POSTFIX = '@nowhere.org'
+
 # ...............................................
 def addUsers(scribe, userId, userEmail):
    """
    @summary Adds PUBLIC_USER, anon user and USER from metadata to the database
    """
    userList = [{'id': PUBLIC_USER,
-                'email': '{}@nowhere.org'.format(PUBLIC_USER)},
+                'email': '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX)},
                {'id': DEFAULT_POST_USER,
-                'email': '{}@nowhere.org'.format(DEFAULT_POST_USER)}]
+                'email': '{}{}'.format(DEFAULT_POST_USER, DEFAULT_EMAIL_POSTFIX)}]
    if userId != PUBLIC_USER:
       userList.append({'id': userId,'email': userEmail})
 
@@ -172,7 +175,7 @@ def _getbioName(obsOrPred, res,
    return name
  
 # ...............................................
-def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
+def _getBaselineLayers(usr, pkgMeta, baseMeta, elyrMeta, lyrtypeMeta):
    """
    @summary Assembles layer metadata for a single layerset
    """
@@ -193,14 +196,14 @@ def _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, lyrtypeMeta):
       dloc = os.path.join(ENV_DATA_PATH, relfname)
       if not os.path.exists(dloc):
          print('Missing local data %s' % dloc)
-      envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
+      envlyr = EnvLayer(lyrname, usr, elyrMeta['epsg'], 
                         dlocation=dloc, 
                         lyrMetadata=lyrmeta,
-                        dataFormat=configMeta['gdalformat'], 
-                        gdalType=configMeta['gdaltype'],
+                        dataFormat=elyrMeta['gdalformat'], 
+                        gdalType=elyrMeta['gdaltype'],
                         valUnits=ltmeta['valunits'],
-                        mapunits=configMeta['mapunits'], 
-                        resolution=configMeta['resolution'], 
+                        mapunits=elyrMeta['mapunits'], 
+                        resolution=elyrMeta['resolution'], 
                         bbox=pkgMeta['bbox'], 
                         modTime=CURR_MJD, 
                         envCode=envcode, 
@@ -234,7 +237,7 @@ def _findFileFor(ltmeta, obsOrPred, gcm=None, tm=None, altPred=None):
    return None, None
       
 # ...............................................
-def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
+def _getPredictedLayers(usr, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
                         observedPredictedMeta, predRpt, tm, gcm=None, altpred=None):
    """
    @summary Assembles layer metadata for a single layerset
@@ -269,14 +272,14 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
          if not os.path.exists(dloc):
             print('Missing local data %s' % dloc)
             dloc = None
-         envlyr = EnvLayer(lyrname, usr, configMeta['epsg'], 
+         envlyr = EnvLayer(lyrname, usr, elyrMeta['epsg'], 
                            dlocation=dloc, 
                            lyrMetadata=lyrmeta,
-                           dataFormat=configMeta['gdalformat'], 
+                           dataFormat=elyrMeta['gdalformat'], 
                            gdalType=rstType,
                            valUnits=ltmeta['valunits'],
-                           mapunits=configMeta['mapunits'], 
-                           resolution=configMeta['resolution'], 
+                           mapunits=elyrMeta['mapunits'], 
+                           resolution=elyrMeta['resolution'], 
                            bbox=pkgMeta['bbox'], 
                            modTime=CURR_MJD,
                            envCode=envcode, 
@@ -291,7 +294,7 @@ def _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
 
 
 # ...............................................
-def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta, 
+def createBaselineScenario(usr, pkgMeta, elyrMeta, lyrtypeMeta, 
                            observedPredictedMeta, climKeywords):
    """
    @summary Assemble Worldclim/bioclim scenario
@@ -303,14 +306,14 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
    basekeywords.extend(baseMeta['keywords'])
    
    scencode = _getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
-   lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, configMeta, 
+   lyrs, staticLayers = _getBaselineLayers(usr, pkgMeta, baseMeta, elyrMeta, 
                                            lyrtypeMeta)
    scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
                'description': baseMeta['description'], 'keywords': basekeywords}
-   scen = Scenario(scencode, usr, configMeta['epsg'], 
+   scen = Scenario(scencode, usr, elyrMeta['epsg'], 
                    metadata=scenmeta, 
-                   units=configMeta['mapunits'], 
-                   res=configMeta['resolution'], 
+                   units=elyrMeta['mapunits'], 
+                   res=elyrMeta['resolution'], 
                    dateCode=pkgMeta['baseline'],
                    bbox=pkgMeta['bbox'], 
                    modTime=CURR_MJD,  
@@ -318,7 +321,7 @@ def createBaselineScenario(usr, pkgMeta, configMeta, lyrtypeMeta,
    return scen, staticLayers
 
 # ...............................................
-def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers,
+def createPredictedScenarios(usr, pkgMeta, elyrMeta, lyrtypeMeta, staticLayers,
                              observedPredictedMeta, climKeywords):
    """
    @summary Assemble predicted future scenarios defined by IPCC report
@@ -362,14 +365,14 @@ def createPredictedScenarios(usr, pkgMeta, configMeta, lyrtypeMeta, staticLayers
                   'and predicted climate calculated from {}'.format(scentitle)))
          scenmeta = {'title': scentitle, 'author': mdlvals['author'], 
                      'description': scendesc, 'keywords': scenkeywords}
-         lyrs = _getPredictedLayers(usr, pkgMeta, configMeta, lyrtypeMeta, 
+         lyrs = _getPredictedLayers(usr, pkgMeta, elyrMeta, lyrtypeMeta, 
                               staticLayers, observedPredictedMeta, predRpt, tm, 
                               gcm=gcm, altpred=altpred)
          
-         scen = Scenario(scencode, usr, configMeta['epsg'], 
+         scen = Scenario(scencode, usr, elyrMeta['epsg'], 
                          metadata=scenmeta, 
-                         units=configMeta['mapunits'], 
-                         res=configMeta['resolution'], 
+                         units=elyrMeta['mapunits'], 
+                         res=elyrMeta['resolution'], 
                          gcmCode=gcm, altpredCode=altpred, dateCode=tm,
                          bbox=pkgMeta['bbox'], 
                          modTime=CURR_MJD, 
@@ -387,45 +390,9 @@ def addScenarioAndLayerMetadata(scribe, scenarios):
       newscen = scribe.findOrInsertScenario(scen)
 
 # ...............................................
-def _getConfiguredMetadata(META, pkgMeta):
-   try:
-      epsg = META.EPSG
-   except:
-      epsg = SCENARIO_PACKAGE_EPSG
-      
-   try:
-      mapunits = META.MAPUNITS
-   except:
-      if epsg == SCENARIO_PACKAGE_EPSG:
-         mapunits = SCENARIO_PACKAGE_MAPUNITS
-      else:
-         raise LMError('Failed to specify MAPUNITS for EPSG {}'.format(epsg))
-   try:
-      res = META.RESOLUTIONS[pkgMeta['res']]
-   except:
-      raise LMError('Failed to specify res or RESOLUTIONS for CLIMATE_PACKAGE')
-   try:
-      gdaltype = META.ENVLYR_GDALTYPE
-   except:
-      raise LMError('Failed to specify ENVLYR_GDALTYPE')
-   try:
-      gdalformat = META.ENVLYR_GDALFORMAT
-   except:
-      raise LMError('Failed to specify META.ENVLYR_GDALFORMAT')
-   expYear = CURRDATE[0]
-   expMonth = CURRDATE[1]
-   expDay = CURRDATE[2]
-
-   configMeta = {'epsg': epsg, 
-                 'mapunits': mapunits, 
-                 'resolution': res, 
-                 'gdaltype': gdaltype, 
-                 'gdalformat': gdalformat,
-                 'expdate': (expYear, expMonth, expDay)}
-   return configMeta
 
 # ...............................................
-def _importClimatePackageMetadata(envPackageName):
+def _findClimatePackageMetadata(envPackageName):
    # TODO: Remove `v2` Debug
    debugMetaname = os.path.join(ENV_DATA_PATH, '{}.v2{}'.format(envPackageName, 
                                                             OutputFormat.PYTHON))
@@ -447,24 +414,59 @@ def _importClimatePackageMetadata(envPackageName):
    return META, metafname
 
 # ...............................................
-def writeConfigFile(archiveName, envPackageName, userid, userEmail, 
-                     speciesSource, speciesData, speciesDataDelimiter,
-                     configMeta, minpoints, algorithms, 
-                     gridname, grid_cellsize, grid_cellsides, intersectParams,
-                     mdlScen=None, prjScens=None, mdlMask=None, prjMask=None,
-                     assemblePams=True):
+def pullClimatePackageMetadata(envPackageName):
+   META, metafname = _findClimatePackageMetadata(envPackageName)
+   # Combination of scenario and layer attributes making up these data 
+   pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
+   
+   try:
+      epsg = META.EPSG
+   except:
+      raise LMError('Failed to specify EPSG for {}'.format(envPackageName))
+   try:
+      mapunits = META.MAPUNITS
+   except:
+      raise LMError('Failed to specify MAPUNITS for {}'.format(envPackageName))
+   try:
+      resInMapunits = META.RESOLUTIONS[pkgMeta['res']]
+   except:
+      raise LMError('Failed to specify res (or RESOLUTIONS values) for {}'
+                    .format(envPackageName))
+   try:
+      gdaltype = META.ENVLYR_GDALTYPE
+   except:
+      raise LMError('Failed to specify ENVLYR_GDALTYPE for {}'.format(envPackageName))
+   try:
+      gdalformat = META.ENVLYR_GDALFORMAT
+   except:
+      raise LMError('Failed to specify META.ENVLYR_GDALFORMAT for {}'.format(envPackageName))
+   # Spatial and format attributes of data files
+   elyrMeta = {'epsg': epsg, 
+                 'mapunits': mapunits, 
+                 'resolution': resInMapunits, 
+                 'gdaltype': gdaltype, 
+                 'gdalformat': gdalformat}
+   return META, metafname, pkgMeta, elyrMeta
+      
+# ...............................................
+def writeConfigFile(usr, usrEmail, archiveName, 
+           envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, cellsides, cellsize, gridname, 
+           intersectParams, elyrMeta, mdlScen=None, prjScens=None, 
+           mdlMask=None, prjMask=None, assemblePams=True):
    """
    """
    earl = EarlJr()
-   pth = earl.createDataPath(userid, LMFileType.BOOM_CONFIG)
+   pth = earl.createDataPath(usr, LMFileType.BOOM_CONFIG)
    newConfigFilename = os.path.join(pth, 
                               '{}{}'.format(archiveName, OutputFormat.CONFIG))
    f = open(newConfigFilename, 'w')
-   f.write('[LmServer - pipeline]\n')
-   f.write('ARCHIVE_USER: {}\n'.format(userid))
+   f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
+   f.write('ARCHIVE_USER: {}\n'.format(usr))
    f.write('ARCHIVE_NAME: {}\n'.format(archiveName))
-   if userEmail is not None:
-      f.write('TROUBLESHOOTERS: {}\n'.format(userEmail))
+   if usrEmail is not None:
+      f.write('TROUBLESHOOTERS: {}\n'.format(usrEmail))
    f.write('\n')   
 
    f.write('; ...................\n')
@@ -477,37 +479,33 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('\n')
    # SDM Algorithm and minimun number of required species points   
    f.write('POINT_COUNT_MIN: {}\n'.format(minpoints))
-   if len(algorithms) > 0:
-      algs = ','.join(algorithms)
-   else:
-      algs = ALGORITHMS
+   algs = ','.join(algorithms)
    f.write('ALGORITHMS: {}\n'.format(algs))
    f.write('\n')
    
    f.write('; ...................\n')
    f.write('; Species data vals\n')
    f.write('; ...................\n')
-   f.write('DATASOURCE: {}\n'.format(speciesSource))
+   f.write('DATASOURCE: {}\n'.format(dataSource))
    # Species source type (for processing) and file
-   if speciesSource == SpeciesDatasource.GBIF:
+   if dataSource == SpeciesDatasource.GBIF:
       varname = 'GBIF_OCCURRENCE_FILENAME'
-      if speciesData is None:
-         speciesData = GBIF_OCCURRENCE_FILENAME
-   elif speciesSource == SpeciesDatasource.BISON:
+      dataFname = gbifFname
+      # TODO: allow overwrite of these vars in initboom --> archive config file
+      f.write('GBIF_TAXONOMY_FILENAME: {}\n'.format(GBIF_TAXONOMY_FILENAME))
+      f.write('GBIF_PROVIDER_FILENAME: {}\n'.format(GBIF_PROVIDER_FILENAME))
+   elif dataSource == SpeciesDatasource.BISON:
       varname = 'BISON_TSN_FILENAME'
-      if speciesData is None:
-         speciesData = BISON_TSN_FILENAME
-   elif speciesSource == SpeciesDatasource.IDIGBIO:
+      dataFname = bisonFname
+   elif dataSource == SpeciesDatasource.IDIGBIO:
       varname = 'IDIG_FILENAME'
-      if speciesData is None:
-         speciesData = IDIG_FILENAME
+      dataFname = idigFname
    else:
       varname = 'USER_OCCURRENCE_DATA'
-      if speciesData is None:
-         speciesData = USER_OCCURRENCE_DATA
+      dataFname = userOccFname
       f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
-              .format(speciesDataDelimiter))
-   f.write('{}: {}\n'.format(varname, speciesData))
+              .format(userOccSep))
+   f.write('{}: {}\n'.format(varname, dataFname))
    f.write('\n')
 
    f.write('; ...................\n')
@@ -515,14 +513,10 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('; ...................\n')
    # Input environmental data, pulled from SCENARIO_PACKAGE metadata
    f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
-   f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(configMeta['epsg']))
-   f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(configMeta['mapunits']))
+   f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(elyrMeta['epsg']))
+   f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(elyrMeta['mapunits']))
    # Scenario codes, created from environmental metadata  
-   if mdlScen is None:
-      mdlScen = SCENARIO_PACKAGE_MODEL_SCENARIO
    f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
-   if not prjScens:
-      prjScens = SCENARIO_PACKAGE_PROJECTION_SCENARIOS
    pcodes = ','.join(prjScens)
    f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    
@@ -537,8 +531,8 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    f.write('; ...................\n')
    # Intersection grid
    f.write('GRID_NAME: {}\n'.format(gridname))
-   f.write('GRID_CELLSIZE: {}\n'.format(grid_cellsize))
-   f.write('GRID_NUM_SIDES: {}\n'.format(grid_cellsides))
+   f.write('GRID_CELLSIZE: {}\n'.format(cellsize))
+   f.write('GRID_NUM_SIDES: {}\n'.format(cellsides))
    f.write('\n')
    for k, v in intersectParams.iteritems():
       f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
@@ -549,115 +543,98 @@ def writeConfigFile(archiveName, envPackageName, userid, userEmail,
    return newConfigFilename
 
 # ...............................................
+def _findConfigOrDefault(config, varname, defaultValue, isList=False):
+   var = None
+   try:
+      var = config.get(SERVER_BOOM_HEADING, varname)
+   except:
+      pass
+   if var is None:
+      var = defaultValue
+   return var
+
+# ...............................................
+def readConfigArgs(configFname):
+   if configFname is None or not os.path.exists(configFname):
+      raise LMError(currargs='Missing config file {}'.format(configFname))
+   config = Config(siteFn=configFname)
+
+   # Fill in missing or null variables for archive.config.ini
+   usr = _findConfigOrDefault(config, 'ARCHIVE_USER', PUBLIC_USER)
+   usrEmail = _findConfigOrDefault(config, 'ARCHIVE_USER_EMAIL', 
+                              '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
+   archiveName = _findConfigOrDefault(config, 'ARCHIVE_NAME', PUBLIC_ARCHIVE_NAME)
+   dataSource = _findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
+   dataSource = dataSource.upper()
+   algstring = _findConfigOrDefault(config, 'ALGORITHMS', ALGORITHMS)
+   minpoints = _findConfigOrDefault(config, 'POINT_COUNT_MIN', POINT_COUNT_MIN)
+   bisonFname = _findConfigOrDefault(config, 'BISON_TSN_FILENAME', 
+                                    BISON_TSN_FILENAME) 
+   userOccFname = _findConfigOrDefault(config, 'USER_OCCURRENCE_DATA', 
+                                    USER_OCCURRENCE_DATA)
+   userOccSep = _findConfigOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER', 
+                                    USER_OCCURRENCE_DATA_DELIMITER)
+   cellsides = _findConfigOrDefault(config, 'GRID_NUM_SIDES', GRID_NUM_SIDES)
+   # TODO: allow filter
+   gridFilter = _findConfigOrDefault(config, 'INTERSECT_FILTERSTRING', 
+                                     INTERSECT_FILTERSTRING)
+   gridIntVal = _findConfigOrDefault(config, 'INTERSECT_VALNAME', 
+                                     INTERSECT_VALNAME)
+   gridMinPct = _findConfigOrDefault(config, 'INTERSECT_MINPERCENT', 
+                                     INTERSECT_MINPERCENT)
+   gridMinPres = _findConfigOrDefault(config, 'INTERSECT_MINPRESENCE', 
+                                      INTERSECT_MINPRESENCE)
+   gridMaxPres = _findConfigOrDefault(config, 'INTERSECT_MAXPRESENCE', 
+                                      INTERSECT_MAXPRESENCE)
+   # These must be present in the default archive and user boom config files
+   envPackageName = config.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE')
+   gbifFname = config.get(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME')
+   idigFname = config.get(SERVER_BOOM_HEADING, 'IDIG_FILENAME')
+   cellsize = config.get(SERVER_BOOM_HEADING, 'GRID_CELLSIZE')
+   assemblePams = config.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
+
+   gridname = '{}-Grid-{}'.format(archiveName, cellsize)
+   try:
+      algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+   except:
+      algorithms = algstring
+   intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
+                      MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
+                      MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
+                      MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
+                      MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
+   return (usr, usrEmail, archiveName, envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
+           intersectParams)
+# ...............................................
 if __name__ == '__main__':
    if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
 
-   algs=','.join(ALGORITHMS)
-   allAlgs = ','.join([alg.code for alg in Algorithms.implemented()])
-#    allAlgs = ','.join(ALGORITHM_DATA.keys())
-   apiUrl = 'http://lifemapper.github.io/api.html'
+   sampleConfigFile = os.path.join(APP_PATH, 'LmDbServer/tools/boom.sample.ini')
+   # Created on roll install: lifemapper-server:lmdata-species
+   defaultConfigFile = os.path.join(SPECIES_DATA_PATH, 'archive.config.ini')
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper database with metadata ' +
                          'specific to an \'archive\', populated with '
-                         'command line arguments, including values in the ' +
-                         'specified environmental data package.'))
-   parser.add_argument('-n', '--archive_name', default=PUBLIC_ARCHIVE_NAME,
-            help=('Name for the archive, gridset, and grid created from ' +
-                  'these data.  Do not use special characters in this name.'))
-   parser.add_argument('-u', '--user', default=PUBLIC_USER,
-            help=('Owner of this archive this archive. The default is '
-                  'PUBLIC_USER ({}), an existing user '.format(PUBLIC_USER) +
-                  'not requiring an email. '))
-   parser.add_argument('-m', '--email', default=None,
-            help=('If the owner is a new user, provide an email address '))
-   parser.add_argument('-e', '--environmental_metadata', default=SCENARIO_PACKAGE,
-            help=('Metadata file should exist in the {} '.format(ENV_DATA_PATH) +
-                  'directory and be named with the arg value and .py extension'))
-   parser.add_argument('-ss', '--species_source', default='GBIF',
-            help=('Species source will be: ' + 
-                  '\'GBIF\' for GBIF-provided CSV data; ' +
-                  '\'IDIGBIO\' iDigBio queries ' +
-                  '\'BISON\' for a list of ITIS TSNs for querying the BISON API. ' +
-                  'Any other value will indicate that user-supplied CSV ' +
-                  'data, documented with metadata describing the fields, is ' +
-                  'to be used for the archive'))
-   parser.add_argument('-sf', '--species_file', default=None,
-            help=('Species file (without full path) will be: ' + 
-                  '1) CSV data sorted by taxon id for \'GBIF\' species source ' +
-                  '(include extension); ' +
-                  '2) Text filename containing a list of GBIF accepted taxon ids ' +
-                  'for \'IDIGBIO\' species source (include extension); ' +
-                  '3) Text filename containing a  list of ITIS TSNs for \'BISON\' ' +
-                  'species source (include extension); '
-                  '4) Basename of the data and metadata files for ' + 
-                  'user-provided data.  They must have ' +
-                  'the same basename.  The data file must have \'.csv\' ' +
-                  'extension, metadata file must have \'.meta\' extension. ' +
-                  'Metadata describes the data fields. ' ))
-   parser.add_argument('-sd', '--species_delimiter', default=',',
-            help=('Delimiter for user-supplied species file, defaults to \',\'. ' ))
-   parser.add_argument('-p', '--min_points', type=int, default=POINT_COUNT_MIN,
-            help=('Minimum number of points required for SDM computation ' +
-                  'The default is POINT_COUNT_MIN in config.lmserver.ini or ' +
-                  'the site-specific configuration file config.site.ini' ))
-   parser.add_argument('-a', '--algorithms', default=algs,
-            help=('Comma-separated list of algorithm codes for computing  ' +
-                  'SDM experiments in this archive.  Options are described at ' +
-                  '{} and include the codes: {} '.format(apiUrl, allAlgs)))
-   parser.add_argument('-ap', '--assemblePams', default=False,
-            help=('Assemble the intersected projections into Global PAMs  ' +
-                  'for multi-species analyses '))
-   parser.add_argument('-gz', '--grid_cellsize', default=1,
-            help=('Size of cells in the grid used for Global PAM. ' +
-                  'Units are mapunits'))
-   parser.add_argument('-gp', '--grid_shape', choices=('square', 'hexagon'),
-            default='square', help=('Shape of cells in the grid used for Global PAM.'))
-   parser.add_argument('-gb', '--grid_bbox', default='[-180, -60, 180, 90]', 
-            help=('Extent of the grid used for Global PAM.'))
-   # Intersect Parameters
-   parser.add_argument('-if', '--intersect_filter', default=None,  
-            help=('SQL Filter to limit features/pixels for intersect'))
-   parser.add_argument('-in', '--intersect_attribute_name', default='pixel', 
-            help=('Attribute feature name for intersect (Vector) or pixel (Raster)'))
-   parser.add_argument('-im', '--intersect_min_presence', type=int, default=1, 
-            help=('Minimum value for for intersect of features/pixels'))
-   parser.add_argument('-ix', '--intersect_max_presence', type=int, default=254, 
-            help=('Maximum value for for intersect of features/pixels'))
-   parser.add_argument('-ip', '--intersect_percent', type=int, default=25, 
-            help=('Minimum spatial coverage of desired values for intersect of features/pixels'))
-
+                         'user-specified values in the config file argument and '
+                         'configured environmental package metadata.'))
+   parser.add_argument('-', '--config_file', default=defaultConfigFile,
+            help=('Configuration file for the archive, gridset, and grid ' +
+                  'to be created from these data.'))
    args = parser.parse_args()
-   archiveName = args.archive_name.replace(' ', '_')
-   usr = args.user
-   usrEmail = args.email
-   envPackageName = args.environmental_metadata
-   speciesSource = args.species_source.upper()
-   speciesData = args.species_file
-   speciesDataDelimiter = args.species_delimiter
-   minpoints = args.min_points
-   algstring = args.algorithms.upper()
-   assemblePams = args.assemblePams
-   algorithms = [alg.strip() for alg in algstring.split(',')]
-   cellsize = args.grid_cellsize
-   gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-   if args.grid_shape == 'hexagon':
-      cellsides = 6
-   else:
-      cellsides = 4
-   gridbbox = eval(args.grid_bbox)
-   intersectParams = {
-         MatrixColumn.INTERSECT_PARAM_FILTER_STRING: args.intersect_filter,
-         MatrixColumn.INTERSECT_PARAM_VAL_NAME: args.intersect_attribute_name,
-         MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: args.intersect_min_presence,
-         MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: args.intersect_max_presence,
-         MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: args.intersect_percent}
+   configFname = args.config_file
+
+   (usr, usrEmail, archiveName, envPackageName, dataSource,  
+    gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+    minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
+    intersectParams) = readConfigArgs(configFname)
    # Imports META
-   META, metafname = _importClimatePackageMetadata(envPackageName)
-   pkgMeta = META.CLIMATE_PACKAGES[envPackageName]
-   configMeta = _getConfiguredMetadata(META, pkgMeta)
+   META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
+   gridbbox = pkgMeta['bbox']
       
 # .............................
    basefilename = os.path.basename(__file__)
@@ -680,13 +657,13 @@ if __name__ == '__main__':
 # .............................
       logger.info('  Insert climate {} metadata ...'.format(envPackageName))
       # Current
-      basescen, staticLayers = createBaselineScenario(usr, pkgMeta, configMeta, 
+      basescen, staticLayers = createBaselineScenario(usr, pkgMeta, elyrMeta, 
                                                       META.LAYERTYPE_META,
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
       logger.info('     Created base scenario {}'.format(basescen.code))
       # Predicted Past and Future
-      predScens = createPredictedScenarios(usr, pkgMeta, configMeta, 
+      predScens = createPredictedScenarios(usr, pkgMeta, elyrMeta, 
                                            META.LAYERTYPE_META, staticLayers,
                                            META.OBSERVED_PREDICTED_META,
                                            META.CLIMATE_KEYWORDS)
@@ -699,7 +676,7 @@ if __name__ == '__main__':
       shpGrid, archiveGridset, globalPAMs = addArchive(scribeWithBorg, 
                          predScens, gridname, metafname, archiveName, 
                          cellsides, cellsize, 
-                         configMeta['mapunits'], configMeta['epsg'], 
+                         elyrMeta['mapunits'], elyrMeta['epsg'], 
                          gridbbox, usr)
       
 # .............................
@@ -712,12 +689,17 @@ if __name__ == '__main__':
       # Write config file for this archive
       mdlScencode = basescen.code
       prjScencodes = predScens.keys()
-      newConfigFilename = writeConfigFile(archiveName, envPackageName, usr, 
-                           usrEmail, speciesSource, 
-                           speciesData, speciesDataDelimiter, configMeta, 
-                           minpoints, algorithms, gridname, cellsize, cellsides, 
-                           intersectParams, mdlScen=mdlScencode, 
-                           prjScens=prjScencodes, assemblePams=assemblePams)
+      """(usr, usrEmail, archiveName, envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
+           intersectParams)
+      """
+      newConfigFilename = writeConfigFile(usr, usrEmail, archiveName, 
+           envPackageName, dataSource,  
+           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+           minpoints, algorithms, cellsides, cellsize, gridname, 
+           intersectParams, elyrMeta, mdlScen=mdlScencode, prjScens=prjScencodes, 
+           assemblePams=assemblePams)
    except Exception, e:
       logger.error(str(e))
       raise
@@ -725,58 +707,6 @@ if __name__ == '__main__':
       scribeWithBorg.closeConnections()
        
 """
-$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive'  \
-                                     -u ryan                \
-                                     -m rfolk@flmnh.ufl.edu \
-                                     -e 10min-past-present-future  \
-                                     -ss user          \
-                                     -sf heuchera_all  \
-                                     -sd ','           \
-                                     -p 25             \
-                                     -ap True          \
-                                     -a bioclim        \
-                                     -gz 1             \
-                                     -gp square        \
-                                     -gb [-180, -60, 180, 90]
-
-$PYTHON LmDbServer/boom/initboom.py  --archive_name 'Heuchera archive' \
-                                     --user ryan2                  \
-                                     --email ryanfolk@ufl.edu  \
-                                     --environmental_metadata 10min-past-present-future  \
-                                     --species_source user        \
-                                     --species_file heuchera_all  \
-                                     --species_delimiter ','      \
-                                     --min_points 25              \
-                                     --algorithms bioclim         \
-                                     --assemblePams True          \
-                                     --grid_cellsize 2            \
-                                     --grid_shape square          \
-                                     -gb '[-180, 10, 180, 90]'
-
-$PYTHON LmDbServer/boom/initboom.py  -n 'Heuchera archive' \
-                                     -u ryan                  \
-                                     -m rfolk@flmnh.ufl.edu  \
-                                     -e Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover  \
-                                     -ss user      \
-                                     -sf heuchera_all  \
-                                     -sd ','       \
-                                     -p 25        \
-                                     -a bioclim   \
-                                     -ap True          \
-                                     -gz 2        \
-                                     -gp square   \
-                                     -gb '[-180, 10, 180, 90]'
-
-$PYTHON LmDbServer/boom/initboom.py  --archive_name 'Biotaphy iDigBio archive' \
-                                     --user idigbio                  \
-                                     --email aimee.stewart@ku.edu  \
-                                     --environmental_metadata 10min-past-present-future  \
-                                     --species_source IDIGBIO        \
-                                     --min_points 25              \
-                                     --algorithms bioclim         \
-                                     --assemblePams False          \
-                                     --grid_cellsize 2            \
-                                     --grid_shape square          \
-                                     -gb '[-180, -90, 180, 90]'
+$PYTHON LmDbServer/boom/initboom.py  --config_file /opt/lifemapper/LmDbServer/tools/boom.sample.ini
 
 """

@@ -33,7 +33,7 @@ from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
    DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR, 
    MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY, 
-   RAD_EXPERIMENT_DIR_PREFIX)
+   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR)
 from LmServer.base.lmobj import LMError, LMObject
          
 # .............................................................................
@@ -98,7 +98,9 @@ class EarlJr(LMObject):
                       gridsetId=None):
       """
       @note: /ARCHIVE_PATH/userId/
-                 contains config files, MF docs, trees, attributes ...
+                 contains config files, trees, attributes ...
+             /ARCHIVE_PATH/userId/makeflow
+                 contains MF docs
              /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
              /ARCHIVE_PATH/userId/MAP_DIR/
@@ -115,6 +117,9 @@ class EarlJr(LMObject):
       # General user documents go directly in user directory
       if LMFileType.isUserSpace(filetype):
          pass
+      
+      elif filetype == LMFileType.MF_DOCUMENT:
+         pth = os.path.join(pth, USER_MAKEFLOW_DIR)
       
       # OccurrenceSet path overrides general map path for SDM maps
       elif LMFileType.isSDM(filetype):

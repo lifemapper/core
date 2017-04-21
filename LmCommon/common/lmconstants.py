@@ -29,12 +29,12 @@ from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
 # .............................................................................
 # .    Configuration file headings
 # .............................................................................
+SERVER_BOOM_HEADING = 'BOOM'
 SERVER_ENV_HEADING = 'LmServer - environment'
 SERVER_PIPELINE_HEADING = 'LmServer - pipeline'
 SERVER_DB_HEADING = 'LmServer - dbserver'
 SERVER_COMPUTE_HEADING = 'LmServer - registeredcompute'
 SERVER_MATT_DAEMON_HEADING = 'LmServer - Matt Daemon'
-SERVER_WEB_HEADING = 'LmServer - webserver'
 
 COMPUTE_ENV_HEADING = 'LmCompute - environment'
 COMPUTE_CMDS_HEADING = 'LmCompute - commands'

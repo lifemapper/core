@@ -79,22 +79,18 @@ USER_OCCURRENCE_DATA_DELIMITER: ,
 ;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE_SEED
 ;; in the [LmCompute - environment] section should match SCENARIO_PACKAGE here
 SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
+;; These will be created from SCENARIO_PACKAGE and written to that config file
 SCENARIO_PACKAGE_EPSG: @EPSG@
-SCENARIO_PACKAGE_MAPUNITS: @MAPUNITS@
+SCENARIO_PACKAGE_MAPUNITS: 
+SCENARIO_PACKAGE_MODEL_SCENARIO: 
+SCENARIO_PACKAGE_PROJECTION_SCENARIOS: 
 
-;; Default KU and iDigBio values for installed default SCENARIO_PACKAGE 10min-past-present-future
-SCENARIO_PACKAGE_MODEL_SCENARIO: WC-10min
-SCENARIO_PACKAGE_PROJECTION_SCENARIOS: CCSM4-lgm-10min,CCSM4-mid-10min,CCSM4-RCP8.5-2070-10min,CCSM4-RCP4.5-2070-10min,CCSM4-RCP8.5-2050-10min,CCSM4-RCP4.5-2050-10min
 
 ; BISON values (Algs=ATT_MAXENT)
 ;; SCENARIO_PACKAGE: 30sec-present-future-CONUS
-;; SCENARIO_PACKAGE_MODEL_SCENARIO: WC-30sec-CONUS
-;; SCENARIO_PACKAGE_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-CONUS,CCSM4-RCP4.5-2050-30sec-CONUS,CCSM4-RCP4.5-2070-30sec-CONUS,CCSM4-RCP8.5-2050-30sec-CONUS
 
 ; PRAGMA values (Algs=BIOCLIM)
 ;; SCENARIO_PACKAGE: 30sec-present-future-SEA
-;; SCENARIO_PACKAGE_MODEL_SCENARIO: WC-30sec-SEA
-;; SCENARIO_PACKAGE_PROJECTION_SCENARIOS: CCSM4-RCP8.5-2070-30sec-SEA,CCSM4-RCP4.5-2050-30sec-SEA,CCSM4-RCP4.5-2070-30sec-SEA,CCSM4-RCP8.5-2050-30sec-SEA
 
 ; ...................
 ; Global PAM vals
@@ -113,10 +109,6 @@ INTERSECT_MAXPRESENCE: 255
 [LmServer - dbserver]
 CONNECTION_PORT: 6432
 DB_HOSTNAME: @DB_FQDN@
-
-; .............................................................................
-[LmServer - webserver]
-WEB_HOSTNAME:  @WEB_FQDN@
 
 ; .............................................................................
 [LmServer - Matt Daemon]

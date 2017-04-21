@@ -10,19 +10,19 @@ tools.encode.encoding: 'utf-8'
 tools.encode.on: True
 tools.etags.autotags: True
 tools.sessions.on: True
-tools.sessions.storage_type: "file"
+tools.sessions.storage_class: cherrypy.lib.sessions.FileSession
 tools.sessions.storage_path: '@LMSCRATCHDISK@/sessions'
 tools.sessions.timeout: 20160
 tools.sessions.locking: 'implicit'
 environment: 'embedded'
 
-[/css]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/css'
-
 [/clients]
 tools.staticdir.on: True
 tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/clients'
+
+[/dashboard]
+tools.statidcir.on: True
+tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/lmdashboard'
 
 [/dl]
 tools.staticdir.on: True
@@ -36,14 +36,6 @@ tools.staticfile.filename: '@LMHOME@/LmWebServer/public_html/static/favicon.ico'
 [/help]
 tools.staticdir.on: True
 tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/help'
-
-[/images]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/images'
-
-[/javascript]
-tools.staticdir.on: True
-tools.staticdir.dir: '@LMHOME@/LmWebServer/public_html/javascript'
 
 [/robots.txt]
 tools.staticfile.on: True

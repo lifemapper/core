@@ -6,11 +6,12 @@ from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import REFERER_KEY, SESSION_KEY
 from LmWebServer.services.common.authentication import checkUserLogin
+from LmWebServer.services.api.v2.base import LmService
 
 
 # .............................................................................
 @cherrypy.expose
-class UserLogin(object):
+class UserLogin(LmService):
    """
    @summary: This is the user login service.  Sending a GET request will return
                 a login page.  POSTing will attempt to login with the user's
@@ -31,11 +32,11 @@ class UserLogin(object):
          return _get_login_page()
 
    # ................................
-   def POST(self, username, pword):
+   def POST(self, userId, pword):
       """
       @summary: Attempt to log in using the provided credentials
       """
-      if username is None or pword is None:
+      if userId is None or pword is None:
          raise cherrypy.HTTPError(400, "Must provide user name and password")
       
       refererPage = None
@@ -45,7 +46,7 @@ class UserLogin(object):
          if cookie.has_key(REFERER_KEY):
             refererPage = cookie[REFERER_KEY].value
          else:
-            refererPage = cherrpy.request.headers['referer']
+            refererPage = cherrypy.request.headers['referer']
             cookie = cherrypy.response.cookie
             cookie[REFERER_KEY] = refererPage
             cookie[REFERER_KEY]['path'] = '/api/login'
@@ -53,23 +54,22 @@ class UserLogin(object):
             cookie[REFERER_KEY]['version'] = 1
       except:
          pass
-            
-      if checkUserLogin(username, pword):
+      
+      user = self.scribe.getUser(userId)
+      if user is not None and user.checkPassword(pword):
          # Provided correct credentials
          cherrypy.session.regenerate()
-         cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
+         cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
          cookie = cherrypy.response.cookie
          cookie[REFERER_KEY] = refererPage
          cookie[REFERER_KEY]['expires'] = 0
          raise cherrypy.HTTPRedirect(refererPage or '/')
       else:
          raise cherrypy.HTTPError(403, 'Invalid username / password combination')
-         
-   
 
 # .............................................................................
 @cherrypy.expose
-class UserLogout(object):
+class UserLogout(LmService):
    """
    @summary: Log the user out of the system
    """
@@ -82,7 +82,7 @@ class UserLogout(object):
    
 # .............................................................................
 @cherrypy.expose
-class UserSignUp(object):
+class UserSignUp(LmService):
    """
    @summary: Service to create a new user
    """
@@ -124,7 +124,7 @@ class UserSignUp(object):
                       lastName=lastName, institution=institution, 
                       addr1=address1, addr2=address2, addr3=address3, 
                       phone=phone)
-         insUsr = self.scribe.insertUser(usr)
+         insUsr = self.scribe.findOrInsertUser(usr)
          
          cherrypy.session[SESSION_KEY] = cherrypy.request.login = userId
          

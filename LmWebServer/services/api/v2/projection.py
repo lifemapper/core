@@ -35,44 +35,47 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
-from LmWebServer.formatters.jsonFormatter import objectFormatter
+from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.common.accessControl import checkUserPermission
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('projectionId')
+@cherrypy.popargs('pathProjectionId')
 class Projection(LmService):
    """
    @summary: This class is for the projections service.  The dispatcher is
                 responsible for calling the correct method
    """
    # ................................
-   def DELETE(self, projectionId):
+   def DELETE(self, pathProjectionId):
       """
       @summary: Attempts to delete a projection
-      @param projectionId: The id of the projection to delete
+      @param pathProjectionId: The id of the projection to delete
       """
-      prj = self.scribe.getSDMProject(projectionId)
+      prj = self.scribe.getSDMProject(int(pathProjectionId))
       
       if prj is None:
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
-                                                                 projectionId))
+                                                                 pathProjectionId))
       
-      if prj.getUserId() == self.getUserId():
+      if checkUserPermission(self.getUserId(), prj, HTTPMethod.DELETE):
          success = self.scribe.deleteObject(prj)
          if success:
             cherrypy.response.status = 204
             return
          else:
             raise cherrypy.HTTPError(500, 
-                         'Failed to delete projection {}'.format(projectionId))
+                         'Failed to delete projection {}'.format(pathProjectionId))
       else:
          raise cherrypy.HTTPError(403, 
             'User {} does not have permission to delete projection {}'.format(
-               self.getUserId(), projectionId))
+               self.getUserId(), pathProjectionId))
 
    # ................................
-   def GET(self, projectionId=None, afterTime=None, algorithmCode=None, 
+   @lmFormatter
+   def GET(self, pathProjectionId=None, afterTime=None, algorithmCode=None, 
                  beforeTime=None, displayName=None, epsgCode=None, limit=100, 
                  modelScenarioCode=None, occurrenceSetId=None, offset=0, 
                  projectionScenarioCode=None, public=None, scenarioId=None, 
@@ -82,12 +85,12 @@ class Projection(LmService):
                    attempt to return that item.  If not, return a list of 
                    projections that match the provided parameters
       """
-      if projectionId is None:
-         if public:
-            userId = PUBLIC_USER
-         else:
-            userId = self.getUserId()
-            
+      if public:
+         userId = PUBLIC_USER
+      else:
+         userId = self.getUserId()
+
+      if pathProjectionId is None:
          return self._listProjections(userId, afterTime=afterTime, 
                                  algCode=algorithmCode, beforeTime=beforeTime, 
                                  displayName=displayName, epsgCode=epsgCode, 
@@ -95,12 +98,21 @@ class Projection(LmService):
                                  occurrenceSetId=occurrenceSetId, offset=offset,
                                  prjScnCode=projectionScenarioCode, 
                                  status=status)
+      elif pathProjectionId.lower() == 'count':
+         return self._countProjections(userId, afterTime=afterTime, 
+                                 algCode=algorithmCode, beforeTime=beforeTime, 
+                                 displayName=displayName, epsgCode=epsgCode, 
+                                 mdlScnCode=modelScenarioCode, 
+                                 occurrenceSetId=occurrenceSetId, 
+                                 prjScnCode=projectionScenarioCode, 
+                                 status=status)
       else:
-         return self._getProjection(projectionId)
+         return self._getProjection(pathProjectionId)
    
    # ................................
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
+   @lmFormatter
    def POST(self):
       """
       @summary: Posts a new projection
@@ -142,33 +154,61 @@ class Projection(LmService):
          
       # TODO: What do we return?
       cherrypy.response.status = 202
-      return objectFormatter(insMFChain)
+      return insMFChain
    
    
    # ................................
    #@cherrypy.json_in
    #@cherrypy.json_out
-   #def PUT(self, projectionId):
+   #def PUT(self, pathProjectionId):
    #   pass
    
    # ................................
-   def _getProjection(self, projectionId):
+   def _countProjections(self, userId, afterTime=None, algCode=None, 
+                        beforeTime=None, displayName=None, epsgCode=None,
+                        mdlScnCode=None, occurrenceSetId=None, prjScnCode=None, 
+                        status=None):
+      """
+      @summary: Return a count of projections matching the specified criteria
+      """
+      afterStatus = None
+      beforeStatus = None
+
+      # Process status parameter
+      if status:
+         if status < JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE - 1
+         elif status == JobStatus.COMPLETE:
+            beforeStatus = JobStatus.COMPLETE + 1
+            afterStatus = JobStatus.COMPLETE - 1
+         else:
+            afterStatus = status - 1
+   
+      prjCount = self.scribe.countSDMProjects(userId=userId,
+                           displayName=displayName, afterTime=afterTime, 
+                           beforeTime=beforeTime, epsg=epsgCode, 
+                           afterStatus=afterStatus, beforeStatus=beforeStatus, 
+                           occsetId=occurrenceSetId, algCode=algCode, 
+                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
+      return {"count" : prjCount}
+
+   # ................................
+   def _getProjection(self, pathProjectionId):
       """
       @summary: Attempt to get a projection
       """
-      prj = self.scribe.getSDMProject(projectionId)
+      prj = self.scribe.getSDMProject(int(pathProjectionId))
       
       if prj is None:
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
-                                                                 projectionId))
+                                                                 pathProjectionId))
       
-      if prj.getUserId() in [self.getUserId(), PUBLIC_USER]:
-         # TODO: Return or format
-         return objectFormatter(prj)
+      if checkUserPermission(self.getUserId(), prj, HTTPMethod.GET):
+         return prj
       else:
          raise cherrypy.HTTPError(403, 
             'User {} does not have permission to delete projection {}'.format(
-               self.getUserId(), projectionId))
+               self.getUserId(), pathProjectionId))
 
    # ................................
    def _listProjections(self, userId, afterTime=None, algCode=None, 
@@ -196,7 +236,6 @@ class Projection(LmService):
                            beforeTime=beforeTime, epsg=epsgCode, 
                            afterStatus=afterStatus, beforeStatus=beforeStatus, 
                            occsetId=occurrenceSetId, algCode=algCode, 
-                           mdlscnCode=mdlScnCode, prjscenCode=prjScnCode)
-      # TODO: Return or format
-      return objectFormatter(prjAtoms)
+                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
+      return prjAtoms
    
