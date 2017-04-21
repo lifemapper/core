@@ -790,11 +790,11 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
          
       if line and parse:
          # Post-parse, line is a dictionary
-         line, specieskey = self._parseCSVRecord(line)
+         line, specieskey = self._parseGBIFRecord(line)
       return line, specieskey
 
 # ...............................................
-   def _parseCSVRecord(self, line):
+   def parseGBIFRecord(self, line):
       specieskey = provkey = None
       if line is not None and len(line) >= 16:
          try:
@@ -835,7 +835,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       currChunk = []
       # if we're at the beginning, pull a record
       if self._currSpeciesKey is None:
-         self._currRec, self._currSpeciesKey = self._getCSVRecord()
+         self._currRec, self._currSpeciesKey = self._getCSVRecord(parse=True)
          if self._currRec is None:
             completeChunk = True
          
@@ -851,7 +851,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
             completeChunk = True
          # Get another record
          if not completeChunk:
-            self._currRec, self._currSpeciesKey = self._getCSVRecord()
+            self._currRec, self._currSpeciesKey = self._getCSVRecord(parse=True)
             if self._currRec is None:
                completeChunk = True
       self.log.debug('Returning {} records for {} (starting on line {})' 
