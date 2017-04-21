@@ -30,6 +30,8 @@ import os
 from StringIO import StringIO
 import zipfile
 
+from LmServer.base.layer2 import Raster, Vector
+
 # .............................................................................
 def file_formatter(filename, readMode='r', stream=False):
    """
@@ -62,6 +64,24 @@ def file_formatter(filename, readMode='r', stream=False):
       contentFLO.close()
       return cnt
 
+# .............................................................................
+def gtiffObjectFormatter(obj):
+   """
+   @summary: Attempt to return a geotiff for an object if it is a raster
+   """
+   if isinstance(obj, Raster):
+      return file_formatter(obj.getDLocation(), readMode='rb')
+   else:
+      raise Exception, "Only raster files have GeoTiff interface"
+
+# .............................................................................
+def shapefileObjectFormatter(obj):
+   """
+   """
+   if isinstance(obj, Vector):
+      return file_formatter(obj.getShapefiles())
+   else:
+      raise Exception, "Only vector files have Shapefile interface"
 
 # .............................................................................
 # NOTE: This was only commented out, and not removed, in case it comes up again

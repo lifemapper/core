@@ -37,19 +37,19 @@ from LmWebServer.services.api.v2.base import LmService
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('layerId')
+@cherrypy.popargs('pathLayerId')
 class Layer(LmService):
    """
    @summary: This class is for the layers service.  The dispatcher is
                 responsible for calling the correct method
    """
    # ................................
-   def DELETE(self, layerId):
+   def DELETE(self, pathLayerId):
       """
       @summary: Attempts to delete a layer
-      @param layerId: The id of the layer to delete
+      @param pathLayerId: The id of the layer to delete
       """
-      lyr = self.scribe.getLayer(lyrId=layerId)
+      lyr = self.scribe.getLayer(lyrId=pathLayerId)
       if lyr is None:
          raise cherrypy.HTTPError(404, "Layer not found")
       
@@ -70,7 +70,7 @@ class Layer(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, layerId=None, afterTime=None, altPredCode=None, 
+   def GET(self, pathLayerId=None, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
            envTypeId=None, gcmCode=None, layerType=None, limit=100, offset=0, 
            public=None, scenarioId=None, squid=None):
@@ -89,32 +89,32 @@ class Layer(LmService):
          userId = self.getUserId()
       
       if layerType is None or layerType == 0:
-         if layerId is None:
+         if pathLayerId is None:
             return self._listLayers(userId, afterTime=afterTime, 
                                     beforeTime=beforeTime, epsgCode=epsgCode, 
                                     limit=limit, offset=offset, squid=squid)
-         elif layerId.lower() == 'count':
+         elif pathLayerId.lower() == 'count':
             return self._countLayers(userId, afterTime=afterTime, 
                                     beforeTime=beforeTime, epsgCode=epsgCode, 
                                     squid=squid)
          else:
-            return self._getLayer(layerId, envLayer=False)
+            return self._getLayer(pathLayerId, envLayer=False)
       else:
-         if layerId is None:
+         if pathLayerId is None:
             return self._listEnvLayers(userId, afterTime=afterTime, 
                                altPredCode=altPredCode, beforeTime=beforeTime, 
                                dateCode=dateCode, envCode=envCode, 
                                envTypeId=envTypeId, epsgCode=epsgCode, 
                                gcmCode=gcmCode, limit=limit, offset=offset, 
                                scenarioId=scenarioId)
-         elif layerId.lower() == 'count':
+         elif pathLayerId.lower() == 'count':
             return self._countEnvLayers(userId, afterTime=afterTime, 
                                altPredCode=altPredCode, beforeTime=beforeTime, 
                                dateCode=dateCode, envCode=envCode, 
                                envTypeId=envTypeId, epsgCode=epsgCode, 
                                gcmCode=gcmCode, scenarioId=scenarioId)
          else:
-            return self._getLayer(layerId, envLayer=True)
+            return self._getLayer(pathLayerId, envLayer=True)
       
    # ................................
    @lmFormatter
@@ -144,7 +144,7 @@ class Layer(LmService):
    
    # ................................
    #@cherrypy.tools.json_out
-   #def PUT(self, layerId, epsgCode, envLayerType, name=None, isCategorical=None,
+   #def PUT(self, pathLayerId, epsgCode, envLayerType, name=None, isCategorical=None,
    #         envLayerTypeId=None, additionalMetadata=None, valUnits=None,
    #         gcmCode=None, alternatePredictionCode=None, dateCode=None):
    #   pass
@@ -206,24 +206,24 @@ class Layer(LmService):
       return {"count" : lyrCount}
 
    # ................................
-   def _getLayer(self, layerId, envLayer=False):
+   def _getLayer(self, pathLayerId, envLayer=False):
       """
       @summary: Attempt to get a layer
       """
       if envLayer:
-         lyr = self.scribe.getEnvLayer(lyrId=layerId)
+         lyr = self.scribe.getEnvLayer(lyrId=pathLayerId)
       else:
-         lyr = self.scribe.getLayer(lyrId=layerId)
+         lyr = self.scribe.getLayer(lyrId=pathLayerId)
       if lyr is None:
          raise cherrypy.HTTPError(404, 
-                        'Environmental layer {} was not found'.format(layerId))
+                        'Environmental layer {} was not found'.format(pathLayerId))
       if lyr.getUserId() in [self.getUserId(), PUBLIC_USER]:
          # TODO: Return or format?
          return lyr
       else:
          raise cherrypy.HTTPError(403, 
                   'User {} does not have permission to access layer {}'.format(
-                     self.getUserId(), layerId))
+                     self.getUserId(), pathLayerId))
    
    # ................................
    def _listEnvLayers(self, userId, afterTime=None, altPredCode=None, 

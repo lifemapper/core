@@ -115,6 +115,18 @@ QUERY_PARAMETERS = {
       'name' : 'offset',
       'processIn' : lambda x: max(0, int(x)) # Integer, minimum is zero
    },
+   'pathlayerid' : {
+      'name' : 'pathLayerId'
+   },
+   'pathoccsetid' : {
+      'name' : 'pathOccSetId'
+   },
+   'pathprojectionid' : {
+      'name' : 'pathProjectionId'
+   },
+   'pathscenarioid' : {
+      'name' : 'pathScenarioId'
+   },
    'projectionscenariocode' : {
       'name' : 'projectionScenarioCode'
    },
@@ -129,6 +141,40 @@ QUERY_PARAMETERS = {
    'status' : {
       'name' : 'status',
       'processIn' : int
+   },
+   # Authentication parameters
+   'address1' : {
+      'name' : 'address1'
+   },
+   'address2' : {
+      'name' : 'address2'
+   },
+   'address3' : {
+      'name' : 'address3'
+   },
+   'phone' : {
+      'name' : 'phone'
+   },
+   'email' : {
+      'name' : 'email'
+   },
+   'firstname' : {
+      'name' : 'firstName'
+   },
+   'institution' : {
+      'name' : 'institution'
+   },
+   'lastname' : {
+      'name' : 'lastName'
+   },
+   'pword' : {
+      'name' : 'pword'
+   },
+   'pword1' : {
+      'name' : 'pword1'
+   },
+   'userid' : {
+      'name' : 'userId'
    },
 }
 
