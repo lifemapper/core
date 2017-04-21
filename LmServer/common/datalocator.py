@@ -98,7 +98,9 @@ class EarlJr(LMObject):
                       gridsetId=None):
       """
       @note: /ARCHIVE_PATH/userId/
-                 contains config files, MF docs, trees, attributes ...
+                 contains config files, trees, attributes ...
+             /ARCHIVE_PATH/userId/makeflow
+                 contains MF docs
              /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
                  contains experiment data common to occurrenceId xxxxxxxxxxxx
              /ARCHIVE_PATH/userId/MAP_DIR/
