@@ -3,7 +3,7 @@ import mx.DateTime
 
 from LmCommon.common.lmconstants import GBIF
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
-from LmServer.db.scribe import Scribe
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ThreadLogger 
 from LmServer.base.taxon import ScientificName
 
@@ -46,7 +46,7 @@ def _getTaxonValues(line):
 # ...............................................
 def readTaxonomy(logger, taxonSourceName, taxonFilename):
    totalIn = totalOut = totalWrongRank = 0
-   scribe = Scribe(logger)
+   scribe = BorgScribe(logger)
    scribe.openConnections()
    taxonSourceId, url, cdate, mdate = scribe.findTaxonSource(taxonSourceName)
    
