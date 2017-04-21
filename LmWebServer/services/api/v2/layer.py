@@ -32,8 +32,10 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.envlayer import EnvLayer
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.common.accessControl import checkUserPermission
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
 @cherrypy.expose
@@ -54,7 +56,7 @@ class Layer(LmService):
          raise cherrypy.HTTPError(404, "Layer not found")
       
       # If allowed to, delete
-      if lyr.getUserId() == self.getUserId():
+      if checkUserPermission(self.getUserId(), lyr, HTTPMethod.DELETE):
          success = self.scribe.deleteObject(lyr)
          if success:
             cherrypy.response.status = 204
@@ -217,8 +219,7 @@ class Layer(LmService):
       if lyr is None:
          raise cherrypy.HTTPError(404, 
                         'Environmental layer {} was not found'.format(pathLayerId))
-      if lyr.getUserId() in [self.getUserId(), PUBLIC_USER]:
-         # TODO: Return or format?
+      if checkUserPermission(self.getUserId(), lyr, HTTPMethod.GET):
          return lyr
       else:
          raise cherrypy.HTTPError(403, 

@@ -32,7 +32,9 @@ import cherrypy
 from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.occlayer import OccurrenceLayer
+from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
@@ -55,7 +57,7 @@ class OccurrenceSet(LmService):
          raise cherrypy.HTTPError(404, "Occurrence set not found")
       
       # If allowed to, delete
-      if occ.getUserId() == self.getUserId():
+      if checkUserPermission(self.getUserId(), occ, HTTPMethod.DELETE):
          success = self.scribe.deleteObject(occ)
          if success:
             cherrypy.response.status = 204
@@ -170,7 +172,7 @@ class OccurrenceSet(LmService):
          raise cherrypy.HTTPError(404, "Occurrence set not found")
       
       # If allowed to, return
-      if occ.getUserId() in [self.getUserId(), PUBLIC_USER]:
+      if checkUserPermission(self.getUserId(), occ, HTTPMethod.GET):
          return occ
       else:
          raise cherrypy.HTTPError(403, 

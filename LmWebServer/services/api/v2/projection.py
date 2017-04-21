@@ -35,7 +35,9 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
+from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
@@ -58,7 +60,7 @@ class Projection(LmService):
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
                                                                  pathProjectionId))
       
-      if prj.getUserId() == self.getUserId():
+      if checkUserPermission(self.getUserId(), prj, HTTPMethod.DELETE):
          success = self.scribe.deleteObject(prj)
          if success:
             cherrypy.response.status = 204
@@ -201,7 +203,7 @@ class Projection(LmService):
          raise cherrypy.HTTPError(404, 'Projection {} not found'.format(
                                                                  pathProjectionId))
       
-      if prj.getUserId() in [self.getUserId(), PUBLIC_USER]:
+      if checkUserPermission(self.getUserId(), prj, HTTPMethod.GET):
          return prj
       else:
          raise cherrypy.HTTPError(403, 

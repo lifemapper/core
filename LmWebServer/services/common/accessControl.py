@@ -26,8 +26,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmServer.common.localconstants import PUBLIC_USER
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
+from LmServer.common.localconstants import PUBLIC_USER
+from LmWebServer.common.lmconstants import HTTPMethod
 
 # .............................................................................
 def checkUserPermission(sessionUser, obj, method):
@@ -42,12 +43,12 @@ def checkUserPermission(sessionUser, obj, method):
    #      GET - session user, public, or anonymous
    #      PUT - session user - can't update public or anonymous
    #      DELETE - session user - can't delete public or anonymous
-   if method.lower() in ['put', 'delete']:
+   if method.upper() in [HTTPMethod.DELETE, HTTPMethod.PUT]:
       validUsers = [sessionUser]
-   elif method.lower() == 'get':
+   elif method.upper() == HTTPMethod.GET:
       validUsers = [sessionUser, PUBLIC_USER, DEFAULT_POST_USER]
    else:
-      raise Exception, "Unknown HTTP method: {}".format(method.lower())
+      raise Exception, "Unknown HTTP method: {}".format(method.upper())
    
    # Return boolean indicating if the object's user id is in the valid user 
    #    list for the HTTP method

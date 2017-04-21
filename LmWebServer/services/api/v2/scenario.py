@@ -32,7 +32,9 @@ import cherrypy
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.scenario import Scenario
+from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
@@ -55,7 +57,7 @@ class Scenario(LmService):
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
                                                                   pathScenarioId))
       
-      if scn.getUserId() == self.getUserId():
+      if checkUserPermission(self.getUserId(), scn, HTTPMethod.DELETE):
          success = self.scribe.deleteObject(scn)
          if success:
             cherrypy.response.status = 204
@@ -168,8 +170,7 @@ class Scenario(LmService):
          raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
                                                                   pathScenarioId))
       
-      if scn.getUserId() in [self.getUserId(), PUBLIC_USER]:
-         
+      if checkUserPermission(self.getUserId(), scn, HTTPMethod.GET):
          return scn
 
       else:
