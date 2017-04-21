@@ -15,10 +15,13 @@ Download the current Lifemapper roll files and shasums:
 * lifemapper-server-2016.11.21-0.x86_64.iso
 
 #. **Download** new LmServer and LmCompute rolls to server, then validate 
-   checksums.  Replace *.* in the wget command with current filenames::
+   checksums.  Replace * in the wget command with current filenames::
 
    # cd /state/partition1/apps/
-   # wget http://lifemapper.org/dl/lifemapper*.*
+   # wget http://lifemapper.org/dl/lifemapper-compute-latest.iso
+   # wget http://lifemapper.org/dl/lifemapper-compute-latest.sha
+   # wget http://lifemapper.org/dl/lifemapper-server-latest.iso
+   # wget http://lifemapper.org/dl/lifemapper-server-latest.sha
    # sha256sum -c lifemapper-*.sha
 
 (If update) Stop processes
