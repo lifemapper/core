@@ -48,7 +48,7 @@ def readTaxonomy(logger, taxonSourceName, taxonFilename):
    totalIn = totalOut = totalWrongRank = 0
    scribe = BorgScribe(logger)
    scribe.openConnections()
-   taxonSourceId, url, cdate, mdate = scribe.findTaxonSource(taxonSourceName)
+   txSourceId, url, moddate = scribe.findTaxonSource(taxonSourceName)
    
    f = open(taxonFilename, 'r')
    csvreader = csv.reader(f, delimiter='\t')
@@ -66,10 +66,10 @@ def readTaxonomy(logger, taxonSourceName, taxonFilename):
          sciName = ScientificName(scinameStr, rank=rank, canonicalName=None, 
                 kingdom=kingdomStr, phylum=phylumStr, txClass=classStr, 
                 txOrder=orderStr, family=familyStr, genus=genusStr, 
-                taxonomySourceId=taxonSourceId, taxonomySourceKey=taxonkey, 
+                taxonomySourceId=txSourceId, taxonomySourceKey=taxonkey, 
                 taxonomySourceGenusKey=genuskey, 
                 taxonomySourceSpeciesKey=specieskey)
-         upSciName = scribe._borg.findOrInsertTaxon(taxonSourceId=taxonSourceId, 
+         upSciName = scribe._borg.findOrInsertTaxon(taxonSourceId=txSourceId, 
                                              taxonKey=taxonkey, sciName=sciName)
          if upSciName:
             totalIn += 1
