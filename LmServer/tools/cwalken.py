@@ -348,6 +348,7 @@ class ChristopherWalken(LMObject):
       """
       @summary: Walks a list of Lifemapper objects for computation
       """
+      self.log.info('Saving next start {} ...'.format(self.nextStart))
       self.saveNextStart()
       self.weaponOfChoice.close()
       

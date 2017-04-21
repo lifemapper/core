@@ -141,9 +141,8 @@ class Boomer(Daemon):
                      f.write('{}: {}\n'.format(squid, fname))
             except:
                self.spudInProcess = False
-               self.log.info('Saving next start {} ...'
-                             .format(self.christopher.nextStart))
-               self.christopher.saveNextStart()
+               # Stop walken the archive and saveNextStart
+               self.christopher.stopWalken()
                raise
             
             self.spudInProcess = False
@@ -160,7 +159,7 @@ class Boomer(Daemon):
    def onShutdown(self):
       self.keepWalken = False
       self.log.debug('Shutdown!')
-      # Stop Walken the archive
+      # Stop walken the archive and saveNextStart
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
       while self.spudInProcess:
