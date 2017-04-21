@@ -70,42 +70,27 @@ class LmServiceRoot(object):
 # .............................................................................
    
 # .............................................................................
-if __name__ == '__main__':
-   
-   # Tell CherryPy to add headers eneded for CORS
-   #cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
-   
-   # Tell CherryPy to look for authenticated users
-   #cherrypy.tools.BasicAuth = cherrypy.Tool('before_handler', getUserName)
-   
-   #cherrypy.config.update(CHERRYPY_CONFIG_FILE)
-   #application = cherrypy.Application(LmServiceRoot(), 
-   #                              script_name=None, config=CHERRYPY_CONFIG_FILE)
-   cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
+# Tell CherryPy to add headers eneded for CORS
+cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
-   # Tell CherryPy to look for authenticated users
-   cherrypy.tools.basicAuth = cherrypy.Tool('before_handler', getUserName)
+# Tell CherryPy to look for authenticated users
+cherrypy.tools.basicAuth = cherrypy.Tool('before_handler', getUserName)
    
-   # Add the parameter caster to the tool box
-   cherrypy.tools.paramCaster = cherrypy.Tool('before_handler', castParameters)
+# Add the parameter caster to the tool box
+cherrypy.tools.paramCaster = cherrypy.Tool('before_handler', castParameters)
 
-   appConfig = {
-      '/' : {
-         'request.dispatch' : LmDispatcher(),
-         'tools.sessions.on' : True,
-         'tools.basicAuth.on' : True,
-         'tools.paramCaster.on' : True
-      }
+appConfig = {
+   '/' : {
+      'request.dispatch' : LmDispatcher(),
+      'tools.sessions.on' : True,
+      'tools.basicAuth.on' : True,
+      'tools.paramCaster.on' : True
    }
+}
 
-   cherrypy.config.update(CHERRYPY_CONFIG_FILE)
-   #cherrypy.mount(LmServiceRoot(), config=appConfig
+cherrypy.config.update(CHERRYPY_CONFIG_FILE)
 
-   cherrypy.quickstart(LmServiceRoot(), '/', config=appConfig)
-
-   #application = cherrypy.Application(LmServiceRoot(),
-   #                              script_name=None)
-   #cherrypy.server.start()
-   #cherrypy.engine.start()
+application = cherrypy.Application(LmServiceRoot(), script_name=None, 
+                                   config=appConfig)
 
 
