@@ -1,6 +1,0 @@
-LocalId,Longitude,Latitude,CanonicalName,CatalogNum,CollectionCode,CollectionDate,Collector,Guid,InstitutionCode,ModTime,ProviderName,ResourceName
-1000,-144.09,31.15,"Sample Name","N1000","Sample Collection Code","2009-05-01","Sample Collector","http://example.com/guid1","Sample Institution","2009-05-01 11:03:00","Sample Provider","Sample Resource"
-1001,-1.8,-42.51,"Sample Name","N1001","Sample Collection Code","2009-05-01","Sample Collector","http://example.com/guid2","Sample Institution","2009-05-01 11:03:30","Sample Provider","Sample Resource"
-1002,-60.66,-10.26,"Sample Name","N1002","Sample Collection Code","2009-05-01","Sample Collector","http://example.com/guid3","Sample Institution","2009-05-01 11:03:45","Sample Provider","Sample Resource"
-1003,-14.28,5.92,"Sample Name","N1003","Sample Collection Code","2009-05-01","Sample Collector","http://example.com/guid4","Sample Institution","2009-05-01 11:04:00","Sample Provider","Sample Resource"
-1004,-155.04,-37.04,"Sample Name","N1004","Sample Collection Code","2009-05-01","Sample Collector","http://example.com/guid5","Sample Institution","2009-05-01 11:04:01","Sample Provider","Sample Resource"
