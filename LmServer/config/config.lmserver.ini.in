@@ -112,7 +112,7 @@ DB_HOSTNAME: @DB_FQDN@
 
 ; .............................................................................
 [LmServer - webserver]
-WEB_HOSTNAME:  @WEB_FQDN@
+;WEB_HOSTNAME:  @WEB_FQDN@
 
 ; .............................................................................
 [LmServer - Matt Daemon]
