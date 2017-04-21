@@ -25,6 +25,7 @@
           02110-1301, USA.
 """
 import csv
+import glob
 import json
 import os
 from osgeo import ogr, osr
@@ -37,6 +38,7 @@ from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
                SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCompute.common.lmObj import LmException
 try:
@@ -235,9 +237,13 @@ class ShapeShifter(object):
       return goodData, featCount
 
    # .............................................................................
-   def writeOccurrences(self, outfname, maxPoints=None, bigfname=None, isUser=False):
+   def writeOccurrences(self, outfname, maxPoints=None, bigfname=None, 
+                        isUser=False, overwrite=True):
+      if not readyFilename(outfname, overwrite=overwrite):
+         raise LmException('{} is not ready for write (overwrite={})'.format
+                           (outfname, overwrite))
       discardIndices = self._getSubset(maxPoints)
-
+      # Create empty datasets with field definitions
       outDs = bigDs = None
       try:
          outDs = self._createDataset(outfname)
@@ -249,16 +255,18 @@ class ShapeShifter(object):
             
          # Do we need a BIG dataset?
          if len(discardIndices) > 0 and bigfname is not None:
+            if not readyFilename(bigfname, overwrite=overwrite):
+               raise LmException('{} is not ready for write (overwrite={})'
+                                 .format(bigfname, overwrite))
             bigDs = self._createDataset(bigfname)
             if isUser:
                bigLyr = self._addUserFieldDef(bigDs)
             else:
                bigLyr = self._addFieldDef(bigDs)
-                        
       except Exception, e:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                            'Unable to create field definitions ({})'.format(e))
-
+      # Fill datasets with records
       try:
          # Loop through records
          recDict = self._getRecord()
@@ -288,6 +296,8 @@ class ShapeShifter(object):
             bigDs.Destroy()
             self._finishWrite(bigfname, minX, maxX, minY, maxY, geomtype, bigcount)
             
+      except LmException, e:
+         raise
       except Exception, e:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
                            'Unable to read or write data ({})'
@@ -712,6 +722,7 @@ from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
 from LmServer.common.log import ScriptLogger
 import ast
 
+# User test
 csvfname = '/share/lm/data/archive/ryan/000/000/000/059/pt_59.csv'
 metafname = '/share/lm/data/archive/ryan/heuchera_all.meta'
 outfname = '/tmp/testpoints.shp'
@@ -720,19 +731,75 @@ logger = ScriptLogger('testing')
 
 with open(csvfname, 'r') as f:
    blob = f.read()
-   
-
 with open(metafname, 'r') as f:
    metad = ast.literal_eval(f.read())
-
 ptype = ProcessType.USER_TAXA_OCCURRENCE
-
-
 shaper = ShapeShifter(ptype, blob, 32, logger=logger, metadata=metad)
 shaper.writeOccurrences(outfname, maxPoints=50, bigfname=bigfname, isUser=True)
 
 
+# GBIF test
+pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.csv'
+count =  1001407
+outFile = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.shp'
+bigFile = '/share/lm/data/archive/kubi/000/000/000/041/bigpt_41.shp'
+maxPoints = 500
+processType=ProcessType.GBIF_TAXA_OCCURRENCE
 
+with open(pointCsvFn) as inF:
+   rawData = inF.read()
+
+readyFilename(outFile, overwrite=True)
+readyFilename(bigFile, overwrite=True)
+logger = LmComputeLogger('crap')
+shaper = ShapeShifter(processType, rawData, count, logger=logger)
+#shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=False)
+
+discardIndices = shaper._getSubset(maxPoints)
+outDs = shaper._createDataset(outfname)
+outLyr = shaper._addFieldDef(outDs)
+lyrDef = outLyr.GetLayerDefn()
+   
+if len(discardIndices) > 0 and bigfname is not None:
+   bigDs = shaper._createDataset(bigfname)
+   bigLyr = shaper._addFieldDef(bigDs)
+
+recDict = shaper._getRecord()
+   while recDict is not None:
+      try:
+         # Add non-discarded features to regular layer
+         if self._currRecum not in discardIndices:
+            self._createFillFeat(lyrDef, recDict, outLyr)
+         # Add all features to optional "Big" layer
+         if bigDs is not None:
+            self._createFillFeat(lyrDef, recDict, bigLyr)
+      except Exception, e:
+         print('Failed to create record ({})'.format((e)))
+      recDict = self._getRecord()
+                        
+   # Return metadata
+   (minX, maxX, minY, maxY) = outLyr.GetExtent()
+   geomtype = lyrDef.GetGeomType()
+   fcount = outLyr.GetFeatureCount()
+   # Close dataset and flush to disk
+   outDs.Destroy()
+   self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount)
+                     
+   # Close Big dataset and flush to disk
+   if bigDs is not None:
+      bigcount = bigLyr.GetFeatureCount()
+      bigDs.Destroy()
+      self._finishWrite(bigfname, minX, maxX, minY, maxY, geomtype, bigcount)
+      
+except LmException, e:
+   raise
+except Exception, e:
+   raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
+                     'Unable to read or write data ({})'
+                     .format(e))
+
+
+# IDIG test
 taxid = 2427616
 
 if os.path.exists(outfilename):

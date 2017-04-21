@@ -64,7 +64,7 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, maxPoints):
                         shapefile
    """
    with open(pointCsvFn) as inF:
-      csvInputBlob = inF.read()
+      csvInputBlob = inF.readlines()
    
    if len(csvInputBlob.strip()) == 0:
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
@@ -148,41 +148,6 @@ def parseCsvData(rawData, processType, outFile, bigFile, count, maxPoints,
          f.write('No excess data')
          f.close()
       
-# ...............................................
-def _readyFilename(self, fullfilename, overwrite=False):
-   """
-   @summary: On existing file, 
-                if overwrite true: delete
-                            false: return false
-             Non-existing file:
-                create parent directories if needed
-                return true if parent directory exists
-   """
-   if fullfilename is None:
-      raise LMError('Full filename is None')
-   
-   import os
-   
-   if os.path.exists(fullfilename):
-      if overwrite:
-         success, msg = self._deleteFile(fullfilename)
-         if not success:
-            raise LMError('Unable to delete {}'.format(fullfilename))
-         else:
-            return True
-      else:
-         return False
-   else:
-      pth, basename = os.path.split(fullfilename)
-      try:
-         os.makedirs(pth, 0775)
-      except:
-         pass
-         
-      if os.path.isdir(pth):
-         return True
-      else:
-         raise LMError('Failed to create directories {}'.format(pth))
 
 """
 import json
@@ -194,6 +159,9 @@ from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger
 from LmServer.db.borgscribe import BorgScribe
+
+from LmCommon.common.readyfile import readyFilename
+
 
 logger = LmComputeLogger('crap')
 
