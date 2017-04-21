@@ -1,8 +1,11 @@
 import csv
+import mx.DateTime
 
-from LmDbServer.common.lmconstants import TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
+from LmCommon.common.lmconstants import GBIF
+from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 from LmServer.db.scribe import Scribe
 from LmServer.common.log import ThreadLogger 
+from LmServer.base.taxon import ScientificName
 
 # ...............................................
 def _convertString(valStr, isInteger=True):
@@ -42,7 +45,7 @@ def _getTaxonValues(line):
    
 # ...............................................
 def readTaxonomy(logger, taxonSourceName, taxonFilename):
-   totalInserted = totalUpdated = totalStatic = totalWrongRank = 0
+   totalIn = totalOut = totalWrongRank = 0
    scribe = Scribe(logger)
    scribe.openConnections()
    taxonSourceId, url, cdate, mdate = scribe.findTaxonSource(taxonSourceName)
@@ -56,21 +59,24 @@ def readTaxonomy(logger, taxonSourceName, taxonFilename):
       if taxonkey not in (specieskey, genuskey): 
          totalWrongRank += 1
       else:
-         scinameId, updated, inserted = scribe._mal.insertTaxonRec(taxonSourceId, 
-                                                        taxonkey, kingdomStr, 
-                                                        phylumStr, classStr, 
-                                                        orderStr, familyStr, 
-                                                        genusStr, scinameStr, 
-                                                        genuskey, specieskey, 
-                                                        None, count)
-         if updated:
-            totalUpdated += 1
-         elif inserted:
-            totalInserted += 1
+         if taxonkey == specieskey:
+            rank = GBIF.RESPONSE_GENUS_KEY
+         elif taxonkey == genuskey:
+            rank = GBIF.RESPONSE_SPECIES_KEY
+         sciName = ScientificName(scinameStr, rank=rank, canonicalName=None, 
+                kingdom=kingdomStr, phylum=phylumStr, txClass=classStr, 
+                txOrder=orderStr, family=familyStr, genus=genusStr, 
+                taxonomySourceId=taxonSourceId, taxonomySourceKey=taxonkey, 
+                taxonomySourceGenusKey=genuskey, 
+                taxonomySourceSpeciesKey=specieskey)
+         upSciName = scribe._borg.findOrInsertTaxon(taxonSourceId=taxonSourceId, 
+                                             taxonKey=taxonkey, sciName=sciName)
+         if upSciName:
+            totalIn += 1
          else:
-            totalStatic += 1
-   print 'Inserted %d; updated %d; wrongRank %d' % (totalInserted, totalUpdated, 
-                                                    totalWrongRank)
+            totalOut += 1
+   print('Inserted or updated {}; failed {}; wrongRank {}'
+         .format(totalIn, totalOut, totalWrongRank))
    f.close()
    scribe.closeConnections()
    

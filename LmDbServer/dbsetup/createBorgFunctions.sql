@@ -223,7 +223,7 @@ BEGIN
    ordercls = ' ORDER BY modTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -258,7 +258,7 @@ BEGIN
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -971,7 +971,7 @@ BEGIN
    ordercls = ' ORDER BY statusModTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -1010,7 +1010,7 @@ BEGIN
    ordercls = ' ORDER BY statusModTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
