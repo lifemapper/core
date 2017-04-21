@@ -27,6 +27,8 @@ import os, sys, time
 
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import JobStatus, OutputFormat
+from LmCommon.common.readyfile import readyFilename
+from LmCompute.common.lmObj import LmException
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
@@ -206,6 +208,9 @@ class Boomer(Daemon):
          chains[scencode] = mfChain
          # Get rawPotato input file from MFChain
          rawPotatoFname = mfChain.getTriageFilename(prefix='rawPotato')
+         if not readyFilename(rawPotatoFname, overwrite=True):
+            raise LmException('{} is not ready for write (overwrite=True)'
+                              .format(rawPotatoFname))
          try:
             f = open(rawPotatoFname, 'w')
          except Exception, e:
