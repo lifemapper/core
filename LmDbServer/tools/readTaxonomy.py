@@ -86,7 +86,7 @@ def readTaxonomy(logger, taxonSourceName, taxonFilename):
 # ...............................................
 if __name__ == '__main__':   
    logger = ThreadLogger('readGbif')
-   readTaxonomy(logger, TAXONOMIC_SOURCE['GBIF']['name'], TAXONOMY_DUMP_FILE)
+   readTaxonomy(logger, TAXONOMIC_SOURCE['GBIF']['name'], GBIF_TAXONOMY_DUMP_FILE)
 
 
 

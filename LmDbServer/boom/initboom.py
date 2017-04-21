@@ -614,6 +614,7 @@ if __name__ == '__main__':
       sys.exit(2)
 
    sampleConfigFile = os.path.join(APP_PATH, 'LmDbServer/tools/boom.sample.ini')
+   # Created on roll install: lifemapper-server:lmdata-species
    defaultConfigFile = os.path.join(SPECIES_DATA_PATH, 'archive.config.ini')
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
