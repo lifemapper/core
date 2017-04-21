@@ -562,7 +562,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -602,7 +602,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -1462,7 +1462,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
@@ -1498,7 +1498,7 @@ BEGIN
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls;
+   cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd
