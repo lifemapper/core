@@ -31,30 +31,16 @@ from osgeo.ogr import wkbPoint
 import os
 import sys
 from time import sleep
-from types import ListType, TupleType
 
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
-                                    ProcessType, JobStatus, ONE_HOUR, OutputFormat) 
-from LmDbServer.common.lmconstants import (SpeciesDatasource)
+                                    ProcessType, JobStatus, ONE_HOUR) 
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import Priority, LOG_PATH, LMFileType
-from LmServer.common.localconstants import TROUBLESHOOTERS
+from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.legion.processchain import MFChain
-
-
-
-from LmServer.notifications.email import EmailNotifier
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
@@ -766,12 +752,12 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
 # ...............................................
    def getOne(self):
       occ = None
-      speciesKey, dataCount, dataChunk = self._getOccurrenceChunk()
+      speciesKey, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
-         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, dataCount)
+         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, len(dataChunk))
          if sciName is not None:
             occ = self._createOrResetOccurrenceset(sciName, speciesKey, 
-                                                   dataCount, data=dataChunk)
+                                                len(dataChunk), data=dataChunk)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
       return occ 
@@ -846,7 +832,6 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       """
       completeChunk = False
       currKey = None
-      currCount = 0
       currChunk = []
       # if we're at the beginning, pull a record
       if self._currSpeciesKey is None:
@@ -861,7 +846,6 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
             self._currKeyFirstRecnum = self._linenum
          # If record of this chunk
          if self._currSpeciesKey == currKey:
-            currCount += 1
             currChunk.append(self._currRec)
          else:
             completeChunk = True
@@ -871,8 +855,8 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
             if self._currRec is None:
                completeChunk = True
       self.log.debug('Returning {} records for {} (starting on line {})' 
-                     .format(currCount, currKey, self._currKeyFirstRecnum))
-      return currKey, currCount, currChunk
+                     .format(len(currChunk), currKey, self._currKeyFirstRecnum))
+      return currKey, currChunk
          
 # ..............................................................................
 class iDigBioWoC(_SpeciesWeaponOfChoice):

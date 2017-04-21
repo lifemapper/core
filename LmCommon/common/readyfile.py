@@ -24,17 +24,20 @@
 """
 
 import os
-from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS
+import glob
+from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS, OutputFormat
 
 # ...............................................
 def readyFilename(fullfilename, overwrite=False):
    """
    @summary: On existing file, 
-                if overwrite true: delete
+                if overwrite true: delete and return true on success
+                                              raise LmException on failure
                             false: return false
              Non-existing file:
                 create parent directories if needed
                 return true if parent directory exists
+                raise Exception if parent directory does not exist
    """
    if fullfilename is None:
       raise Exception('Full filename is None')
@@ -73,12 +76,10 @@ def deleteFile(fname, deleteDir=False):
    if fname is None:
       msg = 'Cannot delete file \'None\''
    else:
-      import os
       pth, basename = os.path.split(fname)
       if fname is not None and os.path.exists(fname):
          base, ext = os.path.splitext(fname)
          if  ext == OutputFormat.SHAPE:
-            import glob
             similarFnames = glob.glob(base + '.*')
             try:
                for simfname in similarFnames:
