@@ -10,7 +10,7 @@ tools.encode.encoding: 'utf-8'
 tools.encode.on: True
 tools.etags.autotags: True
 tools.sessions.on: True
-tools.sessions.storage_type: "file"
+tools.sessions.storage_class: cherrypy.lib.sessions.FileSession
 tools.sessions.storage_path: '@LMSCRATCHDISK@/sessions'
 tools.sessions.timeout: 20160
 tools.sessions.locking: 'implicit'
