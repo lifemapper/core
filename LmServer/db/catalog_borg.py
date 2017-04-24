@@ -938,7 +938,7 @@ class Borg(DbPostgresql):
 # .............................................................................
    def listEnvLayers(self, firstRecNum, maxNum, userId, envCode, gcmcode, 
                      altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                     envTypeId, scenarioCode, atom):
+                     envTypeId, scenCode, atom):
       """
       @todo: Add scenarioId!!
       @summary: List all EnvLayer objects or atoms matching the filter conditions 
@@ -962,14 +962,14 @@ class Borg(DbPostgresql):
          rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerAtoms', 
                            firstRecNum, maxNum, userId, envCode, gcmcode, 
                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                           envTypeId, scenarioCode)
+                           envTypeId, scenCode)
          objs = self._getAtoms(rows, idxs)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerObjects', 
                            firstRecNum, maxNum, userId, envCode, gcmcode, 
                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                           envTypeId, scenarioCode)
+                           envTypeId, scenCode)
          for r in rows:
             objs.append(self._createEnvLayer(r, idxs))
       return objs

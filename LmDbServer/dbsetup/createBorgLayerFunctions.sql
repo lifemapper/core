@@ -587,12 +587,7 @@ BEGIN
    IF scencode is not null THEN
       FOR recplus in EXECUTE cmd
          LOOP
-            SELECT (layerId, userid, lyrsquid, lyrverify, lyrname, lyrdlocation,  
-               lyrmetadataUrl, lyrmetadata, dataFormat, gdalType, ogrType, 
-               valUnits, valAttribute, nodataVal, minVal, maxVal, epsgcode, 
-               mapunits, resolution, bbox, lyrmodtime, envTypeId, envCode, 
-               gcmcode, altpredCode, dateCode, envMetadata, envModtime,  envLayerId) 
-               INTO rec FROM recplus;
+            SELECT * INTO rec FROM lm_v3.lm_envlayer WHERE envLayerId = recplus.envLayerId;
             RETURN NEXT rec;
          END LOOP;
    ELSE
@@ -604,6 +599,7 @@ BEGIN
    END IF;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
+select * from lm_v3.lm_listEnvLayerObjects(0,10,'kubi',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'AR5-CCSM4-RCP8.5-2070-10min');
 
 -- ----------------------------------------------------------------------------
 -- Note: order by lyrModTime desc

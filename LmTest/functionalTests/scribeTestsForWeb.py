@@ -282,13 +282,20 @@ userId = DEFAULT_POST_USER
 scribe = BorgScribe(UnittestLogger())
 scribe.openConnections()
 
-elyrs = scribe.listEnvLayers(0, 10, userId=PUBLIC_USER, atom=True)
-lyrs = scribe.listLayers(0, 10, userId=PUBLIC_USER, atom=True)
+elyrs = scribe.listEnvLayers(0, 10, userId=PUBLIC_USER, atom=False)
+assert len(elyrs) > 0
+publyr = elyrs[(len(elyrs)/2)]
+scode = 'AR5-CCSM4-RCP8.5-2070-10min'
+elyrs_env = scribe.listEnvLayers(0, 10, envCode=publyr.envCode, userId=PUBLIC_USER, atom=False)
+elyrs_gcm = scribe.listEnvLayers(0, 10, gcmcode=publyr.gcmCode, userId=PUBLIC_USER, atom=False)
+elyrs_alt = scribe.listEnvLayers(0, 10, altpredCode=publyr.altpredCode, userId=PUBLIC_USER, atom=False)
+elyrs_dt = scribe.listEnvLayers(0, 10, dateCode=publyr.dateCode, userId=PUBLIC_USER, atom=False)
+elyrs_scen = scribe.listEnvLayers(0, 10, userId=PUBLIC_USER, scenCode=scode, atom=False)
 
 # Create Test user
 postUser = test_user(scribe, 'tester', 'tester@null.nowhere')
 
-fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
+fn = os.path.join(APP_PATH, 'LmTest/data/layers/lyr266.tif')
 postName = 'testLyr{}'.format(randint(0, 10000))
 
 postELyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
@@ -329,5 +336,11 @@ assert len(lyrListPub) >= 0 # Check that it is at least a list
 # Delete
 # Assert we successfully delete the layer we retrieved
 assert scribe.deleteEnvLayer(getELyr1)
+
+scens = scribe.listScenarios(0, 10, userId=PUBLIC_USER, atom=False)
+assert len(scens) > 0
+scens_gcm = scribe.listScenarios(0, 10, userId=PUBLIC_USER, atom=False, gcmCode=publyr.gcmCode)
+scens_alt = scribe.listScenarios(0, 10, userId=PUBLIC_USER, atom=False, altpredCode=publyr.altpredCode)
+scens_dt = scribe.listScenarios(0, 10, userId=PUBLIC_USER, atom=False, dateCode=publyr.dateCode)
 
 """
