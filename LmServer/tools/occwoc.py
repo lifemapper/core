@@ -560,9 +560,9 @@ class UserWoC(_SpeciesWeaponOfChoice):
 # ...............................................
    @property
    def complete(self):
-      if self.occParser is not None:
+      try:
          return self.occParser.closed
-      else:
+      except:
          return True
        
 # ...............................................

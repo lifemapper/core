@@ -132,22 +132,28 @@ class Boomer(Daemon):
                   # Gather species ARF dependency to delay start of multi-species MF
                   spudArf = spud.getArfFilename(prefix='spud')
                   self.spudArfFnames.append(spudArf)
-                  # Add PAV outputs to raw potato files for triabe input
+                  # Add PAV outputs to raw potato files for triage input
                   squid = spud.mfMetadata[MFChain.META_SQUID]
                   for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
                      pavFname = potatoInputs[scencode]
                      rawPotatoFile.write('{}: {}\n'.format(squid, pavFname))
-                  self.log.info('Wrote squid {} to arf files'.format(squid))
+                  self.log.info('Wrote squid to arf files')
                   self.spudInProcess = False
             except Exception, e:
                self.log.debug('Caught exception {} while walken'.format(str(e)))
                # Stop walken the archive and saveNextStart
-               self.christopher.stopWalken()
+               if not self.christopher.complete:
+                  self.christopher.stopWalken()
+               else:
+                  self.log.debug('(run) Christopher is done walken')
                raise e
             time.sleep(10)
       finally:
-         self.log.debug('Done walken')
+         self.log.debug('Finally done walken')
          self.onShutdown()
+         self.log.debug('Closing all rawPotatoFiles with squid, PAV filenames')
+         for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
+            rawPotatoFile.close()
     
    # .............................
    def onUpdate(self):
@@ -158,6 +164,10 @@ class Boomer(Daemon):
       self.keepWalken = False
       self.log.debug('Shutdown!')
       # Stop walken the archive and saveNextStart
+      if not self.christopher.complete:
+         self.christopher.stopWalken()
+      else:
+         self.log.debug('(shutdown) Christopher is done walken')
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
       if self.spudInProcess:
@@ -180,11 +190,7 @@ class Boomer(Daemon):
       self.masterPotato.write()
       self.masterPotato.updateStatus(JobStatus.INITIALIZE)
       self._scribe.updateObject(self.masterPotato)
-      
-      self.log.debug('Closing all rawPotatoFiles with squid, PAV filenames')
-      for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
-         rawPotatoFile.close()
-      
+            
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
 
