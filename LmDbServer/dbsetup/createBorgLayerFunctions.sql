@@ -452,13 +452,19 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterEnvLayer(usr varchar,
                                                       aftertime double precision, 
                                                       beforetime double precision, 
                                                       epsg int,
-                                                      etypeid int)
+                                                      etypeid int,
+                                                      scencode varchar)
    RETURNS varchar AS
 $$
 DECLARE
    wherecls varchar;
 BEGIN
    wherecls = 'WHERE userId =  ' || quote_literal(usr) ;
+
+   -- filter by scenario code 
+   IF scencode is not null THEN
+      wherecls = wherecls || ' AND scenariocode like  ' || quote_literal(scencode);
+   END IF;
 
    -- filter by codes - env, gcm, altpred, date
    IF env is not null THEN
@@ -476,12 +482,12 @@ BEGIN
 
    -- filter by modified after given time
    IF aftertime is not null THEN
-      wherecls = wherecls || ' AND prjstatusModTime >=  ' || quote_literal(aftertime);
+      wherecls = wherecls || ' AND lyrmodtime >=  ' || quote_literal(aftertime);
    END IF;
 
    -- filter by modified before given time
    IF beforetime is not null THEN
-      wherecls = wherecls || ' AND prjstatusModTime <=  ' || quote_literal(beforetime);
+      wherecls = wherecls || ' AND lyrmodtime <=  ' || quote_literal(beforetime);
    END IF;
 
    -- filter by epsgcode
@@ -514,7 +520,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countEnvLayers(usr varchar,
                                                       aftertime double precision, 
                                                       beforetime double precision, 
                                                       epsg int,
-                                                      etypeid int)
+                                                      etypeid int, 
+                                                      scencode varchar)
    RETURNS int AS
 $$
 DECLARE
@@ -522,9 +529,14 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.lm_envlayer ';
+   IF scencode is not null THEN
+      cmd = 'SELECT count(*) FROM lm_v3.lm_scenlayer ';
+   ELSE
+      cmd = 'SELECT count(*) FROM lm_v3.lm_envlayer ';
+   END IF;
+   
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterEnvLayer(usr, env, gcm, altpred, 
-                                    tm, aftertime, beforetime, epsg, etypeid);
+                             tm, aftertime, beforetime, epsg, etypeid, scencode);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
 
@@ -534,7 +546,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- Note: order by statusModTime desc
+-- Note: order by lyrModTime desc
 CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvLayerObjects(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
@@ -545,36 +557,56 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvLayerObjects(firstRecNum int,
                                                       aftertime double precision, 
                                                       beforetime double precision, 
                                                       epsg int,
-                                                      etypeid int)
+                                                      etypeid int,
+                                                      scencode varchar)
    RETURNS SETOF lm_v3.lm_envlayer AS
 $$
 DECLARE
    rec lm_v3.lm_envlayer;
+   recplus lm_v3.lm_scenlayer;
    cmd varchar;
    wherecls varchar;
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.lm_envayer ';
+   cmd = 'SELECT * FROM ';
+   IF scencode is not null THEN
+      cmd = cmd || ' lm_v3.lm_scenlayer ';
+   ELSE
+      cmd = cmd || ' lm_v3.lm_envlayer ';
+   END IF;
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterEnvLayer(usr, env, gcm, altpred, 
-                                    tm, aftertime, beforetime, epsg, etypeid);
-   ordercls = ' ORDER BY statusModTime DESC ';
+                             tm, aftertime, beforetime, epsg, etypeid, scencode);
+   ordercls = ' ORDER BY lyrmodtime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
-   FOR rec in EXECUTE cmd
-      LOOP 
-         RETURN NEXT rec;
-      END LOOP;
-   RETURN;
+   IF scencode is not null THEN
+      FOR recplus in EXECUTE cmd
+         LOOP
+            SELECT (layerId, userid, lyrsquid, lyrverify, lyrname, lyrdlocation,  
+               lyrmetadataUrl, lyrmetadata, dataFormat, gdalType, ogrType, 
+               valUnits, valAttribute, nodataVal, minVal, maxVal, epsgcode, 
+               mapunits, resolution, bbox, lyrmodtime, envTypeId, envCode, 
+               gcmcode, altpredCode, dateCode, envMetadata, envModtime,  envLayerId) 
+               INTO rec FROM recplus;
+            RETURN NEXT rec;
+         END LOOP;
+   ELSE
+      FOR rec in EXECUTE cmd
+         LOOP 
+            RETURN NEXT rec;
+         END LOOP;
+      RETURN;
+   END IF;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- Note: order by statusModTime desc
+-- Note: order by lyrModTime desc
 CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvLayerAtoms(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
@@ -585,7 +617,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvLayerAtoms(firstRecNum int,
                                                     aftertime double precision,
                                                     beforetime double precision,
                                                     epsg int,
-                                                    etypeid int)
+                                                    etypeid int,
+                                                    scencode varchar)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
 DECLARE
@@ -595,10 +628,16 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
+   cmd = 'SELECT envLayerId, lyrname, epsgcode, lyrmodtime FROM ';
+   IF scencode is not null THEN
+      cmd = cmd || ' lm_v3.lm_scenlayer ';
+   ELSE
+      cmd = cmd || ' lm_v3.lm_envlayer ';
+   END IF;
+   
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterEnvLayer(usr, env, gcm, altpred, 
-                                    tm, aftertime, beforetime, epsg, etypeid);
-   cmd = 'SELECT envLayerId, lyrname, epsgcode, lyrmodtime FROM lm_v3.lm_envlayer ';
-   ordercls = ' ORDER BY statusModTime DESC ';
+                             tm, aftertime, beforetime, epsg, etypeid, scencode);   
+   ordercls = ' ORDER BY lyrmodtime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
@@ -1458,7 +1497,7 @@ BEGIN
    cmd = 'SELECT * FROM lm_v3.Layer ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterLayer(usr, sqd, aftertime, 
                                                        beforetime, epsg);
-   ordercls = ' ORDER BY statusModTime DESC ';
+   ordercls = ' ORDER BY modtime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 
@@ -1494,7 +1533,7 @@ BEGIN
    cmd = 'SELECT layerid, name, epsgcode, modtime FROM lm_v3.layer ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterLayer(usr, sqd, aftertime, 
                                                        beforetime, epsg);
-   ordercls = ' ORDER BY statusModTime DESC ';
+   ordercls = ' ORDER BY modtime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
               || quote_literal(firstRecNum);
 

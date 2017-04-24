@@ -55,8 +55,8 @@ def test_environmental_layers(scribe, userId, scenarioId=None):
     
    # We will have a better way to get the data path later, this is more of a 
    #    temporary test, so I'm not worried about it
-   fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif') 
-   postName = 'testLyr{0}'.format(randint(0, 10000))
+   fn = os.path.join(APP_PATH, 'LmTest/data/layers/lyr266.tif') 
+   postName = 'testLyr{}'.format(randint(0, 10000))
    
    postELyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
    postedELyr = scribe.findOrInsertEnvLayer(postELyr, scenarioId=scenarioId)    
@@ -283,14 +283,13 @@ scribe = BorgScribe(UnittestLogger())
 scribe.openConnections()
 
 elyrs = scribe.listEnvLayers(0, 10, userId=PUBLIC_USER, atom=True)
-select * from lm_v3.lm_listSDMProjectAtoms(0,10,'kubi',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 lyrs = scribe.listLayers(0, 10, userId=PUBLIC_USER, atom=True)
 
 # Create Test user
 postUser = test_user(scribe, 'tester', 'tester@null.nowhere')
 
 fn = os.path.join(APP_PATH, 'LmTest', 'data', 'layers', 'lyr266.tif')
-postName = 'testLyr{0}'.format(randint(0, 10000))
+postName = 'testLyr{}'.format(randint(0, 10000))
 
 postELyr = EnvLayer(postName, userId, epsg, dlocation=fn, dataFormat='GTiff')
 postedELyr = scribe.findOrInsertEnvLayer(postELyr)    

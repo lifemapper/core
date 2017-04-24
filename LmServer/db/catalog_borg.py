@@ -916,7 +916,7 @@ class Borg(DbPostgresql):
 
 # .............................................................................
    def countEnvLayers(self, userId, envCode, gcmcode, altpredCode, dateCode, 
-                      afterTime, beforeTime, epsg, envTypeId):
+                      afterTime, beforeTime, epsg, envTypeId, scenarioId):
       """
       @summary: Count all EnvLayers matching the filter conditions 
       @param userId: User (owner) for which to return occurrencesets.  

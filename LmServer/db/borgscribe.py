@@ -164,26 +164,26 @@ class BorgScribe(LMObject):
    def countEnvLayers(self, userId=PUBLIC_USER, 
                       envCode=None, gcmcode=None, altpredCode=None, dateCode=None, 
                       afterTime=None, beforeTime=None, epsg=None, 
-                      envTypeId=None, scenarioId=None):
+                      envTypeId=None, scenarioCode=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countEnvLayers()
       """
       count = self._borg.countEnvLayers(userId, envCode, gcmcode, altpredCode, 
                                         dateCode, afterTime, beforeTime, epsg, 
-                                        envTypeId, scenarioId)
+                                        envTypeId, scenarioCode)
       return count
 
 # .............................................................................
    def listEnvLayers(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
                      envCode=None, gcmcode=None, altpredCode=None, dateCode=None, 
                      afterTime=None, beforeTime=None, epsg=None, 
-                     envTypeId=None, scenarioId=None, atom=True):
+                     envTypeId=None, scenarioCode=None, atom=True):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listEnvLayers()
       """
       objs = self._borg.listEnvLayers(firstRecNum, maxNum, userId, envCode, 
                                       gcmcode, altpredCode, dateCode, afterTime, 
-                                      beforeTime, epsg, envTypeId, scenarioId, 
+                                      beforeTime, epsg, envTypeId, scenarioCode, 
                                       atom)
       return objs
 
