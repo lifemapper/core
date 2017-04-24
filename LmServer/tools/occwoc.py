@@ -129,6 +129,7 @@ class _SpeciesWeaponOfChoice(LMObject):
          try:
             f = open(self.startFile, 'w')
             f.write(str(lineNum))
+            f.write('\n')
             f.close()
          except:
             self.log.error('Failed to write next starting line {} to file {}'

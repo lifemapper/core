@@ -66,10 +66,8 @@ class Boomer(Daemon):
       self._scribe = BorgScribe(self.log)
       # iterator tool for species
       self.christopher = None
-      # Dictionary of MFChains for each projScenarioCode
+      # Dictionary of {scenCode: (potatoChain, rawPotatoFile)}
       self.potatoes = None
-      # Dictionary of PAV input filenames for each projScenarioCode 
-      self.rawPotatoFiles = None
       # MFChain for masterPotatoHead MF
       self.masterPotato = None
       # open file for writing Spud Arf filenames for Potato triage
@@ -105,12 +103,11 @@ class Boomer(Daemon):
       # Keep track of whether a process needs to finish before shutdown
       self.spudInProcess = False
       self.spudArfFnames = []
-      self.potatoes = None
-      self.rawPotatoFiles = None
+      self.potatoes = {}
       self.masterPotato = None      
       if self.christopher.assemblePams:
-         (self.potatoes, 
-          self.rawPotatoFiles) = self._createPotatoMakeflows()
+         # potatoes = {scencode: (potatoChain, rawPotatoFile)
+         self.potatoes = self._createPotatoMakeflows()
          self.masterPotato = self._createMasterMakeflow()         
          
    # .............................
@@ -121,31 +118,32 @@ class Boomer(Daemon):
                         .format(self.christopher.currRecnum))
          self.keepWalken = True
          while self.keepWalken:
-            self.spudInProcess = True
             try:
                self.log.info('Next species ...')
-               # Get a Spud MFChain (single-species MF)
+               # Get a Spud MFChain (single-species MF) and dict of 
+               # {scencode: matrixColFilename}
                spud, potatoInputs = self.christopher.startWalken()
                self.keepWalken = not self.christopher.complete
                if self.assemblePams and spud:
-                  
+                  self.log.debug('Processing spud for potatoes')
+                  self.spudInProcess = True
                   # Add MF rule for Spud execution to Master MF
                   self._addRuleToMasterPotatoHead(spud, prefix='spud')
                   # Gather species ARF dependency to delay start of multi-species MF
                   spudArf = spud.getArfFilename(prefix='spud')
                   self.spudArfFnames.append(spudArf)
                   # Add PAV outputs to raw potato files for triabe input
-                  for scencode, f in self.rawPotatoFiles.iteritems():
-                     squid = spud.mfMetadata[MFChain.META_SQUID]
-                     fname = potatoInputs[scencode]
-                     f.write('{}: {}\n'.format(squid, fname))
-            except:
-               self.spudInProcess = False
+                  squid = spud.mfMetadata[MFChain.META_SQUID]
+                  for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
+                     pavFname = potatoInputs[scencode]
+                     rawPotatoFile.write('{}: {}\n'.format(squid, pavFname))
+                  self.log.info('Wrote squid {} to arf files'.format(squid))
+                  self.spudInProcess = False
+            except Exception, e:
+               self.log.debug('Caught exception {} while walken'.format(str(e)))
                # Stop walken the archive and saveNextStart
                self.christopher.stopWalken()
-               raise
-            
-            self.spudInProcess = False
+               raise e
             time.sleep(10)
       finally:
          self.log.debug('Done walken')
@@ -162,28 +160,30 @@ class Boomer(Daemon):
       # Stop walken the archive and saveNextStart
       self.christopher.stopWalken()
       # Write each potato MFChain, then add the MFRule to execute it to the Master
-      while self.spudInProcess:
+      if self.spudInProcess:
          self.log.info('Waiting for spud to finish ...')
-         time.sleep(20)
-      for scencode, potato in self.potatoes.iteritems():
+         time.sleep(60)
+      for scencode, (potatoChain, rawPotatoFile) in self.potatoes.iteritems():
          mtx = self.christopher.globalPAMs[scencode]
-         potatoMF = self.potatoes[scencode]
-         triageIn = self.rawPotatoFiles[scencode].name
-         triageOut = potatoMF.getTriageFilename(prefix='mashedPotato')
+         triageIn = rawPotatoFile.name
+         triageOut = potatoChain.getTriageFilename(prefix='mashedPotato')
          # Create Potato rules and write
          rules = mtx.computeMe(triageIn, triageOut)
-         potato.addCommands(rules)
-         potato.write()
-         # Close this rawPotato file (containing GPAM PAVs)
-         self.rawPotatoFiles[scencode].close()
-#          potato.updateStatus(JobStatus.INITIALIZE)
-         self._scribe.updateObject(potato)
-         self._addRuleToMasterPotatoHead(potato, dependencies=self.spudArfFnames, 
+         potatoChain.addCommands(rules)
+         potatoChain.write()
+#          potatoChain.updateStatus(JobStatus.INITIALIZE)
+         self._scribe.updateObject(potatoChain)
+         self._addRuleToMasterPotatoHead(potatoChain, 
+                                         dependencies=self.spudArfFnames, 
                                          prefix='potato')
       # Write the masterPotatoHead MFChain
       self.masterPotato.write()
       self.masterPotato.updateStatus(JobStatus.INITIALIZE)
       self._scribe.updateObject(self.masterPotato)
+      
+      self.log.debug('Closing all rawPotatoFiles with squid, PAV filenames')
+      for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
+         rawPotatoFile.close()
       
       self.log.debug("Shutdown signal caught!")
       Daemon.onShutdown(self)
@@ -201,8 +201,12 @@ class Boomer(Daemon):
 
 # ...............................................
    def _createPotatoMakeflows(self):
-      chains = {}
-      rawPotatoFiles = {}
+      """
+      @summary: Create and return dict of {code: potatoChain, rawPotatoFile} 
+         {scenariocode: (makeflow chain, (open)file for squid/PAVfile inputs)}
+      @return 
+      """
+      potatoes = {}
       for scencode in self.christopher.globalPAMs.keys():
          # Create MFChain for this GPAM
          meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
@@ -211,20 +215,19 @@ class Boomer(Daemon):
          newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                           metadata=meta, status=JobStatus.GENERAL, 
                           statusModTime=dt.gmt().mjd)
-         mfChain = self._scribe.insertMFChain(newMFC)
-         chains[scencode] = mfChain
+         potatoChain = self._scribe.insertMFChain(newMFC)
          # Get rawPotato input file from MFChain
-         rawPotatoFname = mfChain.getTriageFilename(prefix='rawPotato')
+         rawPotatoFname = potatoChain.getTriageFilename(prefix='rawPotato')
          if not readyFilename(rawPotatoFname, overwrite=True):
             raise LmException('{} is not ready for write (overwrite=True)'
                               .format(rawPotatoFname))
          try:
-            f = open(rawPotatoFname, 'w')
+            rawPotatoFile = open(rawPotatoFname, 'w')
          except Exception, e:
             raise LMError(currargs='Failed to open {} for writing ({})'
                           .format(rawPotatoFname, str(e)))
-         rawPotatoFiles[scencode] = f
-      return chains, rawPotatoFiles
+         potatoes[scencode] = (potatoChain, rawPotatoFile) 
+      return potatoes
 
    # .............................
    def _addRuleToMasterPotatoHead(self, mfchain, dependencies=[], prefix='spud'):
