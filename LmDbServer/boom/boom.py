@@ -101,7 +101,7 @@ class Boomer(Daemon):
          self.christopher = ChristopherWalken(self.configFname,
                                               scribe=self._scribe)
       except Exception, e:
-         raise LMError(currargs='Failed to initialize Walker ({})'.format(e))
+         raise LMError(currargs='Failed to initialize Chris ({})'.format(e))
 
       self.spudArfFnames = []
       # potatoes = {scencode: (potatoChain, rawPotatoFile)
@@ -110,14 +110,12 @@ class Boomer(Daemon):
       self.masterPotato = None
       if self.christopher.assemblePams:
          self._rotatePotatoes()
-#          self.potatoes = self._createPotatoMakeflows()
-#          self.masterPotato = self._createMasterMakeflow()         
          
    # .............................
    def run(self):
       try:
          self.christopher.moveToStart()
-         self.log.debug('Starting Walker at location {} ... '
+         self.log.debug('Starting Chris at location {} ... '
                         .format(self.christopher.currRecnum))
          self.keepWalken = True
          while self.keepWalken:
@@ -143,19 +141,15 @@ class Boomer(Daemon):
                   if len(self.spudArfFnames) >= SPUD_LIMIT:
                      self._rotatePotatoes()
             except Exception, e:
-               self.log.debug('Caught exception {} while walken'.format(str(e)))
-               # Stop walken the archive and saveNextStart
-               if not self.christopher.complete:
-                  self.christopher.stopWalken()
-               else:
-                  self.log.debug('(run) Christopher is done walken')
+               self.log.debug('Exception {}; If not already, stop walken'
+                              .format(str(e)))
+               self.christopher.stopWalken()
                raise e
             time.sleep(10)
       finally:
-         self.log.debug('Finally done walken')
+         self.log.debug('Christopher is finally done walken')
          self._rotatePotatoes()
          self.onShutdown()
-         self.log.debug('Closing all rawPotatoFiles with squid, PAV filenames')
     
    # .............................
    def _rotatePotatoes(self):
@@ -203,12 +197,9 @@ class Boomer(Daemon):
    # .............................
    def onShutdown(self):
       self.keepWalken = False
-      self.log.debug('Shutdown!')
+      self.log.debug('Shutdown! If not already, stop walken')
       # Stop walken the archive and saveNextStart
-      if not self.christopher.complete:
-         self.christopher.stopWalken()
-      else:
-         self.log.debug('(shutdown) Christopher is done walken')            
+      self.christopher.stopWalken()
       Daemon.onShutdown(self)
 
 # ...............................................
