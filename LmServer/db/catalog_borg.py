@@ -916,7 +916,7 @@ class Borg(DbPostgresql):
 
 # .............................................................................
    def countEnvLayers(self, userId, envCode, gcmcode, altpredCode, dateCode, 
-                      afterTime, beforeTime, epsg, envTypeId):
+                      afterTime, beforeTime, epsg, envTypeId, scenarioCode):
       """
       @summary: Count all EnvLayers matching the filter conditions 
       @param userId: User (owner) for which to return occurrencesets.  
@@ -932,13 +932,13 @@ class Borg(DbPostgresql):
       """
       row, idxs = self.executeSelectOneFunction('lm_countEnvLayers', 
                            userId, envCode, gcmcode, altpredCode, dateCode, 
-                           afterTime, beforeTime, epsg, envTypeId)
+                           afterTime, beforeTime, epsg, envTypeId, scenarioCode)
       return self._getCount(row)
 
 # .............................................................................
    def listEnvLayers(self, firstRecNum, maxNum, userId, envCode, gcmcode, 
                      altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                     envTypeId, scenarioId, atom):
+                     envTypeId, scenCode, atom):
       """
       @todo: Add scenarioId!!
       @summary: List all EnvLayer objects or atoms matching the filter conditions 
@@ -955,19 +955,21 @@ class Borg(DbPostgresql):
       @param envTypeId: filter by the DB id of EnvironmentalType
       @param atom: True if return objects will be Atoms, False if full objects
       @return: a list of EnvLayer objects or atoms
+      select * from lm_v3.lm_listEnvLayerAtoms(0,10,'kubi',NULL,NULL,NULL,NULL,
+                                                NULL,NULL,NULL,NULL);
       """
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerAtoms', 
                            firstRecNum, maxNum, userId, envCode, gcmcode, 
                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                           envTypeId)
+                           envTypeId, scenCode)
          objs = self._getAtoms(rows, idxs)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerObjects', 
                            firstRecNum, maxNum, userId, envCode, gcmcode, 
                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
-                           envTypeId)
+                           envTypeId, scenCode)
          for r in rows:
             objs.append(self._createEnvLayer(r, idxs))
       return objs

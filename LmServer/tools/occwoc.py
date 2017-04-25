@@ -129,6 +129,7 @@ class _SpeciesWeaponOfChoice(LMObject):
          try:
             f = open(self.startFile, 'w')
             f.write(str(lineNum))
+            f.write('\n')
             f.close()
          except:
             self.log.error('Failed to write next starting line {} to file {}'
@@ -559,9 +560,9 @@ class UserWoC(_SpeciesWeaponOfChoice):
 # ...............................................
    @property
    def complete(self):
-      if self.occParser is not None:
+      try:
          return self.occParser.closed
-      else:
+      except:
          return True
        
 # ...............................................
@@ -794,7 +795,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       return line, specieskey
 
 # ...............................................
-   def parseGBIFRecord(self, line):
+   def _parseGBIFRecord(self, line):
       specieskey = provkey = None
       if line is not None and len(line) >= 16:
          try:

@@ -119,7 +119,6 @@ class ChristopherWalken(LMObject):
    @property
    def nextStart(self):
       return self.weaponOfChoice.nextStart
-   
 
 # ...............................................
    @property
@@ -348,8 +347,13 @@ class ChristopherWalken(LMObject):
       """
       @summary: Walks a list of Lifemapper objects for computation
       """
-      self.saveNextStart()
-      self.weaponOfChoice.close()
+      if not self.weaponOfChoice.complete:
+         self.log.debug('Christopher finished walken')
+         self.log.info('Saving next start {} ...'.format(self.nextStart))
+         self.saveNextStart()
+         self.weaponOfChoice.close()
+      else:
+         self.log.debug('Christopher is already done walken')
       
 # ...............................................
    def _createOrResetIntersect(self, prj, mtx, currtime):
