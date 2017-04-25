@@ -291,6 +291,32 @@ class BorgScribe(LMObject):
                         afterTime, beforeTime, epsg, atom)
       return objs
 
+# .............................................................................
+   def countMatrixColumns(self, userId=PUBLIC_USER, squid=None, ident=None, 
+                          afterTime=None, beforeTime=None, epsg=None, 
+                          afterStatus=None, beforeStatus=None, matrixId=None, 
+                          layerId=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countMatrixColumns()
+      """
+      count = self._borg.countMatrixColumns(userId, squid, ident, afterTime, 
+                                 beforeTime, epsg, afterStatus, beforeStatus, 
+                                 matrixId, layerId)
+      return count
+
+# .............................................................................
+   def listMatrixColumns(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                         squid=None, ident=None, afterTime=None, beforeTime=None, 
+                         epsg=None, afterStatus=None, beforeStatus=None, 
+                         matrixId=None, layerId=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listMatrixColumns()
+      """
+      objs = self._borg.listMatrixColumns(firstRecNum, maxNum, userId, squid, 
+                                 ident, afterTime, beforeTime, epsg, afterStatus, 
+                                 beforeStatus, matrixId, layerId, atom)
+      return objs
+
 # ...............................................
    def getMatrix(self, mtx=None, mtxId=None):
       """
@@ -298,6 +324,35 @@ class BorgScribe(LMObject):
       """
       fullMtx = self._borg.getMatrix(mtx, mtxId)
       return fullMtx
+
+# .............................................................................
+   def countMatrices(self, userId=PUBLIC_USER, matrixType=None, 
+                        gcmCode=None, altpredCode=None, dateCode=None,
+                        keyword=None, gridsetId=None, 
+                        afterTime=None, beforeTime=None, epsg=None, 
+                        afterStatus=None, beforeStatus=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countMatrixColumns()
+      """
+      count = self._borg.countMatrixColumns(userId, matrixType, gcmCode, 
+                        altpredCode, dateCode, keyword, gridsetId, afterTime, 
+                        beforeTime, epsg, afterStatus, beforeStatus)
+      return count
+
+# .............................................................................
+   def listMatrices(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                    matrixType=None, gcmCode=None, altpredCode=None, 
+                    dateCode=None, keyword=None, gridsetId=None, 
+                    afterTime=None, beforeTime=None, epsg=None, 
+                    afterStatus=None, beforeStatus=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listMatrixColumns()
+      """
+      objs = self._borg.listMatrixColumns(firstRecNum, maxNum, userId, 
+                        matrixType, gcmCode, altpredCode, dateCode, keyword, 
+                        gridsetId, afterTime, beforeTime, epsg, afterStatus, 
+                        beforeStatus, atom)
+      return objs
 
 # ...............................................
    def getGridset(self, gridset, fillMatrices=False):
@@ -507,7 +562,7 @@ class BorgScribe(LMObject):
       if mtx is not None and mtx.getId() is not None:
          # TODO: Save this into the DB??
          if lyr.dataFormat in GDALFormatCodes.keys():
-            if mtx.matrixType == MatrixType.PAM:
+            if mtx.matrixType in (MatrixType.PAM, MatrixType.ROLLING_PAM):
                ptype = ProcessType.INTERSECT_RASTER
             else:
                ptype = ProcessType.INTERSECT_RASTER_GRIM
@@ -639,6 +694,8 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::deleteObject()
       """
+      if isinstance(obj, OccurrenceLayer):
+         prjs = self.listSDMProjects(0, 500, occsetId-obj.getId(), atom=True)
       success = self._borg.deleteObject(obj)
       return success
 

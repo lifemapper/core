@@ -599,7 +599,6 @@ BEGIN
    END IF;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
-select * from lm_v3.lm_listEnvLayerObjects(0,10,'kubi',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'AR5-CCSM4-RCP8.5-2070-10min');
 
 -- ----------------------------------------------------------------------------
 -- Note: order by lyrModTime desc
@@ -1029,6 +1028,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+-- Note: returns LayerId
 CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum int, 
                                               usr varchar, 
                                               dispname varchar,
@@ -1050,7 +1050,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT sdmprojectid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
+   cmd = 'SELECT layerid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
