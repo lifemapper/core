@@ -186,7 +186,7 @@ class Gridset(ServiceObject):
       return mtxs
 
    def getPAMs(self):
-      return  self._getMatrixTypes(MatrixType.PAM, MatrixType.ROLLING_PAM)
+      return  self._getMatrixTypes([MatrixType.PAM, MatrixType.ROLLING_PAM])
 
    def getGRIMs(self):
       return self._getMatrixTypes(MatrixType.GRIM)
