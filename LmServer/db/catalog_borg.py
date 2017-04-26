@@ -1363,47 +1363,64 @@ class Borg(DbPostgresql):
       @note: If dependent SDMProject is input to a MatrixColumn of a 
              Rolling (Global) PAM, the MatrixColumn will also be deleted.
       """
-      prjAtoms = self.listSDMProjects(0, 500, occ.getUserId(), None, None, None, 
-                                  None, None, None, occ.getId(), None, None, None, 
-                                  True)
-      pavDelcount = self._deleteGlobalPAVsForOccset(occ.getId(), occ.getUserId())
+      pavDelcount = self._deleteOccsetDependentMatrixCols(occ.getId(), occ.getUserId())
       success = self.executeModifyFunction('lm_deleteOccurrenceSet', occ.getId())
       return success
 
 # ...............................................
-   def _deleteGlobalPAVsForOccset(self, occId, usr):
+   def _deleteOccsetDependentMatrixCols(self, occId, usr):
       """
-      @summary: Deletes OccurrenceSet and any dependent SDMProjects (with Layer).  
-      @param occId: OccurrenceSet to delete
-      @return: True/False for success of operation
-      @note: If dependent SDMProject is input to a MatrixColumn of a Global PAM, 
-             the MatrixColumn will also be deleted.
+      @summary: Deletes dependent MatrixColumns IFF they belong to a ROLLING_PAM  
+                for the OccurrenceSet specified by occId
+      @param occId: OccurrenceSet for which to delete dependent MatrixCols
+      @param usr: User (owner) of the OccurrenceSet for which to delete MatrixCols
+      @return: Count of MatrixCols for success of operation
       """
       delcount = 0
-      prjAtoms = self.listSDMProjects(0, 500, usr, None, None, None, None, None, 
-                                      None, occId, None, None, None, True)
       gpamMtxAtoms = self.listMatrices(0, 500, usr, MatrixType.ROLLING_PAM, None, 
                                        None, None, None, None, None, None, None, 
                                        None, None, True)
-      gpamIds = [gpam.getId() for gpam in gpamMtxAtoms]
-      if len(gpamIds) > 0:
-         self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamIds), usr))
-         for prj in prjAtoms:
-            lyrid = prj.getId()
-            gpamCols = self.listMatrixColumns(0, 500, usr, None, None, None, None, 
-                                              None, None, None, None, lyrid, False)
-            for gpamCol in gpamCols:
-               if gpamCol.parentId in gpamIds:
-                  success = self.executeModifyFunction('lm_deleteMatrixColumn', 
-                                                       gpamCol.getId())
-                  if success:
-                     delcount += 1
+      self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamMtxAtoms), usr))
+      if len(gpamMtxAtoms) > 0:
+         gpamIds = [gpam.getId() for gpam in gpamMtxAtoms]
+         # Database will trigger delete of dependent projections on Occset delete
+         _, pavs = self._findOccsetDependents(occId, usr, returnProjs=False, 
+                                              returnMtxCols=True)
+         for pav in pavs:
+            if pav.parentId in gpamIds:
+               success = self.executeModifyFunction('lm_deleteMatrixColumn', 
+                                                    pav.getId())
+               if success:
+                  delcount += 1
          self.log.info('Deleted {} PAVs from {} ROLLING PAMs'
                        .format(len(gpamIds), delcount))
-      else:
-         self.log.info('No ROLLING PAMs for User {}'.format(usr))
       return delcount
 
+# ...............................................
+   def _findOccsetDependents(self, occId, usr, returnProjs=True, returnMtxCols=True):
+      """
+      @summary: Finds any dependent SDMProjects and MatrixColumns for the 
+                OccurrenceSet specified by occId
+      @param occId: OccurrenceSet for which to find dependents
+      @param usr: User (owner) of the OccurrenceSet for which to find dependents.
+      @param returnProjs: flag indicating whether to return projection objects
+             (True) or empty list (False)
+      @param returnMtxCols: flag indicating whether to return MatrixColumn 
+             objects (True) or empty list (False)
+      @return: list of projection atoms/objects, list of MatrixColumns
+      """
+      pavs = []
+      prjs = self.listSDMProjects(0, 500, usr, None, None, None, None, None, 
+                                  None, occId, None, None, None, not(returnProjs))
+      if returnMtxCols:
+         for prj in prjs:
+            layerid = prj.getId() 
+            pavs = self.listMatrixColumns(0, 500, usr, None, None, None, None, 
+                                          None, None, None, None, layerid, False)
+      if not returnProjs:
+         prjs = []
+      return prjs, pavs
+            
 # ...............................................
    def findOrInsertSDMProject(self, proj):
       """
@@ -1757,7 +1774,7 @@ class Borg(DbPostgresql):
                                            mfchain.status, mfchain.statusModTime)
       return success
 
-# ...............................................
+   # ...............................................
    def updateObject(self, obj):
       """
       @summary: Updates object in database

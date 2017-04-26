@@ -826,14 +826,13 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Note: deleting layer cascades to delete 1-to-1 joined SDMProject record
-CREATE OR REPLACE FUNCTION lm_v3.lm_deleteSDMProjectLayer(prjid int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteSDMProjectLayer(lyrid int)
 RETURNS int AS
 $$
 DECLARE
    success int := -1;
    lyrid int;
 BEGIN
-   SELECT layerid INTO lyrid FROM lm_sdmproject WHERE sdmprojectid = prjid;
    DELETE FROM lm_v3.Layer WHERE layerid = lyrid;
    IF FOUND THEN
       success = 0;
