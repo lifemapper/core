@@ -241,7 +241,7 @@ class ChristopherWalken(LMObject):
                      epsgcode=epsg, userId=userId)
       boomGridset = self._scribe.getGridset(tmpGS, fillMatrices=True)
       boomGridset.setMatrixProcessType(ProcessType.CONCATENATE_MATRICES, 
-                                       matrixType=MatrixType.PAM)
+                           matrixTypes=[MatrixType.PAM, MatrixType.ROLLING_PAM])
       intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: 
             self.cfg.get(SERVER_BOOM_HEADING, 'INTERSECT_FILTERSTRING'),

@@ -141,14 +141,13 @@ def addArchive(scribe, predScens, gridname, configFname, archiveName,
    updatedGrdset = scribe.findOrInsertGridset(grdset)
    # "Global" PAMs (one per scenario)
    globalPAMs = []
+   matrixType = MatrixType.PAM
+   if usr == PUBLIC_USER:
+      matrixType = MatrixType.ROLLING_PAM
    for scen in predScens.values():
-      scen.gcmCode
-      scen.altpredCode
-      scen.dateCode
-
       meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
               ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
-      tmpGpam = LMMatrix(None, matrixType=MatrixType.PAM, 
+      tmpGpam = LMMatrix(None, matrixType=matrixType, 
                          gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
                          dateCode=scen.dateCode, metadata=meta, userId=usr, 
                          gridset=updatedGrdset, 

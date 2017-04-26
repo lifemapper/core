@@ -176,15 +176,17 @@ class Gridset(ServiceObject):
                if mtx.getId() not in existingIds:
                   self._matrices.append(mtx)
                                        
-   def _getMatrixTypes(self, mtype):
+   def _getMatrixTypes(self, mtypes):
+      if type(mtypes) is int:
+         mtypes = [mtypes]
       mtxs = []
       for mtx in self._matrices:
-         if mtx.matrixType == mtype:
+         if mtx.matrixType in mtypes:
             mtxs.append(mtx)
       return mtxs
 
    def getPAMs(self):
-      return self._getMatrixTypes(MatrixType.PAM)
+      return  self._getMatrixTypes(MatrixType.PAM, MatrixType.ROLLING_PAM)
 
    def getGRIMs(self):
       return self._getMatrixTypes(MatrixType.GRIM)
@@ -200,11 +202,13 @@ class Gridset(ServiceObject):
             return pam
       return None
 
-   def setMatrixProcessType(self, processType, matrixType=None, matrixId=None):
+   def setMatrixProcessType(self, processType, matrixTypes=[], matrixId=None):
+      if type(matrixTypes) is int:
+         matrixTypes = [matrixTypes]
       matching = []
       for mtx in self._matrices:
-         if matrixType is not None:
-            if mtx.matrixType == matrixType:
+         if matrixTypes:
+            if mtx.matrixType in matrixTypes:
                matching.append(mtx)
          elif matrixId is not None:
             matching.append(mtx)

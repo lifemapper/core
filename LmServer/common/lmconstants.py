@@ -442,7 +442,7 @@ class LMFileType:
    
    @staticmethod
    def getMatrixFiletype(mtype):
-      if mtype == MatrixType.PAM:
+      if mtype in (MatrixType.PAM, MatrixType.ROLLING_PAM):
          return LMFileType.PAM
       elif mtype == MatrixType.GRIM:
          return LMFileType.GRIM

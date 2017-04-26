@@ -570,6 +570,209 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtx(usr varchar,
+                                                    mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int
+                                                    mtxid int,                                                    epsg int,
+                                                    lyrid int)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid = ' || quote_literal(usr);
+
+   -- filter by MatrixType
+   IF mtxtype is not null THEN
+      wherecls = wherecls || ' AND matrixtype =  ' || quote_literal(mtxtype);
+   END IF;
+                
+   -- filter by codes - gcm, altpred, date
+   IF gcm is not null THEN
+      wherecls = wherecls || ' AND gcmcode like  ' || quote_literal(gcm);
+   END IF;
+   IF altpred is not null THEN
+      wherecls = wherecls || ' AND altpredcode like  ' || quote_literal(altpred);
+   END IF;
+   IF tm is not null THEN
+      wherecls = wherecls || ' AND datecode like  ' || quote_literal(tm);
+   END IF;
+
+   -- Metadata
+   IF meta is not null THEN
+      wherecls = wherecls || ' AND metadata like  ' || quote_literal(meta);
+   END IF;
+
+   -- filter by Gridset
+   IF grdid is not null THEN
+      wherecls = wherecls || ' AND gridsetid =  ' || quote_literal(grdid);
+   END IF;
+
+   -- filter by layers modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND statusModTime >=  ' || quote_literal(aftertime);
+   END IF;
+   
+   -- filter by layers modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND statusModTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by epsgcode
+   IF epsg is not null THEN
+      wherecls = wherecls || ' AND  epsgcode =  ' || epsg;
+   END IF;
+
+   -- filter by status
+   IF afterstat is not null OR beforestat is not null THEN
+      begin
+         IF afterstat = beforestat THEN
+            wherecls = wherecls || ' AND status =  ' || afterstat;
+         ELSE
+            -- filter by status >= given value
+            IF afterstat is not null THEN
+                wherecls = wherecls || ' AND status >=  ' || afterstat;
+            END IF;
+   
+            -- filter by status <= given value
+            IF beforestat is not null THEN
+               wherecls = wherecls || ' AND status <=  ' || beforestat;
+            END IF;
+         END IF;
+      end;
+   END IF;
+
+   return wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countMatrices(usr varchar,
+                                                    mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.lm_fullmatrix ';
+   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
+                 altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
+                 afterstat, beforestat);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listMatrixAtoms(firstRecNum int, maxNum int, 
+                                                    usr varchar,
+                                                    mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT matrixId, null, grdepsgcode, statusmodtime FROM lm_v3.lm_fullmatrix ';
+   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
+                 altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
+                 afterstat, beforestat);
+   ordercls = 'ORDER BY statusmodtime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listMatrixObjects(firstRecNum int, maxNum int, 
+                                                    usr varchar,
+                                                    mtxtype int,
+                                                    gcm varchar,
+                                                    altpred varchar,
+                                                    tm varchar,
+                                                    meta varchar, 
+                                                    grdid int,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int)
+   RETURNS SETOF lm_v3.lm_fullmatrix AS
+$$
+DECLARE
+   rec lm_v3.lm_fullmatrix;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.lm_fullmatrix ';
+   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
+                 altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
+                 afterstat, beforestat);
+   ordercls = 'ORDER BY statusmodtime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
+-- ----------------------------------------------------------------------------
 -- JobChain
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
@@ -1246,6 +1449,206 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteMatrixColumn(mtxcolid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+BEGIN
+   DELETE FROM lm_v3.MatrixColumn WHERE matrixColumnId = mtxcolid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtxCols(usr varchar,
+                                                    sqd varchar,
+                                                    idt varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int
+                                                    mtxid int,                                                    epsg int,
+                                                    lyrid int)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid = ' || quote_literal(usr);
+                
+   -- filter by squid
+   IF sqd is not null THEN
+      wherecls = wherecls || ' AND squid like  ' || quote_literal(sqd);
+   END IF;
+
+   -- filter by ident
+   IF idt is not null THEN
+      wherecls = wherecls || ' AND ident like  ' || quote_literal(idt);
+   END IF;
+
+   -- filter by layers modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND statusModTime >=  ' || quote_literal(aftertime);
+   END IF;
+   
+   -- filter by layers modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND statusModTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by epsgcode
+   IF epsg is not null THEN
+      wherecls = wherecls || ' AND  epsgcode =  ' || epsg;
+   END IF;
+
+   -- filter by status
+   IF afterstat is not null OR beforestat is not null THEN
+      begin
+         IF afterstat = beforestat THEN
+            wherecls = wherecls || ' AND status =  ' || afterstat;
+         ELSE
+            -- filter by status >= given value
+            IF afterstat is not null THEN
+                wherecls = wherecls || ' AND status >=  ' || afterstat;
+            END IF;
+   
+            -- filter by status <= given value
+            IF beforestat is not null THEN
+               wherecls = wherecls || ' AND status <=  ' || beforestat;
+            END IF;
+         END IF;
+      end;
+   END IF;
+
+   -- filter by Matrix
+   IF mtxid is not null THEN
+      wherecls = wherecls || ' AND matrixid =  ' || quote_literal(mtxid);
+   END IF;
+
+   -- filter by Layer input
+   IF lyrid is not null THEN
+      wherecls = wherecls || ' AND layerid =  ' || quote_literal(lyrid);
+   END IF;
+   
+   return wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countMtxCols(usr varchar,
+                                                    sqd varchar,
+                                                    idt varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int
+                                                    mtxid int,                                                    epsg int,
+                                                    lyrid int)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.lm_matrixcolumn ';
+   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
+            aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColAtoms(firstRecNum int, maxNum int, 
+                                                    usr varchar,
+                                                    sqd varchar,
+                                                    idt varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int
+                                                    mtxid int,                                                    epsg int,
+                                                    lyrid int)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT matrixColumnId, squid, null, mtxcolstatusmodtime FROM lm_v3.lm_matrixcolumn ';
+   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
+            aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
+   ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColObjects(firstRecNum int, maxNum int, 
+                                                    usr varchar,
+                                                    sqd varchar,
+                                                    idt varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int
+                                                    mtxid int,                                                    epsg int,
+                                                    lyrid int)
+   RETURNS SETOF lm_v3.lm_matrixcolumn AS
+$$
+DECLARE
+   rec lm_v3.lm_matrixcolumn;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.lm_matrixcolumn ';
+   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
+            aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
+   ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
+$$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateMatrix(mtxid int,

@@ -23,7 +23,7 @@
 """
 import mx.DateTime
    
-from LmCommon.common.lmconstants import ProcessType
+from LmCommon.common.lmconstants import ProcessType, MatrixType
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
@@ -31,7 +31,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
-                                         DB_STORE, LM_SCHEMA_BORG)
+                                         DB_STORE, LM_SCHEMA_BORG, GPAM_KEYWORD)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 from LmServer.legion.algorithm import Algorithm
@@ -974,60 +974,17 @@ class Borg(DbPostgresql):
             objs.append(self._createEnvLayer(r, idxs))
       return objs
 
-
-# # .............................................................................
-#    def listSDMProjects(self, firstRecNum, maxNum, userId, displayName, 
-#                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
-#                        occsetId, algCode, mdlscenCode, prjscenCode, atom):
+# # ...............................................
+#    def deleteScenarioLayer(self, envlyr, scenarioId):
 #       """
-#       @summary: Return SDMProjects Objects or Atoms matching filter conditions 
-#       @param firstRecNum: The first record to return, 0 is the first record
-#       @param maxNum: Maximum number of records to return
-#       @param userId: User (owner) for which to return occurrencesets.  
-#       @param minOccurrenceCount: filter by minimum number of points in set.
-#       @param displayName: filter by display name
-#       @param afterTime: filter by modified at or after this time
-#       @param beforeTime: filter by modified at or before this time
-#       @param epsg: filter by this EPSG code
-#       @param afterStatus: filter by status >= value
-#       @param beforeStatus: filter by status <= value
-#       @param occsetId: filter by occurrenceSet identifier
-#       @param algCode: filter by algorithm code
-#       @param mdlscenCode: filter by model scenario code
-#       @param prjscenCode: filter by projection scenario code
-#       @param atom: True if return objects will be Atoms, False if full objects
-#       @return: a list of SDMProjects atoms or full objects
+#       @summary: Un-joins EnvLayer from scenario (if not None)
+#       @param envlyr: EnvLayer to remove from Scenario
+#       @param scenarioId: Id for scenario from which to remove EnvLayer 
+#       @return: True/False for success of operation
 #       """
-#       if displayName is not None:
-#          displayName = displayName.strip() + '%'
-#       if atom:
-#          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms', 
-#                            firstRecNum, maxNum, userId, displayName, afterTime, 
-#                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
-#                            algCode, mdlscenCode, prjscenCode)
-#          objs = self._getAtoms(rows, idxs)
-#       else:
-#          objs = []
-#          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
-#                            firstRecNum, maxNum, userId, displayName, afterTime, 
-#                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
-#                            algCode, mdlscenCode, prjscenCode)
-#          for r in rows:
-#             objs.append(self._createOccurrenceSet(r, idxs))
-#       return objs
-
-
-# ...............................................
-   def deleteScenarioLayer(self, envlyr, scenarioId):
-      """
-      @summary: Un-joins EnvLayer from scenario (if not None)
-      @param envlyr: EnvLayer to remove from Scenario
-      @param scenarioId: Id for scenario from which to remove EnvLayer 
-      @return: True/False for success of operation
-      """
-      success = self.executeModifyFunction('lm_deleteScenarioLayer', 
-                                           envlyr.getId(), scenarioId)         
-      return success
+#       success = self.executeModifyFunction('lm_deleteScenarioLayer', 
+#                                            envlyr.getId(), scenarioId)         
+#       return success
 
 # ...............................................
    def deleteEnvLayer(self, envlyr):
@@ -1398,6 +1355,56 @@ class Borg(DbPostgresql):
       return objs
 
 # ...............................................
+   def deleteOccurrenceSet(self, occ):
+      """
+      @summary: Deletes OccurrenceSet and any dependent SDMProjects (with Layer).  
+      @param occ: OccurrenceSet to delete
+      @return: True/False for success of operation
+      @note: If dependent SDMProject is input to a MatrixColumn of a 
+             Rolling (Global) PAM, the MatrixColumn will also be deleted.
+      """
+      prjAtoms = self.listSDMProjects(0, 500, occ.getUserId(), None, None, None, 
+                                  None, None, None, occ.getId(), None, None, None, 
+                                  True)
+      pavDelcount = self._deleteGlobalPAVsForOccset(occ.getId(), occ.getUserId())
+      success = self.executeModifyFunction('lm_deleteOccurrenceSet', occ.getId())
+      return success
+
+# ...............................................
+   def _deleteGlobalPAVsForOccset(self, occId, usr):
+      """
+      @summary: Deletes OccurrenceSet and any dependent SDMProjects (with Layer).  
+      @param occId: OccurrenceSet to delete
+      @return: True/False for success of operation
+      @note: If dependent SDMProject is input to a MatrixColumn of a Global PAM, 
+             the MatrixColumn will also be deleted.
+      """
+      delcount = 0
+      prjAtoms = self.listSDMProjects(0, 500, usr, None, None, None, None, None, 
+                                      None, occId, None, None, None, True)
+      gpamMtxAtoms = self.listMatrices(0, 500, usr, MatrixType.ROLLING_PAM, None, 
+                                       None, None, None, None, None, None, None, 
+                                       None, None, True)
+      gpamIds = [gpam.getId() for gpam in gpamMtxAtoms]
+      if len(gpamIds) > 0:
+         self.log.info('{} ROLLING PAMs for User {}'.format(len(gpamIds), usr))
+         for prj in prjAtoms:
+            lyrid = prj.getId()
+            gpamCols = self.listMatrixColumns(0, 500, usr, None, None, None, None, 
+                                              None, None, None, None, lyrid, False)
+            for gpamCol in gpamCols:
+               if gpamCol.parentId in gpamIds:
+                  success = self.executeModifyFunction('lm_deleteMatrixColumn', 
+                                                       gpamCol.getId())
+                  if success:
+                     delcount += 1
+         self.log.info('Deleted {} PAVs from {} ROLLING PAMs'
+                       .format(len(gpamIds), delcount))
+      else:
+         self.log.info('No ROLLING PAMs for User {}'.format(usr))
+      return delcount
+
+# ...............................................
    def findOrInsertSDMProject(self, proj):
       """
       @summary: Find existing (from projectID, layerid, OR usr/layername/epsg) 
@@ -1543,6 +1550,67 @@ class Borg(DbPostgresql):
                                            mtxcol.status, mtxcol.statusModTime)
       return success
 
+# .............................................................................
+   def countMatrixColumns(self, userId, squid, ident, afterTime, beforeTime, 
+                          epsg, afterStatus, beforeStatus, matrixId, layerId):
+      """
+      @summary: Return count of MatrixColumns matching filter conditions 
+      @param firstRecNum: The first record to return, 0 is the first record
+      @param maxNum: Maximum number of records to return
+      @param userId: User (owner) for which to return MatrixColumns.  
+      @param squid: a species identifier, tied to a ScientificName
+      @param ident: a layer identifier for non-species data
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param afterStatus: filter by status >= value
+      @param beforeStatus: filter by status <= value
+      @param matrixId: filter by Matrix identifier
+      @param layerId: filter by Layer input identifier
+      @return: a count of MatrixColumns
+      """
+      row, idxs = self.executeSelectOneFunction('lm_countMtxCols', userId, 
+                              squid, ident, afterTime, beforeTime, epsg, 
+                              afterStatus, beforeStatus, matrixId, layerId)
+      return self._getCount(row)
+
+# .............................................................................
+   def listMatrixColumns(self, firstRecNum, maxNum, userId, squid, ident, 
+                         afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
+                         matrixId, layerId, atom):
+      """
+      @summary: Return MatrixColumn Objects or Atoms matching filter conditions 
+      @param firstRecNum: The first record to return, 0 is the first record
+      @param maxNum: Maximum number of records to return
+      @param userId: User (owner) for which to return MatrixColumns.  
+      @param squid: a species identifier, tied to a ScientificName
+      @param ident: a layer identifier for non-species data
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param afterStatus: filter by status >= value
+      @param beforeStatus: filter by status <= value
+      @param matrixId: filter by Matrix identifier
+      @param layerId: filter by Layer input identifier
+      @param atom: True if return objects will be Atoms, False if full objects
+      @return: a list of MatrixColumn atoms or full objects
+      """
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listMtxColAtoms', 
+                                 firstRecNum, maxNum, userId, squid, ident, 
+                                 afterTime, beforeTime, epsg, afterStatus, 
+                                 beforeStatus, matrixId, layerId)
+         objs = self._getAtoms(rows, idxs)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listMtxColObjects', 
+                                 firstRecNum, maxNum, userId, squid, ident, 
+                                 afterTime, beforeTime, epsg, afterStatus, 
+                                 beforeStatus, matrixId, layerId)
+         for r in rows:
+            objs.append(self._createMatrixColumn(r, idxs))
+      return objs
+
 # ...............................................
    def updateMatrix(self, mtx):
       """
@@ -1556,6 +1624,74 @@ class Borg(DbPostgresql):
                                            mtx.getId(), meta, 
                                            mtx.status, mtx.statusModTime)
       return success
+   
+# .............................................................................
+   def countMatrices(self, userId, matrixType, gcmCode, altpredCode, dateCode, 
+                     metastring, gridsetId, afterTime, beforeTime, epsg, 
+                     afterStatus, beforeStatus):
+      """
+      @summary: Count Matrices matching filter conditions 
+      @param userId: User (owner) for which to return MatrixColumns.  
+      @param matrixType: filter by LmCommon.common.lmconstants.MatrixType
+      @param gcmCode: filter by the Global Climate Model code
+      @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
+      @param dateCode: filter by the date code
+      @param keyword: find matrices containing this keyword in the metadata
+      @param gridsetId: find matrices in the Gridset with this identifier
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param afterStatus: filter by status >= value
+      @param beforeStatus: filter by status <= value
+      @return: a count of Matrices
+      """
+      metamatch = '%{}%'.format(metastring)
+      row, idxs = self.executeSelectOneFunction('lm_countMatrices', userId, 
+                                 matrixType, gcmCode, altpredCode, dateCode, 
+                                 metamatch, gridsetId, afterTime, beforeTime, 
+                                 epsg, afterStatus, beforeStatus)
+      return self._getCount(row)
+
+# .............................................................................
+   def listMatrices(self, firstRecNum, maxNum, userId, matrixType, gcmCode, 
+                    altpredCode, dateCode, keyword, gridsetId, afterTime, 
+                    beforeTime, epsg, afterStatus, beforeStatus, atom):
+      """
+      @summary: Return Matrix Objects or Atoms matching filter conditions 
+      @param firstRecNum: The first record to return, 0 is the first record
+      @param maxNum: Maximum number of records to return
+      @param userId: User (owner) for which to return MatrixColumns.  
+      @param matrixType: filter by LmCommon.common.lmconstants.MatrixType
+      @param gcmCode: filter by the Global Climate Model code
+      @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
+      @param dateCode: filter by the date code
+      @param keyword: find matrices containing this keyword in the metadata
+      @param gridsetId: find matrices in the Gridset with this identifier
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param afterStatus: filter by status >= value
+      @param beforeStatus: filter by status <= value
+      @param atom: True if return objects will be Atoms, False if full objects
+      @return: a list of Matrix atoms or full objects
+      """
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
+                                 firstRecNum, maxNum, userId, matrixType, 
+                                 gcmCode, altpredCode, dateCode, keyword, 
+                                 gridsetId, afterTime, beforeTime, epsg, 
+                                 afterStatus, beforeStatus)
+         objs = self._getAtoms(rows, idxs)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
+                                 firstRecNum, maxNum, userId, matrixType, 
+                                 gcmCode, altpredCode, dateCode, keyword, 
+                                 gridsetId, afterTime, beforeTime, epsg, 
+                                 afterStatus, beforeStatus)
+         for r in rows:
+            objs.append(self._createMatrixColumn(r, idxs))
+      return objs
 
 # ...............................................
    def findOrInsertMatrix(self, mtx):
@@ -1647,6 +1783,9 @@ class Borg(DbPostgresql):
       """
       @summary: Deletes object from database
       @return: True/False for success of operation
+      @note: OccurrenceSet delete cascades to SDMProject but not MatrixColumn
+      @note: MatrixColumns for Global PAM should be deleted or reset on 
+             OccurrenceSet delete or recalc 
       """
       try:
          objid = obj.getId()
@@ -1658,7 +1797,7 @@ class Borg(DbPostgresql):
       if isinstance(obj, MFChain):
          success = self.executeModifyFunction('lm_deleteMFChain', objid)
       elif isinstance(obj, OccurrenceLayer):
-         success = self.executeModifyFunction('lm_deleteOccurrenceSet', objid)
+         success = self.deleteOccurrenceSet(obj)
       elif isinstance(obj, SDMProjection):
          success = self.executeModifyFunction('lm_deleteSDMProjectLayer', objid)
       elif isinstance(obj, ShapeGrid):
@@ -1666,8 +1805,11 @@ class Borg(DbPostgresql):
       elif isinstance(obj, Scenario):
          # Deletes ScenarioLayer join; only deletes layers if they are orphaned
          for lyr in obj.layers:
-            self.deleteEnvLayer(lyr, objid)
+            success = self.executeModifyFunction('lm_deleteScenarioLayer', 
+                                                 lyr.getId(), objid)         
          success = self.executeModifyFunction('lm_deleteScenario', objid)
+      elif isinstance(obj, MatrixColumn):
+         success = self.executeModifyFunction('lm_deleteMatrixColumn', objid)
       else:
          raise LMError('Unsupported delete for object {}'.format(type(obj)))
       return success
