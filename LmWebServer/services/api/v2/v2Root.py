@@ -33,8 +33,8 @@
 import cherrypy
 
 from LmWebServer.services.api.v2.layer import Layer
-from LmWebServer.services.api.v2.occurrenceSet import OccurrenceSet
-from LmWebServer.services.api.v2.projection import Projection
+from LmWebServer.services.api.v2.occurrence import OccurrenceLayer
+from LmWebServer.services.api.v2.sdmProject import SdmProject
 from LmWebServer.services.api.v2.scenario import Scenario
 
 # .............................................................................
@@ -44,8 +44,8 @@ class ApiRootV2(object):
    @summary: Top level class containing Lifemapper services V2
    """
    layer = Layer()
-   occurrenceSet = OccurrenceSet()
-   projection = Projection()
+   occurrence = OccurrenceLayer()
+   projection = SdmProject()
    scenario = Scenario()
 
    # ................................
