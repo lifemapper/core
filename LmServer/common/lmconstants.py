@@ -59,6 +59,7 @@ from LmCommon.common.lmconstants import (JobStatus, OutputFormat, MatrixType,
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
                                             SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG)
 
+DEFAULT_EMAIL_POSTFIX = '@nowhere.org'
 BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths
 USER_LAYER_DIR = 'Layers'

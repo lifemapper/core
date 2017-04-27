@@ -95,6 +95,7 @@ SCENARIO_PACKAGE_PROJECTION_SCENARIOS:
 ; ...................
 ; Global PAM vals
 ; ...................
+ASSEMBLE_PAMS: True
 GRID_NAME: lmgrid_1d
 GRID_CELLSIZE: 1
 GRID_NUM_SIDES: 4

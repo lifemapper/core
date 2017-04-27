@@ -30,17 +30,18 @@ from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                     JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (ALGORITHMS, GRID_NUM_SIDES,
-                        GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME,
-                        BISON_TSN_FILENAME, 
-                        USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
-                        INTERSECT_FILTERSTRING, INTERSECT_VALNAME, 
-                        INTERSECT_MINPERCENT, INTERSECT_MINPRESENCE, 
-                        INTERSECT_MAXPRESENCE)
+from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
+      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
+      BISON_TSN_FILENAME, IDIG_FILENAME, 
+      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
+      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
+      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
+      GRID_CELLSIZE, GRID_NUM_SIDES)
 from LmServer.base.lmobj import LMError
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         SPECIES_DATA_PATH, GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME)
+         SPECIES_DATA_PATH, GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME,
+         DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.localconstants import (PUBLIC_USER, APP_PATH, DATASOURCE, 
                                             POINT_COUNT_MIN)
 from LmServer.common.lmuser import LMUser
@@ -58,7 +59,6 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-DEFAULT_EMAIL_POSTFIX = '@nowhere.org'
 
 # ...............................................
 def addUsers(scribe, userId, userEmail):
@@ -563,17 +563,28 @@ def readConfigArgs(configFname):
    usrEmail = _findConfigOrDefault(config, 'ARCHIVE_USER_EMAIL', 
                               '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
    archiveName = _findConfigOrDefault(config, 'ARCHIVE_NAME', PUBLIC_ARCHIVE_NAME)
+   envPackageName = _findConfigOrDefault(config, 'SCENARIO_PACKAGE', SCENARIO_PACKAGE)
    dataSource = _findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
    dataSource = dataSource.upper()
-   algstring = _findConfigOrDefault(config, 'ALGORITHMS', ALGORITHMS)
-   minpoints = _findConfigOrDefault(config, 'POINT_COUNT_MIN', POINT_COUNT_MIN)
+   gbifFname = _findConfigOrDefault(config, 'GBIF_OCCURRENCE_FILENAME', 
+                                    GBIF_OCCURRENCE_FILENAME)
+   idigFname = _findConfigOrDefault(config, 'IDIG_FILENAME', IDIG_FILENAME)
    bisonFname = _findConfigOrDefault(config, 'BISON_TSN_FILENAME', 
                                     BISON_TSN_FILENAME) 
    userOccFname = _findConfigOrDefault(config, 'USER_OCCURRENCE_DATA', 
                                     USER_OCCURRENCE_DATA)
    userOccSep = _findConfigOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER', 
                                     USER_OCCURRENCE_DATA_DELIMITER)
+   minpoints = _findConfigOrDefault(config, 'POINT_COUNT_MIN', POINT_COUNT_MIN)
+   algstring = _findConfigOrDefault(config, 'ALGORITHMS', ALGORITHMS)
+   try:
+      algorithms = [alg.strip().upper() for alg in algstring.split(',')]
+   except:
+      algorithms = algstring
+   assemblePams = _findConfigOrDefault(config, 'ASSEMBLE_PAMS', ASSEMBLE_PAMS)
    cellsides = _findConfigOrDefault(config, 'GRID_NUM_SIDES', GRID_NUM_SIDES)
+   cellsize = _findConfigOrDefault(config, 'GRID_CELLSIZE', GRID_CELLSIZE)
+   gridname = '{}-Grid-{}'.format(archiveName, cellsize)
    # TODO: allow filter
    gridFilter = _findConfigOrDefault(config, 'INTERSECT_FILTERSTRING', 
                                      INTERSECT_FILTERSTRING)
@@ -585,19 +596,7 @@ def readConfigArgs(configFname):
                                       INTERSECT_MINPRESENCE)
    gridMaxPres = _findConfigOrDefault(config, 'INTERSECT_MAXPRESENCE', 
                                       INTERSECT_MAXPRESENCE)
-   # These must be present in the default archive and user boom config files
-   envPackageName = config.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE')
-   gbifFname = config.get(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME')
-   idigFname = config.get(SERVER_BOOM_HEADING, 'IDIG_FILENAME')
-   cellsize = config.get(SERVER_BOOM_HEADING, 'GRID_CELLSIZE')
-   assemblePams = config.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
-
-   gridname = '{}-Grid-{}'.format(archiveName, cellsize)
-   try:
-      algorithms = [alg.strip().upper() for alg in algstring.split(',')]
-   except:
-      algorithms = algstring
-   intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: None,
+   intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: gridFilter,
                       MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
                       MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
                       MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
