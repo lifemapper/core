@@ -509,6 +509,7 @@ class BorgScribe(LMObject):
       count = self._borg.countSDMProjects(userId, displayName, 
                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                        occsetId, algCode, mdlscenCode, prjscenCode)
+      return count
 
 # .............................................................................
    def listSDMProjects(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
