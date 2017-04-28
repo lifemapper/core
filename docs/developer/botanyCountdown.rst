@@ -9,7 +9,7 @@ Countdown to Botany
 
 Weekly goals
 ------------
-* May 1
+#. May 1
 
    * Aimee
    
@@ -30,13 +30,13 @@ Weekly goals
       #. Describe UI workflow with relevant WS calls
       #. Begin implementation and testing of request/display of SDM archive
       
-* May 8
+#. May 8
 
    * Aimee: begin Boom, computation of Biotaphy instance
    * CJ: Solr?
    * Ben: implementation and testing of SDM request
    
-* May 15
+#. May 15
 
    * Aimee: vacation
    
@@ -50,7 +50,7 @@ Weekly goals
    
      #. test and refine of web client
      
-* May 22
+#. May 22
 
    * Aimee: 
    
@@ -64,7 +64,7 @@ Weekly goals
      
    * Ben
    
-* May 29
+#. May 29
 
    * Aimee: 
    
@@ -78,15 +78,19 @@ Weekly goals
    
      #. Request PAM subset
    
-* June 5
+#. June 5
+
    * Aimee
    * CJ
    * Ben
-* June 12
-   * Aimeebui
+   
+#. June 12
+
+   * Aimee
    * CJ
    * Ben
-* June 19
+   
+#. June 19
    * Aimee
    * CJ
    * Ben
