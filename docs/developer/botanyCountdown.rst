@@ -21,14 +21,14 @@ Weekly goals
      
    * CJ
    
-      #. Update web services
-      #. Test SDM computations with Makeflow
-      #. Makeflow run unattend
+     #. Update web services
+     #. Test SDM computations with Makeflow
+     #. Makeflow run unattend
       
    * Ben
    
-      #. Describe UI workflow with relevant WS calls
-      #. Begin implementation and testing of request/display of SDM archive
+     #. Describe UI workflow with relevant WS calls
+     #. Begin implementation and testing of request/display of SDM archive
       
 #. May 8
 
