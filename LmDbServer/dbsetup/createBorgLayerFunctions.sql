@@ -915,6 +915,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterSDMProjects(usr varchar, 
+                                              sqd varchar,
                                               dispname varchar,
                                               aftertime double precision, 
                                               beforetime double precision, 
@@ -931,6 +932,11 @@ DECLARE
    wherecls varchar;
 BEGIN
    wherecls = 'WHERE userid =  ' || quote_literal(usr) ;
+
+   -- filter by squid
+   IF sqd is not null THEN
+      wherecls = wherecls || ' AND squid =  ' || quote_literal(sqd);
+   END IF;
 
    -- filter by occurrenceset displayname
    IF dispname is not null THEN
@@ -996,7 +1002,19 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+DROP  FUNCTION lm_v3.lm_countSDMProjects(usr varchar, 
+                                              dispname varchar,
+                                              aftertime double precision, 
+                                              beforetime double precision, 
+                                              epsg int,
+                                              afterstat int, 
+                                              beforestat int,
+                                              occsetid int, 
+                                              algcode varchar, 
+                                              mdlscencode varchar,
+                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_countSDMProjects(usr varchar, 
+                                              sqd varchar,
                                               dispname varchar,
                                               aftertime double precision, 
                                               beforetime double precision, 
@@ -1015,7 +1033,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.lm_sdmproject ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, dispname, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
    cmd := cmd || wherecls;
@@ -1028,8 +1046,21 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Note: returns LayerId
+DROP  FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum int, 
+                                              usr varchar, 
+                                              dispname varchar,
+                                              aftertime double precision, 
+                                              beforetime double precision, 
+                                              epsg int,
+                                              afterstat int, 
+                                              beforestat int,
+                                              occsetid int, 
+                                              algcode varchar, 
+                                              mdlscencode varchar,
+                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum int, 
                                               usr varchar, 
+                                              sqd varchar,
                                               dispname varchar,
                                               aftertime double precision, 
                                               beforetime double precision, 
@@ -1050,7 +1081,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT layerid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, dispname, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
    ordercls = 'ORDER BY prjstatusModTime DESC';
@@ -1071,6 +1102,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectObjects(firstRecNum int, maxNum int, 
                                               usr varchar, 
+                                              sqd varchar,
                                               dispname varchar,
                                               aftertime double precision, 
                                               beforetime double precision, 
@@ -1091,7 +1123,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.lm_sdmproject ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, dispname, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
    ordercls = 'ORDER BY prjstatusModTime DESC';

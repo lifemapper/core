@@ -1054,6 +1054,15 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+DROP FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
+                                                    sqd varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
                                                     minOccCount int,
                                                     dispname varchar,
@@ -1069,6 +1078,11 @@ DECLARE
 BEGIN
    wherecls = ' WHERE userid = ' || quote_literal(usr);
                 
+   -- filter by squid
+   IF sqd is not null THEN
+      wherecls = wherecls || ' AND squid =  ' || quote_literal(sqd);
+   END IF;
+
    -- filter by count
    IF minOccCount is not null THEN
       wherecls = wherecls || ' AND querycount >= ' || minOccCount;
@@ -1118,7 +1132,16 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+DROP FUNCTION lm_v3.lm_countOccSets(usr varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_countOccSets(usr varchar,
+                                                    sqd varchar,
                                                     minOccCount int,
                                                     dispname varchar,
                                                     aftertime double precision,
@@ -1134,7 +1157,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    cmd := cmd || wherecls;
@@ -1148,9 +1171,20 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Note: order by statusModTime desc
+DROP  FUNCTION lm_v3.lm_listOccSetObjects(firstRecNum int, 
+                                                    maxNum int,
+                                                    usr varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetObjects(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
+                                                    sqd varchar,
                                                     minOccCount int,
                                                     dispname varchar,
                                                     aftertime double precision,
@@ -1168,7 +1202,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    ordercls = ' ORDER BY statusModTime DESC ';
@@ -1187,9 +1221,20 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Note: order by statusModTime desc
+DROP  FUNCTION lm_v3.lm_listOccSetAtoms(firstRecNum int, 
+                                                    maxNum int,
+                                                    usr varchar,
+                                                    minOccCount int,
+                                                    dispname varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int,
+                                                    afterstat int,
+                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetAtoms(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
+                                                    sqd varchar,
                                                     minOccCount int,
                                                     dispname varchar,
                                                     aftertime double precision,
@@ -1207,7 +1252,7 @@ DECLARE
    limitcls varchar;
 BEGIN
    cmd = 'SELECT occurrencesetid, displayname, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
-   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
    ordercls = ' ORDER BY statusModTime DESC ';

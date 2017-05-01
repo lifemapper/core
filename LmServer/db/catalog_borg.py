@@ -1294,7 +1294,7 @@ class Borg(DbPostgresql):
       return newOrExistingOcc
 
 # .............................................................................
-   def countOccurrenceSets(self, userId, minOccurrenceCount, displayName, 
+   def countOccurrenceSets(self, userId, squid, minOccurrenceCount, displayName, 
                         afterTime, beforeTime, epsg, afterStatus, beforeStatus):
       """
       @summary: Count all OccurrenceSets matching the filter conditions 
@@ -1310,15 +1310,14 @@ class Borg(DbPostgresql):
       """
       if displayName is not None:
          displayName = displayName.strip() + '%'
-      row, idxs = self.executeSelectOneFunction('lm_countOccurrenceSets', 
-                                                minOccurrenceCount,
-                                                userId, displayName,
+      row, idxs = self.executeSelectOneFunction('lm_countOccSets', userId, squid,
+                                                minOccurrenceCount, displayName,
                                                 afterTime, beforeTime, epsg,
                                                 afterStatus, beforeStatus)
       return self._getCount(row)
 
 # .............................................................................
-   def listOccurrenceSets(self, firstRecNum, maxNum, userId, 
+   def listOccurrenceSets(self, firstRecNum, maxNum, userId, squid, 
                           minOccurrenceCount, displayName, afterTime, beforeTime, 
                           epsg, afterStatus, beforeStatus, atom):
       """
@@ -1340,14 +1339,14 @@ class Borg(DbPostgresql):
          displayName = displayName.strip() + '%'
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listOccSetAtoms', 
-                              firstRecNum, maxNum, userId, minOccurrenceCount,
+                              firstRecNum, maxNum, userId, squid, minOccurrenceCount,
                               displayName, afterTime, beforeTime, epsg, 
                               afterStatus, beforeStatus)
          objs = self._getAtoms(rows, idxs)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listOccSetObjects', 
-                              firstRecNum, maxNum, userId, minOccurrenceCount,
+                              firstRecNum, maxNum, userId, squid, minOccurrenceCount,
                               displayName, afterTime, beforeTime, epsg, 
                               afterStatus, beforeStatus)
          for r in rows:
