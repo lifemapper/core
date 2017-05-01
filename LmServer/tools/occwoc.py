@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from LmServer.common.localconstants import PUBLIC_USER
 try:
    import mx.DateTime as dt
 except:
@@ -645,6 +646,157 @@ class UserWoC(_SpeciesWeaponOfChoice):
          self.log.debug('Unable to write CSV file {}'.format(rdloc))
       return rdloc
 
+
+# ..............................................................................
+class ArchiveWoC(_SpeciesWeaponOfChoice):
+   """
+   @summary: Parses a CSV file (with headers) of Occurrences using a metadata 
+             file.  A template for the metadata, with instructions, is at 
+             LmDbServer/tools/occurrence.meta.example.  
+             The parser writes each new text chunk to a file, inserts or updates  
+             the Occurrence record and inserts any dependent objects.
+   """
+   def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
+                occIdFname, logger=None):
+      super(ArchiveWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+                                    minPoints, logger=logger)
+      # User-specific attributes
+      self.authorizedDataUsers = [PUBLIC_USER]
+      self.processType = None
+      self._occIdFile = None
+      try:
+         self._occIdFile = open(occIdFname, 'r') 
+#          self._occIdFile.
+      except Exception, e:
+         raise LMError(currargs=e.args)
+      self._linenum = 0
+      
+# ...............................................
+   def _getOrCloneOccurrenceset(self, occId):
+      """
+      @param origOcc: OccurrenceLayer to be cloned for this user
+      """
+      currtime = dt.gmt().mjd
+      occ = None
+      origOcc = self._scribe.getOcc(occId)
+      if origOcc is None: 
+         self._scribe.log.info('Missing occurrenceLayer {}'.format(occId))
+      else:
+         origUser = origOcc.getUserId()
+         if origUser == self.userId:
+            self._scribe.log.info('occurrenceLayer {} exists for user {}'
+                         .format(id, self.userId))
+            occ = origOcc
+         elif origUser not in self.authorizedDataUsers:
+            self._scribe.log.info('User {} is unauthorized to clone data from user {}'
+                                  .format(self.userId, origUser))
+         elif not JobStatus.finished(origOcc.status):
+            self._scribe.log.info('Unable to clone unfinished occurrenceLayer {} for user {}'
+                         .format(id, self.userId))
+         else:
+            self._scribe.log.info('Clone occurrenceLayer {} for user {}'
+                         .format(id, self.userId))
+            sciName = origOcc.getScientificName()
+            # Copy existing metadata to database with User owner
+            tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, 
+                  origOcc.epsgcode, origOcc.queryCount, squid=origOcc.squid, 
+                  ogrType=wkbPoint, processType=None, status=JobStatus.COMPLETE, 
+                  statusModTime=currtime, sciName=sciName)
+            try:
+               occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
+               self.log.info('Found or inserted OccLayer {}'.format(occ.getId()))
+            except Exception, e:
+               if not isinstance(e, LMError):
+                  e = LMError(currargs=e.args, lineno=self.getLineno())
+               raise e
+            # Copy existing data to filesystem in User space
+            if not os.path.exists(occ.getDLocation()):
+               occ.copyData(origOcc.getDLocation())
+      return occ
+
+# ...............................................
+   def _getNextId(self):
+      occId = None
+      while occId is None and not self.complete:
+         try:
+            self._linenum += 1
+            tmp = self._occIdFile.readline()
+         except EOFError:
+            self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
+            self.close()
+         except Exception, e:
+            self._scribe.log.info('Failed to readline {} on line {}'
+                            .format(str(e), self._linenum))
+         else:
+            try:
+               occId = int(tmp.strip())
+            except Exception, e:
+               self._scribe.log.info('Unable to get Id from data {} on line {}'
+                               .format(tmp, self._linenum))
+      return occId
+
+# ...............................................
+   def close(self):
+      try:
+         self.occIdFile.close()
+      except:
+         self.log.error('Unable to close occIdFile with file {}'
+                        .format(self.occIdFile.name))
+               
+# ...............................................
+   @property
+   def complete(self):
+      try:
+         return self._occIdFile.closed
+      except:
+         return True
+      
+      
+# ...............................................
+   @property
+   def nextStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum+1
+
+# ...............................................
+   @property
+   def thisStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum
+
+# ...............................................
+   def moveToStart(self):
+      startline = self._findStart()         
+      if startline < 2:
+         self._linenum = 0
+      else:
+         # Move to line before startline
+         while self._linenum < (startline-1) and not self.complete:
+            try:
+               self._linenum += 1
+               self._occIdFile.readline()
+            except EOFError:
+               self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
+               self.close()
+            except Exception, e:
+               self._scribe.log.info('Failed to readline {} on line {}'
+                               .format(str(e), self._linenum))
+            
+# ...............................................
+   def _getChunk(self):
+      chunk = self.occParser.pullCurrentChunk()
+      taxonName = self.occParser.nameValue
+      return chunk, len(chunk), taxonName
+      
+# ...............................................
+   def getOne(self):
+      occId  = self._getNextId()
+      occ = self._getOrCloneOccurrenceset(occId)
+      return occ
 
 # ..............................................................................
 class GBIFWoC(_SpeciesWeaponOfChoice):

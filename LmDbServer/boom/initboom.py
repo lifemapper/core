@@ -448,12 +448,66 @@ def pullClimatePackageMetadata(envPackageName):
    return META, metafname, pkgMeta, elyrMeta
       
 # ...............................................
+def _checkScenarios(scribe, legalUsers, modelScenCode, prjScenCodeList):
+   epsgcode = mapunits = None
+   if modelScenCode not in prjScenCodeList:
+      prjScenCodeList.append(modelScenCode)
+   for code in prjScenCodeList:
+      scen = scribe.getScenario(code)
+      if scen is None:
+         raise LMError('Missing Scenario for code or id {}'.format(code))
+      else:
+         if scen.getUserId() not in legalUsers:
+            raise LMError('legalUsers {} missing {}'.format(legalUsers,
+                                                            scen.getUserId()))
+      if epsgcode is None:
+         epsgcode = scen.epsgcode
+         mapunits = scen.units
+   return epsgcode, mapunits
+      
+# ...............................................
+def _checkOccurrenceSets(scribe, legalUsers, occIdFname, limit=10):
+   missingCount = 0
+   wrongUserCount = 0
+   nonIntCount = 0
+   if not os.path.exists(occIdFname):
+      raise LMError('Missing OCCURRENCE_ID_FILENAME {}'.format(occIdFname))
+   else:
+      f = open(occIdFname, 'r')
+      for i in range(limit):
+         try:
+            tmp = f.readline()
+         except Exception, e:
+            scribe.log.info('Failed to readline {} on line {}, stopping'
+                            .format(str(e), i))
+            break
+         try:
+            id = int(tmp.strip())
+         except Exception, e:
+            scribe.log.info('Unable to get Id from data {} on line {}'
+                            .format(tmp, i))
+            nonIntCount += 1
+         else:
+            occ = scribe.getOcc(id)
+            if occ is None:
+               missingCount += 1
+            elif occ.getUserId() not in legalUsers:
+               scribe.log.info('Unauthorized user {} for ID {}'
+                               .format(occ.getUserId(), id))
+               wrongUserCount += 1
+   scribe.log.info('Errors out of the first {} occurrenceIds:'. format(limit))
+   scribe.log.info('  Missing: {} '.format(missingCount))
+   scribe.log.info('  Unauthorized data: {} '.format(wrongUserCount))
+   
+# ...............................................
 def writeConfigFile(usr, usrEmail, archiveName, 
-           envPackageName, dataSource,  
+           envPackageName, dataSource, occIdFname,
            gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
-           minpoints, algorithms, cellsides, cellsize, gridname, 
-           intersectParams, elyrMeta, mdlScen=None, prjScens=None, 
-           mdlMask=None, prjMask=None, assemblePams=True):
+           minpoints, algorithms, epsgcode, mapunits, 
+           gridname, gridbbox, cellsides, cellsize, intersectParams, 
+           mdlScenCode=None, prjScenCodes=None, 
+           mdlMaskName=None, prjMaskName=None, 
+           assemblePams=True):
    """
    """
    earl = EarlJr()
@@ -486,6 +540,8 @@ def writeConfigFile(usr, usrEmail, archiveName,
    f.write('; Species data vals\n')
    f.write('; ...................\n')
    f.write('DATASOURCE: {}\n'.format(dataSource))
+   if occIdFname is not None:
+      f.write('OCCURRENCE_ID_FILENAME: {}\n'.format(occIdFname))
    # Species source type (for processing) and file
    if dataSource == SpeciesDatasource.GBIF:
       varname = 'GBIF_OCCURRENCE_FILENAME'
@@ -512,17 +568,17 @@ def writeConfigFile(usr, usrEmail, archiveName,
    f.write('; ...................\n')
    # Input environmental data, pulled from SCENARIO_PACKAGE metadata
    f.write('SCENARIO_PACKAGE: {}\n'.format(envPackageName))
-   f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(elyrMeta['epsg']))
-   f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(elyrMeta['mapunits']))
+   f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(epsgcode))
+   f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(mapunits))
    # Scenario codes, created from environmental metadata  
-   f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScen))
-   pcodes = ','.join(prjScens)
+   f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(mdlScenCode))
+   pcodes = ','.join(prjScenCodes)
    f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
    
-   if mdlMask is not None:
-      f.write('MODEL_MASK_NAME: {}\n'.format(mdlMask))
-   if prjMask is not None:
-      f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMask))
+   if mdlMaskName is not None:
+      f.write('MODEL_MASK_NAME: {}\n'.format(mdlMaskName))
+   if prjMaskName is not None:
+      f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMaskName))
    f.write('\n')
    
    f.write('; ...................\n')
@@ -530,6 +586,7 @@ def writeConfigFile(usr, usrEmail, archiveName,
    f.write('; ...................\n')
    # Intersection grid
    f.write('GRID_NAME: {}\n'.format(gridname))
+   f.write('GRID_BBOX: {}\n'.format(gridbbox))
    f.write('GRID_CELLSIZE: {}\n'.format(cellsize))
    f.write('GRID_NUM_SIDES: {}\n'.format(cellsides))
    f.write('\n')
@@ -543,19 +600,31 @@ def writeConfigFile(usr, usrEmail, archiveName,
 
 # ...............................................
 def _findConfigOrDefault(config, varname, defaultValue, isList=False):
-   var = None
    try:
       var = config.get(SERVER_BOOM_HEADING, varname)
    except:
       pass
    if var is None:
       var = defaultValue
+   else:
+      if isList and var:
+         try:
+            tmplist = [v.strip() for v in var.split(',')]
+            var = []
+         except:
+            raise LMError('Failed to split variables on \',\'')
+         for v in tmplist:
+            try:
+               var.append(int(v))
+            except:
+               var.append(v)
    return var
 
 # ...............................................
 def readConfigArgs(configFname):
    if configFname is None or not os.path.exists(configFname):
-      raise LMError(currargs='Missing config file {}'.format(configFname))
+      print(currargs='Missing config file {}, using defaults'.format(configFname))
+      configFname = None
    config = Config(siteFn=configFname)
 
    # Fill in missing or null variables for archive.config.ini
@@ -564,8 +633,14 @@ def readConfigArgs(configFname):
                               '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
    archiveName = _findConfigOrDefault(config, 'ARCHIVE_NAME', PUBLIC_ARCHIVE_NAME)
    envPackageName = _findConfigOrDefault(config, 'SCENARIO_PACKAGE', SCENARIO_PACKAGE)
+   if envPackageName is not None:
+      modelScenCode = _findConfigOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
+                                           None, isList=False)
+      prjScenCodeList = _findConfigOrDefault(config, 
+                     'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
    dataSource = _findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
    dataSource = dataSource.upper()
+   occIdFname = _findConfigOrDefault(config, 'OCCURRENCE_ID_FILENAME', None)
    gbifFname = _findConfigOrDefault(config, 'GBIF_OCCURRENCE_FILENAME', 
                                     GBIF_OCCURRENCE_FILENAME)
    idigFname = _findConfigOrDefault(config, 'IDIG_FILENAME', IDIG_FILENAME)
@@ -582,6 +657,7 @@ def readConfigArgs(configFname):
    except:
       algorithms = algstring
    assemblePams = _findConfigOrDefault(config, 'ASSEMBLE_PAMS', ASSEMBLE_PAMS)
+   gridbbox = _findConfigOrDefault(config, 'GRID_BBOX', GRID_NUM_SIDES)
    cellsides = _findConfigOrDefault(config, 'GRID_NUM_SIDES', GRID_NUM_SIDES)
    cellsize = _findConfigOrDefault(config, 'GRID_CELLSIZE', GRID_CELLSIZE)
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
@@ -601,17 +677,18 @@ def readConfigArgs(configFname):
                       MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
                       MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                       MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
-   return (usr, usrEmail, archiveName, envPackageName, dataSource,  
-           gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
-           minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
-           intersectParams)
+   return (usr, usrEmail, archiveName, envPackageName, modelScenCode, prjScenCodeList, 
+           dataSource, occIdFname, gbifFname, idigFname, bisonFname, 
+           userOccFname, userOccSep, 
+           minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, 
+           gridname, intersectParams)
+   
 # ...............................................
 if __name__ == '__main__':
    if not isCorrectUser():
       print("Run this script as `lmwriter`")
       sys.exit(2)
 
-   sampleConfigFile = os.path.join(APP_PATH, 'LmDbServer/tools/boom.sample.ini')
    # Created on roll install: lifemapper-server:lmdata-species
    defaultConfigFile = os.path.join(SPECIES_DATA_PATH, 'archive.config.ini')
    # Use the argparse.ArgumentParser class to handle the command line arguments
@@ -626,13 +703,10 @@ if __name__ == '__main__':
    args = parser.parse_args()
    configFname = args.config_file
 
-   (usr, usrEmail, archiveName, envPackageName, dataSource,  
-    gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
-    minpoints, algorithms, assemblePams, cellsides, cellsize, gridname, 
+   (usr, usrEmail, archiveName, envPackageName, modelScenCode, prjScenCodeList, 
+    dataSource, occIdFname, gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
+    minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, gridname, 
     intersectParams) = readConfigArgs(configFname)
-   # Imports META
-   META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
-   gridbbox = pkgMeta['bbox']
       
 # .............................
    basefilename = os.path.basename(__file__)
@@ -649,34 +723,49 @@ if __name__ == '__main__':
 # .............................
       logger.info('  Insert user metadata ...')
       addUsers(scribeWithBorg, usr, usrEmail)
+      legalUsers = [PUBLIC_USER, usr]
 # .............................
       logger.info('  Insert algorithm metadata ...')
       aIds = addAlgorithms(scribeWithBorg)
 # .............................
-      logger.info('  Insert climate {} metadata ...'.format(envPackageName))
-      # Current
-      basescen, staticLayers = createBaselineScenario(usr, pkgMeta, elyrMeta, 
-                                                      META.LAYERTYPE_META,
-                                                      META.OBSERVED_PREDICTED_META,
-                                                      META.CLIMATE_KEYWORDS)
-      logger.info('     Created base scenario {}'.format(basescen.code))
-      # Predicted Past and Future
-      predScens = createPredictedScenarios(usr, pkgMeta, elyrMeta, 
-                                           META.LAYERTYPE_META, staticLayers,
-                                           META.OBSERVED_PREDICTED_META,
-                                           META.CLIMATE_KEYWORDS)
-      logger.info('     Created predicted scenarios {}'.format(predScens.keys()))
-      predScens[basescen.code] = basescen
-      addScenarioAndLayerMetadata(scribeWithBorg, predScens)
+      if modelScenCode and prjScenCodeList:
+         metafname = None
+         epsgcode, mapunits = _checkScenarios(scribeWithBorg, legalUsers,
+                                              modelScenCode, prjScenCodeList)
+      else:
+         # Imports META
+         META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
+         epsgcode = elyrMeta['epsg']
+         mapunits = elyrMeta['mapunits']
+         logger.info('  Insert climate {} metadata ...'.format(envPackageName))
+         # Current
+         basescen, staticLayers = createBaselineScenario(usr, pkgMeta, elyrMeta, 
+                                                         META.LAYERTYPE_META,
+                                                         META.OBSERVED_PREDICTED_META,
+                                                         META.CLIMATE_KEYWORDS)
+         logger.info('     Created base scenario {}'.format(basescen.code))
+         # Predicted Past and Future
+         predScens = createPredictedScenarios(usr, pkgMeta, elyrMeta, 
+                                              META.LAYERTYPE_META, staticLayers,
+                                              META.OBSERVED_PREDICTED_META,
+                                              META.CLIMATE_KEYWORDS)
+         logger.info('     Created predicted scenarios {}'.format(predScens.keys()))
+         predScens[basescen.code] = basescen
+         addScenarioAndLayerMetadata(scribeWithBorg, predScens)
+         
+# .............................
+      # Test a subset of OccurrenceIds provided as BOOM species input
+      if occIdFname:
+         _checkOccurrenceSets(scribeWithBorg, legalUsers, occIdFname)
+
 # .............................
       # Shapefile, Gridset, Matrix for GPAM/BOOMArchive
       logger.info('  Insert, build shapegrid {} ...'.format(gridname))
       shpGrid, archiveGridset, globalPAMs = addArchive(scribeWithBorg, 
                          predScens, gridname, metafname, archiveName, 
-                         cellsides, cellsize, 
-                         elyrMeta['mapunits'], elyrMeta['epsg'], 
+                         cellsides, cellsize, mapunits, epsgcode,
                          gridbbox, usr)
-      
+   
 # .............................
       # Insert all taxonomic sources for now
       logger.info('  Insert taxonomy metadata ...')
@@ -693,10 +782,11 @@ if __name__ == '__main__':
            intersectParams)
       """
       newConfigFilename = writeConfigFile(usr, usrEmail, archiveName, 
-           envPackageName, dataSource,  
+           envPackageName, dataSource, occIdFname,
            gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
-           minpoints, algorithms, cellsides, cellsize, gridname, 
-           intersectParams, elyrMeta, mdlScen=mdlScencode, prjScens=prjScencodes, 
+           minpoints, algorithms, epsgcode, mapunits, 
+           gridname, gridbbox, cellsides, cellsize, intersectParams, 
+           mdlScen=mdlScencode, prjScens=prjScencodes, 
            assemblePams=assemblePams)
    except Exception, e:
       logger.error(str(e))

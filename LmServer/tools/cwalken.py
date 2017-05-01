@@ -324,7 +324,9 @@ class ChristopherWalken(LMObject):
       
       occ = self.weaponOfChoice.getOne()
       if occ:
-         objs.append(occ)   
+         # No need to compute cloned OccurrenceLayers
+         if JobStatus.waiting(occ.status):
+            objs.append(occ)   
          # Sweep over input options
          # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
          #       Change this for BOOM jobs!! 
@@ -448,7 +450,7 @@ class ChristopherWalken(LMObject):
                                     metadata=meta, status=JobStatus.GENERAL, 
                                     statusModTime=dt.gmt().mjd)
                   updatedMFChain = self._scribe.insertMFChain(newMFC)
-            # Get rules
+            # Get rules for objects to be computed
             try:
                rules.extend(o.computeMe())
             except Exception, e:
