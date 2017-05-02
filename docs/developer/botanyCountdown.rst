@@ -21,9 +21,16 @@ Weekly goals
      
    * CJ
    
-     #. Update web services
-     #. Test SDM computations with Makeflow
-     #. Makeflow run unattend
+     #. Update single species web services documentation
+     #. Web service deployment on 191 / 194
+     #. Single species GET / count / list / DELETE services
+     #. CC Tools full automation (identify problem and contact ND)
+     #. Draft multi-species web service documentation
+     #. Draft Solr services documentation
+     #. Single species POST services (beta)
+     #. Update metadata URLs
+     #. Mapping services (beta)
+     #. Basic authentication testing
       
    * Ben
    
@@ -33,7 +40,18 @@ Weekly goals
 #. May 8
 
    * Aimee: begin Boom, computation of Biotaphy instance
-   * CJ: Solr?
+   * CJ
+   
+     #. CJ in Lawrence (May 10-12)
+     #. CC Tools full automation (finish)
+     #. Solr alpha implementation
+     #. CJ and Ben meet about Solr services
+     #. Full web service documentation (beta, may require changes as Ben integrates)
+     #. Mapping services
+     #. KML / KMZ
+     #. Service testing
+     #. Process Biotaphy tree
+
    * Ben: implementation and testing of SDM request
    
 #. May 15
@@ -42,9 +60,12 @@ Weekly goals
    
    * CJ: 
    
-     #. monitor Biotaphy computations
-     #. update website app for new services
-     #. Solr!
+     #. Solr beta implementation
+     #. Multi species services beta implementation
+     #. Global PAM subsetting (beta)
+     #. Web app
+     #. Automated service testing
+     #. Monitor Biotaphy computations
      
    * Ben: 
    
@@ -60,7 +81,9 @@ Weekly goals
      
    * CJ
    
-     #. Web services handle Solr requests
+     #. PUT services?
+     #. Web service bullet-proofing
+     #. Finalize all services
      
    * Ben
    
