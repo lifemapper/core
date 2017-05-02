@@ -25,32 +25,32 @@ the installation screen) and the Python roll from notyeti.lifemapper.org
 (with the updated Python roll).  All other rolls should come from the yeti or 
 notyeti sites if they are physically located there (to speed download time).
   
-For all clusters, install the following:  
+For all clusters, install the following
 
-  * area51
-  * base 
-  * ganglia
-  * hpc
-  * kernel
-  * os
-  * python
-  * sge (LmCompute)
-  * webserver (LmServer)
+* area51
+* base 
+* ganglia
+* hpc
+* kernel
+* os
+* python
+* sge (LmCompute)
+* webserver (LmServer)
 
 Physical clusters only:
   
-  * kvm
-  * zfs
+* kvm
+* zfs
 
 Other info:
 
- * Lawrence Geo:  N38.969  W95.245
- * Public Interface: assigned by Greg Smith for MAC address
- * Private Interface:  (notyeti VMs: available internal 192.168.202.x on notyeti)
- * Gateway:  129.237.201.254
- * DNS:  129.237.133.1
- * NTP server:  time.ku.edu
- * Auto-Partitioning
+* Lawrence Geo:  N38.969  W95.245
+* Public Interface: assigned by Greg Smith for MAC address
+* Private Interface:  (notyeti VMs: available internal 192.168.202.x on notyeti)
+* Gateway:  129.237.201.254
+* DNS:  129.237.133.1
+* NTP server:  time.ku.edu
+* Auto-Partitioning
 
 Update Python Roll
 ~~~~~~~~~~~~~~~~~~
