@@ -48,10 +48,11 @@ def formatAtom(obj):
    @summary: Format an Atom object into a dictionary
    """
    return {
+      'epsg' : obj.epsgcode,
       'id' : obj.id,
-      'name' : obj.name,
       'modificationTime' : formatTimeHuman(obj.modTime),
-      'epsg' : obj.epsgcode
+      'name' : obj.name,
+      'url' : obj.metadataUrl
    }
 
 # .............................................................................
@@ -80,7 +81,7 @@ def formatEnvLayer(lyr):
                                       resolution=lyr.resolution)
    lyrDict['envCode'] = lyr.envCode
    lyrDict['gcmCode'] = lyr.gcmCode
-   lyrDict['alternatePredictioCode'] = lyr.altpredCode
+   lyrDict['altPredCode'] = lyr.altpredCode
    lyrDict['dateCode'] = lyr.dateCode
    
    return lyrDict
