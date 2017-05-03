@@ -334,7 +334,7 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countMatrixColumns()
       """
-      count = self._borg.countMatrixColumns(userId, matrixType, gcmCode, 
+      count = self._borg.countMatrices(userId, matrixType, gcmCode, 
                         altpredCode, dateCode, keyword, gridsetId, afterTime, 
                         beforeTime, epsg, afterStatus, beforeStatus)
       return count
@@ -348,7 +348,7 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listMatrixColumns()
       """
-      objs = self._borg.listMatrixColumns(firstRecNum, maxNum, userId, 
+      objs = self._borg.listMatrices(firstRecNum, maxNum, userId, 
                         matrixType, gcmCode, altpredCode, dateCode, keyword, 
                         gridsetId, afterTime, beforeTime, epsg, afterStatus, 
                         beforeStatus, atom)
