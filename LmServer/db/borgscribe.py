@@ -451,25 +451,26 @@ class BorgScribe(LMObject):
       return newOcc
          
 # .............................................................................
-   def countOccurrenceSets(self, userId=PUBLIC_USER, minOccurrenceCount=None, 
+   def countOccurrenceSets(self, userId=PUBLIC_USER, squid=None, minOccurrenceCount=None, 
                displayName=None, afterTime=None, beforeTime=None, epsg=None, 
                afterStatus=None, beforeStatus=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countOccurrenceSets()
       """
-      count = self._borg.countOccurrenceSets(userId, minOccurrenceCount, 
+      count = self._borg.countOccurrenceSets(userId, squid, minOccurrenceCount, 
             displayName, afterTime, beforeTime, epsg, afterStatus, beforeStatus)
       return count
 
 # .............................................................................
    def listOccurrenceSets(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
-                          minOccurrenceCount=None, displayName=None, 
+                          squid=None, minOccurrenceCount=None, displayName=None, 
                           afterTime=None, beforeTime=None, epsg=None, 
                           afterStatus=None, beforeStatus=None, atom=True):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listOccurrenceSets()
       """
-      objs = self._borg.listOccurrenceSets(firstRecNum, maxNum, userId, minOccurrenceCount, 
+      objs = self._borg.listOccurrenceSets(firstRecNum, maxNum, userId, 
+                                           squid, minOccurrenceCount, 
                                            displayName, afterTime, beforeTime, 
                                            epsg, afterStatus, beforeStatus, atom)
       return objs
@@ -499,20 +500,20 @@ class BorgScribe(LMObject):
       return newOrExistingProj
 
 # .............................................................................
-   def countSDMProjects(self, userId=PUBLIC_USER, displayName=None, 
+   def countSDMProjects(self, userId=PUBLIC_USER, squid=None, displayName=None, 
                         afterTime=None, beforeTime=None, epsg=None, 
                         afterStatus=None, beforeStatus=None, occsetId=None, 
                         algCode=None, mdlscenCode=None, prjscenCode=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countSDMProjects()
       """
-      count = self._borg.countSDMProjects(userId, displayName, 
+      count = self._borg.countSDMProjects(userId, squid, displayName, 
                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                        occsetId, algCode, mdlscenCode, prjscenCode)
       return count
 
 # .............................................................................
-   def listSDMProjects(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+   def listSDMProjects(self, firstRecNum, maxNum, userId=PUBLIC_USER, squid=None, 
                        displayName=None, afterTime=None, beforeTime=None, 
                        epsg=None, afterStatus=None, beforeStatus=None, 
                        occsetId=None, algCode=None, mdlscenCode=None, 
@@ -520,7 +521,7 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listSDMProjects()
       """
-      objs = self._borg.listSDMProjects(firstRecNum, maxNum, userId, displayName, 
+      objs = self._borg.listSDMProjects(firstRecNum, maxNum, userId, squid, displayName, 
                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                        occsetId, algCode, mdlscenCode, prjscenCode, atom)
       return objs

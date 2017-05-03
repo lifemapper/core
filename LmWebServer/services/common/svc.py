@@ -230,29 +230,6 @@ class svc(object):
          err = LMError(e, doTrace=True)
          return errorResponse(log, HTTPStatus.INTERNAL_SERVER_ERROR, err=err)
 
-# .............................................................................
-def getHttpStatus(obj, method):
-   """
-   @summary: Returns the HTTP status code for the resquest
-   @param obj: The object that has been formatted
-   @param method: The HTTP method used for the request
-   """
-   status = None
-   if method.lower() == "post":
-      try:
-         status = obj.status
-      except:
-         try:
-            status = obj.model.status
-         except:
-            pass
-      if status is not None:
-         return HTTPStatus.ACCEPTED
-      else:
-         return HTTPStatus.CREATED
-   else:
-      return HTTPStatus.OK
-   
 
 # .............................................................................
 def getUserLog(userId):
