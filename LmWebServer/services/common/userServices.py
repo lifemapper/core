@@ -5,7 +5,6 @@ import cherrypy
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import REFERER_KEY, SESSION_KEY
-from LmWebServer.services.common.authentication import checkUserLogin
 from LmWebServer.services.api.v2.base import LmService
 
 
@@ -450,3 +449,4 @@ def _verify_length(item, minLength=0, maxLength=50):
       return True
    else:
       return False
+   
