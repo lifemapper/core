@@ -25,9 +25,5 @@
 -- ----------------------------------------------------------------------------
 -- -- psql -U admin -d template1 --file=@LMHOME@/rocks/bin/defineDBTables.sql
 
-\i @LMHOME@/LmDbServer/dbsetup/createMAL.sql
-\i @LMHOME@/LmDbServer/dbsetup/createSPECO.sql
-
--- TODO: reinstate this after testing
--- \i @LMHOME@/LmDbServer/dbsetup/createBorg.sql
+\i @LMHOME@/LmDbServer/dbsetup/createBorg.sql
 -- ----------------------------------------------------------------------------

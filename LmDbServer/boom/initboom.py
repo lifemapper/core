@@ -97,16 +97,6 @@ def addAlgorithms(scribe):
       algid = scribe.findOrInsertAlgorithm(alg)
       ids.append(algid)
    return ids
-#    for algcode, algdict in ALGORITHM_DATA.iteritems():
-#       algmeta = {}
-#       for k, v in algdict.iteritems():
-#          if k != 'parameters':
-#             algmeta[k] = v
-#       alg = Algorithm(algcode, metadata=algmeta)
-#       scribe.log.info('  Insert algorithm {} ...'.format(algcode))
-#       algid = scribe.findOrInsertAlgorithm(alg)
-#       ids.append(algid)
-#    return ids
 
 # ...............................................
 def _addIntersectGrid(scribe, gridname, cellsides, cellsize, mapunits, epsg, bbox, usr):
@@ -623,7 +613,7 @@ def _findConfigOrDefault(config, varname, defaultValue, isList=False):
 # ...............................................
 def readConfigArgs(configFname):
    if configFname is None or not os.path.exists(configFname):
-      print(currargs='Missing config file {}, using defaults'.format(configFname))
+      print('Missing config file {}, using defaults'.format(configFname))
       configFname = None
    config = Config(siteFn=configFname)
 
@@ -682,6 +672,7 @@ def readConfigArgs(configFname):
            userOccFname, userOccSep, 
            minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, 
            gridname, intersectParams)
+
    
 # ...............................................
 if __name__ == '__main__':
@@ -690,7 +681,7 @@ if __name__ == '__main__':
       sys.exit(2)
 
    # Created on roll install: lifemapper-server:lmdata-species
-   defaultConfigFile = os.path.join(SPECIES_DATA_PATH, 'archive.config.ini')
+   defaultConfigFile = None
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper database with metadata ' +
