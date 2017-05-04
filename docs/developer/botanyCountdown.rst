@@ -17,7 +17,6 @@ Weekly goals
      #. Finish and test single and multi-species WS backend functionality
      #. Build, test, build rolls 
      #. Deploy version 1 on VMs
-     #. Package, metadata-ize Biotaphy occurrence, env data
      
    * CJ
    
@@ -39,7 +38,13 @@ Weekly goals
       
 #. May 8
 
-   * Aimee: begin Boom, computation of Biotaphy instance
+   * Aimee: 
+   
+     #. Package, metadata-ize Biotaphy occurrence, env data
+     #. Modify and test boomer for new iDigBio occurrence data
+     #. begin Boom, computation of Biotaphy instance
+     #. testing, testing, testing
+     
    * CJ
    
      #. CJ in Lawrence (May 10-12)
