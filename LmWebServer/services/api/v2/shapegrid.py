@@ -1,7 +1,7 @@
 """
 @summary: This module provides REST services for shapegrids
 @author: CJ Grady
-@versoin: 2.0
+@version: 2.0
 @status: alpha
 @license: gpl2
 @copyright: Copyright (C) 2017, University of Kansas Center for Research
@@ -51,7 +51,7 @@ class ShapeGridService(LmService):
       sg = self.scribe.getShapeGrid(lyrId=pathShapegridId)
 
       if sg is None:
-         raise cherrypy.HTTPError(404, "Layer not found")
+         raise cherrypy.HTTPError(404, "Shapegrid not found")
       
       # If allowed to, delete
       if checkUserPermission(self.getUserId(), sg, HTTPMethod.DELETE):
@@ -96,7 +96,7 @@ class ShapeGridService(LmService):
    @lmFormatter
    def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout):
       """
-      @summary: Posts a new layer
+      @summary: Posts a new shapegrid
       @todo: Add cutout
       @todo: Take a completed shapegrid?
       """
@@ -106,7 +106,7 @@ class ShapeGridService(LmService):
       return updatedSg
    
    # ................................
-   def _countShapegridsLayers(self, userId, afterTime=None, beforeTime=None, 
+   def _countShapegrids(self, userId, afterTime=None, beforeTime=None, 
                               epsgCode=None):
       """
       @summary: Count shapegrid objects matching the specified criteria
@@ -141,7 +141,7 @@ class ShapeGridService(LmService):
                      self.getUserId(), pathShapegridId))
    
    # ................................
-   def _listShapegridsLayers(self, userId, afterTime=None, beforeTime=None, 
+   def _listShapegrids(self, userId, afterTime=None, beforeTime=None, 
                               epsgCode=None, limit=100, offset=0):
       """
       @summary: Count shapegrid objects matching the specified criteria
