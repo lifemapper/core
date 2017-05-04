@@ -40,7 +40,7 @@ from LmWebServer.services.cpTools.lmFormat import lmFormatter
 # .............................................................................
 @cherrypy.expose
 @cherrypy.popargs('pathLayerId')
-class Layer(LmService):
+class LayerService(LmService):
    """
    @summary: This class is for the layers service.  The dispatcher is
                 responsible for calling the correct method
