@@ -41,6 +41,7 @@ Weekly goals
    * Aimee: 
    
      #. Package, metadata-ize Biotaphy occurrence, env data
+     #. Modify and test boomer for new iDigBio occurrence data
      #. begin Boom, computation of Biotaphy instance
      #. testing, testing, testing
      
