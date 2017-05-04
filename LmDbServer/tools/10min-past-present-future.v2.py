@@ -6,10 +6,6 @@ from osgeo import gdalconst
 # will default to constants in config.lmserver.ini
 # ...............................................
 
-# These must be valid ALGORITHM_CODES in the Lifemapper database; 
-# Default = ALGORITHMS
-#ALGORITHM_CODES = None
-
 # Default = SCENARIO_PACKAGE_EPSG
 EPSG = 4326
 # Default = SCENARIO_PACKAGE_MAPUNITS IFF EPSG == SCENARIO_PACKAGE_EPSG

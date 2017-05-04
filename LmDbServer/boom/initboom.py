@@ -453,7 +453,8 @@ def _checkScenarios(scribe, legalUsers, modelScenCode, prjScenCodeList):
       if epsgcode is None:
          epsgcode = scen.epsgcode
          mapunits = scen.units
-   return epsgcode, mapunits
+         bbox = scen.bbox
+   return epsgcode, mapunits, bbox
       
 # ...............................................
 def _checkOccurrenceSets(scribe, legalUsers, occIdFname, limit=10):
@@ -590,6 +591,7 @@ def writeConfigFile(usr, usrEmail, archiveName,
 
 # ...............................................
 def _findConfigOrDefault(config, varname, defaultValue, isList=False):
+   var = None
    try:
       var = config.get(SERVER_BOOM_HEADING, varname)
    except:
@@ -647,7 +649,7 @@ def readConfigArgs(configFname):
    except:
       algorithms = algstring
    assemblePams = _findConfigOrDefault(config, 'ASSEMBLE_PAMS', ASSEMBLE_PAMS)
-   gridbbox = _findConfigOrDefault(config, 'GRID_BBOX', GRID_NUM_SIDES)
+   gridbbox = _findConfigOrDefault(config, 'GRID_BBOX', None)
    cellsides = _findConfigOrDefault(config, 'GRID_NUM_SIDES', GRID_NUM_SIDES)
    cellsize = _findConfigOrDefault(config, 'GRID_CELLSIZE', GRID_CELLSIZE)
    gridname = '{}-Grid-{}'.format(archiveName, cellsize)
@@ -721,11 +723,15 @@ if __name__ == '__main__':
 # .............................
       if modelScenCode and prjScenCodeList:
          metafname = None
-         epsgcode, mapunits = _checkScenarios(scribeWithBorg, legalUsers,
+         epsgcode, mapunits, bbox = _checkScenarios(scribeWithBorg, legalUsers,
                                               modelScenCode, prjScenCodeList)
+         if gridbbox is None:
+            gridbbox = bbox
       else:
          # Imports META
          META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
+         if gridbbox is None:
+            gridbbox = pkgMeta['bbox']
          epsgcode = elyrMeta['epsg']
          mapunits = elyrMeta['mapunits']
          logger.info('  Insert climate {} metadata ...'.format(envPackageName))
@@ -777,7 +783,7 @@ if __name__ == '__main__':
            gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
            minpoints, algorithms, epsgcode, mapunits, 
            gridname, gridbbox, cellsides, cellsize, intersectParams, 
-           mdlScen=mdlScencode, prjScens=prjScencodes, 
+           mdlScenCode=mdlScencode, prjScenCodes=prjScencodes, 
            assemblePams=assemblePams)
    except Exception, e:
       logger.error(str(e))
