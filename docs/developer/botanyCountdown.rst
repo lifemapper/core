@@ -21,15 +21,11 @@ Weekly goals
    * CJ
    
      #. Update single species web services documentation
-     #. Web service deployment on 191 / 194
+     #. Web service deployment on 191
      #. Single species GET / count / list / DELETE services
-     #. CC Tools full automation (identify problem and contact ND)
      #. Draft multi-species web service documentation
      #. Draft Solr services documentation
      #. Single species POST services (beta)
-     #. Update metadata URLs
-     #. Mapping services (beta)
-     #. Basic authentication testing
       
    * Ben
    
@@ -48,11 +44,13 @@ Weekly goals
    * CJ
    
      #. CJ in Lawrence (May 10-12)
-     #. CC Tools full automation (finish)
+     #. CC Tools full automation
      #. Solr alpha implementation
      #. CJ and Ben meet about Solr services
      #. Full web service documentation (beta, may require changes as Ben integrates)
-     #. Mapping services
+     #. Update metadata URLs
+     #. Mapping services (beta)
+     #. Basic authentication testing
      #. KML / KMZ
      #. Service testing
      #. Process Biotaphy tree
