@@ -233,7 +233,7 @@ class Boomer(Daemon):
          # Get rawPotato input file from MFChain
          rawPotatoFname = potatoChain.getTriageFilename(prefix='rawPotato')
          if not readyFilename(rawPotatoFname, overwrite=True):
-            raise LmException('{} is not ready for write (overwrite=True)'
+            raise LMError(currargs='{} is not ready for write (overwrite=True)'
                               .format(rawPotatoFname))
          try:
             rawPotatoFile = open(rawPotatoFname, 'w')

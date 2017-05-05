@@ -1037,7 +1037,8 @@ class Vector(_Layer):
       # The following may be reset by setFeatures:
       # features, featureAttributes, featureCount, geomIdx, localIdIdx, geom, convexHull
       self.setFeatures(features, featureAttributes, featureCount=featureCount)
-      if os.path.exists(dlocation):
+      # If data exists, check description
+      if dlocation is not None and os.path.exists(dlocation):
          # sets features, featureAttributes, and featureCount (if doReadData)
          (newBBox, localIdIdx, geomIdx) = self.readData(dlocation=dlocation, 
                                         dataFormat=dataFormat, doReadData=False)

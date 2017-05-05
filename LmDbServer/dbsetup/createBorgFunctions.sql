@@ -1054,15 +1054,6 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
-DROP FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
-                                                    sqd varchar,
-                                                    minOccCount int,
-                                                    dispname varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
                                                     minOccCount int,
                                                     dispname varchar,
@@ -1132,14 +1123,6 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-DROP FUNCTION lm_v3.lm_countOccSets(usr varchar,
-                                                    minOccCount int,
-                                                    dispname varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_countOccSets(usr varchar,
                                                     sqd varchar,
                                                     minOccCount int,
@@ -1171,16 +1154,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Note: order by statusModTime desc
-DROP  FUNCTION lm_v3.lm_listOccSetObjects(firstRecNum int, 
-                                                    maxNum int,
-                                                    usr varchar,
-                                                    minOccCount int,
-                                                    dispname varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetObjects(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
@@ -1221,16 +1194,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Note: order by statusModTime desc
-DROP  FUNCTION lm_v3.lm_listOccSetAtoms(firstRecNum int, 
-                                                    maxNum int,
-                                                    usr varchar,
-                                                    minOccCount int,
-                                                    dispname varchar,
-                                                    aftertime double precision,
-                                                    beforetime double precision,
-                                                    epsg int,
-                                                    afterstat int,
-                                                    beforestat int);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetAtoms(firstRecNum int, 
                                                     maxNum int,
                                                     usr varchar,
@@ -1521,7 +1484,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtxCols(usr varchar,
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
-                                                    mtxid int,                                                    epsg int,
+                                                    mtxid int,
                                                     lyrid int)
    RETURNS varchar AS
 $$
