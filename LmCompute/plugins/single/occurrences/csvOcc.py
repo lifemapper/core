@@ -30,7 +30,7 @@ import json
 import os
 
 from LmCommon.common.apiquery import BisonAPI, IdigbioAPI
-from LmCommon.common.createshape import ShapeShifter
+from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.readyfile import readyFilename
 from LmCompute.common.lmObj import LmException
@@ -154,7 +154,7 @@ import json
 import os
 
 from LmCommon.common.apiquery import *
-from LmCommon.common.createshape import ShapeShifter
+from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCompute.common.lmObj import LmException
 from LmCompute.common.log import LmComputeLogger

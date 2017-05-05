@@ -30,6 +30,7 @@ import numpy as np
 
 from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
                               DEFAULT_OGR_FORMAT, JobStatus, ProcessType)
+from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
@@ -251,130 +252,20 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       
 # ...................................................
    def buildShape(self, cutout=None, overwrite=False):
-      """
-      @summary: method to build the shapefile for the shapegrid object.
-      Calculates the topology for each cell, square or hexagonal.
-      @todo: Check this, it may fail on newer versions of OGR - 
-             old: CreateFeature vs new: SetFeature
-      """ 
       # After build, setDLocation, write shapefile
-      if os.path.exists(self._dlocation):
+      if os.path.exists(self._dlocation) and not overwrite:
          print "Shapegrid file already exists at: %s" % self._dlocation
          self.readData(doReadData=False)
          self._setCellMeasurements()
          return 
       self._readyFilename(self._dlocation, overwrite=overwrite)
-
-      try:
-         min_x = self.minX
-         min_y = self.minY
-         max_x = self.maxX
-         max_y = self.maxY
-         
-         x_res = self.cellsize 
-         y_res = self.cellsize
-         shapepath = self._dlocation
-         
-         if self.cellsides == 6:
-            t_srs = osr.SpatialReference()
-            #t_srs.SetFromUserInput('WGS84')
-            t_srs.ImportFromEPSG(self.epsgcode)
-            drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
-            ds = drv.CreateDataSource(shapepath)
-            layer = ds.CreateLayer(ds.GetName(), geom_type = ogr.wkbPolygon, srs = t_srs)
-            layer.CreateField(ogr.FieldDefn(self.siteId, ogr.OFTInteger))
-            layer.CreateField(ogr.FieldDefn(self.siteX, ogr.OFTReal))
-            layer.CreateField(ogr.FieldDefn(self.siteY, ogr.OFTReal))
-            
-            apothem_y_res = (y_res * .5)*math.sqrt(3)/2
-            
-            #yc = min_y  # this will miny
-            yc = max_y
-            y_row = True
-            shape_id = 0
-            #while yc < max_y:
-            while yc > min_y:
-               if y_row == True:
-                  xc = min_x  # this will be minx
-               elif y_row == False:
-                  xc = min_x  + (x_res * .75) # this will be minx + 
-               while xc < max_x:
-                  wkt = "POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f, %f %f, %f %f))"% \
-                                ( xc - (x_res * .5)/2, yc + (y_res * .5)*math.sqrt(3)/2,\
-                                  xc + (x_res * .5)/2, yc + (y_res * .5)*math.sqrt(3)/2,\
-                                  xc + (x_res * .5), yc,\
-                                  xc + (x_res * .5)/2, yc - (y_res * .5)*math.sqrt(3)/2,\
-                                  xc - (x_res * .5)/2, yc - (y_res * .5)*math.sqrt(3)/2,\
-                                  xc - (x_res * .5), yc,\
-                                  xc - (x_res * .5)/2, yc + (y_res * .5)*math.sqrt(3)/2
-                                   )
-                  xc += x_res * 1.5
-                  geom = ogr.CreateGeometryFromWkt(wkt)
-                  geom.AssignSpatialReference ( t_srs )
-                  c = geom.Centroid()
-                  x = c.GetX()
-                  y = c.GetY()
-                  feat = ogr.Feature(feature_def=layer.GetLayerDefn())
-                  feat.SetGeometryDirectly(geom)
-                  #feat.SetFID(shape_id)
-                  feat.SetField(self.siteX, x)
-                  feat.SetField(self.siteY, y)
-                  feat.SetField(self.siteId, shape_id)
-                  layer.CreateFeature(feat)
-                  feat.Destroy()
-                  shape_id += 1
-               y_row = not(y_row)
-               #yc += apothem_y_res
-               yc = yc - apothem_y_res
-            ds.Destroy()
-            
-         elif self.cellsides == 4:
-            t_srs = osr.SpatialReference()
-            #t_srs.SetFromUserInput('WGS84')
-            t_srs.ImportFromEPSG(self.epsgcode)
-            drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
-            ds = drv.CreateDataSource(shapepath)
-            layer = ds.CreateLayer(ds.GetName(), geom_type = ogr.wkbPolygon, srs = t_srs)
-            layer.CreateField(ogr.FieldDefn(self.siteId, ogr.OFTInteger))
-            
-            layer.CreateField(ogr.FieldDefn(self.siteX, ogr.OFTReal))
-            layer.CreateField(ogr.FieldDefn(self.siteY, ogr.OFTReal))
-            
-            shape_id = 0
-            for yc in np.arange(max_y,min_y,-y_res):
-               for xc in np.arange(min_x, max_x, x_res):
-            #for xc in xrange(min_x, max_x, x_res):
-               #for yc in xrange(min_y,max_y,y_res):
-                  wkt = "POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))"% \
-                                ( xc, yc, xc+x_res, yc, xc+x_res,yc-y_res,\
-                                 xc,yc-y_res,xc, yc)
-                  #print wkt
-                  geom = ogr.CreateGeometryFromWkt(wkt)
-                  geom.AssignSpatialReference ( t_srs )
-                  c = geom.Centroid()
-                  x = c.GetX()
-                  y = c.GetY()
-                  feat = ogr.Feature(feature_def=layer.GetLayerDefn())
-                  feat.SetGeometryDirectly(geom)
-                  #feat.SetFID(shape_id)
-                  feat.SetField(self.siteX, x)
-                  feat.SetField(self.siteY, y)
-                  feat.SetField(self.siteId,shape_id)
-                  layer.CreateFeature(feat)
-                  feat.Destroy()
-                  shape_id += 1            
-            ds.Destroy()
-      except Exception, e:
-         raise LMError(e)
-      else:
-         # Modify shapegrid by subseting 
-         if cutout is not None:
-            minx,miny,maxx,maxy = self.cutout(cutout,removeOrig=True)
-         # update size and verify attributes
-         self._setCellMeasurements()
-         self._setVerify()
-#          self.setSiteIndices()
-
+      cellCount = buildShapegrid(self._dlocation, self.minX, self.minY, self.maxX, self.maxY, 
+                     self.cellSize, self.epsgcode, self._cellsides, 
+                     siteId=self.siteId, siteX=self.siteX, siteY=self.siteY, 
+                     cutoutWKT=cutout)
+      self._setCellMeasurements(size=cellCount)
+      self._setVerify()
+      
 # ...............................................
    def computeMe(self):
       """

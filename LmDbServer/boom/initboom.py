@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 import argparse
+import inspect
 import mx.DateTime
 import os
 import sys
@@ -675,6 +676,15 @@ def readConfigArgs(configFname):
            minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, 
            gridname, intersectParams)
 
+import inspect
+def _getName(var):
+   callers_local_vars = inspect.currentframe().f_back.f_locals.items()
+   for var_name, var_val in callers_local_vars:
+      if var_val is var and var_name != 'var' and var_name.upper() != var_name:
+         return var_name
+#    return [var_name for var_name, var_val in callers_local_vars if var_val is var]
+
+
    
 # ...............................................
 if __name__ == '__main__':
@@ -700,7 +710,13 @@ if __name__ == '__main__':
     dataSource, occIdFname, gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
     minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, gridname, 
     intersectParams) = readConfigArgs(configFname)
-      
+   
+   for v in (usr, usrEmail, archiveName, envPackageName, modelScenCode, prjScenCodeList, 
+           dataSource, occIdFname, gbifFname, idigFname, bisonFname, 
+           userOccFname, userOccSep, 
+           minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, 
+           gridname, intersectParams):
+      print('{} = {}'.format(_getName(v), v))
 # .............................
    basefilename = os.path.basename(__file__)
    basename, ext = os.path.splitext(basefilename)
@@ -727,11 +743,13 @@ if __name__ == '__main__':
                                               modelScenCode, prjScenCodeList)
          if gridbbox is None:
             gridbbox = bbox
+         print('{} = {}'.format(_getName(gridbbox), gridbbox))
       else:
          # Imports META
          META, metafname, pkgMeta, elyrMeta = pullClimatePackageMetadata(envPackageName)
          if gridbbox is None:
             gridbbox = pkgMeta['bbox']
+         print('{} = {}'.format(_getName(gridbbox), gridbbox))
          epsgcode = elyrMeta['epsg']
          mapunits = elyrMeta['mapunits']
          logger.info('  Insert climate {} metadata ...'.format(envPackageName))

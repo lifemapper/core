@@ -29,9 +29,7 @@ import math
 import numpy as np
 from osgeo import ogr, osr
 
-from LmCommon.common.lmconstants import (JobStatus, OutputFormat, 
-                                         DEFAULT_OGR_FORMAT)
-from LmCompute.common.lmObj import LmException
+from LmCommon.common.lmconstants import DEFAULT_OGR_FORMAT
 
 # Calculate this once and store as a constant instead of for every cell
 SQRT_3 = math.sqrt(3)
@@ -112,6 +110,7 @@ def buildShapegrid(sgFn, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
    @param siteX: The name of the X field for the shapefile
    @param siteY: The name of the Y field for the shapefile
    @param cutout: (optional) WKT for an area of the shapegrid to be cutout
+   @return number of features in the new shapegrid
    """
    # We'll always check for intersection to reduce amount of work
    if cutoutWKT is None:
@@ -166,3 +165,4 @@ def buildShapegrid(sgFn, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
          shapeId += 1
       feat.Destroy()
    ds.Destroy()
+   return shapeId

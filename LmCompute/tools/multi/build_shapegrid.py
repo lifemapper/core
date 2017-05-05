@@ -28,7 +28,7 @@
 """
 import argparse
 
-from LmCompute.plugins.multi.buildShapegrid import buildShapegrid
+from LmCommon.shapes.buildShapegrid import buildShapegrid
 
 # .............................................................................
 if __name__ == "__main__":

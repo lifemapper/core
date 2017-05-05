@@ -714,7 +714,7 @@ import subprocess
 from types import ListType, TupleType, UnicodeType, StringType
 
 from LmBackend.common.occparse import OccDataParser
-from LmCommon.common.createshape import ShapeShifter
+from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
