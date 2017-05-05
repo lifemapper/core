@@ -49,7 +49,18 @@ def lmFormatter(f):
       
       acceptHeaders = cherrypy.request.headers.get('Accept')
       
-      for ah in acceptHeaders.split(';'):
+      rawHeaders = acceptHeaders.split(',')
+      valuedAccepts = []
+      for h in rawHeaders:
+         if len(h.split(';')) > 1:
+            mime, val = h.split(';')
+            valuedAccepts.append((mime, float(val.strip('q='))))
+         else:
+            valuedAccepts.append((h, 0.0))
+      
+      sortedAccepts = sorted(valuedAccepts, key=lambda x: x[1], reverse=True)
+      
+      for ah, _ in sortedAccepts:
          try:
             # If JSON or default
             if ah in [LMFormat.JSON.getMimeType(), '*/*']:
