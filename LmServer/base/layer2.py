@@ -1037,7 +1037,7 @@ class Vector(_Layer):
       # The following may be reset by setFeatures:
       # features, featureAttributes, featureCount, geomIdx, localIdIdx, geom, convexHull
       self.setFeatures(features, featureAttributes, featureCount=featureCount)
-      try:
+      if os.path.exists(dlocation):
          # sets features, featureAttributes, and featureCount (if doReadData)
          (newBBox, localIdIdx, geomIdx) = self.readData(dlocation=dlocation, 
                                         dataFormat=dataFormat, doReadData=False)
@@ -1046,8 +1046,8 @@ class Vector(_Layer):
             self.bbox = newBBox
          self._geomIdx = geomIdx
          self._localIdIdx = localIdIdx   
-      except Exception, e:
-         print 'Warning in Vector.__init__: %s' % str(e)
+      else:
+         print('Warning: Vector {} does not exist'.format(dlocation))
       
 # .............................................................................
 # Static methods

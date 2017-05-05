@@ -254,15 +254,15 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
    def buildShape(self, cutout=None, overwrite=False):
       # After build, setDLocation, write shapefile
       if os.path.exists(self._dlocation) and not overwrite:
-         print "Shapegrid file already exists at: %s" % self._dlocation
+         print('Shapegrid file already exists at: {}'.format(self._dlocation))
          self.readData(doReadData=False)
          self._setCellMeasurements()
          return 
       self._readyFilename(self._dlocation, overwrite=overwrite)
-      cellCount = buildShapegrid(self._dlocation, self.minX, self.minY, self.maxX, self.maxY, 
-                     self.cellSize, self.epsgcode, self._cellsides, 
-                     siteId=self.siteId, siteX=self.siteX, siteY=self.siteY, 
-                     cutoutWKT=cutout)
+      cellCount = buildShapegrid(self._dlocation, self.minX, self.minY, 
+                           self.maxX, self.maxY, self.cellsize, self.epsgcode, 
+                           self._cellsides, siteId=self.siteId, siteX=self.siteX, 
+                           siteY=self.siteY, cutoutWKT=cutout)
       self._setCellMeasurements(size=cellCount)
       self._setVerify()
       

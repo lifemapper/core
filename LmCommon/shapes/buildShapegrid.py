@@ -147,7 +147,7 @@ def buildShapegrid(sgFn, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
                  cellSides))
    
    shapeId = 0
-   for wkt in wktGenerator():
+   for wkt in wktGenerator.next():
       geom = ogr.CreateGeometryFromWkt(wkt)
       geom.AssignSpatialReference(tSrs)
       c = geom.Centroid()
@@ -166,3 +166,32 @@ def buildShapegrid(sgFn, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
       feat.Destroy()
    ds.Destroy()
    return shapeId
+
+# ...............................................
+if __name__ == '__main__':
+   dlocation = '/tmp/shpgrid_test.shp'
+   (minX, minY, maxX, maxY) = (-180.0, -60.0, 180.0, 90.0)
+   cellsize = 1.0
+   epsgcode = 4326
+   cellsides = 4
+   (siteId, siteX, siteY) = ('siteid', 'centerX', 'centerY')
+   cutout = None
+    
+   count = buildShapegrid(dlocation, minX, minY, maxX, maxY, cellsize, epsgcode, 
+                          cellsides, siteId=siteId, siteX=siteX, siteY=siteY, 
+                          cutoutWKT=cutout) 
+   print count
+   print('Try ogrinfo on {}'.format(dlocation))
+   
+   
+"""
+from LmCommon.shapes.buildShapegrid import buildShapegrid
+
+(dlocation, minX, minY, maxX, maxY, cellsize, epsgcode, cellsides, siteId, 
+ siteX, siteY, cutout) = ('/tmp/shpgrid_test.shp', 
+ -180.0, -60.0, 180.0, 90.0, 1.0, 4326, 4, 'siteid', 'centerX', 'centerY', None)
+ 
+count = buildShapegrid(dlocation, minX, minY, maxX, maxY, cellsize, epsgcode, 
+cellsides, siteId=siteId, siteX=siteX, siteY=siteY, cutoutWKT=cutout) 
+
+"""
