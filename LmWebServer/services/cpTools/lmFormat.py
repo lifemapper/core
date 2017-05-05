@@ -54,9 +54,9 @@ def lmFormatter(f):
       for h in rawHeaders:
          if len(h.split(';')) > 1:
             mime, val = h.split(';')
-            valuedAccepts.append((mime, float(val.strip('q='))))
+            valuedAccepts.append((mime.strip(), float(val.strip('q='))))
          else:
-            valuedAccepts.append((h, 0.0))
+            valuedAccepts.append((h.strip(), 1.0))
       
       sortedAccepts = sorted(valuedAccepts, key=lambda x: x[1], reverse=True)
       
@@ -71,12 +71,12 @@ def lmFormatter(f):
                return gtiffObjectFormatter(handler_result)
             elif ah == LMFormat.SHAPE.getMimeType():
                return shapefileObjectFormatter(handler_result)
-         except Exception:
+         except Exception, e:
             # Ignore and try next accept header
-            pass
+            raise cherrypy.HTTPError(500, 'Failed: {}'.format(str(e)))
       # If we cannot find an acceptable formatter, raise HTTP error
       raise cherrypy.HTTPError(HTTPStatus.NOT_ACCEPTABLE, 
-                               'Could not an acceptable format')
+                               'Could not find an acceptable format')
             
       
       
