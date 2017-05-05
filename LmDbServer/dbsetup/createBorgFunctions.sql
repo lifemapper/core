@@ -582,7 +582,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtx(usr varchar,
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
-                                                    mtxid int,                                                    epsg int,
+                                                    mtxid int,
                                                     lyrid int)
    RETURNS varchar AS
 $$
@@ -1597,7 +1597,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countMtxCols(usr varchar,
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
-                                                    mtxid int,                                                    epsg int,
+                                                    mtxid int,
                                                     lyrid int)
    RETURNS int AS
 $$
@@ -1626,8 +1626,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColAtoms(firstRecNum int, maxNum int,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int
-                                                    mtxid int,                                                    epsg int,
+                                                    beforestat int,
+                                                    mtxid int,
                                                     lyrid int)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
@@ -1666,7 +1666,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColObjects(firstRecNum int, maxNum in
                                                     epsg int,
                                                     afterstat int,
                                                     beforestat int,
-                                                    mtxid int,                                                    epsg int,
+                                                    mtxid int,
                                                     lyrid int)
    RETURNS SETOF lm_v3.lm_matrixcolumn AS
 $$

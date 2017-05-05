@@ -37,10 +37,8 @@ Download the current Lifemapper roll files and shasums:
 
 #. **Caution** If want to **completely destroy** existing install, run::
 
-   # bash /opt/lifemapper/rocks/bin/clean-lm-server-roll.sh
-   # bash /opt/lifemapper/rocks/bin/clean-lm-compute-roll.sh
-   # rocks remove roll lifemapper-compute
-   # (cd /export/rocks/install; rocks create distro; yum clean all)
+   # bash /opt/lifemapper/rocks/etc/clean-lm-server-roll.sh
+   # bash /opt/lifemapper/rocks/etc/clean-lm-compute-roll.sh
 
 Install both rolls on Frontend
 ------------------------------
