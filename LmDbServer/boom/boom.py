@@ -28,7 +28,6 @@ import os, sys, time
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import JobStatus, OutputFormat
 from LmCommon.common.readyfile import readyFilename
-from LmCompute.common.lmObj import LmException
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
