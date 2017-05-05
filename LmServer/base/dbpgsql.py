@@ -396,12 +396,9 @@ class DbPostgresql(_DbConn):
 # ............................................................................ 
    def _createAtom(self, row, idxs):
       atom = None
-      epsg = None
       if row is not None:
-         if idxs.has_key('epsgcode'):
-            epsg = row[idxs['epsgcode']]
-         atom = Atom(row[idxs['id']], row[idxs['name']], row[idxs['modtime']],
-                     epsg=epsg)
+         atom = Atom(row[idxs['id']], row[idxs['name']], row[idxs['url']], 
+                     row[idxs['modtime']], epsg=row[idxs['epsgcode']])
       return atom
       
 # ............................................................................ 

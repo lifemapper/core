@@ -623,7 +623,7 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT envLayerId, lyrname, epsgcode, lyrmodtime FROM ';
+   cmd = 'SELECT envLayerId, lyrname, lyrmetadataUrl, epsgcode, lyrmodtime FROM ';
    IF scencode is not null THEN
       cmd = cmd || ' lm_v3.lm_scenlayer ';
    ELSE
@@ -1057,7 +1057,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT layerid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
+   cmd = 'SELECT layerid, displayName, lyrmetadataUrl, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
@@ -1534,7 +1534,7 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT layerid, name, epsgcode, modtime FROM lm_v3.layer ';
+   cmd = 'SELECT layerid, name, metadataUrl, epsgcode, modtime FROM lm_v3.layer ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterLayer(usr, sqd, aftertime, 
                                                        beforetime, epsg);
    ordercls = ' ORDER BY modtime DESC ';

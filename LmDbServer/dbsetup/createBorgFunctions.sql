@@ -254,7 +254,7 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT scenarioid, scenarioCode, epsgcode, modTime FROM lm_v3.scenario ';
+   cmd = 'SELECT scenarioid, scenarioCode, metadataUrl, epsgcode, modTime FROM lm_v3.scenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
 
@@ -710,7 +710,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT matrixId, null, grdepsgcode, statusmodtime FROM lm_v3.lm_fullmatrix ';
+   cmd = 'SELECT matrixId, null, metadataUrl, grdepsgcode, statusmodtime FROM lm_v3.lm_fullmatrix ';
    SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
                  altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
@@ -1214,7 +1214,7 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT occurrencesetid, displayname, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
+   cmd = 'SELECT occurrencesetid, displayname, metadataUrl, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
@@ -1601,7 +1601,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT matrixColumnId, squid, null, mtxcolstatusmodtime FROM lm_v3.lm_matrixcolumn ';
+   cmd = 'SELECT matrixColumnId, squid, null, null, mtxcolstatusmodtime FROM lm_v3.lm_matrixcolumn ';
    SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';

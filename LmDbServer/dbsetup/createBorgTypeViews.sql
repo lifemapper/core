@@ -606,6 +606,7 @@ DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
 CREATE TYPE lm_v3.lm_atom AS (
   id int,
   name varchar,
+  url varchar,
   epsgcode int,
   modtime double precision);
 
