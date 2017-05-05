@@ -147,7 +147,7 @@ def buildShapegrid(sgFn, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
                  cellSides))
    
    shapeId = 0
-   for wkt in wktGenerator.next():
+   for wkt in wktGenerator:
       geom = ogr.CreateGeometryFromWkt(wkt)
       geom.AssignSpatialReference(tSrs)
       c = geom.Centroid()
@@ -160,7 +160,7 @@ def buildShapegrid(sgFn, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
       feat.SetField(siteId, shapeId)
       
       # Check for intersection
-      if feat.Intersect(selectedPoly):
+      if geom.Intersection(selectedPoly):
          layer.CreateFeature(feat)
          shapeId += 1
       feat.Destroy()
