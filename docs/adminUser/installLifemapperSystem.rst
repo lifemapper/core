@@ -11,17 +11,17 @@ Current versions
 ----------------
 Download the current Lifemapper roll files and shasums:
 
-* lifemapper-compute-2016.11.21-0.x86_64.iso (and .sha)
-* lifemapper-server-2016.11.21-0.x86_64.iso
+* lifemapper-compute-<yyyy.mm.dd>-0.x86_64.iso (and .sha)
+* lifemapper-server-<yyyy.mm.dd>-0.x86_64.iso
 
 #. **Download** new LmServer and LmCompute rolls to server, then validate 
-   checksums.  Replace * in the wget command with current filenames::
+   checksums.  Replace filename with latest roll names::
 
    # cd /state/partition1/apps/
-   # wget http://lifemapper.org/dl/lifemapper-compute-latest.iso
-   # wget http://lifemapper.org/dl/lifemapper-compute-latest.sha
-   # wget http://lifemapper.org/dl/lifemapper-server-latest.iso
-   # wget http://lifemapper.org/dl/lifemapper-server-latest.sha
+   # wget http://lifemapper.org/dl/lifemapper-compute-2017.05.04-0.x86_64.disk1.iso
+   # wget http://lifemapper.org/dl/lifemapper-compute-2017.05.04-0.x86_64.disk1.sha
+   # wget http://lifemapper.org/dl/lifemapper-server-2017.05.04-0.x86_64.disk1.iso
+   # wget http://lifemapper.org/dl/lifemapper-server-2017.05.04-0.x86_64.disk1.sha
    # sha256sum -c lifemapper-*.sha
 
 (If update) Stop processes
@@ -40,6 +40,7 @@ Download the current Lifemapper roll files and shasums:
    # bash /opt/lifemapper/rocks/bin/clean-lm-server-roll.sh
    # bash /opt/lifemapper/rocks/bin/clean-lm-compute-roll.sh
    # rocks remove roll lifemapper-compute
+   # (cd /export/rocks/install; rocks create distro; yum clean all)
 
 Install both rolls on Frontend
 ------------------------------

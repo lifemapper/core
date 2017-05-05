@@ -581,7 +581,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtx(usr varchar,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int
+                                                    beforestat int,
                                                     mtxid int,                                                    epsg int,
                                                     lyrid int)
    RETURNS varchar AS
@@ -1520,7 +1520,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtxCols(usr varchar,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int
+                                                    beforestat int,
                                                     mtxid int,                                                    epsg int,
                                                     lyrid int)
    RETURNS varchar AS
@@ -1596,7 +1596,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countMtxCols(usr varchar,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int
+                                                    beforestat int,
                                                     mtxid int,                                                    epsg int,
                                                     lyrid int)
    RETURNS int AS
@@ -1665,7 +1665,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listMtxColObjects(firstRecNum int, maxNum in
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int
+                                                    beforestat int,
                                                     mtxid int,                                                    epsg int,
                                                     lyrid int)
    RETURNS SETOF lm_v3.lm_matrixcolumn AS

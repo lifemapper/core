@@ -1002,17 +1002,6 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-DROP  FUNCTION lm_v3.lm_countSDMProjects(usr varchar, 
-                                              dispname varchar,
-                                              aftertime double precision, 
-                                              beforetime double precision, 
-                                              epsg int,
-                                              afterstat int, 
-                                              beforestat int,
-                                              occsetid int, 
-                                              algcode varchar, 
-                                              mdlscencode varchar,
-                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_countSDMProjects(usr varchar, 
                                               sqd varchar,
                                               dispname varchar,
@@ -1046,18 +1035,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Note: returns LayerId
-DROP  FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum int, 
-                                              usr varchar, 
-                                              dispname varchar,
-                                              aftertime double precision, 
-                                              beforetime double precision, 
-                                              epsg int,
-                                              afterstat int, 
-                                              beforestat int,
-                                              occsetid int, 
-                                              algcode varchar, 
-                                              mdlscencode varchar,
-                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum int, 
                                               usr varchar, 
                                               sqd varchar,
