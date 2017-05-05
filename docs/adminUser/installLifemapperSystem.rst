@@ -137,8 +137,8 @@ LmServer
      
 #. **Test database contents** ::  
 
-   # export PGPASSWORD=`grep sdlapp /opt/lifemapper/rocks/etc/users | awk '{print $2}'`
-   # psql -U sdlapp -d borg
+   # export PGPASSWORD=`grep admin /opt/lifemapper/rocks/etc/users | awk '{print $2}'`
+   # psql -U admin -d borg
    psql (9.1.22)
    Type "help" for help.
    mal=> select scenariocode, userid from scenario;
