@@ -43,7 +43,7 @@ from LmWebServer.services.cpTools.lmFormat import lmFormatter
 # .............................................................................
 @cherrypy.expose
 @cherrypy.popargs('pathProjectionId')
-class SdmProject(LmService):
+class SdmProjectService(LmService):
    """
    @summary: This class is for the projections service.  The dispatcher is
                 responsible for calling the correct method
