@@ -678,10 +678,6 @@ def readConfigArgs(configFname):
    
 # ...............................................
 if __name__ == '__main__':
-   if not isCorrectUser():
-      print("Run this script as `lmwriter`")
-      sys.exit(2)
-
    # Created on roll install: lifemapper-server:lmdata-species
    defaultConfigFile = None
    # Use the argparse.ArgumentParser class to handle the command line arguments
@@ -700,6 +696,12 @@ if __name__ == '__main__':
     dataSource, occIdFname, gbifFname, idigFname, bisonFname, userOccFname, userOccSep, 
     minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, gridname, 
     intersectParams) = readConfigArgs(configFname)
+
+   if not isCorrectUser():
+      print("""
+            When not running this script as `lmwriter`, make sure to fix
+            permissions on the newly created shapegrid {}
+            """.format(gridname))
    
 # .............................
    basefilename = os.path.basename(__file__)
