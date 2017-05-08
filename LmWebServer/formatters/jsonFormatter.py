@@ -52,7 +52,7 @@ def formatAtom(obj):
       'id' : obj.id,
       'modificationTime' : formatTimeHuman(obj.modTime),
       'name' : obj.name,
-      'url' : obj.metadataUrl
+      'url' : obj.url
    }
 
 # .............................................................................
