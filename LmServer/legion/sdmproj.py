@@ -450,6 +450,7 @@ class SDMProjection(_ProjectionType, Raster):
       paramsSet = set(algoInfo)
       paramsHash = md5(str(paramsSet)).hexdigest()
 
+      # TODO: Determine if we should copy this to the workspace or something?
       paramsFname = self._earlJr.createFilename(LMFileType.TMP_JSON,
                                        objCode=paramsHash[:16], usr=self.getUserId())
       
@@ -780,8 +781,9 @@ class SDMProjection(_ProjectionType, Raster):
       """
       rules = []
       # Output
-      # TODO: Make sure this file is deleted on rollback  
-      rulesetFname = self.getModelFilename()
+      # TODO: Make sure this file is deleted on rollback
+      # TODO: Decide if we want to move this to final location or not  
+      rulesetFname = os.path.basename(self.getModelFilename())
       if not os.path.exists(rulesetFname):         
          if self.isATT():
             ptype = ProcessType.ATT_MODEL
@@ -789,7 +791,8 @@ class SDMProjection(_ProjectionType, Raster):
             ptype = ProcessType.OM_MODEL
             
          mdlName = self.getModelTarget()
-         occSetFname = self._occurrenceSet.getDLocation()         
+         # TODO: Determine if we want to do this a different way
+         occSetFname = os.path.basename(self._occurrenceSet.getDLocation())         
          mdlOpts = {'-w' : mdlName}
          args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in mdlOpts.iteritems()])
@@ -821,7 +824,8 @@ class SDMProjection(_ProjectionType, Raster):
       
       if JobStatus.waiting(self.status):
          outputRaster = self.getDLocation()
-         outTiff = outputRaster
+         # TODO: Evaluate
+         outTiff = os.path.basename(outputRaster)
          # Used for both base filenames and relative work directory
          basename = os.path.basename(os.path.splitext(outputRaster)[0])
 
@@ -831,7 +835,9 @@ class SDMProjection(_ProjectionType, Raster):
 
          # Rule for Model dependency
          statusFname = os.path.join(basename, "{}.status".format(basename))
-         packageFname = self.getProjPackageFilename()
+         
+         # TODO: Evaluate
+         packageFname = os.path.join(basename, self.getProjPackageFilename())
          # options for both GDALTranslate and SDMProject
          prjOpts = {'-w' : basename,
                     '-p' : packageFname,
@@ -871,7 +877,9 @@ class SDMProjection(_ProjectionType, Raster):
          prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in prjOpts.iteritems()])
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
-         modelFname = self.getModelFilename()
+         # TODO: Evalute
+         modelFname = os.path.basename(self.getModelFilename())
+         
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
          prjCmdArgs = [os.getenv('PYTHON'),
                        scriptFname,

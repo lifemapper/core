@@ -607,6 +607,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
    def computeMe(self):
       """
       @summary: Assemble command to create a shapefile from raw input
+      @todo: Consider copying raw data file to the workspace and using it for
+                computation.  Note in code
       """
       rules = []
       deps = None
@@ -615,7 +617,10 @@ class OccurrenceLayer(OccurrenceType, Vector):
          #          we'll save a step and have the outputs written to their final 
          #          location
          # TODO: Update with correct data locations
-         outFile = self.getDLocation()
+         
+         # TODO: Do we need to return this?  Or change / add a method?
+         outFile = os.path.basename(self.getDLocation())
+         
          bigFile = self.getDLocation(largeFile=True)
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          deps = []
@@ -635,11 +640,21 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # Process type specific arguments
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             cmdArgs.append(str(self.queryCount))
-            deps.append(self.getRawDLocation())
+            
+            # Note: I commented this out because Makeflow will not allow 
+            #          absolute paths for targets and dependencies.  Consider
+            #          adding a command that copies the raw file to the 
+            #          workspace
+            #deps.append(self.getRawDLocation())
+            
          # Read user-supplied metadata into string
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
             cmdArgs.append(self.rawMetaDLocation)
-            deps.extend([self.getRawDLocation(), self.rawMetaDLocation])
+            # Note: I commented this out because Makeflow will not allow 
+            #          absolute paths for targets and dependencies.  Consider
+            #          adding a command that copies the raw file to the 
+            #          workspace
+            #deps.extend([self.getRawDLocation(), self.rawMetaDLocation])
                
          cmdArgs.extend([outFile, 
                          bigFile,

@@ -29,6 +29,7 @@ from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.localconstants import APP_PATH
 from LmServer.legion.cmd import MfRule
+from LmServer.legion.sdmproj import SDMProjection
 
 # .............................................................................
 # .............................................................................
@@ -157,7 +158,13 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
       rules = []
       # Layer object may be an SDMProject
       if self.layer is not None:
-         inputLayerFname = self.layer.getDLocation()
+         # TODO: Clean this up.  Maybe we can put in temporary file functions
+         if isinstance(self.layer, SDMProjection):
+            inputLayerFname = os.path.join('prj_{}'.format(
+               self.layer.getId(), os.path.basename(self.layer.getDLocation())))
+         else:
+            inputLayerFname = self.layer.getDLocation()
+            
          # Layer input
          dependentFiles = [inputLayerFname]
          try:
@@ -169,7 +176,9 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
             rules.extend(lyrRules)
             
          # Shapegrid input
-         dependentFiles.append(self.shapegrid.getDLocation())
+         # TODO: Cannot use absolute path for shapegrid.  Copy to workspace if
+         #          we want to declare dependancy
+         #dependentFiles.append(self.shapegrid.getDLocation())
          if JobStatus.waiting(self.shapegrid.status):
             shpgrdRules = self.layer.computeMe()
             rules.extend(shpgrdRules)
