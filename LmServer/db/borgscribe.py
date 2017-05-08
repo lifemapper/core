@@ -36,6 +36,7 @@ from LmServer.common.lmconstants import (DbUser, DEFAULT_PROJECTION_FORMAT,
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
                                             PUBLIC_USER)
 from LmServer.legion.mtxcolumn import MatrixColumn
+from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.base.taxon import ScientificName
