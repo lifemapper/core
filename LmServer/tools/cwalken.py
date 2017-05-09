@@ -40,7 +40,7 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import BisonWoC, iDigBioWoC, GBIFWoC, UserWoC
+from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC
 
 # .............................................................................
 class ChristopherWalken(LMObject):
@@ -127,6 +127,7 @@ class ChristopherWalken(LMObject):
 
 # .............................................................................
    def _getOccWeaponOfChoice(self, userId, archiveName, epsg, boompath):
+      useGBIFTaxonIds = False
       # Get datasource and optional taxonomy source
       datasource = self.cfg.get(SERVER_BOOM_HEADING, 'DATASOURCE')
       try:
@@ -141,26 +142,10 @@ class ChristopherWalken(LMObject):
                             self.cfg.getint(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH'), 
                             self.cfg.getint(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY')).mjd
       # Get Weapon of Choice depending on type of Occurrence data to parse
-      # Bison data
-      if datasource == 'BISON':
-         bisonTsn = Config().get(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME')
-         bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
-         weaponOfChoice = BisonWoC(self._scribe, userId, archiveName, 
-                                   epsg, expDate, minPoints, bisonTsnFile, 
-                                   taxonSourceName=taxonSourceName, 
-                                   logger=self.log)
-      # iDigBio data
-      elif datasource == 'IDIGBIO':
-         idigTaxonids = Config().get(SERVER_BOOM_HEADING, 'IDIG_FILENAME')
-         idigTaxonidsFile = os.path.join(SPECIES_DATA_PATH, idigTaxonids)
-         weaponOfChoice = iDigBioWoC(self._scribe, userId, archiveName, 
-                                     epsg, expDate, minPoints, idigTaxonidsFile,
-                                     taxonSourceName=taxonSourceName, 
-                                     logger=self.log)
       # GBIF data
-      elif datasource == 'GBIF':
-         gbifTax = self.cfg.get(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME')
-         gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
+      if datasource == 'GBIF':
+#          gbifTax = self.cfg.get(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME')
+#          gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
          gbifOcc = self.cfg.get(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME')
          gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
          gbifProv = self.cfg.get(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME')
@@ -170,18 +155,33 @@ class ChristopherWalken(LMObject):
                                      providerFname=gbifProvFile, 
                                      taxonSourceName=taxonSourceName, 
                                      logger=self.log)
-      # User data, anything not above
+      # Bison data
+      elif datasource == 'BISON':
+         bisonTsn = Config().get(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME')
+         bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
+         weaponOfChoice = BisonWoC(self._scribe, userId, archiveName, 
+                                   epsg, expDate, minPoints, bisonTsnFile, 
+                                   taxonSourceName=taxonSourceName, 
+                                   logger=self.log)
       else:
-         userOccData = self.cfg.get(SERVER_BOOM_HEADING, 
-                               'USER_OCCURRENCE_DATA')
-         userOccDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
-                               'USER_OCCURRENCE_DATA_DELIMITER')
-         userOccCSV = os.path.join(boompath, userOccData + OutputFormat.CSV)
-         userOccMeta = os.path.join(boompath, userOccData + OutputFormat.METADATA)
+         useGBIFTaxonIds = True
+         # iDigBio data
+         if datasource == 'IDIGBIO':
+            dataVar = 'IDIG_OCCURRENCE_DATA'
+            delimiterVar = 'IDIG_OCCURRENCE_DATA_DELIMITER'
+         # User data, anything not above
+         else:
+            dataVar = 'USER_OCCURRENCE_DATA'
+            delimiterVar = 'USER_OCCURRENCE_DATA_DELIMITER'
+            
+         occData = self.cfg.get(SERVER_BOOM_HEADING, dataVar)
+         occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, delimiterVar) 
+         occCSV = os.path.join(boompath, occData + OutputFormat.CSV)
+         occMeta = os.path.join(boompath, occData + OutputFormat.METADATA)
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
-                                     epsg, expDate, minPoints, userOccCSV,
-                                     userOccMeta, userOccDelimiter, 
-                                     logger=self.log)
+                                  epsg, expDate, minPoints, occCSV, occMeta, 
+                                  occDelimiter, logger=self.log, 
+                                  useGBIFTaxonomy=useGBIFTaxonIds)
       return weaponOfChoice
 
 # .............................................................................

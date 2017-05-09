@@ -525,15 +525,20 @@ class UserWoC(_SpeciesWeaponOfChoice):
              LmDbServer/tools/occurrence.meta.example.  
              The parser writes each new text chunk to a file, inserts or updates  
              the Occurrence record and inserts any dependent objects.
+   @note: If useGBIFTaxonomy is true, the 'GroupBy' field in the metadata
+             should name the field containing the GBIF TaxonID for the accepted 
+             Taxon of each record in the group. 
    """
    def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-                userOccCSV, userOccMeta, userOccDelimiter, logger=None):
+                userOccCSV, userOccMeta, userOccDelimiter, logger=None,
+                useGBIFTaxonomy=False):
       super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
                                     minPoints, logger=logger)
       # User-specific attributes
       self.processType = ProcessType.USER_TAXA_OCCURRENCE
       self.metaFname = userOccMeta
       self.dataFname = userOccCSV
+      self.useGBIFTaxonomy = useGBIFTaxonomy
       self.occParser = None
       try:
          self.occParser = OccDataParser(logger, userOccCSV, userOccMeta, 
@@ -610,18 +615,26 @@ class UserWoC(_SpeciesWeaponOfChoice):
 
 # ...............................................
    def _getChunk(self):
+      """
+      @note: If useGBIFTaxonomy is true, the 'GroupBy' field should contain
+             the GBIF TaxonID for the accepted Taxon of each record in the group. 
+      """
       chunk = self.occParser.pullCurrentChunk()
       taxonName = self.occParser.nameValue
-      return chunk, len(chunk), taxonName
+      taxonKey = self.occParser.sortValue
+      return chunk, len(chunk), taxonName, taxonKey
       
 # ...............................................
    def getOne(self):
       occ = None
-      dataChunk, dataCount, taxonName  = self._getChunk()
+      dataChunk, dataCount, taxonName, taxonKey = self._getChunk()
       if dataChunk and taxonName:
          # Get or insert ScientificName (squid)
-         bbsciName = ScientificName(taxonName, userId=self.userId)
-         sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
+         if self.useGBIFTaxonomy:
+            sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, None)
+         else:
+            bbsciName = ScientificName(taxonName, userId=self.userId)
+            sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
          if sciName is not None:
             occ = self._createOrResetOccurrenceset(sciName, None, dataCount, 
                                                    data=dataChunk)
@@ -645,158 +658,6 @@ class UserWoC(_SpeciesWeaponOfChoice):
          rdloc = None
          self.log.debug('Unable to write CSV file {}'.format(rdloc))
       return rdloc
-
-
-# ..............................................................................
-class ArchiveWoC(_SpeciesWeaponOfChoice):
-   """
-   @summary: Parses a CSV file (with headers) of Occurrences using a metadata 
-             file.  A template for the metadata, with instructions, is at 
-             LmDbServer/tools/occurrence.meta.example.  
-             The parser writes each new text chunk to a file, inserts or updates  
-             the Occurrence record and inserts any dependent objects.
-   """
-   def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-                occIdFname, logger=None):
-      super(ArchiveWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                    minPoints, logger=logger)
-      # User-specific attributes
-      self.authorizedDataUsers = [PUBLIC_USER]
-      self.processType = None
-      self._occIdFile = None
-      try:
-         self._occIdFile = open(occIdFname, 'r') 
-#          self._occIdFile.
-      except Exception, e:
-         raise LMError(currargs=e.args)
-      self._linenum = 0
-      
-# ...............................................
-   def _getOrCloneOccurrenceset(self, occId):
-      """
-      @param origOcc: OccurrenceLayer to be cloned for this user
-      """
-      currtime = dt.gmt().mjd
-      occ = None
-      origOcc = self._scribe.getOcc(occId)
-      if origOcc is None: 
-         self._scribe.log.info('Missing occurrenceLayer {}'.format(occId))
-      else:
-         origUser = origOcc.getUserId()
-         if origUser == self.userId:
-            self._scribe.log.info('occurrenceLayer {} exists for user {}'
-                         .format(id, self.userId))
-            occ = origOcc
-         elif origUser not in self.authorizedDataUsers:
-            self._scribe.log.info('User {} is unauthorized to clone data from user {}'
-                                  .format(self.userId, origUser))
-         elif not JobStatus.finished(origOcc.status):
-            self._scribe.log.info('Unable to clone unfinished occurrenceLayer {} for user {}'
-                         .format(id, self.userId))
-         else:
-            self._scribe.log.info('Clone occurrenceLayer {} for user {}'
-                         .format(id, self.userId))
-            sciName = origOcc.getScientificName()
-            # Copy existing metadata to database with User owner
-            tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, 
-                  origOcc.epsgcode, origOcc.queryCount, squid=origOcc.squid, 
-                  ogrType=wkbPoint, processType=None, status=JobStatus.COMPLETE, 
-                  statusModTime=currtime, sciName=sciName)
-            try:
-               occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
-               self.log.info('Found or inserted OccLayer {}'.format(occ.getId()))
-            except Exception, e:
-               if not isinstance(e, LMError):
-                  e = LMError(currargs=e.args, lineno=self.getLineno())
-               raise e
-            # Copy existing data to filesystem in User space
-            if not os.path.exists(occ.getDLocation()):
-               occ.copyData(origOcc.getDLocation())
-      return occ
-
-# ...............................................
-   def _getNextId(self):
-      occId = None
-      while occId is None and not self.complete:
-         try:
-            self._linenum += 1
-            tmp = self._occIdFile.readline()
-         except EOFError:
-            self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
-            self.close()
-         except Exception, e:
-            self._scribe.log.info('Failed to readline {} on line {}'
-                            .format(str(e), self._linenum))
-         else:
-            try:
-               occId = int(tmp.strip())
-            except Exception, e:
-               self._scribe.log.info('Unable to get Id from data {} on line {}'
-                               .format(tmp, self._linenum))
-      return occId
-
-# ...............................................
-   def close(self):
-      try:
-         self.occIdFile.close()
-      except:
-         self.log.error('Unable to close occIdFile with file {}'
-                        .format(self.occIdFile.name))
-               
-# ...............................................
-   @property
-   def complete(self):
-      try:
-         return self._occIdFile.closed
-      except:
-         return True
-      
-      
-# ...............................................
-   @property
-   def nextStart(self):
-      if self.complete:
-         return 0
-      else:
-         return self._linenum+1
-
-# ...............................................
-   @property
-   def thisStart(self):
-      if self.complete:
-         return 0
-      else:
-         return self._linenum
-
-# ...............................................
-   def moveToStart(self):
-      startline = self._findStart()         
-      if startline < 2:
-         self._linenum = 0
-      else:
-         # Move to line before startline
-         while self._linenum < (startline-1) and not self.complete:
-            try:
-               self._linenum += 1
-               self._occIdFile.readline()
-            except EOFError:
-               self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
-               self.close()
-            except Exception, e:
-               self._scribe.log.info('Failed to readline {} on line {}'
-                               .format(str(e), self._linenum))
-            
-# ...............................................
-   def _getChunk(self):
-      chunk = self.occParser.pullCurrentChunk()
-      taxonName = self.occParser.nameValue
-      return chunk, len(chunk), taxonName
-      
-# ...............................................
-   def getOne(self):
-      occId  = self._getNextId()
-      occ = self._getOrCloneOccurrenceset(occId)
-      return occ
 
 # ..............................................................................
 class GBIFWoC(_SpeciesWeaponOfChoice):
@@ -1011,133 +872,283 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                      .format(len(currChunk), currKey, self._currKeyFirstRecnum))
       return currKey, currChunk
          
-# ..............................................................................
-class iDigBioWoC(_SpeciesWeaponOfChoice):
-   """
-   @summary: Parses an iDigBio provided file of GBIF Taxon ID, count, binomial, 
-             creating a chain of SDM objs for each, unless the species is 
-             up-to-date. 
-   """
-   def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-                idigFname, taxonSourceName=None, logger=None):
-      super(iDigBioWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                     minPoints, taxonSourceName=taxonSourceName, logger=logger)
-      self.processType = ProcessType.IDIGBIO_TAXA_OCCURRENCE
-      # iDigBio-specific file of (GBIF) accepted taxon-ids
-      try:
-         self._idigFile = open(idigFname, 'r')
-      except:
-         raise LMError(currargs='Unable to open {}'.format(idigFname))
+# # ..............................................................................
+# class iDigBioWoC(_SpeciesWeaponOfChoice):
+#    """
+#    @summary: Parses an iDigBio provided file of GBIF Taxon ID, count, binomial, 
+#              creating a chain of SDM objs for each, unless the species is 
+#              up-to-date. 
+#    """
+#    def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
+#                 idigFname, taxonSourceName=None, logger=None):
+#       super(iDigBioWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+#                      minPoints, taxonSourceName=taxonSourceName, logger=logger)
+#       self.processType = ProcessType.IDIGBIO_TAXA_OCCURRENCE
+#       # iDigBio-specific file of (GBIF) accepted taxon-ids
+#       try:
+#          self._idigFile = open(idigFname, 'r')
+#       except:
+#          raise LMError(currargs='Unable to open {}'.format(idigFname))
+# 
+#       self._currBinomial = None
+#       self._currGbifTaxonId = None
+#       self._currReportedCount = None
+#          
+# # ...............................................
+#    def getOne(self):
+#       occ = None
+#       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
+#       if taxonKey is not None:
+#          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
+#          if sciName is not None:
+#             occ = self._createOrResetOccurrenceset(sciName, taxonKey, taxonCount)         
+#          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
+#                        .format(taxonKey, taxonName, taxonCount, self.nextStart))
+#       return occ
+#    
+# # ...............................................
+#    def close(self):
+#       try:
+#          self._idigFile.close()
+#       except:
+#          self.log.error('Unable to close idigFile {}'.format(self._idigFile))
+#       
+# # ...............................................
+#    @property
+#    def complete(self):
+#       return self._idigFile.closed
+#                   
+# # ...............................................
+#    @property
+#    def nextStart(self):
+#       if self.complete:
+#          return 0
+#       else:
+#          return self._linenum+1
+# 
+# # ...............................................
+#    @property
+#    def thisStart(self):
+#       if self.complete:
+#          return 0
+#       else:
+#          return self._linenum
+# 
+# # ...............................................
+#    def _getCurrTaxon(self):
+#       """
+#       @summary: Returns currGbifTaxonId, currReportedCount, currBinomial 
+#       """
+#       currGbifTaxonId = currReportedCount = currName = None
+#       line = self._getNextLine(self._idigFile)
+#          
+#       if line is not None:
+#          tempvals = line.strip().split()
+#          if len(tempvals) < 3:
+#             print('Missing data in line {}'.format(line))
+#          else:
+#             try:
+#                currGbifTaxonId = int(tempvals[0])
+#             except:
+#                pass
+#             try:
+#                currReportedCount = int(tempvals[1])
+#             except:
+#                pass
+#             tempvals = tempvals[1:]
+#             tempvals = tempvals[1:]
+#             try:
+#                currName = ' '.join(tempvals)
+#             except:
+#                pass
+#       return currGbifTaxonId, currReportedCount, currName
+# 
+# # ...............................................
+#    def moveToStart(self):
+#       startline = self._findStart()         
+#       if startline < 1:
+#          self._linenum = 0
+#       else:
+#          taxonKey, taxonCount, taxonName = self._getCurrTaxon()
+#          while taxonName is not None and self._linenum < startline-1:
+#             taxonKey, taxonCount, taxonName = self._getCurrTaxon()
+#          
+# # ...............................................
+#    def _countRecords(self, rawfname):
+#       pointcount = 0
+#       try:
+#          f  = open(rawfname, 'r')
+#          blob = f.read()
+#       except Exception, e:
+#          self.log.debug('Failed to read {}'.format(rawfname))
+#       else:
+#          pointcount = len(blob.split('\n')) - 1
+#       finally:
+#          try:
+#             f.close()
+#          except:
+#             pass
+#          
+#       return pointcount
+#     
+# # ...............................................
+#    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
+#       if taxonSourceKeyVal is None:
+#          raise LMError(currargs='Missing taxonSourceKeyVal for iDigBio query url')
+#       return str(taxonSourceKeyVal)
+# 
+# # .............................................................................
 
-      self._currBinomial = None
-      self._currGbifTaxonId = None
-      self._currReportedCount = None
-         
-# ...............................................
-   def getOne(self):
-      occ = None
-      taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-      if taxonKey is not None:
-         sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
-         if sciName is not None:
-            occ = self._createOrResetOccurrenceset(sciName, taxonKey, taxonCount)         
-         self.log.info('Processed key/name {}/{}, with {} records; next start {}'
-                       .format(taxonKey, taxonName, taxonCount, self.nextStart))
-      return occ
-   
-# ...............................................
-   def close(self):
-      try:
-         self._idigFile.close()
-      except:
-         self.log.error('Unable to close idigFile {}'.format(self._idigFile))
-      
-# ...............................................
-   @property
-   def complete(self):
-      return self._idigFile.closed
-                  
-# ...............................................
-   @property
-   def nextStart(self):
-      if self.complete:
-         return 0
-      else:
-         return self._linenum+1
-
-# ...............................................
-   @property
-   def thisStart(self):
-      if self.complete:
-         return 0
-      else:
-         return self._linenum
-
-# ...............................................
-   def _getCurrTaxon(self):
-      """
-      @summary: Returns currGbifTaxonId, currReportedCount, currBinomial 
-      """
-      currGbifTaxonId = currReportedCount = currName = None
-      line = self._getNextLine(self._idigFile)
-         
-      if line is not None:
-         tempvals = line.strip().split()
-         if len(tempvals) < 3:
-            print('Missing data in line {}'.format(line))
-         else:
-            try:
-               currGbifTaxonId = int(tempvals[0])
-            except:
-               pass
-            try:
-               currReportedCount = int(tempvals[1])
-            except:
-               pass
-            tempvals = tempvals[1:]
-            tempvals = tempvals[1:]
-            try:
-               currName = ' '.join(tempvals)
-            except:
-               pass
-      return currGbifTaxonId, currReportedCount, currName
-
-# ...............................................
-   def moveToStart(self):
-      startline = self._findStart()         
-      if startline < 1:
-         self._linenum = 0
-      else:
-         taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-         while taxonName is not None and self._linenum < startline-1:
-            taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-         
-# ...............................................
-   def _countRecords(self, rawfname):
-      pointcount = 0
-      try:
-         f  = open(rawfname, 'r')
-         blob = f.read()
-      except Exception, e:
-         self.log.debug('Failed to read {}'.format(rawfname))
-      else:
-         pointcount = len(blob.split('\n')) - 1
-      finally:
-         try:
-            f.close()
-         except:
-            pass
-         
-      return pointcount
-    
-# ...............................................
-   def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
-      if taxonSourceKeyVal is None:
-         raise LMError(currargs='Missing taxonSourceKeyVal for iDigBio query url')
-      return str(taxonSourceKeyVal)
-
-# .............................................................................
-
+# # ..............................................................................
+# class ArchiveWoC(_SpeciesWeaponOfChoice):
+#    """
+#    @summary: Parses a CSV file (with headers) of Occurrences using a metadata 
+#              file.  A template for the metadata, with instructions, is at 
+#              LmDbServer/tools/occurrence.meta.example.  
+#              The parser writes each new text chunk to a file, inserts or updates  
+#              the Occurrence record and inserts any dependent objects.
+#    """
+#    def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
+#                 occIdFname, logger=None):
+#       super(ArchiveWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+#                                     minPoints, logger=logger)
+#       # User-specific attributes
+#       self.authorizedDataUsers = [PUBLIC_USER]
+#       self.processType = None
+#       self._occIdFile = None
+#       try:
+#          self._occIdFile = open(occIdFname, 'r') 
+# #          self._occIdFile.
+#       except Exception, e:
+#          raise LMError(currargs=e.args)
+#       self._linenum = 0
+#       
+# # ...............................................
+#    def _getOrCloneOccurrenceset(self, occId):
+#       """
+#       @param origOcc: OccurrenceLayer to be cloned for this user
+#       """
+#       currtime = dt.gmt().mjd
+#       occ = None
+#       origOcc = self._scribe.getOcc(occId)
+#       if origOcc is None: 
+#          self._scribe.log.info('Missing occurrenceLayer {}'.format(occId))
+#       else:
+#          origUser = origOcc.getUserId()
+#          if origUser == self.userId:
+#             self._scribe.log.info('occurrenceLayer {} exists for user {}'
+#                          .format(id, self.userId))
+#             occ = origOcc
+#          elif origUser not in self.authorizedDataUsers:
+#             self._scribe.log.info('User {} is unauthorized to clone data from user {}'
+#                                   .format(self.userId, origUser))
+#          elif not JobStatus.finished(origOcc.status):
+#             self._scribe.log.info('Unable to clone unfinished occurrenceLayer {} for user {}'
+#                          .format(id, self.userId))
+#          else:
+#             self._scribe.log.info('Clone occurrenceLayer {} for user {}'
+#                          .format(id, self.userId))
+#             sciName = origOcc.getScientificName()
+#             # Copy existing metadata to database with User owner
+#             tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, 
+#                   origOcc.epsgcode, origOcc.queryCount, squid=origOcc.squid, 
+#                   ogrType=wkbPoint, processType=None, status=JobStatus.COMPLETE, 
+#                   statusModTime=currtime, sciName=sciName)
+#             try:
+#                occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
+#                self.log.info('Found or inserted OccLayer {}'.format(occ.getId()))
+#             except Exception, e:
+#                if not isinstance(e, LMError):
+#                   e = LMError(currargs=e.args, lineno=self.getLineno())
+#                raise e
+#             # Copy existing data to filesystem in User space
+#             if not os.path.exists(occ.getDLocation()):
+#                occ.copyData(origOcc.getDLocation())
+#       return occ
+# 
+# # ...............................................
+#    def _getNextId(self):
+#       occId = None
+#       while occId is None and not self.complete:
+#          try:
+#             self._linenum += 1
+#             tmp = self._occIdFile.readline()
+#          except EOFError:
+#             self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
+#             self.close()
+#          except Exception, e:
+#             self._scribe.log.info('Failed to readline {} on line {}'
+#                             .format(str(e), self._linenum))
+#          else:
+#             try:
+#                occId = int(tmp.strip())
+#             except Exception, e:
+#                self._scribe.log.info('Unable to get Id from data {} on line {}'
+#                                .format(tmp, self._linenum))
+#       return occId
+# 
+# # ...............................................
+#    def close(self):
+#       try:
+#          self.occIdFile.close()
+#       except:
+#          self.log.error('Unable to close occIdFile with file {}'
+#                         .format(self.occIdFile.name))
+#                
+# # ...............................................
+#    @property
+#    def complete(self):
+#       try:
+#          return self._occIdFile.closed
+#       except:
+#          return True
+#       
+#       
+# # ...............................................
+#    @property
+#    def nextStart(self):
+#       if self.complete:
+#          return 0
+#       else:
+#          return self._linenum+1
+# 
+# # ...............................................
+#    @property
+#    def thisStart(self):
+#       if self.complete:
+#          return 0
+#       else:
+#          return self._linenum
+# 
+# # ...............................................
+#    def moveToStart(self):
+#       startline = self._findStart()         
+#       if startline < 2:
+#          self._linenum = 0
+#       else:
+#          # Move to line before startline
+#          while self._linenum < (startline-1) and not self.complete:
+#             try:
+#                self._linenum += 1
+#                self._occIdFile.readline()
+#             except EOFError:
+#                self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
+#                self.close()
+#             except Exception, e:
+#                self._scribe.log.info('Failed to readline {} on line {}'
+#                                .format(str(e), self._linenum))
+#             
+# # ...............................................
+#    def _getChunk(self):
+#       chunk = self.occParser.pullCurrentChunk()
+#       taxonName = self.occParser.nameValue
+#       return chunk, len(chunk), taxonName
+#       
+# # ...............................................
+#    def getOne(self):
+#       occId  = self._getNextId()
+#       occ = self._getOrCloneOccurrenceset(occId)
+#       return occ
 
 """
 """
