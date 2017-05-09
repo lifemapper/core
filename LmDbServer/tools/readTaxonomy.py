@@ -1,5 +1,6 @@
 import csv
 import mx.DateTime
+import os
 
 from LmCommon.common.lmconstants import GBIF
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
@@ -73,9 +74,10 @@ def readTaxonomy(logger, taxonSourceName, taxonFilename):
                                              taxonKey=taxonkey, sciName=sciName)
          if upSciName:
             totalIn += 1
+            logger.info('Found or inserted {}'.format(scinameStr))
          else:
             totalOut += 1
-   print('Inserted or updated {}; failed {}; wrongRank {}'
+   logger.info('Found or inserted {}; failed {}; wrongRank {}'
          .format(totalIn, totalOut, totalWrongRank))
    f.close()
    scribe.closeConnections()
@@ -85,7 +87,9 @@ def readTaxonomy(logger, taxonSourceName, taxonFilename):
 # MAIN
 # ...............................................
 if __name__ == '__main__':   
-   logger = ThreadLogger('readGbif')
+   basefilename = os.path.basename(__file__)
+   basename, ext = os.path.splitext(basefilename)
+   logger = ThreadLogger(basename)
    readTaxonomy(logger, TAXONOMIC_SOURCE['GBIF']['name'], GBIF_TAXONOMY_DUMP_FILE)
 
 
