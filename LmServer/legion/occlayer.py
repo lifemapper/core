@@ -619,9 +619,11 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # TODO: Update with correct data locations
          
          # TODO: Do we need to return this?  Or change / add a method?
-         outFile = os.path.basename(self.getDLocation())
+         outFile = os.path.join('pt_{}'.format(self.getId()), 
+                                os.path.basename(self.getDLocation()))
          
-         bigFile = self.getDLocation(largeFile=True)
+         bigFile = os.path.join('pt_{}'.format(self.getId()),
+                                os.path.basename(self.getDLocation(largeFile=True)))
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          deps = []
          cmdArgs = ["LOCAL",

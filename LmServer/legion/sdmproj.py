@@ -792,7 +792,8 @@ class SDMProjection(_ProjectionType, Raster):
             
          mdlName = self.getModelTarget()
          # TODO: Determine if we want to do this a different way
-         occSetFname = os.path.basename(self._occurrenceSet.getDLocation())         
+         occSetFname = os.path.join('pt_{}'.format(self._occurrenceSet.getId()),
+                           os.path.basename(self._occurrenceSet.getDLocation()))         
          mdlOpts = {'-w' : mdlName}
          args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in mdlOpts.iteritems()])
