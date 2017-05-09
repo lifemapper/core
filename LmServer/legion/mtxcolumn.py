@@ -159,11 +159,12 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
       # Layer object may be an SDMProject
       if self.layer is not None:
          # TODO: Clean this up.  Maybe we can put in temporary file functions
-         if isinstance(self.layer, SDMProjection):
-            inputLayerFname = os.path.join('prj_{}'.format(
-               self.layer.getId(), os.path.basename(self.layer.getDLocation())))
-         else:
-            inputLayerFname = self.layer.getDLocation()
+         #if isinstance(self.layer, SDMProjection):
+         #   inputLayerFname = os.path.join('prj_{}'.format(
+         #      self.layer.getId(), os.path.basename(self.layer.getDLocation())))
+         #else:
+         
+         inputLayerFname = os.path.basename(self.layer.getDLocation())
             
          # Layer input
          dependentFiles = [inputLayerFname]
