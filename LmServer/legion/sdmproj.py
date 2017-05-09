@@ -823,9 +823,9 @@ class SDMProjection(_ProjectionType, Raster):
       rules = []
       
       if JobStatus.waiting(self.status):
-         outputRaster = self.getDLocation()
-         # TODO: Evaluate
-         outTiff = os.path.basename(outputRaster)
+         #TODO: Evaluate
+         outputRaster = os.path.basename(self.getDLocation())
+         outTiff = outputRaster
          # Used for both base filenames and relative work directory
          basename = os.path.basename(os.path.splitext(outputRaster)[0])
 
@@ -837,7 +837,7 @@ class SDMProjection(_ProjectionType, Raster):
          statusFname = os.path.join(basename, "{}.status".format(basename))
          
          # TODO: Evaluate
-         packageFname = os.path.join(basename, self.getProjPackageFilename())
+         packageFname = os.path.join(basename, os.path.basename(self.getProjPackageFilename()))
          # options for both GDALTranslate and SDMProject
          prjOpts = {'-w' : basename,
                     '-p' : packageFname,
