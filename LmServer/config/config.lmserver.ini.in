@@ -62,7 +62,8 @@ GBIF_PROVIDER_FILENAME: gbif_orgs.txt
 BISON_TSN_FILENAME: bison_species_tsns.txt
 
 ;; Used when DATASOURCE is IDIGBIO 
-IDIG_FILENAME: idig_gbifids.txt
+IDIG_OCCURRENCE_DATA: idig_occurrences_localities
+IDIG_OCCURRENCE_DATA_DELIMITER: ,
 
 ;; The default SPECIES_DATA set on 'lifemapper-server' roll installation
 ;; Used only when DATASOURCE is <> GBIF, IDIGBIO, or BISON. 

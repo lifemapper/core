@@ -28,7 +28,7 @@ from LmServer.common.localconstants import PID_PATH
 from LmServer.common.lmconstants import SPECIES_DATA_PATH
 from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
      GBIF_OCCURRENCE_FILENAME, GBIF_PROVIDER_FILENAME, BISON_TSN_FILENAME , 
-     IDIG_FILENAME, USER_OCCURRENCE_DATA)                  
+     IDIG_OCCURRENCE_DATA, USER_OCCURRENCE_DATA)                  
 
 # ............................................................................
 
@@ -37,7 +37,11 @@ GBIF_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_OCCURRENCE_FILENAME)
 GBIF_TAXONOMY_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_TAXONOMY_FILENAME)
 GBIF_PROVIDER_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_PROVIDER_FILENAME)
 BISON_TSN_FILE = os.path.join(SPECIES_DATA_PATH, BISON_TSN_FILENAME)
-IDIGBIO_FILE = os.path.join(SPECIES_DATA_PATH, IDIG_FILENAME)
+
+IDIG_OCCURRENCE_CSV = os.path.join(SPECIES_DATA_PATH, 
+                                   IDIG_OCCURRENCE_DATA + OutputFormat.CSV)
+IDIG_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH, 
+                                    IDIG_OCCURRENCE_DATA + OutputFormat.METADATA)
 
 USER_OCCURRENCE_CSV = os.path.join(SPECIES_DATA_PATH, 
                                    USER_OCCURRENCE_DATA + OutputFormat.CSV)
