@@ -21,11 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import argparse
-import inspect
 import mx.DateTime
 import os
-import sys
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
@@ -40,7 +37,7 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       GRID_CELLSIZE, GRID_NUM_SIDES)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
+from LmServer.common.lmconstants import (LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
                                             POINT_COUNT_MIN)
@@ -49,7 +46,6 @@ from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.sdm.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
@@ -63,16 +59,15 @@ CURR_MJD = mx.DateTime.gmt().mjd
 # .............................................................................
 class ArchiveFiller(LMObject):
    """
-   Class to ChristopherWalken with a species iterator through a sequence of 
-   species data creating a Spud for each species.
+   Class to populate a Lifemapper database with inputs for a BOOM archive, and 
+   write a configuration file for computations on the inputs.
    """
 # .............................................................................
 # Constructor
 # .............................................................................
    def __init__(self, configFname=None):
       """
-      @summary Constructor for ChristopherWalken class which creates a Spud 
-               (Single-species Makeflow chain) for a species.
+      @summary Constructor for ArchiveFiller class.
       """
       super(ArchiveFiller, self).__init__()
       (self.usr,
@@ -121,6 +116,14 @@ class ArchiveFiller(LMObject):
       except:
          fname = None
       return fname
+   
+   # ...............................................
+   @property
+   def userPath(self):
+      earl = EarlJr()
+      pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
+      return pth
+
          
 # ...............................................
    def _warnPermissions(self):
@@ -823,7 +826,3 @@ if __name__ == '__main__':
    filler.initBoom()
    filler.close()
     
-"""
-$PYTHON LmDbServer/boom/initboom.py  --config_file /opt/lifemapper/LmDbServer/tools/boom.sample.ini
-
-"""

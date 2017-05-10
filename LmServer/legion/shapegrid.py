@@ -24,9 +24,6 @@
 from osgeo import ogr, osr
 import os
 from types import IntType
-import math
-import numpy as np
-# import rtree
 
 from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
                               DEFAULT_OGR_FORMAT, JobStatus, ProcessType)
