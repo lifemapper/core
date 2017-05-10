@@ -217,10 +217,13 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                 assemble into a LMMatrix, then test and catalog results.
       """
       rules = []
-      matrixOutputFname = self.getDLocation()
+
+      #TODO: Update
+      matrixOutputFname = os.path.basename(self.getDLocation())
       # Triage "Mash the potato" rule 
       tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
-                                     [triageInFname], [triageOutFname],
+                                     [], [triageOutFname],
+                                     #TODO: Reinstate? [triageInFname], [triageOutFname],
                                      cmdArgs=[triageInFname, triageOutFname],
                                      local=True)
       rules.append(tRule)
