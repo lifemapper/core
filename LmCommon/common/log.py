@@ -192,6 +192,17 @@ class LmLogger(logging.Logger):
             return True
       return False
    
+   # ...............................................
+   @property
+   def baseFilename(self):
+      fname = None
+      for h in self.log.handlers:
+         try:
+            fname = h.baseFilename
+            return fname
+         except:
+            pass
+   
 # .............................................................................
 class DaemonLogger(LmLogger):
    """
