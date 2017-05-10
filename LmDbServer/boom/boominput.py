@@ -124,7 +124,6 @@ class ArchiveFiller(LMObject):
       pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
       return pth
 
-         
 # ...............................................
    def _warnPermissions(self):
       if not isCorrectUser():

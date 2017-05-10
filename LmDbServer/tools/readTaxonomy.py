@@ -43,7 +43,7 @@ class TaxonFiller(LMObject):
 
       # ...............................................
    def close(self):
-      f.close()
+      self._taxonFile.close()
       self.scribe.closeConnections()
 
    # ...............................................
