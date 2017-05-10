@@ -66,7 +66,7 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, maxPoints):
    with open(pointCsvFn) as inF:
       csvInputBlob = inF.readlines()
    
-   if len(csvInputBlob.strip()) == 0:
+   if len(csvInputBlob) == 0:
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The provided CSV was empty")
    return parseCsvData(csvInputBlob, ProcessType.GBIF_TAXA_OCCURRENCE, outFile, 
