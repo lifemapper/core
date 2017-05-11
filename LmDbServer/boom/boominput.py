@@ -97,7 +97,11 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
        self.cellsides,
        self.cellsize,
        self.gridname, 
-       self.intersectParams) = self.readConfigArgs(configFname)
+       self.intersectParams, 
+       self.allScens, 
+       self.epsgcode, 
+       self.mapunits, 
+       self.envPackageMetaFilename) = self.readConfigArgs(configFname)
       try:
          self.scribe = self._getDb()
       except: 
@@ -158,12 +162,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       usrEmail = self._findConfigOrDefault(config, 'ARCHIVE_USER_EMAIL', 
                                  '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
       archiveName = self._findConfigOrDefault(config, 'ARCHIVE_NAME', PUBLIC_ARCHIVE_NAME)
-      envPackageName = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE', SCENARIO_PACKAGE)
-      if envPackageName is not None:
-         modelScenCode = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
-                                              None, isList=False)
-         prjScenCodeList = self._findConfigOrDefault(config, 
-                        'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
+      
       dataSource = self._findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
       dataSource = dataSource.upper()
       occIdFname = self._findConfigOrDefault(config, 'OCCURRENCE_ID_FILENAME', None)
@@ -205,11 +204,20 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
                          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
                          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
+      # Find package name or code list, check for scenarios and epsg, mapunits
+      envPackageName = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE', SCENARIO_PACKAGE)
+      if envPackageName is not None:
+         modelScenCode = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
+                                              None, isList=False)
+         prjScenCodeList = self._findConfigOrDefault(config, 
+                        'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
+      allScens, epsg, mapunits, envPackageMetaFilename = self._getScenarios()
+      
       return (usr, usrEmail, archiveName, envPackageName, modelScenCode, prjScenCodeList, 
               dataSource, occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, 
               minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, 
-              gridname, intersectParams)
+              gridname, intersectParams, allScens, epsg, mapunits, envPackageMetaFilename)
       
    # ...............................................
    def writeConfigFile(self, mdlMaskName=None, prjMaskName=None):
@@ -382,7 +390,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
    # ...............................................
    def _createScenarios(self):
       # Imports META
-      META, metafname, pkgMeta, elyrMeta = self.pullClimatePackageMetadata()
+      META, envPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
       if self.gridbbox is None:
          self.gridbbox = pkgMeta['bbox']
       epsg = elyrMeta['epsg']
@@ -402,8 +410,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
                                            META.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
       allScens[basescen.code] = basescen
-      self._addScenarioAndLayerMetadata(allScens)
-      return allScens, epsg, mapunits, metafname
+      return allScens, epsg, mapunits, envPackageMetaFilename
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -661,41 +668,36 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       return predScenarios
    
    # ...............................................
-   def _addScenarioAndLayerMetadata(self, scenarios):
+   def addScenariosAndLayers(self):
       """
       @summary Add scenario and layer metadata to database  
       """
-      for scode, scen in scenarios.iteritems():
-         self.scribe.log.info('Insert scenario {}'.format(scode))
-         newscen = self.scribe.findOrInsertScenario(scen)
-   
-   # ...............................................
+      for scode, scen in self.allScens.iteritems():
+         if scen.getId() is not None:
+            self.scribe.log.info('Insert scenario {}'.format(scode))
+            newscen = self.scribe.findOrInsertScenario(scen)
+         else:
+            self.scribe.log.info('Scenario {} exists'.format(scode))
    
    # ...............................................
    def _findClimatePackageMetadata(self):
-      # TODO: Remove `v2` Debug
-      debugMetaname = os.path.join(ENV_DATA_PATH, '{}.v2{}'.format(self.envPackageName, 
-                                                               OutputFormat.PYTHON))
-      if os.path.exists(debugMetaname):
-         metafname = debugMetaname
-      else:
-         metafname = os.path.join(ENV_DATA_PATH, '{}{}'.format(self.envPackageName, 
-                                                               OutputFormat.PYTHON))      
-      if not os.path.exists(metafname):
+      envPackageMetaFilename = os.path.join(ENV_DATA_PATH, 
+                     '{}{}'.format(self.envPackageName, OutputFormat.PYTHON))      
+      if not os.path.exists(envPackageMetaFilename):
          raise LMError(currargs='Climate metadata {} does not exist'
-                       .format(metafname))
+                       .format(envPackageMetaFilename))
       # TODO: change to importlib on python 2.7 --> 3.3+  
       try:
          import imp
-         META = imp.load_source('currentmetadata', metafname)
+         META = imp.load_source('currentmetadata', envPackageMetaFilename)
       except Exception, e:
          raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                       .format(metafname, e))
-      return META, metafname
+                       .format(envPackageMetaFilename, e))
+      return META, envPackageMetaFilename
    
    # ...............................................
-   def pullClimatePackageMetadata(self):
-      META, metafname = self._findClimatePackageMetadata()
+   def _pullClimatePackageMetadata(self):
+      META, envPackageMetaFilename = self._findClimatePackageMetadata()
       # Combination of scenario and layer attributes making up these data 
       pkgMeta = META.CLIMATE_PACKAGES[self.envPackageName]
       
@@ -730,7 +732,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
                     'resolution': resInMapunits, 
                     'gdaltype': gdaltype, 
                     'gdalformat': gdalformat}
-      return META, metafname, pkgMeta, elyrMeta
+      return META, envPackageMetaFilename, pkgMeta, elyrMeta
 
    # ...............................................
    def _addIntersectGrid(self):
@@ -750,7 +752,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       return newshp
       
    # ...............................................
-   def addArchive(self, allScens, configFname):
+   def addArchive(self):
       """
       @summary: Create a Shapegrid, PAM, and Gridset for this archive's Global PAM
       """
@@ -760,7 +762,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                       configFilename=configFname, epsgcode=self.epsgcode, 
+                       configFilename=self.envPackageMetaFilename, epsgcode=self.epsgcode, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAMs (one per scenario)
@@ -768,7 +770,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       matrixType = MatrixType.PAM
       if self.usr == PUBLIC_USER:
          matrixType = MatrixType.ROLLING_PAM
-      for scen in allScens.values():
+      for scen in self.allScens.values():
          meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
                  ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
          tmpGpam = LMMatrix(None, matrixType=matrixType, 
@@ -782,18 +784,18 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       return shp, updatedGrdset, globalPAMs
 
    # ...............................................
-   def addScenarios(self):
+   def _getScenarios(self):
       legalUsers = [PUBLIC_USER, self.usr]
       # Codes for existing Scenarios
       if self.modelScenCode and self.prjScenCodeList:
-         metafname = None
+         envPackageMetaFilename = None
          # This fills or resets epsgcode, mapunits, gridbbox
          allScens, epsg, mapunits = self._checkScenarios(legalUsers)
       # Data/metadata for new Scenarios
       else:
          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-         allScens, epsg, mapunits, metafname = self._createScenarios()
-      return allScens, epsg, mapunits, metafname
+         allScens, epsg, mapunits, envPackageMetaFilename = self._createScenarios()
+      return allScens, epsg, mapunits, envPackageMetaFilename
 
    # ...............................................
    def addAlgorithms(self):
@@ -822,9 +824,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       aIds = self.addAlgorithms()
    
       # Add or get Scenarios
-      allScens, epsg, mapunits, metafname = self.addScenarios()
-      self.epsgcode = epsg
-      self.mapunits = mapunits
+      self.addScenariosAndLayers()
          
       # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
       # Test a subset of OccurrenceIds provided as BOOM species input
@@ -832,7 +832,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
          self._checkOccurrenceSets()
    
       # Add ShapeGrid, Global PAM, Gridset, 
-      shpGrid, archiveGridset, globalPAMs = self.addArchive(allScens, metafname)
+      shpGrid, archiveGridset, globalPAMs = self.addArchive()
    
       # Insert all taxonomic sources for now
       self.scribe.log.info('  Insert taxonomy metadata ...')
@@ -840,8 +840,8 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
          taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
          
       # Write config file for this archive
-      prjScencodes = allScens.keys()
-      newConfigFilename = self._writeConfigFile(prjScenCodes=prjScencodes)
+      prjScencodes = self.allScens.keys()
+      newConfigFilename = self.writeConfigFile(prjScenCodes=prjScencodes)
       self.scribe.log.info('Wrote {}'.format(newConfigFilename))
    
 # ...............................................
