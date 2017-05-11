@@ -132,9 +132,11 @@ class MFChain(ProcessObject):
       @summary: Return temporary dummy filename written to indicate completion  
                 of this MFChain.
       """
-      earlJr = EarlJr()
-      pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
-      fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
+      #TODO: Update with something more specific
+      #earlJr = EarlJr()
+      #pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
+      #fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
+      fname = os.path.join('arf', '{}_{}.arf'.format(prefix, self.objId))
       return fname
 
 # ...............................................
@@ -144,9 +146,14 @@ class MFChain(ProcessObject):
                 This file is used as input for triage to jettison failures
                 from inputs to another MF.
       """
-      earlJr = EarlJr()
-      pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
-      fname = os.path.join(pth, '{}_{}{}'.format
+      # TODO: Do this a different way.  Unfortunately we have to handle this differently
+      if prefix == 'mashedPotato':
+         fname = os.path.join(prefix, '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext))
+      else:
+         #TODO: Update
+         earlJr = EarlJr()
+         pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
+         fname = os.path.join(pth, '{}_{}{}'.format
                            (prefix, self.objId, LMFormat.TXT.ext))
       return fname
 
@@ -157,10 +164,12 @@ class MFChain(ProcessObject):
                 This file is used as input for triage to jettison failures
                 from inputs to another MF.
       """
-      earlJr = EarlJr()
-      pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
-      fname = os.path.join(pth, '{}_{}{}'.format
-                           (prefix, self.objId, LMFormat.TXT.ext))
+      #TODO: Update
+      #earlJr = EarlJr()
+      #pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
+      #fname = os.path.join(pth, '{}_{}{}'.format
+      #                     (prefix, self.objId, LMFormat.TXT.ext))
+      fname = os.path.join(prefix, '{}_{}{}'.format(prefix, self.objId, LMFormat.TXT.ext))
       return fname
 
 # ...............................................
