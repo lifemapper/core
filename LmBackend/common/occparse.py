@@ -310,9 +310,9 @@ class OccDataParser(object):
          fldLat = fldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
          fldGrp = fldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
          fldTaxa = fldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
-      except:
-         raise Exception('Missing one of required field roles ({}) in metadata'
-                         .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
+      except Exception, e:
+         raise Exception('Error: {}; Missing required field role(s) {}'
+                  .format(str(e), ','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
       
       for i in range(len(header)):         
          oname = header[i]
