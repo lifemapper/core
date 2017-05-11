@@ -97,10 +97,14 @@ class ArchiveFiller(LMObject):
          self.scribe = self._getDb()
       except: 
          raise
+      self.open()
       (self.allScens, 
+       newModelScenCode,
        self.epsgcode, 
        self.mapunits, 
-       self.envPackageMetaFilename) = self._getScenarios()      
+       self.envPackageMetaFilename) = self._getScenarios()
+      if newModelScenCode is  not None:
+         self.modelScenCode = newModelScenCode
       self._warnPermissions()
       
    # ...............................................
@@ -403,7 +407,7 @@ class ArchiveFiller(LMObject):
                                            META.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
       allScens[basescen.code] = basescen
-      return allScens, epsg, mapunits, basescen.code, envPackageMetaFilename
+      return allScens, basescen.code, epsg, mapunits, envPackageMetaFilename
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -779,6 +783,7 @@ class ArchiveFiller(LMObject):
    # ...............................................
    def _getScenarios(self):
       legalUsers = [PUBLIC_USER, self.usr]
+      newModelScenCode = None
       # Codes for existing Scenarios
       if self.modelScenCode and self.prjScenCodeList:
          envPackageMetaFilename = None
@@ -787,10 +792,9 @@ class ArchiveFiller(LMObject):
       # Data/metadata for new Scenarios
       else:
          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-         (allScens, epsg, mapunits, modelScenCode, 
+         (allScens, newModelScenCode, epsg, mapunits, 
           envPackageMetaFilename) = self._createScenarios()
-         self.modelScenCode = modelScenCode
-      return allScens, epsg, mapunits, envPackageMetaFilename
+      return allScens, newModelScenCode, epsg, mapunits, envPackageMetaFilename
 
    # ...............................................
    def addAlgorithms(self):
@@ -845,3 +849,7 @@ if __name__ == '__main__':
    filler.initBoom()
    filler.close()
     
+"""
+from LmDbServer.boom.boominput import ArchiveFiller
+
+"""
