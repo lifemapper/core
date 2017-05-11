@@ -62,11 +62,6 @@ class ArchiveFiller(LMObject):
    """
    Class to populate a Lifemapper database with inputs for a BOOM archive, and 
    write a configuration file for computations on the inputs.
-select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-CONUS',
-'http://notyeti-191.lifemapper.org/services/lm/scenarios/#id#',
-'{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "future", "radiative forcing +8.5", "likely temperature increase 2.6 to 4.8 C by 2081-2100"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from AR5, Community Climate System Model, 4.0, RCP8.5, 2061-2080, 30sec, CONUS", "title": "AR5, Community Climate System Model, 4.0, RCP8.5, 2061-2080, 30sec, CONUS"}',
-'CCSM4','RCP8.5','2070','dd',0.0083333,4326,'-125.00,24.00,-66.00,50.00',
-'POLYGON((-125 24,-125 50,-66 50,-66 24,-125 24))',57884.6207045);   
    """
 # .............................................................................
 # Constructor
@@ -98,15 +93,14 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
        self.cellsize,
        self.gridname, 
        self.intersectParams) = self.readConfigArgs(configFname)
-      (self.allScens, 
-       self.epsgcode, 
-       self.mapunits, 
-       self.envPackageMetaFilename) = self._getScenarios()
-
       try:
          self.scribe = self._getDb()
       except: 
          raise
+      (self.allScens, 
+       self.epsgcode, 
+       self.mapunits, 
+       self.envPackageMetaFilename) = self._getScenarios()      
       self._warnPermissions()
       
    # ...............................................
@@ -217,7 +211,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
               dataSource, occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, 
               minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, 
-              gridname, intersectParams, allScens, epsg, mapunits, envPackageMetaFilename)
+              gridname, intersectParams)
       
    # ...............................................
    def writeConfigFile(self, mdlMaskName=None, prjMaskName=None):
@@ -285,7 +279,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(self.mapunits))
       # Scenario codes, created from environmental metadata  
       f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(self.mdlScenCode))
-      pcodes = ','.join(self.prjScenCodeList)
+      pcodes = ','.join(self.allScens.keys())
       f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
       
       if mdlMaskName is not None:
@@ -401,7 +395,6 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
                                                       META.LAYERTYPE_META,
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
-      self.modelScenCode = basescen.code
       self.scribe.log.info('     Created base scenario {}'.format(basescen.code))
       # Predicted Past and Future
       allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
@@ -410,7 +403,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
                                            META.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
       allScens[basescen.code] = basescen
-      return allScens, epsg, mapunits, envPackageMetaFilename
+      return allScens, epsg, mapunits, basescen.code, envPackageMetaFilename
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -794,7 +787,9 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
       # Data/metadata for new Scenarios
       else:
          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-         allScens, epsg, mapunits, envPackageMetaFilename = self._createScenarios()
+         (allScens, epsg, mapunits, modelScenCode, 
+          envPackageMetaFilename) = self._createScenarios()
+         self.modelScenCode = modelScenCode
       return allScens, epsg, mapunits, envPackageMetaFilename
 
    # ...............................................
@@ -840,8 +835,7 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
          taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
          
       # Write config file for this archive
-      prjScencodes = self.allScens.keys()
-      newConfigFilename = self.writeConfigFile(prjScenCodes=prjScencodes)
+      newConfigFilename = self.writeConfigFile()
       self.scribe.log.info('Wrote {}'.format(newConfigFilename))
    
 # ...............................................
