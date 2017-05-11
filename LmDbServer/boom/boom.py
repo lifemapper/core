@@ -100,7 +100,8 @@ class Boomer(Daemon):
          self.christopher = ChristopherWalken(self.configFname,
                                               scribe=self._scribe)
       except Exception, e:
-         raise LMError(currargs='Failed to initialize Chris ({})'.format(e))
+         raise LMError(currargs='Failed to initialize Chris with config {} ({})'
+                       .format(self.configFname, e))
 
       self.spudArfFnames = []
       # potatoes = {scencode: (potatoChain, rawPotatoFile)
