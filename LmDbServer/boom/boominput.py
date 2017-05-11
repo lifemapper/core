@@ -37,7 +37,7 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       GRID_CELLSIZE, GRID_NUM_SIDES)
 from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (LMFileType, ENV_DATA_PATH, 
+from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
                                             POINT_COUNT_MIN)
@@ -52,6 +52,7 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.sdm.algorithm import Algorithm
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
@@ -61,6 +62,11 @@ class ArchiveFiller(LMObject):
    """
    Class to populate a Lifemapper database with inputs for a BOOM archive, and 
    write a configuration file for computations on the inputs.
+select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-CONUS',
+'http://notyeti-191.lifemapper.org/services/lm/scenarios/#id#',
+'{"keywords": ["bioclimatic variables", "climate", "elevation", "predicted", "future", "radiative forcing +8.5", "likely temperature increase 2.6 to 4.8 C by 2081-2100"], "author": "National Center for Atmospheric Research (NCAR) http://www.cesm.ucar.edu/models/ccsm4.0/", "description": "Worldclim1.4, Soil, SpatialDistance and predicted climate calculated from AR5, Community Climate System Model, 4.0, RCP8.5, 2061-2080, 30sec, CONUS", "title": "AR5, Community Climate System Model, 4.0, RCP8.5, 2061-2080, 30sec, CONUS"}',
+'CCSM4','RCP8.5','2070','dd',0.0083333,4326,'-125.00,24.00,-66.00,50.00',
+'POLYGON((-125 24,-125 50,-66 50,-66 24,-125 24))',57884.6207045);   
    """
 # .............................................................................
 # Constructor
@@ -371,7 +377,7 @@ class ArchiveFiller(LMObject):
             self.scribe.log.warn('Configured mapunits {} does not match Scenario mapunits {}'
                             .format(self.mapunits, mapunits))
             self.mapunits = mapunits
-      return allScens
+      return allScens, epsg, mapunits
          
    # ...............................................
    def _createScenarios(self):
@@ -379,25 +385,25 @@ class ArchiveFiller(LMObject):
       META, metafname, pkgMeta, elyrMeta = self.pullClimatePackageMetadata()
       if self.gridbbox is None:
          self.gridbbox = pkgMeta['bbox']
-      self.epsgcode = elyrMeta['epsg']
-      self.mapunits = elyrMeta['mapunits']
+      epsg = elyrMeta['epsg']
+      mapunits = elyrMeta['mapunits']
       self.scribe.log.info('  Insert climate {} metadata ...'.format(self.envPackageName))
       # Current
-      basescen, staticLayers = self._createBaselineScenario(self.usr, pkgMeta, elyrMeta, 
+      basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
                                                       META.LAYERTYPE_META,
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
       self.modelScenCode = basescen.code
       self.scribe.log.info('     Created base scenario {}'.format(basescen.code))
       # Predicted Past and Future
-      allScens = self._createPredictedScenarios(self.usr, pkgMeta, elyrMeta, 
+      allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
                                            META.LAYERTYPE_META, staticLayers,
                                            META.OBSERVED_PREDICTED_META,
                                            META.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
       allScens[basescen.code] = basescen
       self._addScenarioAndLayerMetadata(allScens)
-      return allScens, metafname
+      return allScens, epsg, mapunits, metafname
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -449,7 +455,7 @@ class ArchiveFiller(LMObject):
       return name
     
    # ...............................................
-   def _getBaselineLayers(self, usr, pkgMeta, baseMeta, elyrMeta, lyrtypeMeta):
+   def _getBaselineLayers(self, pkgMeta, baseMeta, elyrMeta, lyrtypeMeta):
       """
       @summary Assembles layer metadata for a single layerset
       """
@@ -689,7 +695,7 @@ class ArchiveFiller(LMObject):
    
    # ...............................................
    def pullClimatePackageMetadata(self):
-      META, metafname = self._findClimatePackageMetadata(self.envPackageName)
+      META, metafname = self._findClimatePackageMetadata()
       # Combination of scenario and layer attributes making up these data 
       pkgMeta = META.CLIMATE_PACKAGES[self.envPackageName]
       
@@ -754,7 +760,7 @@ class ArchiveFiller(LMObject):
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                       configFilename=configFname, epsgcode=self.epsg, 
+                       configFilename=configFname, epsgcode=self.epsgcode, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAMs (one per scenario)
@@ -782,12 +788,30 @@ class ArchiveFiller(LMObject):
       if self.modelScenCode and self.prjScenCodeList:
          metafname = None
          # This fills or resets epsgcode, mapunits, gridbbox
-         allScens = self._checkScenarios(legalUsers)
+         allScens, epsg, mapunits = self._checkScenarios(legalUsers)
       # Data/metadata for new Scenarios
       else:
          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-         allScens, metafname = self._createScenarios()
-      return allScens, metafname
+         allScens, epsg, mapunits, metafname = self._createScenarios()
+      return allScens, epsg, mapunits, metafname
+
+   # ...............................................
+   def addAlgorithms(self):
+      """
+      @summary Adds algorithms to the database from the algorithm dictionary
+      """
+      ids = []
+      for alginfo in Algorithms.implemented():
+         meta = {'name': alginfo.name, 
+                 'isDiscreteOutput': alginfo.isDiscreteOutput,
+                 'outputFormat': alginfo.outputFormat,
+                 'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
+         alg = Algorithm(alginfo.code, metadata=meta)
+         self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
+         algid = self.scribe.findOrInsertAlgorithm(alg)
+         ids.append(algid)
+      return ids
+   
    
    # ...............................................
    def initBoom(self):
@@ -798,7 +822,9 @@ class ArchiveFiller(LMObject):
       aIds = self.addAlgorithms()
    
       # Add or get Scenarios
-      allScens, metafname = self.addScenarios()
+      allScens, epsg, mapunits, metafname = self.addScenarios()
+      self.epsgcode = epsg
+      self.mapunits = mapunits
          
       # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
       # Test a subset of OccurrenceIds provided as BOOM species input
