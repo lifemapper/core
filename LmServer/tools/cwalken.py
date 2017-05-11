@@ -167,17 +167,20 @@ class ChristopherWalken(LMObject):
          useGBIFTaxonIds = True
          # iDigBio data
          if datasource == 'IDIGBIO':
-            dataVar = 'IDIG_OCCURRENCE_DATA'
-            delimiterVar = 'IDIG_OCCURRENCE_DATA_DELIMITER'
+            occData = self.cfg.get(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA')
+            occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
+                                        'IDIG_OCCURRENCE_DATA_DELIMITER') 
+            occCSV = os.path.join(SPECIES_DATA_PATH, occData + OutputFormat.CSV)
+            occMeta = os.path.join(SPECIES_DATA_PATH, 
+                                   occData + OutputFormat.METADATA)
          # User data, anything not above
          else:
-            dataVar = 'USER_OCCURRENCE_DATA'
-            delimiterVar = 'USER_OCCURRENCE_DATA_DELIMITER'
+            occData = self.cfg.get(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA')
+            occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
+                                        'USER_OCCURRENCE_DATA_DELIMITER') 
+            occCSV = os.path.join(boompath, occData + OutputFormat.CSV)
+            occMeta = os.path.join(boompath, occData + OutputFormat.METADATA)
             
-         occData = self.cfg.get(SERVER_BOOM_HEADING, dataVar)
-         occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, delimiterVar) 
-         occCSV = os.path.join(boompath, occData + OutputFormat.CSV)
-         occMeta = os.path.join(boompath, occData + OutputFormat.METADATA)
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
                                   epsg, expDate, minPoints, occCSV, occMeta, 
                                   occDelimiter, logger=self.log, 
@@ -471,6 +474,7 @@ class ChristopherWalken(LMObject):
 """
 userId='kubi'
 
+from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
                      OutputFormat, SERVER_BOOM_HEADING) 
@@ -493,8 +497,9 @@ from LmServer.tools.cwalken import *
 logger = ScriptLogger('testchris')
 scribe = BorgScribe(logger)
 scribe.openConnections()
-fname = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
-chris = ChristopherWalken(fname, scribe=scribe)
+configFile = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
+configFile = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'
+chris = ChristopherWalken(configFile, scribe=scribe)
 
 (chris.userId, chris.archiveName, chris.boompath, chris.weaponOfChoice, 
  chris.epsg, chris.algs, chris.mdlScen, chris.mdlMask, chris.prjScens, chris.prjMask, 
