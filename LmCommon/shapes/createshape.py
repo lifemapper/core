@@ -722,6 +722,7 @@ from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
 from LmServer.common.log import ScriptLogger
 import ast
 
+# ......................................................
 # User test
 csvfname = '/share/lm/data/archive/ryan/000/000/000/059/pt_59.csv'
 metafname = '/share/lm/data/archive/ryan/heuchera_all.meta'
@@ -738,86 +739,22 @@ shaper = ShapeShifter(ptype, blob, 32, logger=logger, metadata=metad)
 shaper.writeOccurrences(outfname, maxPoints=50, bigfname=bigfname, isUser=True)
 
 
+# ......................................................
 # GBIF test
-pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.csv'
-count =  1001407
-outFile = '/share/lm/data/archive/kubi/000/000/000/041/pt_41.shp'
-bigFile = '/share/lm/data/archive/kubi/000/000/000/041/bigpt_41.shp'
+pointsCsvFn = '/share/lm/data/archive/kubi/000/000/000/235/pt_235.csv'
+count =  456
+outFile = '/tmp/pt_235.shp'
+bigFile = '/tmp/bigpt_235.shp'
 maxPoints = 500
-processType=ProcessType.GBIF_TAXA_OCCURRENCE
+ptype=ProcessType.GBIF_TAXA_OCCURRENCE
 
-with open(pointCsvFn) as inF:
-   rawData = inF.read()
-
-readyFilename(outFile, overwrite=True)
-readyFilename(bigFile, overwrite=True)
-logger = LmComputeLogger('crap')
-shaper = ShapeShifter(processType, rawData, count, logger=logger)
-#shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile, isUser=False)
-
-discardIndices = shaper._getSubset(maxPoints)
-outDs = shaper._createDataset(outfname)
-outLyr = shaper._addFieldDef(outDs)
-lyrDef = outLyr.GetLayerDefn()
-   
-if len(discardIndices) > 0 and bigfname is not None:
-   bigDs = shaper._createDataset(bigfname)
-   bigLyr = shaper._addFieldDef(bigDs)
-
-recDict = shaper._getRecord()
-   while recDict is not None:
-      try:
-         # Add non-discarded features to regular layer
-         if self._currRecum not in discardIndices:
-            self._createFillFeat(lyrDef, recDict, outLyr)
-         # Add all features to optional "Big" layer
-         if bigDs is not None:
-            self._createFillFeat(lyrDef, recDict, bigLyr)
-      except Exception, e:
-         print('Failed to create record ({})'.format((e)))
-      recDict = self._getRecord()
-                        
-   # Return metadata
-   (minX, maxX, minY, maxY) = outLyr.GetExtent()
-   geomtype = lyrDef.GetGeomType()
-   fcount = outLyr.GetFeatureCount()
-   # Close dataset and flush to disk
-   outDs.Destroy()
-   self._finishWrite(outfname, minX, maxX, minY, maxY, geomtype, fcount)
-                     
-   # Close Big dataset and flush to disk
-   if bigDs is not None:
-      bigcount = bigLyr.GetFeatureCount()
-      bigDs.Destroy()
-      self._finishWrite(bigfname, minX, maxX, minY, maxY, geomtype, bigcount)
-      
-except LmException, e:
-   raise
-except Exception, e:
-   raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
-                     'Unable to read or write data ({})'
-                     .format(e))
+with open(pointsCsvFn) as inF:
+   blob = inF.read()
+shaper = ShapeShifter(ptype, blob, count, logger=logger)
+shaper.writeOccurrences(outFile, maxPoints=maxPoints, bigfname=bigFile)
 
 
+# ......................................................
 # IDIG test
-taxid = 2427616
-
-if os.path.exists(outfilename):
-   import glob
-   basename, ext = os.path.splitext(outfilename)
-   fnames = glob.glob(basename + '*')
-   for fname in fnames:
-      print('Removing {}'.format(fname))
-      os.remove(fname)
-
-occAPI = IdigbioAPI()
-occList = occAPI.queryByGBIFTaxonId(taxid)
-
-count = len(occList)
-
-shaper = ShapeShifter(ProcessType.IDIGBIO_TAXA_OCCURRENCE, occList, count)
-
-shaper.writeOccurrences(outfilename, maxPoints=40, 
-                        subsetfname=subsetOutfilename)
    
 """
