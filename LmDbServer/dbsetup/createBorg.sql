@@ -183,7 +183,7 @@ create table lm_v3.EnvLayer
  (
     scenarioId serial UNIQUE PRIMARY KEY,
     userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
-    scenarioCode varchar(30),
+    scenarioCode varchar(60),
     metadataUrl text UNIQUE,
 
     -- JSON with title, author, description
