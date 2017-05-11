@@ -1,12 +1,12 @@
 # .............................................................................
 # Note: This file must have the same basename as the CSV file it describes
+# Note: Field names MUST BE in the first row of the CSV data file
 # 
 # This file must contain a Python dictionary with:
 #     Key = field name or field role
 #     Value = if field heading, tuple: (Shortname, Type [, AcceptedValues])
 #             if field role, string: one of the existing field headings
 # 
-# Key field name in the first row of the CSV data file
 # Shortname must be 10 characters or fewer and will be used in the shapefile 
 #   created for each dataset.  
 # Type must be 'integer', 'string', or 'real'

@@ -314,8 +314,11 @@ class OccDataParser(object):
          raise Exception('Error: {}; Missing required field role(s) {}'
                   .format(str(e), ','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
       
-      for i in range(len(header)):         
+      for i in range(len(header)):
          oname = header[i]
+         if oname not in fldmeta.keys():
+            raise Exception('Header fieldname {} missing from metadata'
+                            .format(oname))
          shortname = fldmeta[oname][0]
          ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
          fieldNames.append(shortname)
@@ -654,7 +657,7 @@ from LmCommon.common.lmconstants import (OutputFormat, ENCODING,
 from LmCompute.common.log import TestLogger
 from LmServer.common.localconstants import APP_PATH
 
-relpath = '/share/lm/data/archive/biotaphy/'
+relpath = '/share/lmserver/data/species/'
 dataname = 'idig_occurrences_localities'
 
 pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
@@ -664,12 +667,12 @@ metadata = pthAndBasename + OutputFormat.METADATA
 delimiter = ','
 
 # Read metadata file/stream
-fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)
-   
-fldLon = fieldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
-fldLat = fieldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
-fldGrp = fieldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
-fldTaxa = fieldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
+fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)   
+csvreader, _file = OccDataParser.getReader(data, delimiter)
+
+# Read CSV header
+tmpList = csvreader.next()
+header = [fldname.strip() for fldname in tmpList]
 
 (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
  nameIdx) = OccDataParser.getMetadata(fieldmeta, header)
