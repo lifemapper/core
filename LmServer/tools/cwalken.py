@@ -90,8 +90,8 @@ class ChristopherWalken(LMObject):
 
       (self.userId, self.archiveName, self.boompath, self.weaponOfChoice, 
        self.epsg, self.algs, self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
-       self.boomGridset, self.intersectParams, self.assemblePams) = \
-                         self._getConfiguredObjects()
+       self.boomGridset, self.intersectParams, 
+       self.assemblePams) = self._getConfiguredObjects()
 
       # Global PAM Matrix for each scenario
       self.globalPAMs = {}
@@ -464,8 +464,7 @@ class ChristopherWalken(LMObject):
       return updatedMFChain
 
 """
-userId='ryan'
-archiveName='Heuchera_archive'
+userId='kubi'
 
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
@@ -486,8 +485,27 @@ from LmServer.legion.sdmproj import SDMProjection
 from LmServer.tools.occwoc import BisonWoC, iDigBioWoC, GBIFWoC, UserWoC
 from LmServer.tools.cwalken import *
 
-logger = ScriptLogger('-'.join([userId, archiveName]))
-chris = ChristopherWalken(userId=userId, archiveName=archiveName, logger=logger)
+logger = ScriptLogger('testchris')
+scribe = BorgScribe(logger)
+scribe.openConnections()
+fname = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
+chris = ChristopherWalken(fname, scribe=scribe)
+
+(chris.userId, chris.archiveName, chris.boompath, chris.weaponOfChoice, 
+ chris.epsg, chris.algs, chris.mdlScen, chris.mdlMask, chris.prjScens, chris.prjMask, 
+ chris.boomGridset, chris.intersectParams, 
+ chris.assemblePams) = chris._getConfiguredObjects()
+
+# Global PAM Matrix for each scenario
+chris.globalPAMs = {}
+
+# One Global PAM for each scenario
+if chris.assemblePams:
+   for prjscen in chris.prjScens:
+      chris.globalPAMs[prjscen.code] = chris.boomGridset.getPAMForCodes(
+                     prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
+
+
 
 chris.moveToStart()
 chris.startWalken()

@@ -107,6 +107,7 @@ class ArchiveFiller(LMObject):
        self.envPackageMetaFilename) = self._getScenarios()
       if newModelScenCode is  not None:
          self.modelScenCode = newModelScenCode
+      self.prjScenCodeList = self.allScens.keys()
       # If running as root, new user filespace must have permissions corrected
       self._warnPermissions()
       
@@ -228,13 +229,16 @@ class ArchiveFiller(LMObject):
               intersectParams)
       
    # ...............................................
-   def writeConfigFile(self, mdlMaskName=None, prjMaskName=None):
+   def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
       """
       """
-      earl = EarlJr()
-      pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
-      newConfigFilename = os.path.join(pth, 
-                           '{}{}'.format(self.archiveName, OutputFormat.CONFIG))
+      if fname is not None:
+         newConfigFilename = fname
+      else:
+         earl = EarlJr()
+         pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
+         newConfigFilename = os.path.join(pth, 
+                              '{}{}'.format(self.archiveName, OutputFormat.CONFIG))
       f = open(newConfigFilename, 'w')
       f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
       f.write('ARCHIVE_USER: {}\n'.format(self.usr))
@@ -292,8 +296,8 @@ class ArchiveFiller(LMObject):
       f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(self.epsgcode))
       f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(self.mapunits))
       # Scenario codes, created from environmental metadata  
-      f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(self.mdlScenCode))
-      pcodes = ','.join(self.allScens.keys())
+      f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(self.modelScenCode))
+      pcodes = ','.join(self.prjScenCodeList)
       f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
       
       if mdlMaskName is not None:
@@ -863,6 +867,7 @@ if __name__ == '__main__':
 from LmDbServer.boom.boominput import ArchiveFiller
 filler = ArchiveFiller()
 filler.open()
+filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 filler.initBoom()
 filler.close()
 
