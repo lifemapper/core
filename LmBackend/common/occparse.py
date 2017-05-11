@@ -41,7 +41,7 @@ class OccDataParser(object):
    FIELD_ROLE_LONGITUDE = 'Longitude'
    FIELD_ROLE_LATITUDE = 'Latitude'
    FIELD_ROLE_GROUPBY = 'GroupBy'
-   FIELD_ROLE_TAXANAME = 'Taxa'
+   FIELD_ROLE_TAXANAME = 'TaxaName'
    REQUIRED_FIELD_ROLES = [FIELD_ROLE_LONGITUDE, FIELD_ROLE_LATITUDE, 
                            FIELD_ROLE_GROUPBY, FIELD_ROLE_TAXANAME]
 
@@ -132,13 +132,13 @@ class OccDataParser(object):
          (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
           nameIdx) = self.getMetadata(fieldmeta, self.header)
       except Exception, e:
-         self.log.warning(str(e))
-         try:
-            (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
-             nameIdx) = self.getMetadataDeprecated(fieldmeta, self.header)
-         except Exception, e:
-            raise Exception('Failed to read header or metadata, ({})'
-                            .format(str(e))) 
+#          self.log.warning(str(e))
+#          try:
+#             (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
+#              nameIdx) = self.getMetadataDeprecated(fieldmeta, self.header)
+#          except Exception, e:
+         raise Exception('Failed to read header or metadata, ({})'
+                         .format(str(e))) 
       self.fieldNames = fieldNames
       self.fieldCount = len(fieldNames)
       self.fieldTypes = fieldTypes
@@ -236,48 +236,48 @@ class OccDataParser(object):
          raise Exception('Failed to read or open {}'.format(metadata))
       return fieldmeta, metadataFname
          
-   # .............................................................................
-   @staticmethod
-   def getMetadataDeprecated(fldmeta, header):
-      """
-      @copydoc LmBackend.common.occparse.OccDataParser::getMetadata()
-      """
-      fieldNames = []
-      fieldTypes = []
-      filters = {}
-      idIdx = xIdx = yIdx = sortIdx = nameIdx = None
-
-      for i in range(len(header)):         
-         oname = header[i]
-         shortname = fldmeta[oname][0]
-         ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
-         fieldNames.append(shortname)
-         fieldTypes.append(ogrtype)
-         
-         if len(fldmeta[oname]) == 3:
-            if type(fldmeta[oname][2]) in (ListType, TupleType):
-               acceptedVals = fldmeta[oname][2]
-               if ogrtype == OFTString:
-                  acceptedVals = [val.lower() for val in fldmeta[oname][2]]
-               OccDataParser.filters[i] = acceptedVals 
-            else:
-               role = fldmeta[oname][2].lower()
-               if role == 'id':
-                  idIdx = i
-               elif role == 'longitude':
-                  xIdx = i
-               elif role == 'latitude':
-                  yIdx = i
-               elif role == 'groupby':
-                  sortIdx = i
-               elif role == 'dataname':
-                  nameIdx = i
-      
-      if (xIdx == None or yIdx == None or sortIdx == None or nameIdx == None):
-         raise Exception('Missing one of required field roles ({}) in header'
-                         .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
-      return (fieldNames, fieldTypes, filters, 
-              idIdx, xIdx, yIdx, sortIdx, nameIdx)
+#    # .............................................................................
+#    @staticmethod
+#    def getMetadataDeprecated(fldmeta, header):
+#       """
+#       @copydoc LmBackend.common.occparse.OccDataParser::getMetadata()
+#       """
+#       fieldNames = []
+#       fieldTypes = []
+#       filters = {}
+#       idIdx = xIdx = yIdx = sortIdx = nameIdx = None
+# 
+#       for i in range(len(header)):         
+#          oname = header[i]
+#          shortname = fldmeta[oname][0]
+#          ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
+#          fieldNames.append(shortname)
+#          fieldTypes.append(ogrtype)
+#          
+#          if len(fldmeta[oname]) == 3:
+#             if type(fldmeta[oname][2]) in (ListType, TupleType):
+#                acceptedVals = fldmeta[oname][2]
+#                if ogrtype == OFTString:
+#                   acceptedVals = [val.lower() for val in fldmeta[oname][2]]
+#                OccDataParser.filters[i] = acceptedVals 
+#             else:
+#                role = fldmeta[oname][2].lower()
+#                if role == 'id':
+#                   idIdx = i
+#                elif role == 'longitude':
+#                   xIdx = i
+#                elif role == 'latitude':
+#                   yIdx = i
+#                elif role == 'groupby':
+#                   sortIdx = i
+#                elif role == 'dataname':
+#                   nameIdx = i
+#       
+#       if (xIdx == None or yIdx == None or sortIdx == None or nameIdx == None):
+#          raise Exception('Missing one of required field roles ({}) in header'
+#                          .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
+#       return (fieldNames, fieldTypes, filters, 
+#               idIdx, xIdx, yIdx, sortIdx, nameIdx)
 
    # .............................................................................
    @staticmethod
@@ -654,15 +654,29 @@ from LmCommon.common.lmconstants import (OutputFormat, ENCODING,
 from LmCompute.common.log import TestLogger
 from LmServer.common.localconstants import APP_PATH
 
-relpath = 'LmTest/data/sdm'
-dataname = 'user_heuchera_all'
+relpath = '/share/lm/data/archive/biotaphy/'
+dataname = 'idig_occurrences_localities'
 
 pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
 log = TestLogger('occparse_checkInput')
 data = pthAndBasename + OutputFormat.CSV
 metadata = pthAndBasename + OutputFormat.METADATA
 delimiter = ','
-        
+
+# Read metadata file/stream
+fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)
+   
+fldLon = fieldmeta[OccDataParser.FIELD_ROLE_LONGITUDE]
+fldLat = fieldmeta[OccDataParser.FIELD_ROLE_LATITUDE]
+fldGrp = fieldmeta[OccDataParser.FIELD_ROLE_GROUPBY]
+fldTaxa = fieldmeta[OccDataParser.FIELD_ROLE_TAXANAME]
+
+(fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
+ nameIdx) = OccDataParser.getMetadata(fieldmeta, header)
+
+# open parser
+occparser = OccDataParser(log, data, metadata, delimiter=delimiter)
+
 # Read CSV header
 csvreader, f = OccDataParser.getReader(data, delimiter)
 tmpHeader = csvreader.next()
