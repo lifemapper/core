@@ -384,7 +384,7 @@ optional args can contain any flags understood by Maxent -- for example, a
       args = "nowarnings nocache autorun -z"
       #cmd = "{baseCmd} {lambdaFile} {gridDir} {outFile} {args}".format(
       #            baseCmd=baseCmd, gridDir=gridDir, outFile=outFile, args=args)
-      cmd = "{0} {1} {2} {3} {4} {5}".format(baseCmd, self.lambdasFile, 
+      cmd = "{0} {1} {2} {3} {4} {5}".format(baseCmd, self.rulesetFn, 
                                                self.layersDir, self.asciiOut, 
                                                self.params, args)
       self.log.debug(cmd)
