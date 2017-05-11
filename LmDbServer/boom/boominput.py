@@ -857,7 +857,23 @@ class ArchiveFiller(LMObject):
    
 # ...............................................
 if __name__ == '__main__':
-   filler = ArchiveFiller()
+   import argparse
+   parser = argparse.ArgumentParser(
+            description=('Populate a Lifemapper archive with metadata ' +
+                         'for single- or multi-species computations ' + 
+                         'specific to the configured input data or the ' +
+                         'data package named.'))
+   parser.add_argument('-', '--config_file', default=None,
+            help=('Configuration file for the archive, gridset, and grid ' +
+                  'to be created from these data.'))
+   args = parser.parse_args()
+   configFname = args.config_file
+      
+   if configFname is not None and not os.path.exists(configFname):
+      print ('Missing configuration file {}'.format(configFname))
+      exit(-1)
+
+   filler = ArchiveFiller(configFname=configFname)
    filler.open()
    filler.initBoom()
    filler.close()
