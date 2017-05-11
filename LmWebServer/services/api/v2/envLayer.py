@@ -214,7 +214,7 @@ class EnvLayerService(LmService):
                                    altpredCode=altPredCode, dateCode=dateCode, 
                                    afterTime=afterTime, beforeTime=beforeTime,
                                    epsg=epsgCode, envTypeId=envTypeId,
-                                   scenarioId=scenarioId)
+                                   scenCode=scenarioId)
       # Format return
       # Set headers
       return lyrAtoms
