@@ -684,10 +684,10 @@ class ArchiveFiller(LMObject):
       """
       for scode, scen in self.allScens.iteritems():
          if scen.getId() is not None:
+            self.scribe.log.info('Scenario {} exists'.format(scode))
+         else:
             self.scribe.log.info('Insert scenario {}'.format(scode))
             newscen = self.scribe.findOrInsertScenario(scen)
-         else:
-            self.scribe.log.info('Scenario {} exists'.format(scode))
    
    # ...............................................
    def _findClimatePackageMetadata(self):
@@ -842,7 +842,7 @@ class ArchiveFiller(LMObject):
       # Test a subset of OccurrenceIds provided as BOOM species input
       if self.occIdFname:
          self._checkOccurrenceSets()
-   
+         
       # Add ShapeGrid, Global PAM, Gridset, 
       shpGrid, archiveGridset, globalPAMs = self.addArchive()
    
