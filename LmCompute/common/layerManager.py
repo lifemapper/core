@@ -578,7 +578,7 @@ class LayerManager(object):
             newFn = os.path.join(symDir, "layer{0}{1}".format(i, layerFormat))
             os.symlink(layers[i], newFn)
             newLayers.append(newFn)
-         newMaskFn = os.path.join(symDir, "mask{1}".format(layerFormat))
+         newMaskFn = os.path.join(symDir, "mask{}".format(layerFormat))
          return newLayers, newMaskFn
       else:
          return layers, maskFn
