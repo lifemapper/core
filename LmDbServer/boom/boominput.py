@@ -97,11 +97,12 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
        self.cellsides,
        self.cellsize,
        self.gridname, 
-       self.intersectParams, 
-       self.allScens, 
+       self.intersectParams) = self.readConfigArgs(configFname)
+      (self.allScens, 
        self.epsgcode, 
        self.mapunits, 
-       self.envPackageMetaFilename) = self.readConfigArgs(configFname)
+       self.envPackageMetaFilename) = self._getScenarios()
+
       try:
          self.scribe = self._getDb()
       except: 
@@ -211,7 +212,6 @@ select * from lm_v3.lm_findOrInsertScenario('kubi','AR5-CCSM4-RCP8.5-2070-30sec-
                                               None, isList=False)
          prjScenCodeList = self._findConfigOrDefault(config, 
                         'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
-      allScens, epsg, mapunits, envPackageMetaFilename = self._getScenarios()
       
       return (usr, usrEmail, archiveName, envPackageName, modelScenCode, prjScenCodeList, 
               dataSource, occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
