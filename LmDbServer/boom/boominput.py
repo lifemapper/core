@@ -190,7 +190,7 @@ class ArchiveFiller(LMObject):
          
       assemblePams = self._findConfigOrDefault(config, 'ASSEMBLE_PAMS', 
                                                ASSEMBLE_PAMS)
-      gridbbox = self._findConfigOrDefault(config, 'GRID_BBOX', None)
+      gridbbox = self._findConfigOrDefault(config, 'GRID_BBOX', None, isList=True)
       cellsides = self._findConfigOrDefault(config, 'GRID_NUM_SIDES', 
                                             GRID_NUM_SIDES)
       cellsize = self._findConfigOrDefault(config, 'GRID_CELLSIZE', 
@@ -310,7 +310,7 @@ class ArchiveFiller(LMObject):
       f.write('; ...................\n')
       # Intersection grid
       f.write('GRID_NAME: {}\n'.format(self.gridname))
-      f.write('GRID_BBOX: {}\n'.format(self.gridbbox))
+      f.write('GRID_BBOX: {}\n'.format(','.join(str(v) for v in self.gridbbox)))
       f.write('GRID_CELLSIZE: {}\n'.format(self.cellsize))
       f.write('GRID_NUM_SIDES: {}\n'.format(self.cellsides))
       f.write('\n')
@@ -323,6 +323,17 @@ class ArchiveFiller(LMObject):
       return newConfigFilename
    
    # ...............................................
+   def _getVarValue(self, var):
+      try:
+         var = int(var)
+      except:
+         try:
+            var = float(var)
+         except:
+            pass
+      return var
+      
+   # ...............................................
    def _findConfigOrDefault(self, config, varname, defaultValue, isList=False):
       var = None
       try:
@@ -332,17 +343,17 @@ class ArchiveFiller(LMObject):
       if var is None:
          var = defaultValue
       else:
-         if isList and var:
+         if not isList:
+            var = self._getVarValue(var)
+         else:
             try:
                tmplist = [v.strip() for v in var.split(',')]
                var = []
             except:
                raise LMError('Failed to split variables on \',\'')
             for v in tmplist:
-               try:
-                  var.append(int(v))
-               except:
-                  var.append(v)
+               v = self._getVarValue(v)
+               var.append(v)
       return var
 
    # ...............................................
@@ -750,11 +761,16 @@ class ArchiveFiller(LMObject):
                       self.cellsize, self.mapunits, self.gridbbox,
                       status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
       newshp = self.scribe.findOrInsertShapeGrid(shp)
-      try:
-         newshp.buildShape()
-      except Exception, e:
-         self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
-      else:
+      validData = False
+      if shp.getDLocation() is not None:
+         validData, _ = ShapeGrid.testVector(shp.getDLocation())
+      if not validData:
+         try:
+            newshp.buildShape(overwrite=True)
+            validData = True
+         except Exception, e:
+            self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
+      if validData:
          newshp.updateStatus(JobStatus.COMPLETE)
          success = self.scribe.updateShapeGrid(newshp)
          if success is False:
@@ -879,10 +895,54 @@ if __name__ == '__main__':
    filler.close()
     
 """
+import mx.DateTime
+import os
+
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
+                                    JobStatus, MatrixType, SERVER_BOOM_HEADING)
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
+from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
+      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
+      BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
+      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
+      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
+      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
+      GRID_CELLSIZE, GRID_NUM_SIDES)
+from LmServer.base.lmobj import LMError, LMObject
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
+         GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
+from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
+                                            POINT_COUNT_MIN)
+from LmServer.common.lmuser import LMUser
+from LmServer.common.log import ScriptLogger
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.utilities import isCorrectUser
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.lmmatrix import LMMatrix  
+from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.scenario import Scenario
+from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.sdm.algorithm import Algorithm
+
+CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
+CURR_MJD = mx.DateTime.gmt().mjd
+
+
 from LmDbServer.boom.boominput import ArchiveFiller
-filler = ArchiveFiller()
+configFname='/opt/lifemapper/config/biotaphyNA.boom.ini'
+
+filler = ArchiveFiller(configFname=configFname)
 filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 filler.initBoom()
 filler.close()
+
+shp = ShapeGrid(filler.gridname, filler.usr, filler.epsgcode, filler.cellsides, 
+                filler.cellsize, filler.mapunits, filler.gridbbox,
+                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
+
 
 """
