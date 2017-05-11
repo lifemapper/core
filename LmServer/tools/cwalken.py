@@ -394,13 +394,13 @@ class ChristopherWalken(LMObject):
             success = self._scribe.updateMatrixColumn(mtxcol)
       return mtxcol
 
-# # ...............................................
-#    def _doReset(self, status, statusModTime):
-#       doReset = False
-#       if (JobStatus.failed(status) or 
-#           (status == JobStatus.COMPLETE and statusModTime < self._obsoleteTime)):
-#          doReset = True
-#       return doReset
+# ...............................................
+   def _doReset(self, status, statusModTime):
+      doReset = False
+      if (JobStatus.failed(status) or 
+          (status == JobStatus.COMPLETE and statusModTime < self._obsoleteTime)):
+         doReset = True
+      return doReset
 
 # ...............................................
    def _createOrResetSDMProject(self, occ, alg, prjscen, currtime, reset=False):
