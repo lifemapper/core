@@ -49,7 +49,7 @@ def createBisonShapefile(url, outFile, bigFile, maxPoints):
    occAPI = BisonAPI.initFromUrl(url)
    occList = occAPI.getTSNOccurrences()
    count = len(occList)
-   return parseCsvData(occList, ProcessType.BISON_TAXA_OCCURRENCE, outFile,  
+   return parseCsvData(''.join(occList), ProcessType.BISON_TAXA_OCCURRENCE, outFile,  
                        bigFile, count, maxPoints)
 
 # .............................................................................
@@ -69,8 +69,8 @@ def createGBIFShapefile(pointCsvFn, outFile, bigFile, reportedCount, maxPoints):
    if len(csvInputBlob) == 0:
       raise LmException(JobStatus.OCC_NO_POINTS_ERROR, 
                         "The provided CSV was empty")
-   return parseCsvData(csvInputBlob, ProcessType.GBIF_TAXA_OCCURRENCE, outFile, 
-                       bigFile, reportedCount, maxPoints)
+   return parseCsvData(''.join(csvInputBlob), ProcessType.GBIF_TAXA_OCCURRENCE, outFile, 
+                       bigFile, len(csvInputBlob), maxPoints)
    
 # .............................................................................
 def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
@@ -89,7 +89,7 @@ def createIdigBioShapefile(taxonKey, outFile, bigFile, maxPoints):
    # TODO: Un-hack this - here using canonical name instead
    occList = occAPI.queryBySciname(taxonKey)
    count = len(occList)
-   return parseCsvData(occList, ProcessType.IDIGBIO_TAXA_OCCURRENCE, outFile, 
+   return parseCsvData(''.join(occList), ProcessType.IDIGBIO_TAXA_OCCURRENCE, outFile, 
                        bigFile, count, maxPoints)
    
 # .............................................................................
