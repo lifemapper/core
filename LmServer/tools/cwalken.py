@@ -321,22 +321,28 @@ class ChristopherWalken(LMObject):
       objs = []
       currtime = dt.gmt().mjd
       potatoInputs = {}
+      # If OccurrenceLayer exists and is old or failed
+      reset = False
       
       occ = self.weaponOfChoice.getOne()
       if occ:
-         # No need to compute cloned OccurrenceLayers
-         if JobStatus.waiting(occ.status):
-            objs.append(occ)   
+         # Reset existing OccurrenceLayer if old or failed
+         if self._doReset(occ.status, occ.statusModTime):
+            self.log.info('Reseting OccurrenceLayer {}'.format(occ.getId()))
+            reset = True
+            objs.append(occ)
          # Sweep over input options
          # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
          #       Change this for BOOM jobs!! 
          for alg in self.algs:
             for prjscen in self.prjScens:
                # Add to Spud - SDM Project and MatrixColumn
-               prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime)
+               prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime,
+                                                   reset=reset)
                objs.append(prj)
                mtx = self.globalPAMs[prjscen.code]
-               mtxcol = self._createOrResetIntersect(prj, mtx, currtime)
+               mtxcol = self._createOrResetIntersect(prj, mtx, currtime, 
+                                                     reset=reset)
                objs.append(mtxcol)
                potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
    
@@ -358,7 +364,7 @@ class ChristopherWalken(LMObject):
          self.log.debug('Christopher is already done walken')
       
 # ...............................................
-   def _createOrResetIntersect(self, prj, mtx, currtime):
+   def _createOrResetIntersect(self, prj, mtx, currtime, reset=False):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
@@ -381,24 +387,23 @@ class ChristopherWalken(LMObject):
          # Reset processType (not in db)
          mtxcol.processType = ptype
          
-         if self._doReset(mtxcol.status, mtxcol.statusModTime):
-            self.log.info('Reseting MatrixColumn {}'.format(mtxcol.getId()))
+         # Rollback if OccurrenceLayer is old or failed
+         if reset:
+            self.log.info('   Reseting MatrixColumn {}'.format(mtxcol.getId()))
             mtxcol.updateStatus(JobStatus.GENERAL, modTime=currtime)
             success = self._scribe.updateMatrixColumn(mtxcol)
       return mtxcol
 
-# ...............................................
-   def _doReset(self, status, statusModTime):
-      doReset = False
-      if (JobStatus.failed(status) or 
-          JobStatus.waiting(status) or 
-           # out-of-date
-          (status == JobStatus.COMPLETE and statusModTime < self._obsoleteTime)):
-         doReset = True
-      return doReset
+# # ...............................................
+#    def _doReset(self, status, statusModTime):
+#       doReset = False
+#       if (JobStatus.failed(status) or 
+#           (status == JobStatus.COMPLETE and statusModTime < self._obsoleteTime)):
+#          doReset = True
+#       return doReset
 
 # ...............................................
-   def _createOrResetSDMProject(self, occ, alg, prjscen, currtime):
+   def _createOrResetSDMProject(self, occ, alg, prjscen, currtime, reset=False):
       """
       @summary: Iterates through all input combinations to create or reset
                 SDMProjections for the given occurrenceset.
@@ -420,9 +425,9 @@ class ChristopherWalken(LMObject):
             prj.setModelMask(self.mdlMask)
             prj._projScenario = prjscen
             prj.setProjMask(self.prjMask)
-            # Rollback if finished (new is already at initial status)
-            if self._doReset(prj.status, prj.statusModTime):
-               self.log.info('Reseting SDMProject {}'.format(prj.getId()))
+            # Rollback if OccurrenceLayer is old or failed
+            if reset:
+               self.log.info('   Reseting SDMProject {}'.format(prj.getId()))
                prj.updateStatus(JobStatus.GENERAL, modTime=currtime)
                success = self._scribe.updateSDMProject(prj)
       return prj
