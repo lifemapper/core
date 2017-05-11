@@ -93,11 +93,13 @@ class ArchiveFiller(LMObject):
        self.cellsize,
        self.gridname, 
        self.intersectParams) = self.readConfigArgs(configFname)
+      # Get database
       try:
          self.scribe = self._getDb()
       except: 
          raise
       self.open()
+      # Create new or pull existing scenarios
       (self.allScens, 
        newModelScenCode,
        self.epsgcode, 
@@ -105,6 +107,7 @@ class ArchiveFiller(LMObject):
        self.envPackageMetaFilename) = self._getScenarios()
       if newModelScenCode is  not None:
          self.modelScenCode = newModelScenCode
+      # If running as root, new user filespace must have permissions corrected
       self._warnPermissions()
       
    # ...............................................
@@ -160,32 +163,37 @@ class ArchiveFiller(LMObject):
       usr = self._findConfigOrDefault(config, 'ARCHIVE_USER', PUBLIC_USER)
       usrEmail = self._findConfigOrDefault(config, 'ARCHIVE_USER_EMAIL', 
                                  '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
-      archiveName = self._findConfigOrDefault(config, 'ARCHIVE_NAME', PUBLIC_ARCHIVE_NAME)
+      archiveName = self._findConfigOrDefault(config, 'ARCHIVE_NAME', 
+                                              PUBLIC_ARCHIVE_NAME)
       
       dataSource = self._findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
       dataSource = dataSource.upper()
-      occIdFname = self._findConfigOrDefault(config, 'OCCURRENCE_ID_FILENAME', None)
+      occIdFname = self._findConfigOrDefault(config, 'OCCURRENCE_ID_FILENAME', 
+                                             None)
       gbifFname = self._findConfigOrDefault(config, 'GBIF_OCCURRENCE_FILENAME', 
                                        GBIF_OCCURRENCE_FILENAME)
-      idigFname = self._findConfigOrDefault(config, 'IDIG_OCCURRENCE_DATA', IDIG_OCCURRENCE_DATA)
-      idigOccSep = self._findConfigOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER', 
-                                             IDIG_OCCURRENCE_DATA_DELIMITER)
+      idigFname = self._findConfigOrDefault(config, 'IDIG_OCCURRENCE_DATA', 
+                                            IDIG_OCCURRENCE_DATA)
+      idigOccSep = self._findConfigOrDefault(config, 
+            'IDIG_OCCURRENCE_DATA_DELIMITER', IDIG_OCCURRENCE_DATA_DELIMITER)
       bisonFname = self._findConfigOrDefault(config, 'BISON_TSN_FILENAME', 
                                        BISON_TSN_FILENAME) 
       userOccFname = self._findConfigOrDefault(config, 'USER_OCCURRENCE_DATA', 
                                        USER_OCCURRENCE_DATA)
-      userOccSep = self._findConfigOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER', 
-                                       USER_OCCURRENCE_DATA_DELIMITER)
-      minpoints = self._findConfigOrDefault(config, 'POINT_COUNT_MIN', POINT_COUNT_MIN)
-      algstring = self._findConfigOrDefault(config, 'ALGORITHMS', ALGORITHMS)
-      try:
-         algorithms = [alg.strip().upper() for alg in algstring.split(',')]
-      except:
-         algorithms = algstring
-      assemblePams = self._findConfigOrDefault(config, 'ASSEMBLE_PAMS', ASSEMBLE_PAMS)
+      userOccSep = self._findConfigOrDefault(config, 
+               'USER_OCCURRENCE_DATA_DELIMITER', USER_OCCURRENCE_DATA_DELIMITER)
+      minpoints = self._findConfigOrDefault(config, 'POINT_COUNT_MIN', 
+                                            POINT_COUNT_MIN)
+      algCodeList = self._findConfigOrDefault(config, 'ALGORITHMS', ALGORITHMS, 
+                                            isList=True)
+         
+      assemblePams = self._findConfigOrDefault(config, 'ASSEMBLE_PAMS', 
+                                               ASSEMBLE_PAMS)
       gridbbox = self._findConfigOrDefault(config, 'GRID_BBOX', None)
-      cellsides = self._findConfigOrDefault(config, 'GRID_NUM_SIDES', GRID_NUM_SIDES)
-      cellsize = self._findConfigOrDefault(config, 'GRID_CELLSIZE', GRID_CELLSIZE)
+      cellsides = self._findConfigOrDefault(config, 'GRID_NUM_SIDES', 
+                                            GRID_NUM_SIDES)
+      cellsize = self._findConfigOrDefault(config, 'GRID_CELLSIZE', 
+                                           GRID_CELLSIZE)
       gridname = '{}-Grid-{}'.format(archiveName, cellsize)
       # TODO: allow filter
       gridFilter = self._findConfigOrDefault(config, 'INTERSECT_FILTERSTRING', 
@@ -204,18 +212,20 @@ class ArchiveFiller(LMObject):
                          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
       # Find package name or code list, check for scenarios and epsg, mapunits
-      envPackageName = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE', SCENARIO_PACKAGE)
+      envPackageName = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE', 
+                                                 SCENARIO_PACKAGE)
       if envPackageName is not None:
-         modelScenCode = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
-                                              None, isList=False)
+         modelScenCode = self._findConfigOrDefault(config, 
+                     'SCENARIO_PACKAGE_MODEL_SCENARIO', None, isList=False)
          prjScenCodeList = self._findConfigOrDefault(config, 
-                        'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
+                     'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
       
-      return (usr, usrEmail, archiveName, envPackageName, modelScenCode, prjScenCodeList, 
-              dataSource, occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
-              userOccFname, userOccSep, 
-              minpoints, algorithms, assemblePams, gridbbox, cellsides, cellsize, 
-              gridname, intersectParams)
+      return (usr, usrEmail, archiveName, envPackageName, 
+              modelScenCode, prjScenCodeList, dataSource, 
+              occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
+              userOccFname, userOccSep, minpoints, algCodeList, 
+              assemblePams, gridbbox, cellsides, cellsize, gridname, 
+              intersectParams)
       
    # ...............................................
    def writeConfigFile(self, mdlMaskName=None, prjMaskName=None):
@@ -851,5 +861,9 @@ if __name__ == '__main__':
     
 """
 from LmDbServer.boom.boominput import ArchiveFiller
+filler = ArchiveFiller()
+filler.open()
+filler.initBoom()
+filler.close()
 
 """
