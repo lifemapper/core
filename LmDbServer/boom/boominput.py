@@ -257,8 +257,7 @@ class ArchiveFiller(LMObject):
       f.write('\n')
       # SDM Algorithm and minimun number of required species points   
       f.write('POINT_COUNT_MIN: {}\n'.format(self.minpoints))
-      algs = ','.join(self.algorithms)
-      f.write('ALGORITHMS: {}\n'.format(self.algorithms))
+      f.write('ALGORITHMS: {}\n'.format(','.join(self.algorithms)))
       f.write('\n')
       
       f.write('; ...................\n')
@@ -866,7 +865,6 @@ if __name__ == '__main__':
 """
 from LmDbServer.boom.boominput import ArchiveFiller
 filler = ArchiveFiller()
-filler.open()
 filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 filler.initBoom()
 filler.close()
