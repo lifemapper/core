@@ -95,6 +95,7 @@ class MaxentModel(object):
                                  logFilename=logFn)
    
       self.samplesFile = os.path.join(self.workDir, 'points.csv')
+      self.occName = os.path.splitext(os.path.basename(pointsFn))[0]
       self._processPoints(pointsFn, self.samplesFile)
 
       # layers
@@ -109,7 +110,6 @@ class MaxentModel(object):
       self.params = self._processParameters(paramsJson)
       
       # Need species name?
-      self.occName = os.path.splitext(os.path.basename(pointsFn))[0]
       self.lambdasFile = os.path.join(self.workDir, 
                                       "{0}.lambdas".format(self.occName))
 
