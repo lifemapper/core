@@ -366,6 +366,8 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
 
 configFile = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
 
+configFile = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'
+
 secs = time.time()
 tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))

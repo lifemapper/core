@@ -279,6 +279,8 @@ class ArchiveFiller(LMObject):
       elif self.dataSource == SpeciesDatasource.IDIGBIO:
          varname = 'IDIG_OCCURRENCE_DATA'
          dataFname = self.idigFname
+         f.write('IDIG_OCCURRENCE_DATA_DELIMITER: {}\n'
+                 .format(self.idigOccSep))
       else:
          varname = 'USER_OCCURRENCE_DATA'
          dataFname = self.userOccFname
@@ -770,7 +772,7 @@ class ArchiveFiller(LMObject):
             validData = True
          except Exception, e:
             self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
-      if validData:
+      if validData and newshp.status != JobStatus.COMPLETE:
          newshp.updateStatus(JobStatus.COMPLETE)
          success = self.scribe.updateShapeGrid(newshp)
          if success is False:
