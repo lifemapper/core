@@ -6,6 +6,7 @@ Install or Update a Lifemapper Server/Compute installation
 .. contents::  
 
 .. _Setup Development Environment : docs/developer/developEnv.rst
+.. _Setup User Data : docs/adminUser/setupUserData.rst
 
 Current versions
 ----------------
@@ -145,71 +146,68 @@ LmServer
 
 Populate archive
 ----------------
-To get new data, override SCENARIO_PACKAGE in the config.lmserver.ini and 
-SCENARIO_PACKAGE_SEED in config.lmcompute.ini with a new site.ini file in the 
-same location.  Templates are available.  
+#. Download new environmental data from Yeti.  Requirements for assembling 
+   environmental data are at:  `Setup User Data`_
 
-   * The initBoom script will pick up default arguments from 
-     LmServer.common.lmconstants (PUBLIC_ARCHIVE_NAME) and
-     config.lmserver.ini/site.ini (PUBLIC_USER, SCENARIO_PACKAGE, ENV_DATA_PATH, 
-     DATASOURCE, POINT_COUNT_MIN, INTERSECT_VALNAME, INTERSECT_MINPRESENCE, 
-     INTERSECT_MAXPRESENCE, INTERSECT_MINPERCENT)
+   * For now, update config.site.ini with SCENARIO_PACKAGE corresponding to the 
+     basename of a tar.gz file present in the yeti download directory.  The 
+     compressed file must contain scenario metadata with the SCENARIO_PACKAGE 
+     basename and .meta file extension and layer data.  (TODO: Change to accept 
+     an argument) Then call::
+     
+     # rocks/bin/getClimateData
+
+#. Populate the database with inputs for the default archive.  This runs 
+   LmDbServer/boom/boominput.py with no arguments::
+
+     # rocks/bin/fillDB
+   
+   * The boominput script will either accept a boom initialization configuration  
+     file (example in LmServer/boom/boomInit.sample.ini) or pick up default 
+     arguments from config.lmserver.ini and config.site.ini.
+
+   * The configuration will find either:
+   
+     * SCENARIO_PACKAGE for scenario creation. SCENARIO_PACKAGE indicating a 
+       file ENV_DATA_PATH/SCENARIO_PACKAGE.py describing and pointing to local 
+       data.
+     * or SCENARIO_PACKAGE_MODEL_SCENARIO and 
+       SCENARIO_PACKAGE_PROJECTION_SCENARIOS, with codes for scenarios that 
+       are already described in the database.
+       
+   * The boominput script will:
+    
+     * assemble all of the metadata and populate the database with inputs for a 
+       BOOM process.  
+     * build and write a shapegrid for a "Global PAM"
+     * write a configuration file to the user data space with all of the 
+       designated or calculated metadata for the BOOM process
+       
    * Additional values will be pulled from the scenario package metadata 
      (<SCENARIO_PACKAGE>.py) file included in <SCENARIO_PACKAGE>.tar.gz.
+
    * Values for these data and this archive will be written to a new config 
      file named <SCENARIO_PACKAGE.ini> and placed in the user's (PUBLIC_USER
      or ARCHIVE_USER) data space (/share/lm/data/archive/user/)
 
-#. Download data ::
-   
-   # rocks/bin/getClimateData
-
-#. Catalog metadata for LmServer.  This runs LmDbServer/boom/initBoom.py with 
-   no arguments::
-
-     # rocks/bin/fillDB
-   
-#. Convert and catalog data for LmCompute.  The script will pick up 
-   SCENARIO_PACKAGE_SEED from config.lmserver.ini ::
+#. Convert and catalog data for LmCompute.  The script uses the  
+   SCENARIO_PACKAGE_SEED value from config.lmserver.ini, so override it 
+   in config.site.ini if you have added new data. ::
 
    # /opt/lifemapper/rocks/bin/seedData
 
-#. **Catalog the inputs for archive** in database :  
+#. Data value/location requirements :  
 
-   * Or run LmDbServer/boom/initBoom.ini with new arguments.  If not using the 
-     defaults and installed scenario package, make sure:
-   
-     * to use a unique userId/archiveName combination.  
-     * the data package for  the **environmental_metadata** 
-       argument, a tar.gz file with layers and metadata, is installed in 
-       /share/lm/data/layers.
-     * If the DATASOURCE is not GBIF, IDIGBIO, or BISON :
-       
-       * Make sure the species data files (.csv and .meta) for the 
-         **species_file** argument is installed in the user space 
-         (/share/lm/data/archive/<userId>/).
+   * to use a unique userId/archiveName combination.  
+   * the SCENARIO_PACKAGE data must be installed in the ENV_DATA_PATH directory,
+     this will be correct if using the getClimateData script
+   * If the DATASOURCE is USER (anything except GBIF, IDIGBIO, or BISON),
+    
+     * the species data files USER_OCCURRENCE_DATA(.csv and .meta) must be 
+       installed in the user space (/share/lm/data/archive/<userId>/).
+     * Requirements for assembling occurrence data are at:  `Setup User Data`_
 
-     * If the DATASOURCE is iDigBio, the default file of "Accepted" GBIF 
-       Taxon Ids for iDigBio occurrences is IDIG_FILENAME with a value of 
-       idig_gbifids.txt.  Change the value or download the file from yeti 
-       into /share/lmserver/data/species.provide a list of accepted 
-       GBIF Taxon IDs
-       
-     * If the DATASOURCE is GBIF, with CSV file and known column definitions, the
-       default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU 
-       production installation, override this with the latest full data dump 
-       by downloading the data from yeti into /share/lmserver/data/species/
-              
-#. Download data ::
-   
-   # rocks/bin/getClimateData
-
-#. Catalog metadata for LmServer::
-   
-   # rocks/bin/fillDB
-
-#. Convert and catalog data for LmCompute ::
-
-   # /opt/lifemapper/rocks/bin/seedData
-         
-   
+   * If the DATASOURCE is GBIF, with CSV file and known column definitions, the
+     default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU 
+     production installation, override this with the latest full data dump 
+     by downloading the data from yeti into /share/lmserver/data/species/
