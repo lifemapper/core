@@ -572,13 +572,16 @@ class LayerManager(object):
       if maskId is not None:
          maskFn = self.getLayerFilename(maskId, layerFormat, maskUrl)
       
+      #TODO: Do this with constants
+      lyrExt = os.path.splitext(layers[0])[1]
+
       if symDir is not None:
          newLayers = []
          for i in range(len(layers)):
-            newFn = os.path.join(symDir, "layer{0}{1}".format(i, layerFormat))
+            newFn = os.path.join(symDir, "layer{}{}".format(i, lyrExt))
             os.symlink(layers[i], newFn)
             newLayers.append(newFn)
-         newMaskFn = os.path.join(symDir, "mask{}".format(layerFormat))
+         newMaskFn = os.path.join(symDir, "mask{}".format(lyrExt))
          return newLayers, newMaskFn
       else:
          return layers, maskFn
