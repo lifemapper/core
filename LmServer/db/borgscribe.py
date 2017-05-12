@@ -347,7 +347,7 @@ class BorgScribe(LMObject):
                     afterTime=None, beforeTime=None, epsg=None, 
                     afterStatus=None, beforeStatus=None, atom=True):
       """
-      @copydoc LmServer.db.catalog_borg.Borg::listMatrixColumns()
+      @copydoc LmServer.db.catalog_borg.Borg::listMatrices()
       """
       objs = self._borg.listMatrices(firstRecNum, maxNum, userId, 
                         matrixType, gcmCode, altpredCode, dateCode, keyword, 
@@ -355,6 +355,36 @@ class BorgScribe(LMObject):
                         beforeStatus, atom)
       return objs
 
+# ...............................................
+   def getTree(self, tree=None, treeId=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getTree()
+      """
+      existingTree = self._borg.getMatrix(tree, treeId)
+      return existingTree
+
+# .............................................................................
+   def countTrees(self, userId=PUBLIC_USER, name=None, 
+                  isBinary=None, isUltrametric=None, hasBranchLengths=None,
+                  metastring=None, afterTime=None, beforeTime=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countTrees()
+      """
+      count = self._borg.countMatrices(userId, name, isBinary, isUltrametric, 
+                           hasBranchLengths,metastring, afterTime, beforeTime)
+      return count
+
+# .............................................................................
+   def listTrees(self, firstRecNum, maxNum, userId=PUBLIC_USER, name=None, 
+                 isBinary=None, isUltrametric=None, hasBranchLengths=None,
+                 metastring=None, afterTime=None, beforeTime=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listTrees()
+      """
+      objs = self._borg.listTrees(firstRecNum, maxNum, userId, 
+                              afterTime, beforeTime, name, metastring,  
+                              isBinary, isUltrametric, hasBranchLengths, atom)
+      return objs
 # ...............................................
    def getGridset(self, gridset, fillMatrices=False):
       """
@@ -697,8 +727,6 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::deleteObject()
       """
-      if isinstance(obj, OccurrenceLayer):
-         prjs = self.listSDMProjects(0, 500, occsetId-obj.getId(), atom=True)
       success = self._borg.deleteObject(obj)
       return success
 

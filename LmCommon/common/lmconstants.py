@@ -229,7 +229,6 @@ class MatrixType:
    PAM = 1
    GRIM = 2
    BIOGEO_HYPOTHESES = 3
-   TREE = 4
    ROLLING_PAM = 10
    # OUTPUTS
    PADDED_PAM = 101

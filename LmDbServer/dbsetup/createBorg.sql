@@ -340,13 +340,16 @@ create table lm_v3.Tree
 (
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   name varchar(100) NOT NULL,
    metadataUrl text UNIQUE,
    -- original (Newick or JSON)
-   treeDlocation text,
-   hasBranchLengths boolean,
+   dlocation text,
+   isBinary boolean,
    isUltrametric boolean,
+   hasBranchLengths boolean,
    metadata text,
-   modTime double precision
+   modTime double precision,
+   UNIQUE (userId, name)
 );
 
 -- -------------------------------

@@ -376,7 +376,8 @@ class LMFileType:
 
    @staticmethod
    def isUserSpace(rtype):
-      if rtype in [LMFileType.USER_ATTRIBUTE_MATRIX, LMFileType.USER_TREE, 
+      if rtype in [LMFileType.USER_ATTRIBUTE_MATRIX, 
+                   LMFileType.TREE, LMFileType.USER_TREE, 
                    LMFileType.BOOM_CONFIG, LMFileType.TMP_JSON]:
          return True
       return False
@@ -401,45 +402,6 @@ class LMFileType:
                    LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS]:
          return True
       return False
-
-#    @staticmethod
-#    def isOccurrence(rtype):
-#       if rtype in [LMFileType.SDM_MAP, LMFileType.OCCURRENCE_FILE, 
-#                    LMFileType.OCCURRENCE_RAW_FILE, 
-#                    LMFileType.OCCURRENCE_LARGE_FILE, 
-#                    LMFileType.SDM_MAKEFLOW_FILE]:
-#          return True
-#       return False
-
-#    @staticmethod
-#    def isModel(rtype):
-#       if rtype in [LMFileType.MODEL_REQUEST, LMFileType.MODEL_STATS, 
-#                    LMFileType.MODEL_RESULT, LMFileType.MODEL_ATT_RESULT]:
-#          return True
-#       return False
-# 
-#    @staticmethod
-#    def isProjection(rtype):
-#       if rtype in [LMFileType.PROJECTION_REQUEST, LMFileType.PROJECTION_PACKAGE, 
-#                    LMFileType.PROJECTION_LAYER]:
-#          return True
-#       return False
-
-#    @staticmethod
-#    def isRADExperiment(rtype):
-#       if rtype in [LMFileType.PAM, LMFileType.GRIM, 
-#                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
-#                    LMFileType.BIOGEO_HYPOTHESES]:
-# #                    LMFileType.SITE_INDICES]:
-#          return True
-# #       return False
-# 
-#    @staticmethod
-#    def isMatrix(rtype):
-#       if rtype in [LMFileType.PAM, LMFileType.GRIM, 
-#                    LMFileType.BIOGEO_HYPOTHESES]:
-#          return True
-#       return False
    
    @staticmethod
    def getMatrixFiletype(mtype):
@@ -449,8 +411,6 @@ class LMFileType:
          return LMFileType.GRIM
       elif mtype == MatrixType.BIOGEO_HYPOTHESES:
          return LMFileType.BIOGEO_HYPOTHESES
-      elif mtype == MatrixType.TREE:
-         return LMFileType.TREE
       elif mtype == MatrixType.PADDED_PAM:
          return LMFileType.PADDED_PAM
       elif mtype == MatrixType.MCPA_OUTPUTS:
@@ -467,8 +427,6 @@ PRJ_PREFIX = 'prj'
 SPLOTCH_PREFIX = 'splotch'
 PAMSUM_PREFIX = 'pamsum'
 
-(LMFileType.PAM, LMFileType.GRIM, LMFileType.BIOGEO_HYPOTHESES, 
-                   LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS)
 class FileFix:
    PREFIX = {LMFileType.OTHER_MAP: MapPrefix.USER,
              LMFileType.TMP_JSON: None,

@@ -23,7 +23,7 @@
 """
 import mx.DateTime
    
-from LmCommon.common.lmconstants import ProcessType, MatrixType
+from LmCommon.common.lmconstants import MatrixType
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
@@ -31,7 +31,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
-                                         DB_STORE, LM_SCHEMA_BORG, GPAM_KEYWORD)
+                                         DB_STORE, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 from LmServer.legion.algorithm import Algorithm
@@ -44,6 +44,7 @@ from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.tree import Tree
 
 # .............................................................................
 class Borg(DbPostgresql):
@@ -250,6 +251,27 @@ class Borg(DbPostgresql):
                           shapeGridId=shpId, configFilename=dloc, epsgcode=epsg, userId=usr, 
                           gridsetId=grdid, metadataUrl=murl, modTime=mtime)
       return grdset
+   
+# ...............................................
+   def _createTree(self, row, idxs):
+      """
+      @summary: Create a Tree from a database Tree record
+      """
+      tree = None
+      if row is not None:
+         treeid = self._getColumnValue(row, idxs, ['treeid'])
+         usr = self._getColumnValue(row, idxs, ['userid'])
+         name = self._getColumnValue(row, idxs, ['name'])
+         murl = self._getColumnValue(row, idxs, ['metadataurl'])
+         dloc = self._getColumnValue(row, idxs, ['dlocation'])
+         isbin = self._getColumnValue(row, idxs, ['isbinary'])
+         isultra = self._getColumnValue(row, idxs, ['isultrametric'])
+         haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
+         meta = self._getColumnValue(row, idxs, ['metadata'])
+         modtime = self._getColumnValue(row, idxs, ['metadata'])
+         tree = Tree(name, metadata=meta, dlocation=dloc,
+                metadataUrl=murl, userId=usr, treeId=treeid, modTime=modtime)
+      return tree
    
 # ...............................................
    def _createLMMatrix(self, row, idxs):
@@ -1652,7 +1674,7 @@ class Borg(DbPostgresql):
       @param gcmCode: filter by the Global Climate Model code
       @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
       @param dateCode: filter by the date code
-      @param keyword: find matrices containing this keyword in the metadata
+      @param metastring: find matrices containing this word in the metadata
       @param gridsetId: find matrices in the Gridset with this identifier
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
@@ -1670,7 +1692,7 @@ class Borg(DbPostgresql):
 
 # .............................................................................
    def listMatrices(self, firstRecNum, maxNum, userId, matrixType, gcmCode, 
-                    altpredCode, dateCode, keyword, gridsetId, afterTime, 
+                    altpredCode, dateCode, metastring, gridsetId, afterTime, 
                     beforeTime, epsg, afterStatus, beforeStatus, atom):
       """
       @summary: Return Matrix Objects or Atoms matching filter conditions 
@@ -1681,7 +1703,7 @@ class Borg(DbPostgresql):
       @param gcmCode: filter by the Global Climate Model code
       @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
       @param dateCode: filter by the date code
-      @param keyword: find matrices containing this keyword in the metadata
+      @param metastring: find matrices containing this word in the metadata
       @param gridsetId: find matrices in the Gridset with this identifier
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
@@ -1691,10 +1713,11 @@ class Borg(DbPostgresql):
       @param atom: True if return objects will be Atoms, False if full objects
       @return: a list of Matrix atoms or full objects
       """
+      metamatch = '%{}%'.format(metastring)
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
                                  firstRecNum, maxNum, userId, matrixType, 
-                                 gcmCode, altpredCode, dateCode, keyword, 
+                                 gcmCode, altpredCode, dateCode, metamatch, 
                                  gridsetId, afterTime, beforeTime, epsg, 
                                  afterStatus, beforeStatus)
          objs = self._getAtoms(rows, idxs)
@@ -1702,7 +1725,7 @@ class Borg(DbPostgresql):
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
                                  firstRecNum, maxNum, userId, matrixType, 
-                                 gcmCode, altpredCode, dateCode, keyword, 
+                                 gcmCode, altpredCode, dateCode, metamatch, 
                                  gridsetId, afterTime, beforeTime, epsg, 
                                  afterStatus, beforeStatus)
          for r in rows:
@@ -1724,6 +1747,95 @@ class Borg(DbPostgresql):
                      mtx.statusModTime)
       newOrExistingMtx = self._createLMMatrix(row, idxs)
       return newOrExistingMtx
+
+# .............................................................................
+   def countTrees(self, userId, name, isBinary, isUltrametric, hasBranchLengths,
+                  metastring, afterTime, beforeTime):
+      """
+      @summary: Count Trees matching filter conditions 
+      @param userId: User (owner) for which to return Trees.  
+      @param name: filter by name
+      @param isBinary: filter by boolean binary attribute
+      @param isUltrametric: filter by boolean ultrametric attribute
+      @param hasBranchLengths: filter by boolean hasBranchLengths attribute
+      @param metastring: find trees containing this word in the metadata
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @return: a count of Tree
+      """
+      metamatch = '%{}%'.format(metastring)
+      row, idxs = self.executeSelectOneFunction('lm_countTrees', userId, 
+                                 afterTime, beforeTime, name, metamatch,  
+                                 isBinary, isUltrametric, hasBranchLengths)
+      return self._getCount(row)
+
+# .............................................................................
+   def listTrees(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
+                 name, metastring,  isBinary, isUltrametric, hasBranchLengths, 
+                 atom):
+      """
+      @summary: Return Tree Objects or Atoms matching filter conditions 
+      @param firstRecNum: The first record to return, 0 is the first record
+      @param maxNum: Maximum number of records to return
+      @param userId: User (owner) for which to return Trees.  
+      @param name: filter by name
+      @param isBinary: filter by boolean binary attribute
+      @param isUltrametric: filter by boolean ultrametric attribute
+      @param hasBranchLengths: filter by boolean hasBranchLengths attribute
+      @param metastring: find trees containing this word in the metadata
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param atom: True if return objects will be Atoms, False if full objects
+      @return: a list of Matrix atoms or full objects
+      """
+      metamatch = '%{}%'.format(metastring)
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
+                     firstRecNum, maxNum, userId, afterTime, beforeTime, 
+                     name, metamatch, isBinary, isUltrametric, hasBranchLengths)
+         objs = self._getAtoms(rows, idxs)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
+                     firstRecNum, maxNum, userId, afterTime, beforeTime, 
+                     name, metamatch, isBinary, isUltrametric, hasBranchLengths)
+         for r in rows:
+            objs.append(self._createTree(r, idxs))
+      return objs
+
+# ...............................................
+   def findOrInsertTree(self, tree):
+      """
+      @summary: Find existing OR save a new Tree
+      @param tree: the Tree object to insert
+      @return new or existing Tree
+      """
+      meta = tree.dumpTreeMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree', 
+                     tree.getId(), tree.gerUserId(), tree.name, tree.metadataUrl,
+                     tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
+                     tree.hasBranchLengths(), meta, tree.modTime)
+      newOrExistingMtx = self._createLMMatrix(row, idxs)
+      return newOrExistingMtx
+
+# ...............................................
+   def getTree(self, tree, treeId):
+      """
+      @summary: Retrieve a Tree from the database
+      @param tree: Tree to retrieve
+      @param treeId: Database ID of Tree to retrieve
+      @return: Existing Tree
+      """
+      row = None
+      if tree is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getTree', tree.getId(),
+                                                   tree.getUserId(),
+                                                   tree.name)
+      else:
+         row, idxs = self.executeSelectOneFunction('lm_getTree', treeId,
+                                                   None, None)
+      existingTree = self._createTree(row, idxs)
+      return existingTree
 
 # ...............................................
    def insertMFChain(self, mfchain):
@@ -1826,6 +1938,8 @@ class Borg(DbPostgresql):
          success = self.executeModifyFunction('lm_deleteScenario', objid)
       elif isinstance(obj, MatrixColumn):
          success = self.executeModifyFunction('lm_deleteMatrixColumn', objid)
+      elif isinstance(obj, Tree):
+         success = self.executeModifyFunction('lm_deleteTree', objid)
       else:
          raise LMError('Unsupported delete for object {}'.format(type(obj)))
       return success

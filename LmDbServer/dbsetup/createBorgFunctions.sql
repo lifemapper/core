@@ -84,10 +84,247 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+-- ----------------------------------------------------------------------------
+-- Tree
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertTree(trid int, 
+                                                     usr varchar,
+                                                     nm varchar,
+                                                     murlprefix text,
+                                                     dloc text,
+                                                     isbin boolean,
+                                                     isultra boolean,
+                                                     haslen boolean,
+                                                     meta text,
+                                                     mtime double precision)
+   RETURNS lm_v3.tree AS
+$$
+DECLARE
+   rec lm_v3.tree%rowtype;
+   newid int = -1;
+   idstr varchar = '';
+   treeUrl varchar = '';
+BEGIN
+   IF trid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.tree WHERE treeid = trid;
+   ELSIF usr IS NOT NULL AND nm IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.tree WHERE userId = usr AND name = nm;
+   END;
+   IF NOT FOUND THEN
+      begin
+         INSERT INTO lm_v3.Tree (userId, name, metadataUrl, dlocation,  
+                                 isBinary, isUltrametric, hasBranchLengths, 
+                                 metadata, modTime) 
+            VALUES (usr, nm, murl, dloc, isbin, isultra, haslen, meta, mtime);
+         IF FOUND THEN
+            SELECT INTO newid last_value FROM lm_v3.tree_treeid_seq;
+            idstr = cast(newid as varchar);
+            treeUrl := replace(murlprefix, '#id#', idstr);
+            UPDATE lm_v3.Tree SET metadataUrl = treeUrl WHERE treeId = newid;
+
+            -- get updated record
+            SELECT * INTO rec from lm_v3.Tree WHERE treeId = newid;
+         END IF;
+      end;
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;    
 
 -- ----------------------------------------------------------------------------
--- OccurrenceSet
+CREATE OR REPLACE FUNCTION lm_v3.lm_getTree(trid int, 
+                                            usr varchar,
+                                            nm varchar)
+   RETURNS lm_v3.tree AS
+$$
+DECLARE
+   rec lm_v3.tree%rowtype;
+BEGIN
+   begin
+      IF trid IS NOT NULL THEN
+         SELECT * INTO STRICT rec FROM lm_v3.tree WHERE treeid = trid;
+      ELSIF usr IS NOT NULL AND nm IS NOT NULL THEN
+         SELECT * INTO STRICT rec FROM lm_v3.tree WHERE userId = usr AND name = nm;
+      END;
+      EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RAISE NOTICE 'Tree id/user/name = %/%/% not found', trid, usr, nm;
+   end;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;    
+
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterTrees(usr varchar,
+                                                  aftertime double precision,
+                                                  beforetime double precision,
+                                                  nm varchar,
+                                                  meta varchar,
+                                                  isbin boolean,
+                                                  isultra boolean,
+                                                  haslen boolean)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid =  ' || quote_literal(usr) || ' ';
+   
+   -- filter by trees modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND modTime >=  ' || quote_literal(aftertime);
+   END IF;
+
+   -- filter by trees modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND modTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by name (assume wildcards within the string)
+   IF nm is not null THEN
+      wherecls = wherecls || ' AND name like ' || nm;
+   END IF;
+
+   -- Metadata text (assume wildcards around the string)
+   IF meta is not null THEN
+      wherecls = wherecls || ' AND metadata like  ' || quote_literal(meta);
+   END IF;
+
+   -- filter by isBinary, boolean values sent as uppercase TRUE or FALSE
+   IF isbin is not null THEN
+      wherecls = wherecls || ' AND isBinary IS  ' || quote_literal(isbin);
+   END IF;
+
+   -- filter by isUltrametric
+   IF isultra is not null THEN
+      wherecls = wherecls || ' AND isUltrametric IS  ' || quote_literal(isultra);
+   END IF;
+
+   -- filter by hasBranchLengths
+   IF haslen is not null THEN
+      wherecls = wherecls || ' AND hasBranchLengths IS  ' || quote_literal(haslen);
+   END IF;
+
+   RETURN wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countTrees(usr varchar,
+                                               aftertime double precision,
+                                               beforetime double precision,
+                                               nm varchar,
+                                               meta varchar,
+                                               isbin boolean,
+                                               isultra boolean,
+                                               haslen boolean)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   fromcls varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.tree ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterTrees(usr, 
+                     aftertime, beforetime, nm, meta, isbin, isultra, haslen);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by modTime descending
+CREATE OR REPLACE FUNCTION lm_v3.lm_listTreeObjects(firstRecNum int, 
+                                                    maxNum int,
+                                                    usr varchar,
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    nm varchar,
+                                                    meta varchar,
+                                                    isbin boolean,
+                                                    isultra boolean,
+                                                    haslen boolean)
+   RETURNS SETOF lm_v3.tree AS
+$$
+DECLARE
+   rec lm_v3.tree;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.tree ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterTrees(usr, 
+                     aftertime, beforetime, nm, meta, isbin, isultra, haslen);
+   ordercls = ' ORDER BY modTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by modTime descending
+CREATE OR REPLACE FUNCTION lm_v3.lm_listTreeAtoms(firstRecNum int, 
+                                                  maxNum int,
+                                                  usr varchar,
+                                                  aftertime double precision,
+                                                  beforetime double precision,
+                                                  nm varchar,
+                                                  meta varchar,
+                                                  isbin boolean,
+                                                  isultra boolean,
+                                                  haslen boolean)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT treeid, name, metadataUrl, null, modTime FROM lm_v3.tree ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterTrees(usr, 
+                     aftertime, beforetime, nm, meta, isbin, isultra, haslen);
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteTree(trid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+   lyr_success int := -1;
+BEGIN
+   DELETE FROM lm_v3.Tree WHERE treeId = trid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Scenario
@@ -905,6 +1142,11 @@ BEGIN
    RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+
+-- ----------------------------------------------------------------------------
+-- OccurrenceSet
+-- ----------------------------------------------------------------------------
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getOccurrenceSet(occid int,
