@@ -179,7 +179,7 @@ WF_OPTIONS: -M lifemapper.\\* -T sge -w 2 -W 5 -E \"%(WORKER_OPTIONS)s\" -S @LMS
 
 ; Makeflow constants
 ;** MAKEFLOW_BIN: @LMHOME@/bin/makeflow
-MAKEFLOW_OPTIONS: -T wq -t 600 -u 600 -a -C @PUBLIC_FQDN@:%(CS_PORT)s 
+MAKEFLOW_OPTIONS: -T wq -t 600 -u 600 -X @LMSCRATCHDISK@/worker/ -a -C @PUBLIC_FQDN@:%(CS_PORT)s 
 
 ;Use: /opt/lifemapper/bin/makeflow [options] <dagfile>
 ;Frequently used options:
