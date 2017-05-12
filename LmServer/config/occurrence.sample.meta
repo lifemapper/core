@@ -1,4 +1,21 @@
 # .............................................................................
+## TODO: simplify structure to the following:
+##       {<fieldname>: {
+##                      'name': <shortname>, 
+##                      'type': <type>, 
+##                      'role': <role>, 
+##                      'columnindex': <columnNum>, 
+##                      'acceptedvalues': [<val1>, <val2>, ...]
+##                      },
+##        ...
+##        }
+##   name required,
+##   type required, 
+##   role only for 'Key field roles', 
+##   columnindex required iff header row is missing from data file
+##   acceptedvalues optional, 
+##   keys for each field dictionary are case-insensitive
+# .............................................................................
 # Note: This file must have the same basename as the CSV file it describes
 # Note: Field names MUST BE in the first row of the CSV data file
 # 
