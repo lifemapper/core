@@ -96,7 +96,7 @@ class Stockpile(LMObject):
       try:
          # Get object
          if ProcessType.isOccurrence(ptype):
-            obj = scribe.getOccurrenceSet(occid=objId)
+            obj = scribe.getOccurrenceSet(occId=objId)
          elif ProcessType.isProject(ptype):
             obj = scribe.getSDMProject(objId)
          elif ptype == ProcessType.RAD_BUILDGRID:
