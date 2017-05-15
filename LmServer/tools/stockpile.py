@@ -27,6 +27,7 @@
           02110-1301, USA.
 """
 import argparse
+import glob
 import os
 import shutil
 
@@ -99,7 +100,9 @@ class Stockpile(LMObject):
          if ProcessType.isOccurrence(ptype):
             obj = scribe.getOccurrenceSet(occId=objId)
             # Move data file
-            shutil.move(fileNames[0], obj.getDLocation())
+            baseOutDir = os.path.basename(obj.getDLocation())
+            for fn in glob.glob('{}.*'.format(os.path.splitext(fileNames[0])[0])):
+               shutil.move(fn, baseOutDir)
             
             # Try big data file
             bigFname = fileNames[0].replace('/pt', '/bigpt')
