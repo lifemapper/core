@@ -32,7 +32,8 @@ from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import PUBLIC_FQDN, PUBLIC_USER
+from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
+                                            SCRATCH_PATH)
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -258,6 +259,7 @@ class Boomer(Daemon):
                  '-T wq', 
                  '-N lifemapper-{}b'.format(mfchain.getId()),
                  '-C {}:9097'.format(PUBLIC_FQDN),
+                 '-X {}/worker/'.format(SCRATCH_PATH),
                  '-a {}'.format(outputFname)]
       mfCmd = ' '.join(cmdArgs)
       arfCmd = 'touch {}'.format(targetFname)
