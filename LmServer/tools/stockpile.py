@@ -28,6 +28,7 @@
 """
 import argparse
 import os
+import shutil
 
 from LmCommon.common.lmconstants import ProcessType, LMFormat, JobStatus
 from LmServer.base.layer2 import Vector, Raster
@@ -77,7 +78,7 @@ class Stockpile(LMObject):
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
       try:
-         cls._updateObject(scribe, ptype, objId, status)
+         cls._updateObject(scribe, ptype, objId, status, outputFnameList)
       except:
          # TODO: raise exception, or write info to file?
          pass
@@ -88,7 +89,7 @@ class Stockpile(LMObject):
       
 # .............................................................................
    @classmethod
-   def _updateObject(cls, scribe, ptype, objId, status):
+   def _updateObject(cls, scribe, ptype, objId, status, fileNames):
       """
       @summary: Get object and update DB with status.  
       """
@@ -97,6 +98,15 @@ class Stockpile(LMObject):
          # Get object
          if ProcessType.isOccurrence(ptype):
             obj = scribe.getOccurrenceSet(occId=objId)
+            # Move data file
+            shutil.move(fileNames[0], obj.getDLocation())
+            
+            # Try big data file
+            bigFname = fileNames[0].replace('/pt', '/bigpt')
+            if cls.testFile(bigFname)[0]:
+               shutil.move(bigFname, obj.getDlocation(largeFile=True))
+         
+         
          elif ProcessType.isProject(ptype):
             obj = scribe.getSDMProject(objId)
          elif ptype == ProcessType.RAD_BUILDGRID:
