@@ -100,18 +100,20 @@ class Stockpile(LMObject):
          if ProcessType.isOccurrence(ptype):
             obj = scribe.getOccurrenceSet(occId=objId)
             # Move data file
-            baseOutDir = os.path.basename(obj.getDLocation())
+            baseOutDir = os.path.dirname(obj.getDLocation())
             for fn in glob.glob('{}.*'.format(os.path.splitext(fileNames[0])[0])):
-               shutil.move(fn, baseOutDir)
+               shutil.copy(fn, baseOutDir)
             
             # Try big data file
             bigFname = fileNames[0].replace('/pt', '/bigpt')
             if cls.testFile(bigFname)[0]:
-               shutil.move(bigFname, obj.getDlocation(largeFile=True))
+               shutil.copy(bigFname, obj.getDlocation(largeFile=True))
          
          
          elif ProcessType.isProject(ptype):
             obj = scribe.getSDMProject(objId)
+            shutil.copy(fileNames[0], obj.getDLocation())
+            shutil.copy(fileNames[1], obj.getProjPackageFilename())
          elif ptype == ProcessType.RAD_BUILDGRID:
             obj = scribe.getShapeGrid(lyrId=objId)
          elif ProcessType.isMatrix(ptype):
