@@ -613,21 +613,33 @@ class OccurrenceLayer(OccurrenceType, Vector):
       """
       rules = []
       deps = None
+      
+      # TODO: Assess this, need to move the files if we aren't creating   
+      # TODO: Do we need to return this?  Or change / add a method?
+      outFile = os.path.join('pt_{}'.format(self.getId()), 
+                                os.path.basename(self.getDLocation()))
+         
+      # Make list of output files
+      outFiles = []
+      outFbase = os.path.splitext(outFile)[0]
+      for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+         outFiles.append('{}{}'.format(outFbase, ext))
+
       if JobStatus.waiting(self.status): 
          # NOTE: This may need to change to something else in the future, but for now,
          #          we'll save a step and have the outputs written to their final 
          #          location
          # TODO: Update with correct data locations
          
-         # TODO: Do we need to return this?  Or change / add a method?
-         outFile = os.path.join('pt_{}'.format(self.getId()), 
-                                os.path.basename(self.getDLocation()))
-         
-         # Make list of output files
-         outFiles = []
-         outFbase = os.path.splitext(outFile)[0]
-         for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
-            outFiles.append('{}{}'.format(outFbase, ext))
+         ## TODO: Do we need to return this?  Or change / add a method?
+         #outFile = os.path.join('pt_{}'.format(self.getId()), 
+         #                       os.path.basename(self.getDLocation()))
+         #
+         ## Make list of output files
+         #outFiles = []
+         #outFbase = os.path.splitext(outFile)[0]
+         #for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+         #   outFiles.append('{}{}'.format(outFbase, ext))
          
          bigFile = os.path.join('pt_{}'.format(self.getId()),
                                 os.path.basename(self.getDLocation(largeFile=True)))
@@ -681,5 +693,19 @@ class OccurrenceLayer(OccurrenceType, Vector):
          #uRule = self.getUpdateRule(self.getId(), status, basename, [outFile])
          uRule = self.getUpdateRule(self.getId(), status, basename, outFiles)
          rules.append(uRule)
+      else:
+         outDir = 'pt_{}'.format(self.getId())
+         baseName = os.path.splitext(self.getDLocation())[0]
+         cmdArgs = [
+            'LOCAL',
+            'mv',
+            '-t {}'.format(outDir),
+         ]
+         
+         for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+            cmdArgs.append('{}{}'.format(baseName, ext))
+
+         cmd = ' '.join(cmdArgs)
+         rules.append(MfRule(cmd, outFiles))
          
       return rules
