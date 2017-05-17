@@ -793,7 +793,12 @@ class SDMProjection(_ProjectionType, Raster):
          mdlName = self.getModelTarget()
          # TODO: Determine if we want to do this a different way
          occSetFname = os.path.join('pt_{}'.format(self._occurrenceSet.getId()),
-                           os.path.basename(self._occurrenceSet.getDLocation()))         
+                           os.path.basename(self._occurrenceSet.getDLocation()))
+         occFnames = []
+         occFbase = os.path.splitext(occSetFname)[0]
+         for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+            occFnames.append('{}{}'.format(occFbase, ext))
+                  
          mdlOpts = {'-w' : mdlName}
          args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in mdlOpts.iteritems()])
@@ -813,7 +818,8 @@ class SDMProjection(_ProjectionType, Raster):
          cmd = ' '.join(mdlCmdArgs)
          
          rules.append(MfRule(cmd, [rulesetFname], 
-                             dependencies=[occSetFname]))
+                             #dependencies=[occSetFname]))
+                             dependencies=occFnames))
       return rules
 
    # ......................................

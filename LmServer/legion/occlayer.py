@@ -26,7 +26,8 @@ import os
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT, 
-                                         ProcessType, JobStatus)
+                                         ProcessType, JobStatus,
+   SHAPEFILE_EXTENSIONS)
 from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject
@@ -622,6 +623,12 @@ class OccurrenceLayer(OccurrenceType, Vector):
          outFile = os.path.join('pt_{}'.format(self.getId()), 
                                 os.path.basename(self.getDLocation()))
          
+         # Make list of output files
+         outFiles = []
+         outFbase = os.path.splitext(outFile)[0]
+         for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+            outFiles.append('{}{}'.format(outFbase, ext))
+         
          bigFile = os.path.join('pt_{}'.format(self.getId()),
                                 os.path.basename(self.getDLocation(largeFile=True)))
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
@@ -665,12 +672,14 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
          # Don't add big file to targets since it may not be created
          # TODO: Address this if we don't write to final location
-         rules.append(MfRule(cmd, [outFile], dependencies=deps))
+         #rules.append(MfRule(cmd, [outFile], dependencies=deps))
+         rules.append(MfRule(cmd, outFiles, dependencies=deps))
          
          # Rule for Test/Update 
          status = None
          basename = os.path.basename(os.path.splitext(outFile)[0])
-         uRule = self.getUpdateRule(self.getId(), status, basename, [outFile])
+         #uRule = self.getUpdateRule(self.getId(), status, basename, [outFile])
+         uRule = self.getUpdateRule(self.getId(), status, basename, outFiles)
          rules.append(uRule)
          
       return rules
