@@ -147,8 +147,11 @@ CS_OPTIONS: -n @PUBLIC_FQDN@ -B %(CS_PID_FILE)s -p %(CS_PORT)s -m 100 -o %(CS_LO
 ; -Z,--port-file=<file>          Select port at random and write it to this file. (default: disabled)
 
 ; Worker Factory constants
-WORKER_OPTIONS: -C @PUBLIC_FQDN@:%(CS_PORT)s
-WF_OPTIONS: -M lifemapper.\\* -T sge -w 2 -W 5 -E \"%(WORKER_OPTIONS)s\" -S @LMSCRATCHDISK@/wq-pool-\$uid
+WORKER_OPTIONS: -C @PUBLIC_FQDN@:%(CS_PORT)s -s @LMSCRATCHDISK@
+; TODO: Evaluate if we want to use this directory, this is where the actually worker binary is put
+WORKER_SHARED_DIR: @DATADIR_SHARED@
+WF_OPTIONS: -M lifemapper.\\* -T sge -w 2 -W 5 -E "%(WORKER_OPTIONS)s" -S %(WORKER_SHARED_DIR)s
+; To add debugging of job info, add something like '-B "-j y -o /home/lmwriter/jobLog.out"'
 
 ;Use: work_queue_factory [options]
 ;where options are:
