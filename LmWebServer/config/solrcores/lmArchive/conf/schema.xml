@@ -8,50 +8,66 @@
    <!-- Lifemapper fields -->
    <!-- =========================================== -->
    
-   <!-- Use this field for performing searches.  It will be useful if split out later -->
-   <!--  <field name="searchString" type="text_general" indexed="true" stored="false" />-->
-   
    <!--  May not need to store this if it is part of the query... -->
    <field name="userId" type="text_general" indexed="true" stored="true" />
    
-   <!-- Occurrence Set -->
+   <!-- Taxon Information -->
    <field name="displayName" type="taxonname" indexed="true" stored="true" />
-   <field name="occurrenceSetId" type="int" indexed="true" stored="true" />
-   <field name="occurrenceSetMetadataUrl" type="url" indexed="false" stored="true" />
-   <field name="occurrenceSetBBox" type="bbox" indexed="true" stored="true" />
-   <field name="occurrenceSetModTime" type="datetime" indexed="true" stored="true" />
-   <field name="occurrenceSetDownloadUrl" type="url" indexed="false" stored="true" />
-   <field name="numberOfOccurrencePoints" type="int" indexed="true" stored="true" />
-   <field name="epsgCode" type="int" indexed="true" stored="true" />
-   
-   <!-- Model -->
-   <field name="modelId" type="int" indexed="true" stored="true" />
-   <field name="modelMetadataUrl" type="url" indexed="false" stored="true" />
-   <field name="modelRulesetUrl" type="url" indexed="false" stored="true" />
-   <field name="modelModTime" type="datetime" indexed="true" stored="true" />
-   <field name="modelScenarioCode" type="string" indexed="true" stored="true" />
-   <field name="modelScenarioId" type="int" indexed="true" stored="true" />
-   <field name="modelScenarioUrl" type="url" indexed="false" stored="true" />
+   <field name="squid" type="string" indexed="true" stored="true" />
+   <field name="taxonKingdom" type="string" indexed="true" stored="true" />
+   <field name="taxonPhylum" type="string" indexed="true" stored="true" />
+   <field name="taxonClass" type="string" indexed="true" stored="true" />
+   <field name="taxonOrder" type="string" indexed="true" stored="true" />
+   <field name="taxonFamily" type="string" indexed="true" stored="true" />
+   <field name="taxonGenus" type="string" indexed="true" stored="true" />
+   <field name="taxonSpecies" type="string" indexed="true" stored="true" />
    
    <!-- Algorithm -->
    <field name="algorithmCode" type="string" indexed="true" stored="true" />
    <field name="algorithmParameters" type="text_general" indexed="false" stored="true" />
+
+   <!-- Occurrence Set -->
+   <field name="pointCount" type="int" indexed="true" stored="true" />
+   <field name="occurrenceSetId" type="int" indexed="true" stored="true" />
+   <field name="occurrenceDataUrl" type="url" indexed="false" stored="true" />
+   <field name="occurrenceMetaUrl" type="url" indexed="false" stored="true" />
+   <field name="occurrenceModTime" type="datetime" indexed="true" stored="true" />
+      
+   
+   <!-- Model Scenario -->
+   <field name="modelScenarioCode" type="string" indexed="true" stored="true" />
+   <field name="modelScenarioId" type="int" indexed="true" stored="true" />
+   <field name="modelScenarioUrl" type="url" indexed="false" stored="true" />
+   <field name="modelScenarioGCM" type="string" indexed="true" stored="true" />
+   <field name="modelScenarioDateCode" type="string" indexed="true" stored="true" />
+   <field name="modelScenarioAltPredCode" type="string" indexed="true" stored="true" />
+   
+   <!-- Projection Scenario-->
+   <field name="sdmProjScenarioCode" type="string" indexed="true" stored="true" />
+   <field name="sdmProjScenarioId" type="int" indexed="true" stored="true" />
+   <field name="sdmProjScenarioUrl" type="url" indexed="false" stored="true" />
+   <field name="sdmProjScenarioGCM" type="string" indexed="true" stored="true" />
+   <field name="sdmProjScenarioDateCode" type="string" indexed="true" stored="true" />
+   <field name="sdmProjScenarioAltPredCode" type="string" indexed="true" stored="true" />
    
    <!-- Projection -->
-   <field name="projectionId" type="int" indexed="true" stored="true" />
-   <field name="projectionMetadataUrl" type="url" indexed="false" stored="true" />
-   <field name="projectionBBox" type="bbox" indexed="true" stored="true" />
-   <field name="projectionDownloadUrl" type="url" indexed="false" stored="true" />
-   <field name="projectionModTime" type="datetime" indexed="true" stored="true" />
-   <field name="projectionScenarioCode" type="string" indexed="true" stored="true" />
-   <field name="projectionScenarioId" type="int" indexed="true" stored="true" />
-   <field name="projectionScenarioUrl" type="url" indexed="false" stored="true" />
+   <field name="sdmProjId" type="int" indexed="true" stored="true" />
+   <field name="sdmProjMetaUrl" type="url" indexed="false" stored="true" />
+   <field name="sdmProjDataUrl" type="url" indexed="false" stored="true" />
+   <field name="sdmProjModTime" type="datetime" indexed="true" stored="true" />
    
-      
-   <!-- For each PAV cell that is present -->
-   <!-- <field name="locs" type="location_rpt" indexed="true" stored="false" />-->
+   <!-- PAV -->
+   <field name="pavMetaUrl" type="url" indexed="false" stored="true" />
+   <field name="pavDataUrl" type="url" indexed="false" stored="true" />
+   <field name="presence" type="location" indexed="true" stored="false" multiValued="true" />
    
-   
+   <!-- Grid Set -->
+   <field name="epsgCode" type="int" indexed="true" stored="true" />
+   <field name="gridSetMetaUrl" type="url" indexed="false" stored="true" />
+   <field name="shapegridId" type="int" indexed="true" stored="true" />
+   <field name="shapegridMetaUrl" type="url" indexed="false" stored="true" />
+   <field name="shapegridDataUrl" type="url" indexed="false" stored="true" />
+
    <uniqueKey>id</uniqueKey>
    
    
@@ -93,17 +109,6 @@
       </analyzer>
    </fieldType>
 
-
-   <!-- 
-   <fieldType name="bbox" class="solr.SpatialRecursivePrefixTreeFieldType"
-              spatialContextFactory="com.spatial4j.core.context.jts.JtsSpatialContextFactory"
-              geo="true" distErrPct="0.025" maxDistErr="0.0009" distanceUnits="degrees" />
-   -->
-   <fieldType name="bbox" class="solr.BBoxField" geo="true" 
-              distanceUnits="degrees" numberType="_bbox_coord" 
-              storeSubFields="false" />
-   <fieldType name="_bbox_coord" class="solr.TrieDoubleField" precisionStep="8"
-              docValues="true" stored="false" />
    
    <fieldType name="datetime" class="solr.TrieDateField" sortMissingLast="true" omitNorms="true" />
    
@@ -120,11 +125,6 @@
       </analyzer>
    </fieldType>
 
-   <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType"
-              spatialContextFactory="com.spatial4j.core.context.jts.JtsSpatialContextFactory"
-              geo="true" distErrPct="0.025" maxDistErr="0.000009" distanceUnits="degrees" 
-              multiValued="true" />
-   
 </schema>
 
 
