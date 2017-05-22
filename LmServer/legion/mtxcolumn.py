@@ -35,7 +35,7 @@ from LmServer.legion.cmd import MfRule
 # .............................................................................
 # .............................................................................
 # TODO: This should inherit from LmCommon.common.matrix.Matrix
-class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
+class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
    # Query to filter layer for intersect
    INTERSECT_PARAM_FILTER_STRING = 'filterString'
    # Attribute used in layer intersect
@@ -66,6 +66,7 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
       """
       @summary MatrixColumn constructor
       @copydoc LmServer.base.layer2._LayerParameters::__init__()
+      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
       @copydoc LmServer.base.serviceobject2.ProcessObject::__init__()
       @param matrixIndex: index for column within a matrix.  For the Global 
              PAM, assembled dynamically, this will be None.
