@@ -34,7 +34,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    lyrverify,
    lyrname,
    lyrdlocation,
-   lyrmetadataUrl,
    lyrmetadata,
    dataFormat,
    gdalType,
@@ -61,7 +60,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_envlayer (
    envLayerId
    ) AS
       SELECT l.layerId, l.userid, l.squid, l.verify, l.name, l.dlocation,
-             l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
+             l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
              et.envTypeId, et.envCode, et.gcmcode, et.altpredCode, et.dateCode, 
@@ -86,7 +85,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    lyrverify,
    lyrname,
    lyrdlocation,
-   lyrmetadataUrl,
    lyrmetadata,
    dataFormat,
    gdalType,
@@ -114,7 +112,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
    ) AS
       SELECT s.scenarioId, s.scenarioCode, 
              lel.layerId, lel.userid, lel.lyrsquid, lel.lyrverify, lel.lyrname, 
-             lel.lyrdlocation, lel.lyrmetadataUrl, lel.lyrmetadata, lel.dataFormat, 
+             lel.lyrdlocation, lel.lyrmetadata, lel.dataFormat, 
              lel.gdalType, lel.ogrType, lel.valUnits, lel.valAttribute, 
              lel.nodataVal, lel.minVal, lel.maxVal, lel.epsgcode, lel.mapunits, 
              lel.resolution, lel.bbox, lel.lyrmodtime, lel.envTypeId, lel.envCode,
@@ -146,7 +144,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
    lyrverify,
    lyrname,
    lyrdlocation,
-   lyrmetadataUrl,
    lyrmetadata,
    dataFormat,
    gdalType,
@@ -165,7 +162,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
       SELECT sg.layerId, sg.cellsides, sg.cellsize, sg.vsize, sg.idAttribute,
              sg.xAttribute, sg.yAttribute, sg.status, sg.statusmodtime,
              l.userid, l.squid, l.verify, l.name, l.dlocation,
-             l.metadataUrl, l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
+             l.metadata, l.dataFormat, l.gdalType, l.ogrType, 
              l.valUnits, l.valAttribute, l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime
         FROM lm_v3.layer l, lm_v3.shapegrid sg
@@ -195,7 +192,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
    altpredCode,
    dateCode,
    matrixDlocation,
-   mtxmetadataUrl,
    mtxmetadata,
    mtxstatus,
    mtxstatusmodtime,
@@ -208,7 +204,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
              mc.squid, mc.ident, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
              m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, m.dateCode, 
-             m.matrixDlocation, m.metadataUrl, m.metadata, m.status, 
+             m.matrixDlocation, m.metadata, m.status, 
              m.statusmodtime,
              g.userid, g.layerid
         FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
@@ -222,7 +218,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    gridsetId,
    userId,
    grdname,
-   grdmetadataUrl,
    layerId,
    grddlocation,
    grdepsgcode,
@@ -241,7 +236,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    lyrverify,
    lyrname,
    lyrdlocation,
-   lyrmetadataUrl,
    lyrmetadata,
    dataFormat,
    gdalType,
@@ -256,12 +250,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    resolution,
    bbox,
    lyrmodtime) AS
-   SELECT g.gridsetId, g.userId, g.name, g.metadataUrl, g.layerId, 
+   SELECT g.gridsetId, g.userId, g.name, g.layerId, 
           g.dlocation, g.epsgcode, g.metadata, g.modTime,
           lsg.cellsides, lsg.cellsize, lsg.vsize, lsg.idAttribute,
           lsg.xAttribute, lsg.yAttribute, lsg.shpgrdstatus, 
           lsg.shpgrdstatusmodtime, lsg.lyrsquid, lsg.lyrverify, lsg.lyrname, 
-          lsg.lyrdlocation, lsg.lyrmetadataUrl, lsg.lyrmetadata, lsg.dataFormat, 
+          lsg.lyrdlocation, lsg.lyrmetadata, lsg.dataFormat, 
           lsg.gdalType, lsg.ogrType, lsg.valUnits, lsg.valAttribute, 
           lsg.nodataVal, lsg.minVal, lsg.maxVal, lsg.epsgcode, lsg.mapunits, 
           lsg.resolution, lsg.bbox, lsg.lyrmodtime
@@ -280,14 +274,12 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    altpredCode,
    dateCode,
    matrixDlocation,
-   metadataUrl,
    metadata,
    status,
    statusmodtime, 
    -- lm_gridset
    userId,
    grdname,
-   grdmetadataUrl,
    layerId,
    grddlocation,
    grdepsgcode,
@@ -305,7 +297,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    lyrverify,
    lyrname,
    lyrdlocation,
-   lyrmetadataUrl,
    lyrmetadata,
    dataFormat,
    gdalType,
@@ -321,14 +312,14 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    bbox,
    lyrmodtime) AS
    SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, 
-   		 m.dateCode, m.matrixDlocation, m.metadataUrl, m.metadata, m.status, 
+   		 m.dateCode, m.matrixDlocation, m.metadata, m.status, 
    		 m.statusmodtime, 
-          g.userId, g.grdname, g.grdmetadataUrl, g.layerId, 
+          g.userId, g.grdname, g.layerId, 
           g.grddlocation, g.grdepsgcode, g.grdmetadata, 
           g.grdmodTime, g.cellsides, g.cellsize, g.vsize, g.idAttribute, 
           g.xAttribute, g.yAttribute, g.shpgrdstatus, 
           g.shpgrdstatusmodtime, g.lyrsquid, g.lyrverify, g.lyrname, 
-          g.lyrdlocation, g.lyrmetadataUrl, g.lyrmetadata, g.dataFormat, 
+          g.lyrdlocation, g.lyrmetadata, g.dataFormat, 
           g.gdalType, g.ogrType, g.valUnits, g.valAttribute, g.nodataVal, 
           g.minVal, g.maxVal, g.epsgcode, g.mapunits, g.resolution, g.bbox, 
           g.lyrmodtime
@@ -348,23 +339,21 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrix (
    altpredCode,
    dateCode,
    matrixDlocation,
-   metadataUrl,
    metadata,
    status,
    statusmodtime, 
    -- Gridset
    userId,
    grdname,
-   grdmetadataUrl,
    layerId,
    grddlocation,
    grdepsgcode,
    grdmetadata,
    grdmodTime) AS
    SELECT m.matrixId, m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode,
-          m.dateCode, m.matrixDlocation, m.metadataUrl, m.metadata, m.status, 
+          m.dateCode, m.matrixDlocation, m.metadata, m.status, 
           m.statusmodtime, 
-          g.userId, g.name, g.metadataUrl, g.layerId, 
+          g.userId, g.name, g.layerId, 
           g.dlocation, g.epsgcode, g.metadata, g.modTime
    FROM lm_v3.matrix m, lm_v3.gridset g
    WHERE m.gridsetid = g.gridsetid;
@@ -394,7 +383,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    lyrverify,
    name,
    lyrdlocation,
-   lyrmetadataUrl,
    lyrmetadata,
    dataFormat,
    gdalType,
@@ -413,7 +401,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
    -- occurrenceSet
    occverify,
    displayName,
-   occmetadataUrl,
    occdlocation,
    queryCount,
    occbbox,
@@ -434,11 +421,11 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
              p.algorithmCode, p.algParams, 
              p.mdlscenarioId, p.mdlmaskId, p.prjscenarioId, p.prjmaskId, 
              p.metadata, p.status, p.statusModTime,
-             l.squid, l.verify, l.name, l.dlocation, l.metadataUrl, l.metadata, 
+             l.squid, l.verify, l.name, l.dlocation, l.metadata, 
              l.dataFormat, l.gdalType, l.ogrType, l.valUnits, l.valAttribute, 
              l.nodataVal, l.minVal, l.maxVal, 
              l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime,
-             o.verify, o.displayName, o.metadataUrl, o.dlocation, o.queryCount, 
+             o.verify, o.displayName, o.dlocation, o.queryCount, 
              o.bbox, o.metadata, o.status, o.statusModTime,
              ms.scenarioCode, 
              ps.scenarioCode, ps.gcmCode, ps.altpredCode, ps.dateCode
@@ -460,7 +447,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    squid,
    verify,
    displayName,
-   metadataUrl,
    dlocation,
    rawDlocation,
    queryCount,
@@ -492,7 +478,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    datasetIdentifier
    ) AS
    SELECT o.occurrenceSetId, o.userId, o.verify, o.squid, o.displayName, 
-          o.metadataUrl, o.dlocation, o.rawDlocation, o.queryCount, 
+          o.dlocation, o.rawDlocation, o.queryCount, 
           o.bbox, o.epsgcode, o.metadata, o.status, o.statusModTime,
           t.taxonId, t.taxonomySourceId, t.taxonomyKey, t.kingdom, t.phylum, 
           t.tx_class, t.tx_order, t.family, t.genus, t.rank, 
@@ -606,7 +592,6 @@ DROP TYPE IF EXISTS lm_v3.lm_atom CASCADE;
 CREATE TYPE lm_v3.lm_atom AS (
   id int,
   name varchar,
-  url varchar,
   epsgcode int,
   modtime double precision);
 

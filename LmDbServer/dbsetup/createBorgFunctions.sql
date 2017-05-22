@@ -50,7 +50,9 @@ BEGIN
       begin
          INSERT INTO lm_v3.Algorithm (algorithmcode, metadata, modtime)
             VALUES (code, meta, mtime);
-         IF FOUND THEN
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to find or insert Algorithm';
+         ELSE
             SELECT * INTO rec FROM lm_v3.algorithm WHERE algorithmcode = code;
          END IF;
       end;
@@ -76,7 +78,9 @@ BEGIN
    IF NOT FOUND THEN
       INSERT INTO lm_v3.TaxonomySource 
          (url, datasetIdentifier, modTime) VALUES (taxsrcurl, name, mtime);
-      IF FOUND THEN
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to find or insert TaxonomySource';
+      ELSE
          SELECT INTO rec * FROM lm_v3.taxonomysource WHERE datasetIdentifier = name;
       END IF;
    END IF;
@@ -90,7 +94,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertTree(trid int, 
                                                      usr varchar,
                                                      nm varchar,
-                                                     murlprefix text,
                                                      dloc text,
                                                      isbin boolean,
                                                      isultra boolean,
@@ -102,8 +105,6 @@ $$
 DECLARE
    rec lm_v3.tree%rowtype;
    newid int = -1;
-   idstr varchar = '';
-   treeUrl varchar = '';
 BEGIN
    IF trid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.tree WHERE treeid = trid;
@@ -112,17 +113,15 @@ BEGIN
    END;
    IF NOT FOUND THEN
       begin
-         INSERT INTO lm_v3.Tree (userId, name, metadataUrl, dlocation,  
+         INSERT INTO lm_v3.Tree (userId, name, dlocation,  
                                  isBinary, isUltrametric, hasBranchLengths, 
                                  metadata, modTime) 
-            VALUES (usr, nm, murl, dloc, isbin, isultra, haslen, meta, mtime);
-         IF FOUND THEN
-            SELECT INTO newid last_value FROM lm_v3.tree_treeid_seq;
-            idstr = cast(newid as varchar);
-            treeUrl := replace(murlprefix, '#id#', idstr);
-            UPDATE lm_v3.Tree SET metadataUrl = treeUrl WHERE treeId = newid;
-
+            VALUES (usr, nm, dloc, isbin, isultra, haslen, meta, mtime);
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to find or insert Tree';
+         ELSE
             -- get updated record
+            SELECT INTO newid last_value FROM lm_v3.tree_treeid_seq;
             SELECT * INTO rec from lm_v3.Tree WHERE treeId = newid;
          END IF;
       end;
@@ -296,7 +295,7 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT treeid, name, metadataUrl, null, modTime FROM lm_v3.tree ';
+   cmd = 'SELECT treeid, name, null, modTime FROM lm_v3.tree ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterTrees(usr, 
                      aftertime, beforetime, nm, meta, isbin, isultra, haslen);
    cmd := cmd || wherecls || ordercls || limitcls;
@@ -491,7 +490,7 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT scenarioid, scenarioCode, metadataUrl, epsgcode, modTime FROM lm_v3.scenario ';
+   cmd = 'SELECT scenarioid, scenarioCode, epsgcode, modTime FROM lm_v3.scenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
 
@@ -534,7 +533,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
                                              code varchar, 
-                                             metaUrlprefix text,
                                              meta text,
                                              gcm varchar,
                                              altpred varchar,
@@ -548,9 +546,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenario(usr varchar,
    RETURNS lm_v3.Scenario AS
 $$
 DECLARE
-   id int;
-   idstr varchar;
-   scenmetadataUrl varchar;
+   newid int;
    rec lm_v3.Scenario%rowtype;
 BEGIN
    SELECT * INTO rec FROM lm_v3.Scenario s 
@@ -562,19 +558,15 @@ BEGIN
       VALUES 
          (usr, code, meta, gcm, altpred, tm, unts, res, epsg, bndsstring, mtime);
                        
-      IF FOUND THEN
-         SELECT INTO id last_value FROM lm_v3.scenario_scenarioid_seq;
-         idstr = cast(id as varchar);
-         scenmetadataUrl := replace(metaUrlprefix, '#id#', idstr);
-         IF bboxwkt is NULL THEN 
-            UPDATE lm_v3.scenario SET metadataUrl = scenmetadataUrl WHERE scenarioId = id;
-         ELSE
-            UPDATE lm_v3.scenario SET (metadataUrl, geom) 
-               = (scenmetadataUrl, ST_GeomFromText(bboxwkt, epsg)) 
-               WHERE scenarioId = id;
-         END IF;          
-         SELECT * INTO rec FROM lm_v3.Scenario s 
-            WHERE s.scenariocode = code and s.userid = usr;
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to find or insert Scenario';
+      ELSE
+         SELECT INTO newid last_value FROM lm_v3.scenario_scenarioid_seq;
+         IF bboxwkt IS NOT NULL THEN 
+            UPDATE lm_v3.scenario SET geom = ST_GeomFromText(bboxwkt, epsg)
+               WHERE scenarioId = newid;
+         END IF; 
+         SELECT * INTO rec FROM lm_v3.Scenario s WHERE s.scenarioid = newid;
       END IF; -- end if inserted
    END IF;  -- end if not existing
    
@@ -640,7 +632,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertGridset(grdid int,
                                                         usr varchar, 
                                                         nm varchar,
-                                                        metaurlprefix varchar,
                                                         lyrid int,
                                                         dloc text,
                                                         epsg int,
@@ -651,8 +642,6 @@ $$
 DECLARE
    rec lm_v3.lm_gridset%rowtype;
    newid int;
-   idstr varchar;
-   newurl varchar;
 BEGIN
    SELECT * INTO rec FROM lm_v3.lm_getGridset(grdid, usr, nm);
    IF rec.gridsetid IS NULL THEN
@@ -663,13 +652,7 @@ BEGIN
          IF NOT FOUND THEN
             RAISE EXCEPTION 'Unable to find or insert Gridset';
          ELSE
-            -- update metadataUrl
             SELECT INTO newid last_value FROM lm_v3.gridset_gridsetid_seq;
-            idstr = cast(newid as varchar);
-            newurl := replace(metaurlprefix, '#id#', idstr);
-            UPDATE lm_v3.Gridset SET metadataUrl = newurl WHERE gridsetId = newid;
-
-            -- get updated record
             SELECT * INTO rec from lm_v3.lm_gridset WHERE gridsetId = newid;
          END IF;
       end;
@@ -712,7 +695,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
                                                        altpred varchar,
                                                        dt varchar,
                                                        dloc text,
-                                                       metaurlprefix varchar,
                                                        meta varchar, 
                                                        stat int,
                                                    	 stattime double precision)
@@ -721,8 +703,6 @@ $$
 DECLARE
    rec lm_v3.matrix%rowtype;
    newid int;
-   idstr varchar;
-   newurl varchar;
 BEGIN
    IF mtxid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.matrix WHERE matrixid = mtxid;
@@ -740,14 +720,10 @@ BEGIN
                                    status, statusmodtime) 
                            VALUES (mtxtype, grdid, dloc, gcm, altpred, dt,
                                    meta, stat, stattime);
-         IF FOUND THEN
-            -- update metadataUrl
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to find or insert Matrix';
+         ELSE
             SELECT INTO newid last_value FROM lm_v3.matrix_matrixid_seq;
-            idstr = cast(newid as varchar);
-            newurl := replace(metaurlprefix, '#id#', idstr);
-            UPDATE lm_v3.matrix SET metadataUrl = newurl WHERE matrixId = newid;
-
-            -- get updated record
             SELECT * INTO rec from lm_v3.matrix WHERE matrixId = newid;
          END IF;
       end;
@@ -947,7 +923,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT matrixId, null, metadataUrl, grdepsgcode, statusmodtime FROM lm_v3.lm_fullmatrix ';
+   cmd = 'SELECT matrixId, null, grdepsgcode, statusmodtime FROM lm_v3.lm_fullmatrix ';
    SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
                  altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
@@ -1132,7 +1108,9 @@ BEGIN
                                   specieskey, keyHierarchy, lastcount, modtime)
                  VALUES (tsourceid, usr, tkey, sqd, king, phyl, clss, ordr, fam, 
                          gen, rnk, can, sname, gkey, skey, hierkey, cnt, currtime);
-            IF FOUND THEN 
+            IF NOT FOUND THEN
+               RAISE EXCEPTION 'Unable to find or insert Taxon';
+            ELSE
                SELECT INTO tid last_value FROM lm_v3.taxon_taxonid_seq;
                SELECT * INTO rec FROM lm_v3.Taxon WHERE taxonid = tid;
             END IF;
@@ -1176,7 +1154,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertOccurrenceSet(occid int,
                                                   sqd varchar,
                                                   vrfy varchar,
                                                   name varchar,
-                                                  metaurlprefix varchar,
                                                   dloc varchar,
                                                   rdloc varchar,
                                                   total int,
@@ -1192,8 +1169,6 @@ $$
 DECLARE
    rec lm_v3.occurrenceset%ROWTYPE;                             
    newid int = -1;
-   idstr varchar = '';
-   occmetadataUrl varchar = '';
 BEGIN
    IF occid IS NOT NULL then                     
       SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = occid;
@@ -1210,7 +1185,9 @@ BEGIN
             (usr, sqd, vrfy, name, dloc, rdloc, total, bounds, epsg, meta, 
              stat, stattime);
 
-         IF FOUND THEN
+         IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to find or insert OccurrenceSet';
+         ELSE
             -- add geometries if valid
             IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
                UPDATE lm_v3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
@@ -1221,13 +1198,8 @@ BEGIN
                   WHERE occurrenceSetId = occid;
             END IF;
 
-            -- update metadataUrl
-            SELECT INTO newid last_value FROM lm_v3.occurrenceset_occurrencesetid_seq;
-            idstr = cast(newid as varchar);
-            occmetadataUrl := replace(metaurlprefix, '#id#', idstr);
-            UPDATE lm_v3.OccurrenceSet SET metadataUrl = occmetadataUrl WHERE occurrenceSetId = newid;
-
             -- get updated record
+            SELECT INTO newid last_value FROM lm_v3.occurrenceset_occurrencesetid_seq;
             SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = newid;
          END IF;
          
@@ -1264,16 +1236,15 @@ BEGIN
 
    IF FOUND THEN
       success = 0;
-   END IF;
+      IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
+         UPDATE lm_v3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
+            WHERE occurrenceSetId = occid;
+      END IF;
 
-   IF ST_IsValid(ST_GeomFromText(polywkt, epsg)) THEN
-      UPDATE lm_v3.OccurrenceSet SET geom = ST_GeomFromText(polywkt, epsg) 
-         WHERE occurrenceSetId = occid;
-   END IF;
-
-   IF ST_IsValid(ST_GeomFromText(pointswkt, epsg)) THEN
-      UPDATE lm_v3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
-         WHERE occurrenceSetId = occid;
+      IF ST_IsValid(ST_GeomFromText(pointswkt, epsg)) THEN
+         UPDATE lm_v3.OccurrenceSet SET geompts = ST_GeomFromText(pointswkt, epsg) 
+            WHERE occurrenceSetId = occid;
+      END IF;
    END IF;
 
    RETURN success;
@@ -1456,7 +1427,7 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT occurrencesetid, displayname, metadataUrl, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
+   cmd = 'SELECT occurrencesetid, displayname, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
                         afterstat, beforestat);
@@ -1491,7 +1462,9 @@ BEGIN
    INSERT INTO lm_v3.MFProcess 
              (userid, dlocation, priority, metadata, status, statusmodtime)
       VALUES (usr, dloc, prior, meta, stat, stattime);
-   IF FOUND THEN 
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to insert MFProcess';
+   ELSE 
       SELECT INTO mfid last_value FROM lm_v3.mfprocess_mfprocessid_seq;
       SELECT * INTO rec FROM lm_v3.MFProcess WHERE mfProcessId = mfid;      
    END IF;
@@ -1944,8 +1917,6 @@ BEGIN
                          = (meta, stat, stattime) WHERE matrixId = mtxid;
    IF FOUND THEN 
       success = 0;
-   ELSE
-      RAISE EXCEPTION 'Unable to update MatrixColumn';
    END IF;
       
    RETURN success;

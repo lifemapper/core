@@ -44,7 +44,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertScenLayer(scenid int,
                                           lyrverify varchar,
                                           lyrname varchar, 
                                           lyrdloc varchar,
-                                          lyrmurlprefix varchar,
                                           lyrmeta varchar,
                                           datafmt varchar,
                                           rtype int,
@@ -82,7 +81,7 @@ BEGIN
    ELSE
       -- get or insert layer 
       SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
-         lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
+         lyrname, lyrdloc, lyrmeta, datafmt, rtype, vtype, vunits, 
          vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
          
       IF NOT FOUND THEN
@@ -218,7 +217,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvLayer(lyrid int,
                                           lyrverify varchar,
                                           lyrname varchar, 
                                           lyrdloc varchar,
-                                          lyrmurlprefix varchar,
                                           lyrmeta varchar,
                                           datafmt varchar,
                                           rtype int,
@@ -256,7 +254,7 @@ BEGIN
    ELSE
       -- get or insert layer 
       SELECT * FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, lyrverify, 
-         lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, vunits, 
+         lyrname, lyrdloc, lyrmeta, datafmt, rtype, vtype, vunits, 
          vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime) INTO reclyr;
          
       -- join layer to envType 
@@ -716,7 +714,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertSDMProjectLayer(prjid int,
                                           lyrverify varchar,
                                           lyrname varchar, 
                                           lyrdloc varchar,
-                                          lyrmurlprefix varchar,
                                           lyrmeta varchar,
                                           datafmt varchar,
                                           rtype int,
@@ -750,7 +747,6 @@ DECLARE
    wherecls varchar = '';
    newlyrid int = -1;
    idstr varchar;
-   murl varchar;
    rec_lyr lm_v3.Layer%rowtype;
    rec_fullprj lm_v3.lm_sdmproject%rowtype;
 BEGIN
@@ -795,7 +791,7 @@ BEGIN
       RAISE NOTICE 'Unable to find existing lm_sdmProject for user: %', usr;
       -- get or insert layer 
       SELECT * INTO rec_lyr FROM lm_v3.lm_findOrInsertLayer(lyrid, usr, lyrsquid, 
-         lyrverify, lyrname, lyrdloc, lyrmurlprefix, lyrmeta, datafmt, rtype, vtype, 
+         lyrverify, lyrname, lyrdloc, lyrmeta, datafmt, rtype, vtype, 
          vunits, vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lyrmtime);
       
       IF NOT FOUND THEN
@@ -1127,7 +1123,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lid int,
                                           lverify varchar,
                                           lname varchar, 
                                           ldloc varchar,
-                                          lmurlprefix varchar,
                                           lmeta varchar,
                                           datafmt varchar,
                                           rtype int,
@@ -1170,7 +1165,7 @@ BEGIN
       begin
          -- get or insert layer 
          SELECT * FROM lm_v3.lm_findOrInsertLayer(lid, usr, lsquid, lverify, 
-            lname, ldloc, lmurlprefix, lmeta, datafmt, rtype, vtype, vunits, 
+            lname, ldloc, lmeta, datafmt, rtype, vtype, vunits, 
             vnodata, vmin, vmax, epsg, munits, res, bboxstr, bboxwkt, lmtime) 
             INTO reclyr;
          
@@ -1287,7 +1282,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertLayer(lyrid int,
                                           lyrverify varchar,
                                           lyrname varchar, 
                                           lyrdloc varchar,
-                                          lyrmurlprefix varchar,
                                           lyrmeta varchar,
                                           datafmt varchar,
                                           rtype int,
@@ -1307,7 +1301,6 @@ $$
 DECLARE
    newid int = -1;
    idstr varchar;
-   murl varchar;
    newname varchar;
    rec lm_v3.Layer%rowtype;
 BEGIN
@@ -1333,17 +1326,13 @@ BEGIN
                   
       IF FOUND THEN
          SELECT INTO newid last_value FROM lm_v3.layer_layerid_seq;
-         idstr := cast(newid as varchar);
-         -- Found in LmServer.common.lmconstants.ID_PLACEHOLDER
-         murl := replace(lyrmurlprefix, '#id#', idstr);
          -- If given name does not contain this string, newname = lyrname
          newname := replace(lyrname, '#id#', idstr);
          IF bboxwkt is NOT NULL THEN
-            UPDATE lm_v3.Layer SET (metadataurl, name, geom) 
-               = (murl, newname, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newid;
+            UPDATE lm_v3.Layer SET (name, geom) 
+               = (newname, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newid;
          ELSE
-            UPDATE lm_v3.Layer SET (metadataurl, name) 
-               = (murl, newname) WHERE layerid = newid;
+            UPDATE lm_v3.Layer SET name = newname WHERE layerid = newid;
          END IF;
          
          SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = newid;
@@ -1370,7 +1359,6 @@ $$
 DECLARE
    newid int = -1;
    idstr varchar;
-   murl varchar;
    rec lm_v3.Layer%rowtype;
 BEGIN
    -- get layer 

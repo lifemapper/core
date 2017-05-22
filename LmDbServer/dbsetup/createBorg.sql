@@ -136,7 +136,7 @@ create table lm_v3.Layer
    verify varchar(64),
    name text,
    dlocation text,
-   metadataUrl text UNIQUE,
+   -- metadataUrl text UNIQUE,
 
    -- JSON with title, author, description ...
    metadata text,
@@ -184,7 +184,7 @@ create table lm_v3.EnvLayer
     scenarioId serial UNIQUE PRIMARY KEY,
     userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
     scenarioCode varchar(60),
-    metadataUrl text UNIQUE,
+    -- metadataUrl text UNIQUE,
 
     -- JSON with title, author, description
     metadata text,
@@ -243,7 +243,7 @@ create table lm_v3.OccurrenceSet
    squid varchar(64) REFERENCES lm_v3.Taxon(squid),
    verify varchar(64),
    displayName text,
-   metadataUrl text UNIQUE,
+   -- metadataUrl text UNIQUE,
    dlocation text,
    rawDlocation text,
    queryCount int,
@@ -341,7 +341,7 @@ create table lm_v3.Tree
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
-   metadataUrl text UNIQUE,
+   -- metadataUrl text UNIQUE,
    -- original (Newick or JSON)
    dlocation text,
    isBinary boolean,
@@ -359,7 +359,7 @@ create table lm_v3.Gridset
    gridsetId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
-   metadataUrl text UNIQUE,
+   -- metadataUrl text UNIQUE,
    
    -- optional shapegrid 
    layerId int REFERENCES lm_v3.ShapeGrid,
@@ -405,7 +405,7 @@ create table lm_v3.Matrix
    dateCode varchar(20),
 
    matrixDlocation text,
-   metadataUrl text UNIQUE,
+   -- metadataUrl text UNIQUE,
    metadata text,
    status int,
    statusmodtime double precision,

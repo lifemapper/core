@@ -193,7 +193,6 @@ class Borg(DbPostgresql):
          datecode = self._getColumnValue(row, idxs, ['prjscendatecode', 'datecode'])
          
       usr = self._getColumnValue(row, idxs, ['userid'])
-      metaurl = self._getColumnValue(row, idxs, ['metadataurl'])
       meta = self._getColumnValue(row, idxs, ['metadata'])
       units = self._getColumnValue(row, idxs, ['units'])
       res = self._getColumnValue(row, idxs, ['resolution'])
@@ -202,8 +201,7 @@ class Borg(DbPostgresql):
       modtime = self._getColumnValue(row, idxs, ['modtime'])
     
       if row is not None:
-         scen = Scenario(scencode, metadata=meta, metadataUrl=metaurl, 
-                     units=units, res=res, 
+         scen = Scenario(scencode, metadata=meta, units=units, res=res, 
                      gcmCode=gcmcode, altpredCode=altpredcode, dateCode=datecode,
                      bbox=bbox, modTime=modtime, epsgcode=epsg,
                      layers=None, userId=usr, scenarioid=scenid)
@@ -242,14 +240,13 @@ class Borg(DbPostgresql):
          grdid = self._getColumnValue(row, idxs, ['gridsetid'])
          usr = self._getColumnValue(row, idxs, ['userid'])
          name = self._getColumnValue(row, idxs, ['grdname', 'name'])
-         murl = self._getColumnValue(row, idxs, ['grdmetadataurl', 'metadataurl'])
          dloc = self._getColumnValue(row, idxs, ['grddlocation', 'dlocation'])
          epsg = self._getColumnValue(row, idxs, ['grdepsgcode', 'epsgcode'])
          meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
          mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
          grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
                           shapeGridId=shpId, configFilename=dloc, epsgcode=epsg, userId=usr, 
-                          gridsetId=grdid, metadataUrl=murl, modTime=mtime)
+                          gridsetId=grdid, modTime=mtime)
       return grdset
    
 # ...............................................
@@ -263,15 +260,14 @@ class Borg(DbPostgresql):
          treeid = self._getColumnValue(row, idxs, ['treeid'])
          usr = self._getColumnValue(row, idxs, ['userid'])
          name = self._getColumnValue(row, idxs, ['name'])
-         murl = self._getColumnValue(row, idxs, ['metadataurl'])
          dloc = self._getColumnValue(row, idxs, ['dlocation'])
          isbin = self._getColumnValue(row, idxs, ['isbinary'])
          isultra = self._getColumnValue(row, idxs, ['isultrametric'])
          haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
          meta = self._getColumnValue(row, idxs, ['metadata'])
          modtime = self._getColumnValue(row, idxs, ['metadata'])
-         tree = Tree(name, metadata=meta, dlocation=dloc,
-                metadataUrl=murl, userId=usr, treeId=treeid, modTime=modtime)
+         tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr, 
+                     treeId=treeid, modTime=modtime)
       return tree
    
 # ...............................................
@@ -291,13 +287,11 @@ class Borg(DbPostgresql):
          dloc = self._getColumnValue(row, idxs, ['matrixiddlocation'])
          meta = self._getColumnValue(row, idxs, ['mtxmetadata', 'metadata'])
          usr = self._getColumnValue(row, idxs, ['userid'])
-         murl = self._getColumnValue(row, idxs, ['mtxmetadataurl', 'metadataurl'])
          stat = self._getColumnValue(row, idxs, ['mtxstatus', 'status'])
          stattime = self._getColumnValue(row, idxs, ['mtxstatusmodtime', 'statusmodtime'])
          mtx = LMMatrix(None, matrixType=mtype, 
                         gcmCode=gcm, altpredCode=rcp, dateCode=dt,
-                        metadata=meta, dlocation=dloc, 
-                        metadataUrl=murl, userId=usr, gridset=grdset, 
+                        metadata=meta, dlocation=dloc, userId=usr, gridset=grdset, 
                         matrixId=mtxid, status=stat, statusModTime=stattime)
       return mtx
    
@@ -348,7 +342,6 @@ class Borg(DbPostgresql):
       squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
       name = self._getColumnValue(row, idxs, ['lyrname', 'name'])
       dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
-      murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
       meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
       vtype = self._getColumnValue(row, idxs, ['ogrtype'])
       rtype = self._getColumnValue(row, idxs, ['gdaltype'])
@@ -363,7 +356,7 @@ class Borg(DbPostgresql):
       res = self._getColumnValue(row, idxs, ['resolution'])
       dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
       bbox = self._getColumnValue(row, idxs, ['bbox'])
-      return (dbid, usr, verify, squid, name, dloc, murl, meta, vtype, rtype, 
+      return (dbid, usr, verify, squid, name, dloc, meta, vtype, rtype, 
               vunits, vattr, nodata, minval, maxval, fformat, epsg, munits, res, 
               dtmod, bbox)
 
@@ -385,7 +378,6 @@ class Borg(DbPostgresql):
             verify = self._getColumnValue(row, idxs, ['lyrverify', 'verify'])
             squid = self._getColumnValue(row, idxs, ['lyrsquid', 'squid'])
             dloc = self._getColumnValue(row, idxs, ['lyrdlocation', 'dlocation'])
-            murl = self._getColumnValue(row, idxs, ['lyrmetadataurl', 'metadataurl'])
             meta = self._getColumnValue(row, idxs, ['lyrmetadata', 'metadata'])
             vtype = self._getColumnValue(row, idxs, ['ogrtype'])
             rtype = self._getColumnValue(row, idxs, ['gdaltype'])
@@ -406,14 +398,13 @@ class Borg(DbPostgresql):
                             ogrType=vtype, valUnits=vunits, valAttribute=vattr,
                             nodataVal=nodata, minVal=minval, maxVal=maxval, 
                             mapunits=munits, resolution=res, bbox=bbox, 
-                            metadataUrl=murl, modTime=dtmod)
+                            modTime=dtmod)
             elif fformat in GDALFormatCodes.keys():
                lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
                             dlocation=dloc, metadata=meta, dataFormat=fformat, 
                             gdalType=rtype, valUnits=vunits, nodataVal=nodata, 
                             minVal=minval, maxVal=maxval, mapunits=munits, 
-                            resolution=res, bbox=bbox, metadataUrl=murl, 
-                            modTime=dtmod)
+                            resolution=res, bbox=bbox, modTime=dtmod)
       return lyr
 
 # ...............................................
@@ -474,8 +465,6 @@ class Borg(DbPostgresql):
                rawDLocation=self._getColumnValue(row,idxs,['rawdlocation']),
                bbox=self._getColumnValue(row,idxs,['occbbox','bbox']), 
                occurrenceSetId=self._getColumnValue(row,idxs,['occurrencesetid']), 
-               metadataUrl=self._getColumnValue(row,idxs,['occmetadataurl',
-                                                          'metadataurl']), 
                occMetadata=self._getColumnValue(row,idxs,['occmetadata','metadata']), 
                status=self._getColumnValue(row,idxs,['occstatus','status']), 
                statusModTime=self._getColumnValue(row,idxs,['occstatusmodtime',
@@ -560,7 +549,7 @@ class Borg(DbPostgresql):
                            lyr.verify,
                            lyr.name,
                            lyr.getDLocation(),
-                           lyr.metadataUrl, meta,
+                           meta,
                            lyr.dataFormat,
                            lyr.gdalType,
                            lyr.ogrType,
@@ -648,8 +637,7 @@ class Borg(DbPostgresql):
          wkt = scen.getWkt()
       meta = scen.dumpScenMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
-                           scen.getUserId(), scen.code, 
-                           scen.metadataUrl, meta, 
+                           scen.getUserId(), scen.code, meta, 
                            scen.gcmCode, scen.altpredCode, scen.dateCode, 
                            scen.units, scen.resolution, scen.epsgcode, 
                            scen.getCSVExtentString(), wkt, scen.modTime)
@@ -757,7 +745,7 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
                            shpgrd.getId(), shpgrd.getUserId(), 
                            shpgrd.squid, shpgrd.verify, shpgrd.name,
-                           shpgrd.getDLocation(), shpgrd.metadataUrl, meta,
+                           shpgrd.getDLocation(), meta,
                            shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
                            valunits, nodataval, minval, maxval, 
                            shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
@@ -780,7 +768,6 @@ class Borg(DbPostgresql):
                                                          grdset.getId(),
                                                          grdset.getUserId(),
                                                          grdset.name,
-                                                         grdset.metadataUrl,
                                                          grdset.shapeGridId,
                                                          grdset.configFilename,
                                                          grdset.epsgcode,
@@ -903,7 +890,6 @@ class Borg(DbPostgresql):
                            'lm_findOrInsertEnvLayer', lyr.getId(), 
                            lyr.getUserId(), lyr.squid, lyr.verify, lyr.name,
                            lyr.getDLocation(), 
-                           lyr.metadataUrl,
                            lyrmeta, lyr.dataFormat,  lyr.gdalType, lyr.ogrType, 
                            lyr.valUnits, lyr.nodataVal, lyr.minVal, lyr.maxVal, 
                            lyr.epsgcode, lyr.mapUnits, lyr.resolution, 
@@ -1310,7 +1296,6 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertOccurrenceSet', 
                               occ.getId(), occ.getUserId(), occ.squid, 
                               occ.verify, occ.displayName,
-                              occ.constructMetadataUrl(),
                               occ.getDLocation(), occ.getRawDLocation(),
                               pointtotal, occ.getCSVExtentString(), occ.epsgcode,
                               occ.dumpLyrMetadata(),
@@ -1460,7 +1445,7 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertSDMProjectLayer', 
                      proj.getParamId(), proj.getId(), proj.getUserId(), 
                      proj.squid, proj.verify, proj.name, proj.getDLocation(), 
-                     proj.metadataUrl, lyrmeta, proj.dataFormat, proj.gdalType,
+                     lyrmeta, proj.dataFormat, proj.gdalType,
                      proj.ogrType, proj.valUnits, proj.nodataVal, proj.minVal,
                      proj.maxVal, proj.epsgcode, proj.mapUnits, proj.resolution,
                      proj.getCSVExtentString(), proj.getWkt(), proj.modTime,
@@ -1602,8 +1587,8 @@ class Borg(DbPostgresql):
       @return: a LmServer.legion.MatrixColumn object
       """
       row = None
-      intparams = mtxcol.dumpIntersectParams()
       if mtxcol is not None:
+         intparams = mtxcol.dumpIntersectParams()
          row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn', 
                                                    mtxcol.getId(),
                                                    mtxcol.parentId,
@@ -1773,7 +1758,7 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertMatrix', 
                      mtx.getId(), mtx.matrixType, mtx.parentId, 
                      mtx.gcmCode, mtx.altpredCode, mtx.dateCode,
-                     mtx.getDLocation(), mtx.metadataUrl, meta, mtx.status, 
+                     mtx.getDLocation(), meta, mtx.status, 
                      mtx.statusModTime)
       newOrExistingMtx = self._createLMMatrix(row, idxs)
       return newOrExistingMtx
@@ -1842,7 +1827,7 @@ class Borg(DbPostgresql):
       """
       meta = tree.dumpTreeMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree', 
-                     tree.getId(), tree.gerUserId(), tree.name, tree.metadataUrl,
+                     tree.getId(), tree.gerUserId(), tree.name, 
                      tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
                      tree.hasBranchLengths(), meta, tree.modTime)
       newOrExistingMtx = self._createLMMatrix(row, idxs)
