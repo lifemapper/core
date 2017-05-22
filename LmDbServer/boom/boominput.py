@@ -939,6 +939,9 @@ from LmDbServer.boom.boominput import ArchiveFiller
 configFname='/opt/lifemapper/config/biotaphyNA.boom.ini'
 
 filler = ArchiveFiller(configFname=configFname)
+
+filler = ArchiveFiller()
+
 filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 filler.initBoom()
 filler.close()
@@ -947,5 +950,23 @@ shp = ShapeGrid(filler.gridname, filler.usr, filler.epsgcode, filler.cellsides,
                 filler.cellsize, filler.mapunits, filler.gridbbox,
                 status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
 
+wkt = None
+if shpgrd.epsgcode == 4326:
+   wkt = shpgrd.getWkt()
+meta = shpgrd.dumpParamMetadata()
+gdaltype = valunits = nodataval = minval = maxval = None
+row, idxs = scribe._borg.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
+                     shpgrd.getId(), shpgrd.getUserId(), 
+                     shpgrd.squid, shpgrd.verify, shpgrd.name,
+                     shpgrd.getDLocation(), meta,
+                     shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
+                     valunits, nodataval, minval, maxval, 
+                     shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
+                     shpgrd.getCSVExtentString(), wkt, shpgrd.modTime, 
+                     shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
+                     shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
+                     shpgrd.status, shpgrd.statusModTime)
+updatedShpgrd = self._createShapeGrid(row, idxs)
+return updatedShpgrd
 
 """

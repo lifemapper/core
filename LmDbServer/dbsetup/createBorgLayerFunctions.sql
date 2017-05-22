@@ -1149,12 +1149,11 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertShapeGrid(lid int,
 RETURNS lm_v3.lm_shapegrid AS
 $$
 DECLARE
-   lyrid int;
    shpid int;
    reclyr lm_v3.layer%ROWTYPE;
    recshpgrd lm_v3.lm_shapegrid%ROWTYPE;
 BEGIN
-   IF lyrid IS NOT NULL THEN
+   IF lid IS NOT NULL THEN
       SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid WHERE layerid = lid;
    ELSE
       SELECT * INTO recshpgrd FROM lm_v3.lm_shapegrid 
@@ -1326,13 +1325,19 @@ BEGIN
                   
       IF FOUND THEN
          SELECT INTO newid last_value FROM lm_v3.layer_layerid_seq;
+         idstr := cast(newid as varchar);
          -- If given name does not contain this string, newname = lyrname
-         newname := replace(lyrname, '#id#', idstr);
+         RAISE NOTICE 'lyrname % ', lyrname;
+         newname = replace(lyrname, '#id#', idstr);
+         RAISE NOTICE 'newname % ', newname;
          IF bboxwkt is NOT NULL THEN
             UPDATE lm_v3.Layer SET (name, geom) 
-               = (newname, ST_GeomFromText(bboxwkt, epsg)) WHERE layerid = newid;
+                                 = (replace(lyrname, '#id#', idstr), 
+                                    ST_GeomFromText(bboxwkt, epsg)) 
+               WHERE layerid = newid;
          ELSE
-            UPDATE lm_v3.Layer SET name = newname WHERE layerid = newid;
+            UPDATE lm_v3.Layer SET name = replace(lyrname, '#id#', idstr) 
+               WHERE layerid = newid;
          END IF;
          
          SELECT * INTO rec FROM lm_v3.Layer WHERE layerid = newid;
