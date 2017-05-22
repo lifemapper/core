@@ -1598,8 +1598,38 @@ END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(-- MatrixColumn
-                                                             usr varchar,
+-- Gets a matrixColumn with its matrix
+CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrixColumn(mtxcolid int,
+                                              mtxid int, 
+                                              mtxindex int, 
+                                              lyrid int, 
+                                              intparams int)
+   RETURNS lm_v3.lm_matrixcolumn AS
+$$
+DECLARE
+   rec lm_v3.lm_matrixcolumn%rowtype;
+BEGIN
+   IF mtxcolid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.lm_matrixcolumn WHERE matrixcolumnid = mtxcolid;
+   ELSIF mtxid IS NOT NULL THEN
+      IF mtxindex IS NOT NULL THEN
+         SELECT * INTO rec FROM lm_v3.lm_v3.lm_matrixcolumn 
+                                             WHERE matrixId = mtxid 
+                                               AND matrixIndex = mtxindex;
+      ELSE
+         SELECT * INTO rec FROM lm_v3.lm_v3.lm_matrixcolumn 
+                                             WHERE matrixId = mtxid 
+                                               AND layerid = lyrid 
+                                               AND intersectParams = intparams;
+      END IF;      
+   END IF;
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;    
+
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(usr varchar,
                                                              mtxcolid int,
                                                              mtxid int,
                                                              mtxidx int,

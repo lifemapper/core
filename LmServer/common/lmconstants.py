@@ -585,6 +585,7 @@ class LMServiceType:
    LAYERS = 'layers'
    LAYERSETS = 'layersets'
    MATRICES = 'matrices'
+   MATRIX_COLUMNS = 'mtxcolumns'
    
 # Archive and Global PAM descriptions
 GPAM_KEYWORD = 'Global PAM'

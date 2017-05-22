@@ -26,10 +26,10 @@ import os
 from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import _LayerParameters
-from LmServer.base.serviceobject2 import ProcessObject
+from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
+from LmServer.common.lmconstants import (LMServiceType, LMServiceModule)
 from LmServer.common.localconstants import APP_PATH
 from LmServer.legion.cmd import MfRule
-from LmServer.legion.sdmproj import SDMProjection
 
 # .............................................................................
 # .............................................................................
@@ -59,7 +59,9 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
                 # inputs if this is connected to a layer and shapegrid 
                 layer=None, shapegrid=None, intersectParams={}, 
                 squid=None, ident=None,
-                processType=None, metadata={}, matrixColumnId=None, 
+                processType=None, 
+                metadata={}, 
+                matrixColumnId=None, 
                 status=None, statusModTime=None):
       """
       @summary MatrixColumn constructor
@@ -77,6 +79,10 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
       _LayerParameters.__init__(self, userId, paramId=matrixColumnId, 
                                 matrixIndex=matrixIndex, metadata=metadata, 
                                 modTime=statusModTime)
+      ServiceObject.__init__(self,  userId, matrixColumnId, 
+                             LMServiceType.MATRIX_COLUMNS, 
+                             moduleType=LMServiceModule.LM, 
+                             modTime=statusModTime)
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                              parentId=matrixId, status=status, 
                              statusModTime=statusModTime)
@@ -88,13 +94,13 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
       self.ident = ident
 
 # ...............................................
-   def setId(self, mfid):
+   def setId(self, mtxcolId):
       """
       @summary: Sets the database id on the object, and sets the 
                 dlocation of the file if it is None.
-      @param mfid: The database id for the object
+      @param mtxcolId: The database id for the object
       """
-      self.objId = mfid
+      self.objId = mtxcolId
 
 # ...............................................
    def getId(self):
@@ -103,6 +109,12 @@ class MatrixColumn(Matrix, _LayerParameters, ProcessObject):
       @return integer database id of the object
       """
       return self.objId
+   
+# ...............................................
+   def getLayerId(self):
+      if self.layer is not None:
+         return self.layer.getId()
+      return None
    
 # ...............................................
    @property

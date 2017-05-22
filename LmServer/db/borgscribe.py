@@ -292,6 +292,14 @@ class BorgScribe(LMObject):
                         afterTime, beforeTime, epsg, atom)
       return objs
 
+# ...............................................
+   def getMatrixColumn(self, mtxcol=None, mtxcolId=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getMatrixColumn()
+      """
+      mtxColumn = self._borg.getMatrixColumn(mtxcol, mtxcolId)
+      return mtxColumn
+
 # .............................................................................
    def countMatrixColumns(self, userId=PUBLIC_USER, squid=None, ident=None, 
                           afterTime=None, beforeTime=None, epsg=None, 

@@ -256,6 +256,7 @@ class Borg(DbPostgresql):
    def _createTree(self, row, idxs):
       """
       @summary: Create a Tree from a database Tree record
+      @todo: Do we want to use binary attributes without reading data?
       """
       tree = None
       if row is not None:
@@ -816,9 +817,11 @@ class Borg(DbPostgresql):
 # ...............................................
    def getMatrix(self, mtx, mtxId):
       """
-      @summary: Retrieve a Matrix with its gridset from the database
-      @param mtx: Matrix to retrieve
-      @return: Existing Matrix
+      @summary: Retrieve an LMMatrix with its gridset from the database
+      @param mtx: LMMatrix with unique parameters for which to retrieve the 
+                  existing LMMatrix
+      @param mtxId: database ID for the LMMatrix to retrieve
+      @return: Existing LmServer.legion.lmmatrix.LMMatrix
       """
       row = None
       if mtx is not None:
@@ -1587,6 +1590,33 @@ class Borg(DbPostgresql):
                                            meta, intparams,
                                            mtxcol.status, mtxcol.statusModTime)
       return success
+
+# ...............................................
+   def getMatrixColumn(self, mtxcol=None, mtxcolId=None):
+      """
+      @summary: Get an existing MatrixColumn
+      @param mtxcol: a MatrixColumn object with unique parameters matching the 
+                     existing MatrixColumn to return 
+      @param mtxcolId: a database ID for the LmServer.legion.MatrixColumn 
+                     object to return 
+      @return: a LmServer.legion.MatrixColumn object
+      """
+      row = None
+      intparams = mtxcol.dumpIntersectParams()
+      if mtxcol is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn', 
+                                                   mtxcol.getId(),
+                                                   mtxcol.parentId,
+                                                   mtxcol.getMatrixIndex(),
+                                                   mtxcol.getLayerId(),
+                                                   intparams)
+      elif mtxcolId is not None:
+         row, idxs = self.executeSelectOneFunction('lm_getMatrixColumn', 
+                                             mtxcolId, None, None, None, None)
+      mtxColumn = self._createMatrixColumn(row, idxs)
+      return mtxColumn
+
+
 
 # .............................................................................
    def countMatrixColumns(self, userId, squid, ident, afterTime, beforeTime, 
