@@ -110,7 +110,7 @@ BEGIN
       SELECT * INTO rec FROM lm_v3.tree WHERE treeid = trid;
    ELSIF usr IS NOT NULL AND nm IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.tree WHERE userId = usr AND name = nm;
-   END;
+   END IF;
    IF NOT FOUND THEN
       begin
          INSERT INTO lm_v3.Tree (userId, name, dlocation,  
@@ -144,7 +144,7 @@ BEGIN
          SELECT * INTO STRICT rec FROM lm_v3.tree WHERE treeid = trid;
       ELSIF usr IS NOT NULL AND nm IS NOT NULL THEN
          SELECT * INTO STRICT rec FROM lm_v3.tree WHERE userId = usr AND name = nm;
-      END;
+      END IF;
       EXCEPTION
          WHEN NO_DATA_FOUND THEN
             RAISE NOTICE 'Tree id/user/name = %/%/% not found', trid, usr, nm;

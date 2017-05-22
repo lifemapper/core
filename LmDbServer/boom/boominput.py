@@ -764,19 +764,20 @@ class ArchiveFiller(LMObject):
                       status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
       newshp = self.scribe.findOrInsertShapeGrid(shp)
       validData = False
-      if shp.getDLocation() is not None:
-         validData, _ = ShapeGrid.testVector(shp.getDLocation())
-      if not validData:
-         try:
-            newshp.buildShape(overwrite=True)
-            validData = True
-         except Exception, e:
-            self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
-      if validData and newshp.status != JobStatus.COMPLETE:
-         newshp.updateStatus(JobStatus.COMPLETE)
-         success = self.scribe.updateShapeGrid(newshp)
-         if success is False:
-            self.scribe.log.warning('Failed to update Shapegrid record')
+      if newshp: 
+         if newshp.getDLocation() is not None:
+            validData, _ = ShapeGrid.testVector(newshp.getDLocation())
+         if not validData:
+            try:
+               newshp.buildShape(overwrite=True)
+               validData = True
+            except Exception, e:
+               self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
+         if validData and newshp.status != JobStatus.COMPLETE:
+            newshp.updateStatus(JobStatus.COMPLETE)
+            success = self.scribe.updateShapeGrid(newshp)
+            if success is False:
+               self.scribe.log.warning('Failed to update Shapegrid record')
       return newshp
       
    # ...............................................
