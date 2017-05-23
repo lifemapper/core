@@ -37,6 +37,7 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
                                             SCRATCH_PATH)
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
+from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
 from LmServer.legion.processchain import MFChain
@@ -324,7 +325,7 @@ if __name__ == "__main__":
    
    scriptname = os.path.splitext(os.path.basename(__file__))[0]
    logname = '{}.{}'.format(scriptname, timestamp)
-   logger = DaemonLogger(pid, name=scriptname, level=logging.DEBUG)
+   logger = ScriptLogger(logname, level=logging.DEBUG)
    boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
    
    if cmd == 'start':
@@ -375,9 +376,8 @@ secs = time.time()
 tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
 scriptname = 'boomerTesting'
-pid = os.getpid()
 logname = '{}.{}'.format(scriptname, timestamp)
-logger = DaemonLogger(pid, name=scriptname, level=logging.DEBUG)
+logger = ScriptLogger(logname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 
 earl = EarlJr()
