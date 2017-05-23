@@ -48,7 +48,7 @@ TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 # .............................................................................
 class _SpeciesWeaponOfChoice(LMObject):
    # .............................
-   def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
+   def __init__(self, scribe, user, archiveName, epsg, expDate, 
                 taxonSourceName=None, logger=None):
       super(_SpeciesWeaponOfChoice, self).__init__()
       # Set name for this WoC
@@ -62,7 +62,6 @@ class _SpeciesWeaponOfChoice(LMObject):
       self.userId = user
       self.epsg = epsg
       self._obsoleteTime = expDate
-      self._minPoints = minPoints
       # Taxon Source for known taxonomy
       self._taxonSourceId = None
       if taxonSourceName is not None:
@@ -371,13 +370,11 @@ class BisonWoC(_SpeciesWeaponOfChoice):
    """
    @summary: Initializes the species WoC for BISON.
    """
-   def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-                tsnFname, taxonSourceName=None, logger=None):
-#       # Set name for this WoC
-#       self.name = '{}_{}_{}'.format(user, self.__class__.__name__.lower(), 
-#                                     archiveName)
+   def __init__(self, scribe, user, archiveName, epsg, expDate, tsnFname, 
+                taxonSourceName=None, logger=None):
       super(BisonWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                     minPoints, taxonSourceName=taxonSourceName, logger=logger)
+                                     taxonSourceName=taxonSourceName, 
+                                     logger=logger)
       # Bison-specific attributes
       self.processType = ProcessType.BISON_TAXA_OCCURRENCE
       self._tsnfile = None      
@@ -531,11 +528,11 @@ class UserWoC(_SpeciesWeaponOfChoice):
              should name the field containing the GBIF TaxonID for the accepted 
              Taxon of each record in the group. 
    """
-   def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-                userOccCSV, userOccMeta, userOccDelimiter, logger=None,
-                useGBIFTaxonomy=False):
+   def __init__(self, scribe, user, archiveName, epsg, expDate, 
+                userOccCSV, userOccMeta, userOccDelimiter, 
+                logger=None, useGBIFTaxonomy=False):
       super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                    minPoints, logger=logger)
+                                    logger=logger)
       # User-specific attributes
       self.processType = ProcessType.USER_TAXA_OCCURRENCE
       self.metaFname = userOccMeta
@@ -669,10 +666,10 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
              text chunk to a file, then creates an OccurrenceJob for it and 
              updates the Occurrence record and inserts a job.
    """
-   def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-                occFname, providerFname=None, taxonSourceName=None, logger=None):
+   def __init__(self, scribe, user, archiveName, epsg, expDate, occFname, 
+                providerFname=None, taxonSourceName=None, logger=None):
       super(GBIFWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                     minPoints, taxonSourceName=taxonSourceName, logger=logger)
+                                    taxonSourceName=taxonSourceName, logger=logger)
       # GBIF-specific sorted CSV data
       self.processType = ProcessType.GBIF_TAXA_OCCURRENCE
       self._dumpfile = None
@@ -885,10 +882,10 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
 #              creating a chain of SDM objs for each, unless the species is 
 #              up-to-date. 
 #    """
-#    def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-#                 idigFname, taxonSourceName=None, logger=None):
+#    def __init__(self, scribe, user, archiveName, epsg, expDate, idigFname, 
+#                 taxonSourceName=None, logger=None):
 #       super(iDigBioWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-#                      minPoints, taxonSourceName=taxonSourceName, logger=logger)
+#                      taxonSourceName=taxonSourceName, logger=logger)
 #       self.processType = ProcessType.IDIGBIO_TAXA_OCCURRENCE
 #       # iDigBio-specific file of (GBIF) accepted taxon-ids
 #       try:
@@ -1003,158 +1000,3 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
 #          raise LMError(currargs='Missing taxonSourceKeyVal for iDigBio query url')
 #       return str(taxonSourceKeyVal)
 # 
-# # .............................................................................
-
-# # ..............................................................................
-# class ArchiveWoC(_SpeciesWeaponOfChoice):
-#    """
-#    @summary: Parses a CSV file (with headers) of Occurrences using a metadata 
-#              file.  A template for the metadata, with instructions, is at 
-#              LmDbServer/tools/occurrence.meta.example.  
-#              The parser writes each new text chunk to a file, inserts or updates  
-#              the Occurrence record and inserts any dependent objects.
-#    """
-#    def __init__(self, scribe, user, archiveName, epsg, expDate, minPoints, 
-#                 occIdFname, logger=None):
-#       super(ArchiveWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-#                                     minPoints, logger=logger)
-#       # User-specific attributes
-#       self.authorizedDataUsers = [PUBLIC_USER]
-#       self.processType = None
-#       self._occIdFile = None
-#       try:
-#          self._occIdFile = open(occIdFname, 'r') 
-# #          self._occIdFile.
-#       except Exception, e:
-#          raise LMError(currargs=e.args)
-#       self._linenum = 0
-#       
-# # ...............................................
-#    def _getOrCloneOccurrenceset(self, occId):
-#       """
-#       @param origOcc: OccurrenceLayer to be cloned for this user
-#       """
-#       currtime = dt.gmt().mjd
-#       occ = None
-#       origOcc = self._scribe.getOcc(occId)
-#       if origOcc is None: 
-#          self._scribe.log.info('Missing occurrenceLayer {}'.format(occId))
-#       else:
-#          origUser = origOcc.getUserId()
-#          if origUser == self.userId:
-#             self._scribe.log.info('occurrenceLayer {} exists for user {}'
-#                          .format(id, self.userId))
-#             occ = origOcc
-#          elif origUser not in self.authorizedDataUsers:
-#             self._scribe.log.info('User {} is unauthorized to clone data from user {}'
-#                                   .format(self.userId, origUser))
-#          elif not JobStatus.finished(origOcc.status):
-#             self._scribe.log.info('Unable to clone unfinished occurrenceLayer {} for user {}'
-#                          .format(id, self.userId))
-#          else:
-#             self._scribe.log.info('Clone occurrenceLayer {} for user {}'
-#                          .format(id, self.userId))
-#             sciName = origOcc.getScientificName()
-#             # Copy existing metadata to database with User owner
-#             tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, 
-#                   origOcc.epsgcode, origOcc.queryCount, squid=origOcc.squid, 
-#                   ogrType=wkbPoint, processType=None, status=JobStatus.COMPLETE, 
-#                   statusModTime=currtime, sciName=sciName)
-#             try:
-#                occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
-#                self.log.info('Found or inserted OccLayer {}'.format(occ.getId()))
-#             except Exception, e:
-#                if not isinstance(e, LMError):
-#                   e = LMError(currargs=e.args, lineno=self.getLineno())
-#                raise e
-#             # Copy existing data to filesystem in User space
-#             if not os.path.exists(occ.getDLocation()):
-#                occ.copyData(origOcc.getDLocation())
-#       return occ
-# 
-# # ...............................................
-#    def _getNextId(self):
-#       occId = None
-#       while occId is None and not self.complete:
-#          try:
-#             self._linenum += 1
-#             tmp = self._occIdFile.readline()
-#          except EOFError:
-#             self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
-#             self.close()
-#          except Exception, e:
-#             self._scribe.log.info('Failed to readline {} on line {}'
-#                             .format(str(e), self._linenum))
-#          else:
-#             try:
-#                occId = int(tmp.strip())
-#             except Exception, e:
-#                self._scribe.log.info('Unable to get Id from data {} on line {}'
-#                                .format(tmp, self._linenum))
-#       return occId
-# 
-# # ...............................................
-#    def close(self):
-#       try:
-#          self.occIdFile.close()
-#       except:
-#          self.log.error('Unable to close occIdFile with file {}'
-#                         .format(self.occIdFile.name))
-#                
-# # ...............................................
-#    @property
-#    def complete(self):
-#       try:
-#          return self._occIdFile.closed
-#       except:
-#          return True
-#       
-#       
-# # ...............................................
-#    @property
-#    def nextStart(self):
-#       if self.complete:
-#          return 0
-#       else:
-#          return self._linenum+1
-# 
-# # ...............................................
-#    @property
-#    def thisStart(self):
-#       if self.complete:
-#          return 0
-#       else:
-#          return self._linenum
-# 
-# # ...............................................
-#    def moveToStart(self):
-#       startline = self._findStart()         
-#       if startline < 2:
-#          self._linenum = 0
-#       else:
-#          # Move to line before startline
-#          while self._linenum < (startline-1) and not self.complete:
-#             try:
-#                self._linenum += 1
-#                self._occIdFile.readline()
-#             except EOFError:
-#                self._scribe.log.info('EOF on line {}, closing'.format(self._linenum))
-#                self.close()
-#             except Exception, e:
-#                self._scribe.log.info('Failed to readline {} on line {}'
-#                                .format(str(e), self._linenum))
-#             
-# # ...............................................
-#    def _getChunk(self):
-#       chunk = self.occParser.pullCurrentChunk()
-#       taxonName = self.occParser.nameValue
-#       return chunk, len(chunk), taxonName
-#       
-# # ...............................................
-#    def getOne(self):
-#       occId  = self._getNextId()
-#       occ = self._getOrCloneOccurrenceset(occId)
-#       return occ
-
-"""
-"""

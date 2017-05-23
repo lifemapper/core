@@ -89,8 +89,8 @@ class ChristopherWalken(LMObject):
                self.log.info('{} opened databases'.format(self.name))
 
       (self.userId, self.archiveName, self.boompath, self.weaponOfChoice, 
-       self.epsg, self.algs, self.mdlScen, self.mdlMask, self.prjScens, self.prjMask, 
-       self.boomGridset, self.intersectParams, 
+       self.epsg, self.minPoints, self.algs, self.mdlScen, self.mdlMask, 
+       self.prjScens, self.prjMask, self.boomGridset, self.intersectParams, 
        self.assemblePams) = self._getConfiguredObjects()
 
       # Global PAM Matrix for each scenario
@@ -135,8 +135,6 @@ class ChristopherWalken(LMObject):
       except:
          taxonSourceName = None
          
-      # Minimum number of points required for SDM modeling 
-      minPoints = self.cfg.getint(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN')
       # Expiration date for retrieved species data 
       expDate = dt.DateTime(self.cfg.getint(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR'), 
                             self.cfg.getint(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH'), 
@@ -151,7 +149,7 @@ class ChristopherWalken(LMObject):
          gbifProv = self.cfg.get(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME')
          gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, 
-                                     epsg, expDate, minPoints, gbifOccFile,
+                                     epsg, expDate, gbifOccFile,
                                      providerFname=gbifProvFile, 
                                      taxonSourceName=taxonSourceName, 
                                      logger=self.log)
@@ -160,7 +158,7 @@ class ChristopherWalken(LMObject):
          bisonTsn = Config().get(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME')
          bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
          weaponOfChoice = BisonWoC(self._scribe, userId, archiveName, 
-                                   epsg, expDate, minPoints, bisonTsnFile, 
+                                   epsg, expDate, bisonTsnFile, 
                                    taxonSourceName=taxonSourceName, 
                                    logger=self.log)
       else:
@@ -182,7 +180,7 @@ class ChristopherWalken(LMObject):
             occMeta = os.path.join(boompath, occData + OutputFormat.METADATA)
             
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
-                                  epsg, expDate, minPoints, occCSV, occMeta, 
+                                  epsg, expDate, occCSV, occMeta, 
                                   occDelimiter, logger=self.log, 
                                   useGBIFTaxonomy=useGBIFTaxonIds)
       return weaponOfChoice
@@ -192,6 +190,8 @@ class ChristopherWalken(LMObject):
       algorithms = []
       prjScens = []
       mdlMask = prjMask = None
+      
+      minPoints = self.cfg.getint(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN')
 
       # Get algorithms for SDM modeling
       algCodes = self.cfg.getlist(SERVER_BOOM_HEADING, 'ALGORITHMS')
@@ -231,7 +231,7 @@ class ChristopherWalken(LMObject):
       except:
          pass
 
-      return (algorithms, mdlScen, mdlMask, prjScens, prjMask)  
+      return (minPoints, algorithms, mdlScen, mdlMask, prjScens, prjMask)  
 
 # .............................................................................
    def _getGlobalPamObjects(self, userId, archiveName, epsg):
@@ -289,15 +289,15 @@ class ChristopherWalken(LMObject):
       weaponOfChoice = self._getOccWeaponOfChoice(userId, archiveName, epsg, 
                                                   boompath)
       # SDM inputs
-      (algorithms, mdlScen, mdlMask, 
+      (minPoints, algorithms, mdlScen, mdlMask, 
        prjScens, prjMask) = self._getSDMParams(userId, epsg)
       # Global PAM inputs
       (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                             archiveName, epsg)
       assemblePams = self.cfg.getboolean(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS')
 
-      return (userId, archiveName, boompath, weaponOfChoice, epsg, algorithms, 
-              mdlScen, mdlMask, prjScens, prjMask, 
+      return (userId, archiveName, boompath, weaponOfChoice, epsg, 
+              minPoints, algorithms, mdlScen, mdlMask, prjScens, prjMask, 
               boomGridset, intersectParams, assemblePams)  
 
    # ...............................
@@ -331,29 +331,31 @@ class ChristopherWalken(LMObject):
          # Process existing OccurrenceLayer if incomplete, obsolete, or failed
          if setOrReset:
             objs.append(occ)
+            self.log.info('   Process occurrenceset')
          # Sweep over input options
          # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
          #       Change this for BOOM jobs!! 
-         for alg in self.algs:
-            for prjscen in self.prjScens:
-               # Add to Spud - SDM Project and MatrixColumn
-               prj, pReset = self._createOrResetSDMProject(occ, alg, prjscen, 
-                                                           currtime)
-               if prj is not None:
-                  pcount += 1
-                  if pReset: prcount += 1 
-                  objs.append(prj)
-                  mtx = self.globalPAMs[prjscen.code]
-                  mtxcol, mReset = self._createOrResetIntersect(prj, mtx, 
-                                                                currtime)
-                  if mtxcol is not None:
-                     icount += 1
-                     if mReset: ircount += 1 
-                     objs.append(mtxcol)
-                     potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
+         if occ.queryCount >= self.minPoints:
+            for alg in self.algs:
+               for prjscen in self.prjScens:
+                  # Add to Spud - SDM Project and MatrixColumn
+                  prj, pReset = self._createOrResetSDMProject(occ, alg, prjscen, 
+                                                              currtime)
+                  if prj is not None:
+                     pcount += 1
+                     if pReset: prcount += 1 
+                     objs.append(prj)
+                     mtx = self.globalPAMs[prjscen.code]
+                     mtxcol, mReset = self._createOrResetIntersect(prj, mtx, 
+                                                                   currtime)
+                     if mtxcol is not None:
+                        icount += 1
+                        if mReset: ircount += 1 
+                        objs.append(mtxcol)
+                        potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
    
-      self.log.info('   Process/reset {}/{} projections, {}/{} matrixColumns'
-                    .format(pcount, prcount, icount, ircount))
+            self.log.info('   Process {} projections, {} matrixColumns ( {}, {} reset)'
+                          .format(pcount, icount, prcount, ircount))
       spudObjs = [o for o in objs if o is not None]
       spud = self._createSpudMakeflow(spudObjs)
       return spud, potatoInputs
