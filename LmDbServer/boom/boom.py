@@ -128,6 +128,7 @@ class Boomer(Daemon):
                # {scencode: pavFilename}
                spud, potatoInputs = self.christopher.startWalken()
                self.keepWalken = not self.christopher.complete
+               # TODO: Master process for occurrence only? SDM only? 
                if self.assemblePams and spud:
                   self.log.debug('Processing spud for potatoes')
                   # Add MF rule for Spud execution to Master MF
@@ -137,10 +138,11 @@ class Boomer(Daemon):
                   self.spudArfFnames.append(spudArf)
                   # Add PAV outputs to raw potato files for triage input
                   squid = spud.mfMetadata[MFChain.META_SQUID]
-                  for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
-                     pavFname = potatoInputs[scencode]
-                     rawPotatoFile.write('{}: {}\n'.format(squid, pavFname))
-                  self.log.info('Wrote spud squid to arf files')
+                  if potatoInputs:
+                     for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
+                        pavFname = potatoInputs[scencode]
+                        rawPotatoFile.write('{}: {}\n'.format(squid, pavFname))
+                        self.log.info('Wrote spud squid to arf files')
                   if len(self.spudArfFnames) >= SPUD_LIMIT:
                      self._rotatePotatoes()
             except Exception, e:
