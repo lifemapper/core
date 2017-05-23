@@ -325,9 +325,6 @@ class ChristopherWalken(LMObject):
       currtime = dt.gmt().mjd
       potatoInputs = {}
       pcount = prcount = icount = ircount = 0
-      # If OccurrenceLayer exists and is old or failed
-      reset = False
-      
       # WeaponOfChoice resets old or failed Occurrenceset
       occ, setOrReset = self.weaponOfChoice.getOne()
       if occ:

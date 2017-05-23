@@ -374,7 +374,10 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
 secs = time.time()
 tuple = time.localtime(secs)
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
-logger = ScriptLogger('archivist.{}'.format(timestamp))
+scriptname = 'boomerTesting'
+pid = os.getpid()
+logname = '{}.{}'.format(scriptname, timestamp)
+logger = DaemonLogger(pid, name=scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 
 earl = EarlJr()
@@ -383,20 +386,17 @@ defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME,
                                                  OutputFormat.CONFIG))
 boomer = Boomer(BOOM_PID_FILE, defaultConfigFile, log=logger)
 
-configFile = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'
-boomer = Boomer(BOOM_PID_FILE, configFile, log=logger)
-
 boomer.initialize()
 chris = boomer.christopher
 woc = chris.weaponOfChoice
 alg = chris.algs[0]
 prjscen = chris.prjScens[0]
-
-
-occ = woc.getOne()
-reset = chris._doReset(occ.status, occ.statusModTime) 
-prj = chris._createOrResetSDMProject(occ, alg, prjscen, currtime,reset=reset)
 mtx = chris.globalPAMs[prjscen.code]
+
+
+# occ, setOrReset = woc.getOne()
+# prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, currtime)
+# mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, currtime)
 
 
 spud, potatoInputs = boomer.christopher.startWalken()

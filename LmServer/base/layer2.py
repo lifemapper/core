@@ -1067,8 +1067,8 @@ class Vector(_Layer):
             self.bbox = newBBox
          self._geomIdx = geomIdx
          self._localIdIdx = localIdIdx   
-      else:
-         print('Warning: Vector {} does not exist'.format(dlocation))
+#       else:
+#          print('Warning: Vector {} does not exist'.format(dlocation))
       
 # .............................................................................
 # Static methods
