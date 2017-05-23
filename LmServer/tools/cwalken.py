@@ -340,15 +340,15 @@ class ChristopherWalken(LMObject):
          for alg in self.algs:
             for prjscen in self.prjScens:
                # Add to Spud - SDM Project and MatrixColumn
-               prj, pReset = self._createOrResetSDMProject(occ, alg, prjscen, currtime,
-                                                   reset=reset)
+               prj, pReset = self._createOrResetSDMProject(occ, alg, prjscen, 
+                                                           currtime)
                if prj is not None:
                   pcount += 1
                   if pReset: prcount += 1 
                   objs.append(prj)
                   mtx = self.globalPAMs[prjscen.code]
-                  mtxcol, mReset = self._createOrResetIntersect(prj, mtx, currtime, 
-                                                        reset=reset)
+                  mtxcol, mReset = self._createOrResetIntersect(prj, mtx, 
+                                                                currtime)
                   if mtxcol is not None:
                      icount += 1
                      if mReset: ircount += 1 
@@ -417,7 +417,7 @@ class ChristopherWalken(LMObject):
       return doReset
 
 # ...............................................
-   def _createOrResetSDMProject(self, occ, alg, prjscen, currtime, reset=False):
+   def _createOrResetSDMProject(self, occ, alg, prjscen, currtime):
       """
       @summary: Iterates through all input combinations to create or reset
                 SDMProjections for the given occurrenceset.
