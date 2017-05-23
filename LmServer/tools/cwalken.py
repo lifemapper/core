@@ -324,15 +324,15 @@ class ChristopherWalken(LMObject):
       objs = []
       currtime = dt.gmt().mjd
       potatoInputs = {}
+      pcount = prcount = icount = ircount = 0
       # If OccurrenceLayer exists and is old or failed
       reset = False
       
-      occ = self.weaponOfChoice.getOne()
+      # WeaponOfChoice resets old or failed Occurrenceset
+      occ, setOrReset = self.weaponOfChoice.getOne()
       if occ:
-         # Reset existing OccurrenceLayer if old or failed
-         if self._doReset(occ.status, occ.statusModTime):
-            self.log.info('Reseting OccurrenceLayer {}'.format(occ.getId()))
-            reset = True
+         # Process existing OccurrenceLayer if incomplete, obsolete, or failed
+         if setOrReset:
             objs.append(occ)
          # Sweep over input options
          # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
@@ -340,15 +340,23 @@ class ChristopherWalken(LMObject):
          for alg in self.algs:
             for prjscen in self.prjScens:
                # Add to Spud - SDM Project and MatrixColumn
-               prj = self._createOrResetSDMProject(occ, alg, prjscen, currtime,
+               prj, pReset = self._createOrResetSDMProject(occ, alg, prjscen, currtime,
                                                    reset=reset)
-               objs.append(prj)
-               mtx = self.globalPAMs[prjscen.code]
-               mtxcol = self._createOrResetIntersect(prj, mtx, currtime, 
-                                                     reset=reset)
-               objs.append(mtxcol)
-               potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
+               if prj is not None:
+                  pcount += 1
+                  if pReset: prcount += 1 
+                  objs.append(prj)
+                  mtx = self.globalPAMs[prjscen.code]
+                  mtxcol, mReset = self._createOrResetIntersect(prj, mtx, currtime, 
+                                                        reset=reset)
+                  if mtxcol is not None:
+                     icount += 1
+                     if mReset: ircount += 1 
+                     objs.append(mtxcol)
+                     potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
    
+      self.log.info('   Process/reset {}/{} projections, {}/{} matrixColumns'
+                    .format(pcount, prcount, icount, ircount))
       spudObjs = [o for o in objs if o is not None]
       spud = self._createSpudMakeflow(spudObjs)
       return spud, potatoInputs
@@ -359,15 +367,15 @@ class ChristopherWalken(LMObject):
       @summary: Walks a list of Lifemapper objects for computation
       """
       if not self.weaponOfChoice.complete:
-         self.log.debug('Christopher finished walken')
+         self.log.debug('Christopher, stop walken')
          self.log.info('Saving next start {} ...'.format(self.nextStart))
          self.saveNextStart()
          self.weaponOfChoice.close()
       else:
-         self.log.debug('Christopher is already done walken')
+         self.log.debug('Christopher is done walken')
       
 # ...............................................
-   def _createOrResetIntersect(self, prj, mtx, currtime, reset=False):
+   def _createOrResetIntersect(self, prj, mtx, currtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
@@ -386,16 +394,19 @@ class ChristopherWalken(LMObject):
                 processType=ptype, metadata={}, matrixColumnId=None, 
                 status=JobStatus.GENERAL, statusModTime=currtime)
          mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
-         self.log.info('Found or inserted MatrixColumn {}'.format(mtxcol.getId()))
-         # Reset processType (not in db)
-         mtxcol.processType = ptype
-         
-         # Rollback if OccurrenceLayer is old or failed
-         if reset:
-            self.log.info('   Reseting MatrixColumn {}'.format(mtxcol.getId()))
-            mtxcol.updateStatus(JobStatus.GENERAL, modTime=currtime)
-            success = self._scribe.updateMatrixColumn(mtxcol)
-      return mtxcol
+         if mtxcol is not None:
+            self.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
+
+            # Reset processType (not in db)
+            mtxcol.processType = ptype
+            
+            # Rollback if obsolete or failed
+            reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
+            if reset:
+               self.log.debug('Reset MatrixColumn {}'.format(mtxcol.getId()))
+               mtxcol.updateStatus(JobStatus.GENERAL, modTime=currtime)
+               success = self._scribe.updateMatrixColumn(mtxcol)
+      return mtxcol, reset
 
 # ...............................................
    def _doReset(self, status, statusModTime):
@@ -421,19 +432,19 @@ class ChristopherWalken(LMObject):
                         status=JobStatus.GENERAL, statusModTime=currtime)
          prj = self._scribe.findOrInsertSDMProject(tmpPrj)
          if prj is not None:
-            self.log.info('Found or inserted SDMProject {}'.format(prj.getId()))
-            # Instead of re-pulling unchanged scenario layers, masks, update 
-            # with input objects
+            self.log.debug('Found/inserted SDMProject {}'.format(prj.getId()))
+            # Fill in projection with input scenario layers, masks
             prj._modelScenario = self.mdlScen
             prj.setModelMask(self.mdlMask)
             prj._projScenario = prjscen
             prj.setProjMask(self.prjMask)
-            # Rollback if OccurrenceLayer is old or failed
+            # Rollback if obsolete or failed
+            reset = self._doReset(prj.status, prj.statusModTime)
             if reset:
-               self.log.info('   Reseting SDMProject {}'.format(prj.getId()))
+               self.log.debug('Reset SDMProject {}'.format(prj.getId()))
                prj.updateStatus(JobStatus.GENERAL, modTime=currtime)
                success = self._scribe.updateSDMProject(prj)
-      return prj
+      return prj, reset
 
 # ...............................................
    def _createSpudMakeflow(self, objs):

@@ -157,10 +157,10 @@ class Boomer(Daemon):
       # Finish up existing potatoes
       #   Write triage rule to each. then write potato to Master Potato      
       if self.potatoes:
-         self.log.debug('Rotate potatoes ...')
+         self.log.info('Rotate potatoes ...')
          # Write each potato MFChain, then add the MFRule to execute it to the Master
          for scencode, (potatoChain, rawPotatoFile) in self.potatoes.iteritems():
-            self.log.debug('  Finish {} potato'.format(scencode))
+            self.log.info('  Completed {} potato'.format(scencode))
             # Close this potato input file
             rawPotatoFile.close()
             # Create triage command for potato inputs, add to MF chain
@@ -173,19 +173,19 @@ class Boomer(Daemon):
    #          potatoChain.updateStatus(JobStatus.INITIALIZE)
             self._scribe.updateObject(potatoChain)
             # Add this potato to MasterPotato
-            self.log.debug('  Add {} potato to Master'.format(scencode))
+            self.log.info('  Add {} potato to Master'.format(scencode))
             self._addRuleToMasterPotatoHead(potatoChain, 
                                             dependencies=self.spudArfFnames, 
                                             prefix='potato')
          # Write the masterPotatoHead MFChain
-         self.log.debug('  Finish MasterPotato')
+         self.log.info('   Completed MasterPotato')
          self.masterPotato.write()
          self.masterPotato.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(self.masterPotato)
       
       # Create new potatoes
       if not self.christopher.complete:
-         self.log.debug('  Create new potatoes')
+         self.log.info('Create new potatoes')
          # Initialize new potatoes, MasterPotato
          # potatoes = {scencode: (potatoChain, rawPotatoFile)
          self.potatoes = self._createPotatoMakeflows()
