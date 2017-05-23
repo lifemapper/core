@@ -209,8 +209,11 @@ class DaemonLogger(LmLogger):
    @summary: This is a fallback daemon logger class that can be used if no other
                 logger is provided to the daemon process.
    """
-   def __init__(self, pid, level=logging.DEBUG):
-      name = 'daemon.{}'.format(pid)
+   def __init__(self, pid, name=None, level=logging.DEBUG):
+      if name:
+         name = 'daemon.{}.{}'.format(name, pid)
+      else:
+         name = 'daemon.{}'.format(pid)
       LmLogger.__init__(self, name, level=level)
       import tempfile
       fn = os.path.join(tempfile.mkdtemp(), '{}.log'.format(name))

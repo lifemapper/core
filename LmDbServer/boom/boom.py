@@ -22,11 +22,13 @@
           02110-1301, USA.
 """
 import argparse
+import logging
 import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import JobStatus, OutputFormat
+from LmCommon.common.log import DaemonLogger
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmServer.base.lmobj import LMError
@@ -35,7 +37,6 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
                                             SCRATCH_PATH)
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
-from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
 from LmServer.legion.processchain import MFChain
@@ -320,8 +321,12 @@ if __name__ == "__main__":
    
    secs = time.time()
    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-   logger = ScriptLogger('archivist.{}'.format(timestamp))
+   
+   scriptname = os.path.splitext(os.path.basename(__file__))[0]
+   logname = '{}.{}'.format(scriptname, timestamp)
+   logger = DaemonLogger(pid, name=scriptname, level=logging.DEBUG)
    boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
+   
    if cmd == 'start':
       boomer.start()
    elif cmd == 'stop':
