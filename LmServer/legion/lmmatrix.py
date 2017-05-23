@@ -147,7 +147,24 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
 # ...............................................
 # ...............................................
+   def getRelativeDLocation(self):
+      """
+      @summary: Return the relative filepath from object attributes
+      @note: If the object does not have an ID, this returns None
+      @note: This is to be pre-pended with a relative directory name for data  
+             used by a single workflow/Makeflow 
+      """
+      basename = None
+      self.setDLocation()
+      if self._dlocation is not None:
+         pth, basename = os.path.split(self._dlocation)
+      return basename
+
    def createLocalDLocation(self):
+      """
+      @summary: Create an absolute filepath from object attributes
+      @note: If the object does not have an ID, this returns None
+      """
       ftype = LMFileType.getMatrixFiletype(self.matrixType)
       dloc = self._earlJr.createFilename(ftype, gridsetId=self.parentId, 
                                         objCode=self.getId(), 
@@ -155,6 +172,9 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return dloc
 
    def getDLocation(self):
+      """
+      @summary: Return the _dlocation attribute; create and set it if empty
+      """
       self.setDLocation()
       return self._dlocation
    

@@ -97,9 +97,27 @@ class MFChain(ProcessObject):
 # Superclass methods overridden
 ## .............................................................................
 # ...............................................
+
+# ...............................................
+   def getRelativeDirectory(self):
+      """
+      @summary: Return the relative directory for data associated with this 
+                Makeflow process
+      @note: If the object does not have an ID, this returns None
+      @note: This is to organize a sub-workspace within the Makeflow workspace 
+             for files used by a single workflow 
+      """
+      basename = None
+      self.setDLocation()
+      if self._dlocation is not None:
+         _, basename = os.path.split(self._dlocation)
+         reldir, _ = os.path.splitext(basename)
+      return reldir
+
    def createLocalDLocation(self):
       """
-      @summary: Create data location
+      @summary: Create an absolute filepath from object attributes
+      @note: If the object does not have an ID, this returns None
       """
       dloc = None
       if self.objId is not None:
@@ -109,7 +127,6 @@ class MFChain(ProcessObject):
                                             usr=self._userId)
       return dloc
 
-# ...............................................
    def getDLocation(self):
       self.setDLocation()
       return self._dlocation

@@ -78,7 +78,24 @@ class Tree(LmTree, ServiceObject):
       return dloc
 
 # ...............................................
+   def getRelativeDLocation(self):
+      """
+      @summary: Return the relative filepath from object attributes
+      @note: If the object does not have an ID, this returns None
+      @note: This is to be pre-pended with a relative directory name for data  
+             used by a single workflow/Makeflow 
+      """
+      basename = None
+      self.setDLocation()
+      if self._dlocation is not None:
+         pth, basename = os.path.split(self._dlocation)
+      return basename
+
    def createLocalDLocation(self):
+      """
+      @summary: Create an absolute filepath from object attributes
+      @note: If the object does not have an ID, this returns None
+      """
       dloc = self._earlJr.createFilename(LMFileType.TREE,  objCode=self.getId(), 
                                          usr=self.getUserId())
       return dloc

@@ -275,7 +275,24 @@ class _Layer(LMSpatialObject, ServiceObject):
       return self._metalocation
 
 # ...............................................
+   def getRelativeDLocation(self):
+      """
+      @summary: Return the relative filepath for object data
+      @note: If the object does not have an ID, this returns None
+      @note: This is to be pre-pended with a relative directory name for data  
+             used by a single workflow/Makeflow 
+      """
+      basename = None
+      self.setDLocation()
+      if self._dlocation is not None:
+         pth, basename = os.path.split(self._dlocation)
+      return basename
+
    def createLocalDLocation(self, extension):
+      """
+      @summary: Create an absolute filepath from object attributes
+      @note: If the object does not have an ID, this returns None
+      """
       dloc = self._earlJr.createOtherLayerFilename(self._layerUserId, self._epsg, 
                                              self.name, ext=extension)
       return dloc
@@ -288,6 +305,9 @@ class _Layer(LMSpatialObject, ServiceObject):
       return self._dlocation
    
    def clearDLocation(self): 
+      """
+      @summary: Clear the _dlocation attribute
+      """
       self._dlocation = None
       self._absolutePath = None 
       self._baseFilename = None

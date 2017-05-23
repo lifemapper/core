@@ -193,8 +193,11 @@ class EarlJr(LMObject):
       elif LMFileType.isUserLayer(ftype):
          nameparts.append(lyrname)
       # All non-map, non-user-layer files use objCode 
-      else:
+      elif objCode:
          nameparts.append(objCode)
+         
+      else:
+         return None
          
       fileparts = [str(p) for p in nameparts if p is not None ]
       try:
@@ -215,11 +218,14 @@ class EarlJr(LMObject):
       @param pth: File storage path, overrides calculated path
       """
       basename = self.createBasename(ftype, objCode=objCode, lyrname=lyrname, 
-                                     usr=usr, epsg=epsg)      
-      if pth is None:
-         pth = self.createDataPath(usr, ftype, gridsetId=gridsetId,
-                                   epsg=epsg, occsetId=occsetId)
-      filename = os.path.join(pth, basename + FileFix.EXTENSION[ftype])
+                                     usr=usr, epsg=epsg)   
+      if basename is None:
+         filename = None
+      else:
+         if pth is None:
+            pth = self.createDataPath(usr, ftype, gridsetId=gridsetId,
+                                      epsg=epsg, occsetId=occsetId)
+         filename = os.path.join(pth, basename + FileFix.EXTENSION[ftype])
       return filename
    
 # ...............................................
