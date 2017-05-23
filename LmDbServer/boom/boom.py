@@ -325,7 +325,7 @@ if __name__ == "__main__":
    
    scriptname = os.path.splitext(os.path.basename(__file__))[0]
    logname = '{}.{}'.format(scriptname, timestamp)
-   logger = ScriptLogger(logname, level=logging.DEBUG)
+   logger = ScriptLogger(logname, level=logging.INFO)
    boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
    
    if cmd == 'start':
@@ -343,6 +343,8 @@ if __name__ == "__main__":
 """
 $PYTHON LmDbServer/boom/boom.py --help
 $PYTHON LmDbServer/boom/boom.py  --config_file /share/lm/data/archive/kubi/BOOM_Archive.ini start
+
+select * from lm_v3.lm_updateMFChain(20505,'/share/lm/data/archive/kubi/makeflow/mf_20505.mf',0,57896.90625);
 
 from LmDbServer.boom.boom import *
 

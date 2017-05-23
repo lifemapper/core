@@ -492,7 +492,8 @@ class BisonWoC(_SpeciesWeaponOfChoice):
       if tsn is not None:
          sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
          if sciName is not None:
-            occ, setOrReset = self._createOrResetOccurrenceset(sciName, tsn, tsnCount)
+            occ, setOrReset = self._createOrResetOccurrenceset(sciName, tsnCount,
+                                                               taxonSourceKey=tsn)
          self.log.info('Processed tsn {}, with {} points; next start {}'
                        .format(tsn, tsnCount, self.nextStart))
       return occ, setOrReset
@@ -638,7 +639,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             bbsciName = ScientificName(taxonName, userId=self.userId)
             sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
          if sciName is not None:
-            occ, setOrReset = self._createOrResetOccurrenceset(sciName, None, dataCount, 
+            occ, setOrReset = self._createOrResetOccurrenceset(sciName, dataCount, 
                                                    data=dataChunk)
          self.log.info('Processed name {}, with {} records; next start {}'
                        .format(taxonName, len(dataChunk), self.nextStart))
@@ -773,8 +774,10 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       if speciesKey:
          sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, len(dataChunk))
          if sciName is not None:
-            occ, setOrReset = self._createOrResetOccurrenceset(sciName, speciesKey, 
-                                                len(dataChunk), data=dataChunk)
+            occ, setOrReset = self._createOrResetOccurrenceset(sciName, 
+                                                      len(dataChunk), 
+                                                      taxonSourceKey=speciesKey, 
+                                                      data=dataChunk)
          self.log.info('Processed gbif key {} with {} records; next start {}'
                        .format(speciesKey, len(dataChunk), self.nextStart))
       return occ, setOrReset
@@ -904,7 +907,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
 #       if taxonKey is not None:
 #          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
 #          if sciName is not None:
-#             occ = self._createOrResetOccurrenceset(sciName, taxonKey, taxonCount)         
+#             occ = self._createOrResetOccurrenceset(sciName, taxonCount, taxonSourceKey=taxonKey)         
 #          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
 #                        .format(taxonKey, taxonName, taxonCount, self.nextStart))
 #       return occ
