@@ -412,7 +412,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       targetFiles = []
       if workDir is None:
          workDir = '' # So append command does not need condition
-      relDir = self.getRelativeDLocation()
+      relDir = os.path.splitext(self.getRelativeDLocation())[0]
       
       # Need file name
       baseFname = os.path.splitext(os.path.basename(self.getDLocation()))[0]
@@ -621,7 +621,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          workDir = '' # So path joins work
       
       targetFiles = self.getTargetFiles(workDir=workDir)
-      targetDir = os.path.join(workDir, self.getRelativeDLocation())
+      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
       
       outFileBasename = os.path.basename(self.getDLocation())
       bigFileBasename = os.path.basename(self.getDLocation(largeFile=True))
