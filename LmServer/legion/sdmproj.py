@@ -859,7 +859,7 @@ class SDMProjection(_ProjectionType, Raster):
          # Generate the projection
          if self.isATT():
             rawPrjRaster = os.path.join(targetDir, '{}.asc'.format(prjName))
-            outTiff = os.path.join(targetDir, '{}.tif'.format(prjName)
+            outTiff = os.path.join(targetDir, '{}.tif'.format(prjName))
             
             paramsJsonFname = self.getAlgorithmParametersJsonFilename(
                                                                self._algorithm)
