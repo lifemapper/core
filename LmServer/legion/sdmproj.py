@@ -830,7 +830,7 @@ class SDMProjection(_ProjectionType, Raster):
       if workDir is None:
          workDir = ''
          
-      targetDir = os.path.join(workDir, self.getRelativeDLocation())
+      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
          
       if JobStatus.finished(self.status):
          # Just need to move the tiff into place
@@ -912,7 +912,9 @@ class SDMProjection(_ProjectionType, Raster):
 
          # Rule for Test/Update 
          status = None
-         uRule = self.getUpdateRule(self.getId(), status, prjName, [outTiff, packageFname])
+         uRule = self.getUpdateRule(self.getId(), status, 
+                                    os.path.join(targetDir, prjName), 
+                                    [outTiff, packageFname])
          rules.append(uRule)
          
       return rules
