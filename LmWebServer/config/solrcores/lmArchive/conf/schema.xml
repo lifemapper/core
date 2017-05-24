@@ -28,7 +28,7 @@
 
    <!-- Occurrence Set -->
    <field name="pointCount" type="int" indexed="true" stored="true" />
-   <field name="occurrenceSetId" type="int" indexed="true" stored="true" />
+   <field name="occurrenceId" type="int" indexed="true" stored="true" />
    <field name="occurrenceDataUrl" type="url" indexed="false" stored="true" />
    <field name="occurrenceMetaUrl" type="url" indexed="false" stored="true" />
    <field name="occurrenceModTime" type="datetime" indexed="true" stored="true" />

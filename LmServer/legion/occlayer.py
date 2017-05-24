@@ -404,6 +404,24 @@ class OccurrenceLayer(OccurrenceType, Vector):
    def layerName(self):
       return self._earlJr.createLayername(occsetId=self.getId())
    
+   # ..............................
+   def getTargetFiles(self, workDir=None):
+      """
+      @summary: A list of target files to be created by computeMe
+      """
+      targetFiles = []
+      if workDir is None:
+         workDir = '' # So append command does not need condition
+      relDir = os.path.splitext(self.getRelativeDLocation())[0]
+      
+      # Need file name
+      baseFname = os.path.splitext(os.path.basename(self.getDLocation()))[0]
+      
+      for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+         targetFiles.append(os.path.join(workDir, relDir, 
+                                         '{}{}'.format(baseFname, ext)))
+      return targetFiles
+   
 # ...............................................
    def clearLocalMapfile(self):
       """
@@ -591,7 +609,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
 
    # ................................
-   def computeMe(self):
+   def computeMe(self, workDir=None):
       """
       @summary: Assemble command to create a shapefile from raw input
       @todo: Consider copying raw data file to the workspace and using it for
@@ -599,43 +617,39 @@ class OccurrenceLayer(OccurrenceType, Vector):
       """
       rules = []
       deps = None
+      if workDir is None:
+         workDir = '' # So path joins work
       
-      # TODO: Assess this, need to move the files if we aren't creating   
-      # TODO: Do we need to return this?  Or change / add a method?
-      outFile = os.path.join('pt_{}'.format(self.getId()), 
-                                os.path.basename(self.getDLocation()))
-         
-      # Make list of output files
-      outFiles = []
-      outFbase = os.path.splitext(outFile)[0]
-      for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
-         outFiles.append('{}{}'.format(outFbase, ext))
+      targetFiles = self.getTargetFiles(workDir=workDir)
+      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
+      
+      outFileBasename = os.path.basename(self.getDLocation())
+      bigFileBasename = os.path.basename(self.getDLocation(largeFile=True))
 
-      if JobStatus.waiting(self.status): 
-         # NOTE: This may need to change to something else in the future, but for now,
-         #          we'll save a step and have the outputs written to their final 
-         #          location
-         # TODO: Update with correct data locations
-         
-         ## TODO: Do we need to return this?  Or change / add a method?
-         #outFile = os.path.join('pt_{}'.format(self.getId()), 
-         #                       os.path.basename(self.getDLocation()))
-         #
-         ## Make list of output files
-         #outFiles = []
-         #outFbase = os.path.splitext(outFile)[0]
-         #for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
-         #   outFiles.append('{}{}'.format(outFbase, ext))
-         
-         bigFile = os.path.join('pt_{}'.format(self.getId()),
-                                os.path.basename(self.getDLocation(largeFile=True)))
-         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
+      
+      # If already completed
+      if JobStatus.finished(self.status):
+         # Get the first target file
+         cmdArgs = [
+            'LOCAL',
+            'cp',
+            '{}*'.format(os.path.splitext(self.getDLocation())[0]),
+            targetDir
+         ]
+
+         cmd = ' '.join(cmdArgs)
+         rules.append(MfRule(cmd, targetFiles))
+      
+      else:
+         # Compute everything
          deps = []
-         cmdArgs = ["LOCAL",
-                    os.getenv('PYTHON'),
-                    scriptFname]
-#                     self.getRawDLocation()]
-         
+         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
+         cmdArgs = [
+            "LOCAL",
+            os.getenv('PYTHON'),
+            scriptFname
+         ]
+      
          # TODO: This is a hack using canonical name instead of GBIFTaxonId for iDigBio
          if self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
             name = self.getScientificName().canonicalName
@@ -645,53 +659,35 @@ class OccurrenceLayer(OccurrenceType, Vector):
          cmdArgs.append(rawdloc)
          
          # Process type specific arguments
+         # NOTE: Dependencies are commented out because Makeflow will not allow
+         #          absolute paths
+         
          if self.processType == ProcessType.GBIF_TAXA_OCCURRENCE:
             cmdArgs.append(str(self.queryCount))
-            
-            # Note: I commented this out because Makeflow will not allow 
-            #          absolute paths for targets and dependencies.  Consider
-            #          adding a command that copies the raw file to the 
-            #          workspace
             #deps.append(self.getRawDLocation())
             
          # Read user-supplied metadata into string
          elif self.processType == ProcessType.USER_TAXA_OCCURRENCE:
             cmdArgs.append(self.rawMetaDLocation)
-            # Note: I commented this out because Makeflow will not allow 
-            #          absolute paths for targets and dependencies.  Consider
-            #          adding a command that copies the raw file to the 
-            #          workspace
             #deps.extend([self.getRawDLocation(), self.rawMetaDLocation])
-               
-         cmdArgs.extend([outFile, 
-                         bigFile,
-                         str(POINT_COUNT_MAX)])
-         cmd = ' '.join(cmdArgs)
-         
-         # Don't add big file to targets since it may not be created
-         # TODO: Address this if we don't write to final location
-         #rules.append(MfRule(cmd, [outFile], dependencies=deps))
-         rules.append(MfRule(cmd, outFiles, dependencies=deps))
-         
-         # Rule for Test/Update 
-         status = None
-         basename = os.path.basename(os.path.splitext(outFile)[0])
-         #uRule = self.getUpdateRule(self.getId(), status, basename, [outFile])
-         uRule = self.getUpdateRule(self.getId(), status, basename, outFiles)
-         rules.append(uRule)
-      else:
-         outDir = 'pt_{}'.format(self.getId())
-         baseName = os.path.splitext(self.getDLocation())[0]
-         cmdArgs = [
-            'LOCAL',
-            'mv',
-            '-t {}'.format(outDir),
-         ]
-         
-         for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
-            cmdArgs.append('{}{}'.format(baseName, ext))
+
+         cmdArgs.extend([
+            os.path.join(targetDir, outFileBasename),
+            os.path.join(targetDir, bigFileBasename),
+            str(POINT_COUNT_MAX)
+         ])
 
          cmd = ' '.join(cmdArgs)
-         rules.append(MfRule(cmd, outFiles))
+         
+         # NOTE: Don't add big file to targets since it may not be created
+         rules.append(MfRule(cmd, targetFiles, dependencies=deps))
+      
+         status = None
+         uRule = self.getUpdateRule(self.getId(), status, 
+                                   os.path.join(targetDir, 
+                                                'occ_{}'.format(self.getId())), 
+                                   targetFiles)
+      
+         rules.append(uRule)
          
       return rules

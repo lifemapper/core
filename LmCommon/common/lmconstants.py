@@ -746,6 +746,7 @@ class ProcessType:
    CONCATENATE_MATRICES = 620
    UPDATE_OBJECT = 630
    MF_TRIAGE = 640
+   TOUCH = 650
    
    # .........................
    # TODO: deleteMe
@@ -824,6 +825,9 @@ class ProcessType:
       elif ptype == ProcessType.MF_TRIAGE:
          relpath = SERVER_SCRIPTS_DIR
          jr = 'triage'
+      elif ptype == ProcessType.TOUCH:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'lmTouch'
 
       return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
 #       return os.path.join(APP_PATH, relpath, jr+'.py')   

@@ -264,25 +264,42 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       self._setVerify()
       
 # ...............................................
-   def computeMe(self):
+   def computeMe(self, workDir=None):
       """
       @summary: Creates a command to intersect a layer and a shapegrid to 
                 produce a MatrixColumn.
       """
       rules = []
-      # TODO: Put this somewhere!
-      cutoutWktFn = None
-      # This just works for status 0, 1, assumes Processing or Complete is fine
-      # TODO: How to handle Error status 
-      if JobStatus.waiting(self.status):
-         outFile = self.shapegrid.getDLocation()
+      if workDir is None:
+         workDir = ''
+         
+      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
+      #TODO
+      targetFiles = self.getTargetFiles(workDir=workDir)
+      
+      if JobStatus.finished(self.status):
+         # Need to move outputs
+         baseName = os.path.splitext(self.getDLocation())[0]
+         cmdArgs = [
+            'cp',
+            '{}.*'.format(baseName),
+            targetDir
+         ]
+         cmd = ' '.join(cmdArgs)
+         rules.append(MfRule(cmd, targetFiles))
+      else:
+         # Need to compute
+         cutoutWktFilename = None
+         # TODO: Cutouts
          options = ''
-         if cutoutWktFn is not None:
-            options = "--cutoutWktFn={0}".format(cutoutWktFn)
+         if cutoutWktFilename is not None:
+            options = '--cutoutWktFn={}'.format(cutoutWktFilename)
+         outFile = os.path.join(workDir, self.getRelativeDLocation(), 
+                                os.path.basename(self.getDLocation()))
+      
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          cmdArguments = [os.getenv('PYTHON'), 
                          scriptFname, 
-                         self.shapegrid.getDLocation(), 
                          outFile,
                          self.getMinX(),
                          self.getMinY(),
@@ -293,6 +310,18 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                          self.cellsides,
                          options]
 
-      cmd = ' '.join(cmdArguments)
-      rules.append(MfRule(cmd, [outFile]))
+         cmd = ' '.join(cmdArguments)
+         rules.append(MfRule(cmd, targetFiles))
       return rules
+
+   # ................................
+   def getTargetFiles(self, workDir=None):
+      if workDir is None:
+         workDir = ''
+      targetFiles = []
+      targetDir = os.path.join(workDir, self.getRelativeDLocation())
+      baseName = os.path.splitext(os.path.basename(self.getDLocation()))[0]
+
+      for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+         targetFiles.append(os.path.join(targetDir, '{}{}'.format(baseName, ext)))
+      return targetFiles

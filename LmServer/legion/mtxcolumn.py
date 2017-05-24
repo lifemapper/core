@@ -163,7 +163,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
       return relFname
 
 # ...............................................
-   def computeMe(self):
+   def computeMe(self, workDir=None):
       """
       @summary: Creates a command to intersect a layer and a shapegrid to 
                 produce a MatrixColumn.
@@ -171,13 +171,15 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
       rules = []
       # Layer object may be an SDMProject
       if self.layer is not None:
-         # TODO: Clean this up.  Maybe we can put in temporary file functions
-         #if isinstance(self.layer, SDMProjection):
-         #   inputLayerFname = os.path.join('prj_{}'.format(
-         #      self.layer.getId(), os.path.basename(self.layer.getDLocation())))
-         #else:
          
-         inputLayerFname = os.path.basename(self.layer.getDLocation())
+         if workDir is None:
+            workDir = ''
+         
+         targetDir = os.path.join(workDir, 
+                        os.path.splitext(self.layer.getRelativeDLocation())[0])
+         
+         inputLayerFname = os.path.join(targetDir,
+                                   os.path.basename(self.layer.getDLocation()))
             
          # Layer input
          dependentFiles = [inputLayerFname]
@@ -185,17 +187,15 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             status = self.layer.status
          except:
             status = JobStatus.COMPLETE
+
          if JobStatus.waiting(status):
-            lyrRules = self.layer.computeMe()
+            lyrRules = self.layer.computeMe(workDir=workDir)
             rules.extend(lyrRules)
             
-         # Shapegrid input
-         # TODO: Cannot use absolute path for shapegrid.  Copy to workspace if
-         #          we want to declare dependancy
-         #dependentFiles.append(self.shapegrid.getDLocation())
-         if JobStatus.waiting(self.shapegrid.status):
-            shpgrdRules = self.layer.computeMe()
-            rules.extend(shpgrdRules)
+         shpgrdRules = self.shapegrid.computeMe(workDir=workDir)
+         rules.extend(shpgrdRules)
+         
+         dependentFiles.extend(self.shapegrid.getTargetFiles())
        
          options = ''
          if self.squid is not None:
@@ -203,12 +203,16 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          elif self.ident is not None:
             options = "--ident {0}".format(self.ident)
 
-         pavFname = self.getTargetFilename()
+         pavFname = os.path.join(targetDir, self.getTargetFilename())
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
+         
+         shapegridFile = os.path.join(self.shapegrid.getRelativeDLocation(),
+                               os.path.basename(self.shapegrid.getDLocation()))
+         
          cmdArguments = [os.getenv('PYTHON'), 
                          scriptFname,
-                         options, 
-                         self.shapegrid.getDLocation(), 
+                         options,
+                         shapegridFile,  
                          inputLayerFname,
                          pavFname,
                          str(self.layer.resolution),
@@ -220,9 +224,12 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          
          # Rule for Test/Update 
          status = None
-         basename = os.path.basename(pavFname)
+         basename = os.path.join(targetDir, 'mtxcol_{}'.format(self.getId()))
          uRule = self.getUpdateRule(self.getId(), status, basename, [pavFname])
          rules.append(uRule)
+         
+         # TODO: Post to Solr
+         
 
       return rules
 

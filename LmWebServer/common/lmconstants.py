@@ -25,7 +25,7 @@
           02110-1301, USA.
 """
 import os
-from LmServer.base.utilities import getMjdTimeFromISO8601
+from LmServer.base.utilities import getColor, getMjdTimeFromISO8601
 from LmServer.common.lmconstants import SESSION_DIR
 from LmServer.common.localconstants import SCRATCH_PATH
 
@@ -62,9 +62,26 @@ QUERY_PARAMETERS = {
       'name' : 'beforeTime',
       'processIn' : getMjdTimeFromISO8601
    },
+   'bbox' : {
+      # Comes in as a comma separated list, turn it into a tuple of floats
+      'name' : 'bbox',
+      'processIn' : lambda x: [float(i) for i in x.split(',')]
+   },
+   'bgcolor' : {
+      'name' : 'bgcolor',
+      'processIn' : lambda x: getColor(x, allowRamp=False)
+   },
    'cellsides' : {
       'name' : 'cellSides',
       'processIn' : int
+   },
+   'color' : {
+      'name' : 'color',
+      'processIn' : lambda x: getColor(x, allowRamp=True)
+   },
+   'crs' : {
+      # TODO: Consider processing the EPSG here
+      'name' : 'crs'
    },
    'datecode' : {
       'name' : 'dateCode'
@@ -79,12 +96,27 @@ QUERY_PARAMETERS = {
       'name' : 'envTypeId',
       'processIn' : int
    },
+   'exceptions' : {
+      'name' : 'exceptions'
+   },
    'epsgcode' : {
       'name' : 'epsgCode',
       'processIn' : int
    },
+   'format' : {
+      # TODO: Forward to respFormat since format is reserved
+      'name' : 'respFormat',
+   },
    'gcmcode' : {
       'name' : 'gcmCode',
+   },
+   'height' : {
+      'name' : 'height',
+      'processIn' : int
+   },
+   'layers' : {
+      'name' : 'layers',
+      'processIn' : lambda x: [i for i in x.split(',')]
    },
    'layertype' : {
       'name' : 'layerType',
@@ -93,6 +125,9 @@ QUERY_PARAMETERS = {
    'limit' : {
       'name' : 'limit',
       'processIn' : lambda x: max(1, int(x)) # Integer, minimum is one
+   },
+   'mapname' : {
+      'name' : 'mapName'
    },
    'modelscenariocode' : {
       'name' : 'modelScenarioCode'
@@ -128,12 +163,46 @@ QUERY_PARAMETERS = {
       'name' : 'public',
       'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
    },
+   'request' : {
+      'name' : 'request'
+   },
    'scenarioid' : {
       'name' : 'scenarioId',
       'processIn' : int
    },
+   'service' : {
+      'name' : 'service'
+   },
+   'sld' : {
+      'name' : 'sld'
+   },
+   'sldbody' : {
+      'name' : 'sld_body'
+   },
+   'srs' : {
+      # TODO: Forward to crs for WMS 1.3.0?
+      'name' : 'srs'
+   },
    'status' : {
       'name' : 'status',
+      'processIn' : int
+   },
+   'styles' : {
+      'name' : 'styles',
+      'processIn' : lambda x: [i for i in x.split(',')]
+   },
+   'time' : {
+      'name' : 'time'
+   },
+   'transparent' : {
+      'name' : 'transparent',
+      'processIn' : lambda x: bool(x.lower() == 'true')
+   },
+   'version' : {
+      'name' : 'version'
+   },
+   'width' : {
+      'name' : 'width',
       'processIn' : int
    },
    # Authentication parameters
