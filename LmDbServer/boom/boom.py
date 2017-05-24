@@ -27,7 +27,7 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.lmconstants import JobStatus, OutputFormat
+from LmCommon.common.lmconstants import JobStatus, OutputFormat, ProcessType
 from LmCommon.common.log import DaemonLogger
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
@@ -35,7 +35,7 @@ from LmServer.base.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
-                                            SCRATCH_PATH)
+                                            SCRATCH_PATH, APP_PATH)
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -270,7 +270,17 @@ class Boomer(Daemon):
                  '-X {}/worker/'.format(SCRATCH_PATH),
                  '-a {}'.format(outputFname)]
       mfCmd = ' '.join(cmdArgs)
-      arfCmd = 'touch {}'.format(targetFname)
+      
+      touchScriptFname = os.path.join(APP_PATH, 
+                                      ProcessType.getTool(ProcessType.TOUCH))
+      arfCmdArgs = [
+         os.getenv('PYTHON'),
+         touchScriptFname,
+         targetFname
+      ]
+      arfCmd = ' '.join(arfCmdArgs)
+      
+      #arfCmd = 'touch {}'.format(targetFname)
       cmd = '{} ; {}'.format(mfCmd, arfCmd)
       # Create a rule from the MF and Arf file creation
       # TODO: Replace these dependencies with Delay rule
