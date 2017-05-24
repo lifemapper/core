@@ -195,7 +195,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          shpgrdRules = self.shapegrid.computeMe(workDir=workDir)
          rules.extend(shpgrdRules)
          
-         dependentFiles.extend(self.shapegrid.getTargetFiles())
+         dependentFiles.extend(self.shapegrid.getTargetFiles(workDir=workDir))
        
          options = ''
          if self.squid is not None:

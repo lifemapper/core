@@ -319,7 +319,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if workDir is None:
          workDir = ''
       targetFiles = []
-      targetDir = os.path.join(workDir, self.getRelativeDLocation())
+      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
       baseName = os.path.splitext(os.path.basename(self.getDLocation()))[0]
 
       for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:

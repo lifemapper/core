@@ -818,7 +818,8 @@ class SDMProjection(_ProjectionType, Raster):
          
       rules.append(MfRule(cmd, [rulesetFname], 
                              #dependencies=[occSetFname]))
-                             dependencies=self._occurrenceSet.getTargetFiles()))
+                             dependencies=self._occurrenceSet.getTargetFiles(
+                                workDir=workDir)))
       return rules
 
    # ......................................
