@@ -153,7 +153,8 @@ class MFChain(ProcessObject):
       #earlJr = EarlJr()
       #pth = earlJr.createDataPath(self._userId, LMFileType.MF_DOCUMENT) 
       #fname = os.path.join(pth, '{}_{}.arf'.format(prefix, self.objId))
-      fname = os.path.join('arf', '{}_{}.arf'.format(prefix, self.objId))
+      fname = os.path.join(self.getRelativeDirectory(), 'arf', 
+                           '{}_{}.arf'.format(prefix, self.objId))
       return fname
 
 # ...............................................
