@@ -175,7 +175,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          if workDir is None:
             workDir = ''
          
-         targetDir = os.path.join(workDir, self.getRelativeDLocation())         
+         targetDir = os.path.join(workDir, self.layer.getRelativeDLocation())         
          
          inputLayerFname = os.path.join(targetDir,
                                    os.path.basename(self.layer.getDLocation()))
