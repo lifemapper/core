@@ -470,7 +470,7 @@ class ChristopherWalken(LMObject):
                   updatedMFChain = self._scribe.insertMFChain(newMFC)
             # Get rules for objects to be computed
             try:
-               rules.extend(o.computeMe())
+               rules.extend(o.computeMe(workDir=updatedMFChain.getRelativeDirectory()))
             except Exception, e:
                self.log.info('Failed on object.compute {}, ({})'.format(type(o), 
                                                                         str(e)))

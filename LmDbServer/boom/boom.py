@@ -168,9 +168,12 @@ class Boomer(Daemon):
             rawPotatoFile.close()
             # Create triage command for potato inputs, add to MF chain
             mtx = self.christopher.globalPAMs[scencode]
-            triageIn = rawPotatoFile.name
-            triageOut = potatoChain.getTriageFilename(prefix='mashedPotato')
-            rules = mtx.computeMe(triageIn, triageOut)
+            
+            targetDir = potatoChain.getRelativeDirectory()
+            triageIn = os.path.join(targetDir, rawPotatoFile.name)
+            triageOut = os.path.join(targetDir, 
+                         potatoChain.getTriageFilename(prefix='mashedPotato'))
+            rules = mtx.computeMe(triageIn, triageOut, workDir=targetDir)
             potatoChain.addCommands(rules)
             potatoChain.write()
    #          potatoChain.updateStatus(JobStatus.INITIALIZE)

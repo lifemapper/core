@@ -775,38 +775,37 @@ class SDMProjection(_ProjectionType, Raster):
 #       return rule
 
    # .............................................................................
-   def _computeMyModel(self):
+   def _computeMyModel(self, workDir=None):
       """
       @summary: Generate a command to create a SDM model ruleset for this projection
       """
       rules = []
-      # Output
-      # TODO: Make sure this file is deleted on rollback
-      # TODO: Decide if we want to move this to final location or not  
-      rulesetFname = os.path.basename(self.getModelFilename())
-      if not os.path.exists(rulesetFname):         
-         if self.isATT():
-            ptype = ProcessType.ATT_MODEL
-         else:
-            ptype = ProcessType.OM_MODEL
-            
-         mdlName = self.getModelTarget()
-         # TODO: Determine if we want to do this a different way
-         occSetFname = os.path.join('pt_{}'.format(self._occurrenceSet.getId()),
-                           os.path.basename(self._occurrenceSet.getDLocation()))
-         occFnames = []
-         occFbase = os.path.splitext(occSetFname)[0]
-         for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
-            occFnames.append('{}{}'.format(occFbase, ext))
-                  
-         mdlOpts = {'-w' : mdlName}
-         args = ' '.join(["{opt} {val}".format(opt=o, val=v
-                                            ) for o, v in mdlOpts.iteritems()])
+      if workDir is None:
+         workDir = ''
+         
+      targetDir = os.path.join(workDir, self.getRelativeDLocation())
+      
+      # Ruleset file could go in occ directory
+      occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
+      occSetFname = os.path.join(targetDir, occFileBasename)
+      
+      if self.isATT():
+         ptype = ProcessType.ATT_MODEL
+      else:
+         ptype = ProcessType.OM_MODEL
+      
+      mdlName = self.getModelTarget()
+      rulesetFname = os.path.join(targetDir, mdlName)
+      
+      mdlOpts = {'-w' : targetDir}
+      args = ' '.join(["{opt} {val}".format(opt=o, val=v
+                                         ) for o, v in mdlOpts.iteritems()])
 
-         layersJsonFname = self.getLayersJsonFilename(self.modelScenario, self.modelMask)
-         paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
-         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(ptype))
-         mdlCmdArgs = [os.getenv('PYTHON'),
+      layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
+                                                   self.modelMask)
+      paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
+      scriptFname = os.path.join(APP_PATH, ProcessType.getTool(ptype))
+      mdlCmdArgs = [os.getenv('PYTHON'),
                        scriptFname,
                        args,
                        str(ptype),
@@ -815,50 +814,57 @@ class SDMProjection(_ProjectionType, Raster):
                        layersJsonFname,
                        rulesetFname,
                        paramsJsonFname]
-         cmd = ' '.join(mdlCmdArgs)
+      cmd = ' '.join(mdlCmdArgs)
          
-         rules.append(MfRule(cmd, [rulesetFname], 
+      rules.append(MfRule(cmd, [rulesetFname], 
                              #dependencies=[occSetFname]))
-                             dependencies=occFnames))
+                             dependencies=self._occurrenceSet.getTargetFiles()))
       return rules
 
    # ......................................
-   def computeMe(self):
+   def computeMe(self, workDir=None):
       """
       @todo: Consider producing layersFn and paramsFn with script
       """
       rules = []
-      
-      if JobStatus.waiting(self.status):
-         #TODO: Evaluate
-         outputRaster = os.path.basename(self.getDLocation())
-         outTiff = outputRaster
-         # Used for both base filenames and relative work directory
-         basename = os.path.basename(os.path.splitext(outputRaster)[0])
-
-         # Rule for Model dependency
-         modelRules = self._computeMyModel()
+      if workDir is None:
+         workDir = ''
+         
+      targetDir = os.path.join(workDir, self.getRelativeDLocation())
+         
+      if JobStatus.finished(self.status):
+         # Just need to move the tiff into place
+         pass
+      else:
+         # Generate the model
+         modelRules = self._computeMyModel(workDir=workDir)
          rules.extend(modelRules)
-
-         # Rule for Model dependency
-         statusFname = os.path.join(basename, "{}.status".format(basename))
          
-         # TODO: Evaluate
-         packageFname = os.path.join(basename, os.path.basename(self.getProjPackageFilename()))
-         # options for both GDALTranslate and SDMProject
-         prjOpts = {'-w' : basename,
-                    '-p' : packageFname,
-                    '-s' : statusFname}
+         # Status file name
+         statusFname = os.path.join(targetDir, 
+                                   'prj{}.status'.format(self.getId()))
+         packageFname = os.path.join(targetDir, 
+                               os.path.basename(self.getProjPackageFilename()))
          
-         # Rule for GDALTranslate from ASCII to TIFF for ATT_MAXENT only
-         if self.processType == ProcessType.ATT_PROJECT:
-            paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
-            # TODO: make sure this works consistently for quoting JSON
-            prjOpts['-algo'] = paramsJsonFname
-            # override output name with temp ascii filename for ATT_MAXENT
-            outputRaster = os.path.join(basename, "output.asc")
+         prjOpts = {
+            '-w' : targetDir,
+            '-p' : packageFname,
+            '-s' : statusFname
+         }
+         
+         prjName = 'prj_{}'.format(self.getId())
+         
+         # Generate the projection
+         if self.isATT():
+            rawPrjRaster = os.path.join(targetDir, 'output.asc')
+            outTiff = os.path.join(targetDir, 'output.tif')
             
-            convertCmdArgs = [os.path.join(BIN_PATH, "gdal_translate")]
+            paramsJsonFname = self.getAlgorithmParametersJsonFilename(
+                                                               self._algorithm)
+            prjOpts['-algo'] = paramsJsonFname
+            
+            convertCmdArgs = [os.path.join(BIN_PATH, 'gdal_translate')]
+            
             # If archive or default, scale
             if self.getUserId() in [PUBLIC_USER, DEFAULT_POST_USER]:
                convertCmdArgs.extend(["-scale 0 1 {} {}"
@@ -875,11 +881,15 @@ class SDMProjection(_ProjectionType, Raster):
             # Else, just convert
             else:
                convertCmdArgs.extend(["-of GTiff"])
-            convertCmdArgs.extend([outputRaster, outTiff])
+            convertCmdArgs.extend([rawPrjRaster, outTiff])
             convertCmd = ' '.join(convertCmdArgs)
             rules.append(MfRule(convertCmd, [outTiff], 
-                                dependencies=[outputRaster]))
-         
+                                dependencies=[rawPrjRaster]))
+            
+         else:
+            rawPrjRaster = os.path.join(targetDir, 'output.tif')
+            outTiff = rawPrjRaster
+      
          # Rule for SDMProject process 
          prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in prjOpts.iteritems()])
@@ -892,17 +902,17 @@ class SDMProjection(_ProjectionType, Raster):
                        scriptFname,
                        prjArgs,
                        str(self.processType),
-                       basename,
+                       prjName,
                        modelFname,
                        layersJsonFname,
-                       outputRaster]
+                       rawPrjRaster]
          prjCmd = ' '.join(prjCmdArgs)
-         rules.append(MfRule(prjCmd, [outputRaster, statusFname, packageFname], 
+         rules.append(MfRule(prjCmd, [rawPrjRaster, statusFname, packageFname], 
                              dependencies=[modelFname]))
 
          # Rule for Test/Update 
          status = None
-         uRule = self.getUpdateRule(self.getId(), status, basename, [outTiff, packageFname])
+         uRule = self.getUpdateRule(self.getId(), status, prjName, [outTiff, packageFname])
          rules.append(uRule)
          
       return rules

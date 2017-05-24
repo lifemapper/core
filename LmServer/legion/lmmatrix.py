@@ -231,19 +231,23 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return rule
 
 # ...............................................
-   def computeMe(self, triageInFname, triageOutFname):
+   def computeMe(self, triageInFname, triageOutFname, workDir=None):
       """
       @summary: Creates a command to triage possible MatrixColumn inputs,
                 assemble into a LMMatrix, then test and catalog results.
       """
       rules = []
+      # Make sure work dir is not None
+      if workDir is None:
+         workDir = ''
 
       #TODO: Update
-      matrixOutputFname = os.path.basename(self.getDLocation())
+      matrixOutputFname = os.path.join(workDir, os.path.basename(self.getDLocation()))
       # Triage "Mash the potato" rule 
       tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
-                                     [], [triageOutFname],
-                                     #TODO: Reinstate? [triageInFname], [triageOutFname],
+                                     #[], [triageOutFname],
+                                     #TODO: Reinstate? 
+                                     [triageInFname], [triageOutFname],
                                      cmdArgs=[triageInFname, triageOutFname],
                                      local=True)
       rules.append(tRule)
