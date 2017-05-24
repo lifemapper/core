@@ -31,7 +31,7 @@ from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS,
 from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
+from LmServer.common.lmconstants import (APP_PATH, LMFileType, LMServiceType, LMServiceModule)
 from LmServer.common.localconstants import APP_PATH
 from LmServer.legion.cmd import MfRule
 
@@ -280,7 +280,20 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if JobStatus.finished(self.status):
          # Need to move outputs
          baseName = os.path.splitext(self.getDLocation())[0]
+         touchScriptFname = os.path.join(APP_PATH, 
+                                      ProcessType.getTool(ProcessType.TOUCH))
+         arfCmdArgs = [
+            os.getenv('PYTHON'),
+            touchScriptFname,
+            os.path.join(targetDir, 'touch.out')
+            ]
+         arfCmd = ' '.join(arfCmdArgs)
+
+         
          cmdArgs = [
+            'LOCAL',
+            arfCmd,
+            ';',
             'cp',
             '{}.*'.format(baseName),
             targetDir
@@ -319,7 +332,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if workDir is None:
          workDir = ''
       targetFiles = []
-      targetDir = os.path.join(workDir, self.getRelativeDLocation())
+      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
       baseName = os.path.splitext(os.path.basename(self.getDLocation()))[0]
 
       for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:

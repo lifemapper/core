@@ -242,12 +242,12 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
          workDir = ''
 
       #TODO: Update
-      matrixOutputFname = os.path.join(workDir, os.path.splitext(os.path.basename(self.getDLocation()))[0])
+      matrixOutputFname = os.path.join(workDir, os.path.basename(self.getDLocation()))
       # Triage "Mash the potato" rule 
       tRule = self._createMatrixRule(ProcessType.MF_TRIAGE, 
-                                     #[], [triageOutFname],
-                                     #TODO: Reinstate? 
-                                     [triageInFname], [triageOutFname],
+                                     [], [triageOutFname],
+                                     ##TODO: Reinstate? 
+                                     #[triageInFname], [triageOutFname],
                                      cmdArgs=[triageInFname, triageOutFname],
                                      local=True)
       rules.append(tRule)

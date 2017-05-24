@@ -630,9 +630,19 @@ class OccurrenceLayer(OccurrenceType, Vector):
       # If already completed
       if JobStatus.finished(self.status):
          # Get the first target file
+         touchScriptFname = os.path.join(APP_PATH, 
+                                      ProcessType.getTool(ProcessType.TOUCH))
+         arfCmdArgs = [
+            os.getenv('PYTHON'),
+            touchScriptFname,
+            os.path.join(targetDir, 'touch.out')
+            ]
+         arfCmd = ' '.join(arfCmdArgs)
+
          cmdArgs = [
             'LOCAL',
-            'cp',
+            arfCmd,
+            '; cp',
             '{}*'.format(os.path.splitext(self.getDLocation())[0]),
             targetDir
          ]
