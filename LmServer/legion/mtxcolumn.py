@@ -175,7 +175,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          if workDir is None:
             workDir = ''
          
-         targetDir = os.path.join(workDir, os.path.splitext(self.layer.getRelativeDLocation())[0])
+         targetDir = os.path.join(workDir, 
+                        os.path.splitext(self.layer.getRelativeDLocation())[0])
          
          inputLayerFname = os.path.join(targetDir,
                                    os.path.basename(self.layer.getDLocation()))
@@ -223,7 +224,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          
          # Rule for Test/Update 
          status = None
-         basename = 'mtxcol_{}'.format(self.getId())
+         basename = os.path.join(targetDir, 'mtxcol_{}'.format(self.getId()))
          uRule = self.getUpdateRule(self.getId(), status, basename, [pavFname])
          rules.append(uRule)
          
