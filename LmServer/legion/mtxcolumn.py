@@ -187,8 +187,9 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          except:
             status = JobStatus.COMPLETE
 
-         lyrRules = self.layer.computeMe(workDir=workDir)
-         rules.extend(lyrRules)
+         if JobStatus.waiting(status):
+            lyrRules = self.layer.computeMe(workDir=workDir)
+            rules.extend(lyrRules)
             
          shpgrdRules = self.shapegrid.computeMe(workDir=workDir)
          rules.extend(shpgrdRules)
