@@ -21,7 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmServer.base.lmobj import LMObject
+from LmBackend.common.lmobj import LMObject
 
 # .............................................................................
 class LMComputeResource(LMObject):

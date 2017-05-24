@@ -23,11 +23,11 @@
 """
 import mx.DateTime
    
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import MatrixType
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
-from LmServer.base.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
@@ -572,7 +572,7 @@ class Borg(DbPostgresql):
       @param lyruser: Layer user id
       @param lyrname: Layer name
       @param lyrid: Layer EPSG code
-      @return: LmServer.base.layer._Layer object
+      @return: LmServer.base.layer2._Layer object
       """
       row, idxs = self.executeSelectOneFunction('lm_getLayer', lyrid, lyrverify, 
                                                 lyruser, lyrname, epsgcode)
@@ -917,7 +917,7 @@ class Borg(DbPostgresql):
       @param lyruser: Layer user id
       @param lyrname: Layer name
       @param lyrid: Layer EPSG code
-      @return: LmServer.base.layer._Layer object
+      @return: LmServer.base.layer2._Layer object
       """
       row, idxs = self.executeSelectOneFunction('lm_getEnvLayer', envlyrId, 
                                  lyrid, lyrverify, lyruser, lyrname, epsgcode)

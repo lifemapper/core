@@ -22,11 +22,11 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from types import StringType, UnicodeType, IntType, \
-                  LongType, FloatType, NoneType, BooleanType
+from types import (IntType, LongType, FloatType, NoneType, BooleanType)
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.unicode import fromUnicode, toUnicode
-from LmServer.base.lmobj import LMError, LMAbstractObject
+from LmServer.base.lmobj import LMAbstractObject
 
 # ............................................................................
 class _DbConn(LMAbstractObject):

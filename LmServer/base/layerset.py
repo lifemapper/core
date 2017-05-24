@@ -25,8 +25,9 @@
 import os
 from osgeo import gdal, gdalconst, ogr
 
-from LmServer.base.layer import _Layer, Raster, Vector
-from LmServer.base.lmobj import LMError, LMSpatialObject
+from LmBackend.common.lmobj import LMError
+from LmServer.base.layer2 import _Layer, Raster, Vector
+from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.common.colorpalette import colorPalette
 from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE, 
@@ -39,8 +40,8 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX,
                                             SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
 from LmServer.common.lmconstants import CT_USER
-from LmServer.sdm.occlayer import OccurrenceLayer
-from LmServer.sdm.sdmprojection import SDMProjection
+from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.sdmproj import SDMProjection
 
 # .............................................................................
 class _LayerSet(LMSpatialObject):
@@ -355,7 +356,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       """
       if self.mapfilename is None:
          self.setLocalMapFilename()
-      success, msg = self._deleteFile(self.mapfilename)
+      success, msg = self.deleteFile(self.mapfilename)
 
 # ...............................................
    @property
@@ -399,7 +400,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
 # ...............................................
    def _writeBaseMap(self, mapstr):
       dir = os.path.dirname(self._mapFilename)
-      self._readyFilename(self._mapFilename, overwrite=True)
+      self.readyFilename(self._mapFilename, overwrite=True)
       
       try:
          f = open(self._mapFilename, 'w')

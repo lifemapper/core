@@ -23,8 +23,8 @@
 """
 import os
 
+from LmBackend.common.lmobj import LMObject
 from LmCommon.trees.lmTree import LmTree
-from LmServer.base.lmobj import LMObject
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMServiceModule, 
                                          LMFileType)

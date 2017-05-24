@@ -5,7 +5,7 @@ import os
 from LmCommon.common.lmconstants import GBIF
 from LmDbServer.common.lmconstants import GBIF_TAXONOMY_DUMP_FILE, TAXONOMIC_SOURCE
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.log import ScriptLogger
 from LmServer.base.taxon import ScientificName
 

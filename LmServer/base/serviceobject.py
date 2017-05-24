@@ -25,7 +25,7 @@
           02110-1301, USA.
 """
 import mx.DateTime 
-from LmServer.base.lmobj import LMObject
+from LmBackend.common.lmobj import LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER
 

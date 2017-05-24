@@ -35,7 +35,7 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
       INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
       GRID_CELLSIZE, GRID_NUM_SIDES)
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
@@ -46,13 +46,13 @@ from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.sdm.algorithm import Algorithm
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
@@ -912,7 +912,7 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
       INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
       GRID_CELLSIZE, GRID_NUM_SIDES)
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)

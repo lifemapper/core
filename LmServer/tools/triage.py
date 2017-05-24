@@ -24,8 +24,7 @@
 import argparse
 import os
 
-from LmCommon.common.lmconstants import JobStatus
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMObject
 from LmServer.common.log import ScriptLogger
 
 # .............................................................................

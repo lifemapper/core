@@ -29,9 +29,9 @@ import time
 from types import ListType, TupleType, BooleanType
 import urllib, urllib2
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (GBIF, ONE_MIN, URL_ESCAPES)
-
-from LmServer.base.lmobj import LMError, LMObject, LmHTTPError
+from LmServer.base.lmobj import LmHTTPError
 
 # .............................................................................
 class GBIFData(LMObject):

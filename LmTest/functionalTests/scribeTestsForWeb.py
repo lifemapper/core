@@ -30,6 +30,7 @@
 import os
 from random import randint
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import APP_PATH
@@ -40,7 +41,6 @@ from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.base.lmobj import LMError
 
 # .............................................................................
 # Environmental layers
@@ -274,7 +274,7 @@ from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.base.lmobj import LMError
+from LmBackend.common.lmobj import LMError
 from LmTest.functionalTests.scribeTestsForWeb import *
 
 epsg = 4326

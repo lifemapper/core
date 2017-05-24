@@ -33,11 +33,11 @@ import os
 import sys
 from time import sleep
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
                                     ProcessType, JobStatus, ONE_HOUR) 
-from LmServer.base.lmobj import LMError, LMObject
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.log import ScriptLogger

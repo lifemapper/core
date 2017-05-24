@@ -31,9 +31,9 @@ import glob
 import os
 import shutil
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import ProcessType, LMFormat, JobStatus
 from LmServer.base.layer2 import Vector, Raster
-from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
@@ -233,7 +233,7 @@ $PYTHON /opt/lifemapper/LmServer/tools/stockpile.py 420 504 pt_504.success /shar
 import os
 from LmCommon.common.lmconstants import ProcessType, LMFormat, JobStatus
 from LmServer.base.layer2 import Vector, Raster
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.tools.stockpile import *

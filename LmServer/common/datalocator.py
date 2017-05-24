@@ -24,8 +24,8 @@
 from types import StringType, UnicodeType
 import os
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import OutputFormat
-
 from LmServer.common.localconstants import (APP_PATH, PUBLIC_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
 from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
@@ -34,7 +34,6 @@ from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
    DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR, 
    MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY, 
    RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR)
-from LmServer.base.lmobj import LMError, LMObject
          
 # .............................................................................
 class EarlJr(LMObject):

@@ -37,11 +37,11 @@ import os
 from StringIO import StringIO
 from types import FileType
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, ENCODING
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
 from LmCommon.common.unicode import fromUnicode, toUnicode
 
-from LmServer.base.lmobj import LmHTTPError, LMError
 from LmServer.common.errorReporter import reportError
 from LmServer.common.lmconstants import (DbUser, LOG_PATH, CHERRYPY_CONFIG_FILE)
 from LmServer.common.localconstants import (PUBLIC_USER, WEBSERVICES_ROOT)

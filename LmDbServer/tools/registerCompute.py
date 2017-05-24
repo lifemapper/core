@@ -31,7 +31,7 @@ from LmServer.common.localconstants import (COMPUTE_NAME, COMPUTE_IP,
             COMPUTE_ADDR2, COMPUTE_ADDR3)
 from LmDbServer.tools.computeMeta import LM_COMPUTE_INSTANCES
 
-from LmServer.base.lmobj import LMError
+from LmBackend.common.lmobj import LMError
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.log import ConsoleLogger
 from LmServer.common.lmuser import LMUser

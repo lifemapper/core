@@ -1,6 +1,6 @@
 """
 @license: gpl2
-@copyright: Copyright (C) 2014, University of Kansas Center for Research
+@copyright: Copyright (C) 2017, University of Kansas Center for Research
 
           Lifemapper Project, lifemapper [at] ku [dot] edu, 
           Biodiversity Institute,
@@ -21,11 +21,9 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-import json
-
+from LmBackend.common.lmobj import LMError
 from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
 from LmServer.base.layer2 import Raster, _LayerParameters
-from LmServer.base.lmobj import LMError
 # .........................................................................
 class EnvType(_LayerParameters):
 # .............................................................................

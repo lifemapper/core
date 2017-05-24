@@ -29,8 +29,8 @@ from osgeo import ogr
 import subprocess
 from types import StringType
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import MatrixType
-from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.legion.lmmatrix import LMMatrix                                  

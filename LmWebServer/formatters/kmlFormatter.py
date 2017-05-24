@@ -32,7 +32,7 @@ from LmCommon.common.lmXml import (CDATA, Element, register_namespace,
                                   setDefaultNamespace, SubElement, tostring)
 from LmCommon.common.lmconstants import ENCODING, HTTPStatus
 
-from LmServer.base.layer import Raster
+from LmServer.base.layer2 import Raster
 from LmServer.base.lmobj import LmHTTPError
 from LmServer.base.serviceobject import ServiceObject
 from LmServer.base.utilities import escapeString, formatTimeHuman

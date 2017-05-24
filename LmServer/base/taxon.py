@@ -21,8 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.verify import computeHash
-from LmServer.base.lmobj import LMObject, LMError
 
 # ..............................................................................
 class ScientificName(LMObject):

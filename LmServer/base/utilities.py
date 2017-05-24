@@ -30,9 +30,9 @@ from types import (BuiltinFunctionType, BuiltinMethodType, CodeType,
          FloatType, FunctionType, IntType, LambdaType, MethodType, NoneType, 
          StringType, TypeType, UnicodeType)
 
+from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import (LM_USER, ISO_8601_TIME_FORMAT_FULL, 
          ISO_8601_TIME_FORMAT_TRUNCATED, LM_NAMESPACE, YMD_HH_MM_SS, ENCODING)
-from LmServer.base.lmobj import LMObject
 from LmServer.common.lmconstants import STRING_ESCAPE_FORMATS
 
 # ..............................................................................

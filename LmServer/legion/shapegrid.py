@@ -25,11 +25,11 @@ from osgeo import ogr, osr
 import os
 from types import IntType
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
                               DEFAULT_OGR_FORMAT, JobStatus, ProcessType)
 from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
-from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.common.localconstants import APP_PATH
@@ -212,13 +212,13 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if removeOrig:
          newdLoc = self._dlocation
          for ext in SHAPEFILE_EXTENSIONS:
-            success, msg = self._deleteFile(self._dlocation.replace('.shp',ext))
+            success, msg = self.deleteFile(self._dlocation.replace('.shp',ext))
       else:
          newdLoc = dloc
          if os.path.exists(dloc):
             raise LMError("Shapegrid file already exists at: %s" % dloc)
          else:
-            self._readyFilename(dloc, overwrite=False)
+            self.readyFilename(dloc, overwrite=False)
             
       t_srs = osr.SpatialReference()
       t_srs.ImportFromEPSG(self.epsgcode)
@@ -255,7 +255,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          self.readData(doReadData=False)
          self._setCellMeasurements()
          return 
-      self._readyFilename(self._dlocation, overwrite=overwrite)
+      self.readyFilename(self._dlocation, overwrite=overwrite)
       cellCount = buildShapegrid(self._dlocation, self.minX, self.minY, 
                            self.maxX, self.maxY, self.cellsize, self.epsgcode, 
                            self._cellsides, siteId=self.siteId, siteX=self.siteX, 

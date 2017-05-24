@@ -25,11 +25,10 @@ import mx.DateTime
 import os
 from osgeo import ogr
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (LM_NAMESPACE, DEFAULT_OGR_FORMAT, 
-                                         ProcessType, JobStatus,
-   SHAPEFILE_EXTENSIONS)
+                                         ProcessType, JobStatus)
 from LmServer.base.layer2 import Vector, _LayerParameters
-from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
@@ -420,7 +419,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       """
       @summary: Delete the mapfile containing this layer
       """
-      success, msg = self._deleteFile(self._mapFilename, deleteDir=True)
+      success, msg = self.deleteFile(self._mapFilename, deleteDir=True)
 # .............................................................................
 # Public methods
 # .............................................................................

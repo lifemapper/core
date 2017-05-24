@@ -28,7 +28,7 @@ except:
 import json
 from types import StringType, IntType, FloatType, NoneType
 
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.lmconstants import Algorithms
 
 # .........................................................................

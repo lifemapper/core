@@ -29,9 +29,9 @@
 """
 import psycopg2
 
+from LmBackend.common.lmobj import LMError
 from LmServer.base.atom import Atom
 from LmServer.base.db import _DbConn
-from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LM_SCHEMA
 
 # ............................................................................

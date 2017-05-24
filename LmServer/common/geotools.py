@@ -31,7 +31,7 @@ import os
 import osgeo.gdal as gdal
 import osgeo.gdalconst as gdalconst
 
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMError, LMObject
 
 # ............................................................................
 class GeoFileInfo(LMObject):

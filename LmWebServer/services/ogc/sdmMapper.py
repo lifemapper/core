@@ -28,9 +28,8 @@ Module to write a mapservice which will be cataloged in the SDL
 import mapscript
 import os 
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import HTTPStatus
-
-from LmServer.base.lmobj import LmHTTPError, LMError, LMObject
 from LmServer.common.colorpalette import colorPalette
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (MapPrefix, DbUser, LINE_SIZE, 

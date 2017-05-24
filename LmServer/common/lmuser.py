@@ -23,7 +23,7 @@
 """
 import hashlib
 
-from LmServer.base.lmobj import LMObject
+from LmBackend.common.lmobj import LMObject
 from LmServer.common.lmconstants import SALT
 
 # .............................................................................

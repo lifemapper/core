@@ -27,8 +27,8 @@ from osgeo.ogr import wkbPoint
 import socket
 from types import IntType
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (JobStatus, ProcessType, MatrixType)
-from LmServer.base.lmobj import LMError, LMObject
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
 from LmServer.common.lmconstants import (DbUser, DEFAULT_PROJECTION_FORMAT, 

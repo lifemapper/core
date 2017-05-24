@@ -21,8 +21,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+from LmBackend.common.lmobj import LMError
 from LmServer.base.layerset import MapLayerSet
-from LmServer.base.lmobj import LMError
 from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
 from LmServer.legion.envlayer import EnvLayer
 

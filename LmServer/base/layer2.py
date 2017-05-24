@@ -33,6 +33,7 @@ import subprocess
 from types import ListType, TupleType
 import zipfile
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmAttObject import LmAttObj
 from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
                   DEFAULT_OGR_FORMAT, DEFAULT_GDAL_FORMAT, 
@@ -40,7 +41,7 @@ from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS,
    OFTInteger, OFTString)
 from LmCommon.common.verify import computeHash, verifyHash
 
-from LmServer.base.lmobj import LMError, LMObject, LMSpatialObject
+from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
 
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
@@ -794,7 +795,7 @@ class Raster(_Layer):
       if outFile is None:
          outFile = self.getDLocation()
       if outFile is not None:
-         self._readyFilename(outFile, overwrite=overwrite)
+         self.readyFilename(outFile, overwrite=overwrite)
          
          # Copy from input file using GDAL (no test necessary later)
          if srcFile is not None:
@@ -815,7 +816,7 @@ class Raster(_Layer):
             try:
                self.populateStats()
             except Exception, e:
-               success, msg = self._deleteFile(outFile)
+               success, msg = self.deleteFile(outFile)
                raise LMError(currargs='Invalid data written to %s (%s); Deleted (success=%s, %s)' 
                              % (outFile, str(e), str(success), msg))
          else:
@@ -884,7 +885,7 @@ class Raster(_Layer):
       if not dlocation.endswith(GDALFormatCodes[format]['FILE_EXT']):
          dlocation += GDALFormatCodes[format]['FILE_EXT']
       
-      self._readyFilename(dlocation)
+      self.readyFilename(dlocation)
 
       try:
          self._copyGDALData(1, sourceDataLocation, dlocation, format=format)
@@ -1408,7 +1409,7 @@ class Vector(_Layer):
       if not isTemp:
          self.clearLocalMapfile()
          deleteDir = True
-      self._deleteFile(dlocation, deleteDir=deleteDir)
+      self.deleteFile(dlocation, deleteDir=deleteDir)
 #       self.clearDLocation()
 
 # ...............................................
@@ -1688,7 +1689,7 @@ class Vector(_Layer):
       if dlocation is None:
          dlocation = self._dlocation
       didWrite = False
-      success = self._readyFilename(dlocation, overwrite=overwrite)
+      success = self.readyFilename(dlocation, overwrite=overwrite)
       if success:
          try:
             with open(dlocation, 'wb') as csvfile:
@@ -1730,7 +1731,7 @@ class Vector(_Layer):
          return success
       
       self.setDLocation(dlocation) 
-      self._readyFilename(self._dlocation)        
+      self.readyFilename(self._dlocation)        
             
       try:
          # Create the file object, a layer, and attributes
@@ -1874,7 +1875,7 @@ class Vector(_Layer):
                basename, dext = os.path.splitext(basefilename)
                newfnamewoext = os.path.join(pth, basename)
                outfname = os.path.join(UPLOAD_PATH, basefilename)
-               ready = self._readyFilename(outfname, overwrite=overwrite)
+               ready = self.readyFilename(outfname, overwrite=overwrite)
                break
          if outfname is None:
             raise Exception('Invalid shapefile, zipped data does not contain .shp')
@@ -1887,7 +1888,7 @@ class Vector(_Layer):
          pth, basefilename = os.path.split(outfname)
          basename, dext = os.path.splitext(basefilename)
          newfnamewoext = os.path.join(pth, basename)
-         ready = self._readyFilename(outfname, overwrite=overwrite)
+         ready = self.readyFilename(outfname, overwrite=overwrite)
       
       if ready:
          # unzip zip file stream
@@ -1896,7 +1897,7 @@ class Vector(_Layer):
             # Check file extension and only unzip valid files
             if ext in SHAPEFILE_EXTENSIONS:
                newname = newfnamewoext + ext
-               success, msg = self._deleteFile(newname)
+               success, msg = self.deleteFile(newname)
                z.extract(zname, pth)
                if not isTemp:
                   oldname = os.path.join(pth, zname)

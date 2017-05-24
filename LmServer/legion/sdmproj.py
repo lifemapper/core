@@ -27,12 +27,12 @@ import json
 import mx.DateTime
 import os
 
+from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (OutputFormat, JobStatus, ProcessType,
                                          DEFAULT_POST_USER)
 from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
-from LmServer.base.lmobj import LMError
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
@@ -399,13 +399,13 @@ class SDMProjection(_ProjectionType, Raster):
 # ...............................................
    def clearProjectionFiles(self):
       reqfname = self.getProjRequestFilename()
-      success, msg = self._deleteFile(reqfname)
+      success, msg = self.deleteFile(reqfname)
       pkgfname = self.getProjPackageFilename()
-      success, msg = self._deleteFile(pkgfname)
+      success, msg = self.deleteFile(pkgfname)
       # metadata files
       prjfnames = glob.glob(self._dlocation+'*')
       for fname in prjfnames:
-         success, msg = self._deleteFile(fname)
+         success, msg = self.deleteFile(fname)
       self.clearDLocation()
       
 # ...............................................
@@ -568,7 +568,7 @@ class SDMProjection(_ProjectionType, Raster):
       """
       if fname is None:
          fname = self.getProjPackageFilename()
-      self._readyFilename(fname, overwrite=True)
+      self.readyFilename(fname, overwrite=True)
       try:
          with open(fname, 'w+') as f:
             f.write(pkgData)

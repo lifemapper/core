@@ -26,11 +26,11 @@ import mx.DateTime as dt
 from osgeo.ogr import wkbPoint
 import os
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
          OutputFormat, SERVER_BOOM_HEADING, MatrixType) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmServer.base.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH)
 from LmServer.common.log import ScriptLogger
@@ -489,7 +489,7 @@ from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
                      OutputFormat, SERVER_BOOM_HEADING) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmServer.base.lmobj import LMError, LMObject
+from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (PUBLIC_ARCHIVE_NAME, LMFileType, 
                                          SPECIES_DATA_PATH)

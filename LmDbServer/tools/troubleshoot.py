@@ -26,7 +26,7 @@ from types import ListType, TupleType
 
 from LmCommon.common.lmconstants import JobStatus, ONE_HOUR
 
-from LmServer.base.lmobj import LMError
+from LmBackend.common.lmobj import LMError
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.db.scribe import Scribe
 from LmServer.notifications.email import EmailNotifier

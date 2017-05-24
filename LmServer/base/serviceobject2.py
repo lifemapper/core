@@ -27,8 +27,8 @@
 import mx.DateTime 
 import os
 
+from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import ProcessType
-from LmServer.base.lmobj import LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import ID_PLACEHOLDER
 from LmServer.common.localconstants import APP_PATH
