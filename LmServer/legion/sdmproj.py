@@ -784,10 +784,11 @@ class SDMProjection(_ProjectionType, Raster):
          workDir = ''
          
       targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
-      
+      occTargetDir = os.path.join(workDir, 
+               os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
       # Ruleset file could go in occ directory
       occFileBasename = os.path.basename(self._occurrenceSet.getDLocation())
-      occSetFname = os.path.join(targetDir, occFileBasename)
+      occSetFname = os.path.join(occTargetDir, occFileBasename)
       
       if self.isATT():
          ptype = ProcessType.ATT_MODEL

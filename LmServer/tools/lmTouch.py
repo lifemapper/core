@@ -4,7 +4,7 @@
 """
 import argparse
 
-from LmBackend.common.lmobj import LmObject
+from LmBackend.common.lmobj import LMObject
 
 # .............................................................................
 if __name__ == '__main__':
@@ -13,7 +13,7 @@ if __name__ == '__main__':
    parser.add_argument('file_name', type=str, help='The file path to touch')
    args = parser.parse_args()
    
-   lmo = LmObject()
+   lmo = LMObject()
    lmo.readyFilename(args.file_name)
    
    with open(args.file_name, 'w') as outF:
