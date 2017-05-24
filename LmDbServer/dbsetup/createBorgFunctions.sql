@@ -1922,3 +1922,75 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_clearComputedUserData(usr varchar)
+RETURNS int AS
+$$
+DECLARE
+   currCount int := -1;
+BEGIN
+   -- Matrix Intersect Columns from SDM
+	DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 
+	   (SELECT layerid FROM lm_v3.lm_sdmproject WHERE userid = usr);
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % MatrixColumns using SDMProject layers', currCount;
+   
+   -- Matrix SDMProject Layers
+	DELETE FROM lm_v3.Layer WHERE layerid IN 
+	   (SELECT layerid FROM lm_v3.lm_sdmproject WHERE userid = usr);
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Layers for SDMProjects', currCount;
+
+   -- OccurrenceSet and SDMProjects
+	DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Occurrencesets', currCount;
+
+   RETURN currCount;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_clearUserData(usr varchar)
+RETURNS int AS
+$$
+DECLARE
+   currCount int := -1;
+   total = 0;
+BEGIN
+   SELECT * INTO currCount FROM lm_v3.lm_clearComputedUserData(usr);
+   
+   -- Gridsets (Cascades to Matrix)
+	DELETE FROM lm_v3.Gridset WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Gridsets', currCount;
+   total = total + currCount;
+   
+   -- Scenariosdle
+	DELETE FROM lm_v3.Scenario WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Scenarios', currCount;
+   total = total + currCount;
+   
+   -- Layers (Cascades to EnvLayer, ShapeGrid)
+	DELETE FROM lm_v3.Layer WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Layers', currCount;
+   total = total + currCount;
+
+   -- EnvType
+	DELETE FROM lm_v3.EnvType WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % EnvTypes', currCount;
+   total = total + currCount;
+   
+   -- Tree
+	DELETE FROM lm_v3.Tree WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Trees', currCount;
+   total = total + currCount;
+   
+   RETURN total;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;

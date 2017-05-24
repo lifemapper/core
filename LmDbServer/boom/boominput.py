@@ -24,6 +24,7 @@
 import mx.DateTime
 import os
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
                                     JobStatus, MatrixType, SERVER_BOOM_HEADING)
@@ -35,7 +36,6 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
       INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
       GRID_CELLSIZE, GRID_NUM_SIDES)
-from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
@@ -239,6 +239,7 @@ class ArchiveFiller(LMObject):
          pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
          newConfigFilename = os.path.join(pth, 
                               '{}{}'.format(self.archiveName, OutputFormat.CONFIG))
+      self.readyFilename(newConfigFilename, overwrite=True)
       f = open(newConfigFilename, 'w')
       f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
       f.write('ARCHIVE_USER: {}\n'.format(self.usr))
@@ -747,7 +748,7 @@ class ArchiveFiller(LMObject):
       try:
          gdalformat = META.ENVLYR_GDALFORMAT
       except:
-         raise LMError('Failed to specify META.ENVLYR_GDALFORMAT for {}'
+         raise LMError(currargs='Failed to specify META.ENVLYR_GDALFORMAT for {}'
                        .format(self.envPackageName))
       # Spatial and format attributes of data files
       elyrMeta = {'epsg': epsg, 
@@ -765,19 +766,24 @@ class ArchiveFiller(LMObject):
       newshp = self.scribe.findOrInsertShapeGrid(shp)
       validData = False
       if newshp: 
-         if newshp.getDLocation() is not None:
-            validData, _ = ShapeGrid.testVector(newshp.getDLocation())
+         # check existence
+         validData, _ = ShapeGrid.testVector(newshp.getDLocation())
          if not validData:
             try:
+               dloc = newshp.getDLocation()
                newshp.buildShape(overwrite=True)
-               validData = True
+               validData, _ = ShapeGrid.testVector(dloc)
             except Exception, e:
                self.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
+            if not validData:
+               raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
          if validData and newshp.status != JobStatus.COMPLETE:
             newshp.updateStatus(JobStatus.COMPLETE)
             success = self.scribe.updateShapeGrid(newshp)
             if success is False:
                self.scribe.log.warning('Failed to update Shapegrid record')
+      else:
+         raise LMError(currargs='Failed to find or insert Shapegrid')
       return newshp
       
    # ...............................................

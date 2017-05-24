@@ -202,12 +202,12 @@ class Boomer(Daemon):
             
    # .............................
    def onUpdate(self):
-      self.log.debug("Update signal caught!")
+      self.log.info('Update signal caught!')
        
    # .............................
    def onShutdown(self):
       self.keepWalken = False
-      self.log.debug('Shutdown! If not already, stop walken')
+      self.log.info('Shutdown!')
       # Stop walken the archive and saveNextStart
       self.christopher.stopWalken()
       Daemon.onShutdown(self)
