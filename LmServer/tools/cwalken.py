@@ -366,12 +366,12 @@ class ChristopherWalken(LMObject):
       @summary: Walks a list of Lifemapper objects for computation
       """
       if not self.weaponOfChoice.complete:
-         self.log.debug('Christopher, stop walken')
+         self.log.info('Christopher, stop walken')
          self.log.info('Saving next start {} ...'.format(self.nextStart))
          self.saveNextStart()
          self.weaponOfChoice.close()
       else:
-         self.log.debug('Christopher is done walken')
+         self.log.info('Christopher is done walken')
       
 # ...............................................
    def _createOrResetIntersect(self, prj, mtx, currtime):

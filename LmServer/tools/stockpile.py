@@ -138,9 +138,9 @@ class Stockpile(LMObject):
    def testFile(cls, outputFname):
       success = True
       msgs = []
-      basename, ext = os.path.splitext(outputFname)
+      _, ext = os.path.splitext(outputFname)
       if not os.path.exists(outputFname):
-         msg.append('File {} does not exist'.format(outputFname))
+         msgs.append('File {} does not exist'.format(outputFname))
          success = False
       elif LMFormat.isTestable(ext):
          if LMFormat.isGeo(ext):

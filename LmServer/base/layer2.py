@@ -2085,7 +2085,7 @@ class Vector(_Layer):
 # ...............................................
    @staticmethod
    def testVector(dlocation, driver=DEFAULT_OGR_FORMAT):
-      goodData = True
+      goodData = False
       featCount = 0
       if dlocation is not None and os.path.exists(dlocation):
          ogr.RegisterAll()
