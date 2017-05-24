@@ -14,7 +14,7 @@ if __name__ == '__main__':
    args = parser.parse_args()
    
    lmo = LmObject()
-   lmo._readyFilename(args.file_name)
+   lmo.readyFilename(args.file_name)
    
    with open(args.file_name, 'w') as outF:
       outF.write('')
