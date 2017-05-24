@@ -201,10 +201,9 @@ class Borg(DbPostgresql):
       modtime = self._getColumnValue(row, idxs, ['modtime'])
     
       if row is not None:
-         scen = Scenario(scencode, metadata=meta, units=units, res=res, 
+         scen = Scenario(scencode, usr, epsg, metadata=meta, units=units, res=res, 
                      gcmCode=gcmcode, altpredCode=altpredcode, dateCode=datecode,
-                     bbox=bbox, modTime=modtime, epsgcode=epsg,
-                     layers=None, userId=usr, scenarioid=scenid)
+                     bbox=bbox, modTime=modtime, layers=None, scenarioid=scenid)
       return scen
 
 # ...............................................

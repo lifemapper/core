@@ -28,7 +28,7 @@ from osgeo import gdal, gdalconst, ogr
 from LmBackend.common.lmobj import LMError
 from LmServer.base.layer2 import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.base.serviceobject import ServiceObject
+from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.colorpalette import colorPalette
 from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE, 
          MapPrefix, LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE, POINT_SYMBOL, 
@@ -302,8 +302,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
       """
       _LayerSet.__init__(self, mapname, title=title, keywords=keywords, 
                          epsgcode=epsgcode, layers=layers)
-      ServiceObject.__init__(self, userId, dbId, createTime, modTime, 
-                             serviceType, moduleType=moduleType, metadataUrl=url)
+      ServiceObject.__init__(self, userId, dbId, serviceType, 
+                             moduleType=moduleType, metadataUrl=url, modTime=modTime)
       self._mapFilename = dlocation
       self._mapPrefix = None
 

@@ -24,14 +24,15 @@
 from collections import namedtuple
 from fractions import Fraction
 import inspect
-import json
+# import json
 import mx.DateTime
 from osgeo.osr import CoordinateTransformation, SpatialReference
-import sys
-import traceback
+# import sys
+# import traceback
 from types import TupleType, ListType, FloatType, IntType, StringType, UnicodeType
 
-from LmCommon.common.lmconstants import OutputFormat, SHAPEFILE_EXTENSIONS
+from LmBackend.common.lmobj import LMObject, LMError
+# from LmCommon.common.lmconstants import OutputFormat, SHAPEFILE_EXTENSIONS
 from LmServer.common.localconstants import SMTP_SENDER
 
 # ............................................................................
