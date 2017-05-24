@@ -286,7 +286,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             targetDir
          ]
          cmd = ' '.join(cmdArgs)
-         rules.append(MfRule(cmd, [targetFiles]))
+         rules.append(MfRule(cmd, targetFiles))
       else:
          # Need to compute
          cutoutWktFilename = None
@@ -311,7 +311,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                          options]
 
          cmd = ' '.join(cmdArguments)
-         rules.append(MfRule(cmd, [targetFiles]))
+         rules.append(MfRule(cmd, targetFiles))
       return rules
 
    # ................................
