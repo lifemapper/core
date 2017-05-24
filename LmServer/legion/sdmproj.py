@@ -795,7 +795,7 @@ class SDMProjection(_ProjectionType, Raster):
          ptype = ProcessType.OM_MODEL
       
       mdlName = self.getModelTarget()
-      rulesetFname = os.path.join(targetDir, '{}.xml'.format(mdlName))
+      rulesetFname = os.path.join(targetDir, os.path.basename(self.getModelFilename()))
       
       mdlOpts = {'-w' : targetDir}
       args = ' '.join(["{opt} {val}".format(opt=o, val=v
@@ -896,8 +896,8 @@ class SDMProjection(_ProjectionType, Raster):
          prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in prjOpts.iteritems()])
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
-         # TODO: Evalute
-         modelFname = os.path.basename(self.getModelFilename())
+
+         modelFname = os.path.join(targetDir, os.path.basename(self.getModelFilename()))
          
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
          prjCmdArgs = [os.getenv('PYTHON'),
