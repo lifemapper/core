@@ -795,7 +795,7 @@ class SDMProjection(_ProjectionType, Raster):
          ptype = ProcessType.OM_MODEL
       
       mdlName = self.getModelTarget()
-      rulesetFname = os.path.join(targetDir, mdlName)
+      rulesetFname = os.path.join(targetDir, '{}.xml'.format(mdlName))
       
       mdlOpts = {'-w' : targetDir}
       args = ' '.join(["{opt} {val}".format(opt=o, val=v
@@ -853,12 +853,13 @@ class SDMProjection(_ProjectionType, Raster):
             '-s' : statusFname
          }
          
-         prjName = 'prj_{}'.format(self.getId())
+         prjName = os.path.basename(os.path.splitext(self.getDLocation())[0])
+         #prjName = 'prj_{}'.format(self.getId())
          
          # Generate the projection
          if self.isATT():
-            rawPrjRaster = os.path.join(targetDir, 'output.asc')
-            outTiff = os.path.join(targetDir, 'output.tif')
+            rawPrjRaster = os.path.join(targetDir, '{}.asc'.format(prjName))
+            outTiff = os.path.join(targetDir, '{}.tif'.format(prjName)
             
             paramsJsonFname = self.getAlgorithmParametersJsonFilename(
                                                                self._algorithm)
@@ -888,7 +889,7 @@ class SDMProjection(_ProjectionType, Raster):
                                 dependencies=[rawPrjRaster]))
             
          else:
-            rawPrjRaster = os.path.join(targetDir, 'output.tif')
+            rawPrjRaster = os.path.join(targetDir, '{}.tif'.format(prjName))
             outTiff = rawPrjRaster
       
          # Rule for SDMProject process 
