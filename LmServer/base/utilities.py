@@ -233,6 +233,10 @@ def formatTimeUrl(dt=None):
       return dTime.strftime('%Y-%m-%d')
 
 # ...........................................
+def getColor(colorString, allowRamp=False):
+   pass
+
+# ...........................................
 def getMjdTimeFromISO8601(dt):
    try:
       return mx.DateTime.strptime(dt, 
