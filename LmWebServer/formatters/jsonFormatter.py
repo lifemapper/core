@@ -96,7 +96,7 @@ def formatOccurrenceSet(occ):
    occDict = _getLifemapperMetadata('occurrence set', occ.getId(), 
                            occ.metadataUrl, occ.getUserId(), status=occ.status, 
                            statusModTime=occ.statusModTime, 
-                           metadata=occ.metadata)
+                           metadata=occ.lyrMetadata)
    occDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'occurrences', occ.name)
    dataUrl = '{}/shapefile'.format(occ.metadataUrl)
