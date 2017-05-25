@@ -28,6 +28,7 @@
 """
 import argparse
 
+from LmBackend.common.lmobj import LMObject
 from LmCommon.common.matrix import Matrix
 
 # .............................................................................
@@ -61,6 +62,9 @@ if __name__ == "__main__":
          mtxs.append(Matrix.load(mtxFn))
    
    joinedMtx = Matrix.concatenate(mtxs, axis=args.axis)
+
+   # Make sure directory exists
+   LMObject().readyFilename(args.outFn)
    
    with open(args.outFn, 'w') as outF:
       joinedMtx.save(outF)
