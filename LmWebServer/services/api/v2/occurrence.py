@@ -51,7 +51,7 @@ class OccurrenceLayerService(LmService):
       @summary: Attempts to delete an occurrence set
       @param pathOccSetId: The id of the occurrence set to delete
       """
-      occ = self.scribe.getOccurrenceSet(occid=int(pathOccSetId))
+      occ = self.scribe.getOccurrenceSet(occId=int(pathOccSetId))
       
       if occ is None:
          raise cherrypy.HTTPError(404, "Occurrence set not found")
@@ -166,7 +166,7 @@ class OccurrenceLayerService(LmService):
       """
       @summary: Attempt to get an occurrence set
       """
-      occ = self.scribe.getOccurrenceSet(occid=int(pathOccSetId))
+      occ = self.scribe.getOccurrenceSet(occId=int(pathOccSetId))
       
       if occ is None:
          raise cherrypy.HTTPError(404, "Occurrence set not found")
