@@ -1419,7 +1419,7 @@ class Borg(DbPostgresql):
       """
       pavs = []
       prjs = self.listSDMProjects(0, 500, usr, None, None, None, None, None, 
-                                  None, occId, None, None, None, not(returnProjs))
+                                  None, None, occId, None, None, None, not(returnProjs))
       if returnMtxCols:
          for prj in prjs:
             layerid = prj.getId() 
@@ -1464,12 +1464,13 @@ class Borg(DbPostgresql):
       return newOrExistingProj
 
 # .............................................................................
-   def countSDMProjects(self, userId, displayName, 
+   def countSDMProjects(self, userId, squid, displayName, 
                         afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                         occsetId, algCode, mdlscenCode, prjscenCode):
       """
       @summary: Count all SDMProjects matching the filter conditions 
       @param userId: User (owner) for which to return occurrencesets.  
+      @param squid: a species identifier, tied to a ScientificName
       @param displayName: filter by display name *starting with* this string
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
@@ -1485,13 +1486,13 @@ class Borg(DbPostgresql):
       if displayName is not None:
          displayName = displayName.strip() + '%'
       row, idxs = self.executeSelectOneFunction('lm_countSDMProjects', 
-                           userId, displayName, afterTime, beforeTime, epsg,
+                           userId, squid, displayName, afterTime, beforeTime, epsg,
                            afterStatus, beforeStatus, occsetId, algCode, 
                            mdlscenCode, prjscenCode)
       return self._getCount(row)
 
 # .............................................................................
-   def listSDMProjects(self, firstRecNum, maxNum, userId, displayName, 
+   def listSDMProjects(self, firstRecNum, maxNum, userId, squid, displayName, 
                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                        occsetId, algCode, mdlscenCode, prjscenCode, atom):
       """
@@ -1499,7 +1500,7 @@ class Borg(DbPostgresql):
       @param firstRecNum: The first record to return, 0 is the first record
       @param maxNum: Maximum number of records to return
       @param userId: User (owner) for which to return occurrencesets.  
-      @param minOccurrenceCount: filter by minimum number of points in set.
+      @param squid: a species identifier, tied to a ScientificName
       @param displayName: filter by display name
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
@@ -1517,14 +1518,14 @@ class Borg(DbPostgresql):
          displayName = displayName.strip() + '%'
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms', 
-                           firstRecNum, maxNum, userId, displayName, afterTime, 
+                           firstRecNum, maxNum, userId, squid, displayName, afterTime, 
                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
                            algCode, mdlscenCode, prjscenCode)
          objs = self._getAtoms(rows, idxs)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
-                           firstRecNum, maxNum, userId, displayName, afterTime, 
+                           firstRecNum, maxNum, userId, squid, displayName, afterTime, 
                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
                            algCode, mdlscenCode, prjscenCode)
          for r in rows:
