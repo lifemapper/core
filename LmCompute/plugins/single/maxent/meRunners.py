@@ -298,7 +298,9 @@ class MaxentModel(object):
                # Add everything but layers
                if base.find('layers') == -1:
                   for f in files:
-                     zf.write(os.path.join(base, f), 
+                     # Don't add zip files
+                     if f.find('.zip') == -1:
+                        zf.write(os.path.join(base, f), 
                               os.path.relpath(os.path.join(base, f), 
                                               self.workDir))
 

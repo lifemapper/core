@@ -298,7 +298,9 @@ class OpenModellerModel(object):
                                allowZip64=True) as zf:
             for base, _, files in os.walk(self.workDir):
                for f in files:
-                  zf.write(os.path.join(base, f), 
+                  # Don't add zip files
+                  if f.find('.zip') == -1:
+                     zf.write(os.path.join(base, f), 
                            os.path.relpath(os.path.join(base, f), self.workDir))
 
 # .............................................................................
@@ -487,5 +489,7 @@ class OpenModellerProjection(object):
                                allowZip64=True) as zf:
             for base, _, files in os.walk(self.workDir):
                for f in files:
-                  zf.write(os.path.join(base, f), 
+                  # Don't add zip files
+                  if f.find('.zip') == -1:
+                     zf.write(os.path.join(base, f), 
                            os.path.relpath(os.path.join(base, f), self.workDir))
