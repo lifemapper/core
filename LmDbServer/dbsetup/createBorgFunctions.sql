@@ -493,6 +493,8 @@ BEGIN
    cmd = 'SELECT scenarioid, scenarioCode, epsgcode, modTime FROM lm_v3.scenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
+   ordercls = ' ORDER BY modTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
@@ -1268,6 +1270,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
+                                                    sqd varchar,
                                                     minOccCount int,
                                                     dispname varchar,
                                                     aftertime double precision,
@@ -1627,8 +1630,8 @@ BEGIN
    IF mtxcount < 1 THEN
       RAISE EXCEPTION 'Matrix with id % does not exist', mtxid;
    END IF;
-
-   -- check existence of optional referenced layer
+   
+   -- check existence of optional layerid
    IF lyrid IS NOT NULL THEN
       SELECT * INTO rec_lyr FROM lm_v3.layer WHERE layerid = lyrid;
       IF NOT FOUND THEN
@@ -1636,14 +1639,29 @@ BEGIN
       END IF;
    END IF;
    
-   -- Find existing column at position in matrix
+   -- Find unique combo of matrixid, matrixIndex
    IF mtxidx IS NOT NULL AND mtxidx > -1 THEN
-      SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
-         WHERE matrixid = mtxid AND matrixIndex = mtxidx;
-      IF FOUND THEN
-         RAISE NOTICE 'Returning existing MatrixColumn for Matrix % and Column %',
-            mtxid, mtxidx;
-      END IF;
+      begin
+         SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+            WHERE matrixid = mtxid AND matrixIndex = mtxidx;
+         IF FOUND THEN
+            RAISE NOTICE 'Returning existing MatrixColumn for Matrix % and Column %',
+               mtxid, mtxidx;
+         END IF;
+      end;
+      
+   -- Find unique combo of matrixid, layer, intersect params
+   ELSEIF lyrid IS NOT NULL THEN
+      begin
+         SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+            WHERE matrixid = mtxid AND layerid = lyrid AND intersectParams = intparams;
+         IF FOUND THEN
+            RAISE NOTICE 
+            'Returning existing MatrixColumn for Matrix/Layer/Params % / % / %',
+               mtxid, lyrid, intparams;
+         END IF;
+      end;
+         
    -- or insert new column at location or undefined location for gpam
    ELSE
       INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
