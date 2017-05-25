@@ -1957,7 +1957,7 @@ RETURNS int AS
 $$
 DECLARE
    currCount int := -1;
-   total = 0;
+   total int := 0;
 BEGIN
    SELECT * INTO currCount FROM lm_v3.lm_clearComputedUserData(usr);
    

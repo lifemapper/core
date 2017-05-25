@@ -48,12 +48,11 @@ TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 # .............................................................................
 class _SpeciesWeaponOfChoice(LMObject):
    # .............................
-   def __init__(self, scribe, user, archiveName, epsg, expDate, 
-                taxonSourceName=None, logger=None):
+   def __init__(self, scribe, user, archiveName, epsg, expDate, inputFname,  
+                metaFname=None, taxonSourceName=None, logger=None):
       super(_SpeciesWeaponOfChoice, self).__init__()
       # Set name for this WoC
-      self.name = '{}_{}_{}'.format(user, self.__class__.__name__.lower(), 
-                                    archiveName)
+      self.name = '{}_{}'.format(user, archiveName)
       # Optionally use parent process logger
       if logger is None:
          logger = ScriptLogger(self.name)
@@ -62,14 +61,15 @@ class _SpeciesWeaponOfChoice(LMObject):
       self.userId = user
       self.epsg = epsg
       self._obsoleteTime = expDate
+      self.inputFilename = inputFname
+      # Common metadata description for csv points
+      # TODO: Add this for others?
+      self.metaFilename = metaFname
       # Taxon Source for known taxonomy
       self._taxonSourceId = None
       if taxonSourceName is not None:
          txSourceId, x, x = self._scribe.findTaxonSource(taxonSourceName)
          self._taxonSourceId = txSourceId
-      # Common metadata description for csv points
-      # TODO: Add this for others?
-      self.metaFname = None
       # Beginning of iteration
       self.startFile = os.path.join(LOG_PATH, 'start.{}.txt'.format(self.name))
       self._linenum = 0
@@ -77,13 +77,21 @@ class _SpeciesWeaponOfChoice(LMObject):
 # ...............................................
    def _findStart(self):
       linenum = 0
+      complete = False
       if os.path.exists(self.startFile):
          with open(self.startFile, 'r') as f:
-            line = f.read()
-            try:
-               linenum = int(line)
-            except:
-               print 'Failed to interpret {}'.format(line)
+            while not complete:
+               line = f.read()
+               try:
+                  linenum = int(line)
+                  complete = True
+               except StopIteration, e:
+                  self.log.debug('Failed to find line number in file {}'
+                                 .format(self.startFile))
+                  complete = True
+               except Exception, e:
+                  # Ignore comment lines
+                  pass
          if linenum > 0:
             os.remove(self.startFile)
       return linenum
@@ -128,6 +136,8 @@ class _SpeciesWeaponOfChoice(LMObject):
       if lineNum is not None:
          try:
             f = open(self.startFile, 'w')
+            f.write('# Next start line for {} using species data {}'
+                    .format(self.name, self.inputFilename))
             f.write(str(lineNum))
             f.write('\n')
             f.close()
@@ -166,7 +176,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             dataCount, squid=sciName.squid, ogrType=wkbPoint, 
             processType=self.processType, status=JobStatus.INITIALIZE, 
             statusModTime=currtime, sciName=sciName, 
-            rawMetaDLocation=self.metaFname)
+            rawMetaDLocation=self.metaFilename)
       try:
          occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
          self.log.info('Found/inserted OccLayer {}'.format(occ.getId()))
@@ -198,7 +208,7 @@ class _SpeciesWeaponOfChoice(LMObject):
          occ.setRawDLocation(rdloc, currtime)
          # Set processType and metadata location (from config, not saved in DB)
          occ.processType = self.processType
-         occ.rawMetaDLocation = self.metaFname
+         occ.rawMetaDLocation = self.metaFilename
          # TODO: remove Hack
          # Set scientificName, not pulled from DB, for alternate iDigBio query
          occ.setScientificName(sciName)
@@ -259,72 +269,6 @@ class _SpeciesWeaponOfChoice(LMObject):
                              .format(taxonKey))
       return sciName
          
-
-# ...............................................
-   def _createOrResetOccurrencesetOLD(self, sciName, dataCount, 
-                                   taxonSourceKey=None, data=None):
-      """
-      @param sciName: ScientificName object
-      @param dataCount: reported number of points for taxon in input dataset
-      @param taxonSourceKey: unique identifier for this name in source 
-             taxonomy database
-      @param data: raw point data
-      @note: Updates to existing occset are not saved until 
-      """
-      currtime = dt.gmt().mjd
-      occ = None
-      # Find existing
-      try:
-         occ = self._scribe.getOccurrenceSet(squid=sciName.squid, 
-                                             userId=self.userId, epsg=self.epsg)
-      except Exception, e:
-         if not isinstance(e, LMError):
-            e = LMError(currargs=e.args, lineno=self.getLineno())
-         raise e
-      
-      # Reset existing
-      if occ is not None:
-         if self._doReset(occ.status, occ.statusModTime, occ.getRawDLocation()):
-            # Reset verify hash, name, count, status 
-            occ.clearVerify()
-            occ.displayName = sciName.scientificName
-            occ.queryCount = dataCount
-            occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-            self.log.info('Found and reseting occset {} ({})'
-                          .format(occ.getId(), sciName.scientificName))
-         else:
-            self.log.debug('Ignoring occset {} ({}) is up to date'
-                           .format(occ.getId(), sciName.scientificName))
-            occ = None
-      # or create new
-      else:
-         occ = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg, 
-               dataCount, squid=sciName.squid, ogrType=wkbPoint, 
-               processType=self.processType, status=JobStatus.INITIALIZE, 
-               statusModTime=currtime, sciName=sciName, 
-               rawMetaDLocation=self.metaFname)
-         try:
-            occ = self._scribe.findOrInsertOccurrenceSet(occ)
-            self.log.info('Inserted occset for taxonname {}'.format(sciName.scientificName))
-         except Exception, e:
-            if not isinstance(e, LMError):
-               e = LMError(currargs=e.args, lineno=self.getLineno())
-            raise e
-         
-      # Update new or reset object with raw data
-      if occ is not None:
-         rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKey, 
-                                     data=data)
-         if not rdloc:
-            raise LMError(currargs='Unable to set raw data location')
-         occ.setRawDLocation(rdloc, currtime)
-         # Set processType and metadata location (from config, not saved in DB)
-         occ.processType = self.processType
-         occ.rawMetaDLocation = self.metaFname
-         success = self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
-
-      return occ
-
 # ...............................................
    def _raiseSubclassError(self):
       raise LMError(currargs='Function must be implemented in subclass')
@@ -373,7 +317,7 @@ class BisonWoC(_SpeciesWeaponOfChoice):
    def __init__(self, scribe, user, archiveName, epsg, expDate, tsnFname, 
                 taxonSourceName=None, logger=None):
       super(BisonWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                     taxonSourceName=taxonSourceName, 
+                                     tsnFname, taxonSourceName=taxonSourceName, 
                                      logger=logger)
       # Bison-specific attributes
       self.processType = ProcessType.BISON_TAXA_OCCURRENCE
@@ -532,11 +476,10 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 userOccCSV, userOccMeta, userOccDelimiter, 
                 logger=None, useGBIFTaxonomy=False):
       super(UserWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+                                    userOccCSV, metaFname=userOccMeta, 
                                     logger=logger)
       # User-specific attributes
       self.processType = ProcessType.USER_TAXA_OCCURRENCE
-      self.metaFname = userOccMeta
-      self.dataFname = userOccCSV
       self.useGBIFTaxonomy = useGBIFTaxonomy
       self.occParser = None
       try:
@@ -669,7 +612,8 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
    def __init__(self, scribe, user, archiveName, epsg, expDate, occFname, 
                 providerFname=None, taxonSourceName=None, logger=None):
       super(GBIFWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                    taxonSourceName=taxonSourceName, logger=logger)
+                                    occFname, taxonSourceName=taxonSourceName, 
+                                    logger=logger)
       # GBIF-specific sorted CSV data
       self.processType = ProcessType.GBIF_TAXA_OCCURRENCE
       self._dumpfile = None
