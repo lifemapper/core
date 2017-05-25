@@ -2101,6 +2101,7 @@ class Vector(_Layer):
                goodData = False
             else:  
                featCount = slyr.GetFeatureCount()
+               goodData = True
                   
       return goodData, featCount
 
