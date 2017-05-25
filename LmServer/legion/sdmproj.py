@@ -796,9 +796,9 @@ class SDMProjection(_ProjectionType, Raster):
          ptype = ProcessType.OM_MODEL
       
       mdlName = self.getModelTarget()
-      rulesetFname = os.path.join(targetDir, os.path.basename(self.getModelFilename()))
+      rulesetFname = os.path.join(occTargetDir, os.path.basename(self.getModelFilename()))
       
-      mdlOpts = {'-w' : targetDir}
+      mdlOpts = {'-w' : occTargetDir}
       args = ' '.join(["{opt} {val}".format(opt=o, val=v
                                          ) for o, v in mdlOpts.iteritems()])
 
