@@ -126,7 +126,7 @@ def formatProjection(prj):
    prjDict = _getLifemapperMetadata('projection', prj.getId(), prj.getUserId(), 
                                     prj.metadataUrl, status=prj.status, 
                                     statusModTime=prj.statusModTime, 
-                                    metadata=prj.metadata)
+                                    metadata=prj.lyrMetadata)
    prjDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'projections', prj.name)
    dataUrl = '{}/GTiff'.format(prj.metadataUrl)
@@ -135,11 +135,11 @@ def formatProjection(prj):
    valUnits = 'prediction'
    prjDict['spatialRaster'] = _getSpatialRasterMetadata(prj.epsgcode, prj.bbox, 
                prj.mapUnits, dataUrl, prj.verify, prj.gdalType, prj.dataFormat, 
-               minVal, maxVal, valUnits, prj.dataType, prj.resolution)
+               minVal, maxVal, valUnits, prj.gdalType, prj.resolution)
    
    prjDict['algorithm'] = {
       'code' : prj.algorithmCode,
-      'parameters' : prj._algorithm.getAlgorithmParameters()
+      'parameters' : prj._algorithm._parameters
    }
    
    prjDict['modelScenario'] = {
