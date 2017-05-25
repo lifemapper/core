@@ -397,7 +397,7 @@ class DbPostgresql(_DbConn):
    def _createAtom(self, row, idxs):
       atom = None
       if row is not None:
-         atom = Atom(row[idxs['id']], row[idxs['name']], row[idxs['url']], 
+         atom = Atom(row[idxs['id']], row[idxs['name']], None,
                      row[idxs['modtime']], epsg=row[idxs['epsgcode']])
       return atom
       

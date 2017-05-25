@@ -1053,7 +1053,7 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT layerid, displayName, lyrmetadataUrl, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
+   cmd = 'SELECT layerid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
