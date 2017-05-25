@@ -116,22 +116,61 @@ class SdmProjectService(LmService):
    def POST(self):
       """
       @summary: Posts a new projection
-      @todo: User id
+      @todo: Move all of this to a central processing location for all BOOM-y
+                services
       """
       projectionData = cherrypy.request.json
       
+      # Process algorithms
+      algs = []
+      for algSection in projectionData['algorithms']:
+         algo = Algorithm(algSection['code'])
+         for param in algSection['parameters']:
+            algo.setParameter(param['name'], param['value'])
+         algs.append(algo)
+                              
+      # Process occurrence sets
+      occs = []
+      for occSection in projectionData['occurrenceSets']:
+         occ = self.scribe.getOccurrenceSet(int(occSection['occurrenceSetId']))
+         if occ is None:
+            raise cherrypy.HTTPError(404, 
+                        'Occurrence set {} was not found'.format(
+                           occSection['occurrenceSetId']))
+         occs.append(occ)
+         
+      # Process model scenario
       try:
-         occSetId = int(projectionData['occurrenceSetId'])
-         occ = self.scribe.getOccurrenceSet(occId=occSetId)
-         algoCode = projectionData['algorithmCode']
-         modelScenarioId = projectionData['modelScenario']
-         mdlScn = self.scribe.getScenario(modelScenarioId)
-         prjScns = []
-         for prjScn in projectionData['projectionScenario']:
-            prjScns.append(self.scribe.getScenario(int(prjScn)))
-      except KeyError, ke:
-         raise cherrypy.HTTPError(400, 
-                            'Missing projection parameter: {}'.format(str(ke)))
+         mdlScn = self.scribe.getScenario(
+            int(projectionData['modelScenario']['scenarioCode']))
+      except KeyError:
+         try:
+            mdlScn = self.scribe.getScenario(
+               projectionData['modelScenario']['scenarioCode'])
+         except KeyError:
+            raise cherrypy.HTTPError(400, 
+                                     'Must provide model scenario id or code')
+            
+      # Process projection scenarios
+      prjScns = []
+      for scenarioSection in projectionData['projectionScenarios']:
+         try:
+            idOrCode = int(scenarioSection['scenarioId'])
+         except KeyError:
+            try:
+               idOrCode = scenarioSection['scenarioCode']
+            except KeyError:
+               raise cherrypy.HTTPError(400, 
+                   'Must provide scenario id or code for projection scenarios')
+         prjScns = self.scribe.getScenario(idOrCode)
+      
+      
+      
+      # Need to use init boom
+
+
+
+
 
       # TODO: Process masks and maybe others like metadata
 
