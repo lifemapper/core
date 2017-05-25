@@ -783,7 +783,6 @@ class SDMProjection(_ProjectionType, Raster):
       if workDir is None:
          workDir = ''
          
-      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
       occTargetDir = os.path.join(workDir, 
                os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
       # Ruleset file could go in occ directory
@@ -898,8 +897,11 @@ class SDMProjection(_ProjectionType, Raster):
                                             ) for o, v in prjOpts.iteritems()])
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
 
-         modelFname = os.path.join(targetDir, os.path.basename(self.getModelFilename()))
-         
+         occTargetDir = os.path.join(workDir, 
+               os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
+         modelFname = os.path.join(occTargetDir, 
+                                     os.path.basename(self.getModelFilename()))
+
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
          prjCmdArgs = [os.getenv('PYTHON'),
                        scriptFname,
