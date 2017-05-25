@@ -210,6 +210,14 @@ class BorgScribe(LMObject):
          updatedLyr = self.findOrInsertEnvLayer(lyr, scenId)
          updatedScen.addLayer(updatedLyr)
       return updatedScen
+
+# ...............................................
+   def deleteComputedUserData(self, userId):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::deleteComputedUserData
+      """
+      success = self._borg.deleteComputedUserData(userId)
+      return success 
    
 # ...............................................
    def findOrInsertUser(self, usr):

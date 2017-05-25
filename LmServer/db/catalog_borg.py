@@ -45,6 +45,7 @@ from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.tree import Tree
+from pip.status_codes import SUCCESS
 
 # .............................................................................
 class Borg(DbPostgresql):
@@ -1055,6 +1056,24 @@ class Borg(DbPostgresql):
       row, idxs = self.executeSelectOneFunction('lm_findUser', usrid, email)
       usr = self._createUser(row, idxs)
       return usr
+
+# ...............................................
+   def deleteComputedUserData(self, userId):
+      """
+      @summary: Deletes User OccurrenceSet and any dependent SDMProjects 
+               (with Layer), dependent MatrixColumns, and all Makeflows
+      @param userId: User for whom to delete SDM records, MatrixColumns, Makeflows
+      @return: True/False for success of operation
+      @note: All makeflows will be deleted, regardless
+      """
+      success = False
+      occDelCount = self.executeModifyFunction('lm_clearComputedUserData', userId)
+      self.log.info('Deleted {} OccurrenceLayers, all dependent objects, and all Makeflows for user {}'
+                    .format(occDelCount, userId))
+
+      if occDelCount > 0:
+         success = True
+      return success 
 
 # .............................................................................
    def countJobChains(self, status, userId=None):      

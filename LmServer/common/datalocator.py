@@ -155,6 +155,33 @@ class EarlJr(LMObject):
       return pth
 
 # ...............................................
+   def getTopLevelUserSDMPaths(self, usr):
+      """
+      @note: /ARCHIVE_PATH/userId/
+                 contains config files, trees, attributes ...
+             /ARCHIVE_PATH/userId/xxx/xxx/xxx/xxx
+                 contains experiment data common to occurrenceId xxxxxxxxxxxx
+      """
+      sdmPaths = []
+      if usr is None :
+         raise LMError('getTopLevelUserSDMPaths requires userId')
+      pth = os.path.join(ARCHIVE_PATH, usr)
+      
+      contents = os.listdir(pth)
+      for name in contents:
+         fulldir = os.path.join(pth, name)
+         # SDM dirs are 3-digit integers, EPSG codes are a 4-digit integer
+         if len(name) == 3 and os.path.isdir(fulldir):
+            try:
+               int(name)
+            except:
+               pass
+            else:
+               sdmPaths.append(fulldir)
+         
+      return sdmPaths
+
+# ...............................................
    def createOtherLayerFilename(self, usr, epsg, lyrName, ext):
       """
       @summary: Return the base filename of a Non-SDM-experiment Layer file 

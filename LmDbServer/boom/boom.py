@@ -359,16 +359,12 @@ if __name__ == "__main__":
 
 """
 $PYTHON LmDbServer/boom/boom.py --help
-$PYTHON LmDbServer/boom/boom.py  --config_file /share/lm/data/archive/kubi/BOOM_Archive.ini start
-
-select * from lm_v3.lm_updateMFChain(20505,'/share/lm/data/archive/kubi/makeflow/mf_20505.mf',0,57896.90625);
-
-from LmDbServer.boom.boom import *
 
 import argparse
 import mx.DateTime as dt
 import os, sys, time
 
+from LmDbServer.boom.boom import *
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import JobStatus, OutputFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
@@ -411,12 +407,11 @@ woc = chris.weaponOfChoice
 alg = chris.algs[0]
 prjscen = chris.prjScens[0]
 mtx = chris.globalPAMs[prjscen.code]
-
+scribe = boomer._scribe
 
 # occ, setOrReset = woc.getOne()
 # prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, currtime)
 # mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, currtime)
-
 
 spud, potatoInputs = boomer.christopher.startWalken()
 # for i in range(61):
