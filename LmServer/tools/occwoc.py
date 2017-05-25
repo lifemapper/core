@@ -75,6 +75,11 @@ class _SpeciesWeaponOfChoice(LMObject):
       self._linenum = 0
 
 # ...............................................
+   @property
+   def expirationDate(self):
+      return self._obsoleteTime
+   
+# ...............................................
    def _findStart(self):
       linenum = 0
       complete = False

@@ -411,7 +411,8 @@ class ChristopherWalken(LMObject):
    def _doReset(self, status, statusModTime):
       doReset = False
       if (JobStatus.failed(status) or 
-          (status == JobStatus.COMPLETE and statusModTime < self._obsoleteTime)):
+          (status == JobStatus.COMPLETE and 
+           statusModTime < self.weaponOfChoice.expirationDate)):
          doReset = True
       return doReset
 
