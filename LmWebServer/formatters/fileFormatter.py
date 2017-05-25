@@ -25,7 +25,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from cherrypy.lib import file_generator
+import cherrypy
 import os
 from StringIO import StringIO
 import zipfile
@@ -55,9 +55,11 @@ def file_formatter(filename, readMode='r', stream=False):
    else:
       contentFLO = open(filename, mode=readMode)
 
+   cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}"'.format(os.path.basename(filename))
+
    # If we should stream the output, use the CherryPy file generator      
    if stream:
-      return file_generator(contentFLO)
+      return cherrypy.lib.file_generator(contentFLO)
    else:
       # Just return the content, but close the file
       cnt = contentFLO.read()
