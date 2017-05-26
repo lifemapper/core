@@ -1911,7 +1911,7 @@ class Vector(_Layer):
          for zname in z.namelist():
             tmp, ext = os.path.splitext(zname)
             # Check file extension and only unzip valid files
-            if ext in SHAPEFILE_EXTENSIONS:
+            if ext in LMFormat.SHAPE.getExtensions():
                newname = newfnamewoext + ext
                success, msg = self.deleteFile(newname)
                z.extract(zname, pth)

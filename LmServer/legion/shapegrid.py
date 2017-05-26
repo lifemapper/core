@@ -26,12 +26,13 @@ import os
 from types import IntType
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
-                              DEFAULT_OGR_FORMAT, JobStatus, ProcessType)
+from LmCommon.common.lmconstants import (DEFAULT_OGR_FORMAT, JobStatus, 
+                                         ProcessType, LMFormat)
 from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, LMServiceType)
+from LmServer.common.localconstants import APP_PATH
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -210,7 +211,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          raise LMError("Could not open Layer at: %s" % self._dlocation)
       if removeOrig:
          newdLoc = self._dlocation
-         for ext in SHAPEFILE_EXTENSIONS:
+         for ext in LMFormat.SHAPE.getExtensions():
             success, msg = self.deleteFile(self._dlocation.replace('.shp',ext))
       else:
          newdLoc = dloc
