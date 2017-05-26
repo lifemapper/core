@@ -280,7 +280,7 @@ class EarlJr(LMObject):
       return mapfname, usr
    
 # ...............................................
-   def constructLMDataUrl(self, serviceType, objectId, dataformat, parentMetadataUrl=None):
+   def constructLMDataUrl(self, serviceType, objectId, interface, parentMetadataUrl=None):
       """
       @summary Return the REST service url for data in the Lifemapper Archive 
                or UserData for the given user and service.
@@ -291,10 +291,10 @@ class EarlJr(LMObject):
                The nested structure will begin with a '/', and take a form like: 
                   /grandParentClassType/grandParentId/parentClassType/parentId
       """
-      prefix = self.createWebServicePrefix()
-      postfix = self.createWebServicePostfix(serviceType, objectId, 
+      prefix = self._createWebServicePrefix()
+      postfix = self._createWebServicePostfix(serviceType, objectId, 
                                              parentMetadataUrl=parentMetadataUrl,
-                                             dataformat=dataformat)
+                                             interface=interface)
       url = '/'.join((prefix, postfix))
       return url
 
@@ -311,15 +311,15 @@ class EarlJr(LMObject):
                   /grandParentClassType/grandParentId/parentClassType/parentId
       @param interface: The format in which to return the results, 
       """
-      prefix = self.createWebServicePrefix()
-      postfix = self.createWebServicePostfix(serviceType, objectId, 
+      prefix = self._createWebServicePrefix()
+      postfix = self._createWebServicePostfix(serviceType, objectId, 
                                              parentMetadataUrl=parentMetadataUrl)
       url = '/'.join((prefix, postfix))
       return url
 
 # ...............................................
-   def createWebServicePostfix(self, serviceType, objectId, 
-                               parentMetadataUrl=None, dataformat=None):
+   def _createWebServicePostfix(self, serviceType, objectId, 
+                               parentMetadataUrl=None, interface=None):
       """
       @summary Return the relative REST service url for data in the 
                Lifemapper Archive for the given object and service (with 
@@ -333,20 +333,20 @@ class EarlJr(LMObject):
       """
       parts = [serviceType, str(objectId)]
       if parentMetadataUrl is not None:
-         prefix = self.createWebServicePrefix()
+         prefix = self._createWebServicePrefix()
          if not parentMetadataUrl.startswith(prefix):
             raise LMError('Parent URL {} does not start with local prefix {}'
                           .format(parentMetadataUrl, prefix))
          else:
             relativeprefix = parentMetadataUrl[len(prefix):]
             parts.insert(0, relativeprefix)
-      if dataformat is not None:
-         parts.append(dataformat)
+      if interface is not None:
+         parts.append(interface)
       urlpath = '/'.join(parts)
       return urlpath
 
 # ...............................................
-   def createWebServicePrefix(self):
+   def _createWebServicePrefix(self):
       """
       @summary Return the REST service url for Lifemapper web services (without 
                trailing '/').

@@ -24,7 +24,7 @@
 """
 import os
 import glob
-from LmCommon.common.lmconstants import SHAPEFILE_EXTENSIONS, OutputFormat
+from LmCommon.common.lmconstants import LMFormat
 
 # ...............................................
 def readyFilename(fullfilename, overwrite=False):
@@ -78,12 +78,12 @@ def deleteFile(fname, deleteDir=False):
       pth, basename = os.path.split(fname)
       if fname is not None and os.path.exists(fname):
          base, ext = os.path.splitext(fname)
-         if  ext == OutputFormat.SHAPE:
+         if  ext == LMFormat.SHAPE.ext:
             similarFnames = glob.glob(base + '.*')
             try:
                for simfname in similarFnames:
                   simbase, simext = os.path.splitext(simfname)
-                  if simext in SHAPEFILE_EXTENSIONS:
+                  if simext in LMFormat.SHAPE.getExtensions():
                      os.remove(simfname)
             except Exception, e:
                success = False

@@ -247,15 +247,6 @@ QUERY_PARAMETERS = {
    },
 }
 
-
-# Web object interfaces
-CSV_INTERFACE = "csv"
-GEOTIFF_INTERFACE = "gtiff"
-JSON_INTERFACE = "json"
-KML_INTERFACE = "kml"
-OGC_INTERFACE = "ogc"
-SHAPEFILE_INTERFACE = "shapefile"
-
 # Kml
 KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 KML_NS_PREFIX = None

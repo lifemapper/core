@@ -25,7 +25,7 @@ import csv
 import os
 import sys
 
-from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.lmconstants import LMFormat
 from LmBackend.common.occparse import OccDataParser
 from LmServer.common.log import ScriptLogger
 
@@ -271,8 +271,8 @@ if __name__ == "__main__":
    else:
       usage()
     
-   datafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + OutputFormat.CSV)
-   metafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + OutputFormat.METADATA)
+   datafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + LMFormat.CSV.ext)
+   metafname = os.path.join(WORKPATH, OCCURRENCE_BASENAME + LMFormat.METADATA.ext)
    mergefname = os.path.join(WORKPATH, '%s_%s.csv' % (mergedPrefix, basename))
 
    if sys.argv[1] == 'sort':   

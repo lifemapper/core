@@ -29,7 +29,6 @@ from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
 from LmServer.common.computeResource import LMComputeResource
-from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
                                          DB_STORE, LM_SCHEMA_BORG)
 from LmServer.common.lmuser import LMUser
@@ -64,8 +63,6 @@ class Borg(DbPostgresql):
       DbPostgresql.__init__(self, logger, db=DB_STORE, user=dbUser, 
                             password=dbKey, host=dbHost, port=dbPort,
                             schema=LM_SCHEMA_BORG)
-      earl = EarlJr()
-      self._webservicePrefix = earl.createWebServicePrefix()
 
 # ...............................................
    def _createUser(self, row, idxs):

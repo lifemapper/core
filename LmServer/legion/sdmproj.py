@@ -28,8 +28,8 @@ import mx.DateTime
 import os
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (OutputFormat, JobStatus, ProcessType,
-                                         DEFAULT_POST_USER)
+from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType,
+                                         DEFAULT_POST_USER, GEOTIFF_INTERFACE)
 from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
@@ -39,7 +39,7 @@ from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
 from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
 from LmServer.legion.cmd import MfRule
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
-   SCALE_PROJECTION_MAXIMUM, GEOTIFF_INTERFACE)
+   SCALE_PROJECTION_MAXIMUM)
    
 
 # .........................................................................
@@ -537,7 +537,7 @@ class SDMProjection(_ProjectionType, Raster):
 
 # ...............................................
    def writeProjection(self, rasterData, fname=None, srs=None, epsgcode=None, 
-                       fileExtension=OutputFormat.GTIFF):
+                       fileExtension=LMFormat.GTIFF.ext):
       """
       @note: Overrides Raster.getAbsolutePath
       @summary Gets the absolute path to the model

@@ -26,7 +26,7 @@
 import argparse
 import os
 
-from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.verify import computeHash
 
 # .............................................................................
@@ -50,7 +50,7 @@ if __name__ == "__main__":
       datapath = datapath.rstrip(os.path.sep)
    basepath, topDir = os.path.split(datapath)
    
-   outfname = os.path.join(basepath, pkgName + OutputFormat.CSV)
+   outfname = os.path.join(basepath, pkgName + LMFormat.CSV.ext)
    if os.path.exists(outfname):
       os.remove(outfname)
       
@@ -60,7 +60,7 @@ if __name__ == "__main__":
       for dirpath, dirnames, filenames in os.walk(datapath):
          for fname in filenames:
             fullname = os.path.join(dirpath, fname)
-            if fullname.endswith(OutputFormat.GTIFF):
+            if fullname.endswith(LMFormat.GTIFF.ext):
                print('Computing hash for {}'.format(outfname))
                hashval = computeHash(dlocation=fullname)
                relname = fullname.strip(basepath)

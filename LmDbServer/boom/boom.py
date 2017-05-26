@@ -27,8 +27,7 @@ import mx.DateTime as dt
 import os, sys, time
 
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.lmconstants import JobStatus, OutputFormat, ProcessType
-from LmCommon.common.log import DaemonLogger
+from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmBackend.common.lmobj import LMError
@@ -315,7 +314,7 @@ if __name__ == "__main__":
    earl = EarlJr()
    pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
    defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
-                                                       OutputFormat.CONFIG))
+                                                       LMFormat.CONFIG.ext))
    # Use the argparse.ArgumentParser class to handle the command line arguments
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper archive with metadata ' +
@@ -366,7 +365,6 @@ import os, sys, time
 
 from LmDbServer.boom.boom import *
 from LmBackend.common.daemon import Daemon
-from LmCommon.common.lmconstants import JobStatus, OutputFormat
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmBackend.common.lmobj import LMError
 from LmServer.base.utilities import isCorrectUser
@@ -385,7 +383,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-         OutputFormat, SERVER_BOOM_HEADING, MatrixType) 
+         SERVER_BOOM_HEADING, MatrixType) 
 
 secs = time.time()
 tuple = time.localtime(secs)
@@ -398,7 +396,7 @@ currtime = dt.gmt().mjd
 earl = EarlJr()
 pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
 defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
-                                                 OutputFormat.CONFIG))
+                                                 LMFormat.CONFIG.ext))
 boomer = Boomer(BOOM_PID_FILE, defaultConfigFile, log=logger)
 
 boomer.initialize()

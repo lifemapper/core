@@ -35,10 +35,9 @@ import zipfile
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmAttObject import LmAttObj
-from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS, 
-                  DEFAULT_OGR_FORMAT, DEFAULT_GDAL_FORMAT, 
-                  SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits,
-   OFTInteger, OFTString)
+from LmCommon.common.lmconstants import (DEFAULT_OGR_FORMAT, DEFAULT_GDAL_FORMAT, 
+                  SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits, GEOTIFF_INTERFACE,
+                  SHAPEFILE_INTERFACE, OFTInteger, OFTString)
 from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMSpatialObject
@@ -46,7 +45,7 @@ from LmServer.base.serviceobject2 import ServiceObject
 
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
             GDALFormatCodes, GDALDataTypes, OGRFormatCodes, OGRDataTypes, 
-            OutputFormat, LMServiceType)
+            LMFormat, LMServiceType)
 from LmServer.common.localconstants import APP_PATH, SCENARIO_PACKAGE_EPSG
 
 # .............................................................................
@@ -593,7 +592,7 @@ class Raster(_Layer):
       """
       if ext is None:
          if self._dataFormat is None:
-            ext = OutputFormat.TMP
+            ext = LMFormat.TMP.ext
          else:
             ext = GDALFormatCodes[self._dataFormat]['FILE_EXT']
       dloc = super(Raster, self).createLocalDLocation(ext)
@@ -657,13 +656,14 @@ class Raster(_Layer):
 # .............................................................................
 
 # ...............................................
-   def getDataUrl(self, dataFormat=DEFAULT_GDAL_FORMAT):
+   def getDataUrl(self, interface=GEOTIFF_INTERFACE):
       """
       @note: the ServiceObject._dbId may contain a join id or LayerId depending 
              on the type of Layer being requested
       """
-      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                      dataFormat)
+      durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                             interface)
+      return durl
 
 # ...............................................
    def getHistogram(self, bandnum=1):
@@ -776,7 +776,7 @@ class Raster(_Layer):
          
 # ...............................................
    def readFromUploadedData(self, datacontent, overwrite=False, 
-                            extension=OutputFormat.GTIFF):
+                            extension=LMFormat.GTIFF.ext):
       """
       @summary: Read from uploaded data by writing to temporary file, saving 
                 temporary filename in dlocation.  
@@ -1257,13 +1257,13 @@ class Vector(_Layer):
          self._valAttribute = valAttribute
 
 # ...............................................
-   def getDataUrl(self, dataFormat=DEFAULT_OGR_FORMAT):
+   def getDataUrl(self, interface=SHAPEFILE_INTERFACE):
       """
       @note: the ServiceObject._dbId may contain a join id or LayerId depending 
              on the type of Layer being requested
       """
       durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                             dataFormat)
+                                             interface)
       return durl
 
 # ...............................................
@@ -1293,7 +1293,7 @@ class Vector(_Layer):
       return self._localIdIdx
 
 # ...............................................
-   def createLocalDLocation(self, ext=OutputFormat.SHAPE):
+   def createLocalDLocation(self, ext=LMFormat.SHAPE.ext):
       """
       @summary: Create local filename for this layer.  
       @param ext: File extension for filename
@@ -1321,7 +1321,7 @@ class Vector(_Layer):
          fnames = glob.glob(base + '.*')
          for fname in fnames:
             base, ext = os.path.splitext(fname)
-            if ext in SHAPEFILE_EXTENSIONS:
+            if ext in LMFormat.SHAPE.getExtensions():
                shpnames.append(fname)
       return shpnames
    
@@ -1472,7 +1472,7 @@ class Vector(_Layer):
       # No file, no features, srcData is iterable, write as CSV
       elif srcData is not None:
          if isinstance(srcData, ListType) or isinstance(srcData, TupleType):
-            if not outFile.endswith(OutputFormat.CSV):
+            if not outFile.endswith(LMFormat.CSV.ext):
                raise LMError('Iterable input vector data can only be written to CSV')
             else:
                self.writeCSV(dlocation=outFile, overwrite=overwrite)
@@ -1885,7 +1885,7 @@ class Vector(_Layer):
       if isTemp:
          zfnames = z.namelist()
          for zfname in zfnames:
-            if zfname.endswith(OutputFormat.SHAPE):
+            if zfname.endswith(LMFormat.SHAPE.ext):
                pth, basefilename = os.path.split(zfname)
                pth = UPLOAD_PATH
                basename, dext = os.path.splitext(basefilename)

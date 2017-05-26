@@ -111,6 +111,7 @@ class LMFormat:
    ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'],
                       driver='AAIGrid')
    CSV = FileFormat('.csv', 'text/csv')
+   CONFIG = FileFormat('.ini', 'text/plain')
    GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff')
    HFA = FileFormat('.img', 'image/octet-stream')
    JSON = FileFormat('.json', 'application/json')
@@ -118,6 +119,7 @@ class LMFormat:
    LOG = FileFormat('.log', 'text/plain')
    MAKEFLOW = FileFormat('.mf', 'text/plain')
    MAP = FileFormat('.map', 'text/plain')
+   METADATA = FileFormat('.meta', 'text/plain')
    MXE = FileFormat('.mxe', 'application/octet-stream')
    NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
    NUMPY = FileFormat('.npy', 'application/octet-stream')
@@ -182,33 +184,41 @@ class LMFormat:
       return False
 
    
-# .............................................................................
-class OutputFormat:
-   TAR_GZ = '.tar.gz'
-   TXT = '.txt'
-   XML = '.xml'
-   ZIP = '.zip'
-   TMP = '.tmp'
-   MAP = '.map'
-   CSV = '.csv'
-   JSON = '.json'
-   MXE = '.mxe'
-   NUMPY = '.npy'
-   PICKLE = '.pkl'
-   GTIFF = '.tif'
-   ASCII = '.asc'
-   HFA = '.img'
-   SHAPE = '.shp'
-   LOG = '.log'
-   MAKEFLOW = '.mf'
-   METADATA = '.meta'
-   PYTHON = '.py'
-   CONFIG = '.ini'
-   
-SHAPEFILE_EXTENSIONS = [".shp", ".shx", ".dbf", ".prj", ".sbn", ".sbx", ".fbn", 
-                        ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", 
-                        ".shp.xml", ".cpg", ".qix"]
+# # .............................................................................
+# class OutputFormat:
+#    TAR_GZ = '.tar.gz'
+#    TXT = '.txt'
+#    XML = '.xml'
+#    ZIP = '.zip'
+#    TMP = '.tmp'
+#    MAP = '.map'
+#    CSV = '.csv'
+#    JSON = '.json'
+#    MXE = '.mxe'
+#    NUMPY = '.npy'
+#    PICKLE = '.pkl'
+#    GTIFF = '.tif'
+#    ASCII = '.asc'
+#    HFA = '.img'
+#    SHAPE = '.shp'
+#    LOG = '.log'
+#    MAKEFLOW = '.mf'
+#    METADATA = '.meta'
+#    PYTHON = '.py'
+#    CONFIG = '.ini'
+#    
+# SHAPEFILE_EXTENSIONS = [".shp", ".shx", ".dbf", ".prj", ".sbn", ".sbx", ".fbn", 
+#                         ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", 
+#                         ".shp.xml", ".cpg", ".qix"]
 SHAPEFILE_MAX_STRINGSIZE = 255
+
+# Web object interfaces
+CSV_INTERFACE = "csv"
+GEOTIFF_INTERFACE = "gtiff"
+JSON_INTERFACE = "json"
+KML_INTERFACE = "kml"
+OGC_INTERFACE = "ogc"
+SHAPEFILE_INTERFACE = "shapefile"
 
 # .............................................................................
 # .                               Job constants                               .

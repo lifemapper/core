@@ -34,9 +34,8 @@
 import cherrypy
 from cherrypy._cpdispatch import MethodDispatcher
 
-from LmCommon.common.lmconstants import LMFormat
-from LmWebServer.common.lmconstants import (GEOTIFF_INTERFACE, JSON_INTERFACE, 
-                                            KML_INTERFACE, SHAPEFILE_INTERFACE)
+from LmCommon.common.lmconstants import (LMFormat, GEOTIFF_INTERFACE, 
+                           JSON_INTERFACE, KML_INTERFACE, SHAPEFILE_INTERFACE)
 
 # .............................................................................
 class LmDispatcher(MethodDispatcher):

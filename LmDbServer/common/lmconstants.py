@@ -23,7 +23,7 @@
 """
 import os.path 
 
-from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.lmconstants import LMFormat
 from LmServer.common.localconstants import PID_PATH
 from LmServer.common.lmconstants import SPECIES_DATA_PATH
 from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
@@ -39,14 +39,14 @@ GBIF_PROVIDER_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_PROVIDER_FILENAME
 BISON_TSN_FILE = os.path.join(SPECIES_DATA_PATH, BISON_TSN_FILENAME)
 
 IDIG_OCCURRENCE_CSV = os.path.join(SPECIES_DATA_PATH, 
-                                   IDIG_OCCURRENCE_DATA + OutputFormat.CSV)
+                                   IDIG_OCCURRENCE_DATA + LMFormat.CSV.ext)
 IDIG_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH, 
-                                    IDIG_OCCURRENCE_DATA + OutputFormat.METADATA)
+                                    IDIG_OCCURRENCE_DATA + LMFormat.METADATA.ext)
 
 USER_OCCURRENCE_CSV = os.path.join(SPECIES_DATA_PATH, 
-                                   USER_OCCURRENCE_DATA + OutputFormat.CSV)
+                                   USER_OCCURRENCE_DATA + LMFormat.CSV.ext)
 USER_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH, 
-                                    USER_OCCURRENCE_DATA + OutputFormat.METADATA)
+                                    USER_OCCURRENCE_DATA + LMFormat.METADATA.ext)
 
 class SpeciesDatasource:
    """

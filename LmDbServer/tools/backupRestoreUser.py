@@ -31,9 +31,9 @@ import os
 import subprocess
 import tarfile
 
-from LmCommon.common.lmconstants import DEFAULT_POST_USER, OutputFormat
+from LmCommon.common.lmconstants import DEFAULT_POST_USER, LMFormat
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import MAL_STORE, RAD_STORE, LM_SCHEMA
+from LmServer.common.lmconstants import LM_SCHEMA
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
  
 DEBUG = False
@@ -191,15 +191,15 @@ def getFilename(outpath, basefname, dumptype, table=None, user=None):
    elif dumptype == 'db_data':
       outfname = os.path.join(outpath, '{}.data.dump'.format(basefname))
    elif dumptype == 'file_data':
-      outfname = os.path.join(outpath, '{}{}'.format(basefname, OutputFormat.TAR_GZ))
+      outfname = os.path.join(outpath, '{}{}'.format(basefname, '.tar.gz'))
    elif dumptype == 'readme':
       outfname = os.path.join(outpath, '{}.README'.format(basefname))
    elif dumptype == 'table':
-      outfname = os.path.join(outpath, '{}{}'.format(basefname, OutputFormat.TXT))
+      outfname = os.path.join(outpath, '{}{}'.format(basefname, LMFormat.TXT.ext))
    elif dumptype == 'table_restore':
-      outfname = os.path.join(outpath, '{}{}'.format(basefname, OutputFormat.CSV))
+      outfname = os.path.join(outpath, '{}{}'.format(basefname, LMFormat.CSV.ext))
    elif dumptype == 'log':
-      outfname = os.path.join(outpath, '{}{}'.format(basefname, OutputFormat.LOG))
+      outfname = os.path.join(outpath, '{}{}'.format(basefname, LMFormat.LOG.ext))
 
    return outfname
       
@@ -275,7 +275,7 @@ def ingestRecordData(inpath, inbasename, tablename, columnStr, dbuser, dbname):
       
 # ...............................................
 def untarFileData(inpath, scriptname):
-   tarnames = glob.glob(os.path.join(inpath, scriptname+'*'+OutputFormat.TAR_GZ))
+   tarnames = glob.glob(os.path.join(inpath, scriptname+'*'+'.tar.gz'))
    for tarball in tarnames:
       cmd = 'tar -xvzf {}'.format(tarball)
       dProc = subprocess.Popen(cmd, shell=True)

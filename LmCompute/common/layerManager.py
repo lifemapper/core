@@ -47,8 +47,7 @@ from time import sleep
 import urllib2
 import zipfile
 
-from LmCommon.common.lmconstants import (JobStatus, OutputFormat,
-                                         SHAPEFILE_EXTENSIONS, ENV_LAYER_DIR)
+from LmCommon.common.lmconstants import (JobStatus, LMFormat, ENV_LAYER_DIR)
 from LmCommon.common.verify import verifyHash
 from LmCompute.common.lmconstants import (TEMPORARY_FILE_PATH, INPUT_LAYER_DB, 
          LayerAttributes, LayerFormat, LayerStatus, RETRIEVED_LAYER_DIR, 
@@ -273,13 +272,13 @@ class LayerManager(object):
    # .................................
    def _getFilePath(self, layerId, layerFormat):
       if layerFormat == LayerFormat.GTIFF:
-         lyrExt = OutputFormat.GTIFF
+         lyrExt = LMFormat.GTIFF.ext
       elif layerFormat == LayerFormat.ASCII:
-         lyrExt = OutputFormat.ASCII
+         lyrExt = LMFormat.ASCII.ext
       elif layerFormat == LayerFormat.MXE:
-         lyrExt = OutputFormat.MXE
+         lyrExt = LMFormat.MXE.ext
       elif layerFormat == LayerFormat.SHAPE:
-         lyrExt = OutputFormat.SHAPE
+         lyrExt = LMFormat.SHAPE.ext
       else:
          raise LmException(JobStatus.IO_LAYER_ERROR, 
                            "Unknown file type: %s" % layerFormat)
@@ -419,8 +418,8 @@ class LayerManager(object):
             
             # Generate desired ASCII and MXE file names
             basename = os.path.splitext(layerPath)[0]
-            ascFn = '%s%s' % (basename, OutputFormat.ASCII)
-            mxeFn = '%s%s' % (basename, OutputFormat.MXE)
+            ascFn = '%s%s' % (basename, LMFormat.ASCII.ext)
+            mxeFn = '%s%s' % (basename, LMFormat.MXE.ext)
             
             # Query to see if ASCII is already inserted
             ascStatus, _ = self._queryLayer(layerId, LayerFormat.ASCII)
@@ -527,7 +526,7 @@ class LayerManager(object):
       # Shapefiles have several files
       elif layerFormat == LayerFormat.SHAPE:
          fnBase = os.path.splitext(lyrFn)
-         for ext in SHAPEFILE_EXTENSIONS:
+         for ext in LMFormat.SHAPE.getExtensions():
             filesToDelete.append('%s%s' % (fnBase, ext))
 
       for fn in filesToDelete:
@@ -703,7 +702,7 @@ def convertAsciisToMxes(fnTups):
          #    with a different extension, but just in case
          baseName = os.path.basename(asciiFn)
          tmpMxeFn = os.path.join(outDir, 
-                     '%s%s' % (os.path.splitext(baseName)[0], OutputFormat.MXE))
+                     '%s%s' % (os.path.splitext(baseName)[0], LMFormat.MXE.ext))
          shutil.copy(tmpMxeFn, mxeFn)
       except Exception, e:
          print "Failed to rename layer: %s -> %s" % (tmpMxeFn, mxeFn)

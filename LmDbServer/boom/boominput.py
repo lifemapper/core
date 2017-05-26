@@ -26,7 +26,7 @@ import os
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
                                     JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
@@ -238,7 +238,7 @@ class ArchiveFiller(LMObject):
          earl = EarlJr()
          pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
          newConfigFilename = os.path.join(pth, 
-                              '{}{}'.format(self.archiveName, OutputFormat.CONFIG))
+                              '{}{}'.format(self.archiveName, LMFormat.CONFIG.ext))
       self.readyFilename(newConfigFilename, overwrite=True)
       f = open(newConfigFilename, 'w')
       f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
@@ -706,7 +706,7 @@ class ArchiveFiller(LMObject):
    # ...............................................
    def _findClimatePackageMetadata(self):
       envPackageMetaFilename = os.path.join(ENV_DATA_PATH, 
-                     '{}{}'.format(self.envPackageName, OutputFormat.PYTHON))      
+                     '{}{}'.format(self.envPackageName, LMFormat.PYTHON.ext))      
       if not os.path.exists(envPackageMetaFilename):
          raise LMError(currargs='Climate metadata {} does not exist'
                        .format(envPackageMetaFilename))
@@ -908,7 +908,7 @@ import mx.DateTime
 import os
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, OutputFormat, 
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
                                     JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
@@ -942,26 +942,27 @@ CURR_MJD = mx.DateTime.gmt().mjd
 
 
 from LmDbServer.boom.boominput import ArchiveFiller
-configFname='/opt/lifemapper/config/biotaphyNA.boom.ini'
-
-filler = ArchiveFiller(configFname=configFname)
-
 filler = ArchiveFiller()
 
 filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
-filler.initBoom()
-filler.close()
+# filler.initBoom()
+# filler.close()
 
-shp = ShapeGrid(filler.gridname, filler.usr, filler.epsgcode, filler.cellsides, 
+borg = filler.scribe._borg
+
+shpgrd = ShapeGrid(filler.gridname, filler.usr, filler.epsgcode, filler.cellsides, 
                 filler.cellsize, filler.mapunits, filler.gridbbox,
                 status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
 
 wkt = None
 if shpgrd.epsgcode == 4326:
    wkt = shpgrd.getWkt()
+
+
 meta = shpgrd.dumpParamMetadata()
 gdaltype = valunits = nodataval = minval = maxval = None
-row, idxs = scribe._borg.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
+
+row, idxs = borg.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
                      shpgrd.getId(), shpgrd.getUserId(), 
                      shpgrd.squid, shpgrd.verify, shpgrd.name,
                      shpgrd.getDLocation(), meta,
@@ -972,7 +973,30 @@ row, idxs = scribe._borg.executeInsertAndSelectOneFunction('lm_findOrInsertShape
                      shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
                      shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
                      shpgrd.status, shpgrd.statusModTime)
-updatedShpgrd = self._createShapeGrid(row, idxs)
+
+lyr = borg._createLayer(row, idxs)
+shg = ShapeGrid.initFromParts(lyr, 
+         borg._getColumnValue(row,idxs,['cellsides']), 
+         borg._getColumnValue(row,idxs,['cellsize']),
+         siteId = borg._getColumnValue(row,idxs,['idattribute']), 
+         siteX = borg._getColumnValue(row,idxs,['xattribute']), 
+         siteY = borg._getColumnValue(row,idxs,['yattribute']), 
+         size = borg._getColumnValue(row,idxs,['vsize']),
+         status = borg._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
+         statusModTime = borg._getColumnValue(row,idxs,
+                           ['shpgrdstatusmodtime', 'statusmodtime']))
+
+sides = borg._getColumnValue(row,idxs,['cellsides'])
+size = borg._getColumnValue(row,idxs,['cellsize'])
+siteId = borg._getColumnValue(row,idxs,['idattribute'])
+siteX = borg._getColumnValue(row,idxs,['xattribute'])
+siteY = borg._getColumnValue(row,idxs,['yattribute']) 
+size = borg._getColumnValue(row,idxs,['vsize'])
+status = borg._getColumnValue(row,idxs,['shpgrdstatus', 'status'])
+statusModTime = borg._getColumnValue(row,idxs,
+                  ['shpgrdstatusmodtime', 'statusmodtime'])
+
+updatedShpgrd = filler.scribe._borg._createShapeGrid(row, idxs)
 return updatedShpgrd
 
 """

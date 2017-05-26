@@ -29,7 +29,7 @@ import sys
 import traceback
 from types import TupleType, ListType
 
-from LmCommon.common.lmconstants import OutputFormat, SHAPEFILE_EXTENSIONS
+from LmCommon.common.lmconstants import LMFormat
 
 # ............................................................................
 # ............................................................................
@@ -111,13 +111,13 @@ class LMObject(object):
          pth, basename = os.path.split(fname)
          if fname is not None and os.path.exists(fname):
             base, ext = os.path.splitext(fname)
-            if  ext == OutputFormat.SHAPE:
+            if  ext == LMFormat.SHAPE.ext:
                import glob
                similarFnames = glob.glob(base + '.*')
                try:
                   for simfname in similarFnames:
                      simbase, simext = os.path.splitext(simfname)
-                     if simext in SHAPEFILE_EXTENSIONS:
+                     if simext in LMFormat.SHAPE.getExtensions():
                         os.remove(simfname)
                except Exception, e:
                   success = False

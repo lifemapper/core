@@ -29,7 +29,8 @@ import sys
 import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
-from LmCommon.common.lmconstants import (ENCODING,OFTInteger, OFTReal, OFTString)
+from LmCommon.common.lmconstants import (ENCODING, OFTInteger, OFTReal, 
+                                         OFTString, LMFormat)
 
 # .............................................................................
 class OccDataParser(object):
@@ -621,7 +622,6 @@ class OccDataParser(object):
 
 if __name__ == '__main__':
    from LmCompute.common.log import TestLogger
-   from LmCommon.common.lmconstants import OutputFormat
    
    try:
       from LmServer.common.localconstants import APP_PATH
@@ -637,8 +637,8 @@ if __name__ == '__main__':
 
    pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
    log = TestLogger('occparse_checkInput')
-   op = OccDataParser(log, pthAndBasename + OutputFormat.CSV, 
-                      pthAndBasename + OutputFormat.METADATA)
+   op = OccDataParser(log, pthAndBasename + LMFormat.CSV.ext, 
+                      pthAndBasename + LMFormat.METADATA.ext)
    op.readAllRecs()
    op.printStats()
    op.close()
@@ -652,7 +652,7 @@ import StringIO
 from types import DictionaryType, DictType, ListType, TupleType
 
 from LmBackend.common.occparse import OccDataParser
-from LmCommon.common.lmconstants import (OutputFormat, ENCODING,
+from LmCommon.common.lmconstants import (LMFormat, ENCODING,
                                          OFTInteger, OFTReal, OFTString)
 from LmCompute.common.log import TestLogger
 from LmServer.common.localconstants import APP_PATH
@@ -662,8 +662,8 @@ dataname = 'idig_occurrences_localities'
 
 pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
 log = TestLogger('occparse_checkInput')
-data = pthAndBasename + OutputFormat.CSV
-metadata = pthAndBasename + OutputFormat.METADATA
+data = pthAndBasename + LMFormat.CSV.ext
+metadata = pthAndBasename + LMFormat.METADATA.ext
 delimiter = ','
 
 # Read metadata file/stream
