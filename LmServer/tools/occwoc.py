@@ -87,7 +87,7 @@ class _SpeciesWeaponOfChoice(LMObject):
          f = open(self.startFile, 'r')
          for line in f:
             while not complete:
-               self.log.debug('Found line {}'.format(line))
+               self.log.info('Found line {}'.format(line))
                try:
                   linenum = int(line)
                   complete = True
