@@ -46,7 +46,7 @@ from LmServer.base.serviceobject2 import ServiceObject
 
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
             GDALFormatCodes, GDALDataTypes, OGRFormatCodes, OGRDataTypes, 
-            OutputFormat, LMServiceType, LMServiceModule)
+            OutputFormat, LMServiceType)
 from LmServer.common.localconstants import APP_PATH, SCENARIO_PACKAGE_EPSG
 
 # .............................................................................
@@ -66,7 +66,6 @@ class _Layer(LMSpatialObject, ServiceObject):
                 bbox=None,
                 # ServiceObject
                 svcObjId=None, serviceType=LMServiceType.LAYERS, 
-                moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, modTime=None):
       """
       @summary Layer superclass constructor
@@ -104,8 +103,9 @@ class _Layer(LMSpatialObject, ServiceObject):
          svcObjId = lyrId
       LMSpatialObject.__init__(self, epsgcode, bbox)
       ServiceObject.__init__(self,  userId, svcObjId, serviceType, 
-                             moduleType=moduleType, metadataUrl=metadataUrl,
-                             parentMetadataUrl=parentMetadataUrl, modTime=modTime)
+                             metadataUrl=metadataUrl, 
+                             parentMetadataUrl=parentMetadataUrl, 
+                             modTime=modTime)
 #      ogr.UseExceptions()
       self.name = name
       self._layerUserId = userId
@@ -527,7 +527,6 @@ class Raster(_Layer):
                 mapunits=None, resolution=None, 
                 bbox=None,
                 svcObjId=None, serviceType=LMServiceType.LAYERS, 
-                moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, modTime=None):
       """
       @summary Raster constructor, inherits from _Layer
@@ -560,7 +559,7 @@ class Raster(_Layer):
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 
                 bbox=bbox,
-                svcObjId=svcObjId, serviceType=serviceType, moduleType=moduleType,
+                svcObjId=svcObjId, serviceType=serviceType, 
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
 
@@ -656,6 +655,15 @@ class Raster(_Layer):
 # .............................................................................
 # Public methods
 # .............................................................................
+
+# ...............................................
+   def getDataUrl(self, dataFormat=DEFAULT_GDAL_FORMAT):
+      """
+      @note: the ServiceObject._dbId may contain a join id or LayerId depending 
+             on the type of Layer being requested
+      """
+      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                      dataFormat)
 
 # ...............................................
    def getHistogram(self, bandnum=1):
@@ -1012,7 +1020,6 @@ class Vector(_Layer):
                 mapunits=None, resolution=None, 
                 bbox=None,
                 svcObjId=None, serviceType=LMServiceType.LAYERS, 
-                moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, modTime=None,
                 featureCount=0, featureAttributes={}, features={}, fidAttribute=None):
       """
@@ -1051,7 +1058,7 @@ class Vector(_Layer):
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 
                 bbox=bbox,
-                svcObjId=svcObjId, serviceType=serviceType, moduleType=moduleType,
+                svcObjId=svcObjId, serviceType=serviceType, 
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
       self._verifyDataDescription(ogrType, dataFormat)
@@ -1098,7 +1105,32 @@ class Vector(_Layer):
 # .............................................................................
 # Properties
 # .............................................................................
-
+   # ..................................
+   @property
+   def features(self):
+      """
+      @summary: Converts the private dictionary of features into a list of 
+                   LmAttObjs
+      @note: Uses list comprehensions to create a list of LmAttObjs and another
+                to create a list of (key, value) pairs for the attribute 
+                dictionary
+      @return: A list of LmAttObjs
+      """
+      return [LmAttObj(dict([
+                     (self._featureAttributes[k2][0], self._features[k1][k2]) \
+                     for k2 in self._featureAttributes]), 
+                       "Feature") for k1 in self._features]
+   
+   # ..................................
+   @property
+   def featureAttributes(self):
+      return self._featureAttributes
+   
+   # ..................................
+   @property
+   def fidAttribute(self):
+      return self._fidAttribute
+   
 # ...............................................
    def getFormatLongName(self):
       return self._dataFormat 
@@ -1132,32 +1164,6 @@ class Vector(_Layer):
          return True
       else:
          return False
-   
-   # ..................................
-   @property
-   def features(self):
-      """
-      @summary: Converts the private dictionary of features into a list of 
-                   LmAttObjs
-      @note: Uses list comprehensions to create a list of LmAttObjs and another
-                to create a list of (key, value) pairs for the attribute 
-                dictionary
-      @return: A list of LmAttObjs
-      """
-      return [LmAttObj(dict([
-                     (self._featureAttributes[k2][0], self._features[k1][k2]) \
-                     for k2 in self._featureAttributes]), 
-                       "Feature") for k1 in self._features]
-   
-   # ..................................
-   @property
-   def featureAttributes(self):
-      return self._featureAttributes
-   
-   # ..................................
-   @property
-   def fidAttribute(self):
-      return self._fidAttribute
    
 # .............................................................................
    def setFeatures(self, features, featureAttributes, featureCount=0):
@@ -1249,6 +1255,15 @@ class Vector(_Layer):
                              % (valAttribute, self._dlocation))
       else:
          self._valAttribute = valAttribute
+
+# ...............................................
+   def getDataUrl(self, dataFormat=DEFAULT_OGR_FORMAT):
+      """
+      @note: the ServiceObject._dbId may contain a join id or LayerId depending 
+             on the type of Layer being requested
+      """
+      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                      dataFormat)
 
 # ...............................................
    def _setGeometryIndex(self):

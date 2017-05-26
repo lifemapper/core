@@ -32,7 +32,7 @@ from types import StringType
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import MatrixType
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
+from LmServer.common.lmconstants import LMFileType, LMServiceType
 from LmServer.legion.lmmatrix import LMMatrix                                  
 
 # .............................................................................
@@ -73,7 +73,6 @@ class Gridset(ServiceObject):
                           .format(self._epsg, shapeGrid.epsgcode))
 
       ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
-                             moduleType=LMServiceModule.LM, 
                              metadataUrl=metadataUrl, modTime=modTime)
       self.name = name
       self.grdMetadata = {}

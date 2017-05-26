@@ -28,7 +28,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import OutputFormat
 from LmServer.common.localconstants import (APP_PATH, PUBLIC_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
-from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR,
+from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, 
    LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
    DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR, 
@@ -280,13 +280,32 @@ class EarlJr(LMObject):
       return mapfname, usr
    
 # ...............................................
-   def constructLMMetadataUrl(self, serviceType, objectId, moduleType=None,  
+   def constructLMDataUrl(self, serviceType, objectId, dataformat, parentMetadataUrl=None):
+      """
+      @summary Return the REST service url for data in the Lifemapper Archive 
+               or UserData for the given user and service.
+      @param serviceType: LM service for this service, i.e. 'bucket' or 'model'
+      @param objectId: The unique database id for requested object
+      @param format: The data format in which to return the results, 
+      @param parentMetadataUrl: The nested structure of this object's parent objects.
+               The nested structure will begin with a '/', and take a form like: 
+                  /grandParentClassType/grandParentId/parentClassType/parentId
+      """
+      prefix = self.createWebServicePrefix()
+      postfix = self.createWebServicePostfix(serviceType, objectId, 
+                                             parentMetadataUrl=parentMetadataUrl,
+                                             dataformat=dataformat)
+      url = '/'.join((prefix, postfix))
+      return url
+
+# ...............................................
+   def constructLMMetadataUrl(self, serviceType, objectId, 
                               parentMetadataUrl=None):
       """
       @summary Return the REST service url for data in the Lifemapper Archive 
                or UserData for the given user and service.
-      @param moduleType: LM module for this service, i.e. 'sdm' or 'rad'
       @param serviceType: LM service for this service, i.e. 'bucket' or 'model'
+      @param objectId: The unique database id for requested object
       @param parentMetadataUrl: The nested structure of this object's parent objects.
                The nested structure will begin with a '/', and take a form like: 
                   /grandParentClassType/grandParentId/parentClassType/parentId
@@ -294,32 +313,36 @@ class EarlJr(LMObject):
       """
       prefix = self.createWebServicePrefix()
       postfix = self.createWebServicePostfix(serviceType, objectId, 
-                                             moduleType=moduleType,  
                                              parentMetadataUrl=parentMetadataUrl)
       url = '{}{}'.format(prefix, postfix)
       return url
 
 # ...............................................
-   def createWebServicePostfix(self, serviceType, objectId, moduleType=None,  
-                              parentMetadataUrl=None):
+   def createWebServicePostfix(self, serviceType, objectId, 
+                               parentMetadataUrl=None, dataformat=None):
       """
       @summary Return the relative REST service url for data in the 
                Lifemapper Archive for the given object and service (with 
-               leading '/').
-      @param moduleType: LM module for this service, i.e. 'sdm' or 'rad'
+               or without leading '/').
       @param serviceType: LM service for this service, i.e. 'bucket' or 'model'
+      @param objectId: The unique database id for requested object
       @param parentMetadataUrl: The nested structure of this object's parent objects.
                The nested structure will begin with a '/', and take a form like: 
                   /grandParentClassType/grandParentId/parentClassType/parentId
+      @param dataformat: The data format in which to return the results, 
       """
+      parts = [serviceType, objectId]
       if parentMetadataUrl is not None:
-         relativeprefix = ''
          prefix = self.createWebServicePrefix()
-         if parentMetadataUrl.startswith(prefix):
+         if not parentMetadataUrl.startswith(prefix):
+            raise LMError('Parent URL {} does not start with local prefix {}'
+                          .format(parentMetadataUrl, prefix))
+         else:
             relativeprefix = parentMetadataUrl[len(prefix):]
-         urlpath = '%s/%s/%s' % (relativeprefix, serviceType, objectId)
-      else:
-         urlpath = '/{}/{}/{}'.format(moduleType, serviceType, objectId)
+            parts.insert(0, relativeprefix)
+      if dataformat is not None:
+         parts.append(dataformat)
+      urlpath = '/'.join(parts)
       return urlpath
 
 # ...............................................
@@ -328,7 +351,7 @@ class EarlJr(LMObject):
       @summary Return the REST service url for Lifemapper web services (without 
                trailing '/').
       """
-      url = '{}/{}'.format(WEBSERVICES_ROOT, SERVICES_PREFIX)
+      url = '/'.join((WEBSERVICES_ROOT, SERVICES_PREFIX))
       return url
 
 
@@ -606,8 +629,8 @@ class EarlJr(LMObject):
 # ...............................................
    def _findUserForObject(self, scencode=None, occsetId=None, radexpId=None):
       from LmServer.common.log import ConsoleLogger
-      from LmServer.db.scribe import Scribe
-      scribe = Scribe(ConsoleLogger())
+      from LmServer.db.borgscribe import BorgScribe
+      scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
       usr = scribe.findUserForObject(scencode=scencode, occsetId=occsetId, 
                                      radexpId=radexpId)

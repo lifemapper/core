@@ -27,7 +27,7 @@ from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMServiceType, LMServiceModule)
+from LmServer.common.lmconstants import LMServiceType
 from LmServer.common.localconstants import APP_PATH
 from LmServer.legion.cmd import MfRule
 
@@ -82,7 +82,6 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                                 modTime=statusModTime)
       ServiceObject.__init__(self,  userId, matrixColumnId, 
                              LMServiceType.MATRIX_COLUMNS, 
-                             moduleType=LMServiceModule.LM, 
                              modTime=statusModTime)
       ProcessObject.__init__(self, objId=matrixColumnId, processType=processType, 
                              parentId=matrixId, status=status, 

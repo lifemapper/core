@@ -48,14 +48,13 @@ class ServiceObject(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, userId, dbId, serviceType, moduleType=None,
-                metadataUrl=None, parentMetadataUrl=None, modTime=None):
+   def __init__(self, userId, dbId, serviceType, metadataUrl=None, 
+                parentMetadataUrl=None, modTime=None):
       """
       @summary Constructor for the abstract ServiceObject class
       @param userId: id for the owner of these data
       @param dbId: database id of the object 
       @param serviceType: constant from LmServer.common.lmconstants.LMServiceType
-      @param moduleType: constant from LmServer.common.lmconstants.LMServiceModule
       @param metadataUrl: URL for retrieving the metadata
       @param parentMetadataUrl: URL for retrieving the metadata of a
                                  parent container object
@@ -67,7 +66,6 @@ class ServiceObject(LMObject):
       self._userId = userId
       self._dbId = dbId
       self.serviceType = serviceType
-      self.moduleType = moduleType
       self._metadataUrl = metadataUrl
       self._parentMetadataUrl = parentMetadataUrl
       self.modTime = modTime
@@ -150,9 +148,7 @@ class ServiceObject(LMObject):
       if objId is None:
          objId = ID_PLACEHOLDER
       murl = self._earlJr.constructLMMetadataUrl(self.serviceType, 
-                                               objId,
-                                               moduleType=self.moduleType,
-                                               parentMetadataUrl=self._parentMetadataUrl)
+                           objId, parentMetadataUrl=self._parentMetadataUrl)
       return murl
    
 # ...............................................

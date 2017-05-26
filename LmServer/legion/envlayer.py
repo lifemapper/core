@@ -22,7 +22,7 @@
           02110-1301, USA.
 """
 from LmBackend.common.lmobj import LMError
-from LmServer.common.lmconstants import LMServiceType, LMServiceModule, LMFileType
+from LmServer.common.lmconstants import LMServiceType, LMFileType
 from LmServer.base.layer2 import Raster, _LayerParameters
 # .........................................................................
 class EnvType(_LayerParameters):
@@ -83,7 +83,6 @@ class EnvLayer(EnvType, Raster):
                 mapunits=mapunits, resolution=resolution, 
                 bbox=bbox, svcObjId=envLayerId, 
                 serviceType=LMServiceType.ENVIRONMENTAL_LAYERS, 
-                moduleType=LMServiceModule.LM, 
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
       self._scenCode = scencode

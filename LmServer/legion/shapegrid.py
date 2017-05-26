@@ -31,8 +31,7 @@ from LmCommon.common.lmconstants import (SHAPEFILE_EXTENSIONS,
 from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (APP_PATH, LMFileType, LMServiceType, LMServiceModule)
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.lmconstants import (LMFileType, LMServiceType)
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -79,7 +78,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             dlocation=dlocation, metadata=metadata, 
             dataFormat=DEFAULT_OGR_FORMAT, ogrType=ogr.wkbPolygon, 
             mapunits=mapunits, resolution=resolution, bbox=bbox, svcObjId=lyrId, 
-            serviceType=LMServiceType.SHAPEGRIDS, moduleType=LMServiceModule.LM,
+            serviceType=LMServiceType.SHAPEGRIDS, 
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
             modTime=modTime, featureCount=featureCount, 
             featureAttributes=featureAttributes, features=features,

@@ -56,8 +56,8 @@ from types import IntType, FloatType
 
 from LmCommon.common.lmconstants import (JobStatus, OutputFormat, MatrixType,
    LMFormat)
-from LmServer.common.localconstants import (APP_PATH, DATA_PATH, SHARED_DATA_PATH, 
-                                            SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG)
+from LmServer.common.localconstants import (APP_PATH, DATA_PATH, 
+         SHARED_DATA_PATH, SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG)
 
 DEFAULT_EMAIL_POSTFIX = '@nowhere.org'
 BIN_PATH = os.path.join(APP_PATH, 'bin')
@@ -97,9 +97,7 @@ LM_SCHEMA = 'lm3'
 LM_SCHEMA_BORG = 'lm_v3'
 SALT = "4303e8f7129243fd42a57bcc18a19f5b"
 
-# MAL, RAD, gbifCache database names
-RAD_STORE = 'speco'
-MAL_STORE = 'mal'
+# database name
 DB_STORE = 'borg'
 
 # ............................................................................
@@ -506,7 +504,8 @@ NAME_SEPARATOR = '_'
 # Development desktops, debug users, and beta server names
 DEBUG_USER_PREFIX = 'debug_'
 
-SERVICES_PREFIX = 'services'
+# SERVICES_PREFIX = 'services'
+SERVICES_PREFIX = '/api/v2'
 HINT_PREFIX = 'hint'
 
 CT_USER = 'changeThinking'
@@ -592,13 +591,6 @@ GPAM_KEYWORD = 'Global PAM'
 PUBLIC_ARCHIVE_NAME = 'BOOM_Archive'
 ARCHIVE_KEYWORD = 'archive'
    
-# ............................................................................
-# Change to enum.Enum with Python 3.4
-class LMServiceModule:
-   LM = 'lm'
-   SDM = 'sdm'
-   RAD = 'rad'
-
 # ............................................................................
 # Lifemapper RAD constants
 ORGANISM_LAYER_KEY = 'orgLayerIndices'

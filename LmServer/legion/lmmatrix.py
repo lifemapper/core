@@ -28,8 +28,7 @@ import os
 from LmCommon.common.lmconstants import MatrixType, ProcessType
 from LmCommon.common.matrix import Matrix
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMServiceType, LMServiceModule, 
-                                         LMFileType)
+from LmServer.common.lmconstants import (LMServiceType, LMFileType)
 from LmServer.common.localconstants import APP_PATH
 from LmServer.legion.cmd import MfRule
 
@@ -83,7 +82,6 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
          gridsetId = gridset.getId()
       Matrix.__init__(self, matrix, headers=headers)
       ServiceObject.__init__(self,  userId, matrixId, LMServiceType.MATRICES, 
-                             moduleType=LMServiceModule.LM, 
                              metadataUrl=metadataUrl, 
                              parentMetadataUrl=gridsetUrl,
                              modTime=statusModTime)
@@ -146,6 +144,10 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return url
 
 # ...............................................
+   def getDataUrl(self, dataFormat=None):
+      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                      dataFormat)
+
 # ...............................................
    def getRelativeDLocation(self):
       """

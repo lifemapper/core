@@ -26,8 +26,7 @@ import os
 from LmBackend.common.lmobj import LMObject
 from LmCommon.trees.lmTree import LmTree
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import (LMServiceType, LMServiceModule, 
-                                         LMFileType)
+from LmServer.common.lmconstants import LMServiceType, LMFileType
    
 # .........................................................................
 class Tree(LmTree, ServiceObject):
@@ -49,9 +48,7 @@ class Tree(LmTree, ServiceObject):
       @param treeId: dbId  for ServiceObject
       """
       ServiceObject.__init__(self, userId, treeId, LMServiceType.TREES, 
-                             moduleType=LMServiceModule.LM, 
-                             metadataUrl=metadataUrl, 
-                             modTime=modTime)
+                             metadataUrl=metadataUrl, modTime=modTime)
       # TODO: Do we always want to read the file??
       #       Maybe just populate attributes saved in DB?
       if treeDict:
@@ -129,3 +126,7 @@ class Tree(LmTree, ServiceObject):
       self.treeMetadata = LMObject._addMetadata(self, newMetadataDict, 
                                   existingMetadataDict=self.treeMetadata)
 
+# ...............................................
+   def getDataUrl(self, dataFormat=None):
+      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                      dataFormat)

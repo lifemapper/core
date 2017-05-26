@@ -23,7 +23,7 @@
 """
 from LmBackend.common.lmobj import LMError
 from LmServer.base.layerset import MapLayerSet
-from LmServer.common.lmconstants import LMFileType, LMServiceType, LMServiceModule
+from LmServer.common.lmconstants import LMFileType, LMServiceType
 from LmServer.legion.envlayer import EnvLayer
 
 # .........................................................................
@@ -64,8 +64,7 @@ class Scenario(MapLayerSet):
       MapLayerSet.__init__(self, code, 
                            url=metadataUrl, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
-                           serviceType=LMServiceType.SCENARIOS, 
-                           moduleType=LMServiceModule.LM)      
+                           serviceType=LMServiceType.SCENARIOS)
       # aka MapLayerSet.name    
       self.code = code
       self.modTime = modTime

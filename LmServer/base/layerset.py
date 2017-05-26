@@ -286,7 +286,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
    def __init__(self, mapname, title=None, 
                 url=None, dlocation=None, keywords=None, epsgcode=None, layers=None, 
                 userId=None, dbId=None, createTime=None, modTime=None, 
-                serviceType=LMServiceType.LAYERSETS, moduleType=None):
+                serviceType=LMServiceType.LAYERSETS):
       """
       @summary Constructor for the LayerSet class
       @param name: mapname or code for this layerset
@@ -302,8 +302,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
       """
       _LayerSet.__init__(self, mapname, title=title, keywords=keywords, 
                          epsgcode=epsgcode, layers=layers)
-      ServiceObject.__init__(self, userId, dbId, serviceType, 
-                             moduleType=moduleType, metadataUrl=url, modTime=modTime)
+      ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url, 
+                             modTime=modTime)
       self._mapFilename = dlocation
       self._mapPrefix = None
 

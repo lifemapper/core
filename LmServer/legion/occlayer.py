@@ -32,7 +32,7 @@ from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
-                  LMServiceType, LMServiceModule)
+                  LMServiceType)
 from LmServer.common.localconstants import POINT_COUNT_MAX, APP_PATH
 from LmServer.legion.cmd import MfRule
 
@@ -126,7 +126,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, bbox=None, occurrenceSetId=None, 
                 serviceType=LMServiceType.OCCURRENCES, 
-                moduleType=LMServiceModule.LM,
                 metadataUrl=None, parentMetadataUrl=None, 
                 featureCount=0, featureAttributes={}, features={}, 
                 fidAttribute=None,                
@@ -152,7 +151,6 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 mapunits=mapunits, resolution=resolution, 
                 bbox=bbox,
                 svcObjId=occurrenceSetId, serviceType=LMServiceType.OCCURRENCES, 
-                moduleType=LMServiceModule.LM,
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=statusModTime,
                 featureCount=featureCount, featureAttributes=featureAttributes, 

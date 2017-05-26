@@ -35,7 +35,7 @@ from LmCommon.common.verify import computeHash
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
-            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, LMServiceModule)
+            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType)
 from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
 from LmServer.legion.cmd import MfRule
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
@@ -220,8 +220,8 @@ class SDMProjection(_ProjectionType, Raster):
                 valUnits=valUnits, nodataVal=nodataVal, minVal=minVal, 
                 maxVal=maxVal, mapunits=mapunits, resolution=resolution, 
                 bbox=bbox, svcObjId=lyrId, serviceType=LMServiceType.PROJECTIONS, 
-                moduleType=LMServiceModule.LM, metadataUrl=metadataUrl, 
-                parentMetadataUrl=parentMetadataUrl, modTime=statusModTime)
+                metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
+                modTime=statusModTime)
       # TODO: clean this up.  Do not allow layer to calculate dlocation,  
       #       subclass SDMProjection must override
       self.setId(lyrId)

@@ -256,7 +256,7 @@ def getPackageId(item, separator='.'):
    """
    @summary: Gets the package id of an object, useful for EML or UUID
    """
-   parts = ['kubi', 'lifemapper', item.moduleType, item.serviceType, str(item.getId())]
+   parts = ['kubi', 'lifemapper', item.serviceType, str(item.getId())]
    return separator.join(parts)
 
 # ..............................................................................
