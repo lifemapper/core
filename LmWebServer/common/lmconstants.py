@@ -65,7 +65,7 @@ QUERY_PARAMETERS = {
    'bbox' : {
       # Comes in as a comma separated list, turn it into a tuple of floats
       'name' : 'bbox',
-      'processIn' : lambda x: [float(i) for i in x.split(',')]
+      #'processIn' : lambda x: [float(i) for i in x.split(',')]
    },
    'bgcolor' : {
       'name' : 'bgcolor',
@@ -78,6 +78,9 @@ QUERY_PARAMETERS = {
    'color' : {
       'name' : 'color',
       'processIn' : lambda x: getColor(x, allowRamp=True)
+   },
+   'coverage' : {
+      'name' : 'coverage'
    },
    'crs' : {
       # TODO: Consider processing the EPSG here
@@ -114,9 +117,12 @@ QUERY_PARAMETERS = {
       'name' : 'height',
       'processIn' : int
    },
+   'layer' : {
+      'name' : 'layer'
+   },
    'layers' : {
       'name' : 'layers',
-      'processIn' : lambda x: [i for i in x.split(',')]
+      #'processIn' : lambda x: [i for i in x.split(',')]
    },
    'layertype' : {
       'name' : 'layerType',
@@ -189,14 +195,14 @@ QUERY_PARAMETERS = {
    },
    'styles' : {
       'name' : 'styles',
-      'processIn' : lambda x: [i for i in x.split(',')]
+      #'processIn' : lambda x: [i for i in x.split(',')]
    },
    'time' : {
       'name' : 'time'
    },
    'transparent' : {
       'name' : 'transparent',
-      'processIn' : lambda x: bool(x.lower() == 'true')
+      #'processIn' : lambda x: bool(x.lower() == 'true')
    },
    'version' : {
       'name' : 'version'

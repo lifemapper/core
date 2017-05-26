@@ -53,10 +53,11 @@ class MapService(LmService):
                 available
    """
    # ................................
-   def GET(self, mapName, bbox=None, bgcolor=None, color=None, crs=None, 
-           exceptions=None, height=None, layers=None, point=None, request=None, 
-           respFormat=None, service=None, sld=None, sld_body=None, srs=None, 
-           styles=None, time=None, transparent=None, version=None, width=None):
+   def GET(self, mapName, bbox=None, bgcolor=None, color=None, coverage=None,
+           crs=None, exceptions=None, height=None, layer=None, layers=None, 
+           point=None, request=None, respFormat=None, service=None, sld=None, 
+           sld_body=None, srs=None, styles=None, time=None, transparent=None, 
+           version=None, width=None):
       """
       @summary: GET method for all OGC services
       @param mapName: The map name to use for the request
@@ -83,6 +84,7 @@ class MapService(LmService):
       @param version: The version of the service to use
       @param width: The width (in pixels) of the returned map
       """
+      self.mapName = mapName
       mapFilename, usr = EarlJr().getMapFilenameAndUserFromMapname(mapName)
       
       if not os.path.exists(mapFilename):
@@ -93,11 +95,40 @@ class MapService(LmService):
       
       # TODO: Check permission
       # TODO: Handle parameters
+      self.owsreq = mapscript.OWSRequest()
+      mapParams = [
+         ('map', mapName),
+         ('bbox', bbox),
+         ('bgcolor', bgcolor),
+         ('coverage', coverage),
+         ('crs', crs),
+         ('exceptions', exceptions),
+         ('height', height),
+         ('layer', layer),
+         ('layers', layers),
+         ('point', point),
+         ('request', request),
+         ('format', respFormat),
+         ('service', service),
+         ('sld', sld),
+         ('sld_body', sld_body),
+         ('srs', srs),
+         ('styles', styles),
+         ('time', time),
+         ('transparent', transparent),
+         ('version', version),
+         ('width', width)
+      ]
+           
+      for k, v in mapParams:
+         if v is not None:
+            self.owsreq.setParameter(k, str(v))
       
       self.mapObj = mapscript.mapObj(mapFilename)
       
       if request.lower() in ['getcapabilities', 'describecoverage']:
          contentType, content = self._wxsGetText()
+         
       elif service is not None and request is not None and \
            (service.lower(), request.lower()) in [('wcs', 'getcoverage'), 
                                                   ('wms', 'getmap'), 
@@ -235,20 +266,19 @@ class MapService(LmService):
       @todo: make this work like 'styles' parameter, with a comma-delimited list
              of colors, each entry applicable to the layer in the same position
       """
-      mapname, ext = os.path.splitext(os.path.split(self._mapFilename)[1])
       lyrnames = self.owsreq.getValueByName('layers').split(',')
       colorme = None
       bluemarblelayer = 'bmng'
       
       # Archive maps have only OccurrenceSets, Projections, and Blue Marble
-      if mapname.startswith(MapPrefix.SDM):
+      if self.mapName.startswith(MapPrefix.SDM):
          for lyrname in lyrnames: 
             if lyrname.startswith(OCC_NAME_PREFIX):
                colorme = lyrname
             if lyrname.startswith(PRJ_PREFIX):
                colorme = lyrname
             
-      elif mapname.startswith(MapPrefix.USER):
+      elif self.mapName.startswith(MapPrefix.USER):
          for lyrname in lyrnames: 
             if lyrname.startswith(OCC_NAME_PREFIX):
                colorme = lyrname
@@ -259,14 +289,15 @@ class MapService(LmService):
                if lyrname != bluemarblelayer:
                   colorme = lyrname
 
-      elif (mapname.startswith(MapPrefix.SCEN) or
-            mapname.startswith(MapPrefix.ANC)):
+      elif (self.mapName.startswith(MapPrefix.SCEN) or
+            self.mapName.startswith(MapPrefix.ANC)):
          for lyrname in lyrnames: 
             if lyrname != bluemarblelayer:
                colorme = lyrname
                break
                
       return colorme
+  
 # ...............................................
    def _getRGB(self, colorstring):
       if colorstring in PALETTES:
