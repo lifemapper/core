@@ -379,6 +379,7 @@ class ChristopherWalken(LMObject):
       @summary: Initialize model, projections for inputs/algorithm.
       """
       mtxcol = None
+      reset = False
       if prj is not None:
          # TODO: Save processType into the DB??
          if LMFormat.isGDAL(format=prj.dataFormat):

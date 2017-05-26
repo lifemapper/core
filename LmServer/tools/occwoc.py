@@ -84,21 +84,17 @@ class _SpeciesWeaponOfChoice(LMObject):
       linenum = 0
       complete = False
       if os.path.exists(self.startFile):
-         with open(self.startFile, 'r') as f:
+         f = open(self.startFile, 'r')
+         for line in f:
             while not complete:
-               line = f.read()
+               self.log.debug('Found line {}'.format(line))
                try:
                   linenum = int(line)
-                  complete = True
-               except StopIteration, e:
-                  self.log.debug('Failed to find line number in file {}'
-                                 .format(self.startFile))
                   complete = True
                except Exception, e:
                   # Ignore comment lines
                   pass
-         if linenum > 0:
-            os.remove(self.startFile)
+         os.remove(self.startFile)
       return linenum
                   
 # ...............................................
@@ -141,10 +137,9 @@ class _SpeciesWeaponOfChoice(LMObject):
       if lineNum is not None:
          try:
             f = open(self.startFile, 'w')
-            f.write('# Next start line for {} using species data {}'
+            f.write('# Next start line for {} using species data {}\n'
                     .format(self.name, self.inputFilename))
-            f.write(str(lineNum))
-            f.write('\n')
+            f.write('{}\n'.format(lineNum))
             f.close()
          except:
             self.log.error('Failed to write next starting line {} to file {}'

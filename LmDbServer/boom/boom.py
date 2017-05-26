@@ -407,6 +407,11 @@ prjscen = chris.prjScens[0]
 mtx = chris.globalPAMs[prjscen.code]
 scribe = boomer._scribe
 
+boomer.christopher.moveToStart()
+boomer.log.debug('Starting Chris at location {} ... '
+               .format(self.christopher.currRecnum))
+boomer.keepWalken = True
+
 # occ, setOrReset = woc.getOne()
 # prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, currtime)
 # mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, currtime)

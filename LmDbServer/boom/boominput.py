@@ -950,53 +950,5 @@ filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 
 borg = filler.scribe._borg
 
-shpgrd = ShapeGrid(filler.gridname, filler.usr, filler.epsgcode, filler.cellsides, 
-                filler.cellsize, filler.mapunits, filler.gridbbox,
-                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
-
-wkt = None
-if shpgrd.epsgcode == 4326:
-   wkt = shpgrd.getWkt()
-
-
-meta = shpgrd.dumpParamMetadata()
-gdaltype = valunits = nodataval = minval = maxval = None
-
-row, idxs = borg.executeInsertAndSelectOneFunction('lm_findOrInsertShapeGrid',
-                     shpgrd.getId(), shpgrd.getUserId(), 
-                     shpgrd.squid, shpgrd.verify, shpgrd.name,
-                     shpgrd.getDLocation(), meta,
-                     shpgrd.dataFormat, gdaltype, shpgrd.ogrType, 
-                     valunits, nodataval, minval, maxval, 
-                     shpgrd.epsgcode, shpgrd.mapUnits, shpgrd.resolution, 
-                     shpgrd.getCSVExtentString(), wkt, shpgrd.modTime, 
-                     shpgrd.cellsides, shpgrd.cellsize, shpgrd.size, 
-                     shpgrd.siteId, shpgrd.siteX, shpgrd.siteY, 
-                     shpgrd.status, shpgrd.statusModTime)
-
-lyr = borg._createLayer(row, idxs)
-shg = ShapeGrid.initFromParts(lyr, 
-         borg._getColumnValue(row,idxs,['cellsides']), 
-         borg._getColumnValue(row,idxs,['cellsize']),
-         siteId = borg._getColumnValue(row,idxs,['idattribute']), 
-         siteX = borg._getColumnValue(row,idxs,['xattribute']), 
-         siteY = borg._getColumnValue(row,idxs,['yattribute']), 
-         size = borg._getColumnValue(row,idxs,['vsize']),
-         status = borg._getColumnValue(row,idxs,['shpgrdstatus', 'status']), 
-         statusModTime = borg._getColumnValue(row,idxs,
-                           ['shpgrdstatusmodtime', 'statusmodtime']))
-
-sides = borg._getColumnValue(row,idxs,['cellsides'])
-size = borg._getColumnValue(row,idxs,['cellsize'])
-siteId = borg._getColumnValue(row,idxs,['idattribute'])
-siteX = borg._getColumnValue(row,idxs,['xattribute'])
-siteY = borg._getColumnValue(row,idxs,['yattribute']) 
-size = borg._getColumnValue(row,idxs,['vsize'])
-status = borg._getColumnValue(row,idxs,['shpgrdstatus', 'status'])
-statusModTime = borg._getColumnValue(row,idxs,
-                  ['shpgrdstatusmodtime', 'statusmodtime'])
-
-updatedShpgrd = filler.scribe._borg._createShapeGrid(row, idxs)
-return updatedShpgrd
 
 """
