@@ -29,7 +29,7 @@ import os
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-         OutputFormat, SERVER_BOOM_HEADING, MatrixType) 
+          SERVER_BOOM_HEADING, MatrixType) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH)
@@ -168,16 +168,16 @@ class ChristopherWalken(LMObject):
             occData = self.cfg.get(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA')
             occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
                                         'IDIG_OCCURRENCE_DATA_DELIMITER') 
-            occCSV = os.path.join(SPECIES_DATA_PATH, occData + OutputFormat.CSV)
+            occCSV = os.path.join(SPECIES_DATA_PATH, occData + LMFormat.CSV.ext)
             occMeta = os.path.join(SPECIES_DATA_PATH, 
-                                   occData + OutputFormat.METADATA)
+                                   occData + LMFormat.METADATA.ext)
          # User data, anything not above
          else:
             occData = self.cfg.get(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA')
             occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
                                         'USER_OCCURRENCE_DATA_DELIMITER') 
-            occCSV = os.path.join(boompath, occData + OutputFormat.CSV)
-            occMeta = os.path.join(boompath, occData + OutputFormat.METADATA)
+            occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
+            occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
             
          weaponOfChoice = UserWoC(self._scribe, userId, archiveName, 
                                   epsg, expDate, occCSV, occMeta, 
@@ -488,7 +488,7 @@ userId='kubi'
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-                     OutputFormat, SERVER_BOOM_HEADING) 
+                     SERVER_BOOM_HEADING) 
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr

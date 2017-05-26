@@ -25,7 +25,7 @@ from types import StringType, UnicodeType
 import os
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.lmconstants import LMFormat
 from LmServer.common.localconstants import (APP_PATH, PUBLIC_USER, 
                                     OGC_SERVICE_URL, WEBSERVICES_ROOT)
 from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, 
@@ -274,8 +274,8 @@ class EarlJr(LMObject):
             pth = self._createStaticMapPath()
          else:
             pth = self.createDataPath(usr, LMFileType.OTHER_MAP)
-      if not mapname.endswith(OutputFormat.MAP):
-         mapname = mapname+OutputFormat.MAP
+      if not mapname.endswith(LMFormat.MAP.ext):
+         mapname = mapname+LMFormat.MAP.ext
       mapfname = os.path.join(pth, mapname)
       return mapfname, usr
    
@@ -493,8 +493,8 @@ class EarlJr(LMObject):
       @note: optional layer name must be provided fully formed
       """
       if mapname is not None:
-         if mapname.endswith(OutputFormat.MAP):
-            mapname = mapname[:-1*len(OutputFormat.MAP)]
+         if mapname.endswith(LMFormat.MAP.ext):
+            mapname = mapname[:-1*len(LMFormat.MAP.ext)]
       else:
          if LMFileType.isMap(ftype):
             mapname = self.createBasename(ftype, objCode=objCode, usr=usr, 
@@ -611,8 +611,8 @@ class EarlJr(LMObject):
       scencode = occsetId = radexpId = bucketId = usr = num = None
       ancillary = False
       # Remove extension
-      if mapname.endswith(OutputFormat.MAP):
-         mapname = mapname[:-1*len(OutputFormat.MAP)]
+      if mapname.endswith(LMFormat.MAP.ext):
+         mapname = mapname[:-1*len(LMFormat.MAP.ext)]
          
       parts = mapname.split(NAME_SEPARATOR)
 

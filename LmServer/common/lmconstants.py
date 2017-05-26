@@ -54,8 +54,7 @@ except:
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import (JobStatus, OutputFormat, MatrixType,
-   LMFormat)
+from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, 
          SHARED_DATA_PATH, SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG)
 
@@ -598,11 +597,11 @@ ENVIRONMENTAL_LAYER_KEY = 'envLayerIndices'
 
 ID_PLACEHOLDER = '#id#'
 
-GDALFormatCodes = {'AAIGrid': {'FILE_EXT': OutputFormat.ASCII, 
+GDALFormatCodes = {'AAIGrid': {'FILE_EXT': LMFormat.ASCII.ext, 
                                'DECIMAL_PRECISION': 6, 
                                'FORCE_CELLSIZE':'YES'},
-                   'GTiff': {'FILE_EXT': OutputFormat.GTIFF},
-                   'HFA': {'FILE_EXT': OutputFormat.HFA}
+                   'GTiff': {'FILE_EXT': LMFormat.GTIFF.ext},
+                   'HFA': {'FILE_EXT': LMFormat.HFA.ext}
                    }
 
 DEFAULT_PROJECTION_FORMAT = 'GTiff'
@@ -610,8 +609,8 @@ GDALDataTypes = (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16,
                  GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
                  GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64)
 # OGR string constants supported here, and associated file extensions
-OGRFormatCodes = {'CSV': {'FILE_EXT': OutputFormat.CSV},
-                  'ESRI Shapefile': {'FILE_EXT': OutputFormat.SHAPE}
+OGRFormatCodes = {'CSV': {'FILE_EXT': LMFormat.CSV.ext},
+                  'ESRI Shapefile': {'FILE_EXT': LMFormat.SHAPE.ext}
                   }
 # TODO: delete
 OGRFormats = {'CSV': '.csv', 

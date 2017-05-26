@@ -29,7 +29,7 @@ import mapscript
 import os 
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import HTTPStatus, OutputFormat
+from LmCommon.common.lmconstants import HTTPStatus, LMFormat
 from LmServer.common.colorpalette import colorPalette
 from LmServer.common.lmconstants import (LINE_SIZE, LINE_SYMBOL, POINT_SIZE, 
                               POINT_SYMBOL, POLYGON_SIZE, WEB_DIR, MAP_DIR)
@@ -157,8 +157,8 @@ class MapConstructor2(LMObject):
 
       # Add mapname with full path
       if mapname is not None:
-         if not mapname.endswith(OutputFormat.MAP):
-            mapname = mapname+OutputFormat.MAP
+         if not mapname.endswith(LMFormat.MAP.ext):
+            mapname = mapname+LMFormat.MAP.ext
          mapFilename = os.path.join(APP_PATH, WEB_DIR, MAP_DIR, mapname)
          self._appendToQuery('map', mapname)
       else:

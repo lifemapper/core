@@ -28,7 +28,7 @@
 import logging
 import os
 
-from LmCommon.common.lmconstants import OutputFormat
+from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.log import LmLogger
 
 from LmServer.common.lmconstants import LOG_PATH, USER_LOG_PATH
@@ -51,7 +51,7 @@ class LmServerLogger(LmLogger):
       if addConsole:
          self._addConsoleHandler()
       if addFile:
-         fn = os.path.join(LOG_PATH, '%s%s' % (name, OutputFormat.LOG))
+         fn = os.path.join(LOG_PATH, '%s%s' % (name, LMFormat.LOG.ext))
          self._addFileHandler(fn)
 
 # .............................................................................
@@ -160,5 +160,5 @@ class UserLogger(LmPublicLogger):
             
       name = "user.%s" % userId
       # Add user log file
-      fn = os.path.join(USER_LOG_PATH, '%s%s' % (name, OutputFormat.LOG))
+      fn = os.path.join(USER_LOG_PATH, '%s%s' % (name, LMFormat.LOG.ext))
       self._addFileHandler(fn)
