@@ -45,7 +45,6 @@ from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.tree import Tree
-from pip.status_codes import SUCCESS
 
 # .............................................................................
 class Borg(DbPostgresql):
