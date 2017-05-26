@@ -505,7 +505,7 @@ NAME_SEPARATOR = '_'
 DEBUG_USER_PREFIX = 'debug_'
 
 # SERVICES_PREFIX = 'services'
-SERVICES_PREFIX = '/api/v2'
+SERVICES_PREFIX = 'api/v2'
 HINT_PREFIX = 'hint'
 
 CT_USER = 'changeThinking'

@@ -314,7 +314,7 @@ class EarlJr(LMObject):
       prefix = self.createWebServicePrefix()
       postfix = self.createWebServicePostfix(serviceType, objectId, 
                                              parentMetadataUrl=parentMetadataUrl)
-      url = '{}{}'.format(prefix, postfix)
+      url = '/'.join((prefix, postfix))
       return url
 
 # ...............................................
@@ -331,7 +331,7 @@ class EarlJr(LMObject):
                   /grandParentClassType/grandParentId/parentClassType/parentId
       @param dataformat: The data format in which to return the results, 
       """
-      parts = [serviceType, objectId]
+      parts = [serviceType, str(objectId)]
       if parentMetadataUrl is not None:
          prefix = self.createWebServicePrefix()
          if not parentMetadataUrl.startswith(prefix):
