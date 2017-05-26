@@ -1262,8 +1262,9 @@ class Vector(_Layer):
       @note: the ServiceObject._dbId may contain a join id or LayerId depending 
              on the type of Layer being requested
       """
-      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                      dataFormat)
+      durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                             dataFormat)
+      return durl
 
 # ...............................................
    def _setGeometryIndex(self):

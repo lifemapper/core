@@ -145,8 +145,9 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
 
 # ...............................................
    def getDataUrl(self, dataFormat=None):
-      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                      dataFormat)
+      durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                             dataFormat)
+      return durl
 
 # ...............................................
    def getRelativeDLocation(self):

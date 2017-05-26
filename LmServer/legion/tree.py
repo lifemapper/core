@@ -128,5 +128,6 @@ class Tree(LmTree, ServiceObject):
 
 # ...............................................
    def getDataUrl(self, dataFormat=None):
-      self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                      dataFormat)
+      durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
+                                             dataFormat)
+      return durl
