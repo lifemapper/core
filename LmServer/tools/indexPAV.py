@@ -66,7 +66,7 @@ def getPostDocument(pav, prj, occ):
       ('algorithmParameters', prj.dumpAlgorithmParametersAsString()),
       ('pointCount', occ.queryCount),
       ('occurrenceId', occ.getId()),
-      ('occurrenceDataUrl', '{}/shapefile'.format(occ.metadataUrl)),
+      ('occurrenceDataUrl', occ.getDataUrl()),
       ('occurrenceMetaUrl', occ.metadataUrl),
       ('occurrenceModTime', occ.modTime), # May need to convert
       ('modelScenarioCode', mdlScn.code),
@@ -83,15 +83,15 @@ def getPostDocument(pav, prj, occ):
       ('sdmProjScenarioAltPredCode', prjScn.altpredCode),
       ('sdmProjId', prj.getId()),
       ('sdmProjMetaUrl', prj.metadataUrl),
-      ('sdmProjDataUrl', '{}/GTiff'.format(prj.metadataUrl)),
+      ('sdmProjDataUrl', prj.getDataUrl()),
       ('sdmProjModTime', prj.modTime),
       ('pavMetaUrl', pav.metadataUrl),
-      ('pavDataUrl', '{}/csv'.format(pav.metadataUrl)),
+      ('pavDataUrl', pav.getDataUrl()),
       ('epsgCode', prj.epsgcode),
       #('gridSetMetaUrl', ),
       ('shapegridId', sg.getId()),
       ('shapegridMetaUrl', sg.metadataUrl),
-      ('shapegridDataUrl', '{}/shapefile'.format(sg.metadataUrl))
+      ('shapegridDataUrl', sg.getDataUrl())
    ]
 
    docLines = ['<doc>']
