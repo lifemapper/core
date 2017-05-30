@@ -35,6 +35,7 @@ import cherrypy
 from LmWebServer.services.api.v2.envLayer import EnvLayerService
 from LmWebServer.services.api.v2.layer import LayerService
 from LmWebServer.services.api.v2.occurrence import OccurrenceLayerService
+from LmWebServer.services.api.v2.ogc import MapService
 from LmWebServer.services.api.v2.sdmProject import SdmProjectService
 from LmWebServer.services.api.v2.scenario import ScenarioService
 from LmWebServer.services.api.v2.shapegrid import ShapeGridService
@@ -51,6 +52,8 @@ class ApiRootV2(object):
    projection = SdmProjectService()
    scenario = ScenarioService()
    shapegrid = ShapeGridService()
+   
+   ogc = MapService()
 
    # ................................
    def __init__(self):
