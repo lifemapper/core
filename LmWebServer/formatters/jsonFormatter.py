@@ -34,6 +34,7 @@ from types import ListType, DictionaryType
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Raster
 from LmServer.base.utilities import formatTimeHuman
+from LmServer.common.lmconstants import OGC_SERVICE_URL
 
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.occlayer import OccurrenceLayer
@@ -67,8 +68,7 @@ def formatEnvLayer(lyr):
    lyrDict = _getLifemapperMetadata('environmental layer', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
                                     metadata=lyr.lyrMetadata)
-   lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
-                                    'layers', lyr.name)
+   lyrDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'layers', lyr.name)
    dataUrl = lyr.getDataUrl()
    minVal = lyr.minVal
    maxVal = lyr.maxVal
@@ -97,8 +97,7 @@ def formatOccurrenceSet(occ):
                            occ.metadataUrl, occ.getUserId(), status=occ.status, 
                            statusModTime=occ.statusModTime, 
                            metadata=occ.lyrMetadata)
-   occDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
-                                    'occurrences', occ.name)
+   occDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'occurrences', occ.name)
    dataUrl = occ.getDataUrl()
    occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsgcode, occ.bbox, 
                                     occ.mapUnits, dataUrl, occ.verify, 
@@ -127,8 +126,7 @@ def formatProjection(prj):
                                     prj.metadataUrl, status=prj.status, 
                                     statusModTime=prj.statusModTime, 
                                     metadata=prj.lyrMetadata)
-   prjDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
-                                    'projections', prj.name)
+   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'projections', prj.name)
    dataUrl = prj.getDataUrl()
    minVal = 0
    maxVal = 1
@@ -175,7 +173,7 @@ def formatRasterLayer(lyr):
    lyrDict = _getLifemapperMetadata('raster layer', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
                                     metadata=lyr.lyrMetadata)
-   #lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
+   #lyrDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 
    #                                 'layers', lyr.name)
    dataUrl = lyr.getDataUrl()
    minVal = lyr.minVal
@@ -203,8 +201,7 @@ def formatScenario(scn):
    """
    scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
                                     scn.getUserId(), metadata=scn.scenMetadata)
-   scnDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
-                                    scn.code, scn.layers)
+   scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, scn.code, scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
                                             scn.units, scn.resolution)
 
