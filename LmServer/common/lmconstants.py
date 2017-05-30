@@ -55,9 +55,14 @@ import os.path
 from types import IntType, FloatType
 
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat)
-from LmServer.common.localconstants import (APP_PATH, DATA_PATH, 
-         SHARED_DATA_PATH, SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG)
+from LmServer.common.localconstants import (APP_PATH, DATA_PATH,
+                              SHARED_DATA_PATH, SCRATCH_PATH, PID_PATH, 
+                              SCENARIO_PACKAGE_EPSG, WEBSERVICES_ROOT)
 
+WEB_SERVICE_VERSION = 'v2'
+API_PATH = 'api'
+API_URL = '/'.join([WEBSERVICES_ROOT, API_PATH, WEB_SERVICE_VERSION])
+OGC_SERVICE_URL = '/'.join([API_URL, 'ogc'])
 DEFAULT_EMAIL_POSTFIX = '@nowhere.org'
 BIN_PATH = os.path.join(APP_PATH, 'bin')
 # Relative paths
@@ -503,8 +508,6 @@ NAME_SEPARATOR = '_'
 # Development desktops, debug users, and beta server names
 DEBUG_USER_PREFIX = 'debug_'
 
-# SERVICES_PREFIX = 'services'
-SERVICES_PREFIX = 'api/v2'
 HINT_PREFIX = 'hint'
 
 CT_USER = 'changeThinking'

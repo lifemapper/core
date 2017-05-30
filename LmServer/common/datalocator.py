@@ -26,14 +26,13 @@ import os
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import LMFormat
-from LmServer.common.localconstants import (APP_PATH, PUBLIC_USER, 
-                                    OGC_SERVICE_URL, WEBSERVICES_ROOT)
+from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
 from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, 
-   LMFileType, FileFix, SERVICES_PREFIX, GENERIC_LAYER_NAME_PREFIX,
+   LMFileType, FileFix, GENERIC_LAYER_NAME_PREFIX,
    OCC_NAME_PREFIX, PRJ_PREFIX, MapPrefix, DEFAULT_WMS_FORMAT, 
    DEFAULT_WCS_FORMAT, MAP_TEMPLATE, MAP_DIR, ARCHIVE_PATH, USER_LAYER_DIR, 
    MODEL_DEPTH, NAME_SEPARATOR, MAP_KEY, WMS_LAYER_KEY, WCS_LAYER_KEY, 
-   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR)
+   RAD_EXPERIMENT_DIR_PREFIX, USER_MAKEFLOW_DIR, API_URL, OGC_SERVICE_URL)
          
 # .............................................................................
 class EarlJr(LMObject):
@@ -289,11 +288,10 @@ class EarlJr(LMObject):
                The nested structure will begin with a '/', and take a form like: 
                   /grandParentClassType/grandParentId/parentClassType/parentId
       """
-      prefix = self._createWebServicePrefix()
       postfix = self._createWebServicePostfix(serviceType, objectId, 
                                              parentMetadataUrl=parentMetadataUrl,
                                              interface=interface)
-      url = '/'.join((prefix, postfix))
+      url = '/'.join((API_URL, postfix))
       return url
 
 # ...............................................
@@ -309,10 +307,9 @@ class EarlJr(LMObject):
                   /grandParentClassType/grandParentId/parentClassType/parentId
       @param interface: The format in which to return the results, 
       """
-      prefix = self._createWebServicePrefix()
       postfix = self._createWebServicePostfix(serviceType, objectId, 
                                              parentMetadataUrl=parentMetadataUrl)
-      url = '/'.join((prefix, postfix))
+      url = '/'.join((API_URL, postfix))
       return url
 
 # ...............................................
@@ -331,26 +328,16 @@ class EarlJr(LMObject):
       """
       parts = [serviceType, str(objectId)]
       if parentMetadataUrl is not None:
-         prefix = self._createWebServicePrefix()
-         if not parentMetadataUrl.startswith(prefix):
+         if not parentMetadataUrl.startswith(API_URL):
             raise LMError('Parent URL {} does not start with local prefix {}'
-                          .format(parentMetadataUrl, prefix))
+                          .format(parentMetadataUrl, API_URL))
          else:
-            relativeprefix = parentMetadataUrl[len(prefix):]
+            relativeprefix = parentMetadataUrl[len(API_URL):]
             parts.insert(0, relativeprefix)
       if interface is not None:
          parts.append(interface)
       urlpath = '/'.join(parts)
       return urlpath
-
-# ...............................................
-   def _createWebServicePrefix(self):
-      """
-      @summary Return the REST service url for Lifemapper web services (without 
-               trailing '/').
-      """
-      url = '/'.join((WEBSERVICES_ROOT, SERVICES_PREFIX))
-      return url
 
 
 # ...............................................
