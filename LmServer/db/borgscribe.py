@@ -25,21 +25,14 @@
 import mx.DateTime
 from osgeo.ogr import wkbPoint
 import socket
-from types import IntType
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import (JobStatus, ProcessType, MatrixType)
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
-from LmServer.common.lmconstants import (DbUser, DEFAULT_PROJECTION_FORMAT, 
-                                         GDALFormatCodes)
+from LmServer.common.lmconstants import (DbUser)
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
                                             PUBLIC_USER)
-from LmServer.legion.mtxcolumn import MatrixColumn
-from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.envlayer import EnvLayer, EnvType
-from LmServer.base.taxon import ScientificName
 
 # .............................................................................
 class BorgScribe(LMObject):
@@ -234,7 +227,14 @@ class BorgScribe(LMObject):
       """
       borgUser = self._borg.findUser(userId, email)
       return borgUser
-
+   
+# ...............................................
+   def findUserForObject(self, layerId=None, scenCode=None, occId=None, 
+                         matrixId=None, gridsetId=None, mfprocessId=None):
+      userId = self._borg.findUserForObject(layerId, scenCode, occId, matrixId, 
+                                            gridsetId, mfprocessId)
+      return userId
+   
 # ...............................................
    def findOrInsertTaxonSource(self, taxSourceName, taxSourceUrl):
       taxSource = self._borg.findOrInsertTaxonSource(taxSourceName, 

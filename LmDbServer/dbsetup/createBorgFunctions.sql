@@ -986,6 +986,76 @@ END;
 
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findUserForObject(lyrid int, 
+                                                      scode varchar, 
+                                                      occid int, 
+                                                      mtxid int, 
+                                                      gsid int, 
+                                                      mfid int)
+RETURNS varchar AS
+$$
+DECLARE
+   usr varchar;
+BEGIN
+   -- EnvLayer, SDMProject, ShapeGrid
+   IF lyrid IS NOT NULL THEN
+      begin
+         SELECT userId INTO STRICT usr FROM lm_v3.Layer WHERE layerId = lyrid;
+         EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               RAISE NOTICE 'Layer % not found', lyrid;
+            WHEN TOO_MANY_ROWS THEN
+               RAISE EXCEPTION 'Layer % not unique', lyrid;
+      end;
+   -- Scenario
+   ELSEIF scode IS NOT NULL THEN
+      begin
+         SELECT userId INTO STRICT usr FROM lm_v3.Scenario 
+            WHERE scenarioCode = scode;
+         EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               RAISE NOTICE 'Scenario % not found', scode;
+            WHEN TOO_MANY_ROWS THEN
+               RAISE EXCEPTION 'Scenario % not unique', scode;
+      end;
+   -- OccurrenceSet
+   ELSEIF occid IS NOT NULL THEN
+      begin
+         SELECT userId INTO STRICT usr FROM lm_v3.OccurrenceSet 
+            WHERE occurrenceSetId = occid;
+         EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               RAISE NOTICE 'OccurrenceSet % not found', occid;
+            WHEN TOO_MANY_ROWS THEN
+               RAISE EXCEPTION 'OccurrenceSet % not unique', occid;
+      end;
+   -- Matrix
+   ELSEIF mtxid IS NOT NULL THEN
+      begin
+         SELECT userId INTO STRICT usr FROM lm_v3.lm_matrix 
+            WHERE matrixId = mtxid;
+         EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               RAISE NOTICE 'Matrix % not found', mtxid;
+            WHEN TOO_MANY_ROWS THEN
+               RAISE EXCEPTION 'Matrix % not unique', mtxid;
+      end;
+   -- Gridset
+   ELSEIF
+      begin
+         SELECT distinct(userId) INTO STRICT usr FROM lm_v3.lm_matrix 
+            WHERE gridsetId = gsid;
+         EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+               RAISE NOTICE 'Gridset % not found', gsid;
+            WHEN TOO_MANY_ROWS THEN
+               RAISE EXCEPTION 'Gridset % not unique', gsid;
+      end;
+   END IF;
+   RETURN usr;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- JobChain
@@ -1450,6 +1520,9 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 
 -- ----------------------------------------------------------------------------
+-- MFProcess
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_insertMFChain(usr varchar,
                                                   dloc varchar,
                                                   prior int,
@@ -1547,32 +1620,10 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)
-   RETURNS void AS
-$$
-DECLARE
-   start int = 0;
-BEGIN
-   start = char_length(olddir) + 1;
-   UPDATE lm_v3.JobChain SET dlocation = newdir || substr(dlocation, start)  
-	   WHERE dlocation like olddir || '%';
-
-   UPDATE lm_v3.Layer SET dlocation = newdir || substr(dlocation, start)  
-	   WHERE dlocation like olddir || '%';
-
-   UPDATE lm_v3.Occurrenceset SET dlocation = newdir || substr(dlocation, start)  
-	   WHERE dlocation like olddir || '%';
-
-   UPDATE lm_v3.SDMModel SET dlocation = newdir || substr(dlocation, start)  
-	   WHERE dlocation like olddir || '%';
-
-   UPDATE lm_v3.Process SET dlocation = newdir || substr(dlocation, start)  
-	   WHERE dlocation like olddir || '%';
-   
-END;
-$$ LANGUAGE 'plpgsql' VOLATILE; 
-
+-- MatrixColumn
+-- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- Gets a matrixColumn with its matrix
 CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrixColumn(mtxcolid int,
@@ -1922,6 +1973,9 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+-- Matrix
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateMatrix(mtxid int,
                                                  meta varchar,
                                                  stat int,
@@ -1940,6 +1994,10 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- Update or Rollback
+-- ----------------------------------------------------------------------------
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_clearComputedUserData(usr varchar)
@@ -2017,3 +2075,30 @@ BEGIN
    RETURN total;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updatePaths(olddir varchar, newdir varchar)
+   RETURNS void AS
+$$
+DECLARE
+   start int = 0;
+BEGIN
+   start = char_length(olddir) + 1;
+   UPDATE lm_v3.JobChain SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.Layer SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.Occurrenceset SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.SDMModel SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+
+   UPDATE lm_v3.Process SET dlocation = newdir || substr(dlocation, start)  
+	   WHERE dlocation like olddir || '%';
+   
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE; 

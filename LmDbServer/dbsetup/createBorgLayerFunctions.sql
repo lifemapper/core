@@ -698,9 +698,9 @@ BEGIN
       SELECT * INTO STRICT rec from lm_v3.lm_sdmproject WHERE layerId = lyrid;
       EXCEPTION
          WHEN NO_DATA_FOUND THEN
-            RAISE NOTICE 'OccurrenceSet % not found', occsetid;
+            RAISE NOTICE 'SDMProject % not found', lyrid;
          WHEN TOO_MANY_ROWS THEN
-            RAISE EXCEPTION 'OccurrenceSet % not unique', occsetid;
+            RAISE EXCEPTION 'SDMProject % not unique', lyrid;
    end;
    RETURN rec;                                              
 END;
@@ -1626,5 +1626,4 @@ BEGIN
    RETURN success;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
-
 

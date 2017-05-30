@@ -1041,6 +1041,24 @@ class Borg(DbPostgresql):
       newOrExistingUsr = self._createUser(row, idxs)
       return newOrExistingUsr
 
+# ...............................................
+   def findUserForObject(self, layerId, scenCode, occId, matrixId, gridsetId, 
+                         mfprocessId):
+      """
+      @summary: find a userId for an LM Object identifier in the database
+      @param layerId: the database primary key for a Layer
+      @param scenCode: the code for a Scenario
+      @param occId: the database primary key for a Layer in the database
+      @param matrixId: the database primary key for a Matrix
+      @param gridsetId: the database primary key for a Gridset
+      @param mfprocessId: the database primary key for a MFProcess
+      @return: a userId string
+      """
+      row, idxs = self.executeSelectOneFunction('lm_findUserForObject',
+                     layerId, scenCode, occId, matrixId, gridsetId, mfprocessId)
+      userId = row[idxs['userid']]
+      return userId
+
    # ...............................................
    def findUser(self, usrid, email):
       """

@@ -212,7 +212,7 @@ class EarlJr(LMObject):
       # Prefix
       if FileFix.PREFIX[ftype] is not None:
          nameparts.append(FileFix.PREFIX[ftype])
-      # Non-auto-generated Maps (not scenario or SDM)
+      # Non-auto-generated Maps (not SCENARIO_MAP or SDM_MAP)
       if ftype == LMFileType.OTHER_MAP:
          nameparts.extend([usr, epsg])
       # User layers
@@ -260,11 +260,9 @@ class EarlJr(LMObject):
          pth = self._createStaticMapPath()
          usr = None
       else:
-         scencode, occsetId, radexpId, bucketId, usr, ancillary, num = \
-                     self._parseMapname(mapname)
+         scencode, occsetId, usr, ancillary, _ = self._parseMapname(mapname)
          if usr is None:
-            usr = self._findUserForObject(scencode=scencode, occsetId=occsetId, 
-                                          radexpId=radexpId)
+            usr = self._findUserForObject(scenCode=scencode, occId=occsetId)
          if occsetId is not None:
             pth = self.createDataPath(usr, LMFileType.SDM_MAP, 
                                       occsetId=occsetId)
@@ -596,19 +594,21 @@ class EarlJr(LMObject):
       return (mapname, ancillary, usr, epsg, occsetId, radexpId, bucketId, scencode)
    
 # ...............................................
-   def _findUserForObject(self, scencode=None, occsetId=None, radexpId=None):
+   def _findUserForObject(self, layerId=None, scenCode=None, occId=None, 
+                         matrixId=None, gridsetId=None, mfprocessId=None):
       from LmServer.common.log import ConsoleLogger
       from LmServer.db.borgscribe import BorgScribe
       scribe = BorgScribe(ConsoleLogger())
       scribe.openConnections()
-      usr = scribe.findUserForObject(scencode=scencode, occsetId=occsetId, 
-                                     radexpId=radexpId)
+      usr = scribe.findUserForObject(layerId=layerId, scenCode=scenCode, 
+                                     occId=occId, matrixId=matrixId, 
+                                     gridsetId=gridsetId, mfprocessId=mfprocessId)
       scribe.closeConnections()
       return usr
    
 # ...............................................
    def _parseMapname(self, mapname):
-      scencode = occsetId = radexpId = bucketId = usr = num = None
+      scencode = occsetId = usr = num = None
       ancillary = False
       # Remove extension
       if mapname.endswith(LMFormat.MAP.ext):
@@ -653,4 +653,4 @@ class EarlJr(LMObject):
          msg += '  requires prefix %s, %s, %s, or %s' % (MapPrefix.SCEN, 
                               MapPrefix.SDM, MapPrefix.USER, MapPrefix.ANC)
          raise LMError(currargs=msg, doTrace=True)
-      return scencode, occsetId, radexpId, bucketId, usr, ancillary, num
+      return scencode, occsetId, usr, ancillary, num
