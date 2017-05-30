@@ -69,7 +69,7 @@ def formatEnvLayer(lyr):
                                     metadata=lyr.lyrMetadata)
    lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'layers', lyr.name)
-   dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
+   dataUrl = lyr.getDataUrl()
    minVal = lyr.minVal
    maxVal = lyr.maxVal
    valUnits = lyr.valUnits
@@ -99,7 +99,7 @@ def formatOccurrenceSet(occ):
                            metadata=occ.lyrMetadata)
    occDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'occurrences', occ.name)
-   dataUrl = '{}/shapefile'.format(occ.metadataUrl)
+   dataUrl = occ.getDataUrl()
    occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsgcode, occ.bbox, 
                                     occ.mapUnits, dataUrl, occ.verify, 
                                     occ.ogrType, occ.dataFormat, occ.queryCount,
@@ -129,7 +129,7 @@ def formatProjection(prj):
                                     metadata=prj.lyrMetadata)
    prjDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
                                     'projections', prj.name)
-   dataUrl = '{}/GTiff'.format(prj.metadataUrl)
+   dataUrl = prj.getDataUrl()
    minVal = 0
    maxVal = 1
    valUnits = 'prediction'
@@ -177,7 +177,7 @@ def formatRasterLayer(lyr):
                                     metadata=lyr.lyrMetadata)
    #lyrDict['map'] = _getMapMetadata('http://svc.lifemapper.org/api/v2/maps', 
    #                                 'layers', lyr.name)
-   dataUrl = '{}/GTiff'.format(lyr.metadataUrl)
+   dataUrl = lyr.getDataUrl()
    minVal = lyr.minVal
    maxVal = lyr.maxVal
    valUnits = lyr.valUnits
