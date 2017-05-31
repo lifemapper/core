@@ -34,7 +34,7 @@ import numpy as np
 import os
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import DEFAULT_OGR_FORMAT, LMFormat
+from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.matrix import Matrix
 from LmCommon.encoding.encodingException import EncodingException
 
@@ -265,7 +265,7 @@ class BioGeoEncoding(object):
       """
       @summary: Opens a shapefile and returns the OGR dataset object
       """
-      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+      drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
       ds = drv.Open(fn)
       return ds
 

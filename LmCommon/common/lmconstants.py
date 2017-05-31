@@ -76,7 +76,7 @@ class FileFormat:
    """
    # ...........................
    def __init__(self, extension, mimeType, allExtensions=None, driver=None,
-                options=None):
+                options=None, default=False):
       """
       @summary: Constructor
       @param extension: This is the primary extension if a format has multiple 
@@ -88,6 +88,8 @@ class FileFormat:
       self._mimeType = mimeType
       self.ext = extension
       self.driver = driver
+      self.options = options
+      self.isDefault = default
       self._extensions = allExtensions
       if self._extensions is None:
          self._extensions = []
@@ -116,7 +118,7 @@ class LMFormat:
    CSV = FileFormat('.csv', 'text/csv',
                     driver='CSV')
    CONFIG = FileFormat('.ini', 'text/plain')
-   GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff')
+   GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff', default=True)
    HFA = FileFormat('.img', 'image/octet-stream', driver='HFA')
    JSON = FileFormat('.json', 'application/json')
    KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
@@ -134,13 +136,47 @@ class LMFormat:
                                      ".sbx", ".fbn", ".fbx", ".ain", ".aih", 
                                      ".ixs", ".mxs", ".atx", ".shp.xml", 
                                      ".cpg", ".qix"],
-                      driver='ESRI Shapefile')
+                      driver='ESRI Shapefile',
+                      default=True,
+                      options={'MAX_STRLEN': 255})
    TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
    TMP = FileFormat('.tmp', 'application/octet-stream')
    TXT = FileFormat('.txt', 'text/plain')
    XML = FileFormat('.xml', 'application/xml')
    ZIP = FileFormat('.zip', 'application/zip')
    
+   @staticmethod
+   def GDALFormats():
+      return [LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA]
+   
+   @staticmethod
+   def getDefaultGDAL():
+      for ff in LMFormat.GDALFormats():
+         if ff.isDefault:
+            return ff
+      return None
+   
+   @staticmethod
+   def OGRFormats():
+      return [LMFormat.SHAPE, LMFormat.CSV]
+
+   @staticmethod
+   def getDefaultOGR():
+      for ff in LMFormat.OGRFormats():
+         if ff.isDefault:
+            return ff
+      return None
+   
+   @staticmethod
+   def getStrlenForDefaultOGR():
+      return LMFormat.getDefaultOGR().options['MAX_STRLEN']
+
+   @staticmethod
+   def SpatialFormats():
+      spFormats = [ff for ff in LMFormat.GDALFormats()]
+      spFormats.extend(LMFormat.OGRFormats())
+      return spFormats
+
    @staticmethod
    def getFormatByExtension(ext):
       for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GTIFF, LMFormat.HFA, 
@@ -154,8 +190,7 @@ class LMFormat:
 
    @staticmethod
    def getFormatByDriver(driver):
-      for ff in (LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA, 
-                 LMFormat.CSV, LMFormat.SHAPE):
+      for ff in LMFormat.SpatialFormats():
          if driver == ff.driver:
             return ff
       return None
@@ -168,37 +203,41 @@ class LMFormat:
       return None
 
    @staticmethod
-   def isGeo(ext):
-      if ext in (LMFormat.SHAPE.ext, LMFormat.ASCII.ext, LMFormat.GTIFF.ext):
-         return True
+   def isGeo(ext=None, driver=None):
+      for ff in LMFormat.SpatialFormats():
+         if ext is not None and ext == ff.ext:
+            return True
+         elif driver is not None and driver == ff.driver:
+            return True
       return False
 
    @staticmethod
-   def isOGR(ext=None, format=None):
-      if ext in (LMFormat.SHAPE.ext, LMFormat.CSV.ext):
-         return True
-      elif format in (LMFormat.SHAPE.driver, LMFormat.CSV.driver):
+   def isOGR(ext=None, driver=None):
+      for ff in LMFormat.OGRFormats():
+         if ext is not None and ext == ff.ext:
+            return True
+         elif driver is not None and driver == ff.driver:
+            return True
          return True
       return False
       
    @staticmethod
    def OGRDrivers():
-      ogr_fformats = (LMFormat.SHAPE, LMFormat.CSV)
-      return [lmff.driver for lmff in ogr_fformats]
+      return [ff.driver for ff in LMFormat.OGRFormats()]
 
    @staticmethod
-   def isGDAL(ext=None, format=None):
-      gdal_fformats = (LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA)
-      if ext in [lmff.ext for lmff in gdal_fformats]:
-         return True
-      elif format in [lmff.driver for lmff in gdal_fformats]:
+   def isGDAL(ext=None, driver=None):
+      for ff in LMFormat.GDALFormats():
+         if ext is not None and ext == ff.ext:
+            return True
+         elif driver is not None and driver == ff.driver:
+            return True
          return True
       return False
    
    @staticmethod
    def GDALDrivers():
-      gdal_fformats = (LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA)
-      return [lmff.driver for lmff in gdal_fformats]
+      return [ff.driver for ff in LMFormat.GDALFormats()]
 
    @staticmethod
    def isJSON(ext):
@@ -213,7 +252,6 @@ class LMFormat:
          return True
       return False
 
-   
 # # .............................................................................
 # class OutputFormat:
 #    TAR_GZ = '.tar.gz'
@@ -240,7 +278,7 @@ class LMFormat:
 # SHAPEFILE_EXTENSIONS = [".shp", ".shx", ".dbf", ".prj", ".sbn", ".sbx", ".fbn", 
 #                         ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", 
 #                         ".shp.xml", ".cpg", ".qix"]
-SHAPEFILE_MAX_STRINGSIZE = 255
+# SHAPEFILE_MAX_STRINGSIZE = 255
 
 # Web object interfaces
 CSV_INTERFACE = "csv"
@@ -1590,8 +1628,8 @@ LM_WKT_FIELD = 'geomwkt'
 # .                              Other constants                              .
 # .............................................................................
 # TODO: replace hardcoded vars in code
-DEFAULT_OGR_FORMAT = 'ESRI Shapefile'
-DEFAULT_GDAL_FORMAT = 'GTiff'
+# DEFAULT_OGR_FORMAT = 'ESRI Shapefile'
+# DEFAULT_GDAL_FORMAT = 'GTiff'
 
 LegalMapUnits = ['feet', 'inches', 'kilometers', 'meters', 'miles', 'dd', 'ds']
 

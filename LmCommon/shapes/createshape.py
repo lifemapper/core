@@ -37,7 +37,7 @@ from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
-               SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+               DWCNames, LMFormat)
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCompute.common.lmObj import LmException
@@ -216,7 +216,7 @@ class ShapeShifter(object):
       featCount = 0
       if dlocation is not None and os.path.exists(dlocation):
          ogr.RegisterAll()
-         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+         drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
          try:
             ds = drv.Open(dlocation)
          except Exception, e:
@@ -308,7 +308,7 @@ class ShapeShifter(object):
 # .............................................................................
    # .............................................................................
    def _createDataset(self, fname):
-      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+      drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
       newDs = drv.CreateDataSource(fname)
       if newDs is None:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
@@ -362,7 +362,7 @@ class ShapeShifter(object):
 
    # ...............................................
    def _writeMetadata(self, basename, geomtype, count, minx, miny, maxx, maxy):
-      metaDict = {'ogrformat': DEFAULT_OGR_FORMAT, 'geomtype': geomtype, 
+      metaDict = {'ogrformat': LMFormat.getDefaultOGR().driver, 'geomtype': geomtype, 
                   'count': count,  'minx': minx, 'miny': miny, 'maxx': maxx, 
                   'maxy': maxy}
       with open(basename+'.meta', 'w') as outfile:
@@ -526,7 +526,7 @@ class ShapeShifter(object):
          fldtype = self.op.fieldTypes[pos]
          fldDef = ogr.FieldDefn(fldname, fldtype)
          if fldtype == ogr.OFTString:
-            fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+            fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
          returnVal = newLyr.CreateField(fldDef)
          if returnVal != 0:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -534,7 +534,7 @@ class ShapeShifter(object):
             
       # Add wkt field
       fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
-      fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+      fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
       returnVal = newLyr.CreateField(fldDef)
       if returnVal != 0:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -558,7 +558,7 @@ class ShapeShifter(object):
             fldtype = fielddesc[1]
             fldDef = ogr.FieldDefn(fldname, fldtype)
             if fldtype == ogr.OFTString:
-               fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+               fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
             returnVal = newLyr.CreateField(fldDef)
             if returnVal != 0:
                raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR,
@@ -566,7 +566,7 @@ class ShapeShifter(object):
             
       # Add wkt field to all
       fldDef = ogr.FieldDefn(LM_WKT_FIELD, ogr.OFTString)
-      fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+      fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
       returnVal = newLyr.CreateField(fldDef)
       if returnVal != 0:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -575,7 +575,7 @@ class ShapeShifter(object):
       # Add URL field to GBIF/iDigBio data
       if self.linkField is not None:
          fldDef = ogr.FieldDefn(self.linkField, ogr.OFTString)
-         fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+         fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
          returnVal = newLyr.CreateField(fldDef)
          if returnVal != 0:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -584,7 +584,7 @@ class ShapeShifter(object):
       # Add Provider field to GBIF/iDigBio data (for resolution from key or attribution)
       if self.computedProviderField is not None:
          fldDef = ogr.FieldDefn(self.computedProviderField, ogr.OFTString)
-         fldDef.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+         fldDef.SetWidth(LMFormat.getStrlenForDefaultOGR())
          returnVal = newLyr.CreateField(fldDef)
          if returnVal != 0:
             raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
@@ -718,7 +718,7 @@ from LmCommon.shapes.createshape import ShapeShifter
 from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
-               SHAPEFILE_MAX_STRINGSIZE, DWCNames, DEFAULT_OGR_FORMAT)
+               DWCNames, LMFormat)
 from LmServer.common.log import ScriptLogger
 import ast
 

@@ -29,7 +29,7 @@ import numpy as np
 from osgeo import ogr
 import rtree
 
-from LmCommon.common.lmconstants import DEFAULT_OGR_FORMAT
+from LmCommon.common.lmconstants import LMFormat
 from LmCommon.common.matrix import Matrix
 
 from LmCompute.common.agoodle import AGoodle
@@ -41,7 +41,7 @@ def _openVectorLayer(dlocation):
    @param dlocation: The file location of the vector layer
    """
    ogr.RegisterAll()
-   drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+   drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
    try:
       ds = drv.Open(dlocation)
    except Exception, e:

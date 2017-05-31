@@ -382,7 +382,7 @@ class ChristopherWalken(LMObject):
       reset = False
       if prj is not None:
          # TODO: Save processType into the DB??
-         if LMFormat.isGDAL(format=prj.dataFormat):
+         if LMFormat.isGDAL(driver=prj.dataFormat):
             ptype = ProcessType.INTERSECT_RASTER
          else:
             ptype = ProcessType.INTERSECT_VECTOR
