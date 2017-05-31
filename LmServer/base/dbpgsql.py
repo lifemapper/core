@@ -402,10 +402,16 @@ class DbPostgresql(_DbConn):
       return atom
       
 # ............................................................................ 
-   def _getAtoms(self, rows, idxs):
+   def _getAtoms(self, rows, idxs, serviceType, parentMetadataUrl=None):
+      from LmServer.common.datalocator import EarlJr
       atoms = []
+      earl = EarlJr()
+      
       for r in rows: 
-         atoms.append(self._createAtom(r, idxs))         
+         atom = self._createAtom(r, idxs)
+         url = earl.constructLMMetadataUrl(serviceType, atom.getId(),
+                                           parentMetadataUrl=parentMetadataUrl)
+         atoms.append()         
       return atoms
    
    def _getCount(self, row):

@@ -29,7 +29,7 @@ from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
 from LmServer.common.computeResource import LMComputeResource
-from LmServer.common.lmconstants import DB_STORE, LM_SCHEMA_BORG
+from LmServer.common.lmconstants import DB_STORE, LM_SCHEMA_BORG, LMServiceType
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 from LmServer.legion.algorithm import Algorithm
@@ -583,7 +583,7 @@ class Borg(DbPostgresql):
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
       @param epsg: filter by this EPSG code
-      @return: a list of OccurrenceSet atoms or full objects
+      @return: a count of OccurrenceSets
       """
       row, idxs = self.executeSelectOneFunction('lm_countLayers', 
                                     userId, squid, afterTime, beforeTime, epsg)
@@ -608,7 +608,7 @@ class Borg(DbPostgresql):
          rows, idxs = self.executeSelectManyFunction('lm_listLayerAtoms', 
                               firstRecNum, maxNum, userId, squid, 
                               afterTime, beforeTime, epsg)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.LAYERS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listLayerObjects', 
@@ -679,7 +679,7 @@ class Borg(DbPostgresql):
                                                      firstRecNum, maxNum, userId, 
                                                      afterTime, beforeTime, epsg,
                                                      gcmCode, altpredCode, dateCode)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.SCENARIOS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listScenarioObjects', 
@@ -969,7 +969,7 @@ class Borg(DbPostgresql):
                            firstRecNum, maxNum, userId, envCode, gcmcode, 
                            altpredCode, dateCode, afterTime, beforeTime, epsg, 
                            envTypeId, scenCode)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.ENVIRONMENTAL_LAYERS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listEnvLayerObjects', 
@@ -1382,7 +1382,7 @@ class Borg(DbPostgresql):
                               firstRecNum, maxNum, userId, squid, minOccurrenceCount,
                               displayName, afterTime, beforeTime, epsg, 
                               afterStatus, beforeStatus)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.OCCURRENCES)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listOccSetObjects', 
@@ -1552,7 +1552,7 @@ class Borg(DbPostgresql):
                            firstRecNum, maxNum, userId, squid, displayName, afterTime, 
                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
                            algCode, mdlscenCode, prjscenCode)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.PROJECTIONS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
@@ -1766,7 +1766,7 @@ class Borg(DbPostgresql):
                                  gcmCode, altpredCode, dateCode, metamatch, 
                                  gridsetId, afterTime, beforeTime, epsg, 
                                  afterStatus, beforeStatus)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.MATRICES)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
@@ -1839,7 +1839,7 @@ class Borg(DbPostgresql):
          rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
                      firstRecNum, maxNum, userId, afterTime, beforeTime, 
                      name, metamatch, isBinary, isUltrametric, hasBranchLengths)
-         objs = self._getAtoms(rows, idxs)
+         objs = self._getAtoms(rows, idxs, LMServiceType.TREES)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
