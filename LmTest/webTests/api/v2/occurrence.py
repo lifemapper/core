@@ -31,19 +31,19 @@ import glob
 import json
 import os
 import random
+import shutil
+import StringIO
 import unittest
 import urllib2
-
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.log import ConsoleLogger
-from LmServer.common.lmconstants import API_PATH
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.base.layer2 import Raster, Vector
-import shutil
-from LmCommon.common.lmconstants import JobStatus
-from LmServer.common.localconstants import SCRATCH_PATH
 import zipfile
-import StringIO
+
+from LmCommon.common.lmconstants import JobStatus
+
+from LmServer.base.layer2 import Vector
+from LmServer.common.lmconstants import API_PATH
+from LmServer.common.localconstants import SCRATCH_PATH
+from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.occlayer import OccurrenceLayer
 
 # .............................................................................
