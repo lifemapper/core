@@ -24,13 +24,12 @@
 import mx.DateTime
    
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import MatrixType
+from LmCommon.common.lmconstants import MatrixType, LMFormat
 from LmServer.base.dbpgsql import DbPostgresql
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.taxon import ScientificName
 from LmServer.common.computeResource import LMComputeResource
-from LmServer.common.lmconstants import (GDALFormatCodes, OGRFormatCodes, 
-                                         DB_STORE, LM_SCHEMA_BORG)
+from LmServer.common.lmconstants import DB_STORE, LM_SCHEMA_BORG
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
 from LmServer.legion.algorithm import Algorithm
@@ -388,14 +387,14 @@ class Borg(DbPostgresql):
             dtmod = self._getColumnValue(row, idxs, ['lyrmodtime', 'modtime'])
             bbox = self._getColumnValue(row, idxs, ['lyrbbox', 'bbox'])
                   
-            if fformat in OGRFormatCodes.keys():
+            if fformat in LMFormat.OGRDrivers():
                lyr = Vector(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
                             dlocation=dloc, metadata=meta, dataFormat=fformat, 
                             ogrType=vtype, valUnits=vunits, valAttribute=vattr,
                             nodataVal=nodata, minVal=minval, maxVal=maxval, 
                             mapunits=munits, resolution=res, bbox=bbox, 
                             modTime=dtmod)
-            elif fformat in GDALFormatCodes.keys():
+            elif fformat in LMFormat.GDALDrivers():
                lyr = Raster(name, usr, epsg, lyrId=dbid, squid=squid, verify=verify, 
                             dlocation=dloc, metadata=meta, dataFormat=fformat, 
                             gdalType=rtype, valUnits=vunits, nodataVal=nodata, 

@@ -44,8 +44,7 @@ from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
 
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
-            GDALFormatCodes, GDALDataTypes, OGRFormatCodes, OGRDataTypes, 
-            LMFormat, LMServiceType)
+            GDALDataTypes, OGRDataTypes, LMFormat, LMServiceType)
 from LmServer.common.localconstants import APP_PATH, SCENARIO_PACKAGE_EPSG
 
 # .............................................................................
@@ -594,7 +593,11 @@ class Raster(_Layer):
          if self._dataFormat is None:
             ext = LMFormat.TMP.ext
          else:
-            ext = GDALFormatCodes[self._dataFormat]['FILE_EXT']
+#             ext = GDALFormatCodes[self._dataFormat]['FILE_EXT']
+            ext = LMFormat.getExtensionByDriver(self._dataFormat)
+            if ext is None:
+               raise LMError('Failed to find dataFormat/driver {}'
+                             .format(self._dataFormat))
       dloc = super(Raster, self).createLocalDLocation(ext)
       return dloc
 
@@ -631,7 +634,7 @@ class Raster(_Layer):
              either gdalFormat or gdalType is not legal for a Lifemapper Raster.  
       """
       # GDAL DataFormat is required (may be a placeholder and changed later)
-      if gdalFormat not in GDALFormatCodes.keys():
+      if gdalFormat not in LMFormat.GDALDrivers():
          raise LMError(['Unsupported Raster GDAL dataFormat', gdalFormat])
       if gdalType is not None and gdalType not in GDALDataTypes:
          raise LMError(['Unsupported Raster GDAL type', gdalType])      
@@ -739,7 +742,11 @@ class Raster(_Layer):
          dataFormat = gdalFormat
       # Rename with correct extension if incorrect
       head, ext = os.path.splitext(dlocation)
-      correctExt = GDALFormatCodes[dataFormat]['FILE_EXT']
+      correctExt = LMFormat.getExtensionByDriver(self._dataFormat)
+      if correctExt is None:
+         raise LMError('Failed to find dataFormat/driver {}'
+                       .format(self._dataFormat))
+#       correctExt = GDALFormatCodes[dataFormat]['FILE_EXT']
       if ext != correctExt:
          msgs.append('Invalid extension {}, renaming to {} for layer {}'
                      .format(ext, correctExt, dlocation))
@@ -878,7 +885,7 @@ class Raster(_Layer):
 # ...............................................
    def copyData(self, sourceDataLocation, targetDataLocation=None, 
                 format='GTiff'):
-      if not format in GDALFormatCodes.keys():
+      if not format in LMFormat.GDALDrivers():
          raise LMError(currargs='Unsupported raster format %s' % format)
       if sourceDataLocation is not None and os.path.exists(sourceDataLocation):
          if targetDataLocation is not None:
@@ -890,8 +897,9 @@ class Raster(_Layer):
       else:
          raise LMError('Source location %s is invalid' % str(sourceDataLocation))
       
-      if not dlocation.endswith(GDALFormatCodes[format]['FILE_EXT']):
-         dlocation += GDALFormatCodes[format]['FILE_EXT']
+      correctExt = LMFormat.getExtensionByDriver(format)
+      if not dlocation.endswith(correctExt):
+         dlocation += correctExt
       
       self.readyFilename(dlocation)
 
@@ -1097,7 +1105,7 @@ class Vector(_Layer):
              either ogrFormat or ogrType is not legal for a Lifemapper Vector.  
       """
       # OGR dataFormat is required (may be a placeholder and changed later)
-      if ogrFormat not in OGRFormatCodes.keys():
+      if ogrFormat not in LMFormat.OGRDrivers():
          raise LMError(['Unsupported Vector OGR dataFormat', ogrFormat])
       if ogrType is not None and ogrType not in OGRDataTypes:
          raise LMError(['Unsupported Vector ogrType', ogrType])

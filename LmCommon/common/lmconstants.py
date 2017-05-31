@@ -75,7 +75,8 @@ class FileFormat:
    @todo: Add GDAL / OGR type as optional parameters
    """
    # ...........................
-   def __init__(self, extension, mimeType, allExtensions=None, driver=None):
+   def __init__(self, extension, mimeType, allExtensions=None, driver=None,
+                options=None):
       """
       @summary: Constructor
       @param extension: This is the primary extension if a format has multiple 
@@ -109,11 +110,14 @@ class LMFormat:
    @todo: Deprecate OutputFormat and instead use this
    """
    ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'],
-                      driver='AAIGrid')
-   CSV = FileFormat('.csv', 'text/csv')
+                      driver='AAIGrid',
+                      options={'DECIMAL_PRECISION': 6, 
+                               'FORCE_CELLSIZE':'YES'})
+   CSV = FileFormat('.csv', 'text/csv',
+                    driver='CSV')
    CONFIG = FileFormat('.ini', 'text/plain')
    GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff')
-   HFA = FileFormat('.img', 'image/octet-stream')
+   HFA = FileFormat('.img', 'image/octet-stream', driver='HFA')
    JSON = FileFormat('.json', 'application/json')
    KML = FileFormat('.kml', 'application/vnd.google-earth.kml+xml')
    LOG = FileFormat('.log', 'text/plain')
@@ -146,6 +150,22 @@ class LMFormat:
                  LMFormat.TXT, LMFormat.XML, LMFormat.ZIP):
          if ext == ff.ext:
             return ff
+      return None
+
+   @staticmethod
+   def getFormatByDriver(driver):
+      for ff in (LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA, 
+                 LMFormat.CSV, LMFormat.SHAPE):
+         if driver == ff.driver:
+            return ff
+      return None
+
+   @staticmethod
+   def getExtensionByDriver(driver):
+      ff = LMFormat.getFormatByDriver(driver)
+      if ff is not None:
+         return ff.ext
+      return None
 
    @staticmethod
    def isGeo(ext):
@@ -155,21 +175,31 @@ class LMFormat:
 
    @staticmethod
    def isOGR(ext=None, format=None):
-      if ext == LMFormat.SHAPE.ext:
+      if ext in (LMFormat.SHAPE.ext, LMFormat.CSV.ext):
          return True
-      elif format == LMFormat.SHAPE.driver:
+      elif format in (LMFormat.SHAPE.driver, LMFormat.CSV.driver):
          return True
       return False
       
    @staticmethod
+   def OGRDrivers():
+      ogr_fformats = (LMFormat.SHAPE, LMFormat.CSV)
+      return [lmff.driver for lmff in ogr_fformats]
+
+   @staticmethod
    def isGDAL(ext=None, format=None):
-      gdal_fformats = (LMFormat.ASCII, LMFormat.GTIFF)
+      gdal_fformats = (LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA)
       if ext in [lmff.ext for lmff in gdal_fformats]:
          return True
       elif format in [lmff.driver for lmff in gdal_fformats]:
          return True
       return False
    
+   @staticmethod
+   def GDALDrivers():
+      gdal_fformats = (LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA)
+      return [lmff.driver for lmff in gdal_fformats]
+
    @staticmethod
    def isJSON(ext):
       if ext == LMFormat.JSON.ext:

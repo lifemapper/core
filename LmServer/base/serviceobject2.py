@@ -157,8 +157,8 @@ class ServiceObject(LMObject):
       @summary Return a GET query for the Lifemapper WCS GetCoverage request
       @param format: optional string indicating the URL response format desired;
                      Supported formats are GDAL Raster Format Codes, available 
-                     at http://www.gdal.org/formats_list.html, and keys in 
-                        LmServer.common.lmconstants GDALFormatCodes.
+                     at http://www.gdal.org/formats_list.html, and driver values 
+                     in LmServer.common.lmconstants LMFormat GDAL formats.
       """
       dataurl = self.metadataUrl
       if format is not None:

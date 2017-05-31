@@ -1042,7 +1042,7 @@ BEGIN
                RAISE EXCEPTION 'Matrix % not unique', mtxid;
       end;
    -- Gridset
-   ELSEIF
+   ELSEIF gsid IS NOT NULL THEN
       begin
          SELECT distinct(userId) INTO STRICT usr FROM lm_v3.lm_matrix 
             WHERE gridsetId = gsid;

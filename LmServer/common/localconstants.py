@@ -28,11 +28,6 @@ from LmCommon.common.lmconstants import (SERVER_ENV_HEADING,
       SERVER_COMPUTE_HEADING, SERVER_MATT_DAEMON_HEADING)
 
 cfg = Config()
-# SERVER_ENV_HEADING = "LmServer - environment"
-# _PIPELINE_HEADING = "LmServer - pipeline"
-# _DB_HEADING = "LmServer - dbserver"
-# _COMPUTE_HEADING = "LmServer - registeredcompute"
-# _MATT_DAEMON_HEADING = "LmServer - Matt Daemon"
 
 # LmServer (LmDbServer and LmWebServer)
 PUBLIC_FQDN = cfg.get(SERVER_ENV_HEADING, 'PUBLIC_FQDN')
