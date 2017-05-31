@@ -122,6 +122,10 @@ class TestLayerService_anon_GET_data(unittest.TestCase):
       with open(urllib2.urlopen(lyrUrl)) as lyrReq:
          lyrCont = lyrReq.read()
 
+
+      # TODO: Check content type and handle vector
+
+
       tmpF = tempfile.NamedTemporaryFile(delete=False)
       tmpF.write(lyrCont)
       tmpFn = tmpF.name
