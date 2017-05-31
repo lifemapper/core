@@ -712,7 +712,6 @@ class Raster(_Layer):
       @postcondition: prints warning if data format and type differ from GDAL-reported
       @postcondition: renames file with supported extension if it differs
       """
-      srs = geoTransform = size = msgs = None
       msgs = []
 #       msgs.append('File does not exist: {}'.format(dlocation))
       dataset, band = self._openWithGDAL(dlocation=dlocation, bandnum=bandnum)
@@ -742,10 +741,10 @@ class Raster(_Layer):
          dataFormat = gdalFormat
       # Rename with correct extension if incorrect
       head, ext = os.path.splitext(dlocation)
-      correctExt = LMFormat.getExtensionByDriver(self._dataFormat)
+      correctExt = LMFormat.getExtensionByDriver(dataFormat)
       if correctExt is None:
          raise LMError('Failed to find dataFormat/driver {}'
-                       .format(self._dataFormat))
+                       .format(dataFormat))
 #       correctExt = GDALFormatCodes[dataFormat]['FILE_EXT']
       if ext != correctExt:
          msgs.append('Invalid extension {}, renaming to {} for layer {}'
