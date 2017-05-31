@@ -29,16 +29,16 @@
 """
 import json
 import random
+import shutil
 import tempfile
 import unittest
 import urllib2
 
+from LmServer.base.layer2 import Raster
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.log import ConsoleLogger
 from LmServer.common.lmconstants import API_PATH
 from LmServer.legion.envlayer import EnvLayer
-from LmServer.base.layer2 import Raster
-import shutil
 
 # .............................................................................
 class TestEnvLayerService_anon_COUNT(unittest.TestCase):
@@ -72,7 +72,7 @@ class TestEnvLayerService_anon_COUNT(unittest.TestCase):
       @summary: Test count over http with the anonymous user
       """
       scribeCount = self.scribe.countEnvLayers()
-      countUrl = '{}/envlayers/count'.format(API_PATH)
+      countUrl = '{}/envlayer/count'.format(API_PATH)
       with open(urllib2.urlopen(countUrl)) as countReq:
          countDict = json.loads(countReq.read())
          
@@ -112,7 +112,7 @@ class TestEnvLayerService_anon_GET_data(unittest.TestCase):
       @summary: Test that metadata for public environmental layer can be 
                    retrieved via HTTP
       """
-      envLyrListUrl = '{}/envlayers/'.format(API_PATH)
+      envLyrListUrl = '{}/envlayer/'.format(API_PATH)
       with open(urllib2.urlopen(envLyrListUrl)) as envListReq:
          lyrsResp = json.loads(envListReq.read())
          
@@ -140,7 +140,7 @@ class TestEnvLayerService_anon_GET_data(unittest.TestCase):
    #   """
    #   envLyrAtoms = self.scribe.listEnvLayers(0, 10, userId=)
    #   lyrAtom = random.choice(envLyrAtoms)
-   #   envLyrUrl = '{}/envlayers/{}'.format(API_PATH, lyrAtom.id)
+   #   envLyrUrl = '{}/envlayer/{}'.format(API_PATH, lyrAtom.id)
    #   with open(urllib2.urlopen(envLyrUrl)) as envLyrReq:
    #      lyrJson = json.loads(envLyrReq.read())
    #   
@@ -185,7 +185,7 @@ class TestEnvLayerService_anon_GET_metadata(unittest.TestCase):
       @summary: Test that metadata for public environmental layer can be 
                    retrieved via HTTP
       """
-      envLyrListUrl = '{}/envlayers/'.format(API_PATH)
+      envLyrListUrl = '{}/envlayer/'.format(API_PATH)
       with open(urllib2.urlopen(envLyrListUrl)) as envListReq:
          lyrsResp = json.loads(envListReq.read())
          
@@ -206,7 +206,7 @@ class TestEnvLayerService_anon_GET_metadata(unittest.TestCase):
    #   """
    #   envLyrAtoms = self.scribe.listEnvLayers(0, 10, userId=)
    #   lyrAtom = random.choice(envLyrAtoms)
-   #   envLyrUrl = '{}/envlayers/{}'.format(API_PATH, lyrAtom.id)
+   #   envLyrUrl = '{}/envlayer/{}'.format(API_PATH, lyrAtom.id)
    #   with open(urllib2.urlopen(envLyrUrl)) as envLyrReq:
    #      lyrJson = json.loads(envLyrReq.read())
    #   
@@ -250,7 +250,7 @@ class TestEnvLayerService_anon_LIST(unittest.TestCase):
       @summary: Test list over http with the anonymous user
       """
       envLyrAtoms = self.scribe.listEnvLayers(0, 20)
-      listUrl = '{}/envlayers/?limit=20'.format(API_PATH)
+      listUrl = '{}/envlayer/?limit=20'.format(API_PATH)
       with open(urllib2.urlopen(listUrl)) as listReq:
          listDict = json.loads(listReq.read())
 
