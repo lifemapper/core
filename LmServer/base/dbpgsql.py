@@ -411,7 +411,8 @@ class DbPostgresql(_DbConn):
          atom = self._createAtom(r, idxs)
          url = earl.constructLMMetadataUrl(serviceType, atom.getId(),
                                            parentMetadataUrl=parentMetadataUrl)
-         atoms.append()         
+         atom.url = url
+         atoms.append(atom)         
       return atoms
    
    def _getCount(self, row):
