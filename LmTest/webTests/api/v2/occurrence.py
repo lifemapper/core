@@ -386,6 +386,8 @@ def getTestSuites():
    testSuites.append(
       loader.loadTestsFromTestCase(TestOccLayerService_anon_GET_data))
    testSuites.append(
+      loader.loadTestsFromTestCase(TestOccLayerService_anon_GET_map))
+   testSuites.append(
       loader.loadTestsFromTestCase(TestOccLayerService_anon_GET_metadata))
    testSuites.append(
       loader.loadTestsFromTestCase(TestOccLayerService_anon_LIST))
