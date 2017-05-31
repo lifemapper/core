@@ -85,7 +85,7 @@ class MapService(LmService):
       @param width: The width (in pixels) of the returned map
       """
       self.mapName = mapName
-      mapFilename, usr = EarlJr().getMapFilenameAndUserFromMapname(mapName)
+      mapFilename = EarlJr().getMapFilenameFromMapname(mapName)
       
       if not os.path.exists(mapFilename):
          mapSvc = self.scribe.getMapServiceFromMapFilename(mapFilename)

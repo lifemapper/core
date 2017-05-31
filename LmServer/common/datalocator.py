@@ -129,7 +129,7 @@ class EarlJr(LMObject):
          else:
             raise LMError('Missing occurrenceSetId for SDM filepath')
          
-      # Maps go under user dir
+      # All non-SDM Maps go under user map dir
       elif LMFileType.isMap(filetype):
          pth = os.path.join(pth, MAP_DIR)
                              
@@ -211,13 +211,14 @@ class EarlJr(LMObject):
       # Prefix
       if FileFix.PREFIX[ftype] is not None:
          nameparts.append(FileFix.PREFIX[ftype])
-      # Non-auto-generated Maps (not SCENARIO_MAP or SDM_MAP)
+      # User Maps for unconnected user layers (not SCENARIO_MAP or SDM_MAP)
       if ftype == LMFileType.OTHER_MAP:
          nameparts.extend([usr, epsg])
       # User layers
       elif LMFileType.isUserLayer(ftype):
          nameparts.append(lyrname)
-      # All non-map, non-user-layer files use objCode 
+      # All non-user-layer files use objCode 
+      # SDM_MAP occurrencesetId, RAD_MAP gridsetId, SCENARIO_MAP scenarioCode
       elif objCode:
          nameparts.append(objCode)
          
@@ -254,12 +255,24 @@ class EarlJr(LMObject):
       return filename
    
 # ...............................................
+   def getMapFilenameFromMapname(self, mapname):
+      (scencode, occsetId, gridsetId, usr, ancillary, 
+       epsg) = self._parseMapname(mapname)
+      prefix = mapname.split(NAME_SEPARATOR)[0]
+      filetype = FileFix.getFiletypeFromName(prefix=prefix)
+      mapFilename = self.createFilename(filetype, objCode=scencode,
+                                        occsetId=occsetId, gridsetId=gridsetId, 
+                                        usr=usr, epsg=epsg)
+      return mapFilename
+
+# ...............................................
    def getMapFilenameAndUserFromMapname(self, mapname):         
       if mapname == MAP_TEMPLATE:
          pth = self._createStaticMapPath()
          usr = None
       else:
-         scencode, occsetId, usr, ancillary, _ = self._parseMapname(mapname)
+         (scencode, occsetId, gridsetId, usr, ancillary, 
+          epsg) = self._parseMapname(mapname)
          if usr is None:
             usr = self._findUserForObject(scenCode=scencode, occId=occsetId)
          if occsetId is not None:
@@ -503,7 +516,7 @@ class EarlJr(LMObject):
 
 # ...............................................
    def _parseDataPathParts(self, parts):
-      occsetId = epsg = radId = bckId = None
+      occsetId = epsg = gridsetId = None
       usr = parts[0]
       rem = parts[1:]
       if len(rem) == 4:
@@ -521,15 +534,10 @@ class EarlJr(LMObject):
             elif rem[0].startswith(RAD_EXPERIMENT_DIR_PREFIX):
                dirname = rem[0]
                try:
-                  radId = int(dirname[len(RAD_EXPERIMENT_DIR_PREFIX):])
+                  gridsetId = int(dirname[len(RAD_EXPERIMENT_DIR_PREFIX):])
                except:
-                  raise LMError('Invalid RAD experiment id %s' % dirname)
-               if len(rem) > 1:
-                  try:
-                     bktId = int(rem[1])
-                  except:
-                     raise LMError('Invalid RAD bucket id %s' % rem[1])
-      return usr, occsetId, epsg, radId, bckId 
+                  raise LMError('Invalid RAD gridset id %s' % dirname)
+      return usr, occsetId, epsg, gridsetId 
 
 # ...............................................
    def _parseNewDataPath(self, fullpath):
@@ -544,11 +552,9 @@ class EarlJr(LMObject):
              /ARCHIVE_PATH/userId/epsg/Layers/
                  contains layers sharing epsg code
              /ARCHIVE_PATH/userId/epsg/RADxxx 
-                 contains experiment level data (layer indexes, tree files, etc)
-             /ARCHIVE_PATH/userId/epsg/RADxxx/bucketId
-                 contains bucket level data (pam, statistics, etc)
+                 contains gridset level data
       """
-      usr = occsetId = epsg = radId = bckId = None
+      usr = occsetId = epsg = gridsetId = None
       ancPth = self._createStaticMapPath()
       
       if fullpath.startswith(ancPth):
@@ -564,21 +570,22 @@ class EarlJr(LMObject):
          if last == '':
             parts = parts[:-1]
             
-         usr, occsetId, epsg, radId, bckId = self._parseDataPathParts(parts)
+         usr, occsetId, epsg, gridsetId = self._parseDataPathParts(parts)
             
-      return usr, occsetId, epsg, radId, bckId
+      return usr, occsetId, epsg, gridsetId
 
 # ...............................................
    def parseMapFilename(self, mapfname):
       fullpath, fname = os.path.split(mapfname)
       mapname, ext = os.path.splitext(fname)
 
-      usr, occsetId, epsg, radexpId, bucketId = self._parseNewDataPath(fullpath) 
-      scencode, occsetId, radexpId, bucketId, usr2, ancillary, num \
-               = self._parseMapname(mapname)
+      usr, occsetId, epsg, _ = self._parseNewDataPath(fullpath) 
+      (scencode, occsetId, gridsetId, usr2, ancillary, 
+       epsg2) = self._parseMapname(mapname)
       if usr is None: usr = usr2
+      if epsg is None: epsg = epsg2
 
-      return (mapname, ancillary, usr, epsg, occsetId, radexpId, bucketId, scencode)
+      return (mapname, ancillary, usr, epsg, occsetId, gridsetId, scencode)
    
 # ...............................................
    def _findUserForObject(self, layerId=None, scenCode=None, occId=None, 
@@ -595,7 +602,7 @@ class EarlJr(LMObject):
    
 # ...............................................
    def _parseMapname(self, mapname):
-      scencode = occsetId = usr = num = None
+      scencode = occsetId = usr = epsg = None
       ancillary = False
       # Remove extension
       if mapname.endswith(LMFormat.MAP.ext):
@@ -603,6 +610,7 @@ class EarlJr(LMObject):
          
       parts = mapname.split(NAME_SEPARATOR)
 
+      # RAD_MAP mapname = rad_<gridsetId>
       if parts[0] == MapPrefix.SCEN:
          scencode = parts[1]
          
@@ -614,20 +622,20 @@ class EarlJr(LMObject):
             msg = 'Improper Archive Data mapname %; ' % mapname
             msg += 'Should be %s + OccurrenceSetId' % MapPrefix.SDM
             raise LMError(currargs=msg, doTrace=True)
-         
+      # RAD_MAP mapname = rad_<gridsetId>
       elif parts[0] == MapPrefix.RAD:
          try:
-            radexpId = int(parts[1])
-            bucketId = int(parts[2])
+            gridsetId = int(parts[1])
          except:
             msg = 'Improper RAD mapname %; ' % mapname
-            msg += 'Should be %s + experimentId + bucketId' % MapPrefix.RAD
+            msg += 'Should be %s + gridsetId' % MapPrefix.RAD
             raise LMError(currargs=msg, doTrace=True)
          
+      # User maps are usr_<usr>_<epsg>
       elif parts[0] == MapPrefix.USER:
          usr = parts[1]
          try:
-            num = int(parts[2])
+            epsg = int(parts[2])
          except:
             pass
 
@@ -640,4 +648,4 @@ class EarlJr(LMObject):
          msg += '  requires prefix %s, %s, %s, or %s' % (MapPrefix.SCEN, 
                               MapPrefix.SDM, MapPrefix.USER, MapPrefix.ANC)
          raise LMError(currargs=msg, doTrace=True)
-      return scencode, occsetId, usr, ancillary, num
+      return scencode, occsetId, gridsetId, usr, ancillary, epsg

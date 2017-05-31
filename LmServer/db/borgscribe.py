@@ -32,7 +32,8 @@ from LmCommon.common.lmconstants import (ProcessType, LMFormat)
 from LmServer.base.taxon import ScientificName
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
-from LmServer.common.lmconstants import (DbUser, MatrixType, JobStatus)
+from LmServer.common.lmconstants import (DbUser, MatrixType, JobStatus, FileFix,
+                                         NAME_SEPARATOR, LMFileType)
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
                                             PUBLIC_USER)
 from LmServer.legion.envlayer import EnvLayer, EnvType
@@ -751,3 +752,26 @@ class BorgScribe(LMObject):
       success = self._borg.deleteObject(obj)
       return success
 
+# ...............................................
+   def getMapServiceFromMapFilename(self, mapFilename):
+      """
+      @param mapFilename: absolute path of mapfile
+      @return: LmServer.base.layerset.MapLayerSet containing objects for this
+               a map service
+      """
+      from LmServer.common.datalocator import EarlJr
+      earl = EarlJr()
+      (mapname, ancillary, usr, epsg, occsetId, gridsetId, 
+       scencode) = earl.parseMapFilename(mapFilename)
+      prefix = mapname.split(NAME_SEPARATOR)[0]
+      filetype = FileFix.getFiletypeFromName(prefix=prefix)
+      if filetype == LMFileType.SDM_MAP:
+         pass
+      elif gridsetId is not None:
+         pass
+      elif scencode is not None:
+         pass
+      else:
+         pass
+      return mapFilename
+   

@@ -288,6 +288,7 @@ class LMFileType:
    # User level
    OTHER_MAP = 1
    TMP_JSON = 2
+   ANCILLARY_MAP = 3
    # ..............................
    # Single species
    ENVIRONMENTAL_LAYER = 101
@@ -314,6 +315,7 @@ class LMFileType:
    GRIM = 223
    SUM_CALCS = 241
    SUM_SHAPE = 242
+   RAD_MAP = 250
    
    BIOGEO_HYPOTHESES = 322
    PADDED_PAM = 323
@@ -345,7 +347,7 @@ class LMFileType:
    
    @staticmethod
    def isRAD(rtype):
-      if rtype in [LMFileType.UNSPECIFIED_RAD,
+      if rtype in [LMFileType.UNSPECIFIED_RAD, LMFileType.RAD_MAP,
                    LMFileType.ATTR_MATRIX, 
                    LMFileType.PAM, LMFileType.GRIM, 
                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
@@ -371,7 +373,8 @@ class LMFileType:
    @staticmethod
    def isMap(rtype):
       if rtype in [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 
-                   LMFileType.SDM_MAP]:
+                   LMFileType.SDM_MAP, LMFileType.RAD_MAP, 
+                   LMFileType.ANCILLARY_MAP]:
          return True
       return False
 
@@ -440,8 +443,7 @@ class FileFix:
              LMFileType.BIOGEO_HYPOTHESES: 'biogeo',
              LMFileType.TREE: 'tree',
              LMFileType.PADDED_PAM: 'ppam',
-             LMFileType.MCPA_OUTPUTS: 'mcpa'
-}
+             LMFileType.MCPA_OUTPUTS: 'mcpa'}
    # Postfix
    EXTENSION = {LMFileType.OTHER_MAP: LMFormat.MAP.ext,
                 LMFileType.TMP_JSON: LMFormat.JSON.ext,
@@ -478,6 +480,17 @@ class FileFix:
                 LMFileType.PADDED_PAM: LMFormat.JSON.ext,
                 LMFileType.MCPA_OUTPUTS: LMFormat.JSON.ext
    }
+   @staticmethod
+   def getFiletypeFromName(prefix=None, ext=None):
+      if prefix is not None:
+         for ftype, fprefix in FileFix.PREFIX:
+            if fprefix == prefix:
+               return ftype
+      elif ext is not None:
+         for ftype, fext in FileFix.EXTENSION:
+            if fext == ext:
+               return ftype
+      return None
    
 NAME_SEPARATOR = '_'
    
