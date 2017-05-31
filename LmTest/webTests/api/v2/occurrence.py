@@ -176,6 +176,78 @@ class TestOccLayerService_anon_GET_data(unittest.TestCase):
       assert Vector.testVector(occ.getDLocation())
    
 # .............................................................................
+class TestOccLayerService_anon_GET_map(unittest.TestCase):
+   """
+   @summary: This is a test class for occurrence layer maps
+   """
+   # ............................
+   def setUp(self):
+      """
+      @summary: Set up test
+      """
+      self.scribe = BorgScribe(ConsoleLogger())
+      self.scribe.openConnections()
+   
+   # ............................
+   def tearDown(self):
+      """
+      @summary: Clean up after test
+      """
+      self.scribe.closeConnections()
+   
+   # ............................
+   def test_http_anon_public(self):
+      """
+      @summary: Test that data for public occurrence layer can be 
+                   retrieved via HTTP
+      """
+      occLyrListUrl = '{}/occurrence/?status={}'.format(API_PATH, 
+                                                        JobStatus.COMPLETE)
+      with open(urllib2.urlopen(occLyrListUrl)) as occListReq:
+         occsResp = json.loads(occListReq.read())
+         
+      occAtom = random.choice(occsResp)
+      
+      # Get the occurrence set
+      with open(urllib2.urlopen(occAtom.url)) as occReq:
+         occ = json.loads(occReq.read())
+         
+      # Get capabilities url
+      endpoint = occ['map']['endpoint']
+      mapName = occ['map']['mapName']
+      lyrName = occ['map']['layerName']
+      
+      getCapabilitiesUrl = '{}?mapName={}&service=WMS&request=GetCapabilities&version=1.1.0'.format(endpoint, mapName)
+      
+      # Get occurrence layer map
+      occMap = '{}?mapName={}&service=WMS&request=GetMap&height=200&width=400&bbox=-180,-90,180,90&srs=epsg:4326&format=image/png&color=ff0000&version=1.1.0&styles=&layers={}'.format(endpoint, mapName, lyrName)
+
+      # Get occurrence layer map with background
+      occMapBmng = '{}?mapName={}&service=WMS&request=GetMap&height=200&width=400&bbox=-180,-90,180,90&srs=epsg:4326&format=image/png&color=ff0000&version=1.1.0&styles=&layers=bmng,{}'.format(endpoint, mapName, lyrName)
+      
+      
+      # Get capabilities
+      with open(urllib2.urlopen(getCapabilitiesUrl)) as occGetCapabilitiesReq:
+         getCapResp = occGetCapabilitiesReq.read()
+      
+      # TODO: test get capabilities response
+      assert True
+      
+      # Get occurrence layer map
+      with open(urllib2.urlopen(occMap)) as occGetMapReq:
+         getMapResp = occGetMapReq.read()
+      
+      # TODO: Test get map response
+      assert True
+      
+      # Get occurrence layer map with background
+      with open(urllib2.urlopen(occMapBmng)) as occGetMapBmngReq:
+         getMapBmngResp = occGetMapBmngReq.read()
+      
+      # TODO: Test get map response with background
+      assert True
+      
+# .............................................................................
 class TestOccLayerService_anon_GET_metadata(unittest.TestCase):
    """
    @summary: This is a test class for environmental layer services
