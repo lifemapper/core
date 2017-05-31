@@ -395,9 +395,9 @@ currtime = dt.gmt().mjd
 
 earl = EarlJr()
 pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
-defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
+configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
                                                  LMFormat.CONFIG.ext))
-boomer = Boomer(BOOM_PID_FILE, defaultConfigFile, log=logger)
+boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
 
 boomer.initialize()
 chris = boomer.christopher
@@ -407,9 +407,9 @@ prjscen = chris.prjScens[0]
 mtx = chris.globalPAMs[prjscen.code]
 scribe = boomer._scribe
 
+
 boomer.christopher.moveToStart()
-boomer.log.debug('Starting Chris at location {} ... '
-               .format(self.christopher.currRecnum))
+print('Starting at ', chris.currRecnum)
 boomer.keepWalken = True
 
 # occ, setOrReset = woc.getOne()
