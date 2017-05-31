@@ -1055,7 +1055,6 @@ class Borg(DbPostgresql):
       """
       row, idxs = self.executeSelectOneFunction('lm_findUserForObject',
                      layerId, scenCode, occId, matrixId, gridsetId, mfprocessId)
-      userId = row[idxs['userid']]
       return userId
 
    # ...............................................
