@@ -26,8 +26,7 @@ import os
 from types import IntType
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import (DEFAULT_OGR_FORMAT, JobStatus, 
-                                         ProcessType, LMFormat)
+from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType)
 from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
@@ -77,7 +76,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       _LayerParameters.__init__(self, userId, paramId=lyrId, modTime=modTime)
       Vector.__init__(self, name, userId, epsgcode, lyrId=lyrId, verify=verify, 
             dlocation=dlocation, metadata=metadata, 
-            dataFormat=DEFAULT_OGR_FORMAT, ogrType=ogr.wkbPolygon, 
+            dataFormat=LMFormat.getDefaultOGR().driver, ogrType=ogr.wkbPolygon, 
             mapunits=mapunits, resolution=resolution, bbox=bbox, svcObjId=lyrId, 
             serviceType=LMServiceType.SHAPEGRIDS, 
             metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
@@ -222,7 +221,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             
       t_srs = osr.SpatialReference()
       t_srs.ImportFromEPSG(self.epsgcode)
-      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+      drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
       ds = drv.CreateDataSource(newdLoc)
       newlayer = ds.CreateLayer(ds.GetName(), geom_type = ogr.wkbPolygon, srs = t_srs)
       origLyrDefn = origLayer.GetLayerDefn()

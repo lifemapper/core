@@ -28,12 +28,11 @@ import socket
 from types import IntType
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import ProcessType, LMFormat
+from LmCommon.common.lmconstants import (ProcessType, LMFormat)
 from LmServer.base.taxon import ScientificName
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
-from LmServer.common.lmconstants import (DbUser, MatrixType, 
-                                         JobStatus, DEFAULT_PROJECTION_FORMAT)
+from LmServer.common.lmconstants import (DbUser, MatrixType, JobStatus)
 from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
                                             PUBLIC_USER)
 from LmServer.legion.envlayer import EnvLayer, EnvType
@@ -660,7 +659,7 @@ class BorgScribe(LMObject):
       for projScen in projScenList:
          prj = SDMProjection(occ, alg, mdlScen, projScen, 
                         modelMask=mdlMask, projMask=projMask, 
-                        dataFormat=DEFAULT_PROJECTION_FORMAT,
+                        dataFormat=LMFormat.getDefaultGDAL().driver,
                         status=JobStatus.GENERAL, statusModTime=modtime)
          newOrExistingPrj = self._borg.findOrInsertSDMProject(prj)
          # Instead of re-pulling unchanged scenario layers, masks, update 

@@ -35,9 +35,8 @@ import zipfile
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmAttObject import LmAttObj
-from LmCommon.common.lmconstants import (DEFAULT_OGR_FORMAT, DEFAULT_GDAL_FORMAT, 
-                  SHAPEFILE_MAX_STRINGSIZE, LegalMapUnits, GEOTIFF_INTERFACE,
-                  SHAPEFILE_INTERFACE, OFTInteger, OFTString)
+from LmCommon.common.lmconstants import (LegalMapUnits, GEOTIFF_INTERFACE, 
+                        SHAPEFILE_INTERFACE, OFTInteger, OFTString)
 from LmCommon.common.verify import computeHash, verifyHash
 
 from LmServer.base.lmobj import LMSpatialObject
@@ -520,7 +519,8 @@ class Raster(_Layer):
    # ...............................................       
    def __init__(self, name, userId, epsgcode, lyrId=None, 
                 squid=None, ident=None, verify=None, dlocation=None, 
-                metadata={}, dataFormat=DEFAULT_GDAL_FORMAT, gdalType=None, 
+                metadata={}, dataFormat=LMFormat.getDefaultGDAL().driver, 
+                gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
                 bbox=None,
@@ -1022,7 +1022,7 @@ class Vector(_Layer):
    # ...............................................       
    def __init__(self, name, userId, epsgcode, lyrId=None, 
                 squid=None, ident=None, verify=None, dlocation=None, 
-                metadata={}, dataFormat=DEFAULT_OGR_FORMAT, ogrType=None,
+                metadata={}, dataFormat=LMFormat.getDefaultOGR().driver, ogrType=None,
                 valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, 
@@ -1649,7 +1649,7 @@ class Vector(_Layer):
       successfulWrites = []
       
       ogr.RegisterAll()
-      drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+      drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
       spRef = Vector._getSpatialRef(srsEPSGOrWkt)
             
       f = open(dlocation, 'rb')
@@ -1761,7 +1761,7 @@ class Vector(_Layer):
          # Create the file object, a layer, and attributes
          tSRS = osr.SpatialReference()
          tSRS.ImportFromEPSG(self.epsgcode)
-         drv = ogr.GetDriverByName(DEFAULT_OGR_FORMAT)
+         drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
 
          ds = drv.CreateDataSource(self._dlocation)
          if ds is None:
@@ -1778,7 +1778,7 @@ class Vector(_Layer):
                fldDefn = ogr.FieldDefn(fldname, fldtype)
                # Special case to handle long Canonical, Provider, Resource names
                if (fldname.endswith('name') and fldtype == ogr.OFTString):
-                  fldDefn.SetWidth(SHAPEFILE_MAX_STRINGSIZE)
+                  fldDefn.SetWidth(LMFormat.getStrlenForDefaultOGR())
                returnVal = lyr.CreateField(fldDefn)
                if returnVal != 0:
                   raise LMError('CreateField failed for %s in %s' 
@@ -1823,7 +1823,7 @@ class Vector(_Layer):
       if uploadedType == 'shapefile':
       # Writes zipped stream to temp file and sets dlocation on layer
          self.writeFromZippedShapefile(data, isTemp=True, overwrite=overwrite)
-         self._dataFormat = DEFAULT_OGR_FORMAT
+         self._dataFormat = LMFormat.getDefaultOGR().driver
          try:
             # read to make sure it's valid (and populate stats)
             self.readData()
@@ -2043,7 +2043,7 @@ class Vector(_Layer):
 
 # ...............................................
    def copyData(self, sourceDataLocation, targetDataLocation=None, 
-                format=DEFAULT_OGR_FORMAT):
+                format=LMFormat.getDefaultOGR().driver):
       """
       Copy sourceDataLocation dataset to targetDataLocation or this layer's 
       dlocation.
@@ -2108,7 +2108,7 @@ class Vector(_Layer):
       
 # ...............................................
    @staticmethod
-   def testVector(dlocation, driver=DEFAULT_OGR_FORMAT):
+   def testVector(dlocation, driver=LMFormat.getDefaultOGR().driver):
       goodData = False
       featCount = 0
       if dlocation is not None and os.path.exists(dlocation):
@@ -2377,7 +2377,7 @@ class Vector(_Layer):
       if dataFormat is None:
          dataFormat = self._dataFormat
       if dlocation is not None and os.path.exists(dlocation):
-         if dataFormat == DEFAULT_OGR_FORMAT:
+         if dataFormat == LMFormat.getDefaultOGR().driver:
             (thisBBox, localIdIdx, geomIdx, features, featureAttributes, 
              featureCount) = self.readWithOGR(dlocation, dataFormat, 
                                               featureLimit=featureLimit, 

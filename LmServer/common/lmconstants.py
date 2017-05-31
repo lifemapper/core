@@ -584,8 +584,7 @@ ID_PLACEHOLDER = '#id#'
 #                    'GTiff': {'FILE_EXT': LMFormat.GTIFF.ext},
 #                    'HFA': {'FILE_EXT': LMFormat.HFA.ext}
 #                    }
-
-DEFAULT_PROJECTION_FORMAT = LMFormat.GTIFF.driver
+# DEFAULT_PROJECTION_FORMAT = LMFormat.GTIFF.driver
 GDALDataTypes = (GDT_Unknown, GDT_Byte, GDT_UInt16, GDT_Int16, 
                  GDT_UInt32, GDT_Int32, GDT_Float32, GDT_Float64, 
                  GDT_CInt16, GDT_CInt32, GDT_CFloat32, GDT_CFloat64)
@@ -1004,7 +1003,7 @@ class AlgQualities:
    # ...........................
    def __init__(self, code, name, 
                 isDiscreteOutput=False, 
-                outputFormat=DEFAULT_PROJECTION_FORMAT,
+                outputFormat=LMFormat.getDefaultGDAL().driver,
                 acceptsCategoricalMaps=False, 
                 parameters={}):
       """
