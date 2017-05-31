@@ -218,7 +218,6 @@ class LMFormat:
             return True
          elif driver is not None and driver == ff.driver:
             return True
-         return True
       return False
       
    @staticmethod
@@ -232,7 +231,6 @@ class LMFormat:
             return True
          elif driver is not None and driver == ff.driver:
             return True
-         return True
       return False
    
    @staticmethod

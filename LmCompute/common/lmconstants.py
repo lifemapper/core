@@ -50,6 +50,7 @@ SAMPLE_JOBS_PATH = os.path.join(LM_DISK, 'tests/config/sampleJobs')
 SAMPLE_LAYERS_PATH = os.path.join(LM_DISK, 'tests/data/layers/testLayers.txt')
 SAMPLE_DATA_PATH = os.path.join(LM_DISK, 'tests/data')
 METRICS_STORAGE_PATH = os.path.join(LM_DISK, 'metrics')
+SGE_PATH = os.path.join(LM_DISK, 'sge')
 
 JAVA_SYSTEM_ROOT = os.path.join(SCRATCH_PATH, '.java')
 JAVA_USER_ROOT = os.path.join(JAVA_SYSTEM_ROOT, '.userPrefs')

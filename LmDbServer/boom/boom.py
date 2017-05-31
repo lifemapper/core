@@ -281,7 +281,7 @@ class Boomer(Daemon):
       arfCmd = ' '.join(arfCmdArgs)
       
       #arfCmd = 'touch {}'.format(targetFname)
-      cmd = '{} ; {}'.format(mfCmd, arfCmd)
+      cmd = '{} ; {}'.format(arfCmd, mfCmd)
       # Create a rule from the MF and Arf file creation
       # TODO: Replace these dependencies with Delay rule
       rule = MfRule(cmd, [targetFname], dependencies=dependencies)
@@ -300,7 +300,7 @@ class Boomer(Daemon):
       cmdArgs = ['LOCAL checkArfFiles'].extend(self.spudArfFnames)
       mfCmd = ' '.join(cmdArgs)
       arfCmd = 'touch {}'.format(targetFname)
-      cmd = '{} ; {}'.format(mfCmd, arfCmd)
+      cmd = '{} ; {}'.format(arfCmd, mfCmd)
       # Create a rule from the MF and Arf file creation
       rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       self.masterPotato.addCommands([rule])
