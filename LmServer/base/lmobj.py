@@ -137,7 +137,7 @@ class LMSpatialObject(LMObject):
                legal unit types (feet, inches, kilometers, meters, miles, dd, ds)
       """
       if mapunits is None or mapunits == '':
-         self._mapunits = ''
+         self._mapunits = None
       else:
          mapunits = mapunits.lower()
          try:
@@ -149,8 +149,8 @@ class LMSpatialObject(LMObject):
    
    def _getUnits(self):
       """
-      @todo: add mapunits to Occ table (and Scenario?), 
-             handle better on construction.
+      @todo: REMOVE THIS HACK!
+             Add mapunits to Occ table (and Scenario?), handle on construction.
       """
       if self._mapunits is None and self._epsg == 4326:
          self._mapunits = 'dd'
