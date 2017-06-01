@@ -99,12 +99,12 @@ QUERY_PARAMETERS = {
       'name' : 'envTypeId',
       'processIn' : int
    },
-   'exceptions' : {
-      'name' : 'exceptions'
-   },
    'epsgcode' : {
       'name' : 'epsgCode',
       'processIn' : int
+   },
+   'exceptions' : {
+      'name' : 'exceptions'
    },
    'format' : {
       # TODO: Forward to respFormat since format is reserved
