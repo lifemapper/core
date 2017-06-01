@@ -64,7 +64,8 @@ class Scenario(MapLayerSet):
       MapLayerSet.__init__(self, code, 
                            url=metadataUrl, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
-                           serviceType=LMServiceType.SCENARIOS)
+                           serviceType=LMServiceType.SCENARIOS,
+                           mapType=LMFileType.SCENARIO_MAP)
       # aka MapLayerSet.name    
       self.code = code
       self.modTime = modTime

@@ -770,7 +770,8 @@ class BorgScribe(LMObject):
       lyrs.append(occ)
       mapname = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
                                         usr=occ.getUserId())
-      mapsvc = MapLayerSet(mapname, layers=lyrs, userId=occ.getUserId())
+      mapsvc = MapLayerSet(mapname, layers=lyrs, userId=occ.getUserId(), 
+                           mapType=LMFileType.SDM_MAP)
       return mapsvc
 
 # ...............................................
@@ -785,7 +786,7 @@ class BorgScribe(LMObject):
       (mapname, ancillary, usr, epsg, occsetId, gridsetId, 
        scencode) = earl.parseMapFilename(mapFilename)
       prefix = mapname.split(NAME_SEPARATOR)[0]
-      filetype = FileFix.getFiletypeFromName(prefix=prefix)
+      filetype = FileFix.getMaptypeFromName(prefix=prefix)
       if filetype == LMFileType.SDM_MAP:
          mapsvc = self.getMapServiceForSDMOccurrence(occsetId)
       elif filetype == LMFileType.RAD_MAP:
