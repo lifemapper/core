@@ -1,5 +1,5 @@
 """
-@summary: This module provides REST services for matrixs
+@summary: This module provides REST services for matrices
 @author: CJ Grady
 @version: 2.0
 @status: alpha
@@ -32,6 +32,7 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.lmmatrix import LMMatrix
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.services.api.v2.matrixColumn import MatrixColumnService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
@@ -43,6 +44,8 @@ class MatrixService(LmService):
    @summary: This class is for the matrix service.  The dispatcher is 
                 responsible for calling the correct method.
    """
+   column = MatrixColumnService()
+   
    # ................................
    def DELETE(self, pathGridSetId, pathMatrixId):
       """
@@ -78,7 +81,7 @@ class MatrixService(LmService):
       """
       @summary: Performs a GET request.  If a matrix id is provided,
                    attempt to return that item.  If not, return a list of 
-                   matrixs that match the provided parameters
+                   matrices that match the provided parameters
       """
       if public:
          userId = PUBLIC_USER
@@ -120,13 +123,13 @@ class MatrixService(LmService):
                      gcmCode=None, keyword=None, matrixType=None, status=None):
       """
       @summary: Count matrix objects matching the specified criteria
-      @param userId: The user to count matrixs for.  Note that this may not 
+      @param userId: The user to count matrices for.  Note that this may not 
                         be the same user logged into the system
-      @param afterTime: (optional) Return matrixs modified after this time 
+      @param afterTime: (optional) Return matrices modified after this time 
                            (Modified Julian Day)
-      @param beforeTime: (optional) Return matrixs modified before this time 
+      @param beforeTime: (optional) Return matrices modified before this time 
                             (Modified Julian Day)
-      @param epsgCode: (optional) Return matrixs with this EPSG code
+      @param epsgCode: (optional) Return matrices with this EPSG code
       """
       afterStatus = None
       beforeStatus = None
@@ -175,15 +178,15 @@ class MatrixService(LmService):
                      offset=0, status=None):
       """
       @summary: Count matrix objects matching the specified criteria
-      @param userId: The user to count matrixs for.  Note that this may not 
+      @param userId: The user to count matrices for.  Note that this may not 
                         be the same user logged into the system
-      @param afterTime: (optional) Return matrixs modified after this time 
+      @param afterTime: (optional) Return matrices modified after this time 
                            (Modified Julian Day)
-      @param beforeTime: (optional) Return matrixs modified before this time 
+      @param beforeTime: (optional) Return matrices modified before this time 
                             (Modified Julian Day)
-      @param epsgCode: (optional) Return matrixs with this EPSG code
-      @param limit: (optional) Return this number of matrixs, at most
-      @param offset: (optional) Offset the returned matrixs by this number
+      @param epsgCode: (optional) Return matrices with this EPSG code
+      @param limit: (optional) Return this number of matrices, at most
+      @param offset: (optional) Offset the returned matrices by this number
       """
       afterStatus = None
       beforeStatus = None
