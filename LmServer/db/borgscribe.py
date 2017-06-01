@@ -440,22 +440,24 @@ class BorgScribe(LMObject):
       return existingGridset
    
 # .............................................................................
-   def countGridsets(self, userId, metastring, afterTime, beforeTime, epsg):
+   def countGridsets(self, userId, shpgrdLyrid=None, metastring=None, 
+                     afterTime=None, beforeTime=None, epsg=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countGridsets()
       """
-      count = self._borg.countGridsets(userId, metastring, afterTime, beforeTime, epsg)
+      count = self._borg.countGridsets(userId, shpgrdLyrid, metastring, 
+                                       afterTime, beforeTime, epsg)
       return count
 
 # .............................................................................
    def listGridsets(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
-                    metastring=None, afterTime=None, beforeTime=None, epsg=None, 
-                    atom=True):
+                    shpgrdLyrid=None, metastring=None, 
+                    afterTime=None, beforeTime=None, epsg=None, atom=True):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listGridsets()
       """
-      objs = self._borg.listGridsets(firstRecNum, maxNum, userId, metastring, 
-                                     afterTime, beforeTime, epsg, atom)
+      objs = self._borg.listGridsets(firstRecNum, maxNum, userId, shpgrdLyrid, 
+                                 metastring, afterTime, beforeTime, epsg, atom)
       return objs
 
 # ...............................................
@@ -870,6 +872,11 @@ atoms = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=Non
 count
 objs
 atoms
+count = scribe.countGridsets(userId=usr, 
+                    metastring=None, afterTime=None, beforeTime=None, epsg=None)
+objs = scribe.listGridsets(0, 10, userId=usr, 
+                    metastring=None, afterTime=None, beforeTime=None, epsg=None, 
+                    atom=True
 
 scribe.closeConnections()
 """

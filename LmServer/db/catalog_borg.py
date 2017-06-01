@@ -797,10 +797,11 @@ class Borg(DbPostgresql):
       return fullGset
 
 # .............................................................................
-   def countGridsets(self, userId, metastring, afterTime, beforeTime, epsg):
+   def countGridsets(self, userId, shpgrdLyrid, metastring, afterTime, beforeTime, epsg):
       """
       @summary: Count Matrices matching filter conditions 
       @param userId: User (owner) for which to return MatrixColumns.  
+      @param shpgrdLyrid: filter by ShapeGrid with Layer database ID 
       @param metastring: find gridsets containing this word in the metadata
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
@@ -809,17 +810,18 @@ class Borg(DbPostgresql):
       """
       metamatch = '%{}%'.format(metastring)
       row, idxs = self.executeSelectOneFunction('lm_countGridsets', userId, 
-                                 metamatch, afterTime, beforeTime, epsg)
+                           shpgrdLyrid, metamatch, afterTime, beforeTime, epsg)
       return self._getCount(row)
 
 # .............................................................................
-   def listGridsets(self, firstRecNum, maxNum, userId, metastring, 
+   def listGridsets(self, firstRecNum, maxNum, userId, shpgrdLyrid, metastring, 
                     afterTime, beforeTime, epsg, atom):
       """
       @summary: Return Matrix Objects or Atoms matching filter conditions 
       @param firstRecNum: The first record to return, 0 is the first record
       @param maxNum: Maximum number of records to return
       @param userId: User (owner) for which to return MatrixColumns.  
+      @param shpgrdLyrid: filter by ShapeGrid with Layer database ID 
       @param metastring: find matrices containing this word in the metadata
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
@@ -830,14 +832,14 @@ class Borg(DbPostgresql):
       metamatch = '%{}%'.format(metastring)
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listGridsetAtoms', 
-                                 firstRecNum, maxNum, userId, metamatch, 
-                                 afterTime, beforeTime, epsg)
+                                 firstRecNum, maxNum, userId, shpgrdLyrid, 
+                                 metamatch, afterTime, beforeTime, epsg)
          objs = self._getAtoms(rows, idxs, LMServiceType.GRIDSETS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listGridsetObjects', 
-                                 firstRecNum, maxNum, userId, metamatch, 
-                                 afterTime, beforeTime, epsg)
+                                 firstRecNum, maxNum, userId, shpgrdLyrid, 
+                                 metamatch, afterTime, beforeTime, epsg)
          for r in rows:
             objs.append(self._createGridset(r, idxs))
       return objs
