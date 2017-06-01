@@ -448,9 +448,9 @@ class BorgScribe(LMObject):
       return count
 
 # .............................................................................
-   def listGridsets(self, firstRecNum, maxNum, userId, matrixType, gcmCode, 
-                    altpredCode, dateCode, metastring, gridsetId, afterTime, 
-                    beforeTime, epsg, afterStatus, beforeStatus, atom):
+   def listGridsets(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                    metastring=None, afterTime=None, beforeTime=None, epsg=None, 
+                    atom=True):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listGridsets()
       """
@@ -861,12 +861,15 @@ shplyrid = 135
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
 
-ret = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
+count = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
                         afterTime=None, beforeTime=None, epsg=None)
-ret = scribe.listShapeGridObjects(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
-                        afterTime=None, beforeTime=None, epsg=None)
-ret = scribe.listShapeGridAtoms(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
-                        afterTime=None, beforeTime=None, epsg=None)
+objs = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
+                        afterTime=None, beforeTime=None, epsg=None, atom=False)
+atoms = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
+                        afterTime=None, beforeTime=None, epsg=None, atom=True)
+count
+objs
+atoms
 
 scribe.closeConnections()
 """

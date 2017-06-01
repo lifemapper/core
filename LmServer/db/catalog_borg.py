@@ -935,7 +935,7 @@ class Borg(DbPostgresql):
                               firstRecNum, maxNum, userId, cellsides, cellsize, 
                               afterTime, beforeTime, epsg)
          for r in rows:
-            objs.append(self._createLayer(r, idxs))
+            objs.append(self._createShapeGrid(r, idxs))
       return objs
 
 # ...............................................
