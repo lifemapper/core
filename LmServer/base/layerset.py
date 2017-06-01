@@ -72,7 +72,16 @@ class _LayerSet(LMSpatialObject):
       ## Also sets epsg and bbox
       ## If no layers, initializes to empty list 
       self._setLayers(layers)
-      
+
+   def _getUnits(self):
+      """
+      @todo: add mapunits to Occ table (and Scenario?), 
+             handle better on construction.
+      """
+      if self._mapunits is None and len(self._layers) > 0:
+         self._setUnits(self._layers[0].mapUnits)
+      return self._mapunits
+
 # ...............................................
    def getSRS(self):
       srs = self.createSRSFromEPSG()
