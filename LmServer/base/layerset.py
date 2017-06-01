@@ -346,7 +346,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
 # ...............................................
    def createLocalMapFilename(self):
       """
-      @summary: Full mapfile with path, containing this layer.  
+      @summary: Full mapfile with path, containing this layer.
+      @note: This method is overridden in Scenario  
       """
       fname = None
       if self._mapType == LMFileType.SDM_MAP:
@@ -401,6 +402,25 @@ class MapLayerSet(_LayerSet, ServiceObject):
       return mapname
    
 # .............................................................................
+   def _getMapsetUrl(self):
+      """
+      @note: This method is overridden in Scenario  
+      """
+      url = None
+      self.setLocalMapFilename()
+      if self._mapType == LMFileType.SDM_MAP:
+         for lyr in self.layers:
+            if isinstance(lyr, OccurrenceLayer):
+               url = lyr.metadataUrl
+      elif self._mapType == LMFileType.RAD_MAP:
+         print('RAD_MAP is not yet implemented')
+      elif self._mapType == LMFileType.OTHER_MAP:
+         print('OTHER_MAP is not yet implemented')
+      else:
+         print('Unsupported mapType {}'.format(self._mapType))
+      return url
+            
+# .............................................................................
    def writeMap(self, template=MAP_TEMPLATE):
       """
       @summary Create a mapfile by replacing strings in a template mapfile 
@@ -413,9 +433,10 @@ class MapLayerSet(_LayerSet, ServiceObject):
       # if mapfile does not exist, create service from database, then write file
       if not(os.path.exists(self._mapFilename)):            
          try:
-            layers, onlineUrl = self._createLayers()
+            layers = self._createLayers()
             mapTemplate = self._earlJr.getMapFilenameFromMapname(template)
             mapstr = self._getBaseMap(mapTemplate)
+            onlineUrl = self._getMapsetUrl()
             mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
             mapstr = mapstr.replace('##_LAYERS_##', layers)
          except Exception, e:
@@ -520,38 +541,28 @@ class MapLayerSet(_LayerSet, ServiceObject):
          #       types of vector layers.  
          #       Maybe use ServiceObject._serviceType for display options
          if isinstance(lyr, Vector):
-            vOnlineUrl = lyr.metadataUrl + '/ogc'
             lyrstr = self._createVectorLayer(lyr)
             topLyrStr = '\n'.join([topLyrStr, lyrstr])
             
          elif isinstance(lyr, Raster):
             # projections are below vector layers and above the base layer
             if isinstance(lyr, SDMProjection):
-               rOnlineUrl = lyr.metadataUrl + '/ogc'
                palette = DEFAULT_PROJECTION_PALETTE
                lyrstr = self._createRasterLayer(lyr, palette)
                midLyrStr = '\n'.join([midLyrStr, lyrstr])
             else:
-               eOnlineUrl = lyr.metadataUrl + '/ogc'
                palette = DEFAULT_ENVIRONMENTAL_PALETTE
                lyrstr = self._createRasterLayer(lyr, palette)
                baseLyrStr = '\n'.join([baseLyrStr, lyrstr])
               
       maplayers = '\n'.join([topLyrStr, midLyrStr, baseLyrStr])
-      
-      if vOnlineUrl:
-         onlineUrl = vOnlineUrl
-      elif rOnlineUrl:
-         onlineUrl = rOnlineUrl
-      elif eOnlineUrl:
-         onlineUrl = eOnlineUrl
-            
+                  
       # Add bluemarble image to Data/Occurrence Map Services
       if self.epsgcode == SCENARIO_PACKAGE_EPSG:
          backlyr = self._createBlueMarbleLayer()
          maplayers = '\n'.join([maplayers, backlyr])
          
-      return maplayers, onlineUrl
+      return maplayers
     
 # ...............................................
    def _createVectorLayer(self, sdlLyr):

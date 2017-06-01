@@ -154,6 +154,13 @@ class Scenario(MapLayerSet):
          self._resolution = self._layers[0].resolution
       return self._resolution
    
+# .............................................................................
+   def _getMapsetUrl(self):
+      """
+      @note: Overrides MapLayerset._getMapsetUrl  
+      """
+      return self.metadataUrl
+
 # .........................................................................
 # Public Methods
 # .........................................................................

@@ -863,19 +863,16 @@ shplyrid = 135
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
 
-count = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
+sgcount = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
                         afterTime=None, beforeTime=None, epsg=None)
 objs = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
                         afterTime=None, beforeTime=None, epsg=None, atom=False)
 atoms = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
                         afterTime=None, beforeTime=None, epsg=None, atom=True)
-count
-objs
-atoms
+sg = objs[0]
+sgatom = atoms[0]
 
-select * from lm_v3.lm_countGridsets('kubi',135,NULL,NULL,NULL,NULL);
-
-count = scribe.countGridsets(userId=usr, shpgrdLyrid=shplyrid,
+gscount = scribe.countGridsets(userId=usr, shpgrdLyrid=shplyrid,
                     metastring=None, afterTime=None, beforeTime=None, epsg=None)
 objs = scribe.listGridsets(0, 10, userId=usr, shpgrdLyrid=shplyrid,
                     metastring=None, afterTime=None, beforeTime=None, epsg=None, 
@@ -883,9 +880,9 @@ objs = scribe.listGridsets(0, 10, userId=usr, shpgrdLyrid=shplyrid,
 atoms = scribe.listGridsets(0, 10, userId=usr, shpgrdLyrid=shplyrid,
                     metastring=None, afterTime=None, beforeTime=None, epsg=None, 
                     atom=True)
-count
-objs
-atoms
+gs = objs[0]
+gsatom = atoms[0]
+
 
 
 scribe.closeConnections()
