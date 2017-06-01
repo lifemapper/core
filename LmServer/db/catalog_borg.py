@@ -829,7 +829,9 @@ class Borg(DbPostgresql):
       @param atom: True if return objects will be Atoms, False if full objects
       @return: a list of Matrix atoms or full objects
       """
-      metamatch = '%{}%'.format(metastring)
+      metamatch = None
+      if metastring is not None:
+         metamatch = '%{}%'.format(metastring)
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listGridsetAtoms', 
                                  firstRecNum, maxNum, userId, shpgrdLyrid, 
@@ -1930,7 +1932,9 @@ class Borg(DbPostgresql):
       @param atom: True if return objects will be Atoms, False if full objects
       @return: a list of Matrix atoms or full objects
       """
-      metamatch = '%{}%'.format(metastring)
+      metamatch = None
+      if metastring is not None:
+         metamatch = '%{}%'.format(metastring)
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
                      firstRecNum, maxNum, userId, afterTime, beforeTime, 

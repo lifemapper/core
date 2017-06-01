@@ -872,11 +872,21 @@ atoms = scribe.listShapeGrids(0,10,userId=usr, cellsides=cellsides, cellsize=Non
 count
 objs
 atoms
-count = scribe.countGridsets(userId=usr, 
+
+select * from lm_v3.lm_countGridsets('kubi',135,NULL,NULL,NULL,NULL);
+
+count = scribe.countGridsets(userId=usr, shpgrdLyrid=shplyrid,
                     metastring=None, afterTime=None, beforeTime=None, epsg=None)
-objs = scribe.listGridsets(0, 10, userId=usr, 
+objs = scribe.listGridsets(0, 10, userId=usr, shpgrdLyrid=shplyrid,
                     metastring=None, afterTime=None, beforeTime=None, epsg=None, 
-                    atom=True
+                    atom=False)
+atoms = scribe.listGridsets(0, 10, userId=usr, shpgrdLyrid=shplyrid,
+                    metastring=None, afterTime=None, beforeTime=None, epsg=None, 
+                    atom=True)
+count
+objs
+atoms
+
 
 scribe.closeConnections()
 """
