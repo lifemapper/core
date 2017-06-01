@@ -215,7 +215,9 @@ class Scenario(MapLayerSet):
       """
       @summary: Find mapfile containing this layer.  
       """
-      mapfname = self._earlJr.createFilename(LMFileType.SCENARIO_MAP, 
-                    objCode=self.code, usr=self._userId, epsg=self._epsg)
+      mapfname = self._earlJr.createFilename(self._mapType,
+                                             objCode=self.code, 
+                                             usr=self._userId, 
+                                             epsg=self._epsg)
       return mapfname
    
