@@ -122,7 +122,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 squid=None, verify=None, dlocation=None, 
                 rawDLocation=None, rawMetaDLocation=None,
                 lyrMetadata={}, dataFormat=LMFormat.getDefaultOGR().driver, 
-                ogrType=None, valUnits=None, valAttribute=None, 
+                valUnits=None, valAttribute=None, 
                 nodataVal=None, minVal=None, maxVal=None, 
                 mapunits=None, resolution=None, bbox=None, occurrenceSetId=None, 
                 serviceType=LMServiceType.OCCURRENCES, 
@@ -145,7 +145,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
                 parentId=parentId, status=status, statusModTime=statusModTime)
       Vector.__init__(self, None, userId, epsgcode, lyrId=occurrenceSetId, 
                 squid=squid, verify=verify, dlocation=dlocation, 
-                metadata=lyrMetadata, dataFormat=dataFormat, ogrType=ogrType,
+                metadata=lyrMetadata, dataFormat=dataFormat, ogrType=ogr.wkbPoint,
                 valUnits=valUnits, valAttribute=valAttribute, 
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
                 mapunits=mapunits, resolution=resolution, 

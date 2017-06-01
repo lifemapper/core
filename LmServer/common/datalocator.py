@@ -242,8 +242,12 @@ class EarlJr(LMObject):
       @copydoc LmServer.common.datalocator.EarlJr::createBasename()
       @param occsetId: SDM OccurrenceLayer database Id, used for path
       @param gridsetId: RAD Gridset database Id, used for path
+      @param objCode: ScenarioCode or database Id for primary object contained
+             or organizing the file contents
       @param pth: File storage path, overrides calculated path
       """
+      if occsetId is not None:
+         objCode = occsetId
       basename = self.createBasename(ftype, objCode=objCode, lyrname=lyrname, 
                                      usr=usr, epsg=epsg)   
       if basename is None:

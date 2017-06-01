@@ -403,7 +403,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       if not(os.path.exists(self._mapFilename)):            
          try:
             layers, onlineUrl = self._createLayers()
-            mapTemplate, tmp = self._earlJr.getMapFilenameAndUserFromMapname(template)
+            mapTemplate = self._earlJr.getMapFilenameFromMapname(template)
             mapstr = self._getBaseMap(mapTemplate)
             mapstr = self._addMapBaseAttributes(mapstr, onlineUrl)
             mapstr = mapstr.replace('##_LAYERS_##', layers)
@@ -705,6 +705,10 @@ class MapLayerSet(_LayerSet, ServiceObject):
    def _getLayerMetadata(self, sdlLyr, metalines=[], isVector=False):
       meta = ''
       meta = '\n'.join([meta, '      METADATA'])
+      try:
+         lyrTitle = sdlLyr.lyrMetadata[ServiceObject.META_TITLE]
+      except:
+         lyrTitle = None
       # DUMP True deprecated in Mapserver 6.0, replaced by
       if isVector:
          meta = '\n'.join([meta, '         gml_geometries \"geom\"'])
@@ -712,7 +716,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
          meta = '\n'.join([meta, '         gml_include_items \"all\"'])
       # ows_ used in metadata for multiple OGC services
       meta = '\n'.join([meta, '         ows_name  \"%s\"' % sdlLyr.name])
-      meta = '\n'.join([meta, '         ows_title  \"%s\"' % sdlLyr.title])
+      if lyrTitle is not None:
+         meta = '\n'.join([meta, '         ows_title  \"%s\"' % lyrTitle])
       for line in metalines:
          meta = '\n'.join([meta, '         %s' % line])
       meta = '\n'.join([meta, '      END'])
