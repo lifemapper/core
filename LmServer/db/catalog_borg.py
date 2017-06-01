@@ -796,6 +796,53 @@ class Borg(DbPostgresql):
             fullGset.addMatrix(mtx)
       return fullGset
 
+# .............................................................................
+   def countGridsets(self, userId, metastring, afterTime, beforeTime, epsg):
+      """
+      @summary: Count Matrices matching filter conditions 
+      @param userId: User (owner) for which to return MatrixColumns.  
+      @param metastring: find gridsets containing this word in the metadata
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @return: a count of Matrices
+      """
+      metamatch = '%{}%'.format(metastring)
+      row, idxs = self.executeSelectOneFunction('lm_countGridsets', userId, 
+                                 metamatch, afterTime, beforeTime, epsg)
+      return self._getCount(row)
+
+# .............................................................................
+   def listGridsets(self, firstRecNum, maxNum, userId, metastring, 
+                    afterTime, beforeTime, epsg, atom):
+      """
+      @summary: Return Matrix Objects or Atoms matching filter conditions 
+      @param firstRecNum: The first record to return, 0 is the first record
+      @param maxNum: Maximum number of records to return
+      @param userId: User (owner) for which to return MatrixColumns.  
+      @param metastring: find matrices containing this word in the metadata
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param atom: True if return objects will be Atoms, False if full objects
+      @return: a list of Matrix atoms or full objects
+      """
+      metamatch = '%{}%'.format(metastring)
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listGridsetAtoms', 
+                                 firstRecNum, maxNum, userId, metamatch, 
+                                 afterTime, beforeTime, epsg)
+         objs = self._getAtoms(rows, idxs, LMServiceType.GRIDSETS)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listGridsetObjects', 
+                                 firstRecNum, maxNum, userId, metamatch, 
+                                 afterTime, beforeTime, epsg)
+         for r in rows:
+            objs.append(self._createGridset(r, idxs))
+      return objs
+
+
 # ...............................................
    def getMatrix(self, mtx, mtxId):
       """
@@ -845,28 +892,51 @@ class Borg(DbPostgresql):
       shpgrid = self._createShapeGrid(row, idxs)
       return shpgrid
    
-# # ...............................................
-#    def findOrInsertLayer(self, layer):
-#       """
-#       @summary Insert or find a layer's metadata in the Borg. 
-#       @param lyr: layer to insert
-#       @return: new or existing EnvironmentalLayer
-#       """
-#       layer.modTime = mx.DateTime.utc().mjd
-#       wkt = None
-#       if layer.epsgcode == SCENARIO_PACKAGE_EPSG:
-#          wkt = layer.getWkt()
-#       lyrmeta = layer.dumpLyrMetadata()
-#       row, idxs = self.executeInsertAndSelectOneFunction(
-#                            'lm_findOrInsertLayer', layer.getId(), 
-#                            layer.getUserId(), layer.squid, layer.verify, layer.name,
-#                            layer.getDLocation(), layer.metadataUrl,
-#                            lyrmeta, layer.dataFormat,  layer.gdalType, layer.ogrType, 
-#                            layer.valUnits, layer.nodataVal, layer.minVal, layer.maxVal, 
-#                            layer.epsgcode, layer.mapUnits, layer.resolution, 
-#                            layer.getCSVExtentString(), wkt, layer.modTime)
-#       newOrExistingLyr = self._createLayer(row, idxs)
-#       return newOrExistingLyr
+# .............................................................................
+   def countShapeGrids(self, userId, cellsides, cellsize, afterTime, beforeTime, epsg):
+      """
+      @summary: Count all Layers matching the filter conditions 
+      @param userId: User (owner) for which to return occurrencesets.  
+      @param cellsides: number of sides of each cell, 4=square, 6=hexagon
+      @param cellsize: size of one side of cell in mapUnits
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @return: a count of OccurrenceSets
+      """
+      row, idxs = self.executeSelectOneFunction('lm_countShapegrids', userId, 
+                              cellsides, cellsize, afterTime, beforeTime, epsg)
+      return self._getCount(row)
+
+# .............................................................................
+   def listShapeGrids(self, firstRecNum, maxNum, userId, cellsides, cellsize, 
+                      afterTime, beforeTime, epsg, atom):
+      """
+      @summary: Return Layer Objects or Atoms matching filter conditions 
+      @param firstRecNum: The first record to return, 0 is the first record
+      @param maxNum: Maximum number of records to return
+      @param userId: User (owner) for which to return shapegrids.  
+      @param cellsides: number of sides of each cell, 4=square, 6=hexagon
+      @param cellsize: size of one side of cell in mapUnits
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by this EPSG code
+      @param atom: True if return objects will be Atoms, False if full objects
+      @return: a list of Layer atoms or full objects
+      """
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listShapegridAtoms', 
+                              firstRecNum, maxNum, userId, cellsides, cellsize, 
+                              afterTime, beforeTime, epsg)
+         objs = self._getAtoms(rows, idxs, LMServiceType.SHAPEGRIDS)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listShapegridObjects', 
+                              firstRecNum, maxNum, userId, cellsides, cellsize, 
+                              afterTime, beforeTime, epsg)
+         for r in rows:
+            objs.append(self._createLayer(r, idxs))
+      return objs
 
 # ...............................................
    def findOrInsertEnvLayer(self, lyr, scenarioId):
@@ -1102,6 +1172,11 @@ class Borg(DbPostgresql):
 
 # ...............................................
    def findTaxonSource(self, taxonSourceName):
+      """
+      @summary: Return the taxonomy source info given the name
+      @param taxonSourceName: unique name of this taxonomy source
+      @return: database id, url, and modification time of this source
+      """
       txSourceId = url = createdate = moddate = None
       if taxonSourceName is not None:
          try:
@@ -1131,6 +1206,15 @@ class Borg(DbPostgresql):
    
 # ...............................................
    def findOrInsertTaxon(self, taxonSourceId, taxonKey, sciName):
+      """
+      @summary: Insert a taxon associated with a TaxonomySource into the 
+                database.  
+      @param taxonSourceId: Lifemapper database ID of the TaxonomySource
+      @param taxonKey: unique identifier of the taxon in the (external) 
+             TaxonomySource 
+      @param sciName: ScientificName object with taxonomy information for this taxon
+      @return: new or existing ScientificName
+      """
       scientificname = None
       currtime = mx.DateTime.gmt().mjd
       usr = squid = kingdom = phylum = cls = ordr = family = genus = None
@@ -1172,6 +1256,15 @@ class Borg(DbPostgresql):
 
 # ...............................................
    def getTaxon(self, taxonSourceId, taxonKey, userId, taxonName):
+      """
+      @summary: Find a taxon associated with a TaxonomySource from database.  
+      @param taxonSourceId: Lifemapper database ID of the TaxonomySource
+      @param taxonKey: unique identifier of the taxon in the (external) 
+             TaxonomySource 
+      @param userId: User id for the scenario to be fetched.
+      @param taxonName: name string for this taxon
+      @return: existing ScientificName
+      """
       row, idxs = self.executeSelectOneFunction('lm_getTaxon', 
                                     taxonSourceId, taxonKey, userId, taxonName)
       scientificname = self._createScientificName(row, idxs)
@@ -1776,7 +1869,7 @@ class Borg(DbPostgresql):
                                  gridsetId, afterTime, beforeTime, epsg, 
                                  afterStatus, beforeStatus)
          for r in rows:
-            objs.append(self._createMatrixColumn(r, idxs))
+            objs.append(self._createLMMatrix(r, idxs))
       return objs
 
 # ...............................................

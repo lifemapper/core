@@ -686,6 +686,143 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterGridset(usr varchar,
+                                                    shpgridlyrid int,
+                                                    meta varchar, 
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid = ' || quote_literal(usr);
+
+   -- filter by Shapegrid layerid
+   IF shpgridlyrid is not null THEN
+      wherecls = wherecls || ' AND  layerId =  ' || shpgridlyrid;
+   END IF;
+
+   -- Metadata
+   IF meta is not null THEN
+      wherecls = wherecls || ' AND grdmetadata like  ' || quote_literal(meta);
+   END IF;
+
+   -- filter by gridset modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND grdstatusModTime >=  ' || quote_literal(aftertime);
+   END IF;
+   
+   -- filter by gridset modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND grdstatusModTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by epsgcode
+   IF epsg is not null THEN
+      wherecls = wherecls || ' AND  grdepsgcode =  ' || epsg;
+   END IF;
+
+   return wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countGridsets(usr varchar,
+                                                    shpgridlyrid int,
+                                                    meta varchar, 
+                                                    aftertime double precision,
+                                                    beforetime double precision,
+                                                    epsg int)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.lm_gridset ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterGridset(usr, shpgridlyrid, 
+                                          meta, aftertime, beforetime, epsg);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listGridsetAtoms(firstRecNum int, maxNum int, 
+                                                     usr varchar,
+                                                     shpgridlyrid int,
+                                                     meta varchar, 
+                                                     aftertime double precision,
+                                                     beforetime double precision,
+                                                     epsg int)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT gridsetId, grdname, grdepsgcode, grdmodTime FROM lm_v3.lm_gridset ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterGridset(usr, shpgridlyrid, 
+                                          meta, aftertime, beforetime, epsg);
+   ordercls = 'ORDER BY grdmodTime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listGridsetObjects(firstRecNum int, maxNum int, 
+                                                       usr varchar,
+                                                       shpgridlyrid int,
+                                                       meta varchar, 
+                                                       aftertime double precision,
+                                                       beforetime double precision,
+                                                       epsg int)
+   RETURNS SETOF lm_v3.lm_gridset AS
+$$
+DECLARE
+   rec lm_v3.lm_gridset;
+   cmd varchar;
+   wherecls varchar;
+   limitcls varchar;
+   ordercls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.lm_gridset ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterGridset(usr, shpgridlyrid, 
+                                          meta, aftertime, beforetime, epsg);
+   ordercls = 'ORDER BY grdmodTime DESC';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+
+$$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Matrix

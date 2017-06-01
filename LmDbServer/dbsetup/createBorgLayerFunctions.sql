@@ -498,12 +498,6 @@ BEGIN
       wherecls = wherecls || ' AND envtypeid =  ' || etypeid;
    END IF;
 
-   -- filter by epsgcode
-   IF epsg is not null THEN
-      wherecls = wherecls || ' AND epsgcode =  ' || epsg;
-   END IF;
-
-
    RETURN wherecls;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
@@ -1269,6 +1263,147 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterShapegrid(usr varchar, 
+                                                       csides int,
+                                                       csize double precision,
+                                                       aftertime double precision, 
+                                                       beforetime double precision, 
+                                                       epsg int)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = 'WHERE userId =  ' || quote_literal(usr) ;
+
+   -- filter by cellsides 
+   IF csides is not null THEN
+      wherecls = wherecls || ' AND cellsides =  ' || quote_literal(csides);
+   END IF;
+
+   -- filter by cellsize 
+   IF csize is not null THEN
+      wherecls = wherecls || ' AND cellsize =  ' || quote_literal(csize);
+   END IF;
+
+   -- filter by modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND lyrmodtime >=  ' || quote_literal(aftertime);
+   END IF;
+
+   -- filter by modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND lyrmodtime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by epsgcode
+   IF epsg is not null THEN
+      wherecls = wherecls || ' AND epsgcode =  ' || epsg;
+   END IF;
+
+   RETURN wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countShapegrids(usr varchar, 
+                                                       csides int,
+                                                       csize double precision,
+                                                       aftertime double precision, 
+                                                       beforetime double precision, 
+                                                       epsg int)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.lm_shapegrid ';
+   
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterShapegrid(usr, csides, csize, 
+                                                   aftertime, beforetime, epsg);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_listShapegridObjects(firstRecNum int, 
+                                                    maxNum int,
+                                                    usr varchar,
+                                                    csides int,
+                                                    csize double precision,
+                                                    aftertime double precision, 
+                                                    beforetime double precision, 
+                                                    epsg int)
+   RETURNS SETOF lm_v3.lm_shapegrid AS
+$$
+DECLARE
+   rec lm_v3.lm_shapegrid;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.lm_shapegrid ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterShapegrid(usr, csides, csize, 
+                                                   aftertime, beforetime, epsg);
+   ordercls = ' ORDER BY lyrmodtime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
+              || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by lyrModTime desc
+CREATE OR REPLACE FUNCTION lm_v3.lm_listShapegridAtoms(firstRecNum int, 
+                                                    maxNum int,
+                                                    usr varchar,
+                                                    csides int,
+                                                    csize double precision,
+                                                    aftertime double precision, 
+                                                    beforetime double precision, 
+                                                    epsg int)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT layerId, lyrname, epsgcode, lyrmodtime FROM lm_v3.lm_shapegrid ';
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterShapegrid(usr, csides, csize, 
+                                                   aftertime, beforetime, epsg);
+   ordercls = ' ORDER BY lyrmodtime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' 
+              || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- LAYER

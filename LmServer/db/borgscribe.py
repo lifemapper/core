@@ -280,6 +280,28 @@ class BorgScribe(LMObject):
       shpgrid = self._borg.getShapeGrid(lyrId, userId, lyrName, epsg)
       return shpgrid
 
+# .............................................................................
+   def countShapeGrids(self, userId=PUBLIC_USER, cellsides=None, cellsize=None, 
+                       afterTime=None, beforeTime=None, epsg=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countShapeGrids()
+      """
+      count = self._borg.countShapeGrids(userId, cellsides, cellsize, afterTime, 
+                                         beforeTime, epsg)
+      return count
+
+# .............................................................................
+   def listShapeGrids(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                      cellsides=None, cellsize=None, 
+                      afterTime=None, beforeTime=None, epsg=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listShapeGrids()
+      """
+      objs = self._borg.listShapeGrids(firstRecNum, maxNum, userId, 
+                        cellsides, cellsize, afterTime, beforeTime, epsg, atom)
+      return objs
+
+
 # ...............................................
    def getLayer(self, lyrId=None, lyrVerify=None, userId=None, lyrName=None, 
                 epsg=None):
@@ -416,20 +438,48 @@ class BorgScribe(LMObject):
       """
       existingGridset = self._borg.getGridset(gridset, fillMatrices)
       return existingGridset
+   
+# .............................................................................
+   def countGridsets(self, userId, metastring, afterTime, beforeTime, epsg):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countGridsets()
+      """
+      count = self._borg.countGridsets(userId, metastring, afterTime, beforeTime, epsg)
+      return count
+
+# .............................................................................
+   def listGridsets(self, firstRecNum, maxNum, userId, matrixType, gcmCode, 
+                    altpredCode, dateCode, metastring, gridsetId, afterTime, 
+                    beforeTime, epsg, afterStatus, beforeStatus, atom):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listGridsets()
+      """
+      objs = self._borg.listGridsets(firstRecNum, maxNum, userId, metastring, 
+                                     afterTime, beforeTime, epsg, atom)
+      return objs
 
 # ...............................................
    def findTaxonSource(self, taxonSourceName):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findTaxonSource()
+      """
       txSourceId, url, moddate = self._borg.findTaxonSource(taxonSourceName)
       return txSourceId, url, moddate
    
 # ...............................................
    def findOrInsertTaxon(self, taxonSourceId=None, taxonKey=None, sciName=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertTaxon()
+      """
       sciname = self._borg.findOrInsertTaxon(taxonSourceId, taxonKey, sciName)
       return sciname
 
 # ...............................................
    def getTaxon(self, taxonSourceId=None, taxonKey=None,
                 userId=None, taxonName=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getTaxon()
+      """
       sciname = self._borg.getTaxon(taxonSourceId, taxonKey, userId, taxonName)
       return sciname
 
@@ -799,3 +849,24 @@ class BorgScribe(LMObject):
          self.log.error('Mapping is available for SDM_MAP, SCENARIO_MAP, RAD_MAP')
       return mapsvc
    
+"""
+from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
+
+usr = 'kubi'
+cellsides = 4
+cellsize = 1
+shplyrid = 135
+
+scribe = BorgScribe(ConsoleLogger())
+scribe.openConnections()
+
+ret = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
+                        afterTime=None, beforeTime=None, epsg=None)
+ret = scribe.listShapeGridObjects(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
+                        afterTime=None, beforeTime=None, epsg=None)
+ret = scribe.listShapeGridAtoms(0,10,userId=usr, cellsides=cellsides, cellsize=None, 
+                        afterTime=None, beforeTime=None, epsg=None)
+
+scribe.closeConnections()
+"""
