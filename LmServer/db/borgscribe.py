@@ -29,6 +29,7 @@ from types import IntType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (ProcessType, LMFormat)
+from LmServer.base.layerset import MapLayerSet
 from LmServer.base.taxon import ScientificName
 from LmServer.db.catalog_borg import Borg
 from LmServer.db.connect import HL_NAME
@@ -39,6 +40,7 @@ from LmServer.common.localconstants import (CONNECTION_PORT, DB_HOSTNAME,
 from LmServer.legion.envlayer import EnvLayer, EnvType
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.sdmproj import SDMProjection
+from LmServer.common.datalocator import EarlJr
 
 # .............................................................................
 class BorgScribe(LMObject):
@@ -753,6 +755,25 @@ class BorgScribe(LMObject):
       return success
 
 # ...............................................
+   def getMapServiceForSDMOccurrence(self, occLyrOrId):
+      """
+      @param mapFilename: absolute path of mapfile
+      @return: LmServer.base.layerset.MapLayerSet containing objects for this
+               a map service
+      """
+      try:
+         int(occLyrOrId)
+      except:
+         occLyrOrId = occLyrOrId.getId()
+      occ = self.getOccurrenceSet(occId=occLyrOrId)
+      lyrs = self.listSDMProjects(0,500, occsetId=occLyrOrId, atom=False)
+      lyrs.append(occ)
+      mapname = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
+                                        usr=occ.getUserId())
+      mapsvc = MapLayerSet(mapname, layers=lyrs, userId=occ.getUserId())
+      return mapsvc
+
+# ...............................................
    def getMapServiceFromMapFilename(self, mapFilename):
       """
       @param mapFilename: absolute path of mapfile
@@ -766,12 +787,12 @@ class BorgScribe(LMObject):
       prefix = mapname.split(NAME_SEPARATOR)[0]
       filetype = FileFix.getFiletypeFromName(prefix=prefix)
       if filetype == LMFileType.SDM_MAP:
-         pass
-      elif gridsetId is not None:
-         pass
-      elif scencode is not None:
-         pass
+         mapsvc = self.getMapServiceForSDMOccurrence(occsetId)
+      elif filetype == LMFileType.RAD_MAP:
+         self.log.error('Mapping is not yet implemented for RAD_MAP')
+      elif filetype == LMFileType.SCENARIO_MAP:
+         mapsvc = self.getScenario(scencode, user=usr, fillLayers=True)
       else:
-         pass
-      return mapFilename
+         self.log.error('Mapping is available for SDM_MAP, SCENARIO_MAP, RAD_MAP')
+      return mapsvc
    
