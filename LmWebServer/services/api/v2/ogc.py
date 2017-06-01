@@ -372,5 +372,7 @@ earljr = EarlJr(scribe=scribe)
 fileType, scencode, occsetId, gridsetId, usr, ancillary, epsg = earljr._parseMapname(mapname) 
 mapFilename = earljr.getMapFilenameFromMapname(mapname)
 
+mapSvc = scribe.getMapServiceFromMapFilename(mapFilename)
+
 
 """
