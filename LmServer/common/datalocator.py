@@ -602,7 +602,7 @@ class EarlJr(LMObject):
    
 # ...............................................
    def _parseMapname(self, mapname):
-      scencode = occsetId = usr = epsg = None
+      scencode = occsetId = usr = epsg = gridsetId = None
       ancillary = False
       # Remove extension
       if mapname.endswith(LMFormat.MAP.ext):
