@@ -360,7 +360,7 @@ class MapService(LmService):
 """
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.log import ConsoleLogger
-from LmServer.common.lmconstants import FileFix, LMFileType
+from LmServer.common.lmconstants import FileFix, LMFileType, MAP_TEMPLATE
 from LmServer.db.borgscribe import BorgScribe
 
 mapname = 'data_4'
@@ -373,6 +373,6 @@ fileType, scencode, occsetId, gridsetId, usr, ancillary, epsg = earljr._parseMap
 mapFilename = earljr.getMapFilenameFromMapname(mapname)
 
 mapSvc = scribe.getMapServiceFromMapFilename(mapFilename)
-
+mapSvc.writeMap(MAP_TEMPLATE)
 
 """

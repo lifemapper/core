@@ -286,7 +286,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
    def __init__(self, mapname, title=None, 
                 url=None, dlocation=None, keywords=None, epsgcode=None, layers=None, 
                 userId=None, dbId=None, createTime=None, modTime=None, 
-                serviceType=LMServiceType.LAYERSETS):
+                serviceType=LMServiceType.LAYERSETS, mapType=LMFileType.OTHER_MAP):
       """
       @summary Constructor for the LayerSet class
       @param name: mapname or code for this layerset
@@ -335,7 +335,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       """
       @summary: Full mapfile with path, containing this layer.  
       """
-      fname = self._earlJr. createFilename(LMFileType.OTHER_MAP, usr=self._userId, 
+      fname = self._earlJr.createFilename(self.mapType, usr=self._userId, 
                                            epsg=self._epsg)
       return fname
 
@@ -361,6 +361,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
 # ...............................................
    @property
    def mapFilename(self):
+      if self._mapFilename is None:
+         self.setLocalMapFilename()
       return self._mapFilename
    
 # ...............................................
@@ -381,6 +383,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       @param template: Template mapfile 
       @return a string representing a mapfile 
       """
+      self.setLocalMapFilename()
       # if mapfile does not exist, create service from database, then write file
       if not(os.path.exists(self._mapFilename)):            
          try:
