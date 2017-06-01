@@ -57,10 +57,9 @@ class _Layer(LMSpatialObject, ServiceObject):
                 squid=None, ident=None, verify=None, dlocation=None, 
                 metadata={}, dataFormat=None, gdalType=None, ogrType=None,
                 valUnits=None, valAttribute=None, 
-                nodataVal=None, minVal=None, maxVal=None, 
-                mapunits=None, resolution=None, 
+                nodataVal=None, minVal=None, maxVal=None, resolution=None, 
                 # LMSpatialObject
-                bbox=None,
+                bbox=None, mapunits=None, 
                 # ServiceObject
                 svcObjId=None, serviceType=LMServiceType.LAYERS, 
                 metadataUrl=None, parentMetadataUrl=None, modTime=None):
@@ -91,14 +90,11 @@ class _Layer(LMSpatialObject, ServiceObject):
       @param nodataVal: Value indicating feature/pixel does not contain data
       @param minVal: Smallest value in data
       @param maxVal: Largest value in data
-      @param mapunits: mapunits of measurement. These are keywords as used in 
-                    mapserver, choice of [feet|inches|kilometers|meters|miles|dd],
-                    described in http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
       @param resolution: resolution of the data - pixel size in @mapunits
       """
       if svcObjId is None:
          svcObjId = lyrId
-      LMSpatialObject.__init__(self, epsgcode, bbox)
+      LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
       ServiceObject.__init__(self,  userId, svcObjId, serviceType, 
                              metadataUrl=metadataUrl, 
                              parentMetadataUrl=parentMetadataUrl, 
@@ -114,14 +110,11 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._dataFormat = dataFormat
       self._gdalType = gdalType
       self._ogrType = ogrType
-      self._setUnits(mapunits)
       self.valUnits = valUnits
       self._valAttribute = valAttribute
       self.nodataVal = nodataVal
       self.minVal = minVal 
       self.maxVal = maxVal
-      self._mapunits = None 
-      self._setUnits(mapunits)
       self.resolution = resolution
       self._dlocation = None
       self.setDLocation(dlocation)
@@ -179,28 +172,28 @@ class _Layer(LMSpatialObject, ServiceObject):
       return self._ogrType
 
    
-# ...............................................
-   def _setUnits(self, mapunits):
-      """
-      @summary Set the units parameter for the layer
-      @param mapunits: The new units type
-      @raise LMError: If the new units type is not one of the pre-determined 
-               legal unit types (feet, inches, kilometers, meters, miles, dd, ds)
-      """
-      if mapunits is None or mapunits == '':
-         self._mapunits = ''
-      else:
-         mapunits = mapunits.lower()
-         try:
-            LegalMapUnits.index(mapunits)
-         except:
-            raise LMError(['Illegal Unit type', mapunits])
-         else:
-            self._mapunits = mapunits
-   
-   @property
-   def mapUnits(self):
-      return self._mapunits
+# # ...............................................
+#    def _setUnits(self, mapunits):
+#       """
+#       @summary Set the units parameter for the layer
+#       @param mapunits: The new units type
+#       @raise LMError: If the new units type is not one of the pre-determined 
+#                legal unit types (feet, inches, kilometers, meters, miles, dd, ds)
+#       """
+#       if mapunits is None or mapunits == '':
+#          self._mapunits = ''
+#       else:
+#          mapunits = mapunits.lower()
+#          try:
+#             LegalMapUnits.index(mapunits)
+#          except:
+#             raise LMError(['Illegal Unit type', mapunits])
+#          else:
+#             self._mapunits = mapunits
+#    
+#    @property
+#    def mapUnits(self):
+#       return self._mapunits
 
 # ...............................................
    def readData(self, dlocation, driverType):
@@ -522,8 +515,7 @@ class Raster(_Layer):
                 metadata={}, dataFormat=LMFormat.getDefaultGDAL().driver, 
                 gdalType=None, 
                 valUnits=None, nodataVal=None, minVal=None, maxVal=None, 
-                mapunits=None, resolution=None, 
-                bbox=None,
+                mapunits=None, resolution=None, bbox=None,
                 svcObjId=None, serviceType=LMServiceType.LAYERS, 
                 metadataUrl=None, parentMetadataUrl=None, modTime=None):
       """
@@ -555,8 +547,7 @@ class Raster(_Layer):
                 metadata=metadata, dataFormat=dataFormat, gdalType=gdalType, 
                 valUnits=valUnits, valAttribute='pixel', 
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
-                mapunits=mapunits, resolution=resolution, 
-                bbox=bbox,
+                mapunits=mapunits, resolution=resolution, bbox=bbox,
                 svcObjId=svcObjId, serviceType=serviceType, 
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
@@ -1063,8 +1054,7 @@ class Vector(_Layer):
                 metadata=metadata, dataFormat=dataFormat, ogrType=ogrType, 
                 valUnits=valUnits, valAttribute=valAttribute, 
                 nodataVal=nodataVal, minVal=minVal, maxVal=maxVal, 
-                mapunits=mapunits, resolution=resolution, 
-                bbox=bbox,
+                mapunits=mapunits, resolution=resolution, bbox=bbox,
                 svcObjId=svcObjId, serviceType=serviceType, 
                 metadataUrl=metadataUrl, parentMetadataUrl=parentMetadataUrl, 
                 modTime=modTime)
