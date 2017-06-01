@@ -371,10 +371,12 @@ class LMFileType:
       return False
 
    @staticmethod
+   def mapTypes():
+      return [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, LMFileType.SDM_MAP, 
+              LMFileType.RAD_MAP, LMFileType.ANCILLARY_MAP]
+   @staticmethod
    def isMap(rtype):
-      if rtype in [LMFileType.OTHER_MAP, LMFileType.SCENARIO_MAP, 
-                   LMFileType.SDM_MAP, LMFileType.RAD_MAP, 
-                   LMFileType.ANCILLARY_MAP]:
+      if rtype in LMFileType.mapTypes():
          return True
       return False
 
@@ -481,14 +483,14 @@ class FileFix:
                 LMFileType.MCPA_OUTPUTS: LMFormat.JSON.ext
    }
    @staticmethod
-   def getFiletypeFromName(prefix=None, ext=None):
+   def getMaptypeFromName(prefix=None, ext=None):
       if prefix is not None:
-         for ftype, fprefix in FileFix.PREFIX.iteritems():
-            if fprefix == prefix:
+         for ftype in LMFileType.mapTypes():
+            if FileFix.PREFIX[ftype] == prefix:
                return ftype
       elif ext is not None:
-         for ftype, fext in FileFix.EXTENSION:
-            if fext == ext:
+         for ftype in LMFileType.mapTypes():
+            if FileFix.EXTENSION[ftype] == ext:
                return ftype
       return None
    

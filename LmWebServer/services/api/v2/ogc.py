@@ -85,7 +85,8 @@ class MapService(LmService):
       @param width: The width (in pixels) of the returned map
       """
       self.mapName = mapName
-      mapFilename = EarlJr().getMapFilenameFromMapname(mapName)
+      earljr = EarlJr(scribe=self.scribe)
+      mapFilename = earljr.getMapFilenameFromMapname(mapName)
       
       if not os.path.exists(mapFilename):
          mapSvc = self.scribe.getMapServiceFromMapFilename(mapFilename)
@@ -356,3 +357,12 @@ class MapService(LmService):
       elif (b < r and b < g):
          return 'greenred'
       
+"""
+ from LmServer.common.datalocator import EarlJr
+from LmServer.common.log import ConsoleLogger
+from LmServer.db.borgscribe import BorgScribe
+scribe = BorgScribe(ConsoleLogger())
+scribe.openConnections()
+mapname = 'data_4'
+mapFilename = EarlJr().getMapFilenameFromMapname(mapname)
+"""
