@@ -476,8 +476,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
                                                            mbbox[2], mbbox[3])
       mapstr = mapstr.replace('##_EXTENT_##', boundstr)
       mapunits = SCENARIO_PACKAGE_MAPUNITS
-#       if self.layers and len(self.layers) > 0:
-#          mapunits = self.layers[0].mapUnits
+      if self.layers and len(self.layers) > 0:
+         mapunits = self.layers[0].mapUnits
       mapstr = mapstr.replace('##_UNITS_##',  mapunits)
 
       mapstr = mapstr.replace('##_SYMBOLSET_##',  SYMBOL_FILENAME)

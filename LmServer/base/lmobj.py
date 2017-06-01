@@ -148,6 +148,12 @@ class LMSpatialObject(LMObject):
             self._mapunits = mapunits
    
    def _getUnits(self):
+      """
+      @todo: add mapunits to Occ table (and Scenario?), 
+             handle better on construction.
+      """
+      if self._mapunits is None and self._epsg == 4326:
+         self._mapunits = 'dd'
       return self._mapunits
 
    mapUnits = property(_getUnits, _setUnits)
