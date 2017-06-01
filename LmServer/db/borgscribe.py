@@ -770,8 +770,8 @@ class BorgScribe(LMObject):
       lyrs.append(occ)
       mapname = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
                                         usr=occ.getUserId())
-      mapsvc = MapLayerSet(mapname, layers=lyrs, userId=occ.getUserId(), 
-                           mapType=LMFileType.SDM_MAP)
+      mapsvc = MapLayerSet(mapname, layers=lyrs, dbId=occ.getId(), 
+                           userId=occ.getUserId(), mapType=LMFileType.SDM_MAP)
       return mapsvc
 
 # ...............................................

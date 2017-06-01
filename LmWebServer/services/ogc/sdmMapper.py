@@ -173,11 +173,11 @@ class MapConstructor(LMObject):
 # Private functions
 # .............................................................................
 # ...............................................
-   def _getAbsoluteMapFilenameAndUser(self, mapname):
+   def _getAbsoluteMapFilename(self, mapname):
       mapFname = None
       if mapname is not None:
-         mapFname, usr = EarlJr().getMapFilenameAndUserFromMapname(mapname)
-      return mapFname, usr
+         mapFname = EarlJr().getMapFilenameFromMapname(mapname)
+      return mapFname
 
 # ...............................................
    def _findMapValues(self, args):
@@ -207,7 +207,7 @@ class MapConstructor(LMObject):
 
       # Add mapname with full path we have not yet appended
       if mapname is not None:
-         mapFilename, usr = self._getAbsoluteMapFilenameAndUser(mapname)
+         mapFilename = self._getAbsoluteMapFilename(mapname)
          self._appendToQuery('map', mapname)
       else:
          mapFilename = None
