@@ -483,7 +483,7 @@ class FileFix:
    @staticmethod
    def getFiletypeFromName(prefix=None, ext=None):
       if prefix is not None:
-         for ftype, fprefix in FileFix.PREFIX:
+         for ftype, fprefix in FileFix.PREFIX.iteritems():
             if fprefix == prefix:
                return ftype
       elif ext is not None:
