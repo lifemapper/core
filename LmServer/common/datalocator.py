@@ -276,7 +276,7 @@ class EarlJr(LMObject):
       if not mapname.endswith(LMFormat.MAP.ext):
          mapname = mapname+LMFormat.MAP.ext
       mapfname = os.path.join(pth, mapname)
-      return mapfname, usr
+      return mapfname
    
 # ...............................................
    def constructLMDataUrl(self, serviceType, objectId, interface, parentMetadataUrl=None):

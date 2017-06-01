@@ -368,8 +368,9 @@ mapname = 'data_4'
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
 earljr = EarlJr(scribe=scribe)
-mapFilename = EarlJr().getMapFilenameFromMapname(mapname)
 
+fileType, scencode, occsetId, gridsetId, usr, ancillary, epsg = earljr._parseMapname(mapname) 
+mapFilename = earljr.getMapFilenameFromMapname(mapname)
 
 
 """
