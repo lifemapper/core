@@ -298,13 +298,15 @@ class MapLayerSet(_LayerSet, ServiceObject):
       @param epsgcode: (optional) integer representing the native EPSG code of this layerset
       @param layers: (optional) list of layers 
       @param userId: id for the owner of these data
-      @param dbid: database id of the object 
+      @param dbid: database id of the object, occsetId for SDM_MAP layersets, 
+             gridsetId for RAD_MAP layersets, scenCode for Scenarios 
       """
       _LayerSet.__init__(self, mapname, title=title, keywords=keywords, 
                          epsgcode=epsgcode, layers=layers)
       ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url, 
                              modTime=modTime)
       self._mapFilename = dlocation
+      self._mapType = mapType
       self._mapPrefix = None
 
 # # ...............................................         
@@ -335,8 +337,21 @@ class MapLayerSet(_LayerSet, ServiceObject):
       """
       @summary: Full mapfile with path, containing this layer.  
       """
-      fname = self._earlJr.createFilename(self.mapType, usr=self._userId, 
-                                           epsg=self._epsg)
+      fname = None
+      if self._mapType == LMFileType.SDM_MAP:
+         fname = self._earlJr.createFilename(self._mapType, 
+                                             occsetId=self.getId(), 
+                                             usr=self._userId)
+      elif self._mapType == LMFileType.RAD_MAP:
+         fname = self._earlJr.createFilename(self._mapType, 
+                                             gridsetId=self.getId(),
+                                             usr=self._userId)
+      elif self._mapType == LMFileType.OTHER_MAP:
+         fname = self._earlJr.createFilename(self._mapType, 
+                                             usr=self._userId, 
+                                             epsg=self._epsg)
+      else:
+         print('Unsupported mapType {}'.format(self._mapType))
       return fname
 
 # ...............................................
