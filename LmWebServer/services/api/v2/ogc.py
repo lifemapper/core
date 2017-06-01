@@ -175,7 +175,7 @@ class MapService(LmService):
       if point is not None: 
          self._addDataPoint(point, color)
       mapscript.msIO_installStdoutToBuffer()
-      result = map.OWSDispatch( self.owsreq )
+      result = self.mapObj.OWSDispatch( self.owsreq )
       content_type = mapscript.msIO_stripStdoutBufferContentType()
       # Get the image through msIO_getStdoutBufferBytes which uses GDAL, 
       # which is needed to process Float32 geotiff images
