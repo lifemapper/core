@@ -129,6 +129,10 @@ QUERY_PARAMETERS = {
       'name' : 'isUltrametric',
       'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
    },
+   'keyword' : {
+      'name' : 'keyword',
+      'processIn' : lambda x: [float(x)]
+   },
    'layer' : {
       'name' : 'layer'
    },
@@ -146,6 +150,10 @@ QUERY_PARAMETERS = {
    },
    'mapname' : {
       'name' : 'mapName'
+   },
+   'matrixtype' : {
+      'name' : 'matrixType',
+      'processIn' : int
    },
    'metastring' : {
       'name' : 'metaString'
