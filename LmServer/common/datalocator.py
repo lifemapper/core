@@ -604,7 +604,7 @@ class EarlJr(LMObject):
          
       parts = mapname.split(NAME_SEPARATOR)
       
-      filetype = FileFix.getMaptypeFromName(prefix=parts[0])
+      fileType = FileFix.getMaptypeFromName(prefix=parts[0])
 
       # RAD_MAP mapname = rad_<gridsetId>
       if parts[0] == MapPrefix.SCEN:

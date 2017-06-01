@@ -358,11 +358,18 @@ class MapService(LmService):
          return 'greenred'
       
 """
- from LmServer.common.datalocator import EarlJr
+from LmServer.common.datalocator import EarlJr
 from LmServer.common.log import ConsoleLogger
+from LmServer.common.lmconstants import FileFix, LMFileType
 from LmServer.db.borgscribe import BorgScribe
+
+mapname = 'data_4'
+
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
-mapname = 'data_4'
+earljr = EarlJr(scribe=scribe)
 mapFilename = EarlJr().getMapFilenameFromMapname(mapname)
+
+
+
 """

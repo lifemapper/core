@@ -412,11 +412,14 @@ SPLOTCH_PREFIX = 'splotch'
 PAMSUM_PREFIX = 'pamsum'
 
 class FileFix:
-   PREFIX = {LMFileType.OTHER_MAP: MapPrefix.USER,
-             LMFileType.TMP_JSON: None,
-             LMFileType.ENVIRONMENTAL_LAYER: None,
+   PREFIX = {LMFileType.ANCILLARY_MAP: MapPrefix.ANC,
+             LMFileType.OTHER_MAP: MapPrefix.USER,
              LMFileType.SCENARIO_MAP: MapPrefix.SCEN,
              LMFileType.SDM_MAP: MapPrefix.SDM,
+             LMFileType.RAD_MAP: MapPrefix.RAD,
+             
+             LMFileType.TMP_JSON: None,
+             LMFileType.ENVIRONMENTAL_LAYER: None,
              LMFileType.SDM_MAKEFLOW_FILE: OCC_NAME_PREFIX,
              LMFileType.OCCURRENCE_FILE: OCC_PREFIX,
              LMFileType.OCCURRENCE_RAW_FILE: OCC_PREFIX,
@@ -447,7 +450,12 @@ class FileFix:
              LMFileType.PADDED_PAM: 'ppam',
              LMFileType.MCPA_OUTPUTS: 'mcpa'}
    # Postfix
-   EXTENSION = {LMFileType.OTHER_MAP: LMFormat.MAP.ext,
+   EXTENSION = {LMFileType.ANCILLARY_MAP: LMFormat.MAP.ext,
+                LMFileType.OTHER_MAP: LMFormat.MAP.ext,
+                LMFileType.SCENARIO_MAP: LMFormat.MAP.ext,
+                LMFileType.SDM_MAP: LMFormat.MAP.ext,
+                LMFileType.RAD_MAP: LMFormat.MAP.ext,
+             
                 LMFileType.TMP_JSON: LMFormat.JSON.ext,
                 LMFileType.ENVIRONMENTAL_LAYER: LMFormat.GTIFF.ext,
                 LMFileType.SCENARIO_MAP: LMFormat.MAP.ext,
