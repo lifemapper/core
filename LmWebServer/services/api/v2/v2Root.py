@@ -33,12 +33,14 @@
 import cherrypy
 
 from LmWebServer.services.api.v2.envLayer import EnvLayerService
+from LmWebServer.services.api.v2.gridset import GridSetService
 from LmWebServer.services.api.v2.layer import LayerService
 from LmWebServer.services.api.v2.occurrence import OccurrenceLayerService
 from LmWebServer.services.api.v2.ogc import MapService
-from LmWebServer.services.api.v2.sdmProject import SdmProjectService
 from LmWebServer.services.api.v2.scenario import ScenarioService
+from LmWebServer.services.api.v2.sdmProject import SdmProjectService
 from LmWebServer.services.api.v2.shapegrid import ShapeGridService
+from LmWebServer.services.api.v2.tree import TreeService
 
 # .............................................................................
 @cherrypy.expose
@@ -47,11 +49,13 @@ class ApiRootV2(object):
    @summary: Top level class containing Lifemapper services V2
    """
    envlayer = EnvLayerService()
+   gridset = GridSetService()
    layer = LayerService()
    occurrence = OccurrenceLayerService()
-   projection = SdmProjectService()
    scenario = ScenarioService()
+   sdmproject = SdmProjectService()
    shapegrid = ShapeGridService()
+   tree = TreeService()
    
    ogc = MapService()
 
