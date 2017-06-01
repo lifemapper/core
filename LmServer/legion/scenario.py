@@ -64,6 +64,7 @@ class Scenario(MapLayerSet):
       MapLayerSet.__init__(self, code, 
                            url=metadataUrl, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
+                           bbox=bbox, mapunits=units,
                            serviceType=LMServiceType.SCENARIOS,
                            mapType=LMFileType.SCENARIO_MAP)
       # aka MapLayerSet.name    
@@ -78,9 +79,9 @@ class Scenario(MapLayerSet):
       # Private attributes
       self._scenarioId = scenarioid
       self._setLayers(layers)
-      self._setUnits(units)
+#       self._setUnits(units)
       self._setRes(res) 
-      self._setBBox(bbox)
+#       self._setBBox(bbox)
       self.setMapPrefix()
       self.setLocalMapFilename()
             

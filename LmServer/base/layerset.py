@@ -50,7 +50,7 @@ class _LayerSet(LMSpatialObject):
    @todo: extend as collections.MutableSequence subclass
    """   
    def __init__(self, name, title=None, keywords=None, epsgcode=None, 
-                layers=None):
+                layers=None, bbox=None, mapunits=None):
       """
       @summary Constructor for the LayerSet class
       @param name: name or code for this layerset
@@ -59,7 +59,7 @@ class _LayerSet(LMSpatialObject):
       @param epsgcode: (optional) integer representing the native EPSG code of this layerset
       @param layers: (optional) list of layers 
       """
-      LMSpatialObject.__init__(self, epsgcode, None)
+      LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
 
       ## Name or code identifying this set of layers
       self.name = name
@@ -72,7 +72,16 @@ class _LayerSet(LMSpatialObject):
       ## Also sets epsg and bbox
       ## If no layers, initializes to empty list 
       self._setLayers(layers)
-      
+
+   def _getUnits(self):
+      """
+      @todo: add mapunits to Occ table (and Scenario?), 
+             handle better on construction.
+      """
+      if self._mapunits is None and len(self._layers) > 0:
+         self._setUnits(self._layers[0].mapUnits)
+      return self._mapunits
+
 # ...............................................
    def getSRS(self):
       srs = self.createSRSFromEPSG()
@@ -286,6 +295,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
    def __init__(self, mapname, title=None, 
                 url=None, dlocation=None, keywords=None, epsgcode=None, layers=None, 
                 userId=None, dbId=None, createTime=None, modTime=None, 
+                bbox=None, mapunits=None,
                 serviceType=LMServiceType.LAYERSETS, mapType=LMFileType.OTHER_MAP):
       """
       @summary Constructor for the LayerSet class
@@ -302,7 +312,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
              gridsetId for RAD_MAP layersets, scenCode for Scenarios 
       """
       _LayerSet.__init__(self, mapname, title=title, keywords=keywords, 
-                         epsgcode=epsgcode, layers=layers)
+                         epsgcode=epsgcode, layers=layers, 
+                         bbox=bbox, mapunits=mapunits)
       ServiceObject.__init__(self, userId, dbId, serviceType, metadataUrl=url, 
                              modTime=modTime)
       self._mapFilename = dlocation
@@ -473,9 +484,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
          boundstr = '  %.2f  %.2f  %.2f  %.2f' % (mbbox[0], mbbox[1],
                                                            mbbox[2], mbbox[3])
       mapstr = mapstr.replace('##_EXTENT_##', boundstr)
-      mapunits = SCENARIO_PACKAGE_MAPUNITS
-#       if self.layers and len(self.layers) > 0:
-#          mapunits = self.layers[0].mapUnits
+      mapunits = self.mapUnits
       mapstr = mapstr.replace('##_UNITS_##',  mapunits)
 
       mapstr = mapstr.replace('##_SYMBOLSET_##',  SYMBOL_FILENAME)

@@ -29,6 +29,7 @@ from osgeo.osr import CoordinateTransformation, SpatialReference
 from types import TupleType, ListType, FloatType, IntType, StringType, UnicodeType
 
 from LmBackend.common.lmobj import LMObject, LMError
+from LmCommon.common.lmconstants import LegalMapUnits
 from LmServer.common.localconstants import SMTP_SENDER
 
 # ............................................................................
@@ -53,17 +54,22 @@ class LMSpatialObject(LMObject):
    Class to ensure that bounding boxes are consistent and logical
    """
    
-   def __init__(self, epsgcode, bbox):
+   def __init__(self, epsgcode, bbox, mapunits):
       """
       @summary Constructor for the LMSpatialObject class
       @param epsgcode: Integer code for EPSG indicating the SRS to use.
       @param bbox: Sequence in the form (minX, minY, maxX, maxY)
-                   or string in the form 'minX, minY, maxX, maxY'
+             or string in the form 'minX, minY, maxX, maxY'
+      @param mapunits: mapunits of measurement. These are keywords as used in 
+             mapserver, choice of LmCommon.common.lmconstants.LegalMapUnits
+             described in http://mapserver.gis.umn.edu/docs/reference/mapfile/mapObj)
       """
       self._epsg = None
       self._setEPSG(epsgcode)
       self._bbox = None
       self._setBBox(bbox)
+      self._mapunits = None 
+      self._setUnits(mapunits)
       LMObject.__init__(self)
 
 # ...............................................
@@ -122,6 +128,36 @@ class LMSpatialObject(LMObject):
             raise LMError('Invalid EPSG code {} type {}'.format(epsg, type(epsg)))
    epsgcode = property(_getEPSG, _setEPSG)
          
+# ...............................................
+   def _setUnits(self, mapunits):
+      """
+      @summary Set the units parameter for the layer
+      @param mapunits: The new units type
+      @raise LMError: If the new units type is not one of the pre-determined 
+               legal unit types (feet, inches, kilometers, meters, miles, dd, ds)
+      """
+      if mapunits is None or mapunits == '':
+         self._mapunits = None
+      else:
+         mapunits = mapunits.lower()
+         try:
+            LegalMapUnits.index(mapunits)
+         except:
+            raise LMError(['Illegal Unit type', mapunits])
+         else:
+            self._mapunits = mapunits
+   
+   def _getUnits(self):
+      """
+      @todo: REMOVE THIS HACK!
+             Add mapunits to Occ table (and Scenario?), handle on construction.
+      """
+      if self._mapunits is None and self._epsg == 4326:
+         self._mapunits = 'dd'
+      return self._mapunits
+
+   mapUnits = property(_getUnits, _setUnits)
+            
 # ..............................................................................
    def getHeightWidthByBBox(self, bbox=None, limitWidth=1000):
       if bbox is None or len(bbox) != 4:
