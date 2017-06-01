@@ -113,9 +113,21 @@ QUERY_PARAMETERS = {
    'gcmcode' : {
       'name' : 'gcmCode',
    },
+   'hasbranchlengths' : {
+      'name' : 'hasBranchLengths',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
    'height' : {
       'name' : 'height',
       'processIn' : int
+   },
+   'isbinary' : {
+      'name' : 'isBinary',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
+   },
+   'isultrametric' : {
+      'name' : 'isUltrametric',
+      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
    },
    'layer' : {
       'name' : 'layer'
@@ -134,6 +146,9 @@ QUERY_PARAMETERS = {
    },
    'mapname' : {
       'name' : 'mapName'
+   },
+   'metastring' : {
+      'name' : 'metaString'
    },
    'modelscenariocode' : {
       'name' : 'modelScenarioCode'
@@ -161,6 +176,9 @@ QUERY_PARAMETERS = {
    },
    'pathscenarioid' : {
       'name' : 'pathScenarioId'
+   },
+   'pathtreeid' : {
+      'name' : 'pathTreeId'
    },
    'projectionscenariocode' : {
       'name' : 'projectionScenarioCode'
@@ -203,6 +221,9 @@ QUERY_PARAMETERS = {
    'transparent' : {
       'name' : 'transparent',
       #'processIn' : lambda x: bool(x.lower() == 'true')
+   },
+   'treename' : {
+      'name' : 'name' # Map to 'name' for processing
    },
    'version' : {
       'name' : 'version'

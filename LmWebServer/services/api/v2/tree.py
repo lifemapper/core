@@ -48,9 +48,8 @@ class TreeService(LmService):
       """
       @summary: Attempts to delete a tree
       @param pathTreeId: The id of the tree to delete
-      @todo: This needs to be updated to match scribe functions
       """
-      tree = self.scribe.getTree(pathTreeId)
+      tree = self.scribe.getTree(treeId=pathTreeId)
 
       if tree is None:
          raise cherrypy.HTTPError(404, "Tree {} not found".format(pathTreeId))
@@ -72,8 +71,9 @@ class TreeService(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, pathTreeId=None, afterTime=None, beforeTime=None, 
-           limit=100, offset=0, public=None):
+   def GET(self, pathTreeId=None, limit=100, offset=0, public=None, name=None, 
+           isBinary=None, isUltrametric=None, hasBranchLengths=None, 
+           metaString=None, afterTime=None, beforeTime=None):
       """
       @summary: Performs a GET request.  If a tree id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -91,11 +91,16 @@ class TreeService(LmService):
       
       if pathTreeId is None:
          return self._listTrees(userId, afterTime=afterTime, 
-                                beforeTime=beforeTime, limit=limit, 
-                                offset=offset)
+                     beforeTime=beforeTime, isBinary=isBinary, 
+                     isUltrametric=isUltrametric, 
+                     hasBranchLengths=hasBranchLengths, limit=limit, 
+                     metaString=metaString, name=name, offset=offset)
       elif pathTreeId.lower() == 'count':
          return self._countTrees(userId, afterTime=afterTime, 
-                                      beforeTime=beforeTime)
+                     beforeTime=beforeTime, isBinary=isBinary, 
+                     isUltrametric=isUltrametric, 
+                     hasBranchLengths=hasBranchLengths, metaString=metaString, 
+                     name=name)
       else:
          return self._getTree(pathTreeId)
       
@@ -111,7 +116,9 @@ class TreeService(LmService):
       return updatedTree
    
    # ................................
-   def _countTrees(self, userId, afterTime=None, beforeTime=None):
+   def _countTrees(self, userId, afterTime=None, beforeTime=None, 
+                   isBinary=None, isUltrametric=None, hasBranchLengths=None, 
+                   metaString=None, name=None):
       """
       @summary: Count tree objects matching the specified criteria
       @param userId: The user to count trees for.  Note that this may not 
@@ -121,9 +128,12 @@ class TreeService(LmService):
       @param beforeTime: (optional) Return trees modified before this time 
                             (Modified Julian Day)
       """
-      treeCount = self.scribe.countShapegrids(userId=userId, 
-                                              afterTime=afterTime, 
-                                              beforeTime=beforeTime)
+      treeCount = self.scribe.countTrees(userId=userId, name=name, isBinary=isBinary, 
+                                        isUltrametric=isUltrametric, 
+                                        hasBranchLengths=hasBranchLengths, 
+                                        metastring=metaString, 
+                                        afterTime=afterTime, 
+                                        beforeTime=beforeTime)
       # Format return
       # Set headers
       return {"count" : treeCount}
@@ -133,7 +143,7 @@ class TreeService(LmService):
       """
       @summary: Attempt to get a tree
       """
-      tree = self.scribe.getTree(pathTreeId)
+      tree = self.scribe.getTree(greeId=pathTreeId)
       if tree is None:
          raise cherrypy.HTTPError(404, 
                         'Tree {} was not found'.format(pathTreeId))
@@ -145,8 +155,9 @@ class TreeService(LmService):
                      self.getUserId(), pathTreeId))
    
    # ................................
-   def _listTrees(self, userId, afterTime=None, beforeTime=None, limit=100, 
-                  offset=0):
+   def _listTrees(self, userId, afterTime=None, beforeTime=None, isBinary=None, 
+                     isUltrametric=None, hasBranchLengths=None, limit=100, 
+                     metaString=None, name=None, offset=0):
       """
       @summary: List tree objects matching the specified criteria
       @param userId: The user to count trees for.  Note that this may not 
@@ -159,7 +170,10 @@ class TreeService(LmService):
       @param offset: (optional) Offset the returned trees by this number
       """
       treeAtoms = self.scribe.listTrees(offset, limit, userId=userId, 
-                                    afterTime=afterTime, beforeTime=beforeTime)
-      # Format return
-      # Set headers
+                                        name=name, isBinary=isBinary, 
+                                        isUltrametric=isUltrametric, 
+                                        hasBranchLengths=hasBranchLengths, 
+                                        metastring=metaString, 
+                                        afterTime=afterTime, 
+                                        beforeTime=beforeTime)
       return treeAtoms
