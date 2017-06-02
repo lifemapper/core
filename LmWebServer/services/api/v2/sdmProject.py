@@ -29,6 +29,7 @@
 """
 
 import cherrypy
+from mx.DateTime import gmt
 
 from LmCommon.common.lmconstants import JobStatus
 from LmServer.common.localconstants import PUBLIC_USER
@@ -38,6 +39,7 @@ from LmServer.legion.sdmproj import SDMProjection
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
+from LmWebServer.services.common.boomPost import BoomPoster
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
@@ -121,80 +123,15 @@ class SdmProjectService(LmService):
       """
       projectionData = cherrypy.request.json
       
-      # Process algorithms
-      algs = []
-      for algSection in projectionData['algorithms']:
-         algo = Algorithm(algSection['code'])
-         for param in algSection['parameters']:
-            algo.setParameter(param['name'], param['value'])
-         algs.append(algo)
-                              
-      # Process occurrence sets
-      occs = []
-      for occSection in projectionData['occurrenceSets']:
-         occ = self.scribe.getOccurrenceSet(int(occSection['occurrenceSetId']))
-         if occ is None:
-            raise cherrypy.HTTPError(404, 
-                        'Occurrence set {} was not found'.format(
-                           occSection['occurrenceSetId']))
-         occs.append(occ)
-         
-      # Process model scenario
-      try:
-         mdlScn = self.scribe.getScenario(
-            int(projectionData['modelScenario']['scenarioCode']))
-      except KeyError:
-         try:
-            mdlScn = self.scribe.getScenario(
-               projectionData['modelScenario']['scenarioCode'])
-         except KeyError:
-            raise cherrypy.HTTPError(400, 
-                                     'Must provide model scenario id or code')
-            
-      # Process projection scenarios
-      prjScns = []
-      for scenarioSection in projectionData['projectionScenarios']:
-         try:
-            idOrCode = int(scenarioSection['scenarioId'])
-         except KeyError:
-            try:
-               idOrCode = scenarioSection['scenarioCode']
-            except KeyError:
-               raise cherrypy.HTTPError(400, 
-                   'Must provide scenario id or code for projection scenarios')
-         prjScns = self.scribe.getScenario(idOrCode)
+      usr = self.scribe.findUser(self.getUserId())
       
+      archiveName = '{}_{}'.format(usr.userid, gmt().mjd)
       
-      
-      # Need to use init boom
+      bp = BoomPoster(usr.userid, usr.email, archiveName, projectionData)
+      bp.initBoom()
 
-
-
-
-
-      # TODO: Process masks and maybe others like metadata
-
-      chain = MFChain(self.getUserId(), status=JobStatus.GENERAL)
-      insMFChain = self.scribe.insertMFChain(chain)
-      
-      rules = []
-      
-      algo = Algorithm(algoCode)
-      
-      for prjScn in prjScns:
-         prj = SDMProjection(occ, algo, mdlScn, prjScn)
-         newPrj = self.scribe.findOrInsertSDMProject(prj)
-         rules.extend(newPrj.computeMe())
-         
-      insMFChain.addCommands(rules)
-      insMFChain.write()
-      insMFChain.updateStatus(JobStatus.INITIALIZE)
-      self.scribe.updateObject(insMFChain)
-         
       # TODO: What do we return?
       cherrypy.response.status = 202
-      return insMFChain
-   
    
    # ................................
    #@cherrypy.json_in
