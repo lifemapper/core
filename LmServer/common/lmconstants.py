@@ -566,27 +566,27 @@ class JobFamily:
 # Change to enum.Enum with Python 3.4
 # Corresponds to LmCommon individual constants MODELS_SERVICE, LAYERS_SERVICE, etc
 class LMServiceType:
-   BUCKETS = 'buckets'
-   TREES = 'trees'
-   EXPERIMENTS = 'experiments'
-   GRIDSETS = 'gridsets'
-   SDM_EXPERIMENTS = 'experiments'
-   LAYERTYPES = 'typecodes'
-   MODELS = 'models'
-   OCCURRENCES = 'occurrences'
-   PAMSUMS = 'pamsums'
-   ANCILLARY_LAYERS = 'anclayers'
-   PRESENCEABSENCE_LAYERS = 'palayers'
+   BUCKETS = 'buckets' # TODO: Remove, obsolete 
+   TREES = 'tree'
+   EXPERIMENTS = 'experiments' # TODO: Remove, obsolete
+   GRIDSETS = 'gridset'
+   SDM_EXPERIMENTS = 'experiments' # TODO: Remove, obsolete
+   LAYERTYPES = 'typecodes' # TODO: Remove, obsolete
+   MODELS = 'models' # TODO: Remove, obsolete
+   OCCURRENCES = 'occurrence'
+   PAMSUMS = 'pamsums' # TODO: Remove, obsolete?
+   ANCILLARY_LAYERS = 'anclayers' # TODO: Remove, obsolete?
+   PRESENCEABSENCE_LAYERS = 'palayers' # TODO: Remove, obsolete?
    MATRIX_LAYERS = 'mtxlayers'
-   ENVIRONMENTAL_LAYERS = 'envlayers'
-   PROJECTIONS = 'projections'
-   SCENARIOS = 'scenarios'
-   SHAPEGRIDS = 'shpgrid'
+   ENVIRONMENTAL_LAYERS = 'envlayer'
+   PROJECTIONS = 'sdmProject'
+   SCENARIOS = 'scenario'
+   SHAPEGRIDS = 'shapegrid'
    # Generic layers/layersets/matrices
-   LAYERS = 'layers'
-   LAYERSETS = 'layersets'
-   MATRICES = 'matrices'
-   MATRIX_COLUMNS = 'mtxcolumns'
+   LAYERS = 'layer'
+   LAYERSETS = 'layersets' # TODO: Remove, obsolete?
+   MATRICES = 'matrix'
+   MATRIX_COLUMNS = 'column'
    
 # Archive and Global PAM descriptions
 GPAM_KEYWORD = 'Global PAM'

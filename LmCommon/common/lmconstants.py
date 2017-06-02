@@ -1022,46 +1022,28 @@ class RandomizeMethods:
 # .............................................................................
 # .                             Service constants                             .
 # .............................................................................
+
+# TODO: Remove?  Does not appear to be used
 class API_SERVICE:
-   BUCKETS = 'buckets'
-   EXPERIMENTS = 'experiments'
-   RAD_EXPERIMENTS = 'radexperiments'
-   SDM_EXPERIMENTS = 'sdmexperiments'
-   LAYERS = 'layers'
-   LAYERTYPES = 'typecodes'
-   MODELS = 'models'
-   OCCURRENCES = 'occurrences'
-   PAMSUMS = 'pamsums'
-   ANCILLARY_LAYERS = 'anclayers'
-   PRESENCEABSENCE_LAYERS = 'palayers'
-   MATRIX_LAYERS = 'mtxlayers'
-   PROJECTIONS = 'projections'
-   SCENARIOS = 'scenarios'
+   BUCKETS = 'buckets' # TODO: Remove, obsolete
+   EXPERIMENTS = 'experiments' # TODO: Remove, obsolete
+   RAD_EXPERIMENTS = 'radexperiments' # TODO: Remove, obsolete
+   SDM_EXPERIMENTS = 'sdmexperiments' # TODO: Remove, obsolete
+   LAYERS = 'layer'
+   LAYERTYPES = 'typecodes' # TODO: Remove, obsolete
+   MODELS = 'models' # TODO: Remove, obsolete
+   OCCURRENCES = 'occurrence'
+   PAMSUMS = 'pamsums' # TODO: Remove, obsolete
+   ANCILLARY_LAYERS = 'anclayers' # TODO: Remove, obsolete
+   PRESENCEABSENCE_LAYERS = 'palayers' # TODO: Remove, obsolete
+   MATRIX_LAYERS = 'column'
+   PROJECTIONS = 'sdmproject'
+   SCENARIOS = 'scenario'
    # Generic layersets, not Scenarios
-   LAYERSETS = 'layersets'
+   LAYERSETS = 'layersets' # TODO: Are we going to have this?
    # Biogeography Tools
-   SHAPEGRIDS = 'shpgrid'
+   SHAPEGRIDS = 'shapegrid'
 
-# TODO: delete   
-BUCKETS_SERVICE = 'buckets'
-EXPERIMENTS_SERVICE = 'experiments'
-RAD_EXPERIMENTS_SERVICE = 'radexperiments'
-SDM_EXPERIMENTS_SERVICE = 'sdmexperiments'
-LAYERS_SERVICE = 'layers'
-LAYERTYPES_SERVICE = 'typecodes'
-MODELS_SERVICE = 'models'
-OCCURRENCES_SERVICE = 'occurrences'
-PAMSUMS_SERVICE = 'pamsums'
-ANCILLARY_LAYERS_SERVICE = 'anclayers'
-PRESENCEABSENCE_LAYERS_SERVICE = 'palayers'
-MATRIX_LAYERS_SERVICE = 'mtxlayers'
-PROJECTIONS_SERVICE = 'projections'
-SCENARIOS_SERVICE = 'scenarios'
-
-# Generic layersets, not Scenarios
-LAYERSETS_SERVICE = 'layersets'
-# Biogeography Tools
-SHAPEGRIDS_SERVICE = 'shpgrid'
 
 # .............................................................................
 # .                              Time constants                               .
