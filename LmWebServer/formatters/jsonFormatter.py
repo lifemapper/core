@@ -26,6 +26,7 @@
           02110-1301, USA.
 @todo: Use constants
 @todo: Can we make this more elegant?
+@todo: Trees
 """
 from hashlib import md5
 import json
@@ -68,7 +69,6 @@ def formatEnvLayer(lyr):
    lyrDict = _getLifemapperMetadata('environmental layer', lyr.getId(), 
                                     lyr.metadataUrl, lyr.getUserId(), 
                                     metadata=lyr.lyrMetadata)
-   lyrDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'layers', lyr.name)
    dataUrl = lyr.getDataUrl()
    minVal = lyr.minVal
    maxVal = lyr.maxVal
@@ -201,7 +201,8 @@ def formatScenario(scn):
    """
    scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
                                     scn.getUserId(), metadata=scn.scenMetadata)
-   scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, scn.code, scn.layers)
+   scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'scen_{}'.format(scn.code), 
+                                    scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
                                             scn.units, scn.resolution)
 
