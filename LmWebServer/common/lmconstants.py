@@ -208,6 +208,9 @@ QUERY_PARAMETERS = {
    'service' : {
       'name' : 'service'
    },
+   'shapegridid' : {
+      'name' : 'shapegridId'
+   },
    'sld' : {
       'name' : 'sld'
    },

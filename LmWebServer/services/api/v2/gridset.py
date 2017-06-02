@@ -74,7 +74,8 @@ class GridSetService(LmService):
    # ................................
    @lmFormatter
    def GET(self, pathGridSetId=None, afterTime=None, beforeTime=None, 
-           epsgCode=None, limit=100, offset=0, public=None):
+           epsgCode=None, limit=100, metaString=None, offset=0, public=None, 
+           shapegridId=None):
       """
       @summary: Performs a GET request.  If a grid set id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -88,10 +89,13 @@ class GridSetService(LmService):
       if pathGridSetId is None:
          return self._listGridSets(userId, afterTime=afterTime, 
                                      beforeTime=beforeTime, epsgCode=epsgCode, 
-                                     limit=limit, offset=offset)
+                                     limit=limit, metaString=metaString, 
+                                     offset=offset, shapegridId=shapegridId)
       elif pathGridSetId.lower() == 'count':
          return self._countGridSets(userId, afterTime=afterTime, 
-                                      beforeTime=beforeTime, epsgCode=epsgCode)
+                                     beforeTime=beforeTime, epsgCode=epsgCode, 
+                                     metaString=metaString, 
+                                     shapegridId=shapegridId)
       else:
          return self._getGridSet(pathGridSetId)
       
@@ -110,7 +114,7 @@ class GridSetService(LmService):
    
    # ................................
    def _countGridSets(self, userId, afterTime=None, beforeTime=None, 
-                              epsgCode=None):
+                        epsgCode=None, metaString=None, shapegridId=None):
       """
       @summary: Count GridSet objects matching the specified criteria
       @param userId: The user to count GridSets for.  Note that this may not 
@@ -121,8 +125,10 @@ class GridSetService(LmService):
                             (Modified Julian Day)
       @param epsgCode: (optional) Return GridSets with this EPSG code
       """
-      gsCount = self.scribe.countGridSets(userId=userId, afterTime=afterTime, 
-                                          beforeTime=beforeTime, epsg=epsgCode)
+      gsCount = self.scribe.countGridsets(userId=userId, 
+                              shpgrdLyrid=shapegridId, metastring=metaString,
+                               afterTime=afterTime, beforeTime=beforeTime, 
+                               epsg=epsgCode)
       # Format return
       # Set headers
       return {"count" : gsCount}
@@ -145,7 +151,8 @@ class GridSetService(LmService):
    
    # ................................
    def _listGridSetsLayers(self, userId, afterTime=None, beforeTime=None, 
-                              epsgCode=None, limit=100, offset=0):
+                              epsgCode=None, limit=100, metaString=None,
+                              offset=0, shapegridId=None):
       """
       @summary: Count GridSet objects matching the specified criteria
       @param userId: The user to count GridSets for.  Note that this may not 
@@ -158,8 +165,9 @@ class GridSetService(LmService):
       @param limit: (optional) Return this number of GridSets, at most
       @param offset: (optional) Offset the returned GridSets by this number
       """
-      gsAtoms = self.scribe.listGridSets(offset, limit, userId=userId, 
-                                    afterTime=afterTime, beforeTime=beforeTime, 
-                                    epsg=epsgCode)
+      gsAtoms = self.scribe.listGridsets(offset, limit, userId=userId, 
+                               shpgrdLyrid=shapegridId, metastring=metaString,
+                               afterTime=afterTime, beforeTime=beforeTime, 
+                               epsg=epsgCode)
 
       return gsAtoms
