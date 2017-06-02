@@ -1658,7 +1658,7 @@ class Borg(DbPostgresql):
                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
                            algCode, mdlscenCode, prjscenCode)
          for r in rows:
-            objs.append(self._createOccurrenceLayer(r, idxs))
+            objs.append(self._createSDMProjection(r, idxs))
       return objs
 
 # ...............................................
@@ -1961,8 +1961,8 @@ class Borg(DbPostgresql):
                      tree.getId(), tree.gerUserId(), tree.name, 
                      tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
                      tree.hasBranchLengths(), meta, tree.modTime)
-      newOrExistingMtx = self._createLMMatrix(row, idxs)
-      return newOrExistingMtx
+      newOrExistingTree = self._createTree(row, idxs)
+      return newOrExistingTree
 
 # ...............................................
    def getTree(self, tree, treeId):
