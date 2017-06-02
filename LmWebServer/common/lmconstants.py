@@ -75,6 +75,10 @@ QUERY_PARAMETERS = {
       'name' : 'cellSides',
       'processIn' : int
    },
+   'cellsize' : {
+      'name' : 'cellSize',
+      'processIn' : float
+   },
    'color' : {
       'name' : 'color',
       'processIn' : lambda x: getColor(x, allowRamp=True)

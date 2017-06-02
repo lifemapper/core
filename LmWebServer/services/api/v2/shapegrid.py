@@ -71,7 +71,8 @@ class ShapeGridService(LmService):
    # ................................
    @lmFormatter
    def GET(self, pathShapegridId=None, afterTime=None, beforeTime=None, 
-           epsgCode=None, limit=100, offset=0, public=None):
+           cellSides=None, cellSize=None, epsgCode=None, limit=100, offset=0, 
+           public=None):
       """
       @summary: Performs a GET request.  If a shapegrid id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -84,11 +85,13 @@ class ShapeGridService(LmService):
       
       if pathShapegridId is None:
          return self._listShapegrids(userId, afterTime=afterTime, 
-                                     beforeTime=beforeTime, epsgCode=epsgCode, 
+                                     beforeTime=beforeTime, cellSides=cellSides,
+                                     cellSize=cellSize, epsgCode=epsgCode, 
                                      limit=limit, offset=offset)
       elif pathShapegridId.lower() == 'count':
          return self._countShapegrids(userId, afterTime=afterTime, 
-                                      beforeTime=beforeTime, epsgCode=epsgCode)
+                                     beforeTime=beforeTime, cellSides=cellSides,
+                                     cellSize=cellSize, epsgCode=epsgCode)
       else:
          return self._getShapegrid(pathShapegridId)
       
@@ -107,7 +110,7 @@ class ShapeGridService(LmService):
    
    # ................................
    def _countShapegrids(self, userId, afterTime=None, beforeTime=None, 
-                              epsgCode=None):
+                        cellSides=None, cellSize=None, epsgCode=None):
       """
       @summary: Count shapegrid objects matching the specified criteria
       @param userId: The user to count shapegrids for.  Note that this may not 
@@ -118,8 +121,11 @@ class ShapeGridService(LmService):
                             (Modified Julian Day)
       @param epsgCode: (optional) Return shapegrids with this EPSG code
       """
-      sgCount = self.scribe.countShapegrids(userId=userId, afterTime=afterTime, 
-                                          beforeTime=beforeTime, epsg=epsgCode)
+      sgCount = self.scribe.countShapegrids(userId=userId, cellsides=cellSides,
+                                            cellsize=cellSize, 
+                                            afterTime=afterTime, 
+                                            beforeTime=beforeTime, 
+                                            epsg=epsgCode)
       # Format return
       # Set headers
       return {"count" : sgCount}
@@ -142,7 +148,8 @@ class ShapeGridService(LmService):
    
    # ................................
    def _listShapegrids(self, userId, afterTime=None, beforeTime=None, 
-                              epsgCode=None, limit=100, offset=0):
+                        cellSides=None, cellSize=None, epsgCode=None, 
+                        limit=100, offset=0):
       """
       @summary: Count shapegrid objects matching the specified criteria
       @param userId: The user to count shapegrids for.  Note that this may not 
@@ -156,6 +163,7 @@ class ShapeGridService(LmService):
       @param offset: (optional) Offset the returned shapegrids by this number
       """
       sgAtoms = self.scribe.listShapegrids(offset, limit, userId=userId, 
+                                    cellsides=cellSides, cellsize=cellSize,
                                     afterTime=afterTime, beforeTime=beforeTime, 
                                     epsg=epsgCode)
       # Format return
