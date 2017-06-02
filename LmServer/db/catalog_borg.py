@@ -1488,7 +1488,7 @@ class Borg(DbPostgresql):
                               displayName, afterTime, beforeTime, epsg, 
                               afterStatus, beforeStatus)
          for r in rows:
-            objs.append(self._createOccurrenceSet(r, idxs))
+            objs.append(self._createOccurrenceLayer(r, idxs))
       return objs
 
 # ...............................................
@@ -1658,7 +1658,7 @@ class Borg(DbPostgresql):
                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
                            algCode, mdlscenCode, prjscenCode)
          for r in rows:
-            objs.append(self._createOccurrenceSet(r, idxs))
+            objs.append(self._createOccurrenceLayer(r, idxs))
       return objs
 
 # ...............................................
