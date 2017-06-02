@@ -246,7 +246,7 @@ class EarlJr(LMObject):
              or organizing the file contents
       @param pth: File storage path, overrides calculated path
       """
-      if occsetId is not None:
+      if occsetId is not None and objCode is None:
          objCode = occsetId
       basename = self.createBasename(ftype, objCode=objCode, lyrname=lyrname, 
                                      usr=usr, epsg=epsg)   

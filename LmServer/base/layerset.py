@@ -38,7 +38,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
          CT_SPECIES_KEYWORD, PROJ_LIB)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX,
-                                            SCENARIO_PACKAGE_EPSG, SCENARIO_PACKAGE_MAPUNITS)
+                                            SCENARIO_PACKAGE_EPSG)
 from LmServer.common.lmconstants import CT_USER
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
@@ -532,7 +532,6 @@ class MapLayerSet(_LayerSet, ServiceObject):
       topLyrStr = ''
       midLyrStr = ''
       baseLyrStr = ''
-      vOnlineUrl = rOnlineUrl = eOnlineUrl = onlineUrl = None
             
       # Vector layers are described first, so drawn on top
       for lyr in self.layers:

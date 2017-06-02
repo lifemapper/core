@@ -363,7 +363,7 @@ from LmServer.common.log import ConsoleLogger
 from LmServer.common.lmconstants import FileFix, LMFileType, MAP_TEMPLATE
 from LmServer.db.borgscribe import BorgScribe
 
-mapname = 'data_4'
+mapname = 'data_473'
 
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
@@ -374,5 +374,4 @@ mapFilename = earljr.getMapFilenameFromMapname(mapname)
 
 mapSvc = scribe.getMapServiceFromMapFilename(mapFilename)
 mapSvc.writeMap(MAP_TEMPLATE)
-
 """
