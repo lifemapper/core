@@ -59,13 +59,20 @@ class ChristopherWalken(LMObject):
       """
       super(ChristopherWalken, self).__init__()
       self.priority = priority
-      basename, ext = os.path.splitext(os.path.basename(configFname))
+      self.configFname = configFname
+      baseAbsFilename, ext = os.path.splitext(configFname)
+      basename = os.path.basename(baseAbsFilename)
+      # Chris writes this file when completed walking through species data
+      self.walkedArchiveFname = os.path.join(baseAbsFilename, LMFormat.LOG.ext)
+#       basename, ext = os.path.splitext(os.path.basename(configFname))
       self.name = '{}_{}'.format(self.__class__.__name__.lower(), basename)       
       # Config
       if configFname is not None and os.path.exists(configFname):
          self.cfg = Config(siteFn=configFname)
       else:
          raise LMError(currargs='Missing config file {}'.format(configFname))
+      
+      baseFilename, ext = os.path.splitext(configFname)
          
       # JSON or ini based configuration
       if jsonFname is not None:
@@ -327,6 +334,8 @@ class ChristopherWalken(LMObject):
       pcount = prcount = icount = ircount = 0
       # WeaponOfChoice resets old or failed Occurrenceset
       occ, setOrReset = self.weaponOfChoice.getOne()
+      if self.weaponOfChoice.finishedInput:
+         self._writeDoneWalkenFile()
       if occ:
          # Process existing OccurrenceLayer if incomplete, obsolete, or failed
          if setOrReset:
@@ -482,6 +491,18 @@ class ChristopherWalken(LMObject):
          self._scribe.updateObject(updatedMFChain)
          
       return updatedMFChain
+
+# ...............................................
+   def _writeDoneWalkenFile(self):
+         try:
+            f = open(self.walkedArchiveFname, 'w')
+            f.write('# {} Completed walking species input {} in config file {}\n'
+                    .format(dt.now(), self.weaponOfChoice.inputFilename, 
+                            self.configFname))
+            f.close()
+         except:
+            self.log.error('Failed to write doneWalken file {} for config {}'
+                           .format(self.walkedArchiveFname, self.configFname))
 
 """
 userId='kubi'

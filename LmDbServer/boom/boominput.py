@@ -47,15 +47,19 @@ from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.cmd import MfRule
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
+# TODO: Change to new script, not a daemon
+BOOM_SCRIPT = 'LmDbServer/boom/boom.py'
 
 # .............................................................................
 class ArchiveFiller(LMObject):
@@ -93,7 +97,12 @@ class ArchiveFiller(LMObject):
        self.cellsize,
        self.gridname, 
        self.intersectParams) = self.readConfigArgs(configFname)
-      # Get database
+
+      earl = EarlJr()
+      self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
+                                                   objCode=self.archiveName, 
+                                                   usr=self.usr)
+# Get database
       try:
          self.scribe = self._getDb()
       except: 
@@ -232,15 +241,8 @@ class ArchiveFiller(LMObject):
    def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
       """
       """
-      if fname is not None:
-         newConfigFilename = fname
-      else:
-         earl = EarlJr()
-         pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
-         newConfigFilename = os.path.join(pth, 
-                              '{}{}'.format(self.archiveName, LMFormat.CONFIG.ext))
-      self.readyFilename(newConfigFilename, overwrite=True)
-      f = open(newConfigFilename, 'w')
+      self.readyFilename(self.outConfigFilename, overwrite=True)
+      f = open(self.outConfigFilename, 'w')
       f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
       f.write('ARCHIVE_USER: {}\n'.format(self.usr))
       f.write('ARCHIVE_NAME: {}\n'.format(self.archiveName))
@@ -323,7 +325,6 @@ class ArchiveFiller(LMObject):
       f.write('\n')
          
       f.close()
-      return newConfigFilename
    
    # ...............................................
    def _getVarValue(self, var):
@@ -851,6 +852,39 @@ class ArchiveFiller(LMObject):
          ids.append(algid)
       return ids
    
+   # ...............................................
+   def createMFBoom(self):
+      """
+      @summary: Create a Makeflow to initiate Boomer with inputs assembled 
+                and configFile written by ArchiveFiller.initBoom.
+      """
+      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+              MFChain.META_DESC: 'Boom start for User {}, Archive {}'
+      .format(self.usr, self.archiveName)}
+      newMFC = MFChain(self.usr, priority=self.priority, 
+                       metadata=meta, status=JobStatus.GENERAL, 
+                       statusModTime=CURR_MJD)
+      mfChain = self._scribe.insertMFChain(newMFC)
+
+      cmdArgs = ['LOCAL',
+                 os.getenv('PYTHON'),
+                 BOOM_SCRIPT,
+                 '--config_file {}'.format(self.outConfigFilename),
+                 'start']
+      boomCmd = ' '.join(cmdArgs)
+
+      baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
+      # Boomer.ChristopherWalken writes this file when finished walking through 
+      # species data (initiated by this Makeflow).  
+      walkedArchiveFname = os.path.join(baseAbsFilename, LMFormat.LOG.ext)
+
+      outputFname = mfChain.getDLocation()
+      # Create a rule from the MF and Arf file creation
+      rule = MfRule(boomCmd, [walkedArchiveFname], 
+                    dependencies=self.outConfigFilename)
+      mfChain.addCommands([rule])
+      mfChain.write()
+      return mfChain
    
    # ...............................................
    def initBoom(self):
@@ -877,8 +911,9 @@ class ArchiveFiller(LMObject):
          taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
          
       # Write config file for this archive
-      newConfigFilename = self.writeConfigFile()
-      self.scribe.log.info('Wrote {}'.format(newConfigFilename))
+      self.writeConfigFile()
+      self.createMFBoom()
+      self.scribe.log.info('Wrote {}'.format(self.outConfigFilename))
    
 # ...............................................
 if __name__ == '__main__':

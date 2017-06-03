@@ -51,6 +51,7 @@ class _SpeciesWeaponOfChoice(LMObject):
    def __init__(self, scribe, user, archiveName, epsg, expDate, inputFname,  
                 metaFname=None, taxonSourceName=None, logger=None):
       super(_SpeciesWeaponOfChoice, self).__init__()
+      self.finishedInput = False
       # Set name for this WoC
       self.name = '{}_{}'.format(user, archiveName)
       # Optionally use parent process logger
@@ -108,6 +109,7 @@ class _SpeciesWeaponOfChoice(LMObject):
             else:
                line = infile.next()
          except StopIteration, e:
+            self.finishedInput = True
             self.log.debug('Finished file {} on line {}'
                            .format(infile.name, self._linenum))
             infile.close()

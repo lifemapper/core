@@ -439,6 +439,7 @@ class FileFix:
              LMFileType.SUM_CALCS: PAMSUM_PREFIX,
              LMFileType.SUM_SHAPE: PAMSUM_PREFIX,
 
+             LMFileType.BOOM_CONFIG: None,
              LMFileType.UNSPECIFIED_RAD: None,
              LMFileType.USER_LAYER: GENERIC_LAYER_NAME_PREFIX,
              LMFileType.USER_SHAPEGRID: None,
@@ -479,6 +480,7 @@ class FileFix:
                 LMFileType.SUM_CALCS: LMFormat.PICKLE.ext,
                 LMFileType.SUM_SHAPE: LMFormat.SHAPE.ext,
 
+                LMFileType.BOOM_CONFIG: LMFormat.CONFIG.ext,
                 LMFileType.UNSPECIFIED_RAD: None,
                 LMFileType.USER_LAYER: None,
                 LMFileType.USER_SHAPEGRID:  LMFormat.SHAPE.ext,
