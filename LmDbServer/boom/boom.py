@@ -342,7 +342,7 @@ if __name__ == "__main__":
    scriptname = os.path.splitext(os.path.basename(__file__))[0]
    logname = '{}.{}'.format(scriptname, timestamp)
    logger = ScriptLogger(logname, level=logging.INFO)
-   boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
+   boomer = BoomerOld(BOOM_PID_FILE, configFname, log=logger)
    
    if cmd == 'start':
       boomer.start()
