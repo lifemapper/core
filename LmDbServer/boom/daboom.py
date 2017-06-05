@@ -44,8 +44,13 @@ class DaBoom(Daemon):
    Class to run the Boomer as a Daemon process
    """
    # .............................
-   def __init__(self, pidfile, configFname, 
-                assemblePams=True, priority=None, log=None):      
+   def __init__(self, pidfile, configFname, assemblePams=True, priority=None):
+      # Logfile
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}'.format(self.__class__.__name__.lower(), timestamp)
+      log = ScriptLogger(logname, level=logging.INFO)
+
       Daemon.__init__(self, pidfile, log=log)
       self.boomer = Boomer(configFname, assemblePams=assemblePams, 
                            priority=priority, log=log)
@@ -67,10 +72,9 @@ class DaBoom(Daemon):
        
    # .............................
    def onShutdown(self):
-      self.keepWalken = False
       self.log.info('Shutdown!')
       # Stop walken the archive and saveNextStart
-      self.christopher.stopWalken()
+      self.boomer.close()
       Daemon.onShutdown(self)
 
 # .............................................................................
@@ -98,18 +102,18 @@ if __name__ == "__main__":
    configFname = args.config_file
    cmd = args.cmd.lower()
       
-   if os.path.exists(BOOM_PID_FILE):
-      pid = open(BOOM_PID_FILE).read().strip()
-   else:
-      pid = os.getpid()
+#    if os.path.exists(BOOM_PID_FILE):
+#       pid = open(BOOM_PID_FILE).read().strip()
+#    else:
+#       pid = os.getpid()
+#    secs = time.time()
+#    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+#    
+#    scriptname = os.path.splitext(os.path.basename(__file__))[0]
+#    logname = '{}.{}'.format(scriptname, timestamp)
+#    logger = ScriptLogger(logname, level=logging.INFO)
    
-   secs = time.time()
-   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-   
-   scriptname = os.path.splitext(os.path.basename(__file__))[0]
-   logname = '{}.{}'.format(scriptname, timestamp)
-   logger = ScriptLogger(logname, level=logging.INFO)
-   boomer = DaBoom(BOOM_PID_FILE, configFname, log=logger)
+   boomer = DaBoom(BOOM_PID_FILE, configFname)
    
    if cmd == 'start':
       boomer.start()
@@ -122,3 +126,38 @@ if __name__ == "__main__":
    else:
       print("Unknown command: {}".format(cmd))
       sys.exit(2)
+      
+"""
+import logging
+import mx.DateTime as dt
+import os, sys, time
+
+from LmBackend.common.daemon import Daemon
+from LmCommon.common.lmconstants import LMFormat
+from LmDbServer.common.lmconstants import BOOM_PID_FILE
+from LmDbServer.boom.boomer import Boomer
+from LmServer.base.utilities import isCorrectUser
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
+from LmServer.common.log import ScriptLogger
+
+SPUD_LIMIT = 100
+
+earl = EarlJr()
+pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
+configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
+                                              LMFormat.CONFIG.ext))   
+secs = time.time()
+timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+log = ScriptLogger('debug_dabomb', level=logging.INFO)
+
+boomer = Boomer(configFname, assemblePams=True, log=log)
+boomer.initializeMe()
+
+boomer.keepWalken
+
+boomer.processSpud()
+
+
+"""

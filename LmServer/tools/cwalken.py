@@ -58,6 +58,7 @@ class ChristopherWalken(LMObject):
                (Single-species Makeflow chain) for a species.
       """
       super(ChristopherWalken, self).__init__()
+      self.name = self.__class__.__name__.lower()
       self.priority = priority
       self.configFname = configFname
       baseAbsFilename, ext = os.path.splitext(configFname)
@@ -340,7 +341,7 @@ class ChristopherWalken(LMObject):
          # Process existing OccurrenceLayer if incomplete, obsolete, or failed
          if setOrReset:
             objs.append(occ)
-            self.log.info('   Process occurrenceset')
+            self.log.info('   Will compute occurrenceSet')
          # Sweep over input options
          # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
          #       Change this for BOOM jobs!! 
@@ -363,7 +364,7 @@ class ChristopherWalken(LMObject):
                         objs.append(mtxcol)
                         potatoInputs[prjscen.code] = mtxcol.getTargetFilename()
    
-            self.log.info('   Process {} projections, {} matrixColumns ( {}, {} reset)'
+            self.log.info('   Will compute {} projections, {} matrixColumns ( {}, {} reset)'
                           .format(pcount, icount, prcount, ircount))
       spudObjs = [o for o in objs if o is not None]
       spud = self._createSpudMakeflow(spudObjs)
@@ -471,7 +472,7 @@ class ChristopherWalken(LMObject):
                except:
                   pass
                else:
-                  meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+                  meta = {MFChain.META_CREATED_BY: self.name,
                           MFChain.META_DESC: 'Spud for User {}, Archive {}, Species {}'
                           .format(self.userId, self.archiveName, speciesName),
                           MFChain.META_SQUID: squid}

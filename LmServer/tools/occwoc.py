@@ -175,13 +175,13 @@ class _SpeciesWeaponOfChoice(LMObject):
       occ = None
       # Find existing
       tmpocc = OccurrenceLayer(sciName.scientificName, self.userId, self.epsg, 
-            dataCount, squid=sciName.squid, ogrType=wkbPoint, 
+            dataCount, squid=sciName.squid, 
             processType=self.processType, status=JobStatus.INITIALIZE, 
             statusModTime=currtime, sciName=sciName, 
             rawMetaDLocation=self.metaFilename)
       try:
          occ = self._scribe.findOrInsertOccurrenceSet(tmpocc)
-         self.log.info('Found/inserted OccLayer {}'.format(occ.getId()))
+         self.log.info('   Found/inserted OccLayer {}'.format(occ.getId()))
       except Exception, e:
          if not isinstance(e, LMError):
             e = LMError(currargs=e.args, lineno=self.getLineno())
@@ -437,8 +437,8 @@ class BisonWoC(_SpeciesWeaponOfChoice):
          if sciName is not None:
             occ, setOrReset = self._createOrResetOccurrenceset(sciName, tsnCount,
                                                                taxonSourceKey=tsn)
-         self.log.info('Processed tsn {}, with {} points; next start {}'
-                       .format(tsn, tsnCount, self.nextStart))
+         self.log.info('Processed occset {}, tsn {}, with {} points; next start {}'
+                       .format(occ.getId(), tsn, tsnCount, self.nextStart))
       return occ, setOrReset
 
 # ...............................................
@@ -583,8 +583,9 @@ class UserWoC(_SpeciesWeaponOfChoice):
          if sciName is not None:
             occ, setOrReset = self._createOrResetOccurrenceset(sciName, dataCount, 
                                                    data=dataChunk)
-         self.log.info('Processed name {}, with {} records; next start {}'
-                       .format(taxonName, len(dataChunk), self.nextStart))
+         self.log.info('Processed occset {}, name {}, with {} records; next start {}'
+                       .format(occ.getId(), taxonName, len(dataChunk), 
+                               self.nextStart))
       return occ, setOrReset
 
 # ...............................................
@@ -715,14 +716,16 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       setOrReset = False
       speciesKey, dataChunk = self._getOccurrenceChunk()
       if speciesKey:
-         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, len(dataChunk))
+         sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
+                                                           len(dataChunk))
          if sciName is not None:
             occ, setOrReset = self._createOrResetOccurrenceset(sciName, 
                                                       len(dataChunk), 
                                                       taxonSourceKey=speciesKey, 
                                                       data=dataChunk)
-         self.log.info('Processed gbif key {} with {} records; next start {}'
-                       .format(speciesKey, len(dataChunk), self.nextStart))
+         self.log.info('Processed occset {} gbif key {} with {} records; next start {}'
+                       .format(occ.getId(), speciesKey, len(dataChunk), 
+                               self.nextStart))
       return occ, setOrReset
    
 # ...............................................

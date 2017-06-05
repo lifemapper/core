@@ -45,7 +45,7 @@ from LmServer.tools.cwalken import ChristopherWalken
 SPUD_LIMIT = 100
 
 # .............................................................................
-class Boomer(Daemon):
+class BoomerOld(Daemon):
    """
    Class to iterate with a ChristopherWalken through a sequence of species data
    creating individual species (Spud) MFChains, multi-species (Potato) MFChains, 
@@ -213,7 +213,7 @@ class Boomer(Daemon):
 
 # ...............................................
    def _createMasterMakeflow(self):
-      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+      meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESC: 'MasterPotatoHead for User {}, Archive {}'
       .format(self.christopher.userId, self.christopher.archiveName)}
       newMFC = MFChain(self.christopher.userId, priority=self.priority, 
@@ -232,7 +232,7 @@ class Boomer(Daemon):
       potatoes = {}
       for scencode in self.christopher.globalPAMs.keys():
          # Create MFChain for this GPAM
-         meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+         meta = {MFChain.META_CREATED_BY: self.name,
                  MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
          .format(self.christopher.userId, self.christopher.archiveName, scencode)}
          newMFC = MFChain(self.christopher.userId, priority=self.priority, 

@@ -58,6 +58,14 @@ class Boomer(LMObject):
    # .............................
    def __init__(self, configFname, assemblePams=True, priority=None, log=None):      
       self.name = self.__class__.__name__.lower()
+      # Logfile
+      if log is None:
+         secs = time.time()
+         timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+         logname = '{}.{}'.format(self.name, timestamp)
+         log = ScriptLogger(logname, level=logging.INFO)
+      self.log = log
+
       self.configFname = configFname
       self.assemblePams = assemblePams
       self.priority = priority
@@ -102,6 +110,7 @@ class Boomer(LMObject):
       except Exception, e:
          raise LMError(currargs='Failed to initialize Chris with config {} ({})'
                        .format(self.configFname, e))
+      # Start where we left off 
       self.christopher.moveToStart()
       self.log.debug('Starting Chris at location {} ... '
                      .format(self.christopher.currRecnum))
@@ -177,20 +186,22 @@ class Boomer(LMObject):
             rules = mtx.computeMe(triageIn, triageOut, workDir=targetDir)
             potatoChain.addCommands(rules)
             potatoChain.write()
-   #          potatoChain.updateStatus(JobStatus.INITIALIZE)
+#             potatoChain.updateStatus(JobStatus.INITIALIZE)
             self._scribe.updateObject(potatoChain)
             # Add this potato to MasterPotato
             self._addRuleToMasterPotatoHead(potatoChain, 
                                             dependencies=self.spudArfFnames, 
                                             prefix='potato')
-            self.log.info('  Wrote and added {} potato to Master'.format(scencode))
+            self.log.info('  Wrote potato {} for scencode {} and added to Master'
+                          .format(potatoChain.objId, scencode))
          # Write the masterPotatoHead MFChain
          self.masterPotato.write()
          self.masterPotato.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(self.masterPotato)
          self.potatoesOpen = False
-         self.log.info('   Completed MasterPotato ({} potatoes and {} spuds)'
-                       .format(len(self.potatoes), len(self.spudArfFnames)))
+         self.log.info('   Wrote MasterPotato {} ({} potatoes and {} spuds)'
+                       .format(self.masterPotato.objId, len(self.potatoes), 
+                               len(self.spudArfFnames)))
       
       # Create new potatoes
       if not self.christopher.complete:
@@ -212,7 +223,7 @@ class Boomer(LMObject):
 
 # ...............................................
    def _createMasterMakeflow(self):
-      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+      meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESC: 'MasterPotatoHead for User {}, Archive {}'
       .format(self.christopher.userId, self.christopher.archiveName)}
       newMFC = MFChain(self.christopher.userId, priority=self.priority, 
@@ -235,7 +246,7 @@ class Boomer(LMObject):
       potatoes = {}
       for scencode in self.christopher.globalPAMs.keys():
          # Create MFChain for this GPAM
-         meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+         meta = {MFChain.META_CREATED_BY: self.name,
                  MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
          .format(self.christopher.userId, self.christopher.archiveName, scencode)}
          newMFC = MFChain(self.christopher.userId, priority=self.priority, 
