@@ -39,7 +39,8 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       GRID_CELLSIZE, GRID_NUM_SIDES)
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
+         GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
+         DEFAULT_EMAIL_POSTFIX, Priority)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
                                             POINT_COUNT_MIN)
 from LmServer.common.lmuser import LMUser
@@ -79,6 +80,7 @@ class ArchiveFiller(LMObject):
       (self.usr,
        self.usrEmail,
        self.archiveName,
+       self.priority,
        self.envPackageName,
        self.modelScenCode,
        self.prjScenCodeList,
@@ -181,6 +183,8 @@ class ArchiveFiller(LMObject):
                                  '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
       archiveName = self._findConfigOrDefault(config, 'ARCHIVE_NAME', 
                                               PUBLIC_ARCHIVE_NAME)
+      priority = self._findConfigOrDefault(config, 'ARCHIVE_PRIORITY', 
+                                              Priority.NORMAL)
       
       dataSource = self._findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
       dataSource = dataSource.upper()
@@ -236,7 +240,7 @@ class ArchiveFiller(LMObject):
          prjScenCodeList = self._findConfigOrDefault(config, 
                      'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
       
-      return (usr, usrEmail, archiveName, envPackageName, 
+      return (usr, usrEmail, archiveName, priority, envPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algCodeList, 
