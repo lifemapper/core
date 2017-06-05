@@ -23,6 +23,7 @@
 """
 import mx.DateTime
 import os
+import time
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
@@ -102,7 +103,7 @@ class ArchiveFiller(LMObject):
       self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                    objCode=self.archiveName, 
                                                    usr=self.usr)
-# Get database
+      # Get database
       try:
          self.scribe = self._getDb()
       except: 
@@ -156,9 +157,14 @@ class ArchiveFiller(LMObject):
          
    # ...............................................
    def _getDb(self):
-      basefilename = os.path.basename(__file__)
-      basename, ext = os.path.splitext(basefilename)
-      logger = ScriptLogger(basename)
+      import logging
+      loglevel = logging.INFO
+      # Logfile
+      secs = time.time()
+      timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+      logname = '{}.{}'.format(self.__class__.__name__.lower(), timestamp)
+      logger = ScriptLogger(logname, level=loglevel)
+      # DB connection
       scribe = BorgScribe(logger)
       return scribe
       
