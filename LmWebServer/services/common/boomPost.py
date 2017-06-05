@@ -94,7 +94,7 @@ class BoomPoster(object):
       algos = []
       for algoSection in algoJson:
          algos.append(algoSection['code'])
-      self.config.set(SERVER_BOOM_HEADING, 'ALGORITHMS', algos)
+      self.config.set(SERVER_BOOM_HEADING, 'ALGORITHMS', ', '.join(algos))
    
    # ................................
    def _processOccurrenceSets(self, occSetJson):
