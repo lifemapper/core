@@ -188,8 +188,11 @@ class LmLogger(logging.Logger):
       @return: A boolean indicating if the handler was found
       """
       for x in self.log.handlers:
-         if x.stream.name == name:
-            return True
+         try:
+            if x.stream.name == name:
+               return True
+         except:
+            pass
       return False
    
    # ...............................................
