@@ -115,7 +115,7 @@ class SdmProjectService(LmService):
    # ................................
    #@cherrypy.tools.json_in
    #@cherrypy.tools.json_out
-   @lmFormatter
+   #@lmFormatter
    def POST(self):
       """
       @summary: Posts a new projection
