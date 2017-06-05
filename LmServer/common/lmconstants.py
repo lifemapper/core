@@ -54,6 +54,7 @@ TEST_DATA_PATH = os.path.join(DATA_PATH, 'test')
 IMAGE_PATH = os.path.join(DATA_PATH, 'image')
 # On scratch disk
 UPLOAD_PATH = os.path.join(SCRATCH_PATH, 'tmpUpload')
+TEMP_PATH = os.path.join(SCRATCH_PATH, 'temp')
 LOG_PATH = os.path.join(SCRATCH_PATH, 'log')
 USER_LOG_PATH = os.path.join(LOG_PATH, 'users')
 ERROR_LOG_PATH = os.path.join(LOG_PATH, 'errors')
