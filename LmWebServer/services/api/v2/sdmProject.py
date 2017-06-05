@@ -29,6 +29,7 @@
 """
 
 import cherrypy
+import json
 from mx.DateTime import gmt
 
 from LmCommon.common.lmconstants import JobStatus
@@ -121,7 +122,8 @@ class SdmProjectService(LmService):
       @todo: Move all of this to a central processing location for all BOOM-y
                 services
       """
-      projectionData = cherrypy.request.json
+      #projectionData = cherrypy.request.json
+      projectionData = json.loads(cherrypy.request.body.read())
       
       usr = self.scribe.findUser(self.getUserId())
       
