@@ -459,7 +459,7 @@ class ArchiveFiller(LMObject):
                                .format(tmp, i))
                nonIntCount += 1
             else:
-               occ = self.scribe.getOcc(id)
+               occ = self.scribe.getOccurrenceSet(occId=id)
                if occ is None:
                   missingCount += 1
                elif occ.getUserId() not in legalUsers:
