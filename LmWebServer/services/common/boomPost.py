@@ -46,6 +46,7 @@ class BoomPoster(object):
       @todo: Make this more generic
       """
       self.config = ConfigParser()
+      self.config.add_section(SERVER_BOOM_HEADING)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', userId)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER_EMAIL', userEmail)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
@@ -133,5 +134,5 @@ class BoomPoster(object):
          prjScnCodes.append(scn['scenarioCode'])
       
       self.config.set(SERVER_BOOM_HEADING, 
-                      'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', prjScnCodes)
+                      'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', ','.join(prjScnCodes))
    
