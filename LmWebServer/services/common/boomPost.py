@@ -32,7 +32,7 @@ import random
 
 from LmCommon.common.lmconstants import SERVER_BOOM_HEADING, LMFormat
 from LmDbServer.boom.boominput import ArchiveFiller
-from LmServer.common.localconstants import TEMP_PATH
+from LmServer.common.lmconstants import TEMP_PATH
 
 # .............................................................................
 class BoomPoster(object):
