@@ -866,10 +866,11 @@ class ArchiveFiller(LMObject):
       newMFC = MFChain(self.usr, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=CURR_MJD)
-      mfChain = self._scribe.insertMFChain(newMFC)
+      mfChain = self.scribe.insertMFChain(newMFC)
 
       cmdArgs = ['LOCAL',
-                 os.getenv('PYTHON'),
+                 #os.getenv('PYTHON'),
+                 '$PYTHON',
                  BOOM_SCRIPT,
                  '--config_file {}'.format(self.outConfigFilename),
                  'start']
