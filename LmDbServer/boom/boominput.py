@@ -409,14 +409,6 @@ class ArchiveFiller(LMObject):
          # Fill or reset 
          if self.gridbbox is None:
             self.gridbbox = bbox
-         if self.epsgcode != epsg:
-            self.scribe.log.warn('Configured EPSG {} does not match Scenario EPSG {}'
-                            .format(self.epsgcode, epsg))
-            self.epsgcode = epsg
-         if self.mapunits != mapunits:
-            self.scribe.log.warn('Configured mapunits {} does not match Scenario mapunits {}'
-                            .format(self.mapunits, mapunits))
-            self.mapunits = mapunits
       return allScens, epsg, mapunits
          
    # ...............................................
