@@ -486,16 +486,17 @@ class BorgScribe(LMObject):
       return sciname
 
 # ...............................................
-   def getScenario(self, idOrCode, user=None, fillLayers=False):
+   def getScenario(self, idOrCode, fillLayers=False):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getScenario()
       """
+      sid = code = None
       if isinstance(idOrCode, IntType):
-         scenario = self._borg.getScenario(scenid=idOrCode, 
-                                           fillLayers=fillLayers)
+         sid = idOrCode
       else:
-         scenario = self._borg.getScenario(code=idOrCode, usrid=user, 
-                                           fillLayers=fillLayers)
+         code = idOrCode
+      scenario = self._borg.getScenario(scenid=sid, code=code, 
+                                        fillLayers=fillLayers)
       return scenario
    
 # .............................................................................
@@ -862,6 +863,10 @@ shplyrid = 135
 
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
+
+code = 'AR5-CCSM4-RCP8.5-2050-10min'
+
+scen = scribe.getScenario(code)
 
 sgcount = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
                         afterTime=None, beforeTime=None, epsg=None)

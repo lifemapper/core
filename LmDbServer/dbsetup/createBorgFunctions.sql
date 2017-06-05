@@ -329,7 +329,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- Scenario
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getScenario(scenid int,
-                                                usr varchar,
                                                 code varchar)
    RETURNS lm_v3.Scenario AS
 $$
@@ -337,7 +336,7 @@ DECLARE
    rec lm_v3.Scenario%rowtype;
 BEGIN
    SELECT * INTO rec FROM lm_v3.Scenario s 
-      WHERE s.scenariocode = code and s.userid = usr;
+      WHERE s.scenariocode = code;
    IF NOT FOUND THEN
       begin
          SELECT * INTO STRICT rec FROM lm_v3.Scenario s WHERE s.scenarioid = scenid;

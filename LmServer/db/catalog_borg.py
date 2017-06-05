@@ -1276,7 +1276,7 @@ class Borg(DbPostgresql):
       return scientificname
 
 # .............................................................................
-   def getScenario(self, scenid=None, code=None, usrid=None, fillLayers=False):
+   def getScenario(self, scenid=None, code=None, fillLayers=False):
       """
       @summary: Get and fill a scenario from its user and code or database id.   
                 If  fillLayers is true, populate the layers in the objecgt.
@@ -1287,7 +1287,7 @@ class Borg(DbPostgresql):
              layers from to be fetched.
       @return: a LmServer.legion.scenario.Scenario object
       """
-      row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid, usrid, code)
+      row, idxs = self.executeSelectOneFunction('lm_getScenario', scenid, code)
       scen = self._createScenario(row, idxs)
       if scen is not None and fillLayers:
          lyrs = self.getScenarioLayers(scen.getId())
