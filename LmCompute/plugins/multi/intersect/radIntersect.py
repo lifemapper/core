@@ -92,12 +92,13 @@ def _getRasterAreaDictionary(sgFn, rasterFn, resolution):
    areaDict = {}
    for siteIdx, geom in sgSiteGeomDict.iteritems():
       cellgeom = ogr.CreateGeometryFromWkt(geom)
+      x, y = cellgeom.Centroid().GetPoint_2D()
       cellarea = cellgeom.GetArea() 
       if cellarea > (resolution**2) * 25:                  
          summary = raster.summarize_wkt(geom)
       else:        
          summary = raster.raster_as_poly(geom)
-      areaDict[siteIdx] = (summary, cellarea)
+      areaDict[siteIdx] = (summary, cellarea, x, y)
    return areaDict
 
 # .............................................................................
@@ -179,7 +180,9 @@ def pavRasterIntersect(sgFn, rasterFn, resolution, minPresence, maxPresence,
    rowcount = len(areaDict)
    layerArray = np.zeros((rowcount, 1), dtype=bool)
    counter = 0
-   for _, (summary, cellarea) in sorted(areaDict.iteritems()):
+   rowHeaders = []
+   for siteId, (summary, cellarea, x, y) in sorted(areaDict.iteritems()):
+      rowHeaders.append([siteId, x, y])
       mySum = 0
       for pixelvalue in summary.keys():
          if (pixelvalue >= minPresence) and (pixelvalue <= maxPresence):
@@ -188,10 +191,10 @@ def pavRasterIntersect(sgFn, rasterFn, resolution, minPresence, maxPresence,
          layerArray[counter, 0] = True
       counter += 1
    
+   headers = {'0' : rowHeaders}
+   
    if squid is not None:
       headers = {'1': [squid]}
-   else:
-      headers = None
       
    pav = Matrix(layerArray, headers=headers)
    
@@ -255,7 +258,7 @@ def pavVectorIntersect(sgFn, vectFn, presenceAttrib, minPresence, maxPresence,
    cell = sgLyr.GetNextFeature()     
    while cell is not None:
       cellFID = cell.GetFID()
-      areaDict[cellFID] = ([],[]) 
+      areaDict[cellFID] = ([],[], None, None) 
       minx, maxx, miny, maxy = cell.GetGeometryRef().GetEnvelope()
       # yes, changed order
       rtreeIndex.insert(cellFID, (minx, miny, maxx, maxy))      
@@ -287,7 +290,11 @@ def pavVectorIntersect(sgFn, vectFn, presenceAttrib, minPresence, maxPresence,
             for cfid in shpgridcellfids:
                shpgrdfeature = sgLyr.GetFeature(cfid) 
                gridgeom =  shpgrdfeature.GetGeometryRef() 
-               cellarea = gridgeom.GetArea() 
+               cellarea = gridgeom.GetArea()
+               centroid = gridgeom.Centroid()
+               x, y = centroid.GetPoint_2D()
+               areaDict[2] = x
+               areaDict[3] = y
                
                if sum(areaDict[cfid][0]) < cellarea:   
                   if firstintersection.Contains(gridgeom):                    
@@ -307,16 +314,18 @@ def pavVectorIntersect(sgFn, vectFn, presenceAttrib, minPresence, maxPresence,
             
       feat = vLyr.GetNextFeature()
    
-   siteIds = []
+   siteHeaders = []
    for fid, areas in areaDict.iteritems():
-      siteIds.append(fid)
+      x = areas[2]
+      y = areas[3]
+      siteHeaders.append([fid, x, y])
       if len(areas[0]) > 0: 
          if (sum(areas[0]) > (areas[1][0] * percentPresenceDec)):  
             layerArray[fid, 0] = True
    # Disable so doesn't cause AGoodle failures
    ogr.DontUseExceptions()
    
-   headers = {'0' : siteIds}
+   headers = {'0' : siteHeaders}
    if squid is not None:
       headers['1'] = [squid]
    

@@ -33,12 +33,13 @@ import tempfile
 # TODO: Different logger
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmCommon.common.matrix import Matrix
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 COLLECTION = 'lmArchive'
 
 # .............................................................................
-def getPostDocument(pav, prj, occ):
+def getPostDocument(pav, prj, occ, pavFname):
    """
    @summary: Create the Solr document to be posted
    @param pav: A PAV matrix column object
@@ -96,16 +97,18 @@ def getPostDocument(pav, prj, occ):
 
    docLines = ['<doc>']
        
-   # Need to process presence centroids
-   'presence'
-   
    for fName, val in fields:
       if val is not None:
          docLines.append('   <field name="{}">{}</field>'.format(fName, val))
    
-   # TODO: Process presence centroids
-   # for x in y
-   #    docLines.append('   <field name="presence">{}</field>')
+   # Process presence centroids
+   pavMtx = Matrix.load(pavFname)
+   rowHeaders = pavMtx.getRowHeaders()
+   
+   for i in pavMtx.data.shape[0]:
+      if pavMtx.data[i]:
+         _, x, y = rowHeaders[i]
+         docLines.append('   <field name="presence">{},{}</field>'.format(y, x))
    
    docLines.append('</doc>')
    
@@ -137,7 +140,7 @@ if __name__ == '__main__':
    occ = scribe.getOccurrenceSet(occId=args.occurrenceId)
    
    # Get all information for POST
-   doc = getPostDocument(pav, prj, occ)
+   doc = getPostDocument(pav, prj, occ, args.pavFilename)
    
    with open(args.pavIdxFilename, 'w') as outF:
       outF.write('<add>\n')
