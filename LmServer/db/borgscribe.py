@@ -847,7 +847,7 @@ class BorgScribe(LMObject):
       elif filetype == LMFileType.RAD_MAP:
          self.log.error('Mapping is not yet implemented for RAD_MAP')
       elif filetype == LMFileType.SCENARIO_MAP:
-         mapsvc = self.getScenario(scencode, user=usr, fillLayers=True)
+         mapsvc = self.getScenario(scencode, fillLayers=True)
       else:
          self.log.error('Mapping is available for SDM_MAP, SCENARIO_MAP, RAD_MAP')
       return mapsvc
