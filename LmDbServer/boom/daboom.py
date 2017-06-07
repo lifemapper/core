@@ -63,8 +63,7 @@ class DaBoom(Daemon):
    # .............................
    def run(self):
       try:
-         while self.keepRunning and os.path.exists(self.pidfile):
-            self.boomer.processPotatoes()
+         self.boomer.processPotatoes()
       except Exception, e:
          tb = traceback.format_exc()
          self.log.error("An error occurred")
