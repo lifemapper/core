@@ -124,16 +124,16 @@ class Boomer(LMObject):
       if self.christopher.assemblePams:
          self.rotatePotatoes()
          
-   # .............................
-   def processPotatoes(self):
-      try:
-         while self.keepWalken:
-            self.processSpud()
-      except Exception, e:
-         self.log.debug('Exception {} on potato'.format(str(e)))         
-      finally:
-         self.log.debug('Christopher is finally done walken')
-         self.close()
+#    # .............................
+#    def processPotatoes(self):
+#       try:
+#          while self.keepWalken:
+#             self.processSpud()
+#       except Exception, e:
+#          self.log.debug('Exception {} on potato'.format(str(e)))         
+#       finally:
+#          self.log.debug('Christopher is finally done walken')
+#          self.close()
     
    # .............................
    def processSpud(self):
@@ -360,7 +360,7 @@ import argparse
 import mx.DateTime as dt
 import os, sys, time
 
-from LmDbServer.boom.boom import *
+from LmDbServer.boom.boomer import *
 from LmBackend.common.daemon import Daemon
 from LmDbServer.common.lmconstants import BOOM_PID_FILE
 from LmBackend.common.lmobj import LMError
@@ -394,20 +394,47 @@ earl = EarlJr()
 pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
 configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
                                                  LMFormat.CONFIG.ext))
-boomer = Boomer(BOOM_PID_FILE, configFname, log=logger)
+earl = EarlJr()
+pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
+configFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
+                                                    LMFormat.CONFIG.ext))
 
-boomer.initialize()
+boomer = Boomer(configFname, log=logger)
+
+boomer.initializeMe()
 chris = boomer.christopher
 woc = chris.weaponOfChoice
 alg = chris.algs[0]
 prjscen = chris.prjScens[0]
 mtx = chris.globalPAMs[prjscen.code]
 scribe = boomer._scribe
+ptype = ProcessType.INTERSECT_RASTER
+borg = scribe._borg
+
+spud, potatoInputs = chris.startWalken()
+boomer.keepWalken = not chris.complete
 
 
-boomer.christopher.moveToStart()
-print('Starting at ', chris.currRecnum)
-boomer.keepWalken = True
+spud = self._createSpudMakeflow(spudObjs)
+
+
+if self.assemblePams and spud:
+   self.log.debug('Processing spud for potatoes')
+   # Add MF rule for Spud execution to Master MF
+   self._addRuleToMasterPotatoHead(spud, prefix='spud')
+   # Gather species ARF dependency to delay start of multi-species MF
+   spudArf = spud.getArfFilename(prefix='spud')
+   self.spudArfFnames.append(spudArf)
+   # Add PAV outputs to raw potato files for triage input
+   squid = spud.mfMetadata[MFChain.META_SQUID]
+   if potatoInputs:
+      for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
+         pavFname = potatoInputs[scencode]
+         rawPotatoFile.write('{}: {}\n'.format(squid, pavFname))
+      self.log.info('Wrote spud squid to {} arf files'
+                    .format(len(potatoInputs)))
+   if len(self.spudArfFnames) >= SPUD_LIMIT:
+      self.rotatePotatoes()
 
 # occ, setOrReset = woc.getOne()
 # prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, currtime)

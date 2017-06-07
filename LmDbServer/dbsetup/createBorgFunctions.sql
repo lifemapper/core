@@ -1814,6 +1814,7 @@ DECLARE
 BEGIN
    -- check existence of required referenced matrix
    SELECT count(*) INTO mtxcount FROM lm_v3.Matrix WHERE matrixid = mtxid;
+   RAISE NOTICE 'mtxcount = %', mtxcount;
    IF mtxcount < 1 THEN
       RAISE EXCEPTION 'Matrix with id % does not exist', mtxid;
    END IF;
@@ -1821,6 +1822,7 @@ BEGIN
    -- check existence of optional layerid
    IF lyrid IS NOT NULL THEN
       SELECT * INTO rec_lyr FROM lm_v3.layer WHERE layerid = lyrid;
+      RAISE NOTICE 'search for lyr %', lyrid;
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Layer with id %, does not exist', lyrid; 
       END IF;
@@ -1829,6 +1831,7 @@ BEGIN
    -- Find unique combo of matrixid, matrixIndex
    IF mtxidx IS NOT NULL AND mtxidx > -1 THEN
       begin
+         RAISE NOTICE 'look for unique with matrixid %, matrixIndex %', mtxid, mtxidx;
          SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
             WHERE matrixid = mtxid AND matrixIndex = mtxidx;
          IF FOUND THEN
@@ -1840,29 +1843,29 @@ BEGIN
    -- Find unique combo of matrixid, layer, intersect params
    ELSEIF lyrid IS NOT NULL THEN
       begin
+         RAISE NOTICE 'look for unique with lyr %', lyrid;
          SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
             WHERE matrixid = mtxid AND layerid = lyrid AND intersectParams = intparams;
          IF FOUND THEN
             RAISE NOTICE 
             'Returning existing MatrixColumn for Matrix/Layer/Params % / % / %',
                mtxid, lyrid, intparams;
+         -- or insert new column at location or undefined location for gpam
+         ELSE
+            INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
+                      metadata, layerId, intersectParams, status, statusmodtime)
+               VALUES (mtxid, mtxidx, sqd, idnt, meta, lyrid, intparams, 
+                       stat, stattime);
+            IF NOT FOUND THEN
+               RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
+            ELSE
+               SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
+               SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+                  WHERE matrixColumnId = newid;
+            END IF;
          END IF;
       end;
-         
-   -- or insert new column at location or undefined location for gpam
-   ELSE
-      INSERT INTO lm_v3.MatrixColumn (matrixId, matrixIndex, squid, ident, 
-            metadata, layerId, intersectParams, status, statusmodtime)
-         VALUES (mtxid, mtxidx, sqd, idnt, meta, lyrid, intparams, stat, stattime);
-      IF NOT FOUND THEN
-         RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
-      ELSE
-         SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
-         SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
-            WHERE matrixColumnId = newid;
-      END IF;
    END IF;
-   
    RETURN rec_mtxcol;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;

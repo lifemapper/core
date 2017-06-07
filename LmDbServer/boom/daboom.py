@@ -62,9 +62,17 @@ class DaBoom(Daemon):
    # .............................
    def run(self):
       try:
-         self.boomer.processPotatoes()
+         while self.boomer.keepWalken:
+            self.boomer.processSpud()
+      except Exception, e:
+         self.log.debug('Exception {} on potato'.format(str(e)))         
       finally:
+         self.log.debug('Daboom finally stopping')
          self.onShutdown()
+#       try:
+#          self.boomer.processPotatoes()
+#       finally:
+#          self.onShutdown()
                 
    # .............................
    def onUpdate(self):
@@ -101,17 +109,6 @@ if __name__ == "__main__":
    args = parser.parse_args()
    configFname = args.config_file
    cmd = args.cmd.lower()
-      
-#    if os.path.exists(BOOM_PID_FILE):
-#       pid = open(BOOM_PID_FILE).read().strip()
-#    else:
-#       pid = os.getpid()
-#    secs = time.time()
-#    timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-#    
-#    scriptname = os.path.splitext(os.path.basename(__file__))[0]
-#    logname = '{}.{}'.format(scriptname, timestamp)
-#    logger = ScriptLogger(logname, level=logging.INFO)
    
    boomer = DaBoom(BOOM_PID_FILE, configFname)
    

@@ -583,9 +583,9 @@ class UserWoC(_SpeciesWeaponOfChoice):
          if sciName is not None:
             occ, setOrReset = self._createOrResetOccurrenceset(sciName, dataCount, 
                                                    data=dataChunk)
-         self.log.info('Processed occset {}, name {}, with {} records; next start {}'
-                       .format(occ.getId(), taxonName, len(dataChunk), 
-                               self.nextStart))
+            self.log.info('Processed occset {}, name {}, with {} records; next start {}'
+                          .format(occ.getId(), taxonName, len(dataChunk), 
+                                  self.nextStart))
       return occ, setOrReset
 
 # ...............................................
@@ -723,9 +723,9 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                                                       len(dataChunk), 
                                                       taxonSourceKey=speciesKey, 
                                                       data=dataChunk)
-         self.log.info('Processed occset {} gbif key {} with {} records; next start {}'
-                       .format(occ.getId(), speciesKey, len(dataChunk), 
-                               self.nextStart))
+            self.log.info('Processed occset {} gbif key {} with {} records; next start {}'
+                          .format(occ.getId(), speciesKey, len(dataChunk), 
+                                  self.nextStart))
       return occ, setOrReset
    
 # ...............................................
