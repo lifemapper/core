@@ -203,9 +203,6 @@ class _SpeciesWeaponOfChoice(LMObject):
          if not rdloc:
             raise LMError(currargs='   Failed to set raw data location')
          occ.setRawDLocation(rdloc, currtime)
-         # Set processType and metadata location (from config, not saved in DB)
-         occ.processType = self.processType
-         occ.rawMetaDLocation = self.metaFilename
          # TODO: remove Hack
          # Set scientificName, not pulled from DB, for alternate iDigBio query
          occ.setScientificName(sciName)
@@ -213,7 +210,11 @@ class _SpeciesWeaponOfChoice(LMObject):
       else:
          # Ignore existing, complete
          self.log.info('   Ignoring up to date OccLayer')
-
+      
+      if occ is not None:
+         # Set processType and metadata location (from config, not saved in DB)
+         occ.processType = self.processType
+         occ.rawMetaDLocation = self.metaFilename
       return occ
    
 # ...............................................
