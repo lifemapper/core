@@ -277,7 +277,7 @@ class Boomer(LMObject):
       
       #TODO: Add this back with a relative path for makeflow files if needed
       #dependencies.append(outputFname)
-      cmdArgs = ['LOCAL makeflow',
+      cmdArgs = ['makeflow',
                  '-T wq', 
                  '-N lifemapper-{}b'.format(mfchain.getId()),
                  '-C {}:9097'.format(PUBLIC_FQDN),
@@ -295,7 +295,7 @@ class Boomer(LMObject):
       arfCmd = ' '.join(arfCmdArgs)
       
       #arfCmd = 'touch {}'.format(targetFname)
-      cmd = '{} ; {}'.format(arfCmd, mfCmd)
+      cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
       # Create a rule from the MF and Arf file creation
       # TODO: Replace these dependencies with Delay rule
       rule = MfRule(cmd, [targetFname], dependencies=dependencies)
@@ -311,10 +311,10 @@ class Boomer(LMObject):
              with this Delay rule
       """
       targetFname = self.masterPotato.getArfFilename(prefix='goPotato')
-      cmdArgs = ['LOCAL checkArfFiles'].extend(self.spudArfFnames)
+      cmdArgs = ['checkArfFiles'].extend(self.spudArfFnames)
       mfCmd = ' '.join(cmdArgs)
       arfCmd = 'touch {}'.format(targetFname)
-      cmd = '{} ; {}'.format(arfCmd, mfCmd)
+      cmd = 'LOCAL {} ; {}'.format(arfCmd, mfCmd)
       # Create a rule from the MF and Arf file creation
       rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       self.masterPotato.addCommands([rule])
