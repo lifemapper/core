@@ -25,6 +25,7 @@ import argparse
 import logging
 import mx.DateTime as dt
 import os, sys, time
+import traceback
 
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import LMFormat
@@ -62,7 +63,13 @@ class DaBoom(Daemon):
    # .............................
    def run(self):
       try:
-         self.boomer.processPotatoes()
+         while self.keepRunning and os.path.exists(self.pidfile):
+            self.boomer.processPotatoes()
+      except Exception, e:
+         tb = traceback.format_exc()
+         self.log.error("An error occurred")
+         self.log.error(str(e))
+         self.log.error(tb)
       finally:
          self.onShutdown()
                 
