@@ -333,14 +333,12 @@ class ChristopherWalken(LMObject):
       potatoInputs = {}
       pcount = prcount = icount = ircount = 0
       # WeaponOfChoice resets old or failed Occurrenceset
-      occ, setOrReset = self.weaponOfChoice.getOne()
+      occ = self.weaponOfChoice.getOne()
       if self.weaponOfChoice.finishedInput:
          self._writeDoneWalkenFile()
       if occ:
          # Process existing OccurrenceLayer if incomplete, obsolete, or failed
-         if setOrReset:
-            objs.append(occ)
-            self.log.info('   Will compute occurrenceSet')
+         objs.append(occ)
          # Sweep over input options
          # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.
          #       Change this for BOOM jobs!! 

@@ -147,17 +147,17 @@ class _SpeciesWeaponOfChoice(LMObject):
             self.log.error('Failed to write next starting line {} to file {}'
                            .format(lineNum, self.startFile))
 
-
 # ...............................................
-   def _doReset(self, status, statusModTime, rawDataLocation):
+   def _doReset(self, status, statusModTime, dlocation, rawDataLocation):
       doReset = False
+      noRawData = rawDataLocation is None or not os.path.exists(rawDataLocation)
+      noCompleteData = dlocation is None or not os.path.exists(dlocation)
+      obsoleteData = statusModTime > 0 and statusModTime < self._obsoleteTime
       if (JobStatus.failed(status) or
            # waiting with missing data
-          (JobStatus.waiting(status) and rawDataLocation is None) or 
+          (JobStatus.waiting(status) and noRawData) or 
            # out-of-date
-          (status == JobStatus.COMPLETE and 
-           statusModTime > 0 and 
-           statusModTime < self._obsoleteTime)):
+          (status == JobStatus.COMPLETE and noCompleteData or obsoleteData)):
          doReset = True
       return doReset
 
@@ -188,21 +188,16 @@ class _SpeciesWeaponOfChoice(LMObject):
          raise e
 
       # Reset found or inserted Occ
-      setOrReset = self._doReset(occ.status, occ.statusModTime, occ.getRawDLocation())
+      setOrReset = self._doReset(occ.status, occ.statusModTime, 
+                                 occ.getDLocation(), occ.getRawDLocation())
       if setOrReset:
-         self.log.info('   Reseting OccLayer')
+         self.log.info('   Reseting OccLayer status and raw data')
          # Reset verify hash, name, count, status 
          occ.clearVerify()
          occ.displayName = sciName.scientificName
          occ.queryCount = dataCount
          occ.updateStatus(JobStatus.INITIALIZE, modTime=currtime)
-      else:
-         # Ignore existing, complete
-         self.log.info('   Ignoring up to date OccLayer')
-         
-      # Update  raw data in new or reset object
-      if setOrReset:
-         self.log.info('   Updating raw data for OccLayer')
+         # Update  raw data in new or reset object
          rdloc = self._locateRawData(occ, taxonSourceKeyVal=taxonSourceKey, 
                                      data=data)
          if not rdloc:
@@ -215,8 +210,11 @@ class _SpeciesWeaponOfChoice(LMObject):
          # Set scientificName, not pulled from DB, for alternate iDigBio query
          occ.setScientificName(sciName)
          success = self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+      else:
+         # Ignore existing, complete
+         self.log.info('   Ignoring up to date OccLayer')
 
-      return occ, setOrReset
+      return occ
    
 # ...............................................
    def _getInsertSciNameForGBIFSpeciesKey(self, taxonKey, taxonCount):
@@ -435,11 +433,11 @@ class BisonWoC(_SpeciesWeaponOfChoice):
       if tsn is not None:
          sciName = self._getInsertSciNameForItisTSN(tsn, tsnCount)
          if sciName is not None:
-            occ, setOrReset = self._createOrResetOccurrenceset(sciName, tsnCount,
+            occ = self._createOrResetOccurrenceset(sciName, tsnCount,
                                                                taxonSourceKey=tsn)
          self.log.info('Processed occset {}, tsn {}, with {} points; next start {}'
                        .format(occ.getId(), tsn, tsnCount, self.nextStart))
-      return occ, setOrReset
+      return occ
 
 # ...............................................
    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
@@ -581,12 +579,12 @@ class UserWoC(_SpeciesWeaponOfChoice):
             bbsciName = ScientificName(taxonName, userId=self.userId)
             sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
          if sciName is not None:
-            occ, setOrReset = self._createOrResetOccurrenceset(sciName, dataCount, 
+            occ = self._createOrResetOccurrenceset(sciName, dataCount, 
                                                    data=dataChunk)
             self.log.info('Processed occset {}, name {}, with {} records; next start {}'
                           .format(occ.getId(), taxonName, len(dataChunk), 
                                   self.nextStart))
-      return occ, setOrReset
+      return occ
 
 # ...............................................
    def _simplifyName(self, longname):
@@ -719,14 +717,14 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
          sciName = self._getInsertSciNameForGBIFSpeciesKey(speciesKey, 
                                                            len(dataChunk))
          if sciName is not None:
-            occ, setOrReset = self._createOrResetOccurrenceset(sciName, 
+            occ = self._createOrResetOccurrenceset(sciName, 
                                                       len(dataChunk), 
                                                       taxonSourceKey=speciesKey, 
                                                       data=dataChunk)
             self.log.info('Processed occset {} gbif key {} with {} records; next start {}'
                           .format(occ.getId(), speciesKey, len(dataChunk), 
                                   self.nextStart))
-      return occ, setOrReset
+      return occ
    
 # ...............................................
    def moveToStart(self):
