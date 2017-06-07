@@ -63,6 +63,7 @@ class DaBoom(Daemon):
    # .............................
    def run(self):
       try:
+         # TODO: Looping should be handled in this class, not in the boomer
          self.boomer.processPotatoes()
       except Exception, e:
          tb = traceback.format_exc()
