@@ -194,7 +194,7 @@ def pavRasterIntersect(sgFn, rasterFn, resolution, minPresence, maxPresence,
    headers = {'0' : rowHeaders}
    
    if squid is not None:
-      headers = {'1': [squid]}
+      headers['1'] = [squid]
       
    pav = Matrix(layerArray, headers=headers)
    
