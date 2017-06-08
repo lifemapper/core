@@ -93,6 +93,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
       self.loadIntersectParams(intersectParams)
       self.squid = squid
       self.ident = ident
+      self.postToSolr = postToSolr
 
 # ...............................................
    def setId(self, mtxcolId):
