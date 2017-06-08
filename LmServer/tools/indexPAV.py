@@ -126,7 +126,6 @@ if __name__ == '__main__':
    parser.add_argument('pavFilename', type=str, help='The PAV file to use')
    parser.add_argument('pavId', type=int, help='The matrix column id')
    parser.add_argument('projectionId', type=int, help='The projection id')
-   parser.add_argument('occurrenceId', type=int, help='The occurrence layer id')
    parser.add_argument('pavIdxFilename', type=str, 
                        help='A temporary file to be used for Solr POST')
    
@@ -137,7 +136,7 @@ if __name__ == '__main__':
    
    pav = scribe.getMatrixColumn(mtxcolId=args.pavId)
    prj = scribe.getSDMProject(args.projectionId)
-   occ = scribe.getOccurrenceSet(occId=args.occurrenceId)
+   occ = prj.occurrenceSet
    
    # Get all information for POST
    doc = getPostDocument(pav, prj, occ, args.pavFilename)
