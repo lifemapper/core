@@ -189,6 +189,15 @@ class MattDaemon(Daemon):
       """
       self.log.debug("Shutdown signal caught!")
       self.scribe.closeConnections()
+      Daemon.onShutdown(self)
+
+      # Wait for makeflows to finish
+      numRunning = self.getNumberOfRunningProcesses()
+      while numRunning > 0:
+         self.log.debug(
+            "Waiting on {} makeflow processes to finish".format(numRunning))
+         sleep(self.sleepTime)
+         numRunning = self.getNumberOfRunningProcesses()
       
       # Stop worker factory
       try:
@@ -202,7 +211,6 @@ class MattDaemon(Daemon):
       except:
          pass
       
-      Daemon.onShutdown(self)
       
    # .............................
    def startCatalogServer(self):
