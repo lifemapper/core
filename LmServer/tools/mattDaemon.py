@@ -192,12 +192,18 @@ class MattDaemon(Daemon):
       Daemon.onShutdown(self)
 
       # Wait for makeflows to finish
+      maxTime = 60 * 3
+      timeWaited = 0
       numRunning = self.getNumberOfRunningProcesses()
-      while numRunning > 0:
+      while numRunning > 0 and timeWaited < maxTime:
          self.log.debug(
             "Waiting on {} makeflow processes to finish".format(numRunning))
          sleep(self.sleepTime)
+         timeWaited += self.sleepTime
          numRunning = self.getNumberOfRunningProcesses()
+         
+      if timeWaited > maxTime:
+         self.log.debug("Waited for {} seconds.  Stopping.".format(timeWaited))
       
       # Stop worker factory
       try:
