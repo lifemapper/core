@@ -306,8 +306,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          options = ''
          if cutoutWktFilename is not None:
             options = '--cutoutWktFn={}'.format(cutoutWktFilename)
-         outFile = os.path.join(workDir, self.getRelativeDLocation(), 
-                                os.path.basename(self.getDLocation()))
+         outFile = os.path.join(targetDir, os.path.basename(self.getDLocation()))
       
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          cmdArguments = [os.getenv('PYTHON'), 
