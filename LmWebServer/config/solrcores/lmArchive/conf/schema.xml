@@ -60,6 +60,8 @@
    <field name="pavMetaUrl" type="url" indexed="false" stored="true" />
    <field name="pavDataUrl" type="url" indexed="false" stored="true" />
    <field name="presence" type="location" indexed="true" stored="false" multiValued="true" />
+   <dynamicField name="*_coordinate" type="tdouble" indexed="true" stored="false" />
+   
    
    <!-- Grid Set -->
    <field name="epsgCode" type="int" indexed="true" stored="true" />
