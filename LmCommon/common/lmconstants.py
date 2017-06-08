@@ -823,6 +823,7 @@ class ProcessType:
    UPDATE_OBJECT = 630
    MF_TRIAGE = 640
    TOUCH = 650
+   SOLR_POST = 660
    
    # .........................
    # TODO: deleteMe
@@ -904,6 +905,9 @@ class ProcessType:
       elif ptype == ProcessType.TOUCH:
          relpath = SERVER_SCRIPTS_DIR
          jr = 'lmTouch'
+      elif ptype == ProcessType.SOLR_POST:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'indexPAV'
 
       return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
 #       return os.path.join(APP_PATH, relpath, jr+'.py')   
