@@ -205,8 +205,9 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          pavFname = os.path.join(targetDir, self.getTargetFilename())
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
          
-         shapegridFile = os.path.join(workDir, self.shapegrid.getRelativeDLocation(),
-                               os.path.basename(self.shapegrid.getDLocation()))
+         shapegridFile = os.path.join(workDir, 
+                    os.path.splitext(self.shapegrid.getRelativeDLocation())[0],
+                    os.path.basename(self.shapegrid.getDLocation()))
          
          cmdArguments = [os.getenv('PYTHON'), 
                          scriptFname,
