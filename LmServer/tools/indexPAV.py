@@ -87,7 +87,7 @@ def getPostDocument(pav, prj, occ, pavFname):
       ('sdmProjDataUrl', prj.getDataUrl()),
       ('sdmProjModTime', prj.modTime),
       ('pavMetaUrl', pav.metadataUrl),
-      ('pavDataUrl', pav.getDataUrl()),
+      #('pavDataUrl', pav.getDataUrl()),
       ('epsgCode', prj.epsgcode),
       #('gridSetMetaUrl', ),
       ('shapegridId', sg.getId()),
@@ -95,22 +95,22 @@ def getPostDocument(pav, prj, occ, pavFname):
       ('shapegridDataUrl', sg.getDataUrl())
    ]
 
-   docLines = ['<doc>']
+   docLines = ['   <doc>']
        
    for fName, val in fields:
       if val is not None:
-         docLines.append('   <field name="{}">{}</field>'.format(fName, val))
+         docLines.append('      <field name="{}">{}</field>'.format(fName, val))
    
    # Process presence centroids
    pavMtx = Matrix.load(pavFname)
    rowHeaders = pavMtx.getRowHeaders()
    
-   for i in pavMtx.data.shape[0]:
+   for i in xrange(pavMtx.data.shape[0]):
       if pavMtx.data[i]:
          _, x, y = rowHeaders[i]
-         docLines.append('   <field name="presence">{},{}</field>'.format(y, x))
+         docLines.append('      <field name="presence">{},{}</field>'.format(y, x))
    
-   docLines.append('</doc>')
+   docLines.append('   </doc>\n')
    
    doc = '\n'.join(docLines)
 
