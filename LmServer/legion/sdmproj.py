@@ -40,6 +40,7 @@ from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
 from LmServer.legion.cmd import MfRule
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
+from wx.py.editor import directory
    
 
 # .........................................................................
@@ -835,7 +836,32 @@ class SDMProjection(_ProjectionType, Raster):
          
       if JobStatus.finished(self.status):
          # Just need to move the tiff into place
-         pass
+         
+         touchScriptFname = os.path.join(APP_PATH, 
+                                      ProcessType.getTool(ProcessType.TOUCH))
+         
+         cpRaster = os.path.join(targetDir, os.path.basename(self.getDLocation()))
+         
+         #touch directory
+         #copy file
+         touchCmdArgs = [
+            '$PYTHON', 
+            touchScriptFname, 
+            os.path.join(targetDir, 'touch.out')
+         ]
+         touchCmd = ' '.join(touchCmdArgs)
+         
+         cpArgs = [
+            'cp',
+            self.getDLocation(),
+            cpRaster
+         ]
+         
+         cpCmd = ' '.join(cpArgs)
+         
+         cmd = 'LOCAL {} ; {}'.format(touchCmd, cpCmd)
+         cpRule = MfRule(cmd, [cpRaster])
+         rules.append(cpRule)
       else:
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir)
