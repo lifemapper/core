@@ -239,8 +239,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                '$PYTHON',
                ProcessType.getTool(ProcessType.SOLR_POST),
                pavFname,
-               self.getId(), # PAV id
-               self.layer.getId(), # Projection id
+               str(self.getId()), # PAV id
+               str(self.layer.getId()), # Projection id
                postXmlFilename
             ]
             solrCmd = ' '.join(solrPostArgs)
