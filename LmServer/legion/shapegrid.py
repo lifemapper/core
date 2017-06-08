@@ -272,7 +272,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if workDir is None:
          workDir = ''
          
-      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
+      targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0], '') # Need trailing slash
       #TODO
       targetFiles = self.getTargetFiles(workDir=workDir)
       
@@ -334,6 +334,6 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       targetDir = os.path.join(workDir, os.path.splitext(self.getRelativeDLocation())[0])
       baseName = os.path.splitext(os.path.basename(self.getDLocation()))[0]
 
-      for ext in ['.shp', '.dbf', '.meta', '.prj', '.qix', '.shx']:
+      for ext in ['.shp', '.dbf', '.prj', '.shx']:
          targetFiles.append(os.path.join(targetDir, '{}{}'.format(baseName, ext)))
       return targetFiles
