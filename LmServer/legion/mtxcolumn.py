@@ -230,6 +230,22 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          rules.append(uRule)
          
          # TODO: Post to Solr
+         if self.postToSolr:
+            postXmlFilename = os.path.join(targetDir, 
+                                   'mtxcol_solr_{}.xml'.format(self.getId()))
+            solrPostArgs = [
+               'LOCAL',
+               '$PYTHON',
+               ProcessType.getTool(ProcessType.SOLR_POST),
+               pavFname,
+               self.getId(), # PAV id
+               self.layer.getId(), # Projection id
+               postXmlFilename
+            ]
+            solrCmd = ' '.join(solrPostArgs)
+            solrRule = MfRule(solrCmd, [postXmlFilename], 
+                              dependencies=[pavFname])
+            rules.append(solrRule)
          
 
       return rules
