@@ -40,7 +40,6 @@ from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
 from LmServer.legion.cmd import MfRule
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
-from wx.py.editor import directory
    
 
 # .........................................................................
