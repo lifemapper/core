@@ -159,15 +159,16 @@ class MattDaemon(Daemon):
       """
       numRunning = 0
       for idx in xrange(len(self._mfPool)):
-         result = self._mfPool[idx][2].poll()
-         if result is None:
-            numRunning += 1
-         else:
-            mfObj = self._mfPool[idx][0]
-            mfDocFn = self._mfPool[idx][1]
-            self._mfPool[idx] = None
-            
-            self._cleanupMakeflow(mfObj, mfDocFn, result)
+         if self._mfPool[idx] is not None:
+            result = self._mfPool[idx][2].poll()
+            if result is None:
+               numRunning += 1
+            else:
+               mfObj = self._mfPool[idx][0]
+               mfDocFn = self._mfPool[idx][1]
+               self._mfPool[idx] = None
+               
+               self._cleanupMakeflow(mfObj, mfDocFn, result)
 
       self._mfPool = filter(None, self._mfPool)
       return numRunning
