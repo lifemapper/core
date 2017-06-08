@@ -237,7 +237,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             solrPostArgs = [
                'LOCAL',
                '$PYTHON',
-               ProcessType.getTool(ProcessType.SOLR_POST),
+               os.path.join(APP_PATH, ProcessType.getTool(ProcessType.SOLR_POST)),
                pavFname,
                str(self.getId()), # PAV id
                str(self.layer.getId()), # Projection id
