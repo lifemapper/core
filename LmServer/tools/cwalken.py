@@ -399,6 +399,7 @@ class ChristopherWalken(LMObject):
                 intersectParams=self.intersectParams, 
                 squid=prj.squid, ident=prj.ident,
                 processType=ptype, metadata={}, matrixColumnId=None, 
+                postToSolr=self.assemblePams,
                 status=JobStatus.GENERAL, statusModTime=currtime)
          mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
          if mtxcol is not None:

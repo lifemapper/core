@@ -62,6 +62,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                 processType=None, 
                 metadata={}, 
                 matrixColumnId=None, 
+                postToSolr=True,
                 status=None, statusModTime=None):
       """
       @summary MatrixColumn constructor
