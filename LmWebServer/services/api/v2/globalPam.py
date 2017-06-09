@@ -112,7 +112,7 @@ class GlobalPAMService(LmService):
          if pointMin is None:
             pmin = '*'
             
-         queryParts.append('pointCount:%5B{} TO {}%5D'.format(pmin, pmax))
+         queryParts.append('pointCount:%5B{}%20TO%20{}%5D'.format(pmin, pmax))
       
       if public:
          userId = PUBLIC_USER
