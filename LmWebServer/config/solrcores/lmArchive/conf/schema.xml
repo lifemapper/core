@@ -75,7 +75,7 @@
    
    
    <!-- Field types -->
-   <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate">
+   <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate" />
    <!-- New lat lon -->
    <!-- <fieldType name="location" class="solr.LatLonPointSpatialField" docValues="true" />-->
    
