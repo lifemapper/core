@@ -201,7 +201,10 @@ class MattDaemon(Daemon):
             "Waiting on {} makeflow processes to finish".format(numRunning))
          sleep(self.sleepTime)
          timeWaited += self.sleepTime
-         numRunning = self.getNumberOfRunningProcesses()
+         try:
+            numRunning = self.getNumberOfRunningProcesses()
+         except:
+            numRunning = 0
          
       if timeWaited > maxTime:
          self.log.debug("Waited for {} seconds.  Stopping.".format(timeWaited))
