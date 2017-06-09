@@ -90,7 +90,7 @@ def getPostDocument(pav, prj, occ, pam, pavFname):
       #('pavDataUrl', pav.getDataUrl()),
       ('epsgCode', prj.epsgcode),
       ('gridSetMetaUrl', pam.gridsetUrl),
-      ('gridSetId', pam.gridsetId()),
+      ('gridSetId', pam.gridsetId),
       ('shapegridId', sg.getId()),
       ('shapegridMetaUrl', sg.metadataUrl),
       ('shapegridDataUrl', sg.getDataUrl())
