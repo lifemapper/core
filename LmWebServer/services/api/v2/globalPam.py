@@ -49,7 +49,7 @@ import urllib2
 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.cpTools import lmFormat
+from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # TODO: Move these somewhere
 SERVER = "localhost:8983/solr/"
@@ -64,7 +64,7 @@ class GlobalPAMService(LmService):
                 dispatcher is responsible for calling the correct method
    """
    # ................................
-   @lmFormat
+   @lmFormatter
    def GET(self, algorithmCode=None, bbox=None, gridSetId=None, 
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  public=None, projectionScenarioCode=None, squid=None):
