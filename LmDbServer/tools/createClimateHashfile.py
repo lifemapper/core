@@ -61,9 +61,9 @@ if __name__ == "__main__":
          for fname in filenames:
             fullname = os.path.join(dirpath, fname)
             if fullname.endswith(LMFormat.GTIFF.ext):
-               print('Computing hash for {}'.format(outfname))
-               hashval = computeHash(dlocation=fullname)
                relname = fullname.strip(basepath)
+               print('Computing hash for {} (in {})'.format(relname, basepath))
+               hashval = computeHash(dlocation=fullname)
                outf.write('{},  {}\n'.format(hashval, relname))
    except Exception, e:
       print('Failed to write {}, ({})'.format(outfname, e))
@@ -71,9 +71,9 @@ if __name__ == "__main__":
       outf.close()
       
 """
-$PYTHON LmDbServer/tools/createClimateHashfile.py Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover /share/lm/data/layers/ryan
+$PYTHON LmDbServer/tools/createClimateHashfile.py Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover /share/lm/data/layers/ryan/Worldclim-GTOPO-ISRIC-SoilGrids-ConsensusLandCover
 
-$PYTHON LmDbServer/tools/createClimateHashfile.py 10min-past-present-future /share/lm/data/layers
+$PYTHON LmDbServer/tools/createClimateHashfile.py 10min-past-present-future /share/lm/data/layers/10min-past-present-future
 
 
 """
