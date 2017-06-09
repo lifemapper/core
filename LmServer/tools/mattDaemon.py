@@ -39,6 +39,7 @@ import sys
 from time import sleep
 import traceback
 
+from LmServer.base.utilities import isCorrectUser
 from LmBackend.common.daemon import Daemon, DaemonCommands
 from LmCommon.common.lmconstants import JobStatus
 #from LmServer.db.scribe import Scribe
@@ -299,7 +300,10 @@ class MattDaemon(Daemon):
    
 # .............................................................................
 if __name__ == "__main__":
-   
+   if not isCorrectUser():
+      print("Run this script as `lmwriter`")
+      sys.exit(2)
+      
    if os.path.exists(MATT_DAEMON_PID_FILE):
       pid = open(MATT_DAEMON_PID_FILE).read().strip()
    else:
