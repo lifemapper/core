@@ -434,7 +434,7 @@
       -->
      <lst name="defaults">
        <str name="echoParams">explicit</str>
-       <int name="rows">100</int>
+       <int name="rows">10000</int>
      </lst>
 
     </requestHandler>
