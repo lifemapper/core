@@ -33,6 +33,7 @@
 import cherrypy
 
 from LmWebServer.services.api.v2.envLayer import EnvLayerService
+from LmWebServer.services.api.v2.globalPam import GlobalPAMService
 from LmWebServer.services.api.v2.gridset import GridSetService
 from LmWebServer.services.api.v2.layer import LayerService
 from LmWebServer.services.api.v2.occurrence import OccurrenceLayerService
@@ -49,6 +50,7 @@ class ApiRootV2(object):
    @summary: Top level class containing Lifemapper services V2
    """
    envlayer = EnvLayerService()
+   globalpam = GlobalPAMService()
    gridset = GridSetService()
    layer = LayerService()
    occurrence = OccurrenceLayerService()
