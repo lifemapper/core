@@ -858,14 +858,19 @@ class Borg(DbPostgresql):
       """
       row = None
       if mtx is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtx.getId(),
+         row, idxs = self.executeSelectOneFunction('lm_getMatrix', 
+                                                   mtx.getId(),
                                                    mtx.matrixType,
                                                    mtx.parentId, 
+                                                   mtx.gcmCode,
+                                                   mtx.altpredCode,
+                                                   mtx.dateCode,
                                                    mtx.gridsetName,
                                                    mtx.getUserId())
       elif mtxId is not None:
          row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtxId,
-                                                   None, None, None, None)
+                                                   None, None, None, None,
+                                                   None, None, None)
       fullMtx = self._createLMMatrix(row, idxs)
       return fullMtx
       
