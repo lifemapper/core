@@ -150,9 +150,10 @@ class GlobalPAMService(LmService):
       
       #curl "http://localhost:8983/solr/lmArchive/select?q=*%3A*&fq=presence:%5B-90,-180%20TO%2090,180%5D&indent=true"
       
-      url = 'http://{}{}/select?q={}&wt=python&indent=true'.format(SERVER, 
+      url = 'http://{}{}/select?{}&wt=python&indent=true'.format(SERVER, 
                                                                    COLLECTION, 
                                                                    query)
+      self.log.debug(url)
       res = urllib2.urlopen(url)
       resp = res.read()
       rDict = literal_eval(resp)
