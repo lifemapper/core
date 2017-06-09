@@ -241,6 +241,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                pavFname,
                str(self.getId()), # PAV id
                str(self.layer.getId()), # Projection id
+               str(self.parentId), # PAM id
                postXmlFilename
             ]
             solrCmd = ' '.join(solrPostArgs)

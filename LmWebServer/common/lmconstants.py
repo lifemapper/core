@@ -117,6 +117,10 @@ QUERY_PARAMETERS = {
    'gcmcode' : {
       'name' : 'gcmCode',
    },
+   'gridsetid' : {
+      'name' : 'gridSetId',
+      'processIn' : int
+   },
    'hasbranchlengths' : {
       'name' : 'hasBranchLengths',
       'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
@@ -195,6 +199,14 @@ QUERY_PARAMETERS = {
    'pathtreeid' : {
       'name' : 'pathTreeId'
    },
+   'pointmax' : {
+      'name' : 'pointMax',
+      'processIn' : int
+   },
+   'pointmin' : {
+      'name' : 'pointMin',
+      'processIn' : int
+   },
    'projectionscenariocode' : {
       'name' : 'projectionScenarioCode'
    },
@@ -204,6 +216,9 @@ QUERY_PARAMETERS = {
    },
    'request' : {
       'name' : 'request'
+   },
+   'scenariocode' : {
+      'name' : 'scenarioCode'
    },
    'scenarioid' : {
       'name' : 'scenarioId',
@@ -220,6 +235,10 @@ QUERY_PARAMETERS = {
    },
    'sldbody' : {
       'name' : 'sld_body'
+   },
+   'squid' : {
+      'name' : 'squid',
+      'processIn' : lambda x: x # TODO: Evaluate what needs to be done to process into list
    },
    'srs' : {
       # TODO: Forward to crs for WMS 1.3.0?

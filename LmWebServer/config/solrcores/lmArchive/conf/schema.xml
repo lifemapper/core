@@ -66,6 +66,7 @@
    <!-- Grid Set -->
    <field name="epsgCode" type="int" indexed="true" stored="true" />
    <field name="gridSetMetaUrl" type="url" indexed="false" stored="true" />
+   <field name="gridSetId" type="int" indexed="true" stored="true" />
    <field name="shapegridId" type="int" indexed="true" stored="true" />
    <field name="shapegridMetaUrl" type="url" indexed="false" stored="true" />
    <field name="shapegridDataUrl" type="url" indexed="false" stored="true" />

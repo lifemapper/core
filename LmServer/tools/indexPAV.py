@@ -39,7 +39,7 @@ SOLR_POST_COMMAND = '/opt/solr/bin/post'
 COLLECTION = 'lmArchive'
 
 # .............................................................................
-def getPostDocument(pav, prj, occ, pavFname):
+def getPostDocument(pav, prj, occ, pam, pavFname):
    """
    @summary: Create the Solr document to be posted
    @param pav: A PAV matrix column object
@@ -89,7 +89,8 @@ def getPostDocument(pav, prj, occ, pavFname):
       ('pavMetaUrl', pav.metadataUrl),
       #('pavDataUrl', pav.getDataUrl()),
       ('epsgCode', prj.epsgcode),
-      #('gridSetMetaUrl', ),
+      ('gridSetMetaUrl', pam.gridsetUrl),
+      ('gridSetId', pam.gridsetId()),
       ('shapegridId', sg.getId()),
       ('shapegridMetaUrl', sg.metadataUrl),
       ('shapegridDataUrl', sg.getDataUrl())
@@ -126,6 +127,7 @@ if __name__ == '__main__':
    parser.add_argument('pavFilename', type=str, help='The PAV file to use')
    parser.add_argument('pavId', type=int, help='The matrix column id')
    parser.add_argument('projectionId', type=int, help='The projection id')
+   parser.add_argument('pamId', type=int, help='The PAM id')
    parser.add_argument('pavIdxFilename', type=str, 
                        help='A temporary file to be used for Solr POST')
    
@@ -137,9 +139,10 @@ if __name__ == '__main__':
    pav = scribe.getMatrixColumn(mtxcolId=args.pavId)
    prj = scribe.getSDMProject(args.projectionId)
    occ = prj.occurrenceSet
+   pam = scribe.getMatrix(mtxId=args.pamId)
    
    # Get all information for POST
-   doc = getPostDocument(pav, prj, occ, args.pavFilename)
+   doc = getPostDocument(pav, prj, occ, pam, args.pavFilename)
    
    with open(args.pavIdxFilename, 'w') as outF:
       outF.write('<add>\n')
