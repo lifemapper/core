@@ -31,9 +31,10 @@ import subprocess
 import tempfile
 
 # TODO: Different logger
+from LmCommon.common.matrix import Matrix
+from LmCommon.compression.binaryList import compress
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmCommon.common.matrix import Matrix
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 COLLECTION = 'lmArchive'
@@ -50,6 +51,7 @@ def getPostDocument(pav, prj, occ, pam, pavFname):
    sg = pav.shapegrid
    mdlScn = prj.modelScenario
    prjScn = prj.projScenario
+   pavMtx = Matrix.load(pavFname)
    
    fields = [
       ('id', pav.getId()),
@@ -93,7 +95,9 @@ def getPostDocument(pav, prj, occ, pam, pavFname):
       ('gridSetId', pam.gridsetId),
       ('shapegridId', sg.getId()),
       ('shapegridMetaUrl', sg.metadataUrl),
-      ('shapegridDataUrl', sg.getDataUrl())
+      ('shapegridDataUrl', sg.getDataUrl()),
+      # Compress the PAV and store the string
+      ('compressedPAV', compress(pavMtx.data))
    ]
 
    docLines = ['   <doc>']
@@ -103,7 +107,6 @@ def getPostDocument(pav, prj, occ, pam, pavFname):
          docLines.append('      <field name="{}">{}</field>'.format(fName, val))
    
    # Process presence centroids
-   pavMtx = Matrix.load(pavFname)
    rowHeaders = pavMtx.getRowHeaders()
    
    for i in xrange(pavMtx.data.shape[0]):

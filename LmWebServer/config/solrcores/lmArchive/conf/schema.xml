@@ -61,6 +61,7 @@
    <field name="pavDataUrl" type="url" indexed="false" stored="true" />
    <field name="presence" type="location" indexed="true" stored="false" multiValued="true" />
    <dynamicField name="*_coordinate" type="tdouble" indexed="true" stored="false" />
+   <field name="compressedPAV" type="string" indexed="false" stored="true" />
    
    
    <!-- Grid Set -->
