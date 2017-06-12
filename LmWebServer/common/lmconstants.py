@@ -58,6 +58,9 @@ QUERY_PARAMETERS = {
    'altpredcode' : {
       'name' : 'altPredCode'
    },
+   'archivename' : {
+      'name' : 'archiveName'
+   },
    'beforetime' : {
       'name' : 'beforeTime',
       'processIn' : getMjdTimeFromISO8601

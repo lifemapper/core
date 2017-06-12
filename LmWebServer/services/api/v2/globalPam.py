@@ -24,27 +24,10 @@
           along with this program; if not, write to the Free Software 
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
-
-
-algorithm
-scenario code
-spatial
-user
-taxon
-squids
-point count
-grid set?
-
-
-id
-url
-data path
- pav
- raster
-
 """
 from ast import literal_eval
 import cherrypy
+from mx.DateTime import gmt
 import numpy as np
 import urllib2
 
@@ -54,6 +37,10 @@ from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS,
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmServer.legion.gridset import Gridset
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.legion.lmmatrix import LMMatrix
+from LmCommon.common.lmconstants import MatrixType, JobStatus
 
 # .............................................................................
 @cherrypy.expose
@@ -82,35 +69,22 @@ class GlobalPAMService(LmService):
    
    
    # ................................
-   def POST(self, algorithmCode=None, bbox=None, gridSetId=None, 
+   def POST(self, pathGridSetId, archiveName, algorithmCode=None, bbox=None,  
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  public=None, projectionScenarioCode=None, squid=None):
       """
       @summary: A Global PAM post request will create a subset
       """
       matches = self._makeSolrQuery(algorithmCode=algorithmCode, bbox=bbox, 
-                                 gridSetId=gridSetId, 
+                                 gridSetId=pathGridSetId, 
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
                                  projectionScenarioCode=projectionScenarioCode, 
                                  squid=squid)
-      sg = self.scribe.getShapeGrid(matches[0][SOLR_FIELDS.SHAPEGRID_ID])
-      ncols = len(matches)
-      nrows = sg.featureCount
       
-      pamData = np.zeros((nrows, ncols), dtype=bool)
-      squids = []
-      
-      for i in range(len(matches)):
-         pamData[:,i] = decompress(matches[i][SOLR_FIELDS.COMPRESSED_PAV])
-         squids.append(matches[i][SOLR_FIELDS.SQUID])
-      # For each match
-      #    Decompress
-      #    Add column to PAM
-      
-      # Insert PAM
-      
+      self._subsetGlobalPAM(archiveName, matches)
+      cherrypy.response.status = 202
    
    # ................................
    def _makeSolrQuery(self, algorithmCode=None, bbox=None, gridSetId=None, 
@@ -185,4 +159,79 @@ class GlobalPAMService(LmService):
       rDict = literal_eval(resp)
       
       return rDict['response']['docs']
+   
+   # ................................
+   def _subsetGlobalPAM(self, archiveName, matches):
+      """
+      @summary: Create a subset of a global PAM and create a new grid set
+      @param archiveName: The name of this new grid set
+      @param matches: Solr hits to be used for subsetting
+      """
+      # Get metadata
+      match1 = matches[0]
+      origShp = self.scribe.getShapeGrid(match1[SOLR_FIELDS.SHAPEGRID_ID])
+      origNrows = origShp.featureCount
+      epsgCode = match1[SOLR_FIELDS.EPSG_CODE]
+      origGSId = match1[SOLR_FIELDS.GRIDSET_ID]
+
+      origGS = self.scribe.getGridset(origGSId, fillMatrices=True)
+   
+      # Get the row headers
+      oldPam = origGS.getPAMs()[0]
+      rowHeaders = oldPam.getRowHeaders()
+   
+      # TODO: Subset / copy shapegrid
+      myShp = origShp
+   
+      gsMeta = {
+         ServiceObject.META_DESCRIPTION: 'Subset of Global PAM, gridset {}'.format(
+            origGSId),
+         ServiceObject.META_KEYWORDS: ['subset']
+      }
+      
+      # Create a dictionary of matches by scenario
+      matchesByScen = {}
+      for match in matches:
+         scnId = match[SOLR_FIELDS.PROJ_SCENARIO_ID]
+         if matchesByScen.has_key(scnId):
+            matchesByScen[scnId].append(match)
+         else:
+            matchesByScen[scnId] = [match]
+      
+      # Create grid set
+      gs = Gridset(name=archiveName, metadata=gsMeta, shapeGrid=myShp, 
+                   epsgcode=epsgCode, userId=self.userId(), modTime=gmt().mjd)
+      updatedGS = self.scribe.findOrInsertGridset(gs)
+      
+      for scnId, scnMatches in matchesByScen.iteritems():
+         scnCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
+         dateCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
+         gcmCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
+         altPredCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
+         
+         scnMeta = {
+            ServiceObject.META_DESCRIPTION: 'Subset of grid set {}, scenario {}'.format(
+               origGSId, scnId),
+            ServiceObject.META_KEYWORDS: ['subset', scnCode]
+         }
+         
+         # Assemble full matrix
+         pamData = np.zeros((origNrows, len(scnMatches)), dtype=bool)
+         squids = []
+         
+         for i in range(len(scnMatches)):
+            pamData[:,i] = decompress(scnMatches[i][SOLR_FIELDS.COMPRESSED_PAV])
+            squids.append(scnMatches[i][SOLR_FIELDS.SQUID])
+         
+         # TODO: Subset PAM data
+         
+         # Create object
+         pamMtx = LMMatrix(pamData, matrixType=MatrixType.PAM, gcmCode=gcmCode, 
+                           altpredCode=altPredCode, dateCode=dateCode, 
+                           metadata=scnMeta, userId=self.getUserId(),
+                           gridset=updatedGS, status=JobStatus.COMPLETE,
+                           statusModTime=gmt().mjd, headers={'0' : rowHeaders,
+                                                             '1' : squids})
+         # Insert it into db
+         self.scribe.findOrInsertMatrix(pamMtx)
    
