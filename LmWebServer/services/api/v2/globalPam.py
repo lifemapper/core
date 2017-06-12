@@ -184,5 +184,5 @@ class GlobalPAMService(LmService):
       resp = res.read()
       rDict = literal_eval(resp)
       
-      return rDict
+      return rDict['response']['docs']
    
