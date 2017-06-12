@@ -1582,3 +1582,59 @@ ALGORITHM_DATA  = {
 'ENFA': ENFA_PARAMETERS, 
 'RNDFOREST': RNDFOREST_PARAMETERS
 }
+
+# ============================================================================
+# =                              Solr Constants                              =
+# ============================================================================
+SOLR_ARCHIVE_COLLECTION = 'lmArchive'
+SOLR_POST_COMMAND = '/opt/solr/bin/post'
+SOLR_SERVER = 'http://localhost:8983/solr/'
+
+class SOLR_FIELDS(object):
+   """
+   @summary: This class contains constants for SOLR index field names
+   """
+   ALGORITHM_CODE = 'algorithmCode'
+   ALGORITHM_PARAMETERS = 'algorithmParameters'
+   COMPRESSED_PAV = 'compressedPAV'
+   DISPLAY_NAME = 'displayName'
+   EPSG_CODE = 'epsgCode'
+   GRIDSET_ID = 'gridSetId'
+   GRIDSET_META_URL = 'gridSetMetaUrl'
+   ID = 'id'
+   MODEL_SCENARIO_ALT_PRED_CODE = 'modelScenarioAltPredCode'
+   MODEL_SCENARIO_CODE = 'modelScenarioCode'
+   MODEL_SCENARIO_DATE_CODE = 'modelScenarioDateCode'
+   MODEL_SCENARIO_GCM = 'modelScenarioGCM'
+   MODEL_SCENARIO_ID = 'modelScenarioId'
+   MODEL_SCENARIO_URL = 'modelScenarioUrl'
+   OCCURRENCE_DATA_URL = 'occurrenceDataUrl'
+   OCCURRENCE_ID = 'occurrenceId'
+   OCCURRENCE_META_URL = 'occurrenceMetaUrl'
+   OCCURRENCE_MOD_TIME = 'occurrenceModTime'
+   PAV_DATA_URL = 'pavDataUrl'
+   PAV_META_URL = 'pavMetaUrl'
+   POINT_COUNT = 'pointCount'
+   PRESENCE = 'presence'
+   PROJ_DATA_URL = 'sdmProjDataUrl'
+   PROJ_ID = 'sdmProjId'
+   PROJ_META_URL = 'sdmProjMetaUrl'
+   PROJ_MOD_TIME = 'sdmProjModTime'
+   PROJ_SCENARIO_ALT_PRED_CODE = 'sdmProjScenarioAltPredCode'
+   PROJ_SCENARIO_CODE = 'sdmProjScenarioCode'
+   PROJ_SCENARIO_DATE_CODE = 'sdmProjScenarioDateCode'
+   PROJ_SCENARIO_GCM = 'sdmProjScenarioGCM'
+   PROJ_SCENARIO_ID = 'sdmProjScenarioId'
+   PROJ_SCENARIO_URL = 'sdmProjScenarioUrl'
+   SHAPEGRID_DATA_URL = 'shapegridDataUrl'
+   SHAPEGRID_ID = 'shapegridId'
+   SHAPEGRID_META_URL = 'shapegridMetaUrl'
+   SQUID = 'squid'
+   TAXON_CLASS = 'taxonClass'
+   TAXON_FAMILY = 'taxonFamily'
+   TAXON_GENUS = 'taxonGenus'
+   TAXON_KINGDOM = 'taxonKingdom'
+   TAXON_ORDER = 'taxonOrder'
+   TAXON_PHYLUM = 'taxonPhylum'
+   TAXON_SPECIES = 'taxonSpecies'
+   USER_ID = 'userId'
