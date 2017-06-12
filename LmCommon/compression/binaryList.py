@@ -37,7 +37,7 @@ def compress(lst):
    @summary: Compresses a list of zeros and ones into a string of run lengths
    """
    runs = []
-   startVal = lst[0]
+   startVal = int(lst[0])
    val = startVal
    runLength = 0
 
