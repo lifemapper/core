@@ -47,7 +47,7 @@ def compress(lst):
          runLength += 1
       else:
          # Add the run length and switch to the other value
-         runs.append(runLength)
+         runs.append(str(runLength))
          val = i
          runLength = 1
          
