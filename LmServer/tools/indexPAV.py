@@ -25,6 +25,8 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+#TODO: Keys for index names
+
 import argparse
 import os
 import subprocess
@@ -33,11 +35,10 @@ import tempfile
 # TODO: Different logger
 from LmCommon.common.matrix import Matrix
 from LmCommon.compression.binaryList import compress
+from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
+                                         SOLR_POST_COMMAND)
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
-
-SOLR_POST_COMMAND = '/opt/solr/bin/post'
-COLLECTION = 'lmArchive'
 
 # .............................................................................
 def getPostDocument(pav, prj, occ, pam, pavFname):
@@ -54,50 +55,50 @@ def getPostDocument(pav, prj, occ, pam, pavFname):
    pavMtx = Matrix.load(pavFname)
    
    fields = [
-      ('id', pav.getId()),
-      ('userId', pav.getUserId()),
-      ('displayName', occ.displayName),
-      ('squid', pav.squid),
-      #('taxonKingdom', taxKingdom),
-      #('taxonPhylum', taxPhylum),
-      #('taxonClass', taxClass),
-      #('taxonOrder', taxOrder),
-      #('taxonFamily', taxFamily),
-      #('taxonGenus', taxGenus),
-      #('taxonSpecies', taxSpecies),
-      ('algorithmCode', prj.algorithmCode),
-      ('algorithmParameters', prj.dumpAlgorithmParametersAsString()),
-      ('pointCount', occ.queryCount),
-      ('occurrenceId', occ.getId()),
-      ('occurrenceDataUrl', occ.getDataUrl()),
-      ('occurrenceMetaUrl', occ.metadataUrl),
-      ('occurrenceModTime', occ.modTime), # May need to convert
-      ('modelScenarioCode', mdlScn.code),
-      ('modelScenarioId', mdlScn.getId()),
-      ('modelScenarioUrl', mdlScn.metadataUrl),
-      ('modelScenarioGCM', mdlScn.gcmCode),
-      ('modelScenarioDateCode', mdlScn.dateCode),
-      ('modelScenarioAltPredCode', mdlScn.altpredCode),
-      ('sdmProjScenarioCode', prjScn.code),
-      ('sdmProjScenarioId', prjScn.getId()),
-      ('sdmProjScenarioUrl', prjScn.metadataUrl),
-      ('sdmProjScenarioGCM', prjScn.gcmCode),
-      ('sdmProjScenarioDateCode', prjScn.dateCode),
-      ('sdmProjScenarioAltPredCode', prjScn.altpredCode),
-      ('sdmProjId', prj.getId()),
-      ('sdmProjMetaUrl', prj.metadataUrl),
-      ('sdmProjDataUrl', prj.getDataUrl()),
-      ('sdmProjModTime', prj.modTime),
-      ('pavMetaUrl', pav.metadataUrl),
-      #('pavDataUrl', pav.getDataUrl()),
-      ('epsgCode', prj.epsgcode),
-      ('gridSetMetaUrl', pam.gridsetUrl),
-      ('gridSetId', pam.gridsetId),
-      ('shapegridId', sg.getId()),
-      ('shapegridMetaUrl', sg.metadataUrl),
-      ('shapegridDataUrl', sg.getDataUrl()),
+      (SOLR_FIELDS.ID, pav.getId()),
+      (SOLR_FIELDS.USER_ID, pav.getUserId()),
+      (SOLR_FIELDS.DISPLAY_NAME, occ.displayName),
+      (SOLR_FIELDS.SQUID, pav.squid),
+      #(SOLR_FIELDS.TAXON_KINGDOM, taxKingdom),
+      #(SOLR_FIELDS.TAXON_PHYLUM, taxPhylum),
+      #(SOLR_FIELDS.TAXON_CLASS, taxClass),
+      #(SOLR_FIELDS.TAXON_ORDER, taxOrder),
+      #(SOLR_FIELDS.TAXON_FAMILY, taxFamily),
+      #(SOLR_FIELDS.TAXON_GENUS, taxGenus),
+      #(SOLR_FIELDS.TAXON_SPECIES, taxSpecies),
+      (SOLR_FIELDS.ALGORITHM_CODE, prj.algorithmCode),
+      (SOLR_FIELDS.ALGORITHM_PARAMETERS, prj.dumpAlgorithmParametersAsString()),
+      (SOLR_FIELDS.POINT_COUNT, occ.queryCount),
+      (SOLR_FIELDS.OCCURRENCE_ID, occ.getId()),
+      (SOLR_FIELDS.OCCURRENCE_DATA_URL, occ.getDataUrl()),
+      (SOLR_FIELDS.OCCURRENCE_META_URL, occ.metadataUrl),
+      (SOLR_FIELDS.OCCURRENCE_MOD_TIME, occ.modTime), # May need to convert
+      (SOLR_FIELDS.MODEL_SCENARIO_CODE, mdlScn.code),
+      (SOLR_FIELDS.MODEL_SCENARIO_ID, mdlScn.getId()),
+      (SOLR_FIELDS.MODEL_SCENARIO_URL, mdlScn.metadataUrl),
+      (SOLR_FIELDS.MODEL_SCENARIO_GCM, mdlScn.gcmCode),
+      (SOLR_FIELDS.MODEL_SCENARIO_DATE_CODE, mdlScn.dateCode),
+      (SOLR_FIELDS.MODEL_SCENARIO_ALT_PRED_CODE, mdlScn.altpredCode),
+      (SOLR_FIELDS.PROJ_SCENARIO_CODE, prjScn.code),
+      (SOLR_FIELDS.PROJ_SCENARIO_ID, prjScn.getId()),
+      (SOLR_FIELDS.PROJ_SCENARIO_URL, prjScn.metadataUrl),
+      (SOLR_FIELDS.PROJ_SCENARIO_GCM, prjScn.gcmCode),
+      (SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE, prjScn.dateCode),
+      (SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE, prjScn.altpredCode),
+      (SOLR_FIELDS.PROJ_ID, prj.getId()),
+      (SOLR_FIELDS.PROJ_META_URL, prj.metadataUrl),
+      (SOLR_FIELDS.PROJ_DATA_URL, prj.getDataUrl()),
+      (SOLR_FIELDS.PROJ_MOD_TIME, prj.modTime),
+      (SOLR_FIELDS.PAV_META_URL, pav.metadataUrl),
+      #(SOLR_FIELDS.PAV_DATA_URL, pav.getDataUrl()),
+      (SOLR_FIELDS.EPSG_CODE, prj.epsgcode),
+      (SOLR_FIELDS.GRIDSET_META_URL, pam.gridsetUrl),
+      (SOLR_FIELDS.GRIDSET_ID, pam.gridsetId),
+      (SOLR_FIELDS.SHAPEGRID_ID, sg.getId()),
+      (SOLR_FIELDS.SHAPEGRID_META_URL, sg.metadataUrl),
+      (SOLR_FIELDS.SHAPEGRID_DATA_URL, sg.getDataUrl()),
       # Compress the PAV and store the string
-      ('compressedPAV', compress(pavMtx.data))
+      (SOLR_FIELDS.COMPRESSED_PAV, compress(pavMtx.data))
    ]
 
    docLines = ['   <doc>']
@@ -112,7 +113,8 @@ def getPostDocument(pav, prj, occ, pam, pavFname):
    for i in xrange(pavMtx.data.shape[0]):
       if pavMtx.data[i]:
          _, x, y = rowHeaders[i]
-         docLines.append('      <field name="presence">{},{}</field>'.format(y, x))
+         docLines.append('      <field name="{}">{},{}</field>'.format(
+            SOLR_FIELDS.PRESENCE, y, x))
    
    docLines.append('   </doc>\n')
    
@@ -153,7 +155,7 @@ if __name__ == '__main__':
       outF.write('</add>')
 
    cmd = '{cmd} -c {collection} -out no {filename}'.format(
-               cmd=SOLR_POST_COMMAND, collection=COLLECTION, 
+               cmd=SOLR_POST_COMMAND, collection=SOLR_ARCHIVE_COLLECTION, 
                filename=args.pavIdxFilename)
    subprocess.call(cmd, shell=True)
    
