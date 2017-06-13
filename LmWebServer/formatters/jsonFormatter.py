@@ -37,10 +37,11 @@ from LmServer.base.layer2 import Raster
 from LmServer.base.utilities import formatTimeHuman
 from LmServer.common.lmconstants import OGC_SERVICE_URL
 
-from LmServer.legion.sdmproj import SDMProjection
-from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
+from LmServer.legion.sdmproj import SDMProjection
 
 # Format object method looks at object type and calls formatters appropriately
 # Provide methods for direct calls to formatters
@@ -299,6 +300,8 @@ def _formatObject(obj):
       return formatScenario(obj)
    elif isinstance(obj, Raster):
       return formatRasterLayer(obj)
+   elif isinstance(obj, Gridset):
+      return formatGridset(obj)
    else:
       # TODO: Expand these and maybe fallback to a generic formatter of public
       #          attributes
