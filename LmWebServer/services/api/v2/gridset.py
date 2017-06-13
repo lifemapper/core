@@ -138,7 +138,7 @@ class GridSetService(LmService):
       """
       @summary: Attempt to get a GridSet
       """
-      gs = self.scribe.getGridSet(pathGridSetId)
+      gs = self.scribe.getGridset(gridsetId=pathGridSetId)
       if gs is None:
          raise cherrypy.HTTPError(404, 
                         'GridSet {} was not found'.format(pathGridSetId))
