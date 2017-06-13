@@ -237,7 +237,7 @@ class GlobalPAMService(LmService):
                            statusModTime=gmt().mjd, headers={'0' : rowHeaders,
                                                              '1' : squids})
          # Insert it into db
-         self.scribe.findOrInsertMatrix(pamMtx)
-         with open(pamMtx.getDLocation(), 'w') as outF:
+         updatedPamMtx = self.scribe.findOrInsertMatrix(pamMtx)
+         with open(updatedPamMtx.getDLocation(), 'w') as outF:
             pamMtx.save(outF)
    
