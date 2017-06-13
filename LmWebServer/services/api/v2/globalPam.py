@@ -44,7 +44,6 @@ from LmCommon.common.lmconstants import MatrixType, JobStatus
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathGridSetId')
 class GlobalPAMService(LmService):
    """
    @summary: This class is responsible for the Global PAM services.  The 
@@ -69,14 +68,14 @@ class GlobalPAMService(LmService):
    
    
    # ................................
-   def POST(self, pathGridSetId, archiveName, algorithmCode=None, bbox=None,  
+   def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  public=None, projectionScenarioCode=None, squid=None):
       """
       @summary: A Global PAM post request will create a subset
       """
       matches = self._makeSolrQuery(algorithmCode=algorithmCode, bbox=bbox, 
-                                 gridSetId=pathGridSetId, 
+                                 gridSetId=gridSetId, 
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
