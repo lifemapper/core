@@ -190,6 +190,9 @@ QUERY_PARAMETERS = {
    'pathlayerid' : {
       'name' : 'pathLayerId'
    },
+   'pathmatrixid' : {
+      'name' : 'pathMatrixId'
+   },
    'pathoccsetid' : {
       'name' : 'pathOccSetId'
    },
