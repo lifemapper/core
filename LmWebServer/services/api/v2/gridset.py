@@ -150,7 +150,7 @@ class GridSetService(LmService):
                      self.getUserId(), pathGridSetId))
    
    # ................................
-   def _listGridSetsLayers(self, userId, afterTime=None, beforeTime=None, 
+   def _listGridSets(self, userId, afterTime=None, beforeTime=None, 
                               epsgCode=None, limit=100, metaString=None,
                               offset=0, shapegridId=None):
       """
