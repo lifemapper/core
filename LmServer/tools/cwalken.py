@@ -247,9 +247,8 @@ class ChristopherWalken(LMObject):
       intersectGrid = self._scribe.getShapeGrid(userId=userId, lyrName=gridname, 
                                                 epsg=epsg)
       # Get  for Archive "Global PAM"
-      tmpGS = Gridset(name=archiveName, shapeGrid=intersectGrid, 
-                     epsgcode=epsg, userId=userId)
-      boomGridset = self._scribe.getGridset(tmpGS, fillMatrices=True)
+      boomGridset = self._scribe.getGridset(name=archiveName, userId=userId, 
+                                            fillMatrices=True)
       boomGridset.setMatrixProcessType(ProcessType.CONCATENATE_MATRICES, 
                            matrixTypes=[MatrixType.PAM, MatrixType.ROLLING_PAM])
       intersectParams = {

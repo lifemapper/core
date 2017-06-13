@@ -772,20 +772,20 @@ class Borg(DbPostgresql):
       return updatedGrdset
       
 # ...............................................
-   def getGridset(self, gridset, fillMatrices):
+   def getGridset(self, gridsetId, userId, name, fillMatrices):
       """
       @summary: Retrieve a Gridset from the database
-      @param gridset: Gridset to retrieve
+      @param gridsetId: Database id of the Gridset to retrieve
+      @param userId: UserId of the Gridset to retrieve
+      @param name: Name of the Gridset to retrieve
       @param fillMatrices: True/False indicating whether to find and attach any 
              matrices associated with this Gridset
       @return: Existing LmServer.legion.gridset.Gridset
-      @note: ProcessType is not held in DB record and must be set after
-             retrieval
       """
       row, idxs = self.executeSelectOneFunction('lm_getGridset', 
-                                                gridset.getId(),
-                                                gridset.getUserId(),
-                                                gridset.name)
+                                                gridsetId,
+                                                userId,
+                                                name)
       fullGset = self._createGridset(row, idxs)
       if fullGset is not None and fillMatrices:
          rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset',

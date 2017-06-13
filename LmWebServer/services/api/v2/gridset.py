@@ -51,7 +51,7 @@ class GridSetService(LmService):
       @summary: Attempts to delete a grid set
       @param pathGridSetId: The id of the grid set to delete
       """
-      gs = self.scribe.getGridset(pathGridSetId)
+      gs = self.scribe.getGridset(gridsetId=pathGridSetId)
 
       if gs is None:
          raise cherrypy.HTTPError(404, "Grid set not found")

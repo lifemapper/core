@@ -174,7 +174,7 @@ class GlobalPAMService(LmService):
       epsgCode = match1[SOLR_FIELDS.EPSG_CODE]
       origGSId = match1[SOLR_FIELDS.GRIDSET_ID]
 
-      origGS = self.scribe.getGridset(origGSId, fillMatrices=True)
+      origGS = self.scribe.getGridset(gridsetId=origGSId, fillMatrices=True)
    
       # Get the row headers
       oldPam = origGS.getPAMs()[0]

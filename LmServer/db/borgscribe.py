@@ -432,11 +432,20 @@ class BorgScribe(LMObject):
                               isBinary, isUltrametric, hasBranchLengths, atom)
       return objs
 # ...............................................
-   def getGridset(self, gridset, fillMatrices=False):
+   def getGridset(self, gridset=None, gridsetId=None, userId=None, name=None, 
+                  fillMatrices=False):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getGridset()
+      @param gridset: LmServer.legion.gridset.Gridset object containing 
+             matching attributes Id, userId, name
+      @note: gridset object values override gridsetId, userId, name
       """
-      existingGridset = self._borg.getGridset(gridset, fillMatrices)
+      if gridset is not None:
+         gridsetId=gridset.getId() 
+         userId = gridset.getUserId()
+         name = gridset.name
+      existingGridset = self._borg.getGridset(gridsetId, userId, name, 
+                                              fillMatrices)
       return existingGridset
    
 # .............................................................................
