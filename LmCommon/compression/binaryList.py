@@ -50,6 +50,7 @@ def compress(lst):
          runs.append(str(runLength))
          val = i
          runLength = 1
+   runs.append(str(runLength))
          
    return 'v{}s{} {}'.format(VERSION, startVal, ' '.join(runs))
 
