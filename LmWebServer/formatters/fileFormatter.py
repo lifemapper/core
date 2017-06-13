@@ -31,6 +31,7 @@ from StringIO import StringIO
 import zipfile
 
 from LmServer.base.layer2 import Raster, Vector
+from LmServer.legion.lmmatrix import LMMatrix
 
 # .............................................................................
 def file_formatter(filename, readMode='r', stream=False):
@@ -66,6 +67,22 @@ def file_formatter(filename, readMode='r', stream=False):
       contentFLO.close()
       return cnt
 
+# .............................................................................
+def csvObjectFormatter(obj):
+   """
+   @summary: Attempt to return CSV for an object
+   """
+   if isinstance(obj, LMMatrix):
+      cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="mtx{}.csv"'.format(obj.getId())
+      outStream = StringIO()
+      obj.writeCSV(outStream)
+      outStream.seek(0)
+      cnt = outStream.read()
+      outStream.close()
+      return cnt
+   else:
+      raise Exception, "Only matrix objects can be formatted as csv at this time"
+   
 # .............................................................................
 def gtiffObjectFormatter(obj):
    """

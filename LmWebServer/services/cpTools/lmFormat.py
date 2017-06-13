@@ -30,7 +30,8 @@ import cherrypy
 
 from LmCommon.common.lmconstants import LMFormat, HTTPStatus
 
-from LmWebServer.formatters.fileFormatter import (gtiffObjectFormatter,
+from LmWebServer.formatters.fileFormatter import (csvObjectFormatter,
+                                                  gtiffObjectFormatter,
                                                   shapefileObjectFormatter)
 from LmWebServer.formatters.jsonFormatter import jsonObjectFormatter
 
@@ -71,6 +72,8 @@ def lmFormatter(f):
                return gtiffObjectFormatter(handler_result)
             elif ah == LMFormat.SHAPE.getMimeType():
                return shapefileObjectFormatter(handler_result)
+            elif ah == LMFormat.CSV.getMimeType():
+               return csvObjectFormatter(handler_result)
          except Exception, e:
             # Ignore and try next accept header
             raise cherrypy.HTTPError(500, 'Failed: {}'.format(str(e)))
