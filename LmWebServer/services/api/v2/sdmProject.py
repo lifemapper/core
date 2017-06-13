@@ -33,10 +33,8 @@ import json
 from mx.DateTime import gmt
 
 from LmCommon.common.lmconstants import JobStatus
+from LmServer.base.atom import Atom
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.sdmproj import SDMProjection
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
@@ -130,10 +128,12 @@ class SdmProjectService(LmService):
       archiveName = '{}_{}'.format(usr.userid, gmt().mjd)
       
       bp = BoomPoster(usr.userid, usr.email, archiveName, projectionData)
-      bp.initBoom()
+      gridset = bp.initBoom()
 
       # TODO: What do we return?
       cherrypy.response.status = 202
+      return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
+                  gridset.modTime, epsg=gridset.epsgcode)
    
    # ................................
    #@cherrypy.json_in

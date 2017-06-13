@@ -74,8 +74,9 @@ class BoomPoster(object):
          self.config.write(configOutF)
       
       filler = ArchiveFiller(configFname=filename)
-      filler.initBoom()
+      gridset = filler.initBoom()
       filler.close()
+      return gridset
          
    # ................................
    def _getTempFilename(self, ext):

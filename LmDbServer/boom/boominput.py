@@ -917,6 +917,8 @@ class ArchiveFiller(LMObject):
       self.writeConfigFile()
       self.createMFBoom()
       self.scribe.log.info('Wrote {}'.format(self.outConfigFilename))
+      
+      return archiveGridset
    
 # ...............................................
 if __name__ == '__main__':
