@@ -199,14 +199,19 @@ class GlobalPAMService(LmService):
       
       # Create grid set
       gs = Gridset(name=archiveName, metadata=gsMeta, shapeGrid=myShp, 
-                   epsgcode=epsgCode, userId=self.userId(), modTime=gmt().mjd)
+                   epsgcode=epsgCode, userId=self.getUserId(), modTime=gmt().mjd)
       updatedGS = self.scribe.findOrInsertGridset(gs)
       
       for scnId, scnMatches in matchesByScen.iteritems():
          scnCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
-         dateCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
-         gcmCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
-         altPredCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
+         dateCode = altPredCode = gcmCode = None
+         
+         if scnMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE):
+            dateCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_DATE_CODE]
+         if scnMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_GCM):
+            gcmCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_GCM]
+         if scnMatches[0].has_key(SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE):
+            altPredCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_ALT_PRED_CODE]
          
          scnMeta = {
             ServiceObject.META_DESCRIPTION: 'Subset of grid set {}, scenario {}'.format(

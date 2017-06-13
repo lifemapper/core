@@ -37,10 +37,12 @@ from LmServer.base.layer2 import Raster
 from LmServer.base.utilities import formatTimeHuman
 from LmServer.common.lmconstants import OGC_SERVICE_URL
 
-from LmServer.legion.sdmproj import SDMProjection
-from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.lmmatrix import LMMatrix
+from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
+from LmServer.legion.sdmproj import SDMProjection
 
 # Format object method looks at object type and calls formatters appropriately
 # Provide methods for direct calls to formatters
@@ -85,6 +87,79 @@ def formatEnvLayer(lyr):
    lyrDict['dateCode'] = lyr.dateCode
    
    return lyrDict
+
+# .............................................................................
+def formatGridset(gs):
+   """
+   @summary: Convert a grid set to a dictionary
+   """
+   gsDict = _getLifemapperMetadata('gridset', gs.getId(), gs.metadataUrl, 
+                                   gs.getUserId(), metadata=gs.grdMetadata)
+   gsDict['epsg'] = gs.epsgcode
+   
+   gsDict['bioGeoHypotheses'] = []
+   gsDict['grims'] = []
+   gsDict['pams'] = []
+   
+   # Bio geo hypotheses
+   for mtx in gs.getBiogeographicHypotheses():
+      gsDict['bioGeoHypotheses'].append(
+         {
+            'id' : mtx.getId(),
+            'url' : mtx.metadataUrl
+         }
+      )
+      
+   # PAMs
+   for mtx in gs.getPAMs():
+      gsDict['pams'].append(
+         {
+            'id' : mtx.getId(),
+            'url' : mtx.metadataUrl
+         }
+      )
+
+   # GRIMs
+   for mtx in gs.getGRIMs():
+      gsDict['grims'].append(
+         {
+            'id' : mtx.getId(),
+            'url' : mtx.metadataUrl
+         }
+      )
+
+   # Shapegrid
+   gsDict['shapegridUrl'] = gs.getShapegrid().metadataUrl
+   gsDict['shapegridId'] = gs.shapeGridId
+   
+   # Tree
+   if gs.tree is not None:
+      gsDict['tree'] = gs.tree.metadataUrl
+   
+   gsDict['name'] = gs.name
+   gsDict['modTime'] = gs.modTime   
+   return gsDict
+
+# .............................................................................
+def formatMatrix(mtx):
+   """
+   @summary: Convert a matrix object into a dictionary
+   """
+   mtxDict = _getLifemapperMetadata('matrix', mtx.getId(), mtx.metadataUrl, 
+                                    mtx.getUserId(), status=mtx.status, 
+                                    statusModTime=mtx.statusModTime,
+                                    metadata=mtx.mtxMetadata)
+   mtxDict['altPredCode'] = mtx.altpredCode
+   mtxDict['dateCode'] = mtx.dateCode
+   mtxDict['gcmCode'] = mtx.gcmCode
+   mtxDict['dataUrl'] = mtx.getDataUrl()
+   mtxDict['matrixType'] = mtx.matrixType
+   mtxDict['parentMetadataUrl'] = mtx.parentMetadataUrl
+   mtxDict['gridsetId'] = mtx.gridsetId
+   mtxDict['gridsetUrl'] = mtx.gridsetUrl
+   mtxDict['gridsetName'] = mtx.gridsetName
+   
+   return mtxDict
 
 # .............................................................................
 def formatOccurrenceSet(occ):
@@ -247,6 +322,10 @@ def _formatObject(obj):
       return formatScenario(obj)
    elif isinstance(obj, Raster):
       return formatRasterLayer(obj)
+   elif isinstance(obj, Gridset):
+      return formatGridset(obj)
+   elif isinstance(obj, LMMatrix):
+      return formatMatrix(obj)
    else:
       # TODO: Expand these and maybe fallback to a generic formatter of public
       #          attributes
