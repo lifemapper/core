@@ -319,7 +319,8 @@ class Matrix(object):
          # For each row in the data set
          for i in xrange(self.data.shape[0]):
             # Add the row headers if exists
-            row = [rowHeaders[i]] if rowHeaders else []
+            row = []
+            row.extend(rowHeaders[i])
             # Get the data from the data array
             row.extend(self.data[i].tolist())
             yield row
