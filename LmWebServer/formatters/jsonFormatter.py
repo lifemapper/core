@@ -172,7 +172,8 @@ def formatOccurrenceSet(occ):
                            occ.metadataUrl, occ.getUserId(), status=occ.status, 
                            statusModTime=occ.statusModTime, 
                            metadata=occ.lyrMetadata)
-   occDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'occurrences', occ.name)
+   occDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 
+                                    'data_{}'.format(occ.getId()), occ.name)
    dataUrl = occ.getDataUrl()
    occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsgcode, occ.bbox, 
                                     occ.mapUnits, dataUrl, occ.verify, 
@@ -201,7 +202,8 @@ def formatProjection(prj):
                                     prj.metadataUrl, status=prj.status, 
                                     statusModTime=prj.statusModTime, 
                                     metadata=prj.lyrMetadata)
-   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'projections', prj.name)
+   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'data_'.format(
+      prj.getOccurrenceSetId()), prj.name)
    dataUrl = prj.getDataUrl()
    minVal = 0
    maxVal = 1
