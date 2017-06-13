@@ -808,7 +808,9 @@ class Borg(DbPostgresql):
       @param epsg: filter by this EPSG code
       @return: a count of Matrices
       """
-      metamatch = '%{}%'.format(metastring)
+      metamatch = None
+      if metastring is not None:
+         metamatch = '%{}%'.format(metastring)
       row, idxs = self.executeSelectOneFunction('lm_countGridsets', userId, 
                            shpgrdLyrid, metamatch, afterTime, beforeTime, epsg)
       return self._getCount(row)
@@ -1832,7 +1834,9 @@ class Borg(DbPostgresql):
       @param beforeStatus: filter by status <= value
       @return: a count of Matrices
       """
-      metamatch = '%{}%'.format(metastring)
+      metamatch = None
+      if metastring is not None:
+         metamatch = '%{}%'.format(metastring)
       row, idxs = self.executeSelectOneFunction('lm_countMatrices', userId, 
                                  matrixType, gcmCode, altpredCode, dateCode, 
                                  metamatch, gridsetId, afterTime, beforeTime, 
@@ -1862,7 +1866,9 @@ class Borg(DbPostgresql):
       @param atom: True if return objects will be Atoms, False if full objects
       @return: a list of Matrix atoms or full objects
       """
-      metamatch = '%{}%'.format(metastring)
+      metamatch = None
+      if metastring is not None:
+         metamatch = '%{}%'.format(metastring)
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
                                  firstRecNum, maxNum, userId, matrixType, 
@@ -1912,7 +1918,9 @@ class Borg(DbPostgresql):
       @param beforeTime: filter by modified at or before this time
       @return: a count of Tree
       """
-      metamatch = '%{}%'.format(metastring)
+      metamatch = None
+      if metastring is not None:
+         metamatch = '%{}%'.format(metastring)
       row, idxs = self.executeSelectOneFunction('lm_countTrees', userId, 
                                  afterTime, beforeTime, name, metamatch,  
                                  isBinary, isUltrametric, hasBranchLengths)

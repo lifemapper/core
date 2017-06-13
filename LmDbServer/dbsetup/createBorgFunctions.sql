@@ -932,9 +932,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterMtx(usr varchar,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int,
-                                                    mtxid int,
-                                                    lyrid int)
+                                                    beforestat int)
    RETURNS varchar AS
 $$
 DECLARE
@@ -1027,7 +1025,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.lm_fullmatrix ';
-   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtx(usr, mtxtype, gcm, 
                  altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
    cmd := cmd || wherecls;
@@ -1062,7 +1060,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT matrixId, null, grdepsgcode, statusmodtime FROM lm_v3.lm_fullmatrix ';
-   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtx(usr, mtxtype, gcm, 
                  altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
    ordercls = 'ORDER BY statusmodtime DESC';
@@ -1104,7 +1102,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.lm_fullmatrix ';
-   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMatrix(usr, mtxtype, gcm, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtx(usr, mtxtype, gcm, 
                  altpred, tm, meta, grdid, aftertime, beforetime, epsg, 
                  afterstat, beforestat);
    ordercls = 'ORDER BY statusmodtime DESC';
@@ -1776,11 +1774,11 @@ BEGIN
       SELECT * INTO rec FROM lm_v3.lm_matrixcolumn WHERE matrixcolumnid = mtxcolid;
    ELSIF mtxid IS NOT NULL THEN
       IF mtxindex IS NOT NULL THEN
-         SELECT * INTO rec FROM lm_v3.lm_v3.lm_matrixcolumn 
+         SELECT * INTO rec FROM lm_v3.lm_matrixcolumn 
                                              WHERE matrixId = mtxid 
                                                AND matrixIndex = mtxindex;
       ELSE
-         SELECT * INTO rec FROM lm_v3.lm_v3.lm_matrixcolumn 
+         SELECT * INTO rec FROM lm_v3..lm_matrixcolumn 
                                              WHERE matrixId = mtxid 
                                                AND layerid = lyrid 
                                                AND intersectParams = intparams;
@@ -2023,7 +2021,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.lm_matrixcolumn ';
-   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
+   SELECT * INTO wherecls FROM lm_v3..lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
@@ -2055,7 +2053,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT matrixColumnId, squid, null, null, mtxcolstatusmodtime FROM lm_v3.lm_matrixcolumn ';
-   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
+   SELECT * INTO wherecls FROM lm_v3..lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
@@ -2094,7 +2092,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.lm_matrixcolumn ';
-   SELECT * INTO wherecls FROM lm_v3.lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
+   SELECT * INTO wherecls FROM lm_v3..lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
