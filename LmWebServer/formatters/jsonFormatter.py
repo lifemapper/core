@@ -39,6 +39,7 @@ from LmServer.common.lmconstants import OGC_SERVICE_URL
 
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
+from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.sdmproj import SDMProjection
@@ -138,6 +139,27 @@ def formatGridset(gs):
    gsDict['name'] = gs.name
    gsDict['modTime'] = gs.modTime   
    return gsDict
+
+# .............................................................................
+def formatMatrix(mtx):
+   """
+   @summary: Convert a matrix object into a dictionary
+   """
+   mtxDict = _getLifemapperMetadata('matrix', mtx.getId(), mtx.metadataUrl, 
+                                    mtx.getUserId(), status=mtx.status, 
+                                    statusModTime=mtx.statusModTime,
+                                    metadata=mtx.mtxMetadata)
+   mtxDict['altPredCode'] = mtx.altpredCode
+   mtxDict['dateCode'] = mtx.dateCode
+   mtxDict['gcmCode'] = mtx.gcmCode
+   mtxDict['dataUrl'] = mtx.getDataUrl()
+   mtxDict['matrixType'] = mtx.matrixType
+   mtxDict['parentMetadataUrl'] = mtx.parentMetadataUrl
+   mtxDict['gridsetId'] = mtx.gridsetId
+   mtxDict['gridsetUrl'] = mtx.gridsetUrl
+   mtxDict['gridsetName'] = mtx.gridsetName
+   
+   return mtxDict
 
 # .............................................................................
 def formatOccurrenceSet(occ):
@@ -302,6 +324,8 @@ def _formatObject(obj):
       return formatRasterLayer(obj)
    elif isinstance(obj, Gridset):
       return formatGridset(obj)
+   elif isinstance(obj, LMMatrix):
+      return formatMatrix(obj)
    else:
       # TODO: Expand these and maybe fallback to a generic formatter of public
       #          attributes
