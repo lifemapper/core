@@ -313,7 +313,7 @@ class Matrix(object):
          # Start with the header row, if we have one
          if self.headers.has_key('1') and self.headers['1']:
             # Add a blank entry if we have row headers
-            headerRow = ['']*len(rowHeaders[0] if rowHeaders else []
+            headerRow = ['']*len(rowHeaders[0]) if rowHeaders else []
             headerRow.extend(self.headers['1'])
             yield headerRow
          # For each row in the data set
