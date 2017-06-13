@@ -46,7 +46,7 @@ class Gridset(ServiceObject):
 # .............................................................................
    def __init__(self, name=None, metadata={}, 
                 shapeGrid=None, shapeGridId=None, siteIndicesFilename=None, 
-                configFilename=None, epsgcode=None, matrices=None, tree=None,
+                dlocation=None, epsgcode=None, matrices=None, tree=None,
                 userId=None, gridsetId=None, metadataUrl=None, modTime=None):
       """
       @summary Constructor for the Gridset class
@@ -139,6 +139,38 @@ class Gridset(ServiceObject):
       if self._path is None:
          self.setPath()
       return self._path
+
+# ...............................................
+   def createLocalDLocation(self):
+      """
+      @summary: Create an absolute filepath from object attributes
+      @note: If the object does not have an ID, this returns None
+      """
+      dloc = self._earlJr.createFilename(LMFileType.BOOM_CONFIG, 
+                                         objCode=self.getId(), 
+                                         usr=self.getUserId())
+      return dloc
+
+   def getDLocation(self):
+      """
+      @summary: Return the _dlocation attribute; create and set it if empty
+      """
+      self.setDLocation()
+      return self._dlocation
+   
+   def setDLocation(self, dlocation=None):
+      """
+      @summary: Set the _dlocation attribute if it is None.  Use dlocation
+                if provided, otherwise calculate it.
+      @note: Does NOT override existing dlocation, use clearDLocation for that
+      """
+      if self._dlocation is None:
+         if dlocation is None: 
+            dlocation = self.createLocalDLocation()
+         self._dlocation = dlocation
+
+   def clearDLocation(self): 
+      self._dlocation = None
 
 # ...............................................
    def setMatrices(self, matrices, doRead=False):
