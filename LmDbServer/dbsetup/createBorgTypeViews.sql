@@ -559,10 +559,11 @@ lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
+lm_v3.lm_sdmProject, 
 lm_v3.lm_matrixcolumn,
 lm_v3.lm_matrix,
+lm_v3.lm_fullmatrix,
 lm_v3.lm_gridset,
-lm_v3.lm_sdmProject, 
 lm_v3.lm_bloat
 TO GROUP reader;
 
@@ -571,10 +572,11 @@ lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
+lm_v3.lm_sdmProject, 
 lm_v3.lm_matrixcolumn,
 lm_v3.lm_matrix,
+lm_v3.lm_fullmatrix,
 lm_v3.lm_gridset,
-lm_v3.lm_sdmProject, 
 lm_v3.lm_bloat
 TO GROUP writer;
 
