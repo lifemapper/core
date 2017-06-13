@@ -364,7 +364,7 @@ create table lm_v3.Gridset
    -- optional shapegrid 
    layerId int REFERENCES lm_v3.ShapeGrid,
    
-   -- Optional metadata and configuration file for initArchive and archivist workflow
+   -- Optional configuration file created by boominput for boomer workflow
    dlocation text,
 
    epsgcode int,

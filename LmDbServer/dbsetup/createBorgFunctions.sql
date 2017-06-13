@@ -488,8 +488,9 @@ DECLARE
    wherecls varchar;
    ordercls varchar;
    limitcls varchar;
+   title varchar;
 BEGIN
-   cmd = 'SELECT scenarioid, scenarioCode, epsgcode, modTime FROM lm_v3.scenario ';
+   cmd = 'SELECT scenarioid, null, epsgcode, modTime FROM lm_v3.scenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt);
    ordercls = ' ORDER BY modTime DESC ';
@@ -500,6 +501,8 @@ BEGIN
 
    FOR rec in EXECUTE cmd
       LOOP 
+         SELECT * INTO title FROM lm_v3.lm_getScenarioTitle(rec.id);
+         rec.name = title;
          RETURN NEXT rec;
       END LOOP;
    RETURN;
@@ -836,23 +839,32 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
                                                        meta varchar, 
                                                        stat int,
                                                    	 stattime double precision)
-   RETURNS lm_v3.Matrix AS
+   RETURNS lm_v3.lm_matrix AS
 $$
 DECLARE
-   rec lm_v3.matrix%rowtype;
+   rec lm_v3.lm_matrix%rowtype;
+   grdcount int;
    newid int;
 BEGIN
    IF mtxid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixid = mtxid;
+      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
    ELSE
-      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
+      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
                                             AND gridsetid = grdid
                                             AND gcmCode = gcm
                                             AND altpredCode = altpred
                                             AND dateCode = dt;
    END IF;
+
    IF NOT FOUND THEN
       begin
+         -- check existence of required referenced gridset
+         SELECT count(*) INTO grdcount FROM lm_v3.Gridset WHERE gridsetid = grdid;
+         RAISE NOTICE 'grdcount = %', grdcount;
+         IF grdcount < 1 THEN
+            RAISE EXCEPTION 'Gridset with id % does not exist', grdcount;
+         END IF;
+
          INSERT INTO lm_v3.matrix (matrixType, gridsetId, matrixDlocation, 
                                    gcmCode, altpredCode, dateCode, metadata, 
                                    status, statusmodtime) 
@@ -862,7 +874,7 @@ BEGIN
             RAISE EXCEPTION 'Unable to find or insert Matrix';
          ELSE
             SELECT INTO newid last_value FROM lm_v3.matrix_matrixid_seq;
-            SELECT * INTO rec from lm_v3.matrix WHERE matrixId = newid;
+            SELECT * INTO rec from lm_v3.lm_matrix WHERE matrixId = newid;
          END IF;
       end;
    END IF;
@@ -894,11 +906,11 @@ BEGIN
                                                  AND userid = usr;
       END IF;
       
-      SELECT * INTO rec FROM lm_v3.matrix WHERE matrixtype = mtxtype 
-                                            AND gridsetid = gsid
-                                            AND gcmCode = gcm
-                                            AND altpredCode = altpred
-                                            AND dateCode = dt;
+      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
+                                               AND gridsetid = gsid
+                                               AND gcmCode = gcm
+                                               AND altpredCode = altpred
+                                               AND dateCode = dt;
    END IF;
    RETURN rec;
 END;
@@ -907,12 +919,12 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- Gets all (bare) matrices for a gridset 
 CREATE OR REPLACE FUNCTION lm_v3.lm_getMatricesForGridset(gsid int)
-   RETURNS SETOF lm_v3.matrix AS
+   RETURNS SETOF lm_v3.lm_matrix AS
 $$
 DECLARE
-   rec lm_v3.matrix%rowtype;
+   rec lm_v3.lm_matrix%rowtype;
 BEGIN
-   FOR rec IN SELECT * FROM lm_v3.Matrix WHERE gridsetId = gsid
+   FOR rec IN SELECT * FROM lm_v3.lm_matrix WHERE gridsetId = gsid
       LOOP
          RETURN NEXT rec;
       END LOOP;
@@ -2239,3 +2251,38 @@ BEGIN
    
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE; 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getMetadataField(metastr varchar,
+                                                     key varchar)
+   RETURNS varchar AS
+$$
+DECLARE
+   keystr varchar;
+   tmp varchar;
+   pos int;
+   val varchar;
+BEGIN
+   keystr := '"' || key || '": "';
+   SELECT INTO pos position(keystr in metastr) + char_length(keystr) ;
+   SELECT INTO tmp substring(metastr, pos);
+   SELECT INTO pos position('"' in tmp);
+	SELECT INTO val substring(tmp, 0, pos);
+   RETURN val;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getScenarioTitle(scenid int)
+   RETURNS varchar AS
+$$
+DECLARE
+   metastr varchar;
+   val varchar;
+BEGIN
+   SELECT metadata INTO metastr FROM lm_v3.Scenario WHERE scenarioId = scenId;
+   SELECT * INTO val FROM lm_v3.lm_getMetadataField(metastr, 'title');
+   RETURN val;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
