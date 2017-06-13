@@ -24,6 +24,7 @@
 import os
 
 from LmBackend.common.lmobj import LMObject
+from LmCommon.common.lmconstants import JSON_INTERFACE
 from LmCommon.trees.lmTree import LmTree
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMServiceType, LMFileType
@@ -127,7 +128,7 @@ class Tree(LmTree, ServiceObject):
                                   existingMetadataDict=self.treeMetadata)
 
 # ...............................................
-   def getDataUrl(self, dataFormat=None):
+   def getDataUrl(self, interface=JSON_INTERFACE):
       durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                             dataFormat)
+                                             interface)
       return durl

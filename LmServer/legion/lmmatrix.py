@@ -25,7 +25,7 @@
 """
 import os
 
-from LmCommon.common.lmconstants import MatrixType, ProcessType
+from LmCommon.common.lmconstants import MatrixType, ProcessType, CSV_INTERFACE
 from LmCommon.common.matrix import Matrix
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMFileType)
@@ -144,9 +144,9 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return url
 
 # ...............................................
-   def getDataUrl(self, dataFormat=None):
+   def getDataUrl(self, interface=CSV_INTERFACE):
       durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                             dataFormat)
+                                             interface)
       return durl
 
 # ...............................................
