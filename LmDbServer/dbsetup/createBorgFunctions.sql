@@ -1778,7 +1778,7 @@ BEGIN
                                              WHERE matrixId = mtxid 
                                                AND matrixIndex = mtxindex;
       ELSE
-         SELECT * INTO rec FROM lm_v3..lm_matrixcolumn 
+         SELECT * INTO rec FROM lm_v3.lm_matrixcolumn 
                                              WHERE matrixId = mtxid 
                                                AND layerid = lyrid 
                                                AND intersectParams = intparams;
@@ -2021,7 +2021,7 @@ DECLARE
    wherecls varchar;
 BEGIN
    cmd = 'SELECT count(*) FROM lm_v3.lm_matrixcolumn ';
-   SELECT * INTO wherecls FROM lm_v3..lm_getFilterMtxCols(usr, sqd, idt, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
@@ -2053,7 +2053,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT matrixColumnId, squid, null, null, mtxcolstatusmodtime FROM lm_v3.lm_matrixcolumn ';
-   SELECT * INTO wherecls FROM lm_v3..lm_getFilterMtxCols(usr, sqd, idt, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
@@ -2092,7 +2092,7 @@ DECLARE
    ordercls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.lm_matrixcolumn ';
-   SELECT * INTO wherecls FROM lm_v3..lm_getFilterMtxCols(usr, sqd, idt, 
+   SELECT * INTO wherecls FROM lm_v3.lm_getFilterMtxCols(usr, sqd, idt, 
             aftertime, beforetime, epsg, afterstat, beforestat, mtxid, lyrid);
    ordercls = 'ORDER BY mtxcolstatusmodtime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
