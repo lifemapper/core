@@ -199,7 +199,7 @@ class GlobalPAMService(LmService):
       
       # Create grid set
       gs = Gridset(name=archiveName, metadata=gsMeta, shapeGrid=myShp, 
-                   epsgcode=epsgCode, userId=self.userId(), modTime=gmt().mjd)
+                   epsgcode=epsgCode, userId=self.getUserId(), modTime=gmt().mjd)
       updatedGS = self.scribe.findOrInsertGridset(gs)
       
       for scnId, scnMatches in matchesByScen.iteritems():
