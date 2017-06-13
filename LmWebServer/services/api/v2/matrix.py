@@ -106,7 +106,7 @@ class MatrixService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout):
+   def POST(self, pathGridSetId, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout):
       """
       @summary: Posts a new layer
       @todo: Add cutout

@@ -29,18 +29,22 @@ from ast import literal_eval
 import cherrypy
 from mx.DateTime import gmt
 import numpy as np
+from osgeo import ogr
 import urllib2
 
 from LmCommon.compression.binaryList import decompress
+from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat
+
+from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
                                          SOLR_SERVER)
 from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.lmmatrix import LMMatrix
+
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
-from LmServer.legion.gridset import Gridset
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.legion.lmmatrix import LMMatrix
-from LmCommon.common.lmconstants import MatrixType, JobStatus
+
 
 # .............................................................................
 @cherrypy.expose
@@ -173,11 +177,8 @@ class GlobalPAMService(LmService):
       epsgCode = match1[SOLR_FIELDS.EPSG_CODE]
       origGSId = match1[SOLR_FIELDS.GRIDSET_ID]
 
-      origGS = self.scribe.getGridset(gridsetId=origGSId, fillMatrices=True)
-   
       # Get the row headers
-      oldPam = origGS.getPAMs()[0]
-      rowHeaders = oldPam.getRowHeaders()
+      rowHeaders = getRowHeaders(origShp.getDLocation())
    
       # TODO: Subset / copy shapegrid
       myShp = origShp
@@ -240,4 +241,25 @@ class GlobalPAMService(LmService):
          updatedPamMtx = self.scribe.findOrInsertMatrix(pamMtx)
          with open(updatedPamMtx.getDLocation(), 'w') as outF:
             pamMtx.save(outF)
+
+# ............................................................................
+def getRowHeaders(shapefileFilename):
+   """
+   @summary: Get a (sorted by feature id) list of row headers for a shapefile
+   @todo: Move this to LmCommon or LmBackend and use with LmCompute.  This is
+             a rough copy of what is now used for rasterIntersect
+   """
+   ogr.RegisterAll()
+   drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+   ds = drv.Open(shapefileFilename)
+   lyr = ds.GetLayer(0)
    
+   rowHeaders = []
+   
+   for j in range(lyr.GetFeatureCount()):
+      curFeat = lyr.GetFeature(j)
+      siteIdx = curFeat.GetFID()
+      x, y = curFeat.geometry().Centroid().GetPoint_2D()
+      rowHeaders.append((siteIdx, x, y))
+      
+   return sorted(rowHeaders)
