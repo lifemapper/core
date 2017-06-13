@@ -238,4 +238,6 @@ class GlobalPAMService(LmService):
                                                              '1' : squids})
          # Insert it into db
          self.scribe.findOrInsertMatrix(pamMtx)
+         with open(pamMtx.getDLocation(), 'w') as outF:
+            pamMtx.save(outF)
    
