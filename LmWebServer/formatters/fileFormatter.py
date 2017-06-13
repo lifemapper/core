@@ -30,6 +30,7 @@ import os
 from StringIO import StringIO
 import zipfile
 
+from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.legion.lmmatrix import LMMatrix
 
@@ -74,8 +75,9 @@ def csvObjectFormatter(obj):
    """
    if isinstance(obj, LMMatrix):
       cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="mtx{}.csv"'.format(obj.getId())
+      m = Matrix.load(obj.getDLocation())
       outStream = StringIO()
-      obj.writeCSV(outStream)
+      m.writeCSV(outStream)
       outStream.seek(0)
       cnt = outStream.read()
       outStream.close()
