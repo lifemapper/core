@@ -116,8 +116,9 @@ class TreeService(LmService):
       if name is None:
          raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
       treeJson = json.loads(cherrypy.request.body.read())
-      newTree = Tree(name, treeDict=treeJson, userId=self.getUserId())
+      newTree = Tree(name, userId=self.getUserId())
       updatedTree = self.scribe.findOrInsertTree(newTree)
+      updatedTree.tree = treeJson
       updatedTree.writeTree()
       updatedTree.modTime = mx.DateTime.gmt().mjd
       self.scribe.updateObject(updatedTree)

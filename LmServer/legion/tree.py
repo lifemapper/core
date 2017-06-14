@@ -72,10 +72,10 @@ class Tree(LmTree, ServiceObject):
 # .........................................................................
 # Public Methods
 # .........................................................................
-   def readData(self):
-      dloc = self._earlJr.createFilename(LMFileType.TREE,  objCode=self.getId(), 
-                                         usr=self.getUserId())
-      return dloc
+#    def readData(self):
+#       dloc = self._earlJr.createFilename(LMFileType.TREE,  objCode=self.getId(), 
+#                                          usr=self.getUserId())
+#       return dloc
 
    # ..............................
    def writeTree(self):
