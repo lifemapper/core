@@ -1070,7 +1070,7 @@ class Algorithms:
                           'GARP with Best Subsets - new openModeller implementation ',
                           parameters = GARP_BS_PARAMS)
    DG_GARP_BS = AlgQualities('DG_GARP_BS', 
-                             'GARP (single run) - DesktopGARP implementation',
+                             'GARP with Best Subsets - DesktopGARP implementation',
                              parameters = GARP_BS_PARAMS)
    MAXENT = AlgQualities('MAXENT', 
                          'Maximum Entropy (openModeller Implementation)',
