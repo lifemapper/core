@@ -54,11 +54,15 @@ def file_formatter(filename, readMode='r', stream=False, contentType=None):
          for fn in filename:
             zipF.write(fn, os.path.split(fn)[1])
       
+      retFilename = '{}.zip'.format(
+         os.path.splitext(os.path.basename(filename[0]))[0])
+      
       contentFLO.seek(0)
    else:
       contentFLO = open(filename, mode=readMode)
+      retFilename = os.path.basename(filename)
 
-   cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}"'.format(os.path.basename(filename))
+   cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}"'.format(retFilename)
    if contentType is not None:
       cherrypy.response.headers['Content-Type'] = contentType
 
