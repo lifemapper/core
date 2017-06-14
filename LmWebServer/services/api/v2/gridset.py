@@ -26,13 +26,16 @@
           02110-1301, USA.
 """
 import cherrypy
+import json
+from mx.DateTime import gmt
 
+from LmServer.base.atom import Atom
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.legion.gridset import Gridset
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
 from LmWebServer.services.common.accessControl import checkUserPermission
+from LmWebServer.services.common.boomPost import BoomPoster
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
@@ -100,18 +103,24 @@ class GridSetService(LmService):
          return self._getGridSet(pathGridSetId)
       
    # ................................
-   @lmFormatter
-   def POST(self, name, epsgCode, cellSides, cellSize, mapUnits, bbox, cutout):
+   def POST(self):
       """
-      @summary: Posts a new layer
-      @todo: Add cutout
-      @todo: Take a completed GridSet?
+      @summary: Posts a new grid set
       """
-      sg = Gridset(name, self.getUserId(), epsgCode, cellSides, cellSize, 
-                     mapUnits, bbox)
-      updatedSg = self.scribe.findOrInsertGridSet(sg, cutout=cutout)
-      return updatedSg
-   
+      gridsetData = json.loads(cherrypy.request.body.read())
+      
+      usr = self.scribe.findUser(self.getUserId())
+      
+      archiveName = '{}_{}'.format(usr.userid, gmt().mjd)
+      
+      bp = BoomPoster(usr.userid, usr.email, archiveName, gridsetData)
+      gridset = bp.initBoom()
+
+      # TODO: What do we return?
+      cherrypy.response.status = 202
+      return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
+                  gridset.modTime, epsg=gridset.epsgcode)
+      
    # ................................
    def _countGridSets(self, userId, afterTime=None, beforeTime=None, 
                         epsgCode=None, metaString=None, shapegridId=None):
