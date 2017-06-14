@@ -60,7 +60,6 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-# TODO: Change to new script, not a daemon
 BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
 
 # .............................................................................
@@ -939,7 +938,6 @@ if __name__ == '__main__':
       exit(-1)
 
    filler = ArchiveFiller(configFname=configFname)
-   filler.open()
    filler.initBoom()
    filler.close()
     

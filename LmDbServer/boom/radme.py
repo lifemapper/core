@@ -26,24 +26,15 @@ import os
 import time
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (LMFormat, JobStatus, MatrixType)
-from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import LMFileType, Priority
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
-from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.cmd import MfRule
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
+from LmServer.db.borgscribe import BorgScribe 
 from LmServer.legion.processchain import MFChain
 
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-# TODO: Change to new script, not a daemon
-BOOM_SCRIPT = 'LmDbServer/boom/boom.py'
 
 # .............................................................................
 class RADCaller(LMObject):
@@ -54,68 +45,63 @@ class RADCaller(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, gridsetId):
+   def __init__(self, gridsetId, priority=Priority.NORMAL):
       """
       @summary Constructor for ArchiveFiller class.
       """
       super(RADCaller, self).__init__()
       # Get database
       try:
-         self.scribe = self._getDb()
+         self._scribe = self._getDb()
       except: 
          raise
       self.open()
-      self.gridset = self.scribe.getGridset(gridsetId=gridsetId)
-      if self.gridset is None:
+      self._priority = priority
+      self._gridset = self._scribe.getGridset(gridsetId=gridsetId)
+      if self._gridset is None:
          raise LMError(currargs='Failed to retrieve Gridset for Id {}'
                                 .format(gridsetId))
-      self.user = self.gridset.getUserId()
-      # If running as root, new user filespace must have permissions corrected
-      self._warnPermissions()
       
    # ...............................................
    @property
    def userId(self):
-      return self.gridset.getUserId()
+      return self._gridset.getUserId()
    
    # ...............................................
    @property
    def gridsetId(self):
-      return self.gridset.getId()
+      return self._gridset.getId()
+   
+   # ...............................................
+   @property
+   def gridsetName(self):
+      return self._gridset.name
    
    # ...............................................
    def open(self):
-      success = self.scribe.openConnections()
+      success = self._scribe.openConnections()
       if not success: 
          raise LMError('Failed to open database')
 
       # ...............................................
    def close(self):
-      self.scribe.closeConnections()
+      self._scribe.closeConnections()
 
    # ...............................................
    @property
    def logFilename(self):
       try:
-         fname = self.scribe.log.baseFilename
+         fname = self._scribe.log.baseFilename
       except:
          fname = None
       return fname
    
-   # ...............................................
-   @property
-   def userPath(self):
-      earl = EarlJr()
-      pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
-      return pth
-
-# ...............................................
-   def _warnPermissions(self):
-      if not isCorrectUser():
-         print("""
-               When not running this script as `lmwriter`, make sure to fix
-               permissions on the newly created shapegrid {}
-               """.format(self.gridname))
+#    # ...............................................
+#    @property
+#    def userPath(self):
+#       earl = EarlJr()
+#       pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
+#       return pth
          
    # ...............................................
    def _getDb(self):
@@ -130,51 +116,44 @@ class RADCaller(LMObject):
       scribe = BorgScribe(logger)
       return scribe
       
-   
    # ...............................................
-   def _getVarValue(self, var):
-      try:
-         var = int(var)
-      except:
-         try:
-            var = float(var)
-         except:
-            pass
-      return var
-      
-      
-   # ...............................................
-   def createMF(self, rules):
+   def _createMF(self, rules):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                 and configFile written by ArchiveFiller.initBoom.
       """
+      desc = ('Makeflow for RAD computations on Gridset {}, {} for User {}'
+              .format(self._gridsetId, self._gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
-              MFChain.META_DESC: 'Gridset RAD computations for User {}, Gridset {}'
-      .format(self.userId, self.gridsetId)}
-      newMFC = MFChain(self.usr, priority=self.priority, 
-                       metadata=meta, status=JobStatus.GENERAL, 
-                       statusModTime=CURR_MJD)
-      mfChain = self.scribe.insertMFChain(newMFC)
+              MFChain.META_DESC: desc }
+      
+      newMFC = MFChain(self.userId, metadata=meta, priority=self._priority,
+                       status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+      mfChain = self._scribe.insertMFChain(newMFC)
 
       mfChain.write()
+      self._scribe.updateObject(potatoChain)
       return mfChain
    
    # ...............................................
    def analyzeGrid(self, doCalc=False, doMCPA=False):   
       # Insert all taxonomic sources for now
-      self.scribe.log.info('  Creating Gridset MFRules ...')
-      rules = self.gridset.computeMe(doCalc=doCalc, doMCPA=doMCPA)
+      self._scribe.log.info('  Creating Gridset MFRules ...')
+      rules = self._gridset.computeMe(doCalc=doCalc, doMCPA=doMCPA)
          
-      mfChain = self.createMF()
+      mfChain = self._createMF()
       mfChain.addCommands(rules)
       mfChain.write()
 
-      self.scribe.log.info('  Wrote Gridset MF file')
+      self._scribe.log.info('  Wrote Gridset MF file')
       
    
 # ...............................................
 if __name__ == '__main__':
+   if not isCorrectUser():
+      print("Run this script as `lmwriter`")
+      sys.exit(2)
+
    import argparse
    parser = argparse.ArgumentParser(
             description=('Compute multi-species computations on a Gridset.'))
@@ -187,58 +166,39 @@ if __name__ == '__main__':
             help=('Compute Meta-Community Phylogenetics computations on the ' +
                   'matrices, phylogenetic tree, and biogeographic hypotheses ' +
                   'in this Gridset.'))
+   parser.add_argument('-p', '--priority', type=int, choices=[0,1,2,3,4,5], 
+            help=('Priority for these computations; an integer between 0 and 5 ' +
+                  'where 0 is the lowest and 5 is the highest.'))
    args = parser.parse_args()
       
-   caller = RADCaller(args.gridsetId)
+   caller = RADCaller(args.gridsetId, priority=args.priority)
    caller.analyzeGrid(doCalc=args.doCalc, doMCPA=args.doMCPA)
    caller.close()
     
 """
 import mx.DateTime
 import os
+import time
 
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-                                    JobStatus, MatrixType, SERVER_BOOM_HEADING)
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
-      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
-      BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
-      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
-      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
-      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
-      GRID_CELLSIZE, GRID_NUM_SIDES)
 from LmBackend.common.lmobj import LMError, LMObject
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
-from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
-                                            POINT_COUNT_MIN)
+from LmCommon.common.lmconstants import (LMFormat, JobStatus, MatrixType)
+from LmServer.common.lmconstants import LMFileType, Priority
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
-from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.scenario import Scenario
-from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.sdm.algorithm import Algorithm
-
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
+from LmServer.db.borgscribe import BorgScribe 
+from LmServer.legion.processchain import MFChain
 CURR_MJD = mx.DateTime.gmt().mjd
 
+from LmDbServer.boom.radme import RADCaller
 
-from LmDbServer.boom.boominput import ArchiveFiller
-filler = ArchiveFiller()
+gridsetId = 1
+priority=Priority.REQUESTED
+doCalc = True
+doMCPA=False
 
-filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
-# filler.initBoom()
-# filler.close()
-
-borg = filler.scribe._borg
-
+caller = RADCaller(args.gridsetId, priority=args.priority)
+caller.analyzeGrid(doCalc=args.doCalc, doMCPA=args.doMCPA)
+caller.close()
 
 """
