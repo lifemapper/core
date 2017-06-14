@@ -298,6 +298,8 @@ BEGIN
    cmd = 'SELECT treeid, name, null, modTime FROM lm_v3.tree ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterTrees(usr, 
                      aftertime, beforetime, nm, meta, isbin, isultra, haslen);
+   ordercls = ' ORDER BY modTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
    cmd := cmd || wherecls || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 

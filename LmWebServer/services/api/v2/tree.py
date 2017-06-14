@@ -26,14 +26,15 @@
           02110-1301, USA.
 """
 import cherrypy
-
-from LmCommon.trees.lmTree import LmTree
+import json
 
 from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmCommon.common.lmconstants import HTTPStatus
 
 # .............................................................................
 @cherrypy.expose
@@ -106,14 +107,18 @@ class TreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self):
+   def POST(self, name=None):
       """
       @summary: Posts a new tree
       @todo: Parameters
       """
-      newTree = LmTree()
+      if name is None:
+         raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
+      treeJson = json.loads(cherrypy.request.body.read())
+      newTree = Tree(name, treeDict=treeJson, userId=self.getUserId())
       updatedTree = self.scribe.findOrInsertTree(newTree)
-      return updatedTree
+      updatedTree.write(updatedTree.getDLocation())
+      return updatedTree.tree
    
    # ................................
    def _countTrees(self, userId, afterTime=None, beforeTime=None, 

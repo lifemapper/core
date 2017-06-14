@@ -33,9 +33,10 @@ import zipfile
 from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import Raster, Vector
 from LmServer.legion.lmmatrix import LMMatrix
+from LmCommon.common.lmconstants import LMFormat
 
 # .............................................................................
-def file_formatter(filename, readMode='r', stream=False):
+def file_formatter(filename, readMode='r', stream=False, contentType=None):
    """
    @summary: Returns the contents of the file(s) either as a single string or
                 with a generator
@@ -53,11 +54,17 @@ def file_formatter(filename, readMode='r', stream=False):
          for fn in filename:
             zipF.write(fn, os.path.split(fn)[1])
       
+      retFilename = '{}.zip'.format(
+         os.path.splitext(os.path.basename(filename[0]))[0])
+      
       contentFLO.seek(0)
    else:
       contentFLO = open(filename, mode=readMode)
+      retFilename = os.path.basename(filename)
 
-   cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}"'.format(os.path.basename(filename))
+   cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="{}"'.format(retFilename)
+   if contentType is not None:
+      cherrypy.response.headers['Content-Type'] = contentType
 
    # If we should stream the output, use the CherryPy file generator      
    if stream:
@@ -91,7 +98,8 @@ def gtiffObjectFormatter(obj):
    @summary: Attempt to return a geotiff for an object if it is a raster
    """
    if isinstance(obj, Raster):
-      return file_formatter(obj.getDLocation(), readMode='rb')
+      return file_formatter(obj.getDLocation(), readMode='rb', 
+                            contentType=LMFormat.GTIFF.getMimeType())
    else:
       raise Exception, "Only raster files have GeoTiff interface"
 
@@ -100,7 +108,7 @@ def shapefileObjectFormatter(obj):
    """
    """
    if isinstance(obj, Vector):
-      return file_formatter(obj.getShapefiles())
+      return file_formatter(obj.getShapefiles(), contentType=LMFormat.SHAPE.getMimeType())
    else:
       raise Exception, "Only vector files have Shapefile interface"
 
