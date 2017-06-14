@@ -43,6 +43,7 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.sdmproj import SDMProjection
+from LmServer.legion.shapegrid import ShapeGrid
 
 # Format object method looks at object type and calls formatters appropriately
 # Provide methods for direct calls to formatters
@@ -290,7 +291,25 @@ def formatScenario(scn):
    scnDict['code'] = scn.code
    
    return scnDict
-   
+
+# .............................................................................
+def formatShapegrid(sg):
+   """
+   @summary: Convert a shapegrid into a dictionary
+   """
+   sgDict = _getLifemapperMetadata('shapegrid', sg.getId(), sg.metadataUrl, 
+                                   sg.getUserId(), status=sg.status, 
+                                   statusModTime=sg.statusModTime, 
+                                   metadata=sg.lyrMetadata)
+   sgDict['spatialVector'] = _getSpatialVectorMetadata(sg.epsgcode, sg.bbox, 
+                                    sg.mapUnits, sg.getDataUrl(), sg.verify, 
+                                    sg.ogrType, sg.dataFormat, sg.featureCount,
+                                    resolution=sg.resolution)
+   sgDict['cellSides'] = sg.cellSides
+   sgDict['cellSize'] = sg.cellSize
+
+   return sgDict
+
 # .............................................................................
 def jsonObjectFormatter(obj):
    """
@@ -328,6 +347,8 @@ def _formatObject(obj):
       return formatGridset(obj)
    elif isinstance(obj, LMMatrix):
       return formatMatrix(obj)
+   elif isinstance(obj, ShapeGrid):
+      return formatShapegrid(obj)
    else:
       # TODO: Expand these and maybe fallback to a generic formatter of public
       #          attributes
