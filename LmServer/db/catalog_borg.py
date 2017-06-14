@@ -2058,7 +2058,7 @@ class Borg(DbPostgresql):
       elif isinstance(obj, ShapeGrid):
          success = self.updateShapeGrid(obj)
       elif isinstance(obj, Tree):
-         meta = ob.dumpTreeMetadata()
+         meta = obj.dumpTreeMetadata()
          success = self.executeModifyFunction('lm_updateTree', obj.getId(),
                                               obj.getDLocation(), 
                                               obj.isBinary(), 
