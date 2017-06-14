@@ -37,8 +37,7 @@ class Tree(LmTree, ServiceObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, name, metadata={}, isBinary=False, isUltrametric=False,
-                hasBranchLengths=False, treeDict=None, dlocation=None,
+   def __init__(self, name, metadata={}, treeDict=None, dlocation=None,
                 metadataUrl=None, userId=None, treeId=None, modTime=None):
       """
       @summary Constructor for the Tree class.  
@@ -59,9 +58,6 @@ class Tree(LmTree, ServiceObject):
          LmTree.fromFile(dlocation)   
       self.name = name
       self._dlocation = dlocation
-      self.isBinary = isBinary
-      self.isUltrametric = isUltrametric
-      self.hasBranchLengths = hasBranchLengths
       self.treeMetadata = {}
       self.loadTreeMetadata(metadata)
          
