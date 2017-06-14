@@ -28,9 +28,8 @@
 import cherrypy
 import json
 
-from LmCommon.trees.lmTree import LmTree
-
 from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
@@ -107,14 +106,15 @@ class TreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self):
+   def POST(self, treeName):
       """
       @summary: Posts a new tree
       @todo: Parameters
       """
       treeJson = json.loads(cherrypy.request.body.read())
-      newTree = LmTree(treeJson)
+      newTree = Tree(treeName, treeDict=treeJson)
       updatedTree = self.scribe.findOrInsertTree(newTree)
+      updatedTree.write(updatedTree.getDLocation())
       return updatedTree.tree
    
    # ................................
