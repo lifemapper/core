@@ -74,6 +74,8 @@ class Gridset(ServiceObject):
 
       ServiceObject.__init__(self, userId, gridsetId, LMServiceType.GRIDSETS, 
                              metadataUrl=metadataUrl, modTime=modTime)
+      # TODO: Aimee, do you want to move this somewhere else?
+      self._dlocation = None
       self.name = name
       self.grdMetadata = {}
       self.loadGrdMetadata(metadata)
