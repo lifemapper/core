@@ -402,6 +402,14 @@ class BorgScribe(LMObject):
       return objs
 
 # ...............................................
+   def findOrInsertTree(self, tree):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertTree()
+      """
+      newTree = self._borg.findOrInsertTree(tree)
+      return newTree
+
+# ...............................................
    def getTree(self, tree=None, treeId=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getTree()
@@ -559,12 +567,7 @@ class BorgScribe(LMObject):
       @note: updates db with count, the actual count on the object (likely zero 
              on initial insertion)
       """
-      newOcc = None
-      if occ.getId() is None :
-         newOcc = self._borg.findOrInsertOccurrenceSet(occ)
-      else:
-         self.log.error('OccurrenceLayer {} already contains a database ID'
-                        .format(occ.getId()))
+      newOcc = self._borg.findOrInsertOccurrenceSet(occ)
       return newOcc
          
 # .............................................................................
