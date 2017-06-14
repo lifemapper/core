@@ -141,15 +141,17 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_updateTree(trid int,
    RETURNS int AS
 $$
 DECLARE
+   rec lm_v3.tree%rowtype;
    success int = -1;
 BEGIN
-   SELECT * FROM lm_v3.tree WHERE treeid = trid;
+   SELECT * INTO rec FROM lm_v3.tree WHERE treeid = trid;
    IF NOT FOUND THEN
       RAISE EXCEPTION 'Unable to update non-existent Tree with id %', trid;
    ELSE
       UPDATE lm_v3.Tree SET (dlocation,  isBinary, isUltrametric, 
                              hasBranchLengths, metadata, modTime) =
-                            (dloc, isbin, isultra, haslen, meta, mtime);
+                            (dloc, isbin, isultra, haslen, meta, mtime)
+                        WHERE treeid = trid;
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to find or insert Tree';
       ELSE
