@@ -27,7 +27,7 @@ from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import JSON_INTERFACE
 from LmCommon.trees.lmTree import LmTree
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import LMServiceType, LMFileType
+from LmServer.common.lmconstants import LMServiceType, LMFileType, ID_PLACEHOLDER
    
 # .........................................................................
 class Tree(LmTree, ServiceObject):
@@ -78,6 +78,14 @@ class Tree(LmTree, ServiceObject):
       dloc = self._earlJr.createFilename(LMFileType.TREE,  objCode=self.getId(), 
                                          usr=self.getUserId())
       return dloc
+
+   # ..............................
+   def writeTree(self):
+      """
+      @summary: Writes the tree JSON to disk
+      """
+      dloc = self.getDLocation()
+      LmTree.writeTree(self, dloc)
 
 # ...............................................
    def getRelativeDLocation(self):

@@ -26,6 +26,7 @@
           02110-1301, USA.
 """
 import cherrypy
+import mx.DateTime
 import json
 
 from LmServer.common.localconstants import PUBLIC_USER
@@ -117,7 +118,9 @@ class TreeService(LmService):
       treeJson = json.loads(cherrypy.request.body.read())
       newTree = Tree(name, treeDict=treeJson, userId=self.getUserId())
       updatedTree = self.scribe.findOrInsertTree(newTree)
-      updatedTree.write(updatedTree.getDLocation())
+      updatedTree.writeTree()
+      updatedTree.modTime = mx.DateTime.gmt().mjd
+      self.scribe.updateObject(updatedTree)
       return updatedTree.tree
    
    # ................................
