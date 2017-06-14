@@ -305,8 +305,8 @@ def formatShapegrid(sg):
                                     sg.mapUnits, sg.getDataUrl(), sg.verify, 
                                     sg.ogrType, sg.dataFormat, sg.featureCount,
                                     resolution=sg.resolution)
-   sgDict['cellSides'] = sg.cellSides
-   sgDict['cellSize'] = sg.cellSize
+   sgDict['cellSides'] = sg.cellsides
+   sgDict['cellSize'] = sg.cellsize
 
    return sgDict
 
