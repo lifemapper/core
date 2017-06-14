@@ -107,15 +107,15 @@ class TreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, treeName=None):
+   def POST(self, name=None):
       """
       @summary: Posts a new tree
       @todo: Parameters
       """
-      if treeName is None:
+      if name is None:
          raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
       treeJson = json.loads(cherrypy.request.body.read())
-      newTree = Tree(treeName, treeDict=treeJson)
+      newTree = Tree(name, treeDict=treeJson)
       updatedTree = self.scribe.findOrInsertTree(newTree)
       updatedTree.write(updatedTree.getDLocation())
       return updatedTree.tree
