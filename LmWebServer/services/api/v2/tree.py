@@ -152,7 +152,7 @@ class TreeService(LmService):
       """
       @summary: Attempt to get a tree
       """
-      tree = self.scribe.getTree(greeId=pathTreeId)
+      tree = self.scribe.getTree(treeId=pathTreeId)
       if tree is None:
          raise cherrypy.HTTPError(404, 
                         'Tree {} was not found'.format(pathTreeId))
