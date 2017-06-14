@@ -162,7 +162,7 @@ class ShapeGridService(LmService):
       @param limit: (optional) Return this number of shapegrids, at most
       @param offset: (optional) Offset the returned shapegrids by this number
       """
-      sgAtoms = self.scribe.listShapegrids(offset, limit, userId=userId, 
+      sgAtoms = self.scribe.listShapeGrids(offset, limit, userId=userId, 
                                     cellsides=cellSides, cellsize=cellSize,
                                     afterTime=afterTime, beforeTime=beforeTime, 
                                     epsg=epsgCode)
