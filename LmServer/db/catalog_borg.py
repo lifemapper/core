@@ -2058,12 +2058,13 @@ class Borg(DbPostgresql):
       elif isinstance(obj, ShapeGrid):
          success = self.updateShapeGrid(obj)
       elif isinstance(obj, Tree):
+         meta = ob.dumpTreeMetadata()
          success = self.executeModifyFunction('lm_updateTree', obj.getId(),
                                               obj.getDLocation(), 
                                               obj.isBinary(), 
                                               obj.isUltrametric(), 
                                               obj.hasBranchLengths(),
-                                              obj.modTime)
+                                              meta, obj.modTime)
       elif isinstance(obj, MFChain):
          success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
                                               obj.getDLocation(), 
