@@ -79,7 +79,7 @@ class Gridset(ServiceObject):
       self.loadGrdMetadata(metadata)
       self._shapeGrid = shapeGrid
       self._shapeGridId = shapeGridId
-      self.configFilename = configFilename
+      self.configFilename = self.setDLocation(dlocation=dlocation)
       self._setEPSG(epsgcode)
       self._matrices = []
       self.setMatrices(matrices, doRead=False)
