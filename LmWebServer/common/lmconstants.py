@@ -202,6 +202,9 @@ QUERY_PARAMETERS = {
    'pathscenarioid' : {
       'name' : 'pathScenarioId'
    },
+   'pathshapegridid' : {
+      'name' : 'pathShapegridId'
+   },
    'pathtreeid' : {
       'name' : 'pathTreeId'
    },
