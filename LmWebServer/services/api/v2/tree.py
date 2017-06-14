@@ -152,12 +152,12 @@ class TreeService(LmService):
       """
       @summary: Attempt to get a tree
       """
-      tree = self.scribe.getTree(greeId=pathTreeId)
+      tree = self.scribe.getTree(treeId=pathTreeId)
       if tree is None:
          raise cherrypy.HTTPError(404, 
                         'Tree {} was not found'.format(pathTreeId))
       if checkUserPermission(self.getUserId(), tree, HTTPMethod.GET):
-         return tree
+         return tree.tree
       else:
          raise cherrypy.HTTPError(403, 
               'User {} does not have permission to access tree {}'.format(

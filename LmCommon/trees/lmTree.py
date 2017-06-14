@@ -254,6 +254,8 @@ class LmTree(object):
       @summary: Returns boolean indicating if the tree has branch lengths for
                    every clade
       """
+      if self.tree is None or self.tree == {}:
+         return None
       return self._hasBranchLengths(self.tree)
 
    # ..............................
@@ -261,6 +263,8 @@ class LmTree(object):
       """
       @summary: Returns boolean indicating if the tree has polytomies
       """
+      if self.tree is None or self.tree == {}:
+         return None
       return self._hasPolytomies(self.tree)
    
    # ..............................
@@ -269,6 +273,8 @@ class LmTree(object):
       @summary: Returns a boolean indicating if the tree is binary
       @note: Checks that every clade has either zero or two children
       """
+      if self.tree is None or self.tree == {}:
+         return None
       return self._isBinary(self.tree)
    
    # ..............................
@@ -279,6 +285,8 @@ class LmTree(object):
                 equal for all tips
       """
       # Only possible if the tree has branch lengths
+      if self.tree is None or self.tree == {}:
+         return None
       if self.hasBranchLengths():
          # Get the branch lengths dictionary
          lengths = self.getBranchLengths()
