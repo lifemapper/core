@@ -26,6 +26,7 @@
           02110-1301, USA.
 """
 import cherrypy
+import json
 
 from LmCommon.trees.lmTree import LmTree
 
@@ -111,9 +112,10 @@ class TreeService(LmService):
       @summary: Posts a new tree
       @todo: Parameters
       """
-      newTree = LmTree()
+      treeJson = json.loads(cherrypy.request.body.read())
+      newTree = LmTree(treeJson)
       updatedTree = self.scribe.findOrInsertTree(newTree)
-      return updatedTree
+      return updatedTree.tree
    
    # ................................
    def _countTrees(self, userId, afterTime=None, beforeTime=None, 
