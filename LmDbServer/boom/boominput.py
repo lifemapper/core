@@ -61,7 +61,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 # TODO: Change to new script, not a daemon
-BOOM_SCRIPT = 'LmDbServer/boom/boom.py'
+BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
 
 # .............................................................................
 class ArchiveFiller(LMObject):
