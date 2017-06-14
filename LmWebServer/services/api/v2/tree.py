@@ -34,6 +34,7 @@ from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmCommon.common.lmconstants import HTTPStatus
 
 # .............................................................................
 @cherrypy.expose
@@ -106,11 +107,13 @@ class TreeService(LmService):
       
    # ................................
    @lmFormatter
-   def POST(self, treeName):
+   def POST(self, treeName=None):
       """
       @summary: Posts a new tree
       @todo: Parameters
       """
+      if treeName is None:
+         raise cherrypy.HTTPError(HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
       treeJson = json.loads(cherrypy.request.body.read())
       newTree = Tree(treeName, treeDict=treeJson)
       updatedTree = self.scribe.findOrInsertTree(newTree)
