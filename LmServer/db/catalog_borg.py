@@ -1971,7 +1971,7 @@ class Borg(DbPostgresql):
       """
       meta = tree.dumpTreeMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertTree', 
-                     tree.getId(), tree.gerUserId(), tree.name, 
+                     tree.getId(), tree.getUserId(), tree.name, 
                      tree.getDLocation(), tree.isBinary(), tree.isUltrametric(),
                      tree.hasBranchLengths(), meta, tree.modTime)
       newOrExistingTree = self._createTree(row, idxs)
