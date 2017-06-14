@@ -2033,16 +2033,16 @@ class Borg(DbPostgresql):
          mfchainList.append(mfchain)
       return mfchainList
       
-# ...............................................
-   def updateMFChain(self, mfchain):
-      """
-      @summary: Updates MFChain status and statusModTime in the database
-      @return: True/False for success of operation
-      """
-      success = self.executeModifyFunction('lm_updateMFChain', mfchain.objId,
-                                           mfchain.getDLocation(), 
-                                           mfchain.status, mfchain.statusModTime)
-      return success
+# # ...............................................
+#    def updateMFChain(self, mfchain):
+#       """
+#       @summary: Updates MFChain status and statusModTime in the database
+#       @return: True/False for success of operation
+#       """
+#       success = self.executeModifyFunction('lm_updateMFChain', mfchain.objId,
+#                                            mfchain.getDLocation(), 
+#                                            mfchain.status, mfchain.statusModTime)
+#       return success
 
    # ...............................................
    def updateObject(self, obj):
@@ -2057,6 +2057,13 @@ class Borg(DbPostgresql):
          success = self.updateSDMProject(obj)
       elif isinstance(obj, ShapeGrid):
          success = self.updateShapeGrid(obj)
+      elif isinstance(obj, Tree):
+         success = self.executeModifyFunction('lm_updateTree', obj.objId,
+                                              obj.getDLocation(), 
+                                              obj.isBinary, 
+                                              obj.isUltrametric, 
+                                              obj.hasBranchLengths,
+                                              obj.modTime)
       elif isinstance(obj, MFChain):
          success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
                                               obj.getDLocation(), 

@@ -414,7 +414,10 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getTree()
       """
-      existingTree = self._borg.getMatrix(tree, treeId)
+      existingTree = self._borg.getTree(tree, treeId)
+      # access private attribute to see if it came back from db
+      if existingTree._dlocation is None:
+         existingTree.setDLocation()
       return existingTree
 
 # .............................................................................

@@ -131,6 +131,36 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;    
 
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateTree(trid int, 
+                                               dloc text,
+                                               isbin boolean,
+                                               isultra boolean,
+                                               haslen boolean,
+                                               meta text,
+                                               mtime double precision)
+   RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   SELECT * FROM lm_v3.tree WHERE treeid = trid;
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to update non-existent Tree with id %', trid;
+   ELSE
+      UPDATE lm_v3.Tree SET (dlocation,  isBinary, isUltrametric, 
+                             hasBranchLengths, metadata, modTime) =
+                            (dloc, isbin, isultra, haslen, meta, mtime);
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to find or insert Tree';
+      ELSE
+         success = 0;
+      END IF;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;   
+ 
+-- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getTree(trid int, 
                                             usr varchar,
                                             nm varchar)
