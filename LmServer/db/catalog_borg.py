@@ -1935,27 +1935,27 @@ class Borg(DbPostgresql):
       @param firstRecNum: The first record to return, 0 is the first record
       @param maxNum: Maximum number of records to return
       @param userId: User (owner) for which to return Trees.  
-      @param name: filter by name
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
       @param isBinary: filter by boolean binary attribute
       @param isUltrametric: filter by boolean ultrametric attribute
       @param hasBranchLengths: filter by boolean hasBranchLengths attribute
+      @param name: filter by name
       @param metastring: find trees containing this word in the metadata
-      @param afterTime: filter by modified at or after this time
-      @param beforeTime: filter by modified at or before this time
       @param atom: True if return objects will be Atoms, False if full objects
-      @return: a list of Matrix atoms or full objects
+      @return: a list of Tree atoms or full objects
       """
       metamatch = None
       if metastring is not None:
          metamatch = '%{}%'.format(metastring)
       if atom:
-         rows, idxs = self.executeSelectManyFunction('lm_listMatrixAtoms', 
+         rows, idxs = self.executeSelectManyFunction('lm_listTreeAtoms', 
                      firstRecNum, maxNum, userId, afterTime, beforeTime, 
                      name, metamatch, isBinary, isUltrametric, hasBranchLengths)
          objs = self._getAtoms(rows, idxs, LMServiceType.TREES)
       else:
          objs = []
-         rows, idxs = self.executeSelectManyFunction('lm_listMatrixObjects', 
+         rows, idxs = self.executeSelectManyFunction('lm_listTreeObjects', 
                      firstRecNum, maxNum, userId, afterTime, beforeTime, 
                      name, metamatch, isBinary, isUltrametric, hasBranchLengths)
          for r in rows:
