@@ -365,11 +365,26 @@ class BorgScribe(LMObject):
       return objs
 
 # ...............................................
-   def getMatrix(self, mtx=None, mtxId=None):
+   def getMatrix(self, mtx=None, mtxId=None, 
+                 gridsetId=None, gridsetName=None, userId=None, 
+                 mtxType=None, gcmCode=None, altpredCode=None, dateCode=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getMatrix()
+      @param mtx: A LmServer.legion.LMMatrix object containing the unique 
+                  parameters for which to retrieve the existing LMMatrix
+      @note: if mtx parameter is present, it overrides individual parameters
       """
-      fullMtx = self._borg.getMatrix(mtx, mtxId)
+      try:
+         mtxId = mtx.getId()
+         mtxType = mtx.matrixType
+         gridsetId = mtx.parentId
+         gcmCode = mtx.gcmCode
+         altpredCode = mtx.altpredCode
+         dateCode = mtx.dateCode
+      except Exception, e:
+         self.log.warn('Failed to get matrix attribute, {}'.format(e))
+      fullMtx = self._borg.getMatrix(mtxId, gridsetId, gridsetName, userId, 
+                                     mtxType, gcmCode, altpredCode, dateCode)
       return fullMtx
 
 # .............................................................................
