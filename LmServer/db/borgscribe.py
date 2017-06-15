@@ -382,7 +382,7 @@ class BorgScribe(LMObject):
          altpredCode = mtx.altpredCode
          dateCode = mtx.dateCode
       except Exception, e:
-         self.log.warn('Failed to get matrix attribute, {}'.format(e))
+         self.log.info('Failed to get matrix attribute, {}'.format(e))
       fullMtx = self._borg.getMatrix(mtxId, gridsetId, gridsetName, userId, 
                                      mtxType, gcmCode, altpredCode, dateCode)
       return fullMtx
@@ -891,8 +891,29 @@ cellsides = 4
 cellsize = 1
 shplyrid = 135
 
+gcm='CCSM4'
+alt='RCP8.5'
+dt='2050'
+
+grdid=17
+name='cjTest5'
+mtxid=42
+type=1
+
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
+
+m1 = scribe.getMatrix(mtxId=mtxid, 
+                 gridsetId=None, gridsetName=None, userId=None, 
+                 mtxType=None, gcmCode=None, altpredCode=None, dateCode=None)
+
+m2 = scribe.getMatrix(mtxId=None, 
+                 gridsetId=grdid, gridsetName=None, userId=None, 
+                 mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
+
+m3 = scribe.getMatrix(mtxId=None, 
+                 gridsetId=None, gridsetName=name, userId=usr, 
+                 mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
 
 code = 'AR5-CCSM4-RCP8.5-2050-10min'
 
