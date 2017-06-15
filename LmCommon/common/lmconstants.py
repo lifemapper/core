@@ -307,8 +307,22 @@ class MatrixType:
    BIOGEO_HYPOTHESES = 3
    ROLLING_PAM = 10
    # OUTPUTS
-   PADDED_PAM = 101
-   MCPA_OUTPUTS = 201
+   OBSERVED_CALC = 101
+   RANDOM_CALC = 102
+   MCPA_OUTPUTS = 201 # Could be used for permutations
+   MCPA_BG_F_GLOBAL = 202
+   MCPA_BG_F_SEMI = 203
+   MCPA_BG_OBS_ADJ_R_SQ = 204
+   MCPA_BG_OBS_PARTIAL = 205
+   MCPA_BG_RAND_F_GLOBAL = 206
+   MCPA_BG_RAND_F_PARTIAL = 207
+   MCPA_ENV_F_GLOBAL = 208
+   MCPA_ENV_F_SEMI = 209
+   MCPA_ENV_OBS_ADJ_R_SQ = 210
+   MCPA_ENV_OBS_PARTIAL = 211
+   MCPA_ENV_RAND_F_GLOBAL = 212
+   MCPA_ENV_RAND_F_PARTIAL = 213
+   
 
 
 class JobStage:
@@ -809,6 +823,7 @@ class ProcessType:
    RAD_CALCULATE = 340
    ENCODE_HYPOTHESES = 350
    ENCODE_PHYLOGENY = 360
+   SQUID_INC = 365
    # Randomize
    RAD_SWAP = 331
    RAD_SPLOTCH = 332
@@ -908,6 +923,9 @@ class ProcessType:
       elif ptype == ProcessType.SOLR_POST:
          relpath = SERVER_SCRIPTS_DIR
          jr = 'indexPAV'
+      elif ptype == ProcessType.SQUID_INC:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'squid_inc'
 
       return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
 #       return os.path.join(APP_PATH, relpath, jr+'.py')   
