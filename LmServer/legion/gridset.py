@@ -30,10 +30,12 @@ import subprocess
 from types import StringType
 
 from LmBackend.common.lmobj import LMError
-from LmCommon.common.lmconstants import MatrixType
+from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType
 from LmServer.legion.lmmatrix import LMMatrix                                  
+from LmServer.common.localconstants import APP_PATH
+from LmServer.legion.cmd import MfRule
 
 # .............................................................................
 class Gridset(ServiceObject):
@@ -112,6 +114,466 @@ class Gridset(ServiceObject):
 # .............................................................................
 # Methods
 # .............................................................................
+   # ............................................
+   def computeMe(self, workDir=None, doCalc=False, doMCPA=False, pamDict=None):
+      """
+      @summary: Perform analyses on a grid set
+      """
+      rules = []
+      if workDir is None:
+         workDir = ''
+      # TODO: Use a function to get relative directory name instead of 'gs_{}'
+      targetDir = os.path.join(workDir, 'gs_{}'.format(self.getId()))
+      
+      # Script names
+      calcScriptName = os.path.join(APP_PATH, 
+                                ProcessType.getTool(ProcessType.RAD_CALCULATE))
+      encTreeScript = os.path.join(APP_PATH, 
+                             ProcessType.getTool(ProcessType.ENCODE_PHYLOGENY))
+      obsMcpaScript = os.path.join(APP_PATH, 
+                                ProcessType.getTool(ProcessType.MCPA_OBSERVED))
+      randMcpaScript = os.path.join(APP_PATH,
+                                  ProcessType.getTool(ProcessType.MCPA_RANDOM))
+      squidScript = os.path.join(APP_PATH, 
+                                    ProcessType.getTool(ProcessType.SQUID_INC))
+      stockpileScript = os.path.join(APP_PATH,
+                                ProcessType.getTool(ProcessType.UPDATE_OBJECT))
+      touchScript = os.path.join(APP_PATH, 
+                                        ProcessType.getTool(ProcessType.TOUCH))
+      correctPvaluesScript = os.path.join(APP_PATH,
+                         ProcessType.getTool(ProcessType.MCPA_CORRECT_PVALUES))
+      
+      if doMCPA:
+         
+         # TODO: Need biogeographic hypotheses
+         bgs = self.getBiogeographicHypotheses()
+         # TODO: Are these individual columns?  Or are they all in one matrix?
+         # TODO: Are they already encoded?
+         
+         # TODO: If already encoded, move to workspace
+         # TODO: If not, encode
+         wsBGFilename = None
+         
+         # If valid tree, we can resolve polytomies
+         if self.tree.isBinary() and (
+               not self.tree.hasBranchLengths() or self.tree.isUltrametric()):
+            
+            # Copy tree to workspace, touch the directory to ensure creation,
+            #   then copy tree
+            wsTreeFilename = os.path.join(targetDir, 'wsTree.json')
+            touchWsTreeCmd = '$PYTHON {} {}'.format(touchScript,
+                                          os.path.join(targetDir, 'touch.out'))
+            cpTreeCmd = 'LOCAL {} ; cp {} {}'.format(touchWsTreeCmd, 
+                                                     self.tree.getDLocation(), 
+                                                     wsTreeFilename)
+            rules.append(MfRule(cpTreeCmd, [wsTreeFilename]))
+            
+            # Add squids to workspace tree via SQUID_INC
+            squidTreeFilename = os.path.join(targetDir, 'squidTree.json')
+            squidArgs = [
+                  'LOCAL',
+                  '$PYTHON', 
+                  squidScript, 
+                  wsTreeFilename, 
+                  self.getUserId(), 
+                  squidTreeFilename
+               ]
+            squidCmd = ' '.join(squidArgs)
+            squidRule = MfRule(squidCmd, [squidTreeFilename], 
+                               dependencies=[wsTreeFilename])
+            rules.append(squidRule)
+                  
+      for pamId in pamDict.keys():
+         # Copy PAM into workspace
+         pam = pamDict[pamId]['pam']
+         pamWorkDir = os.path.join(targetDir, 'pam_{}_work'.format(pam.getId()))
+         wsPamFilename = os.path.join(pamWorkDir, 
+                                            'pam_{}.json'.format(pam.getId()))
+         pamDirTouchFilename = os.path.join(pamWorkDir, 'touch.out')
+         pamDirTouchCmd = '$PYTHON {} {}'.format(touchScript, 
+                                                 pamDirTouchFilename)
+         cpPamArgs = [
+            'LOCAL',
+            pamDirTouchCmd,
+            '; cp',
+            pam.getDLocation(),
+         ]
+         cpPamCmd = ' '.join(cpPamArgs)
+         rules.append(MfRule(cpPamCmd, [wsPamFilename, pamDirTouchFilename]))
+         
+         # RAD calculations
+         if doCalc:
+            calcOptions = []
+            calcTargets = []
+            
+            # Site stats
+            siteStatsMtx = pamDict[pamId][MatrixType.SITES_OBSERVED]
+            siteStatsFilename = os.path.join(pamWorkDir, 'siteStats.json')
+            calcTargets.append(siteStatsFilename)
+            # Stockpile
+            sitesSuccessFilename = os.path.join(pamWorkDir, 'sites.success')
+            siteStatsStockPileArgs = [
+               'LOCAL',
+               '$PYTHON',
+               stockpileScript,
+               ProcessType.RAD_CALCULATE,
+               str(siteStatsMtx.getId()),
+               sitesSuccessFilename,
+               siteStatsFilename
+            ]
+            rules.append(
+               MfRule(' '.join(siteStatsStockPileArgs), [sitesSuccessFilename], 
+                      depedencies=[siteStatsFilename]))
+
+            # Species stats
+            spStatsMtx = pamDict[pamId][MatrixType.SPECIES_OBSERVED]
+            spStatsFilename = os.path.join(pamWorkDir, 'spStats.json')
+            calcTargets.append(spStatsFilename)
+            # Stockpile
+            spSuccessFilename = os.path.join(pamWorkDir, 'species.success')
+            spStatsStockPileArgs = [
+               'LOCAL',
+               '$PYTHON',
+               stockpileScript,
+               ProcessType.RAD_CALCULATE,
+               str(spStatsMtx.getId()),
+               spSuccessFilename,
+               spStatsFilename
+            ]
+            rules.append(
+               MfRule(' '.join(spStatsStockPileArgs), [spSuccessFilename], 
+                      depedencies=[spStatsFilename]))
+            
+            # Diversity stats
+            divStatsMtx = pamDict[pamId][MatrixType.DIVERSITY_OBSERVED]
+            divStatsFilename = os.path.join(pamWorkDir, 'divStats.json')
+            calcTargets.append(divStatsFilename)
+            # Stockpile
+            divSuccessFilename = os.path.join(pamWorkDir, 'diversity.success')
+            divStatsStockPileArgs = [
+               'LOCAL',
+               '$PYTHON',
+               stockpileScript,
+               ProcessType.RAD_CALCULATE,
+               str(divStatsMtx.getId()),
+               divSuccessFilename,
+               divStatsFilename
+            ]
+            rules.append(
+               MfRule(' '.join(divStatsStockPileArgs), [divSuccessFilename], 
+                      depedencies=[divStatsFilename]))
+            
+            # TODO: Site covariance, species covariance, schluter
+            
+            statsArgs = [
+               '$PYTHON',
+               calcScriptName,
+               ' '.join(calcOptions),
+               wsPamFilename,
+               siteStatsFilename,
+               spStatsFilename,
+               divStatsFilename
+            ]
+            statsCmd = ' '.join(statsArgs)
+            rules.append(MfRule(statsCmd, calcTargets, 
+                                dependencies=[wsPamFilename]))
+            
+         # MCPA
+         if doMCPA:
+            # Encode tree
+            encTreeFilename = os.path.join(pamWorkDir, 'tree.json')
+            encTreeArgs = [
+               '$PYTHON',
+               encTreeScript,
+               squidTreeFilename,
+               wsPamFilename,
+               encTreeFilename
+            ]
+            encTreeCmd = ' '.join(encTreeArgs)
+            rules.append(MfRule(encTreeCmd, [encTreeFilename], 
+                           dependencies=[squidTreeFilename, wsPamFilename])) 
+            
+            grim = pamDict[pamId][MatrixType.GRIM]
+               
+            # TODO: Add check for GRIM status and create if necessary
+            # Assume GRIM exists and copy to workspace
+            wsGrimFilename = os.path.join(pamWorkDir, 'grim.json')
+            cpGrimArgs = ['LOCAL', 'cp', grim.getDLocation(), wsGrimFilename]
+            cpGrimCmd = ' '.join(cpGrimArgs)
+            rules.append(MfRule(cpGrimCmd, [wsGrimFilename], 
+                                dependencies=[pamDirTouchFilename]))
+            
+            # Get MCPA matrices
+            envAdjRsqMtx = pamDict[pamId][MatrixType.MCPA_ENV_OBS_ADJ_R_SQ]
+            envPartialMtx = pamDict[pamId][MatrixType.MCPA_ENV_OBS_PARTIAL]
+            envFglobalMtx = pamDict[pamId][MatrixType.MCPA_ENV_F_GLOBAL]
+            envFsemipartMtx = pamDict[pamId][MatrixType.MCPA_ENV_F_SEMI]
+            
+            bgAdjRsqMtx = pamDict[pamId][MatrixType.MCPA_BG_OBS_ADJ_R_SQ]
+            bgPartialMtx = pamDict[pamId][MatrixType.MCPA_BG_OBS_PARTIAL]
+            bgFglobalMtx = pamDict[pamId][MatrixType.MCPA_BG_F_GLOBAL]
+            bgFsemipartMtx = pamDict[pamId][MatrixType.MCPA_BG_F_SEMI]
+            
+            # Get workspace filenames
+            wsEnvAdjRsqFilename = os.path.join(pamWorkDir, 'envAdjRsq.json')
+            wsEnvPartCorFilename = os.path.join(pamWorkDir, 'envPartCor.json')
+            wsEnvFglobalFilename = os.path.join(pamWorkDir, 'envFglobal.json')
+            wsEnvFpartialFilename = os.path.join(pamWorkDir, 'envFpartial.json')
+            
+            wsBGAdjRsqFilename = os.path.join(pamWorkDir, 'bgAdjRsq.json')
+            wsBGPartCorFilename = os.path.join(pamWorkDir, 'bgPartCor.json')
+            wsBGFglobalFilename = os.path.join(pamWorkDir, 'bgFglobal.json')
+            wsBGFpartialFilename = os.path.join(pamWorkDir, 'bgFpartial.json')
+            
+            # MCPA env observed command
+            mcpaEnvObsArgs = [
+               '$PYTHON', 
+               obsMcpaScript, 
+               wsPamFilename,
+               encTreeFilename,
+               wsGrimFilename,
+               wsEnvAdjRsqFilename,
+               wsEnvPartCorFilename,
+               wsEnvFglobalFilename,
+               wsEnvFpartialFilename
+            ]
+            mcpaEnvObsCmd = ' '.join(mcpaEnvObsArgs)
+            rules.append(MfRule(mcpaEnvObsCmd, 
+                                [wsEnvAdjRsqFilename, wsEnvFglobalFilename, 
+                                 wsEnvFpartialFilename, wsEnvPartCorFilename],
+                                dependencies=[wsPamFilename, encTreeFilename, 
+                                              wsGrimFilename]))
+            # Stockpile observed values
+            # Env adjusted r-squared
+            envAdjRsqSuccessFilename = os.path.join(pamWorkDir, 
+                                                    'envAdjRsq.success')
+            envAdjRsqStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(envAdjRsqMtx.getId()), 
+               envAdjRsqSuccessFilename, 
+               wsEnvAdjRsqFilename])
+            rules.append(MfRule(envAdjRsqStockpileCmd, 
+                                [envAdjRsqSuccessFilename], 
+                                dependencies=[wsEnvAdjRsqFilename]))
+               
+            # Env partial correlation
+            envPartCorSuccessFilename = os.path.join(pamWorkDir, 
+                                                    'envPartCor.success')
+            envPartCorStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(envPartialMtx.getId()), 
+               envPartCorSuccessFilename, 
+               wsEnvPartCorFilename])
+            rules.append(MfRule(envPartCorStockpileCmd, 
+                                [envPartCorSuccessFilename], 
+                                dependencies=[wsEnvPartCorFilename]))
+               
+               
+            # Env Randomizations
+            envFglobRands = []
+            envFpartRands = []
+            for i in range(10):
+               envFglobRandFilename = os.path.join(pamWorkDir, 
+                                               'envFglobRand{}.json'.format(i))
+               envFpartRandFilename = os.path.join(pamWorkDir, 
+                                               'envFpartRand{}.json'.format(i))
+               envFglobRands.append(envFglobRandFilename)
+               envFpartRands.append(envFpartRandFilename)
+               randCmd = ' '.join([
+                  '$PYTHON',
+                  randMcpaScript,
+                  '-n 10',
+                  wsPamFilename,
+                  encTreeFilename,
+                  wsGrimFilename,
+                  envFglobRandFilename,
+                  envFpartRandFilename
+               ])
+               rules.append(MfRule(randCmd, 
+                                   [envFglobRandFilename, envFpartRandFilename],
+                                   dependencies=[wsPamFilename, 
+                                                 encTreeFilename, 
+                                                 wsGrimFilename]))
+            
+            # TODO: Consider saving randomized matrices
+            
+            # Env F-global
+            envFglobFilename = os.path.join(pamWorkDir, 'envFglobP.json')
+            envFglobCmd = ' '.join([
+               '$PYTHON',
+               correctPvaluesScript,
+               envFglobFilename,
+               ' '.join(envFglobRands)
+            ])
+            rules.append(MfRule(envFglobCmd, [envFglobFilename], 
+                                dependencies=envFglobRands))
+            # Stockpile
+            envFglobSuccessFilename = os.path.join(pamWorkDir, 'envFglob.success')
+            envFglobStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(envFglobalMtx.getId()), 
+               envFglobSuccessFilename, 
+               envFglobFilename])
+            rules.append(MfRule(envFglobStockpileCmd, 
+                                [envFglobSuccessFilename], 
+                                dependencies=[envFglobFilename]))
+            
+            # Env F-semipartial
+            envFpartFilename = os.path.join(pamWorkDir, 'envFpartP.json')   
+            envFpartCmd = ' '.join([
+               '$PYTHON',
+               correctPvaluesScript,
+               envFpartFilename,
+               ' '.join(envFpartRands)
+            ])
+            rules.append(MfRule(envFpartCmd, [envFpartFilename], 
+                                dependencies=envFpartRands))
+            # Stockpile
+            envFpartSuccessFilename = os.path.join(pamWorkDir, 'envFpart.success')
+            envFpartStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(envFsemipartMtx.getId()), 
+               envFpartSuccessFilename, 
+               envFpartFilename])
+            rules.append(MfRule(envFpartStockpileCmd, 
+                                [envFpartSuccessFilename], 
+                                dependencies=[envFpartFilename]))
+            
+            # Bio geo
+            # MCPA bg observed command
+            mcpaBGObsArgs = [
+               '$PYTHON', 
+               obsMcpaScript, 
+               '-b {}'.format(wsBGFilename),
+               wsPamFilename,
+               encTreeFilename,
+               wsGrimFilename,
+               wsBGAdjRsqFilename,
+               wsBGPartCorFilename,
+               wsBGFglobalFilename,
+               wsBGFpartialFilename
+            ]
+            mcpaBGObsCmd = ' '.join(mcpaBGObsArgs)
+            rules.append(MfRule(mcpaBGObsCmd, 
+                                [wsBGAdjRsqFilename, wsBGFglobalFilename, 
+                                 wsBGFpartialFilename, wsBGPartCorFilename],
+                                dependencies=[wsPamFilename, encTreeFilename, 
+                                              wsGrimFilename, wsBGFilename]))
+            # Stockpile observed values
+            # BG adjusted r-squared
+            bgAdjRsqSuccessFilename = os.path.join(pamWorkDir, 
+                                                    'bgAdjRsq.success')
+            bgAdjRsqStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(bgAdjRsqMtx.getId()), 
+               bgAdjRsqSuccessFilename, 
+               wsBGAdjRsqFilename])
+            rules.append(MfRule(bgAdjRsqStockpileCmd, 
+                                [bgAdjRsqSuccessFilename], 
+                                dependencies=[wsBGAdjRsqFilename]))
+               
+            # BG partial correlation
+            bgPartCorSuccessFilename = os.path.join(pamWorkDir, 
+                                                    'bgPartCor.success')
+            bgPartCorStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(bgPartialMtx.getId()), 
+               bgPartCorSuccessFilename, 
+               wsBGPartCorFilename])
+            rules.append(MfRule(bgPartCorStockpileCmd, 
+                                [bgPartCorSuccessFilename], 
+                                dependencies=[wsBGPartCorFilename]))
+               
+            # BG Randomizations
+            bgFglobRands = []
+            bgFpartRands = []
+            for i in range(10):
+               bgFglobRandFilename = os.path.join(pamWorkDir, 
+                                               'bgFglobRand{}.json'.format(i))
+               bgFpartRandFilename = os.path.join(pamWorkDir, 
+                                               'bgFpartRand{}.json'.format(i))
+               bgFglobRands.append(bgFglobRandFilename)
+               bgFpartRands.append(bgFpartRandFilename)
+               randCmd = ' '.join([
+                  '$PYTHON',
+                  randMcpaScript,
+                  '-b {}'.format(wsBGFilename),
+                  '-n 10',
+                  wsPamFilename,
+                  encTreeFilename,
+                  wsGrimFilename,
+                  bgFglobRandFilename,
+                  bgFpartRandFilename
+               ])
+               rules.append(MfRule(randCmd, 
+                                   [bgFglobRandFilename, bgFpartRandFilename],
+                                   dependencies=[wsPamFilename, 
+                                                 encTreeFilename, 
+                                                 wsGrimFilename,
+                                                 wsBGFilename]))
+            
+            # TODO: Consider saving randomized matrices
+            
+            # BG F-global
+            bgFglobFilename = os.path.join(pamWorkDir, 'bgFglobP.json')
+            bgFglobCmd = ' '.join([
+               '$PYTHON',
+               correctPvaluesScript,
+               bgFglobFilename,
+               ' '.join(bgFglobRands)
+            ])
+            rules.append(MfRule(bgFglobCmd, [bgFglobFilename], 
+                                dependencies=bgFglobRands))
+            # Stockpile
+            bgFglobSuccessFilename = os.path.join(pamWorkDir, 'bgFglob.success')
+            bgFglobStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(bgFglobalMtx.getId()), 
+               bgFglobSuccessFilename, 
+               bgFglobFilename])
+            rules.append(MfRule(bgFglobStockpileCmd, 
+                                [bgFglobSuccessFilename], 
+                                dependencies=[bgFglobFilename]))
+            
+            # BG F-semipartial
+            bgFpartFilename = os.path.join(pamWorkDir, 'bgFpartP.json')   
+            bgFpartCmd = ' '.join([
+               '$PYTHON',
+               correctPvaluesScript,
+               bgFpartFilename,
+               ' '.join(bgFpartRands)
+            ])
+            rules.append(MfRule(bgFpartCmd, [bgFpartFilename], 
+                                dependencies=bgFpartRands))
+            # Stockpile
+            bgFpartSuccessFilename = os.path.join(pamWorkDir, 'bgFpart.success')
+            bgFpartStockpileCmd = ' '.join([
+               'LOCAL $PYTHON',
+               stockpileScript, 
+               ProcessType.MCPA_OBSERVED, 
+               str(bgFsemipartMtx.getId()), 
+               bgFpartSuccessFilename, 
+               bgFpartFilename])
+            rules.append(MfRule(bgFpartStockpileCmd, 
+                                [bgFpartSuccessFilename], 
+                                dependencies=[bgFpartFilename]))
+
+      return rules
+   
 # ...............................................
    def getShapegrid(self):
       return self._shapeGrid
