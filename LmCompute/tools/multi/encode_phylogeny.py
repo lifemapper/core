@@ -55,9 +55,16 @@ if __name__ == "__main__":
    
    tree = LmTree.fromFile(args.treeFn)
    
-   # Check ultrametric
-   if not tree.isUltrametric():
+   # Check if we can encode tree
+   if tree.hasBranchLengths() and not tree.isUltrametric():
       raise Exception, "Tree must be ultrametric for encoding"
+
+   # If the tree is not binary, resolve the polytomies
+   if not tree.isBinary():
+      tree.resolvePolytomies()
+   
+   # Load the PAM
+   pam = Matrix.load(args.pamFn)
 
    # If we should insert matrix indices
    if args.mashedPotato is not None:
@@ -69,11 +76,16 @@ if __name__ == "__main__":
             squidDict[squid.strip()] = idx
             idx += 1
       tree.addSquidMatrixIndices(squidDict)
+   else:
+      squidDict = {}
+      squids = pam.getColumnHeaders()
+      if len(squids) == 0:
+         raise Exception, 'Cannot encode tree without squids in PAM or mashed potato'
+      for i in range(len(squids)):
+         squidDict[squids[i]] = i
    
    # Prune tree
    tree.pruneTipsWithoutMatrixIndices()
-   
-   pam = Matrix.load(args.pamFn)
    
    encoder = PhyloEncoding(tree, pam)
 
