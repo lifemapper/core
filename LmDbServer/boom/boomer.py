@@ -73,7 +73,7 @@ class Boomer(LMObject):
       self._scribe = BorgScribe(self.log)
       # iterator tool for species
       self.christopher = None
-      # Dictionary of {scenCode: (potatoChain, rawPotatoFile)}
+      # Dictionary of {scenCode: (potatoChain, triagePotatoFile)}
       self.potatoes = None
       # MFChain for masterPotatoHead MF
       self.masterPotato = None
@@ -117,24 +117,13 @@ class Boomer(LMObject):
       self.keepWalken = True
 
       self.spudArfFnames = []
-      # potatoes = {scencode: (potatoChain, rawPotatoFile)
+      # potatoes = {scencode: (potatoChain, triagePotatoFile)
       self.potatoes = {}
       # master MF chain
       self.masterPotato = None
       if self.christopher.assemblePams:
          self.rotatePotatoes()
          
-#    # .............................
-#    def processPotatoes(self):
-#       try:
-#          while self.keepWalken:
-#             self.processSpud()
-#       except Exception, e:
-#          self.log.debug('Exception {} on potato'.format(str(e)))         
-#       finally:
-#          self.log.debug('Christopher is finally done walken')
-#          self.close()
-    
    # .............................
    def processSpud(self):
       try:
@@ -154,9 +143,9 @@ class Boomer(LMObject):
             # Add PAV outputs to raw potato files for triage input
             squid = spud.mfMetadata[MFChain.META_SQUID]
             if potatoInputs:
-               for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
+               for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
                   pavFname = potatoInputs[scencode]
-                  rawPotatoFile.write('{}: {}\n'.format(squid, pavFname))
+                  triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
                self.log.info('Wrote spud squid to {} arf files'
                              .format(len(potatoInputs)))
             if len(self.spudArfFnames) >= SPUD_LIMIT:
@@ -173,14 +162,14 @@ class Boomer(LMObject):
       if self.potatoes:
          self.log.info('Rotate potatoes ...')
          # Write each potato MFChain, then add the MFRule to execute it to the Master
-         for scencode, (potatoChain, rawPotatoFile) in self.potatoes.iteritems():
+         for scencode, (potatoChain, triagePotatoFile) in self.potatoes.iteritems():
             # Close this potato input file
-            rawPotatoFile.close()
+            triagePotatoFile.close()
             # Create triage command for potato inputs, add to MF chain
             mtx = self.christopher.globalPAMs[scencode]
             
             targetDir = potatoChain.getRelativeDirectory()
-            triageIn = os.path.join(targetDir, rawPotatoFile.name)
+            triageIn = os.path.join(targetDir, triagePotatoFile.name)
             triageOut = os.path.join(targetDir, 
                          potatoChain.getTriageFilename(prefix='mashedPotato'))
             rules = mtx.computeMe(triageIn, triageOut, workDir=targetDir)
@@ -207,7 +196,7 @@ class Boomer(LMObject):
       if not self.christopher.complete:
          self.log.info('Create new potatoes')
          # Initialize new potatoes, MasterPotato
-         # potatoes = {scencode: (potatoChain, rawPotatoFile)
+         # potatoes = {scencode: (potatoChain, triagePotatoFile)
          self.spudArfFnames = []
          self.potatoes = self._createPotatoMakeflows()
          self.masterPotato = self._createMasterMakeflow()
@@ -241,7 +230,7 @@ class Boomer(LMObject):
                          1) MFChain of commands to assemble a global PAM
                          2) open File of inputs for each species in the PAM,
                             squid, PAV filename
-      @return:  dict of {scenarioCode: (potatoChain, rawPotatoFile)} 
+      @return:  dict of {scenarioCode: (potatoChain, triagePotatoFile)} 
       """
       potatoes = {}
       for scencode in self.christopher.globalPAMs.keys():
@@ -253,17 +242,17 @@ class Boomer(LMObject):
                           metadata=meta, status=JobStatus.GENERAL, 
                           statusModTime=dt.gmt().mjd)
          potatoChain = self._scribe.insertMFChain(newMFC)
-         # Get rawPotato input file from MFChain
-         rawPotatoFname = potatoChain.getTriageFilename(prefix='rawPotato')
-         if not readyFilename(rawPotatoFname, overwrite=True):
+         # Get triage input file from MFChain
+         triagePotatoFname = potatoChain.getTriageFilename(prefix='triage')
+         if not readyFilename(triagePotatoFname, overwrite=True):
             raise LMError(currargs='{} is not ready for write (overwrite=True)'
-                              .format(rawPotatoFname))
+                              .format(triagePotatoFname))
          try:
-            rawPotatoFile = open(rawPotatoFname, 'w')
+            triagePotatoFile = open(triagePotatoFname, 'w')
          except Exception, e:
             raise LMError(currargs='Failed to open {} for writing ({})'
-                          .format(rawPotatoFname, str(e)))
-         potatoes[scencode] = (potatoChain, rawPotatoFile) 
+                          .format(triagePotatoFname, str(e)))
+         potatoes[scencode] = (potatoChain, triagePotatoFile) 
       return potatoes
 
    # .............................
@@ -428,9 +417,9 @@ if self.assemblePams and spud:
    # Add PAV outputs to raw potato files for triage input
    squid = spud.mfMetadata[MFChain.META_SQUID]
    if potatoInputs:
-      for scencode, (pc, rawPotatoFile) in self.potatoes.iteritems():
+      for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
          pavFname = potatoInputs[scencode]
-         rawPotatoFile.write('{}: {}\n'.format(squid, pavFname))
+         triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
       self.log.info('Wrote spud squid to {} arf files'
                     .format(len(potatoInputs)))
    if len(self.spudArfFnames) >= SPUD_LIMIT:
@@ -448,7 +437,7 @@ while not spud:
       boomer._addRuleToMasterPotatoHead(spud, prefix='spud')
       spudArf = spud.getArfFilename(prefix='spud')
       boomer.spudArfFnames.append(spudArf)
-      for scencode, f in boomer.rawPotatoFiles.keys():
+      for scencode, f in boomer.triagePotatoFiles.keys():
          squid = spud.mfMetadata[MFChain.META_SQUID]
          fname = potatoInputs[scencode]
          f.write('{}: {}\n'.format(squid, fname))

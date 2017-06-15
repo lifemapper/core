@@ -204,6 +204,7 @@ class BorgScribe(LMObject):
    def findOrInsertScenario(self, scen):
       """
       @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenario()
+      @note: This returns the updated Scenario filled with Layers
       """
       updatedScen = self._borg.findOrInsertScenario(scen)
       scenId = updatedScen.getId()
