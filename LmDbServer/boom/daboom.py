@@ -74,10 +74,6 @@ class DaBoom(Daemon):
       finally:
          self.log.debug('Daboom finally stopping')
          self.onShutdown()
-#       try:
-#          self.boomer.processPotatoes()
-#       finally:
-#          self.onShutdown()
                 
    # .............................
    def onUpdate(self):

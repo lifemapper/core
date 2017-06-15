@@ -28,7 +28,8 @@ import time
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-                                    JobStatus, MatrixType, SERVER_BOOM_HEADING)
+                        ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
+from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
       GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
@@ -39,7 +40,7 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       GRID_CELLSIZE, GRID_NUM_SIDES)
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
+         GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
          DEFAULT_EMAIL_POSTFIX, Priority)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
                                             POINT_COUNT_MIN)
@@ -76,6 +77,7 @@ class ArchiveFiller(LMObject):
       @summary Constructor for ArchiveFiller class.
       """
       super(ArchiveFiller, self).__init__()
+      self.name = self.__class__.__name__.lower()
       (self.usr,
        self.usrEmail,
        self.archiveName,
@@ -398,7 +400,7 @@ class ArchiveFiller(LMObject):
       if self.modelScenCode not in self.prjScenCodeList:
          self.prjScenCodeList.append(self.modelScenCode)
       for code in self.prjScenCodeList:
-         scen = self.scribe.getScenario(code)
+         scen = self.scribe.getScenario(code, fillLayers=True)
          if scen is None:
             raise LMError('Missing Scenario for code or id {}'.format(code))
          if scen.getUserId() not in legalUsers:
@@ -696,14 +698,19 @@ class ArchiveFiller(LMObject):
    # ...............................................
    def addScenariosAndLayers(self):
       """
-      @summary Add scenario and layer metadata to database  
+      @summary Add scenario and layer metadata to database, and update the 
+               allScens attribute with newly inserted scenarios and layers
       """
+      updatedScens = {}
       for scode, scen in self.allScens.iteritems():
          if scen.getId() is not None:
             self.scribe.log.info('Scenario {} exists'.format(scode))
+            updatedScens[scode] = scen
          else:
             self.scribe.log.info('Insert scenario {}'.format(scode))
             newscen = self.scribe.findOrInsertScenario(scen)
+            updatedScens[scode] = newscen
+      self.allScens = updatedScens
    
    # ...............................................
    def _findClimatePackageMetadata(self):
@@ -789,6 +796,33 @@ class ArchiveFiller(LMObject):
       return newshp
       
    # ...............................................
+   def _createDefaultMatrices(self, gridset, scen):
+      # Create Global PAM for this archive, scenario
+      pamType = MatrixType.PAM
+      if self.usr == PUBLIC_USER:
+         pamType = MatrixType.ROLLING_PAM
+      desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
+      pamMeta = {ServiceObject.META_DESCRIPTION: desc,
+                 ServiceObject.META_KEYWORDS: [GPAM_KEYWORD, scen.code]}
+      tmpGpam = LMMatrix(None, matrixType=pamType, 
+                         gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
+                         dateCode=scen.dateCode, metadata=pamMeta, userId=self.usr, 
+                         gridset=gridset, 
+                         status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+      gpam = self.scribe.findOrInsertMatrix(tmpGpam)
+      # Create Scenario-GRIM for this archive, scenario
+      desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
+      grimMeta = {ServiceObject.META_DESCRIPTION: desc,
+                 ServiceObject.META_KEYWORDS: [GGRIM_KEYWORD]}
+      tmpGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
+                         gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
+                         dateCode=scen.dateCode, metadata=grimMeta, userId=self.usr, 
+                         gridset=gridset, 
+                         status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+      grim = self.scribe.findOrInsertMatrix(tmpGrim)
+      return gpam, grim
+
+   # ...............................................
    def addArchive(self):
       """
       @summary: Create a Shapegrid, PAM, and Gridset for this archive's Global PAM
@@ -802,23 +836,78 @@ class ArchiveFiller(LMObject):
                        configFilename=self.envPackageMetaFilename, epsgcode=self.epsgcode, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
-      # "Global" PAMs (one per scenario)
-      globalPAMs = []
-      matrixType = MatrixType.PAM
-      if self.usr == PUBLIC_USER:
-         matrixType = MatrixType.ROLLING_PAM
-      for scen in self.allScens.values():
-         meta = {ServiceObject.META_DESCRIPTION: GPAM_KEYWORD,
-                 ServiceObject.META_KEYWORDS: [GPAM_KEYWORD]}
-         tmpGpam = LMMatrix(None, matrixType=matrixType, 
-                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
-                            dateCode=scen.dateCode, metadata=meta, userId=self.usr, 
-                            gridset=updatedGrdset, 
-                            status=JobStatus.GENERAL, statusModTime=CURR_MJD)
-         gpam = self.scribe.findOrInsertMatrix(tmpGpam)
-         globalPAMs.append(gpam)
+      # "Global" PAM, GRIM (one each per scenario)
+      pamGrims = {}
+      for code, scen in self.allScens.iteritems():
+         gPam, scenGrim = self._createDefaultMatrices(updatedGrdset, scen)
+         pamGrims[code] = (gPam, scenGrim)
       
-      return shp, updatedGrdset, globalPAMs
+      return shp, updatedGrdset, pamGrims
+   
+# ...............................................
+   def _initIntersect(self, lyr, mtx, shpGrid, intersectParams, currtime):
+      """
+      @summary: Initialize model, projections for inputs/algorithm.
+      """
+      mtxcol = None
+      if lyr is not None:
+         # TODO: Save processType into the DB??
+         if LMFormat.isGDAL(driver=lyr.dataFormat):
+            ptype = ProcessType.INTERSECT_RASTER
+         else:
+            ptype = ProcessType.INTERSECT_VECTOR
+   
+         tmpCol = MatrixColumn(None, mtx.getId(), self.userId, 
+                layer=lyr, shapegrid=shpGrid, 
+                intersectParams=intersectParams, 
+                squid=lyr.squid, ident=lyr.ident, processType=ptype, 
+                status=JobStatus.GENERAL, statusModTime=currtime)
+         mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
+         if mtxcol is not None:
+            self.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
+            # Reset processType (not in db)
+            mtxcol.processType = ptype            
+      return mtxcol
+
+   # .............................
+   def _createGrimMF(self, scencode, currtime):
+      # Create MFChain for this GPAM
+      desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
+              .format(self.usr, self.archiveName, scencode))
+      meta = {MFChain.META_CREATED_BY: self.name,
+              MFChain.META_DESC: desc}
+      newMFC = MFChain(self.usr, priority=self.priority, 
+                       metadata=meta, status=JobStatus.GENERAL, 
+                       statusModTime=currtime)
+      grimChain = self._scribe.insertMFChain(newMFC)
+      return grimChain
+   
+   # .............................
+   def createGRIMChains(self, shpGrid, pamGrims):
+      grimChains = []
+      currtime = mx.DateTime.gmt().mjd
+      intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
+
+      for code, (pam, grim) in pamGrims.iteritems():
+         scen = self.allScens[code]
+         # Create MFChain for this GRIM
+         grimChain = self._createGrimMF(code, currtime)
+         targetDir = grimChain.getRelativeDirectory()
+
+         for lyr in scen.layers:
+            # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
+            mtxcol = self._initIntersect(lyr, grim, shpGrid, intersectParams, 
+                                         currtime)
+            rules = mtxcol.computeMe(workDir=targetDir)
+            grimChain.addCommands(rules)
+         grimChain.write()
+         grimChain.updateStatus(JobStatus.INITIALIZE)
+         self._scribe.updateObject(grimChain)
+         grimChains.append(grimChain)
+         self.log.info('  Wrote GRIM Makeflow {} for scencode {}'
+                       .format(grimChain.objId, code))
+               
+      return grimChains
 
    # ...............................................
    def _getScenarios(self):
@@ -905,8 +994,11 @@ class ArchiveFiller(LMObject):
          self._checkOccurrenceSets()
          
       # Add ShapeGrid, Global PAM, Gridset, 
-      shpGrid, archiveGridset, globalPAMs = self.addArchive()
+      shpGrid, archiveGridset, pamGrims = self.addArchive()
    
+      # Assemble a MFChain for creating each Scenario GRIM
+      grimChains = self.createGRIMChains(shpGrid, pamGrims)
+      
       # Insert all taxonomic sources for now
       self.scribe.log.info('  Insert taxonomy metadata ...')
       for name, taxInfo in TAXONOMIC_SOURCE.iteritems():

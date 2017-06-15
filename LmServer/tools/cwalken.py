@@ -246,11 +246,13 @@ class ChristopherWalken(LMObject):
       gridname = self.cfg.get(SERVER_BOOM_HEADING, 'GRID_NAME')
       intersectGrid = self._scribe.getShapeGrid(userId=userId, lyrName=gridname, 
                                                 epsg=epsg)
-      # Get  for Archive "Global PAM"
+      # Global PAM and Scenario GRIM for each scenario
       boomGridset = self._scribe.getGridset(name=archiveName, userId=userId, 
                                             fillMatrices=True)
       boomGridset.setMatrixProcessType(ProcessType.CONCATENATE_MATRICES, 
-                           matrixTypes=[MatrixType.PAM, MatrixType.ROLLING_PAM])
+                                       matrixTypes=[MatrixType.PAM, 
+                                                    MatrixType.ROLLING_PAM, 
+                                                    MatrixType.GRIM])
       intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: 
             self.cfg.get(SERVER_BOOM_HEADING, 'INTERSECT_FILTERSTRING'),
