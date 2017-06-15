@@ -936,7 +936,7 @@ BEGIN
       SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
    ELSE
 	   IF gsid IS NULL THEN
-         SELECT * INTO gsid FROM lm_v3.gridset WHERE grdname = gsname 
+         SELECT * INTO gsid FROM lm_v3.gridset WHERE name = gsname 
                                                  AND userid = usr;
       END IF;
       

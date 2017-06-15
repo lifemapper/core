@@ -850,29 +850,24 @@ class Borg(DbPostgresql):
 
 
 # ...............................................
-   def getMatrix(self, mtx, mtxId):
+   def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType, gcmCode, altpredCode, dateCode):
       """
-      @summary: Retrieve an LMMatrix with its gridset from the database
-      @param mtx: LMMatrix with unique parameters for which to retrieve the 
-                  existing LMMatrix
-      @param mtxId: database ID for the LMMatrix to retrieve
+      @summary: Retrieve an LmServer.legion.LMMatrix object with its gridset 
+                from the database
+      @param mtxId: database ID for the LMMatrix
+      @param gridsetId: database ID for the Gridset containing the LMMatrix
+      @param gridsetName: name of the Gridset containing the LMMatrix
+      @param userId: userID for the Gridset containing the LMMatrix
+      @param mtxType: LmCommon.common.lmconstants.MatrixType of the LMMatrix
+      @param gcmCode: Global Climate Model Code of the LMMatrix
+      @param altpredCode: alternate prediction code of the LMMatrix
+      @param dateCode: date code of the LMMatrix
       @return: Existing LmServer.legion.lmmatrix.LMMatrix
       """
-      row = None
-      if mtx is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getMatrix', 
-                                                   mtx.getId(),
-                                                   mtx.matrixType,
-                                                   mtx.parentId, 
-                                                   mtx.gcmCode,
-                                                   mtx.altpredCode,
-                                                   mtx.dateCode,
-                                                   mtx.gridsetName,
-                                                   mtx.getUserId())
-      elif mtxId is not None:
-         row, idxs = self.executeSelectOneFunction('lm_getMatrix', mtxId,
-                                                   None, None, None, None,
-                                                   None, None, None)
+      row, idxs = self.executeSelectOneFunction('lm_getMatrix', 
+                                                mtxId, mtxType, gridsetId, 
+                                                gcmCode, altpredCode, dateCode, 
+                                                gridsetName, userId)
       fullMtx = self._createLMMatrix(row, idxs)
       return fullMtx
       
