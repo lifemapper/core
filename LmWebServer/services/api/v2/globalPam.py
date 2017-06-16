@@ -59,7 +59,7 @@ class GlobalPAMService(LmService):
    def GET(self, algorithmCode=None, bbox=None, gridSetId=None, 
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  public=None, projectionScenarioCode=None, squid=None, 
-                 taxKingdom=False, taxPhylum=None, taxClass=None, 
+                 taxKingdom=None, taxPhylum=None, taxClass=None, 
                  taxOrder=None, taxFamily=None, taxGenus=None, taxSpecies=None):
       """
       @summary: A Global PAM get request will query the global PAM and return
@@ -80,7 +80,7 @@ class GlobalPAMService(LmService):
    def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  public=None, projectionScenarioCode=None, squid=None, 
-                 taxKingdom=False, taxPhylum=None, taxClass=None, 
+                 taxKingdom=None, taxPhylum=None, taxClass=None, 
                  taxOrder=None, taxFamily=None, taxGenus=None, taxSpecies=None):
       """
       @summary: A Global PAM post request will create a subset
@@ -104,7 +104,7 @@ class GlobalPAMService(LmService):
                             modelScenarioCode=None, pointMax=None, 
                             pointMin=None, public=None, 
                             projectionScenarioCode=None, squid=None,
-                            taxKingdom=False, taxPhylum=None, taxClass=None, 
+                            taxKingdom=None, taxPhylum=None, taxClass=None, 
                             taxOrder=None, taxFamily=None, taxGenus=None, 
                             taxSpecies=None):
       # Build query
