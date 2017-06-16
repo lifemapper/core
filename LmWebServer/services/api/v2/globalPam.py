@@ -58,7 +58,9 @@ class GlobalPAMService(LmService):
    @lmFormatter
    def GET(self, algorithmCode=None, bbox=None, gridSetId=None, 
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
-                 public=None, projectionScenarioCode=None, squid=None):
+                 public=None, projectionScenarioCode=None, squid=None, 
+                 taxKingdom=False, taxPhylum=None, taxClass=None, 
+                 taxOrder=None, taxFamily=None, taxGenus=None, taxSpecies=None):
       """
       @summary: A Global PAM get request will query the global PAM and return
                    entries matching the parameters, or a count of those
@@ -69,8 +71,10 @@ class GlobalPAMService(LmService):
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
                                  projectionScenarioCode=projectionScenarioCode, 
-                                 squid=squid)
-   
+                                 squid=squid, taxKingdom=taxKingdom, 
+                                 taxPhylum=taxPhylum, taxClass=taxClass,
+                                 taxOrder=taxOrder, taxFamily=taxFamily,
+                                 taxGenus=taxGenus, taxSpecies=taxSpecies)
    
    # ................................
    def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
