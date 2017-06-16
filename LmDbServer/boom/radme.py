@@ -257,8 +257,9 @@ class RADCaller(LMObject):
       @param gsId: The id of the gridset to use
       @param mtxType: The matrix type to look for
       """
-      mtx = self._scribe(gridsetId=gsId, mtxType=mtxType, gcmCode=gcmCode, 
-                         altpredCode=altpredCode, dateCode=dateCode)
+      mtx = self._scribe.getMatrix(gridsetId=gsId, mtxType=mtxType, 
+                                   gcmCode=gcmCode, altpredCode=altpredCode, 
+                                   dateCode=dateCode)
       if mtx is None:
          # Insert new matrix
          newMtx = LMMatrix(None, matrixType=mtxType, processType=procType, 
