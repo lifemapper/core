@@ -33,7 +33,8 @@ from osgeo import ogr
 import urllib2
 
 from LmCommon.compression.binaryList import decompress
-from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat
+from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat,\
+   ProcessType
 
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
@@ -176,6 +177,7 @@ class GlobalPAMService(LmService):
       origNrows = origShp.featureCount
       epsgCode = match1[SOLR_FIELDS.EPSG_CODE]
       origGSId = match1[SOLR_FIELDS.GRIDSET_ID]
+      origGS = self.scribe.getGridset(gridsetId=origGSId, fillMatrices=True)
 
       # Get the row headers
       rowHeaders = getRowHeaders(origShp.getDLocation())
@@ -198,12 +200,15 @@ class GlobalPAMService(LmService):
          else:
             matchesByScen[scnId] = [match]
       
+      # TODO: Copy tree?
       # Create grid set
       gs = Gridset(name=archiveName, metadata=gsMeta, shapeGrid=myShp, 
-                   epsgcode=epsgCode, userId=self.getUserId(), modTime=gmt().mjd)
+                   epsgcode=epsgCode, userId=self.getUserId(), 
+                   modTime=gmt().mjd, tree=origGS.tree)
       updatedGS = self.scribe.findOrInsertGridset(gs)
       
       for scnId, scnMatches in matchesByScen.iteritems():
+         
          scnCode = scnMatches[0][SOLR_FIELDS.PROJ_SCENARIO_CODE]
          dateCode = altPredCode = gcmCode = None
          
@@ -241,6 +246,40 @@ class GlobalPAMService(LmService):
          updatedPamMtx = self.scribe.findOrInsertMatrix(pamMtx)
          with open(updatedPamMtx.getDLocation(), 'w') as outF:
             pamMtx.save(outF)
+      
+      # GRIMs
+      for grim in origGS.getGRIMs():
+         # TODO: Subset grim
+         newGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
+                            processType=ProcessType.RAD_INTERSECT, 
+                            gcmCode=grim.gcmCode, altpredCode=grim.altpredCode,
+                            dateCode=grim.dateCode, metadata=grim.metadata,
+                            userId=self.getUserId(), gridset=gs, 
+                            status=JobStatus.INITIALIZE)
+         insertedGrim = self.scribe.findOrInsertMatrix(newGrim)
+         insertedGrim.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
+         self.scribe.updateObject(insertedGrim)
+         # Save the original grim data into the new location
+         with open(insertedGrim.getDLocation(), 'w') as outF:
+            grim.save(outF)
+         
+      # BioGeo
+      for bg in origGS.getBiogeographicHypotheses():
+         # TODO: Subset BioGeo
+         newBG = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
+                            processType=ProcessType.ENCODE_HYPOTHESES, 
+                            gcmCode=bg.gcmCode, altpredCode=bg.altpredCode,
+                            dateCode=bg.dateCode, metadata=bg.metadata,
+                            userId=self.getUserId(), gridset=gs, 
+                            status=JobStatus.INITIALIZE)
+         insertedBG = self.scribe.findOrInsertMatrix(newBG)
+         insertedBG.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
+         self.scribe.updateObject(insertedBG)
+         # Save the original grim data into the new location
+         with open(insertedBG.getDLocation(), 'w') as outF:
+            bg.save(outF)
+         
+      
 
 # ............................................................................
 def getRowHeaders(shapefileFilename):
