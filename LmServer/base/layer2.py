@@ -727,7 +727,7 @@ class Raster(_Layer):
       if dataFormat is None:
          dataFormat = gdalFormat
       elif dataFormat != gdalFormat:
-         msgs.append('Invalid gdalFormat {}, changing to {} for layer {}'
+         msgs.append('Incorrect gdalFormat {}, changing to {} for layer {}'
                      .format(dataFormat, gdalFormat, dlocation))
          dataFormat = gdalFormat
       # Rename with correct extension if incorrect
@@ -754,7 +754,7 @@ class Raster(_Layer):
       if gdalType is None:
          gdalType = band.DataType
       elif gdalType != band.DataType:
-         msgs.append('Invalid datatype {}, changing to {} for layer {}'
+         msgs.append('Incorrect datatype {}, changing to {} for layer {}'
                      .format(gdalType, band.DataType, dlocation))
          gdalType = band.DataType
       bmin, bmax, bmean, bstddev = band.GetStatistics(False,True)

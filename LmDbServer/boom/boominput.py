@@ -78,6 +78,22 @@ class ArchiveFiller(LMObject):
       """
       super(ArchiveFiller, self).__init__()
       self.name = self.__class__.__name__.lower()
+      self.inConfigFname = configFname
+      # Get database
+      try:
+         self.scribe = self._getDb()
+      except: 
+         raise
+      self.open()
+      
+   # ...............................................
+   def initializeInputs(self, configFname=None):
+      """
+      @summary Constructor for ArchiveFiller class.
+      """
+      # Allow reset configuration
+      if configFname is not None:
+         self.inConfigFname = configFname
       (self.usr,
        self.usrEmail,
        self.archiveName,
@@ -100,18 +116,15 @@ class ArchiveFiller(LMObject):
        self.cellsides,
        self.cellsize,
        self.gridname, 
-       self.intersectParams) = self.readConfigArgs(configFname)
+       self.intersectParams) = self.readConfigArgs()
+       
+      # If running as root, new user filespace must have permissions corrected
+      self._warnPermissions()
 
       earl = EarlJr()
       self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                    objCode=self.archiveName, 
                                                    usr=self.usr)
-      # Get database
-      try:
-         self.scribe = self._getDb()
-      except: 
-         raise
-      self.open()
       # Create new or pull existing scenarios
       (self.allScens, 
        newModelScenCode,
@@ -121,8 +134,6 @@ class ArchiveFiller(LMObject):
       if newModelScenCode is  not None:
          self.modelScenCode = newModelScenCode
       self.prjScenCodeList = self.allScens.keys()
-      # If running as root, new user filespace must have permissions corrected
-      self._warnPermissions()
       
    # ...............................................
    def open(self):
@@ -143,7 +154,7 @@ class ArchiveFiller(LMObject):
          fname = None
       return fname
    
-   # ...............................................
+   # ...............................................      
    @property
    def userPath(self):
       earl = EarlJr()
@@ -172,10 +183,12 @@ class ArchiveFiller(LMObject):
       return scribe
       
    # ...............................................
-   def readConfigArgs(self, configFname):
-      if configFname is None or not os.path.exists(configFname):
-         print('Missing config file {}, using defaults'.format(configFname))
+   def readConfigArgs(self):
+      if self.inConfigFname is None or not os.path.exists(self.inConfigFname):
+         print('Missing config file {}, using defaults'.format(self.inConfigFname))
          configFname = None
+      else:
+         configFname = self.inConfigFname
       config = Config(siteFn=configFname)
    
       # Fill in missing or null variables for archive.config.ini
@@ -252,7 +265,7 @@ class ArchiveFiller(LMObject):
    def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
       """
       """
-      self.readyFilename(self.outConfigFilename, overwrite=True)
+      readyFilename(self.outConfigFilename, overwrite=True)
       f = open(self.outConfigFilename, 'w')
       f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
       f.write('ARCHIVE_USER: {}\n'.format(self.usr))
@@ -1030,6 +1043,7 @@ if __name__ == '__main__':
       exit(-1)
 
    filler = ArchiveFiller(configFname=configFname)
+   filler.initializeInputs()
    filler.initBoom()
    filler.close()
     
@@ -1066,19 +1080,56 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.sdm.algorithm import Algorithm
+from LmDbServer.boom.boominput import ArchiveFiller
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
+configFname = '/root/biotaphyHeuchera.boom.ini'
 
-
-from LmDbServer.boom.boominput import ArchiveFiller
-filler = ArchiveFiller()
+filler = ArchiveFiller(configFname=configFname)
+filler.initializeInputs()
 
 filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 # filler.initBoom()
 # filler.close()
 
-borg = filler.scribe._borg
+
+layers = []
+staticLayers = {}
+envcode = pkgMeta['layertypes'][0]
+ltmeta = lyrtypeMeta[envcode]
+envKeywords = [k for k in baseMeta['keywords']]
+relfname, isStatic = filler._findFileFor(ltmeta, pkgMeta['baseline'], 
+                                  gcm=None, tm=None, altPred=None)
+lyrname = filler._getbioName(pkgMeta['baseline'], pkgMeta['res'], 
+                           lyrtype=envcode, suffix=pkgMeta['suffix'])
+lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
+           'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
+envmeta = {'title': ltmeta['title'],
+           'description': ltmeta['description'],
+           'keywords': envKeywords.extend(ltmeta['keywords'])}
+dloc = os.path.join(ENV_DATA_PATH, relfname)
+if not os.path.exists(dloc):
+   print('Missing local data %s' % dloc)
+envlyr = EnvLayer(lyrname, filler.usr, elyrMeta['epsg'], 
+                  dlocation=dloc, 
+                  lyrMetadata=lyrmeta,
+                  dataFormat=elyrMeta['gdalformat'], 
+                  gdalType=elyrMeta['gdaltype'],
+                  valUnits=ltmeta['valunits'],
+                  mapunits=elyrMeta['mapunits'], 
+                  resolution=elyrMeta['resolution'], 
+                  bbox=pkgMeta['bbox'], 
+                  modTime=CURR_MJD, 
+                  envCode=envcode, 
+                  dateCode=pkgMeta['baseline'],
+                  envMetadata=envmeta,
+                  envModTime=CURR_MJD)
+layers.append(envlyr)
+if isStatic:
+   staticLayers[envcode] = envlyr
+   
+return layers, staticLayers
 
 
 """
