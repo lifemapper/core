@@ -846,7 +846,7 @@ class ArchiveFiller(LMObject):
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                       configFilename=self.envPackageMetaFilename, epsgcode=self.epsgcode, 
+                       dlocation=self.envPackageMetaFilename, epsgcode=self.epsgcode, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAM, GRIM (one each per scenario)
