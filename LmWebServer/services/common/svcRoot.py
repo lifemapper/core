@@ -66,7 +66,7 @@ class LmServiceRoot(object):
 # .............................................................................
    
 # .............................................................................
-# Tell CherryPy to add headers eneded for CORS
+# Tell CherryPy to add headers needed for CORS
 cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
 # Tell CherryPy to look for authenticated users

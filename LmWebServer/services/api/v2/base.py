@@ -65,4 +65,10 @@ class LmService(object):
          return cherrypy.session.user
       except:
          return PUBLIC_USER
-      
+
+   # ..........................
+   def OPTIONS(self):
+      """
+      @summary: Common options request for all services (needed for CORS)
+      """
+      return
