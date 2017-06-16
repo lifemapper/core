@@ -75,7 +75,9 @@ class GlobalPAMService(LmService):
    # ................................
    def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
-                 public=None, projectionScenarioCode=None, squid=None):
+                 public=None, projectionScenarioCode=None, squid=None, 
+                 taxKingdom=False, taxPhylum=None, taxClass=None, 
+                 taxOrder=None, taxFamily=None, taxGenus=None, taxSpecies=None):
       """
       @summary: A Global PAM post request will create a subset
       """
@@ -85,7 +87,10 @@ class GlobalPAMService(LmService):
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
                                  projectionScenarioCode=projectionScenarioCode, 
-                                 squid=squid)
+                                 squid=squid, taxKingdom=taxKingdom, 
+                                 taxPhylum=taxPhylum, taxClass=taxClass,
+                                 taxOrder=taxOrder, taxFamily=taxFamily,
+                                 taxGenus=taxGenus, taxSpecies=taxSpecies)
       
       self._subsetGlobalPAM(archiveName, matches)
       cherrypy.response.status = 202
@@ -94,7 +99,10 @@ class GlobalPAMService(LmService):
    def _makeSolrQuery(self, algorithmCode=None, bbox=None, gridSetId=None, 
                             modelScenarioCode=None, pointMax=None, 
                             pointMin=None, public=None, 
-                            projectionScenarioCode=None, squid=None):
+                            projectionScenarioCode=None, squid=None,
+                            taxKingdom=False, taxPhylum=None, taxClass=None, 
+                            taxOrder=None, taxFamily=None, taxGenus=None, 
+                            taxSpecies=None):
       # Build query
       queryParts = []
       
@@ -142,6 +150,19 @@ class GlobalPAMService(LmService):
          else:
             squidVals = squid
          queryParts.append('{}:{}'.format(SOLR_FIELDS.SQUID, squidVals))
+      
+      taxonInfo = [
+         (SOLR_FIELDS.TAXON_KINGDOM, taxKingdom),
+         (SOLR_FIELDS.TAXON_PHYLUM, taxPhylum),
+         (SOLR_FIELDS.TAXON_CLASS, taxClass),
+         (SOLR_FIELDS.TAXON_ORDER, taxOrder),
+         (SOLR_FIELDS.TAXON_FAMILY, taxFamily),
+         (SOLR_FIELDS.TAXON_GENUS, taxGenus),
+         (SOLR_FIELDS.TAXON_SPECIES, taxSpecies),
+      ]
+      for fld, val in taxonInfo:
+         if val is not None:
+            queryParts.append('{}:{}'.format(fld, val))
                
       if bbox is not None:
          minx, miny, maxx, maxy = bbox.split(',')
