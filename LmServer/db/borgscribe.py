@@ -513,12 +513,12 @@ class BorgScribe(LMObject):
       return sciname
 
 # ...............................................
-   def getTaxon(self, taxonSourceId=None, taxonKey=None,
+   def getTaxon(self, squid=None, taxonSourceId=None, taxonKey=None,
                 userId=None, taxonName=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getTaxon()
       """
-      sciname = self._borg.getTaxon(taxonSourceId, taxonKey, userId, taxonName)
+      sciname = self._borg.getTaxon(squid, taxonSourceId, taxonKey, userId, taxonName)
       return sciname
 
 # ...............................................

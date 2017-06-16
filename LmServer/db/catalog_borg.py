@@ -1261,9 +1261,11 @@ class Borg(DbPostgresql):
       return scientificname
 
 # ...............................................
-   def getTaxon(self, taxonSourceId, taxonKey, userId, taxonName):
+   def getTaxon(self, squid, taxonSourceId, taxonKey, userId, taxonName):
       """
-      @summary: Find a taxon associated with a TaxonomySource from database.  
+      @summary: Find a taxon associated with a TaxonomySource from database.
+      @param squid: Hash value of either taxonSourceId+taxonKey 
+                    or userId+taxonName
       @param taxonSourceId: Lifemapper database ID of the TaxonomySource
       @param taxonKey: unique identifier of the taxon in the (external) 
              TaxonomySource 
@@ -1271,7 +1273,7 @@ class Borg(DbPostgresql):
       @param taxonName: name string for this taxon
       @return: existing ScientificName
       """
-      row, idxs = self.executeSelectOneFunction('lm_getTaxon', 
+      row, idxs = self.executeSelectOneFunction('lm_getTaxon', squid,
                                     taxonSourceId, taxonKey, userId, taxonName)
       scientificname = self._createScientificName(row, idxs)
       

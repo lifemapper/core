@@ -1297,7 +1297,8 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getTaxon(tsourceid int,
+CREATE OR REPLACE FUNCTION lm_v3.lm_getTaxon(sqd varchar,
+                                             tsourceid int,
                                              tkey int, 
                                              usr varchar,
                                              tname varchar)
@@ -1306,7 +1307,9 @@ $$
 DECLARE
    rec lm_v3.Taxon%ROWTYPE;
 BEGIN
-   IF tsourceid IS NOT NULL AND tkey IS NOT NULL THEN
+   IF sqd IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.Taxon WHERE squid = sqd;   
+   ELSEIF tsourceid IS NOT NULL AND tkey IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.Taxon
           WHERE taxonomysourceid = tsourceid and taxonomykey = tkey;
    ELSE
