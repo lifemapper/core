@@ -518,7 +518,8 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getTaxon()
       """
-      sciname = self._borg.getTaxon(squid, taxonSourceId, taxonKey, userId, taxonName)
+      sciname = self._borg.getTaxon(squid, taxonSourceId, taxonKey, userId, 
+                                    taxonName)
       return sciname
 
 # ...............................................
