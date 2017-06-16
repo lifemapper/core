@@ -145,14 +145,24 @@ class Gridset(ServiceObject):
       
       if doMCPA:
          
-         # TODO: Need biogeographic hypotheses
+         # Copy encoded biogeographic hypotheses to workspace
          bgs = self.getBiogeographicHypotheses()
-         # TODO: Are these individual columns?  Or are they all in one matrix?
-         # TODO: Are they already encoded?
+         if len(bgs) > 0:
+            bgs = bgs[0] # Just get the first for now
          
-         # TODO: If already encoded, move to workspace
-         # TODO: If not, encode
-         wsBGFilename = None
+         wsBGFilename = os.path.join(targetDir, 'bg.json')
+         
+         if JobStatus.finished(bgs.status):
+            # If the matrix is completed, copy it
+            touchWsBGCmd = '$PYTHON {} {}'.format(touchScript,
+                                          os.path.join(targetDir, 'touchBG.out'))
+            cpTreeCmd = 'LOCAL {} ; cp {} {}'.format(touchWsBGCmd,
+                                                     bgs.getDLocation(), 
+                                                     wsBGFilename)
+            rules.append(MfRule(cpTreeCmd, [wsBGFilename]))
+         else:
+            #TODO: Handle matrix columns
+            raise Exception, "Not currently handling non-completed BGs"
          
          # If valid tree, we can resolve polytomies
          if self.tree.isBinary() and (
