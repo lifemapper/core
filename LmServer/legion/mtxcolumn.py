@@ -205,7 +205,24 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             options = "--ident {0}".format(self.ident)
 
          pavFname = os.path.join(targetDir, self.getTargetFilename())
+         
+         if ProcessType.isIntersect(self.processType):
+            if self.processType == ProcessType.INTERSECT_RASTER_GRIM:
+               if self.intersectParams[self.INTERSECT_PARAM_WEIGHTED_MEAN]:
+                  # Default option for numerical data
+                  intersectArgs = []
+               else:
+                  # For classified data
+                  intersectArgs = [str(self.intersectParams
+                                       [self.INTERSECT_PARAM_MIN_PERCENT])]
+            else:
+               intersectArgs = [
+                  str(self.intersectParams[self.INTERSECT_PARAM_MIN_PRESENCE]),
+                  str(self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE]),
+                  str(self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT])]
+
          scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
+
          
          shapegridFile = os.path.join(workDir, 
                     os.path.splitext(self.shapegrid.getRelativeDLocation())[0],
@@ -217,10 +234,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                          shapegridFile,  
                          inputLayerFname,
                          pavFname,
-                         str(self.layer.resolution),
-                         str(self.intersectParams[self.INTERSECT_PARAM_MIN_PRESENCE]),
-                         str(self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE]),
-                         str(self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT])]
+                         str(self.layer.resolution)]
+         cmdArguments.extend(intersectArgs)
          cmd = ' '.join(cmdArguments)
          rules.append(MfRule(cmd, [pavFname], dependencies=dependentFiles))
          

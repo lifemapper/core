@@ -858,7 +858,7 @@ class ArchiveFiller(LMObject):
       return shp, updatedGrdset, pamGrims
    
 # ...............................................
-   def _initIntersect(self, lyr, mtx, shpGrid, intersectParams, currtime):
+   def _initGRIMIntersect(self, lyr, mtx, shpGrid, intersectParams, currtime):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
@@ -866,18 +866,19 @@ class ArchiveFiller(LMObject):
       if lyr is not None:
          # TODO: Save processType into the DB??
          if LMFormat.isGDAL(driver=lyr.dataFormat):
-            ptype = ProcessType.INTERSECT_RASTER
+            ptype = ProcessType.INTERSECT_RASTER_GRIM
          else:
-            ptype = ProcessType.INTERSECT_VECTOR
+            self.scribe.log.debug('Vector intersect not yet implemented for GRIM column {}'
+                                  .format(mtxcol.getId()))
    
-         tmpCol = MatrixColumn(None, mtx.getId(), self.userId, 
+         tmpCol = MatrixColumn(None, mtx.getId(), self.usr, 
                 layer=lyr, shapegrid=shpGrid, 
                 intersectParams=intersectParams, 
                 squid=lyr.squid, ident=lyr.ident, processType=ptype, 
                 status=JobStatus.GENERAL, statusModTime=currtime)
-         mtxcol = self._scribe.findOrInsertMatrixColumn(tmpCol)
+         mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
          if mtxcol is not None:
-            self.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
+            self.scribe.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
             # Reset processType (not in db)
             mtxcol.processType = ptype            
       return mtxcol
@@ -892,7 +893,7 @@ class ArchiveFiller(LMObject):
       newMFC = MFChain(self.usr, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=currtime)
-      grimChain = self._scribe.insertMFChain(newMFC)
+      grimChain = self.scribe.insertMFChain(newMFC)
       return grimChain
    
    # .............................
@@ -909,15 +910,15 @@ class ArchiveFiller(LMObject):
 
          for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-            mtxcol = self._initIntersect(lyr, grim, shpGrid, intersectParams, 
+            mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
                                          currtime)
             rules = mtxcol.computeMe(workDir=targetDir)
             grimChain.addCommands(rules)
          grimChain.write()
          grimChain.updateStatus(JobStatus.INITIALIZE)
-         self._scribe.updateObject(grimChain)
+         self.scribe.updateObject(grimChain)
          grimChains.append(grimChain)
-         self.log.info('  Wrote GRIM Makeflow {} for scencode {}'
+         self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
                        .format(grimChain.objId, code))
                
       return grimChains
