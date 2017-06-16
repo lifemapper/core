@@ -261,6 +261,27 @@ QUERY_PARAMETERS = {
       'name' : 'styles',
       #'processIn' : lambda x: [i for i in x.split(',')]
    },
+   'taxonclass' : {
+      'name' : 'taxonClass'
+   },
+   'taxonfamily' : {
+      'name' : 'taxonFamily'
+   },
+   'taxongenus' : {
+      'name' : 'taxonGenus'
+   },
+   'taxonkingdom' : {
+      'name' : 'taxonKingdom'
+   },
+   'taxonorder' : {
+      'name' : 'taxonOrder'
+   },
+   'taxonphylum' : {
+      'name' : 'taxonPhylum'
+   },
+   'taxonspecies' : {
+      'name' : 'taxonSpecies'
+   },
    'time' : {
       'name' : 'time'
    },

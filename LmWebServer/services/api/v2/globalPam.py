@@ -59,8 +59,9 @@ class GlobalPAMService(LmService):
    def GET(self, algorithmCode=None, bbox=None, gridSetId=None, 
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  public=None, projectionScenarioCode=None, squid=None, 
-                 taxKingdom=None, taxPhylum=None, taxClass=None, 
-                 taxOrder=None, taxFamily=None, taxGenus=None, taxSpecies=None):
+                 taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
+                 taxonOrder=None, taxonFamily=None, taxonGenus=None, 
+                 taxonSpecies=None):
       """
       @summary: A Global PAM get request will query the global PAM and return
                    entries matching the parameters, or a count of those
@@ -71,17 +72,18 @@ class GlobalPAMService(LmService):
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
                                  projectionScenarioCode=projectionScenarioCode, 
-                                 squid=squid, taxKingdom=taxKingdom, 
-                                 taxPhylum=taxPhylum, taxClass=taxClass,
-                                 taxOrder=taxOrder, taxFamily=taxFamily,
-                                 taxGenus=taxGenus, taxSpecies=taxSpecies)
+                                 squid=squid, taxKingdom=taxonKingdom, 
+                                 taxPhylum=taxonPhylum, taxClass=taxonClass,
+                                 taxOrder=taxonOrder, taxFamily=taxonFamily,
+                                 taxGenus=taxonGenus, taxSpecies=taxonSpecies)
    
    # ................................
    def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
                  public=None, projectionScenarioCode=None, squid=None, 
-                 taxKingdom=None, taxPhylum=None, taxClass=None, 
-                 taxOrder=None, taxFamily=None, taxGenus=None, taxSpecies=None):
+                 taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
+                 taxonOrder=None, taxonFamily=None, taxonGenus=None, 
+                 taxonSpecies=None):
       """
       @summary: A Global PAM post request will create a subset
       """
@@ -91,10 +93,10 @@ class GlobalPAMService(LmService):
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
                                  projectionScenarioCode=projectionScenarioCode, 
-                                 squid=squid, taxKingdom=taxKingdom, 
-                                 taxPhylum=taxPhylum, taxClass=taxClass,
-                                 taxOrder=taxOrder, taxFamily=taxFamily,
-                                 taxGenus=taxGenus, taxSpecies=taxSpecies)
+                                 squid=squid, taxKingdom=taxonKingdom, 
+                                 taxPhylum=taxonPhylum, taxClass=taxonClass,
+                                 taxOrder=taxonOrder, taxFamily=taxonFamily,
+                                 taxGenus=taxonGenus, taxSpecies=taxonSpecies)
       
       self._subsetGlobalPAM(archiveName, matches)
       cherrypy.response.status = 202
