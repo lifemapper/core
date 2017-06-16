@@ -25,8 +25,6 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-#TODO: Keys for index names
-
 import argparse
 import os
 import subprocess
@@ -41,7 +39,7 @@ from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
-def getPostDocument(pav, prj, occ, pam, pavFname):
+def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
    """
    @summary: Create the Solr document to be posted
    @param pav: A PAV matrix column object
@@ -53,19 +51,23 @@ def getPostDocument(pav, prj, occ, pam, pavFname):
    mdlScn = prj.modelScenario
    prjScn = prj.projScenario
    pavMtx = Matrix.load(pavFname)
+   try:
+      sp = sciName.scientificName.split(' ')[1]
+   except:
+      sp = None
    
    fields = [
       (SOLR_FIELDS.ID, pav.getId()),
       (SOLR_FIELDS.USER_ID, pav.getUserId()),
       (SOLR_FIELDS.DISPLAY_NAME, occ.displayName),
       (SOLR_FIELDS.SQUID, pav.squid),
-      #(SOLR_FIELDS.TAXON_KINGDOM, taxKingdom),
-      #(SOLR_FIELDS.TAXON_PHYLUM, taxPhylum),
-      #(SOLR_FIELDS.TAXON_CLASS, taxClass),
-      #(SOLR_FIELDS.TAXON_ORDER, taxOrder),
-      #(SOLR_FIELDS.TAXON_FAMILY, taxFamily),
-      #(SOLR_FIELDS.TAXON_GENUS, taxGenus),
-      #(SOLR_FIELDS.TAXON_SPECIES, taxSpecies),
+      (SOLR_FIELDS.TAXON_KINGDOM, sciName.kingdom),
+      (SOLR_FIELDS.TAXON_PHYLUM, sciName.phylum),
+      (SOLR_FIELDS.TAXON_CLASS, sciName.txClass),
+      (SOLR_FIELDS.TAXON_ORDER, sciName.txOrder),
+      (SOLR_FIELDS.TAXON_FAMILY, sciName.family),
+      (SOLR_FIELDS.TAXON_GENUS, sciName.genus),
+      (SOLR_FIELDS.TAXON_SPECIES, sp),
       (SOLR_FIELDS.ALGORITHM_CODE, prj.algorithmCode),
       (SOLR_FIELDS.ALGORITHM_PARAMETERS, prj.dumpAlgorithmParametersAsString()),
       (SOLR_FIELDS.POINT_COUNT, occ.queryCount),
@@ -145,9 +147,10 @@ if __name__ == '__main__':
    prj = scribe.getSDMProject(args.projectionId)
    occ = prj.occurrenceSet
    pam = scribe.getMatrix(mtxId=args.pamId)
+   sciName = scribe.getTaxon(squid=pav.squid)
    
    # Get all information for POST
-   doc = getPostDocument(pav, prj, occ, pam, args.pavFilename)
+   doc = getPostDocument(pav, prj, occ, pam, sciName, args.pavFilename)
    
    with open(args.pavIdxFilename, 'w') as outF:
       outF.write('<add>\n')
