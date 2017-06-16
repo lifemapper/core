@@ -23,16 +23,19 @@
 """
 import mx.DateTime
 import os
+import sys
 import time
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import (LMFormat, JobStatus, MatrixType)
+from LmCommon.common.lmconstants import (LMFormat, JobStatus, MatrixType,
+   ProcessType)
 from LmServer.common.lmconstants import LMFileType, Priority
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe 
 from LmServer.legion.processchain import MFChain
+from LmServer.legion.lmmatrix import LMMatrix
 
 CURR_MJD = mx.DateTime.gmt().mjd
 
@@ -57,7 +60,8 @@ class RADCaller(LMObject):
          raise
       self.open()
       self._priority = priority
-      self._gridset = self._scribe.getGridset(gridsetId=gridsetId)
+      self._gridset = self._scribe.getGridset(gridsetId=gridsetId, 
+                                              fillMatrices=True)
       if self._gridset is None:
          raise LMError(currargs='Failed to retrieve Gridset for Id {}'
                                 .format(gridsetId))
@@ -132,14 +136,111 @@ class RADCaller(LMObject):
       mfChain = self._scribe.insertMFChain(newMFC)
 
       mfChain.write()
-      self._scribe.updateObject(potatoChain)
+      self._scribe.updateObject(mfChain)
       return mfChain
    
    # ...............................................
-   def analyzeGrid(self, doCalc=False, doMCPA=False):   
+   def analyzeGrid(self, doCalc=False, doMCPA=False):
+      # For each PAM
+      gridsetId = self._gridset.getId()
+      
+      pamDict = {}
+      # Loop through PAMs and add calculated matrices to dictionary by either
+      #    getting the existing matrices or creating new ones
+      for pam in self._gridset.getPAMs():
+         pamId = pam.getId()
+         pd = {}
+         
+         if doCalc:
+            # Sites matrix
+            pd[MatrixType.SITES_OBSERVED] = self._getOrInsertMatrix(gridsetId, 
+                                                  MatrixType.SITES_OBSERVED, 
+                                                  ProcessType.RAD_CALCULATE,
+                                                  pam.gcmCode, pam.altpredCode, 
+                                                  pam.dateCode)
+            # Species matrix
+            pd[MatrixType.SPECIES_OBSERVED] = self._getOrInsertMatrix(gridsetId, 
+                                                  MatrixType.SPECIES_OBSERVED, 
+                                                  ProcessType.RAD_CALCULATE,
+                                                  pam.gcmCode, pam.altpredCode, 
+                                                  pam.dateCode)
+            # Diveristy matrix
+            pd[MatrixType.DIVERSITY_OBSERVED] = self._getOrInsertMatrix(gridsetId, 
+                                                  MatrixType.DIVERSITY_OBSERVED, 
+                                                  ProcessType.RAD_CALCULATE,
+                                                  pam.gcmCode, pam.altpredCode, 
+                                                  pam.dateCode)
+            # TODO: Site covariance, species covariance, schluter
+         
+         if doMCPA:
+            # GRIM
+            pd[MatrixType.GRIM] = self._getOrInsertMatrix(gridsetId, 
+                                                  MatrixType.GRIM, 
+                                                  ProcessType.MCPA_OBSERVED,
+                                                  pam.gcmCode, pam.altpredCode, 
+                                                  pam.dateCode)
+            # Env Adjusted R-squared
+            pd[MatrixType.MCPA_ENV_OBS_ADJ_R_SQ] = self._getOrInsertMatrix(
+                                             gridsetId, 
+                                             MatrixType.MCPA_ENV_OBS_ADJ_R_SQ, 
+                                             ProcessType.MCPA_OBSERVED,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+            # Env Parital Correlation
+            pd[MatrixType.MCPA_ENV_OBS_PARTIAL] = self._getOrInsertMatrix(
+                                             gridsetId, 
+                                             MatrixType.MCPA_ENV_OBS_PARTIAL, 
+                                             ProcessType.MCPA_OBSERVED,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+            # Env F global
+            pd[MatrixType.MCPA_ENV_F_GLOBAL] = self._getOrInsertMatrix(
+                                             gridsetId, 
+                                             MatrixType.MCPA_ENV_F_GLOBAL, 
+                                             ProcessType.MCPA_CORRECT_PVALUES,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+            # Env F semi partial   
+            pd[MatrixType.MCPA_ENV_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
+                                             MatrixType.MCPA_ENV_F_SEMI, 
+                                             ProcessType.MCPA_CORRECT_PVALUES,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+
+            # BG Adjusted R-squared
+            pd[MatrixType.MCPA_BG_OBS_ADJ_R_SQ] = self._getOrInsertMatrix(
+                                             gridsetId, 
+                                             MatrixType.MCPA_BG_OBS_ADJ_R_SQ, 
+                                             ProcessType.MCPA_OBSERVED,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+            # BG Parital Correlation
+            pd[MatrixType.MCPA_BG_OBS_PARTIAL] = self._getOrInsertMatrix(
+                                             gridsetId, 
+                                             MatrixType.MCPA_BG_OBS_PARTIAL, 
+                                             ProcessType.MCPA_OBSERVED,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+            # BG F global
+            pd[MatrixType.MCPA_ENV_F_GLOBAL] = self._getOrInsertMatrix(
+                                             gridsetId, 
+                                             MatrixType.MCPA_BG_F_GLOBAL, 
+                                             ProcessType.MCPA_CORRECT_PVALUES,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+            # BG F semi partial   
+            pd[MatrixType.MCPA_ENV_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
+                                             MatrixType.MCPA_BG_F_SEMI, 
+                                             ProcessType.MCPA_CORRECT_PVALUES,
+                                             pam.gcmCode, pam.altpredCode, 
+                                             pam.dateCode)
+                     
+         pamDict[pamId] = pd
+         
       # Insert all taxonomic sources for now
       self._scribe.log.info('  Creating Gridset MFRules ...')
-      rules = self._gridset.computeMe(doCalc=doCalc, doMCPA=doMCPA)
+      rules = self._gridset.computeMe(doCalc=doCalc, doMCPA=doMCPA, 
+                                      pamDict=pamDict)
          
       mfChain = self._createMF()
       mfChain.addCommands(rules)
@@ -147,7 +248,28 @@ class RADCaller(LMObject):
 
       self._scribe.log.info('  Wrote Gridset MF file')
       
-   
+   # ..............................................
+   def _getOrInsertMatrix(self, gsId, mtxType, procType, gcmCode, altpredCode, dateCode):
+      """
+      @summary: Attempts to find a matrix of the specified type and scenario
+                   parameters.  If it cannot be found, create a new matrix
+                   for these values
+      @param gsId: The id of the gridset to use
+      @param mtxType: The matrix type to look for
+      """
+      mtx = self._scribe(gridsetId=gsId, mtxType=mtxType, gcmCode=gcmCode, 
+                         altpredCode=altpredCode, dateCode=dateCode)
+      if mtx is None:
+         # Insert new matrix
+         newMtx = LMMatrix(None, matrixType=mtxType, processType=procType, 
+                           gcmCode=gcmCode, altpredCode=altpredCode, 
+                           dateCode=dateCode, userId=self._gridset.getUserId(), 
+                           gridset=self._gridset)
+         mtx = self._scribe.findOrInsertMatrix(newMtx)
+         mtx.updateStatus(status=JobStatus.INITIALIZE, 
+                          modTime=mx.DateTime.gmt().mjd)
+      return mtx
+
 # ...............................................
 if __name__ == '__main__':
    if not isCorrectUser():
