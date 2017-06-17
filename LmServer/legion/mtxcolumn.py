@@ -192,6 +192,16 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          if JobStatus.waiting(status):
             lyrRules = self.layer.computeMe(workDir=workDir)
             rules.extend(lyrRules)
+         else:
+            touchCmd = '$PYTHON {} {}'.format(ProcessType.getTool(ProcessType.TOUCH),
+                                    os.path.join(
+                                       os.path.basename(inputLayerFname), 
+                                          'touch.out'))
+            cpLyrCmd = 'LOCAL {} ; cp {} {}'.format(touchCmd, 
+                                                    self.layer.getDLocation(), 
+                                                    inputLayerFname)
+            cpLyrRule = MfRule(cpLyrCmd, [inputLayerFname])
+            rules.append(cpLyrRule)
             
          shpgrdRules = self.shapegrid.computeMe(workDir=workDir)
          rules.extend(shpgrdRules)
