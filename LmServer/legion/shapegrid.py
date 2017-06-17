@@ -305,13 +305,13 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          cmdArguments = ['$PYTHON', 
                          ProcessTool.get(self.processType), 
                          outFile,
-                         self.getMinX(),
-                         self.getMinY(),
-                         self.getMaxX(),
-                         self.getMaxY(),
-                         self.cellsize,
-                         self.epsgcode,
-                         self.cellsides,
+                         str(self.getMinX()),
+                         str(self.getMinY()),
+                         str(self.getMaxX()),
+                         str(self.getMaxY()),
+                         str(self.cellsize),
+                         str(self.epsgcode),
+                         str(self.cellsides),
                          options]
 
          cmd = ' '.join(cmdArguments)

@@ -933,7 +933,8 @@ class ArchiveFiller(LMObject):
                        ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
                        # Axis
                        '1', 
-                       wsGrim, ' '.join(colFilenames)
+                       wsGrim, 
+                       ' '.join(colFilenames)
                        ]
          concatCmd = ' '.join(concatArgs)
          rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
@@ -943,9 +944,9 @@ class ArchiveFiller(LMObject):
          stockpileArgs = ['LOCAL',
                           '$PYTHON',
                           ProcessTool.get(ProcessType.UPDATE_OBJECT),
-                          '-s ', JobStatus.COMPLETE,
-                          ProcessType.INTERSECT_RASTER_GRIM,
-                          grim.getId(),
+                          '-s {}'.format(JobStatus.COMPLETE),
+                          str(ProcessType.INTERSECT_RASTER_GRIM),
+                          str(grim.getId()),
                           grimSuccessFilename,
                           wsGrim]
          stockpileCmd = ' '.join(stockpileArgs)

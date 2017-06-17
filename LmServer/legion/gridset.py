@@ -219,16 +219,16 @@ class Gridset(ServiceObject):
          wsPamFilename = os.path.join(pamWorkDir, 
                                             'pam_{}.json'.format(pam.getId()))
          pamDirTouchFilename = os.path.join(pamWorkDir, 'touch.out')
-         pamDirTouchCmd = '$PYTHON {} {}'.format(touchScript, 
-                                                 pamDirTouchFilename)
-         cpPamArgs = [
-            'LOCAL',
-            pamDirTouchCmd,
-            '; cp',
+         touchCopyPamArgs = [
+            'LOCAL', '$PYTHON',
+            touchScript, 
+            pamDirTouchFilename,
+            ';', 
+            'cp',
             pam.getDLocation(),
          ]
-         cpPamCmd = ' '.join(cpPamArgs)
-         rules.append(MfRule(cpPamCmd, [wsPamFilename, pamDirTouchFilename]))
+         touchCopyPamCmd = ' '.join(touchCopyPamArgs)
+         rules.append(MfRule(touchCopyPamCmd, [wsPamFilename, pamDirTouchFilename]))
          
          # RAD calculations
          if doCalc:
@@ -245,7 +245,7 @@ class Gridset(ServiceObject):
                'LOCAL',
                '$PYTHON',
                stockpileScript,
-               ProcessType.RAD_CALCULATE,
+               str(ProcessType.RAD_CALCULATE),
                str(siteStatsMtx.getId()),
                sitesSuccessFilename,
                siteStatsFilename
@@ -264,7 +264,7 @@ class Gridset(ServiceObject):
                'LOCAL',
                '$PYTHON',
                stockpileScript,
-               ProcessType.RAD_CALCULATE,
+               str(ProcessType.RAD_CALCULATE),
                str(spStatsMtx.getId()),
                spSuccessFilename,
                spStatsFilename
@@ -283,7 +283,7 @@ class Gridset(ServiceObject):
                'LOCAL',
                '$PYTHON',
                stockpileScript,
-               ProcessType.RAD_CALCULATE,
+               str(ProcessType.RAD_CALCULATE),
                str(divStatsMtx.getId()),
                divSuccessFilename,
                divStatsFilename
@@ -375,7 +375,7 @@ class Gridset(ServiceObject):
             envAdjRsqStockpileCmd = ' '.join([
                'LOCAL $PYTHON',
                stockpileScript, 
-               ProcessType.MCPA_OBSERVED, 
+               str(ProcessType.MCPA_OBSERVED), 
                str(envAdjRsqMtx.getId()), 
                envAdjRsqSuccessFilename, 
                wsEnvAdjRsqFilename])
@@ -389,7 +389,7 @@ class Gridset(ServiceObject):
             envPartCorStockpileCmd = ' '.join([
                'LOCAL $PYTHON',
                stockpileScript, 
-               ProcessType.MCPA_OBSERVED, 
+               str(ProcessType.MCPA_OBSERVED), 
                str(envPartialMtx.getId()), 
                envPartCorSuccessFilename, 
                wsEnvPartCorFilename])
@@ -441,7 +441,7 @@ class Gridset(ServiceObject):
             envFglobStockpileCmd = ' '.join([
                'LOCAL $PYTHON',
                stockpileScript, 
-               ProcessType.MCPA_OBSERVED, 
+               str(ProcessType.MCPA_OBSERVED), 
                str(envFglobalMtx.getId()), 
                envFglobSuccessFilename, 
                envFglobFilename])
@@ -464,7 +464,7 @@ class Gridset(ServiceObject):
             envFpartStockpileCmd = ' '.join([
                'LOCAL $PYTHON',
                stockpileScript, 
-               ProcessType.MCPA_OBSERVED, 
+               str(ProcessType.MCPA_OBSERVED), 
                str(envFsemipartMtx.getId()), 
                envFpartSuccessFilename, 
                envFpartFilename])
@@ -497,7 +497,7 @@ class Gridset(ServiceObject):
             bgAdjRsqStockpileCmd = ' '.join([
                'LOCAL $PYTHON',
                stockpileScript, 
-               ProcessType.MCPA_OBSERVED, 
+               str(ProcessType.MCPA_OBSERVED), 
                str(bgAdjRsqMtx.getId()), 
                bgAdjRsqSuccessFilename, 
                wsBGAdjRsqFilename])
@@ -511,7 +511,7 @@ class Gridset(ServiceObject):
             bgPartCorStockpileCmd = ' '.join([
                'LOCAL $PYTHON',
                stockpileScript, 
-               ProcessType.MCPA_OBSERVED, 
+               str(ProcessType.MCPA_OBSERVED), 
                str(bgPartialMtx.getId()), 
                bgPartCorSuccessFilename, 
                wsBGPartCorFilename])
@@ -559,7 +559,7 @@ class Gridset(ServiceObject):
             bgFglobSuccessFilename = os.path.join(pamWorkDir, 'bgFglob.success')
             bgFglobStockpileCmd = ' '.join(['LOCAL $PYTHON',
                                             stockpileScript, 
-                                            ProcessType.MCPA_OBSERVED, 
+                                            str(ProcessType.MCPA_OBSERVED), 
                                             str(bgFglobalMtx.getId()), 
                                             bgFglobSuccessFilename, 
                                             bgFglobFilename])
@@ -579,7 +579,7 @@ class Gridset(ServiceObject):
             bgFpartSuccessFilename = os.path.join(pamWorkDir, 'bgFpart.success')
             bgFpartStockpileCmd = ' '.join(['LOCAL $PYTHON',
                                             stockpileScript, 
-                                            ProcessType.MCPA_OBSERVED, 
+                                            str(ProcessType.MCPA_OBSERVED), 
                                             str(bgFsemipartMtx.getId()), 
                                             bgFpartSuccessFilename, 
                                             bgFpartFilename])
