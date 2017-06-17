@@ -908,6 +908,9 @@ class ArchiveFiller(LMObject):
          # Create MFChain for this GRIM
          grimChain = self._createGrimMF(code, currtime)
          targetDir = grimChain.getRelativeDirectory()
+         
+         # Need to keep track of intersections for matrix concatenation
+         colFilenames = []
 
          for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
@@ -915,6 +918,29 @@ class ArchiveFiller(LMObject):
                                          currtime)
             rules = mtxcol.computeMe(workDir=targetDir)
             grimChain.addCommands(rules)
+            colFilenames.append(os.path.join(targetDir, 
+                              os.path.splitext(lyr.getRelativeDLocation())[0], 
+                              mtxcol.getTargetFilename()))
+         # Add concatenate command
+         wsGrim = os.path.join(targetDir, 'grim_{}.json'.format(grim.getId()))
+         concatCmd = '$PYTHON {} {} 1 {}'.format(
+            ProcessType.getTool(ProcessType.CONCATENATE_MATRICES),
+            wsGrim, ' '.join(colFilenames))
+         rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
+         # Stockpile GRIM
+         grimSuccessFilename = os.path.join(targetDir, 
+                                        'grim_{}.success'.format(grim.getId()))
+         stockpileCmd = 'LOCAL $PYTHON {} -s {} {} {} {} {}'.format(
+            ProcessType.getTool(ProcessType.UPDATE_OBJECT),
+            JobStatus.COMPLETE,
+            ProcessType.INTERSECT_RASTER_GRIM,
+            grim.getId(),
+            grimSuccessFilename,
+            wsGrim
+         )
+         rules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
+                             dependencies=[wsGrim]))
+         
          grimChain.write()
          grimChain.updateStatus(JobStatus.INITIALIZE)
          self.scribe.updateObject(grimChain)
