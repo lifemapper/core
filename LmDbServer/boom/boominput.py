@@ -61,7 +61,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
+BOOM_DAEMON = 'LmDbServer/boom/daboom.py'
 
 # .............................................................................
 class ArchiveFiller(LMObject):
@@ -973,22 +973,24 @@ class ArchiveFiller(LMObject):
       cmdArgs = ['LOCAL',
                  #os.getenv('PYTHON'),
                  '$PYTHON',
-                 BOOM_SCRIPT,
-                 '--config_file {}'.format(self.outConfigFilename),
+                 BOOM_DAEMON,
+                 '--config_file={}'.format(self.outConfigFilename),
                  'start']
       boomCmd = ' '.join(cmdArgs)
 
       baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)
       # Boomer.ChristopherWalken writes this file when finished walking through 
       # species data (initiated by this Makeflow).  
-      walkedArchiveFname = os.path.join(baseAbsFilename, LMFormat.LOG.ext)
+      walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
 
       outputFname = mfChain.getDLocation()
       # Create a rule from the MF and Arf file creation
       rule = MfRule(boomCmd, [walkedArchiveFname], 
-                    dependencies=self.outConfigFilename)
+                    dependencies=[self.outConfigFilename])
       mfChain.addCommands([rule])
       mfChain.write()
+      mfChain.updateStatus(JobStatus.INITIALIZE)
+      self.scribe.updateObject(mfChain)
       return mfChain
    
    # ...............................................
@@ -1020,7 +1022,7 @@ class ArchiveFiller(LMObject):
          
       # Write config file for this archive
       self.writeConfigFile()
-      self.createMFBoom()
+      mfChain = self.createMFBoom()
       self.scribe.log.info('Wrote {}'.format(self.outConfigFilename))
       
       return archiveGridset
@@ -1051,10 +1053,13 @@ if __name__ == '__main__':
 """
 import mx.DateTime
 import os
+import time
 
+from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-                                    JobStatus, MatrixType, SERVER_BOOM_HEADING)
+                        ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
+from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
 from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
       GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
@@ -1063,10 +1068,10 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
       INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
       INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
       GRID_CELLSIZE, GRID_NUM_SIDES)
-from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, DEFAULT_EMAIL_POSTFIX)
+         GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
+         DEFAULT_EMAIL_POSTFIX, Priority)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
                                             POINT_COUNT_MIN)
 from LmServer.common.lmuser import LMUser
@@ -1074,18 +1079,23 @@ from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.cmd import MfRule
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
-from LmServer.sdm.algorithm import Algorithm
-from LmDbServer.boom.boominput import ArchiveFiller
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-configFname = '/root/biotaphyHeuchera.boom.ini'
+BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
+
+from LmDbServer.boom.boominput import ArchiveFiller
+
+configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 
 filler = ArchiveFiller(configFname=configFname)
 filler.initializeInputs()
