@@ -28,8 +28,7 @@ import os
 from LmCommon.common.lmconstants import MatrixType, ProcessType, CSV_INTERFACE
 from LmCommon.common.matrix import Matrix
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMServiceType, LMFileType)
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.lmconstants import (LMServiceType, LMFileType, ProcessTool)
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -227,7 +226,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       if local:
          cmdArguments.append('LOCAL')
       cmdArguments.extend(['$PYTHON', 
-                           ProcessType.getTool(processType)])
+                           ProcessTool.get(processType)])
       cmdArguments.extend(cmdArgs)
       cmd = ' '.join(cmdArguments)
       rule = MfRule(cmd, targetFnameList, dependencies=dependentFnameList)

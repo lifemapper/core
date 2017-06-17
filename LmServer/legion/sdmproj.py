@@ -35,8 +35,8 @@ from LmCommon.common.verify import computeHash
 from LmServer.base.layer2 import Raster, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
-            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType)
-from LmServer.common.localconstants import PUBLIC_USER, APP_PATH
+            DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, ProcessTool)
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.cmd import MfRule
 from LmWebServer.common.lmconstants import (SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
@@ -686,7 +686,7 @@ class SDMProjection(_ProjectionType, Raster):
                                                    self.modelMask)
       paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
       mdlCmdArgs = ['$PYTHON',
-                    ProcessType.getTool(ptype),
+                    ProcessTool.get(ptype),
                     args,
                     str(ptype),
                     mdlName,
@@ -720,7 +720,7 @@ class SDMProjection(_ProjectionType, Raster):
          #touch directory then copy file
          touchAndCopyArgs = ['LOCAL', 
                              '$PYTHON', 
-                             ProcessType.getTool(ProcessType.TOUCH), 
+                             ProcessTool.get(ProcessType.TOUCH), 
                              os.path.join(targetDir, 'touch.out') ,
                              ';',
                              'cp',
@@ -797,7 +797,7 @@ class SDMProjection(_ProjectionType, Raster):
 
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
          prjCmdArgs = ['$PYTHON',
-                       ProcessType.getTool(self.processType),
+                       ProcessTool.get(self.processType),
                        prjArgs,
                        str(self.processType),
                        prjName,

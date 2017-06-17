@@ -27,8 +27,7 @@ from LmCommon.common.lmconstants import ProcessType, JobStatus, LMFormat
 from LmCommon.common.matrix import Matrix
 from LmServer.base.layer2 import _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import LMServiceType
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.lmconstants import LMServiceType, ProcessTool
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -195,13 +194,13 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
          else:
             outfname = os.path.join(os.path.basename(inputLayerFname), 'touch.out')
 #             touchCmd = '$PYTHON {} {}'.format(
-#                      ProcessType.getTool(ProcessType.TOUCH), outfname)
+#                      ProcessTool.get(ProcessType.TOUCH), outfname)
 #             cpLyrCmd = 'LOCAL {} ; cp {} {}'.format(touchCmd, 
 #                                                     self.layer.getDLocation(), 
 #                                                     inputLayerFname)
             cmdArgs = ['LOCAL', 
                        '$PYTHON',
-                       ProcessType.getTool(ProcessType.TOUCH), 
+                       ProcessTool.get(ProcessType.TOUCH), 
                        outfname, 
                        ';'
                        'cp',
@@ -244,7 +243,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                     os.path.basename(self.shapegrid.getDLocation()))
          
          cmdArguments = ['$PYTHON', 
-                         ProcessType.getTool(self.processType),
+                         ProcessTool.get(self.processType),
                          options,
                          shapegridFile,  
                          inputLayerFname,
@@ -267,7 +266,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             solrPostArgs = [
                'LOCAL',
                '$PYTHON',
-               ProcessType.getTool(ProcessType.SOLR_POST),
+               ProcessTool.get(ProcessType.SOLR_POST),
                pavFname,
                str(self.getId()), # PAV id
                str(self.layer.getId()), # Projection id

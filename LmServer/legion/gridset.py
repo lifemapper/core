@@ -32,9 +32,8 @@ from types import StringType
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import MatrixType, JobStatus, ProcessType
 from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import LMFileType, LMServiceType
+from LmServer.common.lmconstants import LMFileType, LMServiceType, ProcessTool
 from LmServer.legion.lmmatrix import LMMatrix                                  
-from LmServer.common.localconstants import APP_PATH
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -124,14 +123,14 @@ class Gridset(ServiceObject):
       if JobStatus.finished(bgs.status):
          wsBGFilename = os.path.join(targetDir, 'bg.json')
          cmdArgs = ['LOCAL', '$PYTHON',
-                    ProcessType.getTool(ProcessType.TOUCH), 
+                    ProcessTool.get(ProcessType.TOUCH), 
                     os.path.join(targetDir, 'touchBG.out'),
                     ';',
                     'cp',
                     bgs.getDLocation(),
                     wsBGFilename]
          # If the matrix is completed, copy it
-         touchWsBGCmd = '$PYTHON {} {}'.format(ProcessType.getTool(ProcessType.TOUCH),
+         touchWsBGCmd = '$PYTHON {} {}'.format(ProcessTool.get(ProcessType.TOUCH),
                                        os.path.join(targetDir, 'touchBG.out'))
          cpTreeCmd = 'LOCAL {} ; cp {} {}'.format(touchWsBGCmd,
                                                   bgs.getDLocation(), 
@@ -157,11 +156,11 @@ class Gridset(ServiceObject):
       targetDir = os.path.join(workDir, 'gs_{}'.format(self.getId()))
       
       # Script names
-      obsMcpaScript = ProcessType.getTool(ProcessType.MCPA_OBSERVED)
-      randMcpaScript = ProcessType.getTool(ProcessType.MCPA_RANDOM)
-      stockpileScript = ProcessType.getTool(ProcessType.UPDATE_OBJECT)
-      touchScript = ProcessType.getTool(ProcessType.TOUCH)
-      correctPvaluesScript = ProcessType.getTool(ProcessType.MCPA_CORRECT_PVALUES)
+      obsMcpaScript = ProcessTool.get(ProcessType.MCPA_OBSERVED)
+      randMcpaScript = ProcessTool.get(ProcessType.MCPA_RANDOM)
+      stockpileScript = ProcessTool.get(ProcessType.UPDATE_OBJECT)
+      touchScript = ProcessTool.get(ProcessType.TOUCH)
+      correctPvaluesScript = ProcessTool.get(ProcessType.MCPA_CORRECT_PVALUES)
       
       if doMCPA:
 #          mcpaRule = self._getMCPARule(workDir, targetDir)
@@ -204,7 +203,7 @@ class Gridset(ServiceObject):
             squidTreeFilename = os.path.join(targetDir, 'squidTree.json')
             squidArgs = ['LOCAL',
                          '$PYTHON', 
-                         ProcessType.getTool(ProcessType.SQUID_INC), 
+                         ProcessTool.get(ProcessType.SQUID_INC), 
                          wsTreeFilename, 
                          self.getUserId(), 
                          squidTreeFilename]
@@ -297,7 +296,7 @@ class Gridset(ServiceObject):
             
             statsArgs = [
                '$PYTHON',
-               ProcessType.getTool(ProcessType.RAD_CALCULATE),
+               ProcessTool.get(ProcessType.RAD_CALCULATE),
                ' '.join(calcOptions),
                wsPamFilename,
                siteStatsFilename,
@@ -313,7 +312,7 @@ class Gridset(ServiceObject):
             # Encode tree
             encTreeFilename = os.path.join(pamWorkDir, 'tree.json')
             encTreeArgs = ['$PYTHON',
-                           ProcessType.getTool(ProcessType.ENCODE_PHYLOGENY),
+                           ProcessTool.get(ProcessType.ENCODE_PHYLOGENY),
                            squidTreeFilename,
                            wsPamFilename,
                            encTreeFilename]

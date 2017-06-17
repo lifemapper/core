@@ -32,8 +32,8 @@ from LmServer.base.layer2 import Vector, _LayerParameters
 from LmServer.base.serviceobject2 import ProcessObject
 from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT, 
                   OccurrenceFieldNames, ID_PLACEHOLDER, LMFileType, 
-                  LMServiceType)
-from LmServer.common.localconstants import POINT_COUNT_MAX, APP_PATH
+                  LMServiceType, ProcessTool)
+from LmServer.common.localconstants import POINT_COUNT_MAX
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -629,7 +629,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
       if JobStatus.finished(self.status):
          # Get the first target file
          touchCopyArgs = ['LOCAL', '$PYTHON',
-                          ProcessType.getTool(ProcessType.TOUCH),
+                          ProcessTool.get(ProcessType.TOUCH),
                           os.path.join(targetDir, 'touch.out'),
                           '; ',
                           'cp',
@@ -642,7 +642,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          # Compute everything
          deps = []
          cmdArgs = ['LOCAL', '$PYTHON',
-                    ProcessType.getTool(self.processType)]
+                    ProcessTool.get(self.processType)]
       
          # TODO: This is a hack using canonical name instead of GBIFTaxonId for iDigBio
          if self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:

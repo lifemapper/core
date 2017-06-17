@@ -26,14 +26,15 @@ import logging
 import mx.DateTime as dt
 import os, sys, time
 
-from LmCommon.common.lmconstants import JobStatus, LMFormat, ProcessType
+from LmCommon.common.lmconstants import JobStatus, ProcessType
 from LmCommon.common.readyfile import readyFilename
 from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
-                                            SCRATCH_PATH, APP_PATH)
-from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
+                                            SCRATCH_PATH)
+from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
+                                         ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
@@ -275,7 +276,7 @@ class Boomer(LMObject):
       mfCmd = ' '.join(cmdArgs)
       
       arfCmdArgs = ['$PYTHON', 
-                    ProcessType.getTool(ProcessType.TOUCH),
+                    ProcessTool.get(ProcessType.TOUCH),
                     targetFname]
       arfCmd = ' '.join(arfCmdArgs)
       

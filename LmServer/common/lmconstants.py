@@ -31,7 +31,8 @@ from osgeo.ogr import (wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint,
 import os.path
 from types import IntType, FloatType
 
-from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat)
+from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
+                                         ProcessType)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH,
                               SHARED_DATA_PATH, SCRATCH_PATH, PID_PATH, 
                               SCENARIO_PACKAGE_EPSG, WEBSERVICES_ROOT)
@@ -81,6 +82,105 @@ SALT = "4303e8f7129243fd42a57bcc18a19f5b"
 
 # database name
 DB_STORE = 'borg'
+
+# Relative paths
+# For LmCompute command construction by LmServer (for Makeflow)
+SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
+MULTI_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/multi'
+COMMON_SCRIPTS_DIR = 'LmCompute/tools/common'
+SERVER_SCRIPTS_DIR = 'LmServer/tools'
+
+class ProcessTool:
+   @staticmethod
+   def getRelative(ptype):
+      """
+      @summary: returns relative path and filename to script for processType
+      """
+      if ProcessType.isSingle(ptype):
+         relpath = SINGLE_SPECIES_SCRIPTS_DIR
+         if ProcessType.isOccurrence(ptype):
+            if ptype == ProcessType.GBIF_TAXA_OCCURRENCE:
+               jr = 'gbif_points'
+            elif ptype == ProcessType.BISON_TAXA_OCCURRENCE:
+               jr = 'bison_points'
+            elif ptype == ProcessType.IDIGBIO_TAXA_OCCURRENCE:
+               jr = 'idigbio_points'
+            elif ptype == ProcessType.USER_TAXA_OCCURRENCE:
+               jr = 'user_points'
+         # SDM models
+         elif ProcessType.isModel(ptype):
+            jr = 'sdmodel'
+         # SDM projects
+         elif ProcessType.isProject(ptype):
+            jr = 'sdmproject'
+         # SDM project request file creation
+         elif ptype == ProcessType.PROJECT_REQUEST:
+            jr = 'makeProjectionRequest'
+         
+         # Intersect layer
+         elif ProcessType.isIntersect(ptype):
+            if ptype == ProcessType.INTERSECT_RASTER:
+               jr = 'intersect_raster'
+            elif ptype == ProcessType.INTERSECT_VECTOR:
+               jr = 'intersect_vector'
+            elif ptype == ProcessType.INTERSECT_RASTER_GRIM:
+               jr = 'grim_raster'
+         
+      elif ProcessType.isRAD(ptype):
+         relpath = MULTI_SPECIES_SCRIPTS_DIR
+         if ProcessType.isRADPrep(ptype):
+            if ptype == ProcessType.RAD_BUILDGRID:
+               jr = 'build_shapegrid'
+            elif ptype == ProcessType.RAD_CALCULATE:
+               jr = 'calculate_pam_stats'
+            elif ptype == ProcessType.ENCODE_HYPOTHESES:
+               jr = 'encode_hypotheses'
+            elif ptype == ProcessType.ENCODE_PHYLOGENY:
+               jr = 'encode_phylogeny'
+         elif ProcessType.isRandom(ptype):
+            if ptype == ProcessType.RAD_GRADY:
+               jr = 'grady_randomize'
+            elif ptype == ProcessType.RAD_SWAP:
+               jr = 'swap_randomize'
+            elif ptype == ProcessType.RAD_SPLOTCH:
+               jr = 'splotch_randomize'
+         elif ProcessType.isMCPA(ptype):
+            if ptype == ProcessType.MCPA_CORRECT_PVALUES:
+               jr = 'mcpa_correct_pvalues'
+            elif ptype == ProcessType.MCPA_OBSERVED:
+               jr = 'mcpa_observed'
+            elif ptype == ProcessType.MCPA_RANDOM:
+               jr = 'mcpa_random'
+               
+      elif ptype == ProcessType.CONCATENATE_MATRICES:
+         relpath = COMMON_SCRIPTS_DIR
+         jr = 'concatenate_matrices'
+                  
+      elif ptype == ProcessType.UPDATE_OBJECT:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'stockpile'
+      elif ptype == ProcessType.MF_TRIAGE:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'triage'
+      elif ptype == ProcessType.TOUCH:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'lmTouch'
+      elif ptype == ProcessType.SOLR_POST:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'indexPAV'
+      elif ptype == ProcessType.SQUID_INC:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'squid_inc'
+
+      return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
+   
+   """
+   @summary: returns absp;ite path and filename to script for processType
+   """
+   @staticmethod
+   def get(ptype):
+      relScript = ProcessTool.getRelative(ptype)
+      return os.path.join(APP_PATH, relScript)
 
 # ............................................................................
 class DbUser:

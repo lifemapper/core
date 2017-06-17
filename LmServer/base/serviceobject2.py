@@ -25,13 +25,11 @@
           02110-1301, USA.
 """
 import mx.DateTime 
-import os
 
 from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import ProcessType
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import ID_PLACEHOLDER
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.lmconstants import ID_PLACEHOLDER, ProcessTool
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -251,7 +249,7 @@ class ProcessObject(LMObject):
       successFname = successFileBasename + '.success'
       # Assemble command - configured python and script
       args = ['LOCAL', '$PYTHON ', 
-              ProcessType.getTool(ProcessType.UPDATE_OBJECT)]
+              ProcessTool.get(ProcessType.UPDATE_OBJECT)]
       # options
       args.extend(opts)
       # positional arguments

@@ -30,8 +30,7 @@ from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType)
 from LmCommon.shapes.buildShapegrid import buildShapegrid
 from LmServer.base.layer2 import _LayerParameters, Vector
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
-from LmServer.common.lmconstants import (LMFileType, LMServiceType)
-from LmServer.common.localconstants import APP_PATH
+from LmServer.common.lmconstants import (LMFileType, LMServiceType, ProcessTool)
 from LmServer.legion.cmd import MfRule
 
 # .............................................................................
@@ -280,7 +279,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          # Need to move outputs
          baseName = os.path.splitext(self.getDLocation())[0]
          arfCmdArgs = ['$PYTHON',
-                       ProcessType.getTool(ProcessType.TOUCH),
+                       ProcessTool.get(ProcessType.TOUCH),
                        os.path.join(targetDir, 'touch.out')]
          arfCmd = ' '.join(arfCmdArgs)
 
@@ -304,7 +303,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
          outFile = os.path.join(targetDir, os.path.basename(self.getDLocation()))
       
          cmdArguments = ['$PYTHON', 
-                         ProcessType.getTool(self.processType), 
+                         ProcessTool.get(self.processType), 
                          outFile,
                          self.getMinX(),
                          self.getMinY(),

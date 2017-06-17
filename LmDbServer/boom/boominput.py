@@ -41,7 +41,7 @@ from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS,
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
-         DEFAULT_EMAIL_POSTFIX, Priority)
+         DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
                                             POINT_COUNT_MIN)
 from LmServer.common.lmuser import LMUser
@@ -930,7 +930,7 @@ class ArchiveFiller(LMObject):
          wsGrim = os.path.join(targetDir, 'grim_{}.{}'
                                .format(grim.getId(), LMFormat.JSON.ext))
          concatArgs = ['$PYTHON',
-                       ProcessType.getTool(ProcessType.CONCATENATE_MATRICES),
+                       ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
                        # Axis
                        '1', 
                        wsGrim, ' '.join(colFilenames)
@@ -942,7 +942,7 @@ class ArchiveFiller(LMObject):
                                         'grim_{}.success'.format(grim.getId()))
          stockpileArgs = ['LOCAL',
                           '$PYTHON',
-                          ProcessType.getTool(ProcessType.UPDATE_OBJECT),
+                          ProcessTool.get(ProcessType.UPDATE_OBJECT),
                           '-s ', JobStatus.COMPLETE,
                           ProcessType.INTERSECT_RASTER_GRIM,
                           grim.getId(),

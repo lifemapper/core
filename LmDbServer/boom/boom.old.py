@@ -35,7 +35,8 @@ from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
                                             SCRATCH_PATH, APP_PATH)
-from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
+from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
+                                         ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
@@ -273,7 +274,7 @@ class BoomerOld(Daemon):
       mfCmd = ' '.join(cmdArgs)
       
       touchScriptFname = os.path.join(APP_PATH, 
-                                      ProcessType.getTool(ProcessType.TOUCH))
+                                      ProcessTool.get(ProcessType.TOUCH))
       arfCmdArgs = [
          '$PYTHON',
          touchScriptFname,
