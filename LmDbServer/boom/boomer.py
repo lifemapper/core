@@ -274,13 +274,9 @@ class Boomer(LMObject):
                  '-a {}'.format(outputFname)]
       mfCmd = ' '.join(cmdArgs)
       
-      touchScriptFname = os.path.join(APP_PATH, 
-                                      ProcessType.getTool(ProcessType.TOUCH))
-      arfCmdArgs = [
-         os.getenv('PYTHON'),
-         touchScriptFname,
-         targetFname
-      ]
+      arfCmdArgs = ['$PYTHON', 
+                    ProcessType.getTool(ProcessType.TOUCH),
+                    targetFname]
       arfCmd = ' '.join(arfCmdArgs)
       
       #arfCmd = 'touch {}'.format(targetFname)

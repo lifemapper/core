@@ -193,15 +193,23 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             lyrRules = self.layer.computeMe(workDir=workDir)
             rules.extend(lyrRules)
          else:
-            touchCmd = '$PYTHON {} {}'.format(ProcessType.getTool(ProcessType.TOUCH),
-                                    os.path.join(
-                                       os.path.basename(inputLayerFname), 
-                                          'touch.out'))
-            cpLyrCmd = 'LOCAL {} ; cp {} {}'.format(touchCmd, 
-                                                    self.layer.getDLocation(), 
-                                                    inputLayerFname)
-            cpLyrRule = MfRule(cpLyrCmd, [inputLayerFname])
-            rules.append(cpLyrRule)
+            outfname = os.path.join(os.path.basename(inputLayerFname), 'touch.out')
+#             touchCmd = '$PYTHON {} {}'.format(
+#                      ProcessType.getTool(ProcessType.TOUCH), outfname)
+#             cpLyrCmd = 'LOCAL {} ; cp {} {}'.format(touchCmd, 
+#                                                     self.layer.getDLocation(), 
+#                                                     inputLayerFname)
+            cmdArgs = ['LOCAL', 
+                       '$PYTHON',
+                       ProcessType.getTool(ProcessType.TOUCH), 
+                       outfname, 
+                       ';'
+                       'cp',
+                       self.layer.getDLocation(), 
+                       inputLayerFname]
+            touchAndCopyCmd = ' '.join(cmdArgs)
+            touchAndCopyRule = MfRule(touchAndCopyCmd, [inputLayerFname])
+            rules.append(touchAndCopyRule)
             
          shpgrdRules = self.shapegrid.computeMe(workDir=workDir)
          rules.extend(shpgrdRules)
@@ -231,15 +239,12 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
                   str(self.intersectParams[self.INTERSECT_PARAM_MAX_PRESENCE]),
                   str(self.intersectParams[self.INTERSECT_PARAM_MIN_PERCENT])]
 
-         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
-
-         
          shapegridFile = os.path.join(workDir, 
                     os.path.splitext(self.shapegrid.getRelativeDLocation())[0],
                     os.path.basename(self.shapegrid.getDLocation()))
          
-         cmdArguments = [os.getenv('PYTHON'), 
-                         scriptFname,
+         cmdArguments = ['$PYTHON', 
+                         ProcessType.getTool(self.processType),
                          options,
                          shapegridFile,  
                          inputLayerFname,
@@ -262,7 +267,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             solrPostArgs = [
                'LOCAL',
                '$PYTHON',
-               os.path.join(APP_PATH, ProcessType.getTool(ProcessType.SOLR_POST)),
+               ProcessType.getTool(ProcessType.SOLR_POST),
                pavFname,
                str(self.getId()), # PAV id
                str(self.layer.getId()), # Projection id

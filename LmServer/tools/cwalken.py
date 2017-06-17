@@ -339,7 +339,8 @@ class ChristopherWalken(LMObject):
       if self.weaponOfChoice.finishedInput:
          self._writeDoneWalkenFile()
       if occ:
-         # Process existing OccurrenceLayer if incomplete, obsolete, or failed
+         # Process existing OccurrenceLayer (copy if up-to-date and complete,
+         # recompute if incomplete, obsolete, or failed)
          objs.append(occ)
          # Sweep over input options
          # TODO: This puts all prjScen PAVs with diff algorithms into same matrix.

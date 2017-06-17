@@ -628,35 +628,21 @@ class OccurrenceLayer(OccurrenceType, Vector):
       # If already completed
       if JobStatus.finished(self.status):
          # Get the first target file
-         touchScriptFname = os.path.join(APP_PATH, 
-                                      ProcessType.getTool(ProcessType.TOUCH))
-         arfCmdArgs = [
-            os.getenv('PYTHON'),
-            touchScriptFname,
-            os.path.join(targetDir, 'touch.out')
-            ]
-         arfCmd = ' '.join(arfCmdArgs)
-
-         cmdArgs = [
-            'LOCAL',
-            arfCmd,
-            '; cp',
-            '{}*'.format(os.path.splitext(self.getDLocation())[0]),
-            targetDir
-         ]
-
-         cmd = ' '.join(cmdArgs)
-         rules.append(MfRule(cmd, targetFiles))
+         touchCopyArgs = ['LOCAL', '$PYTHON',
+                          ProcessType.getTool(ProcessType.TOUCH),
+                          os.path.join(targetDir, 'touch.out'),
+                          '; ',
+                          'cp',
+                          '{}*'.format(os.path.splitext(self.getDLocation())[0]),
+                          targetDir ]
+         touchCopyCmd = ' '.join(touchCopyArgs)
+         rules.append(MfRule(touchCopyCmd, targetFiles))
       
       else:
          # Compute everything
          deps = []
-         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
-         cmdArgs = [
-            "LOCAL",
-            os.getenv('PYTHON'),
-            scriptFname
-         ]
+         cmdArgs = ['LOCAL', '$PYTHON',
+                    ProcessType.getTool(self.processType)]
       
          # TODO: This is a hack using canonical name instead of GBIFTaxonId for iDigBio
          if self.processType == ProcessType.IDIGBIO_TAXA_OCCURRENCE:

@@ -655,125 +655,6 @@ class SDMProjection(_ProjectionType, Raster):
                      bbox, color, self.getSRSAsString(), format)
       return wmsUrl   
 
-# ...............................................
-#    @property
-#    def projScenario(self):
-#       return self._projScenario
-# 
-#    @property
-#    def projScenarioCode(self):
-#       return self._projScenario.code
-# 
-#    @property
-#    def projMask(self):
-#       return self._projMask
-#    
-#    @property
-#    def occurrenceSet(self):
-#       return self._occurrenceSet
-# 
-#    @property
-#    def displayName(self):
-#       return self._occurrenceSet.displayName
-# 
-#    @property
-#    def status(self):
-#       return self._status
-# 
-#    @property
-#    def statusModTime(self):
-#       return self._statusmodtime
-# 
-#    @property
-#    def speciesName(self):
-#       return self._occurrenceSet.displayName
-# 
-#    @property
-#    def algorithmCode(self):
-#       return self._algorithm.code
-#    
-#    @property
-#    def modelScenario(self):
-#       return self._modelScenario
-# 
-#    @property
-#    def modelScenarioCode(self):
-#       return self._modelScenario.code
-#    
-#    @property
-#    def modelMask(self):
-#       return self._modelMask
-#    
-#    @property
-#    def projInputLayers(self):
-#       """
-#       @summary Gets the layers of the projection Scenario
-#       """
-#       return self._projScenario.layers
-
-#    # .............................................................................
-#    def _computeModel(self):
-#       """
-#       @summary: Generate a command to create a SDM model ruleset for this projection
-#       """
-#       # model depends on occurrenceSet
-#       #occRule = self._occurrenceSet.compute()
-#       occSetFn = self._occurrenceSet.getDLocation()
-#       # model input - XML request for model generation
-#       xmlRequestFname = self.getModelFilename(isResult=False)
-#       dataPath, fname = os.path.split(xmlRequestFname)
-#       
-#       if self.isATT() == 'ATT_MAXENT':
-#          ptype = ProcessType.ATT_MODEL
-#       else:
-#          ptype = ProcessType.OM_MODEL
-#          
-#       name = '{}-{}'.format(ptype, self.getModelTarget())
-#       statusTarget = "{}.status".format(name)
-# 
-#       options = {'-n' : name,
-#                  '-o' : dataPath,
-#                  '-l' : '{}.log'.format(name),
-#                  '-s' : statusTarget }
-#       # Join arguments
-#       args = ' '.join(["{opt} {val}".format(opt=o, val=v) for o, v in options.iteritems()])
-#    
-#       cmdArguments = [os.getenv('PYTHON'), ProcessType.getTool(ptype), 
-#                       xmlRequestFname, args]
-#       cmd = ' '.join(cmdArguments)
-#       rule = MfRule(cmd, [statusTarget], dependencies=[occSetFn])
-#       
-#       return rule
-
-# # ...............................................
-#    def compute(self):
-#       """
-#       @summary: Generate a command to create a SDM projection
-#       """
-#       # projection depends on model
-#       modelRule = self._computeModel()
-#       
-#       xmlRequestFname = self.getProjRequestFilename()
-#       # projection output
-#       dataPath, fname = os.path.split(xmlRequestFname)
-#       name = '{}-{}'.format(self.processType, self.getId())
-#       statusTarget = "{}.status".format(name)
-#       
-#       options = {'-n' : name,
-#                  '-o' : dataPath,
-#                  '-l' : '{}.log'.format(name),
-#                  '-s' : statusTarget }   
-#       # Join arguments
-#       args = ' '.join(['{opt} {val}'.format(opt=o, val=v) for o, v in options.iteritems()])
-#       
-#       cmdArguments = [os.getenv('PYTHON'), 
-#                       ProcessType.getTool(self.processType), 
-#                       xmlRequestFname, args]
-#       cmd = ' '.join(cmdArguments)
-#       rule = MfRule(cmd, [statusTarget], dependencies=[modelRule])
-#       
-#       return rule
-
    # .............................................................................
    def _computeMyModel(self, workDir=None):
       """
@@ -804,16 +685,15 @@ class SDMProjection(_ProjectionType, Raster):
       layersJsonFname = self.getLayersJsonFilename(self.modelScenario, 
                                                    self.modelMask)
       paramsJsonFname = self.getAlgorithmParametersJsonFilename(self._algorithm)
-      scriptFname = os.path.join(APP_PATH, ProcessType.getTool(ptype))
-      mdlCmdArgs = [os.getenv('PYTHON'),
-                       scriptFname,
-                       args,
-                       str(ptype),
-                       mdlName,
-                       occSetFname,
-                       layersJsonFname,
-                       rulesetFname,
-                       paramsJsonFname]
+      mdlCmdArgs = ['$PYTHON',
+                    ProcessType.getTool(ptype),
+                    args,
+                    str(ptype),
+                    mdlName,
+                    occSetFname,
+                    layersJsonFname,
+                    rulesetFname,
+                    paramsJsonFname]
       cmd = ' '.join(mdlCmdArgs)
          
       rules.append(MfRule(cmd, [rulesetFname], 
@@ -835,32 +715,21 @@ class SDMProjection(_ProjectionType, Raster):
          
       if JobStatus.finished(self.status):
          # Just need to move the tiff into place
-         
-         touchScriptFname = os.path.join(APP_PATH, 
-                                      ProcessType.getTool(ProcessType.TOUCH))
-         
          cpRaster = os.path.join(targetDir, os.path.basename(self.getDLocation()))
          
-         #touch directory
-         #copy file
-         touchCmdArgs = [
-            '$PYTHON', 
-            touchScriptFname, 
-            os.path.join(targetDir, 'touch.out')
-         ]
-         touchCmd = ' '.join(touchCmdArgs)
+         #touch directory then copy file
+         touchAndCopyArgs = ['LOCAL', 
+                             '$PYTHON', 
+                             ProcessType.getTool(ProcessType.TOUCH), 
+                             os.path.join(targetDir, 'touch.out') ,
+                             ';',
+                             'cp',
+                             self.getDLocation(),
+                             cpRaster ]
+         touchAndCopyCmd = ' '.join(touchAndCopyArgs)
          
-         cpArgs = [
-            'cp',
-            self.getDLocation(),
-            cpRaster
-         ]
-         
-         cpCmd = ' '.join(cpArgs)
-         
-         cmd = 'LOCAL {} ; {}'.format(touchCmd, cpCmd)
-         cpRule = MfRule(cmd, [cpRaster])
-         rules.append(cpRule)
+         touchAndCopyRule = MfRule(touchAndCopyCmd, [cpRaster])
+         rules.append(touchAndCopyRule)
       else:
          # Generate the model
          modelRules = self._computeMyModel(workDir=workDir)
@@ -920,7 +789,6 @@ class SDMProjection(_ProjectionType, Raster):
          # Rule for SDMProject process 
          prjArgs = ' '.join(["{opt} {val}".format(opt=o, val=v
                                             ) for o, v in prjOpts.iteritems()])
-         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
 
          occTargetDir = os.path.join(workDir, 
                os.path.splitext(self._occurrenceSet.getRelativeDLocation())[0])
@@ -928,8 +796,8 @@ class SDMProjection(_ProjectionType, Raster):
                                      os.path.basename(self.getModelFilename()))
 
          layersJsonFname = self.getLayersJsonFilename(self.projScenario, self.projMask)
-         prjCmdArgs = [os.getenv('PYTHON'),
-                       scriptFname,
+         prjCmdArgs = ['$PYTHON',
+                       ProcessType.getTool(self.processType),
                        prjArgs,
                        str(self.processType),
                        prjName,

@@ -25,6 +25,7 @@
 """
 import os
 from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
+from LmServer.common.localconstants import APP_PATH
    
 # .............................................................................
 # .    Configuration file headings
@@ -859,7 +860,7 @@ class ProcessType:
    RAD_COMPRESS = 320
 
    @staticmethod
-   def getTool(ptype):
+   def getRelativeTool(ptype):
       """
       @summary: returns relative path and filename to script for processType
       """
@@ -941,6 +942,11 @@ class ProcessType:
 
       return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
 #       return os.path.join(APP_PATH, relpath, jr+'.py')   
+
+   @staticmethod
+   def getTool(ptype):
+      relScript = ProcessType.getRelativeTool(ptype)
+      return os.path.join(APP_PATH, relScript)   
 
    @staticmethod
    def isSingle(ptype):

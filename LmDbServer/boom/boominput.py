@@ -921,23 +921,34 @@ class ArchiveFiller(LMObject):
             colFilenames.append(os.path.join(targetDir, 
                               os.path.splitext(lyr.getRelativeDLocation())[0], 
                               mtxcol.getTargetFilename()))
+         # TODO: Matrix Concatenate and Stockpile Rules should be created by 
+         #       grim.computeMe().  LMMatrix obj should check MatrixType to  
+         #       determine whether triage files are used (True for SDM PAM,  
+         #       False for GRIM, BioGeo, output matrices) 
+         # TODO: Create a default "successFile" from object
          # Add concatenate command
-         wsGrim = os.path.join(targetDir, 'grim_{}.json'.format(grim.getId()))
-         concatCmd = '$PYTHON {} {} 1 {}'.format(
-            ProcessType.getTool(ProcessType.CONCATENATE_MATRICES),
-            wsGrim, ' '.join(colFilenames))
+         wsGrim = os.path.join(targetDir, 'grim_{}.{}'
+                               .format(grim.getId(), LMFormat.JSON.ext))
+         concatArgs = ['$PYTHON',
+                       ProcessType.getTool(ProcessType.CONCATENATE_MATRICES),
+                       # Axis
+                       '1', 
+                       wsGrim, ' '.join(colFilenames)
+                       ]
+         concatCmd = ' '.join(concatArgs)
          rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
          # Stockpile GRIM
          grimSuccessFilename = os.path.join(targetDir, 
                                         'grim_{}.success'.format(grim.getId()))
-         stockpileCmd = 'LOCAL $PYTHON {} -s {} {} {} {} {}'.format(
-            ProcessType.getTool(ProcessType.UPDATE_OBJECT),
-            JobStatus.COMPLETE,
-            ProcessType.INTERSECT_RASTER_GRIM,
-            grim.getId(),
-            grimSuccessFilename,
-            wsGrim
-         )
+         stockpileArgs = ['LOCAL',
+                          '$PYTHON',
+                          ProcessType.getTool(ProcessType.UPDATE_OBJECT),
+                          '-s ', JobStatus.COMPLETE,
+                          ProcessType.INTERSECT_RASTER_GRIM,
+                          grim.getId(),
+                          grimSuccessFilename,
+                          wsGrim]
+         stockpileCmd = ' '.join(stockpileArgs)
          rules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
                              dependencies=[wsGrim]))
          
@@ -997,9 +1008,7 @@ class ArchiveFiller(LMObject):
                        statusModTime=CURR_MJD)
       mfChain = self.scribe.insertMFChain(newMFC)
 
-      cmdArgs = ['LOCAL',
-                 #os.getenv('PYTHON'),
-                 '$PYTHON',
+      cmdArgs = ['LOCAL', '$PYTHON',
                  BOOM_DAEMON,
                  '--config_file={}'.format(self.outConfigFilename),
                  'start']

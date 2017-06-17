@@ -248,11 +248,10 @@ class ProcessObject(LMObject):
             opts.append('-s {}'.format(status))
          except:
             opts.append('-f {}'.format(status))
-      scriptFname = os.path.join(APP_PATH, ProcessType.getTool(
-                                                   ProcessType.UPDATE_OBJECT))
       successFname = successFileBasename + '.success'
       # Assemble command - configured python and script
-      args = ['LOCAL', os.getenv('PYTHON'), scriptFname]
+      args = ['LOCAL', '$PYTHON ', 
+              ProcessType.getTool(ProcessType.UPDATE_OBJECT)]
       # options
       args.extend(opts)
       # positional arguments

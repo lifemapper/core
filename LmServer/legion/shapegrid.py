@@ -279,16 +279,11 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       if JobStatus.finished(self.status):
          # Need to move outputs
          baseName = os.path.splitext(self.getDLocation())[0]
-         touchScriptFname = os.path.join(APP_PATH, 
-                                      ProcessType.getTool(ProcessType.TOUCH))
-         arfCmdArgs = [
-            os.getenv('PYTHON'),
-            touchScriptFname,
-            os.path.join(targetDir, 'touch.out')
-            ]
+         arfCmdArgs = ['$PYTHON',
+                       ProcessType.getTool(ProcessType.TOUCH),
+                       os.path.join(targetDir, 'touch.out')]
          arfCmd = ' '.join(arfCmdArgs)
 
-         
          cmdArgs = [
             'LOCAL',
             arfCmd,
@@ -308,9 +303,8 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
             options = '--cutoutWktFn={}'.format(cutoutWktFilename)
          outFile = os.path.join(targetDir, os.path.basename(self.getDLocation()))
       
-         scriptFname = os.path.join(APP_PATH, ProcessType.getTool(self.processType))
-         cmdArguments = [os.getenv('PYTHON'), 
-                         scriptFname, 
+         cmdArguments = ['$PYTHON', 
+                         ProcessType.getTool(self.processType), 
                          outFile,
                          self.getMinX(),
                          self.getMinY(),
