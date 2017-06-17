@@ -170,9 +170,9 @@ class ChristopherWalken(LMObject):
                                    taxonSourceName=taxonSourceName, 
                                    logger=self.log)
       else:
-         useGBIFTaxonIds = True
          # iDigBio data
          if datasource == 'IDIGBIO':
+            useGBIFTaxonIds = True
             occData = self.cfg.get(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA')
             occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
                                         'IDIG_OCCURRENCE_DATA_DELIMITER') 
@@ -181,6 +181,7 @@ class ChristopherWalken(LMObject):
                                    occData + LMFormat.METADATA.ext)
          # User data, anything not above
          else:
+            useGBIFTaxonIds = False
             occData = self.cfg.get(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA')
             occDelimiter = self.cfg.get(SERVER_BOOM_HEADING, 
                                         'USER_OCCURRENCE_DATA_DELIMITER') 

@@ -146,6 +146,8 @@ earl = EarlJr()
 pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
 configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
                                               LMFormat.CONFIG.ext))   
+configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
+
 secs = time.time()
 timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 log = ScriptLogger('debug_dabomb', level=logging.INFO)
@@ -157,5 +159,7 @@ boomer.keepWalken
 
 boomer.processSpud()
 
+$PYTHON LmDbServer/boom/daboom.py --config_file=/share/lm/data/archive/biotaphy/biotaphy_boom.ini start
 
+LmBackend.common.lmobj.LMError\n\n\nFailed to initialize Chris with config /share/lm/data/archive/biotaphy/biotaphy_boom.ini
 """
