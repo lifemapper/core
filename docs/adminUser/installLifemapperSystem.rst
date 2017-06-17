@@ -144,6 +144,29 @@ LmServer
    Type "help" for help.
    mal=> select scenariocode, userid from scenario;
 
+Configure new BOOM
+------------------
+#. Get new environmental data package (<SCEN_PKG>.tar.gz) containing a metadata 
+   file (<SCEN_PKG>.py) and a file containing layer file hash values and 
+   relative filenames ((<SCEN_PKG>.csv) and layer data files.  Then run the 
+   seedData command that builds files in alternate data formats and creates a 
+   fills the LmCompute sqlite3 database with file locations (so data does not
+   need to be pulled for computations)::
+    
+  # seedData <SCEN_PKG>
+
+#. Create a BOOM initialization file based on the template in 
+   /opt/lifemapper/config/boomInit.sample.ini, then run the BOOM script 
+   **as lmwriter** that fills all input values and creates a BOOM config file::
+    
+  [lmwriter]$  $PYTHON LmDbServer/boom/boominput.py --config_file=/tmp/biotaphyHeucheraLowres.boom.ini
+  
+#. **TESTING ONLY** The boominput script will create a Makeflow for computation, 
+   using the BOOM config file created in that step.  To shortcut that MF process, 
+   look at the command in that makeflow file and run it at the command prompt::
+    
+  [lmwriter]$  $PYTHON LmDbServer/boom/boomer.py --config_file=/share/lm/data/archive/biotaphy/biotaphy_boom.ini start
+
 Populate archive
 ----------------
 #. Download new environmental data from Yeti.  Requirements for assembling 

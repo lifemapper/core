@@ -33,5 +33,5 @@
   'Longitude': 'decimallongitude',
   'Latitude': 'decimallatitude',
   'GroupBy': 'species',
-  'Taxa': 'species' 
+  'TaxaName': 'species' 
   }
