@@ -875,7 +875,8 @@ class ArchiveFiller(LMObject):
                 layer=lyr, shapegrid=shpGrid, 
                 intersectParams=intersectParams, 
                 squid=lyr.squid, ident=lyr.ident, processType=ptype, 
-                status=JobStatus.GENERAL, statusModTime=currtime)
+                status=JobStatus.GENERAL, statusModTime=currtime,
+                postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
          if mtxcol is not None:
             self.scribe.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
