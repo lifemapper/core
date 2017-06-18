@@ -1807,8 +1807,8 @@ class Borg(DbPostgresql):
       """
       meta = mtx.dumpMtxMetadata()
       success = self.executeModifyFunction('lm_updateMatrix', 
-                                           mtx.getId(), meta, 
-                                           mtx.status, mtx.statusModTime)
+                                           mtx.getId(), mtx.getDLocation(),
+                                           meta, mtx.status, mtx.statusModTime)
       return success
    
 # .............................................................................
