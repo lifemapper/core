@@ -927,6 +927,7 @@ class ArchiveFiller(LMObject):
          #       False for GRIM, BioGeo, output matrices) 
          # TODO: Create a default "successFile" from object
          # Add concatenate command
+         grimRules = []
          wsGrim = os.path.join(targetDir, 'grim_{}.{}'
                                .format(grim.getId(), LMFormat.JSON.ext))
          concatArgs = ['$PYTHON',
@@ -937,7 +938,7 @@ class ArchiveFiller(LMObject):
                        ' '.join(colFilenames)
                        ]
          concatCmd = ' '.join(concatArgs)
-         rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
+         grimRules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
          # Stockpile GRIM
          grimSuccessFilename = os.path.join(targetDir, 
                                         'grim_{}.success'.format(grim.getId()))
@@ -950,9 +951,10 @@ class ArchiveFiller(LMObject):
                           grimSuccessFilename,
                           wsGrim]
          stockpileCmd = ' '.join(stockpileArgs)
-         rules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
+         grimRules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
                              dependencies=[wsGrim]))
          
+         grimChain.addCommands(grimRules)
          grimChain.write()
          grimChain.updateStatus(JobStatus.INITIALIZE)
          self.scribe.updateObject(grimChain)
