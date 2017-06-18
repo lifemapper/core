@@ -35,6 +35,7 @@ import urllib2
 from LmCommon.compression.binaryList import decompress
 from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat,\
    ProcessType
+from LmCommon.common.matrix import Matrix
 
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
@@ -287,8 +288,10 @@ class GlobalPAMService(LmService):
          insertedGrim.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
          self.scribe.updateObject(insertedGrim)
          # Save the original grim data into the new location
+         # TODO: Add read / load method for LMMatrix
+         grimMtx = Matrix.load(grim.getDLocation())
          with open(insertedGrim.getDLocation(), 'w') as outF:
-            grim.save(outF)
+            grimMtx.save(outF)
          
       # BioGeo
       for bg in origGS.getBiogeographicHypotheses():
@@ -303,8 +306,10 @@ class GlobalPAMService(LmService):
          insertedBG.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
          self.scribe.updateObject(insertedBG)
          # Save the original grim data into the new location
+         # TODO: Add read / load method for LMMatrix
+         bgMtx = Matrix.load(bg.getDLocation())
          with open(insertedBG.getDLocation(), 'w') as outF:
-            bg.save(outF)
+            bgMtx.save(outF)
          
       
 
