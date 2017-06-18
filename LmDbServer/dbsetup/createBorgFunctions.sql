@@ -2163,6 +2163,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateMatrix(mtxid int,
+                                                 dloc text,
                                                  meta varchar,
                                                  stat int,
                                                  stattime double precision)
@@ -2171,8 +2172,8 @@ $$
 DECLARE
    success int = -1;
 BEGIN
-   UPDATE lm_v3.Matrix SET (metadata, status, statusmodtime) 
-                         = (meta, stat, stattime) WHERE matrixId = mtxid;
+   UPDATE lm_v3.Matrix SET (matrixDlocation, metadata, status, statusmodtime) 
+                         = (dloc, meta, stat, stattime) WHERE matrixId = mtxid;
    IF FOUND THEN 
       success = 0;
    END IF;

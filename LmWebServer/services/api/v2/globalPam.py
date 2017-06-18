@@ -35,6 +35,7 @@ import urllib2
 from LmCommon.compression.binaryList import decompress
 from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat,\
    ProcessType
+from LmCommon.common.matrix import Matrix
 
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
@@ -280,15 +281,17 @@ class GlobalPAMService(LmService):
          newGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
                             processType=ProcessType.RAD_INTERSECT, 
                             gcmCode=grim.gcmCode, altpredCode=grim.altpredCode,
-                            dateCode=grim.dateCode, metadata=grim.metadata,
-                            userId=self.getUserId(), gridset=gs, 
+                            dateCode=grim.dateCode, metadata=grim.mtxMetadata,
+                            userId=self.getUserId(), gridset=updatedGS, 
                             status=JobStatus.INITIALIZE)
          insertedGrim = self.scribe.findOrInsertMatrix(newGrim)
          insertedGrim.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
          self.scribe.updateObject(insertedGrim)
          # Save the original grim data into the new location
+         # TODO: Add read / load method for LMMatrix
+         grimMtx = Matrix.load(grim.getDLocation())
          with open(insertedGrim.getDLocation(), 'w') as outF:
-            grim.save(outF)
+            grimMtx.save(outF)
          
       # BioGeo
       for bg in origGS.getBiogeographicHypotheses():
@@ -296,15 +299,17 @@ class GlobalPAMService(LmService):
          newBG = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                             processType=ProcessType.ENCODE_HYPOTHESES, 
                             gcmCode=bg.gcmCode, altpredCode=bg.altpredCode,
-                            dateCode=bg.dateCode, metadata=bg.metadata,
-                            userId=self.getUserId(), gridset=gs, 
+                            dateCode=bg.dateCode, metadata=bg.mtxMetadata,
+                            userId=self.getUserId(), gridset=updatedGS, 
                             status=JobStatus.INITIALIZE)
          insertedBG = self.scribe.findOrInsertMatrix(newBG)
          insertedBG.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
          self.scribe.updateObject(insertedBG)
          # Save the original grim data into the new location
+         # TODO: Add read / load method for LMMatrix
+         bgMtx = Matrix.load(bg.getDLocation())
          with open(insertedBG.getDLocation(), 'w') as outF:
-            bg.save(outF)
+            bgMtx.save(outF)
          
       
 
