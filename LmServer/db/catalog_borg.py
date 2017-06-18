@@ -2054,6 +2054,8 @@ class Borg(DbPostgresql):
          success = self.updateSDMProject(obj)
       elif isinstance(obj, ShapeGrid):
          success = self.updateShapeGrid(obj)
+      elif isinstance(obj, LMMatrix):
+         success = self.updateMatrix(obj)
       elif isinstance(obj, Tree):
          meta = obj.dumpTreeMetadata()
          success = self.executeModifyFunction('lm_updateTree', obj.getId(),
