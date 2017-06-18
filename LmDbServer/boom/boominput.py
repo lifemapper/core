@@ -911,11 +911,12 @@ class ArchiveFiller(LMObject):
          
          # Need to keep track of intersections for matrix concatenation
          colFilenames = []
-
+#          colIdx = 0
          for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
             mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
-                                         currtime)
+                                             currtime)
+#             colIdx += 1
             rules = mtxcol.computeMe(workDir=targetDir)
             grimChain.addCommands(rules)
             colFilenames.append(os.path.join(targetDir, 
@@ -1137,9 +1138,92 @@ configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 filler = ArchiveFiller(configFname=configFname)
 filler.initializeInputs()
 
+for code, scen in scens.iteritems():
+   print code
+   for lyr in scen.layers:
+      print '  ',lyr.name
+   print
+
+filler.addScenariosAndLayers()
+for code, scen in scens.iteritems():
+   print code
+   for lyr in scen.layers:
+      print '  ',lyr.name
+   print
+
+shpGrid, archiveGridset, pamGrims = filler.addArchive()
+
+grimChains = []
+currtime = mx.DateTime.gmt().mjd
+intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
+
+# for code, (pam, grim) in pamGrims.iteritems():
+scen = filler.allScens[code]
+pam, grim = pamGrims[code]
+# Create MFChain for this GRIM
+grimChain = filler._createGrimMF(code, currtime)
+targetDir = grimChain.getRelativeDirectory()
+
+# Need to keep track of intersections for matrix concatenation
+colFilenames = []
+for lyr in scen.layers:
+   # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
+   mtxcol = filler._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
+                                    currtime)
+   rules = mtxcol.computeMe(workDir=targetDir)
+   grimChain.addCommands(rules)
+   colFilenames.append(os.path.join(targetDir, 
+                     os.path.splitext(lyr.getRelativeDLocation())[0], 
+                     mtxcol.getTargetFilename()))
+
+wsGrim = os.path.join(targetDir, 'grim_{}.{}'
+                      .format(grim.getId(), LMFormat.JSON.ext))
+concatArgs = ['$PYTHON',
+              ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
+              # Axis
+              '1', 
+              wsGrim, 
+              ' '.join(colFilenames)
+              ]
+concatCmd = ' '.join(concatArgs)
+rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
+# Stockpile GRIM
+grimSuccessFilename = os.path.join(targetDir, 
+                               'grim_{}.success'.format(grim.getId()))
+stockpileArgs = ['LOCAL',
+                 '$PYTHON',
+                 ProcessTool.get(ProcessType.UPDATE_OBJECT),
+                 '-s {}'.format(JobStatus.COMPLETE),
+                 str(ProcessType.INTERSECT_RASTER_GRIM),
+                 str(grim.getId()),
+                 grimSuccessFilename,
+                 wsGrim]
+stockpileCmd = ' '.join(stockpileArgs)
+rules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
+                    dependencies=[wsGrim]))
+
+grimChain.write()
+grimChain.updateStatus(JobStatus.INITIALIZE)
+filler.scribe.updateObject(grimChain)
+grimChains.append(grimChain)
+filler.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
+              .format(grimChain.objId, code))
+         
+
+grimChains = filler.createGRIMChains(shpGrid, pamGrims)
+
+
 filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 # filler.initBoom()
 # filler.close()
+
+
+
+   
+# Write config file for this archive
+filler.writeConfigFile()
+mfChain = filler.createMFBoom()
+filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))
 
 
 layers = []
