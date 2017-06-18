@@ -124,10 +124,12 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
 
    layerArray = np.zeros((len(areaDict.keys()), 1), dtype=float)
    
+   rowHeaders = []
    if minPercent is not None:
       # Largest class method
       minPercent = minPercent / 100.0
-      for siteidx, (summary, cellarea) in areaDict.iteritems():
+      for siteidx, (summary, cellarea, x, y) in areaDict.iteritems():
+         rowHeaders.append([siteidx, x, y])
          maxArea = max(summary.values())
          if maxArea / cellarea >= minPercent:
             layerArray[siteidx, 0] = summary.keys()[summary.values().index(maxArea)]
@@ -135,11 +137,10 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
             layerArray[siteidx, 0] = np.nan
    else:
       # Weighted mean method
-      siteIds = []
-      for siteidx, (summary, cellarea) in areaDict.iteritems():
+      for siteidx, (summary, cellarea, x, y) in areaDict.iteritems():
+         rowHeaders.append([siteidx, x, y])
          numerator = 0
          denominator = 0
-         siteIds.append(siteidx)
          for pixelvalue in summary.keys():
             numerator += float(summary[pixelvalue]) * pixelvalue
             denominator += float(summary[pixelvalue])
@@ -149,7 +150,7 @@ def grimRasterIntersect(sgFn, rasterFn, resolution, minPercent=None,
             weightedMean = 0
          layerArray[siteidx, 0] = weightedMean
    
-   headers = {'0': siteIds}
+   headers = {'0': rowHeaders}
    if ident is not None:
       headers['1'] = [ident]
       
