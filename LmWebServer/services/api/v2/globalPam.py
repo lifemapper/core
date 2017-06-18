@@ -267,12 +267,15 @@ class GlobalPAMService(LmService):
          pamMtx = LMMatrix(pamData, matrixType=MatrixType.PAM, gcmCode=gcmCode, 
                            altpredCode=altPredCode, dateCode=dateCode, 
                            metadata=scnMeta, userId=self.getUserId(),
-                           gridset=updatedGS, status=JobStatus.COMPLETE,
+                           gridset=updatedGS, status=JobStatus.GENERAL,
                            statusModTime=gmt().mjd, headers={'0' : rowHeaders,
                                                              '1' : squids})
          # Insert it into db
          updatedPamMtx = self.scribe.findOrInsertMatrix(pamMtx)
-         with open(updatedPamMtx.getDLocation(), 'w') as outF:
+         updatedPamMtx.updateStatus(status=JobStatus.COMPLETE, 
+                                    modTime=gmt().mjd)
+         updatedPam2 = self.scribe.updateObject(updatedPamMtx)
+         with open(updatedPam2.getDLocation(), 'w') as outF:
             pamMtx.save(outF)
       
       # GRIMs
