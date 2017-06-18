@@ -1675,10 +1675,10 @@ class Borg(DbPostgresql):
       lyrid = None
       if mtxcol.layer is not None:
          # Check for existing id before pulling from db
-         lyrid = mtxcol.layer.getId()
+         lyrid = mtxcol.layer.getLayerId()
          if lyrid is None:
             newOrExistingLyr = self.findOrInsertBaseLayer(mtxcol.layer)
-            lyrid = newOrExistingLyr.getId()
+            lyrid = newOrExistingLyr.getLayerId()
 
             # Shapegrid is already in db
             shpid = mtxcol.shapegrid.getId()
