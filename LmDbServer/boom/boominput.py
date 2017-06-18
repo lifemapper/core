@@ -917,20 +917,17 @@ class ArchiveFiller(LMObject):
          colFilenames = []
 
          for lyr in scen.layers:
-            # TODO: Remove this, checking to see if shapegrid is getting added 
-            #          to scenario layers
-            if not isinstance(lyr, (ShapeGrid, Vector)):
-               # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-               mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
-                                            currtime)
-               rules = mtxcol.computeMe(workDir=targetDir)
-               grimChain.addCommands(rules)
+            # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
+            mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
+                                         currtime)
+            rules = mtxcol.computeMe(workDir=targetDir)
+            grimChain.addCommands(rules)
 
-               pavFname = os.path.join(targetDir, 
-                     os.path.splitext(mtxcol.layer.getRelativeDLocation())[0], 
-                     mtxcol.getTargetFilename())
-               
-               colFilenames.append(pavFname)
+            pavFname = os.path.join(targetDir, 
+                  os.path.splitext(mtxcol.layer.getRelativeDLocation())[0], 
+                  mtxcol.getTargetFilename())
+            
+            colFilenames.append(pavFname)
                
          # TODO: Matrix Concatenate and Stockpile Rules should be created by 
          #       grim.computeMe().  LMMatrix obj should check MatrixType to  
