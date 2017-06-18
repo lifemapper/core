@@ -939,9 +939,9 @@ class ArchiveFiller(LMObject):
                                .format(grim.getId(), LMFormat.JSON.ext))
          concatArgs = ['$PYTHON',
                        ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
+                       wsGrim, 
                        # Axis
                        '1', 
-                       wsGrim, 
                        ' '.join(colFilenames)
                        ]
          concatCmd = ' '.join(concatArgs)
