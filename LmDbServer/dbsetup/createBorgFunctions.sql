@@ -2172,7 +2172,7 @@ $$
 DECLARE
    success int = -1;
 BEGIN
-   UPDATE lm_v3.Matrix SET (dlocation, metadata, status, statusmodtime) 
+   UPDATE lm_v3.Matrix SET (matrixDlocation, metadata, status, statusmodtime) 
                          = (dloc, meta, stat, stattime) WHERE matrixId = mtxid;
    IF FOUND THEN 
       success = 0;
