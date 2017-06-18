@@ -871,10 +871,11 @@ class ArchiveFiller(LMObject):
             self.scribe.log.debug('Vector intersect not yet implemented for GRIM column {}'
                                   .format(mtxcol.getId()))
    
+         # TODO: Change ident to lyr.ident when that is populated
          tmpCol = MatrixColumn(None, mtx.getId(), self.usr, 
                 layer=lyr, shapegrid=shpGrid, 
                 intersectParams=intersectParams, 
-                squid=lyr.squid, ident=lyr.ident, processType=ptype, 
+                squid=lyr.squid, ident=lyr.name, processType=ptype, 
                 status=JobStatus.GENERAL, statusModTime=currtime,
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
