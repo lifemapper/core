@@ -879,6 +879,12 @@ class ArchiveFiller(LMObject):
                 status=JobStatus.GENERAL, statusModTime=currtime,
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
+         
+         #TODO: Debugging to see if the layer in matches the layer on the new
+         #         matrix column
+         if lyr.getId() != mtxcol.layer.getId():
+            raise Exception, "Layer does not match matrix column layer {} - {}".format(lyr.getId(), mtxcol.layer.getId())
+         
          # TODO: This is a hack, post to solr needs to be retrieved from DB
          mtxcol.postToSolr = False
          if mtxcol is not None:
@@ -934,7 +940,7 @@ class ArchiveFiller(LMObject):
          # TODO: Create a default "successFile" from object
          # Add concatenate command
          grimRules = []
-         wsGrim = os.path.join(targetDir, 'grim_{}.{}'
+         wsGrim = os.path.join(targetDir, 'grim_{}{}'
                                .format(grim.getId(), LMFormat.JSON.ext))
          concatArgs = ['$PYTHON',
                        ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
