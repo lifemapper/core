@@ -878,6 +878,8 @@ class ArchiveFiller(LMObject):
                 status=JobStatus.GENERAL, statusModTime=currtime,
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
+         # TODO: This is a hack, post to solr needs to be retrieved from DB
+         mtxcol.postToSolr = False
          if mtxcol is not None:
             self.scribe.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
             # Reset processType (not in db)
