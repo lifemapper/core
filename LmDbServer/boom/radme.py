@@ -151,6 +151,10 @@ class RADCaller(LMObject):
          pamId = pam.getId()
          pd = {}
          
+         # Add PAM
+         pd[MatrixType.PAM] = pam
+         
+         
          if doCalc:
             # Sites matrix
             pd[MatrixType.SITES_OBSERVED] = self._getOrInsertMatrix(gridsetId, 

@@ -214,7 +214,7 @@ class Gridset(ServiceObject):
                   
       for pamId in pamDict.keys():
          # Copy PAM into workspace
-         pam = pamDict[pamId]['pam']
+         pam = pamDict[pamId][MatrixType.PAM]
          pamWorkDir = os.path.join(targetDir, 'pam_{}_work'.format(pam.getId()))
          wsPamFilename = os.path.join(pamWorkDir, 
                                             'pam_{}.json'.format(pam.getId()))
