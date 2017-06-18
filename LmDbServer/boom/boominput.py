@@ -880,11 +880,6 @@ class ArchiveFiller(LMObject):
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
          
-         #TODO: Debugging to see if the layer in matches the layer on the new
-         #         matrix column
-         if lyr.getId() != mtxcol.layer.getId():
-            raise Exception, "Layer does not match matrix column layer {} - {}".format(lyr.getId(), mtxcol.layer.getId())
-         
          # TODO: This is a hack, post to solr needs to be retrieved from DB
          mtxcol.postToSolr = False
          if mtxcol is not None:
@@ -930,9 +925,13 @@ class ArchiveFiller(LMObject):
                                             currtime)
                rules = mtxcol.computeMe(workDir=targetDir)
                grimChain.addCommands(rules)
-               colFilenames.append(os.path.join(targetDir, 
-                                 os.path.splitext(lyr.getRelativeDLocation())[0], 
-                                 mtxcol.getTargetFilename()))
+
+               pavFname = os.path.join(targetDir, 
+                     os.path.splitext(mtxcol.layer.getRelativeDLocation())[0], 
+                     mtxcol.getTargetFilename())
+               
+               colFilenames.append(pavFname)
+               
          # TODO: Matrix Concatenate and Stockpile Rules should be created by 
          #       grim.computeMe().  LMMatrix obj should check MatrixType to  
          #       determine whether triage files are used (True for SDM PAM,  
