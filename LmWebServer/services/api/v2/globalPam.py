@@ -274,8 +274,9 @@ class GlobalPAMService(LmService):
          updatedPamMtx = self.scribe.findOrInsertMatrix(pamMtx)
          updatedPamMtx.updateStatus(status=JobStatus.COMPLETE, 
                                     modTime=gmt().mjd)
-         updatedPam2 = self.scribe.updateObject(updatedPamMtx)
-         with open(updatedPam2.getDLocation(), 'w') as outF:
+         self.scribe.updateObject(updatedPamMtx)
+         self.log.debug("Dlocation for updated pam: {}".format(updatedPamMtx.getDLocation()))
+         with open(updatedPamMtx.getDLocation(), 'w') as outF:
             pamMtx.save(outF)
       
       # GRIMs
