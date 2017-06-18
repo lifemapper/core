@@ -41,7 +41,7 @@ if __name__ == "__main__":
    #              help="If this is not None, output the status of the job here")
    parser.add_argument("outFn", type=str, 
                         help="The file location to write the resulting matrix")
-   parser.add_argument("axis", type=int, 
+   parser.add_argument("axis", type=str, 
                       help="The (Matrix) axis to concatenate these matrices on")
    parser.add_argument("mtxFn", type=str, nargs='*',
                        help="The file location of the first matrix")
@@ -50,7 +50,6 @@ if __name__ == "__main__":
    
    args = parser.parse_args()
    
-   joinAxis = args.axis
    mtxs = []
    if args.mashedPotato is not None:
       with open(args.mashedPotato, 'r') as mashIn:
