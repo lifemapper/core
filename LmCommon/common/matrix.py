@@ -123,7 +123,7 @@ class Matrix(object):
             mtx.setHeaders([''], axis=str(axis))
          
          # TODO: Handle when there are no headers for an axis
-         axisHeaders.append(mtx.getHeaders(axis=str(axis)))
+         axisHeaders.extend(mtx.getHeaders(axis=str(axis)))
          mtxObjs.append(mtx.data)
          
       # Create a new data matrix
