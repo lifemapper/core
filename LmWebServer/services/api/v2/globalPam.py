@@ -280,7 +280,7 @@ class GlobalPAMService(LmService):
          newGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
                             processType=ProcessType.RAD_INTERSECT, 
                             gcmCode=grim.gcmCode, altpredCode=grim.altpredCode,
-                            dateCode=grim.dateCode, metadata=grim.metadata,
+                            dateCode=grim.dateCode, metadata=grim.mtxMetadata,
                             userId=self.getUserId(), gridset=gs, 
                             status=JobStatus.INITIALIZE)
          insertedGrim = self.scribe.findOrInsertMatrix(newGrim)
@@ -296,7 +296,7 @@ class GlobalPAMService(LmService):
          newBG = LMMatrix(None, matrixType=MatrixType.BIOGEO_HYPOTHESES, 
                             processType=ProcessType.ENCODE_HYPOTHESES, 
                             gcmCode=bg.gcmCode, altpredCode=bg.altpredCode,
-                            dateCode=bg.dateCode, metadata=bg.metadata,
+                            dateCode=bg.dateCode, metadata=bg.mtxMetadata,
                             userId=self.getUserId(), gridset=gs, 
                             status=JobStatus.INITIALIZE)
          insertedBG = self.scribe.findOrInsertMatrix(newBG)
