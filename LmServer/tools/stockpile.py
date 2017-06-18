@@ -118,6 +118,7 @@ class Stockpile(LMObject):
             obj = scribe.getShapeGrid(lyrId=objId)
          elif ProcessType.isMatrix(ptype):
             obj = scribe.getMatrix(mtxId=objId)
+            shutil.copy(fileNames[0], obj.getDLocation())
       except Exception, e:
          msg = 'Failed to get object {} for process {}'.format(objId, ptype)
          msgs.append(msg)
