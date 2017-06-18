@@ -58,6 +58,7 @@ from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.scenario import Scenario
 from LmServer.legion.shapegrid import ShapeGrid
+from LmServer.base.layer2 import Vector
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
@@ -915,14 +916,17 @@ class ArchiveFiller(LMObject):
          colFilenames = []
 
          for lyr in scen.layers:
-            # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-            mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
-                                         currtime)
-            rules = mtxcol.computeMe(workDir=targetDir)
-            grimChain.addCommands(rules)
-            colFilenames.append(os.path.join(targetDir, 
-                              os.path.splitext(lyr.getRelativeDLocation())[0], 
-                              mtxcol.getTargetFilename()))
+            # TODO: Remove this, checking to see if shapegrid is getting added 
+            #          to scenario layers
+            if not isinstance(lyr, (ShapeGrid, Vector)):
+               # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
+               mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
+                                            currtime)
+               rules = mtxcol.computeMe(workDir=targetDir)
+               grimChain.addCommands(rules)
+               colFilenames.append(os.path.join(targetDir, 
+                                 os.path.splitext(lyr.getRelativeDLocation())[0], 
+                                 mtxcol.getTargetFilename()))
          # TODO: Matrix Concatenate and Stockpile Rules should be created by 
          #       grim.computeMe().  LMMatrix obj should check MatrixType to  
          #       determine whether triage files are used (True for SDM PAM,  
