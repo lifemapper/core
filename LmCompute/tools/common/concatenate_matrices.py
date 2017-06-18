@@ -50,7 +50,6 @@ if __name__ == "__main__":
    
    args = parser.parse_args()
    
-   joinAxis = args.axis
    mtxs = []
    if args.mashedPotato is not None:
       with open(args.mashedPotato, 'r') as mashIn:

@@ -871,13 +871,17 @@ class ArchiveFiller(LMObject):
             self.scribe.log.debug('Vector intersect not yet implemented for GRIM column {}'
                                   .format(mtxcol.getId()))
    
+         # TODO: Change ident to lyr.ident when that is populated
          tmpCol = MatrixColumn(None, mtx.getId(), self.usr, 
                 layer=lyr, shapegrid=shpGrid, 
                 intersectParams=intersectParams, 
-                squid=lyr.squid, ident=lyr.ident, processType=ptype, 
+                squid=lyr.squid, ident=lyr.name, processType=ptype, 
                 status=JobStatus.GENERAL, statusModTime=currtime,
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
+         
+         # TODO: This is a hack, post to solr needs to be retrieved from DB
+         mtxcol.postToSolr = False
          if mtxcol is not None:
             self.scribe.log.debug('Found/inserted MatrixColumn {}'.format(mtxcol.getId()))
             # Reset processType (not in db)
@@ -919,26 +923,31 @@ class ArchiveFiller(LMObject):
 #             colIdx += 1
             rules = mtxcol.computeMe(workDir=targetDir)
             grimChain.addCommands(rules)
-            colFilenames.append(os.path.join(targetDir, 
-                              os.path.splitext(lyr.getRelativeDLocation())[0], 
-                              mtxcol.getTargetFilename()))
+
+            pavFname = os.path.join(targetDir, 
+                  os.path.splitext(mtxcol.layer.getRelativeDLocation())[0], 
+                  mtxcol.getTargetFilename())
+            
+            colFilenames.append(pavFname)
+               
          # TODO: Matrix Concatenate and Stockpile Rules should be created by 
          #       grim.computeMe().  LMMatrix obj should check MatrixType to  
          #       determine whether triage files are used (True for SDM PAM,  
          #       False for GRIM, BioGeo, output matrices) 
          # TODO: Create a default "successFile" from object
          # Add concatenate command
-         wsGrim = os.path.join(targetDir, 'grim_{}.{}'
+         grimRules = []
+         wsGrim = os.path.join(targetDir, 'grim_{}{}'
                                .format(grim.getId(), LMFormat.JSON.ext))
          concatArgs = ['$PYTHON',
                        ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
+                       wsGrim, 
                        # Axis
                        '1', 
-                       wsGrim, 
                        ' '.join(colFilenames)
                        ]
          concatCmd = ' '.join(concatArgs)
-         rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
+         grimRules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
          # Stockpile GRIM
          grimSuccessFilename = os.path.join(targetDir, 
                                         'grim_{}.success'.format(grim.getId()))
@@ -951,9 +960,10 @@ class ArchiveFiller(LMObject):
                           grimSuccessFilename,
                           wsGrim]
          stockpileCmd = ' '.join(stockpileArgs)
-         rules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
+         grimRules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
                              dependencies=[wsGrim]))
          
+         grimChain.addCommands(grimRules)
          grimChain.write()
          grimChain.updateStatus(JobStatus.INITIALIZE)
          self.scribe.updateObject(grimChain)

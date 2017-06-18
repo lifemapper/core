@@ -120,10 +120,10 @@ class Matrix(object):
          if mtx.data.ndim < axis + 1: # Add 1 since zero-based
             newShape = list(mtx.data.shape) + [1]
             mtx.data = mtx.data.reshape(newShape)
-            mtx.setHeaders([''], axis=axis)
+            mtx.setHeaders([''], axis=str(axis))
          
          # TODO: Handle when there are no headers for an axis
-         axisHeaders.append(mtx.getHeaders(axis=axis))
+         axisHeaders.extend(mtx.getHeaders(axis=str(axis)))
          mtxObjs.append(mtx.data)
          
       # Create a new data matrix
@@ -131,7 +131,7 @@ class Matrix(object):
       # Use the first Matrix's headers as the base
       newHeaders = mtxList[0].getHeaders()
       # Replace the axis of headers with the concatenated version
-      newHeaders[axis] = axisHeaders
+      newHeaders[str(axis)] = axisHeaders
       return cls(newData, headers=newHeaders)
    
    # ...........................

@@ -192,7 +192,7 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             lyrRules = self.layer.computeMe(workDir=workDir)
             rules.extend(lyrRules)
          else:
-            outfname = os.path.join(os.path.basename(inputLayerFname), 'touch.out')
+            outfname = os.path.join(os.path.dirname(inputLayerFname), 'touch.out')
 #             touchCmd = '$PYTHON {} {}'.format(
 #                      ProcessTool.get(ProcessType.TOUCH), outfname)
 #             cpLyrCmd = 'LOCAL {} ; cp {} {}'.format(touchCmd, 
