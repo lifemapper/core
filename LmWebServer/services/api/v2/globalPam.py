@@ -281,7 +281,7 @@ class GlobalPAMService(LmService):
                             processType=ProcessType.RAD_INTERSECT, 
                             gcmCode=grim.gcmCode, altpredCode=grim.altpredCode,
                             dateCode=grim.dateCode, metadata=grim.mtxMetadata,
-                            userId=self.getUserId(), gridset=gs, 
+                            userId=self.getUserId(), gridset=updatedGS, 
                             status=JobStatus.INITIALIZE)
          insertedGrim = self.scribe.findOrInsertMatrix(newGrim)
          insertedGrim.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
@@ -297,7 +297,7 @@ class GlobalPAMService(LmService):
                             processType=ProcessType.ENCODE_HYPOTHESES, 
                             gcmCode=bg.gcmCode, altpredCode=bg.altpredCode,
                             dateCode=bg.dateCode, metadata=bg.mtxMetadata,
-                            userId=self.getUserId(), gridset=gs, 
+                            userId=self.getUserId(), gridset=updatedGS, 
                             status=JobStatus.INITIALIZE)
          insertedBG = self.scribe.findOrInsertMatrix(newBG)
          insertedBG.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
