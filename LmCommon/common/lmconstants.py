@@ -949,7 +949,8 @@ class ProcessType:
    
    @staticmethod
    def isMCPA(ptype):
-      if ptype in ProcessType.randomTypes():
+      if ptype in [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
+                   ProcessType.MCPA_RANDOM]:
          return True
       return False
    
