@@ -317,9 +317,10 @@ class GlobalPAMService(LmService):
          with open(insertedBG.getDLocation(), 'w') as outF:
             bgMtx.save(outF)
       
+      doMCPA = len(origGS.getBiogeographicHypotheses()) > 0 and origGS.tree is not None
       # TODO: This should be a separate service call
       rc = RADCaller(updatedGS.getId())
-      rc.analyzeGrid(doCalc=True, doMCPA=True)
+      rc.analyzeGrid(doCalc=True, doMCPA=doMCPA)
       rc.close()
 
 # ............................................................................
