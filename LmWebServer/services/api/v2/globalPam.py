@@ -37,6 +37,8 @@ from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat,\
    ProcessType
 from LmCommon.common.matrix import Matrix
 
+from LmDbServer.boom.radme import RADCaller
+
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
                                          SOLR_SERVER)
@@ -314,8 +316,11 @@ class GlobalPAMService(LmService):
          bgMtx = Matrix.load(bg.getDLocation())
          with open(insertedBG.getDLocation(), 'w') as outF:
             bgMtx.save(outF)
-         
       
+      # TODO: This should be a separate service call
+      rc = RADCaller(updatedGS.getId())
+      rc.analyzeGrid(doCalc=True, doMCPA=True)
+      rc.close()
 
 # ............................................................................
 def getRowHeaders(shapefileFilename):
