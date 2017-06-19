@@ -226,6 +226,7 @@ class Gridset(ServiceObject):
             ';', 
             'cp',
             pam.getDLocation(),
+            wsPamFilename
          ]
          touchCopyPamCmd = ' '.join(touchCopyPamArgs)
          rules.append(MfRule(touchCopyPamCmd, [wsPamFilename, pamDirTouchFilename]))
