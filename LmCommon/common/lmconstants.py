@@ -899,7 +899,8 @@ class ProcessType:
                    ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
                    ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
                    ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
-                   ProcessType.MCPA_RANDOM]:
+                   ProcessType.MCPA_RANDOM, ProcessType.ENCODE_HYPOTHESES,
+                   ProcessType.ENCODE_PHYLOGENY]:
          return True
       return False
    
