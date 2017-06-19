@@ -236,6 +236,8 @@ class GlobalPAMService(LmService):
                    epsgcode=epsgCode, userId=self.getUserId(), 
                    modTime=gmt().mjd, tree=origGS.tree)
       updatedGS = self.scribe.findOrInsertGridset(gs)
+      gs.tree = origGS.tree
+      self.scribe.updateGridset(gs)
       
       for scnId, scnMatches in matchesByScen.iteritems():
          
