@@ -56,7 +56,7 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
       # Need to add tree to grid set
       gs.tree = insertedTree
       gs.updateModtime()
-      scribe.updateObject(gs)
+      scribe.updateGridset(gs)
       
       
    
