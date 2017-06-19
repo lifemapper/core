@@ -100,13 +100,6 @@ class RADCaller(LMObject):
          fname = None
       return fname
    
-#    # ...............................................
-#    @property
-#    def userPath(self):
-#       earl = EarlJr()
-#       pth = earl.createDataPath(self.usr, LMFileType.BOOM_CONFIG)
-#       return pth
-         
    # ...............................................
    def _getDb(self):
       import logging
@@ -326,8 +319,8 @@ priority=Priority.REQUESTED
 doCalc = True
 doMCPA=False
 
-caller = RADCaller(args.gridsetId, priority=args.priority)
-caller.analyzeGrid(doCalc=args.doCalc, doMCPA=args.doMCPA)
+caller = RADCaller(gridsetId, priority=priority)
+caller.analyzeGrid(doCalc=doCalc, doMCPA=doMCPA)
 caller.close()
 
 """

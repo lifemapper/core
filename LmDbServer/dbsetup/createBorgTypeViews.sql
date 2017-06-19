@@ -168,47 +168,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_shapegrid (
         FROM lm_v3.layer l, lm_v3.shapegrid sg
         WHERE l.layerid = sg.layerid;
 
--- ----------------------------------------------------------------------------
--- lm_matrixcolumn (MatrixColumn + Matrix + Gridset user/shapegrid ids)
-DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
-(
-   -- MatrixColumn.*
-   matrixColumnId,
-   matrixId,
-   matrixIndex,
-   mtxcolsquid,
-   mtxcolident,
-   mtxcolmetadata, 
-   layerId,
-   intersectParams,
-   mtxcolstatus,
-   mtxcolstatusmodtime,
-   
-   -- Matrix.*
-   matrixType,
-   gridsetId,
-   gcmCode,
-   altpredCode,
-   dateCode,
-   matrixDlocation,
-   mtxmetadata,
-   mtxstatus,
-   mtxstatusmodtime,
-   
-   -- Gridset userid and shapegrid-layerid
-   userid, 
-   shplayerid
-) AS 
-      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
-             mc.squid, mc.ident, mc.metadata, mc.layerId,
-             mc.intersectParams, mc.status, mc.statusmodtime,
-             m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, m.dateCode, 
-             m.matrixDlocation, m.metadata, m.status, 
-             m.statusmodtime,
-             g.userid, g.layerid
-        FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
-        WHERE mc.matrixId = m.matrixId AND m.gridsetid = g.gridsetid;
 
 -- ----------------------------------------------------------------------------
 -- ----------------
@@ -500,6 +459,55 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmproject (
         AND p.mdlscenarioId = ms.scenarioid
         AND p.occurrencesetid = o.occurrencesetid;
 
+-- ----------------
+-- lm_sdmproject_lyr (SDMProject + Layer)
+DROP VIEW IF EXISTS lm_v3.lm_sdmproject_lyr CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_sdmproject_lyr (
+   -- sdmproject.*
+   sdmprojectid,
+   layerid,
+   userid,
+   occurrenceSetId,
+   algorithmCode,
+   algParams,
+   mdlscenarioId,
+   mdlmaskId,
+   prjscenarioId,
+   prjmaskId,
+   prjmetadata,
+   prjstatus,
+   prjstatusModTime,
+   
+   -- Layer.* 
+   squid,
+   lyrverify,
+   lyrname,
+   lyrdlocation,
+   lyrmetadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   valAttribute,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   lyrbbox,
+   lyrmodtime) AS
+      SELECT p.sdmprojectid, p.layerid, p.userid, p.occurrenceSetId, 
+             p.algorithmCode, p.algParams, 
+             p.mdlscenarioId, p.mdlmaskId, p.prjscenarioId, p.prjmaskId, 
+             p.metadata, p.status, p.statusModTime,
+             l.squid, l.verify, l.name, l.dlocation, l.metadata, 
+             l.dataFormat, l.gdalType, l.ogrType, l.valUnits, l.valAttribute, 
+             l.nodataVal, l.minVal, l.maxVal, 
+             l.epsgcode, l.mapunits, l.resolution, l.bbox, l.modTime
+      FROM lm_v3.sdmproject p, lm_v3.layer l
+      WHERE p.layerid = l.layerid;
+
        
 -- ----------------------------------------------------------------------------
 -- lm_occurrenceset (Occurrenceset + Taxon + TaxonomySource) 
@@ -552,6 +560,156 @@ CREATE OR REPLACE VIEW lm_v3.lm_occurrenceset (
    FROM lm_v3.occurrenceset o, lm_v3.taxon t, lm_v3.taxonomysource ts
    WHERE o.squid = t.squid 
      AND t.taxonomysourceid = ts.taxonomysourceid;
+
+-- ----------------------------------------------------------------------------
+-- lm_matrixcolumn (MatrixColumn + Matrix + Gridset user/shapegrid ids)
+DROP VIEW IF EXISTS lm_v3.lm_matrixcolumn CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
+(
+   -- MatrixColumn.*
+   matrixColumnId,
+   matrixId,
+   matrixIndex,
+   mtxcolsquid,
+   mtxcolident,
+   mtxcolmetadata, 
+   layerId,
+   intersectParams,
+   mtxcolstatus,
+   mtxcolstatusmodtime,
+   
+   -- Matrix.*
+   matrixType,
+   gridsetId,
+   gcmCode,
+   altpredCode,
+   dateCode,
+   matrixDlocation,
+   mtxmetadata,
+   mtxstatus,
+   mtxstatusmodtime,
+   
+   -- Gridset userid and shapegrid-layerid
+   userid, 
+   shplayerid
+) AS 
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
+             mc.squid, mc.ident, mc.metadata, mc.layerId,
+             mc.intersectParams, mc.status, mc.statusmodtime,
+             m.matrixType, m.gridsetId, m.gcmCode, m.altpredCode, m.dateCode, 
+             m.matrixDlocation, m.metadata, m.status, 
+             m.statusmodtime,
+             g.userid, g.layerid
+        FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
+        WHERE mc.matrixId = m.matrixId AND m.gridsetid = g.gridsetid;
+
+-- ----------------------------------------------------------------------------
+-- lm_sdmMatrixcolumn (MatrixColumn + lm_sdmproject_lyr)
+DROP VIEW IF EXISTS lm_v3.lm_sdmMatrixcolumn CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
+(
+   -- MatrixColumn.*
+   matrixColumnId,
+   matrixId,
+   matrixIndex,
+   mtxcolsquid,
+   mtxcolident,
+   mtxcolmetadata, 
+   layerId,
+   intersectParams,
+   mtxcolstatus,
+   mtxcolstatusmodtime,
+
+   -- lm_sdmproject_lyr
+   sdmprojectid,
+   -- layerid,
+   userid,
+   occurrenceSetId,
+   algorithmCode,
+   algParams,
+   mdlscenarioId,
+   mdlmaskId,
+   prjscenarioId,
+   prjmaskId,
+   prjmetadata,
+   prjstatus,
+   prjstatusModTime,
+   -- squid,
+   lyrverify,
+   lyrname,
+   lyrdlocation,
+   lyrmetadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   valAttribute,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   lyrbbox,
+   lyrmodtime) AS
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
+             mc.squid, mc.ident, mc.metadata, mc.layerId,
+             mc.intersectParams, mc.status, mc.statusmodtime,
+             pl.sdmprojectid, pl.userid, pl.occurrenceSetId, pl.algorithmCode, 
+             pl.algParams, pl.mdlscenarioId, pl.mdlmaskId, pl.prjscenarioId, 
+             pl.prjmaskId, pl.prjmetadata, pl.prjstatus, pl.prjstatusModTime, 
+             pl.lyrverify, pl.lyrname, pl.lyrdlocation, pl.lyrmetadata, 
+             pl.dataFormat, pl.gdalType, pl.ogrType, pl.valUnits, 
+             pl.valAttribute, pl.nodataVal, pl.minVal, pl.maxVal, pl.epsgcode,
+             pl.mapunits, pl.resolution, pl.lyrbbox, pl.lyrmodtime
+        FROM lm_v3.MatrixColumn mc, lm_v3.lm_sdmproject_lyr pl
+        WHERE mc.layerid = pl.layerId;
+
+-- ----------------------------------------------------------------------------
+-- lm_lyrMatrixcolumn (MatrixColumn + Layer)
+DROP VIEW IF EXISTS lm_v3.lm_lyrMatrixcolumn CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_lyrMatrixcolumn
+(
+   -- MatrixColumn.*
+   matrixColumnId,
+   matrixId,
+   matrixIndex,
+   mtxcolsquid,
+   mtxcolident,
+   mtxcolmetadata, 
+   layerId,
+   intersectParams,
+   mtxcolstatus,
+   mtxcolstatusmodtime,
+   -- Layer
+   userid,
+   --squid,
+   lyrverify,
+   lyrname,
+   lyrdlocation,
+   lyrmetadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   valAttribute,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   lyrbbox,
+   lyrmodTime) AS
+      SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
+             mc.squid, mc.ident, mc.metadata, mc.layerId,
+             mc.intersectParams, mc.status, mc.statusmodtime,
+             l.userid, l.verify, l.name, l.dlocation, l.metadata, 
+             l.dataFormat, l.gdalType, l.ogrType, l.valUnits, 
+             l.valAttribute, l.nodataVal, l.minVal, l.maxVal, l.epsgcode,
+             l.mapunits, l.resolution, l.bbox, l.modtime
+        FROM lm_v3.MatrixColumn mc, lm_v3.Layer l
+        WHERE mc.layerid = l.layerId;
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
@@ -624,7 +782,10 @@ lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_sdmProject, 
+lm_v3.lm_sdmproject_lyr,
 lm_v3.lm_matrixcolumn,
+lm_v3.lm_sdmMatrixcolumn,
+lm_v3.lm_lyrMatrixcolumn,
 lm_v3.lm_matrix,
 lm_v3.lm_fullmatrix,
 lm_v3.lm_gridset,
@@ -637,7 +798,10 @@ lm_v3.lm_scenlayer,
 lm_v3.lm_shapegrid,
 lm_v3.lm_occurrenceset, 
 lm_v3.lm_sdmProject, 
+lm_v3.lm_sdmproject_lyr,
 lm_v3.lm_matrixcolumn,
+lm_v3.lm_sdmMatrixcolumn,
+lm_v3.lm_lyrMatrixcolumn,
 lm_v3.lm_matrix,
 lm_v3.lm_fullmatrix,
 lm_v3.lm_gridset,

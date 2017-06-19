@@ -89,7 +89,7 @@ class ArchiveFiller(LMObject):
    # ...............................................
    def initializeInputs(self, configFname=None):
       """
-      @summary Constructor for ArchiveFiller class.
+      @summary Initialize configured and stored inputs for ArchiveFiller class.
       """
       # Allow reset configuration
       if configFname is not None:

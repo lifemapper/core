@@ -25,7 +25,8 @@
 """
 import os
 
-from LmCommon.common.lmconstants import MatrixType, ProcessType, CSV_INTERFACE
+from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
+                                         LMFormat, JobStatus)
 from LmCommon.common.matrix import Matrix
 from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMServiceType, LMFileType, ProcessTool)
@@ -268,3 +269,39 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       rules.append(uRule)
         
       return rules
+
+   # .............................
+   # TODO: add these to computeMe with conditional processing for Matrix attributes
+   def getConcatAndStockpileRules(self, mtxcolFnames, workDir=None):
+      # Make sure work dir is not None
+      if workDir is None:
+         workDir = ''
+      rules = []
+      # Add concatenate command
+      mtxOutputFname = os.path.join(workDir, 'mtx_{}{}'
+                                    .format(self.getId(), LMFormat.JSON.ext))
+      concatArgs = ['$PYTHON',
+                    ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
+                    mtxOutputFname, 
+                    # Axis
+                    '1', 
+                    ' '.join(mtxcolFnames)
+                    ]
+      concatCmd = ' '.join(concatArgs)
+      rules.append(MfRule(concatCmd, [mtxOutputFname], dependencies=mtxcolFnames))
+      # Stockpile Matrix
+      mtxSuccessFilename = os.path.join(workDir, 'mtx_{}.success'
+                                        .format(self.getId()))
+      stockpileArgs = ['LOCAL',
+                       '$PYTHON',
+                       ProcessTool.get(ProcessType.UPDATE_OBJECT),
+                       '-s {}'.format(JobStatus.COMPLETE),
+                       str(ProcessType.CONCATENATE_MATRICES),
+                       str(self.getId()),
+                       mtxSuccessFilename,
+                       mtxOutputFname]
+      stockpileCmd = ' '.join(stockpileArgs)
+      rules.append(MfRule(stockpileCmd, [mtxSuccessFilename], 
+                          dependencies=[mtxOutputFname]))
+      return rules
+

@@ -300,13 +300,11 @@ class Borg(DbPostgresql):
       """
       mtxcol = None
       if row is not None:
-         # Ids of joined inputs, not used yet
+         # Returned by only some functions
+         inputLyr = self._createLayer(row, idxs)
+         # Ids of joined input layers
          lyrid = self._getColumnValue(row,idxs,['layerid']) 
          shpgrdid = self._getColumnValue(row,idxs,['shplayerid']) 
-         if lyrid:
-            inputLayer = self.getBaseLayer(lyrid, None, None, None, None)
-         if shpgrdid:
-            shpgrid = self.getShapeGrid(shpgrdid, None, None, None)
          mtxcolid = self._getColumnValue(row,idxs,['matrixcolumnid']) 
          mtxid = self._getColumnValue(row,idxs,['matrixid']) 
          mtxIndex = self._getColumnValue(row,idxs,['matrixindex']) 
@@ -319,7 +317,7 @@ class Borg(DbPostgresql):
          usr = self._getColumnValue(row,idxs,['userid'])
 
          mtxcol = MatrixColumn(mtxIndex, mtxid, usr, 
-                        layer=inputLayer, shapegrid=shpgrid, 
+                        layer=inputLyr, layerId=lyrid, shapeGridId=shpgrdid, 
                         intersectParams=intparams,
                         squid=squid, ident=ident,
                         processType=None, metadata=mtxcolmeta, 
@@ -1727,7 +1725,7 @@ class Borg(DbPostgresql):
       return success
 
 # ...............................................
-   def getMatrixColumn(self, mtxcol=None, mtxcolId=None):
+   def getMatrixColumn(self, mtxcol, mtxcolId):
       """
       @summary: Get an existing MatrixColumn
       @param mtxcol: a MatrixColumn object with unique parameters matching the 
@@ -1750,6 +1748,23 @@ class Borg(DbPostgresql):
                                              mtxcolId, None, None, None, None)
       mtxColumn = self._createMatrixColumn(row, idxs)
       return mtxColumn
+
+# ...............................................
+   def getMatrixColumnsForMatrix(self, mtxId):
+      """
+      @summary: Get all existing MatrixColumns for a Matrix
+      @param mtxId: a database ID for the LmServer.legion.LMMatrix 
+                     object to return columns for
+      @return: a list of LmServer.legion.MatrixColumn objects
+      """
+      mtxColumns = []
+      if mtxId is not None:
+         rows, idxs = self.executeSelectManyFunction('lm_getColumnsForMatrix', 
+                                                     mtxId)
+         for r in rows:
+            mtxcol = self._createMatrixColumn(r, idxs)
+            mtxColumns.append(mtxcol)
+      return mtxColumns
 
 
 

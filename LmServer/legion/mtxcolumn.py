@@ -56,7 +56,8 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
 # .............................................................................
    def __init__(self, matrixIndex, matrixId, userId, 
                 # inputs if this is connected to a layer and shapegrid 
-                layer=None, shapegrid=None, intersectParams={}, 
+                layer=None, layerId=None, shapegrid=None, shapeGridId=None, 
+                intersectParams={}, 
                 squid=None, ident=None,
                 processType=None, 
                 metadata={}, 
@@ -193,11 +194,6 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             rules.extend(lyrRules)
          else:
             outfname = os.path.join(os.path.dirname(inputLayerFname), 'touch.out')
-#             touchCmd = '$PYTHON {} {}'.format(
-#                      ProcessTool.get(ProcessType.TOUCH), outfname)
-#             cpLyrCmd = 'LOCAL {} ; cp {} {}'.format(touchCmd, 
-#                                                     self.layer.getDLocation(), 
-#                                                     inputLayerFname)
             cmdArgs = ['LOCAL', 
                        '$PYTHON',
                        ProcessTool.get(ProcessType.TOUCH), 
@@ -277,7 +273,6 @@ class MatrixColumn(Matrix, _LayerParameters, ServiceObject, ProcessObject):
             solrRule = MfRule(solrCmd, [postXmlFilename], 
                               dependencies=[pavFname])
             rules.append(solrRule)
-         
-
+      
       return rules
 

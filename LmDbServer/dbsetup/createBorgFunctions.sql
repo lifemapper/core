@@ -2180,6 +2180,24 @@ END;
 
 $$  LANGUAGE 'plpgsql' STABLE;
 
+
+-- ----------------------------------------------------------------------------
+-- Gets a matrixColumn with its matrix
+CREATE OR REPLACE FUNCTION lm_v3.lm_getColumnsForMatrix(mtxid int)
+   RETURNS SETOF lm_v3.lm_lyrMatrixcolumn AS
+$$
+DECLARE
+   rec lm_v3.lm_lyrMatrixcolumn%rowtype;
+BEGIN
+   FOR rec IN 
+      SELECT * FROM lm_v3.lm_lyrMatrixcolumn WHERE matrixid = mtxid
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
 -- ----------------------------------------------------------------------------
 -- Matrix
 -- ----------------------------------------------------------------------------
