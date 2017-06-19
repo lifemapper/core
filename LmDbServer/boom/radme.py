@@ -249,8 +249,8 @@ class RADCaller(LMObject):
                                       pamDict=pamDict)
          
       mfChain = self._createMF(rules)
-      #mfChain.addCommands(rules)
-      #mfChain.write()
+      mfChain.updateStatus(JobStatus.INITIALIZE)
+      self._scribe.updateObject(mfChain)
 
       self._scribe.log.info('  Wrote Gridset MF file')
       
