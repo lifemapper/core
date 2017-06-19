@@ -37,6 +37,8 @@ from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat,\
    ProcessType
 from LmCommon.common.matrix import Matrix
 
+from LmDbServer.boom.radme import RADCaller
+
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
                                          SOLR_SERVER)
@@ -234,6 +236,10 @@ class GlobalPAMService(LmService):
                    epsgcode=epsgCode, userId=self.getUserId(), 
                    modTime=gmt().mjd, tree=origGS.tree)
       updatedGS = self.scribe.findOrInsertGridset(gs)
+      updatedGS.tree = origGS.tree
+      self.log.debug("Tree for gridset {} is {}".format(updatedGS.getId(), updatedGS.tree.getId()))
+      updatedGS.updateModtime()
+      self.scribe.updateGridset(updatedGS)
       
       for scnId, scnMatches in matchesByScen.iteritems():
          
@@ -314,8 +320,12 @@ class GlobalPAMService(LmService):
          bgMtx = Matrix.load(bg.getDLocation())
          with open(insertedBG.getDLocation(), 'w') as outF:
             bgMtx.save(outF)
-         
       
+      doMCPA = len(origGS.getBiogeographicHypotheses()) > 0 and origGS.tree is not None
+      # TODO: This should be a separate service call
+      rc = RADCaller(updatedGS.getId())
+      rc.analyzeGrid(doCalc=True, doMCPA=doMCPA)
+      rc.close()
 
 # ............................................................................
 def getRowHeaders(shapefileFilename):

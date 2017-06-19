@@ -112,7 +112,10 @@ def standardizeMatrix(mtx, weights):
    
    stdDevWeighted = ((s2 - (s1**2.0 / totalSum)) / (totalSum))**0.5
    
-   stdMtx = (ones.T.dot(stdDevWeighted)**-1.0) * (mtx - ones.T.dot(meanWeighted))
+   # Fixes any invalid values created previously
+   tmp = np.nan_to_num(ones.T.dot(stdDevWeighted)**-1.0)
+   
+   stdMtx = tmp * (mtx - ones.T.dot(meanWeighted))
    
    return stdMtx
 
@@ -291,8 +294,19 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
             semiPartialMtx[j, i] = 0.0
          # Calculate F semi-partial
          fSemiPartialMtx[j, i] = (rSq - remainingRsq) / totalPsigmaResidual
+   
+   # Adding headers for each Matrix
+   adjR2Mtx = Matrix(adjRsq, headers={'0' : phyloMtx.getColumnHeaders(),
+                                      '1' : ['Adjusted R-squared']})
+   fGlobalMtx = Matrix(fGlobal, headers={'0' : phyloMtx.getColumnHeaders(),
+                                         '1' : ['F-Global']})
+   spMtx = Matrix(semiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
+                                        '1' : predictorMtx.getColumnHeaders()})
+   fSpMtx = Matrix(fSemiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
+                                        '1' : predictorMtx.getColumnHeaders()})
+   
                                  
-   return Matrix(adjRsq), Matrix(fGlobal), Matrix(semiPartialMtx), Matrix(fSemiPartialMtx)
+   return adjR2Mtx, fGlobalMtx, spMtx, fSpMtx
 
 # .............................................................................
 def mcpa(pam, phyloMtx, grim, bioGeoHypotheses=None, numPermutations=9999):

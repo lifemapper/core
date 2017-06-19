@@ -410,7 +410,8 @@ class Gridset(ServiceObject):
             # Env Randomizations
             envFglobRands = []
             envFpartRands = []
-            for i in range(10):
+            # TODO: This should be configurable 
+            for i in range(5):
                envFglobRandFilename = os.path.join(pamWorkDir, 
                                                'envFglobRand{}.json'.format(i))
                envFpartRandFilename = os.path.join(pamWorkDir, 
@@ -420,7 +421,7 @@ class Gridset(ServiceObject):
                randCmd = ' '.join([
                   '$PYTHON',
                   randMcpaScript,
-                  '-n 10',
+                  '-n 5',
                   wsPamFilename,
                   encTreeFilename,
                   wsGrimFilename,
@@ -531,7 +532,8 @@ class Gridset(ServiceObject):
             # BG Randomizations
             bgFglobRands = []
             bgFpartRands = []
-            for i in range(10):
+            # TODO: This should be configurable 
+            for i in range(5):
                bgFglobRandFilename = os.path.join(pamWorkDir, 
                                                'bgFglobRand{}.json'.format(i))
                bgFpartRandFilename = os.path.join(pamWorkDir, 
@@ -541,7 +543,7 @@ class Gridset(ServiceObject):
                randCmd = ' '.join(['$PYTHON',
                                    randMcpaScript,
                                    '-b {}'.format(wsBGFilename),
-                                   '-n 10',
+                                   '-n 5',
                                    wsPamFilename,
                                    encTreeFilename,
                                    wsGrimFilename,
