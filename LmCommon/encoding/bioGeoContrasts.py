@@ -95,7 +95,7 @@ class BioGeoEncoding(object):
          else:
             features = self._getFeaturesWithEvent(dloc, eventField)
          for featureTuple, label in features:
-            encodedLayers.append(self._encodeFeatures(featureTuple), label=label)
+            encodedLayers.append(self._encodeFeatures(featureTuple, label=label))
       
       matrix = Matrix.concatenate(encodedLayers, axis=1)
       return matrix
