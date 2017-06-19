@@ -46,7 +46,7 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
 
    # If a tree was provided
    if treeFilename and treeName:
-      t = Tree(treeName, dlocation=treeFilename)
+      t = Tree(treeName, dlocation=treeFilename, userId=gs.getUserId())
       insertedTree = scribe.findOrInsertTree(t)
       insertedTree.updateModtime()
       insertedTree.tree = t.tree
