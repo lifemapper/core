@@ -228,14 +228,14 @@ class RADCaller(LMObject):
                                              pam.gcmCode, pam.altpredCode, 
                                              pam.dateCode)
             # BG F global
-            pd[MatrixType.MCPA_ENV_F_GLOBAL] = self._getOrInsertMatrix(
+            pd[MatrixType.MCPA_BG_F_GLOBAL] = self._getOrInsertMatrix(
                                              gridsetId, 
                                              MatrixType.MCPA_BG_F_GLOBAL, 
                                              ProcessType.MCPA_CORRECT_PVALUES,
                                              pam.gcmCode, pam.altpredCode, 
                                              pam.dateCode)
             # BG F semi partial   
-            pd[MatrixType.MCPA_ENV_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
+            pd[MatrixType.MCPA_BG_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
                                              MatrixType.MCPA_BG_F_SEMI, 
                                              ProcessType.MCPA_CORRECT_PVALUES,
                                              pam.gcmCode, pam.altpredCode, 
