@@ -56,10 +56,9 @@ class Tree(LmTree, ServiceObject):
       if treeDict:
          LmTree.__init__(self, treeDict)
       elif dlocation is not None:
-         if os.path.exists(dlocation):
-            with open(dlocation) as inF:
-               treeDict = json.load(inF)
-            LmTree.__init__(self, treeDict)
+         with open(dlocation) as inF:
+            treeDict = json.load(inF)
+         LmTree.__init__(self, treeDict)
       else:
          LmTree.__init__(self, {})
       self.name = name
