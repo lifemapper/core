@@ -127,7 +127,7 @@ class RADCaller(LMObject):
                 and configFile written by ArchiveFiller.initBoom.
       """
       desc = ('Makeflow for RAD computations on Gridset {}, {} for User {}'
-              .format(self._gridsetId, self._gridsetName, self.userId))
+              .format(self.gridsetId, self.gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
               MFChain.META_DESC: desc }
       
