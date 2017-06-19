@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import json
 import os
 
 from LmBackend.common.lmobj import LMObject
@@ -55,7 +56,9 @@ class Tree(LmTree, ServiceObject):
       if treeDict:
          LmTree.__init__(self, treeDict)
       elif dlocation is not None:
-         LmTree.fromFile(dlocation)   
+         with open(dlocation) as inF:
+            treeDict = json.load(inF)
+         LmTree.__init__(self, treeDict)
       else:
          LmTree.__init__(self, {})
       self.name = name

@@ -416,6 +416,7 @@ class LMFileType:
    GRIM = 223
    SUM_CALCS = 241
    SUM_SHAPE = 242
+   CALCS = 243 # New rad calcs
    RAD_MAP = 250
    
    BIOGEO_HYPOTHESES = 322
@@ -452,7 +453,8 @@ class LMFileType:
                    LMFileType.ATTR_MATRIX, 
                    LMFileType.PAM, LMFileType.GRIM, 
                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
-                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.TREE]:
+                   LMFileType.BIOGEO_HYPOTHESES, LMFileType.TREE,
+                   LMFileType.CALCS]:
          return True
       return False
 
@@ -484,7 +486,8 @@ class LMFileType:
    @staticmethod
    def isMatrix(rtype):
       if rtype in [LMFileType.PAM, LMFileType.GRIM, LMFileType.BIOGEO_HYPOTHESES, 
-                   LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS]:
+                   LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS,
+                   LMFileType.CALCS]:
          return True
       return False
    
@@ -496,10 +499,25 @@ class LMFileType:
          return LMFileType.GRIM
       elif mtype == MatrixType.BIOGEO_HYPOTHESES:
          return LMFileType.BIOGEO_HYPOTHESES
-      elif mtype == MatrixType.PADDED_PAM:
-         return LMFileType.PADDED_PAM
-      elif mtype == MatrixType.MCPA_OUTPUTS:
+      #elif mtype == MatrixType.PADDED_PAM:
+      #   return LMFileType.PADDED_PAM
+      #elif mtype == MatrixType.MCPA_OUTPUTS:
+      elif mtype in [MatrixType.MCPA_OUTPUTS, MatrixType.MCPA_BG_F_GLOBAL, 
+               MatrixType.MCPA_BG_F_SEMI, MatrixType.MCPA_BG_OBS_ADJ_R_SQ,
+               MatrixType.MCPA_BG_OBS_PARTIAL, MatrixType.MCPA_BG_RAND_F_GLOBAL, 
+               MatrixType.MCPA_BG_RAND_F_PARTIAL, MatrixType.MCPA_ENV_F_GLOBAL, 
+               MatrixType.MCPA_ENV_F_SEMI, MatrixType.MCPA_ENV_OBS_ADJ_R_SQ,
+               MatrixType.MCPA_ENV_OBS_PARTIAL, MatrixType.MCPA_ENV_RAND_F_GLOBAL, 
+               MatrixType.MCPA_ENV_RAND_F_PARTIAL]:
          return LMFileType.MCPA_OUTPUTS
+      elif mtype in [MatrixType.OBSERVED_CALC, MatrixType.SITES_OBSERVED,
+                     MatrixType.SPECIES_OBSERVED, MatrixType.DIVERSITY_OBSERVED,
+                     MatrixType.SCHLUTER_OBSERVED, MatrixType.SPECIES_COV_OBSERVED,
+                     MatrixType.SITES_COV_OBSERVED, MatrixType.RANDOM_CALC,
+                     MatrixType.SITES_RANDOM, MatrixType.SPECIES_RANDOM,
+                     MatrixType.DIVERSITY_RANDOM, MatrixType.SCHLUTER_RANDOM,
+                     MatrixType.SPECIES_COV_RANDOM, MatrixType.SITES_COV_RANDOM]:
+         return LMFileType.CALCS
 
 NAME_SEPARATOR = '_'
 
@@ -538,6 +556,7 @@ class FileFix:
              LMFileType.PAM: 'pam',
              LMFileType.GRIM: 'grim',
              LMFileType.SUM_CALCS: PAMSUM_PREFIX,
+             LMFileType.CALCS: 'calc', # TODO: Add to this?
              LMFileType.SUM_SHAPE: PAMSUM_PREFIX,
 
              LMFileType.BOOM_CONFIG: None,
@@ -591,7 +610,8 @@ class FileFix:
                 LMFileType.BIOGEO_HYPOTHESES: LMFormat.JSON.ext,
                 LMFileType.TREE: LMFormat.JSON.ext,
                 LMFileType.PADDED_PAM: LMFormat.JSON.ext,
-                LMFileType.MCPA_OUTPUTS: LMFormat.JSON.ext
+                LMFileType.MCPA_OUTPUTS: LMFormat.JSON.ext,
+                LMFileType.CALCS: LMFormat.JSON.ext
    }
    @staticmethod
    def getMaptypeFromName(prefix=None, ext=None):

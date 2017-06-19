@@ -94,8 +94,8 @@ class BioGeoEncoding(object):
             features = self._getFeaturesNoEvent(dloc)
          else:
             features = self._getFeaturesWithEvent(dloc, eventField)
-         for featureTuple in features:
-            encodedLayers.append(self._encodeFeatures(featureTuple))
+         for featureTuple, label in features:
+            encodedLayers.append(self._encodeFeatures(featureTuple, label=label))
       
       matrix = Matrix.concatenate(encodedLayers, axis=1)
       return matrix
@@ -169,7 +169,7 @@ class BioGeoEncoding(object):
       except: # Second feature is optional
          pass
       
-      return [(feat1, feat2)]
+      return [(feat1, feat2), os.path.basename(layerDL)]
    
    # ..............................
    def _getFeaturesWithEvent(self, layerDL, eventField):
@@ -235,7 +235,7 @@ class BioGeoEncoding(object):
          except: # Second feature is optional
             pass
          
-         featuresList.append((feat1, feat2))
+         featuresList.append(((feat1, feat2), de))
 
       return featuresList
       

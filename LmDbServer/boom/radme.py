@@ -127,13 +127,15 @@ class RADCaller(LMObject):
                 and configFile written by ArchiveFiller.initBoom.
       """
       desc = ('Makeflow for RAD computations on Gridset {}, {} for User {}'
-              .format(self._gridsetId, self._gridsetName, self.userId))
+              .format(self.gridsetId, self.gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
               MFChain.META_DESC: desc }
       
       newMFC = MFChain(self.userId, metadata=meta, priority=self._priority,
                        status=JobStatus.GENERAL, statusModTime=CURR_MJD)
       mfChain = self._scribe.insertMFChain(newMFC)
+
+      mfChain.addCommands(rules)
 
       mfChain.write()
       self._scribe.updateObject(mfChain)
@@ -150,6 +152,10 @@ class RADCaller(LMObject):
       for pam in self._gridset.getPAMs():
          pamId = pam.getId()
          pd = {}
+         
+         # Add PAM
+         pd[MatrixType.PAM] = pam
+         
          
          if doCalc:
             # Sites matrix
@@ -242,9 +248,9 @@ class RADCaller(LMObject):
       rules = self._gridset.computeMe(doCalc=doCalc, doMCPA=doMCPA, 
                                       pamDict=pamDict)
          
-      mfChain = self._createMF()
-      mfChain.addCommands(rules)
-      mfChain.write()
+      mfChain = self._createMF(rules)
+      #mfChain.addCommands(rules)
+      #mfChain.write()
 
       self._scribe.log.info('  Wrote Gridset MF file')
       

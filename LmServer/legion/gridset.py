@@ -222,7 +222,7 @@ class Gridset(ServiceObject):
                   
       for pamId in pamDict.keys():
          # Copy PAM into workspace
-         pam = pamDict[pamId]['pam']
+         pam = pamDict[pamId][MatrixType.PAM]
          pamWorkDir = os.path.join(targetDir, 'pam_{}_work'.format(pam.getId()))
          wsPamFilename = os.path.join(pamWorkDir, 
                                             'pam_{}.json'.format(pam.getId()))
@@ -234,6 +234,7 @@ class Gridset(ServiceObject):
             ';', 
             'cp',
             pam.getDLocation(),
+            wsPamFilename
          ]
          touchCopyPamCmd = ' '.join(touchCopyPamArgs)
          rules.append(MfRule(touchCopyPamCmd, [wsPamFilename, pamDirTouchFilename]))
@@ -260,7 +261,7 @@ class Gridset(ServiceObject):
             ]
             rules.append(
                MfRule(' '.join(siteStatsStockPileArgs), [sitesSuccessFilename], 
-                      depedencies=[siteStatsFilename]))
+                      dependencies=[siteStatsFilename]))
 
             # Species stats
             spStatsMtx = pamDict[pamId][MatrixType.SPECIES_OBSERVED]
@@ -279,7 +280,7 @@ class Gridset(ServiceObject):
             ]
             rules.append(
                MfRule(' '.join(spStatsStockPileArgs), [spSuccessFilename], 
-                      depedencies=[spStatsFilename]))
+                      dependencies=[spStatsFilename]))
             
             # Diversity stats
             divStatsMtx = pamDict[pamId][MatrixType.DIVERSITY_OBSERVED]
@@ -298,7 +299,7 @@ class Gridset(ServiceObject):
             ]
             rules.append(
                MfRule(' '.join(divStatsStockPileArgs), [divSuccessFilename], 
-                      depedencies=[divStatsFilename]))
+                      dependencies=[divStatsFilename]))
             
             # TODO: Site covariance, species covariance, schluter
             

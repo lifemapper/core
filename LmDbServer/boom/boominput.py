@@ -953,7 +953,7 @@ class ArchiveFiller(LMObject):
                           '$PYTHON',
                           ProcessTool.get(ProcessType.UPDATE_OBJECT),
                           '-s {}'.format(JobStatus.COMPLETE),
-                          str(ProcessType.INTERSECT_RASTER_GRIM),
+                          str(ProcessType.CONCATENATE_MATRICES),
                           str(grim.getId()),
                           grimSuccessFilename,
                           wsGrim]

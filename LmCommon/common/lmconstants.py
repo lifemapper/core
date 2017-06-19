@@ -897,7 +897,9 @@ class ProcessType:
       if ptype in [ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
                    ProcessType.RAD_INTERSECT, ProcessType.RAD_COMPRESS, 
                    ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                   ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY]:
+                   ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
+                   ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
+                   ProcessType.MCPA_RANDOM]:
          return True
       return False
    
@@ -947,7 +949,8 @@ class ProcessType:
    
    @staticmethod
    def isMCPA(ptype):
-      if ptype in ProcessType.randomTypes():
+      if ptype in [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
+                   ProcessType.MCPA_RANDOM]:
          return True
       return False
    
