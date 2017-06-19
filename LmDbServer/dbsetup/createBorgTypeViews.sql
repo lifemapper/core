@@ -218,6 +218,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    gridsetId,
    userId,
    grdname,
+   treeId,
    layerId,
    grddlocation,
    grdepsgcode,
@@ -250,7 +251,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
    resolution,
    bbox,
    lyrmodtime) AS
-   SELECT g.gridsetId, g.userId, g.name, g.layerId, 
+   SELECT g.gridsetId, g.userId, g.name, g.treeId, g.layerId, 
           g.dlocation, g.epsgcode, g.metadata, g.modTime,
           lsg.cellsides, lsg.cellsize, lsg.vsize, lsg.idAttribute,
           lsg.xAttribute, lsg.yAttribute, lsg.shpgrdstatus, 
@@ -261,6 +262,69 @@ CREATE OR REPLACE VIEW lm_v3.lm_gridset (
           lsg.resolution, lsg.bbox, lsg.lyrmodtime
    FROM lm_v3.gridset g
    LEFT JOIN lm_v3.lm_shapegrid lsg ON g.layerid = lsg.layerid; 
+
+-- ----------------------------------------------------------------------------
+-- ----------------
+-- lm_tree  (lm_gridset + tree)
+DROP VIEW IF EXISTS lm_v3.lm_tree CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_tree (
+   -- lm_gridset.*
+   gridsetId,
+   userId,
+   grdname,
+   treeId,
+   layerId,
+   grddlocation,
+   grdepsgcode,
+   grdmetadata,
+   grdmodTime,
+   cellsides,
+   cellsize,
+   vsize,
+   idAttribute,
+   xAttribute,
+   yAttribute,
+   shpgrdstatus,
+   shpgrdstatusmodtime,
+   lyrsquid,
+   lyrverify,
+   lyrname,
+   lyrdlocation,
+   lyrmetadata,
+   dataFormat,
+   gdalType,
+   ogrType,
+   valUnits,
+   valAttribute,
+   nodataVal,
+   minVal,
+   maxVal,
+   epsgcode,
+   mapunits,
+   resolution,
+   bbox,
+   lyrmodtime, 
+   -- Tree
+   treename,
+   treedlocation,
+   isBinary,
+   isUltrametric,
+   hasBranchLengths,
+   treemetadata,
+   treemodTime,
+) AS
+   SELECT lg.gridsetId, lg.userId, lg.grdname, lg.treeId, lg.layerId, 
+          lg.grddlocation, lg.grdepsgcode, lg.grdmetadata, lg.grdmodTime, 
+          lg.cellsides, lg.cellsize, lg.vsize, lg.idAttribute, lg.xAttribute, 
+          lg.yAttribute, lg.shpgrdstatus, lg.shpgrdstatusmodtime, lg.lyrsquid, 
+          lg.lyrverify, lg.lyrname, lg.lyrdlocation, lg.lyrmetadata, 
+          lg.dataFormat, lg.gdalType, lg.ogrType, lg.valUnits, lg.valAttribute, 
+          lg.nodataVal, lg.minVal, lg.maxVal, lg.epsgcode, lg.mapunits, 
+          lg.resolution, lg.bbox, lg.lyrmodtime,
+          t.name, t.dlocation, t.isBinary, t.isUltrametric, 
+          t.hasBranchLengths, t.metadata, t.modTime
+   FROM lm_v3.lm_gridset lg
+   LEFT JOIN lm_v3.tree t ON lg.treeid = t.treeid; 
 
 -- ----------------
 -- lm_matrix (Matrix + lm_gridset (Gridset + lm_shapegrid))

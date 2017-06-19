@@ -231,8 +231,10 @@ class Borg(DbPostgresql):
       grdset = None
       if row is not None:
          shp = self._createShapeGrid(row, idxs)
+         tree = self._createTree(row, idxs)
          shpId = self._getColumnValue(row, idxs, ['layerid'])
          grdid = self._getColumnValue(row, idxs, ['gridsetid'])
+         treeid = self._getColumnValue(row, idxs, ['treeid'])
          usr = self._getColumnValue(row, idxs, ['userid'])
          name = self._getColumnValue(row, idxs, ['grdname', 'name'])
          dloc = self._getColumnValue(row, idxs, ['grddlocation', 'dlocation'])
@@ -240,7 +242,8 @@ class Borg(DbPostgresql):
          meta = self._getColumnValue(row, idxs, ['grdmetadata', 'metadata'])
          mtime = self._getColumnValue(row, idxs, ['grdmodtime', 'modtime'])
          grdset = Gridset(name=name, metadata=meta, shapeGrid=shp, 
-                          shapeGridId=shpId, dlocation=dloc, epsgcode=epsg, userId=usr, 
+                          shapeGridId=shpId, tree=tree, treeId=treeid, 
+                          dlocation=dloc, epsgcode=epsg, userId=usr, 
                           gridsetId=grdid, modTime=mtime)
       return grdset
    
@@ -253,14 +256,14 @@ class Borg(DbPostgresql):
       tree = None
       if row is not None:
          treeid = self._getColumnValue(row, idxs, ['treeid'])
-         usr = self._getColumnValue(row, idxs, ['userid'])
-         name = self._getColumnValue(row, idxs, ['name'])
-         dloc = self._getColumnValue(row, idxs, ['dlocation'])
+         usr = self._getColumnValue(row, idxs, ['treeuserid', 'userid'])
+         name = self._getColumnValue(row, idxs, ['treename', 'name'])
+         dloc = self._getColumnValue(row, idxs, ['treedlocation', 'dlocation'])
          isbin = self._getColumnValue(row, idxs, ['isbinary'])
          isultra = self._getColumnValue(row, idxs, ['isultrametric'])
          haslen = self._getColumnValue(row, idxs, ['hasbranchlengths'])
-         meta = self._getColumnValue(row, idxs, ['metadata'])
-         modtime = self._getColumnValue(row, idxs, ['metadata'])
+         meta = self._getColumnValue(row, idxs, ['treemetadata', 'metadata'])
+         modtime = self._getColumnValue(row, idxs, ['treemodtime', 'modtime'])
          tree = Tree(name, metadata=meta, dlocation=dloc, userId=usr, 
                      treeId=treeid, modTime=modtime)
       return tree
@@ -848,7 +851,21 @@ class Borg(DbPostgresql):
             objs.append(self._createGridset(r, idxs))
       return objs
 
-
+# ...............................................
+   def updateGridset(self, grdset):
+      """
+      @summary: Update a LmServer.legion.Gridset
+      @param grdset: the LmServer.legion.Gridset object to update
+      @return: Boolean success/failure
+      """
+      meta = grdset.dumpGrdMetadata()
+      success = self.executeModifyFunction('lm_updateGridset', 
+                                           grdset.getId(), 
+                                           grdset.treeId, 
+                                           grdset.getDLocation(),
+                                           meta, grdset.modTime)
+      return success
+   
 # ...............................................
    def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType, gcmCode, altpredCode, dateCode):
       """

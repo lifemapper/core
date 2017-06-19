@@ -915,12 +915,10 @@ class ArchiveFiller(LMObject):
          
          # Need to keep track of intersections for matrix concatenation
          colFilenames = []
-#          colIdx = 0
          for lyr in scen.layers:
             # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
             mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
                                              currtime)
-#             colIdx += 1
             rules = mtxcol.computeMe(workDir=targetDir)
             grimChain.addCommands(rules)
 

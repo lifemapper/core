@@ -341,12 +341,12 @@ create table lm_v3.Tree
    treeId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
-   -- metadataUrl text UNIQUE,
-   -- original (Newick or JSON)
    dlocation text,
+   
    isBinary boolean,
    isUltrametric boolean,
    hasBranchLengths boolean,
+   
    metadata text,
    modTime double precision,
    UNIQUE (userId, name)
@@ -359,7 +359,7 @@ create table lm_v3.Gridset
    gridsetId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
-   -- metadataUrl text UNIQUE,
+   treeId int NOT NULL REFERENCES lm_v3.Tree,   
    
    -- optional shapegrid 
    layerId int REFERENCES lm_v3.ShapeGrid,
@@ -410,26 +410,6 @@ create table lm_v3.Matrix
    status int,
    statusmodtime double precision,
    UNIQUE (gridsetId, matrixType, gcmCode, altpredCode, dateCode)
-);
-
--- -------------------------------
--- Link user Tree with a Gridset
--- Input/Output Object 
-create table lm_v3.GridsetTree
-(
-   gridsetTreeId serial UNIQUE PRIMARY KEY,
-   treeId int NOT NULL REFERENCES lm_v3.Tree ON DELETE CASCADE,
-   gridsetId int NOT NULL REFERENCES lm_v3.Gridset ON DELETE CASCADE,
-   isPruned boolean,
-   isBinary boolean,
-   
-   -- TODO: Names?!
-   -- JSON, with PAM_MtxIds, used for display, input for RAD, MCPA
-   treePamLinkDlocation text,
-   -- Encoded Tree Matrix, used in MCPA calcs, can be used with multiple BioGeoHypotheses
-   treeEncodedMatrixDlocation text,
-   -- TreeCorrelationLink, JSON, used for display
-   treeCorrLinkDlocation text
 );
 
 -- -------------------------------

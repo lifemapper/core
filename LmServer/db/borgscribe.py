@@ -497,6 +497,14 @@ class BorgScribe(LMObject):
       return objs
 
 # ...............................................
+   def updateGridset(self, grdset):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::updateGridset()
+      """
+      success = self._borg.updateGridset(grdset)
+      return success
+
+# ...............................................
    def findTaxonSource(self, taxonSourceName):
       """
       @copydoc LmServer.db.catalog_borg.Borg::findTaxonSource()

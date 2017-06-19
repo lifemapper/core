@@ -85,6 +85,17 @@ class DaBoom(Daemon):
       # Stop walken the archive and saveNextStart
       self.boomer.close()
       Daemon.onShutdown(self)
+      
+   # ...............................................
+   @property
+   def logFilename(self):
+      try:
+         fname = self.log.baseFilename
+      except:
+         fname = None
+      return fname
+   
+
 
 # .............................................................................
 if __name__ == "__main__":

@@ -46,8 +46,9 @@ class Gridset(ServiceObject):
 # Constructor
 # .............................................................................
    def __init__(self, name=None, metadata={}, 
-                shapeGrid=None, shapeGridId=None, siteIndicesFilename=None, 
-                dlocation=None, epsgcode=None, matrices=None, tree=None,
+                shapeGrid=None, shapeGridId=None, tree=None, treeId=None,
+                siteIndicesFilename=None, 
+                dlocation=None, epsgcode=None, matrices=None, 
                 userId=None, gridsetId=None, metadataUrl=None, modTime=None):
       """
       @summary Constructor for the Gridset class
@@ -110,6 +111,13 @@ class Gridset(ServiceObject):
 
    epsgcode = property(_getEPSG, _setEPSG)
       
+   @property
+   def treeId(self):
+      try:
+         return self.tree.getId()
+      except:
+         return None
+         
 # .............................................................................
 # Private methods
 # .............................................................................

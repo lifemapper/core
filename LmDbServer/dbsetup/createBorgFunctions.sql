@@ -697,7 +697,29 @@ BEGIN
    END IF;
    RETURN rec;
 END;
-$$  LANGUAGE 'plpgsql' VOLATILE;    
+$$  LANGUAGE 'plpgsql' VOLATILE; 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_updateGridset(gsid int,
+                                                  trid text,
+                                                  dloc text,
+                                                  meta varchar, 
+                                                  mtime double precision)
+RETURNS int AS
+$$
+DECLARE
+   success int = -1;
+BEGIN
+   UPDATE lm_v3.Gridset SET (treeId, dlocation, metadata, modTime) 
+                          = (trid, dloc, meta, mtime) WHERE gridsetId = gsid;
+   IF FOUND THEN 
+      success = 0;
+   END IF;
+      
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
 
 -- ----------------------------------------------------------------------------
 -- Get an existing gridset
