@@ -359,7 +359,7 @@ create table lm_v3.Gridset
    gridsetId serial UNIQUE PRIMARY KEY,
    userId varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(100) NOT NULL,
-   treeId int NOT NULL REFERENCES lm_v3.Tree,   
+   treeId int REFERENCES lm_v3.Tree,   
    
    -- optional shapegrid 
    layerId int REFERENCES lm_v3.ShapeGrid,
