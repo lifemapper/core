@@ -291,8 +291,19 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
             semiPartialMtx[j, i] = 0.0
          # Calculate F semi-partial
          fSemiPartialMtx[j, i] = (rSq - remainingRsq) / totalPsigmaResidual
+   
+   # Adding headers for each Matrix
+   adjR2Mtx = Matrix(adjRsq, headers={'0' : phyloMtx.getColumnHeaders(),
+                                      '1' : ['Adjusted R-squared']})
+   fGlobalMtx = Matrix(fGlobal, headers={'0' : phyloMtx.getColumnHeaders(),
+                                         '1' : ['F-Global']})
+   spMtx = Matrix(semiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
+                                        '1' : predictorMtx.getColumnHeaders()})
+   fSpMtx = Matrix(fSemiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
+                                        '1' : predictorMtx.getColumnHeaders()})
+   
                                  
-   return Matrix(adjRsq), Matrix(fGlobal), Matrix(semiPartialMtx), Matrix(fSemiPartialMtx)
+   return adjR2Mtx, fGlobalMtx, spMtx, fSpMtx
 
 # .............................................................................
 def mcpa(pam, phyloMtx, grim, bioGeoHypotheses=None, numPermutations=9999):
