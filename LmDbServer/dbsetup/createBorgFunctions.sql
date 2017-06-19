@@ -701,7 +701,7 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_updateGridset(gsid int,
-                                                  trid text,
+                                                  trid int,
                                                   dloc text,
                                                   meta varchar, 
                                                   mtime double precision)
