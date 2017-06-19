@@ -246,7 +246,7 @@ class RADCaller(LMObject):
       rules = self._gridset.computeMe(doCalc=doCalc, doMCPA=doMCPA, 
                                       pamDict=pamDict)
          
-      mfChain = self._createMF(rules)
+      mfChain = self._createMF()
       mfChain.addCommands(rules)
       mfChain.write()
 
