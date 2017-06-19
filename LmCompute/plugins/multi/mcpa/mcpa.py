@@ -112,7 +112,10 @@ def standardizeMatrix(mtx, weights):
    
    stdDevWeighted = ((s2 - (s1**2.0 / totalSum)) / (totalSum))**0.5
    
-   stdMtx = (ones.T.dot(stdDevWeighted)**-1.0) * (mtx - ones.T.dot(meanWeighted))
+   # Fixes any invalid values created previously
+   tmp = np.nan_to_num(ones.T.dot(stdDevWeighted)**-1.0)
+   
+   stdMtx = tmp * (mtx - ones.T.dot(meanWeighted))
    
    return stdMtx
 
