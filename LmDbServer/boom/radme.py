@@ -121,7 +121,7 @@ class RADCaller(LMObject):
       return scribe
       
    # ...............................................
-   def _createMF(self, rules):
+   def _createMF(self):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
                 and configFile written by ArchiveFiller.initBoom.
@@ -247,7 +247,7 @@ class RADCaller(LMObject):
                                       pamDict=pamDict)
          
       mfChain = self._createMF(rules)
-      #mfChain.addCommands(rules)
+      mfChain.addCommands(rules)
       mfChain.write()
 
       self._scribe.log.info('  Wrote Gridset MF file')
