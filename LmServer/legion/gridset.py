@@ -252,7 +252,7 @@ class Gridset(ServiceObject):
             ]
             rules.append(
                MfRule(' '.join(siteStatsStockPileArgs), [sitesSuccessFilename], 
-                      depedencies=[siteStatsFilename]))
+                      dependencies=[siteStatsFilename]))
 
             # Species stats
             spStatsMtx = pamDict[pamId][MatrixType.SPECIES_OBSERVED]
@@ -271,7 +271,7 @@ class Gridset(ServiceObject):
             ]
             rules.append(
                MfRule(' '.join(spStatsStockPileArgs), [spSuccessFilename], 
-                      depedencies=[spStatsFilename]))
+                      dependencies=[spStatsFilename]))
             
             # Diversity stats
             divStatsMtx = pamDict[pamId][MatrixType.DIVERSITY_OBSERVED]
@@ -290,7 +290,7 @@ class Gridset(ServiceObject):
             ]
             rules.append(
                MfRule(' '.join(divStatsStockPileArgs), [divSuccessFilename], 
-                      depedencies=[divStatsFilename]))
+                      dependencies=[divStatsFilename]))
             
             # TODO: Site covariance, species covariance, schluter
             
