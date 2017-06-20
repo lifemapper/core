@@ -52,6 +52,7 @@ class Pammer(LMObject):
       @summary Constructor for ArchiveFiller class.
       """
       super(Pammer, self).__init__()
+      self.name = self.__class__.__name__.lower()
       self.PAMs = []
       self.GRIMs = []
       self.doPAM = doPAM 
@@ -109,7 +110,7 @@ class Pammer(LMObject):
               .format(mtx.getId(), self.gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESC: desc}
-      newMFC = MFChain(self.userId, priority=self.priority, 
+      newMFC = MFChain(self.userId, priority=self._priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
       mtxChain = self._scribe.insertMFChain(newMFC)
