@@ -62,9 +62,9 @@ class Pammer(LMObject):
       except: 
          raise
       self.open()
-      self._gridset = self._scribe.getGridset(gridsetId=self._gridsetId, 
-                                              userId=self._userId, 
-                                              name=self._gridsetName,
+      self._gridset = self._scribe.getGridset(gridsetId=gridsetId, 
+                                              userId=userId, 
+                                              name=gridsetName,
                                               fillMatrices=True)
       if self._gridset is None:
          raise LMError(currargs='Failed to retrieve Gridset for Id {}'
