@@ -111,7 +111,7 @@ class Pammer(LMObject):
       # Create MFChain for this GPAM
       desc = ('Makeflow for Matrix {}, Gridset {}, User {}'
               .format(mtx.getId(), self.gridsetName, self.usr))
-      meta = {MFChain.META_CREATED_BY: self.name,
+      meta = {MFChain.META_CREATED_BY: 'pammer',
               MFChain.META_DESC: desc}
       newMFC = MFChain(self.usr, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
