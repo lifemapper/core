@@ -180,7 +180,10 @@ class Pammer(LMObject):
       return self._gridset.name
    
    def _setGridsetName(self, value):
-      self._gridset.name = value
+      try:
+         self._gridset.name = value
+      except:
+         pass
       
    gridsetName = property(_getGridsetName, _setGridsetName)
    
