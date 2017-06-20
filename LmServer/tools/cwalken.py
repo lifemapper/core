@@ -409,6 +409,8 @@ class ChristopherWalken(LMObject):
 
             # Reset processType (not in db)
             mtxcol.processType = ptype
+            # DB does not populate with shapegrid on insert
+            mtxcol.shapegrid = self.boomGridset.getShapegrid()
             
             # Rollback if obsolete or failed
             reset = self._doReset(mtxcol.status, mtxcol.statusModTime)
