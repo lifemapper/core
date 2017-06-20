@@ -176,9 +176,13 @@ class Pammer(LMObject):
       return self._gridset.getId()
    
    # ...............................................
-   @property
-   def gridsetName(self):
+   def _getGridsetName(self):
       return self._gridset.name
+   
+   def _setGridsetName(self, value):
+      self._gridset.name = value
+      
+   gridsetName = property(_getGridsetName, _setGridsetName)
    
    # ...............................................
    def open(self):
