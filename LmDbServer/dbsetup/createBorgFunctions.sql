@@ -1861,6 +1861,17 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 
 -- ----------------------------------------------------------------------------
+DROP FUNCTION lm_v3.lm_findOrInsertMatrixColumn(usr varchar,
+                                                             mtxcolid int,
+                                                             mtxid int,
+                                                             mtxidx int,
+                                                             lyrid int,
+                                                             sqd varchar,
+                                                             idnt varchar,
+                                                             meta text,
+                                                             intparams text,
+                                                             stat int,
+                                                             stattime double precision);
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(usr varchar,
                                                              mtxcolid int,
                                                              mtxid int,
@@ -1872,14 +1883,14 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(usr varchar,
                                                              intparams text,
                                                              stat int,
                                                              stattime double precision)
-RETURNS lm_v3.lm_matrixcolumn AS
+RETURNS lm_v3.lm_lyrMatrixcolumn AS
 $$
 DECLARE
    lyrcount int;
    mtxcount int;
    newid int;
    rec_lyr lm_v3.layer%rowtype;
-   rec_mtxcol lm_v3.lm_matrixcolumn%rowtype;
+   rec_mtxcol lm_v3.lm_lyrMatrixcolumn%rowtype;
 BEGIN
    -- check existence of required referenced matrix
    SELECT count(*) INTO mtxcount FROM lm_v3.Matrix WHERE matrixid = mtxid;
@@ -1901,7 +1912,7 @@ BEGIN
    IF mtxidx IS NOT NULL AND mtxidx > -1 THEN
       begin
          RAISE NOTICE 'look for unique with matrixid %, matrixIndex %', mtxid, mtxidx;
-         SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+         SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
             WHERE matrixid = mtxid AND matrixIndex = mtxidx;
          IF FOUND THEN
             RAISE NOTICE 'Returning existing MatrixColumn for Matrix % and Column %',
@@ -1913,7 +1924,7 @@ BEGIN
    ELSEIF lyrid IS NOT NULL THEN
       begin
          RAISE NOTICE 'look for unique with lyr %', lyrid;
-         SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+         SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
             WHERE matrixid = mtxid AND layerid = lyrid AND intersectParams = intparams;
          IF FOUND THEN
             RAISE NOTICE 
@@ -1929,7 +1940,7 @@ BEGIN
                RAISE EXCEPTION 'Unable to findOrInsertMatrixColumn';
             ELSE
                SELECT INTO newid last_value FROM lm_v3.matrixcolumn_matrixcolumnid_seq;
-               SELECT * INTO rec_mtxcol FROM lm_v3.lm_matrixcolumn 
+               SELECT * INTO rec_mtxcol FROM lm_v3.lm_lyrMatrixcolumn 
                   WHERE matrixColumnId = newid;
             END IF;
          END IF;

@@ -342,49 +342,34 @@ if __name__ == "__main__":
 """
 $PYTHON LmDbServer/boom/boom.py --help
 
-import argparse
 import mx.DateTime as dt
 import os, sys, time
 
 from LmDbServer.boom.boomer import *
-from LmBackend.common.daemon import Daemon
-from LmDbServer.common.lmconstants import BOOM_PID_FILE
-from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import JobStatus, ProcessType
+from LmCommon.common.readyfile import readyFilename
+from LmBackend.common.lmobj import LMError, LMObject
 from LmServer.base.utilities import isCorrectUser
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import PUBLIC_FQDN, PUBLIC_USER
-from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
+from LmServer.common.localconstants import (PUBLIC_FQDN, PUBLIC_USER, 
+                                            SCRATCH_PATH)
+from LmServer.common.lmconstants import (LMFileType, PUBLIC_ARCHIVE_NAME, 
+                                         ProcessTool)
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.cmd import MfRule
 from LmServer.legion.processchain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
-
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.gridset import Gridset
 from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.sdmproj import SDMProjection
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-         SERVER_BOOM_HEADING, MatrixType) 
+          SERVER_BOOM_HEADING, MatrixType) 
 
-secs = time.time()
-tuple = time.localtime(secs)
-timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", tuple))
+
 scriptname = 'boomerTesting'
-logname = '{}.{}'.format(scriptname, timestamp)
-logger = ScriptLogger(logname, level=logging.DEBUG)
+logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 
-earl = EarlJr()
-pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
-configFname = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
-                                                 LMFormat.CONFIG.ext))
-earl = EarlJr()
-pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
-configFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
-                                                    LMFormat.CONFIG.ext))
-
+configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
 boomer = Boomer(configFname, log=logger)
 
 boomer.initializeMe()
@@ -397,30 +382,67 @@ scribe = boomer._scribe
 ptype = ProcessType.INTERSECT_RASTER
 borg = scribe._borg
 
-spud, potatoInputs = chris.startWalken()
-boomer.keepWalken = not chris.complete
+# spud, potatoInputs = chris.startWalken()
+# self.keepWalken = not chris.complete
+# if  spud:
+#    self._addRuleToMasterPotatoHead(spud, prefix='spud')
+#    # Gather species ARF dependency to delay start of multi-species MF
+#    spudArf = spud.getArfFilename(prefix='spud')
+#    self.spudArfFnames.append(spudArf)
+#    # Add PAV outputs to raw potato files for triage input
+#    squid = spud.mfMetadata[MFChain.META_SQUID]
+#    if potatoInputs:
+#       for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
+#          pavFname = potatoInputs[scencode]
+#          triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
+#       self.log.info('Wrote spud squid to {} arf files'
+#                     .format(len(potatoInputs)))
+#    if len(self.spudArfFnames) >= SPUD_LIMIT:
+#       self.rotatePotatoes()
 
 
-spud = self._createSpudMakeflow(spudObjs)
+# spud, potatoInputs = chris.startWalken()
+# boomer.keepWalken = not chris.complete
+
+objs = []
+occ = woc.getOne()
+objs.append(occ)
+prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, 
+                                            currtime)
+objs.append(prj)
+mtx = chris.globalPAMs[prjscen.code]
+
+if LMFormat.isGDAL(driver=prj.dataFormat):
+   ptype = ProcessType.INTERSECT_RASTER
+else:
+   ptype = ProcessType.INTERSECT_VECTOR
+
+tmpCol = MatrixColumn(None, mtx.getId(), chris.userId, 
+       layer=prj, shapegrid=chris.boomGridset.getShapegrid(), 
+       intersectParams=chris.intersectParams, 
+       squid=prj.squid, ident=prj.ident,
+       processType=ptype, metadata={}, matrixColumnId=None, 
+       postToSolr=chris.assemblePams,
+       status=JobStatus.GENERAL, statusModTime=currtime)
+
+mtxcol, mReset = chris._createOrResetIntersect(prj, mtx, 
+                                              currtime)
+objs.append(mtxcol)
+spudObjs = [o for o in objs if o is not None]
+
+squid = occ.squid
+speciesName = occ.displayName
+meta = {MFChain.META_CREATED_BY: chris.name,
+        MFChain.META_DESC: 'Spud for User {}, Archive {}, Species {}'
+        .format(chris.userId, chris.archiveName, speciesName),
+        MFChain.META_SQUID: squid}
+newMFC = MFChain(chris.userId, priority=chris.priority, 
+                  metadata=meta, status=JobStatus.GENERAL, 
+                  statusModTime=currtime)
+updatedMFChain = chris._scribe.insertMFChain(newMFC)
 
 
-if self.assemblePams and spud:
-   self.log.debug('Processing spud for potatoes')
-   # Add MF rule for Spud execution to Master MF
-   self._addRuleToMasterPotatoHead(spud, prefix='spud')
-   # Gather species ARF dependency to delay start of multi-species MF
-   spudArf = spud.getArfFilename(prefix='spud')
-   self.spudArfFnames.append(spudArf)
-   # Add PAV outputs to raw potato files for triage input
-   squid = spud.mfMetadata[MFChain.META_SQUID]
-   if potatoInputs:
-      for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
-         pavFname = potatoInputs[scencode]
-         triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
-      self.log.info('Wrote spud squid to {} arf files'
-                    .format(len(potatoInputs)))
-   if len(self.spudArfFnames) >= SPUD_LIMIT:
-      self.rotatePotatoes()
+spud = chris._createSpudMakeflow(spudObjs)
 
 # occ, setOrReset = woc.getOne()
 # prj, pReset = chris._createOrResetSDMProject(occ, alg, prjscen, currtime)

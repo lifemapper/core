@@ -880,6 +880,9 @@ class ArchiveFiller(LMObject):
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
          
+         # DB does not populate with shapegrid on insert
+         mtxcol.shapegrid = shpGrid
+         
          # TODO: This is a hack, post to solr needs to be retrieved from DB
          mtxcol.postToSolr = False
          if mtxcol is not None:
