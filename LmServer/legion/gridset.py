@@ -36,6 +36,11 @@ from LmServer.common.lmconstants import LMFileType, LMServiceType, ProcessTool
 from LmServer.legion.lmmatrix import LMMatrix                                  
 from LmServer.legion.cmd import MfRule
 
+# TODO: Move these to localconstants
+NUM_RAND_GROUPS = 2
+NUM_RAND_PER_GROUP = 5 
+
+
 # .............................................................................
 class Gridset(ServiceObject):
    """
@@ -410,8 +415,7 @@ class Gridset(ServiceObject):
             # Env Randomizations
             envFglobRands = []
             envFpartRands = []
-            # TODO: This should be configurable 
-            for i in range(5):
+            for i in range(NUM_RAND_GROUPS):
                envFglobRandFilename = os.path.join(pamWorkDir, 
                                                'envFglobRand{}.json'.format(i))
                envFpartRandFilename = os.path.join(pamWorkDir, 
@@ -421,7 +425,7 @@ class Gridset(ServiceObject):
                randCmd = ' '.join([
                   '$PYTHON',
                   randMcpaScript,
-                  '-n 5',
+                  '-n {}'.format(NUM_RAND_PER_GROUP),
                   wsPamFilename,
                   encTreeFilename,
                   wsGrimFilename,
@@ -535,7 +539,7 @@ class Gridset(ServiceObject):
             bgFglobRands = []
             bgFpartRands = []
             # TODO: This should be configurable 
-            for i in range(5):
+            for i in range(NUM_RAND_GROUPS):
                bgFglobRandFilename = os.path.join(pamWorkDir, 
                                                'bgFglobRand{}.json'.format(i))
                bgFpartRandFilename = os.path.join(pamWorkDir, 
@@ -545,7 +549,7 @@ class Gridset(ServiceObject):
                randCmd = ' '.join(['$PYTHON',
                                    randMcpaScript,
                                    '-b {}'.format(wsBGFilename),
-                                   '-n 5',
+                                   '-n {}'.format(NUM_RAND_PER_GROUP),
                                    wsPamFilename,
                                    encTreeFilename,
                                    wsGrimFilename,
