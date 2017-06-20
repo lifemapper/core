@@ -113,7 +113,7 @@ class Pammer(LMObject):
               .format(mtx.getId(), self.gridsetName, self.usr))
       meta = {MFChain.META_CREATED_BY: 'pammer',
               MFChain.META_DESC: desc}
-      newMFC = MFChain(self.usr, priority=self.priority, 
+      newMFC = MFChain(self.usr, priority=self._priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
       mtxChain = self.scribe.insertMFChain(newMFC)
