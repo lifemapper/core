@@ -106,13 +106,13 @@ class Pammer(LMObject):
          postToSolr = True
       # Create MFChain for this GPAM
       desc = ('Makeflow for Matrix {}, Gridset {}, User {}'
-              .format(mtx.getId(), self.gridsetName, self.userIdrId))
+              .format(mtx.getId(), self.gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESC: desc}
       newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
-      mtxChain = self.scribe.insertMFChain(newMFC)
+      mtxChain = self._scribe.insertMFChain(newMFC)
       # Add layer intersect rules to it
       targetDir = mtxChain.getRelativeDirectory()
       mtxcols = self._scribe.getMatrixColumnsForMatrix(mtx.getId())
@@ -144,8 +144,8 @@ class Pammer(LMObject):
       mtxChain.addCommands(mtxRules)
       mtxChain.write()
       mtxChain.updateStatus(JobStatus.INITIALIZE)
-      self.scribe.updateObject(mtxChain)
-      self.scribe.log.info('  Wrote Matrix Intersect Makeflow {} for {}'
+      self._scribe.updateObject(mtxChain)
+      self._scribe.log.info('  Wrote Matrix Intersect Makeflow {} for {}'
                     .format(mtxChain.objId, desc))
                
       return mtxChain
@@ -177,9 +177,16 @@ class Pammer(LMObject):
       return self._gridset.getId()
    
    # ...............................................
-   @property
-   def gridsetName(self):
+   def _getGridsetName(self):
       return self._gridset.name
+   
+   def _setGridsetName(self, value):
+      try:
+         self._gridset.name = value
+      except:
+         pass
+      
+   gridsetName = property(_getGridsetName, _setGridsetName)
    
    # ...............................................
    def open(self):
@@ -247,14 +254,14 @@ if __name__ == '__main__':
             description=('Intersect all PAM and/or GRIM layers for a Gridset.'))
    parser.add_argument('gridsetId', type=int,
             help=('Database Id for the Gridset on which to intersect layers'))
-   parser.add_argument('name', type=int,
+   parser.add_argument('name', type=str,
             help=('Name for the Gridset on which to intersect layers'))
-   parser.add_argument('userId', type=int,
+   parser.add_argument('userId', type=str,
             help=('User Id for the Gridset on which to to intersect layers'))
-   parser.add_argument('-c', '--doPam', action='store_true',
+   parser.add_argument('-pam', '--doPam', action='store_true',
             help=('Compute multi-species matrix outputs for the matrices ' +
                   'in this Gridset.'))
-   parser.add_argument('-c', '--doGrim', action='store_true',
+   parser.add_argument('-grim', '--doGrim', action='store_true',
             help=('Compute multi-species matrix outputs for the matrices ' +
                   'in this Gridset.'))
    parser.add_argument('-p', '--priority', type=int, choices=[0,1,2,3,4,5], 
@@ -269,8 +276,8 @@ if __name__ == '__main__':
       
    caller = Pammer(gridsetId=gridsetId, gridsetName=gridsetName, userId=userId, 
                    doPAM=doPam, doGRIM=doGrim, priority=args.priority)
-   Pammer.initializeInputs()
-   Pammer.assembleIntersects()
+   caller.initializeInputs()
+   caller.assembleIntersects()
    caller.close()
     
 """
