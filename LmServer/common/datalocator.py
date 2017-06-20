@@ -619,7 +619,7 @@ class EarlJr(LMObject):
          try:
             occsetId = int(occsetIdStr)
          except:
-            msg = 'Improper Archive Data mapname %; ' % mapname
+            msg = 'Improper Archive Data mapname %s ; ' % mapname
             msg += 'Should be %s + OccurrenceSetId' % MapPrefix.SDM
             raise LMError(currargs=msg, doTrace=True)
       # RAD_MAP mapname = rad_<gridsetId>
@@ -627,7 +627,7 @@ class EarlJr(LMObject):
          try:
             gridsetId = int(parts[1])
          except:
-            msg = 'Improper RAD mapname %; ' % mapname
+            msg = 'Improper RAD mapname %s ; ' % mapname
             msg += 'Should be %s + gridsetId' % MapPrefix.RAD
             raise LMError(currargs=msg, doTrace=True)
          
