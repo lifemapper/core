@@ -116,7 +116,7 @@ class Pammer(LMObject):
       newMFC = MFChain(self.usr, priority=self._priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
-      mtxChain = self.scribe.insertMFChain(newMFC)
+      mtxChain = self._scribe.insertMFChain(newMFC)
       # Add layer intersect rules to it
       targetDir = mtxChain.getRelativeDirectory()
       mtxcols = self._scribe.getMatrixColumnsForMatrix(mtx.getId())
@@ -147,8 +147,8 @@ class Pammer(LMObject):
       mtxChain.addCommands(mtxRules)
       mtxChain.write()
       mtxChain.updateStatus(JobStatus.INITIALIZE)
-      self.scribe.updateObject(mtxChain)
-      self.scribe.log.info('  Wrote Matrix Intersect Makeflow {} for {}'
+      self._scribe.updateObject(mtxChain)
+      self._scribe.log.info('  Wrote Matrix Intersect Makeflow {} for {}'
                     .format(mtxChain.objId, desc))
                
       return mtxChain
