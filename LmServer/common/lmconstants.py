@@ -418,11 +418,40 @@ class LMFileType:
    SUM_SHAPE = 242
    CALCS = 243 # New rad calcs
    RAD_MAP = 250
-   
+   # RAD statistic matrices
+   OBSERVED_CALC = 260 
+   SITES_OBSERVED = 261
+   SPECIES_OBSERVED = 262
+   DIVERSITY_OBSERVED = 263
+   SCHLUTER_OBSERVED = 264
+   SPECIES_COV_OBSERVED = 265
+   SITES_COV_OBSERVED = 266
+   RANDOM_CALC = 267
+   SITES_RANDOM = 268
+   SPECIES_RANDOM = 269
+   DIVERSITY_RANDOM = 270
+   SCHLUTER_RANDOM = 271
+   SPECIES_COV_RANDOM = 272
+   SITES_COV_RANDOM = 273
+      
    BIOGEO_HYPOTHESES = 322
    PADDED_PAM = 323
    MCPA_OUTPUTS = 324
    TREE = 325
+   
+   MCPA_BG_F_GLOBAL = 330 
+   MCPA_BG_F_SEMI = 331
+   MCPA_BG_OBS_ADJ_R_SQ = 332
+   MCPA_BG_OBS_PARTIAL = 333
+   MCPA_BG_RAND_F_GLOBAL = 334
+   MCPA_BG_RAND_F_PARTIAL = 335
+   MCPA_ENV_F_GLOBAL = 336
+   MCPA_ENV_F_SEMI = 337
+   MCPA_ENV_OBS_ADJ_R_SQ = 338
+   MCPA_ENV_OBS_PARTIAL = 339
+   MCPA_ENV_RAND_F_GLOBAL = 340
+   MCPA_ENV_RAND_F_PARTIAL = 341
+   
 
    USER_LAYER = 510
    USER_SHAPEGRID = 511
@@ -454,7 +483,20 @@ class LMFileType:
                    LMFileType.PAM, LMFileType.GRIM, 
                    LMFileType.SUM_CALCS, LMFileType.SUM_SHAPE, 
                    LMFileType.BIOGEO_HYPOTHESES, LMFileType.TREE,
-                   LMFileType.CALCS]:
+                   LMFileType.CALCS, LMFileType.MCPA_BG_F_GLOBAL,
+                   LMFileType.MCPA_BG_F_SEMI, LMFileType.MCPA_BG_OBS_ADJ_R_SQ,
+                   LMFileType.MCPA_BG_OBS_PARTIAL, LMFileType.MCPA_BG_RAND_F_GLOBAL,
+                   LMFileType.MCPA_BG_RAND_F_PARTIAL, LMFileType.MCPA_ENV_F_GLOBAL,
+                   LMFileType.MCPA_ENV_F_SEMI, LMFileType.MCPA_ENV_OBS_ADJ_R_SQ,
+                   LMFileType.MCPA_ENV_OBS_PARTIAL, LMFileType.MCPA_ENV_RAND_F_GLOBAL,
+                   LMFileType.MCPA_ENV_RAND_F_PARTIAL, LMFileType.OBSERVED_CALC, 
+                   LMFileType.SITES_OBSERVED, LMFileType.SPECIES_OBSERVED,
+                   LMFileType.DIVERSITY_OBSERVED, LMFileType.SCHLUTER_OBSERVED,
+                   LMFileType.SPECIES_COV_OBSERVED, LMFileType.SITES_COV_OBSERVED,
+                   LMFileType.RANDOM_CALC, LMFileType.SITES_RANDOM,
+                   LMFileType.SPECIES_RANDOM, LMFileType.DIVERSITY_RANDOM,
+                   LMFileType.SCHLUTER_RANDOM, LMFileType.SPECIES_COV_RANDOM,
+                   LMFileType.SITES_COV_RANDOM]:
          return True
       return False
 
@@ -487,7 +529,20 @@ class LMFileType:
    def isMatrix(rtype):
       if rtype in [LMFileType.PAM, LMFileType.GRIM, LMFileType.BIOGEO_HYPOTHESES, 
                    LMFileType.TREE, LMFileType.PADDED_PAM, LMFileType.MCPA_OUTPUTS,
-                   LMFileType.CALCS]:
+                   LMFileType.CALCS, LMFileType.MCPA_BG_F_GLOBAL,
+                   LMFileType.MCPA_BG_F_SEMI, LMFileType.MCPA_BG_OBS_ADJ_R_SQ,
+                   LMFileType.MCPA_BG_OBS_PARTIAL, LMFileType.MCPA_BG_RAND_F_GLOBAL,
+                   LMFileType.MCPA_BG_RAND_F_PARTIAL, LMFileType.MCPA_ENV_F_GLOBAL,
+                   LMFileType.MCPA_ENV_F_SEMI, LMFileType.MCPA_ENV_OBS_ADJ_R_SQ,
+                   LMFileType.MCPA_ENV_OBS_PARTIAL, LMFileType.MCPA_ENV_RAND_F_GLOBAL,
+                   LMFileType.MCPA_ENV_RAND_F_PARTIAL, LMFileType.OBSERVED_CALC, 
+                   LMFileType.SITES_OBSERVED, LMFileType.SPECIES_OBSERVED,
+                   LMFileType.DIVERSITY_OBSERVED, LMFileType.SCHLUTER_OBSERVED,
+                   LMFileType.SPECIES_COV_OBSERVED, LMFileType.SITES_COV_OBSERVED,
+                   LMFileType.RANDOM_CALC, LMFileType.SITES_RANDOM,
+                   LMFileType.SPECIES_RANDOM, LMFileType.DIVERSITY_RANDOM,
+                   LMFileType.SCHLUTER_RANDOM, LMFileType.SPECIES_COV_RANDOM,
+                   LMFileType.SITES_COV_RANDOM]:
          return True
       return False
    
@@ -501,23 +556,56 @@ class LMFileType:
          return LMFileType.BIOGEO_HYPOTHESES
       #elif mtype == MatrixType.PADDED_PAM:
       #   return LMFileType.PADDED_PAM
-      #elif mtype == MatrixType.MCPA_OUTPUTS:
-      elif mtype in [MatrixType.MCPA_OUTPUTS, MatrixType.MCPA_BG_F_GLOBAL, 
-               MatrixType.MCPA_BG_F_SEMI, MatrixType.MCPA_BG_OBS_ADJ_R_SQ,
-               MatrixType.MCPA_BG_OBS_PARTIAL, MatrixType.MCPA_BG_RAND_F_GLOBAL, 
-               MatrixType.MCPA_BG_RAND_F_PARTIAL, MatrixType.MCPA_ENV_F_GLOBAL, 
-               MatrixType.MCPA_ENV_F_SEMI, MatrixType.MCPA_ENV_OBS_ADJ_R_SQ,
-               MatrixType.MCPA_ENV_OBS_PARTIAL, MatrixType.MCPA_ENV_RAND_F_GLOBAL, 
-               MatrixType.MCPA_ENV_RAND_F_PARTIAL]:
+      elif mtype == MatrixType.MCPA_OUTPUTS:
          return LMFileType.MCPA_OUTPUTS
-      elif mtype in [MatrixType.OBSERVED_CALC, MatrixType.SITES_OBSERVED,
-                     MatrixType.SPECIES_OBSERVED, MatrixType.DIVERSITY_OBSERVED,
-                     MatrixType.SCHLUTER_OBSERVED, MatrixType.SPECIES_COV_OBSERVED,
-                     MatrixType.SITES_COV_OBSERVED, MatrixType.RANDOM_CALC,
-                     MatrixType.SITES_RANDOM, MatrixType.SPECIES_RANDOM,
-                     MatrixType.DIVERSITY_RANDOM, MatrixType.SCHLUTER_RANDOM,
-                     MatrixType.SPECIES_COV_RANDOM, MatrixType.SITES_COV_RANDOM]:
-         return LMFileType.CALCS
+      elif mtype == MatrixType.MCPA_BG_F_GLOBAL:
+         return LMFileType.MCPA_BG_F_GLOBAL
+      elif mtype == MatrixType.MCPA_BG_F_SEMI:
+         return LMFileType.MCPA_BG_F_SEMI
+      elif mtype == MatrixType.MCPA_BG_OBS_ADJ_R_SQ:
+         return LMFileType.MCPA_BG_OBS_ADJ_R_SQ
+      elif mtype == MatrixType.MCPA_BG_OBS_PARTIAL:
+         return LMFileType.MCPA_BG_OBS_PARTIAL
+      elif mtype == MatrixType.MCPA_BG_RAND_F_GLOBAL:
+         return LMFileType.MCPA_BG_RAND_F_PARTIAL
+      elif mtype == MatrixType.MCPA_ENV_F_GLOBAL:
+         return LMFileType.MCPA_ENV_F_GLOBAL
+      elif mtype == MatrixType.MCPA_ENV_F_SEMI:
+         return LMFileType.MCPA_ENV_F_SEMI
+      elif mtype == MatrixType.MCPA_ENV_OBS_ADJ_R_SQ:
+         return LMFileType.MCPA_ENV_OBS_ADJ_R_SQ
+      elif mtype == MatrixType.MCPA_ENV_OBS_PARTIAL:
+         return LMFileType.MCPA_ENV_OBS_PARTIAL
+      elif mtype == MatrixType.MCPA_ENV_RAND_F_GLOBAL:
+         return LMFileType.MCPA_ENV_RAND_F_PARTIAL
+      elif mtype == MatrixType.OBSERVED_CALC:
+         return LMFileType.OBSERVED_CALC
+      elif mtype == MatrixType.SITES_OBSERVED:
+         return LMFileType.SITES_OBSERVED
+      elif mtype == MatrixType.SPECIES_OBSERVED:
+         return LMFileType.SPECIES_OBSERVED
+      elif mtype == MatrixType.DIVERSITY_OBSERVED:
+         return LMFileType.DIVERSITY_OBSERVED
+      elif mtype == MatrixType.SCHLUTER_OBSERVED:
+         return LMFileType.SCHLUTER_OBSERVED
+      elif mtype == MatrixType.SPECIES_COV_OBSERVED:
+         return LMFileType.SPECIES_COV_OBSERVED
+      elif mtype == MatrixType.SITES_COV_OBSERVED:
+         return LMFileType.SITES_COV_OBSERVED
+      elif mtype == MatrixType.RANDOM_CALC:
+         return LMFileType.RANDOM_CALC
+      elif mtype == MatrixType.SITES_RANDOM:
+         return LMFileType.SITES_RANDOM
+      elif mtype == MatrixType.SPECIES_RANDOM:
+         return LMFileType.SPECIES_RANDOM
+      elif mtype == MatrixType.DIVERSITY_RANDOM:
+         return LMFileType.DIVERSITY_RANDOM
+      elif mtype == MatrixType.SCHLUTER_RANDOM:
+         return LMFileType.SCHLUTER_RANDOM
+      elif mtype == MatrixType.SPECIES_COV_RANDOM:
+         return LMFileType.SPECIES_COV_RANDOM
+      elif mtype == MatrixType.SITES_COV_RANDOM:
+         return LMFileType.SITES_COV_RANDOM
 
 NAME_SEPARATOR = '_'
 
@@ -558,6 +646,21 @@ class FileFix:
              LMFileType.SUM_CALCS: PAMSUM_PREFIX,
              LMFileType.CALCS: 'calc', # TODO: Add to this?
              LMFileType.SUM_SHAPE: PAMSUM_PREFIX,
+             # RAD calcs
+             LMFileType.OBSERVED_CALC: 'obsCalc', 
+             LMFileType.SITES_OBSERVED: 'sites', 
+             LMFileType.SPECIES_OBSERVED: 'species',
+             LMFileType.DIVERSITY_OBSERVED: 'diversity', 
+             LMFileType.SCHLUTER_OBSERVED: 'schluter',
+             LMFileType.SPECIES_COV_OBSERVED: 'speciesCovObs',
+             LMFileType.SITES_COV_OBSERVED: 'siteCovObs',
+             LMFileType.RANDOM_CALC: 'randCalc', 
+             LMFileType.SITES_RANDOM: 'sitesRand',
+             LMFileType.SPECIES_RANDOM: 'speciesRand', 
+             LMFileType.DIVERSITY_RANDOM: 'diversityRand',
+             LMFileType.SCHLUTER_RANDOM: 'schluterRand', 
+             LMFileType.SPECIES_COV_RANDOM: 'speciesCovRand',
+             LMFileType.SITES_COV_RANDOM: 'siteCovRand',             
 
              LMFileType.BOOM_CONFIG: None,
              LMFileType.UNSPECIFIED_RAD: None,
@@ -569,7 +672,21 @@ class FileFix:
              LMFileType.BIOGEO_HYPOTHESES: 'biogeo',
              LMFileType.TREE: 'tree',
              LMFileType.PADDED_PAM: 'ppam',
-             LMFileType.MCPA_OUTPUTS: 'mcpa'}
+             LMFileType.MCPA_OUTPUTS: 'mcpa',
+             # MCPA
+             LMFileType.MCPA_BG_F_GLOBAL: 'bgFglobal',
+             LMFileType.MCPA_BG_F_SEMI: 'bgFsemi', 
+             LMFileType.MCPA_BG_OBS_ADJ_R_SQ: 'bgObsAdjRsq',
+             LMFileType.MCPA_BG_OBS_PARTIAL: 'bgObsPart', 
+             LMFileType.MCPA_BG_RAND_F_GLOBAL: 'bgRandFglob', 
+             LMFileType.MCPA_BG_RAND_F_PARTIAL: 'bgRandFpart', 
+             LMFileType.MCPA_ENV_F_GLOBAL: 'envFglobal', 
+             LMFileType.MCPA_ENV_F_SEMI: 'envFsemi', 
+             LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: 'envObjAdjRsq',
+             LMFileType.MCPA_ENV_OBS_PARTIAL: 'envObjPart', 
+             LMFileType.MCPA_ENV_RAND_F_GLOBAL: 'envRandFglob', 
+             LMFileType.MCPA_ENV_RAND_F_PARTIAL: 'envRandFpart'
+   }
    # Postfix
    EXTENSION = {LMFileType.ANCILLARY_MAP: LMFormat.MAP.ext,
                 LMFileType.OTHER_MAP: LMFormat.MAP.ext,
@@ -599,6 +716,21 @@ class FileFix:
                 LMFileType.GRIM: LMFormat.JSON.ext,
                 LMFileType.SUM_CALCS: LMFormat.PICKLE.ext,
                 LMFileType.SUM_SHAPE: LMFormat.SHAPE.ext,
+                # RAD calcs
+                LMFileType.OBSERVED_CALC: LMFormat.JSON.ext, 
+                LMFileType.SITES_OBSERVED: LMFormat.JSON.ext, 
+                LMFileType.SPECIES_OBSERVED: LMFormat.JSON.ext,
+                LMFileType.DIVERSITY_OBSERVED: LMFormat.JSON.ext, 
+                LMFileType.SCHLUTER_OBSERVED: LMFormat.JSON.ext,
+                LMFileType.SPECIES_COV_OBSERVED: LMFormat.JSON.ext,
+                LMFileType.SITES_COV_OBSERVED: LMFormat.JSON.ext,
+                LMFileType.RANDOM_CALC: LMFormat.JSON.ext, 
+                LMFileType.SITES_RANDOM: LMFormat.JSON.ext,
+                LMFileType.SPECIES_RANDOM: LMFormat.JSON.ext, 
+                LMFileType.DIVERSITY_RANDOM: LMFormat.JSON.ext,
+                LMFileType.SCHLUTER_RANDOM: LMFormat.JSON.ext, 
+                LMFileType.SPECIES_COV_RANDOM: LMFormat.JSON.ext,
+                LMFileType.SITES_COV_RANDOM: LMFormat.JSON.ext,
 
                 LMFileType.BOOM_CONFIG: LMFormat.CONFIG.ext,
                 LMFileType.UNSPECIFIED_RAD: None,
@@ -611,7 +743,20 @@ class FileFix:
                 LMFileType.TREE: LMFormat.JSON.ext,
                 LMFileType.PADDED_PAM: LMFormat.JSON.ext,
                 LMFileType.MCPA_OUTPUTS: LMFormat.JSON.ext,
-                LMFileType.CALCS: LMFormat.JSON.ext
+                LMFileType.CALCS: LMFormat.JSON.ext,
+                #MCPA
+                LMFileType.MCPA_BG_F_GLOBAL: LMFormat.JSON.ext,
+                LMFileType.MCPA_BG_F_SEMI: LMFormat.JSON.ext, 
+                LMFileType.MCPA_BG_OBS_ADJ_R_SQ: LMFormat.JSON.ext,
+                LMFileType.MCPA_BG_OBS_PARTIAL: LMFormat.JSON.ext, 
+                LMFileType.MCPA_BG_RAND_F_GLOBAL: LMFormat.JSON.ext, 
+                LMFileType.MCPA_BG_RAND_F_PARTIAL: LMFormat.JSON.ext, 
+                LMFileType.MCPA_ENV_F_GLOBAL: LMFormat.JSON.ext, 
+                LMFileType.MCPA_ENV_F_SEMI: LMFormat.JSON.ext, 
+                LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: LMFormat.JSON.ext,
+                LMFileType.MCPA_ENV_OBS_PARTIAL: LMFormat.JSON.ext, 
+                LMFileType.MCPA_ENV_RAND_F_GLOBAL: LMFormat.JSON.ext, 
+                LMFileType.MCPA_ENV_RAND_F_PARTIAL: LMFormat.JSON.ext
    }
    @staticmethod
    def getMaptypeFromName(prefix=None, ext=None):
