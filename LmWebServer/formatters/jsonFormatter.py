@@ -203,7 +203,7 @@ def formatProjection(prj):
                                     prj.metadataUrl, status=prj.status, 
                                     statusModTime=prj.statusModTime, 
                                     metadata=prj.lyrMetadata)
-   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'data_'.format(
+   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'data_{}'.format(
       prj.getOccurrenceSetId()), prj.name)
    dataUrl = prj.getDataUrl()
    minVal = 0
