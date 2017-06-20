@@ -295,7 +295,17 @@ class GlobalPAMService(LmService):
                             userId=self.getUserId(), gridset=updatedGS, 
                             status=JobStatus.INITIALIZE)
          insertedGrim = self.scribe.findOrInsertMatrix(newGrim)
-         insertedGrim.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
+         grimMetadata = grim.mtxMetadata
+         grimMetadata['keywords'].append('subset')
+         grimMetadata = {
+            'keywords' : ['subset'],
+            'description' : 'Subset of GRIM {}'.format(grim.getId())
+         }
+         if grim.mtxMetadata.has_key('keywords'):
+            grimMetadata['keywords'].extend(grim.mtxMetadata['keywords'])
+         
+         insertedGrim.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd,
+                                   metadata=grimMetadata)
          self.scribe.updateObject(insertedGrim)
          # Save the original grim data into the new location
          # TODO: Add read / load method for LMMatrix
