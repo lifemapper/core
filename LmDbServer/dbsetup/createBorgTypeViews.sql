@@ -270,7 +270,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_tree (
    isUltrametric,
    hasBranchLengths,
    treemetadata,
-   treemodTime,
+   treemodTime
 ) AS
    SELECT lg.gridsetId, lg.userId, lg.grdname, lg.treeId, lg.layerId, 
           lg.grddlocation, lg.grdepsgcode, lg.grdmetadata, lg.grdmodTime, 
