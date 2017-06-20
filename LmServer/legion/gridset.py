@@ -37,8 +37,8 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.cmd import MfRule
 
 # TODO: Move these to localconstants
-NUM_RAND_GROUPS = 2
-NUM_RAND_PER_GROUP = 2
+NUM_RAND_GROUPS = 5
+NUM_RAND_PER_GROUP = 5
 
 
 # .............................................................................
