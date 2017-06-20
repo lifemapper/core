@@ -450,7 +450,7 @@ class Gridset(ServiceObject):
                ' '.join(envFglobRands)
             ])
             rules.append(MfRule(envFglobCmd, [envFglobFilename], 
-                                dependencies=envFglobRands))
+                                dependencies=envFglobRands + wsEnvFglobalFilename))
             # Stockpile
             envFglobSuccessFilename = os.path.join(pamWorkDir, 'envFglob.success')
             envFglobStockpileCmd = ' '.join([
@@ -474,7 +474,7 @@ class Gridset(ServiceObject):
                ' '.join(envFpartRands)
             ])
             rules.append(MfRule(envFpartCmd, [envFpartFilename], 
-                                dependencies=envFpartRands))
+                                dependencies=envFpartRands + wsEnvFpartialFilename))
             # Stockpile
             envFpartSuccessFilename = os.path.join(pamWorkDir, 'envFpart.success')
             envFpartStockpileCmd = ' '.join([
@@ -572,7 +572,7 @@ class Gridset(ServiceObject):
                                    bgFglobFilename,
                                    ' '.join(bgFglobRands)])
             rules.append(MfRule(bgFglobCmd, [bgFglobFilename], 
-                                dependencies=bgFglobRands))
+                                dependencies=bgFglobRands + wsBGFglobalFilename))
             # Stockpile
             bgFglobSuccessFilename = os.path.join(pamWorkDir, 'bgFglob.success')
             bgFglobStockpileCmd = ' '.join(['LOCAL $PYTHON',
@@ -593,7 +593,7 @@ class Gridset(ServiceObject):
                                    bgFpartFilename,
                                    ' '.join(bgFpartRands)])
             rules.append(MfRule(bgFpartCmd, [bgFpartFilename], 
-                                dependencies=bgFpartRands))
+                                dependencies=bgFpartRands + wsBGFpartialFilename))
             # Stockpile
             bgFpartSuccessFilename = os.path.join(pamWorkDir, 'bgFpart.success')
             bgFpartStockpileCmd = ' '.join(['LOCAL $PYTHON',
