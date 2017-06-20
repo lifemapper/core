@@ -1145,6 +1145,8 @@ BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
 from LmDbServer.boom.boominput import ArchiveFiller
 
 configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
+configFname = '/state/partition1/lmscratch/temp/file_24548.ini'
+occIdFname = '/state/partition1/lmscratch/temp/file_54844.csv'
 
 filler = ArchiveFiller(configFname=configFname)
 filler.initializeInputs()
