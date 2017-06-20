@@ -441,6 +441,7 @@ class Gridset(ServiceObject):
             envFglobCmd = ' '.join([
                '$PYTHON',
                correctPvaluesScript,
+               wsEnvFglobalFilename,
                envFglobFilename,
                ' '.join(envFglobRands)
             ])
@@ -464,6 +465,7 @@ class Gridset(ServiceObject):
             envFpartCmd = ' '.join([
                '$PYTHON',
                correctPvaluesScript,
+               wsEnvFpartialFilename,
                envFpartFilename,
                ' '.join(envFpartRands)
             ])
@@ -562,6 +564,7 @@ class Gridset(ServiceObject):
             bgFglobFilename = os.path.join(pamWorkDir, 'bgFglobP.json')
             bgFglobCmd = ' '.join(['$PYTHON',
                                    correctPvaluesScript,
+                                   wsBGFglobalFilename,
                                    bgFglobFilename,
                                    ' '.join(bgFglobRands)])
             rules.append(MfRule(bgFglobCmd, [bgFglobFilename], 
@@ -582,6 +585,7 @@ class Gridset(ServiceObject):
             bgFpartFilename = os.path.join(pamWorkDir, 'bgFpartP.json')   
             bgFpartCmd = ' '.join(['$PYTHON',
                                    correctPvaluesScript,
+                                   wsBGFpartialFilename,
                                    bgFpartFilename,
                                    ' '.join(bgFpartRands)])
             rules.append(MfRule(bgFpartCmd, [bgFpartFilename], 
