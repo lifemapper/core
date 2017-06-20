@@ -33,7 +33,6 @@ from LmServer.base.utilities import isCorrectUser
 from LmServer.common.lmconstants import Priority
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe 
-from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
 
 CURR_MJD = mx.DateTime.gmt().mjd
@@ -63,8 +62,13 @@ class Pammer(LMObject):
       except: 
          raise
       self.open()
-      self.usr = None
-      self.gridsetName = None
+      self._gridset = self._scribe.getGridset(gridsetId=self._gridsetId, 
+                                              userId=self._userId, 
+                                              name=self._gridsetName,
+                                              fillMatrices=True)
+      if self._gridset is None:
+         raise LMError(currargs='Failed to retrieve Gridset for Id {}'
+                                .format(gridsetId))
       self._priority = priority
       
    # ...............................................
@@ -72,14 +76,6 @@ class Pammer(LMObject):
       """
       @summary Initialize configured and stored inputs for Pammer class.
       """
-      self._gridset = self._scribe.getGridset(gridsetId=gridsetId, 
-                                              userId=userId, name=gridsetName,
-                                              fillMatrices=True)
-      if self._gridset is None:
-         raise LMError(currargs='Failed to retrieve Gridset for Id {}'
-                                .format(gridsetId))
-      self.usr = self._gridset.getUserId()
-      self.gridsetName = self._gridset.name
       self.PAMs = self._gridset.getPAMs()
       self.GRIMs = self._gridset.getGRIMs()
       
@@ -110,10 +106,10 @@ class Pammer(LMObject):
          postToSolr = True
       # Create MFChain for this GPAM
       desc = ('Makeflow for Matrix {}, Gridset {}, User {}'
-              .format(mtx.getId(), self.gridsetName, self.usr))
+              .format(mtx.getId(), self.gridsetName, self.userIdrId))
       meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESC: desc}
-      newMFC = MFChain(self.usr, priority=self.priority, 
+      newMFC = MFChain(self.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
       mtxChain = self.scribe.insertMFChain(newMFC)
@@ -124,6 +120,7 @@ class Pammer(LMObject):
       for mtxcol in mtxcols:
          mtxcol.postToSolr = postToSolr
          mtxcol.processType = self._getMCProcessType(mtxcol, mtx.matrixType)
+         mtxcol.shapegrid = self._gridset.getShapegrid()
 
          lyrRules = mtxcol.computeMe(workDir=targetDir)
          mtxChain.addCommands(lyrRules)
@@ -158,12 +155,16 @@ class Pammer(LMObject):
       """
       @summary Initialize configured and stored inputs for Pammer class.
       """
+      mfs = []
       if self.doPAM:
          for pam in self.PAMs:
             mtxChain = self._createMatrixMF(pam)
+            mfs.append(mtxChain)
       if self.doGRIM:
          for grim in self.GRIMs:
             mtxChain = self._createMatrixMF(grim)
+            mfs.append(mtxChain)
+      return mfs
    
    # ...............................................
    @property
@@ -275,27 +276,29 @@ if __name__ == '__main__':
 """
 import mx.DateTime
 import os
+import sys
 import time
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import (LMFormat, JobStatus, MatrixType)
-from LmServer.common.lmconstants import LMFileType, Priority
-from LmServer.common.lmuser import LMUser
-from LmServer.common.log import ScriptLogger
+from LmCommon.common.lmconstants import (JobStatus, MatrixType,
+   ProcessType,LMFormat)
 from LmServer.base.utilities import isCorrectUser
+from LmServer.common.lmconstants import Priority
+from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe 
 from LmServer.legion.processchain import MFChain
+
 CURR_MJD = mx.DateTime.gmt().mjd
 
-from LmDbServer.boom.radme import RADCaller
+from LmDbServer.boom.pamme import Pammer
 
-gridsetId = 1
+gridsetId = 5
 priority=Priority.REQUESTED
-doCalc = True
-doMCPA=False
 
-caller = RADCaller(gridsetId, priority=priority)
-caller.analyzeGrid(doCalc=doCalc, doMCPA=doMCPA)
-caller.close()
+pammer = Pammer(gridsetId=gridsetId, doPAM=False, doGRIM=True, priority=priority)
+pammer.initializeInputs()
+mfs = pammer.assembleIntersects()
+
+pammer.close()
 
 """
