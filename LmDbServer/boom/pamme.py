@@ -275,8 +275,8 @@ if __name__ == '__main__':
       
    caller = Pammer(gridsetId=gridsetId, gridsetName=gridsetName, userId=userId, 
                    doPAM=doPam, doGRIM=doGrim, priority=args.priority)
-   Pammer.initializeInputs()
-   Pammer.assembleIntersects()
+   caller.initializeInputs()
+   caller.assembleIntersects()
    caller.close()
     
 """
