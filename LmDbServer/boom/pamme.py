@@ -250,10 +250,10 @@ if __name__ == '__main__':
             help=('Name for the Gridset on which to intersect layers'))
    parser.add_argument('userId', type=int,
             help=('User Id for the Gridset on which to to intersect layers'))
-   parser.add_argument('-c', '--doPam', action='store_true',
+   parser.add_argument('-pam', '--doPam', action='store_true',
             help=('Compute multi-species matrix outputs for the matrices ' +
                   'in this Gridset.'))
-   parser.add_argument('-c', '--doGrim', action='store_true',
+   parser.add_argument('-grim', '--doGrim', action='store_true',
             help=('Compute multi-species matrix outputs for the matrices ' +
                   'in this Gridset.'))
    parser.add_argument('-p', '--priority', type=int, choices=[0,1,2,3,4,5], 
