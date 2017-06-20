@@ -462,19 +462,20 @@ class ArchiveFiller(LMObject):
       if not os.path.exists(self.occIdFname):
          raise LMError('Missing OCCURRENCE_ID_FILENAME {}'.format(self.occIdFname))
       else:
-         f = open(self.occIdFname, 'r')
-         for i in range(limit):
+         count = 0
+         for line in open(self.occIdFname, 'r'):
+            count += 1
             try:
-               tmp = f.readline()
+               tmp = line.strip()
             except Exception, e:
-               self.scribe.log.info('Failed to readline {} on line {}, stopping'
-                               .format(str(e), i))
+               self.scribe.log.info('Error reading line {} ({}), stopping'
+                               .format(count, str(e)))
                break
             try:
-               id = int(tmp.strip())
+               id = int(tmp)
             except Exception, e:
                self.scribe.log.info('Unable to get Id from data {} on line {}'
-                               .format(tmp, i))
+                               .format(tmp, count))
                nonIntCount += 1
             else:
                occ = self.scribe.getOccurrenceSet(occId=id)
@@ -484,7 +485,9 @@ class ArchiveFiller(LMObject):
                   self.scribe.log.info('Unauthorized user {} for ID {}'
                                   .format(occ.getUserId(), id))
                   wrongUserCount += 1
-      self.scribe.log.info('Errors out of the first {} occurrenceIds:'. format(limit))
+            if count >= limit:
+               break
+      self.scribe.log.info('Errors out of {} read OccurrenceSets (limit {}):'. format(limit))
       self.scribe.log.info('  Missing: {} '.format(missingCount))
       self.scribe.log.info('  Unauthorized data: {} '.format(wrongUserCount))
 
