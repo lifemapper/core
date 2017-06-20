@@ -173,11 +173,12 @@ class RADCaller(LMObject):
          
          if doMCPA:
             # GRIM
-            pd[MatrixType.GRIM] = self._getOrInsertMatrix(gridsetId, 
-                                                  MatrixType.GRIM, 
-                                                  ProcessType.MCPA_OBSERVED,
-                                                  pam.gcmCode, pam.altpredCode, 
-                                                  pam.dateCode)
+            pd[MatrixType.GRIM] = self._scribe.getMatrix(gridsetId=gridsetId, 
+                                   mtxType=MatrixType.GRIM, 
+                                   gcmCode=pam.gcmCode, 
+                                   altpredCode=pam.altpredCode, 
+                                   dateCode=pam.dateCode)
+
             # Env Adjusted R-squared
             pd[MatrixType.MCPA_ENV_OBS_ADJ_R_SQ] = self._getOrInsertMatrix(
                                              gridsetId, 
@@ -256,17 +257,17 @@ class RADCaller(LMObject):
       @param gsId: The id of the gridset to use
       @param mtxType: The matrix type to look for
       """
-      mtx = self._scribe.getMatrix(gridsetId=gsId, mtxType=mtxType, 
-                                   gcmCode=gcmCode, altpredCode=altpredCode, 
-                                   dateCode=dateCode)
-      if mtx is None:
-         # Insert new matrix
-         newMtx = LMMatrix(None, matrixType=mtxType, processType=procType, 
+      #mtx = self._scribe.getMatrix(gridsetId=gsId, mtxType=mtxType, 
+      #                             gcmCode=gcmCode, altpredCode=altpredCode, 
+      #                             dateCode=dateCode)
+      #if mtx is None:
+      
+      newMtx = LMMatrix(None, matrixType=mtxType, processType=procType, 
                            gcmCode=gcmCode, altpredCode=altpredCode, 
                            dateCode=dateCode, userId=self._gridset.getUserId(), 
                            gridset=self._gridset)
-         mtx = self._scribe.findOrInsertMatrix(newMtx)
-         mtx.updateStatus(status=JobStatus.INITIALIZE, 
+      mtx = self._scribe.findOrInsertMatrix(newMtx)
+      mtx.updateStatus(status=JobStatus.INITIALIZE, 
                           modTime=mx.DateTime.gmt().mjd)
       return mtx
 
