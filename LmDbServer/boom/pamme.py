@@ -246,9 +246,9 @@ if __name__ == '__main__':
             description=('Intersect all PAM and/or GRIM layers for a Gridset.'))
    parser.add_argument('gridsetId', type=int,
             help=('Database Id for the Gridset on which to intersect layers'))
-   parser.add_argument('name', type=int,
+   parser.add_argument('name', type=str,
             help=('Name for the Gridset on which to intersect layers'))
-   parser.add_argument('userId', type=int,
+   parser.add_argument('userId', type=str,
             help=('User Id for the Gridset on which to to intersect layers'))
    parser.add_argument('-pam', '--doPam', action='store_true',
             help=('Compute multi-species matrix outputs for the matrices ' +
