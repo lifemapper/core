@@ -1446,6 +1446,30 @@ class Vector(_Layer):
       else:
          return None
 
+   # ............................................................................
+   @classmethod
+   def getShapefileRowHeaders(cls, shapefileFilename):
+      """
+      @summary: Get a (sorted by feature id) list of row headers for a shapefile
+      @todo: Move this to a common Vector class in LmCommon or LmBackend and 
+             use with LmCompute.  This is a rough copy of what is now used for 
+             rasterIntersect.
+      """
+      ogr.RegisterAll()
+      drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
+      ds = drv.Open(shapefileFilename)
+      lyr = ds.GetLayer(0)
+      
+      rowHeaders = []
+      
+      for j in range(lyr.GetFeatureCount()):
+         curFeat = lyr.GetFeature(j)
+         siteIdx = curFeat.GetFID()
+         x, y = curFeat.geometry().Centroid().GetPoint_2D()
+         rowHeaders.append((siteIdx, x, y))
+         
+      return sorted(rowHeaders)
+
 # ...............................................
    def writeLayer(self, srcData=None, srcFile=None, outFile=None, overwrite=False):
       """

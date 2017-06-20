@@ -902,17 +902,9 @@ DECLARE
    grdcount int;
    newid int;
 BEGIN
-   IF mtxid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
-   ELSE
-      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
-                                            AND gridsetid = grdid
-                                            AND gcmCode = gcm
-                                            AND altpredCode = altpred
-                                            AND dateCode = dt;
-   END IF;
-
-   IF NOT FOUND THEN
+   SELECT * INTO rec FROM lm_v3.lm_getMatrix(mtxid, mtxtype, grdid, 
+                                             gcm, altpred, dt, NULL, NULL);
+   IF NOT FOUND OR rec.matrixId IS NULL THEN
       begin
          -- check existence of required referenced gridset
          SELECT count(*) INTO grdcount FROM lm_v3.Gridset WHERE gridsetid = grdid;
@@ -938,6 +930,7 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;    
 
+
 -- ----------------------------------------------------------------------------
 -- Gets a matrix with its lm_gridset (including optional shapegrid)
 -- Unique: gridsetId, matrixType, gcmCode, altpredCode, dateCode
@@ -953,6 +946,10 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrix(mtxid int,
 $$
 DECLARE
    rec lm_v3.lm_matrix%rowtype;
+   cmd varchar;
+   gcmtest varchar;
+   altpredtest varchar;
+   datetest varchar;
 BEGIN
    IF mtxid IS NOT NULL THEN
       SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
@@ -962,11 +959,34 @@ BEGIN
                                                  AND userid = usr;
       END IF;
       
-      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixtype = mtxtype 
-                                               AND gridsetid = gsid
-                                               AND gcmCode = gcm
-                                               AND altpredCode = altpred
-                                               AND dateCode = dt;
+      IF gcm IS NULL THEN
+         gcmtest = 'gcmCode IS NULL';
+      ELSE 
+         gcmtest = 'gcmCode =  ' || quote_literal(gcm);
+      END IF;
+      
+      IF altpred IS NULL THEN
+         altpredtest = 'altpredCode IS NULL';
+      ELSE 
+         altpredtest = 'altpredCode =  ' || quote_literal(altpred);
+      END IF;
+      
+      IF dt IS NULL THEN
+         datetest = 'dateCode IS NULL';
+      ELSE 
+         datetest = 'dateCode =  ' || quote_literal(dt);
+      END IF;
+      
+      cmd := 'SELECT * FROM lm_v3.lm_matrix WHERE matrixtype = ' 
+                                                      || quote_literal(mtxtype) 
+                                                      || ' AND gridsetid = ' 
+                                                      || quote_literal(gsid)
+                                                      || ' AND ' || gcmtest
+                                                      || ' AND ' || altpredtest
+                                                      || ' AND ' || datetest;
+      RAISE NOTICE 'cmd = %', cmd;
+
+      EXECUTE cmd INTO rec;
    END IF;
    RETURN rec;
 END;

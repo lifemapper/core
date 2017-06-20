@@ -865,7 +865,8 @@ class Borg(DbPostgresql):
       return success
    
 # ...............................................
-   def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType, gcmCode, altpredCode, dateCode):
+   def getMatrix(self, mtxId, gridsetId, gridsetName, userId, mtxType, 
+                 gcmCode, altpredCode, dateCode):
       """
       @summary: Retrieve an LmServer.legion.LMMatrix object with its gridset 
                 from the database
