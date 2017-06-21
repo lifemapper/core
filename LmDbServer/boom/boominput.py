@@ -43,7 +43,7 @@ from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH,
          GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
          DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
-                                            POINT_COUNT_MIN)
+                                            POINT_COUNT_MIN, APP_PATH)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -61,7 +61,8 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-BOOM_DAEMON = 'LmDbServer/boom/daboom.py'
+
+BOOM_DAEMON = os.path.join(APP_PATH, 'LmDbServer/boom/daboom.py')
 
 # .............................................................................
 class ArchiveFiller(LMObject):
