@@ -1881,17 +1881,6 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 
 -- ----------------------------------------------------------------------------
-DROP FUNCTION lm_v3.lm_findOrInsertMatrixColumn(usr varchar,
-                                                             mtxcolid int,
-                                                             mtxid int,
-                                                             mtxidx int,
-                                                             lyrid int,
-                                                             sqd varchar,
-                                                             idnt varchar,
-                                                             meta text,
-                                                             intparams text,
-                                                             stat int,
-                                                             stattime double precision);
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrixColumn(usr varchar,
                                                              mtxcolid int,
                                                              mtxid int,
