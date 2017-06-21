@@ -284,7 +284,7 @@ def formatScenario(scn):
    scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
                                     scn.getUserId(), metadata=scn.scenMetadata)
    mapName = EarlJr().createBasename(LMFileType.SCENARIO_MAP, 
-                                     objCode=scn.getId(), usr=scn.getUserId(), 
+                                     objCode=scn.code, usr=scn.getUserId(), 
                                      epsg=scn.epsgcode)
    scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
