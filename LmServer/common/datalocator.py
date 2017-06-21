@@ -523,6 +523,8 @@ class EarlJr(LMObject):
             occsetId = int(''.join(parts))
          except:
             pass
+      elif len(rem) == 1 and rem[0] == MAP_DIR:
+         nonSDMMap = True
       else:
          # Everything else begins with epsgcode (returned as string)
          epsg = rem[0]
@@ -536,7 +538,7 @@ class EarlJr(LMObject):
                   gridsetId = int(dirname[len(RAD_EXPERIMENT_DIR_PREFIX):])
                except:
                   raise LMError('Invalid RAD gridset id %s' % dirname)
-      return usr, occsetId, epsg, gridsetId 
+      return usr, occsetId, epsg, gridsetId, isLayers, nonSDMMap
 
 # ...............................................
    def _parseNewDataPath(self, fullpath):
@@ -569,18 +571,22 @@ class EarlJr(LMObject):
          if last == '':
             parts = parts[:-1]
             
-         usr, occsetId, epsg, gridsetId = self._parseDataPathParts(parts)
+         (usr, occsetId, epsg, gridsetId, 
+          isLayers, nonSDMMap) = self._parseDataPathParts(parts)
             
-      return usr, occsetId, epsg, gridsetId
+      return usr, occsetId, epsg, gridsetId, isLayers, nonSDMMap
 
 # ...............................................
    def parseMapFilename(self, mapfname):
       fullpath, fname = os.path.split(mapfname)
       mapname, ext = os.path.splitext(fname)
-
-      usr, occsetId, epsg, _ = self._parseNewDataPath(fullpath) 
+      # Get path info
+      (usr, occsetId, epsg, gridsetId, isLayers, 
+       nonSDMMap) = self._parseNewDataPath(fullpath) 
+      # Get filename info
       (fileType, scencode, occsetId, gridsetId, usr2, ancillary, 
        epsg2) = self._parseMapname(mapname)
+       
       if usr is None: usr = usr2
       if epsg is None: epsg = epsg2
 
