@@ -516,6 +516,7 @@ class EarlJr(LMObject):
 # ...............................................
    def _parseDataPathParts(self, parts):
       occsetId = epsg = gridsetId = None
+      isLayers = nonSDMMap = False
       usr = parts[0]
       rem = parts[1:]
       if len(rem) == 4:
