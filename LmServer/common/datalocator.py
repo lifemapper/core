@@ -201,7 +201,11 @@ class EarlJr(LMObject):
       """
       @summary: Return the base filename for given filetype and parameters 
       @param ftype: LmServer.common.lmconstants.LMFileType
-      @param objCode: Object database Id or unique code for non-db items
+      @param objCode: Object database Id or unique code for non-db items, 
+                      For maps: 
+                        SDM_MAP occurrencesetId
+                        RAD_MAP gridsetId
+                        SCENARIO_MAP scenarioCode
       @param lyrname: Layer name 
       @param usr: User database Id
       @param epsg: File or object EPSG code
@@ -212,14 +216,18 @@ class EarlJr(LMObject):
       # Prefix
       if FileFix.PREFIX[ftype] is not None:
          nameparts.append(FileFix.PREFIX[ftype])
+         
+      # MAPs
+      if ftype == LMFileType.SCENARIO_MAP:
+         nameparts.append(usr)
       # User Maps for unconnected user layers (not SCENARIO_MAP or SDM_MAP)
-      if ftype == LMFileType.OTHER_MAP:
+      elif ftype == LMFileType.OTHER_MAP:
          nameparts.extend([usr, epsg])
+         
       # User layers
-      elif LMFileType.isUserLayer(ftype):
+      if LMFileType.isUserLayer(ftype):
          nameparts.append(lyrname)
-      # All non-user-layer files use objCode 
-      # SDM_MAP occurrencesetId, RAD_MAP gridsetId, SCENARIO_MAP scenarioCode
+      # All non-UserLayer files add objCode 
       elif objCode:
          nameparts.append(objCode)
          
@@ -260,20 +268,18 @@ class EarlJr(LMObject):
       return filename
    
 # ...............................................
-   def getMapFilenameFromMapname(self, mapname):         
+   def getMapFilenameFromMapname(self, mapname):
+      pth = self._createStaticMapPath()       
       if mapname == MAP_TEMPLATE:
-         pth = self._createStaticMapPath()
          usr = None
       else:
          (fileType, scencode, occsetId, gridsetId, usr, ancillary, 
           epsg) = self._parseMapname(mapname)
          
          if usr is None:
-            usr = self._findUserForObject(scenCode=scencode, occId=occsetId)
+            usr = self._findUserForObject(occId=occsetId)
          
-         if ancillary:
-            pth = self._createStaticMapPath()
-         else:
+         if not ancillary:
             pth = self.createDataPath(usr, fileType, 
                                       occsetId=occsetId, gridsetId=gridsetId)
       
@@ -581,26 +587,27 @@ class EarlJr(LMObject):
       return (mapname, ancillary, usr, epsg, occsetId, gridsetId, scencode)
    
 # ...............................................
-   def _findUserForObject(self, layerId=None, scenCode=None, occId=None, 
+   def _findUserForObject(self, layerId=None, occId=None, 
                          matrixId=None, gridsetId=None, mfprocessId=None):
       if self._scribe is not None:
-         usr = self._scribe.findUserForObject(layerId=layerId, scenCode=scenCode, 
-                                        occId=occId, matrixId=matrixId, 
-                                        gridsetId=gridsetId, mfprocessId=mfprocessId)
+         usr = self._scribe.findUserForObject(layerId=layerId, occId=occId, 
+                                              matrixId=matrixId, 
+                                              gridsetId=gridsetId, 
+                                              mfprocessId=mfprocessId)
       else:
          from LmServer.common.log import ConsoleLogger
          from LmServer.db.borgscribe import BorgScribe
          scribe = BorgScribe(ConsoleLogger())
          scribe.openConnections()
-         usr = scribe.findUserForObject(layerId=layerId, scenCode=scenCode, 
-                                        occId=occId, matrixId=matrixId, 
-                                        gridsetId=gridsetId, mfprocessId=mfprocessId)
+         usr = scribe.findUserForObject(layerId=layerId, occId=occId, 
+                                        matrixId=matrixId, gridsetId=gridsetId, 
+                                        mfprocessId=mfprocessId)
          scribe.closeConnections()
       return usr
    
 # ...............................................
    def _parseMapname(self, mapname):
-      fileType = scencode = occsetId = usr = epsg = gridsetId = None
+      scencode = occsetId = usr = epsg = gridsetId = None
       ancillary = False
       # Remove extension
       if mapname.endswith(LMFormat.MAP.ext):
@@ -610,9 +617,10 @@ class EarlJr(LMObject):
       
       fileType = FileFix.getMaptypeFromName(prefix=parts[0])
 
-      # RAD_MAP mapname = rad_<gridsetId>
+      # SCENARIO_MAP mapname = scen_<user>_<scencode>
       if parts[0] == MapPrefix.SCEN:
-         scencode = parts[1]
+         usr = parts[1]
+         scencode = parts[2]
          
       elif parts[0] == MapPrefix.SDM:
          occsetIdStr = parts[1]
