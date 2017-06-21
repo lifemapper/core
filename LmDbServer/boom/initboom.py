@@ -61,22 +61,27 @@ from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-# BOOM_DAEMON = 'LmDbServer/boom/daboom.py'
 
 # .............................................................................
-class ArchiveFiller(LMObject):
+class BOOMFiller(LMObject):
    """
-   Class to populate a Lifemapper database with inputs for a BOOM archive, and 
-   write a configuration file for computations on the inputs.
+   @note: Not yet used!
+   @summary 
+   Class to: 
+     1) populate a Lifemapper database with inputs for a BOOM archive
+     2) create default matrices for each scenario, 
+        PAMs for SDM projections and GRIMs for Scenario layers
+     3) Write a configuration file for computations (BOOM daemon) on the inputs
+     4) Write a Makeflow to begin the BOOM daemon
    """
 # .............................................................................
 # Constructor
 # .............................................................................
    def __init__(self, configFname=None):
       """
-      @summary Constructor for ArchiveFiller class.
+      @summary Constructor for BOOMFiller class.
       """
-      super(ArchiveFiller, self).__init__()
+      super(BOOMFiller, self).__init__()
       self.name = self.__class__.__name__.lower()
       self.inConfigFname = configFname
       # Get database
@@ -89,7 +94,7 @@ class ArchiveFiller(LMObject):
    # ...............................................
    def initializeInputs(self, configFname=None):
       """
-      @summary Initialize configured and stored inputs for ArchiveFiller class.
+      @summary Initialize configured and stored inputs for BOOMFiller class.
       """
       # Allow reset configuration
       if configFname is not None:
@@ -867,8 +872,6 @@ class ArchiveFiller(LMObject):
       for code, scen in self.allScens.iteritems():
          gPam, scenGrim = self._findOrAddDefaultMatrices(updatedGrdset, scen)
          self.defaultPamGrims[code] = (gPam, scenGrim)
-      
-#       return shp, updatedGrdset, pamGrims
    
 # ...............................................
    def _initGRIMIntersect(self, lyr, mtx):
@@ -995,9 +998,9 @@ class ArchiveFiller(LMObject):
    def addBoomChain(self):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                and configFile written by ArchiveFiller.initBoom.
+                and configFile written by BOOMFiller.initBoom.
       """
-      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+      meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESC: 'Boom start for User {}, Archive {}'
       .format(self.usr, self.archiveName)}
       newMFC = MFChain(self.usr, priority=self.priority, 
@@ -1016,7 +1019,6 @@ class ArchiveFiller(LMObject):
       # species data (initiated by this Makeflow).  
       walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
 
-      outputFname = mfChain.getDLocation()
       # Create a rule from the MF and Arf file creation
       rule = MfRule(boomCmd, [walkedArchiveFname], 
                     dependencies=[self.outConfigFilename])
@@ -1026,40 +1028,6 @@ class ArchiveFiller(LMObject):
       self.scribe.updateObject(mfChain)
       return mfChain
    
-   # ...............................................
-   def initBoom(self):
-      # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
-      self.addUsers()
-   
-      # Add Algorithms if they do not exist
-      aIds = self.addAlgorithms()
-   
-      # Add or get Scenarios 
-      # This updates the allScens with db objects for other operations
-      self.findOrAddScenariosAndLayers()
-         
-      # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
-      # Test a subset of OccurrenceIds provided as BOOM species input
-      if self.occIdFname:
-         self._checkOccurrenceSets()
-         
-      # Add ShapeGrid, Global PAM, Gridset, 
-      shpGrid, archiveGridset, pamGrims = self.addArchive()
-   
-      # Assemble a MFChain for creating each Scenario GRIM
-      grimChains = self.addGRIMChains(shpGrid, pamGrims)
-      
-      # Insert all taxonomic sources for now
-      self.scribe.log.info('  Insert taxonomy metadata ...')
-      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-         
-      # Write config file for this archive
-      self.writeConfigFile()
-      mfChain = self.addBoomChain()
-      self.scribe.log.info('Wrote {}'.format(self.outConfigFilename))
-      
-      return archiveGridset
    
 # ...............................................
 if __name__ == '__main__':
@@ -1079,7 +1047,7 @@ if __name__ == '__main__':
       print ('Missing configuration file {}'.format(configFname))
       exit(-1)
 
-   filler = ArchiveFiller(configFname=configFname)
+   filler = BOOMFiller(configFname=configFname)
    filler.initializeInputs()
    
    # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
@@ -1097,23 +1065,26 @@ if __name__ == '__main__':
    if filler.occIdFname:
       filler._checkOccurrenceSets()
          
-   # Add or get ShapeGrid, Global PAM, Gridset
+   # Add or get ShapeGrid, Global PAM, Gridset for this archive
    # This updates the gridset, shapegrid, default PAMs (rolling, with no 
    #     matrixColumns, default GRIMs with matrixColumns
    filler.addArchive()
    
-      # Assemble a MFChain for creating each Scenario GRIM
-      grimChains = self.addGRIMChains(shpGrid, pamGrims)
+   # Create, add, write MFChain for creating each Scenario GRIM
+   filler.addGRIMChains()
       
-      # Insert all taxonomic sources for now
-      self.scribe.log.info('  Insert taxonomy metadata ...')
-      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
+   # Insert all taxonomic sources for now
+   filler.scribe.log.info('  Insert taxonomy metadata ...')
+   for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+      taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
          
-      # Write config file for this archive
-      self.writeConfigFile()
-      mfChain = self.addBoomChain()
-      self.scribe.log.info('Wrote {}'.format(self.outConfigFilename))   filler.close()
+   # Write config file for this archive
+   filler.writeConfigFile()
+   
+   # Create, add, write MFChain running the Boomer daemon on these SDM inputs
+   mfChain = filler.addBoomChain()
+   filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+   filler.close()
     
 """
 import mx.DateTime
@@ -1158,13 +1129,11 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 CURR_MJD = mx.DateTime.gmt().mjd
 BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
 
-from LmDbServer.boom.boominput import ArchiveFiller
+from LmDbServer.boom.initboom import BOOMFiller
 
 configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
-# configFname = '/state/partition1/lmscratch/temp/file_24548.ini'
-# occIdFname = '/state/partition1/lmscratch/temp/file_54844.csv'
 
-filler = ArchiveFiller(configFname=configFname)
+filler = BOOMFiller(configFname=configFname)
 filler.initializeInputs()
 for code, scen in filler.allScens.iteritems():
    print code, scen.getId()
