@@ -895,10 +895,10 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertMatrix(mtxid int,
                                                        meta varchar, 
                                                        stat int,
                                                    	 stattime double precision)
-   RETURNS lm_v3.lm_matrix AS
+   RETURNS lm_v3.lm_fullmatrix AS
 $$
 DECLARE
-   rec lm_v3.lm_matrix%rowtype;
+   rec lm_v3.lm_fullmatrix%rowtype;
    grdcount int;
    newid int;
 BEGIN
@@ -922,7 +922,7 @@ BEGIN
             RAISE EXCEPTION 'Unable to find or insert Matrix';
          ELSE
             SELECT INTO newid last_value FROM lm_v3.matrix_matrixid_seq;
-            SELECT * INTO rec from lm_v3.lm_matrix WHERE matrixId = newid;
+            SELECT * INTO rec from lm_v3.lm_fullmatrix WHERE matrixId = newid;
          END IF;
       end;
    END IF;
@@ -942,17 +942,17 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getMatrix(mtxid int,
                                               dt varchar,
                                               gsname varchar,
                                               usr varchar)
-   RETURNS lm_v3.lm_matrix AS
+   RETURNS lm_v3.lm_fullmatrix AS
 $$
 DECLARE
-   rec lm_v3.lm_matrix%rowtype;
+   rec lm_v3.lm_fullmatrix%rowtype;
    cmd varchar;
    gcmtest varchar;
    altpredtest varchar;
    datetest varchar;
 BEGIN
    IF mtxid IS NOT NULL THEN
-      SELECT * INTO rec FROM lm_v3.lm_matrix WHERE matrixid = mtxid;
+      SELECT * INTO rec FROM lm_v3.lm_fullmatrix WHERE matrixid = mtxid;
    ELSE
 	   IF gsid IS NULL THEN
          SELECT * INTO gsid FROM lm_v3.gridset WHERE name = gsname 
@@ -977,7 +977,7 @@ BEGIN
          datetest = 'dateCode =  ' || quote_literal(dt);
       END IF;
       
-      cmd := 'SELECT * FROM lm_v3.lm_matrix WHERE matrixtype = ' 
+      cmd := 'SELECT * FROM lm_v3.lm_fullmatrix WHERE matrixtype = ' 
                                                       || quote_literal(mtxtype) 
                                                       || ' AND gridsetid = ' 
                                                       || quote_literal(gsid)
@@ -993,14 +993,14 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;    
 
 -- ----------------------------------------------------------------------------
--- Gets all (bare) matrices for a gridset 
+-- Gets all matrices for a gridset 
 CREATE OR REPLACE FUNCTION lm_v3.lm_getMatricesForGridset(gsid int)
-   RETURNS SETOF lm_v3.lm_matrix AS
+   RETURNS SETOF lm_v3.lm_fullmatrix AS
 $$
 DECLARE
-   rec lm_v3.lm_matrix%rowtype;
+   rec lm_v3.lm_fullmatrix%rowtype;
 BEGIN
-   FOR rec IN SELECT * FROM lm_v3.lm_matrix WHERE gridsetId = gsid
+   FOR rec IN SELECT * FROM lm_v3.lm_fullmatrix WHERE gridsetId = gsid
       LOOP
          RETURN NEXT rec;
       END LOOP;
@@ -1255,7 +1255,7 @@ BEGIN
    -- Matrix
    ELSEIF mtxid IS NOT NULL THEN
       begin
-         SELECT userId INTO STRICT usr FROM lm_v3.lm_matrix 
+         SELECT userId INTO STRICT usr FROM lm_v3.lm_fullmatrix 
             WHERE matrixId = mtxid;
          EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -1266,7 +1266,7 @@ BEGIN
    -- Gridset
    ELSEIF gsid IS NOT NULL THEN
       begin
-         SELECT distinct(userId) INTO STRICT usr FROM lm_v3.lm_matrix 
+         SELECT distinct(userId) INTO STRICT usr FROM lm_v3.lm_fullmatrix 
             WHERE gridsetId = gsid;
          EXCEPTION
             WHEN NO_DATA_FOUND THEN

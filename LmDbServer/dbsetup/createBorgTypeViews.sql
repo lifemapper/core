@@ -286,7 +286,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_tree (
    LEFT JOIN lm_v3.tree t ON lg.treeid = t.treeid; 
 
 -- ----------------
--- lm_matrix (Matrix + lm_gridset (Gridset + lm_shapegrid))
+-- lm_fullmatrix (Matrix + lm_gridset (Gridset + lm_shapegrid))
 DROP VIEW IF EXISTS lm_v3.lm_fullmatrix CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    -- Matrix
