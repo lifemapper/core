@@ -25,7 +25,6 @@
 import mx.DateTime
 from osgeo.ogr import wkbPoint
 import socket
-from types import IntType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import (ProcessType, LMFormat)
@@ -544,9 +543,9 @@ class BorgScribe(LMObject):
       @copydoc LmServer.db.catalog_borg.Borg::getScenario()
       """
       sid = code = None
-      if isinstance(idOrCode, IntType):
-         sid = idOrCode
-      else:
+      try:
+         sid = int(idOrCode)
+      except:
          code = idOrCode
       scenario = self._borg.getScenario(scenid=sid, code=code, 
                                         fillLayers=fillLayers)
