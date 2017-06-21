@@ -47,7 +47,7 @@ def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
    @param occ: An occurrence layer object
    @return: A string that can be posted to the Solr index
    """
-   sg = pam.shapegrid
+   sg = pam.getShapegrid()
    mdlScn = prj.modelScenario
    prjScn = prj.projScenario
    pavMtx = Matrix.load(pavFname)
