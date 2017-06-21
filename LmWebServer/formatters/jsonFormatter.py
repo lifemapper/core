@@ -35,7 +35,8 @@ from types import ListType, DictionaryType
 from LmServer.base.atom import Atom
 from LmServer.base.layer2 import Raster
 from LmServer.base.utilities import formatTimeHuman
-from LmServer.common.lmconstants import OGC_SERVICE_URL
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import OGC_SERVICE_URL, LMFileType
 
 from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
@@ -173,8 +174,9 @@ def formatOccurrenceSet(occ):
                            occ.metadataUrl, occ.getUserId(), status=occ.status, 
                            statusModTime=occ.statusModTime, 
                            metadata=occ.lyrMetadata)
-   occDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 
-                                    'data_{}'.format(occ.getId()), occ.name)
+   mapName = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
+                                     usr=occ.getUserId(), epsg=occ.epsgcode)
+   occDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, occ.name)
    dataUrl = occ.getDataUrl()
    occDict['spatialVector'] = _getSpatialVectorMetadata(occ.epsgcode, occ.bbox, 
                                     occ.mapUnits, dataUrl, occ.verify, 
@@ -203,8 +205,10 @@ def formatProjection(prj):
                                     prj.metadataUrl, status=prj.status, 
                                     statusModTime=prj.statusModTime, 
                                     metadata=prj.lyrMetadata)
-   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'data_{}'.format(
-      prj.getOccurrenceSetId()), prj.name)
+   occ = prj._occurrenceSet
+   mapName = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
+                                     usr=occ.getUserId(), epsg=occ.epsgcode)
+   prjDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, prj.name)
    dataUrl = prj.getDataUrl()
    minVal = 0
    maxVal = 1
@@ -279,8 +283,10 @@ def formatScenario(scn):
    """
    scnDict = _getLifemapperMetadata('scenario', scn.getId(), scn.metadataUrl,
                                     scn.getUserId(), metadata=scn.scenMetadata)
-   scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, 'scen_{}'.format(scn.code), 
-                                    scn.layers)
+   mapName = EarlJr().createBasename(LMFileType.SCENARIO_MAP, 
+                                     objCode=scn.getId(), usr=scn.getUserId(), 
+                                     epsg=scn.epsgcode)
+   scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
                                             scn.units, scn.resolution)
 
