@@ -88,6 +88,7 @@ DB_STORE = 'borg'
 SINGLE_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/single'
 MULTI_SPECIES_SCRIPTS_DIR = 'LmCompute/tools/multi'
 COMMON_SCRIPTS_DIR = 'LmCompute/tools/common'
+BOOM_SCRIPTS_DIR = 'LmDbServer/boom'
 SERVER_SCRIPTS_DIR = 'LmServer/tools'
 
 class ProcessTool:
@@ -152,6 +153,13 @@ class ProcessTool:
             elif ptype == ProcessType.MCPA_RANDOM:
                jr = 'mcpa_random'
                
+      elif ProcessType.isBoom(ptype):
+         relpath = BOOM_SCRIPTS_DIR
+         if ptype == ProcessType.BOOM_INIT:
+            jr = 'boominput'
+         else:
+            jr = 'daboom'
+
       elif ptype == ProcessType.CONCATENATE_MATRICES:
          relpath = COMMON_SCRIPTS_DIR
          jr = 'concatenate_matrices'

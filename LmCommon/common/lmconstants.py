@@ -842,6 +842,9 @@ class ProcessType:
    MF_TRIAGE = 640
    TOUCH = 650
    SOLR_POST = 660
+   # BOOM
+   BOOM_INIT = 710
+   BOOM_DAEMON = 720
    
    # .........................
    # TODO: deleteMe
@@ -908,6 +911,12 @@ class ProcessType:
    def isRADPrep(ptype):
       if ptype in [ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE, 
               ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]:
+         return True
+      return False
+   
+   @staticmethod
+   def isBoom(ptype):
+      if ptype in [ProcessType.BOOM_INIT, ProcessType.BOOM_DAEMON]:
          return True
       return False
    

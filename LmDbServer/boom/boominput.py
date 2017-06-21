@@ -62,7 +62,7 @@ from LmServer.legion.shapegrid import ShapeGrid
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 
-BOOM_DAEMON = os.path.join(APP_PATH, 'LmDbServer/boom/daboom.py')
+# BOOM_DAEMON = os.path.join(APP_PATH, 'LmDbServer/boom/daboom.py')
 
 # .............................................................................
 class ArchiveFiller(LMObject):
@@ -1026,7 +1026,7 @@ class ArchiveFiller(LMObject):
       mfChain = self.scribe.insertMFChain(newMFC)
 
       cmdArgs = ['LOCAL', '$PYTHON',
-                 BOOM_DAEMON,
+                 ProcessTool.get(ProcessType.BOOM_DAEMON),
                  '--config_file={}'.format(self.outConfigFilename),
                  'start']
       boomCmd = ' '.join(cmdArgs)
