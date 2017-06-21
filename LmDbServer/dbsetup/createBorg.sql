@@ -462,7 +462,6 @@ lm_v3.tree, lm_v3.tree_treeid_seq,
 lm_v3.gridset, lm_v3.gridset_gridsetid_seq,
 lm_v3.mfprocess, lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix, lm_v3.matrix_matrixid_seq,
-lm_v3.gridsettree, lm_v3.gridsettree_gridsettreeid_seq,
 lm_v3.matrixcolumn, lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP reader;
 
@@ -484,7 +483,6 @@ lm_v3.tree,
 lm_v3.gridset,
 lm_v3.mfprocess,
 lm_v3.matrix,
-lm_v3.gridsettree,
 lm_v3.matrixcolumn
 TO GROUP writer;
 
@@ -503,7 +501,6 @@ lm_v3.tree_treeid_seq,
 lm_v3.gridset_gridsetid_seq,
 lm_v3.mfprocess_mfprocessid_seq,
 lm_v3.matrix_matrixid_seq,
-lm_v3.gridsettree_gridsettreeid_seq,
 lm_v3.matrixcolumn_matrixcolumnid_seq
 TO GROUP writer;
 
