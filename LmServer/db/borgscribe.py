@@ -902,6 +902,7 @@ class BorgScribe(LMObject):
 """
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
+from LmServer.common.datalocator import EarlJr
 
 usr = 'kubi'
 cellsides = 4
@@ -920,21 +921,27 @@ type=1
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
 
-m1 = scribe.getMatrix(mtxId=mtxid, 
-                 gridsetId=None, gridsetName=None, userId=None, 
-                 mtxType=None, gcmCode=None, altpredCode=None, dateCode=None)
+earl = EarlJr(scribe=scribe)
+mtxid=1907
+mtxid=1908
 
-m2 = scribe.getMatrix(mtxId=None, 
-                 gridsetId=grdid, gridsetName=None, userId=None, 
-                 mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
-
-m3 = scribe.getMatrix(mtxId=None, 
-                 gridsetId=None, gridsetName=name, userId=usr, 
-                 mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
+# m1 = scribe.getMatrix(mtxId=mtxid, 
+#                  gridsetId=None, gridsetName=None, userId=None, 
+#                  mtxType=None, gcmCode=None, altpredCode=None, dateCode=None)
+# 
+# m2 = scribe.getMatrix(mtxId=None, 
+#                  gridsetId=grdid, gridsetName=None, userId=None, 
+#                  mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
+# 
+# m3 = scribe.getMatrix(mtxId=None, 
+#                  gridsetId=None, gridsetName=name, userId=usr, 
+#                  mtxType=type, gcmCode=gcm, altpredCode=alt, dateCode=dt)
 
 code = 'AR5-CCSM4-RCP8.5-2050-10min'
 
 scen = scribe.getScenario(code)
+mapfname = scen.createLocalMapFilename()
+(mapname, ancillary, usr, epsg, occsetId, gridsetId, scencode)=  earl.parseMapFilename(mapfname)
 
 sgcount = scribe.countShapeGrids(userId=usr, cellsides=cellsides, cellsize=None, 
                         afterTime=None, beforeTime=None, epsg=None)

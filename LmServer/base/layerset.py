@@ -749,7 +749,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       if (isinstance(sdlLyr, OccurrenceLayer) and
           sdlLyr.getUserId() == PUBLIC_USER and 
           sdlLyr.queryCount > POINT_COUNT_MAX):
-         dlocation = sdlLyr.getDLocation(subset=True)
+         dlocation = sdlLyr.getDLocation(largeFile=False)
          if not os.path.exists(dlocation):
             dlocation = sdlLyr.getDLocation()
       else:

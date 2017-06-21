@@ -43,7 +43,7 @@ from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH,
          GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
          DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
 from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
-                                            POINT_COUNT_MIN, APP_PATH)
+                                            POINT_COUNT_MIN)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -62,22 +62,26 @@ from LmServer.legion.shapegrid import ShapeGrid
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 
-# BOOM_DAEMON = os.path.join(APP_PATH, 'LmDbServer/boom/daboom.py')
-
 # .............................................................................
-class ArchiveFiller(LMObject):
+class BOOMFiller(LMObject):
    """
-   Class to populate a Lifemapper database with inputs for a BOOM archive, and 
-   write a configuration file for computations on the inputs.
+   @note: Not yet used!
+   @summary 
+   Class to: 
+     1) populate a Lifemapper database with inputs for a BOOM archive
+     2) create default matrices for each scenario, 
+        PAMs for SDM projections and GRIMs for Scenario layers
+     3) Write a configuration file for computations (BOOM daemon) on the inputs
+     4) Write a Makeflow to begin the BOOM daemon
    """
 # .............................................................................
 # Constructor
 # .............................................................................
    def __init__(self, configFname=None):
       """
-      @summary Constructor for ArchiveFiller class.
+      @summary Constructor for BOOMFiller class.
       """
-      super(ArchiveFiller, self).__init__()
+      super(BOOMFiller, self).__init__()
       self.name = self.__class__.__name__.lower()
       self.inConfigFname = configFname
       # Get database
@@ -90,7 +94,7 @@ class ArchiveFiller(LMObject):
    # ...............................................
    def initializeInputs(self, configFname=None):
       """
-      @summary Initialize configured and stored inputs for ArchiveFiller class.
+      @summary Initialize configured and stored inputs for BOOMFiller class.
       """
       # Allow reset configuration
       if configFname is not None:
@@ -135,6 +139,9 @@ class ArchiveFiller(LMObject):
       if newModelScenCode is  not None:
          self.modelScenCode = newModelScenCode
       self.prjScenCodeList = self.allScens.keys()
+      self.gridset = None
+      self.shapegrid = None
+      self.defaultPamGrims = {}
       
    # ...............................................
    def open(self):
@@ -177,7 +184,7 @@ class ArchiveFiller(LMObject):
       # Logfile
       secs = time.time()
       timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-      logname = '{}.{}'.format(self.__class__.__name__.lower(), timestamp)
+      logname = '{}.{}'.format(self.name, timestamp)
       logger = ScriptLogger(logname, level=loglevel)
       # DB connection
       scribe = BorgScribe(logger)
@@ -713,7 +720,7 @@ class ArchiveFiller(LMObject):
       return predScenarios
    
    # ...............................................
-   def addScenariosAndLayers(self):
+   def findOrAddScenariosAndLayers(self):
       """
       @summary Add scenario and layer metadata to database, and update the 
                allScens attribute with newly inserted scenarios and layers
@@ -813,8 +820,9 @@ class ArchiveFiller(LMObject):
       return newshp
       
    # ...............................................
-   def _createDefaultMatrices(self, gridset, scen):
+   def _findOrAddDefaultMatrices(self, gridset, scen):
       # Create Global PAM for this archive, scenario
+      # Pam layers are added upon boom processing
       pamType = MatrixType.PAM
       if self.usr == PUBLIC_USER:
          pamType = MatrixType.ROLLING_PAM
@@ -828,6 +836,7 @@ class ArchiveFiller(LMObject):
                          status=JobStatus.GENERAL, statusModTime=CURR_MJD)
       gpam = self.scribe.findOrInsertMatrix(tmpGpam)
       # Create Scenario-GRIM for this archive, scenario
+      # GRIM layers are added now
       desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
       grimMeta = {ServiceObject.META_DESCRIPTION: desc,
                  ServiceObject.META_KEYWORDS: [GGRIM_KEYWORD]}
@@ -837,15 +846,20 @@ class ArchiveFiller(LMObject):
                          gridset=gridset, 
                          status=JobStatus.GENERAL, statusModTime=CURR_MJD)
       grim = self.scribe.findOrInsertMatrix(tmpGrim)
+      for lyr in scen.layers:
+         # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
+         mtxcol = self._initGRIMIntersect(lyr, grim, CURR_MJD)
       return gpam, grim
 
    # ...............................................
    def addArchive(self):
       """
-      @summary: Create a Shapegrid, PAM, and Gridset for this archive's Global PAM
+      @summary: Create a Gridset, Shapegrid, PAMs, GRIMs for this archive, and
+                update attributes with new or existing values from DB
       """
       self.scribe.log.info('  Insert, build shapegrid {} ...'.format(self.gridname))
       shp = self._addIntersectGrid()
+      self.shapegrid = shp
       # "BOOM" Archive
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
@@ -853,20 +867,20 @@ class ArchiveFiller(LMObject):
                        dlocation=self.envPackageMetaFilename, epsgcode=self.epsgcode, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
+      self.gridset = updatedGrdset
       # "Global" PAM, GRIM (one each per scenario)
-      pamGrims = {}
       for code, scen in self.allScens.iteritems():
-         gPam, scenGrim = self._createDefaultMatrices(updatedGrdset, scen)
-         pamGrims[code] = (gPam, scenGrim)
-      
-      return shp, updatedGrdset, pamGrims
+         gPam, scenGrim = self._findOrAddDefaultMatrices(updatedGrdset, scen)
+         self.defaultPamGrims[code] = (gPam, scenGrim)
    
 # ...............................................
-   def _initGRIMIntersect(self, lyr, mtx, shpGrid, intersectParams, currtime):
+   def _initGRIMIntersect(self, lyr, mtx):
       """
       @summary: Initialize model, projections for inputs/algorithm.
       """
       mtxcol = None
+      intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
+
       if lyr is not None:
          # TODO: Save processType into the DB??
          if LMFormat.isGDAL(driver=lyr.dataFormat):
@@ -877,15 +891,15 @@ class ArchiveFiller(LMObject):
    
          # TODO: Change ident to lyr.ident when that is populated
          tmpCol = MatrixColumn(None, mtx.getId(), self.usr, 
-                layer=lyr, shapegrid=shpGrid, 
+                layer=lyr, shapegrid=self.shapegrid, 
                 intersectParams=intersectParams, 
                 squid=lyr.squid, ident=lyr.name, processType=ptype, 
-                status=JobStatus.GENERAL, statusModTime=currtime,
+                status=JobStatus.GENERAL, statusModTime=CURR_MJD,
                 postToSolr=False)
          mtxcol = self.scribe.findOrInsertMatrixColumn(tmpCol)
          
          # DB does not populate with shapegrid on insert
-         mtxcol.shapegrid = shpGrid
+         mtxcol.shapegrid = self.shapegrid
          
          # TODO: This is a hack, post to solr needs to be retrieved from DB
          mtxcol.postToSolr = False
@@ -909,64 +923,33 @@ class ArchiveFiller(LMObject):
       return grimChain
    
    # .............................
-   def createGRIMChains(self, shpGrid, pamGrims):
+   def addGRIMChains(self):
       grimChains = []
       currtime = mx.DateTime.gmt().mjd
-      intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
 
-      for code, (pam, grim) in pamGrims.iteritems():
+      for code, (pam, grim) in self.defaultPamGrims.iteritems():
          scen = self.allScens[code]
          # Create MFChain for this GRIM
          grimChain = self._createGrimMF(code, currtime)
          targetDir = grimChain.getRelativeDirectory()
+         mtxcols = self._scribe.getMatrixColumnsForMatrix(grim.getId())
          
-         # Need to keep track of intersections for matrix concatenation
          colFilenames = []
-         for lyr in scen.layers:
-            # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-            mtxcol = self._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
-                                             currtime)
-            rules = mtxcol.computeMe(workDir=targetDir)
-            grimChain.addCommands(rules)
-
-            pavFname = os.path.join(targetDir, 
-                  os.path.splitext(mtxcol.layer.getRelativeDLocation())[0], 
-                  mtxcol.getTargetFilename())
+         for mtxcol in mtxcols:
+            mtxcol.postToSolr = False
+            mtxcol.processType = self._getMCProcessType(mtxcol, grim.matrixType)
+            mtxcol.shapegrid = self.shapegrid
+      
+            lyrRules = mtxcol.computeMe(workDir=targetDir)
+            grimChain.addCommands(lyrRules)
             
-            colFilenames.append(pavFname)
-               
-         # TODO: Matrix Concatenate and Stockpile Rules should be created by 
-         #       grim.computeMe().  LMMatrix obj should check MatrixType to  
-         #       determine whether triage files are used (True for SDM PAM,  
-         #       False for GRIM, BioGeo, output matrices) 
-         # TODO: Create a default "successFile" from object
+            # Keep track of intersection filenames for matrix concatenation
+            relDir = os.path.splitext(mtxcol.layer.getRelativeDLocation())[0]
+            outFname = os.path.join(targetDir, relDir, mtxcol.getTargetFilename())
+            colFilenames.append(outFname)
+                        
          # Add concatenate command
-         grimRules = []
-         wsGrim = os.path.join(targetDir, 'grim_{}{}'
-                               .format(grim.getId(), LMFormat.JSON.ext))
-         concatArgs = ['$PYTHON',
-                       ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
-                       wsGrim, 
-                       # Axis
-                       '1', 
-                       ' '.join(colFilenames)
-                       ]
-         concatCmd = ' '.join(concatArgs)
-         grimRules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
-         # Stockpile GRIM
-         grimSuccessFilename = os.path.join(targetDir, 
-                                        'grim_{}.success'.format(grim.getId()))
-         stockpileArgs = ['LOCAL',
-                          '$PYTHON',
-                          ProcessTool.get(ProcessType.UPDATE_OBJECT),
-                          '-s {}'.format(JobStatus.COMPLETE),
-                          str(ProcessType.CONCATENATE_MATRICES),
-                          str(grim.getId()),
-                          grimSuccessFilename,
-                          wsGrim]
-         stockpileCmd = ' '.join(stockpileArgs)
-         grimRules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
-                             dependencies=[wsGrim]))
+         grimRules = grim.getConcatAndStockpileRules(colFilenames, workDir=targetDir)
          
          grimChain.addCommands(grimRules)
          grimChain.write()
@@ -1012,12 +995,12 @@ class ArchiveFiller(LMObject):
       return ids
    
    # ...............................................
-   def createMFBoom(self):
+   def addBoomChain(self):
       """
       @summary: Create a Makeflow to initiate Boomer with inputs assembled 
-                and configFile written by ArchiveFiller.initBoom.
+                and configFile written by BOOMFiller.initBoom.
       """
-      meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
+      meta = {MFChain.META_CREATED_BY: self.name,
               MFChain.META_DESC: 'Boom start for User {}, Archive {}'
       .format(self.usr, self.archiveName)}
       newMFC = MFChain(self.usr, priority=self.priority, 
@@ -1036,7 +1019,6 @@ class ArchiveFiller(LMObject):
       # species data (initiated by this Makeflow).  
       walkedArchiveFname = baseAbsFilename + LMFormat.LOG.ext
 
-      outputFname = mfChain.getDLocation()
       # Create a rule from the MF and Arf file creation
       rule = MfRule(boomCmd, [walkedArchiveFname], 
                     dependencies=[self.outConfigFilename])
@@ -1046,39 +1028,6 @@ class ArchiveFiller(LMObject):
       self.scribe.updateObject(mfChain)
       return mfChain
    
-   # ...............................................
-   def initBoom(self):
-      # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
-      self.addUsers()
-   
-      # Add Algorithms if they do not exist
-      aIds = self.addAlgorithms()
-   
-      # Add or get Scenarios
-      self.addScenariosAndLayers()
-         
-      # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
-      # Test a subset of OccurrenceIds provided as BOOM species input
-      if self.occIdFname:
-         self._checkOccurrenceSets()
-         
-      # Add ShapeGrid, Global PAM, Gridset, 
-      shpGrid, archiveGridset, pamGrims = self.addArchive()
-   
-      # Assemble a MFChain for creating each Scenario GRIM
-      grimChains = self.createGRIMChains(shpGrid, pamGrims)
-      
-      # Insert all taxonomic sources for now
-      self.scribe.log.info('  Insert taxonomy metadata ...')
-      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-         taxSourceId = self.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-         
-      # Write config file for this archive
-      self.writeConfigFile()
-      mfChain = self.createMFBoom()
-      self.scribe.log.info('Wrote {}'.format(self.outConfigFilename))
-      
-      return archiveGridset
    
 # ...............................................
 if __name__ == '__main__':
@@ -1098,9 +1047,43 @@ if __name__ == '__main__':
       print ('Missing configuration file {}'.format(configFname))
       exit(-1)
 
-   filler = ArchiveFiller(configFname=configFname)
+   filler = BOOMFiller(configFname=configFname)
    filler.initializeInputs()
-   filler.initBoom()
+   
+   # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
+   filler.addUsers()
+   
+   # Add Algorithms if they do not exist
+   filler.addAlgorithms()
+   
+   # Add or get Scenarios 
+   # This updates the allScens with db objects for other operations
+   filler.findOrAddScenariosAndLayers()
+         
+   # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
+   # Test a subset of OccurrenceIds provided as BOOM species input
+   if filler.occIdFname:
+      filler._checkOccurrenceSets()
+         
+   # Add or get ShapeGrid, Global PAM, Gridset for this archive
+   # This updates the gridset, shapegrid, default PAMs (rolling, with no 
+   #     matrixColumns, default GRIMs with matrixColumns
+   filler.addArchive()
+   
+   # Create, add, write MFChain for creating each Scenario GRIM
+   filler.addGRIMChains()
+      
+   # Insert all taxonomic sources for now
+   filler.scribe.log.info('  Insert taxonomy metadata ...')
+   for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+      taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
+         
+   # Write config file for this archive
+   filler.writeConfigFile()
+   
+   # Create, add, write MFChain running the Boomer daemon on these SDM inputs
+   mfChain = filler.addBoomChain()
+   filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
    filler.close()
     
 """
@@ -1146,93 +1129,33 @@ CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().d
 CURR_MJD = mx.DateTime.gmt().mjd
 BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
 
-from LmDbServer.boom.boominput import ArchiveFiller
+from LmDbServer.boom.initboom import BOOMFiller
 
 configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
-configFname = '/state/partition1/lmscratch/temp/file_24548.ini'
-occIdFname = '/state/partition1/lmscratch/temp/file_54844.csv'
 
-filler = ArchiveFiller(configFname=configFname)
+filler = BOOMFiller(configFname=configFname)
 filler.initializeInputs()
-
-for code, scen in scens.iteritems():
-   print code
+for code, scen in filler.allScens.iteritems():
+   print code, scen.getId()
    for lyr in scen.layers:
       print '  ',lyr.name
    print
 
 filler.addScenariosAndLayers()
-for code, scen in scens.iteritems():
-   print code
+
+for code, scen in filler.allScens.iteritems():
+   print code, scen.getId()
    for lyr in scen.layers:
       print '  ',lyr.name
    print
 
 shpGrid, archiveGridset, pamGrims = filler.addArchive()
-
-grimChains = []
-currtime = mx.DateTime.gmt().mjd
-intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
-
-# for code, (pam, grim) in pamGrims.iteritems():
-scen = filler.allScens[code]
-pam, grim = pamGrims[code]
-# Create MFChain for this GRIM
-grimChain = filler._createGrimMF(code, currtime)
-targetDir = grimChain.getRelativeDirectory()
-
-# Need to keep track of intersections for matrix concatenation
-colFilenames = []
-for lyr in scen.layers:
-   # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-   mtxcol = filler._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
-                                    currtime)
-   rules = mtxcol.computeMe(workDir=targetDir)
-   grimChain.addCommands(rules)
-   colFilenames.append(os.path.join(targetDir, 
-                     os.path.splitext(lyr.getRelativeDLocation())[0], 
-                     mtxcol.getTargetFilename()))
-
-wsGrim = os.path.join(targetDir, 'grim_{}.{}'
-                      .format(grim.getId(), LMFormat.JSON.ext))
-concatArgs = ['$PYTHON',
-              ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
-              # Axis
-              '1', 
-              wsGrim, 
-              ' '.join(colFilenames)
-              ]
-concatCmd = ' '.join(concatArgs)
-rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
-# Stockpile GRIM
-grimSuccessFilename = os.path.join(targetDir, 
-                               'grim_{}.success'.format(grim.getId()))
-stockpileArgs = ['LOCAL',
-                 '$PYTHON',
-                 ProcessTool.get(ProcessType.UPDATE_OBJECT),
-                 '-s {}'.format(JobStatus.COMPLETE),
-                 str(ProcessType.INTERSECT_RASTER_GRIM),
-                 str(grim.getId()),
-                 grimSuccessFilename,
-                 wsGrim]
-stockpileCmd = ' '.join(stockpileArgs)
-rules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
-                    dependencies=[wsGrim]))
-
-grimChain.write()
-grimChain.updateStatus(JobStatus.INITIALIZE)
-filler.scribe.updateObject(grimChain)
-grimChains.append(grimChain)
-filler.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
-              .format(grimChain.objId, code))
-         
-
 grimChains = filler.createGRIMChains(shpGrid, pamGrims)
 
 
 filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
-# filler.initBoom()
-# filler.close()
+filler.initBoom()
+filler.close()
 
 
 
@@ -1241,44 +1164,5 @@ filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
 filler.writeConfigFile()
 mfChain = filler.createMFBoom()
 filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))
-
-
-layers = []
-staticLayers = {}
-envcode = pkgMeta['layertypes'][0]
-ltmeta = lyrtypeMeta[envcode]
-envKeywords = [k for k in baseMeta['keywords']]
-relfname, isStatic = filler._findFileFor(ltmeta, pkgMeta['baseline'], 
-                                  gcm=None, tm=None, altPred=None)
-lyrname = filler._getbioName(pkgMeta['baseline'], pkgMeta['res'], 
-                           lyrtype=envcode, suffix=pkgMeta['suffix'])
-lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
-           'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
-envmeta = {'title': ltmeta['title'],
-           'description': ltmeta['description'],
-           'keywords': envKeywords.extend(ltmeta['keywords'])}
-dloc = os.path.join(ENV_DATA_PATH, relfname)
-if not os.path.exists(dloc):
-   print('Missing local data %s' % dloc)
-envlyr = EnvLayer(lyrname, filler.usr, elyrMeta['epsg'], 
-                  dlocation=dloc, 
-                  lyrMetadata=lyrmeta,
-                  dataFormat=elyrMeta['gdalformat'], 
-                  gdalType=elyrMeta['gdaltype'],
-                  valUnits=ltmeta['valunits'],
-                  mapunits=elyrMeta['mapunits'], 
-                  resolution=elyrMeta['resolution'], 
-                  bbox=pkgMeta['bbox'], 
-                  modTime=CURR_MJD, 
-                  envCode=envcode, 
-                  dateCode=pkgMeta['baseline'],
-                  envMetadata=envmeta,
-                  envModTime=CURR_MJD)
-layers.append(envlyr)
-if isStatic:
-   staticLayers[envcode] = envlyr
-   
-return layers, staticLayers
-
 
 """
