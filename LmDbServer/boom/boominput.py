@@ -488,7 +488,7 @@ class ArchiveFiller(LMObject):
                   wrongUserCount += 1
             if count >= limit:
                break
-      self.scribe.log.info('Errors out of {} read OccurrenceSets (limit {}):'. format(limit))
+      self.scribe.log.info('Errors out of {} read OccurrenceSets (limit {}):'.format(count, limit))
       self.scribe.log.info('  Missing: {} '.format(missingCount))
       self.scribe.log.info('  Unauthorized data: {} '.format(wrongUserCount))
 
