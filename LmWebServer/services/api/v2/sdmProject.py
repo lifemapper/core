@@ -198,9 +198,6 @@ class SdmProjectService(LmService):
       """
       @summary: Return a list of projections matching the specified criteria
       """
-      afterStatus = None
-      beforeStatus = None
-
       # Process status parameter
       if status:
          if status < JobStatus.COMPLETE:
