@@ -125,8 +125,8 @@ class SdmProjectService(LmService):
       #projectionData = cherrypy.request.json
       projectionData = json.loads(cherrypy.request.body.read())
       
-      if self.userId == PUBLIC_USER:
-         usr.self.scribe.findUser(DEFAULT_POST_USER)
+      if self.getUserId() == PUBLIC_USER:
+         usr = self.scribe.findUser(DEFAULT_POST_USER)
       else:
          usr = self.scribe.findUser(self.getUserId())
       
