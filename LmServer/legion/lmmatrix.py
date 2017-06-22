@@ -106,7 +106,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return mtxobj
 
    # ...............................................
-   def updateStatus(self, status=None, metadata=None, modTime=mx.DateTime.gmt().mjd):
+   def updateStatus(self, status, metadata=None, modTime=mx.DateTime.gmt().mjd):
       """
       @summary: Updates matrixIndex, paramMetadata, and modTime.
       @param metadata: Dictionary of Matrix metadata keys/values; key constants  

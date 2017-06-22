@@ -38,7 +38,7 @@ def addToGridset(gridsetId, treeFilename=None, treeName=None, hypotheses=None,
                         processType=ProcessType.ENCODE_HYPOTHESES,
                         userId=gs.getUserId(), gridset=gs)
       insertedMtx = scribe.findOrInsertMatrix(newMtx)
-      insertedMtx.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
+      insertedMtx.updateStatus(JobStatus.COMPLETE)
       scribe.updateObject(insertedMtx)
       # Write the encoded matrix to the new matrix dlocation
       with open(insertedMtx.getDLocation(), 'w') as outF:

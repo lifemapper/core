@@ -279,3 +279,9 @@ class MFChain(ProcessObject):
             # These have built-in newlines
             outF.write(job) 
       
+   # ...............................................
+   def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd):
+      """
+      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+      """
+      ProcessObject.updateStatus(self, status, modTime)

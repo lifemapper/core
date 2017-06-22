@@ -278,8 +278,7 @@ class GlobalPAMService(LmService):
                                                              '1' : squids})
          # Insert it into db
          updatedPamMtx = self.scribe.findOrInsertMatrix(pamMtx)
-         updatedPamMtx.updateStatus(status=JobStatus.COMPLETE, 
-                                    modTime=gmt().mjd)
+         updatedPamMtx.updateStatus(JobStatus.COMPLETE)
          self.scribe.updateObject(updatedPamMtx)
          self.log.debug("Dlocation for updated pam: {}".format(updatedPamMtx.getDLocation()))
          with open(updatedPamMtx.getDLocation(), 'w') as outF:
@@ -304,8 +303,7 @@ class GlobalPAMService(LmService):
          if grim.mtxMetadata.has_key('keywords'):
             grimMetadata['keywords'].extend(grim.mtxMetadata['keywords'])
          
-         insertedGrim.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd,
-                                   metadata=grimMetadata)
+         insertedGrim.updateStatus(JobStatus.COMPLETE, metadata=grimMetadata)
          self.scribe.updateObject(insertedGrim)
          # Save the original grim data into the new location
          # TODO: Add read / load method for LMMatrix
@@ -323,7 +321,7 @@ class GlobalPAMService(LmService):
                             userId=self.getUserId(), gridset=updatedGS, 
                             status=JobStatus.INITIALIZE)
          insertedBG = self.scribe.findOrInsertMatrix(newBG)
-         insertedBG.updateStatus(status=JobStatus.COMPLETE, modTime=gmt().mjd)
+         insertedBG.updateStatus(JobStatus.COMPLETE)
          self.scribe.updateObject(insertedBG)
          # Save the original grim data into the new location
          # TODO: Add read / load method for LMMatrix

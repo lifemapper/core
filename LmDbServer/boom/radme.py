@@ -267,8 +267,7 @@ class RADCaller(LMObject):
                            dateCode=dateCode, userId=self._gridset.getUserId(), 
                            gridset=self._gridset)
       mtx = self._scribe.findOrInsertMatrix(newMtx)
-      mtx.updateStatus(status=JobStatus.INITIALIZE, 
-                          modTime=mx.DateTime.gmt().mjd)
+      mtx.updateStatus(JobStatus.INITIALIZE)
       return mtx
 
 # ...............................................
