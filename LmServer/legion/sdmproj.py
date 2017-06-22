@@ -762,21 +762,24 @@ class SDMProjection(_ProjectionType, Raster):
             convertCmdArgs = [os.path.join(BIN_PATH, 'gdal_translate')]
             
             # If archive or default, scale
-            if self.getUserId() in [PUBLIC_USER, DEFAULT_POST_USER]:
-               convertCmdArgs.extend(["-scale 0 1 {} {}"
+            #if self.getUserId() in [PUBLIC_USER, DEFAULT_POST_USER]:
+            
+            # TODO: Get this from db
+            # CJG / AMS - 06/22/2017 - Always scale for now
+            convertCmdArgs.extend(["-scale 0 1 {} {}"
                                       .format(SCALE_PROJECTION_MINIMUM,
                                               SCALE_PROJECTION_MAXIMUM),
                                       "-ot Int16", 
                                       "-of GTiff"])
             # If Charlie, multiply
             # TODO: put these scaling params in SCALE_PROJECTION_MINIMUM and MAX
-            elif self.getUserId() == 'cgwillis':
-               convertCmdArgs.extend(["-scale 0 1 0 10000",
-                                      "-ot Int16",
-                                      "-of GTiff"])
-            # Else, just convert
-            else:
-               convertCmdArgs.extend(["-of GTiff"])
+            #elif self.getUserId() == 'cgwillis':
+            #   convertCmdArgs.extend(["-scale 0 1 0 10000",
+            #                          "-ot Int16",
+            #                          "-of GTiff"])
+            ## Else, just convert
+            #else:
+            #   convertCmdArgs.extend(["-of GTiff"])
             convertCmdArgs.extend([rawPrjRaster, outTiff])
             convertCmd = ' '.join(convertCmdArgs)
             rules.append(MfRule(convertCmd, [outTiff], 
