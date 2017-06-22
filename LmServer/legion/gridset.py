@@ -824,6 +824,12 @@ class Gridset(ServiceObject):
                                                                   str(e))
       return success
       
+   # ...............................................
+   def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
+      """
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
+      """
+      ServiceObject.updateModtime(self, modTime)
 
 # .............................................................................
 # Public methods

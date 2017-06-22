@@ -282,6 +282,6 @@ class MFChain(ProcessObject):
    # ...............................................
    def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd):
       """
-      @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
       """
       ProcessObject.updateStatus(self, status, modTime)
