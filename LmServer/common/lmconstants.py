@@ -690,8 +690,8 @@ class FileFix:
              LMFileType.MCPA_BG_RAND_F_PARTIAL: 'bgRandFpart', 
              LMFileType.MCPA_ENV_F_GLOBAL: 'envFglobal', 
              LMFileType.MCPA_ENV_F_SEMI: 'envFsemi', 
-             LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: 'envObjAdjRsq',
-             LMFileType.MCPA_ENV_OBS_PARTIAL: 'envObjPart', 
+             LMFileType.MCPA_ENV_OBS_ADJ_R_SQ: 'envObsAdjRsq',
+             LMFileType.MCPA_ENV_OBS_PARTIAL: 'envObsPart', 
              LMFileType.MCPA_ENV_RAND_F_GLOBAL: 'envRandFglob', 
              LMFileType.MCPA_ENV_RAND_F_PARTIAL: 'envRandFpart'
    }
