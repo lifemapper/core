@@ -999,7 +999,7 @@ class ArchiveFiller(LMObject):
       """
       @summary Adds algorithms to the database from the algorithm dictionary
       """
-      ids = []
+      allAlgs = []
       for alginfo in Algorithms.implemented():
          meta = {'name': alginfo.name, 
                  'isDiscreteOutput': alginfo.isDiscreteOutput,
@@ -1007,9 +1007,8 @@ class ArchiveFiller(LMObject):
                  'acceptsCategoricalMaps': alginfo.acceptsCategoricalMaps}
          alg = Algorithm(alginfo.code, metadata=meta)
          self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
-         algid = self.scribe.findOrInsertAlgorithm(alg)
-         ids.append(algid)
-      return ids
+         updatedAlg = self.scribe.findOrInsertAlgorithm(alg)
+         allAlgs.append(algid)
    
    # ...............................................
    def createMFBoom(self):
@@ -1108,177 +1107,37 @@ import mx.DateTime
 import os
 import time
 
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-                        ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
-from LmCommon.common.readyfile import readyFilename
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
-      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
-      BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
-      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
-      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
-      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
-      GRID_CELLSIZE, GRID_NUM_SIDES)
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
-         DEFAULT_EMAIL_POSTFIX, Priority)
-from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
-                                            POINT_COUNT_MIN)
-from LmServer.common.lmuser import LMUser
-from LmServer.common.log import ScriptLogger
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isCorrectUser
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.cmd import MfRule
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario
-from LmServer.legion.shapegrid import ShapeGrid
-
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
-BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
 
 from LmDbServer.boom.boominput import ArchiveFiller
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 
 configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
-configFname = '/state/partition1/lmscratch/temp/file_24548.ini'
-occIdFname = '/state/partition1/lmscratch/temp/file_54844.csv'
+# filler = ArchiveFiller(configFname=configFname)
 
-filler = ArchiveFiller(configFname=configFname)
+filler = ArchiveFiller()
+
+
 filler.initializeInputs()
-
-for code, scen in scens.iteritems():
-   print code
-   for lyr in scen.layers:
-      print '  ',lyr.name
-   print
-
+filler.addUsers()
+filler.addAlgorithms()
 filler.addScenariosAndLayers()
-for code, scen in scens.iteritems():
-   print code
-   for lyr in scen.layers:
-      print '  ',lyr.name
-   print
+if filler.occIdFname:
+   filler._checkOccurrenceSets()
+
 
 shpGrid, archiveGridset, pamGrims = filler.addArchive()
-
-grimChains = []
-currtime = mx.DateTime.gmt().mjd
-intersectParams = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
-
-# for code, (pam, grim) in pamGrims.iteritems():
-scen = filler.allScens[code]
-pam, grim = pamGrims[code]
-# Create MFChain for this GRIM
-grimChain = filler._createGrimMF(code, currtime)
-targetDir = grimChain.getRelativeDirectory()
-
-# Need to keep track of intersections for matrix concatenation
-colFilenames = []
-for lyr in scen.layers:
-   # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-   mtxcol = filler._initGRIMIntersect(lyr, grim, shpGrid, intersectParams, 
-                                    currtime)
-   rules = mtxcol.computeMe(workDir=targetDir)
-   grimChain.addCommands(rules)
-   colFilenames.append(os.path.join(targetDir, 
-                     os.path.splitext(lyr.getRelativeDLocation())[0], 
-                     mtxcol.getTargetFilename()))
-
-wsGrim = os.path.join(targetDir, 'grim_{}.{}'
-                      .format(grim.getId(), LMFormat.JSON.ext))
-concatArgs = ['$PYTHON',
-              ProcessTool.get(ProcessType.CONCATENATE_MATRICES),
-              # Axis
-              '1', 
-              wsGrim, 
-              ' '.join(colFilenames)
-              ]
-concatCmd = ' '.join(concatArgs)
-rules.append(MfRule(concatCmd, [wsGrim], dependencies=colFilenames))
-# Stockpile GRIM
-grimSuccessFilename = os.path.join(targetDir, 
-                               'grim_{}.success'.format(grim.getId()))
-stockpileArgs = ['LOCAL',
-                 '$PYTHON',
-                 ProcessTool.get(ProcessType.UPDATE_OBJECT),
-                 '-s {}'.format(JobStatus.COMPLETE),
-                 str(ProcessType.INTERSECT_RASTER_GRIM),
-                 str(grim.getId()),
-                 grimSuccessFilename,
-                 wsGrim]
-stockpileCmd = ' '.join(stockpileArgs)
-rules.append(MfRule(stockpileCmd, [grimSuccessFilename], 
-                    dependencies=[wsGrim]))
-
-grimChain.write()
-grimChain.updateStatus(JobStatus.INITIALIZE)
-filler.scribe.updateObject(grimChain)
-grimChains.append(grimChain)
-filler.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
-              .format(grimChain.objId, code))
-         
-
 grimChains = filler.createGRIMChains(shpGrid, pamGrims)
+for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+   taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
 
 
-filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
-# filler.initBoom()
-# filler.close()
-
-
-
-   
-# Write config file for this archive
 filler.writeConfigFile()
 mfChain = filler.createMFBoom()
 filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))
 
-
-layers = []
-staticLayers = {}
-envcode = pkgMeta['layertypes'][0]
-ltmeta = lyrtypeMeta[envcode]
-envKeywords = [k for k in baseMeta['keywords']]
-relfname, isStatic = filler._findFileFor(ltmeta, pkgMeta['baseline'], 
-                                  gcm=None, tm=None, altPred=None)
-lyrname = filler._getbioName(pkgMeta['baseline'], pkgMeta['res'], 
-                           lyrtype=envcode, suffix=pkgMeta['suffix'])
-lyrmeta = {'title': ' '.join((pkgMeta['baseline'], ltmeta['title'])),
-           'description': ' '.join((pkgMeta['baseline'], ltmeta['description']))}
-envmeta = {'title': ltmeta['title'],
-           'description': ltmeta['description'],
-           'keywords': envKeywords.extend(ltmeta['keywords'])}
-dloc = os.path.join(ENV_DATA_PATH, relfname)
-if not os.path.exists(dloc):
-   print('Missing local data %s' % dloc)
-envlyr = EnvLayer(lyrname, filler.usr, elyrMeta['epsg'], 
-                  dlocation=dloc, 
-                  lyrMetadata=lyrmeta,
-                  dataFormat=elyrMeta['gdalformat'], 
-                  gdalType=elyrMeta['gdaltype'],
-                  valUnits=ltmeta['valunits'],
-                  mapunits=elyrMeta['mapunits'], 
-                  resolution=elyrMeta['resolution'], 
-                  bbox=pkgMeta['bbox'], 
-                  modTime=CURR_MJD, 
-                  envCode=envcode, 
-                  dateCode=pkgMeta['baseline'],
-                  envMetadata=envmeta,
-                  envModTime=CURR_MJD)
-layers.append(envlyr)
-if isStatic:
-   staticLayers[envcode] = envlyr
-   
-return layers, staticLayers
+filler.close()
 
 
 """
