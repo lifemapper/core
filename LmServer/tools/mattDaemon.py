@@ -49,6 +49,7 @@ from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
 from LmServer.common.localconstants import (CATALOG_SERVER_OPTIONS, 
                   MAKEFLOW_OPTIONS, MAX_MAKEFLOWS, WORKER_FACTORY_OPTIONS)
 from LmServer.common.log import LmServerLogger
+from mx.DateTime.DateTime import gmt
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -290,7 +291,7 @@ class MattDaemon(Daemon):
             lmStatus = JobStatus.INITIALIZE
          
          # Update
-         mfObj.updateStatus(lmStatus)
+         mfObj.updateStatus(lmStatus, gmt().mjd)
          self.scribe.updateObject(mfObj)
       
       # Remove files from workspace
