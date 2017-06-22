@@ -1008,7 +1008,7 @@ class ArchiveFiller(LMObject):
          alg = Algorithm(alginfo.code, metadata=meta)
          self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
          updatedAlg = self.scribe.findOrInsertAlgorithm(alg)
-         allAlgs.append(algid)
+         allAlgs.append(updatedAlg)
    
    # ...............................................
    def createMFBoom(self):
