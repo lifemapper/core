@@ -483,24 +483,23 @@ class _LayerParameters(LMObject):
       return self._treeIndex
 
    # ...............................................
-   def updateParams(self, matrixIndex=None, metadata=None, 
-                    modTime=mx.DateTime.gmt().mjd):
+   def updateParams(self, modTime, matrixIndex=None, metadata=None):
       """
       @summary: Updates matrixIndex, paramMetadata, and modTime.
+      @param modTime: time/date last modified
       @param matrixIndex: Index of the position in PAM or other matrix.  If this 
                       Parameterized Layer is not a Matrix input, or part of 
                       a Global PAM, created dynamically upon query of existing
                       matrix columns, value is -1.
       @param metadata: Dictionary of metadata keys/values; key constants are 
                        class attributes.
-      @param modTime: time/date last modified
       @note: Missing keyword parameters are ignored.
       """
+      self.paramModTime = modTime
       if metadata is not None:
          self.loadParamMetadata(metadata)
       if matrixIndex is not None:
          self._matrixIndex = matrixIndex
-      self.paramModTime = modTime
 
 # .............................................................................
 # Raster class (inherits from _Layer)

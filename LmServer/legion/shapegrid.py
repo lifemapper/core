@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import mx.DateTime
 from osgeo import ogr, osr
 import os
 from types import IntType
@@ -116,16 +117,16 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
       return shpGrid
 
    # ...............................................
-   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=None):
+   def updateStatus(self, status, matrixIndex=None, metadata=None, modTime=mx.DateTime.gmt().mjd):
       """
       @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
       @copydoc LmServer.base.serviceobject2.ServiceObject::updateModtime()
       @copydoc LmServer.base.layer2._LayerParameters::updateParams()
       """
-      ProcessObject.updateStatus(self, status, modTime=modTime)
-      ServiceObject.updateModtime(self, modTime=modTime)
-      _LayerParameters.updateParams(self, matrixIndex=matrixIndex, 
-                                    metadata=metadata, modTime=modTime)
+      ProcessObject.updateStatus(self, status, modTime)
+      ServiceObject.updateModtime(self, modTime)
+      _LayerParameters.updateParams(self, modTime, matrixIndex=matrixIndex, 
+                                    metadata=metadata)
           
 # ...............................................
    def _setCellsides(self, cellsides):

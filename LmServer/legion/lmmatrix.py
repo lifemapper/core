@@ -24,6 +24,7 @@
           02110-1301, USA.
 """
 import os
+import mx.DateTime
 
 from LmCommon.common.lmconstants import (MatrixType, ProcessType, CSV_INTERFACE, 
                                          LMFormat, JobStatus)
@@ -105,7 +106,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       return mtxobj
 
    # ...............................................
-   def updateStatus(self, status=None, metadata=None, modTime=None):
+   def updateStatus(self, status=None, metadata=None, modTime=mx.DateTime.gmt().mjd):
       """
       @summary: Updates matrixIndex, paramMetadata, and modTime.
       @param metadata: Dictionary of Matrix metadata keys/values; key constants  
@@ -116,8 +117,8 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
       """
       if metadata is not None:
          self.loadMtxMetadata(metadata)
-      ProcessObject.updateStatus(self, status, modTime=modTime)
-      ServiceObject.updateModtime(self, modTime=modTime)
+      ProcessObject.updateStatus(self, status, modTime)
+      ServiceObject.updateModtime(self, modTime)
 
 # ...............................................
    @property

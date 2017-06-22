@@ -164,7 +164,7 @@ class ServiceObject(LMObject):
       return dataurl
    
    # ...............................................
-   def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
+   def updateModtime(self, modTime):
       self.modTime = modTime
 
 # .............................................................................
@@ -214,7 +214,7 @@ class ProcessObject(LMObject):
       return self._statusmodtime
 
    # ...............................................
-   def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd):
+   def updateStatus(self, status, modTime):
       self._status = status
       self._statusmodtime = modTime
 

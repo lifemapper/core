@@ -101,11 +101,11 @@ class OccurrenceType(_LayerParameters, ProcessObject):
       self.paramModTime = modTime
    
    # ...............................................
-   def updateStatus(self, status, modTime=None, queryCount=None):
+   def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd, queryCount=None):
       """
       @note: Overrides ProcessObject.updateStatus
       """
-      ProcessObject.updateStatus(self, status, modTime=modTime)
+      ProcessObject.updateStatus(self, status, modTime)
       if queryCount is not None: 
          self.queryCount = queryCount
          self.paramModTime = self.statusModTime
