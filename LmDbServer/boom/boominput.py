@@ -804,7 +804,7 @@ class ArchiveFiller(LMObject):
             if not validData:
                raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
          if validData and newshp.status != JobStatus.COMPLETE:
-            newshp.updateStatus(JobStatus.COMPLETE, mx.DateTime.gmt().mjd)
+            newshp.updateStatus(JobStatus.COMPLETE)
             success = self.scribe.updateShapeGrid(newshp)
             if success is False:
                self.scribe.log.warning('Failed to update Shapegrid record')
