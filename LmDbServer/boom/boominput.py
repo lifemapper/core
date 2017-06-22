@@ -804,7 +804,7 @@ class ArchiveFiller(LMObject):
             if not validData:
                raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
          if validData and newshp.status != JobStatus.COMPLETE:
-            newshp.updateStatus(JobStatus.COMPLETE)
+            newshp.updateStatus(JobStatus.COMPLETE, mx.DateTime.gmt().mjd)
             success = self.scribe.updateShapeGrid(newshp)
             if success is False:
                self.scribe.log.warning('Failed to update Shapegrid record')
@@ -970,7 +970,7 @@ class ArchiveFiller(LMObject):
          
          grimChain.addCommands(grimRules)
          grimChain.write()
-         grimChain.updateStatus(JobStatus.INITIALIZE)
+         grimChain.updateStatus(JobStatus.INITIALIZE, mx.DateTime.gmt().mjd)
          self.scribe.updateObject(grimChain)
          grimChains.append(grimChain)
          self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
@@ -1041,7 +1041,7 @@ class ArchiveFiller(LMObject):
                     dependencies=[self.outConfigFilename])
       mfChain.addCommands([rule])
       mfChain.write()
-      mfChain.updateStatus(JobStatus.INITIALIZE)
+      mfChain.updateStatus(JobStatus.INITIALIZE, mx.DateTime.gmt().mjd)
       self.scribe.updateObject(mfChain)
       return mfChain
    
