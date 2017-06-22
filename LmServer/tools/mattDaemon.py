@@ -291,7 +291,7 @@ class MattDaemon(Daemon):
             lmStatus = JobStatus.INITIALIZE
          
          # Update
-         mfObj.updateStatus(lmStatus, gmt().mjd)
+         mfObj.updateStatus(lmStatus, modTime=gmt().mjd)
          self.scribe.updateObject(mfObj)
       
       # Remove files from workspace
