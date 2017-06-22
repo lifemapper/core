@@ -76,11 +76,11 @@ class SdmProjectService(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, pathProjectionId=None, afterTime=None, algorithmCode=None, 
-                 beforeTime=None, displayName=None, epsgCode=None, limit=100, 
-                 modelScenarioCode=None, occurrenceSetId=None, offset=0, 
-                 projectionScenarioCode=None, public=None, scenarioId=None, 
-                 status=None):
+   def GET(self, pathProjectionId=None, afterStatus=None, afterTime=None, 
+           algorithmCode=None, beforeStatus=None, beforeTime=None, 
+           displayName=None, epsgCode=None, limit=100, modelScenarioCode=None, 
+           occurrenceSetId=None, offset=0, projectionScenarioCode=None, 
+           public=None, scenarioId=None, status=None):
       """
       @summary: Performs a GET request.  If a projection id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -92,16 +92,18 @@ class SdmProjectService(LmService):
          userId = self.getUserId()
 
       if pathProjectionId is None:
-         return self._listProjections(userId, afterTime=afterTime, 
-                                 algCode=algorithmCode, beforeTime=beforeTime, 
+         return self._listProjections(userId, afterStatus=afterStatus, 
+                                 afterTime=afterTime, algCode=algorithmCode, 
+                                 beforeStatus=beforeStatus, beforeTime=beforeTime, 
                                  displayName=displayName, epsgCode=epsgCode, 
                                  limit=limit, mdlScnCode=modelScenarioCode, 
                                  occurrenceSetId=occurrenceSetId, offset=offset,
                                  prjScnCode=projectionScenarioCode, 
                                  status=status)
       elif pathProjectionId.lower() == 'count':
-         return self._countProjections(userId, afterTime=afterTime, 
-                                 algCode=algorithmCode, beforeTime=beforeTime, 
+         return self._countProjections(userId, afterStatus=afterStatus,
+                                 afterTime=afterTime, algCode=algorithmCode, 
+                                 beforeStatus=beforeStatus, beforeTime=beforeTime, 
                                  displayName=displayName, epsgCode=epsgCode, 
                                  mdlScnCode=modelScenarioCode, 
                                  occurrenceSetId=occurrenceSetId, 
@@ -142,15 +144,14 @@ class SdmProjectService(LmService):
    #   pass
    
    # ................................
-   def _countProjections(self, userId, afterTime=None, algCode=None, 
+   def _countProjections(self, userId, afterStatus=None, afterTime=None, 
+                         algCode=None, beforeStatus=None, 
                         beforeTime=None, displayName=None, epsgCode=None,
                         mdlScnCode=None, occurrenceSetId=None, prjScnCode=None, 
                         status=None):
       """
       @summary: Return a count of projections matching the specified criteria
       """
-      afterStatus = None
-      beforeStatus = None
 
       # Process status parameter
       if status:
@@ -189,7 +190,8 @@ class SdmProjectService(LmService):
                self.getUserId(), pathProjectionId))
 
    # ................................
-   def _listProjections(self, userId, afterTime=None, algCode=None, 
+   def _listProjections(self, userId, afterStatus=None, afterTime=None, 
+                        algCode=None, beforeStatus=None,  
                         beforeTime=None, displayName=None, epsgCode=None,
                         limit=100, mdlScnCode=None, occurrenceSetId=None, 
                         offset=0, prjScnCode=None, status=None):

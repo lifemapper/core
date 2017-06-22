@@ -48,6 +48,10 @@ class HTTPMethod(object):
 #          The 'name' value of each key is what it gets translated to
 # The point of this structure is to allow query parameters to be case-insensitive
 QUERY_PARAMETERS = {
+   'afterstatus' : {
+      'name' : 'afterStatus',
+      'processIn' : int
+   },
    'aftertime' : {
       'name' : 'afterTime',
       'processIn' : getMjdTimeFromISO8601
@@ -60,6 +64,10 @@ QUERY_PARAMETERS = {
    },
    'archivename' : {
       'name' : 'archiveName'
+   },
+   'beforestatus' : {
+      'name' : 'beforeStatus',
+      'processIn' : int
    },
    'beforetime' : {
       'name' : 'beforeTime',
