@@ -538,7 +538,7 @@ class BorgScribe(LMObject):
       return sciname
 
 # ...............................................
-   def getScenario(self, idOrCode, fillLayers=False):
+   def getScenario(self, idOrCode, userId=None, fillLayers=False):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getScenario()
       """
@@ -547,7 +547,7 @@ class BorgScribe(LMObject):
          sid = int(idOrCode)
       except:
          code = idOrCode
-      scenario = self._borg.getScenario(scenid=sid, code=code, 
+      scenario = self._borg.getScenario(scenid=sid, code=code, userId=userId,
                                         fillLayers=fillLayers)
       return scenario
    
@@ -894,7 +894,7 @@ class BorgScribe(LMObject):
       elif filetype == LMFileType.RAD_MAP:
          self.log.error('Mapping is not yet implemented for RAD_MAP')
       elif filetype == LMFileType.SCENARIO_MAP:
-         mapsvc = self.getScenario(scencode, fillLayers=True)
+         mapsvc = self.getScenario(scencode, userId=usr, fillLayers=True)
       else:
          self.log.error('Mapping is available for SDM_MAP, SCENARIO_MAP, RAD_MAP')
       return mapsvc

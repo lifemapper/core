@@ -211,12 +211,12 @@ class ChristopherWalken(LMObject):
       # Get environmental data model and projection scenarios
       mdlScenCode = self.cfg.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
       prjScenCodes = self.cfg.getlist(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_PROJECTION_SCENARIOS')
-      mdlScen = self._scribe.getScenario(mdlScenCode, fillLayers=True)
+      mdlScen = self._scribe.getScenario(mdlScenCode, userId=self.userId, fillLayers=True)
       if mdlScen is not None:
          if mdlScenCode not in prjScenCodes:
             prjScens.append(mdlScen)
          for pcode in prjScenCodes:
-            scen = self._scribe.getScenario(pcode, fillLayers=True)
+            scen = self._scribe.getScenario(pcode, userId=self.userId, fillLayers=True)
             if scen is not None:
                prjScens.append(scen)
             else:

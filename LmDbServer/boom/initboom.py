@@ -421,7 +421,7 @@ class BOOMFiller(LMObject):
       if self.modelScenCode not in self.prjScenCodeList:
          self.prjScenCodeList.append(self.modelScenCode)
       for code in self.prjScenCodeList:
-         scen = self.scribe.getScenario(code, fillLayers=True)
+         scen = self.scribe.getScenario(code, userId=self.usr, fillLayers=True)
          if scen is None:
             raise LMError('Missing Scenario for code or id {}'.format(code))
          if scen.getUserId() not in legalUsers:
