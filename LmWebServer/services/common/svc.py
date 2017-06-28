@@ -34,32 +34,16 @@
 import cherrypy
 from logging import handlers, DEBUG
 import os
-from StringIO import StringIO
-from types import FileType
 
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus, ENCODING
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import DEFAULT_POST_USER, HTTPStatus
 from LmCommon.common.lmconstants import LOGFILE_BACKUP_COUNT, LOGFILE_MAX_BYTES
-from LmCommon.common.unicode import fromUnicode, toUnicode
 
-from LmServer.common.errorReporter import reportError
-from LmServer.common.lmconstants import (DbUser, LOG_PATH, CHERRYPY_CONFIG_FILE)
-from LmServer.common.localconstants import (PUBLIC_USER, WEBSERVICES_ROOT)
-from LmServer.common.lmuser import LMUser
-from LmServer.common.log import (JobMuleLogger, LmPublicLogger, MapLogger, 
-                                 UserLogger)
-from LmServer.db.scribe import Scribe
-from LmServer.base.utilities import (escapeString, getFileContents,
-                                     getUrlParameter)
+from LmServer.common.lmconstants import (LOG_PATH, CHERRYPY_CONFIG_FILE)
+from LmServer.common.localconstants import (PUBLIC_USER)
+from LmServer.common.log import (LmPublicLogger, UserLogger)
+from LmServer.base.utilities import (escapeString, getUrlParameter)
 
-from LmWebServer.common.lmconstants import (DEFAULT_INTERFACE, HTTP_ERRORS, 
-                                            SESSION_PATH, STATIC_PATH)
-from LmWebServer.formatters.formatterFactory import FormatterFactory
-from LmWebServer.services.common.authentication import checkUserLogin
-from LmWebServer.services.common.group import LMServiceGroup
-from LmWebServer.services.common.jobMule import JobMule
-from LmWebServer.services.ogc.sdmMapper import MapConstructor
-from LmWebServer.solr.lmSolr import searchArchive, searchHintIndex
           
 # .............................................................................
 # Constants for CherryPy application
@@ -72,111 +56,6 @@ class svc(object):
    @summary: Class that exposes services
    """
        
-   # ....................................................
-   @cherrypy.expose
-   def hint(self, *vpath, **params):
-      """
-      @summary: Gets species hint
-      @param *vpath: Url path parameters (/hint/{query})
-      @param **params: Url named parameters (?param1=val1&param2=val2...)
-      """
-      try:
-         queryType = "species"
-         query = ""
-
-         virpath = list(vpath)
-         parameters = dict(params)
-         parameters = dict([(k.lower(), parameters[k]) for k in parameters.keys()])
-      
-         if len(virpath) > 0:
-            queryType = virpath.pop(0)
-         if len(virpath) > 0:
-            query = virpath.pop(0)
-      
-         if query == "":
-            query = getUrlParameter("query", parameters)
-      
-         if query is None or len(query) == 0:
-            return errorResponse(LmPublicLogger(), 
-                     code=HTTPStatus.BAD_REQUEST, 
-                     err="Query string cannot be empty")
-      
-         query = query.replace("\"", "").replace("'", "")
-         query = query.replace("?", "").replace("*", "")
-
-         if queryType == "species":
-            frmt = getUrlParameter("format", parameters)
-            numCols = getUrlParameter("columns", parameters)
-            maxReturned = getUrlParameter("maxreturned", parameters)
-            seeAll = getUrlParameter("seeall", parameters)
-            
-            if maxReturned is None:
-               maxReturned = 100
-              
-            if seeAll is not None:
-               if seeAll:
-                  maxReturned = 0
-         
-            if frmt is None:
-               frmt = "autocomplete"
-            
-            if frmt.lower() in ["json", "newjson"]:
-               content_type = "application/json"
-            else:
-               content_type = "text/plain"
-            
-            if numCols is None:
-               numCols = "3"
-
-            cherrypy.response.headers["Content-Type"] = content_type
-            return searchHintIndex(query, frmt, numCols, maxReturned).encode(ENCODING)
-               
-         elif queryType == "archive":
-            content_type = "application/xml"
-            cherrypy.response.headers["Content-Type"] = content_type
-            return searchArchive(query)
-
-      except Exception, e:
-         err = LMError(e, doTrace=True)
-         return errorResponse(LmPublicLogger(), HTTPStatus.INTERNAL_SERVER_ERROR, err=err)
-   
-   # ....................................................
-   @cherrypy.expose
-   def ogc(self, *vpath, **params):
-      """
-      @summary: Lifemapper ogc services
-      @param *vpath: Url path parameters (/ogc/{param1}/{param2}/...)
-      @param **params: Url named parameters (?param1=val1&param2=val2...) 
-      """
-      logger = MapLogger(isDev=True)
-      ogcsvr = MapConstructor(logger)
-      sessionUser = getUserName()
-      
-      virpath = list(vpath)
-      logger.debug('URL path parameters: %s' % str(virpath))
-      logger.debug('params: %s' % str(params))
-      parameters = dict(params)
-      logger.debug('URL named parameters: %s' % str(parameters))
-      
-      try:
-         ogcsvr.assembleMap(parameters, sessionUser=sessionUser)
-         content_type, content = ogcsvr.returnResponse()
-      except LmHTTPError, e:
-         if e.code == HTTPStatus.FORBIDDEN:
-            return errorResponse(logger, HTTPStatus.FORBIDDEN, err=e)
-         elif e.code == HTTPStatus.BAD_REQUEST:
-            return errorResponse(logger, HTTPStatus.BAD_REQUEST, msg="A required parameter was missing", err=e)
-      except Exception, e:
-         logger.debug('\n<br />'.join(("Parameters:", str(parameters))))
-         err = LMError(e, doTrace=True)
-         return errorResponse(logger, HTTPStatus.INTERNAL_SERVER_ERROR, err=err)
-      
-      logger = None
-      
-      
-      cherrypy.response.headers["Content-Type"] = content_type
-      return content
-
    
    # ....................................................
    @cherrypy.expose
