@@ -87,7 +87,7 @@ class Parser(object):
       """
       self.newickString = newickString
 
-      # parentsClade gets built with keys(pathId) for all nodes other than root, 
+      # parentsClade gets built with keys(cladeId) for all nodes other than root, 
       #    since it doesn't have a parent.
       # nodeId's value is that node's parent clade and the entire sub tree from 
       #    that parent to it's tips
@@ -146,7 +146,7 @@ class Parser(object):
       @param clade: Child clade to get the parent of
       @note: This is a lookup structure
       """
-      return self.parentClades[clade[PhyloTreeKeys.PATH_ID]]
+      return self.parentClades[clade[PhyloTreeKeys.CLADE_ID]]
    
    # ..............................   
    def createNewClade(self, cladeId, parent=None):
@@ -156,14 +156,14 @@ class Parser(object):
       @param parent: (optional) A parent clade
       """
       newClade = {
-         PhyloTreeKeys.PATH_ID: cladeId,
+         PhyloTreeKeys.CLADE_ID: cladeId,
          PhyloTreeKeys.CHILDREN: []
       }
       
       # If a parent is provided, update the parent and the path
       if parent is not None:
          parent[PhyloTreeKeys.CHILDREN].append(newClade)
-         self.parentClades[newClade[PhyloTreeKeys.PATH_ID]] = parent
+         self.parentClades[newClade[PhyloTreeKeys.CLADE_ID]] = parent
 
       return newClade
       

@@ -39,6 +39,7 @@ from LmCommon.common.matrix import Matrix
 
 from LmDbServer.boom.radme import RADCaller
 
+from LmServer.base.atom import Atom
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
                                          SOLR_SERVER)
@@ -61,7 +62,7 @@ class GlobalPAMService(LmService):
    @lmFormatter
    def GET(self, algorithmCode=None, bbox=None, gridSetId=None, 
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
-                 public=None, projectionScenarioCode=None, squid=None, 
+                 public=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
                  taxonSpecies=None):
@@ -74,16 +75,17 @@ class GlobalPAMService(LmService):
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
-                                 projectionScenarioCode=projectionScenarioCode, 
+                                 projectionScenarioCode=prjScenCode, 
                                  squid=squid, taxKingdom=taxonKingdom, 
                                  taxPhylum=taxonPhylum, taxClass=taxonClass,
                                  taxOrder=taxonOrder, taxFamily=taxonFamily,
                                  taxGenus=taxonGenus, taxSpecies=taxonSpecies)
    
    # ................................
+   @lmFormatter
    def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
-                 public=None, projectionScenarioCode=None, squid=None, 
+                 public=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
                  taxonSpecies=None):
@@ -95,14 +97,16 @@ class GlobalPAMService(LmService):
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
                                  public=public, 
-                                 projectionScenarioCode=projectionScenarioCode, 
+                                 projectionScenarioCode=prjScenCode, 
                                  squid=squid, taxKingdom=taxonKingdom, 
                                  taxPhylum=taxonPhylum, taxClass=taxonClass,
                                  taxOrder=taxonOrder, taxFamily=taxonFamily,
                                  taxGenus=taxonGenus, taxSpecies=taxonSpecies)
       
-      self._subsetGlobalPAM(archiveName, matches)
+      gridset = self._subsetGlobalPAM(archiveName, matches)
       cherrypy.response.status = 202
+      return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
+                  gridset.modTime, epsg=gridset.epsgcode)
    
    # ................................
    def _makeSolrQuery(self, algorithmCode=None, bbox=None, gridSetId=None, 
@@ -334,6 +338,7 @@ class GlobalPAMService(LmService):
       rc = RADCaller(updatedGS.getId())
       rc.analyzeGrid(doCalc=True, doMCPA=doMCPA)
       rc.close()
+      return updatedGS
 
 # ............................................................................
 def getRowHeaders(shapefileFilename):

@@ -217,7 +217,7 @@ class PhyloEncoding(object):
                # Add to blDict with this branch length
                blDict[k] = tipBLs
 
-         pValsDict[clade[PhyloTreeKeys.PATH_ID]] = cladePvals
+         pValsDict[clade[PhyloTreeKeys.CLADE_ID]] = cladePvals
          
       else: # We are at a tip
          blDict = {
@@ -288,11 +288,11 @@ class PhyloEncoding(object):
       """
       # .......................
       # Initialize the matrix
-      allPathIds = self.tree.cladePaths.keys()
+      allCladeIds = self.tree.cladePaths.keys()
       
       # Internal path ids are the subset of path ids that are not tips
-      internalPathIds = list(set(allPathIds) - set(self.tree.tips))
-      matrix = np.zeros((len(self.tree.tips), len(internalPathIds)), 
+      internalCladeIds = list(set(allCladeIds) - set(self.tree.tips))
+      matrix = np.zeros((len(self.tree.tips), len(internalCladeIds)), 
                         dtype=np.float)
 
       # Get the list of tip proportion lists
@@ -303,12 +303,12 @@ class PhyloEncoding(object):
       
       # We need a mapping of node path id to matrix column.  I don't think 
       #    order matters
-      nodeColumnIndex = dict(zip(internalPathIds, range(len(internalPathIds))))
+      nodeColumnIndex = dict(zip(internalCladeIds, range(len(internalCladeIds))))
       
       # The matrix index of the tip in the PAM maps to the row index of P
       for rowIdx, tipProp in tipProps:
-         for nodePathId, val in tipProp:
-            matrix[rowIdx][nodeColumnIndex[nodePathId]] = val
+         for nodeCladeId, val in tipProp:
+            matrix[rowIdx][nodeColumnIndex[nodeCladeId]] = val
             
       labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
                                                       sort=True)
@@ -334,10 +334,10 @@ class PhyloEncoding(object):
          # Recurse.  Left is negative, right is positive
          tipProps.extend(
             self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][0], 
-                            newVisited + [(clade[PhyloTreeKeys.PATH_ID], -1.0)]))
+                            newVisited + [(clade[PhyloTreeKeys.CLADE_ID], -1.0)]))
          tipProps.extend(
             self._buildPMatrixTipProportionList(clade[PhyloTreeKeys.CHILDREN][1], 
-                             newVisited + [(clade[PhyloTreeKeys.PATH_ID], 1.0)]))
+                             newVisited + [(clade[PhyloTreeKeys.CLADE_ID], 1.0)]))
       else: # We are at a tip
          tipProps.append((clade[PhyloTreeKeys.MTX_IDX], visited)) # Just return a list with one list
       return tipProps
@@ -407,11 +407,11 @@ class PhyloEncoding(object):
       #    order matters
       nodeColumnIndex = dict(zip(pValDict.keys(), range(len(pValDict.keys()))))
       
-      for nodePathId in pValDict.keys():
+      for nodeCladeId in pValDict.keys():
          
-         for tipMtxIdx in pValDict[nodePathId].keys():
-            matrix[tipMtxIdx][nodeColumnIndex[nodePathId]] = pValDict[
-                                                         nodePathId][tipMtxIdx]
+         for tipMtxIdx in pValDict[nodeCladeId].keys():
+            matrix[tipMtxIdx][nodeColumnIndex[nodeCladeId]] = pValDict[
+                                                         nodeCladeId][tipMtxIdx]
             
       labelPairs = self.tree.getMatrixIndexLabelPairs(useSquids=True, 
                                                       sort=True)

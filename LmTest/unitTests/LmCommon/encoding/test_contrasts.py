@@ -76,32 +76,32 @@ class TestPhyloEncoding(unittest.TestCase):
       treeDict = {
          "name": "0",
          "path":  [0],
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "path": [1,0],
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "path": [9,5,0],
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "path": [3,2,1,0],
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .2,
                                  "path" : [4,3,2,1,0],
                                  "mx" : 0
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .2,
                                  "path" : [5,3,2,1,0],
                                  "mx" : 1
@@ -109,7 +109,7 @@ class TestPhyloEncoding(unittest.TestCase):
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                            "path" : [6,2,1,0],
                            "mx" : 2
@@ -117,7 +117,7 @@ class TestPhyloEncoding(unittest.TestCase):
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                      "path" : [7,1,0],
                      "mx" : 3
@@ -125,18 +125,18 @@ class TestPhyloEncoding(unittest.TestCase):
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "path": [8,0],
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                      "path" : [9,8,0],
                      "mx" : 4
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                      "path" : [10,8,0],
                      "mx" : 5
@@ -194,48 +194,48 @@ class TestPhyloEncoding(unittest.TestCase):
       """
       treeDict = {
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
             "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "mx" : 0
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "mx" : 1
                               }
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "mx" : 2
                         }
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "mx" : 3
                   }
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "mx" : 4
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "mx" : 5
                   }
                ]
@@ -289,7 +289,7 @@ class TestPhyloEncoding(unittest.TestCase):
       """
       treeDict = {
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
@@ -341,32 +341,32 @@ class TestPhyloEncoding(unittest.TestCase):
       treeDict = {
          "name": "0",
          "path":  [0],
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "path": [1,0],
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "path": [9,5,0],
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "path": [3,2,1,0],
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .25,
                                  "path" : [4,3,2,1,0],
                                  "mx" : 0
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .3,
                                  "path" : [5,3,2,1,0],
                                  "mx" : 1
@@ -374,7 +374,7 @@ class TestPhyloEncoding(unittest.TestCase):
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                            "path" : [6,2,1,0],
                            "mx" : 2
@@ -382,7 +382,7 @@ class TestPhyloEncoding(unittest.TestCase):
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                      "path" : [7,1,0],
                      "mx" : 3
@@ -390,18 +390,18 @@ class TestPhyloEncoding(unittest.TestCase):
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "path": [8,0],
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                      "path" : [9,8,0],
                      "mx" : 4
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                      "path" : [10,8,0],
                      "mx" : 5
@@ -425,7 +425,7 @@ class TestPhyloEncoding(unittest.TestCase):
       """
       treeDict = {
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
@@ -485,32 +485,32 @@ class TestPhyloEncoding(unittest.TestCase):
       treeDict = {
          "name": "0",
          "path":  [0],
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "path": [1,0],
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "path": [9,5,0],
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "path": [3,2,1,0],
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .2,
                                  "path" : [4,3,2,1,0],
                                  "mx" : 0
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .2,
                                  "path" : [5,3,2,1,0],
                                  "mx" : 1
@@ -518,7 +518,7 @@ class TestPhyloEncoding(unittest.TestCase):
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                            "path" : [6,2,1,0],
                            "mx" : 2
@@ -526,25 +526,25 @@ class TestPhyloEncoding(unittest.TestCase):
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                      "path" : [7,1,0],
                   }
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "path": [8,0],
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                      "path" : [9,8,0],
                      "mx" : 3
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                      "path" : [10,8,0],
                   }
@@ -587,31 +587,31 @@ class TestPhyloEncoding(unittest.TestCase):
       treeDict = {
          "name": "0",
          "path":  [0],
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "path": [1,0],
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "path": [9,5,0],
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "path": [3,2,1,0],
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .2,
                                  "path" : [4,3,2,1,0],
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .2,
                                  "path" : [5,3,2,1,0],
                                  "mx" : 1
@@ -619,7 +619,7 @@ class TestPhyloEncoding(unittest.TestCase):
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                            "path" : [6,2,1,0],
                            "mx" : 2
@@ -627,7 +627,7 @@ class TestPhyloEncoding(unittest.TestCase):
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                      "path" : [7,1,0],
                      "mx" : 3
@@ -635,18 +635,18 @@ class TestPhyloEncoding(unittest.TestCase):
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "path": [8,0],
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                      "path" : [9,8,0],
                      "mx" : 4
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                      "path" : [10,8,0],
                      "mx" : 5
@@ -672,32 +672,32 @@ class TestPhyloEncoding(unittest.TestCase):
       treeDict = {
          "name": "0",
          "path":  [0],
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "path": [1,0],
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "path": [9,5,0],
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "path": [3,2,1,0],
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .2,
                                  "path" : [4,3,2,1,0],
                                  "mx" : 0
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .2,
                                  "path" : [5,3,2,1,0],
                                  "mx" : 1
@@ -705,7 +705,7 @@ class TestPhyloEncoding(unittest.TestCase):
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                            "path" : [6,2,1,0],
                            "mx" : 2
@@ -713,7 +713,7 @@ class TestPhyloEncoding(unittest.TestCase):
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                      "path" : [7,1,0],
                      "mx" : 3
@@ -721,18 +721,18 @@ class TestPhyloEncoding(unittest.TestCase):
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "path": [8,0],
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                      "path" : [9,8,0],
                      "mx" : 4
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                      "path" : [10,8,0],
                      "mx" : 5
@@ -788,48 +788,48 @@ class TestPhyloEncoding(unittest.TestCase):
       """
       treeDict = {
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
             "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "mx" : 0
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "mx" : 1
                               }
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "mx" : 2
                         }
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "mx" : 3
                   }
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "mx" : 4
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "mx" : 5
                   }
                ]

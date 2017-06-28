@@ -141,26 +141,26 @@ class LmTree(object):
       return dict(branchLengths)
    
    # ..............................
-   def getClade(self, pathId):
+   def getClade(self, cladeId):
       """
       @summary: Get a clade by it's path id
-      @param pathId: The path id of the clade to retrieve
+      @param cladeId: The path id of the clade to retrieve
       """
-      if self.cladePaths.has_key(pathId):
-         cladePath = self.cladePaths[pathId]
+      if self.cladePaths.has_key(cladeId):
+         cladePath = self.cladePaths[cladeId]
       else:
-         raise LmTreeException("Path id: %s was not found" % pathId)
+         raise LmTreeException("Path id: %s was not found" % cladeId)
       
       clade = self.tree
       for cid in cladePath[1:]: # We can skip the root
          for child in clade[PhyloTreeKeys.CHILDREN]:
-            if child[PhyloTreeKeys.PATH_ID] == cid:
+            if child[PhyloTreeKeys.CLADE_ID] == cid:
                clade = child
                break
-      if clade[PhyloTreeKeys.PATH_ID] == pathId:
+      if clade[PhyloTreeKeys.CLADE_ID] == cladeId:
          return clade
       else:
-         raise LmTreeException("Could not find clade: %s" % pathId)
+         raise LmTreeException("Could not find clade: %s" % cladeId)
 
    # ..............................
    def getDistanceMatrix(self, squidLabels=False):
@@ -296,8 +296,8 @@ class LmTree(object):
          for tip in self.tips:
             # Create a list of all of the branch lengths for a tip
             tipLengths = []
-            for pathId in self.cladePaths[tip]:
-               tipLengths.append(lengths[pathId])
+            for cladeId in self.cladePaths[tip]:
+               tipLengths.append(lengths[cladeId])
             
             tipBL = round(sum(tipLengths), 3)
             
@@ -356,13 +356,13 @@ class LmTree(object):
       self._resolvePolytomies(self.tree)
 
    # ..............................
-   def setBranchLengthForClade(self, pathId, branchLength):
+   def setBranchLengthForClade(self, cladeId, branchLength):
       """
       @summary: Set the branch length for the specific clade
-      @param pathId: The path id for the clade
+      @param cladeId: The path id for the clade
       @param branchLength: The new branch length for the clade
       """
-      clade = self.getClade(pathId)
+      clade = self.getClade(cladeId)
       clade[PhyloTreeKeys.BRANCH_LENGTH] = branchLength
    
    # ..............................
@@ -454,12 +454,12 @@ class LmTree(object):
          clade[PhyloTreeKeys.NAME] = ''
          
       # Clade should have a path id
-      if not clade.has_key(PhyloTreeKeys.PATH_ID) or \
-            clade[PhyloTreeKeys.PATH_ID] is None:
-         clade[PhyloTreeKeys.PATH_ID] = self._getNewPathId()
+      if not clade.has_key(PhyloTreeKeys.CLADE_ID) or \
+            clade[PhyloTreeKeys.CLADE_ID] is None:
+         clade[PhyloTreeKeys.CLADE_ID] = self._getNewCladeId()
       
       # Path should be the path to the clade from the root
-      cladePath = basePath + [clade[PhyloTreeKeys.PATH_ID]]
+      cladePath = basePath + [clade[PhyloTreeKeys.CLADE_ID]]
       # Set the path on this clade
       clade[PhyloTreeKeys.PATH] = cladePath
       # Recurse to children
@@ -468,13 +468,13 @@ class LmTree(object):
             self._cleanUpClade(child, basePath=cladePath)
             
       else: # This is a tip, path id to tips list
-         self.tips.append(clade[PhyloTreeKeys.PATH_ID])
+         self.tips.append(clade[PhyloTreeKeys.CLADE_ID])
          
       # Add clade path to dictionary
-      self.cladePaths[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.PATH]
+      self.cladePaths[clade[PhyloTreeKeys.CLADE_ID]] = clade[PhyloTreeKeys.PATH]
 
    # ..............................
-   def _findLargestPathId(self, clade):
+   def _findLargestCladeId(self, clade):
       """
       @summary: Find the largest path id in the tree so that new path ids will
                    not collide
@@ -482,20 +482,20 @@ class LmTree(object):
       if clade is None:
          clade = self.tree
 
-      pathIds = []
+      cladeIds = []
       # Get the current clade path id (if exists)
       try:
-         pathIds.append(clade[PhyloTreeKeys.PATH_ID])
+         cladeIds.append(clade[PhyloTreeKeys.CLADE_ID])
       except: # If path id key is missing
          pass
       
       # Get the children path ids
       if clade.has_key(PhyloTreeKeys.CHILDREN):
          for child in clade[PhyloTreeKeys.CHILDREN]:
-            pathIds.append(self._findLargestPathId(child))
+            cladeIds.append(self._findLargestCladeId(child))
 
       try:
-         return max(pathIds) # Could be None if all are None
+         return max(cladeIds) # Could be None if all are None
       except: # Fails if empty list
          return None
 
@@ -509,11 +509,11 @@ class LmTree(object):
       """
       branchLengths = []
       if clade.has_key(PhyloTreeKeys.BRANCH_LENGTH):
-         branchLengths.append((clade[PhyloTreeKeys.PATH_ID], 
+         branchLengths.append((clade[PhyloTreeKeys.CLADE_ID], 
                                clade[PhyloTreeKeys.BRANCH_LENGTH]))
       else:
          raise LmTreeException("Clade {0} does not have branch length".format(
-              clade[PhyloTreeKeys.PATH_ID]))
+              clade[PhyloTreeKeys.CLADE_ID]))
       for child in clade[PhyloTreeKeys.CHILDREN]:
          branchLengths.extend(self._getBranchLengths(child))
       return branchLengths
@@ -584,7 +584,7 @@ class LmTree(object):
          for child in clade[PhyloTreeKeys.CHILDREN]:
             localLabels.extend(self._getLabels(child))
       else: # Tip, return (label, path id)
-         localLabels.append((clade[PhyloTreeKeys.NAME], clade[PhyloTreeKeys.PATH_ID]))
+         localLabels.append((clade[PhyloTreeKeys.NAME], clade[PhyloTreeKeys.CLADE_ID]))
 
       return localLabels
    
@@ -626,13 +626,13 @@ class LmTree(object):
       """
       mapping = {}
       if clade.has_key(PhyloTreeKeys.MTX_IDX):
-         mapping[clade[PhyloTreeKeys.PATH_ID]] = clade[PhyloTreeKeys.MTX_IDX]
+         mapping[clade[PhyloTreeKeys.CLADE_ID]] = clade[PhyloTreeKeys.MTX_IDX]
       for child in clade[PhyloTreeKeys.CHILDREN]:
          mapping.update(self._getMatrixIndicesMapping(child))
       return mapping
    
    # ..............................
-   def _getNewPathId(self):
+   def _getNewCladeId(self):
       """
       @summary: Gets an unused path id to use for a new clade
       """
@@ -733,7 +733,7 @@ class LmTree(object):
       @summary: Process the provided tree, fill in missing information, and 
                    create clade paths dictionary
       """
-      self._lastCladeId = self._findLargestPathId(self.tree)
+      self._lastCladeId = self._findLargestCladeId(self.tree)
       if self._lastCladeId is None:
          self._lastCladeId = -1
          
