@@ -354,6 +354,7 @@ class LmTree(object):
                 clades that were changed
       """
       self._resolvePolytomies(self.tree)
+      self._cleanUpClade()
 
    # ..............................
    def setBranchLengthForClade(self, cladeId, branchLength):
@@ -460,8 +461,7 @@ class LmTree(object):
       
       # Path should be the path to the clade from the root
       cladePath = basePath + [clade[PhyloTreeKeys.CLADE_ID]]
-      # Set the path on this clade
-      clade[PhyloTreeKeys.PATH] = cladePath
+
       # Recurse to children
       if len(clade[PhyloTreeKeys.CHILDREN]) > 0:
          for child in clade[PhyloTreeKeys.CHILDREN]:
@@ -471,7 +471,7 @@ class LmTree(object):
          self.tips.append(clade[PhyloTreeKeys.CLADE_ID])
          
       # Add clade path to dictionary
-      self.cladePaths[clade[PhyloTreeKeys.CLADE_ID]] = clade[PhyloTreeKeys.PATH]
+      self.cladePaths[clade[PhyloTreeKeys.CLADE_ID]] = cladePath
 
    # ..............................
    def _findLargestCladeId(self, clade):
@@ -834,12 +834,8 @@ class LmTree(object):
          newClade = {
             PhyloTreeKeys.NAME: '',
             PhyloTreeKeys.CHILDREN: [c1, c2],
-            PhyloTreeKeys.PATH: [],
             PhyloTreeKeys.BRANCH_LENGTH: 0.0
          }
-
-         # Fix the paths of this clade and all children
-         self._cleanUpClade(newClade, basePath=self.tree[PhyloTreeKeys.PATH])
 
          # Append the new clade
          clade[PhyloTreeKeys.CHILDREN].append(newClade)
