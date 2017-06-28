@@ -1730,5 +1730,5 @@ class PhyloTreeKeys(object):
    MTX_IDX = 'mx' # The matrix index for this node
    NAME = 'name' # Name of the node
    PATH = 'path' # Path from the root to this clade
-   CLADE_D = 'cladeId' # This is an identifier for the clade
+   CLADE_ID = 'cladeId' # This is an identifier for the clade
    SQUID = 'squid' # This is the LM SQUID (species identifier) for the tip
