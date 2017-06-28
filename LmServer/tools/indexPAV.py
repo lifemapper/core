@@ -26,16 +26,14 @@
           02110-1301, USA.
 """
 import argparse
-import os
-import subprocess
-import tempfile
+from mx.DateTime import DateTimeFromMJD
 
 # TODO: Different logger
 from LmCommon.common.matrix import Matrix
 from LmCommon.compression.binaryList import compress
-from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, 
-                                         SOLR_POST_COMMAND)
+from LmServer.common.lmconstants import (SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS)
 from LmServer.common.log import ConsoleLogger
+from LmServer.common.solr import buildSolrDocument, postSolrDocument
 from LmServer.db.borgscribe import BorgScribe
 
 # .............................................................................
@@ -56,6 +54,16 @@ def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
    except:
       sp = None
    
+   # Mod times
+   occModTime = prjModTime = None
+   
+   if occ.modTime is not None:
+      occModTime = DateTimeFromMJD(occ.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+   
+   if prj.modTime is not None:
+      prjModTime = DateTimeFromMJD(prj.modTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+   
    fields = [
       (SOLR_FIELDS.ID, pav.getId()),
       (SOLR_FIELDS.USER_ID, pav.getUserId()),
@@ -74,7 +82,7 @@ def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
       (SOLR_FIELDS.OCCURRENCE_ID, occ.getId()),
       (SOLR_FIELDS.OCCURRENCE_DATA_URL, occ.getDataUrl()),
       (SOLR_FIELDS.OCCURRENCE_META_URL, occ.metadataUrl),
-      (SOLR_FIELDS.OCCURRENCE_MOD_TIME, occ.modTime), # May need to convert
+      (SOLR_FIELDS.OCCURRENCE_MOD_TIME, occModTime),
       (SOLR_FIELDS.MODEL_SCENARIO_CODE, mdlScn.code),
       (SOLR_FIELDS.MODEL_SCENARIO_ID, mdlScn.getId()),
       (SOLR_FIELDS.MODEL_SCENARIO_URL, mdlScn.metadataUrl),
@@ -90,7 +98,7 @@ def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
       (SOLR_FIELDS.PROJ_ID, prj.getId()),
       (SOLR_FIELDS.PROJ_META_URL, prj.metadataUrl),
       (SOLR_FIELDS.PROJ_DATA_URL, prj.getDataUrl()),
-      (SOLR_FIELDS.PROJ_MOD_TIME, prj.modTime),
+      (SOLR_FIELDS.PROJ_MOD_TIME, prjModTime),
       (SOLR_FIELDS.PAV_META_URL, pav.metadataUrl),
       #(SOLR_FIELDS.PAV_DATA_URL, pav.getDataUrl()),
       (SOLR_FIELDS.EPSG_CODE, prj.epsgcode),
@@ -103,24 +111,15 @@ def getPostDocument(pav, prj, occ, pam, sciName, pavFname):
       (SOLR_FIELDS.COMPRESSED_PAV, compress(pavMtx.data))
    ]
 
-   docLines = ['   <doc>']
-       
-   for fName, val in fields:
-      if val is not None:
-         docLines.append('      <field name="{}">{}</field>'.format(fName, val))
-   
    # Process presence centroids
    rowHeaders = pavMtx.getRowHeaders()
    
    for i in xrange(pavMtx.data.shape[0]):
       if pavMtx.data[i]:
          _, x, y = rowHeaders[i]
-         docLines.append('      <field name="{}">{},{}</field>'.format(
-            SOLR_FIELDS.PRESENCE, y, x))
-   
-   docLines.append('   </doc>\n')
-   
-   doc = '\n'.join(docLines)
+         fields.append((SOLR_FIELDS.PRESENCE, '{},{}'.format(y, x)))
+
+   doc = buildSolrDocument(fields)
 
    return doc
 
@@ -153,15 +152,10 @@ if __name__ == '__main__':
    doc = getPostDocument(pav, prj, occ, pam, sciName, args.pavFilename)
    
    with open(args.pavIdxFilename, 'w') as outF:
-      outF.write('<add>\n')
       outF.write(doc)
-      outF.write('</add>')
 
-   cmd = '{cmd} -c {collection} -out no {filename}'.format(
-               cmd=SOLR_POST_COMMAND, collection=SOLR_ARCHIVE_COLLECTION, 
-               filename=args.pavIdxFilename)
-   subprocess.call(cmd, shell=True)
-   
+   postSolrDocument(SOLR_ARCHIVE_COLLECTION, args.pavIdxFilename)
+
    scribe.closeConnections()
    
    

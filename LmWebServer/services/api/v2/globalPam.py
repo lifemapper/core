@@ -25,12 +25,10 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from ast import literal_eval
 import cherrypy
 from mx.DateTime import gmt
 import numpy as np
 from osgeo import ogr
-import urllib2
 
 from LmCommon.compression.binaryList import decompress
 from LmCommon.common.lmconstants import MatrixType, JobStatus, LMFormat,\
@@ -49,6 +47,8 @@ from LmServer.legion.lmmatrix import LMMatrix
 
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
+
+from LmServer.common.solr import queryArchiveIndex
 
 
 # .............................................................................
@@ -116,87 +116,19 @@ class GlobalPAMService(LmService):
                             taxKingdom=None, taxPhylum=None, taxClass=None, 
                             taxOrder=None, taxFamily=None, taxGenus=None, 
                             taxSpecies=None):
-      # Build query
-      queryParts = []
-      
-      if algorithmCode is not None:
-         queryParts.append('{}:{}'.format(SOLR_FIELDS.ALGORITHM_CODE, 
-                                          algorithmCode))
-         
-      if gridSetId is not None:
-         queryParts.append('{}:{}'.format(SOLR_FIELDS.GRIDSET_ID, gridSetId))
-      
-      if pointMax is not None or pointMin is not None:
-         pmax = pointMax
-         pmin = pointMin
-         
-         if pointMax is None:
-            pmax = '*'
-         
-         if pointMin is None:
-            pmin = '*'
-            
-         queryParts.append('{}:%5B{}%20TO%20{}%5D'.format(
-            SOLR_FIELDS.POINT_COUNT, pmin, pmax))
       
       if public:
          userId = PUBLIC_USER
       else:
          userId = self.getUserId()
-      
-      queryParts.append('{}:{}'.format(SOLR_FIELDS.USER_ID, userId))
-      
-      if modelScenarioCode is not None:
-         queryParts.append('{}:{}'.format(SOLR_FIELDS.MODEL_SCENARIO_CODE,
-                                          modelScenarioCode))
-      
-      if projectionScenarioCode is not None:
-         queryParts.append('{}:{}'.format(SOLR_FIELDS.PROJ_SCENARIO_CODE,
-            projectionScenarioCode))
-         
-      if squid is not None:
-         if isinstance(squid, list):
-            if len(squid) > 1:
-               squidVals = '({})'.format(' '.join(squid))
-            else:
-               squidVals = squid[0]
-         else:
-            squidVals = squid
-         queryParts.append('{}:{}'.format(SOLR_FIELDS.SQUID, squidVals))
-      
-      taxonInfo = [
-         (SOLR_FIELDS.TAXON_KINGDOM, taxKingdom),
-         (SOLR_FIELDS.TAXON_PHYLUM, taxPhylum),
-         (SOLR_FIELDS.TAXON_CLASS, taxClass),
-         (SOLR_FIELDS.TAXON_ORDER, taxOrder),
-         (SOLR_FIELDS.TAXON_FAMILY, taxFamily),
-         (SOLR_FIELDS.TAXON_GENUS, taxGenus),
-         (SOLR_FIELDS.TAXON_SPECIES, taxSpecies),
-      ]
-      for fld, val in taxonInfo:
-         if val is not None:
-            queryParts.append('{}:{}'.format(fld, val))
-               
-      if bbox is not None:
-         minx, miny, maxx, maxy = bbox.split(',')
-         # Create query string, have to url encode brackets [, ] -> %5B, %5D
-         spatialQuery = '&fq={}:%5B{},{}%20{},{}%5D'.format(
-            SOLR_FIELDS.PRESENCE, miny, minx, maxy, maxx)
-      else:
-         spatialQuery = ''
-      
-      query = 'q={}{}'.format('+AND+'.join(queryParts), spatialQuery)
-      
-      #curl "http://localhost:8983/solr/lmArchive/select?q=*%3A*&fq=presence:%5B-90,-180%20TO%2090,180%5D&indent=true"
-      
-      url = '{}{}/select?{}&wt=python&indent=true'.format(
-         SOLR_SERVER, SOLR_ARCHIVE_COLLECTION, query)
-      self.log.debug(url)
-      res = urllib2.urlopen(url)
-      resp = res.read()
-      rDict = literal_eval(resp)
-      
-      return rDict['response']['docs']
+
+      return queryArchiveIndex(algorithmCode=algorithmCode, bbox=bbox, 
+                  gridSetId=gridSetId, modelScenarioCode=modelScenarioCode, 
+                  pointMax=pointMax, pointMin=pointMin,
+                  projectionScenarioCode=projectionScenarioCode, squid=squid,
+                  taxKingdom=taxKingdom, taxPhylum=taxPhylum, taxClass=taxClass, 
+                  taxOrder=taxOrder, taxFamily=taxFamily, taxGenus=taxGenus, 
+                  taxSpecies=taxSpecies, userId=userId)
    
    # ................................
    def _subsetGlobalPAM(self, archiveName, matches):

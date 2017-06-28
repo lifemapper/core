@@ -1,4 +1,8 @@
 """
+==================================================================
+=      Do not use, this is replaced by LmServer.common.solr      =
+==================================================================
+@deprecated: This is replaced by LmServer.common.solr
 @summary: This script builds the projections index for Solr
 @author: CJ Grady
 @todo: Get constants from local constants
