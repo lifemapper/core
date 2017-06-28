@@ -347,10 +347,4 @@ QUERY_PARAMETERS = {
 KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 KML_NS_PREFIX = None
 
-# TODO: These probably shouldn't be here
-# Projections scaling constants.  Used for mapping of archive projections
-#   These are sent to Maxent job runners in a post processing step
-SCALE_PROJECTION_MINIMUM = 0
-SCALE_PROJECTION_MAXIMUM = 100
-SCALE_DATA_TYPE = "int"
 

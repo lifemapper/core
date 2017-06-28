@@ -1912,3 +1912,10 @@ class SOLR_FIELDS(object):
    TAXON_PHYLUM = 'taxonPhylum'
    TAXON_SPECIES = 'taxonSpecies'
    USER_ID = 'userId'
+
+# ============================================================================
+# =                             Scaling Constants                            =
+# ============================================================================
+SCALE_PROJECTION_MINIMUM = 0
+SCALE_PROJECTION_MAXIMUM = 100
+SCALE_DATA_TYPE = "int"

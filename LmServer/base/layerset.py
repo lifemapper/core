@@ -36,7 +36,8 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          QUERY_TOLERANCE, SYMBOL_FILENAME, DEFAULT_POINT_COLOR, 
          DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE, LMServiceType,
          DEFAULT_ENVIRONMENTAL_PALETTE, CT_SPECIES_LAYER_STYLES, 
-         CT_SPECIES_KEYWORD, PROJ_LIB)
+         CT_SPECIES_KEYWORD, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
+   SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX,
                                             SCENARIO_PACKAGE_EPSG)
 from LmServer.common.lmconstants import CT_USER
@@ -781,8 +782,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
                                 % str(sdlLyr.nodataVal)])
          # SDM projections are always scaled b/w 0 and 100
          if isinstance(sdlLyr, SDMProjection):
-            vmin = 0
-            vmax = 100
+            vmin = SCALE_PROJECTION_MINIMUM + 1
+            vmax = SCALE_PROJECTION_MAXIMUM
          else: 
             vmin = sdlLyr.minVal
             vmax = sdlLyr.maxVal
