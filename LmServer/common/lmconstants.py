@@ -33,9 +33,10 @@ from types import IntType, FloatType
 
 from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat, 
                                          ProcessType)
-from LmServer.common.localconstants import (APP_PATH, DATA_PATH,
-                              SHARED_DATA_PATH, SCRATCH_PATH, PID_PATH, 
-                              SCENARIO_PACKAGE_EPSG, WEBSERVICES_ROOT)
+from LmServer.common.localconstants import (APP_PATH, DATA_PATH, MAX_WORKERS, 
+                              MIN_WORKERS, PUBLIC_FQDN, SHARED_DATA_PATH, 
+                              SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG, 
+                              WEBSERVICES_ROOT)
 
 WEB_SERVICE_VERSION = 'v2'
 API_PATH = 'api'
@@ -68,6 +69,27 @@ CATALOG_SERVER_BIN = os.path.join(BIN_PATH, 'catalog_server')
 WORKER_FACTORY_BIN = os.path.join(BIN_PATH, 'work_queue_factory')
 MAKEFLOW_BIN = os.path.join(BIN_PATH, 'makeflow')
 MAKEFLOW_WORKSPACE = os.path.join(SCRATCH_PATH, 'makeflow')
+
+# Catalog server
+CS_PID_FILE = os.path.join(PID_PATH, 'catalog_server.pid')
+CS_LOG_FILE = os.path.join(LOG_PATH, 'catalog_server.log')
+CS_HISTORY_FILE = os.path.join(SCRATCH_PATH, 'catalog.history')
+CS_PORT = 9097
+CS_OPTIONS = '-n {} -B {} -p {} -m 100 -o {} -O 100M -H {}'.format( 
+               PUBLIC_FQDN, CS_PID_FILE, CS_PORT, CS_LOG_FILE, CS_HISTORY_FILE)  
+
+# Worker options
+WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
+WORKER_OPTIONS = 'C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
+
+WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} -E "{}" -S {}'.format(
+   MIN_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_DATA_PATH)
+
+# Makeflow options
+MAKEFLOW_OPTIONS = '-T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
+   WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
+
+
 
 DEFAULT_CONFIG = 'config'
 
