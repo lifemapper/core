@@ -367,25 +367,31 @@ class LmTree(object):
       clade[PhyloTreeKeys.BRANCH_LENGTH] = branchLength
    
    # ..............................
-   def writeTree(self, fn):
+   def writeTree(self, fn, indent=None):
       """
       @summary: Writes the tree JSON to the specified file path
       @param fn: The file location to write the JSON tree
+      @param indent: Passed directly to json dump.  If provided and 
+                        non-negative integer, pretty prints with this number of 
+                        spaces per level
       @todo: Possibly remove.  Unless we decide that the trees written to disk
                 should not include matrix index / path / maybe others.  We may
                 do that because those things can vary between loads.  We are 
                 already resetting the path on load
       """
       with open(fn, 'w') as outF:
-         self.writeTreeToFlo(outF)
+         self.writeTreeToFlo(outF, indent=indent)
          
    # ..............................
-   def writeTreeToFlo(self, flo):
+   def writeTreeToFlo(self, flo, indent=None):
       """
       @summary: Write the tree JSON to a file-like object
       @param flo: A file-like object to write to
+      @param indent: Passed directly to json dump.  If provided and 
+                        non-negative integer, pretty prints with this number of 
+                        spaces per level
       """
-      json.dump(self.tree, flo, sort_keys=True, indent=3)
+      json.dump(self.tree, flo, sort_keys=True, indent=indent)
       
    
    # Helper methods
