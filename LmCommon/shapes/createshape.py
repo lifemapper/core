@@ -167,7 +167,7 @@ class ShapeShifter(object):
                elif role == 'latitude':
                   self._yIdx = i
                elif role == 'groupby':
-                  self._sortIdx = i
+                  self._groupByIdx = i
                elif role == 'dataname':
                   self._nameIdx = i
       self.fieldCount = len(self.fieldNames)
@@ -181,7 +181,7 @@ class ShapeShifter(object):
       if self._yIdx == None:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Missing \'latitude\' georeference field')
-      if self._sortIdx == None:
+      if self._groupByIdx == None:
          raise LmException(JobStatus.IO_OCCURRENCE_SET_WRITE_ERROR, 
                            'Missing \'groupby\' sorting field')
       if self._nameIdx == None:

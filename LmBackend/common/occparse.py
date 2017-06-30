@@ -69,7 +69,7 @@ class OccDataParser(object):
       self._idIdx = None
       self._xIdx = None
       self._yIdx = None
-      self._sortIdx = None
+      self._groupByIdx = None
       self._nameIdx = None
             
       # Overall stats
@@ -130,12 +130,12 @@ class OccDataParser(object):
    # .............................................................................
    def _populateMetadata(self, fieldmeta, header):
       try:
-         (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
+         (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, groupByIdx, 
           nameIdx) = self.getMetadata(fieldmeta, self.header)
       except Exception, e:
 #          self.log.warning(str(e))
 #          try:
-#             (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
+#             (fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, groupByIdx, 
 #              nameIdx) = self.getMetadataDeprecated(fieldmeta, self.header)
 #          except Exception, e:
          raise Exception('Failed to read header or metadata, ({})'
@@ -147,7 +147,7 @@ class OccDataParser(object):
       self._idIdx = idIdx
       self._xIdx = xIdx
       self._yIdx = yIdx
-      self._sortIdx = sortIdx
+      self._groupByIdx = groupByIdx
       self._nameIdx = nameIdx
 
    # .............................................................................
@@ -161,8 +161,8 @@ class OccDataParser(object):
          return None
    
    @property
-   def sortIdx(self):
-      return self._sortIdx
+   def groupByIdx(self):
+      return self._groupByIdx
 
    @property
    def idValue(self):
@@ -186,11 +186,15 @@ class OccDataParser(object):
       return yVal   
       
    @property
-   def sortValue(self):
-      sortVal = None
+   def groupByValue(self):
+      value = None
       if self.currLine is not None:
-         sortVal = self.currLine[self._sortIdx]
-      return sortVal
+         tmp = self.currLine[self._groupByIdx]
+         try:
+            value = int(tmp)
+         except:
+            value = str(tmp)
+      return value
    
    @property
    def nameValue(self):
@@ -237,49 +241,6 @@ class OccDataParser(object):
          raise Exception('Failed to read or open {}'.format(metadata))
       return fieldmeta, metadataFname
          
-#    # .............................................................................
-#    @staticmethod
-#    def getMetadataDeprecated(fldmeta, header):
-#       """
-#       @copydoc LmBackend.common.occparse.OccDataParser::getMetadata()
-#       """
-#       fieldNames = []
-#       fieldTypes = []
-#       filters = {}
-#       idIdx = xIdx = yIdx = sortIdx = nameIdx = None
-# 
-#       for i in range(len(header)):         
-#          oname = header[i]
-#          shortname = fldmeta[oname][0]
-#          ogrtype = OccDataParser.getOgrFieldType(fldmeta[oname][1])
-#          fieldNames.append(shortname)
-#          fieldTypes.append(ogrtype)
-#          
-#          if len(fldmeta[oname]) == 3:
-#             if type(fldmeta[oname][2]) in (ListType, TupleType):
-#                acceptedVals = fldmeta[oname][2]
-#                if ogrtype == OFTString:
-#                   acceptedVals = [val.lower() for val in fldmeta[oname][2]]
-#                OccDataParser.filters[i] = acceptedVals 
-#             else:
-#                role = fldmeta[oname][2].lower()
-#                if role == 'id':
-#                   idIdx = i
-#                elif role == 'longitude':
-#                   xIdx = i
-#                elif role == 'latitude':
-#                   yIdx = i
-#                elif role == 'groupby':
-#                   sortIdx = i
-#                elif role == 'dataname':
-#                   nameIdx = i
-#       
-#       if (xIdx == None or yIdx == None or sortIdx == None or nameIdx == None):
-#          raise Exception('Missing one of required field roles ({}) in header'
-#                          .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
-#       return (fieldNames, fieldTypes, filters, 
-#               idIdx, xIdx, yIdx, sortIdx, nameIdx)
-
    # .............................................................................
    @staticmethod
    def getMetadata(fldmeta, header):
@@ -300,7 +261,7 @@ class OccDataParser(object):
       fieldNames = []
       fieldTypes = []
       filters = {}
-      idIdx = xIdx = yIdx = sortIdx = nameIdx = None
+      idIdx = xIdx = yIdx = groupByIdx = nameIdx = None
       try:
          fldId = fldmeta[OccDataParser.FIELD_ROLE_IDENTIFIER]
       except:
@@ -344,13 +305,13 @@ class OccDataParser(object):
          elif oname == fldTaxa:
             nameIdx = i
          if oname == fldGrp:
-            sortIdx = i         
+            groupByIdx = i         
       
-      if (xIdx == None or yIdx == None or sortIdx == None or nameIdx == None):
+      if (xIdx == None or yIdx == None or groupByIdx == None or nameIdx == None):
          raise Exception('Missing one of required field roles ({}) in header'
                          .format(','.join(OccDataParser.REQUIRED_FIELD_ROLES)))
       return (fieldNames, fieldTypes, filters, 
-              idIdx, xIdx, yIdx, sortIdx, nameIdx)
+              idIdx, xIdx, yIdx, groupByIdx, nameIdx)
    # .............................................................................
    @staticmethod
    def getOgrFieldType(typeString):
@@ -464,17 +425,19 @@ class OccDataParser(object):
          line, goodEnough = self._getLine()
 
    # ...............................................
+   # TODO: get rid of this, use property groupByValue
    def _getGroupByValue(self, line):
       try:
-         value = int(line[self._sortIdx])
+         value = int(line[self._groupByIdx])
       except:
-         value = str(line[self._sortIdx])
+         value = str(line[self._groupByIdx])
       return value
 
    # ...............................................
    def pullNextValidRec(self):
       """
       Fills in self.groupVal and self.currLine
+      @TODO: get rid of self.groupVal, use property groupByValue
       """
       complete = False
       self.groupVal = None
@@ -537,7 +500,8 @@ class OccDataParser(object):
       """
       complete = False
       currCount = 0
-      currgroup = self.groupVal
+      chunkGroup = self.groupByValue
+      chunkName = self.nameValue
       chunk = []
       
       if self.currLine is not None:
@@ -552,7 +516,7 @@ class OccDataParser(object):
                self.pullNextValidRec()
                
                # Add to or complete chunk
-               if self.groupVal == currgroup:
+               if self.groupByValue == chunkGroup:
                   currCount += 1
                   chunk.append(self.currLine)
                else:
@@ -566,7 +530,7 @@ class OccDataParser(object):
             self.log.error('Failed in getNextChunkForCurrKey, currRecnum=%s, e=%s' 
                       % (str(self.currRecnum), str(e)))
             self.currLine = self.groupVal = None
-      return chunk
+      return chunk, chunkGroup, chunkName
 
    # ...............................................
    def readAllChunks(self):
@@ -674,7 +638,7 @@ csvreader, _file = OccDataParser.getReader(data, delimiter)
 tmpList = csvreader.next()
 header = [fldname.strip() for fldname in tmpList]
 
-(fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, sortIdx, 
+(fieldNames, fieldTypes, filters, idIdx, xIdx, yIdx, groupByIdx, 
  nameIdx) = OccDataParser.getMetadata(fieldmeta, header)
 
 # open parser
@@ -689,7 +653,7 @@ fieldmeta, metadataFname = OccDataParser.readMetadata(metadata)
 
 
 (fieldNames, fieldTypes, filters, 
- idIdx, xIdx, yIdx, sortIdx, nameIdx) = OccDataParser.getMetadata(fieldmeta, 
+ idIdx, xIdx, yIdx, groupByIdx, nameIdx) = OccDataParser.getMetadata(fieldmeta, 
                                                                   header)       
 op = OccDataParser(log, data, metadata, delimiter=',')
 op.readAllRecs()

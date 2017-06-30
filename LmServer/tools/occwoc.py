@@ -560,16 +560,13 @@ class UserWoC(_SpeciesWeaponOfChoice):
       @note: If useGBIFTaxonomy is true, the 'GroupBy' field should contain
              the GBIF TaxonID for the accepted Taxon of each record in the group. 
       """
-      chunk = self.occParser.pullCurrentChunk()
-      taxonName = self.occParser.nameValue
-      taxonKey = self.occParser.sortValue
-      return chunk, len(chunk), taxonName, taxonKey
+      chunk, chunkGroup, chunkName = self.occParser.pullCurrentChunk()
+      return chunk, chunkName, chunkGroup
       
 # ...............................................
    def getOne(self):
       occ = None
-      setOrReset = False
-      dataChunk, dataCount, taxonName, taxonKey = self._getChunk()
+      dataChunk, taxonName, taxonKey = self._getChunk()
       if dataChunk and taxonName:
          # Get or insert ScientificName (squid)
          if self.useGBIFTaxonomy:
@@ -578,7 +575,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             bbsciName = ScientificName(taxonName, userId=self.userId)
             sciName = self._scribe.findOrInsertTaxon(sciName=bbsciName)
          if sciName is not None:
-            occ = self._createOrResetOccurrenceset(sciName, dataCount, 
+            occ = self._createOrResetOccurrenceset(sciName, len(dataChunk), 
                                                    data=dataChunk)
             self.log.info('Processed occset {}, name {}, with {} records; next start {}'
                           .format(occ.getId(), taxonName, len(dataChunk), 
@@ -614,7 +611,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       super(GBIFWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
                                     occFname, taxonSourceName=taxonSourceName, 
                                     logger=logger)
-      # GBIF-specific sorted CSV data
+      # GBIF-specific grouped/sorted CSV data
       self.processType = ProcessType.GBIF_TAXA_OCCURRENCE
       self._dumpfile = None
       csv.field_size_limit(sys.maxsize)

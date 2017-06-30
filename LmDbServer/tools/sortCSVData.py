@@ -60,7 +60,7 @@ def checkMergedFile(log, mergefname, metafname):
    bigSortedData = OccDataParser(log, mergefname, metafname)
    prevKey = bigSortedData.groupVal
    
-   chunk = bigSortedData.pullCurrentChunk()
+   chunk, chunkGroup, chunkName = bigSortedData.pullCurrentChunk()
    try:
       while not bigSortedData.eof() and len(chunk) > 0:
          if bigSortedData.groupVal > prevKey: 
@@ -74,7 +74,7 @@ def checkMergedFile(log, mergefname, metafname):
             log.debug('Current chunk key = prev key %d' % (prevKey))
             failChunkCount += 1
             
-         prevKey = bigSortedData.groupVal
+         prevKey = chunkGroup
          chunk = bigSortedData.pullCurrentChunk()
 
    except Exception, e:
@@ -129,7 +129,7 @@ def splitIntoFiles(occparser, datapath, prefix, basename, maxFileSize):
    return idx
    
 # .............................................................................
-def sortFiles(sortvalIdx, datapath, inprefix, outprefix, basename):
+def sortFiles(groupByIdx, datapath, inprefix, outprefix, basename):
    idx = 0
    
    infname = _getOPFilename(datapath, inprefix, basename, run=idx)
@@ -150,7 +150,7 @@ def sortFiles(sortvalIdx, datapath, inprefix, outprefix, basename):
                      (infname, occreader.line_num, e))
                break
       # Sort records into new array
-      srtRows = sortRecs(unsRows, sortvalIdx)
+      srtRows = sortRecs(unsRows, groupByIdx)
       # Write sorted records to file
       with open(outfname, 'wb') as csvfile:
          occwriter = csv.writer(csvfile, delimiter='\t')
@@ -175,7 +175,7 @@ def _switchFiles(openFile, csvwriter, datapath, prefix, basename, run=None):
 def _popChunkAndWrite(csvwriter, occPrsr):
    # first get chunk
    thiskey = occPrsr.groupVal
-   chunk = occPrsr.pullCurrentChunk()
+   chunk, chunkGroup, chunkName = occPrsr.pullCurrentChunk()
    for rec in chunk:
       csvwriter.writerow(rec)
 
@@ -278,14 +278,14 @@ if __name__ == "__main__":
    if sys.argv[1] == 'sort':   
       # Split into smaller unsorted files
       occparser = OccDataParser(log, datafname, metafname)
-      sortvalIdx = occparser.sortIdx
+      groupByIdx = occparser.groupByIdx
        
       splitIntoFiles(occparser, WORKPATH, unsortedPrefix, basename, 500000)
       occparser.close()
-      print 'sortvalIdx = ', sortvalIdx
+      print 'groupByIdx = ', groupByIdx
               
       # Sort smaller files
-      sortFiles(sortvalIdx, WORKPATH, unsortedPrefix, sortedPrefix, basename)
+      sortFiles(groupByIdx, WORKPATH, unsortedPrefix, sortedPrefix, basename)
 
       # Merge all data for production system into multiple subset files
       mergeSortedFiles(log, mergefname, WORKPATH, sortedPrefix, basename, 
