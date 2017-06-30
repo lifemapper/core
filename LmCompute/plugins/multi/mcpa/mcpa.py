@@ -72,9 +72,9 @@ def getPValues(observedValue, testValues, numPermutations=None):
          pVals += testMtx.data >= observedValue.data
    # Scale and return the pVals matrix
    if numPermutations:
-      return Matrix(pVals / numPermutations)
+      return Matrix(pVals / numPermutations, headers=observedValue.headers)
    else:
-      return Matrix(pVals)
+      return Matrix(pVals, headers=observedValue.headers)
 
 # .............................................................................
 def standardizeMatrix(mtx, weights):
