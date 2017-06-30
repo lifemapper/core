@@ -1130,6 +1130,9 @@ class Borg(DbPostgresql):
                               usr.address3, usr.phone, usr.email, usr.modTime, 
                               usr.getPassword())
       newOrExistingUsr = self._createUser(row, idxs)
+      if usr.userid != newOrExistingUsr.userid:
+         self.log.info('Failed to add new user {}; matching email for user {}'
+                       .format(usr.userid, newOrExistingUsr.userid))
       return newOrExistingUsr
 
 # ...............................................

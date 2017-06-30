@@ -1114,6 +1114,7 @@ from LmDbServer.boom.boominput import ArchiveFiller
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 
 configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
+configFname = '/state/partition1/tmpdata/biotaphyHeucheraHires.boom.ini'
 # filler = ArchiveFiller(configFname=configFname)
 
 filler = ArchiveFiller()

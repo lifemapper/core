@@ -78,7 +78,8 @@ USER_OCCURRENCE_DATA_DELIMITER: ,
 ;; If LmServer and LmCompute are on the same server, SCENARIO_PACKAGE_SEED
 ;; in the [LmCompute - environment] section should match SCENARIO_PACKAGE here
 SCENARIO_PACKAGE: @SCENARIO_PACKAGE@
-;; These will be created from SCENARIO_PACKAGE and written to that config file
+;; These will be created from SCENARIO_PACKAGE and written to the  
+;; archive boom config file
 SCENARIO_PACKAGE_EPSG: @EPSG@
 SCENARIO_PACKAGE_MAPUNITS: 
 SCENARIO_PACKAGE_MODEL_SCENARIO: 

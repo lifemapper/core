@@ -413,6 +413,7 @@ class BOOMFiller(LMObject):
          else:
             self.scribe.log.info('  Insert user {} ...'.format(usrmeta['id']))
             tmp = self.scribe.findOrInsertUser(user)
+            self.scribe.log.info('  Insert user {} ...'.format(usrmeta['id']))
    
    # ...............................................
    def _checkScenarios(self, legalUsers):
@@ -932,7 +933,7 @@ class BOOMFiller(LMObject):
          # Create MFChain for this GRIM
          grimChain = self._createGrimMF(code, currtime)
          targetDir = grimChain.getRelativeDirectory()
-         mtxcols = self._scribe.getMatrixColumnsForMatrix(grim.getId())
+         mtxcols = self.scribe.getMatrixColumnsForMatrix(grim.getId())
          
          colFilenames = []
          for mtxcol in mtxcols:
@@ -982,7 +983,7 @@ class BOOMFiller(LMObject):
       """
       @summary Adds algorithms to the database from the algorithm dictionary
       """
-      ids = []
+      algs = []
       for alginfo in Algorithms.implemented():
          meta = {'name': alginfo.name, 
                  'isDiscreteOutput': alginfo.isDiscreteOutput,
@@ -991,8 +992,7 @@ class BOOMFiller(LMObject):
          alg = Algorithm(alginfo.code, metadata=meta)
          self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
          algid = self.scribe.findOrInsertAlgorithm(alg)
-         ids.append(algid)
-      return ids
+         algs.append(algid)
    
    # ...............................................
    def addBoomChain(self):
@@ -1040,6 +1040,9 @@ if __name__ == '__main__':
    parser.add_argument('-', '--config_file', default=None,
             help=('Configuration file for the archive, gridset, and grid ' +
                   'to be created from these data.'))
+   parser.add_argument('-grim', '--doGrim', action='store_true',
+            help=('Compute multi-species matrix outputs for the matrices ' +
+                  'in this Gridset.'))
    args = parser.parse_args()
    configFname = args.config_file
       
@@ -1050,12 +1053,27 @@ if __name__ == '__main__':
    filler = BOOMFiller(configFname=configFname)
    filler.initializeInputs()
    
+   # ...............................................
+   # Data for any user
+   # ...............................................
+   # Insert all taxonomic sources for now
+   filler.scribe.log.info('  Insert taxonomy metadata ...')
+   for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+      taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
+
+   # For ALL users, add Algorithms if they do not exist
+   filler.addAlgorithms()
+   
+         
+   # ...............................................
+   # This user and default users
+   # ...............................................
    # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
    filler.addUsers()
    
-   # Add Algorithms if they do not exist
-   filler.addAlgorithms()
-   
+   # ...............................................
+   # Data for this Boom user
+   # ...............................................
    # Add or get Scenarios 
    # This updates the allScens with db objects for other operations
    filler.findOrAddScenariosAndLayers()
@@ -1073,11 +1091,6 @@ if __name__ == '__main__':
    # Create, add, write MFChain for creating each Scenario GRIM
    filler.addGRIMChains()
       
-   # Insert all taxonomic sources for now
-   filler.scribe.log.info('  Insert taxonomy metadata ...')
-   for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-      taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-         
    # Write config file for this archive
    filler.writeConfigFile()
    
@@ -1087,61 +1100,60 @@ if __name__ == '__main__':
    filler.close()
     
 """
-import mx.DateTime
-import os
-import time
-
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-                        ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
-from LmCommon.common.readyfile import readyFilename
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
-      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
-      BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
-      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
-      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
-      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
-      GRID_CELLSIZE, GRID_NUM_SIDES)
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
-         GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
-         DEFAULT_EMAIL_POSTFIX, Priority)
-from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
-                                            POINT_COUNT_MIN)
-from LmServer.common.lmuser import LMUser
-from LmServer.common.log import ScriptLogger
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.base.utilities import isCorrectUser
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.cmd import MfRule
-from LmServer.legion.envlayer import EnvLayer
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix  
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario
-from LmServer.legion.shapegrid import ShapeGrid
-
-CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
-CURR_MJD = mx.DateTime.gmt().mjd
-BOOM_SCRIPT = 'LmDbServer/boom/boomer.py'
-
 from LmDbServer.boom.initboom import BOOMFiller
 
-configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
-
+configFname = '/state/partition1/tmpdata/testCrap.boom.ini'
 filler = BOOMFiller(configFname=configFname)
+
 filler.initializeInputs()
+
+filler.scribe.log.info('  Insert taxonomy metadata ...')
+for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+   taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
+      
+# Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
+filler.addUsers()
+
+# For ALL users, add Algorithms if they do not exist
+filler.addAlgorithms()
+
+# ...............................................
+# Data for this Boom user
+# ...............................................
+# Add or get Scenarios 
+# This updates the allScens with db objects for other operations
+filler.findOrAddScenariosAndLayers()
+for code, scen in filler.allScens.iteritems():
+   print code, scen.getId()
+   for lyr in scen.layers:
+      print '  ',lyr.name
+   print
+      
+# Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
+# Test a subset of OccurrenceIds provided as BOOM species input
+if filler.occIdFname:
+   filler._checkOccurrenceSets()
+      
+# Add or get ShapeGrid, Global PAM, Gridset for this archive
+# This updates the gridset, shapegrid, default PAMs (rolling, with no 
+#     matrixColumns, default GRIMs with matrixColumns
+filler.addArchive()
 for code, scen in filler.allScens.iteritems():
    print code, scen.getId()
    for lyr in scen.layers:
       print '  ',lyr.name
    print
 
-filler.addScenariosAndLayers()
+# Create, add, write MFChain for creating each Scenario GRIM
+filler.addGRIMChains()
+   
+# Write config file for this archive
+filler.writeConfigFile()
+
+# Create, add, write MFChain running the Boomer daemon on these SDM inputs
+mfChain = filler.addBoomChain()
+filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+filler.close()
 
 for code, scen in filler.allScens.iteritems():
    print code, scen.getId()

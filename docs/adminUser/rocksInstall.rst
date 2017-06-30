@@ -46,7 +46,8 @@ Other info:
 
 * Lawrence Geo:  N38.969  W95.245
 * Public Interface: assigned by Greg Smith for MAC address
-* Private Interface:  (notyeti VMs: available internal 192.168.202.x on notyeti)
+* Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
+  xxx is the last quartet of the public IP address)
 * Gateway:  129.237.201.254
 * DNS:  129.237.133.1
 * NTP server:  time.ku.edu

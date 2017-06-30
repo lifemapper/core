@@ -5,8 +5,7 @@ Install or Update a Lifemapper Server/Compute installation
 ==========================================================
 .. contents::  
 
-.. _Setup Development Environment : docs/developer/developEnv.rst
-.. _Setup User Data : docs/adminUser/setupUserData.rst
+.. _Configure Archive Data : docs/adminUser/configureLifemapper.rst
 
 Current versions
 ----------------
@@ -170,7 +169,7 @@ Configure new BOOM
 Populate archive
 ----------------
 #. Download new environmental data from Yeti.  Requirements for assembling 
-   environmental data are at:  `Setup User Data`_
+   environmental data are at:  `Configure Archive Data`_
 
    * For now, update config.site.ini with SCENARIO_PACKAGE corresponding to the 
      basename of a tar.gz file present in the yeti download directory.  The 
@@ -228,7 +227,7 @@ Populate archive
     
      * the species data files USER_OCCURRENCE_DATA(.csv and .meta) must be 
        installed in the user space (/share/lm/data/archive/<userId>/).
-     * Requirements for assembling occurrence data are at:  `Setup User Data`_
+     * Requirements for assembling occurrence data are at:  `Configure Archive Data`_
 
    * If the DATASOURCE is GBIF, with CSV file and known column definitions, the
      default OCCURRENCE_FILENAME is gbif_subset.txt.  If this is KU 

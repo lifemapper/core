@@ -21,14 +21,12 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
-from LmServer.common.localconstants import PUBLIC_USER
 try:
    import mx.DateTime as dt
 except:
    pass
 
 import csv
-from osgeo.ogr import wkbPoint
 import os
 import sys
 from time import sleep
@@ -823,128 +821,3 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                      .format(len(currChunk), currKey, self._currKeyFirstRecnum))
       return currKey, currChunk
          
-# # ..............................................................................
-# class iDigBioWoC(_SpeciesWeaponOfChoice):
-#    """
-#    @summary: Parses an iDigBio provided file of GBIF Taxon ID, count, binomial, 
-#              creating a chain of SDM objs for each, unless the species is 
-#              up-to-date. 
-#    """
-#    def __init__(self, scribe, user, archiveName, epsg, expDate, idigFname, 
-#                 taxonSourceName=None, logger=None):
-#       super(iDigBioWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-#                      taxonSourceName=taxonSourceName, logger=logger)
-#       self.processType = ProcessType.IDIGBIO_TAXA_OCCURRENCE
-#       # iDigBio-specific file of (GBIF) accepted taxon-ids
-#       try:
-#          self._idigFile = open(idigFname, 'r')
-#       except:
-#          raise LMError(currargs='Unable to open {}'.format(idigFname))
-# 
-#       self._currBinomial = None
-#       self._currGbifTaxonId = None
-#       self._currReportedCount = None
-#          
-# # ...............................................
-#    def getOne(self):
-#       occ = None
-#       taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-#       if taxonKey is not None:
-#          sciName = self._getInsertSciNameForGBIFSpeciesKey(taxonKey, taxonCount)
-#          if sciName is not None:
-#             occ = self._createOrResetOccurrenceset(sciName, taxonCount, taxonSourceKey=taxonKey)         
-#          self.log.info('Processed key/name {}/{}, with {} records; next start {}'
-#                        .format(taxonKey, taxonName, taxonCount, self.nextStart))
-#       return occ
-#    
-# # ...............................................
-#    def close(self):
-#       try:
-#          self._idigFile.close()
-#       except:
-#          self.log.error('Unable to close idigFile {}'.format(self._idigFile))
-#       
-# # ...............................................
-#    @property
-#    def complete(self):
-#       return self._idigFile.closed
-#                   
-# # ...............................................
-#    @property
-#    def nextStart(self):
-#       if self.complete:
-#          return 0
-#       else:
-#          return self._linenum+1
-# 
-# # ...............................................
-#    @property
-#    def thisStart(self):
-#       if self.complete:
-#          return 0
-#       else:
-#          return self._linenum
-# 
-# # ...............................................
-#    def _getCurrTaxon(self):
-#       """
-#       @summary: Returns currGbifTaxonId, currReportedCount, currBinomial 
-#       """
-#       currGbifTaxonId = currReportedCount = currName = None
-#       line = self._getNextLine(self._idigFile)
-#          
-#       if line is not None:
-#          tempvals = line.strip().split()
-#          if len(tempvals) < 3:
-#             print('Missing data in line {}'.format(line))
-#          else:
-#             try:
-#                currGbifTaxonId = int(tempvals[0])
-#             except:
-#                pass
-#             try:
-#                currReportedCount = int(tempvals[1])
-#             except:
-#                pass
-#             tempvals = tempvals[1:]
-#             tempvals = tempvals[1:]
-#             try:
-#                currName = ' '.join(tempvals)
-#             except:
-#                pass
-#       return currGbifTaxonId, currReportedCount, currName
-# 
-# # ...............................................
-#    def moveToStart(self):
-#       startline = self._findStart()         
-#       if startline < 1:
-#          self._linenum = 0
-#       else:
-#          taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-#          while taxonName is not None and self._linenum < startline-1:
-#             taxonKey, taxonCount, taxonName = self._getCurrTaxon()
-#          
-# # ...............................................
-#    def _countRecords(self, rawfname):
-#       pointcount = 0
-#       try:
-#          f  = open(rawfname, 'r')
-#          blob = f.read()
-#       except Exception, e:
-#          self.log.debug('Failed to read {}'.format(rawfname))
-#       else:
-#          pointcount = len(blob.split('\n')) - 1
-#       finally:
-#          try:
-#             f.close()
-#          except:
-#             pass
-#          
-#       return pointcount
-#     
-# # ...............................................
-#    def _locateRawData(self, occ, taxonSourceKeyVal=None, data=None):
-#       if taxonSourceKeyVal is None:
-#          raise LMError(currargs='Missing taxonSourceKeyVal for iDigBio query url')
-#       return str(taxonSourceKeyVal)
-# 

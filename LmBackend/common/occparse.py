@@ -657,13 +657,13 @@ from LmCommon.common.lmconstants import (LMFormat, ENCODING,
 from LmCompute.common.log import TestLogger
 from LmServer.common.localconstants import APP_PATH
 
-relpath = '/share/lmserver/data/species/'
-dataname = 'idig_occurrences_localities'
+dataname = 'LmTest/data/sdm/heuchera_all'
 
-pthAndBasename = os.path.join(APP_PATH, relpath, dataname)
+pthAndBasename = os.path.join(APP_PATH, datafname)
 log = TestLogger('occparse_checkInput')
-data = pthAndBasename + LMFormat.CSV.ext
-metadata = pthAndBasename + LMFormat.METADATA.ext
+
+dataFname = pthAndBasename + LMFormat.CSV.ext
+metadataFname = pthAndBasename + LMFormat.METADATA.ext
 delimiter = ','
 
 # Read metadata file/stream
