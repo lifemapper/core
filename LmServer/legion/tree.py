@@ -22,6 +22,7 @@
           02110-1301, USA.
 """
 import json
+import mx.DateTime
 import os
 
 from LmBackend.common.lmobj import LMObject
@@ -145,3 +146,10 @@ class Tree(LmTree, ServiceObject):
       durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
                                              interface)
       return durl
+
+   # ...............................................
+   def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
+      """
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
+      """
+      ServiceObject.updateModtime(self, modTime)

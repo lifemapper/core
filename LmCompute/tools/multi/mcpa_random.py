@@ -60,9 +60,14 @@ if __name__ == "__main__":
    phyloMtx = Matrix.load(args.phyloEncodingFn)
    
    if args.bio:
+      # I believe that Jeff may have made a mistake in his interpretation of 
+      #    how to handle BioGeo and they should not be concatenated here.
+      #    Will comment out in case we do need to do that
       # If a biogeographic matrix is supplied, concatenate environment matrix
-      bgMtx = Matrix.load(args.bio)
-      predictorMtx = Matrix.concatenate([bgMtx, envMtx], axis=1)
+      #bgMtx = Matrix.load(args.bio)
+      #predictorMtx = Matrix.concatenate([bgMtx, envMtx], axis=1)
+      
+      predictorMtx = Matrix.load(args.bio)
    else:
       predictorMtx = envMtx
    

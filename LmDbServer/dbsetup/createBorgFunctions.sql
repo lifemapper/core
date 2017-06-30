@@ -363,23 +363,18 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- Scenario
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getScenario(scenid int,
+                                                usr varchar,
                                                 code varchar)
    RETURNS lm_v3.Scenario AS
 $$
 DECLARE
    rec lm_v3.Scenario%rowtype;
 BEGIN
-   SELECT * INTO rec FROM lm_v3.Scenario s 
-      WHERE s.scenariocode = code;
-   IF NOT FOUND THEN
-      begin
-         SELECT * INTO STRICT rec FROM lm_v3.Scenario s WHERE s.scenarioid = scenid;
-         EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-               RAISE NOTICE 'Scenario id/user/code = %/%/% not found', scenid, usr, code;
-            WHEN TOO_MANY_ROWS THEN
-               RAISE NOTICE 'Scenario id/user/code = %/%/% not unique', scenid, usr, code;
-      end;
+   IF scenid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.Scenario s WHERE s.scenarioid = scenid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.Scenario s 
+         WHERE s.scenariocode = code AND s.userId = usr ;
    END IF;
    
    IF NOT FOUND THEN

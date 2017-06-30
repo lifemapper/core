@@ -414,7 +414,7 @@ class ArchiveFiller(LMObject):
       if self.modelScenCode not in self.prjScenCodeList:
          self.prjScenCodeList.append(self.modelScenCode)
       for code in self.prjScenCodeList:
-         scen = self.scribe.getScenario(code, fillLayers=True)
+         scen = self.scribe.getScenario(code, userId=self.usr, fillLayers=True)
          if scen is None:
             raise LMError('Missing Scenario for code or id {}'.format(code))
          if scen.getUserId() not in legalUsers:
@@ -970,7 +970,7 @@ class ArchiveFiller(LMObject):
          
          grimChain.addCommands(grimRules)
          grimChain.write()
-         grimChain.updateStatus(JobStatus.INITIALIZE)
+         grimChain.updateStatus(JobStatus.INITIALIZE, mx.DateTime.gmt().mjd)
          self.scribe.updateObject(grimChain)
          grimChains.append(grimChain)
          self.scribe.log.info('  Wrote GRIM Makeflow {} for scencode {}'
@@ -1008,7 +1008,7 @@ class ArchiveFiller(LMObject):
          alg = Algorithm(alginfo.code, metadata=meta)
          self.scribe.log.info('  Insert algorithm {} ...'.format(alginfo.code))
          updatedAlg = self.scribe.findOrInsertAlgorithm(alg)
-         allAlgs.append(algid)
+         allAlgs.append(updatedAlg)
    
    # ...............................................
    def createMFBoom(self):
@@ -1041,7 +1041,7 @@ class ArchiveFiller(LMObject):
                     dependencies=[self.outConfigFilename])
       mfChain.addCommands([rule])
       mfChain.write()
-      mfChain.updateStatus(JobStatus.INITIALIZE)
+      mfChain.updateStatus(JobStatus.INITIALIZE, mx.DateTime.gmt().mjd)
       self.scribe.updateObject(mfChain)
       return mfChain
    

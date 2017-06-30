@@ -41,59 +41,59 @@ from LmTest.helpers.testConstants import TREES_PATH
 
 BASE_TEST_TREE = {
    "name": "0",
-   "pathId": 0,
+   "cladeId": 0,
    "length": 0.0,
    "children": [
       {
-         "pathId": 1,
+         "cladeId": 1,
          "length": .4,
          "children": [
             {
-               "pathId" : 2,
+               "cladeId" : 2,
                "length": .15,
                "children": [
                   {
-                     "pathId" : 3,
+                     "cladeId" : 3,
                      "length" : .65,
                      "children": [
                         {
                            "name" : "4",
-                           "pathId" : 4,
+                           "cladeId" : 4,
                            "length" : .2,
                         },
                         {
                            "name" : "5",
-                           "pathId" : 5,
+                           "cladeId" : 5,
                            "length" : .2,
                         }
                      ]
                   },
                   {
                      "name" : "6",
-                     "pathId" : 6,
+                     "cladeId" : 6,
                      "length" : .85,
                   }
                ]
             },
             {
                "name" : "7",
-               "pathId" : 7,
+               "cladeId" : 7,
                "length" : 1.0,
             }
          ]
       },
       {
-         "pathId" : 8,
+         "cladeId" : 8,
          "length": .9,
          "children": [
             {
                "name" : "9",
-               "pathId" : 9,
+               "cladeId" : 9,
                "length" : .5,
             },
             {
                "name" : "10",
-               "pathId" : 10,
+               "cladeId" : 10,
                "length" : .5,
             }
          ]
@@ -192,7 +192,7 @@ class TestLmTree(unittest.TestCase):
       
       pamMetadata = {}
       i = 0
-      for label, pathId in lmt.getLabels():
+      for label, cladeId in lmt.getLabels():
          pamMetadata[label] = mtxIdxs[i]
          i += 1
       
@@ -216,7 +216,7 @@ class TestLmTree(unittest.TestCase):
       
       # Randomly create "squids" for each label
       squidDict = {}
-      for label, pathId in lmt.getLabels():
+      for label, cladeId in lmt.getLabels():
          shuffle(pseudoSquid)
          squidDict[label] = ''.join(pseudoSquid)
       
@@ -258,7 +258,7 @@ class TestLmTree(unittest.TestCase):
       lmt = LmTree(BASE_TEST_TREE)
       for cladeId in lmt.cladePaths.keys():
          clade = lmt.getClade(cladeId)
-         assert clade[PhyloTreeKeys.PATH_ID] == cladeId
+         assert clade[PhyloTreeKeys.CLADE_ID] == cladeId
 
    # ............................
    def test_get_clade_nonexisting_fail(self):
@@ -293,7 +293,7 @@ class TestLmTree(unittest.TestCase):
       
       pamMetadata = {}
       i = 0
-      for label, pathId in lmt.getLabels():
+      for label, cladeId in lmt.getLabels():
          pamMetadata[label] = mtxIdxs[i]
          i += 1
       
@@ -320,7 +320,7 @@ class TestLmTree(unittest.TestCase):
       
       pamMetadata = {}
       i = 0
-      for label, pathId in lmt.getLabels():
+      for label, cladeId in lmt.getLabels():
          pamMetadata[label] = mtxIdxs[i]
          i += 1
       
@@ -477,59 +477,59 @@ class TestLmTree(unittest.TestCase):
       # Not ultrametric
       nonUltrametricTreeDict = {
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "children": [ # Children don't have same lengths
                               {
                                  "name" : "4",
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .3,
                               },
                               {
                                  "name" : "5",
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .1,
                               }
                            ]
                         },
                         {
                            "name" : "6",
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                         }
                      ]
                   },
                   {
                      "name" : "7",
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                   }
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "children": [
                   {
                      "name" : "9",
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                   },
                   {
                      "name" : "10",
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                   }
                ]
@@ -551,63 +551,63 @@ class TestLmTree(unittest.TestCase):
       """
       treeDict = { # Not using base test tree because we need labels
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
                "name" : "1",
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "children": [
                   {
                      "name" : "2",
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "children": [
                         {
                            "name" : "3",
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "children": [
                               {
                                  "name" : "4",
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .2,
                               },
                               {
                                  "name" : "5",
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .2,
                               }
                            ]
                         },
                         {
                            "name" : "6",
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                         }
                      ]
                   },
                   {
                      "name" : "7",
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                   }
                ]
             },
             {
                "name" : "8",
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "children": [
                   {
                      "name" : "9",
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                   },
                   {
                      "name" : "10",
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                   }
                ]
@@ -640,63 +640,63 @@ class TestLmTree(unittest.TestCase):
       """
       treeDict = { # Not using base test tree because we need labels
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
                "name" : "1",
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "children": [
                   {
                      "name" : "2",
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "children": [
                         {
                            "name" : "3",
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "children": [
                               {
                                  "name" : "4",
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .2,
                               },
                               {
                                  "name" : "5",
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .2,
                               }
                            ]
                         },
                         {
                            "name" : "6",
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                         }
                      ]
                   },
                   {
                      "name" : "7",
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                   }
                ]
             },
             {
                "name" : "8",
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "children": [
                   {
                      "name" : "9",
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                   },
                   {
                      "name" : "10",
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                   }
                ]
@@ -749,7 +749,7 @@ class TestLmTree(unittest.TestCase):
       
       pamMetadata = {}
       i = 0
-      for label, pathId in lmt.getLabels():
+      for label, cladeId in lmt.getLabels():
          pamMetadata[label] = mtxIdxs[i]
          i += 1
       
@@ -810,53 +810,53 @@ class TestLmTree(unittest.TestCase):
       """
       treeDict = {
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "children": [
                   {
-                     "pathId" : 2,
+                     "cladeId" : 2,
                      "length": .15,
                      "children": [
                         {
-                           "pathId" : 3,
+                           "cladeId" : 3,
                            "length" : .65,
                            "children": [
                               {
-                                 "pathId" : 4,
+                                 "cladeId" : 4,
                                  "length" : .2,
                               },
                               {
-                                 "pathId" : 5,
+                                 "cladeId" : 5,
                                  "length" : .2,
                               }
                            ]
                         },
                         {
-                           "pathId" : 6,
+                           "cladeId" : 6,
                            "length" : .85,
                         }
                      ]
                   },
                   {
-                     "pathId" : 7,
+                     "cladeId" : 7,
                      "length" : 1.0,
                   }
                ]
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                   }
                ]
@@ -890,24 +890,24 @@ class TestLmTree(unittest.TestCase):
       """
       treeDict = {
          "name": "0",
-         "pathId": 0,
+         "cladeId": 0,
          "length": 0.0,
          "children": [
             {
-               "pathId": 1,
+               "cladeId": 1,
                "length": .4,
                "children": []
             },
             {
-               "pathId" : 8,
+               "cladeId" : 8,
                "length": .9,
                "children": [
                   {
-                     "pathId" : 9,
+                     "cladeId" : 9,
                      "length" : .5,
                   },
                   {
-                     "pathId" : 10,
+                     "cladeId" : 10,
                      "length" : .5,
                   }
                ]

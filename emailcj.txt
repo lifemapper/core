@@ -1,0 +1,28 @@
+cleaned old rolls
+installed new rolls
+rebooted
+
+fixed layers.db permissions
+
+installed nodes
+fixed lmscratch permissions on nodes
+
+checked logfiles  errors in cron jobs:
+
+[root@notyeti-194 tmp]# more lmserver_build_solr_index.log 
+Traceback (most recent call last):
+  File "/opt/lifemapper/LmWebServer/solr/buildIndex.py", line 20, in <module>
+    from LmServer.common.localconstants import TEMP_PATH
+ImportError: cannot import name TEMP_PATH
+
+removed bad grim MF records in db
+removed bad grim MF files
+
+manually added matrixcolumns and grim MF jobs
+manually ran boominput on heuchera data for biotaphy user
+manually removed daboom mfprocesses from db (since we're running by hand)
+
+manually copied heuchera data to /share/lm/data/archive/biotaphy/
+ran daboom on biotaphy
+ 
+

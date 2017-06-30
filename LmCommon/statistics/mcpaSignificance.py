@@ -128,8 +128,8 @@ def sortRowsByNodeId(mtx, tree):
    @param tree: An LmTree object providing matrix index : node id mappings
    """
    nodeToMtxIdx = tree.getMatrixIndicesMapping()
-   # Get the new order by sorting the path ids and creating a list of matching 
+   # Get the new order by sorting the clade ids and creating a list of matching 
    # matrix indices
-   rowOrder = [nodeToMtxIdx[pathId] for pathId in sorted(nodeToMtxIdx.keys())]
+   rowOrder = [nodeToMtxIdx[cladeId] for cladeId in sorted(nodeToMtxIdx.keys())]
    # Fancy index the matrix
    return mtx.data[rowOrder,:]

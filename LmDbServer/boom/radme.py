@@ -178,62 +178,67 @@ class RADCaller(LMObject):
                                    gcmCode=pam.gcmCode, 
                                    altpredCode=pam.altpredCode, 
                                    dateCode=pam.dateCode)
+            # Store all MCPA outputs in one matrix, remove extra comments when
+            #    confirmed
+            pd[MatrixType.MCPA_OUTPUTS] = self._getOrInsertMatrix(
+               gridsetId, MatrixType.MCPA_OUTPUTS, ProcessType.MCPA_ASSEMBLE,
+               pam.gcmCode, pam.altpredCode, pam.dateCode)
+            
+            ## Env Adjusted R-squared
+            #pd[MatrixType.MCPA_ENV_OBS_ADJ_R_SQ] = self._getOrInsertMatrix(
+            #                                 gridsetId, 
+            #                                 MatrixType.MCPA_ENV_OBS_ADJ_R_SQ, 
+            #                                 ProcessType.MCPA_OBSERVED,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
+            ## Env Parital Correlation
+            #pd[MatrixType.MCPA_ENV_OBS_PARTIAL] = self._getOrInsertMatrix(
+            #                                 gridsetId, 
+            #                                 MatrixType.MCPA_ENV_OBS_PARTIAL, 
+            #                                 ProcessType.MCPA_OBSERVED,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
+            ## Env F global
+            #pd[MatrixType.MCPA_ENV_F_GLOBAL] = self._getOrInsertMatrix(
+            #                                 gridsetId, 
+            #                                 MatrixType.MCPA_ENV_F_GLOBAL, 
+            #                                 ProcessType.MCPA_CORRECT_PVALUES,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
+            ## Env F semi partial   
+            #pd[MatrixType.MCPA_ENV_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
+            #                                 MatrixType.MCPA_ENV_F_SEMI, 
+            #                                 ProcessType.MCPA_CORRECT_PVALUES,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
 
-            # Env Adjusted R-squared
-            pd[MatrixType.MCPA_ENV_OBS_ADJ_R_SQ] = self._getOrInsertMatrix(
-                                             gridsetId, 
-                                             MatrixType.MCPA_ENV_OBS_ADJ_R_SQ, 
-                                             ProcessType.MCPA_OBSERVED,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
-            # Env Parital Correlation
-            pd[MatrixType.MCPA_ENV_OBS_PARTIAL] = self._getOrInsertMatrix(
-                                             gridsetId, 
-                                             MatrixType.MCPA_ENV_OBS_PARTIAL, 
-                                             ProcessType.MCPA_OBSERVED,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
-            # Env F global
-            pd[MatrixType.MCPA_ENV_F_GLOBAL] = self._getOrInsertMatrix(
-                                             gridsetId, 
-                                             MatrixType.MCPA_ENV_F_GLOBAL, 
-                                             ProcessType.MCPA_CORRECT_PVALUES,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
-            # Env F semi partial   
-            pd[MatrixType.MCPA_ENV_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
-                                             MatrixType.MCPA_ENV_F_SEMI, 
-                                             ProcessType.MCPA_CORRECT_PVALUES,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
-
-            # BG Adjusted R-squared
-            pd[MatrixType.MCPA_BG_OBS_ADJ_R_SQ] = self._getOrInsertMatrix(
-                                             gridsetId, 
-                                             MatrixType.MCPA_BG_OBS_ADJ_R_SQ, 
-                                             ProcessType.MCPA_OBSERVED,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
-            # BG Parital Correlation
-            pd[MatrixType.MCPA_BG_OBS_PARTIAL] = self._getOrInsertMatrix(
-                                             gridsetId, 
-                                             MatrixType.MCPA_BG_OBS_PARTIAL, 
-                                             ProcessType.MCPA_OBSERVED,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
-            # BG F global
-            pd[MatrixType.MCPA_BG_F_GLOBAL] = self._getOrInsertMatrix(
-                                             gridsetId, 
-                                             MatrixType.MCPA_BG_F_GLOBAL, 
-                                             ProcessType.MCPA_CORRECT_PVALUES,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
-            # BG F semi partial   
-            pd[MatrixType.MCPA_BG_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
-                                             MatrixType.MCPA_BG_F_SEMI, 
-                                             ProcessType.MCPA_CORRECT_PVALUES,
-                                             pam.gcmCode, pam.altpredCode, 
-                                             pam.dateCode)
+            ## BG Adjusted R-squared
+            #pd[MatrixType.MCPA_BG_OBS_ADJ_R_SQ] = self._getOrInsertMatrix(
+            #                                 gridsetId, 
+            #                                 MatrixType.MCPA_BG_OBS_ADJ_R_SQ, 
+            #                                 ProcessType.MCPA_OBSERVED,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
+            ## BG Parital Correlation
+            #pd[MatrixType.MCPA_BG_OBS_PARTIAL] = self._getOrInsertMatrix(
+            #                                 gridsetId, 
+            #                                 MatrixType.MCPA_BG_OBS_PARTIAL, 
+            #                                 ProcessType.MCPA_OBSERVED,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
+            ## BG F global
+            #pd[MatrixType.MCPA_BG_F_GLOBAL] = self._getOrInsertMatrix(
+            #                                 gridsetId, 
+            #                                 MatrixType.MCPA_BG_F_GLOBAL, 
+            #                                 ProcessType.MCPA_CORRECT_PVALUES,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
+            ## BG F semi partial   
+            #pd[MatrixType.MCPA_BG_F_SEMI] = self._getOrInsertMatrix(gridsetId, 
+            #                                 MatrixType.MCPA_BG_F_SEMI, 
+            #                                 ProcessType.MCPA_CORRECT_PVALUES,
+            #                                 pam.gcmCode, pam.altpredCode, 
+            #                                 pam.dateCode)
                      
          pamDict[pamId] = pd
          
@@ -267,8 +272,7 @@ class RADCaller(LMObject):
                            dateCode=dateCode, userId=self._gridset.getUserId(), 
                            gridset=self._gridset)
       mtx = self._scribe.findOrInsertMatrix(newMtx)
-      mtx.updateStatus(status=JobStatus.INITIALIZE, 
-                          modTime=mx.DateTime.gmt().mjd)
+      mtx.updateStatus(JobStatus.INITIALIZE)
       return mtx
 
 # ...............................................

@@ -44,11 +44,14 @@ from LmBackend.common.daemon import Daemon, DaemonCommands
 from LmCommon.common.lmconstants import JobStatus
 #from LmServer.db.scribe import Scribe
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, MAKEFLOW_BIN,
-                  MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, WORKER_FACTORY_BIN)
-from LmServer.common.localconstants import (CATALOG_SERVER_OPTIONS, 
-                  MAKEFLOW_OPTIONS, MAX_MAKEFLOWS, WORKER_FACTORY_OPTIONS)
+from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
+                                      MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
+                                      MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, 
+                                      WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
+
+from LmServer.common.localconstants import MAX_MAKEFLOWS
 from LmServer.common.log import LmServerLogger
+from mx.DateTime.DateTime import gmt
 
 # .............................................................................
 class MattDaemon(Daemon):
@@ -229,7 +232,7 @@ class MattDaemon(Daemon):
       @summary: Start the local catalog server
       """
       cmd = "{csBin} {csOptions}".format(csBin=CATALOG_SERVER_BIN, 
-                                         csOptions=CATALOG_SERVER_OPTIONS)
+                                         csOptions=CS_OPTIONS)
       self.csProc = Popen(cmd, shell=True, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    
    # .............................
@@ -290,7 +293,7 @@ class MattDaemon(Daemon):
             lmStatus = JobStatus.INITIALIZE
          
          # Update
-         mfObj.updateStatus(lmStatus)
+         mfObj.updateStatus(lmStatus, modTime=gmt().mjd)
          self.scribe.updateObject(mfObj)
       
       # Remove files from workspace

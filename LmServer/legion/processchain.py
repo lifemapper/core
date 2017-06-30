@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import mx.DateTime
 import os
 
 from LmCommon.common.lmconstants import LMFormat
@@ -279,3 +280,9 @@ class MFChain(ProcessObject):
             # These have built-in newlines
             outF.write(job) 
       
+   # ...............................................
+   def updateStatus(self, status, modTime=mx.DateTime.gmt().mjd):
+      """
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateStatus()
+      """
+      ProcessObject.updateStatus(self, status, modTime)

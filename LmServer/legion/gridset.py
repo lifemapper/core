@@ -174,6 +174,7 @@ class Gridset(ServiceObject):
       stockpileScript = ProcessTool.get(ProcessType.UPDATE_OBJECT)
       touchScript = ProcessTool.get(ProcessType.TOUCH)
       correctPvaluesScript = ProcessTool.get(ProcessType.MCPA_CORRECT_PVALUES)
+      mcpaAssembleScript = ProcessTool.get(ProcessType.MCPA_ASSEMBLE)
       
       if doMCPA:
 #          mcpaRule = self._getMCPARule(workDir, targetDir)
@@ -345,15 +346,7 @@ class Gridset(ServiceObject):
                                 dependencies=[pamDirTouchFilename]))
             
             # Get MCPA matrices
-            envAdjRsqMtx = pamDict[pamId][MatrixType.MCPA_ENV_OBS_ADJ_R_SQ]
-            envPartialMtx = pamDict[pamId][MatrixType.MCPA_ENV_OBS_PARTIAL]
-            envFglobalMtx = pamDict[pamId][MatrixType.MCPA_ENV_F_GLOBAL]
-            envFsemipartMtx = pamDict[pamId][MatrixType.MCPA_ENV_F_SEMI]
-            
-            bgAdjRsqMtx = pamDict[pamId][MatrixType.MCPA_BG_OBS_ADJ_R_SQ]
-            bgPartialMtx = pamDict[pamId][MatrixType.MCPA_BG_OBS_PARTIAL]
-            bgFglobalMtx = pamDict[pamId][MatrixType.MCPA_BG_F_GLOBAL]
-            bgFsemipartMtx = pamDict[pamId][MatrixType.MCPA_BG_F_SEMI]
+            mcpaOutMtx = pamDict[pamId][MatrixType.MCPA_OUTPUTS]
             
             # Get workspace filenames
             wsEnvAdjRsqFilename = os.path.join(pamWorkDir, 'envAdjRsq.json')
@@ -365,6 +358,8 @@ class Gridset(ServiceObject):
             wsBGPartCorFilename = os.path.join(pamWorkDir, 'bgPartCor.json')
             wsBGFglobalFilename = os.path.join(pamWorkDir, 'bgFglobal.json')
             wsBGFpartialFilename = os.path.join(pamWorkDir, 'bgFpartial.json')
+            
+            wsMcpaOutFilename = os.path.join(pamWorkDir, 'mcpaOut.json')
             
             # MCPA env observed command
             mcpaEnvObsArgs = ['$PYTHON', 
@@ -382,35 +377,6 @@ class Gridset(ServiceObject):
                                  wsEnvFpartialFilename, wsEnvPartCorFilename],
                                 dependencies=[wsPamFilename, encTreeFilename, 
                                               wsGrimFilename]))
-            # Stockpile observed values
-            # Env adjusted r-squared
-            envAdjRsqSuccessFilename = os.path.join(pamWorkDir, 
-                                                    'envAdjRsq.success')
-            envAdjRsqStockpileCmd = ' '.join([
-               'LOCAL $PYTHON',
-               stockpileScript, 
-               str(ProcessType.MCPA_OBSERVED), 
-               str(envAdjRsqMtx.getId()), 
-               envAdjRsqSuccessFilename, 
-               wsEnvAdjRsqFilename])
-            rules.append(MfRule(envAdjRsqStockpileCmd, 
-                                [envAdjRsqSuccessFilename], 
-                                dependencies=[wsEnvAdjRsqFilename]))
-               
-            # Env partial correlation
-            envPartCorSuccessFilename = os.path.join(pamWorkDir, 
-                                                    'envPartCor.success')
-            envPartCorStockpileCmd = ' '.join([
-               'LOCAL $PYTHON',
-               stockpileScript, 
-               str(ProcessType.MCPA_OBSERVED), 
-               str(envPartialMtx.getId()), 
-               envPartCorSuccessFilename, 
-               wsEnvPartCorFilename])
-            rules.append(MfRule(envPartCorStockpileCmd, 
-                                [envPartCorSuccessFilename], 
-                                dependencies=[wsEnvPartCorFilename]))
-               
                
             # Env Randomizations
             envFglobRands = []
@@ -451,18 +417,6 @@ class Gridset(ServiceObject):
             ])
             rules.append(MfRule(envFglobCmd, [envFglobFilename], 
                                 dependencies=envFglobRands + [wsEnvFglobalFilename]))
-            # Stockpile
-            envFglobSuccessFilename = os.path.join(pamWorkDir, 'envFglob.success')
-            envFglobStockpileCmd = ' '.join([
-               'LOCAL $PYTHON',
-               stockpileScript, 
-               str(ProcessType.MCPA_OBSERVED), 
-               str(envFglobalMtx.getId()), 
-               envFglobSuccessFilename, 
-               envFglobFilename])
-            rules.append(MfRule(envFglobStockpileCmd, 
-                                [envFglobSuccessFilename], 
-                                dependencies=[envFglobFilename]))
             
             # Env F-semipartial
             envFpartFilename = os.path.join(pamWorkDir, 'envFpartP.json')   
@@ -475,18 +429,6 @@ class Gridset(ServiceObject):
             ])
             rules.append(MfRule(envFpartCmd, [envFpartFilename], 
                                 dependencies=envFpartRands + [wsEnvFpartialFilename]))
-            # Stockpile
-            envFpartSuccessFilename = os.path.join(pamWorkDir, 'envFpart.success')
-            envFpartStockpileCmd = ' '.join([
-               'LOCAL $PYTHON',
-               stockpileScript, 
-               str(ProcessType.MCPA_OBSERVED), 
-               str(envFsemipartMtx.getId()), 
-               envFpartSuccessFilename, 
-               envFpartFilename])
-            rules.append(MfRule(envFpartStockpileCmd, 
-                                [envFpartSuccessFilename], 
-                                dependencies=[envFpartFilename]))
             
             # Bio geo
             # MCPA bg observed command
@@ -506,34 +448,6 @@ class Gridset(ServiceObject):
                                  wsBGFpartialFilename, wsBGPartCorFilename],
                                 dependencies=[wsPamFilename, encTreeFilename, 
                                               wsGrimFilename, wsBGFilename]))
-            # Stockpile observed values
-            # BG adjusted r-squared
-            bgAdjRsqSuccessFilename = os.path.join(pamWorkDir, 
-                                                    'bgAdjRsq.success')
-            bgAdjRsqStockpileCmd = ' '.join([
-               'LOCAL $PYTHON',
-               stockpileScript, 
-               str(ProcessType.MCPA_OBSERVED), 
-               str(bgAdjRsqMtx.getId()), 
-               bgAdjRsqSuccessFilename, 
-               wsBGAdjRsqFilename])
-            rules.append(MfRule(bgAdjRsqStockpileCmd, 
-                                [bgAdjRsqSuccessFilename], 
-                                dependencies=[wsBGAdjRsqFilename]))
-               
-            # BG partial correlation
-            bgPartCorSuccessFilename = os.path.join(pamWorkDir, 
-                                                    'bgPartCor.success')
-            bgPartCorStockpileCmd = ' '.join([
-               'LOCAL $PYTHON',
-               stockpileScript, 
-               str(ProcessType.MCPA_OBSERVED), 
-               str(bgPartialMtx.getId()), 
-               bgPartCorSuccessFilename, 
-               wsBGPartCorFilename])
-            rules.append(MfRule(bgPartCorStockpileCmd, 
-                                [bgPartCorSuccessFilename], 
-                                dependencies=[wsBGPartCorFilename]))
                
             # BG Randomizations
             bgFglobRands = []
@@ -573,17 +487,6 @@ class Gridset(ServiceObject):
                                    ' '.join(bgFglobRands)])
             rules.append(MfRule(bgFglobCmd, [bgFglobFilename], 
                                 dependencies=bgFglobRands + [wsBGFglobalFilename]))
-            # Stockpile
-            bgFglobSuccessFilename = os.path.join(pamWorkDir, 'bgFglob.success')
-            bgFglobStockpileCmd = ' '.join(['LOCAL $PYTHON',
-                                            stockpileScript, 
-                                            str(ProcessType.MCPA_OBSERVED), 
-                                            str(bgFglobalMtx.getId()), 
-                                            bgFglobSuccessFilename, 
-                                            bgFglobFilename])
-            rules.append(MfRule(bgFglobStockpileCmd, 
-                                [bgFglobSuccessFilename], 
-                                dependencies=[bgFglobFilename]))
             
             # BG F-semipartial
             bgFpartFilename = os.path.join(pamWorkDir, 'bgFpartP.json')   
@@ -594,17 +497,43 @@ class Gridset(ServiceObject):
                                    ' '.join(bgFpartRands)])
             rules.append(MfRule(bgFpartCmd, [bgFpartFilename], 
                                 dependencies=bgFpartRands + [wsBGFpartialFilename]))
-            # Stockpile
-            bgFpartSuccessFilename = os.path.join(pamWorkDir, 'bgFpart.success')
-            bgFpartStockpileCmd = ' '.join(['LOCAL $PYTHON',
-                                            stockpileScript, 
-                                            str(ProcessType.MCPA_OBSERVED), 
-                                            str(bgFsemipartMtx.getId()), 
-                                            bgFpartSuccessFilename, 
-                                            bgFpartFilename])
-            rules.append(MfRule(bgFpartStockpileCmd, 
-                                [bgFpartSuccessFilename], 
-                                dependencies=[bgFpartFilename]))
+
+            # Assemble outputs
+            assembleCmd = ' '.join(['$PYTHON',
+                                    mcpaAssembleScript,
+                                    wsEnvPartCorFilename,
+                                    wsEnvAdjRsqFilename,
+                                    wsEnvFglobalFilename,
+                                    wsEnvFpartialFilename,
+                                    wsBGPartCorFilename,
+                                    wsBGAdjRsqFilename,
+                                    wsBGFglobalFilename,
+                                    wsBGFpartialFilename,
+                                    wsMcpaOutFilename])
+            rules.append(MfRule(assembleCmd, [wsMcpaOutFilename],
+                                dependencies=[wsEnvPartCorFilename,
+                                              wsEnvAdjRsqFilename,
+                                              wsEnvFglobalFilename,
+                                              wsEnvFpartialFilename,
+                                              wsBGPartCorFilename,
+                                              wsBGAdjRsqFilename,
+                                              wsBGFglobalFilename,
+                                              wsBGFpartialFilename]))
+            # Stockpile matrix
+            mcpaOutSuccessFilename = os.path.join(pamWorkDir, 'mcpaOut.success')
+            mcpaOutStockpileCmd = ' '.join([
+               'LOCAL',
+               '$PYTHON',
+               stockpileScript,
+               str(ProcessType.MCPA_ASSEMBLE),
+               str(mcpaOutMtx.getId()),
+               mcpaOutSuccessFilename,
+               wsMcpaOutFilename
+            ])
+            
+            rules.append(
+               MfRule(' '.join(mcpaOutStockpileCmd), [mcpaOutSuccessFilename], 
+                      dependencies=[wsMcpaOutFilename]))
 
       return rules
    
@@ -824,6 +753,12 @@ class Gridset(ServiceObject):
                                                                   str(e))
       return success
       
+   # ...............................................
+   def updateModtime(self, modTime=mx.DateTime.gmt().mjd):
+      """
+      @copydoc LmServer.base.serviceobject2.ProcessObject::updateModtime()
+      """
+      ServiceObject.updateModtime(self, modTime)
 
 # .............................................................................
 # Public methods
