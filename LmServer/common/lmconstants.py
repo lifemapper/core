@@ -174,6 +174,8 @@ class ProcessTool:
                jr = 'mcpa_observed'
             elif ptype == ProcessType.MCPA_RANDOM:
                jr = 'mcpa_random'
+            elif ptype == ProcessType.MCPA_ASSEMBLE:
+               jr = 'mcpa_assemble'
                
       elif ProcessType.isBoom(ptype):
          relpath = BOOM_SCRIPTS_DIR

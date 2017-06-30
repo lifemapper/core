@@ -834,7 +834,8 @@ class ProcessType:
    # MCPA
    MCPA_CORRECT_PVALUES = 530
    MCPA_OBSERVED = 540
-   MCPA_RANDOM = 550      
+   MCPA_RANDOM = 550  
+   MCPA_ASSEMBLE = 560 # Assembles all MCPA outputs into a single matrix
    # .......... Notify ..........
    SMTP = 610
    CONCATENATE_MATRICES = 620
@@ -903,7 +904,7 @@ class ProcessType:
                    ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
                    ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
                    ProcessType.MCPA_RANDOM, ProcessType.ENCODE_HYPOTHESES,
-                   ProcessType.ENCODE_PHYLOGENY]:
+                   ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE]:
          return True
       return False
    
@@ -925,7 +926,7 @@ class ProcessType:
       if ptype in [ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE, 
                    ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY, 
                    ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                   ProcessType.RAD_GRADY, 
+                   ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
                    ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
                    ProcessType.MCPA_RANDOM]:
          return True
@@ -955,12 +956,12 @@ class ProcessType:
    @staticmethod
    def mcpaTypes():
       return [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-              ProcessType.MCPA_RANDOM]
+              ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]
    
    @staticmethod
    def isMCPA(ptype):
       if ptype in [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                   ProcessType.MCPA_RANDOM]:
+                   ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]:
          return True
       return False
    
