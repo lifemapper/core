@@ -824,6 +824,12 @@ class LmTree(object):
       @summary: Resolve polytomies in a clade
       @param clade: The clade to resolve polytomies in
       """
+      while len(clade[PhyloTreeKeys.CHILDREN]) == 1:
+         child = clade[PhyloTreeKeys.CHILDREN].pop()
+         print("Merging {} and {}".format(clade[PhyloTreeKeys.CLADE_ID], child[PhyloTreeKeys.CLADE_ID]))
+         self._mergeClades(clade, child)
+         print("new len: {}".format(len(clade[PhyloTreeKeys.CHILDREN])))
+   
       while len(clade[PhyloTreeKeys.CHILDREN]) > 2:
          shuffle(clade[PhyloTreeKeys.CHILDREN])
          c1 = clade[PhyloTreeKeys.CHILDREN].pop(0)
