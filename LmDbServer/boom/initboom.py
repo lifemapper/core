@@ -910,6 +910,23 @@ class BOOMFiller(LMObject):
             mtxcol.processType = ptype            
       return mtxcol
 
+   # ...............................................
+   def _getMCProcessType(self, mtxColumn, mtxType):
+      """
+      @summary Initialize configured and stored inputs for ArchiveFiller class.
+      """
+      if LMFormat.isOGR(driver=mtxColumn.layer.dataFormat):
+         if mtxType == MatrixType.PAM:
+            ptype = ProcessType.INTERSECT_VECTOR
+         elif mtxType == MatrixType.GRIM:
+            raise LMError('Vector GRIM intersection is not implemented')
+      else:
+         if mtxType == MatrixType.PAM:
+            ptype = ProcessType.INTERSECT_RASTER
+         elif mtxType == MatrixType.GRIM:
+            ptype = ProcessType.INTERSECT_RASTER_GRIM
+      return ptype
+   
    # .............................
    def _createGrimMF(self, scencode, currtime):
       # Create MFChain for this GPAM
