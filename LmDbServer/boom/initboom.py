@@ -849,7 +849,7 @@ class BOOMFiller(LMObject):
       grim = self.scribe.findOrInsertMatrix(tmpGrim)
       for lyr in scen.layers:
          # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
-         mtxcol = self._initGRIMIntersect(lyr, grim, CURR_MJD)
+         mtxcol = self._initGRIMIntersect(lyr, grim)
       return gpam, grim
 
    # ...............................................
