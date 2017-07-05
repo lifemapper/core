@@ -80,7 +80,7 @@ CS_OPTIONS = '-n {} -B {} -p {} -m 100 -o {} -O 100M -H {}'.format(
 
 # Worker options
 WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
-WORKER_OPTIONS = 'C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
+WORKER_OPTIONS = '-C {}:{} -s {}'.format(PUBLIC_FQDN, CS_PORT, WORKER_PATH)
 
 WORKER_FACTORY_OPTIONS = '-M lifemapper.\\* -T sge -w {} -W {} -E "{}" -S {}'.format(
    MIN_WORKERS, MAX_WORKERS, WORKER_OPTIONS, SHARED_DATA_PATH)

@@ -47,7 +47,8 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
                                       MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
                                       MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, 
-                                      WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
+                                      WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS,
+   WORKER_PATH)
 
 from LmServer.common.localconstants import MAX_MAKEFLOWS
 from LmServer.common.log import LmServerLogger
@@ -259,6 +260,17 @@ class MattDaemon(Daemon):
       os.killpg(os.getpgid(self.wfProc.pid), signal.SIGTERM)
    
    # .............................
+   def _getMakeflowCleanCommand(self, mfDocFn):
+      """
+      @summary: Assemble Makeflow clean command
+      @param mfDocFn: The Makeflow file to run
+      """
+      mfCmd = "{mfBin} -c -X {workDir} {mfDoc}".format(
+                           mfBin=MAKEFLOW_BIN, workDir=WORKER_PATH, 
+                           mfDoc=mfDocFn)
+      return mfCmd
+
+   # .............................
    def _getMakeflowCommand(self, name, mfDocFn):
       """
       @summary: Assemble Makeflow command
@@ -284,6 +296,9 @@ class MattDaemon(Daemon):
       # If success, delete
       if exitStatus == 0:
          self.scribe.deleteObject(mfObj)
+         cleanUpCmd = self._getMakeflowCleanCommand(mfDocFn)
+         cleanProc = Popen(cleanUpCmd, shell=True)
+         # TODO: Do we need to wait for this?
       else:
          # Either killed by signal or error
          if lmStatus is None:
