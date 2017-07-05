@@ -25,6 +25,7 @@
 import mx.DateTime as dt
 from osgeo.ogr import wkbPoint
 import os
+from types import IntType, FloatType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
@@ -194,20 +195,32 @@ class ChristopherWalken(LMObject):
       return weaponOfChoice
 
 # .............................................................................
-   def _getSDMParams(self, userId, epsg):
+   def _getAlgorithms(self):
       algorithms = []
+      # Get algorithms for SDM modeling
+      sections = self.cfg.getsections('ALGORITHM')
+      for algHeading in sections:
+         acode =  self.cfg.get(algHeading, 'CODE')
+         alg = Algorithm(acode)
+         alg.fillWithDefaults()
+         # override defaults with any option specified
+         algoptions = self.cfg.getoptions(algHeading)
+         for name in algoptions:
+            pname, ptype = alg.findParamNameType(name)
+            if pname is not None:
+               if ptype == IntType:
+                  val = self.cfg.getint(algHeading, pname)
+               else:
+                  val = self.cfg.getfloat(algHeading, pname)
+               alg.setParameter(pname, val)
+         algorithms.append(alg)
+      return algorithms
+
+# .............................................................................
+   def _getProjParams(self, userId, epsg):
       prjScens = []
       mdlMask = prjMask = None
       
-      minPoints = self.cfg.getint(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN')
-
-      # Get algorithms for SDM modeling
-      algCodes = self.cfg.getlist(SERVER_BOOM_HEADING, 'ALGORITHMS')
-      for acode in algCodes:
-         alg = Algorithm(acode)
-         alg.fillWithDefaults()
-         algorithms.append(alg)
-
       # Get environmental data model and projection scenarios
       mdlScenCode = self.cfg.get(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
       prjScenCodes = self.cfg.getlist(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_PROJECTION_SCENARIOS')
@@ -238,7 +251,7 @@ class ChristopherWalken(LMObject):
       except:
          pass
 
-      return (minPoints, algorithms, mdlScen, mdlMask, prjScens, prjMask)  
+      return (mdlScen, mdlMask, prjScens, prjMask)  
 
 # .............................................................................
    def _getGlobalPamObjects(self, userId, archiveName, epsg):
@@ -297,8 +310,9 @@ class ChristopherWalken(LMObject):
       weaponOfChoice = self._getOccWeaponOfChoice(userId, archiveName, epsg, 
                                                   boompath)
       # SDM inputs
-      (minPoints, algorithms, mdlScen, mdlMask, 
-       prjScens, prjMask) = self._getSDMParams(userId, epsg)
+      minPoints = self.cfg.getint(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN')
+      algorithms = self._getAlgorithms()
+      (mdlScen, mdlMask, prjScens, prjMask) = self._getProjParams(userId, epsg)
       # Global PAM inputs
       (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                             archiveName, epsg)

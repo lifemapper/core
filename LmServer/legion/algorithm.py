@@ -106,7 +106,6 @@ class Algorithm(LMObject):
       self._parameterConstraints = {}
       algparams = Algorithms.get(self.code).parameters
       for key, constraintDict in algparams.iteritems():
-#       for key, constraintDict in ALGORITHM_DATA[self.code]['parameters'].iteritems():
          self._parameterConstraints[key] = constraintDict
          self._parameters[key] = None
 
@@ -176,11 +175,42 @@ class Algorithm(LMObject):
          self._parameters[key] = constraints['default']
          
    # ...............................................
+   def findParamNameType(self, name):
+      """
+      @summary Find the correct case-sensitive property name and type for this 
+               algorithm, given a case-insensitive parameter name 
+      @param name: The parameter to find, case-insensitive
+      @return a correctly-capitalized string for this parameter and type, 
+              None, None if it is not valid for this algorithm
+      """
+      pname = self._getParamKey(name)
+      if pname is not None:
+         ptype = self._parameterConstraints[pname]['type']
+         return pname, ptype
+      return None, None
+
+   # ...............................................
+   def _getParamKey(self, name):
+      """
+      @summary Find the correct case-sensitive property name for this algorithm given a string 
+      @param name: The parameter to find
+      @return a correctly-capitalized string for this parameter, None if it is 
+              not valid for this algorithm
+      """
+      if self._parameterConstraints.has_key(name):
+         return name
+      else:
+         for key in self._parameterConstraints.keys():
+            if key.lower() == name.lower():
+               return key
+         return None
+
+   # ...............................................
    def setParameter(self, name, val):
       """
       @summary If parameterConstraints are present, check to see if a 
                property and value are valid and set the property if they are.
-      @param name: The parameter to set
+      @param name: The case-insensitive parameter name to set
       @param val: The new value for the parameter
       @exception InvalidParameterError: Thrown if the parameter is not valid 
                                        for the algorithm
@@ -192,8 +222,9 @@ class Algorithm(LMObject):
                                  the acceptable value range.
       """
       if self._parameterConstraints:
-         if self._parameterConstraints.has_key(name):
-            constraints = self._parameterConstraints[name]
+         paramName = self._getParamKey(name)
+         if paramName is not None:
+            constraints = self._parameterConstraints[paramName]
             if (isinstance(val, NoneType)):
                val = constraints['default']
                
@@ -226,7 +257,7 @@ class Algorithm(LMObject):
                   raise WrongTypeError(['Expected IntType, Received %s - type %s' % 
                                         (str(val), str(type(val))) ])
             # Successfully ran the gauntlet
-            self._parameters[name] = val            
+            self._parameters[paramName] = val            
          else:
             # If didn't find name and return
             raise InvalidParameterError(['Invalid parameter %s' % str(name)])
