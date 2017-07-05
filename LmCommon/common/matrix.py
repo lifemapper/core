@@ -287,16 +287,22 @@ class Matrix(object):
       return Matrix(newData, headers=newHeaders)
       
    # ...........................
-   def writeCSV(self, flo):
+   def writeCSV(self, flo, *sliceArgs):
       """
       @summary: Write the Matrix object to a CSV file-like object
       @param flo: The file-like object to write to
-      @todo: Flatten 3 or more dimensions?
+      @param sliceArgs: If provided, perform a slice operation and use the 
+                       resulting matrix for writing
       @todo: Handle header overlap (where the header for one axis is for another 
                 axis header
-      @todo: Multiple headers along an axis (think site id, x, y for PAMs)
       @note: Currently only works for 2-D tables
       """
+      
+      if list(sliceArgs):
+         mtx = self.slice(sliceArgs)
+      else:
+         mtx = self
+         
       # .....................
       # Inner function
       def csvGenerator():
@@ -305,24 +311,24 @@ class Matrix(object):
                       be output as CSV
          """
          try:
-            rowHeaders = self.headers['0']
+            rowHeaders = mtx.headers['0']
          except:
             # No row headers
             rowHeaders = []
          
          # Start with the header row, if we have one
-         if self.headers.has_key('1') and self.headers['1']:
+         if mtx.headers.has_key('1') and mtx.headers['1']:
             # Add a blank entry if we have row headers
             headerRow = ['']*len(rowHeaders[0]) if rowHeaders else []
-            headerRow.extend(self.headers['1'])
+            headerRow.extend(mtx.headers['1'])
             yield headerRow
          # For each row in the data set
-         for i in xrange(self.data.shape[0]):
+         for i in xrange(mtx.data.shape[0]):
             # Add the row headers if exists
             row = []
             row.extend(rowHeaders[i])
             # Get the data from the data array
-            row.extend(self.data[i].tolist())
+            row.extend(mtx.data[i].tolist())
             yield row
             
       # .....................
