@@ -303,10 +303,14 @@ class MattDaemon(Daemon):
       """
       # If success, delete
       if exitStatus == 0:
-         self.scribe.deleteObject(mfObj)
          cleanUpCmd = self._getMakeflowCleanCommand(mfDocFn)
          cleanProc = Popen(cleanUpCmd, shell=True)
-         # TODO: Do we need to wait for this?
+
+         while cleanProc.poll() is not None:
+            # Sleep a couple of seconds until Makeflow cleans up
+            sleep(2)
+         
+         self.scribe.deleteObject(mfObj)
       else:
          # Either killed by signal or error
          if lmStatus is None:
