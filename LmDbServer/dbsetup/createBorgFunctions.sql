@@ -989,13 +989,20 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
 -- Gets all matrices for a gridset 
-CREATE OR REPLACE FUNCTION lm_v3.lm_getMatricesForGridset(gsid int)
+CREATE OR REPLACE FUNCTION lm_v3.lm_getMatricesForGridset(gsid int, 
+                                                          mtxtype int)
    RETURNS SETOF lm_v3.lm_fullmatrix AS
 $$
 DECLARE
    rec lm_v3.lm_fullmatrix%rowtype;
+   cmd varchar;
 BEGIN
-   FOR rec IN SELECT * FROM lm_v3.lm_fullmatrix WHERE gridsetId = gsid
+   cmd = 'SELECT * FROM lm_v3.lm_fullmatrix WHERE gridsetId = gsid' 
+   IF mtxtype IS NOT NULL THEN
+      cmd = cmd || ' AND matrixType = ' || quote_literal(mtxtype);
+   END IF;
+   
+   FOR rec in EXECUTE cmd
       LOOP
          RETURN NEXT rec;
       END LOOP;
@@ -1424,6 +1431,23 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getOccurrenceSet(occid int,
                                                       sqd varchar, 
                                                       epsg int)
    RETURNS lm_v3.occurrenceset AS
+$$
+DECLARE
+   rec lm_v3.occurrenceset%ROWTYPE;                             
+BEGIN
+   IF occid IS NOT NULL then                     
+      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = occid;
+   ELSE
+      SELECT * INTO rec from lm_v3.OccurrenceSet 
+             WHERE userid = usr AND squid = sqd AND epsgcode = epsg;
+   END IF;                                                 
+   RETURN rec;                                              
+END; 
+$$ LANGUAGE 'plpgsql' STABLE; 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getOccsetsForGridset(grdid int)
+   RETURNS SETOF lm_v3.occurrenceset AS
 $$
 DECLARE
    rec lm_v3.occurrenceset%ROWTYPE;                             
@@ -2197,7 +2221,7 @@ $$  LANGUAGE 'plpgsql' STABLE;
 
 
 -- ----------------------------------------------------------------------------
--- Gets a matrixColumn with its matrix
+-- Gets all matrixColumns with their matrix
 CREATE OR REPLACE FUNCTION lm_v3.lm_getColumnsForMatrix(mtxid int)
    RETURNS SETOF lm_v3.lm_lyrMatrixcolumn AS
 $$
@@ -2212,6 +2236,24 @@ BEGIN
    RETURN;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Gets all lm_sdmMatrixColumns with their matrix (with SDMProjections as input layer)
+CREATE OR REPLACE FUNCTION lm_v3.lm_getSDMColumnsForMatrix(mtxid int)
+   RETURNS SETOF lm_v3.lm_sdmMatrixcolumn AS
+$$
+DECLARE
+   rec lm_v3.lm_sdmMatrixcolumn%rowtype;
+BEGIN
+   FOR rec IN 
+      SELECT * FROM lm_v3.lm_sdmMatrixcolumn WHERE matrixid = mtxid
+      LOOP
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
 
 -- ----------------------------------------------------------------------------
 -- Matrix

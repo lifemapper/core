@@ -339,12 +339,21 @@ class BorgScribe(LMObject):
       return mtxColumn
    
 # ...............................................
-   def getMatrixColumnsForMatrix(self, mtxId):
+   def getColumnsForMatrix(self, mtxId):
       """
-      @copydoc LmServer.db.catalog_borg.Borg::getMatrixColumnsForMatrix()
+      @copydoc LmServer.db.catalog_borg.Borg::getColumnsForMatrix()
       """
-      mtxColumns = self._borg.getMatrixColumnsForMatrix(mtxId)
+      mtxColumns = self._borg.getColumnsForMatrix(mtxId)
       return mtxColumns
+
+# ...............................................
+   def getSDMProjectsForMatrix(self, mtxId):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getColumnsForMatrix()
+      """
+      mtxColumns, sdmProjects = self._borg.getSDMColumnsForMatrix(mtxId,
+                                    returnColumns=False, returnProjections=True)
+      return mtxColumns, sdmProjects
 
 # .............................................................................
    def countMatrixColumns(self, userId=PUBLIC_USER, squid=None, ident=None, 
@@ -899,6 +908,51 @@ class BorgScribe(LMObject):
          self.log.error('Mapping is available for SDM_MAP, SCENARIO_MAP, RAD_MAP')
       return mapsvc
    
+# ...............................................
+   def getOccsetsForGridset(self, gridsetid):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getOccsetsForGridset()
+      """
+      pams = self._borg.getMatricesForGridset(self, gridsetid, 
+                                              mtxType=MatrixType.PAM)
+      for pam in pams:
+         
+         
+      occs = self._borg.getOccsetsForGridset(gridsetid)
+      return occs
+
+# ...............................................
+   def getSDMProjectsForGridset(self, gridsetid):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getSDMProjectsForGridset()
+      """
+      pams = self._borg.getMatricesForGridset(self, gridsetid, 
+                                              mtxType=MatrixType.PAM)
+      for pam in pams:
+         _, projs = self.getSDMColumnsForMatrix(pam.getId(), 
+                                                   returnProjections=True)
+
+      return projs
+
+# ...............................................
+   def getMatricesForGridset(self, gridsetid):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getMatricesForGridset()
+      """
+      mtxs = self._borg.getSDMProjectsForGridset(gridsetid)
+      return mtxs
+
+# # ...............................................
+#    def getPAMsForGridset(self, gridsetid):
+#       """
+#       @summary Return all LmServer.legion.LMMatrix PAMs that are part of a 
+#                gridset
+#       @param gridsetid: Id of the gridset organizing these data matrices
+#       """
+#       pams = self._borg.getMatricesForGridset(self, gridsetid, 
+#                                               mtxType=MatrixType.PAM)
+#       return pams
+
 """
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe

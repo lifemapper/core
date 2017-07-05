@@ -29,7 +29,7 @@ import os
 
 from LmBackend.common.lmobj import LMError
 from LmCommon.common.lmconstants import (LMFormat, JobStatus, ProcessType,
-                                         DEFAULT_POST_USER, GEOTIFF_INTERFACE)
+                                         GEOTIFF_INTERFACE)
 from LmCommon.common.verify import computeHash
 
 from LmServer.base.layer2 import Raster, _LayerParameters
@@ -37,7 +37,6 @@ from LmServer.base.serviceobject2 import ProcessObject, ServiceObject
 from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, ProcessTool,
             SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.cmd import MfRule
 
 # .........................................................................

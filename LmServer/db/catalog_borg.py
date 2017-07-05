@@ -789,12 +789,9 @@ class Borg(DbPostgresql):
                                                 name)
       fullGset = self._createGridset(row, idxs)
       if fullGset is not None and fillMatrices:
-         rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset',
-                                                     fullGset.getId())
-         for r in rows:
-            mtx = self._createLMMatrix(r, idxs)
-            # addMatrix sets userid
-            fullGset.addMatrix(mtx)
+         mtx = self.getMatricesForGridset(fullGset.getId(), mtxType=None)
+         # addMatrix sets userid
+         fullGset.addMatrix(mtx)
       return fullGset
 
 # .............................................................................
@@ -1755,7 +1752,7 @@ class Borg(DbPostgresql):
       return mtxColumn
 
 # ...............................................
-   def getMatrixColumnsForMatrix(self, mtxId):
+   def getColumnsForMatrix(self, mtxId):
       """
       @summary: Get all existing MatrixColumns for a Matrix
       @param mtxId: a database ID for the LmServer.legion.LMMatrix 
@@ -1770,6 +1767,27 @@ class Borg(DbPostgresql):
             mtxcol = self._createMatrixColumn(r, idxs)
             mtxColumns.append(mtxcol)
       return mtxColumns
+
+# ...............................................
+   def getSDMColumnsForMatrix(self, mtxId, 
+                              returnColumns=False, returnProjections=False):
+      """
+      @summary: Get all existing MatrixColumns for a Matrix
+      @param mtxId: a database ID for the LmServer.legion.LMMatrix 
+                     object to return columns for
+      @return: a list of LmServer.legion.MatrixColumn objects
+      """
+      mtxColumns = []
+      sdmProjects = []
+      if mtxId is not None:
+         rows, idxs = self.executeSelectManyFunction('lm_getSDMColumnsForMatrix', 
+                                                     mtxId)
+         for r in rows:
+            if returnColumns:
+               mtxColumns.append(self._createMatrixColumn(r, idxs))
+            if returnProjections:
+               sdmProjects.append(self._createSDMProjection(r, idxs))
+      return mtxColumns, sdmProjects
 
 
 
@@ -2148,3 +2166,46 @@ class Borg(DbPostgresql):
       return success
       
       
+# # ...............................................
+#    def getOccsetsForGridset(self, gridsetid):
+#       """
+#       @summary Return all LmServer.legion.OccurrenceLayer objects that provide 
+#                input for a gridset
+#       @param gridsetid: Id of the gridset organizing these data layers
+#       """
+#       occsets = []
+#       rows, idxs = self.executeSelectManyFunction('lm_getOccsetsForGridset', 
+#                                                   gridsetid)
+#       for r in rows:
+#          occsets.append(self._createOccurrenceLayer(r, idxs))
+#       return occsets
+# 
+# # ...............................................
+#    def getSDMProjectsForGridset(self, gridsetid):
+#       """
+#       @summary Return all LmServer.legion.SDMProjection objects that provide 
+#                input for a gridset
+#       @param gridsetid: Id of the gridset organizing these data layers
+#       """
+#       projs = []
+#       rows, idxs = self.executeSelectManyFunction('lm_getSDMProjectsForGridset', 
+#                                                   gridsetid)
+#       for r in rows:
+#          projs.append(self._createSDMProjection(r, idxs))
+#       return projs
+
+# ...............................................
+   def getMatricesForGridset(self, gridsetid, mtxType=None):
+      """
+      @summary Return all LmServer.legion.LMMatrix objects that are part of a 
+               gridset
+      @param gridsetid: Id of the gridset organizing these data matrices
+      @param mtxType: optional filter for one type of LMMatrix
+      """
+      mtxs = []
+      rows, idxs = self.executeSelectManyFunction('lm_getMatricesForGridset', 
+                                                  gridsetid, mtxType)
+      for r in rows:
+         mtxs.append(self._createLMMatrix(r, idxs))
+      return mtxs
+

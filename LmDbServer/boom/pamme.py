@@ -116,7 +116,7 @@ class Pammer(LMObject):
       mtxChain = self._scribe.insertMFChain(newMFC)
       # Add layer intersect rules to it
       targetDir = mtxChain.getRelativeDirectory()
-      mtxcols = self._scribe.getMatrixColumnsForMatrix(mtx.getId())
+      mtxcols = self._scribe.getColumnsForMatrix(mtx.getId())
       colFilenames = []
       for mtxcol in mtxcols:
          mtxcol.postToSolr = postToSolr

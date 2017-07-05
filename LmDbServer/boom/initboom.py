@@ -950,7 +950,7 @@ class BOOMFiller(LMObject):
          # Create MFChain for this GRIM
          grimChain = self._createGrimMF(code, currtime)
          targetDir = grimChain.getRelativeDirectory()
-         mtxcols = self.scribe.getMatrixColumnsForMatrix(grim.getId())
+         mtxcols = self.scribe.getColumnsForMatrix(grim.getId())
          
          colFilenames = []
          for mtxcol in mtxcols:
