@@ -218,7 +218,7 @@ class MattDaemon(Daemon):
          for runningProc in self._mfPool:
             try:
                _, _, mfProc = runningProc
-               mfProc.terminate()
+               os.killpg(os.getpgid(mfProc.pid), signal.SIGTERM)
             except:
                pass
       
