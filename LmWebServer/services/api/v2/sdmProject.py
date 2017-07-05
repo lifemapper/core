@@ -119,8 +119,6 @@ class SdmProjectService(LmService):
    def POST(self):
       """
       @summary: Posts a new projection
-      @todo: Move all of this to a central processing location for all BOOM-y
-                services
       """
       #projectionData = cherrypy.request.json
       projectionData = json.loads(cherrypy.request.body.read())
