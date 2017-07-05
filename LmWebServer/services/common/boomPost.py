@@ -93,12 +93,15 @@ class BoomPoster(object):
    def _processAlgorithms(self, algoJson):
       """
       @summary: Process algorithms in request
-      @todo: Process parameters
       """
-      algos = []
-      for algoSection in algoJson:
-         algos.append(algoSection['code'])
-      self.config.set(SERVER_BOOM_HEADING, 'ALGORITHMS', ', '.join(algos))
+      i = 0
+      for algo in algoJson:
+         algoSection = 'Algorithm - {}'.format(i)
+         self.config.add_section(algoSection)
+         self.config.set(algoSection, 'code', algo['code'])
+         for param in algo['parameters'].keys():
+            self.config.set(algoSection, param, algo['parameters'][param])
+         i += 1
    
    # ................................
    def _processOccurrenceSets(self, occSetJson):
