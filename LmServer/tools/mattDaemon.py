@@ -201,6 +201,8 @@ class MattDaemon(Daemon):
       maxTime = 60 * 3
       timeWaited = 0
       numRunning = self.getNumberOfRunningProcesses()
+      self.log.debug(
+            "Waiting on {} makeflow processes to finish".format(numRunning))
       while numRunning > 0 and timeWaited < maxTime:
          self.log.debug(
             "Waiting on {} makeflow processes to finish".format(numRunning))
