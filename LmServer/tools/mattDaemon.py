@@ -116,7 +116,8 @@ class MattDaemon(Daemon):
                   cmd = self._getMakeflowCommand("lifemapper-{0}".format(
                                              mfObj.getId()), mfDocFn)
                   self.log.debug(cmd)
-                  self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True)])
+                  self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True, 
+                                                      preexec_fn=os.setsid)])
                else:
                   self._cleanupMakeflow(mfObj, mfDocFn, exitStatus=2, 
                                         lmStatus=JobStatus.IO_GENERAL_ERROR)
