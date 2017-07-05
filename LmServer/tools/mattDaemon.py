@@ -213,6 +213,12 @@ class MattDaemon(Daemon):
          
       if timeWaited > maxTime:
          self.log.debug("Waited for {} seconds.  Stopping.".format(timeWaited))
+         for runningProc in self._mfPool:
+            try:
+               _, _, mfProc = runningProc
+               mfProc.terminate()
+            except:
+               pass
       
       # Stop worker factory
       try:
