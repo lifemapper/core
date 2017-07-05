@@ -47,7 +47,8 @@ from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
                                       MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
                                       MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, 
-                                      WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS)
+                                      WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS,
+   WORKER_PATH)
 
 from LmServer.common.localconstants import MAX_MAKEFLOWS
 from LmServer.common.log import LmServerLogger
@@ -115,7 +116,8 @@ class MattDaemon(Daemon):
                   cmd = self._getMakeflowCommand("lifemapper-{0}".format(
                                              mfObj.getId()), mfDocFn)
                   self.log.debug(cmd)
-                  self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True)])
+                  self._mfPool.append([mfObj, mfDocFn, Popen(cmd, shell=True, 
+                                                      preexec_fn=os.setsid)])
                else:
                   self._cleanupMakeflow(mfObj, mfDocFn, exitStatus=2, 
                                         lmStatus=JobStatus.IO_GENERAL_ERROR)
@@ -200,6 +202,8 @@ class MattDaemon(Daemon):
       maxTime = 60 * 3
       timeWaited = 0
       numRunning = self.getNumberOfRunningProcesses()
+      self.log.debug(
+            "Waiting on {} makeflow processes to finish".format(numRunning))
       while numRunning > 0 and timeWaited < maxTime:
          self.log.debug(
             "Waiting on {} makeflow processes to finish".format(numRunning))
@@ -212,6 +216,12 @@ class MattDaemon(Daemon):
          
       if timeWaited > maxTime:
          self.log.debug("Waited for {} seconds.  Stopping.".format(timeWaited))
+         for runningProc in self._mfPool:
+            try:
+               _, _, mfProc = runningProc
+               os.killpg(os.getpgid(mfProc.pid), signal.SIGTERM)
+            except:
+               pass
       
       # Stop worker factory
       try:
@@ -259,6 +269,17 @@ class MattDaemon(Daemon):
       os.killpg(os.getpgid(self.wfProc.pid), signal.SIGTERM)
    
    # .............................
+   def _getMakeflowCleanCommand(self, mfDocFn):
+      """
+      @summary: Assemble Makeflow clean command
+      @param mfDocFn: The Makeflow file to run
+      """
+      mfCmd = "{mfBin} -c -X {workDir} {mfDoc}".format(
+                           mfBin=MAKEFLOW_BIN, workDir=WORKER_PATH, 
+                           mfDoc=mfDocFn)
+      return mfCmd
+
+   # .............................
    def _getMakeflowCommand(self, name, mfDocFn):
       """
       @summary: Assemble Makeflow command
@@ -283,6 +304,13 @@ class MattDaemon(Daemon):
       """
       # If success, delete
       if exitStatus == 0:
+         cleanUpCmd = self._getMakeflowCleanCommand(mfDocFn)
+         cleanProc = Popen(cleanUpCmd, shell=True)
+
+         while cleanProc.poll() is not None:
+            # Sleep a couple of seconds until Makeflow cleans up
+            sleep(2)
+         
          self.scribe.deleteObject(mfObj)
       else:
          # Either killed by signal or error

@@ -27,11 +27,13 @@
 @todo: Process grids
 """
 from ConfigParser import ConfigParser
+import json
 import os
 import random
 
 from LmCommon.common.lmconstants import SERVER_BOOM_HEADING, LMFormat
-from LmDbServer.boom.boominput import ArchiveFiller
+#from LmDbServer.boom.boominput import ArchiveFiller
+from LmDbServer.boom.initboom import BOOMFiller
 from LmServer.common.lmconstants import TEMP_PATH
 
 # .............................................................................
@@ -73,7 +75,7 @@ class BoomPoster(object):
       with open(filename, 'w') as configOutF:
          self.config.write(configOutF)
       
-      filler = ArchiveFiller(configFname=filename)
+      filler = BOOMFiller(configFname=filename)
       filler.initializeInputs(configFname=filename)
       gridset = filler.initBoom()
       filler.close()
@@ -91,12 +93,15 @@ class BoomPoster(object):
    def _processAlgorithms(self, algoJson):
       """
       @summary: Process algorithms in request
-      @todo: Process parameters
       """
-      algos = []
-      for algoSection in algoJson:
-         algos.append(algoSection['code'])
-      self.config.set(SERVER_BOOM_HEADING, 'ALGORITHMS', ', '.join(algos))
+      i = 0
+      for algo in algoJson:
+         algoSection = 'Algorithm - {}'.format(i)
+         self.config.add_section(algoSection)
+         self.config.set(algoSection, 'code', algo['code'])
+         for param in algo['parameters'].keys():
+            self.config.set(algoSection, param.lower(), algo['parameters'][param])
+         i += 1
    
    # ................................
    def _processOccurrenceSets(self, occSetJson):
@@ -109,7 +114,22 @@ class BoomPoster(object):
       for occSection in occSetJson:
          if occSection.has_key('occurrenceSetId'):
             occIds.append(occSection['occurrenceSetId'])
-            
+         elif occSection.has_key('occurrenceData'):
+            # Process user csv upload
+            # Write the CSV data
+            occFname = self._getTempFilename(LMFormat.CSV.ext)
+            with open(occFname, 'w') as outF:
+               outF.write(occSection['occurrenceData'])
+            # Set the config
+            self.config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA')
+            # Look for metadata
+            metaFname = '{}{}'.format(os.path.splitext(occFname), 
+                                      LMFormat.METADATA.ext)
+            if occSection.has_key('occurrenceMeta'):
+               with open(metaFname, 'w') as metaOut:
+                  json.dump(occSection['occurrenceMeta'], metaOut, indent=3)
+               
+               
       if len(occIds) > 0:
          occFname = self._getTempFilename(LMFormat.CSV.ext)
          with open(occFname, 'w') as outF:

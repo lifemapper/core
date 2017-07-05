@@ -28,13 +28,17 @@
           02110-1301, USA.
 """
 import cherrypy
+import json
+from mx.DateTime import gmt
 
-from LmCommon.common.lmconstants import JobStatus
+from LmCommon.common.lmconstants import JobStatus, DEFAULT_POST_USER
+from LmServer.base.atom import Atom
 from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.legion.occlayer import OccurrenceLayer
+#from LmServer.legion.occlayer import OccurrenceLayer
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
+from LmWebServer.services.common.boomPost import BoomPoster
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
 
 # .............................................................................
@@ -99,34 +103,58 @@ class OccurrenceLayerService(LmService):
    # ................................
    #@cherrypy.tools.json_out
    @lmFormatter
-   def POST(self, displayName, epsgCode, squid=None, additionalMetadata=None):
+   def POST(self):
       """
-      @summary: Posts a new occurrence set
-      @param displayName: The display name for the new occurrence set
-      @param epsgCode: The EPSG code for the new occurrence set
-      @param additionalMetadata: Additional JSON metadata to add to this 
-                                    occurrence set
+      @summary: Posts a new BOOM archive
+      @todo: Do we want to enable single occurrence set posts still?
       """
-      contentType = cherrypy.request.headers['Content-Type']
-      #features = None
+      #projectionData = cherrypy.request.json
+      projectionData = json.loads(cherrypy.request.body.read())
       
-      # Get features
-      if contentType == 'application/octet-stream':
-         uploadType = 'shapefile'
-      elif contentType == 'text/csv':
-         uploadType = 'csv'
-      #elif contentType == 'application/json':
-      #   uploadType = None
-      #   features = json.loads(cherrypy.request.body)
+      if self.getUserId() == PUBLIC_USER:
+         usr = self.scribe.findUser(DEFAULT_POST_USER)
+      else:
+         usr = self.scribe.findUser(self.getUserId())
       
-      occ = OccurrenceLayer(displayName, self.getUserId(), epsgCode, -1,
-                            squid=squid, lyrMetadata=additionalMetadata)
-      occ.readFromUploadedData(cherrypy.request.body, uploadType)
-      #if features:
-      #   occ.setFeatures(features, featureAttributes, featureCount)
-      newOcc = self.scribe.findOrInsertOccurrenceSet(occ)
+      archiveName = '{}_{}'.format(usr.userid, gmt().mjd)
       
-      return newOcc
+      bp = BoomPoster(usr.userid, usr.email, archiveName, projectionData)
+      gridset = bp.initBoom()
+
+      # TODO: What do we return?
+      cherrypy.response.status = 202
+      return Atom(gridset.getId(), gridset.name, gridset.metadataUrl, 
+                  gridset.modTime, epsg=gridset.epsgcode)
+
+   #@lmFormatter
+   #def POST(self, displayName, epsgCode, squid=None, additionalMetadata=None):
+   #   """
+   #   @summary: Posts a new occurrence set
+   #   @param displayName: The display name for the new occurrence set
+   #   @param epsgCode: The EPSG code for the new occurrence set
+   #   @param additionalMetadata: Additional JSON metadata to add to this 
+   #                                 occurrence set
+   #   """
+   #   contentType = cherrypy.request.headers['Content-Type']
+   #   #features = None
+   #   
+   #   # Get features
+   #   if contentType == 'application/octet-stream':
+   #      uploadType = 'shapefile'
+   #   elif contentType == 'text/csv':
+   #      uploadType = 'csv'
+   #   #elif contentType == 'application/json':
+   #   #   uploadType = None
+   #   #   features = json.loads(cherrypy.request.body)
+   #   
+   #   occ = OccurrenceLayer(displayName, self.getUserId(), epsgCode, -1,
+   #                         squid=squid, lyrMetadata=additionalMetadata)
+   #   occ.readFromUploadedData(cherrypy.request.body, uploadType)
+   #   #if features:
+   #   #   occ.setFeatures(features, featureAttributes, featureCount)
+   #   newOcc = self.scribe.findOrInsertOccurrenceSet(occ)
+   #   
+   #   return newOcc
    
    # ................................
    #@cherrypy.tools.json_out
