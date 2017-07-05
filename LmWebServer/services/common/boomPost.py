@@ -100,7 +100,7 @@ class BoomPoster(object):
          self.config.add_section(algoSection)
          self.config.set(algoSection, 'code', algo['code'])
          for param in algo['parameters'].keys():
-            self.config.set(algoSection, param, algo['parameters'][param])
+            self.config.set(algoSection, param.lower(), algo['parameters'][param])
          i += 1
    
    # ................................
