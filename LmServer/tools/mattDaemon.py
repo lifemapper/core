@@ -275,7 +275,7 @@ class MattDaemon(Daemon):
       @summary: Assemble Makeflow clean command
       @param mfDocFn: The Makeflow file to run
       """
-      mfCmd = "{mfBin} -c -X {workDir} {mfDoc}".format(
+      mfCmd = "{mfBin} -c -X {workDir}/ {mfDoc}".format(
                            mfBin=MAKEFLOW_BIN, workDir=WORKER_PATH, 
                            mfDoc=mfDocFn)
       return mfCmd
