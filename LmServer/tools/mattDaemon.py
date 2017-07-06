@@ -214,14 +214,15 @@ class MattDaemon(Daemon):
          except:
             numRunning = 0
          
-      if timeWaited > maxTime:
+      if timeWaited >= maxTime:
          self.log.debug("Waited for {} seconds.  Stopping.".format(timeWaited))
          for runningProc in self._mfPool:
             try:
                _, _, mfProc = runningProc
-               os.killpg(os.getpgid(mfProc.pid), signal.SIGTERM)
-            except:
-               pass
+               print 'Killing process group: {}'.format(os.getpgid(mfProc.pid))
+               os.killpg(os.getpgid(mfProc.pid), signal.SIGKILL)
+            except Exception, e:
+               self.log.debug(str(e))
       
       # Stop worker factory
       try:
@@ -305,6 +306,8 @@ class MattDaemon(Daemon):
       # If success, delete
       if exitStatus == 0:
          cleanUpCmd = self._getMakeflowCleanCommand(mfDocFn)
+         self.log.debug('Clean up makeflow {}'.format(mfDocFn))
+         self.log.debug(cleanUpCmd)
          cleanProc = Popen(cleanUpCmd, shell=True)
 
          while cleanProc.poll() is not None:
