@@ -214,7 +214,7 @@ class MattDaemon(Daemon):
          except:
             numRunning = 0
          
-      if timeWaited > maxTime:
+      if timeWaited >= maxTime:
          self.log.debug("Waited for {} seconds.  Stopping.".format(timeWaited))
          for runningProc in self._mfPool:
             try:
