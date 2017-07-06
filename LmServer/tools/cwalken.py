@@ -431,7 +431,7 @@ class ChristopherWalken(LMObject):
             if reset:
                self.log.debug('Reset MatrixColumn {}'.format(mtxcol.getId()))
                mtxcol.updateStatus(JobStatus.GENERAL, modTime=currtime)
-               success = self._scribe.updateMatrixColumn(mtxcol)
+               success = self._scribe.updateObject(mtxcol)
       return mtxcol, reset
 
 # ...............................................
@@ -470,7 +470,7 @@ class ChristopherWalken(LMObject):
             if reset:
                self.log.debug('Reset SDMProject {}'.format(prj.getId()))
                prj.updateStatus(JobStatus.GENERAL, modTime=currtime)
-               success = self._scribe.updateSDMProject(prj)
+               success = self._scribe.updateObject(prj)
       return prj, reset
 
 # ...............................................

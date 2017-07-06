@@ -468,9 +468,10 @@ class Borg(DbPostgresql):
       return occ
 
 # ...............................................
-   def _createSDMProjection(self, row, idxs):
+   def _createSDMProjection(self, row, idxs, layer=None):
       """
-      @note: takes lm_sdmproject record
+      @note: takes lm_sdmproject or lm_sdmMatrixcolumn record
+      @note: allows previously constructed layer object to avoid reconstructing
       """
       prj = None
       if row is not None:
@@ -478,7 +479,8 @@ class Borg(DbPostgresql):
          alg = self._createAlgorithm(row, idxs)
          mdlscen = self._createScenario(row, idxs, isForModel=True)
          prjscen = self._createScenario(row, idxs, isForModel=False)
-         layer = self._createLayer(row, idxs)
+         if layer is None:
+            layer = self._createLayer(row, idxs)
          prj = SDMProjection.initFromParts(occ, alg, mdlscen, prjscen, layer,
 #                   modelMaskId=self._getColumnValue(row, idxs, ['mdlmaskid']), 
 #                   projMaskId=self._getColumnValue(row, idxs, ['prjmaskid']),
@@ -1786,11 +1788,12 @@ class Borg(DbPostgresql):
          rows, idxs = self.executeSelectManyFunction('lm_getSDMColumnsForMatrix', 
                                                      mtxId)
          for r in rows:
-            mtxcol = sdmprj = None
+            mtxcol = sdmprj = layer = None
             if returnColumns:
                mtxcol = self._createMatrixColumn(r, idxs)
+               layer = mtxcol.layer
             if returnProjections:
-               sdmprj = self._createSDMProjection(r, idxs)
+               sdmprj = self._createSDMProjection(r, idxs, layer=layer)
             colPrjPairs.append((mtxcol, sdmprj))
       return colPrjPairs
 

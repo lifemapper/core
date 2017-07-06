@@ -843,7 +843,7 @@ class BOOMFiller(LMObject):
                raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
          if validData and newshp.status != JobStatus.COMPLETE:
             newshp.updateStatus(JobStatus.COMPLETE)
-            success = self.scribe.updateShapeGrid(newshp)
+            success = self.scribe.updateObject(newshp)
             if success is False:
                self.scribe.log.warning('Failed to update Shapegrid record')
       else:

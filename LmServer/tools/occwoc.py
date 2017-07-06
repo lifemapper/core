@@ -204,7 +204,7 @@ class _SpeciesWeaponOfChoice(LMObject):
          # TODO: remove Hack
          # Set scientificName, not pulled from DB, for alternate iDigBio query
          occ.setScientificName(sciName)
-         success = self._scribe.updateOccset(occ, polyWkt=None, pointsWkt=None)
+         success = self._scribe.updateObject(occ)
       else:
          # Ignore existing, complete
          self.log.info('   Ignoring up to date OccLayer')
