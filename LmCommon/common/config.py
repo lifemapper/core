@@ -95,6 +95,18 @@ class Config(object):
       return [itm.strip() for itm in listStr.split(',')]
 
    # .....................................
+   def getsections(self, sectionPrefix):
+      matching = []
+      for section in self.config.sections():
+         if section.startswith(sectionPrefix):
+            matching.append(section)
+      return matching
+
+   # .....................................
+   def getoptions(self, section):
+      return self.config.option(section)
+
+   # .....................................
    def reload(self):
       """
       @summary: This function will reload the configuration file(s) and the 

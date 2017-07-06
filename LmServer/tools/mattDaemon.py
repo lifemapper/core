@@ -150,11 +150,17 @@ class MattDaemon(Daemon):
          # New filename
          origLoc = mfObj.getDLocation()
          newLoc = os.path.join(self.workspace, os.path.basename(origLoc))
-         # Move to workspace if it does not exist (see note)
-         if not os.path.exists(newLoc):
-            shutil.copyfile(origLoc, newLoc)
-         # Add to mfs list
-         mfs.append((mfObj, newLoc))
+
+         # Attempt to move the file to the workspace if needed
+         try:
+            # Move to workspace if it does not exist (see note)
+            if not os.path.exists(newLoc):
+               shutil.copyfile(origLoc, newLoc)
+            # Add to mfs list
+            mfs.append((mfObj, newLoc))
+         except Exception, e:
+            # Could fail if original dlocation does not exist
+            pass
 
       return mfs
       
