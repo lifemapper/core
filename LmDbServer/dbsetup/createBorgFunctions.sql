@@ -652,7 +652,7 @@ BEGIN
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to find or insert EnvPackage';
       ELSE
-         SELECT INTO newid last_value lm_v3.envpackage_envpackageid_seq;
+         SELECT INTO newid last_value FROM lm_v3.envpackage_envpackageid_seq;
          SELECT * INTO rec FROM lm_v3.EnvPackage p WHERE p.envPackageid = newid;
       END IF; -- end if inserted
    END IF;  -- end if not existing
@@ -820,7 +820,7 @@ BEGIN
    FOR rec IN
       SELECT * FROM lm_v3.EnvPackage WHERE envPackageId IN
          (SELECT envPackageId FROM lm_v3.EnvPackageScenario 
-                             WHERE scenarioId = scenid);
+                             WHERE scenarioId = scenid)
       LOOP 
          RETURN NEXT rec;
       END LOOP;
@@ -846,7 +846,7 @@ BEGIN
    FOR rec IN
       SELECT * FROM lm_v3.Scenario WHERE scenarioId IN
          (SELECT scenarioId FROM lm_v3.EnvPackageScenario 
-                             WHERE envPackageId = epid);
+                             WHERE envPackageId = epid)
       LOOP 
          RETURN NEXT rec;
       END LOOP;

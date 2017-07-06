@@ -225,7 +225,7 @@ create table lm_v3.EnvPackageScenario
 (
 	envPackageScenarioId serial UNIQUE PRIMARY KEY,
 	envPackageId int REFERENCES lm_v3.EnvPackage MATCH FULL ON DELETE CASCADE,
-   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
+   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE
 );
 
 -- -------------------------------
@@ -517,6 +517,8 @@ lm_v3.envtype_envtypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.envlayer_envlayerid_seq,
 lm_v3.scenario_scenarioid_seq,
+lm_v3.envpackage_envpackageid_seq,
+lm_v3.envpackagescenario_envpackagescenarioid_seq,
 lm_v3.scenariolayer_scenariolayerid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmproject_sdmprojectid_seq,
