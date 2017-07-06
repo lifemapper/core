@@ -362,7 +362,7 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getOccLayersForMatrix
       """
-      occsets = self.getOccLayersForMatrix(mtxId)
+      occsets = self._borg.getOccLayersForMatrix(mtxId)
       return occsets
    
 # .............................................................................
@@ -902,7 +902,6 @@ class BorgScribe(LMObject):
       @return: LmServer.base.layerset.MapLayerSet containing objects for this
                a map service
       """
-      from LmServer.common.datalocator import EarlJr
       earl = EarlJr()
       (mapname, ancillary, usr, epsg, occsetId, gridsetId, 
        scencode) = earl.parseMapFilename(mapFilename)
@@ -944,8 +943,7 @@ class BorgScribe(LMObject):
                if the option is False  
       """
       allPairs = []
-      pams = self._borg.getMatricesForGridset(self, gridsetid, 
-                                              mtxType=MatrixType.PAM)
+      pams = self.getMatricesForGridset(gridsetid, mtxType=MatrixType.PAM)
       for pam in pams:
          colPrjPairs = self.getSDMColumnsForMatrix(pam.getId(), 
                                                    returnProjections=True)
@@ -954,28 +952,23 @@ class BorgScribe(LMObject):
       return allPairs
 
 # ...............................................
-   def getMatricesForGridset(self, gridsetid):
+   def getMatricesForGridset(self, gridsetid, mtxType=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getMatricesForGridset()
       """
-      mtxs = self._borg.getSDMProjectsForGridset(gridsetid)
+      mtxs = self._borg.getMatricesForGridset(gridsetid, mtxType)
       return mtxs
 
-# # ...............................................
-#    def getPAMsForGridset(self, gridsetid):
-#       """
-#       @summary Return all LmServer.legion.LMMatrix PAMs that are part of a 
-#                gridset
-#       @param gridsetid: Id of the gridset organizing these data matrices
-#       """
-#       pams = self._borg.getMatricesForGridset(self, gridsetid, 
-#                                               mtxType=MatrixType.PAM)
-#       return pams
 
 """
 from LmServer.common.log import ConsoleLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.common.datalocator import EarlJr
+
+pamid = 15
+grimid = 16
+grdid = 2
+
 
 usr = 'kubi'
 cellsides = 4

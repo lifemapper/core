@@ -997,7 +997,7 @@ DECLARE
    rec lm_v3.lm_fullmatrix%rowtype;
    cmd varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.lm_fullmatrix WHERE gridsetId = gsid' 
+   cmd = 'SELECT * FROM lm_v3.lm_fullmatrix WHERE gridsetId = gsid';
    IF mtxtype IS NOT NULL THEN
       cmd = cmd || ' AND matrixType = ' || quote_literal(mtxtype);
    END IF;
@@ -1431,23 +1431,6 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getOccurrenceSet(occid int,
                                                       sqd varchar, 
                                                       epsg int)
    RETURNS lm_v3.occurrenceset AS
-$$
-DECLARE
-   rec lm_v3.occurrenceset%ROWTYPE;                             
-BEGIN
-   IF occid IS NOT NULL then                     
-      SELECT * INTO rec from lm_v3.OccurrenceSet WHERE occurrenceSetId = occid;
-   ELSE
-      SELECT * INTO rec from lm_v3.OccurrenceSet 
-             WHERE userid = usr AND squid = sqd AND epsgcode = epsg;
-   END IF;                                                 
-   RETURN rec;                                              
-END; 
-$$ LANGUAGE 'plpgsql' STABLE; 
-
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION lm_v3.lm_getOccsetsForGridset(grdid int)
-   RETURNS SETOF lm_v3.occurrenceset AS
 $$
 DECLARE
    rec lm_v3.occurrenceset%ROWTYPE;                             

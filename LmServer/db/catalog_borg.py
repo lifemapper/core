@@ -2184,38 +2184,9 @@ class Borg(DbPostgresql):
       else:
          raise LMError('Unsupported delete for object {}'.format(type(obj)))
       return success
-      
-      
-# # ...............................................
-#    def getOccsetsForGridset(self, gridsetid):
-#       """
-#       @summary Return all LmServer.legion.OccurrenceLayer objects that provide 
-#                input for a gridset
-#       @param gridsetid: Id of the gridset organizing these data layers
-#       """
-#       occsets = []
-#       rows, idxs = self.executeSelectManyFunction('lm_getOccsetsForGridset', 
-#                                                   gridsetid)
-#       for r in rows:
-#          occsets.append(self._createOccurrenceLayer(r, idxs))
-#       return occsets
-# 
-# # ...............................................
-#    def getSDMProjectsForGridset(self, gridsetid):
-#       """
-#       @summary Return all LmServer.legion.SDMProjection objects that provide 
-#                input for a gridset
-#       @param gridsetid: Id of the gridset organizing these data layers
-#       """
-#       projs = []
-#       rows, idxs = self.executeSelectManyFunction('lm_getSDMProjectsForGridset', 
-#                                                   gridsetid)
-#       for r in rows:
-#          projs.append(self._createSDMProjection(r, idxs))
-#       return projs
 
 # ...............................................
-   def getMatricesForGridset(self, gridsetid, mtxType=None):
+   def getMatricesForGridset(self, gridsetid, mtxType):
       """
       @summary Return all LmServer.legion.LMMatrix objects that are part of a 
                gridset
