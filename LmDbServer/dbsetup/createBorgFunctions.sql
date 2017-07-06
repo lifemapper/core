@@ -997,7 +997,8 @@ DECLARE
    rec lm_v3.lm_fullmatrix%rowtype;
    cmd varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.lm_fullmatrix WHERE gridsetId = gsid';
+   cmd = 'SELECT * FROM lm_v3.lm_fullmatrix WHERE gridsetId = ' 
+          || quote_literal(gsid);
    IF mtxtype IS NOT NULL THEN
       cmd = cmd || ' AND matrixType = ' || quote_literal(mtxtype);
    END IF;

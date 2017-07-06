@@ -363,6 +363,21 @@ class _Layer(LMSpatialObject, ServiceObject):
       self.lyrMetadata = super(_Layer, self)._addMetadata(newMetadataDict, 
                                   existingMetadataDict=self.lyrMetadata)
 
+   # ...............................................
+   def updateLayer(self, modTime, verify=None, metadata=None):
+      """
+      @summary: Updates modTime, verification hash, metadata.
+      @param modTime: time/date last modified
+      @param verify: Hash of the data for verification
+      @param metadata: Dictionary of metadata keys/values; key constants are 
+                       class attributes.
+      """
+      self.updateModtime(modTime)
+      if metadata is not None:
+         self.loadLyrMetadata(metadata)
+      if verify is not None:
+         self._setVerify(verify=verify)
+
 # ...............................................
 # Properties
 # ...............................................           
@@ -715,9 +730,9 @@ class Raster(_Layer):
       
       newVerify = self.computeHash(dlocation=dlocation)
       if verify is not None and verify <> newVerify:
-         msg =('Computed hash value {} does not match reported value {}'
-               .format(newVerify, verify))
-         raise LMError(currargs=msg)
+         msgs.append('Computed hash value for {} ({}) does not match {}'
+                     .format(dlocation, newVerify, verify))
+#          raise LMError(currargs=msg)
       else:
          verify = newVerify
       

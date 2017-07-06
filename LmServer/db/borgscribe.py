@@ -922,8 +922,7 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getOccLayersForGridset()
       """
-      pams = self._borg.getMatricesForGridset(self, gridsetid, 
-                                              mtxType=MatrixType.PAM)
+      pams = self.getMatricesForGridset(gridsetid, mtxType=MatrixType.PAM)
       for pam in pams:
          occs = self._borg.getOccLayersForMatrix(pam.getId())
       return occs
@@ -969,6 +968,14 @@ pamid = 15
 grimid = 16
 grdid = 2
 
+scribe = BorgScribe(ConsoleLogger())
+scribe.openConnections()
+
+occs = scribe.getOccLayersForGridset(grdid)
+
+colPrjPairs1 = scribe.getSDMColumnsForMatrix(pamid) 
+colPrjPairs2 = scribe.getSDMColumnsForMatrix(grimid) 
+colPrjPairs3 = scribe.getSDMColumnsForGridset(grdid) 
 
 usr = 'kubi'
 cellsides = 4
@@ -984,8 +991,6 @@ name='cjTest5'
 mtxid=42
 type=1
 
-scribe = BorgScribe(ConsoleLogger())
-scribe.openConnections()
 
 earl = EarlJr(scribe=scribe)
 mtxid=1907
