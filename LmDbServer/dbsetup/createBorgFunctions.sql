@@ -2254,6 +2254,28 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
+-- ----------------------------------------------------------------------------
+-- Gets all occurrenceSets used as input to SDMProjections used as input to 
+-- MatrixColumns in a Matrix
+CREATE OR REPLACE FUNCTION lm_v3.lm_getOccLayersForMatrix(mtxid int)
+   RETURNS SETOF lm_v3.occurrenceset AS
+$$
+DECLARE
+   occid int;
+   orec lm_v3.occurrenceset%rowtype;
+BEGIN
+   FOR occid IN 
+      SELECT distinct(occurrenceSetId) FROM lm_v3.lm_sdmMatrixcolumn 
+         WHERE matrixid = mtxid
+      LOOP
+         SELECT * INTO orec FROM lm_v3.occurrenceset 
+            WHERE occurrencesetid = occid;
+         RETURN NEXT orec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
 
 -- ----------------------------------------------------------------------------
 -- Matrix

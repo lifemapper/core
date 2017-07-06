@@ -1769,27 +1769,47 @@ class Borg(DbPostgresql):
       return mtxColumns
 
 # ...............................................
-   def getSDMColumnsForMatrix(self, mtxId, 
-                              returnColumns=False, returnProjections=False):
+   def getSDMColumnsForMatrix(self, mtxId, returnColumns, returnProjections):
       """
-      @summary: Get all existing MatrixColumns for a Matrix
+      @summary: Get all existing MatrixColumns and SDMProjections that have  
+                SDMProjections as input layers for a Matrix
       @param mtxId: a database ID for the LmServer.legion.LMMatrix 
                      object to return columns for
-      @return: a list of LmServer.legion.MatrixColumn objects
+      @param returnColumns: option to return MatrixColumn objects
+      @param returnProjections: option to return SDMProjection objects
+      @return: a list of tuples containing LmServer.legion.MatrixColumn
+               and LmServer.legion.SDMProjection objects.  Either may be None
+               if the option is False  
       """
-      mtxColumns = []
-      sdmProjects = []
+      colPrjPairs = []
       if mtxId is not None:
          rows, idxs = self.executeSelectManyFunction('lm_getSDMColumnsForMatrix', 
                                                      mtxId)
          for r in rows:
+            mtxcol = sdmprj = None
             if returnColumns:
-               mtxColumns.append(self._createMatrixColumn(r, idxs))
+               mtxcol = self._createMatrixColumn(r, idxs)
             if returnProjections:
-               sdmProjects.append(self._createSDMProjection(r, idxs))
-      return mtxColumns, sdmProjects
+               sdmprj = self._createSDMProjection(r, idxs)
+            colPrjPairs.append((mtxcol, sdmprj))
+      return colPrjPairs
 
-
+# ...............................................
+   def getOccLayersForMatrix(self, mtxId):
+      """
+      @summary: Get all existing OccurrenceLayer objects that are inputs to  
+                SDMProjections used as input layers for a Matrix
+      @param mtxId: a database ID for the LmServer.legion.LMMatrix 
+                     object to return columns for
+      @return: a list of LmServer.legion.OccurrenceLayer objects
+      """
+      occsets = []
+      if mtxId is not None:
+         rows, idxs = self.executeSelectManyFunction('lm_getOccLayersForMatrix', 
+                                                     mtxId)
+         for r in rows:
+            occsets.append(self._createOccurrenceLayer(r, idxs))
+      return occsets
 
 # .............................................................................
    def countMatrixColumns(self, userId, squid, ident, afterTime, beforeTime, 
