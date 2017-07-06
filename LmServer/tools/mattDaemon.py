@@ -219,9 +219,10 @@ class MattDaemon(Daemon):
          for runningProc in self._mfPool:
             try:
                _, _, mfProc = runningProc
+               print 'Killing process group: {}'.format(os.getpgid(mfProc.pid))
                os.killpg(os.getpgid(mfProc.pid), signal.SIGKILL)
-            except:
-               pass
+            except Exception, e:
+               self.log.debug(str(e))
       
       # Stop worker factory
       try:
