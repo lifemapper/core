@@ -96,9 +96,9 @@ class BoomPoster(object):
       """
       i = 0
       for algo in algoJson:
-         algoSection = 'Algorithm - {}'.format(i)
+         algoSection = 'ALGORITHM - {}'.format(i)
          self.config.add_section(algoSection)
-         self.config.set(algoSection, 'code', algo['code'])
+         self.config.set(algoSection, 'CODE', algo['code'])
          for param in algo['parameters'].keys():
             self.config.set(algoSection, param.lower(), algo['parameters'][param])
          i += 1
