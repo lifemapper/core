@@ -24,6 +24,7 @@
 import mx.DateTime
 import os
 import time
+from types import IntType
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config

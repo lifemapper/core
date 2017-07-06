@@ -54,10 +54,10 @@ class _LayerSet(LMSpatialObject):
                 layers=None, bbox=None, mapunits=None):
       """
       @summary Constructor for the LayerSet class
+      @copydoc LmServer.base.lmobj.LMSpatialObject::__init__()
       @param name: name or code for this layerset
       @param title: (optional) human readable title of this layerset
       @param keywords: (optional) sequence of keywords for this layerset
-      @param epsgcode: (optional) integer representing the native EPSG code of this layerset
       @param layers: (optional) list of layers 
       """
       LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
@@ -295,20 +295,15 @@ class MapLayerSet(_LayerSet, ServiceObject):
 # .............................................................................   
    def __init__(self, mapname, title=None, 
                 url=None, dlocation=None, keywords=None, epsgcode=None, layers=None, 
-                userId=None, dbId=None, createTime=None, modTime=None, 
+                userId=None, dbId=None, modTime=None, 
                 bbox=None, mapunits=None,
                 serviceType=LMServiceType.LAYERSETS, mapType=LMFileType.OTHER_MAP):
       """
       @summary Constructor for the LayerSet class
-      @param name: mapname or code for this layerset
-      @param serviceType: string for constructing webservice URL for object
-      @param title: (optional) human readable title of this layerset
-      @param mapcode:
-      @param url:
-      @param keywords: (optional) sequence of keywords for this layerset
-      @param epsgcode: (optional) integer representing the native EPSG code of this layerset
-      @param layers: (optional) list of layers 
-      @param userId: id for the owner of these data
+      @copydoc LmServer.base.layerset._LayerSet::__init__()
+      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+      @param mapname: mapname or code for this layerset
+      @param layers: list of layers 
       @param dbid: database id of the object, occsetId for SDM_MAP layersets, 
              gridsetId for RAD_MAP layersets, scenCode for Scenarios 
       """

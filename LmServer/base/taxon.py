@@ -30,7 +30,7 @@ class ScientificName(LMObject):
                 userId=None, squid=None,
                 kingdom=None, phylum=None, txClass=None, txOrder=None, 
                 family=None, genus=None, lastOccurrenceCount=None, 
-                createTime=None, modTime=None, 
+                modTime=None, 
                 taxonomySourceId=None, taxonomySourceKey=None, 
                 taxonomySourceGenusKey=None, taxonomySourceSpeciesKey=None, 
                 taxonomySourceKeyHierarchy=None, scientificNameId=None):
@@ -50,7 +50,6 @@ class ScientificName(LMObject):
       self.family = family
       self.genus = genus
       self.lastOccurrenceCount = lastOccurrenceCount 
-      self.createTime = createTime
       self.modTime = modTime
       self._sourceId = taxonomySourceId 
       self._sourceKey = taxonomySourceKey

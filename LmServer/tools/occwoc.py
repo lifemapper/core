@@ -248,7 +248,7 @@ class _SpeciesWeaponOfChoice(LMObject):
                                kingdom=kingdomStr, phylum=phylumStr, 
                                txClass=None, txOrder=orderStr, 
                                family=familyStr, genus=genusStr, 
-                               createTime=currtime, modTime=currtime, 
+                               modTime=currtime, 
                                taxonomySourceId=self._taxonSourceId, 
                                taxonomySourceKey=taxonKey, 
                                taxonomySourceGenusKey=genusKey, 
