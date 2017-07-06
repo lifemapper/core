@@ -33,7 +33,7 @@ import json
 from types import ListType, DictionaryType
 
 from LmServer.base.atom import Atom
-from LmServer.base.layer2 import Raster
+from LmServer.base.layer2 import Raster, Vector
 from LmServer.base.utilities import formatTimeHuman
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import OGC_SERVICE_URL, LMFileType
@@ -317,6 +317,20 @@ def formatShapegrid(sg):
    return sgDict
 
 # .............................................................................
+def formatVector(vlyr):
+   """
+   @summary: Convert a vector into a dictionary
+   """
+   vDict = _getLifemapperMetadata('Vector Layer', vlyr.getId(), vlyr.metadataUrl, 
+                                   vlyr.getUserId(), metadata=vlyr.lyrMetadata)
+   vDict['spatialVector'] = _getSpatialVectorMetadata(vlyr.epsgcode, vlyr.bbox, 
+                                    vlyr.mapUnits, vlyr.getDataUrl(), vlyr.verify, 
+                                    vlyr.ogrType, vlyr.dataFormat, 
+                                    vlyr.featureCount)
+
+   return vDict
+
+# .............................................................................
 def jsonObjectFormatter(obj):
    """
    @summary: Looks at object and converts to JSON based on its type
@@ -355,6 +369,8 @@ def _formatObject(obj):
       return formatMatrix(obj)
    elif isinstance(obj, ShapeGrid):
       return formatShapegrid(obj)
+   elif isinstance(obj, Vector):
+      return formatVector(obj)
    else:
       # TODO: Expand these and maybe fallback to a generic formatter of public
       #          attributes
