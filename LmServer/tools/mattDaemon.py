@@ -305,6 +305,8 @@ class MattDaemon(Daemon):
       # If success, delete
       if exitStatus == 0:
          cleanUpCmd = self._getMakeflowCleanCommand(mfDocFn)
+         self.log.debug('Clean up makeflow {}'.format(mfDocFn))
+         self.log.debug(cleanUpCmd)
          cleanProc = Popen(cleanUpCmd, shell=True)
 
          while cleanProc.poll() is not None:
