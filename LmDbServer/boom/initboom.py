@@ -189,6 +189,28 @@ class BOOMFiller(LMObject):
       # DB connection
       scribe = BorgScribe(logger)
       return scribe
+   
+# .............................................................................
+   def _getAlgorithms(self, config):
+      algorithms = []
+      # Get algorithms for SDM modeling
+      sections = config.getsections('ALGORITHM')
+      for algHeading in sections:
+         acode =  config.get(algHeading, 'CODE')
+         alg = Algorithm(acode)
+         alg.fillWithDefaults()
+         # override defaults with any option specified
+         algoptions = config.getoptions(algHeading)
+         for name in algoptions:
+            pname, ptype = alg.findParamNameType(name)
+            if pname is not None:
+               if ptype == IntType:
+                  val = config.getint(algHeading, pname)
+               else:
+                  val = config.getfloat(algHeading, pname)
+               alg.setParameter(pname, val)
+         algorithms.append(alg)
+      return algorithms
       
    # ...............................................
    def readConfigArgs(self):
@@ -226,8 +248,7 @@ class BOOMFiller(LMObject):
                'USER_OCCURRENCE_DATA_DELIMITER', USER_OCCURRENCE_DATA_DELIMITER)
       minpoints = self._findConfigOrDefault(config, 'POINT_COUNT_MIN', 
                                             POINT_COUNT_MIN)
-      algCodeList = self._findConfigOrDefault(config, 'ALGORITHMS', ALGORITHMS, 
-                                            isList=True)
+      algs = self._getAlgorithms()
          
       assemblePams = self._findConfigOrDefault(config, 'ASSEMBLE_PAMS', 
                                                ASSEMBLE_PAMS)
@@ -265,7 +286,7 @@ class BOOMFiller(LMObject):
       return (usr, usrEmail, archiveName, priority, envPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
-              userOccFname, userOccSep, minpoints, algCodeList, 
+              userOccFname, userOccSep, minpoints, algs, 
               assemblePams, gridbbox, cellsides, cellsize, gridname, 
               intersectParams)
       
@@ -290,11 +311,9 @@ class BOOMFiller(LMObject):
       f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
       f.write('SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
       f.write('\n')
-      # SDM Algorithm and minimun number of required species points   
+      # Minimun number of required species points   
       f.write('POINT_COUNT_MIN: {}\n'.format(self.minpoints))
-      f.write('ALGORITHMS: {}\n'.format(','.join(self.algorithms)))
-      f.write('\n')
-      
+
       f.write('; ...................\n')
       f.write('; Species data vals\n')
       f.write('; ...................\n')
@@ -355,7 +374,18 @@ class BOOMFiller(LMObject):
          f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
       f.write('ASSEMBLE_PAMS: {}\n'.format(str(self.assemblePams)))
       f.write('\n')
-         
+
+      # SDM Algorithms with all parameters   
+      counter = 0
+      for alg in self.algorithms:
+         counter += 1
+         f.write('; ...................\n')
+         f.write('[ALGORITHM - {}]\n'.format(counter))
+         f.write('; ...................\n')
+         for name, val in alg.parameters.iteritems():
+            f.write('{}: {}\n'.format(name, val))
+         f.write('\n')
+               
       f.close()
    
    # ...............................................
