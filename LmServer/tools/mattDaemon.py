@@ -276,17 +276,6 @@ class MattDaemon(Daemon):
       os.killpg(os.getpgid(self.wfProc.pid), signal.SIGTERM)
    
    # .............................
-   def _getMakeflowCleanCommand(self, mfDocFn):
-      """
-      @summary: Assemble Makeflow clean command
-      @param mfDocFn: The Makeflow file to run
-      """
-      mfCmd = "{mfBin} -c -X {workDir} {mfDoc}".format(
-                           mfBin=MAKEFLOW_BIN, workDir=WORKER_PATH, 
-                           mfDoc=mfDocFn)
-      return mfCmd
-
-   # .............................
    def _getMakeflowCommand(self, name, mfDocFn):
       """
       @summary: Assemble Makeflow command
@@ -311,14 +300,24 @@ class MattDaemon(Daemon):
       """
       # If success, delete
       if exitStatus == 0:
-         cleanUpCmd = self._getMakeflowCleanCommand(mfDocFn)
-         self.log.debug('Clean up makeflow {}'.format(mfDocFn))
-         self.log.debug(cleanUpCmd)
-         cleanProc = Popen(cleanUpCmd, shell=True)
-
-         while cleanProc.poll() is not None:
-            # Sleep a couple of seconds until Makeflow cleans up
-            sleep(2)
+         
+         # We won't necessarily know every single file created, so makeflow
+         #    cannot clean up automatically
+         # Use the relative driectory for the makeflow to get the workspace
+         #    directory to delete
+         mfRelDir = mfObj.getRelativeDirectory()
+         self.log.debug('Completed workflow relative directory: {}'.format(mfRelDir))
+         
+         # Make sure we have a relative directory, otherwise skip so we don't
+         #    delete everything in the workspace
+         if mfRelDir is not None:
+            mfWsDir = os.path.join(WORKER_PATH, mfRelDir)
+            self.log.debug('Attempting to delete: {}'.format(mfWsDir))
+            try:
+               shutil.rmtree(mfWsDir)
+            except Exception, e:
+               self.log.debug('Could not delete: {} - {}'.format(mfWsDir, str(e)))
+         
          
          self.scribe.deleteObject(mfObj)
       else:
