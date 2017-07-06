@@ -881,6 +881,7 @@ class LMServiceType:
    ENVIRONMENTAL_LAYERS = 'envlayer'
    PROJECTIONS = 'sdmProject'
    SCENARIOS = 'scenario'
+   ENV_PACKAGES = 'envpackage'
    SHAPEGRIDS = 'shapegrid'
    # Generic layers/layersets/matrices
    LAYERS = 'layer'

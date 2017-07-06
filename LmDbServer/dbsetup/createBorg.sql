@@ -179,6 +179,27 @@ create table lm_v3.EnvLayer
 
 -- -------------------------------
 -- Object
+create table lm_v3.EnvPackage
+(
+	envPackageId serial UNIQUE PRIMARY KEY,
+   userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
+   name varchar(60) NOT NULL,
+   metadata text,
+   modTime double precision,
+   UNIQUE (name, userid)
+);
+
+-- -------------------------------
+-- Object (via join)
+create table lm_v3.EnvPackageScenarios
+(
+	scenarioLayerId serial UNIQUE PRIMARY KEY,
+	envPackageId int REFERENCES lm_v3.EnvPackage MATCH FULL ON DELETE CASCADE,
+   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
+);
+
+-- -------------------------------
+-- Object
  create table lm_v3.Scenario
  (
     scenarioId serial UNIQUE PRIMARY KEY,

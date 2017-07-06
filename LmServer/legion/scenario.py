@@ -23,8 +23,104 @@
 """
 from LmBackend.common.lmobj import LMError
 from LmServer.base.layerset import MapLayerSet
+from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType
 from LmServer.legion.envlayer import EnvLayer
+
+# .........................................................................
+class EnvPackage(ServiceObject):
+   """       
+   Class to hold a set of Raster object environmental data layers 
+   that are used together for creating or projecting a niche model
+   """
+# .............................................................................
+# Constructor
+# .............................................................................
+   # ...............................................       
+   def __init__(self, name, userId, 
+                metadata={},
+                metadataUrl=None, 
+                modTime=None, 
+                scenarios=None, 
+                envPackageId=None):
+      """
+      @summary Constructor for the EnvPackage class 
+      @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
+      @param name: The name for this set of scenarios
+      @param scenarios: list of Scenario objects
+      """
+      ServiceObject.__init__(self, userId, envPackageId, 
+                             LMServiceType.ENV_PACKAGES, 
+                             metadataUrl=metadataUrl, 
+                             modTime=modTime)
+      self.name = name
+      self.loadScenMetadata(metadata)
+      
+      self._scenarios = []
+      self._setScenarios(scenarios)
+
+# .............................................................................
+   def addScenario(self, scen):
+      """
+      @summary: Add a scenario to an EnvPackage.  Scenarios not yet added to the 
+                database (without a metadataUrl) may be added without testing 
+                for uniqueness, but will not be added to the database again.
+      @note: metadataUrl is used for identification - ensuring that a scenario 
+             is not duplicated in the EnvPackage.  MetadataUrl should be unique
+             as it is constructed from the unique database ID.
+      @note: Scenarios not yet added to the database (without a metadataUrl) 
+             may be added to the EnvPackage
+      """
+      if isinstance(scen, Scenario):
+         if self.getScenario(metadataUrl=scen.metadataUrl) is None:
+            self._scenarios.append(scen)
+      else:
+         raise LMError(['Cannot add {} as a Scenario'.format(type(scen))])
+         
+# .............................................................................
+   def getScenario(self, metadataUrl=None, userId=None, pkgName=None):
+      """
+      @summary Gets a scenario from the EnvPackage with the specified metadataUrl
+      @param metadataUrl: metadataUrl for which to find matching scenario
+      @param userId: user for which to find matching scenario with name
+      @param name: name for which to find matching scenario with userId
+      @return the LmServer.legion.Scenario object with the given metadataUrl, 
+             or userId/pkgName combination. None if not found.
+      """
+      for scen in self._scenarios:
+         if metadataUrl is not None:
+            if scen.metadataUrl == metadataUrl:
+               return scen
+         else:
+            if scen.getUserId() == userId and scen.name == pkgName:
+               return scen
+      return None
+
+   # ...............................................
+   # layers property code overrides the same methods in layerset.LayerSet
+   @property
+   def scenarios(self):
+      return self._scenarios
+      
+   def _setScenarios(self, scens):
+      self._scenarios = []
+      if scens:
+         for scen in scens:
+            self.addScenario(scen) 
+
+# ...............................................
+   def dumpEnvpkgMetadata(self):
+      return super(EnvPackage, self)._dumpMetadata(self.envpkgMetadata)
+ 
+# ...............................................
+   def loadEnvpkgMetadata(self, newMetadata):
+      self.envpkgMetadata = super(EnvPackage, self)._loadMetadata(newMetadata)
+
+# ...............................................
+   def addScenMetadata(self, newMetadataDict):
+      self.envpkgMetadata = super(EnvPackage, self)._addMetadata(newMetadataDict, 
+                                  existingMetadataDict=self.envpkgMetadata)
+
 
 # .........................................................................
 class Scenario(MapLayerSet):
@@ -44,19 +140,15 @@ class Scenario(MapLayerSet):
                 layers=None, scenarioid=None):
       """
       @summary Constructor for the scenario class 
-      @todo: Move title, author, description to self.metadata
+      @copydoc LmServer.base.layerset.MapLayerSet::__init__()
       @param code: The code for this set of layers
-      @param metadataUrl: Lifemapper metadataUrl of this set of layers
-      @param units: units of measurement for pixel size
       @param res: size of each side of a pixel (assumes square pixels)
-      @param bbox: (optional) a length 4 tuple of (minX, minY, maxX, maxY)
       @param modTime: (optional) Last modification time of the object (any of 
                         the points (saved in the PBJ) included in this 
                         OccurrenceSet) in modified julian date format; 
                         0 if points have not yet been collected and saved
-      @param layers: (optional) list of Raster layers of environmental data
-      @param userid: ID of the user associated with this scenario
-      @param scenarioid: (optional) The scenario/service id in the database
+      @param layers: list of Raster layers of environmental data
+      @param scenarioid: The scenarioId in the database
       """
       self._layers = []
       # layers are set not set in LayerSet or Layerset - done here to check
@@ -64,12 +156,11 @@ class Scenario(MapLayerSet):
       MapLayerSet.__init__(self, code, 
                            url=metadataUrl, 
                            epsgcode=epsgcode, userId=userId, dbId=scenarioid,
-                           bbox=bbox, mapunits=units,
+                           bbox=bbox, mapunits=units, modTime=modTime,
                            serviceType=LMServiceType.SCENARIOS,
                            mapType=LMFileType.SCENARIO_MAP)
       # aka MapLayerSet.name    
       self.code = code
-      self.modTime = modTime
 
       self.gcmCode=gcmCode
       self.altpredCode=altpredCode
@@ -79,9 +170,7 @@ class Scenario(MapLayerSet):
       # Private attributes
       self._scenarioId = scenarioid
       self._setLayers(layers)
-#       self._setUnits(units)
       self._setRes(res) 
-#       self._setBBox(bbox)
       self.setMapPrefix()
       self.setLocalMapFilename()
             
