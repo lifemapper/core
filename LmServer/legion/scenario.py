@@ -56,44 +56,44 @@ class EnvPackage(ServiceObject):
       self.name = name
       self.loadScenMetadata(metadata)
       
-      self._scenarios = []
-      self._setScenarios(scenarios)
+      self._scenarios = {}
+      self.setScenarios(scenarios)
 
 # .............................................................................
    def addScenario(self, scen):
       """
-      @summary: Add a scenario to an EnvPackage.  Scenarios not yet added to the 
-                database (without a metadataUrl) may be added without testing 
-                for uniqueness, but will not be added to the database again.
-      @note: metadataUrl is used for identification - ensuring that a scenario 
-             is not duplicated in the EnvPackage.  MetadataUrl should be unique
-             as it is constructed from the unique database ID.
-      @note: Scenarios not yet added to the database (without a metadataUrl) 
-             may be added to the EnvPackage
+      @summary: Add a scenario to an EnvPackage.  
+      @note: metadataUrl or scenario code (unique for a user), is used 
+             to ensure that a scenario is not duplicated in the EnvPackage.  
       """
       if isinstance(scen, Scenario):
-         if self.getScenario(metadataUrl=scen.metadataUrl) is None:
-            self._scenarios.append(scen)
+         if scen.getUserId() == self.getUserId():
+            if self.getScenario(code=scen.code, 
+                                metadataUrl=scen.metadataUrl) is None:
+               self._scenarios[scen.code] = scen
+         else:
+            raise LMError(['Cannot add user {} Scenario to user {} EnvPackage'
+                           .format(scen.getUserId(), self.getUserId())])
       else:
          raise LMError(['Cannot add {} as a Scenario'.format(type(scen))])
          
 # .............................................................................
-   def getScenario(self, metadataUrl=None, userId=None, pkgName=None):
+   def getScenario(self, code=None, metadataUrl=None):
       """
       @summary Gets a scenario from the EnvPackage with the specified metadataUrl
       @param metadataUrl: metadataUrl for which to find matching scenario
-      @param userId: user for which to find matching scenario with name
-      @param name: name for which to find matching scenario with userId
+      @param userId: user for which to find matching scenario with code
+      @param code: code for which to find matching scenario with userId
       @return the LmServer.legion.Scenario object with the given metadataUrl, 
-             or userId/pkgName combination. None if not found.
+             or userId/code combination. None if not found.
       """
       for scen in self._scenarios:
-         if metadataUrl is not None:
-            if scen.metadataUrl == metadataUrl:
-               return scen
-         else:
-            if scen.getUserId() == userId and scen.name == pkgName:
-               return scen
+         if code is not None:
+            return self._scenarios[code]
+         elif metadataUrl is not None:
+            for code, scen in self._scenarios.iteritems():
+               if scen.metadataUrl == metadataUrl:
+                  return scen
       return None
 
    # ...............................................
@@ -102,11 +102,11 @@ class EnvPackage(ServiceObject):
    def scenarios(self):
       return self._scenarios
       
-   def _setScenarios(self, scens):
-      self._scenarios = []
+   def setScenarios(self, scens):
+      self._scenarios = {}
       if scens:
          for scen in scens:
-            self.addScenario(scen) 
+            self.addScenario(scen)
 
 # ...............................................
    def dumpEnvpkgMetadata(self):

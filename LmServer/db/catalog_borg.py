@@ -621,11 +621,73 @@ class Borg(DbPostgresql):
             objs.append(self._createLayer(r, idxs))
       return objs
 
-
 # ...............................................
-   def findOrInsertScenario(self, scen):
+   def findOrInsertEnvPackage(self, envPkg):
       """
-      @summary Inserts all scenario layers into the database
+      @summary Inserts a EnvPackage and any scenarios present into the database
+      @param envPkg: The LmServer.legion.scenario.EnvPackage to insert
+      @return: new or existing EnvPackage
+      @note: This returns the updated EnvPackage 
+      """
+      meta = envPkg.dumpEnvpkgMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvPackage', 
+                           envPkg.getUserId(), envPkg.name, meta, 
+                           envPkg.modTime)
+      newOrExistingEnvPkg = self._createEnvPackage(row, idxs)
+      return newOrExistingEnvPkg
+   
+# ...............................................
+   def getEnvPackagesForScenario(self, scen, scenId, userId, scenCode):
+      """
+      @summary Find all EnvPackages that contain the given Scenario
+      @param scen: The The LmServer.legion.scenario.Scenario to find 
+                     scenarios for
+      @param scenId: The database Id for the Scenario to find EnvPackages
+      @param userId: The userId for the Scenario to find EnvPackages
+      @param envPkgName: The name for the Scenario to find EnvPackages
+      @return: list of LmServer.legion.scenario.EnvPackage objects, filled
+               with Scenarios
+      """
+      envPkgs = []
+      if scen:
+         scenId = scen.getId()
+         userId = scen.getUserId()
+         scenCode = scen.code
+      rows, idxs = self.executeSelectManyFunction('lm_getEnvPackagesForScenario',
+                                                  scenId, userId, scenCode)
+      for r in rows:
+         epkg = self._createEnvPackage(r, idxs)
+         scens = self.getScenariosForEnvPackage(epkg, None, None, None)
+         epkg.setScenarios(scens)
+         envPkgs.append(epkg)
+      return envPkgs
+   
+# ...............................................
+   def getScenariosForEnvPackage(self, envPkg, envPkgId, userId, envPkgName):
+      """
+      @summary Find all scenarios that are part of the given EnvPackage
+      @param envPkg: The LmServer.legion.scenario.EnvPackage to find 
+                     scenarios for
+      @param envPkgId: The database Id for the EnvPackage to find scenarios
+      @param userId: The userId for the EnvPackage to find scenarios
+      @param envPkgName: The name for the EnvPackage to find scenarios
+      @return: list of LmServer.legion.scenario.Scenario objects
+      """
+      scens = []
+      if envPkg:
+         envPkgId = envPkg.getId()
+         userId = envPkg.getUserId()
+         envPkgName = envPkg.name
+      rows, idxs = self.executeSelectManyFunction('lm_getScenariosForEnvPackage',
+                                                  envPkgId, userId, envPkgName)
+      for r in rows:
+         scens.append(self._createScenario(r, idxs))
+      return scens
+   
+# ...............................................
+   def findOrInsertScenario(self, scen, envPkgId):
+      """
+      @summary Inserts a scenario and any layers present into the database
       @param scen: The scenario to insert
       @return: new or existing Scenario
       """
@@ -640,6 +702,13 @@ class Borg(DbPostgresql):
                            scen.units, scen.resolution, scen.epsgcode, 
                            scen.getCSVExtentString(), wkt, scen.modTime)
       newOrExistingScen = self._createScenario(row, idxs)
+      if envPkgId is not None:
+         scenarioId = self._getColumnValue(row, idxs, ['scenarioid'])
+         joinId = self.executeModifyReturnValue(
+                     'lm_joinEnvPackageScenario', envPkgId, scenarioId)
+         if joinId < 0:
+            raise LMError('Failed to join EnvPackage {} to Scenario {}'
+                          .format(envPkgId, scenarioId))
       return newOrExistingScen
    
 # .............................................................................

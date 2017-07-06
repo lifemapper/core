@@ -292,7 +292,7 @@ BEGIN
    IF FOUND THEN 
       RAISE NOTICE 'Layer % and EnvType % are already joined', lyrid, etypeid;
    ELSE   
-      INSERT INTO EnvLayer (layerid, envTypeId) VALUES (lyrid, etypeid);
+      INSERT INTO lm_v3.EnvLayer (layerid, envTypeId) VALUES (lyrid, etypeid);
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to insert/join EnvLayer';
       ELSE

@@ -57,7 +57,7 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario
+from LmServer.legion.scenario import Scenario, EnvPackage
 from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -132,14 +132,14 @@ class BOOMFiller(LMObject):
                                                    objCode=self.archiveName, 
                                                    usr=self.usr)
       # Create new or pull existing scenarios
-      (self.allScens, 
+      (self.envPkg, 
        newModelScenCode,
        self.epsgcode, 
        self.mapunits, 
        self.envPackageMetaFilename) = self._getScenarios()
       if newModelScenCode is  not None:
          self.modelScenCode = newModelScenCode
-      self.prjScenCodeList = self.allScens.keys()
+      self.prjScenCodeList = self.envPkg.scenarios.keys()
       self.gridset = None
       self.shapegrid = None
       self.defaultPamGrims = {}
@@ -449,25 +449,39 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _checkScenarios(self, legalUsers):
       epsg = mapunits = None
-      allScens = {}
+#       allScens = {}
       if self.modelScenCode not in self.prjScenCodeList:
          self.prjScenCodeList.append(self.modelScenCode)
-      for code in self.prjScenCodeList:
-         scen = self.scribe.getScenario(code, userId=self.usr, fillLayers=True)
-         if scen is None:
-            raise LMError('Missing Scenario for code or id {}'.format(code))
-         if scen.getUserId() not in legalUsers:
-            raise LMError('legalUsers {} missing {}'.format(legalUsers,
-                                                            scen.getUserId()))
-         allScens[code] = scen
-         if epsg is None:
-            epsg = scen.epsgcode
-            mapunits = scen.units
-            bbox = scen.bbox
-         # Fill or reset 
-         if self.gridbbox is None:
-            self.gridbbox = bbox
-      return allScens, epsg, mapunits
+      envPkgs = self.scribe.getEnvPackagesForUserCodes(self.usr, 
+                                                       self.prjScenCodeList)
+      if not envPkgs:
+         envPkgs = self.scribe.getEnvPackagesForUserCodes(PUBLIC_USER, 
+                                                          self.prjScenCodeList)
+      if len(envPkgs) == 0:
+         raise LMError('There are no matching envPackages!')
+      elif len(envPkgs) > 1:
+         raise LMError('I cannot handle multiple matching envPackages!')
+      else:
+         envPkg = envPkgs[0]
+         scen = envPkg.getScenario(code=self.prjScenCodeList[0])
+         epsg = scen.epsgcode
+         mapunits = scen.units
+#       for code in self.prjScenCodeList:
+#          scen = self.scribe.getScenario(code, userId=self.usr, fillLayers=True)
+#          if scen is None:
+#             raise LMError('Missing Scenario for code or id {}'.format(code))
+#          if scen.getUserId() not in legalUsers:
+#             raise LMError('legalUsers {} missing {}'.format(legalUsers,
+#                                                             scen.getUserId()))
+#          allScens[code] = scen
+#          if epsg is None:
+#             epsg = scen.epsgcode
+#             mapunits = scen.units
+#             bbox = scen.bbox
+#          # Fill or reset 
+#          if self.gridbbox is None:
+#             self.gridbbox = bbox
+      return envPkg, epsg, mapunits
          
    # ...............................................
    def _createScenarios(self):
@@ -478,11 +492,13 @@ class BOOMFiller(LMObject):
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
       self.scribe.log.info('  Insert climate {} metadata ...'.format(self.envPackageName))
+      envPkg = EnvPackage(self.envPackageName, self.usr)
       # Current
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
                                                       META.LAYERTYPE_META,
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
+      envPkg.addScenario(basescen)
       self.scribe.log.info('     Created base scenario {}'.format(basescen.code))
       # Predicted Past and Future
       allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
@@ -490,8 +506,9 @@ class BOOMFiller(LMObject):
                                            META.OBSERVED_PREDICTED_META,
                                            META.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
-      allScens[basescen.code] = basescen
-      return allScens, basescen.code, epsg, mapunits, envPackageMetaFilename
+      for scen in allScens:
+         envPkg.addScenario(scen)
+      return envPkg, basescen.code, epsg, mapunits, envPackageMetaFilename
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -752,21 +769,23 @@ class BOOMFiller(LMObject):
       return predScenarios
    
    # ...............................................
-   def findOrAddScenariosAndLayers(self):
+   def findOrAddPackageScenariosAndLayers(self):
       """
       @summary Add scenario and layer metadata to database, and update the 
                allScens attribute with newly inserted scenarios and layers
       """
       updatedScens = {}
-      for scode, scen in self.allScens.iteritems():
+      updatedEnvPkg = self.scribe.findOrInsertEnvPackage(self.envPkg)
+      for scode, scen in self.envPkg.scenarios.iteritems():
          if scen.getId() is not None:
             self.scribe.log.info('Scenario {} exists'.format(scode))
             updatedScens[scode] = scen
          else:
             self.scribe.log.info('Insert scenario {}'.format(scode))
-            newscen = self.scribe.findOrInsertScenario(scen)
+            newscen = self.scribe.findOrInsertScenario(scen, 
+                                                envPkgId=updatedEnvPkg.getId())
             updatedScens[scode] = newscen
-      self.allScens = updatedScens
+      self.envPkg.setScenarios(updatedScens)
    
    # ...............................................
    def _findClimatePackageMetadata(self):
@@ -1018,13 +1037,13 @@ class BOOMFiller(LMObject):
       if self.modelScenCode and self.prjScenCodeList:
          envPackageMetaFilename = None
          # This fills or resets epsgcode, mapunits, gridbbox
-         allScens, epsg, mapunits = self._checkScenarios(legalUsers)
+         envPkg, epsg, mapunits = self._checkScenarios(legalUsers)
       # Data/metadata for new Scenarios
       else:
          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-         (allScens, newModelScenCode, epsg, mapunits, 
+         (envPkg, newModelScenCode, epsg, mapunits, 
           envPackageMetaFilename) = self._createScenarios()
-      return allScens, newModelScenCode, epsg, mapunits, envPackageMetaFilename
+      return envPkg, newModelScenCode, epsg, mapunits, envPackageMetaFilename
 
    # ...............................................
    def addAlgorithms(self):
@@ -1124,7 +1143,7 @@ if __name__ == '__main__':
    # ...............................................
    # Add or get Scenarios 
    # This updates the allScens with db objects for other operations
-   filler.findOrAddScenariosAndLayers()
+   filler.findOrAddPackageScenariosAndLayers()
          
    # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
    # Test a subset of OccurrenceIds provided as BOOM species input
@@ -1170,7 +1189,7 @@ filler.addAlgorithms()
 # ...............................................
 # Add or get Scenarios 
 # This updates the allScens with db objects for other operations
-filler.findOrAddScenariosAndLayers()
+filler.findOrAddPackageScenariosAndLayers()
 for code, scen in filler.allScens.iteritems():
    print code, scen.getId()
    for lyr in scen.layers:

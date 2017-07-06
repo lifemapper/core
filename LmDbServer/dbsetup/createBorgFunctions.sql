@@ -608,6 +608,284 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+-- EnvPackage
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getEnvPackage(epid int,
+                                                  usr varchar,
+                                                  epname varchar)
+   RETURNS lm_v3.EnvPackage AS
+$$
+DECLARE
+   rec lm_v3.EnvPackage%rowtype;
+BEGIN
+   IF epid IS NOT NULL THEN
+      SELECT * INTO rec FROM lm_v3.EnvPackage WHERE envPackageId = epid;
+   ELSE
+      SELECT * INTO rec FROM lm_v3.EnvPackage
+         WHERE name = epname AND userId = usr ;
+   END IF;
+   
+   IF NOT FOUND THEN
+      RAISE NOTICE 'EnvPackage id = % or user/name = %/% not found', epid, usr, epname;
+   END IF;
+   
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertEnvPackage(usr varchar,
+                                             epname varchar, 
+                                             meta text,
+                                             mtime double precision)
+   RETURNS lm_v3.EnvPackage AS
+$$
+DECLARE
+   newid int;
+   rec lm_v3.EnvPackage%rowtype;
+BEGIN
+   SELECT * INTO rec FROM lm_v3.EnvPackage p 
+      WHERE p.name = epname and p.userid = usr;
+   IF NOT FOUND THEN
+      INSERT INTO lm_v3.EnvPackage (userid, epname, metadata, modTime)
+                            VALUES (usr, epname, meta, mtime);
+      IF NOT FOUND THEN
+         RAISE EXCEPTION 'Unable to find or insert EnvPackage';
+      ELSE
+         SELECT INTO newid last_value lm_v3.envpackage_envpackageid_seq;
+         SELECT * INTO rec FROM lm_v3.EnvPackage p WHERE p.envPackageid = newid;
+      END IF; -- end if inserted
+   END IF;  -- end if not existing
+   
+   RETURN rec;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterEnvPackages(usr varchar,
+                                                  aftertime double precision,
+                                                  beforetime double precision)
+   RETURNS varchar AS
+$$
+DECLARE
+   wherecls varchar;
+BEGIN
+   wherecls = ' WHERE userid =  ' || quote_literal(usr) || ' ';
+   
+   -- filter by EnvPackages modified after given time
+   IF aftertime is not null THEN
+      wherecls = wherecls || ' AND modTime >=  ' || quote_literal(aftertime);
+   END IF;
+
+   -- filter by EnvPackages modified before given time
+   IF beforetime is not null THEN
+      wherecls = wherecls || ' AND modTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   RETURN wherecls;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_countEnvPackages(usr varchar,
+                                                   aftertime double precision,
+                                                   beforetime double precision)
+   RETURNS int AS
+$$
+DECLARE
+   num int;
+   cmd varchar;
+   fromcls varchar;
+   wherecls varchar;
+BEGIN
+   cmd = 'SELECT count(*) FROM lm_v3.scenario ';
+   SELECT * INTO wherecls  
+         FROM lm_v3.lm_getFilterEnvPackages(usr, aftertime, beforetime);
+   cmd := cmd || wherecls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   EXECUTE cmd INTO num;
+   RETURN num;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by modTime descending
+CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvPackageObjects(firstRecNum int, 
+                                                   maxNum int,
+                                                   usr varchar,
+                                                   aftertime double precision,
+                                                   beforetime double precision)
+   RETURNS SETOF lm_v3.EnvPackage AS
+$$
+DECLARE
+   rec lm_v3.EnvPackage;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+BEGIN
+   cmd = 'SELECT * FROM lm_v3.EnvPackage ';
+   SELECT * INTO wherecls  
+         FROM lm_v3.lm_getFilterEnvPackages(usr, aftertime, beforetime);
+   ordercls = ' ORDER BY modTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+-- Note: order by modTime descending
+CREATE OR REPLACE FUNCTION lm_v3.lm_listEnvPackageAtoms(firstRecNum int, 
+                                                   maxNum int,
+                                                   usr varchar,
+                                                   aftertime double precision,
+                                                   beforetime double precision)
+   RETURNS SETOF lm_v3.lm_atom AS
+$$
+DECLARE
+   rec lm_v3.lm_atom;
+   cmd varchar;
+   wherecls varchar;
+   ordercls varchar;
+   limitcls varchar;
+   title varchar;
+BEGIN
+   cmd = 'SELECT envPackageId, name, null, modTime FROM lm_v3.EnvPackage ';
+   SELECT * INTO wherecls  
+         FROM lm_v3.lm_getFilterEnvPackages(usr, aftertime, beforetime);
+   ordercls = ' ORDER BY modTime DESC ';
+   limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
+
+   cmd := cmd || wherecls || ordercls || limitcls;
+   RAISE NOTICE 'cmd = %', cmd;
+
+   FOR rec in EXECUTE cmd
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_deleteEnvPackage(epid int)
+RETURNS int AS
+$$
+DECLARE
+   success int := -1;
+   scenid int;
+   
+BEGIN
+   FOR scenid IN 
+      SELECT scenarioId FROM lm_v3.EnvPackageScenario WHERE envPackageId = epid
+   LOOP
+      -- Delete join
+      DELETE FROM lm_v3.EnvPackageScenario WHERE envPackageId = epid 
+                                             AND scenarioId = scenid;
+      -- DO NOT delete scenario
+      RAISE NOTICE 'Deleted Scenario % from EnvPackage', scenid;
+   END LOOP;
+   
+   DELETE FROM lm_v3.EnvPackage WHERE envPackageId = epid;
+   IF FOUND THEN
+      success = 0;
+   END IF;
+   RETURN success;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getEnvPackagesForScenario(scenid int,
+                                                              usr varchar,
+                                                              code varchar)
+   RETURNS SETOF lm_v3.EnvPackage AS
+$$
+DECLARE
+   rec lm_v3.EnvPackage;
+BEGIN
+   IF scenid IS NULL THEN
+      SELECT scenarioId INTO scenid FROM lm_v3.Scenario 
+         WHERE userId = usr AND scenarioCode = code;
+   END IF;
+   
+   FOR rec IN
+      SELECT * FROM lm_v3.EnvPackage WHERE envPackageId IN
+         (SELECT envPackageId FROM lm_v3.EnvPackageScenario 
+                             WHERE scenarioId = scenid);
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_getScenariosForEnvPackage(epid int,
+                                                              usr varchar,
+                                                              epname varchar)
+   RETURNS SETOF lm_v3.Scenario AS
+$$
+DECLARE
+   rec lm_v3.Scenario;
+BEGIN
+   IF epid IS NULL THEN
+      SELECT envPackageId INTO epid FROM lm_v3.EnvPackage 
+         WHERE userId = usr AND name = epname;
+   END IF;
+   
+   FOR rec IN
+      SELECT * FROM lm_v3.Scenario WHERE scenarioId IN
+         (SELECT scenarioId FROM lm_v3.EnvPackageScenario 
+                             WHERE envPackageId = epid);
+      LOOP 
+         RETURN NEXT rec;
+      END LOOP;
+   RETURN;
+END;
+$$  LANGUAGE 'plpgsql' STABLE;
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_joinEnvPackageScenario(epid int, 
+                                                           scenid int)
+   RETURNS int AS
+$$
+DECLARE
+   temp1 int;
+   temp2 int;
+   newid int = -1;
+BEGIN
+   SELECT count(*) INTO temp1 FROM lm_v3.EnvPackage WHERE envPackageId = epid;
+   SELECT count(*) INTO temp2 FROM lm_v3.Scenario WHERE scenarioId = scenid;
+   IF temp1 < 1 THEN
+      RAISE EXCEPTION 'EnvPackage with id % does not exist', epid;
+   ELSIF temp2 < 1 THEN
+      RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
+   END IF;
+   
+   INSERT INTO lm_v3.EnvPackageScenario (envPackageId, scenarioId) 
+                                 VALUES (epid, scenid);
+   IF NOT FOUND THEN
+      RAISE EXCEPTION 'Unable to join Scenario and EnvPackage';
+   ELSE
+      SELECT INTO newid last_value 
+          FROM lm_v3.envpackagescenario_envpackagescenarioid_seq;
+   END IF;
+   
+   RETURN newid;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
+                                                           
+-- ----------------------------------------------------------------------------
 -- LmUser
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_findOrInsertUser(usr varchar, 
