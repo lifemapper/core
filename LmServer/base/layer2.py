@@ -119,7 +119,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       self._dlocation = None
       self.setDLocation(dlocation)
       self._verify = None
-      self._setVerify(verify=verify)
+      self.setVerify(verify=verify)
       self._mapFilename = None
       
 # ...............................................
@@ -238,7 +238,7 @@ class _Layer(LMSpatialObject, ServiceObject):
       return verified
    
 # ...............................................
-   def _setVerify(self, verify=None, dlocation=None, content=None):
+   def setVerify(self, verify=None, dlocation=None, content=None):
       value = None
       if verify is not None:
          self._verify = verify
@@ -364,19 +364,17 @@ class _Layer(LMSpatialObject, ServiceObject):
                                   existingMetadataDict=self.lyrMetadata)
 
    # ...............................................
-   def updateLayer(self, modTime, verify=None, metadata=None):
+   def updateLayer(self, modTime, metadata=None):
       """
-      @summary: Updates modTime, verification hash, metadata.
+      @summary: Updates modTime, data verification hash, metadata.
       @param modTime: time/date last modified
-      @param verify: Hash of the data for verification
       @param metadata: Dictionary of metadata keys/values; key constants are 
                        class attributes.
       """
       self.updateModtime(modTime)
       if metadata is not None:
          self.loadLyrMetadata(metadata)
-      if verify is not None:
-         self._setVerify(verify=verify)
+      self.setVerify()
 
 # ...............................................
 # Properties

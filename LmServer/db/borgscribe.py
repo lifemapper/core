@@ -264,14 +264,6 @@ class BorgScribe(LMObject):
       updatedMtx = self._borg.findOrInsertMatrix(mtx)
       return updatedMtx   
 
-# # ...............................................
-#    def updateShapeGrid(self, shpgrd):
-#       """
-#       @copydoc LmServer.db.catalog_borg.Borg::updateShapeGrid()
-#       """
-#       success = self._borg.updateShapeGrid(shpgrd)
-#       return success
-
 # ...............................................
    def getShapeGrid(self, lyrId=None, userId=None, lyrName=None, epsg=None):
       """
@@ -522,14 +514,6 @@ class BorgScribe(LMObject):
                                  metastring, afterTime, beforeTime, epsg, atom)
       return objs
 
-# # ...............................................
-#    def updateGridset(self, grdset):
-#       """
-#       @copydoc LmServer.db.catalog_borg.Borg::updateGridset()
-#       """
-#       success = self._borg.updateGridset(grdset)
-#       return success
-
 # ...............................................
    def findTaxonSource(self, taxonSourceName):
       """
@@ -649,14 +633,6 @@ class BorgScribe(LMObject):
                                            epsg, afterStatus, beforeStatus, atom)
       return objs
 
-# # ...............................................
-#    def updateOccset(self, occ, polyWkt=None, pointsWkt=None):
-#       """
-#       @copydoc LmServer.db.catalog_borg.Borg::updateOccurrenceSet()
-#       """
-#       success = self._borg.updateOccurrenceSet(occ, polyWkt, pointsWkt)
-#       return success
-
 # ...............................................
    def getSDMProject(self, layerid):
       """
@@ -699,25 +675,6 @@ class BorgScribe(LMObject):
                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
                        occsetId, algCode, mdlscenCode, prjscenCode, atom)
       return objs
-
-# # ...............................................
-#    def updateSDMProject(self, proj):
-#       """
-#       @summary Method to update an SDMProjection object in the database with 
-#                the verify hash, metadata, data extent and values, status/statusmodtime.
-#       @param proj the SDMProjection object to update
-#       @return: True/False for successful update.
-#       """
-#       success = self._borg.updateSDMProject(proj)
-#       return success   
-   
-# # ...............................................
-#    def updateMatrixColumn(self, mtxcol):
-#       """
-#       @copydoc LmServer.db.catalog_borg.Borg::updateMatrixColumn()
-#       """
-#       success = self._borg.updateMatrixColumn(mtxcol)
-#       return success
    
 # ...............................................
    def findOrInsertMatrixColumn(self, mtxcol):
@@ -974,11 +931,16 @@ scribe.openConnections()
 occs = scribe.getOccLayersForGridset(grdid)
 
 colPrjPairs1 = scribe.getSDMColumnsForMatrix(pamid) 
+for (col, prj) in colPrjPairs1:
+   print col.getId(), prj.getId()
+
 colPrjPairs2 = scribe.getSDMColumnsForMatrix(grimid) 
+for (col, prj) in colPrjPairs2:
+   print col.getId(), prj.getId()
+
 colPrjPairs3 = scribe.getSDMColumnsForGridset(grdid) 
-
-
-badPrjVerify = [176, 180, 193, 196, 214, 219]
+for (col, prj) in colPrjPairs3:
+   print col.getId(), prj.getId()
 
 usr = 'kubi'
 cellsides = 4

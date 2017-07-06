@@ -260,7 +260,7 @@ class ShapeGrid(_LayerParameters, Vector, ProcessObject):
                            self._cellsides, siteId=self.siteId, siteX=self.siteX, 
                            siteY=self.siteY, cutoutWKT=cutout)
       self._setCellMeasurements(size=cellCount)
-      self._setVerify()
+      self.setVerify()
       
 # ...............................................
    def computeMe(self, workDir=None):

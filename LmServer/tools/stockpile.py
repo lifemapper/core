@@ -124,6 +124,12 @@ class Stockpile(LMObject):
          msgs.append(msg)
          raise LMError(currargs=msg)
       
+      # Update verify hash and modtime for layers
+      try:
+         obj.updateLayer()
+      except:
+         pass
+      
       # Update object and db record
       try:
          obj.updateStatus(status)
