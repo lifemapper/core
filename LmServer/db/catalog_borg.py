@@ -2215,6 +2215,8 @@ class Borg(DbPostgresql):
          success = self.executeModifyFunction('lm_updateMFChain', obj.objId,
                                               obj.getDLocation(), 
                                               obj.status, obj.statusModTime)
+      elif isinstance(obj, Gridset):
+         success = self.updateGridset(obj)
       else:
          raise LMError('Unsupported update for object {}'.format(type(obj)))
       return success
