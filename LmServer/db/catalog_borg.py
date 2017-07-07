@@ -446,16 +446,16 @@ class Borg(DbPostgresql):
 # ...............................................
    def _createOccurrenceLayer(self, row, idxs):
       """
-      @note: takes OccurrenceSet or lm_sdmproject record
+      @note: takes OccurrenceSet, lm_occMatrixcolumn, or lm_sdmproject record
       """
       occ = None
       if row is not None:
          name = self._getColumnValue(row,idxs,['displayname'])
          usr = self._getColumnValue(row,idxs,['occuserid','userid'])
-         epsg = self._getColumnValue(row,idxs,['epsgcode'])
+         epsg = self._getColumnValue(row,idxs,['occepsgcode', 'epsgcode'])
          qcount = self._getColumnValue(row,idxs,['querycount'])
          occ = OccurrenceLayer(name, usr, epsg, qcount,
-               squid=self._getColumnValue(row,idxs,['squid']), 
+               squid=self._getColumnValue(row,idxs,['occsquid', 'squid']), 
                verify=self._getColumnValue(row,idxs,['occverify','verify']), 
                dlocation=self._getColumnValue(row,idxs,['occdlocation','dlocation']), 
                rawDLocation=self._getColumnValue(row,idxs,['rawdlocation']),
@@ -1526,7 +1526,8 @@ class Borg(DbPostgresql):
 
 # .............................................................................
    def countOccurrenceSets(self, userId, squid, minOccurrenceCount, displayName, 
-                        afterTime, beforeTime, epsg, afterStatus, beforeStatus):
+                        afterTime, beforeTime, epsg, afterStatus, beforeStatus,
+                        gridsetId):
       """
       @summary: Count all OccurrenceSets matching the filter conditions 
       @param userId: User (owner) for which to return occurrencesets.  
@@ -1537,6 +1538,7 @@ class Borg(DbPostgresql):
       @param epsg: filter by this EPSG code
       @param afterStatus: filter by status >= value
       @param beforeStatus: filter by status <= value
+      @param gridsetId: filter by occurrenceset used by this gridset
       @return: a list of OccurrenceSet atoms or full objects
       """
       if displayName is not None:
@@ -1544,13 +1546,14 @@ class Borg(DbPostgresql):
       row, idxs = self.executeSelectOneFunction('lm_countOccSets', userId, squid,
                                                 minOccurrenceCount, displayName,
                                                 afterTime, beforeTime, epsg,
-                                                afterStatus, beforeStatus)
+                                                afterStatus, beforeStatus,
+                                                gridsetId)
       return self._getCount(row)
 
 # .............................................................................
    def listOccurrenceSets(self, firstRecNum, maxNum, userId, squid, 
                           minOccurrenceCount, displayName, afterTime, beforeTime, 
-                          epsg, afterStatus, beforeStatus, atom):
+                          epsg, afterStatus, beforeStatus, gridsetId, atom):
       """
       @summary: Return OccurrenceSet Objects or Atoms matching filter conditions 
       @param firstRecNum: The first record to return, 0 is the first record
@@ -1563,6 +1566,7 @@ class Borg(DbPostgresql):
       @param epsg: filter by this EPSG code
       @param afterStatus: filter by status >= value
       @param beforeStatus: filter by status <= value
+      @param gridsetId: filter by occurrenceset used by this gridset
       @param atom: True if return objects will be Atoms, False if full objects
       @return: a list of OccurrenceSet atoms or full objects
       """
@@ -1572,14 +1576,14 @@ class Borg(DbPostgresql):
          rows, idxs = self.executeSelectManyFunction('lm_listOccSetAtoms', 
                               firstRecNum, maxNum, userId, squid, minOccurrenceCount,
                               displayName, afterTime, beforeTime, epsg, 
-                              afterStatus, beforeStatus)
+                              afterStatus, beforeStatus, gridsetId)
          objs = self._getAtoms(rows, idxs, LMServiceType.OCCURRENCES)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listOccSetObjects', 
                               firstRecNum, maxNum, userId, squid, minOccurrenceCount,
                               displayName, afterTime, beforeTime, epsg, 
-                              afterStatus, beforeStatus)
+                              afterStatus, beforeStatus, gridsetId)
          for r in rows:
             objs.append(self._createOccurrenceLayer(r, idxs))
       return objs
@@ -1688,7 +1692,7 @@ class Borg(DbPostgresql):
 # .............................................................................
    def countSDMProjects(self, userId, squid, displayName, 
                         afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
-                        occsetId, algCode, mdlscenCode, prjscenCode):
+                        occsetId, algCode, mdlscenCode, prjscenCode, gridsetId):
       """
       @summary: Count all SDMProjects matching the filter conditions 
       @param userId: User (owner) for which to return occurrencesets.  
@@ -1703,6 +1707,7 @@ class Borg(DbPostgresql):
       @param algCode: filter by algorithm code
       @param mdlscenCode: filter by model scenario code
       @param prjscenCode: filter by projection scenario code
+      @param gridsetId: filter by projection included in this gridset
       @return: a count of SDMProjects 
       """
       if displayName is not None:
@@ -1710,13 +1715,14 @@ class Borg(DbPostgresql):
       row, idxs = self.executeSelectOneFunction('lm_countSDMProjects', 
                            userId, squid, displayName, afterTime, beforeTime, epsg,
                            afterStatus, beforeStatus, occsetId, algCode, 
-                           mdlscenCode, prjscenCode)
+                           mdlscenCode, prjscenCode, gridsetId)
       return self._getCount(row)
 
 # .............................................................................
    def listSDMProjects(self, firstRecNum, maxNum, userId, squid, displayName, 
                        afterTime, beforeTime, epsg, afterStatus, beforeStatus, 
-                       occsetId, algCode, mdlscenCode, prjscenCode, atom):
+                       occsetId, algCode, mdlscenCode, prjscenCode, gridsetId, 
+                       atom):
       """
       @summary: Return SDMProjects Objects or Atoms matching filter conditions 
       @param firstRecNum: The first record to return, 0 is the first record
@@ -1733,6 +1739,7 @@ class Borg(DbPostgresql):
       @param algCode: filter by algorithm code
       @param mdlscenCode: filter by model scenario code
       @param prjscenCode: filter by projection scenario code
+      @param gridsetId: filter by projection included in this gridset
       @param atom: True if return objects will be Atoms, False if full objects
       @return: a list of SDMProjects atoms or full objects
       """
@@ -1742,14 +1749,14 @@ class Borg(DbPostgresql):
          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectAtoms', 
                            firstRecNum, maxNum, userId, squid, displayName, afterTime, 
                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
-                           algCode, mdlscenCode, prjscenCode)
+                           algCode, mdlscenCode, prjscenCode, gridsetId)
          objs = self._getAtoms(rows, idxs, LMServiceType.PROJECTIONS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listSDMProjectObjects', 
                            firstRecNum, maxNum, userId, squid, displayName, afterTime, 
                            beforeTime, epsg, afterStatus, beforeStatus, occsetId, 
-                           algCode, mdlscenCode, prjscenCode)
+                           algCode, mdlscenCode, prjscenCode, gridsetId)
          for r in rows:
             objs.append(self._createSDMProjection(r, idxs))
       return objs

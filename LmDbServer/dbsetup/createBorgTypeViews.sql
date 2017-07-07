@@ -602,7 +602,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_matrixcolumn
         FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.Gridset g
         WHERE mc.matrixId = m.matrixId AND m.gridsetid = g.gridsetid;
 
--- (MatrixColumn + Matrix + SDMProject + OccurrenceSet)
+-- ----------------------------------------------------------------------------
+-- lm_v3.lm_occMatrixcolumn (MatrixColumn + Matrix + SDMProject + OccurrenceSet)
 DROP VIEW IF EXISTS lm_v3.lm_occMatrixcolumn CASCADE;
 CREATE OR REPLACE VIEW lm_v3.lm_occMatrixcolumn (
    -- MatrixColumn.*
@@ -643,11 +644,13 @@ CREATE OR REPLACE VIEW lm_v3.lm_occMatrixcolumn (
    prjstatusModTime,
    
    -- OccurrenceSet.* 
+   occsquid,
    occverify,
    displayName,
    occdlocation,
    queryCount,
    occbbox,
+   epsgcode,
    occmetadata,
    occstatus,
    occstatusModTime
@@ -662,8 +665,8 @@ CREATE OR REPLACE VIEW lm_v3.lm_occMatrixcolumn (
              p.algorithmCode, p.algParams, 
              p.mdlscenarioId, p.mdlmaskId, p.prjscenarioId, p.prjmaskId, 
              p.metadata, p.status, p.statusModTime,
-             o.verify, o.displayName, o.dlocation, o.queryCount, 
-             o.bbox, o.metadata, o.status, o.statusModTime
+             o.squid, o.verify, o.displayName, o.dlocation, o.queryCount, 
+             o.bbox, o.epsgcode, o.metadata, o.status, o.statusModTime
         FROM lm_v3.MatrixColumn mc, lm_v3.Matrix m, lm_v3.sdmproject p, 
              lm_v3.occurrenceSet o
         WHERE mc.matrixId = m.matrixId AND 

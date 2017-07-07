@@ -904,6 +904,18 @@ END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
+DROP  FUNCTION lm_v3.lm_getFilterSDMProjects(usr varchar, 
+                                              sqd varchar,
+                                              dispname varchar,
+                                              aftertime double precision, 
+                                              beforetime double precision, 
+                                              epsg int,
+                                              afterstat int, 
+                                              beforestat int,
+                                              occsetid int, 
+                                              algcode varchar, 
+                                              mdlscencode varchar,
+                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterSDMProjects(usr varchar, 
                                               sqd varchar,
                                               dispname varchar,
@@ -915,14 +927,18 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterSDMProjects(usr varchar,
                                               occsetid int, 
                                               algcode varchar, 
                                               mdlscencode varchar,
-                                              prjscencode varchar)
+                                              prjscencode varchar,
+                                              grdid int)
    RETURNS varchar AS
 $$
 DECLARE
-   wherecls varchar;
+   wherecls varchar := ' WHERE userid = ' || quote_literal(usr);
 BEGIN
-   wherecls = 'WHERE userid =  ' || quote_literal(usr) ;
-
+   -- filter by gridsetId 
+   IF grdid is not null THEN
+      wherecls = wherecls || ' AND  gridsetId =  ' || grdid;
+   END IF;
+                
    -- filter by squid
    IF sqd is not null THEN
       wherecls = wherecls || ' AND squid =  ' || quote_literal(sqd);
@@ -992,6 +1008,18 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+DROP FUNCTION lm_v3.lm_countSDMProjects(usr varchar, 
+                                              sqd varchar,
+                                              dispname varchar,
+                                              aftertime double precision, 
+                                              beforetime double precision, 
+                                              epsg int,
+                                              afterstat int, 
+                                              beforestat int,
+                                              occsetid int, 
+                                              algcode varchar, 
+                                              mdlscencode varchar,
+                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_countSDMProjects(usr varchar, 
                                               sqd varchar,
                                               dispname varchar,
@@ -1003,7 +1031,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countSDMProjects(usr varchar,
                                               occsetid int, 
                                               algcode varchar, 
                                               mdlscencode varchar,
-                                              prjscencode varchar)
+                                              prjscencode varchar, 
+                                              grdid int)
    RETURNS int AS
 $$
 DECLARE
@@ -1011,7 +1040,11 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.lm_sdmproject ';
+   IF grdid IS NOT NULL THEN
+      cmd = 'SELECT count(*) FROM lm_v3.lm_sdmMatrixcolumn_matrix ';
+   ELSE
+      cmd = 'SELECT count(*) FROM lm_v3.lm_sdmproject ';
+   END IF;
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
             algcode, mdlscencode, prjscencode);
@@ -1024,7 +1057,20 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- Note: returns LayerId
+-- Note: orders by prjstatusModTime descending
+DROP  FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum int, 
+                                              usr varchar, 
+                                              sqd varchar,
+                                              dispname varchar,
+                                              aftertime double precision, 
+                                              beforetime double precision, 
+                                              epsg int,
+                                              afterstat int, 
+                                              beforestat int,
+                                              occsetid int, 
+                                              algcode varchar, 
+                                              mdlscencode varchar,
+                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum int, 
                                               usr varchar, 
                                               sqd varchar,
@@ -1037,7 +1083,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectAtoms(firstRecNum int, maxNum 
                                               occsetid int, 
                                               algcode varchar, 
                                               mdlscencode varchar,
-                                              prjscencode varchar)
+                                              prjscencode varchar,
+                                              grdid int)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
 DECLARE
@@ -1047,11 +1094,16 @@ DECLARE
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT layerid, displayName, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
+   IF grdid IS NOT NULL THEN
+      cmd = 'SELECT layerid, lyrname, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmMatrixcolumn_matrix ';
+   ELSE
+      cmd = 'SELECT layerid, name, epsgcode, prjstatusModTime FROM lm_v3.lm_sdmproject ';
+   END IF;
+
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
-            algcode, mdlscencode, prjscencode);
-   ordercls = 'ORDER BY prjstatusModTime DESC';
+            algcode, mdlscencode, prjscencode, grdid);
+   ordercls = ' ORDER BY prjstatusModTime DESC';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
@@ -1067,6 +1119,19 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
+DROP  FUNCTION lm_v3.lm_listSDMProjectObjects(firstRecNum int, maxNum int, 
+                                              usr varchar, 
+                                              sqd varchar,
+                                              dispname varchar,
+                                              aftertime double precision, 
+                                              beforetime double precision, 
+                                              epsg int,
+                                              afterstat int, 
+                                              beforestat int,
+                                              occsetid int, 
+                                              algcode varchar, 
+                                              mdlscencode varchar,
+                                              prjscencode varchar);
 CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectObjects(firstRecNum int, maxNum int, 
                                               usr varchar, 
                                               sqd varchar,
@@ -1079,31 +1144,45 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listSDMProjectObjects(firstRecNum int, maxNu
                                               occsetid int, 
                                               algcode varchar, 
                                               mdlscencode varchar,
-                                              prjscencode varchar)
+                                              prjscencode varchar,
+                                              grdid int)
    RETURNS SETOF lm_v3.lm_sdmproject AS
 $$
 DECLARE
-   rec lm_v3.lm_sdmproject;
+   prec lm_v3.lm_sdmproject;
+   mcrec lm_v3.lm_sdmMatrixcolumn_matrix;
    cmd varchar;
    wherecls varchar;
    limitcls varchar;
    ordercls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.lm_sdmproject ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
-            algcode, mdlscencode, prjscencode);
-   ordercls = 'ORDER BY prjstatusModTime DESC';
+            algcode, mdlscencode, prjscencode, grdid);
+   ordercls = ' ORDER BY prjstatusModTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls || ordercls || limitcls;
-   RAISE NOTICE 'cmd = %', cmd;
-
-   FOR rec in EXECUTE cmd
-      LOOP
-         RETURN NEXT rec;
-      END LOOP;
-   RETURN;
+   IF grdid IS NOT NULL THEN
+      cmd = 'SELECT * FROM lm_v3.lm_sdmMatrixcolumn_matrix '
+            || wherecls || ordercls || limitcls;
+      RAISE NOTICE 'cmd = %', cmd;
+      FOR mcrec in EXECUTE cmd
+         LOOP 
+            SELECT * FROM lm_v3.lm_sdmproject INTO prec 
+               WHERE sdmprojectid = mcrec.sdmprojectid;
+            RETURN NEXT prec;
+         END LOOP;
+      RETURN;
+   ELSE
+      cmd = 'SELECT * FROM lm_v3.lm_sdmproject '
+            || wherecls || ordercls || limitcls;
+      RAISE NOTICE 'cmd = %', cmd;
+      FOR prec in EXECUTE cmd
+         LOOP 
+            RETURN NEXT prec;
+         END LOOP;
+      RETURN;
+   END IF;   
 END;
 
 $$  LANGUAGE 'plpgsql' STABLE;

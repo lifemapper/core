@@ -1853,17 +1853,28 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterOccSets(usr varchar,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int)
+                                                    beforestat int,
+                                                    grdid int)
    RETURNS varchar AS
 $$
 DECLARE
-   wherecls varchar;
+   squidcol varchar := 'squid';
+   statcol varchar := 'status';
+   timecol varchar := 'statusModTime';
+   wherecls varchar := ' WHERE userid = ' || quote_literal(usr);
 BEGIN
-   wherecls = ' WHERE userid = ' || quote_literal(usr);
+   -- filter by gridsetId 
+   --   and modify column names for lm_occMatrixcolumn
+   IF grdid is not null THEN
+      wherecls = wherecls || ' AND  gridsetId =  ' || grdid;
+      squidcol = 'occsquid';
+      statcol = 'occstatus';
+      timecol = 'occstatusModTime';
+   END IF;
                 
    -- filter by squid
    IF sqd is not null THEN
-      wherecls = wherecls || ' AND squid =  ' || quote_literal(sqd);
+      wherecls = wherecls || ' AND ' || squidcol || ' =  ' || quote_literal(sqd);
    END IF;
 
    -- filter by count
@@ -1878,12 +1889,12 @@ BEGIN
 
    -- filter by layers modified after given time
    IF aftertime is not null THEN
-      wherecls = wherecls || ' AND statusModTime >=  ' || quote_literal(aftertime);
+      wherecls = wherecls || ' AND ' || timecol || ' >=  ' || quote_literal(aftertime);
    END IF;
    
    -- filter by layers modified before given time
    IF beforetime is not null THEN
-      wherecls = wherecls || ' AND statusModTime <=  ' || quote_literal(beforetime);
+      wherecls = wherecls || ' AND ' || timecol || ' <=  ' || quote_literal(beforetime);
    END IF;
 
    -- filter by epsgcode
@@ -1895,16 +1906,16 @@ BEGIN
    IF afterstat is not null OR beforestat is not null THEN
       begin
          IF afterstat = beforestat THEN
-            wherecls = wherecls || ' AND status =  ' || afterstat;
+            wherecls = wherecls || ' AND ' || statcol || ' =  ' || afterstat;
          ELSE
             -- filter by status >= given value
             IF afterstat is not null THEN
-                wherecls = wherecls || ' AND status >=  ' || afterstat;
+                wherecls = wherecls || ' AND ' || statcol || ' >=  ' || afterstat;
             END IF;
    
             -- filter by status <= given value
             IF beforestat is not null THEN
-               wherecls = wherecls || ' AND status <=  ' || beforestat;
+               wherecls = wherecls || ' AND ' || statcol || ' <=  ' || beforestat;
             END IF;
          END IF;
       end;
@@ -1923,7 +1934,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countOccSets(usr varchar,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int)
+                                                    beforestat int,
+                                                    grdid int)
    RETURNS int AS
 $$
 DECLARE
@@ -1931,10 +1943,15 @@ DECLARE
    cmd varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.occurrenceset ';
+   IF grdid IS NOT NULL THEN
+      cmd = 'SELECT count(*) FROM lm_v3.lm_occMatrixcolumn ';
+   ELSE
+      cmd = 'SELECT count(*) FROM lm_v3.occurrenceset ';
+   END IF;
+   
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
-                        afterstat, beforestat);
+                        afterstat, beforestat, grdid);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
 
@@ -1956,31 +1973,44 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetObjects(firstRecNum int,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int)
+                                                    beforestat int,
+                                                    grdid int)
    RETURNS SETOF lm_v3.OccurrenceSet AS
 $$
 DECLARE
-   rec lm_v3.OccurrenceSet;
+   orec lm_v3.OccurrenceSet;
+   mcrec lm_v3.lm_occMatrixcolumn;
    cmd varchar;
    wherecls varchar;
-   ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.occurrenceset ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
-                        afterstat, beforestat);
-   ordercls = ' ORDER BY statusModTime DESC ';
+                        afterstat, beforestat, grdid);
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
-   cmd := cmd || wherecls || ordercls || limitcls;
-   RAISE NOTICE 'cmd = %', cmd;
+   IF grdid IS NOT NULL THEN
+      cmd = 'SELECT * FROM lm_v3.lm_occMatrixcolumn '
+            || wherecls || ' ORDER BY occstatusModTime DESC ' || limitcls;
+      RAISE NOTICE 'cmd = %', cmd;
+      FOR mcrec in EXECUTE cmd
+         LOOP 
+            SELECT * FROM lm_v3.occurrenceset INTO orec 
+               WHERE occurrencesetid = mcrec.occurrencesetid;
+            RETURN NEXT orec;
+         END LOOP;
+      RETURN;
 
-   FOR rec in EXECUTE cmd
-      LOOP 
-         RETURN NEXT rec;
-      END LOOP;
-   RETURN;
+   ELSE
+      cmd = 'SELECT * FROM lm_v3.occurrenceset '
+            || wherecls || ' ORDER BY statusModTime DESC ' || limitcls;
+      RAISE NOTICE 'cmd = %', cmd;
+      FOR orec in EXECUTE cmd
+         LOOP 
+            RETURN NEXT orec;
+         END LOOP;
+      RETURN;
+   END IF;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
@@ -1996,7 +2026,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listOccSetAtoms(firstRecNum int,
                                                     beforetime double precision,
                                                     epsg int,
                                                     afterstat int,
-                                                    beforestat int)
+                                                    beforestat int,
+                                                    grdid int)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
 DECLARE
@@ -2006,11 +2037,18 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT occurrencesetid, displayname, epsgcode, statusmodtime FROM lm_v3.occurrenceset ';
+   cmd = 'SELECT occurrencesetid, displayname, epsgcode, ';
+   IF grdid IS NOT NULL THEN
+      cmd = cmd || ' occstatusmodtime FROM lm_v3.lm_occMatrixcolumn ';
+      ordercls = ' ORDER BY occstatusModTime DESC ';
+   ELSE
+      cmd = cmd || ' statusmodtime FROM lm_v3.occurrenceset ';
+      ordercls = ' ORDER BY statusModTime DESC ';
+   END IF;
+
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterOccSets(usr, sqd,
                         minOccCount, dispname, aftertime, beforetime, epsg, 
-                        afterstat, beforestat);
-   ordercls = ' ORDER BY statusModTime DESC ';
+                        afterstat, beforestat, grdid);
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
