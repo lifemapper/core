@@ -39,7 +39,7 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.mtxcolumn import MatrixColumn
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario
+from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.tree import Tree
@@ -175,8 +175,10 @@ class Borg(DbPostgresql):
       scen = None
       if isForModel:
          scenid = self._getColumnValue(row, idxs, ['mdlscenarioid', 'scenarioid'])
-         scencode = self._getColumnValue(row, idxs, ['mdlscenariocode', 'scenariocode'])
-         meta = self._getColumnValue(row, idxs, ['mdlscenmetadata', 'metadata'])
+         scencode = self._getColumnValue(row, idxs, ['mdlscenariocode', 
+                                                     'scenariocode'])
+         meta = self._getColumnValue(row, idxs, ['mdlscenmetadata', 
+                                                 'scenmetadata', 'metadata'])
          gcmcode = self._getColumnValue(row, idxs, ['mdlscengcmcode', 'gcmcode'])
          altpredcode = self._getColumnValue(row, idxs, ['mdlscenaltpredcode', 'altpredcode'])
          datecode = self._getColumnValue(row, idxs, ['mdlscendatecode', 'datecode'])
@@ -194,12 +196,28 @@ class Borg(DbPostgresql):
       res = self._getColumnValue(row, idxs, ['resolution'])
       epsg = self._getColumnValue(row, idxs, ['epsgcode'])
       bbox = self._getColumnValue(row, idxs, ['bbox'])
-      modtime = self._getColumnValue(row, idxs, ['modtime'])
+      modtime = self._getColumnValue(row, idxs, ['scenmodtime', 'modtime'])
     
       if row is not None:
          scen = Scenario(scencode, usr, epsg, metadata=meta, units=units, res=res, 
                      gcmCode=gcmcode, altpredCode=altpredcode, dateCode=datecode,
                      bbox=bbox, modTime=modtime, layers=None, scenarioid=scenid)
+      return scen
+
+# ...............................................
+   def _createScenPackage(self, row, idxs, isForModel=True):
+      """
+      @note: created only from Scenario table or lm_sdmproject view
+      """
+      scen = None
+      pkgid = self._getColumnValue(row, idxs, ['scenpackageid'])
+      usr = self._getColumnValue(row, idxs, ['userid'])
+      name = self._getColumnValue(row, idxs, ['pkgname', 'name'])
+      meta = self._getColumnValue(row, idxs, ['pkgmetadata', 'metadata'])
+      modtime = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
+    
+      if row is not None:
+         scen = ScenPackage(name, usr, metadata=meta, modTime=modtime)
       return scen
 
 # ...............................................
@@ -622,70 +640,70 @@ class Borg(DbPostgresql):
       return objs
 
 # ...............................................
-   def findOrInsertEnvPackage(self, envPkg):
+   def findOrInsertScenPackage(self, scenPkg):
       """
-      @summary Inserts a EnvPackage and any scenarios present into the database
-      @param envPkg: The LmServer.legion.scenario.EnvPackage to insert
-      @return: new or existing EnvPackage
-      @note: This returns the updated EnvPackage 
+      @summary Inserts a ScenPackage and any scenarios present into the database
+      @param scenPkg: The LmServer.legion.scenario.ScenPackage to insert
+      @return: new or existing ScenPackage
+      @note: This returns the updated ScenPackage 
       """
-      meta = envPkg.dumpEnvpkgMetadata()
-      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertEnvPackage', 
-                           envPkg.getUserId(), envPkg.name, meta, 
-                           envPkg.modTime)
-      newOrExistingEnvPkg = self._createEnvPackage(row, idxs)
-      return newOrExistingEnvPkg
+      meta = scenPkg.dumpScenpkgMetadata()
+      row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenPackage', 
+                           scenPkg.getUserId(), scenPkg.name, meta, 
+                           scenPkg.modTime)
+      newOrExistingScenPkg = self._createScenPackage(row, idxs)
+      return newOrExistingScenPkg
    
 # ...............................................
-   def getEnvPackagesForScenario(self, scen, scenId, userId, scenCode):
+   def getScenPackagesForScenario(self, scen, scenId, userId, scenCode):
       """
-      @summary Find all EnvPackages that contain the given Scenario
+      @summary Find all ScenPackages that contain the given Scenario
       @param scen: The The LmServer.legion.scenario.Scenario to find 
                      scenarios for
-      @param scenId: The database Id for the Scenario to find EnvPackages
-      @param userId: The userId for the Scenario to find EnvPackages
-      @param envPkgName: The name for the Scenario to find EnvPackages
-      @return: list of LmServer.legion.scenario.EnvPackage objects, filled
+      @param scenId: The database Id for the Scenario to find ScenPackages
+      @param userId: The userId for the Scenario to find ScenPackages
+      @param scenPkgName: The name for the Scenario to find ScenPackages
+      @return: list of LmServer.legion.scenario.ScenPackage objects, filled
                with Scenarios
       """
-      envPkgs = []
+      scenPkgs = []
       if scen:
          scenId = scen.getId()
          userId = scen.getUserId()
          scenCode = scen.code
-      rows, idxs = self.executeSelectManyFunction('lm_getEnvPackagesForScenario',
+      rows, idxs = self.executeSelectManyFunction('lm_getScenPackagesForScenario',
                                                   scenId, userId, scenCode)
       for r in rows:
-         epkg = self._createEnvPackage(r, idxs)
-         scens = self.getScenariosForEnvPackage(epkg, None, None, None)
+         epkg = self._createScenPackage(r, idxs)
+         scens = self.getScenariosForScenPackage(epkg, None, None, None)
          epkg.setScenarios(scens)
-         envPkgs.append(epkg)
-      return envPkgs
+         scenPkgs.append(epkg)
+      return scenPkgs
    
 # ...............................................
-   def getScenariosForEnvPackage(self, envPkg, envPkgId, userId, envPkgName):
+   def getScenariosForScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName):
       """
-      @summary Find all scenarios that are part of the given EnvPackage
-      @param envPkg: The LmServer.legion.scenario.EnvPackage to find 
+      @summary Find all scenarios that are part of the given ScenPackage
+      @param scenPkg: The LmServer.legion.scenario.ScenPackage to find 
                      scenarios for
-      @param envPkgId: The database Id for the EnvPackage to find scenarios
-      @param userId: The userId for the EnvPackage to find scenarios
-      @param envPkgName: The name for the EnvPackage to find scenarios
+      @param scenPkgId: The database Id for the ScenPackage to find scenarios
+      @param userId: The userId for the ScenPackage to find scenarios
+      @param scenPkgName: The name for the ScenPackage to find scenarios
       @return: list of LmServer.legion.scenario.Scenario objects
       """
       scens = []
-      if envPkg:
-         envPkgId = envPkg.getId()
-         userId = envPkg.getUserId()
-         envPkgName = envPkg.name
-      rows, idxs = self.executeSelectManyFunction('lm_getScenariosForEnvPackage',
-                                                  envPkgId, userId, envPkgName)
+      if scenPkg:
+         scenPkgId = scenPkg.getId()
+         userId = scenPkg.getUserId()
+         scenPkgName = scenPkg.name
+      rows, idxs = self.executeSelectManyFunction('lm_getScenariosForScenPackage',
+                                                  scenPkgId, userId, scenPkgName)
       for r in rows:
          scens.append(self._createScenario(r, idxs))
       return scens
    
 # ...............................................
-   def findOrInsertScenario(self, scen, envPkgId):
+   def findOrInsertScenario(self, scen, scenPkgId):
       """
       @summary Inserts a scenario and any layers present into the database
       @param scen: The scenario to insert
@@ -702,18 +720,18 @@ class Borg(DbPostgresql):
                            scen.units, scen.resolution, scen.epsgcode, 
                            scen.getCSVExtentString(), wkt, scen.modTime)
       newOrExistingScen = self._createScenario(row, idxs)
-      if envPkgId is not None:
+      if scenPkgId is not None:
          scenarioId = self._getColumnValue(row, idxs, ['scenarioid'])
          joinId = self.executeModifyReturnValue(
-                     'lm_joinEnvPackageScenario', envPkgId, scenarioId)
+                     'lm_joinScenPackageScenario', scenPkgId, scenarioId)
          if joinId < 0:
-            raise LMError('Failed to join EnvPackage {} to Scenario {}'
-                          .format(envPkgId, scenarioId))
+            raise LMError('Failed to join ScenPackage {} to Scenario {}'
+                          .format(scenPkgId, scenarioId))
       return newOrExistingScen
    
 # .............................................................................
    def countScenarios(self, userId, afterTime, beforeTime, epsg, 
-                      gcmCode, altpredCode, dateCode):
+                      gcmCode, altpredCode, dateCode, scenPackageId):
       """
       @summary: Return the number of scenarios fitting the given filter conditions
       @param userId: filter by LMUser 
@@ -723,16 +741,18 @@ class Borg(DbPostgresql):
       @param gcmCode: filter by the Global Climate Model code
       @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
       @param dateCode: filter by the date code
+      @param scenPackageId: filter by a ScenPackage 
       @return: number of scenarios fitting the given filter conditions
       """
       row, idxs = self.executeSelectOneFunction('lm_countScenarios', userId, 
                                                 afterTime, beforeTime, epsg,
-                                                gcmCode, altpredCode, dateCode)
+                                                gcmCode, altpredCode, dateCode,
+                                                scenPackageId)
       return self._getCount(row)
 
 # .............................................................................
    def listScenarios(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
-                     epsg, gcmCode, altpredCode, dateCode, atom):
+                     epsg, gcmCode, altpredCode, dateCode, scenPackageId, atom):
       """
       @summary: Return scenario Objects or Atoms fitting the given filters 
       @param firstRecNum: start at this record
@@ -744,20 +764,23 @@ class Borg(DbPostgresql):
       @param gcmCode: filter by the Global Climate Model code
       @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
       @param dateCode: filter by the date code
+      @param scenPackageId: filter by a ScenPackage 
       @param atom: True if return objects will be Atoms, False if full objects
       """
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listScenarioAtoms', 
                                                      firstRecNum, maxNum, userId, 
                                                      afterTime, beforeTime, epsg,
-                                                     gcmCode, altpredCode, dateCode)
+                                                     gcmCode, altpredCode, 
+                                                     dateCode, scenPackageId)
          objs = self._getAtoms(rows, idxs, LMServiceType.SCENARIOS)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listScenarioObjects', 
                                                      firstRecNum, maxNum, userId, 
                                                      afterTime, beforeTime, epsg,
-                                                     gcmCode, altpredCode, dateCode)
+                                                     gcmCode, altpredCode, 
+                                                     dateCode, scenPackageId)
          for r in rows:
             objs.append(self._createScenario(r, idxs))
       return objs

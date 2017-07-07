@@ -57,7 +57,7 @@ from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix  
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
-from LmServer.legion.scenario import Scenario, EnvPackage
+from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.shapegrid import ShapeGrid
 
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
@@ -104,7 +104,7 @@ class BOOMFiller(LMObject):
        self.usrEmail,
        self.archiveName,
        self.priority,
-       self.envPackageName,
+       self.scenPackageName,
        self.modelScenCode,
        self.prjScenCodeList,
        self.dataSource,
@@ -132,14 +132,14 @@ class BOOMFiller(LMObject):
                                                    objCode=self.archiveName, 
                                                    usr=self.usr)
       # Create new or pull existing scenarios
-      (self.envPkg, 
+      (self.scenPkg, 
        newModelScenCode,
        self.epsgcode, 
        self.mapunits, 
-       self.envPackageMetaFilename) = self._getScenarios()
+       self.scenPackageMetaFilename) = self._getScenarios()
       if newModelScenCode is  not None:
          self.modelScenCode = newModelScenCode
-      self.prjScenCodeList = self.envPkg.scenarios.keys()
+      self.prjScenCodeList = self.scenPkg.scenarios.keys()
       self.gridset = None
       self.shapegrid = None
       self.defaultPamGrims = {}
@@ -276,15 +276,15 @@ class BOOMFiller(LMObject):
                          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
       # Find package name or code list, check for scenarios and epsg, mapunits
-      envPackageName = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE', 
+      scenPackageName = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE', 
                                                  SCENARIO_PACKAGE)
-      if envPackageName is not None:
+      if scenPackageName is not None:
          modelScenCode = self._findConfigOrDefault(config, 
                      'SCENARIO_PACKAGE_MODEL_SCENARIO', None, isList=False)
          prjScenCodeList = self._findConfigOrDefault(config, 
                      'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
       
-      return (usr, usrEmail, archiveName, priority, envPackageName, 
+      return (usr, usrEmail, archiveName, priority, scenPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
               occIdFname, gbifFname, idigFname, idigOccSep, bisonFname, 
               userOccFname, userOccSep, minpoints, algs, 
@@ -348,7 +348,7 @@ class BOOMFiller(LMObject):
       f.write('; Env Package Vals\n')
       f.write('; ...................\n')
       # Input environmental data, pulled from SCENARIO_PACKAGE metadata
-      f.write('SCENARIO_PACKAGE: {}\n'.format(self.envPackageName))
+      f.write('SCENARIO_PACKAGE: {}\n'.format(self.scenPackageName))
       f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(self.epsgcode))
       f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(self.mapunits))
       # Scenario codes, created from environmental metadata  
@@ -452,18 +452,18 @@ class BOOMFiller(LMObject):
 #       allScens = {}
       if self.modelScenCode not in self.prjScenCodeList:
          self.prjScenCodeList.append(self.modelScenCode)
-      envPkgs = self.scribe.getEnvPackagesForUserCodes(self.usr, 
+      scenPkgs = self.scribe.getScenPackagesForUserCodes(self.usr, 
                                                        self.prjScenCodeList)
-      if not envPkgs:
-         envPkgs = self.scribe.getEnvPackagesForUserCodes(PUBLIC_USER, 
+      if not scenPkgs:
+         scenPkgs = self.scribe.getScenPackagesForUserCodes(PUBLIC_USER, 
                                                           self.prjScenCodeList)
-      if len(envPkgs) == 0:
-         raise LMError('There are no matching envPackages!')
-      elif len(envPkgs) > 1:
-         raise LMError('I cannot handle multiple matching envPackages!')
+      if len(scenPkgs) == 0:
+         raise LMError('There are no matching scenPackages!')
+      elif len(scenPkgs) > 1:
+         raise LMError('I cannot handle multiple matching scenPackages!')
       else:
-         envPkg = envPkgs[0]
-         scen = envPkg.getScenario(code=self.prjScenCodeList[0])
+         scenPkg = scenPkgs[0]
+         scen = scenPkg.getScenario(code=self.prjScenCodeList[0])
          epsg = scen.epsgcode
          mapunits = scen.units
 #       for code in self.prjScenCodeList:
@@ -481,24 +481,24 @@ class BOOMFiller(LMObject):
 #          # Fill or reset 
 #          if self.gridbbox is None:
 #             self.gridbbox = bbox
-      return envPkg, epsg, mapunits
+      return scenPkg, epsg, mapunits
          
    # ...............................................
    def _createScenarios(self):
       # Imports META
-      META, envPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
+      META, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
       if self.gridbbox is None:
          self.gridbbox = pkgMeta['bbox']
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
-      self.scribe.log.info('  Insert climate {} metadata ...'.format(self.envPackageName))
-      envPkg = EnvPackage(self.envPackageName, self.usr)
+      self.scribe.log.info('  Insert climate {} metadata ...'.format(self.scenPackageName))
+      scenPkg = ScenPackage(self.scenPackageName, self.usr)
       # Current
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
                                                       META.LAYERTYPE_META,
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
-      envPkg.addScenario(basescen)
+      scenPkg.addScenario(basescen)
       self.scribe.log.info('     Created base scenario {}'.format(basescen.code))
       # Predicted Past and Future
       allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
@@ -507,8 +507,8 @@ class BOOMFiller(LMObject):
                                            META.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
       for scen in allScens:
-         envPkg.addScenario(scen)
-      return envPkg, basescen.code, epsg, mapunits, envPackageMetaFilename
+         scenPkg.addScenario(scen)
+      return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename
    
    # ...............................................
    def _checkOccurrenceSets(self, limit=10):
@@ -775,72 +775,72 @@ class BOOMFiller(LMObject):
                allScens attribute with newly inserted scenarios and layers
       """
       updatedScens = {}
-      updatedEnvPkg = self.scribe.findOrInsertEnvPackage(self.envPkg)
-      for scode, scen in self.envPkg.scenarios.iteritems():
+      updatedScenPkg = self.scribe.findOrInsertScenPackage(self.scenPkg)
+      for scode, scen in self.scenPkg.scenarios.iteritems():
          if scen.getId() is not None:
             self.scribe.log.info('Scenario {} exists'.format(scode))
             updatedScens[scode] = scen
          else:
             self.scribe.log.info('Insert scenario {}'.format(scode))
             newscen = self.scribe.findOrInsertScenario(scen, 
-                                                envPkgId=updatedEnvPkg.getId())
+                                                scenPkgId=updatedScenPkg.getId())
             updatedScens[scode] = newscen
-      self.envPkg.setScenarios(updatedScens)
+      self.scenPkg.setScenarios(updatedScens)
    
    # ...............................................
    def _findClimatePackageMetadata(self):
-      envPackageMetaFilename = os.path.join(ENV_DATA_PATH, 
-                     '{}{}'.format(self.envPackageName, LMFormat.PYTHON.ext))      
-      if not os.path.exists(envPackageMetaFilename):
+      scenPackageMetaFilename = os.path.join(ENV_DATA_PATH, 
+                     '{}{}'.format(self.scenPackageName, LMFormat.PYTHON.ext))      
+      if not os.path.exists(scenPackageMetaFilename):
          raise LMError(currargs='Climate metadata {} does not exist'
-                       .format(envPackageMetaFilename))
+                       .format(scenPackageMetaFilename))
       # TODO: change to importlib on python 2.7 --> 3.3+  
       try:
          import imp
-         META = imp.load_source('currentmetadata', envPackageMetaFilename)
+         META = imp.load_source('currentmetadata', scenPackageMetaFilename)
       except Exception, e:
          raise LMError(currargs='Climate metadata {} cannot be imported; ({})'
-                       .format(envPackageMetaFilename, e))
-      return META, envPackageMetaFilename
+                       .format(scenPackageMetaFilename, e))
+      return META, scenPackageMetaFilename
    
    # ...............................................
    def _pullClimatePackageMetadata(self):
-      META, envPackageMetaFilename = self._findClimatePackageMetadata()
+      META, scenPackageMetaFilename = self._findClimatePackageMetadata()
       # Combination of scenario and layer attributes making up these data 
-      pkgMeta = META.CLIMATE_PACKAGES[self.envPackageName]
+      pkgMeta = META.CLIMATE_PACKAGES[self.scenPackageName]
       
       try:
          epsg = META.EPSG
       except:
          raise LMError('Failed to specify EPSG for {}'
-                       .format(self.envPackageName))
+                       .format(self.scenPackageName))
       try:
          mapunits = META.MAPUNITS
       except:
          raise LMError('Failed to specify MAPUNITS for {}'
-                       .format(self.envPackageName))
+                       .format(self.scenPackageName))
       try:
          resInMapunits = META.RESOLUTIONS[pkgMeta['res']]
       except:
          raise LMError('Failed to specify res (or RESOLUTIONS values) for {}'
-                       .format(self.envPackageName))
+                       .format(self.scenPackageName))
       try:
          gdaltype = META.ENVLYR_GDALTYPE
       except:
          raise LMError('Failed to specify ENVLYR_GDALTYPE for {}'
-                       .format(self.envPackageName))
+                       .format(self.scenPackageName))
       try:
          gdalformat = META.ENVLYR_GDALFORMAT
       except:
          raise LMError(currargs='Failed to specify META.ENVLYR_GDALFORMAT for {}'
-                       .format(self.envPackageName))
+                       .format(self.scenPackageName))
       # Spatial and format attributes of data files
       elyrMeta = {'epsg': epsg, 
                     'mapunits': mapunits, 
                     'resolution': resInMapunits, 
                     'gdaltype': gdaltype, 
                     'gdalformat': gdalformat}
-      return META, envPackageMetaFilename, pkgMeta, elyrMeta
+      return META, scenPackageMetaFilename, pkgMeta, elyrMeta
 
    # ...............................................
    def _addIntersectGrid(self):
@@ -915,7 +915,7 @@ class BOOMFiller(LMObject):
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                       dlocation=self.envPackageMetaFilename, epsgcode=self.epsgcode, 
+                       dlocation=self.scenPackageMetaFilename, epsgcode=self.epsgcode, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       self.gridset = updatedGrdset
@@ -1035,15 +1035,15 @@ class BOOMFiller(LMObject):
       newModelScenCode = None
       # Codes for existing Scenarios
       if self.modelScenCode and self.prjScenCodeList:
-         envPackageMetaFilename = None
+         scenPackageMetaFilename = None
          # This fills or resets epsgcode, mapunits, gridbbox
-         envPkg, epsg, mapunits = self._checkScenarios(legalUsers)
+         scenPkg, epsg, mapunits = self._checkScenarios(legalUsers)
       # Data/metadata for new Scenarios
       else:
          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-         (envPkg, newModelScenCode, epsg, mapunits, 
-          envPackageMetaFilename) = self._createScenarios()
-      return envPkg, newModelScenCode, epsg, mapunits, envPackageMetaFilename
+         (scenPkg, newModelScenCode, epsg, mapunits, 
+          scenPackageMetaFilename) = self._createScenarios()
+      return scenPkg, newModelScenCode, epsg, mapunits, scenPackageMetaFilename
 
    # ...............................................
    def addAlgorithms(self):

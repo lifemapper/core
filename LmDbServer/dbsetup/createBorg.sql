@@ -209,9 +209,9 @@ create table lm_v3.EnvLayer
 
 -- -------------------------------
 -- Object
-create table lm_v3.EnvPackage
+create table lm_v3.ScenPackage
 (
-	envPackageId serial UNIQUE PRIMARY KEY,
+	scenPackageId serial UNIQUE PRIMARY KEY,
    userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(60) NOT NULL,
    metadata text,
@@ -221,10 +221,10 @@ create table lm_v3.EnvPackage
 
 -- -------------------------------
 -- Object (via join)
-create table lm_v3.EnvPackageScenario
+create table lm_v3.ScenPackageScenario
 (
-	envPackageScenarioId serial UNIQUE PRIMARY KEY,
-	envPackageId int REFERENCES lm_v3.EnvPackage MATCH FULL ON DELETE CASCADE,
+	scenPackageScenarioId serial UNIQUE PRIMARY KEY,
+	scenPackageId int REFERENCES lm_v3.ScenPackage MATCH FULL ON DELETE CASCADE,
    scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE
 );
 
@@ -472,8 +472,8 @@ lm_v3.envtype, lm_v3.envtype_envtypeid_seq,
 lm_v3.layer, lm_v3.layer_layerid_seq, 
 lm_v3.envlayer, lm_v3.envlayer_envlayerid_seq,
 lm_v3.scenario, lm_v3.scenario_scenarioid_seq,
-lm_v3.envpackage, lm_v3.envpackage_envpackageid_seq,
-lm_v3.envpackagescenario, lm_v3.envpackagescenario_envpackagescenarioid_seq,
+lm_v3.scenpackage, lm_v3.scenpackage_scenpackageid_seq,
+lm_v3.scenpackagescenario, lm_v3.scenpackagescenario_scenpackagescenarioid_seq,
 lm_v3.scenariolayer, lm_v3.scenariolayer_scenariolayerid_seq,
 lm_v3.process, lm_v3.process_processid_seq,
 lm_v3.occurrenceset, lm_v3.occurrenceset_occurrencesetid_seq, 
@@ -495,8 +495,8 @@ lm_v3.envtype,
 lm_v3.layer, 
 lm_v3.envlayer,  
 lm_v3.scenario,
-lm_v3.envpackage, 
-lm_v3.envpackagescenario,
+lm_v3.scenpackage, 
+lm_v3.scenpackagescenario,
 lm_v3.scenariolayer,
 lm_v3.process,
 lm_v3.occurrenceset, 
@@ -517,8 +517,8 @@ lm_v3.envtype_envtypeid_seq,
 lm_v3.layer_layerid_seq,
 lm_v3.envlayer_envlayerid_seq,
 lm_v3.scenario_scenarioid_seq,
-lm_v3.envpackage_envpackageid_seq,
-lm_v3.envpackagescenario_envpackagescenarioid_seq,
+lm_v3.scenpackage_scenpackageid_seq,
+lm_v3.scenpackagescenario_scenpackagescenarioid_seq,
 lm_v3.scenariolayer_scenariolayerid_seq,
 lm_v3.occurrenceset_occurrencesetid_seq,
 lm_v3.sdmproject_sdmprojectid_seq,

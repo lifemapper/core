@@ -1,11 +1,11 @@
 """
 These constants represent metadata for one or more Lifemapper environmental data 
 packages.  New climate data packages should be created in a compressed file 
-named <envPackageName>.tar.gz in the ENV_DATA_PATH directory.  
+named <scenPackageName>.tar.gz in the ENV_DATA_PATH directory.  
 
-Uncompressing the package should create <envPackageName>.py and 
-<envPackageName>.csv at the topmost level; data files should be under the
-'topdir', specified in the <envPackageName> entry of the CLIMATE_PACKAGES 
+Uncompressing the package should create <scenPackageName>.py and 
+<scenPackageName>.csv at the topmost level; data files should be under the
+'topdir', specified in the <scenPackageName> entry of the CLIMATE_PACKAGES 
 dictionary. Filenames for each layertype are specified in the LAYERTYPE_DATA
 dictionary, and should be their relative path and filename (under <topdir>).
 

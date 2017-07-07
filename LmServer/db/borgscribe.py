@@ -200,48 +200,48 @@ class BorgScribe(LMObject):
       return newOrExistingET
 
 # ...............................................
-   def findOrInsertEnvPackage(self, envPkg):
+   def findOrInsertScenPackage(self, scenPkg):
       """
-      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertEnvPackage()
-      @note: This returns the updated EnvPackage filled with Scenarios and Layers
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenPackage()
+      @note: This returns the updated ScenPackage filled with Scenarios and Layers
       """
-      updatedEnvPkg = self._borg.findOrInsertEnvPackage(envPkg)
-      for code, scen in updatedEnvPkg.scenarios.iteritems():
-         updatedScen = self.findOrInsertScenario(scen, updatedEnvPkg.getId())
-         updatedEnvPkg.addScenario(updatedScen)
-      return updatedEnvPkg
+      updatedScenPkg = self._borg.findOrInsertScenPackage(scenPkg)
+      for code, scen in updatedScenPkg.scenarios.iteritems():
+         updatedScen = self.findOrInsertScenario(scen, updatedScenPkg.getId())
+         updatedScenPkg.addScenario(updatedScen)
+      return updatedScenPkg
 
 # ...............................................
-   def getEnvPackagesForScenario(self, scen=None, scenId=None, 
+   def getScenPackagesForScenario(self, scen=None, scenId=None, 
                                  userId=None, scenCode=None):
       """
-      @copydoc LmServer.db.catalog_borg.Borg::getEnvPackagesForScenario()
+      @copydoc LmServer.db.catalog_borg.Borg::getScenPackagesForScenario()
       """
-      envPkgs = self._borg.getEnvPackagesForScenario(scen, scenId, 
+      scenPkgs = self._borg.getScenPackagesForScenario(scen, scenId, 
                                                      userId, scenCode)
-      return envPkgs
+      return scenPkgs
 
 # ...............................................
-   def getScenariosForEnvPackage(self, envPkg=None, envPkgId=None, 
-                                 userId=None, envPkgName=None):
+   def getScenariosForScenPackage(self, scenPkg=None, scenPkgId=None, 
+                                 userId=None, scenPkgName=None):
       """
-      @copydoc LmServer.db.catalog_borg.Borg::getScenariosForEnvPackage
+      @copydoc LmServer.db.catalog_borg.Borg::getScenariosForScenPackage
       """
-      scens = self.getScenariosForEnvPackage(envPkg)
+      scens = self.getScenariosForScenPackage(scenPkg)
       return scens
 
 # ...............................................
-   def getEnvPackagesForUserCodes(self, usr, scenCodeList):
+   def getScenPackagesForUserCodes(self, usr, scenCodeList):
       """
-      @copydoc LmServer.db.catalog_borg.Borg::getEnvPackagesForScenario()
-      @note: This returns all EnvPackages containing this scenario.  All 
-             EnvPackages are filled with Scenarios.
+      @copydoc LmServer.db.catalog_borg.Borg::getScenPackagesForScenario()
+      @note: This returns all ScenPackages containing this scenario.  All 
+             ScenPackages are filled with Scenarios.
       """
-      envPkgs = []
+      scenPkgs = []
       if scenCodeList:
          firstCode = scenCodeList[0]
          scenCodeList.remove(firstCode)
-         firstPkgs = self.getEnvPackagesForScenario(userId=usr, 
+         firstPkgs = self.getScenPackagesForScenario(userId=usr, 
                                                     scenCode=firstCode)
          for pkg in firstPkgs:
             badMatch = False
@@ -251,16 +251,16 @@ class BorgScribe(LMObject):
                   badMatch = True
                   break
             if not badMatch:
-               envPkgs.append(pkg)
-      return envPkgs
+               scenPkgs.append(pkg)
+      return scenPkgs
 
 # ...............................................
-   def findOrInsertScenario(self, scen, envPkgId=None):
+   def findOrInsertScenario(self, scen, scenPkgId=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenario()
       @note: This returns the updated Scenario filled with Layers
       """
-      updatedScen = self._borg.findOrInsertScenario(scen, envPkgId)
+      updatedScen = self._borg.findOrInsertScenario(scen, scenPkgId)
       scenId = updatedScen.getId()
       for lyr in scen.layers:
          updatedLyr = self.findOrInsertEnvLayer(lyr, scenId)

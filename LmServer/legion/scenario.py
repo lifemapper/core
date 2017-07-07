@@ -28,7 +28,7 @@ from LmServer.common.lmconstants import LMFileType, LMServiceType
 from LmServer.legion.envlayer import EnvLayer
 
 # .........................................................................
-class EnvPackage(ServiceObject):
+class ScenPackage(ServiceObject):
    """       
    Class to hold a set of Raster object environmental data layers 
    that are used together for creating or projecting a niche model
@@ -42,15 +42,15 @@ class EnvPackage(ServiceObject):
                 metadataUrl=None, 
                 modTime=None, 
                 scenarios=None, 
-                envPackageId=None):
+                scenPackageId=None):
       """
-      @summary Constructor for the EnvPackage class 
+      @summary Constructor for the ScenPackage class 
       @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
       @param name: The name for this set of scenarios
       @param scenarios: list of Scenario objects
       """
-      ServiceObject.__init__(self, userId, envPackageId, 
-                             LMServiceType.ENV_PACKAGES, 
+      ServiceObject.__init__(self, userId, scenPackageId, 
+                             LMServiceType.SCEN_PACKAGES, 
                              metadataUrl=metadataUrl, 
                              modTime=modTime)
       self.name = name
@@ -62,9 +62,9 @@ class EnvPackage(ServiceObject):
 # .............................................................................
    def addScenario(self, scen):
       """
-      @summary: Add a scenario to an EnvPackage.  
+      @summary: Add a scenario to an ScenPackage.  
       @note: metadataUrl or scenario code (unique for a user), is used 
-             to ensure that a scenario is not duplicated in the EnvPackage.  
+             to ensure that a scenario is not duplicated in the ScenPackage.  
       """
       if isinstance(scen, Scenario):
          if scen.getUserId() == self.getUserId():
@@ -72,7 +72,7 @@ class EnvPackage(ServiceObject):
                                 metadataUrl=scen.metadataUrl) is None:
                self._scenarios[scen.code] = scen
          else:
-            raise LMError(['Cannot add user {} Scenario to user {} EnvPackage'
+            raise LMError(['Cannot add user {} Scenario to user {} ScenPackage'
                            .format(scen.getUserId(), self.getUserId())])
       else:
          raise LMError(['Cannot add {} as a Scenario'.format(type(scen))])
@@ -80,7 +80,7 @@ class EnvPackage(ServiceObject):
 # .............................................................................
    def getScenario(self, code=None, metadataUrl=None):
       """
-      @summary Gets a scenario from the EnvPackage with the specified metadataUrl
+      @summary Gets a scenario from the ScenPackage with the specified metadataUrl
       @param metadataUrl: metadataUrl for which to find matching scenario
       @param userId: user for which to find matching scenario with code
       @param code: code for which to find matching scenario with userId
@@ -109,17 +109,17 @@ class EnvPackage(ServiceObject):
             self.addScenario(scen)
 
 # ...............................................
-   def dumpEnvpkgMetadata(self):
-      return super(EnvPackage, self)._dumpMetadata(self.envpkgMetadata)
+   def dumpScenpkgMetadata(self):
+      return super(ScenPackage, self)._dumpMetadata(self.scenpkgMetadata)
  
 # ...............................................
-   def loadEnvpkgMetadata(self, newMetadata):
-      self.envpkgMetadata = super(EnvPackage, self)._loadMetadata(newMetadata)
+   def loadScenpkgMetadata(self, newMetadata):
+      self.scenpkgMetadata = super(ScenPackage, self)._loadMetadata(newMetadata)
 
 # ...............................................
-   def addScenMetadata(self, newMetadataDict):
-      self.envpkgMetadata = super(EnvPackage, self)._addMetadata(newMetadataDict, 
-                                  existingMetadataDict=self.envpkgMetadata)
+   def addScenpkgMetadata(self, newMetadataDict):
+      self.scenpkgMetadata = super(ScenPackage, self)._addMetadata(newMetadataDict, 
+                                  existingMetadataDict=self.scenpkgMetadata)
 
 
 # .........................................................................

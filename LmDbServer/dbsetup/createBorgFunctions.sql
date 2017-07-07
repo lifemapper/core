@@ -392,7 +392,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenarios(usr varchar,
                                                   epsg int,
                                                   gcm varchar,
                                                   altpred varchar,
-                                                  dt varchar)
+                                                  dt varchar,
+                                                  pkgid int)
    RETURNS varchar AS
 $$
 DECLARE
@@ -430,6 +431,11 @@ BEGIN
       wherecls = wherecls || ' AND datecode =  ' || quote_literal(dt);
    END IF;
 
+   -- filter by scenPackageId
+   IF pkgid is not null THEN
+      wherecls = wherecls || ' AND scenPackageId =  ' || pkgid;
+   END IF;
+
    RETURN wherecls;
 END;
 $$  LANGUAGE 'plpgsql' STABLE;
@@ -441,7 +447,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_countScenarios(usr varchar,
                                                    epsg int,
                                                    gcm varchar,
                                                    altpred varchar,
-                                                   dt varchar)
+                                                   dt varchar,
+                                                   pkgid int)
    RETURNS int AS
 $$
 DECLARE
@@ -450,9 +457,9 @@ DECLARE
    fromcls varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.scenario ';
+   cmd = 'SELECT count(*) FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
-                          aftertime, beforetime, epsg, gcm, altpred, dt);
+                          aftertime, beforetime, epsg, gcm, altpred, dt, pkgid);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
 
@@ -462,7 +469,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- Note: order by modTime descending
+-- Note: order by scenario modTime descending
 CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioObjects(firstRecNum int, 
                                                    maxNum int,
                                                    usr varchar,
@@ -471,8 +478,9 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioObjects(firstRecNum int,
                                                    epsg int,
                                                    gcm varchar,
                                                    altpred varchar,
-                                                   dt varchar)
-   RETURNS SETOF lm_v3.scenario AS
+                                                   dt varchar,
+                                                   pkgid int)
+   RETURNS SETOF lm_v3.lm_scenPackageScenario AS
 $$
 DECLARE
    rec lm_v3.scenario;
@@ -481,10 +489,10 @@ DECLARE
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.scenario ';
+   cmd = 'SELECT * FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
-                          aftertime, beforetime, epsg, gcm, altpred, dt);
-   ordercls = ' ORDER BY modTime DESC ';
+                          aftertime, beforetime, epsg, gcm, altpred, dt, pkgid);
+   ordercls = ' ORDER BY scenmodTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
@@ -499,7 +507,7 @@ END;
 $$  LANGUAGE 'plpgsql' STABLE;
 
 -- ----------------------------------------------------------------------------
--- Note: order by modTime descending
+-- Note: order by scenario modTime descending
 CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioAtoms(firstRecNum int, 
                                                    maxNum int,
                                                    usr varchar,
@@ -508,7 +516,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listScenarioAtoms(firstRecNum int,
                                                    epsg int,
                                                    gcm varchar,
                                                    altpred varchar,
-                                                   dt varchar)
+                                                   dt varchar,
+                                                   pkgid int)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
 DECLARE
@@ -519,9 +528,9 @@ DECLARE
    limitcls varchar;
    title varchar;
 BEGIN
-   cmd = 'SELECT scenarioid, null, epsgcode, modTime FROM lm_v3.scenario ';
+   cmd = 'SELECT scenarioid, null, epsgcode, scenmodTime FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
-                          aftertime, beforetime, epsg, gcm, altpred, dt);
+                          aftertime, beforetime, epsg, gcm, altpred, dt, pkgid);
    ordercls = ' ORDER BY modTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 

@@ -124,6 +124,47 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenlayer (
           AND sl.scenarioid = s.scenarioid
         ORDER BY sl.scenarioLayerId ASC;
 
+-- -------------------------------
+-- lm_scenPackageScenario (ScenPackage + Scenario)
+DROP VIEW IF EXISTS lm_v3.lm_scenPackageScenario CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
+   -- Scenario.*
+    scenarioId,
+    userid,
+    scenarioCode,
+    scenmetadata,
+    gcmCode,
+    altpredCode,
+    dateCode,
+    units,
+    resolution,
+    epsgcode,
+    bbox,
+    scenmodTime,
+    -- EnvPackage.*
+    scenPackageId,
+    pkgname,
+    pkgmetadata,
+    pkgmodTime
+   ) AS
+      SELECT s.scenarioId, s.scenarioCode, s.userid, s.scenarioCode, s.metadata, 
+      s.gcmCode, s.altpredCode, s.dateCode, s.units, s.resolution, s.epsgcode, 
+      s.bbox, s.modTime,
+      p.scenPackageId, p.name, p.metadata, p.modTime
+        FROM lm_v3.Scenario s, lm_v3.ScenPackage p, lm_v3.ScenPackageScenario sps
+        WHERE sps.scenarioId = s.scenarioId
+          AND sps.scenPackageId = p.scenPackageId
+        ORDER BY s.modTime ASC;
+
+-- -------------------------------
+-- Object (via join)
+create table lm_v3.EnvPackageScenario
+(
+	envPackageScenarioId serial UNIQUE PRIMARY KEY,
+	envPackageId int REFERENCES lm_v3.EnvPackage MATCH FULL ON DELETE CASCADE,
+   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE
+);
+
 -- ----------------------------------------------------------------------------
 -- lm_shapegrid (ShapeGrid + Layer)
 DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
