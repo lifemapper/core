@@ -531,9 +531,8 @@ class Gridset(ServiceObject):
                wsMcpaOutFilename
             ])
             
-            rules.append(
-               MfRule(' '.join(mcpaOutStockpileCmd), [mcpaOutSuccessFilename], 
-                      dependencies=[wsMcpaOutFilename]))
+            rules.append(MfRule(mcpaOutStockpileCmd, [mcpaOutSuccessFilename], 
+                                dependencies=[wsMcpaOutFilename]))
 
       return rules
    
