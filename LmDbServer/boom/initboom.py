@@ -492,7 +492,7 @@ class BOOMFiller(LMObject):
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
       self.scribe.log.info('  Insert climate {} metadata ...'.format(self.scenPackageName))
-      scenPkg = ScenPackage(self.scenPackageName, self.usr)
+      scenPkg = ScenPackage(self.scenPackageName, self.usr, modTime=CURR_MJD)
       # Current
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
                                                       META.LAYERTYPE_META,
