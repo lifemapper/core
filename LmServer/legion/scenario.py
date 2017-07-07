@@ -89,7 +89,12 @@ class ScenPackage(ServiceObject):
       """
       for scen in self._scenarios:
          if code is not None:
-            return self._scenarios[code]
+            try:
+               scen = self._scenarios[code]
+            except:
+               pass
+            else:
+               return scen
          elif metadataUrl is not None:
             for code, scen in self._scenarios.iteritems():
                if scen.metadataUrl == metadataUrl:
@@ -103,6 +108,10 @@ class ScenPackage(ServiceObject):
       return self._scenarios
       
    def setScenarios(self, scens):
+      """
+      @summary: sets the scenarios in the ScenPackage
+      @param scens: list of scenarios
+      """
       self._scenarios = {}
       if scens:
          for scen in scens:

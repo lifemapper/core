@@ -506,7 +506,7 @@ class BOOMFiller(LMObject):
                                            META.OBSERVED_PREDICTED_META,
                                            META.CLIMATE_KEYWORDS)
       self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
-      for scen in allScens:
+      for scen in allScens.values():
          scenPkg.addScenario(scen)
       return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename
    
@@ -774,17 +774,17 @@ class BOOMFiller(LMObject):
       @summary Add scenPackage, scenario and layer metadata to database, and 
                update the scenPkg attribute with newly inserted objects
       """
-      updatedScens = {}
+      updatedScens = []
       updatedScenPkg = self.scribe.findOrInsertScenPackage(self.scenPkg)
       for scode, scen in self.scenPkg.scenarios.iteritems():
          if scen.getId() is not None:
             self.scribe.log.info('Scenario {} exists'.format(scode))
-            updatedScens[scode] = scen
+            updatedScens.append(scen)
          else:
             self.scribe.log.info('Insert scenario {}'.format(scode))
             newscen = self.scribe.findOrInsertScenario(scen, 
                                                 scenPkgId=updatedScenPkg.getId())
-            updatedScens[scode] = newscen
+            updatedScens.append(newscen)
       self.scenPkg.setScenarios(updatedScens)
    
    # ...............................................
