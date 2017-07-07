@@ -105,7 +105,7 @@ def _query(collection, qParams=None, fqParams=None,
          queryParts.append('fq={}'.format('+AND+'.join(fqParts)))
    
    if otherParams is not None:
-      queryParts.append('wt={}'.format(otherParams))
+      queryParts.append(otherParams)
    
    url = '{}{}/select?{}'.format(SOLR_SERVER, collection, '&'.join(queryParts))
    res = urllib2.urlopen(url)
