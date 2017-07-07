@@ -249,7 +249,7 @@ class BOOMFiller(LMObject):
                'USER_OCCURRENCE_DATA_DELIMITER', USER_OCCURRENCE_DATA_DELIMITER)
       minpoints = self._findConfigOrDefault(config, 'POINT_COUNT_MIN', 
                                             POINT_COUNT_MIN)
-      algs = self._getAlgorithms()
+      algs = self._getAlgorithms(config)
          
       assemblePams = self._findConfigOrDefault(config, 'ASSEMBLE_PAMS', 
                                                ASSEMBLE_PAMS)
@@ -769,10 +769,10 @@ class BOOMFiller(LMObject):
       return predScenarios
    
    # ...............................................
-   def findOrAddPackageScenariosAndLayers(self):
+   def addPackageScenariosLayers(self):
       """
-      @summary Add scenario and layer metadata to database, and update the 
-               allScens attribute with newly inserted scenarios and layers
+      @summary Add scenPackage, scenario and layer metadata to database, and 
+               update the scenPkg attribute with newly inserted objects
       """
       updatedScens = {}
       updatedScenPkg = self.scribe.findOrInsertScenPackage(self.scenPkg)
@@ -1142,8 +1142,8 @@ if __name__ == '__main__':
    # Data for this Boom user
    # ...............................................
    # Add or get Scenarios 
-   # This updates the allScens with db objects for other operations
-   filler.findOrAddPackageScenariosAndLayers()
+   # This updates the scenPkg with db objects for other operations
+   filler.addPackageScenariosLayers()
          
    # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
    # Test a subset of OccurrenceIds provided as BOOM species input
@@ -1169,7 +1169,7 @@ if __name__ == '__main__':
 """
 from LmDbServer.boom.initboom import BOOMFiller
 
-configFname = '/state/partition1/tmpdata/testCrap.boom.ini'
+configFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
 filler = BOOMFiller(configFname=configFname)
 
 filler.initializeInputs()
@@ -1189,8 +1189,8 @@ filler.addAlgorithms()
 # ...............................................
 # Add or get Scenarios 
 # This updates the allScens with db objects for other operations
-filler.findOrAddPackageScenariosAndLayers()
-for code, scen in filler.allScens.iteritems():
+filler.addPackageScenariosLayers()
+for code, scen in filler.scenPkg.scenarios.iteritems():
    print code, scen.getId()
    for lyr in scen.layers:
       print '  ',lyr.name
@@ -1201,15 +1201,6 @@ for code, scen in filler.allScens.iteritems():
 if filler.occIdFname:
    filler._checkOccurrenceSets()
       
-# Add or get ShapeGrid, Global PAM, Gridset for this archive
-# This updates the gridset, shapegrid, default PAMs (rolling, with no 
-#     matrixColumns, default GRIMs with matrixColumns
-filler.addArchive()
-for code, scen in filler.allScens.iteritems():
-   print code, scen.getId()
-   for lyr in scen.layers:
-      print '  ',lyr.name
-   print
 
 # Create, add, write MFChain for creating each Scenario GRIM
 filler.addGRIMChains()
