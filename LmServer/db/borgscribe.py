@@ -983,6 +983,8 @@ grdid = 2
 scribe = BorgScribe(ConsoleLogger())
 scribe.openConnections()
 
+gs = scribe.getGridset(gridsetId=grdid, fillMatrices=True)
+
 occs = scribe.getOccLayersForGridset(grdid)
 
 colPrjPairs1 = scribe.getSDMColumnsForMatrix(pamid) 

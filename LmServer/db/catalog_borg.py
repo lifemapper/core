@@ -860,9 +860,10 @@ class Borg(DbPostgresql):
                                                 name)
       fullGset = self._createGridset(row, idxs)
       if fullGset is not None and fillMatrices:
-         mtx = self.getMatricesForGridset(fullGset.getId(), mtxType=None)
-         # addMatrix sets userid
-         fullGset.addMatrix(mtx)
+         mtxs = self.getMatricesForGridset(fullGset.getId(), None)
+         for m in mtxs:
+            # addMatrix sets userid
+            fullGset.addMatrix(m)
       return fullGset
 
 # .............................................................................
