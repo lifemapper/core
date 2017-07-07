@@ -656,12 +656,12 @@ BEGIN
    SELECT * INTO rec FROM lm_v3.ScenPackage p 
       WHERE p.name = epname and p.userid = usr;
    IF NOT FOUND THEN
-      INSERT INTO lm_v3.ScenPackage (userid, epname, metadata, modTime)
+      INSERT INTO lm_v3.ScenPackage (userid, name, metadata, modTime)
                             VALUES (usr, epname, meta, mtime);
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to find or insert ScenPackage';
       ELSE
-         SELECT INTO newid last_value FROM lm_v3.envpackage_envpackageid_seq;
+         SELECT INTO newid last_value FROM lm_v3.scenpackage_scenpackageid_seq;
          SELECT * INTO rec FROM lm_v3.ScenPackage p WHERE p.scenPackageid = newid;
       END IF; -- end if inserted
    END IF;  -- end if not existing

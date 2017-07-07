@@ -32,7 +32,7 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat,
                         ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (ALGORITHMS, ASSEMBLE_PAMS, 
+from LmDbServer.common.localconstants import (ASSEMBLE_PAMS, 
       GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
       BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
       USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
@@ -1170,6 +1170,7 @@ if __name__ == '__main__':
 from LmDbServer.boom.initboom import BOOMFiller
 
 configFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
+configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 filler = BOOMFiller(configFname=configFname)
 
 filler.initializeInputs()

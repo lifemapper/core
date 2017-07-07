@@ -104,7 +104,7 @@ class Config(object):
 
    # .....................................
    def getoptions(self, section):
-      return self.config.option(section)
+      return self.config.options(section)
 
    # .....................................
    def reload(self):

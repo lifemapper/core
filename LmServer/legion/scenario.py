@@ -54,7 +54,7 @@ class ScenPackage(ServiceObject):
                              metadataUrl=metadataUrl, 
                              modTime=modTime)
       self.name = name
-      self.loadScenMetadata(metadata)
+      self.loadScenpkgMetadata(metadata)
       
       self._scenarios = {}
       self.setScenarios(scenarios)
