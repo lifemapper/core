@@ -757,7 +757,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_sdmMatrixcolumn
       SELECT mc.matrixColumnId, mc.matrixId, mc.matrixIndex, 
              mc.squid, mc.ident, mc.metadata, mc.layerId,
              mc.intersectParams, mc.status, mc.statusmodtime,
-             psmc.dmprojectid, pl.userid, pl.occurrenceSetId, pl.algorithmCode, 
+             pl.sdmprojectid, pl.userid, pl.occurrenceSetId, pl.algorithmCode, 
              pl.algParams, pl.mdlscenarioId, pl.mdlmaskId, pl.prjscenarioId, 
              pl.prjmaskId, pl.prjmetadata, pl.prjstatus, pl.prjstatusModTime, 
              pl.lyrverify, pl.lyrname, pl.lyrdlocation, pl.lyrmetadata, 
