@@ -156,15 +156,6 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
           AND sps.scenPackageId = p.scenPackageId
         ORDER BY s.modTime ASC;
 
--- -------------------------------
--- Object (via join)
-create table lm_v3.EnvPackageScenario
-(
-	envPackageScenarioId serial UNIQUE PRIMARY KEY,
-	envPackageId int REFERENCES lm_v3.EnvPackage MATCH FULL ON DELETE CASCADE,
-   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE
-);
-
 -- ----------------------------------------------------------------------------
 -- lm_shapegrid (ShapeGrid + Layer)
 DROP VIEW IF EXISTS lm_v3.lm_shapegrid CASCADE;
