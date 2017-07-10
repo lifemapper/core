@@ -141,7 +141,7 @@ def predictedCalc(predStd, rDivQT, siteWeights, pSigmaStd):
    return predicted
 
 # .............................................................................
-def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
+def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False, headerPrefix=''):
    """
    @summary: Perform an MCPA run on a PAM, predictor matrix, and phylo matrix
    @param pam: The PAM to use for this run (also referred to as an incidence 
@@ -297,9 +297,9 @@ def mcpaRun(pam, predictorMtx, phyloMtx, randomize=False):
    
    # Adding headers for each Matrix
    adjR2Mtx = Matrix(adjRsq, headers={'0' : phyloMtx.getColumnHeaders(),
-                                      '1' : ['Adjusted R-squared']})
+                                      '1' : ['{}Adjusted R-squared'.format(headerPrefix)]})
    fGlobalMtx = Matrix(fGlobal, headers={'0' : phyloMtx.getColumnHeaders(),
-                                         '1' : ['F-Global']})
+                                         '1' : ['{}F-Global'.format(headerPrefix)]})
    spMtx = Matrix(semiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
                                         '1' : predictorMtx.getColumnHeaders()})
    fSpMtx = Matrix(fSemiPartialMtx, headers={'0' : phyloMtx.getColumnHeaders(),
