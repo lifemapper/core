@@ -462,7 +462,6 @@ class BOOMFiller(LMObject):
    # ...............................................
    def _checkScenarios(self, legalUsers):
       epsg = mapunits = None
-#       allScens = {}
       if self.modelScenCode not in self.prjScenCodeList:
          self.prjScenCodeList.append(self.modelScenCode)
       scenPkgs = self.scribe.getScenPackagesForUserCodes(self.usr, 
@@ -479,21 +478,6 @@ class BOOMFiller(LMObject):
          scen = scenPkg.getScenario(code=self.prjScenCodeList[0])
          epsg = scen.epsgcode
          mapunits = scen.units
-#       for code in self.prjScenCodeList:
-#          scen = self.scribe.getScenario(code, userId=self.usr, fillLayers=True)
-#          if scen is None:
-#             raise LMError('Missing Scenario for code or id {}'.format(code))
-#          if scen.getUserId() not in legalUsers:
-#             raise LMError('legalUsers {} missing {}'.format(legalUsers,
-#                                                             scen.getUserId()))
-#          allScens[code] = scen
-#          if epsg is None:
-#             epsg = scen.epsgcode
-#             mapunits = scen.units
-#             bbox = scen.bbox
-#          # Fill or reset 
-#          if self.gridbbox is None:
-#             self.gridbbox = bbox
       return scenPkg, epsg, mapunits
          
    # ...............................................
@@ -1010,7 +994,7 @@ class BOOMFiller(LMObject):
       currtime = mx.DateTime.gmt().mjd
 
       for code, (pam, grim) in self.defaultPamGrims.iteritems():
-         scen = self.allScens[code]
+         scen = self.scenPkg.scenarios[code]
          # Create MFChain for this GRIM
          grimChain = self._createGrimMF(code, currtime)
          targetDir = grimChain.getRelativeDirectory()
