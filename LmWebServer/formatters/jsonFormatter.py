@@ -42,7 +42,7 @@ from LmServer.legion.envlayer import EnvLayer
 from LmServer.legion.gridset import Gridset
 from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.occlayer import OccurrenceLayer
-from LmServer.legion.scenario import Scenario
+from LmServer.legion.scenario import Scenario, ScenPackage
 from LmServer.legion.sdmproj import SDMProjection
 from LmServer.legion.shapegrid import ShapeGrid
 
@@ -299,6 +299,18 @@ def formatScenario(scn):
    return scnDict
 
 # .............................................................................
+def formatScenarioPackage(scnPkg):
+   """
+   @summary: Converts a scenario package object into a dictionary
+   """
+   scnPkgDict = _getLifemapperMetadata('scenario package', scnPkg.getId(), 
+                                       scnPkg.metadataUrl, scnPkg.getUserId(),
+                                       metadata=scnPkg.scenpkgMetadata)
+   scnPkgDict['name'] = scnPkg.name
+   scnPkgDict['scenarios'] = [formatScenario(scn) for scn in scnPkg.scenarios]
+   return scnPkgDict
+
+# .............................................................................
 def formatShapegrid(sg):
    """
    @summary: Convert a shapegrid into a dictionary
@@ -361,6 +373,8 @@ def _formatObject(obj):
       return formatEnvLayer(obj)
    elif isinstance(obj, Scenario):
       return formatScenario(obj)
+   elif isinstance(obj, ScenPackage):
+      return formatScenarioPackage(obj)
    elif isinstance(obj, Raster):
       return formatRasterLayer(obj)
    elif isinstance(obj, Gridset):
