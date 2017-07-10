@@ -673,7 +673,8 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenPackages(usr varchar,
                                                   aftertime double precision,
-                                                  beforetime double precision)
+                                                  beforetime double precision,
+                                                  scenid int)
    RETURNS varchar AS
 $$
 DECLARE
@@ -683,12 +684,17 @@ BEGIN
    
    -- filter by ScenPackages modified after given time
    IF aftertime is not null THEN
-      wherecls = wherecls || ' AND modTime >=  ' || quote_literal(aftertime);
+      wherecls = wherecls || ' AND pkgmodTime >=  ' || quote_literal(aftertime);
    END IF;
 
    -- filter by ScenPackages modified before given time
    IF beforetime is not null THEN
-      wherecls = wherecls || ' AND modTime <=  ' || quote_literal(beforetime);
+      wherecls = wherecls || ' AND pkgmodTime <=  ' || quote_literal(beforetime);
+   END IF;
+
+   -- filter by ScenPackages containing a particular scenario
+   IF scenid is not null THEN
+      wherecls = wherecls || ' AND scenid =  ' || quote_literal(scenid);
    END IF;
 
    RETURN wherecls;
@@ -698,7 +704,8 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_countScenPackages(usr varchar,
                                                    aftertime double precision,
-                                                   beforetime double precision)
+                                                   beforetime double precision,
+                                                   scenid int)
    RETURNS int AS
 $$
 DECLARE
@@ -707,9 +714,9 @@ DECLARE
    fromcls varchar;
    wherecls varchar;
 BEGIN
-   cmd = 'SELECT count(*) FROM lm_v3.scenario ';
+   cmd = 'SELECT count(*) FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls  
-         FROM lm_v3.lm_getFilterScenPackages(usr, aftertime, beforetime);
+         FROM lm_v3.lm_getFilterScenPackages(usr, aftertime, beforetime, scenid);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
 
@@ -724,20 +731,21 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listScenPackageObjects(firstRecNum int,
                                                    maxNum int,
                                                    usr varchar,
                                                    aftertime double precision,
-                                                   beforetime double precision)
-   RETURNS SETOF lm_v3.ScenPackage AS
+                                                   beforetime double precision,
+                                                   scenid int)
+   RETURNS SETOF lm_v3.lm_scenPackageScenario AS
 $$
 DECLARE
-   rec lm_v3.ScenPackage;
+   rec lm_v3.lm_scenPackageScenario;
    cmd varchar;
    wherecls varchar;
    ordercls varchar;
    limitcls varchar;
 BEGIN
-   cmd = 'SELECT * FROM lm_v3.ScenPackage ';
+   cmd = 'SELECT * FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls  
-         FROM lm_v3.lm_getFilterScenPackages(usr, aftertime, beforetime);
-   ordercls = ' ORDER BY modTime DESC ';
+         FROM lm_v3.lm_getFilterScenPackages(usr, aftertime, beforetime, scenid);
+   ordercls = ' ORDER BY pkgmodTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
@@ -757,7 +765,8 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listScenPackageAtoms(firstRecNum int,
                                                    maxNum int,
                                                    usr varchar,
                                                    aftertime double precision,
-                                                   beforetime double precision)
+                                                   beforetime double precision,
+                                                   scenid int)
    RETURNS SETOF lm_v3.lm_atom AS
 $$
 DECLARE
@@ -768,10 +777,10 @@ DECLARE
    limitcls varchar;
    title varchar;
 BEGIN
-   cmd = 'SELECT scenPackageId, name, null, modTime FROM lm_v3.ScenPackage ';
+   cmd = 'SELECT scenPackageId, name, null, modTime FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls  
-         FROM lm_v3.lm_getFilterScenPackages(usr, aftertime, beforetime);
-   ordercls = ' ORDER BY modTime DESC ';
+         FROM lm_v3.lm_getFilterScenPackages(usr, aftertime, beforetime, scenid);
+   ordercls = ' ORDER BY pkgmodTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;

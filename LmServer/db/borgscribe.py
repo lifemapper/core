@@ -199,6 +199,25 @@ class BorgScribe(LMObject):
          raise LMError(currargs='Invalid object for EnvType insertion')
       return newOrExistingET
 
+# .............................................................................
+   def countScenPackages(self, userId=PUBLIC_USER, afterTime=None, 
+                         beforeTime=None, scenId=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::countScenPackages()
+      """
+      count = self._borg.countScenPackages(userId, afterTime, beforeTime, scenId)
+      return count
+
+# .............................................................................
+   def listScenPackages(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
+                        afterTime=None, beforeTime=None, scenId=None, atom=True):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::listScenPackages()
+      """
+      objs = self._borg.listScenPackages(firstRecNum, maxNum, userId, afterTime, 
+                                         beforeTime, scenId, atom)
+      return objs
+
 # ...............................................
    def findOrInsertScenPackage(self, scenPkg):
       """

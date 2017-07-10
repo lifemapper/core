@@ -655,6 +655,53 @@ class Borg(DbPostgresql):
       newOrExistingScenPkg = self._createScenPackage(row, idxs)
       return newOrExistingScenPkg
    
+# .............................................................................
+   def countScenPackages(self, userId, afterTime, beforeTime, scenId):
+      """
+      @summary: Return the number of ScenarioPackages fitting the given filter 
+               conditions
+      @param userId: filter by LMUser 
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param scenId: filter by a Scenario 
+      @return: number of ScenarioPackages fitting the given filter conditions
+      """
+      row, idxs = self.executeSelectOneFunction('lm_countScenPackages', userId, 
+                                                afterTime, beforeTime, scenId)
+      return self._getCount(row)
+
+# .............................................................................
+   def listScenPackages(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
+                        scenId, atom):
+      """
+      @summary: Return ScenPackage Objects or Atoms fitting the given filters 
+      @param firstRecNum: start at this record
+      @param maxNum: maximum number of records to return
+      @param userId: filter by LMUser 
+      @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
+      @param scenId: filter by a Scenario 
+      @param atom: True if return objects will be Atoms, False if full objects
+      @note: returned ScenPackage Objects contain Scenario objects, not filled
+             with layers.
+      """
+      if atom:
+         rows, idxs = self.executeSelectManyFunction('lm_listScenPackageAtoms', 
+                                                     firstRecNum, maxNum, userId, 
+                                                     afterTime, beforeTime, 
+                                                     scenId)
+         objs = self._getAtoms(rows, idxs, LMServiceType.SCEN_PACKAGES)
+      else:
+         objs = []
+         rows, idxs = self.executeSelectManyFunction('lm_listScenPackageObjects', 
+                                                     firstRecNum, maxNum, userId, 
+                                                     afterTime, beforeTime, 
+                                                     scenId)
+         for r in rows:
+            objs.append(self._createScenario(r, idxs))
+      return objs
+
+
 # ...............................................
    def getScenPackagesForScenario(self, scen, scenId, userId, scenCode):
       """
@@ -736,8 +783,8 @@ class Borg(DbPostgresql):
       """
       @summary: Return the number of scenarios fitting the given filter conditions
       @param userId: filter by LMUser 
-      @param beforeTime: filter by modified at or before this time
       @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
       @param epsg: filter by the EPSG spatial reference system code 
       @param gcmCode: filter by the Global Climate Model code
       @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
@@ -759,8 +806,8 @@ class Borg(DbPostgresql):
       @param firstRecNum: start at this record
       @param maxNum: maximum number of records to return
       @param userId: filter by LMUser 
-      @param beforeTime: filter by modified at or before this time
       @param afterTime: filter by modified at or after this time
+      @param beforeTime: filter by modified at or before this time
       @param epsg: filter by the EPSG spatial reference system code 
       @param gcmCode: filter by the Global Climate Model code
       @param altpredCode: filter by the alternate predictor code (i.e. IPCC RCP)
