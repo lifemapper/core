@@ -66,7 +66,6 @@ CURR_MJD = mx.DateTime.gmt().mjd
 # .............................................................................
 class BOOMFiller(LMObject):
    """
-   @note: Not yet used!
    @summary 
    Class to: 
      1) populate a Lifemapper database with inputs for a BOOM archive
@@ -97,6 +96,16 @@ class BOOMFiller(LMObject):
       """
       @summary Initialize configured and stored inputs for BOOMFiller class.
       """
+      # Filled in with fillScenarios
+      self.scenPkg = None
+      self.epsgcode = None
+      self.mapunits = None
+      self.scenPackageMetaFilename = None
+      # Filled in with config file (using existing codes) 
+      #   or fillScenarios (for a new ScenPackage)
+      self.modelScenCode = None
+      self.prjScenCodeList = []
+      
       # Allow reset configuration
       if configFname is not None:
          self.inConfigFname = configFname
@@ -131,19 +140,27 @@ class BOOMFiller(LMObject):
       self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                    objCode=self.archiveName, 
                                                    usr=self.usr)
+      # Created by addArchive
+      self.gridset = None
+      self.shapegrid = None
+      self.defaultPamGrims = {}
+      
+   # ...............................................
+   def fillScenarios(self, configFname=None):
+      """
+      @summary Initialize configured and stored inputs for BOOMFiller class.
+      """
       # Create new or pull existing scenarios
       (self.scenPkg, 
        newModelScenCode,
        self.epsgcode, 
        self.mapunits, 
        self.scenPackageMetaFilename) = self._getScenarios()
+      # If scenario codes were provided, not a new package, fill codes
       if newModelScenCode is  not None:
          self.modelScenCode = newModelScenCode
       self.prjScenCodeList = self.scenPkg.scenarios.keys()
-      self.gridset = None
-      self.shapegrid = None
-      self.defaultPamGrims = {}
-      
+
    # ...............................................
    def open(self):
       success = self.scribe.openConnections()
@@ -1167,11 +1184,55 @@ if __name__ == '__main__':
    filler.close()
     
 """
+import mx.DateTime
+import os
+import time
+from types import IntType
+
+from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
+                        ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
+from LmCommon.common.readyfile import readyFilename
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
+from LmDbServer.common.localconstants import (ASSEMBLE_PAMS, 
+      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
+      BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
+      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
+      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
+      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
+      GRID_CELLSIZE, GRID_NUM_SIDES)
+from LmServer.common.datalocator import EarlJr
+from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
+         GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
+         DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
+from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
+                                            POINT_COUNT_MIN)
+from LmServer.common.lmuser import LMUser
+from LmServer.common.log import ScriptLogger
+from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.utilities import isCorrectUser
+from LmServer.db.borgscribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.cmd import MfRule
+from LmServer.legion.envlayer import EnvLayer
+from LmServer.legion.gridset import Gridset
+from LmServer.legion.lmmatrix import LMMatrix  
+from LmServer.legion.mtxcolumn import MatrixColumn          
+from LmServer.legion.processchain import MFChain
+from LmServer.legion.scenario import Scenario, ScenPackage
+from LmServer.legion.shapegrid import ShapeGrid
+
+CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
+CURR_MJD = mx.DateTime.gmt().mjd
+
 from LmDbServer.boom.initboom import BOOMFiller
 
 configFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
 configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 configFname = '/state/partition1/tmpdata/atest.boom.ini'
+configFname = '/state/partition1/tmpdata/file_90310.ini'
+
 filler = BOOMFiller(configFname=configFname)
 
 filler.initializeInputs()
