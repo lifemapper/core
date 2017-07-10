@@ -362,7 +362,7 @@ class BOOMFiller(LMObject):
       f.write('; ...................\n')
       # Input environmental data, pulled from SCENARIO_PACKAGE metadata
       f.write('SCENARIO_PACKAGE: {}\n'.format(self.scenPackageName))
-      f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(self.epsgcode))
+      f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(self.epsg))
       f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(self.mapunits))
       # Scenario codes, created from environmental metadata  
       f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(self.modelScenCode))
@@ -858,7 +858,7 @@ class BOOMFiller(LMObject):
 
    # ...............................................
    def _addIntersectGrid(self):
-      shp = ShapeGrid(self.gridname, self.usr, self.epsgcode, self.cellsides, 
+      shp = ShapeGrid(self.gridname, self.usr, self.epsg, self.cellsides, 
                       self.cellsize, self.mapunits, self.gridbbox,
                       status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
       newshp = self.scribe.findOrInsertShapeGrid(shp)
@@ -929,7 +929,7 @@ class BOOMFiller(LMObject):
       meta = {ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
               ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD]}
       grdset = Gridset(name=self.archiveName, metadata=meta, shapeGrid=shp, 
-                       dlocation=self.scenPackageMetaFilename, epsgcode=self.epsgcode, 
+                       dlocation=self.scenPackageMetaFilename, epsgcode=self.epsg, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       self.gridset = updatedGrdset
