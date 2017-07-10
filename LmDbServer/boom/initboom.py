@@ -542,24 +542,25 @@ class BOOMFiller(LMObject):
                                .format(count, str(e)))
                break
             try:
-               id = int(tmp)
+               occid = int(tmp)
             except Exception, e:
                self.scribe.log.info('Unable to get Id from data {} on line {}'
                                .format(tmp, count))
                nonIntCount += 1
             else:
-               occ = self.scribe.getOccurrenceSet(occId=id)
+               occ = self.scribe.getOccurrenceSet(occId=occid)
                if occ is None:
                   missingCount += 1
                elif occ.getUserId() not in legalUsers:
                   self.scribe.log.info('Unauthorized user {} for ID {}'
-                                  .format(occ.getUserId(), id))
+                                  .format(occ.getUserId(), occid))
                   wrongUserCount += 1
             if count >= limit:
                break
-      self.scribe.log.info('Errors out of {} read OccurrenceSets (limit {}):'. format(limit))
+      self.scribe.log.info('Errors out of {} read OccurrenceSets (limit {}):'.format(count, limit))
       self.scribe.log.info('  Missing: {} '.format(missingCount))
       self.scribe.log.info('  Unauthorized data: {} '.format(wrongUserCount))
+      self.scribe.log.info('  Bad ID: {} '.format(nonIntCount))
 
    # ...............................................
    def _getbioName(self, obsOrPred, res, gcm=None, tm=None, altpred=None, 
