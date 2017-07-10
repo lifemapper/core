@@ -77,7 +77,7 @@ class OccurrenceLayerService(LmService):
    @lmFormatter
    def GET(self, pathOccSetId=None, afterTime=None, beforeTime=None, 
            displayName=None, epsgCode=None, minimumNumberOfPoints=1, 
-           limit=100, offset=0, public=None, status=None):
+           limit=100, offset=0, public=None, status=None, gridSetId=None):
       """
       @summary: Performs a GET request.  If an occurrence set id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -92,11 +92,12 @@ class OccurrenceLayerService(LmService):
          return self._listOccurrenceSets(userId, afterTime=afterTime, 
                 beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
-                limit=limit, offset=offset)
+                limit=limit, offset=offset, gridSetId=gridSetId)
       elif pathOccSetId.lower() == 'count':
          return self._countOccurrenceSets(userId, afterTime=afterTime, 
                 beforeTime=beforeTime, displayName=displayName, 
-                epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints)
+                epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
+                gridSetId=gridSetId)
       else:
          return self._getOccurrenceSet(pathOccSetId)
    
@@ -164,7 +165,7 @@ class OccurrenceLayerService(LmService):
    # ................................
    def _countOccurrenceSets(self, userId, afterTime=None, beforeTime=None, 
                            displayName=None, epsgCode=None, 
-                           minimumNumberOfPoints=1, status=None):
+                           minimumNumberOfPoints=1, status=None, gridSetId=None):
       """
       @summary: Return a count of occurrence sets matching the specified 
                    criteria
@@ -186,7 +187,8 @@ class OccurrenceLayerService(LmService):
                      minOccurrenceCount=minimumNumberOfPoints, 
                      displayName=displayName, afterTime=afterTime, 
                      beforeTime=beforeTime, epsg=epsgCode, 
-                     beforeStatus=beforeStatus, afterStatus=afterStatus)
+                     beforeStatus=beforeStatus, afterStatus=afterStatus,
+                     gridsetId=gridSetId)
       return {'count' : occCount}
 
    # ................................
@@ -211,7 +213,7 @@ class OccurrenceLayerService(LmService):
    def _listOccurrenceSets(self, userId, afterTime=None, beforeTime=None, 
                            displayName=None, epsgCode=None, 
                            minimumNumberOfPoints=1, limit=100, offset=0, 
-                           status=None):
+                           status=None, gridSetId=None):
       """
       @summary: Return a list of occurrence sets matching the specified 
                    criteria
@@ -233,7 +235,8 @@ class OccurrenceLayerService(LmService):
                      minOccurrenceCount=minimumNumberOfPoints, 
                      displayName=displayName, afterTime=afterTime, 
                      beforeTime=beforeTime, epsg=epsgCode, 
-                     beforeStatus=beforeStatus, afterStatus=afterStatus)
+                     beforeStatus=beforeStatus, afterStatus=afterStatus,
+                     gridsetId=gridSetId)
       return occAtoms
    
    

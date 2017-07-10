@@ -80,7 +80,7 @@ class SdmProjectService(LmService):
            algorithmCode=None, beforeStatus=None, beforeTime=None, 
            displayName=None, epsgCode=None, limit=100, modelScenarioCode=None, 
            occurrenceSetId=None, offset=0, projectionScenarioCode=None, 
-           public=None, scenarioId=None, status=None):
+           public=None, scenarioId=None, status=None, gridSetId=None):
       """
       @summary: Performs a GET request.  If a projection id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -99,7 +99,7 @@ class SdmProjectService(LmService):
                                  limit=limit, mdlScnCode=modelScenarioCode, 
                                  occurrenceSetId=occurrenceSetId, offset=offset,
                                  prjScnCode=projectionScenarioCode, 
-                                 status=status)
+                                 status=status, gridSetId=gridSetId)
       elif pathProjectionId.lower() == 'count':
          return self._countProjections(userId, afterStatus=afterStatus,
                                  afterTime=afterTime, algCode=algorithmCode, 
@@ -108,7 +108,7 @@ class SdmProjectService(LmService):
                                  mdlScnCode=modelScenarioCode, 
                                  occurrenceSetId=occurrenceSetId, 
                                  prjScnCode=projectionScenarioCode, 
-                                 status=status)
+                                 status=status, gridSetId=gridSetId)
       else:
          return self._getProjection(pathProjectionId)
    
@@ -149,7 +149,7 @@ class SdmProjectService(LmService):
                          algCode=None, beforeStatus=None, 
                         beforeTime=None, displayName=None, epsgCode=None,
                         mdlScnCode=None, occurrenceSetId=None, prjScnCode=None, 
-                        status=None):
+                        status=None, gridSetId=None):
       """
       @summary: Return a count of projections matching the specified criteria
       """
@@ -169,7 +169,8 @@ class SdmProjectService(LmService):
                            beforeTime=beforeTime, epsg=epsgCode, 
                            afterStatus=afterStatus, beforeStatus=beforeStatus, 
                            occsetId=occurrenceSetId, algCode=algCode, 
-                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
+                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode,
+                           gridsetId=gridSetId)
       return {"count" : prjCount}
 
    # ................................
@@ -195,7 +196,7 @@ class SdmProjectService(LmService):
                         algCode=None, beforeStatus=None,  
                         beforeTime=None, displayName=None, epsgCode=None,
                         limit=100, mdlScnCode=None, occurrenceSetId=None, 
-                        offset=0, prjScnCode=None, status=None):
+                        offset=0, prjScnCode=None, status=None, gridSetId=None):
       """
       @summary: Return a list of projections matching the specified criteria
       """
@@ -214,6 +215,7 @@ class SdmProjectService(LmService):
                            beforeTime=beforeTime, epsg=epsgCode, 
                            afterStatus=afterStatus, beforeStatus=beforeStatus, 
                            occsetId=occurrenceSetId, algCode=algCode, 
-                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode)
+                           mdlscenCode=mdlScnCode, prjscenCode=prjScnCode,
+                           gridsetId=gridSetId)
       return prjAtoms
    
