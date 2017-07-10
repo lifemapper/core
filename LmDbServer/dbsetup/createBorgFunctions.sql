@@ -887,7 +887,7 @@ BEGIN
       RAISE EXCEPTION 'Unable to join Scenario and ScenPackage';
    ELSE
       SELECT INTO newid last_value 
-          FROM lm_v3.envpackagescenario_envpackagescenarioid_seq;
+          FROM lm_v3.scenpackagescenario_scenpackagescenarioid_seq;
    END IF;
    
    RETURN newid;

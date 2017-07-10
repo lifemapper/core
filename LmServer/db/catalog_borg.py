@@ -217,7 +217,8 @@ class Borg(DbPostgresql):
       modtime = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
     
       if row is not None:
-         scen = ScenPackage(name, usr, metadata=meta, modTime=modtime)
+         scen = ScenPackage(name, usr, metadata=meta, modTime=modtime,
+                            scenPackageId=pkgid)
       return scen
 
 # ...............................................

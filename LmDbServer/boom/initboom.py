@@ -1171,6 +1171,7 @@ from LmDbServer.boom.initboom import BOOMFiller
 
 configFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
 configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
+configFname = '/state/partition1/tmpdata/atest.boom.ini'
 filler = BOOMFiller(configFname=configFname)
 
 filler.initializeInputs()
@@ -1191,11 +1192,6 @@ filler.addAlgorithms()
 # Add or get Scenarios 
 # This updates the allScens with db objects for other operations
 filler.addPackageScenariosLayers()
-for code, scen in filler.scenPkg.scenarios.iteritems():
-   print code, scen.getId()
-   for lyr in scen.layers:
-      print '  ',lyr.name
-   print
       
 # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
 # Test a subset of OccurrenceIds provided as BOOM species input

@@ -610,25 +610,29 @@ class BorgScribe(LMObject):
       return scenario
    
 # .............................................................................
-   def countScenarios(self, userId=PUBLIC_USER, beforeTime=None, afterTime=None, 
-                      epsg=None, gcmCode=None, altpredCode=None, dateCode=None):
+   def countScenarios(self, userId=PUBLIC_USER, afterTime=None, beforeTime=None, 
+                      epsg=None, gcmCode=None, altpredCode=None, dateCode=None,
+                      scenPackageId=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countScenarios()
       """
-      count = self._borg.countScenarios(userId, beforeTime, afterTime, epsg,
-                                            gcmCode, altpredCode, dateCode)
+      count = self._borg.countScenarios(userId, afterTime, beforeTime, epsg,
+                                            gcmCode, altpredCode, dateCode, 
+                                            scenPackageId)
       return count
 
 # .............................................................................
    def listScenarios(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
-                     beforeTime=None, afterTime=None, epsg=None, gcmCode=None, 
-                     altpredCode=None, dateCode=None, atom=True):
+                     afterTime=None, beforeTime=None, epsg=None, gcmCode=None, 
+                     altpredCode=None, dateCode=None, scenPackageId=None, 
+                     atom=True):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countScenarios()
       """
       count = self._borg.listScenarios(firstRecNum, maxNum, userId, 
-                                       beforeTime, afterTime, epsg, gcmCode, 
-                                       altpredCode, dateCode, atom)
+                                       afterTime, beforeTime, epsg, gcmCode, 
+                                       altpredCode, dateCode, scenPackageId, 
+                                       atom)
       return count
 
 # ...............................................
