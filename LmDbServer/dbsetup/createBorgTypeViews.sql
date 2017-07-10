@@ -147,7 +147,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
     pkgmetadata,
     pkgmodTime
    ) AS
-      SELECT s.scenarioId, s.scenarioCode, s.userid, s.scenarioCode, s.metadata, 
+      SELECT s.scenarioId, s.userid, s.scenarioCode, s.metadata, 
       s.gcmCode, s.altpredCode, s.dateCode, s.units, s.resolution, s.epsgcode, 
       s.bbox, s.modTime,
       p.scenPackageId, p.name, p.metadata, p.modTime
@@ -346,7 +346,36 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    idAttribute,
    xAttribute,
    yAttribute,
-   shpgrdstatus,
+   shpgrdstatus,DROP VIEW IF EXISTS lm_v3.lm_scenPackageScenario CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
+   -- Scenario.*
+    scenarioId,
+    userid,
+    scenarioCode,
+    scenmetadata,
+    gcmCode,
+    altpredCode,
+    dateCode,
+    units,
+    resolution,
+    epsgcode,
+    bbox,
+    scenmodTime,
+    -- EnvPackage.*
+    scenPackageId,
+    pkgname,
+    pkgmetadata,
+    pkgmodTime
+   ) AS
+      SELECT s.scenarioId, s.userid, s.scenarioCode, s.metadata, 
+      s.gcmCode, s.altpredCode, s.dateCode, s.units, s.resolution, s.epsgcode, 
+      s.bbox, s.modTime,
+      p.scenPackageId, p.name, p.metadata, p.modTime
+        FROM lm_v3.Scenario s, lm_v3.ScenPackage p, lm_v3.ScenPackageScenario sps
+        WHERE sps.scenarioId = s.scenarioId
+          AND sps.scenPackageId = p.scenPackageId
+        ORDER BY s.modTime ASC;
+   
    shpgrdstatusmodtime,
    lyrsquid,
    lyrverify,
@@ -951,32 +980,41 @@ CREATE OR REPLACE VIEW lm_v3.lm_bloat AS
 GRANT SELECT ON TABLE 
 lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
+lm_v3.lm_scenPackageScenario,
 lm_v3.lm_shapegrid,
-lm_v3.lm_occurrenceset, 
+lm_v3.lm_gridset,
+lm_v3.lm_tree,
+lm_v3.lm_fullmatrix,
+lm_v3.lm_matrix,
 lm_v3.lm_sdmProject, 
 lm_v3.lm_sdmproject_lyr,
+lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixcolumn,
+lm_v3.lm_occMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn,
+lm_v3.lm_sdmMatrixcolumn_matrix,
 lm_v3.lm_lyrMatrixcolumn,
-lm_v3.lm_matrix,
-lm_v3.lm_fullmatrix,
-lm_v3.lm_gridset,
 lm_v3.lm_bloat
 TO GROUP reader;
+
 
 GRANT SELECT ON TABLE 
 lm_v3.lm_envlayer,
 lm_v3.lm_scenlayer,
+lm_v3.lm_scenPackageScenario,
 lm_v3.lm_shapegrid,
-lm_v3.lm_occurrenceset, 
+lm_v3.lm_gridset,
+lm_v3.lm_tree,
+lm_v3.lm_fullmatrix,
+lm_v3.lm_matrix,
 lm_v3.lm_sdmProject, 
 lm_v3.lm_sdmproject_lyr,
+lm_v3.lm_occurrenceset, 
 lm_v3.lm_matrixcolumn,
+lm_v3.lm_occMatrixcolumn,
 lm_v3.lm_sdmMatrixcolumn,
+lm_v3.lm_sdmMatrixcolumn_matrix,
 lm_v3.lm_lyrMatrixcolumn,
-lm_v3.lm_matrix,
-lm_v3.lm_fullmatrix,
-lm_v3.lm_gridset,
 lm_v3.lm_bloat
 TO GROUP writer;
 

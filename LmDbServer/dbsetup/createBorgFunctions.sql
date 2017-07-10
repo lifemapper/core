@@ -531,7 +531,7 @@ BEGIN
    cmd = 'SELECT scenarioid, null, epsgcode, scenmodTime FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt, pkgid);
-   ordercls = ' ORDER BY modTime DESC ';
+   ordercls = ' ORDER BY scenmodTime DESC ';
    limitcls = ' LIMIT ' || quote_literal(maxNum) || ' OFFSET ' || quote_literal(firstRecNum);
 
    cmd := cmd || wherecls || ordercls || limitcls;
