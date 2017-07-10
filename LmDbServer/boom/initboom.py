@@ -934,7 +934,7 @@ class BOOMFiller(LMObject):
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       self.gridset = updatedGrdset
       # "Global" PAM, GRIM (one each per scenario)
-      for code, scen in self.allScens.iteritems():
+      for code, scen in self.scenPkg.scenarios.iteritems():
          gPam, scenGrim = self._findOrAddDefaultMatrices(updatedGrdset, scen)
          self.defaultPamGrims[code] = (gPam, scenGrim)
    
@@ -1274,7 +1274,37 @@ for code, scen in filler.allScens.iteritems():
       print '  ',lyr.name
    print
 
+shp = ShapeGrid(filler.gridname, filler.usr, filler.epsg, filler.cellsides, 
+                filler.cellsize, filler.mapunits, filler.gridbbox,
+                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
+newshp = filler.scribe.findOrInsertShapeGrid(shp)
+validData = False
+if newshp: 
+   # check existence
+   validData, _ = ShapeGrid.testVector(newshp.getDLocation())
+   if not validData:
+      try:
+         dloc = newshp.getDLocation()
+         newshp.buildShape(overwrite=True)
+         validData, _ = ShapeGrid.testVector(dloc)
+      except Exception, e:
+         filler.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
+      if not validData:
+         raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
+   if validData and newshp.status != JobStatus.COMPLETE:
+      newshp.updateStatus(JobStatus.COMPLETE)
+      success = filler.scribe.updateObject(newshp)
+      if success is False:
+         filler.scribe.log.warning('Failed to update Shapegrid record')
+else:
+   raise LMError(currargs='Failed to find or insert Shapegrid')
+return newshp
+
 shpGrid, archiveGridset, pamGrims = filler.addArchive()
+
+
+
+
 grimChains = filler.createGRIMChains(shpGrid, pamGrims)
 
 
