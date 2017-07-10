@@ -703,6 +703,30 @@ class Borg(DbPostgresql):
 
 
 # ...............................................
+   def getScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName):
+      """
+      @summary Find all ScenPackages that contain the given Scenario
+      @param scenPkg: The The LmServer.legion.scenario.ScenPackage to find 
+      @param scenPkgId: The database Id for the ScenPackage
+      @param userId: The userId for the ScenPackages
+      @param scenPkgName: The name for the ScenPackage
+      @return: LmServer.legion.scenario.ScenPackage object, filled
+               with Scenarios
+      """
+      if scenPkg:
+         scenPkgId = scenPkg.getId()
+         userId = scenPkg.getUserId()
+         scenPkgName = scenPkg.name
+      row, idxs = self.executeSelectManyFunction('lm_getScenPackage',
+                                                  scenPkgId, userId, scenPkgName)
+      foundScenPkg = self._createScenPackage(row, idxs)
+      if foundScenPkg:
+         scens = self.getScenariosForScenPackage(foundScenPkg, None, None, None)
+         foundScenPkg.setScenarios(scens)
+      return foundScenPkg
+   
+
+# ...............................................
    def getScenPackagesForScenario(self, scen, scenId, userId, scenCode):
       """
       @summary Find all ScenPackages that contain the given Scenario

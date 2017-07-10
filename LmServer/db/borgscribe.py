@@ -274,6 +274,16 @@ class BorgScribe(LMObject):
       return scenPkgs
 
 # ...............................................
+   def getScenPackage(self, scenPkg=None, scenPkgId=None, 
+                      userId=None, scenPkgName=None):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::getScenPackage()
+      """
+      foundScenPkg = self._borg.getScenPackage(scenPkg, scenPkgId, userId, 
+                                               scenPkgName)
+      return foundScenPkg
+
+# ...............................................
    def findOrInsertScenario(self, scen, scenPkgId=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::findOrInsertScenario()

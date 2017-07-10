@@ -141,7 +141,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
     epsgcode,
     bbox,
     scenmodTime,
-    -- EnvPackage.*
+    -- ScenPackage.*
     scenPackageId,
     pkgname,
     pkgmetadata,

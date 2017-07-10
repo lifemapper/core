@@ -670,6 +670,7 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenPackages(usr varchar,
                                                   aftertime double precision,
