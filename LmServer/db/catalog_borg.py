@@ -214,10 +214,14 @@ class Borg(DbPostgresql):
       usr = self._getColumnValue(row, idxs, ['userid'])
       name = self._getColumnValue(row, idxs, ['pkgname', 'name'])
       meta = self._getColumnValue(row, idxs, ['pkgmetadata', 'metadata'])
+      epsg = self._getColumnValue(row, idxs, ['pkgepsgcode', 'epsgcode'])
+      bbox = self._getColumnValue(row, idxs, ['pkgbbox', 'bbox'])
+      units = self._getColumnValue(row, idxs, ['pkgunits', 'units'])
       modtime = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
     
       if row is not None:
-         scen = ScenPackage(name, usr, metadata=meta, modTime=modtime,
+         scen = ScenPackage(name, usr, metadata=meta, epsgcode=epsg, bbox=bbox, 
+                            mapunits=units, modTime=modtime,
                             scenPackageId=pkgid)
       return scen
 

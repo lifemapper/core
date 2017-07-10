@@ -28,7 +28,7 @@ from LmServer.common.lmconstants import LMFileType, LMServiceType
 from LmServer.legion.envlayer import EnvLayer
 
 # .........................................................................
-class ScenPackage(ServiceObject):
+class ScenPackage(ServiceObject, LMSpatialObject):
    """       
    Class to hold a set of Raster object environmental data layers 
    that are used together for creating or projecting a niche model
@@ -40,6 +40,9 @@ class ScenPackage(ServiceObject):
    def __init__(self, name, userId, 
                 metadata={},
                 metadataUrl=None, 
+                epsgcode=None, 
+                bbox=None, 
+                mapunits=None,
                 modTime=None, 
                 scenarios=None, 
                 scenPackageId=None):
@@ -53,6 +56,7 @@ class ScenPackage(ServiceObject):
                              LMServiceType.SCEN_PACKAGES, 
                              metadataUrl=metadataUrl, 
                              modTime=modTime)
+      LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
       self.name = name
       self.loadScenpkgMetadata(metadata)
       

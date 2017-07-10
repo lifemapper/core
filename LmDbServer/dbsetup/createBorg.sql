@@ -215,6 +215,11 @@ create table lm_v3.ScenPackage
    userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(60) NOT NULL,
    metadata text,
+   
+   units varchar(20),
+   epsgcode int,
+   bbox varchar(60),
+
    modTime double precision,
    UNIQUE (name, userid)
 );

@@ -778,7 +778,7 @@ DECLARE
    limitcls varchar;
    title varchar;
 BEGIN
-   cmd = 'SELECT scenPackageId, name, null, modTime FROM lm_v3.lm_scenPackageScenario ';
+   cmd = 'SELECT scenPackageId, pkgname, null, pkgmodTime FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls  
          FROM lm_v3.lm_getFilterScenPackages(usr, aftertime, beforetime, scenid);
    ordercls = ' ORDER BY pkgmodTime DESC ';
