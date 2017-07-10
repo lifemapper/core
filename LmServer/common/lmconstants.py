@@ -528,7 +528,7 @@ class LMFileType:
                    LMFileType.RANDOM_CALC, LMFileType.SITES_RANDOM,
                    LMFileType.SPECIES_RANDOM, LMFileType.DIVERSITY_RANDOM,
                    LMFileType.SCHLUTER_RANDOM, LMFileType.SPECIES_COV_RANDOM,
-                   LMFileType.SITES_COV_RANDOM]:
+                   LMFileType.SITES_COV_RANDOM, LMFileType.MCPA_OUTPUTS]:
          return True
       return False
 

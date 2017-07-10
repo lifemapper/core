@@ -70,11 +70,15 @@ if __name__ == "__main__":
       #predictorMtx = Matrix.concatenate([bgMtx, envMtx], axis=1)
       
       predictorMtx = Matrix.load(args.bio)
+      hp = 'BG - '
    else:
       predictorMtx = envMtx
+      hp = 'ENV - '
    
    adjRsq, fGlobal, semiPartialMtx, fSemiPartial = mcpaRun(incidenceMtx, 
-                                                        predictorMtx, phyloMtx)
+                                                           predictorMtx, 
+                                                           phyloMtx, 
+                                                           headerPrefix=hp)
 
    # Write outputs
    with open(args.adjRsqFn, 'w') as adjRsqF:

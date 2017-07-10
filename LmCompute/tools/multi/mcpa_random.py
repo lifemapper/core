@@ -68,8 +68,10 @@ if __name__ == "__main__":
       #predictorMtx = Matrix.concatenate([bgMtx, envMtx], axis=1)
       
       predictorMtx = Matrix.load(args.bio)
+      hp = 'BG - '
    else:
       predictorMtx = envMtx
+      hp = 'ENV - '
    
    numNodes = phyloMtx.data.shape[1]
    numPredictors = predictorMtx.data.shape[1]
@@ -86,7 +88,8 @@ if __name__ == "__main__":
       # TODO: Update when this returns Matrix objects
       _, fGlobalRand, _, fSemiPartialRand = mcpaRun(incidenceMtx, 
                                                     predictorMtx, phyloMtx,
-                                                    randomize=True)
+                                                    randomize=True, 
+                                                    headerPrefix=hp)
       # Add values to stacks
       fGlobals.append(fGlobalRand)
       fSemiPartials.append(fSemiPartialRand)

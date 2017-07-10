@@ -235,7 +235,7 @@ class BioGeoEncoding(object):
          except: # Second feature is optional
             pass
          
-         featuresList.append(((feat1, feat2), de))
+         featuresList.append(((feat1, feat2), '{} - {}'.format(eventField, de)))
 
       return featuresList
       
