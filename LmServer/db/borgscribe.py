@@ -259,12 +259,12 @@ class BorgScribe(LMObject):
       scenPkgs = []
       if scenCodeList:
          firstCode = scenCodeList[0]
-         scenCodeList.remove(firstCode)
+         newlist = scenCodeList[1:]
          firstPkgs = self.getScenPackagesForScenario(userId=usr, 
                                                     scenCode=firstCode)
          for pkg in firstPkgs:
             badMatch = False
-            for code in scenCodeList:
+            for code in newlist:
                foundScen = pkg.getScenario(code=code)
                if not foundScen:
                   badMatch = True

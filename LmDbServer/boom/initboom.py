@@ -95,17 +95,7 @@ class BOOMFiller(LMObject):
    def initializeInputs(self, configFname=None):
       """
       @summary Initialize configured and stored inputs for BOOMFiller class.
-      """
-      # Filled in with fillScenarios
-      self.scenPkg = None
-      self.epsgcode = None
-      self.mapunits = None
-      self.scenPackageMetaFilename = None
-      # Filled in with config file (using existing codes) 
-      #   or fillScenarios (for a new ScenPackage)
-      self.modelScenCode = None
-      self.prjScenCodeList = []
-      
+      """      
       # Allow reset configuration
       if configFname is not None:
          self.inConfigFname = configFname
@@ -133,6 +123,15 @@ class BOOMFiller(LMObject):
        self.gridname, 
        self.intersectParams) = self.readConfigArgs()
        
+      # Fill existing scenarios from configured codes 
+      # or create from ScenPackage metadata
+      self._fillScenarios()
+
+      # Created by addArchive
+      self.gridset = None
+      self.shapegrid = None
+      self.defaultPamGrims = {}
+      
       # If running as root, new user filespace must have permissions corrected
       self._warnPermissions()
 
@@ -140,26 +139,23 @@ class BOOMFiller(LMObject):
       self.outConfigFilename = earl.createFilename(LMFileType.BOOM_CONFIG, 
                                                    objCode=self.archiveName, 
                                                    usr=self.usr)
-      # Created by addArchive
-      self.gridset = None
-      self.shapegrid = None
-      self.defaultPamGrims = {}
       
    # ...............................................
-   def fillScenarios(self, configFname=None):
+   def _fillScenarios(self, configFname=None):
       """
-      @summary Initialize configured and stored inputs for BOOMFiller class.
+      @summary Find Scenarios from codes or create from ScenPackage metadata
       """
-      # Create new or pull existing scenarios
-      (self.scenPkg, 
-       newModelScenCode,
-       self.epsgcode, 
-       self.mapunits, 
-       self.scenPackageMetaFilename) = self._getScenarios()
-      # If scenario codes were provided, not a new package, fill codes
-      if newModelScenCode is  not None:
-         self.modelScenCode = newModelScenCode
-      self.prjScenCodeList = self.scenPkg.scenarios.keys()
+      # Configured codes for existing Scenarios
+      if self.modelScenCode and self.prjScenCodeList:
+         self.scenPackageMetaFilename = None
+         # Fill or reset epsgcode, mapunits, gridbbox
+         self.scenPkg, self.epsg, self.mapunits = self._checkScenarios(
+                                                      [PUBLIC_USER, self.usr])
+      else:
+         # If new ScenPackage was provided (not SDM scenario codes), fill codes 
+         (self.scenPkg, self.modelScenCode, self.epsg, self.mapunits, 
+          self.scenPackageMetaFilename) = self._createScenarios()
+         self.prjScenCodeList = self.scenPkg.scenarios.keys()
 
    # ...............................................
    def open(self):
@@ -1046,21 +1042,21 @@ class BOOMFiller(LMObject):
                
       return grimChains
 
-   # ...............................................
-   def _getScenarios(self):
-      legalUsers = [PUBLIC_USER, self.usr]
-      newModelScenCode = None
-      # Codes for existing Scenarios
-      if self.modelScenCode and self.prjScenCodeList:
-         scenPackageMetaFilename = None
-         # This fills or resets epsgcode, mapunits, gridbbox
-         scenPkg, epsg, mapunits = self._checkScenarios(legalUsers)
-      # Data/metadata for new Scenarios
-      else:
-         # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-         (scenPkg, newModelScenCode, epsg, mapunits, 
-          scenPackageMetaFilename) = self._createScenarios()
-      return scenPkg, newModelScenCode, epsg, mapunits, scenPackageMetaFilename
+#    # ...............................................
+#    def _getScenarios(self):
+#       legalUsers = [PUBLIC_USER, self.usr]
+#       newModelScenCode = None
+#       # Codes for existing Scenarios
+#       if self.modelScenCode and self.prjScenCodeList:
+#          scenPackageMetaFilename = None
+#          # This fills or resets epsgcode, mapunits, gridbbox
+#          scenPkg, epsg, mapunits = self._checkScenarios(legalUsers)
+#       # Data/metadata for new Scenarios
+#       else:
+#          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
+#          (scenPkg, newModelScenCode, epsg, mapunits, 
+#           scenPackageMetaFilename) = self._createScenarios()
+#       return scenPkg, newModelScenCode, epsg, mapunits, scenPackageMetaFilename
 
    # ...............................................
    def addAlgorithms(self):
