@@ -660,18 +660,20 @@ class Borg(DbPostgresql):
       return newOrExistingScenPkg
    
 # .............................................................................
-   def countScenPackages(self, userId, afterTime, beforeTime, scenId):
+   def countScenPackages(self, userId, afterTime, beforeTime, epsg, scenId):
       """
       @summary: Return the number of ScenarioPackages fitting the given filter 
                conditions
       @param userId: filter by LMUser 
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by the EPSG spatial reference system code 
       @param scenId: filter by a Scenario 
       @return: number of ScenarioPackages fitting the given filter conditions
       """
       row, idxs = self.executeSelectOneFunction('lm_countScenPackages', userId, 
-                                                afterTime, beforeTime, scenId)
+                                                afterTime, beforeTime, epsg, 
+                                                scenId)
       return self._getCount(row)
 
 # .............................................................................
@@ -684,6 +686,7 @@ class Borg(DbPostgresql):
       @param userId: filter by LMUser 
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by the EPSG spatial reference system code 
       @param scenId: filter by a Scenario 
       @param atom: True if return objects will be Atoms, False if full objects
       @note: returned ScenPackage Objects contain Scenario objects, not filled
@@ -692,15 +695,15 @@ class Borg(DbPostgresql):
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listScenPackageAtoms', 
                                                      firstRecNum, maxNum, userId, 
-                                                     afterTime, beforeTime, 
-                                                     scenId)
+                                                     afterTime, beforeTime,  
+                                                     epsg, scenId)
          objs = self._getAtoms(rows, idxs, LMServiceType.SCEN_PACKAGES)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listScenPackageObjects', 
                                                      firstRecNum, maxNum, userId, 
                                                      afterTime, beforeTime, 
-                                                     scenId)
+                                                     epsg, scenId)
          for r in rows:
             objs.append(self._createScenario(r, idxs))
       return objs
