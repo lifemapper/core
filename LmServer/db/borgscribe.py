@@ -246,7 +246,8 @@ class BorgScribe(LMObject):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getScenariosForScenPackage
       """
-      scens = self.getScenariosForScenPackage(scenPkg)
+      scens = self._borg.getScenariosForScenPackage(scenPkg, scenPkgId, userId, 
+                                                    scenPkgName)
       return scens
 
 # ...............................................

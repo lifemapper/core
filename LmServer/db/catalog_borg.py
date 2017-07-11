@@ -205,7 +205,7 @@ class Borg(DbPostgresql):
       return scen
 
 # ...............................................
-   def _createScenPackage(self, row, idxs, isForModel=True):
+   def _createScenPackage(self, row, idxs):
       """
       @note: created only from Scenario table or lm_sdmproject view
       """
@@ -771,7 +771,7 @@ class Borg(DbPostgresql):
       rows, idxs = self.executeSelectManyFunction('lm_getScenariosForScenPackage',
                                                   scenPkgId, userId, scenPkgName)
       for r in rows:
-         scens.append(self._createScenario(r, idxs))
+         scens.append(self._createScenario(r, idxs, isForModel=False))
       return scens
    
 # ...............................................

@@ -1241,8 +1241,6 @@ if filler.occIdFname:
    filler._checkOccurrenceSets()
       
 
-# Create, add, write MFChain for creating each Scenario GRIM
-filler.addGRIMChains()
    
 # Write config file for this archive
 filler.writeConfigFile()
@@ -1252,40 +1250,10 @@ mfChain = filler.addBoomChain()
 filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
 filler.close()
 
-for code, scen in filler.allScens.iteritems():
-   print code, scen.getId()
-   for lyr in scen.layers:
-      print '  ',lyr.name
-   print
-
-shp = ShapeGrid(filler.gridname, filler.usr, filler.epsg, filler.cellsides, 
-                filler.cellsize, filler.mapunits, filler.gridbbox,
-                status=JobStatus.INITIALIZE, statusModTime=CURR_MJD)
-newshp = filler.scribe.findOrInsertShapeGrid(shp)
-validData = False
-if newshp: 
-   # check existence
-   validData, _ = ShapeGrid.testVector(newshp.getDLocation())
-   if not validData:
-      try:
-         dloc = newshp.getDLocation()
-         newshp.buildShape(overwrite=True)
-         validData, _ = ShapeGrid.testVector(dloc)
-      except Exception, e:
-         filler.scribe.log.warning('Unable to build Shapegrid ({})'.format(str(e)))
-      if not validData:
-         raise LMError(currargs='Failed to write Shapegrid {}'.format(dloc))
-   if validData and newshp.status != JobStatus.COMPLETE:
-      newshp.updateStatus(JobStatus.COMPLETE)
-      success = filler.scribe.updateObject(newshp)
-      if success is False:
-         filler.scribe.log.warning('Failed to update Shapegrid record')
-else:
-   raise LMError(currargs='Failed to find or insert Shapegrid')
-return newshp
-
 shpGrid, archiveGridset, pamGrims = filler.addArchive()
 
+# Create, add, write MFChain for creating each Scenario GRIM
+filler.addGRIMChains()
 
 
 
