@@ -155,6 +155,9 @@ class BOOMFiller(LMObject):
          (self.scenPkg, self.modelScenCode, self.epsg, self.mapunits, 
           self.scenPackageMetaFilename) = self._createScenarios()
          self.prjScenCodeList = self.scenPkg.scenarios.keys()
+      # Fill grid bbox with scenario package if it is absent
+      if self.gridbbox is None:
+         self.gridbbox = self.scenPkg.bbox
 
    # ...............................................
    def open(self):
@@ -354,8 +357,8 @@ class BOOMFiller(LMObject):
             dataFname = self.userOccFname
             f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
                     .format(self.userOccSep))
-      f.write('{}: {}\n'.format(varname, dataFname))
-      f.write('\n')
+         f.write('{}: {}\n'.format(varname, dataFname))
+         f.write('\n')
    
       f.write('; ...................\n')
       f.write('; Env Package Vals\n')
@@ -478,14 +481,13 @@ class BOOMFiller(LMObject):
          scen = scenPkg.getScenario(code=self.prjScenCodeList[0])
          epsg = scen.epsgcode
          mapunits = scen.mapUnits
+
       return scenPkg, epsg, mapunits
          
    # ...............................................
    def _createScenarios(self):
       # Imports META
       META, scenPackageMetaFilename, pkgMeta, elyrMeta = self._pullClimatePackageMetadata()
-      if self.gridbbox is None:
-         self.gridbbox = pkgMeta['bbox']
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
       self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(self.scenPackageName))
@@ -1247,7 +1249,7 @@ paramFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
 paramFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 paramFname = '/state/partition1/tmpdata/atest.boom.ini'
 paramFname = '/state/partition1/tmpdata/file_90310.ini'
-
+paramFname='/state/partition1/tmpdata/atest_2.ini'
 isInitial=False
 
 filler = BOOMFiller(configFname=paramFname)
