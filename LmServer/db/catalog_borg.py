@@ -724,7 +724,7 @@ class Borg(DbPostgresql):
          scenPkgId = scenPkg.getId()
          userId = scenPkg.getUserId()
          scenPkgName = scenPkg.name
-      row, idxs = self.executeSelectManyFunction('lm_getScenPackage',
+      row, idxs = self.executeSelectOneFunction('lm_getScenPackage',
                                                   scenPkgId, userId, scenPkgName)
       foundScenPkg = self._createScenPackage(row, idxs)
       if foundScenPkg:
