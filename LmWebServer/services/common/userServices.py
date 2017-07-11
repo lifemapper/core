@@ -73,7 +73,7 @@ class UserLogout(LmService):
    @summary: Log the user out of the system
    """
    # ................................
-   def index(self):
+   def GET(self):
       cherrypy.lib.sessions.expire()
       cherrypy.session[SESSION_KEY] = cherrypy.request.login = None
       
