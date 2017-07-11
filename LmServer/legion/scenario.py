@@ -23,6 +23,7 @@
 """
 from LmBackend.common.lmobj import LMError
 from LmServer.base.layerset import MapLayerSet
+from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
 from LmServer.common.lmconstants import LMFileType, LMServiceType
 from LmServer.legion.envlayer import EnvLayer
