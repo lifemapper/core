@@ -709,7 +709,7 @@ BEGIN
 
    -- filter by ScenPackages containing a particular scenario
    IF scenid is not null THEN
-      wherecls = wherecls || ' AND scenid =  ' || quote_literal(scenid);
+      wherecls = wherecls || ' AND scenarioId =  ' || quote_literal(scenid);
    END IF;
 
    RETURN wherecls;
