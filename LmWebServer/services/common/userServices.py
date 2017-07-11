@@ -23,7 +23,8 @@ class UserLogin(LmService):
                    logged in.  If they are, return their user name
       """
       # Check if the user is logged in
-      if cherrypy.session.user != PUBLIC_USER:
+      user = cherrypy.session.user
+      if user is not None and user != PUBLIC_USER:
          # Already logged in
          return "Welcome {}".format(cherrypy.session.user)
       else:
