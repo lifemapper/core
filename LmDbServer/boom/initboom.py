@@ -83,7 +83,7 @@ class BOOMFiller(LMObject):
       """
       super(BOOMFiller, self).__init__()
       self.name = self.__class__.__name__.lower()
-      self.inConfigFname = configFname
+      self.inParamFname = configFname
       # Get database
       try:
          self.scribe = self._getDb()
@@ -92,13 +92,13 @@ class BOOMFiller(LMObject):
       self.open()
       
    # ...............................................
-   def initializeInputs(self, configFname=None):
+   def initializeInputs(self, paramFname=None):
       """
       @summary Initialize configured and stored inputs for BOOMFiller class.
       """      
       # Allow reset configuration
-      if configFname is not None:
-         self.inConfigFname = configFname
+      if paramFname is not None:
+         self.inParamFname = paramFname
       (self.usr,
        self.usrEmail,
        self.archiveName,
@@ -121,7 +121,7 @@ class BOOMFiller(LMObject):
        self.cellsides,
        self.cellsize,
        self.gridname, 
-       self.intersectParams) = self.readConfigArgs()
+       self.intersectParams) = self.readParamVals()
        
       # Fill existing scenarios from configured codes 
       # or create from ScenPackage metadata
@@ -141,7 +141,7 @@ class BOOMFiller(LMObject):
                                                    usr=self.usr)
       
    # ...............................................
-   def _fillScenarios(self, configFname=None):
+   def _fillScenarios(self):
       """
       @summary Find Scenarios from codes or create from ScenPackage metadata
       """
@@ -227,13 +227,13 @@ class BOOMFiller(LMObject):
       return algorithms
       
    # ...............................................
-   def readConfigArgs(self):
-      if self.inConfigFname is None or not os.path.exists(self.inConfigFname):
-         print('Missing config file {}, using defaults'.format(self.inConfigFname))
-         configFname = None
+   def readParamVals(self):
+      if self.inParamFname is None or not os.path.exists(self.inParamFname):
+         print('Missing config file {}, using defaults'.format(self.inParamFname))
+         paramFname = None
       else:
-         configFname = self.inConfigFname
-      config = Config(siteFn=configFname)
+         paramFname = self.inParamFname
+      config = Config(siteFn=paramFname)
    
       # Fill in missing or null variables for archive.config.ini
       usr = self._findConfigOrDefault(config, 'ARCHIVE_USER', PUBLIC_USER)
@@ -477,7 +477,7 @@ class BOOMFiller(LMObject):
          scenPkg = scenPkgs[0]
          scen = scenPkg.getScenario(code=self.prjScenCodeList[0])
          epsg = scen.epsgcode
-         mapunits = scen.units
+         mapunits = scen.mapUnits
       return scenPkg, epsg, mapunits
          
    # ...............................................
@@ -1109,13 +1109,13 @@ if __name__ == '__main__':
             help=('Compute multi-species matrix outputs for the matrices ' +
                   'in this Gridset.'))
    args = parser.parse_args()
-   configFname = args.config_file
+   paramFname = args.config_file
       
-   if configFname is not None and not os.path.exists(configFname):
-      print ('Missing configuration file {}'.format(configFname))
+   if paramFname is not None and not os.path.exists(paramFname):
+      print ('Missing configuration file {}'.format(paramFname))
       exit(-1)
 
-   filler = BOOMFiller(configFname=configFname)
+   filler = BOOMFiller(configFname=paramFname)
    filler.initializeInputs()
    
    # ...............................................
@@ -1207,14 +1207,16 @@ from LmServer.legion.shapegrid import ShapeGrid
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 
+select * from lm_v3.lm_findOrInsertScenPackage('atest','10min-past-present-future',NULL,57945.7669511);
+
 from LmDbServer.boom.initboom import BOOMFiller
 
-configFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
-configFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
-configFname = '/state/partition1/tmpdata/atest.boom.ini'
-configFname = '/state/partition1/tmpdata/file_90310.ini'
+paramFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
+paramFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
+paramFname = '/state/partition1/tmpdata/atest.boom.ini'
+paramFname = '/state/partition1/tmpdata/file_90310.ini'
 
-filler = BOOMFiller(configFname=configFname)
+filler = BOOMFiller(configFname=paramFname)
 
 filler.initializeInputs()
 
