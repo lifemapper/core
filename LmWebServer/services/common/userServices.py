@@ -181,7 +181,7 @@ def _get_signup_page():
    </head>
    <body>
 <div align="center" class="signup">
-   <form name="signup" action="/signup" method="post" 
+   <form name="signup" action="/api/signup" method="post" 
          onsubmit="return validateNewUser(this);">
       <div align="center">
          <table>
