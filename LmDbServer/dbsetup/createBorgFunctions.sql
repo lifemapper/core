@@ -528,7 +528,7 @@ DECLARE
    limitcls varchar;
    title varchar;
 BEGIN
-   cmd = 'SELECT scenarioid, null, epsgcode, scenmodTime FROM lm_v3.lm_scenPackageScenario ';
+   cmd = 'SELECT scenarioid, null, scenepsgcode, scenmodTime FROM lm_v3.lm_scenPackageScenario ';
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterScenarios(usr, 
                           aftertime, beforetime, epsg, gcm, altpred, dt, pkgid);
    ordercls = ' ORDER BY scenmodTime DESC ';
@@ -709,7 +709,7 @@ BEGIN
 
    -- filter by ScenPackages containing a particular scenario
    IF scenid is not null THEN
-      wherecls = wherecls || ' AND scenid =  ' || quote_literal(scenid);
+      wherecls = wherecls || ' AND scenarioId =  ' || quote_literal(scenid);
    END IF;
 
    RETURN wherecls;

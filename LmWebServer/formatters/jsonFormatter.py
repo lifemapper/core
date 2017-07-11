@@ -288,7 +288,7 @@ def formatScenario(scn):
                                      epsg=scn.epsgcode)
    scnDict['map'] = _getMapMetadata(OGC_SERVICE_URL, mapName, scn.layers)
    scnDict['spatial'] = _getSpatialMetadata(scn.epsgcode, scn.bbox, 
-                                            scn.units, scn.resolution)
+                                            scn.mapUnits, scn.resolution)
 
    scnLayers = []
    for lyr in scn.layers:

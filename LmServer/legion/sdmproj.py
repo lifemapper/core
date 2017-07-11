@@ -359,7 +359,7 @@ class SDMProjection(_ProjectionType, Raster):
       if epsgcode is None:
          epsgcode = projScenario.epsgcode
       if mapunits is None:
-         mapunits = projScenario.units
+         mapunits = projScenario.mapUnits
       if resolution is None:
          resolution = projScenario.resolution
       if processType is None:
