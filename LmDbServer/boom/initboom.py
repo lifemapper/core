@@ -145,7 +145,7 @@ class BOOMFiller(LMObject):
       @summary Find Scenarios from codes or create from ScenPackage metadata
       """
       # Configured codes for existing Scenarios
-      if self.modelScenCode and self.prjScenCodeList:
+      if self.modelScenCode is not None:
          self.scenPackageMetaFilename = None
          # Fill or reset epsgcode, mapunits, gridbbox
          self.scenPkg, self.epsg, self.mapunits = self._checkScenarios(
@@ -333,26 +333,27 @@ class BOOMFiller(LMObject):
       f.write('DATASOURCE: {}\n'.format(self.dataSource))
       if self.occIdFname is not None:
          f.write('OCCURRENCE_ID_FILENAME: {}\n'.format(self.occIdFname))
-      # Species source type (for processing) and file
-      if self.dataSource == SpeciesDatasource.GBIF:
-         varname = 'GBIF_OCCURRENCE_FILENAME'
-         dataFname = self.gbifFname
-         # TODO: allow overwrite of these vars in initboom --> archive config file
-         f.write('GBIF_TAXONOMY_FILENAME: {}\n'.format(GBIF_TAXONOMY_FILENAME))
-         f.write('GBIF_PROVIDER_FILENAME: {}\n'.format(GBIF_PROVIDER_FILENAME))
-      elif self.dataSource == SpeciesDatasource.BISON:
-         varname = 'BISON_TSN_FILENAME'
-         dataFname = self.bisonFname
-      elif self.dataSource == SpeciesDatasource.IDIGBIO:
-         varname = 'IDIG_OCCURRENCE_DATA'
-         dataFname = self.idigFname
-         f.write('IDIG_OCCURRENCE_DATA_DELIMITER: {}\n'
-                 .format(self.idigOccSep))
       else:
-         varname = 'USER_OCCURRENCE_DATA'
-         dataFname = self.userOccFname
-         f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
-                 .format(self.userOccSep))
+         # Species source type (for processing) and file
+         if self.dataSource == SpeciesDatasource.GBIF:
+            varname = 'GBIF_OCCURRENCE_FILENAME'
+            dataFname = self.gbifFname
+            # TODO: allow overwrite of these vars in initboom --> archive config file
+            f.write('GBIF_TAXONOMY_FILENAME: {}\n'.format(GBIF_TAXONOMY_FILENAME))
+            f.write('GBIF_PROVIDER_FILENAME: {}\n'.format(GBIF_PROVIDER_FILENAME))
+         elif self.dataSource == SpeciesDatasource.BISON:
+            varname = 'BISON_TSN_FILENAME'
+            dataFname = self.bisonFname
+         elif self.dataSource == SpeciesDatasource.IDIGBIO:
+            varname = 'IDIG_OCCURRENCE_DATA'
+            dataFname = self.idigFname
+            f.write('IDIG_OCCURRENCE_DATA_DELIMITER: {}\n'
+                    .format(self.idigOccSep))
+         else:
+            varname = 'USER_OCCURRENCE_DATA'
+            dataFname = self.userOccFname
+            f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
+                    .format(self.userOccSep))
       f.write('{}: {}\n'.format(varname, dataFname))
       f.write('\n')
    
@@ -440,7 +441,6 @@ class BOOMFiller(LMObject):
       """
       @summary Adds PUBLIC_USER, DEFAULT_POST_USER and USER from metadata to the database
       """
-      self.scribe.log.info('  Insert user metadata ...')
       userList = []
       if isInitial:
          userList.append((PUBLIC_USER,'{}{}'.format(PUBLIC_USER, 
@@ -450,13 +450,13 @@ class BOOMFiller(LMObject):
       if self.usr != PUBLIC_USER:
          userList.append((self.usr, self.usrEmail))
    
-      for usrmeta in userList:
+      for uinfo in userList:
          try:
-            user = LMUser(usrmeta[0], usrmeta[1], usrmeta[1], modTime=CURR_MJD)
+            user = LMUser(uinfo[0], uinfo[1], uinfo[1], modTime=CURR_MJD)
          except:
             pass
          else:
-            self.scribe.log.info('  Insert user {} ...'.format(usrmeta[0]))
+            self.scribe.log.info('  Find or insert user {} ...'.format(uinfo[0]))
             tmp = self.scribe.findOrInsertUser(user)
    
    # ...............................................
@@ -488,7 +488,7 @@ class BOOMFiller(LMObject):
          self.gridbbox = pkgMeta['bbox']
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
-      self.scribe.log.info('  Insert climate {} metadata ...'.format(self.scenPackageName))
+      self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(self.scenPackageName))
       scenPkg = ScenPackage(self.scenPackageName, self.usr, modTime=CURR_MJD)
       # Current
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
@@ -496,13 +496,13 @@ class BOOMFiller(LMObject):
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
       scenPkg.addScenario(basescen)
-      self.scribe.log.info('     Created base scenario {}'.format(basescen.code))
+      self.scribe.log.info('     Assembled base scenario {}'.format(basescen.code))
       # Predicted Past and Future
       allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
                                            META.LAYERTYPE_META, staticLayers,
                                            META.OBSERVED_PREDICTED_META,
                                            META.CLIMATE_KEYWORDS)
-      self.scribe.log.info('     Created predicted scenarios {}'.format(allScens.keys()))
+      self.scribe.log.info('     Assembled predicted scenarios {}'.format(allScens.keys()))
       for scen in allScens.values():
          scenPkg.addScenario(scen)
       return scenPkg, basescen.code, epsg, mapunits, scenPackageMetaFilename
@@ -1070,22 +1070,6 @@ class BOOMFiller(LMObject):
                
       return grimChains
 
-#    # ...............................................
-#    def _getScenarios(self):
-#       legalUsers = [PUBLIC_USER, self.usr]
-#       newModelScenCode = None
-#       # Codes for existing Scenarios
-#       if self.modelScenCode and self.prjScenCodeList:
-#          scenPackageMetaFilename = None
-#          # This fills or resets epsgcode, mapunits, gridbbox
-#          scenPkg, epsg, mapunits = self._checkScenarios(legalUsers)
-#       # Data/metadata for new Scenarios
-#       else:
-#          # This fills or resets modelScenCode, epsgcode, mapunits, gridbbox
-#          (scenPkg, newModelScenCode, epsg, mapunits, 
-#           scenPackageMetaFilename) = self._createScenarios()
-#       return scenPkg, newModelScenCode, epsg, mapunits, scenPackageMetaFilename
-
    # ...............................................
    def addAlgorithms(self):
       """
@@ -1212,54 +1196,7 @@ if __name__ == '__main__':
          .format(isInitial, paramFname))
    initBoom(paramFname, isInitial=isInitial)
 
-#    filler = BOOMFiller(configFname=paramFname)
-#    filler.initializeInputs()
-#    
-#    # ...............................................
-#    # Data for any user
-#    # ...............................................
-#    # Insert all taxonomic sources for now
-#    filler.scribe.log.info('  Insert taxonomy metadata ...')
-#    for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-#       taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-# 
-#    # For ALL users, add Algorithms if they do not exist
-#    filler.addAlgorithms()
-#    
-#          
-#    # ...............................................
-#    # This user and default users
-#    # ...............................................
-#    # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
-#    filler.addUsers()
-#    
-#    # ...............................................
-#    # Data for this Boom user
-#    # ...............................................
-#    # Add or get Scenarios 
-#    # This updates the scenPkg with db objects for other operations
-#    filler.addPackageScenariosLayers()
-#          
-#    # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
-#    # Test a subset of OccurrenceIds provided as BOOM species input
-#    if filler.occIdFname:
-#       filler._checkOccurrenceSets()
-#          
-#    # Add or get ShapeGrid, Global PAM, Gridset for this archive
-#    # This updates the gridset, shapegrid, default PAMs (rolling, with no 
-#    #     matrixColumns, default GRIMs with matrixColumns
-#    filler.addArchive()
-#    
-#    # Create, add, write MFChain for creating each Scenario GRIM
-#    filler.addGRIMChains()
-#       
-#    # Write config file for this archive
-#    filler.writeConfigFile()
-#    
-#    # Create, add, write MFChain running the Boomer daemon on these SDM inputs
-#    mfChain = filler.addBoomChain()
-#    filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
-#    filler.close()
+
     
 """
 import mx.DateTime
@@ -1304,8 +1241,6 @@ from LmServer.legion.shapegrid import ShapeGrid
 CURRDATE = (mx.DateTime.gmt().year, mx.DateTime.gmt().month, mx.DateTime.gmt().day)
 CURR_MJD = mx.DateTime.gmt().mjd
 
-select * from lm_v3.lm_findOrInsertScenPackage('atest','10min-past-present-future',NULL,57945.7669511);
-
 from LmDbServer.boom.initboom import BOOMFiller
 
 paramFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
@@ -1313,62 +1248,51 @@ paramFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 paramFname = '/state/partition1/tmpdata/atest.boom.ini'
 paramFname = '/state/partition1/tmpdata/file_90310.ini'
 
-filler = BOOMFiller(configFname=paramFname)
+isInitial=False
 
+filler = BOOMFiller(configFname=paramFname)
 filler.initializeInputs()
 
-filler.scribe.log.info('  Insert taxonomy metadata ...')
-for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-   taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
+# ...............................................
+# Data for this instance (Taxonomy, algorithms, default users)
+# ...............................................
+if isInitial:
+   # Insert all taxonomic sources for now
+   filler.scribe.log.info('  Insert taxonomy metadata ...')
+   for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+      taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
+
+   filler.addAlgorithms()
       
-# Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
-filler.addUsers()
-
-# For ALL users, add Algorithms if they do not exist
-filler.addAlgorithms()
+# This user and default users
+# Add param user, PUBLIC_USER, DEFAULT_POST_USER users
+filler.addUsers(isInitial=isInitial)
 
 # ...............................................
-# Data for this Boom user
+# Data for this Boom archive
 # ...............................................
-# Add or get Scenarios 
-# This updates the allScens with db objects for other operations
+# This updates the scenPkg with db objects for other operations
 filler.addPackageScenariosLayers()
       
-# Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
-# Test a subset of OccurrenceIds provided as BOOM species input
+# Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
 if filler.occIdFname:
    filler._checkOccurrenceSets()
       
+# Add or get ShapeGrid, Global PAM, Gridset for this archive
+# This updates the gridset, shapegrid, default PAMs (rolling, with no 
+#     matrixColumns, default GRIMs with matrixColumns
+# Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
+scenGrims = filler.addShapeGridGPAMGridset()
 
+# If there are Scenario GRIMs, create MFChain for each 
+filler.addGRIMChains(scenGrims)
    
 # Write config file for this archive
 filler.writeConfigFile()
 
-# Create, add, write MFChain running the Boomer daemon on these SDM inputs
+# Create MFChain to run Boomer daemon on these inputs
 mfChain = filler.addBoomChain()
 filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
 filler.close()
-
-shpGrid, archiveGridset, pamGrims = filler.addArchive()
-
-# Create, add, write MFChain for creating each Scenario GRIM
-filler.addGRIMChains()
-
-
-
-grimChains = filler.createGRIMChains(shpGrid, pamGrims)
-
-
-filler.writeConfigFile(fname='/tmp/testFillerConfig.ini')
-filler.initBoom()
-filler.close()
-
-
-
-   
-# Write config file for this archive
-filler.writeConfigFile()
-mfChain = filler.createMFBoom()
-filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))
 
 """
