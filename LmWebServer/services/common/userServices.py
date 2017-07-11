@@ -32,7 +32,7 @@ class UserLogin(LmService):
          return _get_login_page()
 
    # ................................
-   def POST(self, userId, pword):
+   def POST(self, userId=None, pword=None):
       """
       @summary: Attempt to log in using the provided credentials
       """
@@ -150,7 +150,7 @@ def _get_login_page():
                         User Name: 
                      </td>
                      <td style="text-align: left;">
-                        <input type="text" name="username" />
+                        <input type="text" name="userid" />
                      </td>
                   </tr>
                   <tr>
