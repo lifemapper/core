@@ -53,6 +53,9 @@ class BoomPoster(object):
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER_EMAIL', userEmail)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
       
+      # TODO: Determine this from POST
+      self.config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', False)
+      
       if reqJson.has_key('algorithms'):
          self._processAlgorithms(reqJson['algorithms'])
          
