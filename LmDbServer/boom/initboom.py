@@ -130,7 +130,6 @@ class BOOMFiller(LMObject):
       # Created by addArchive
       self.gridset = None
       self.shapegrid = None
-      self.defaultPamGrims = {}
       
       # If running as root, new user filespace must have permissions corrected
       self._warnPermissions()
@@ -437,27 +436,28 @@ class BOOMFiller(LMObject):
       return var
 
    # ...............................................
-   def addUsers(self):
+   def addUsers(self, isInitial=True):
       """
       @summary Adds PUBLIC_USER, DEFAULT_POST_USER and USER from metadata to the database
       """
       self.scribe.log.info('  Insert user metadata ...')
-      userList = [{'id': PUBLIC_USER,
-                   'email': '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX)},
-                  {'id': DEFAULT_POST_USER,
-                   'email': '{}{}'.format(DEFAULT_POST_USER, DEFAULT_EMAIL_POSTFIX)}]
+      userList = []
+      if isInitial:
+         userList.append((PUBLIC_USER,'{}{}'.format(PUBLIC_USER, 
+                                                    DEFAULT_EMAIL_POSTFIX)))
+         userList.append((DEFAULT_POST_USER,'{}{}'.format(DEFAULT_POST_USER, 
+                                                          DEFAULT_EMAIL_POSTFIX)))
       if self.usr != PUBLIC_USER:
-         userList.append({'id': self.usr,'email': self.usrEmail})
+         userList.append((self.usr, self.usrEmail))
    
       for usrmeta in userList:
          try:
-            user = LMUser(usrmeta['id'], usrmeta['email'], usrmeta['email'], modTime=CURR_MJD)
+            user = LMUser(usrmeta[0], usrmeta[1], usrmeta[1], modTime=CURR_MJD)
          except:
             pass
          else:
-            self.scribe.log.info('  Insert user {} ...'.format(usrmeta['id']))
+            self.scribe.log.info('  Insert user {} ...'.format(usrmeta[0]))
             tmp = self.scribe.findOrInsertUser(user)
-            self.scribe.log.info('  Insert user {} ...'.format(usrmeta['id']))
    
    # ...............................................
    def _checkScenarios(self, legalUsers):
@@ -776,7 +776,7 @@ class BOOMFiller(LMObject):
       updatedScenPkg = self.scribe.findOrInsertScenPackage(self.scenPkg)
       for scode, scen in self.scenPkg.scenarios.iteritems():
          if scen.getId() is not None:
-            self.scribe.log.info('Scenario {} exists'.format(scode))
+            self.scribe.log.info('Scenario {} is present'.format(scode))
             updatedScens.append(scen)
          else:
             self.scribe.log.info('Insert scenario {}'.format(scode))
@@ -884,6 +884,45 @@ class BOOMFiller(LMObject):
                          gridset=gridset, 
                          status=JobStatus.GENERAL, statusModTime=CURR_MJD)
       gpam = self.scribe.findOrInsertMatrix(tmpGpam)
+      # Anonymous and simple SDM booms do not need GRIMs
+      grim = None
+      if not(self.usr == DEFAULT_POST_USER or self.assemblePams):
+         # Create Scenario-GRIM for this archive, scenario
+         # GRIM layers are added now
+         desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
+         grimMeta = {ServiceObject.META_DESCRIPTION: desc,
+                    ServiceObject.META_KEYWORDS: [GGRIM_KEYWORD]}
+         tmpGrim = LMMatrix(None, matrixType=MatrixType.GRIM, 
+                            gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
+                            dateCode=scen.dateCode, metadata=grimMeta, userId=self.usr, 
+                            gridset=gridset, 
+                            status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+         grim = self.scribe.findOrInsertMatrix(tmpGrim)
+         for lyr in scen.layers:
+            # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
+            mtxcol = self._initGRIMIntersect(lyr, grim)
+      return gpam, grim
+
+   # ...............................................
+   def _findOrAddPAM(self, gridset, scen):
+      # Create Global PAM for this archive, scenario
+      # Pam layers are added upon boom processing
+      pamType = MatrixType.PAM
+      if self.usr == PUBLIC_USER:
+         pamType = MatrixType.ROLLING_PAM
+      desc = '{} for Scenario {}'.format(GPAM_KEYWORD, scen.code)
+      pamMeta = {ServiceObject.META_DESCRIPTION: desc,
+                 ServiceObject.META_KEYWORDS: [GPAM_KEYWORD, scen.code]}
+      tmpGpam = LMMatrix(None, matrixType=pamType, 
+                         gcmCode=scen.gcmCode, altpredCode=scen.altpredCode, 
+                         dateCode=scen.dateCode, metadata=pamMeta, userId=self.usr, 
+                         gridset=gridset, 
+                         status=JobStatus.GENERAL, statusModTime=CURR_MJD)
+      gpam = self.scribe.findOrInsertMatrix(tmpGpam)
+      return gpam
+
+   # ...............................................
+   def _findOrAddGRIM(self, gridset, scen):
       # Create Scenario-GRIM for this archive, scenario
       # GRIM layers are added now
       desc = '{} for Scenario {}'.format(GGRIM_KEYWORD, scen.code)
@@ -898,14 +937,16 @@ class BOOMFiller(LMObject):
       for lyr in scen.layers:
          # Add to GRIM Makeflow ScenarioLayer and MatrixColumn
          mtxcol = self._initGRIMIntersect(lyr, grim)
-      return gpam, grim
+      return grim
 
    # ...............................................
-   def addArchive(self):
+#    def addArchive(self):
+   def addShapeGridGPAMGridset(self):
       """
       @summary: Create a Gridset, Shapegrid, PAMs, GRIMs for this archive, and
                 update attributes with new or existing values from DB
       """
+      scenGrims = {}
       self.scribe.log.info('  Insert, build shapegrid {} ...'.format(self.gridname))
       shp = self._addIntersectGrid()
       self.shapegrid = shp
@@ -919,9 +960,12 @@ class BOOMFiller(LMObject):
       self.gridset = updatedGrdset
       # "Global" PAM, GRIM (one each per scenario)
       for code, scen in self.scenPkg.scenarios.iteritems():
-         gPam, scenGrim = self._findOrAddDefaultMatrices(updatedGrdset, scen)
-         self.defaultPamGrims[code] = (gPam, scenGrim)
-   
+#          gPam, scenGrim = self._findOrAddDefaultMatrices(updatedGrdset, scen)
+         gPam = self._findOrAddPAM(updatedGrdset, scen)
+         if not(self.usr == DEFAULT_POST_USER or self.assemblePams):
+            scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
+            scenGrims[code] = (gPam, scenGrim)
+      return scenGrims
 # ...............................................
    def _initGRIMIntersect(self, lyr, mtx):
       """
@@ -989,12 +1033,11 @@ class BOOMFiller(LMObject):
       return grimChain
    
    # .............................
-   def addGRIMChains(self):
+   def addGRIMChains(self, defaultGrims):
       grimChains = []
       currtime = mx.DateTime.gmt().mjd
 
-      for code, (pam, grim) in self.defaultPamGrims.iteritems():
-         scen = self.scenPkg.scenarios[code]
+      for code, grim in defaultGrims.iteritems():
          # Create MFChain for this GRIM
          grimChain = self._createGrimMF(code, currtime)
          targetDir = grimChain.getRelativeDirectory()
@@ -1092,7 +1135,56 @@ class BOOMFiller(LMObject):
       mfChain.updateStatus(JobStatus.INITIALIZE)
       self.scribe.updateObject(mfChain)
       return mfChain
+
+# ...............................................
+def initBoom(paramFname, isInitial=True):
+   """
+   @summary: Initialize an empty Lifemapper database and archive
+   """
+   filler = BOOMFiller(configFname=paramFname)
+   filler.initializeInputs()
+
+   # ...............................................
+   # Data for this instance (Taxonomy, algorithms, default users)
+   # ...............................................
+   if isInitial:
+      # Insert all taxonomic sources for now
+      filler.scribe.log.info('  Insert taxonomy metadata ...')
+      for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+         taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
    
+      filler.addAlgorithms()
+         
+   # This user and default users
+   # Add param user, PUBLIC_USER, DEFAULT_POST_USER users
+   filler.addUsers(isInitial=isInitial)
+   
+   # ...............................................
+   # Data for this Boom archive
+   # ...............................................
+   # This updates the scenPkg with db objects for other operations
+   filler.addPackageScenariosLayers()
+         
+   # Test a subset of OccurrenceLayer Ids for existing or PUBLIC user
+   if filler.occIdFname:
+      filler._checkOccurrenceSets()
+         
+   # Add or get ShapeGrid, Global PAM, Gridset for this archive
+   # This updates the gridset, shapegrid, default PAMs (rolling, with no 
+   #     matrixColumns, default GRIMs with matrixColumns
+   # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
+   scenGrims = filler.addShapeGridGPAMGridset()
+   
+   # If there are Scenario GRIMs, create MFChain for each 
+   filler.addGRIMChains(scenGrims)
+      
+   # Write config file for this archive
+   filler.writeConfigFile()
+   
+   # Create MFChain to run Boomer daemon on these inputs
+   mfChain = filler.addBoomChain()
+   filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+   filler.close()
    
 # ...............................................
 if __name__ == '__main__':
@@ -1102,67 +1194,72 @@ if __name__ == '__main__':
                          'for single- or multi-species computations ' + 
                          'specific to the configured input data or the ' +
                          'data package named.'))
-   parser.add_argument('-', '--config_file', default=None,
+   parser.add_argument('--config_file', default=None,
             help=('Configuration file for the archive, gridset, and grid ' +
                   'to be created from these data.'))
-   parser.add_argument('-grim', '--doGrim', action='store_true',
+   parser.add_argument('--is_first_run', action='store_true',
             help=('Compute multi-species matrix outputs for the matrices ' +
                   'in this Gridset.'))
    args = parser.parse_args()
    paramFname = args.config_file
-      
+   isInitial = args.is_first_run
+         
    if paramFname is not None and not os.path.exists(paramFname):
       print ('Missing configuration file {}'.format(paramFname))
       exit(-1)
-
-   filler = BOOMFiller(configFname=paramFname)
-   filler.initializeInputs()
-   
-   # ...............................................
-   # Data for any user
-   # ...............................................
-   # Insert all taxonomic sources for now
-   filler.scribe.log.info('  Insert taxonomy metadata ...')
-   for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
-      taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
-
-   # For ALL users, add Algorithms if they do not exist
-   filler.addAlgorithms()
-   
-         
-   # ...............................................
-   # This user and default users
-   # ...............................................
-   # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
-   filler.addUsers()
-   
-   # ...............................................
-   # Data for this Boom user
-   # ...............................................
-   # Add or get Scenarios 
-   # This updates the scenPkg with db objects for other operations
-   filler.addPackageScenariosLayers()
-         
-   # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
-   # Test a subset of OccurrenceIds provided as BOOM species input
-   if filler.occIdFname:
-      filler._checkOccurrenceSets()
-         
-   # Add or get ShapeGrid, Global PAM, Gridset for this archive
-   # This updates the gridset, shapegrid, default PAMs (rolling, with no 
-   #     matrixColumns, default GRIMs with matrixColumns
-   filler.addArchive()
-   
-   # Create, add, write MFChain for creating each Scenario GRIM
-   filler.addGRIMChains()
       
-   # Write config file for this archive
-   filler.writeConfigFile()
-   
-   # Create, add, write MFChain running the Boomer daemon on these SDM inputs
-   mfChain = filler.addBoomChain()
-   filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
-   filler.close()
+   print('Running initBoom with isInitial = {}, configFname = {}'
+         .format(isInitial, paramFname))
+   initBoom(paramFname, isInitial=isInitial)
+
+#    filler = BOOMFiller(configFname=paramFname)
+#    filler.initializeInputs()
+#    
+#    # ...............................................
+#    # Data for any user
+#    # ...............................................
+#    # Insert all taxonomic sources for now
+#    filler.scribe.log.info('  Insert taxonomy metadata ...')
+#    for name, taxInfo in TAXONOMIC_SOURCE.iteritems():
+#       taxSourceId = filler.scribe.findOrInsertTaxonSource(taxInfo['name'],taxInfo['url'])
+# 
+#    # For ALL users, add Algorithms if they do not exist
+#    filler.addAlgorithms()
+#    
+#          
+#    # ...............................................
+#    # This user and default users
+#    # ...............................................
+#    # Add user and PUBLIC_USER and DEFAULT_POST_USER users if they do not exist
+#    filler.addUsers()
+#    
+#    # ...............................................
+#    # Data for this Boom user
+#    # ...............................................
+#    # Add or get Scenarios 
+#    # This updates the scenPkg with db objects for other operations
+#    filler.addPackageScenariosLayers()
+#          
+#    # Test provided OccurrenceLayer Ids for existing user or PUBLIC occurrence data
+#    # Test a subset of OccurrenceIds provided as BOOM species input
+#    if filler.occIdFname:
+#       filler._checkOccurrenceSets()
+#          
+#    # Add or get ShapeGrid, Global PAM, Gridset for this archive
+#    # This updates the gridset, shapegrid, default PAMs (rolling, with no 
+#    #     matrixColumns, default GRIMs with matrixColumns
+#    filler.addArchive()
+#    
+#    # Create, add, write MFChain for creating each Scenario GRIM
+#    filler.addGRIMChains()
+#       
+#    # Write config file for this archive
+#    filler.writeConfigFile()
+#    
+#    # Create, add, write MFChain running the Boomer daemon on these SDM inputs
+#    mfChain = filler.addBoomChain()
+#    filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+#    filler.close()
     
 """
 import mx.DateTime
