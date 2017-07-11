@@ -678,7 +678,7 @@ class Borg(DbPostgresql):
 
 # .............................................................................
    def listScenPackages(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
-                        scenId, atom):
+                        epsg, scenId, atom):
       """
       @summary: Return ScenPackage Objects or Atoms fitting the given filters 
       @param firstRecNum: start at this record
