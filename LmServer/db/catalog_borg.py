@@ -214,10 +214,14 @@ class Borg(DbPostgresql):
       usr = self._getColumnValue(row, idxs, ['userid'])
       name = self._getColumnValue(row, idxs, ['pkgname', 'name'])
       meta = self._getColumnValue(row, idxs, ['pkgmetadata', 'metadata'])
+      epsg = self._getColumnValue(row, idxs, ['pkgepsgcode', 'epsgcode'])
+      bbox = self._getColumnValue(row, idxs, ['pkgbbox', 'bbox'])
+      units = self._getColumnValue(row, idxs, ['pkgunits', 'units'])
       modtime = self._getColumnValue(row, idxs, ['pkgmodtime', 'modtime'])
     
       if row is not None:
-         scen = ScenPackage(name, usr, metadata=meta, modTime=modtime,
+         scen = ScenPackage(name, usr, metadata=meta, epsgcode=epsg, bbox=bbox, 
+                            mapunits=units, modTime=modtime,
                             scenPackageId=pkgid)
       return scen
 
@@ -656,23 +660,25 @@ class Borg(DbPostgresql):
       return newOrExistingScenPkg
    
 # .............................................................................
-   def countScenPackages(self, userId, afterTime, beforeTime, scenId):
+   def countScenPackages(self, userId, afterTime, beforeTime, epsg, scenId):
       """
       @summary: Return the number of ScenarioPackages fitting the given filter 
                conditions
       @param userId: filter by LMUser 
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by the EPSG spatial reference system code 
       @param scenId: filter by a Scenario 
       @return: number of ScenarioPackages fitting the given filter conditions
       """
       row, idxs = self.executeSelectOneFunction('lm_countScenPackages', userId, 
-                                                afterTime, beforeTime, scenId)
+                                                afterTime, beforeTime, epsg, 
+                                                scenId)
       return self._getCount(row)
 
 # .............................................................................
    def listScenPackages(self, firstRecNum, maxNum, userId, afterTime, beforeTime, 
-                        scenId, atom):
+                        epsg, scenId, atom):
       """
       @summary: Return ScenPackage Objects or Atoms fitting the given filters 
       @param firstRecNum: start at this record
@@ -680,6 +686,7 @@ class Borg(DbPostgresql):
       @param userId: filter by LMUser 
       @param afterTime: filter by modified at or after this time
       @param beforeTime: filter by modified at or before this time
+      @param epsg: filter by the EPSG spatial reference system code 
       @param scenId: filter by a Scenario 
       @param atom: True if return objects will be Atoms, False if full objects
       @note: returned ScenPackage Objects contain Scenario objects, not filled
@@ -688,15 +695,15 @@ class Borg(DbPostgresql):
       if atom:
          rows, idxs = self.executeSelectManyFunction('lm_listScenPackageAtoms', 
                                                      firstRecNum, maxNum, userId, 
-                                                     afterTime, beforeTime, 
-                                                     scenId)
+                                                     afterTime, beforeTime,  
+                                                     epsg, scenId)
          objs = self._getAtoms(rows, idxs, LMServiceType.SCEN_PACKAGES)
       else:
          objs = []
          rows, idxs = self.executeSelectManyFunction('lm_listScenPackageObjects', 
                                                      firstRecNum, maxNum, userId, 
                                                      afterTime, beforeTime, 
-                                                     scenId)
+                                                     epsg, scenId)
          for r in rows:
             objs.append(self._createScenario(r, idxs))
       return objs

@@ -136,21 +136,25 @@ CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
     gcmCode,
     altpredCode,
     dateCode,
-    units,
+    scenunits,
     resolution,
-    epsgcode,
-    bbox,
+    scenepsgcode,
+    scenbbox,
     scenmodTime,
     -- ScenPackage.*
     scenPackageId,
     pkgname,
     pkgmetadata,
+    pkgunits,
+    pkgepsgcode,
+    pkgbbox,
     pkgmodTime
    ) AS
       SELECT s.scenarioId, s.userid, s.scenarioCode, s.metadata, 
       s.gcmCode, s.altpredCode, s.dateCode, s.units, s.resolution, s.epsgcode, 
       s.bbox, s.modTime,
-      p.scenPackageId, p.name, p.metadata, p.modTime
+      p.scenPackageId, p.name, p.metadata, p.units, 
+      p.epsgcode, p.bbox, p.modTime
         FROM lm_v3.Scenario s, lm_v3.ScenPackage p, lm_v3.ScenPackageScenario sps
         WHERE sps.scenarioId = s.scenarioId
           AND sps.scenPackageId = p.scenPackageId
@@ -346,36 +350,7 @@ CREATE OR REPLACE VIEW lm_v3.lm_fullmatrix (
    idAttribute,
    xAttribute,
    yAttribute,
-   shpgrdstatus,DROP VIEW IF EXISTS lm_v3.lm_scenPackageScenario CASCADE;
-CREATE OR REPLACE VIEW lm_v3.lm_scenPackageScenario (
-   -- Scenario.*
-    scenarioId,
-    userid,
-    scenarioCode,
-    scenmetadata,
-    gcmCode,
-    altpredCode,
-    dateCode,
-    units,
-    resolution,
-    epsgcode,
-    bbox,
-    scenmodTime,
-    -- EnvPackage.*
-    scenPackageId,
-    pkgname,
-    pkgmetadata,
-    pkgmodTime
-   ) AS
-      SELECT s.scenarioId, s.userid, s.scenarioCode, s.metadata, 
-      s.gcmCode, s.altpredCode, s.dateCode, s.units, s.resolution, s.epsgcode, 
-      s.bbox, s.modTime,
-      p.scenPackageId, p.name, p.metadata, p.modTime
-        FROM lm_v3.Scenario s, lm_v3.ScenPackage p, lm_v3.ScenPackageScenario sps
-        WHERE sps.scenarioId = s.scenarioId
-          AND sps.scenPackageId = p.scenPackageId
-        ORDER BY s.modTime ASC;
-   
+   shpgrdstatus,
    shpgrdstatusmodtime,
    lyrsquid,
    lyrverify,

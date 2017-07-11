@@ -201,21 +201,23 @@ class BorgScribe(LMObject):
 
 # .............................................................................
    def countScenPackages(self, userId=PUBLIC_USER, afterTime=None, 
-                         beforeTime=None, scenId=None):
+                         beforeTime=None, epsg=None, scenId=None):
       """
       @copydoc LmServer.db.catalog_borg.Borg::countScenPackages()
       """
-      count = self._borg.countScenPackages(userId, afterTime, beforeTime, scenId)
+      count = self._borg.countScenPackages(userId, afterTime, beforeTime, epsg, 
+                                           scenId)
       return count
 
 # .............................................................................
    def listScenPackages(self, firstRecNum, maxNum, userId=PUBLIC_USER, 
-                        afterTime=None, beforeTime=None, scenId=None, atom=True):
+                        afterTime=None, beforeTime=None, epsg=None, scenId=None, 
+                        atom=True):
       """
       @copydoc LmServer.db.catalog_borg.Borg::listScenPackages()
       """
       objs = self._borg.listScenPackages(firstRecNum, maxNum, userId, afterTime, 
-                                         beforeTime, scenId, atom)
+                                         beforeTime, epsg, scenId, atom)
       return objs
 
 # ...............................................

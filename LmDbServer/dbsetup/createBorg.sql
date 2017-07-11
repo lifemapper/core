@@ -215,9 +215,19 @@ create table lm_v3.ScenPackage
    userid  varchar(20) NOT NULL REFERENCES lm_v3.LMUser ON DELETE CASCADE,
    name varchar(60) NOT NULL,
    metadata text,
+   
+   units varchar(20),
+   epsgcode int,
+   bbox varchar(60),
+
    modTime double precision,
    UNIQUE (name, userid)
 );
+Select AddGeometryColumn('lm_v3', 'scenpackage', 'geom', 4326, 'POLYGON', 2);
+ALTER TABLE lm_v3.ScenPackage ADD CONSTRAINT geometry_valid_check CHECK (st_isvalid(geom));
+ALTER TABLE lm_v3.ScenPackage ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 4326);
+ALTER TABLE lm_v3.ScenPackage ADD CONSTRAINT enforce_dims_geom CHECK (st_ndims(geom) = 2);
+CREATE INDEX spidx_scenpackage ON lm_v3.ScenPackage USING GIST ( geom );
 
 -- -------------------------------
 -- Object (via join)
