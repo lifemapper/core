@@ -227,20 +227,20 @@ class Scenario(MapLayerSet):
             self.addLayer(lyr) 
          self._bbox = MapLayerSet._getIntersectBounds(self)
    
-   # ...............................................
-   def _setUnits(self, units):
-      if units is not None:
-         self._units = units 
-      elif len(self._layers) > 0:
-         self._units = self._layers[0].mapUnits
-      else:
-         self._units = None
-         
-   @property
-   def units(self):
-      if self._units is None and len(self._layers) > 0:
-         self._units = self._layers[0].mapUnits
-      return self._units   
+#    # ...............................................
+#    def _setUnits(self, units):
+#       if units is not None:
+#          self._units = units 
+#       elif len(self._layers) > 0:
+#          self._units = self._layers[0].mapUnits
+#       else:
+#          self._units = None
+#          
+#    @property
+#    def units(self):
+#       if self._units is None and len(self._layers) > 0:
+#          self._units = self._layers[0].mapUnits
+#       return self._units   
       
    # ...............................................       
    def _setRes(self, res):
