@@ -106,7 +106,7 @@ class UserSignUp(LmService):
       if not _verify_length(lastName, minLength=2, maxLength=50):
          raise cherrypy.HTTPError(400, 
                              'Last name must have between 2 and 50 characters')
-      if phone is not None and not _verify_length(phone, minLength=10, maxLength=20):
+      if phone is not None and len(phone) > 0 and not _verify_length(phone, minLength=10, maxLength=20):
          raise cherrypy.HTTPError(400, 
                          'Phone number must have between 10 and 20 characters')
       if not _verify_length(email, minLength=9, maxLength=64):
