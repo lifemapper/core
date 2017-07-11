@@ -23,7 +23,8 @@ class UserLogin(LmService):
                    logged in.  If they are, return their user name
       """
       # Check if the user is logged in
-      if cherrypy.session.user != PUBLIC_USER:
+      user = cherrypy.session.user
+      if user is not None and user != PUBLIC_USER:
          # Already logged in
          return "Welcome {}".format(cherrypy.session.user)
       else:
@@ -31,7 +32,7 @@ class UserLogin(LmService):
          return _get_login_page()
 
    # ................................
-   def POST(self, userId, pword):
+   def POST(self, userId=None, pword=None):
       """
       @summary: Attempt to log in using the provided credentials
       """
@@ -54,7 +55,7 @@ class UserLogin(LmService):
       except:
          pass
       
-      user = self.scribe.getUser(userId)
+      user = self.scribe.findUser(userId=userId)
       if user is not None and user.checkPassword(pword):
          # Provided correct credentials
          cherrypy.session.regenerate()
@@ -73,7 +74,7 @@ class UserLogout(LmService):
    @summary: Log the user out of the system
    """
    # ................................
-   def index(self):
+   def GET(self):
       cherrypy.lib.sessions.expire()
       cherrypy.session[SESSION_KEY] = cherrypy.request.login = None
       
@@ -106,7 +107,7 @@ class UserSignUp(LmService):
       if not _verify_length(lastName, minLength=2, maxLength=50):
          raise cherrypy.HTTPError(400, 
                              'Last name must have between 2 and 50 characters')
-      if not _verify_length(phone, minLength=10, maxLength=20):
+      if phone is not None and len(phone) > 0 and not _verify_length(phone, minLength=10, maxLength=20):
          raise cherrypy.HTTPError(400, 
                          'Phone number must have between 10 and 20 characters')
       if not _verify_length(email, minLength=9, maxLength=64):
@@ -149,7 +150,7 @@ def _get_login_page():
                         User Name: 
                      </td>
                      <td style="text-align: left;">
-                        <input type="text" name="username" />
+                        <input type="text" name="userid" />
                      </td>
                   </tr>
                   <tr>
@@ -181,7 +182,7 @@ def _get_signup_page():
    </head>
    <body>
 <div align="center" class="signup">
-   <form name="signup" action="/signup" method="post" 
+   <form name="signup" action="/api/signup" method="post" 
          onsubmit="return validateNewUser(this);">
       <div align="center">
          <table>
@@ -228,6 +229,7 @@ def _get_signup_page():
                   <input name="lastName" type="text" />
                </td>
                <td class="signupRequired">
+                  (Required)
                </td>
             </tr>
             <tr>
