@@ -647,14 +647,21 @@ class Borg(DbPostgresql):
 # ...............................................
    def findOrInsertScenPackage(self, scenPkg):
       """
-      @summary Inserts a ScenPackage and any scenarios present into the database
+      @summary Inserts a ScenPackage into the database
       @param scenPkg: The LmServer.legion.scenario.ScenPackage to insert
       @return: new or existing ScenPackage
       @note: This returns the updated ScenPackage 
+      @note:  This Borg function inserts only the ScenPackage; 
+              the calling Scribe method also adds and joins Scenarios present 
       """
+      wkt = None
+      if scenPkg.epsgcode == SCENARIO_PACKAGE_EPSG:
+         wkt = scenPkg.getWkt()
       meta = scenPkg.dumpScenpkgMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenPackage', 
                            scenPkg.getUserId(), scenPkg.name, meta, 
+                           scenPkg.mapUnits, scenPkg.epsgcode, 
+                           scenPkg.getCSVExtentString(), wkt,
                            scenPkg.modTime)
       newOrExistingScenPkg = self._createScenPackage(row, idxs)
       return newOrExistingScenPkg
@@ -796,7 +803,7 @@ class Borg(DbPostgresql):
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
                            scen.getUserId(), scen.code, meta, 
                            scen.gcmCode, scen.altpredCode, scen.dateCode, 
-                           scen.units, scen.resolution, scen.epsgcode, 
+                           scen.mapUnits, scen.resolution, scen.epsgcode, 
                            scen.getCSVExtentString(), wkt, scen.modTime)
       newOrExistingScen = self._createScenario(row, idxs)
       if scenPkgId is not None:
