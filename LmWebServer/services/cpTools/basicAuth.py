@@ -50,6 +50,8 @@ def getUserName():
       print sessionFn
       if os.path.isfile(sessionFn):
          user = cherrypy.session.get(SESSION_KEY)
+         if user is None:
+            user = PUBLIC_USER
          log = UserLogger(user)
    except Exception, e:
       log.debug("Exception in getUserName: {}".format(str(e)))

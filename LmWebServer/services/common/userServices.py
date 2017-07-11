@@ -2,9 +2,12 @@
 @summary: Module containing user services for basic authentication
 """
 import cherrypy
+import os
+import shutil
+
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
-from LmWebServer.common.lmconstants import REFERER_KEY, SESSION_KEY
+from LmWebServer.common.lmconstants import REFERER_KEY, SESSION_KEY, SESSION_PATH
 from LmWebServer.services.api.v2.base import LmService
 
 
@@ -77,6 +80,12 @@ class UserLogout(LmService):
    def GET(self):
       cherrypy.lib.sessions.expire()
       cherrypy.session[SESSION_KEY] = cherrypy.request.login = None
+      sessionFn = os.path.join(SESSION_PATH, 
+                               'session-{}'.format(cherrypy.session.id))
+      try:
+         shutil.rmtree(sessionFn)
+      except:
+         pass
       
       raise cherrypy.HTTPRedirect('/api/login')
    
