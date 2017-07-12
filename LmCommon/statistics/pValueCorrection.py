@@ -92,5 +92,5 @@ def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):
    
    # Convert back to original shape
    correctedPvals = correctedPvals.reshape(origShape)
-   return Matrix(correctedPvals)
+   return Matrix(correctedPvals, pValues.headers)
    

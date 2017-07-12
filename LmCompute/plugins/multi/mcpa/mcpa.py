@@ -67,9 +67,9 @@ def getPValues(observedValue, testValues, numPermutations=None):
       # If this is a stack
       if testMtx.data.ndim == 3:
          for i in xrange(testMtx.data.shape[2]):
-            pVals += np.abs(testMtx.data[:,:,i]) >= np.abs(observedValue.data)
+            pVals += np.abs(np.round(testMtx.data[:,:,i], 5)) >= np.abs(np.round(observedValue.data, 5))
       else:
-         pVals += np.abs(testMtx.data) >= np.abs(observedValue.data)
+         pVals += np.abs(np.round(testMtx.data, 5)) >= np.abs(np.round(observedValue.data, 5))
    # Scale and return the pVals matrix
    if numPermutations:
       return Matrix(pVals / numPermutations, headers=observedValue.headers)
