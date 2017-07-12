@@ -147,6 +147,58 @@ class Matrix(object):
       self.headers[str(axis)].append(mtx.getHeaders(axis=axis))
    
    # ...........................
+   def flatten_2D(self):
+      """
+      @summary: Flattens a higher dimension Matrix object into a 2D matrix
+      """
+      flatMtx = self
+      while flatMtx.data.ndim > 2:
+         # More than two dimensions so we must flatten
+         oldShape = flatMtx.data.shape
+         oldNumRows = oldShape[0]
+         newShape = tuple([oldShape[0]*oldShape[2], oldShape[1]] + list(oldShape[3:]))
+         newMtx = Matrix(np.zeros(newShape))
+         
+         oldRH = flatMtx.getRowHeaders()
+         newRH = []
+         
+         # Get old headers
+         try:
+            oldHeaders = flatMtx.getHeaders(axis=2)
+         except KeyError:
+            oldHeaders = [''] * oldShape[2]
+            
+            
+         # Set data and headers
+         for i in range(oldShape[2]):
+            oh = oldHeaders[i]
+            # Set data
+            startRow = i * oldNumRows
+            endRow = (i+1) * oldNumRows
+            # TODO: Higher order matrices?
+            newMtx.data[startRow:endRow,:] = flatMtx.data[:,:,i]
+            
+            # Set row headers
+            for rh in oldRH:
+               if not isinstance(rh, list):
+                  rh = [rh]
+               newRH.append(rh+[oh])
+         
+         # Set the headers on the new matrix
+         newMtx.setRowHeaders(newRH)
+         newMtx.setColumnHeaders(flatMtx.getColumnHeaders())
+         
+         # Higher order headers
+         for axis in flatMtx.headers.keys():
+            if int(axis) > 2:
+               # Reduce the key of the axis by one and set headers on new matrix
+               newMtx.setHeaders(flatMtx.getHeaders(axis=axis), axis=str(int(axis) - 1))
+         
+         flatMtx = newMtx
+      
+      return flatMtx
+   
+   # ...........................
    def getColumnHeaders(self):
       """
       @summary: Shortcut to get column headers
@@ -254,7 +306,7 @@ class Matrix(object):
          # Subset the headers
          tmp = []
          for j in args[i]:
-            tmp.append(newHeaders[str(j)])
+            tmp.append(newHeaders[str(i)][j])
          newHeaders[str(i)] = tmp
       return Matrix(newData, headers=newHeaders)
    
@@ -302,6 +354,9 @@ class Matrix(object):
          mtx = self.slice(sliceArgs)
       else:
          mtx = self
+         
+      if mtx.data.ndim > 2:
+         mtx = mtx.flatten_2D()
          
       # .....................
       # Inner function
