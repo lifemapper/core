@@ -503,22 +503,22 @@ class Gridset(ServiceObject):
                                     mcpaAssembleScript,
                                     wsEnvPartCorFilename,
                                     wsEnvAdjRsqFilename,
-                                    wsEnvFglobalFilename,
-                                    wsEnvFpartialFilename,
+                                    envFglobFilename,
+                                    envFpartFilename,
                                     wsBGPartCorFilename,
                                     wsBGAdjRsqFilename,
-                                    wsBGFglobalFilename,
-                                    wsBGFpartialFilename,
+                                    bgFglobFilename,
+                                    bgFpartFilename,
                                     wsMcpaOutFilename])
             rules.append(MfRule(assembleCmd, [wsMcpaOutFilename],
                                 dependencies=[wsEnvPartCorFilename,
                                               wsEnvAdjRsqFilename,
-                                              wsEnvFglobalFilename,
-                                              wsEnvFpartialFilename,
+                                              envFglobFilename,
+                                              envFpartFilename,
                                               wsBGPartCorFilename,
                                               wsBGAdjRsqFilename,
-                                              wsBGFglobalFilename,
-                                              wsBGFpartialFilename]))
+                                              bgFglobFilename,
+                                              bgFpartFilename]))
             # Stockpile matrix
             mcpaOutSuccessFilename = os.path.join(pamWorkDir, 'mcpaOut.success')
             mcpaOutStockpileCmd = ' '.join([
