@@ -175,7 +175,6 @@ class Matrix(object):
             # Set data
             startRow = i * oldNumRows
             endRow = (i+1) * oldNumRows
-            # TODO: Higher order matrices?
             newMtx.data[startRow:endRow,:] = flatMtx.data[:,:,i]
             
             # Set row headers
