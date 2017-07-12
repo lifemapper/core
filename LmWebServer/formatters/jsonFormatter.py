@@ -102,6 +102,7 @@ def formatGridset(gs):
    gsDict['bioGeoHypotheses'] = []
    gsDict['grims'] = []
    gsDict['pams'] = []
+   gsDict['matrices'] = []
    
    # Bio geo hypotheses
    for mtx in gs.getBiogeographicHypotheses():
@@ -129,6 +130,10 @@ def formatGridset(gs):
             'url' : mtx.metadataUrl
          }
       )
+
+   # All matrices
+   for mtx in gs._matrices:
+      gsDict['matrices'].append(formatMatrix(mtx))
 
    # Shapegrid
    gsDict['shapegridUrl'] = gs.getShapegrid().metadataUrl
