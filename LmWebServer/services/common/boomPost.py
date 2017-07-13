@@ -33,7 +33,7 @@ import random
 
 from LmCommon.common.lmconstants import SERVER_BOOM_HEADING, LMFormat
 #from LmDbServer.boom.boominput import ArchiveFiller
-from LmDbServer.boom.initboom import BOOMFiller
+from LmDbServer.boom.initboom import initBoom
 from LmServer.common.lmconstants import TEMP_PATH
 
 # .............................................................................
@@ -78,10 +78,8 @@ class BoomPoster(object):
       with open(filename, 'w') as configOutF:
          self.config.write(configOutF)
       
-      filler = BOOMFiller(configFname=filename)
-      filler.initializeInputs(paramFname=filename)
-      gridset = filler.initBoom()
-      filler.close()
+      gridset = initBoom(filename)
+      
       return gridset
          
    # ................................
