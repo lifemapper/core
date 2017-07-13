@@ -79,7 +79,7 @@ class BoomPoster(object):
          self.config.write(configOutF)
       
       filler = BOOMFiller(configFname=filename)
-      filler.initializeInputs(configFname=filename)
+      filler.initializeInputs(paramFname=filename)
       gridset = filler.initBoom()
       filler.close()
       return gridset
