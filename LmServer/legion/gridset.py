@@ -161,6 +161,7 @@ class Gridset(ServiceObject):
    def computeMe(self, workDir=None, doCalc=False, doMCPA=False, pamDict=None):
       """
       @summary: Perform analyses on a grid set
+      @todo: Better names for corrected matrices
       """
       rules = []
       if workDir is None:
@@ -408,11 +409,13 @@ class Gridset(ServiceObject):
             
             # Env F-global
             envFglobFilename = os.path.join(pamWorkDir, 'envFglobP.json')
+            envFglobBHfilename = os.path.join(pamWorkDir, 'envFglobBH.json')
             envFglobCmd = ' '.join([
                '$PYTHON',
                correctPvaluesScript,
                wsEnvFglobalFilename,
                envFglobFilename,
+               envFglobBHfilename,
                ' '.join(envFglobRands)
             ])
             rules.append(MfRule(envFglobCmd, [envFglobFilename], 
@@ -420,11 +423,13 @@ class Gridset(ServiceObject):
             
             # Env F-semipartial
             envFpartFilename = os.path.join(pamWorkDir, 'envFpartP.json')   
+            envFpartBHfilename = os.path.join(pamWorkDir, 'envFpartBH.json')   
             envFpartCmd = ' '.join([
                '$PYTHON',
                correctPvaluesScript,
                wsEnvFpartialFilename,
                envFpartFilename,
+               envFpartBHfilename,
                ' '.join(envFpartRands)
             ])
             rules.append(MfRule(envFpartCmd, [envFpartFilename], 
@@ -480,20 +485,24 @@ class Gridset(ServiceObject):
             
             # BG F-global
             bgFglobFilename = os.path.join(pamWorkDir, 'bgFglobP.json')
+            bgFglobBHfilename = os.path.join(pamWorkDir, 'bgFglobBH.json')
             bgFglobCmd = ' '.join(['$PYTHON',
                                    correctPvaluesScript,
                                    wsBGFglobalFilename,
                                    bgFglobFilename,
+                                   bgFglobBHfilename,
                                    ' '.join(bgFglobRands)])
             rules.append(MfRule(bgFglobCmd, [bgFglobFilename], 
                                 dependencies=bgFglobRands + [wsBGFglobalFilename]))
             
             # BG F-semipartial
             bgFpartFilename = os.path.join(pamWorkDir, 'bgFpartP.json')   
+            bgFpartBHfilename = os.path.join(pamWorkDir, 'bgFpartBH.json')
             bgFpartCmd = ' '.join(['$PYTHON',
                                    correctPvaluesScript,
                                    wsBGFpartialFilename,
                                    bgFpartFilename,
+                                   bgFpartBHfilename,
                                    ' '.join(bgFpartRands)])
             rules.append(MfRule(bgFpartCmd, [bgFpartFilename], 
                                 dependencies=bgFpartRands + [wsBGFpartialFilename]))
@@ -505,20 +514,29 @@ class Gridset(ServiceObject):
                                     wsEnvAdjRsqFilename,
                                     envFglobFilename,
                                     envFpartFilename,
+                                    envFglobBHfilename,
+                                    envFpartBHfilename,
                                     wsBGPartCorFilename,
                                     wsBGAdjRsqFilename,
                                     bgFglobFilename,
                                     bgFpartFilename,
+                                    bgFglobBHfilename,
+                                    bgFpartBHfilename,
                                     wsMcpaOutFilename])
             rules.append(MfRule(assembleCmd, [wsMcpaOutFilename],
                                 dependencies=[wsEnvPartCorFilename,
                                               wsEnvAdjRsqFilename,
                                               envFglobFilename,
                                               envFpartFilename,
+                                              envFglobBHfilename,
+                                              envFpartBHfilename,
                                               wsBGPartCorFilename,
                                               wsBGAdjRsqFilename,
                                               bgFglobFilename,
-                                              bgFpartFilename]))
+                                              bgFpartFilename,
+                                              bgFglobBHfilename,
+                                              bgFpartBHfilename
+                                              ]))
             # Stockpile matrix
             mcpaOutSuccessFilename = os.path.join(pamWorkDir, 'mcpaOut.success')
             mcpaOutStockpileCmd = ' '.join([

@@ -45,6 +45,11 @@ if __name__ == "__main__":
                help='The file path for the environment F-global matrix')
    parser.add_argument('envFpartialMtxFn', 
                help='The file path for the environment F-matrix for partial correlations')
+   parser.add_argument('envBHfGlobalMtxFn',
+               help='The file path for the environment Benjamini–Hochberg F-global matrix')
+   parser.add_argument('envBHfPartialMtxFn',
+               help='The file path for the environment Benjamini–Hochberg F-partial matrix')
+
    # Bio Geo
    parser.add_argument('bgPartCorMtxFn', 
                help='The partial correlation matrix for biogeo')
@@ -54,6 +59,10 @@ if __name__ == "__main__":
                help='The file path for the biogeo F-global matrix')
    parser.add_argument('bgFpartialMtxFn', 
                help='The file path for the biogeo F-matrix for partial correlations')
+   parser.add_argument('bgBHfGlobalMtxFn',
+               help='The file path for the biogeo Benjamini–Hochberg F-global matrix')
+   parser.add_argument('bgBHfPartialMtxFn',
+               help='The file path for the biogeo Benjamini–Hochberg F-partial matrix')
    
    # Output
    parser.add_argument('outputMtxFn', 
@@ -66,11 +75,15 @@ if __name__ == "__main__":
    envAdjRsqMtx = Matrix.load(args.envAdjRsqFn)
    envFglobalMtx = Matrix.load(args.envFGlobalMtxFn)
    envFpartialMtx = Matrix.load(args.envFpartialMtxFn)
+   envFglobalBHMtx = Matrix.load(args.envBHfGlobalMtxFn)
+   envFpartialBHMtx = Matrix.load(args.envBHfPartialMtxFn)
 
    bgPartCorMtx = Matrix.load(args.bgPartCorMtxFn)
    bgAdjRsqMtx = Matrix.load(args.bgAdjRsqFn)
    bgFglobalMtx = Matrix.load(args.bgFGlobalMtxFn)
    bgFpartialMtx = Matrix.load(args.bgFpartialMtxFn)
+   bgFglobalBHMtx = Matrix.load(args.bgBHfGlobalMtxFn)
+   bgFpartialBHMtx = Matrix.load(args.bgBHfPartialMtxFn)
    
    # Concatenate matrices one axis at a time
    # Observed layer
@@ -79,11 +92,14 @@ if __name__ == "__main__":
    # Frequency layer
    freqMtx = Matrix.concatenate(
       [envFpartialMtx, envFglobalMtx, bgFpartialMtx, bgFglobalMtx], axis=1)
+
+   bhMtx = Matrix.concatenate([envFpartialBHMtx, envFglobalBHMtx, 
+                               bgFpartialBHMtx, bgFglobalBHMtx], axis=1)
    # Stack matrices
-   outMtx = Matrix.concatenate([obsMtx, freqMtx], axis=2)
+   outMtx = Matrix.concatenate([obsMtx, freqMtx, bhMtx], axis=2)
    
    # Add depth headers
-   outMtx.setHeaders(['observed', 'frequency'], axis=2)
+   outMtx.setHeaders(['Observed', 'P-Values', 'BH Significant'], axis=2)
    
    # Write output
    LMObject().readyFilename(args.outputMtxFn)
