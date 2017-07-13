@@ -37,8 +37,8 @@ from LmServer.legion.lmmatrix import LMMatrix
 from LmServer.legion.cmd import MfRule
 
 # TODO: Move these to localconstants
-NUM_RAND_GROUPS = 20
-NUM_RAND_PER_GROUP = 20
+NUM_RAND_GROUPS = 30
+NUM_RAND_PER_GROUP = 10
 
 
 # .............................................................................
@@ -418,7 +418,7 @@ class Gridset(ServiceObject):
                envFglobBHfilename,
                ' '.join(envFglobRands)
             ])
-            rules.append(MfRule(envFglobCmd, [envFglobFilename], 
+            rules.append(MfRule(envFglobCmd, [envFglobFilename, envFglobBHfilename], 
                                 dependencies=envFglobRands + [wsEnvFglobalFilename]))
             
             # Env F-semipartial
@@ -432,7 +432,7 @@ class Gridset(ServiceObject):
                envFpartBHfilename,
                ' '.join(envFpartRands)
             ])
-            rules.append(MfRule(envFpartCmd, [envFpartFilename], 
+            rules.append(MfRule(envFpartCmd, [envFpartFilename, envFpartBHfilename], 
                                 dependencies=envFpartRands + [wsEnvFpartialFilename]))
             
             # Bio geo
@@ -492,7 +492,7 @@ class Gridset(ServiceObject):
                                    bgFglobFilename,
                                    bgFglobBHfilename,
                                    ' '.join(bgFglobRands)])
-            rules.append(MfRule(bgFglobCmd, [bgFglobFilename], 
+            rules.append(MfRule(bgFglobCmd, [bgFglobFilename, bgFglobBHfilename], 
                                 dependencies=bgFglobRands + [wsBGFglobalFilename]))
             
             # BG F-semipartial
@@ -504,7 +504,7 @@ class Gridset(ServiceObject):
                                    bgFpartFilename,
                                    bgFpartBHfilename,
                                    ' '.join(bgFpartRands)])
-            rules.append(MfRule(bgFpartCmd, [bgFpartFilename], 
+            rules.append(MfRule(bgFpartCmd, [bgFpartFilename, bgFpartBHfilename], 
                                 dependencies=bgFpartRands + [wsBGFpartialFilename]))
 
             # Assemble outputs
