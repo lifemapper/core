@@ -41,6 +41,8 @@ if __name__ == "__main__":
    parser.add_argument("observedFn", 
                                help="File location of observed values to test")
    parser.add_argument("pValuesFn", help="File location to store the P-Values")
+   parser.add_argument('bhValuesFn', 
+            help='File location to store the Benjamini–Hochberg output matrix')
    parser.add_argument("fValueFn", nargs='+', 
                               help="A file of F-values or a stack of F-Values")
    
@@ -65,9 +67,12 @@ if __name__ == "__main__":
    obsVals = Matrix.load(args.observedFn)
    pValues = getPValues(obsVals, testValues, numPermutations=numValues)
    
-   correctedPvals = correctPValues(pValues)
+   bhVals = correctPValues(pValues)
    
    with open(args.pValuesFn, 'w') as pValF:
-      correctedPvals.save(pValF)
+      pValues.save(pValF)
+      
+   with open(args.bhValuesFn, 'w') as bhValF:
+      bhVals.save(bhValF)
 
    

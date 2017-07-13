@@ -51,46 +51,75 @@ def correctPValues(pValues, correctionType=CorrectionTypes.BENJAMINI_HOCHBERG):
    @see: CorrectionTypes 
    @note: consistent with R - print correct_pvalues_for_multiple_testing([0.0, 
              0.01, 0.029, 0.03, 0.031, 0.05, 0.069, 0.07, 0.071, 0.09, 0.1])
-   @todo: Consider how we might add metadata to this 
+   @todo: Consider how we might add metadata to this
+   @todo: Re-enable other correction types 
+   @todo: Consider producing a matrix of the maximum FDR value that would mark
+             each cell as significant
    """
    # Get the original shape, we'll convert back to this
-   origShape = pValues.data.shape
+   #origShape = pValues.data.shape
    
    # Reshape into one-dimensional array
    pFlat = pValues.data.flatten()
    
    numVals = pFlat.shape[0]
 
-   correctedPvals = np.empty(numVals)
+   #correctedPvals = np.empty(numVals)
    
-   if correctionType == CorrectionTypes.BONFERRONI:                                                                   
-      correctedPvals = numVals * pFlat
-   elif correctionType == CorrectionTypes.BONFERRONI_HOLM:                                                            
-      values = [(pvalue, i) for i, pvalue in enumerate(pFlat)]                                      
-      values.sort()
-      for rank, vals in enumerate(values):                                                              
-         pvalue, i = vals
-         correctedPvals[i] = (numVals - rank) * pvalue                                                            
-   elif correctionType == CorrectionTypes.BENJAMINI_HOCHBERG:                                                         
-      values = [(pvalue, i) for i, pvalue in enumerate(pFlat)]                                      
-      values.sort()
-      values.reverse()                                                                                  
-      newValues = []
-      for i, vals in enumerate(values):                                                                 
-         rank = numVals - i
-         pvalue, index = vals                                                                          
-         newValues.append((1.0 * numVals / rank) * pvalue)                                                          
-      for i in xrange(0, numVals - 1):  
-         if newValues[i] < newValues[i+1]:                                                           
-            newValues[i+1] = newValues[i]                                                           
-      for i, vals in enumerate(values):
-         pvalue, index = vals
-         correctedPvals[index] = newValues[i]
-   else:
-      # TODO: Throw a specific exception
-      raise Exception, "Unknown correction type"
+   #if correctionType == CorrectionTypes.BONFERRONI:                                                                   
+   #   correctedPvals = numVals * pFlat
+   #elif correctionType == CorrectionTypes.BONFERRONI_HOLM:                                                            
+   #   values = [(pvalue, i) for i, pvalue in enumerate(pFlat)]                                      
+   #   values.sort()
+   #   for rank, vals in enumerate(values):                                                              
+   #      pvalue, i = vals
+   #      correctedPvals[i] = (numVals - rank) * pvalue                                                            
+   
+   #elif correctionType == CorrectionTypes.BENJAMINI_HOCHBERG:
+   # TODO: This should be configurable
+   fdr = 0.05
+   # 1. Order p-values
+   # 2. Assign rank
+   # 3. Create critical values
+   # 4. Find the largest p-value such that P(i) < critical value
+   # All P(j) such that j <= i are significant
+   rank = 1
+   cmpP = 0.0
+   for p in sorted(pFlat.tolist()):
+      critVal = fdr * (float(rank) / numVals)
+      
+      # Check if the p value is less than the critical value
+      if p < critVal:
+         # If this p is smaller, all p values smaller than this one are 
+         #    "significant", even those that were greater than their 
+         #    respective critical value
+         cmpP = p  
+      
+      rank += 1
+   
+   sigValues = (pValues <= cmpP).astype(int)
+   return Matrix(sigValues, headers=pValues.headers)
+      
+   # Old code, probably remove
+   #values = [(pvalue, i) for i, pvalue in enumerate(pFlat)]                                      
+   #values.sort()
+   #values.reverse()                                                                                  
+   #newValues = []
+   #for i, vals in enumerate(values):                                                                 
+   #   rank = numVals - i
+   #   pvalue, index = vals                                                                          
+   #   newValues.append((1.0 * numVals / rank) * pvalue)                                                          
+   #for i in xrange(0, numVals - 1):  
+   #   if newValues[i] < newValues[i+1]:                                                           
+   #      newValues[i+1] = newValues[i]                                                           
+   #for i, vals in enumerate(values):
+   #   pvalue, index = vals
+   #   correctedPvals[index] = newValues[i]
+   #else:
+   #   # TODO: Throw a specific exception
+   #   raise Exception, "Unknown correction type"
    
    # Convert back to original shape
-   correctedPvals = correctedPvals.reshape(origShape)
-   return Matrix(correctedPvals, pValues.headers)
+   #correctedPvals = correctedPvals.reshape(origShape)
+   #return Matrix(correctedPvals, pValues.headers)
    
