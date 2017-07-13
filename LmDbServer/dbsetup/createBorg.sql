@@ -174,7 +174,8 @@ create table lm_v3.EnvLayer
 (
    envLayerId serial UNIQUE PRIMARY KEY,
    envTypeId int NOT NULL REFERENCES lm_v3.EnvType ON DELETE CASCADE,
-   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE
+   layerId int NOT NULL REFERENCES lm_v3.Layer ON DELETE CASCADE,
+   UNIQUE (envTypeId, layerId)
 );
 
 -- -------------------------------
@@ -235,7 +236,8 @@ create table lm_v3.ScenPackageScenario
 (
 	scenPackageScenarioId serial UNIQUE PRIMARY KEY,
 	scenPackageId int REFERENCES lm_v3.ScenPackage MATCH FULL ON DELETE CASCADE,
-   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE
+   scenarioId int REFERENCES lm_v3.Scenario MATCH FULL ON DELETE CASCADE,
+   UNIQUE (scenPackageId, scenarioId)
 );
 
 -- -------------------------------

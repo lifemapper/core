@@ -893,12 +893,12 @@ $$  LANGUAGE 'plpgsql' STABLE;
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_joinScenPackageScenario(spid int, 
                                                             scenid int)
-   RETURNS int AS
+   RETURNS lm_v3.lm_scenPackageScenario AS
 $$
 DECLARE
    temp1 int;
    temp2 int;
-   newid int = -1;
+   rec lm_v3.lm_scenPackageScenario%ROWTYPE;
 BEGIN
    SELECT count(*) INTO temp1 FROM lm_v3.ScenPackage WHERE scenPackageId = spid;
    SELECT count(*) INTO temp2 FROM lm_v3.Scenario WHERE scenarioId = scenid;
@@ -908,16 +908,23 @@ BEGIN
       RAISE EXCEPTION 'Scenario with id % does not exist', scenid;
    END IF;
    
-   INSERT INTO lm_v3.ScenPackageScenario (scenPackageId, scenarioId) 
-                                 VALUES (spid, scenid);
+   SELECT * INTO rec FROM lm_v3.lm_scenPackageScenario
+      WHERE scenPackageId = spid AND scenarioId = scenid;
+   IF FOUND THEN 
+      RAISE NOTICE 'ScenPackage % and Scenario % are already joined', spid, scenid;
+   ELSE   
+      INSERT INTO lm_v3.ScenPackageScenario (scenPackageId, scenarioId) 
+                                     VALUES (spid, scenid);
+   END IF;
+   
    IF NOT FOUND THEN
       RAISE EXCEPTION 'Unable to join Scenario and ScenPackage';
    ELSE
-      SELECT INTO newid last_value 
-          FROM lm_v3.scenpackagescenario_scenpackagescenarioid_seq;
+      SELECT * INTO rec FROM lm_v3.lm_scenPackageScenario
+         WHERE scenPackageId = spid AND scenarioId = scenid;
    END IF;
    
-   RETURN newid;
+   RETURN rec;
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
                                                            
