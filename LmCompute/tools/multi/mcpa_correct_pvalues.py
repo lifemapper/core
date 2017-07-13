@@ -42,7 +42,7 @@ if __name__ == "__main__":
                                help="File location of observed values to test")
    parser.add_argument("pValuesFn", help="File location to store the P-Values")
    parser.add_argument('bhValuesFn', 
-            help='File location to store the Benjamini–Hochberg output matrix')
+            help='File location to store the Benjamini-Hochberg output matrix')
    parser.add_argument("fValueFn", nargs='+', 
                               help="A file of F-values or a stack of F-Values")
    

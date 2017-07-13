@@ -46,9 +46,9 @@ if __name__ == "__main__":
    parser.add_argument('envFpartialMtxFn', 
                help='The file path for the environment F-matrix for partial correlations')
    parser.add_argument('envBHfGlobalMtxFn',
-               help='The file path for the environment Benjamini–Hochberg F-global matrix')
+               help='The file path for the environment Benjamini-Hochberg F-global matrix')
    parser.add_argument('envBHfPartialMtxFn',
-               help='The file path for the environment Benjamini–Hochberg F-partial matrix')
+               help='The file path for the environment Benjamini-Hochberg F-partial matrix')
 
    # Bio Geo
    parser.add_argument('bgPartCorMtxFn', 
@@ -60,9 +60,9 @@ if __name__ == "__main__":
    parser.add_argument('bgFpartialMtxFn', 
                help='The file path for the biogeo F-matrix for partial correlations')
    parser.add_argument('bgBHfGlobalMtxFn',
-               help='The file path for the biogeo Benjamini–Hochberg F-global matrix')
+               help='The file path for the biogeo Benjamini-Hochberg F-global matrix')
    parser.add_argument('bgBHfPartialMtxFn',
-               help='The file path for the biogeo Benjamini–Hochberg F-partial matrix')
+               help='The file path for the biogeo Benjamini-Hochberg F-partial matrix')
    
    # Output
    parser.add_argument('outputMtxFn', 
