@@ -128,7 +128,6 @@ class BOOMFiller(LMObject):
       self._fillScenarios()
 
       # Created by addArchive
-      self.gridset = None
       self.shapegrid = None
       
       # If running as root, new user filespace must have permissions corrected
@@ -306,6 +305,93 @@ class BOOMFiller(LMObject):
               assemblePams, gridbbox, cellsides, cellsize, gridname, 
               intersectParams)
       
+   # ...............................................
+   def writeConfigFile2(self, fname=None, mdlMaskName=None, prjMaskName=None):
+      """
+      """
+      import ConfigParser
+      config = ConfigParser.SafeConfigParser()
+      config.add_section(SERVER_BOOM_HEADING)
+      
+      # .........................................      
+      # SDM Algorithms with all parameters   
+      counter = 0
+      for alg in self.algorithms:
+         counter += 1
+         thisHeading = 'ALGORITHM {}'.format(counter)
+         config.add_section(thisHeading)
+         for name, val in alg.parameters.iteritems():
+            config.set(thisHeading, name, val)
+
+      # .........................................      
+      # Global PAM vals
+      # Intersection grid
+      config.set(SERVER_BOOM_HEADING, 'GRID_NUM_SIDES', self.cellsides)
+      config.set(SERVER_BOOM_HEADING, 'GRID_CELLSIZE', self.cellsize)
+      config.set(SERVER_BOOM_HEADING, 'GRID_BBOX', 
+                 ','.join(str(v) for v in self.gridbbox))
+      config.set(SERVER_BOOM_HEADING, 'GRID_NAME', self.gridname)
+      # Intersection params
+      for k, v in self.intersectParams.iteritems():
+         config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), v)
+      config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', str(self.assemblePams))
+      
+      # SDM input
+      if mdlMaskName is not None:
+         config.set(SERVER_BOOM_HEADING, 'MODEL_MASK_NAME', mdlMaskName)
+      if prjMaskName is not None:
+         config.set(SERVER_BOOM_HEADING, 'PROJECTION_MASK_NAME', prjMaskName)
+      
+      # SDM input environmental data, pulled from SCENARIO_PACKAGE metadata
+      pcodes = ','.join(self.prjScenCodeList)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
+                 pcodes)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
+                 self.modelScenCode)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MAPUNITS', self.mapunits)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG', self.epsg)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE', self.scenPackageName)
+      
+      # SDM input species source data and type (for processing)
+      if self.occIdFname is not None:
+         config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
+                    self.occIdFname)
+      else:
+         if self.dataSource == SpeciesDatasource.GBIF:
+            config.set(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME', self.gbifFname)
+            # TODO: allow overwrite of these vars in initboom --> archive config file
+            config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
+                       GBIF_TAXONOMY_FILENAME)
+            config.set(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME', 
+                       GBIF_PROVIDER_FILENAME)
+         elif self.dataSource == SpeciesDatasource.BISON:
+            config.set(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME', self.bisonFname)
+         elif self.dataSource == SpeciesDatasource.IDIGBIO:
+            config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA', self.idigFname)
+            config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA_DELIMITER',
+                       self.idigOccSep)
+         else:
+            config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA', 
+                       self.userOccFname)
+            config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER',
+                       self.userOccSep)
+      config.set(SERVER_BOOM_HEADING, 'DATASOURCE', self.dataSource)
+
+      config.set(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN', self.minpoints)
+      
+      # Expiration date triggering re-query and computation
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR', CURRDATE[0])
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH', CURRDATE[1])
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY', CURRDATE[2])
+
+      config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', self.usr)
+      config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', self.archiveName)
+      config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', self.usrEmail)
+
+      readyFilename(self.outConfigFilename, overwrite=True)
+      with open(self.outConfigFilename, 'wb') as configfile:
+         config.write(configfile)
+
    # ...............................................
    def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
       """
@@ -959,7 +1045,6 @@ class BOOMFiller(LMObject):
                        dlocation=self.scenPackageMetaFilename, epsgcode=self.epsg, 
                        userId=self.usr, modTime=CURR_MJD)
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
-      self.gridset = updatedGrdset
       # "Global" PAM, GRIM (one each per scenario)
       for code, scen in self.scenPkg.scenarios.iteritems():
 #          gPam, scenGrim = self._findOrAddDefaultMatrices(updatedGrdset, scen)
@@ -967,7 +1052,7 @@ class BOOMFiller(LMObject):
          if not(self.usr == DEFAULT_POST_USER or self.assemblePams):
             scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
             scenGrims[code] = (gPam, scenGrim)
-      return scenGrims
+      return scenGrims, updatedGrdset
 # ...............................................
    def _initGRIMIntersect(self, lyr, mtx):
       """
@@ -1159,7 +1244,7 @@ def initBoom(paramFname, isInitial=True):
    # This updates the gridset, shapegrid, default PAMs (rolling, with no 
    #     matrixColumns, default GRIMs with matrixColumns
    # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
-   scenGrims = filler.addShapeGridGPAMGridset()
+   scenGrims, boomGridset = filler.addShapeGridGPAMGridset()
    
    # If there are Scenario GRIMs, create MFChain for each 
    filler.addGRIMChains(scenGrims)
@@ -1171,6 +1256,7 @@ def initBoom(paramFname, isInitial=True):
    mfChain = filler.addBoomChain()
    filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
    filler.close()
+   return boomGridset
    
 # ...............................................
 if __name__ == '__main__':
@@ -1250,6 +1336,7 @@ paramFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 paramFname = '/state/partition1/tmpdata/atest.boom.ini'
 paramFname = '/state/partition1/tmpdata/file_90310.ini'
 paramFname='/state/partition1/tmpdata/atest_2.ini'
+paramFname='/state/partition1/tmpdata/atest3.ini'
 isInitial=False
 
 filler = BOOMFiller(configFname=paramFname)
