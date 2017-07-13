@@ -689,27 +689,31 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_getFilterScenPackages(usr varchar,
 $$
 DECLARE
    wherecls varchar;
+   mname varchar = 'modTime';
+   epname varchar = 'epsgcode';
 BEGIN
    wherecls = ' WHERE userid =  ' || quote_literal(usr) || ' ';
    
+   -- filter by ScenPackages containing a particular scenario
+   IF scenid is not null THEN
+      wherecls = wherecls || ' AND scenarioId =  ' || quote_literal(scenid);
+      mname = 'pkgmodTime';
+      epname = 'pkgepsgcode';
+   END IF;
+
    -- filter by ScenPackages modified after given time
    IF aftertime is not null THEN
-      wherecls = wherecls || ' AND pkgmodTime >=  ' || quote_literal(aftertime);
+      wherecls = wherecls || ' AND ' || mname || ' >=  ' || quote_literal(aftertime);
    END IF;
 
    -- filter by ScenPackages modified before given time
    IF beforetime is not null THEN
-      wherecls = wherecls || ' AND pkgmodTime <=  ' || quote_literal(beforetime);
+      wherecls = wherecls || ' AND ' || mname || ' <=  ' || quote_literal(beforetime);
    END IF;
    
    -- filter by epsg code
    IF epsg is not null THEN
-      wherecls = wherecls || ' AND pkgepsgcode =  ' || epsg;
-   END IF;
-
-   -- filter by ScenPackages containing a particular scenario
-   IF scenid is not null THEN
-      wherecls = wherecls || ' AND scenarioId =  ' || quote_literal(scenid);
+      wherecls = wherecls || ' AND ' || epname || ' =  ' || epsg;
    END IF;
 
    RETURN wherecls;
@@ -750,7 +754,7 @@ CREATE OR REPLACE FUNCTION lm_v3.lm_listScenPackageObjects(firstRecNum int,
                                                    beforetime double precision,
                                                    epsg int,
                                                    scenid int)
-   RETURNS SETOF lm_v3.lm_scenPackageScenario AS
+   RETURNS SETOF lm_v3.ScenPackage AS
 $$
 DECLARE
    rec lm_v3.lm_scenPackageScenario;
