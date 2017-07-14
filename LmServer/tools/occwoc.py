@@ -818,3 +818,67 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
                      .format(len(currChunk), currKey, self._currKeyFirstRecnum))
       return currKey, currChunk
          
+# ..............................................................................
+class PublicWoC(_SpeciesWeaponOfChoice):
+   """
+   @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
+             text chunk to a file, then creates an OccurrenceJob for it and 
+             updates the Occurrence record and inserts a job.
+   """
+   def __init__(self, scribe, user, archiveName, epsg, expDate, occIdFname, 
+                logger=None):
+      super(PublicWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+                                    occIdFname, logger=logger)
+      # Copy the occurrencesets 
+      self.processType = None
+      self._dumpfile = None
+      csv.field_size_limit(sys.maxsize)
+      try:
+         self._idfile = open(occIdFname, 'r')
+      except:
+         raise LMError(currargs='Failed to open {}'.format(occIdFname))
+
+
+# ...............................................
+   def close(self):
+      try:
+         self._dumpfile.close()
+      except:
+         self.log.error('Unable to close {}'.format(self._dumpfile))
+         
+# ...............................................
+   @property
+   def complete(self):
+      try:
+         return self._dumpfile.closed
+      except:
+         return True
+         
+# ...............................................
+   @property
+   def nextStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._linenum
+
+# ...............................................
+   @property
+   def thisStart(self):
+      if self.complete:
+         return 0
+      else:
+         return self._currKeyFirstRecnum
+            
+# ...............................................
+   def moveToStart(self):
+      startline = self._findStart()         
+      if startline < 0:
+         self._currKeyFirstRecnum = startline
+         self._currRec = self._currSpeciesKey = None
+      else:
+         line, specieskey = self._getCSVRecord(parse=True)
+         # If not there yet, power through lines
+         while line is not None and self._linenum < startline-1:
+            line, specieskey = self._getCSVRecord(parse=False)
+      

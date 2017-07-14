@@ -242,9 +242,12 @@ class BOOMFiller(LMObject):
       priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
                                         defaultValue=Priority.NORMAL)
       
-      dataSource = self._getBoomOrDefault(config, 'DATASOURCE')
-      dataSource = dataSource.upper()
       occIdFname = self._getBoomOrDefault(config, 'OCCURRENCE_ID_FILENAME')
+      if occIdFname:
+         dataSource = 'PUBLIC'
+      else:
+         dataSource = self._getBoomOrDefault(config, 'DATASOURCE')
+         dataSource = dataSource.upper()
       gbifFname = self._getBoomOrDefault(config, 'GBIF_OCCURRENCE_FILENAME')
       idigFname = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA')
       idigOccSep = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER')
@@ -1313,19 +1316,11 @@ from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat,
                         ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (ASSEMBLE_PAMS, 
-      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
-      BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
-      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
-      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
-      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
-      GRID_CELLSIZE, GRID_NUM_SIDES)
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
          DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
-from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
-                                            POINT_COUNT_MIN)
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject

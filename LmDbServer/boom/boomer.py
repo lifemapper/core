@@ -82,7 +82,6 @@ class Boomer(LMObject):
       self.spudArfFnames = None
       # Stop indicator
       self.keepWalken = False
-      self.potatoesOpen = False
 
 
    # .............................
@@ -120,8 +119,7 @@ class Boomer(LMObject):
       self.potatoes = {}
       # master MF chain
       self.masterPotato = None
-      if self.christopher.assemblePams:
-         self.rotatePotatoes()
+      self.rotatePotatoes()
          
    # .............................
    def processSpud(self):
@@ -186,20 +184,19 @@ class Boomer(LMObject):
          self.masterPotato.write()
          self.masterPotato.updateStatus(JobStatus.INITIALIZE)
          self._scribe.updateObject(self.masterPotato)
-         self.potatoesOpen = False
          self.log.info('   Wrote MasterPotato {} ({} potatoes and {} spuds)'
                        .format(self.masterPotato.objId, len(self.potatoes), 
                                len(self.spudArfFnames)))
       
       # Create new potatoes
       if not self.christopher.complete:
-         self.log.info('Create new potatoes')
-         # Initialize new potatoes, MasterPotato
-         # potatoes = {scencode: (potatoChain, triagePotatoFile)
-         self.spudArfFnames = []
-         self.potatoes = self._createPotatoMakeflows()
          self.masterPotato = self._createMasterMakeflow()
-         self.potatoesOpen = True
+         if self.christopher.assemblePams:
+            self.log.info('Create new potatoes')
+            # Initialize new potatoes, MasterPotato
+            # potatoes = {scencode: (potatoChain, triagePotatoFile)
+            self.spudArfFnames = []
+            self.potatoes = self._createPotatoMakeflows()
             
    # .............................
    def close(self):
