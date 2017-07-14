@@ -34,6 +34,7 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH)
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
@@ -46,7 +47,9 @@ from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC
 class ChristopherWalken(LMObject):
    """
    Class to ChristopherWalken with a species iterator through a sequence of 
-   species data creating a Spud for each species.
+   species data creating a Spud for each species.  Creates and catalogs objects 
+   (OccurrenceSets, SMDModels, SDMProjections, and MatrixColumns and MFChains 
+    for their calculation) in the database .
    """
 # .............................................................................
 # Constructor
@@ -96,14 +99,18 @@ class ChristopherWalken(LMObject):
             else:
                self.log.info('{} opened databases'.format(self.name))
 
+      # Global PAM Matrix for each scenario
+      self.globalPAMs = {}
+
+   # .............................
+   def initializeMe(self):
+      """
+      @summary: Sets objects and parameters for workflow on this object
+      """
       (self.userId, self.archiveName, self.boompath, self.weaponOfChoice, 
        self.epsg, self.minPoints, self.algs, self.mdlScen, self.mdlMask, 
        self.prjScens, self.prjMask, self.boomGridset, self.intersectParams, 
        self.assemblePams) = self._getConfiguredObjects()
-
-      # Global PAM Matrix for each scenario
-      self.globalPAMs = {}
-      
       # One Global PAM for each scenario
       if self.assemblePams:
          for prjscen in self.prjScens:
@@ -263,25 +270,40 @@ class ChristopherWalken(LMObject):
 # .............................................................................
    def _getProjParams(self, userId, epsg):
       prjScens = []
-      mdlMask = prjMask = None
+      mdlScen = mdlMask = prjMask = None
       
       # Get environmental data model and projection scenarios
       mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
       prjScenCodes = self._getBoomOrDefault('SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
                                              isList=True)
-      mdlScen = self._scribe.getScenario(mdlScenCode, userId=userId, fillLayers=True)
-      if mdlScen is not None:
-         if mdlScenCode not in prjScenCodes:
-            prjScens.append(mdlScen)
-         for pcode in prjScenCodes:
-            scen = self._scribe.getScenario(pcode, userId=userId, fillLayers=True)
-            if scen is not None:
-               prjScens.append(scen)
-            else:
-               raise LMError('Failed to retrieve scenario {}'.format(pcode))
-      else:
-         raise LMError('Failed to retrieve scenario {}'.format(mdlScen))
+      if mdlScenCode not in prjScenCodes:
+         prjScenCodes.append(mdlScenCode)
 
+      scenPkgs = self._scribe.getScenPackagesForUserCodes(userId, prjScenCodes, 
+                                                          fillLayers=True)
+      if not scenPkgs:
+         scenPkgs = self._scribe.getScenPackagesForUserCodes(PUBLIC_USER, 
+                                                prjScenCodes, fillLayers=True)
+      if scenPkgs:
+         scenPkg = scenPkgs[0]
+         mdlScen = scenPkg.getScenario(code=mdlScenCode)
+         for pcode in prjScenCodes:
+            prjScens.append(scenPkg.getScenario(code=pcode))
+      else:
+         raise LMError('Failed to retrieve ScenPackage for scenarios {}'
+                       .format(prjScenCodes))
+#       mdlScen = self._scribe.getScenario(mdlScenCode, userId=userId, fillLayers=True)
+#       if mdlScen is not None:
+#          if mdlScenCode not in prjScenCodes:
+#             prjScens.append(mdlScen)
+#          for pcode in prjScenCodes:
+#             scen = self._scribe.getScenario(pcode, userId=userId, fillLayers=True)
+#             if scen is not None:
+#                prjScens.append(scen)
+#             else:
+#                raise LMError('Failed to retrieve scenario {}'.format(pcode))
+#       else:
+#          raise LMError('Failed to retrieve scenario {}'.format(mdlScen))
       # Get optional model and project masks
       try:
          mdlMaskName = self._getBoomOrDefault('MODEL_MASK_NAME')
@@ -295,7 +317,7 @@ class ChristopherWalken(LMObject):
                                          lyrName=prjMaskName, epsg=epsg)
       except:
          pass
-
+      
       return (mdlScen, mdlMask, prjScens, prjMask)  
 
 # .............................................................................
@@ -350,12 +372,12 @@ class ChristopherWalken(LMObject):
                        .format(self.cfg.configFiles))
       earl = EarlJr()
       boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-      epsg = self.cfg.getint(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG')
+      epsg = self._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
       # Species parser/puller
       weaponOfChoice = self._getOccWeaponOfChoice(userId, archiveName, epsg, 
                                                   boompath)
       # SDM inputs
-      minPoints = self.cfg.getint(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN')
+      minPoints = self._getBoomOrDefault('POINT_COUNT_MIN')
       algorithms = self._getAlgorithms()
       (mdlScen, mdlMask, prjScens, prjMask) = self._getProjParams(userId, epsg)
       # Global PAM inputs
