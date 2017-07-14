@@ -234,12 +234,12 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def getScenPackagesForScenario(self, scen=None, scenId=None, 
-                                 userId=None, scenCode=None):
+                                 userId=None, scenCode=None, fillLayers=False):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getScenPackagesForScenario()
       """
-      scenPkgs = self._borg.getScenPackagesForScenario(scen, scenId, 
-                                                     userId, scenCode)
+      scenPkgs = self._borg.getScenPackagesForScenario(scen, scenId, userId, 
+                                                       scenCode, fillLayers)
       return scenPkgs
 
 # ...............................................
@@ -253,7 +253,7 @@ class BorgScribe(LMObject):
       return scens
 
 # ...............................................
-   def getScenPackagesForUserCodes(self, usr, scenCodeList):
+   def getScenPackagesForUserCodes(self, usr, scenCodeList, fillLayers=False):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getScenPackagesForScenario()
       @note: This returns all ScenPackages containing this scenario.  All 
@@ -264,7 +264,8 @@ class BorgScribe(LMObject):
          firstCode = scenCodeList[0]
          newlist = scenCodeList[1:]
          firstPkgs = self.getScenPackagesForScenario(userId=usr, 
-                                                    scenCode=firstCode)
+                                                     scenCode=firstCode, 
+                                                     fillLayers=fillLayers)
          for pkg in firstPkgs:
             badMatch = False
             for code in newlist:
@@ -278,7 +279,7 @@ class BorgScribe(LMObject):
 
 # ...............................................
    def getScenPackage(self, scenPkg=None, scenPkgId=None, 
-                      userId=None, scenPkgName=None):
+                      userId=None, scenPkgName=None, fillLayers=False):
       """
       @copydoc LmServer.db.catalog_borg.Borg::getScenPackage()
       """

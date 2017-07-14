@@ -717,7 +717,8 @@ class Borg(DbPostgresql):
 
 
 # ...............................................
-   def getScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName):
+   def getScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName, 
+                      fillLayers):
       """
       @summary Find all ScenPackages that contain the given Scenario
       @param scenPkg: The The LmServer.legion.scenario.ScenPackage to find 
@@ -735,13 +736,14 @@ class Borg(DbPostgresql):
                                                   scenPkgId, userId, scenPkgName)
       foundScenPkg = self._createScenPackage(row, idxs)
       if foundScenPkg:
-         scens = self.getScenariosForScenPackage(foundScenPkg, None, None, None)
+         scens = self.getScenariosForScenPackage(foundScenPkg, None, None, None, 
+                                                 fillLayers)
          foundScenPkg.setScenarios(scens)
       return foundScenPkg
    
 
 # ...............................................
-   def getScenPackagesForScenario(self, scen, scenId, userId, scenCode):
+   def getScenPackagesForScenario(self, scen, scenId, userId, scenCode, fillLayers):
       """
       @summary Find all ScenPackages that contain the given Scenario
       @param scen: The The LmServer.legion.scenario.Scenario to find 
@@ -761,13 +763,14 @@ class Borg(DbPostgresql):
                                                   scenId, userId, scenCode)
       for r in rows:
          epkg = self._createScenPackage(r, idxs)
-         scens = self.getScenariosForScenPackage(epkg, None, None, None)
+         scens = self.getScenariosForScenPackage(epkg, None, None, None, fillLayers)
          epkg.setScenarios(scens)
          scenPkgs.append(epkg)
       return scenPkgs
    
 # ...............................................
-   def getScenariosForScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName):
+   def getScenariosForScenPackage(self, scenPkg, scenPkgId, userId, scenPkgName,
+                                  fillLayers):
       """
       @summary Find all scenarios that are part of the given ScenPackage
       @param scenPkg: The LmServer.legion.scenario.ScenPackage to find 
@@ -785,7 +788,12 @@ class Borg(DbPostgresql):
       rows, idxs = self.executeSelectManyFunction('lm_getScenariosForScenPackage',
                                                   scenPkgId, userId, scenPkgName)
       for r in rows:
-         scens.append(self._createScenario(r, idxs, isForModel=False))
+         scen = self._createScenario(r, idxs, isForModel=False)
+         if scen is not None and fillLayers:
+            lyrs = self.getScenarioLayers(scen.getId())
+            scen.setLayers(lyrs)
+         scens.append(scen)
+
       return scens
    
 # ...............................................
