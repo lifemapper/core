@@ -508,14 +508,20 @@ class BOOMFiller(LMObject):
       # Get value from BOOM or default config file
       if isBool:
          try:
-            var = self.cfg.getboolean(SERVER_BOOM_HEADING, varname)
+            var = config.getboolean(SERVER_BOOM_HEADING, varname)
          except:
-            var = self.cfg.getboolean(SERVER_PIPELINE_HEADING, varname)
+            try:
+               var = config.getboolean(SERVER_PIPELINE_HEADING, varname)
+            except:
+               pass
       else:
          try:
-            var = self._findBoomOrDefault(varname)
+            var = config.get(SERVER_BOOM_HEADING, varname)
          except:
-            var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
+            try:
+               var = config.get(SERVER_PIPELINE_HEADING, varname)
+            except:
+               pass
       # Interpret value
       if not isList:
          var = self._getVarValue(var)

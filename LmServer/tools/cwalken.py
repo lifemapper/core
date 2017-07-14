@@ -152,12 +152,18 @@ class ChristopherWalken(LMObject):
          try:
             var = self.cfg.getboolean(SERVER_BOOM_HEADING, varname)
          except:
-            var = self.cfg.getboolean(SERVER_PIPELINE_HEADING, varname)
+            try:
+               var = self.cfg.getboolean(SERVER_PIPELINE_HEADING, varname)
+            except:
+               pass
       else:
          try:
             var = self._findBoomOrDefault(varname)
          except:
-            var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
+            try:
+               var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
+            except:
+               pass
       # Interpret value
       if not isList:
          var = self._getVarValue(var)
