@@ -158,48 +158,49 @@ class ChristopherWalken(LMObject):
                pass
       else:
          try:
-            var = self._findBoomOrDefault(varname)
+            var = self.cfg.get(SERVER_BOOM_HEADING, varname)
          except:
             try:
                var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
             except:
                pass
       # Interpret value
-      if not isList:
-         var = self._getVarValue(var)
-      else:
-         try:
-            tmplist = [v.strip() for v in var.split(',')]
-            var = []
-         except:
-            raise LMError('Failed to split variables on \',\'')
-         for v in tmplist:
-            v = self._getVarValue(v)
-            var.append(v)
+      if var is not None:
+         if not isList:
+            var = self._getVarValue(var)
+         else:
+            try:
+               tmplist = [v.strip() for v in var.split(',')]
+               var = []
+            except:
+               raise LMError('Failed to split variables on \',\'')
+            for v in tmplist:
+               v = self._getVarValue(v)
+               var.append(v)
       return var
 
 # .............................................................................
    def _getOccWeaponOfChoice(self, userId, archiveName, epsg, boompath):
       useGBIFTaxonIds = False
       # Get datasource and optional taxonomy source
-      datasource = self._findBoomOrDefault('DATASOURCE')
+      datasource = self._getBoomOrDefault('DATASOURCE')
       try:
          taxonSourceName = TAXONOMIC_SOURCE[datasource]['name']
       except:
          taxonSourceName = None
          
       # Expiration date for retrieved species data 
-      expDate = dt.DateTime(self._findBoomOrDefault('SPECIES_EXP_YEAR'), 
-                            self._findBoomOrDefault('SPECIES_EXP_MONTH'), 
-                            self._findBoomOrDefault('SPECIES_EXP_DAY')).mjd
+      expDate = dt.DateTime(self._getBoomOrDefault('SPECIES_EXP_YEAR'), 
+                            self._getBoomOrDefault('SPECIES_EXP_MONTH'), 
+                            self._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
       # Get Weapon of Choice depending on type of Occurrence data to parse
       # GBIF data
       if datasource == 'GBIF':
-#          gbifTax = self._findBoomOrDefault('GBIF_TAXONOMY_FILENAME')
+#          gbifTax = self._getBoomOrDefault('GBIF_TAXONOMY_FILENAME')
 #          gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
-         gbifOcc = self._findBoomOrDefault('GBIF_OCCURRENCE_FILENAME')
+         gbifOcc = self._getBoomOrDefault('GBIF_OCCURRENCE_FILENAME')
          gbifOccFile = os.path.join(SPECIES_DATA_PATH, gbifOcc)
-         gbifProv = self._findBoomOrDefault('GBIF_PROVIDER_FILENAME')
+         gbifProv = self._getBoomOrDefault('GBIF_PROVIDER_FILENAME')
          gbifProvFile = os.path.join(SPECIES_DATA_PATH, gbifProv)
          weaponOfChoice = GBIFWoC(self._scribe, userId, archiveName, 
                                      epsg, expDate, gbifOccFile,
@@ -208,7 +209,7 @@ class ChristopherWalken(LMObject):
                                      logger=self.log)
       # Bison data
       elif datasource == 'BISON':
-         bisonTsn = self._findBoomOrDefault('BISON_TSN_FILENAME')
+         bisonTsn = self._getBoomOrDefault('BISON_TSN_FILENAME')
          bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
          weaponOfChoice = BisonWoC(self._scribe, userId, archiveName, 
                                    epsg, expDate, bisonTsnFile, 
@@ -218,16 +219,16 @@ class ChristopherWalken(LMObject):
          # iDigBio data
          if datasource == 'IDIGBIO':
             useGBIFTaxonIds = True
-            occData = self._findBoomOrDefault('IDIG_OCCURRENCE_DATA')
-            occDelimiter = self._findBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
+            occData = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
+            occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
             occCSV = os.path.join(SPECIES_DATA_PATH, occData + LMFormat.CSV.ext)
             occMeta = os.path.join(SPECIES_DATA_PATH, 
                                    occData + LMFormat.METADATA.ext)
          # User data, anything not above
          else:
             useGBIFTaxonIds = False
-            occData = self._findBoomOrDefault('USER_OCCURRENCE_DATA')
-            occDelimiter = self._findBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
+            occData = self._getBoomOrDefault('USER_OCCURRENCE_DATA')
+            occDelimiter = self._getBoomOrDefault('USER_OCCURRENCE_DATA_DELIMITER') 
             occCSV = os.path.join(boompath, occData + LMFormat.CSV.ext)
             occMeta = os.path.join(boompath, occData + LMFormat.METADATA.ext)
             
@@ -265,8 +266,8 @@ class ChristopherWalken(LMObject):
       mdlMask = prjMask = None
       
       # Get environmental data model and projection scenarios
-      mdlScenCode = self._findBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
-      prjScenCodes = self._findBoomOrDefault('SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
+      mdlScenCode = self._getBoomOrDefault('SCENARIO_PACKAGE_MODEL_SCENARIO')
+      prjScenCodes = self._getBoomOrDefault('SCENARIO_PACKAGE_PROJECTION_SCENARIOS', 
                                              isList=True)
       mdlScen = self._scribe.getScenario(mdlScenCode, userId=userId, fillLayers=True)
       if mdlScen is not None:
@@ -283,13 +284,13 @@ class ChristopherWalken(LMObject):
 
       # Get optional model and project masks
       try:
-         mdlMaskName = self._findBoomOrDefault('MODEL_MASK_NAME')
+         mdlMaskName = self._getBoomOrDefault('MODEL_MASK_NAME')
          mdlMask = self._scribe.getLayer(userId=userId, 
                                          lyrName=mdlMaskName, epsg=epsg)
       except:
          pass
       try:
-         prjMaskName = self._findBoomOrDefault('PROJECTION_MASK_NAME')
+         prjMaskName = self._getBoomOrDefault('PROJECTION_MASK_NAME')
          prjMask = self._scribe.getLayer(userId=userId, 
                                          lyrName=prjMaskName, epsg=epsg)
       except:
@@ -300,7 +301,7 @@ class ChristopherWalken(LMObject):
 # .............................................................................
    def _getGlobalPamObjects(self, userId, archiveName, epsg):
       # Get existing intersect grid, gridset and parameters for Global PAM
-      gridname = self._findBoomOrDefault('GRID_NAME')
+      gridname = self._getBoomOrDefault('GRID_NAME')
       intersectGrid = self._scribe.getShapeGrid(userId=userId, lyrName=gridname, 
                                                 epsg=epsg)
       # Global PAM and Scenario GRIM for each scenario
@@ -312,15 +313,15 @@ class ChristopherWalken(LMObject):
                                                     MatrixType.GRIM])
       intersectParams = {
          MatrixColumn.INTERSECT_PARAM_FILTER_STRING: 
-            self._findBoomOrDefault('INTERSECT_FILTERSTRING'),
+            self._getBoomOrDefault('INTERSECT_FILTERSTRING'),
          MatrixColumn.INTERSECT_PARAM_VAL_NAME: 
-            self._findBoomOrDefault('INTERSECT_VALNAME'),
+            self._getBoomOrDefault('INTERSECT_VALNAME'),
          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: 
-            self._findBoomOrDefault('INTERSECT_MINPRESENCE'),
+            self._getBoomOrDefault('INTERSECT_MINPRESENCE'),
          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: 
-            self._findBoomOrDefault('INTERSECT_MAXPRESENCE'),
+            self._getBoomOrDefault('INTERSECT_MAXPRESENCE'),
          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: 
-            self._findBoomOrDefault('INTERSECT_MINPERCENT')}
+            self._getBoomOrDefault('INTERSECT_MINPERCENT')}
 
       return (boomGridset, intersectParams)  
 
@@ -341,8 +342,8 @@ class ChristopherWalken(LMObject):
       @summary: Get configured string values and any corresponding db objects 
       @TODO: Make all archive/default config keys consistent
       """
-      userId = self._findBoomOrDefault('ARCHIVE_USER')
-      archiveName = self._findBoomOrDefault('ARCHIVE_NAME')
+      userId = self._getBoomOrDefault('ARCHIVE_USER')
+      archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
       # Get user-archive configuration file
       if userId is None or archiveName is None:
          raise LMError(currargs='Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
@@ -360,7 +361,7 @@ class ChristopherWalken(LMObject):
       # Global PAM inputs
       (boomGridset, intersectParams) = self._getGlobalPamObjects(userId, 
                                                             archiveName, epsg)
-      assemblePams = self._findBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
+      assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
 
       return (userId, archiveName, boompath, weaponOfChoice, epsg, 
               minPoints, algorithms, mdlScen, mdlMask, prjScens, prjMask, 

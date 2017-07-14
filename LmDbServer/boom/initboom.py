@@ -523,17 +523,18 @@ class BOOMFiller(LMObject):
             except:
                pass
       # Interpret value
-      if not isList:
-         var = self._getVarValue(var)
-      else:
-         try:
-            tmplist = [v.strip() for v in var.split(',')]
-            var = []
-         except:
-            raise LMError('Failed to split variables on \',\'')
-         for v in tmplist:
-            v = self._getVarValue(v)
-            var.append(v)
+      if var is not None:
+         if not isList:
+            var = self._getVarValue(var)
+         else:
+            try:
+               tmplist = [v.strip() for v in var.split(',')]
+               var = []
+            except:
+               raise LMError('Failed to split variables on \',\'')
+            for v in tmplist:
+               v = self._getVarValue(v)
+               var.append(v)
       return var
 
 
