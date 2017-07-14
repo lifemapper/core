@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import ConfigParser
 import mx.DateTime
 import os
 import time
@@ -309,7 +310,6 @@ class BOOMFiller(LMObject):
    def writeConfigFile2(self, fname=None, mdlMaskName=None, prjMaskName=None):
       """
       """
-      import ConfigParser
       config = ConfigParser.SafeConfigParser()
       config.add_section(SERVER_BOOM_HEADING)
       
@@ -321,19 +321,19 @@ class BOOMFiller(LMObject):
          thisHeading = 'ALGORITHM {}'.format(counter)
          config.add_section(thisHeading)
          for name, val in alg.parameters.iteritems():
-            config.set(thisHeading, name, val)
+            config.set(thisHeading, name, str(val))
 
       # .........................................      
       # Global PAM vals
       # Intersection grid
-      config.set(SERVER_BOOM_HEADING, 'GRID_NUM_SIDES', self.cellsides)
-      config.set(SERVER_BOOM_HEADING, 'GRID_CELLSIZE', self.cellsize)
+      config.set(SERVER_BOOM_HEADING, 'GRID_NUM_SIDES', str(self.cellsides))
+      config.set(SERVER_BOOM_HEADING, 'GRID_CELLSIZE', str(self.cellsize))
       config.set(SERVER_BOOM_HEADING, 'GRID_BBOX', 
                  ','.join(str(v) for v in self.gridbbox))
       config.set(SERVER_BOOM_HEADING, 'GRID_NAME', self.gridname)
       # Intersection params
       for k, v in self.intersectParams.iteritems():
-         config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), v)
+         config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
       config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', str(self.assemblePams))
       
       # SDM input
@@ -349,7 +349,7 @@ class BOOMFiller(LMObject):
       config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MODEL_SCENARIO', 
                  self.modelScenCode)
       config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_MAPUNITS', self.mapunits)
-      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG', self.epsg)
+      config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE_EPSG', str(self.epsg))
       config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE', self.scenPackageName)
       
       # SDM input species source data and type (for processing)
@@ -377,12 +377,12 @@ class BOOMFiller(LMObject):
                        self.userOccSep)
       config.set(SERVER_BOOM_HEADING, 'DATASOURCE', self.dataSource)
 
-      config.set(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN', self.minpoints)
+      config.set(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN', str(self.minpoints))
       
       # Expiration date triggering re-query and computation
-      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR', CURRDATE[0])
-      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH', CURRDATE[1])
-      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY', CURRDATE[2])
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_YEAR', str(CURRDATE[0]))
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH', str(CURRDATE[1]))
+      config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY', str(CURRDATE[2]))
 
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', self.usr)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', self.archiveName)
@@ -1371,13 +1371,13 @@ if filler.occIdFname:
 # This updates the gridset, shapegrid, default PAMs (rolling, with no 
 #     matrixColumns, default GRIMs with matrixColumns
 # Anonymous and simple SDM booms do not need Scenario GRIMs and return empty dict
-scenGrims = filler.addShapeGridGPAMGridset()
+scenGrims, gridset = filler.addShapeGridGPAMGridset()
 
 # If there are Scenario GRIMs, create MFChain for each 
 filler.addGRIMChains(scenGrims)
    
 # Write config file for this archive
-filler.writeConfigFile()
+filler.writeConfigFile2()
 
 # Create MFChain to run Boomer daemon on these inputs
 mfChain = filler.addBoomChain()

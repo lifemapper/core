@@ -150,6 +150,7 @@ from LmServer.common.datalocator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
 from LmServer.common.log import ScriptLogger
+from LmServer.tools.cwalken import ChristopherWalken
 
 SPUD_LIMIT = 100
 
