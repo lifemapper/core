@@ -311,7 +311,8 @@ class BOOMFiller(LMObject):
       # Intersection params
       for k, v in self.intersectParams.iteritems():
          config.set(SERVER_BOOM_HEADING, 'INTERSECT_{}'.format(k.upper()), str(v))
-      config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', str(self.assemblePams))
+      # TODO: For now, this defaults to True
+      config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', str(True))
       
       # SDM input
       if mdlMaskName is not None:
