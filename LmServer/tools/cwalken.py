@@ -145,8 +145,7 @@ class ChristopherWalken(LMObject):
       return var
 
    # ...............................................
-   def _getBoomOrDefault(self, varname, defaultVal=None, 
-                         isList=False, isBool=False):
+   def _getBoomOrDefault(self, varname, isList=False, isBool=False):
       var = None
       # Get value from BOOM or default config file
       if isBool:
@@ -160,20 +159,17 @@ class ChristopherWalken(LMObject):
          except:
             var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
       # Interpret value
-      if var is None:
-         var = defaultVal
+      if not isList:
+         var = self._getVarValue(var)
       else:
-         if not isList:
-            var = self._getVarValue(var)
-         else:
-            try:
-               tmplist = [v.strip() for v in var.split(',')]
-               var = []
-            except:
-               raise LMError('Failed to split variables on \',\'')
-            for v in tmplist:
-               v = self._getVarValue(v)
-               var.append(v)
+         try:
+            tmplist = [v.strip() for v in var.split(',')]
+            var = []
+         except:
+            raise LMError('Failed to split variables on \',\'')
+         for v in tmplist:
+            v = self._getVarValue(v)
+            var.append(v)
       return var
 
 # .............................................................................

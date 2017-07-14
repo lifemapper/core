@@ -30,22 +30,17 @@ from types import IntType
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (DEFAULT_POST_USER, LMFormat, 
-                        ProcessType, JobStatus, MatrixType, SERVER_BOOM_HEADING)
+                        ProcessType, JobStatus, MatrixType, 
+                        SERVER_PIPELINE_HEADING, SERVER_BOOM_HEADING)
 from LmCommon.common.readyfile import readyFilename
 from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmDbServer.common.localconstants import (ASSEMBLE_PAMS, 
-      GBIF_TAXONOMY_FILENAME, GBIF_PROVIDER_FILENAME, GBIF_OCCURRENCE_FILENAME, 
-      BISON_TSN_FILENAME, IDIG_OCCURRENCE_DATA, IDIG_OCCURRENCE_DATA_DELIMITER,
-      USER_OCCURRENCE_DATA, USER_OCCURRENCE_DATA_DELIMITER,
-      INTERSECT_FILTERSTRING, INTERSECT_VALNAME, INTERSECT_MINPERCENT, 
-      INTERSECT_MINPRESENCE, INTERSECT_MAXPRESENCE, SCENARIO_PACKAGE,
-      GRID_CELLSIZE, GRID_NUM_SIDES)
+from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME, 
+                                              GBIF_PROVIDER_FILENAME)
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (Algorithms, LMFileType, ENV_DATA_PATH, 
          GPAM_KEYWORD, GGRIM_KEYWORD, ARCHIVE_KEYWORD, PUBLIC_ARCHIVE_NAME, 
          DEFAULT_EMAIL_POSTFIX, Priority, ProcessTool)
-from LmServer.common.localconstants import (PUBLIC_USER, DATASOURCE, 
-                                            POINT_COUNT_MIN)
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.lmuser import LMUser
 from LmServer.common.log import ScriptLogger
 from LmServer.base.serviceobject2 import ServiceObject
@@ -238,66 +233,49 @@ class BOOMFiller(LMObject):
       config = Config(siteFn=paramFname)
    
       # Fill in missing or null variables for archive.config.ini
-      usr = self._findConfigOrDefault(config, 'ARCHIVE_USER', PUBLIC_USER)
-      usrEmail = self._findConfigOrDefault(config, 'ARCHIVE_USER_EMAIL', 
-                                 '{}{}'.format(PUBLIC_USER, DEFAULT_EMAIL_POSTFIX))
-      archiveName = self._findConfigOrDefault(config, 'ARCHIVE_NAME', 
-                                              PUBLIC_ARCHIVE_NAME)
-      priority = self._findConfigOrDefault(config, 'ARCHIVE_PRIORITY', 
-                                              Priority.NORMAL)
+      usr = self._getBoomOrDefault(config, 'ARCHIVE_USER', defaultValue=PUBLIC_USER)
+      usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL', 
+                                 defaultValue='{}{}'.format(PUBLIC_USER, 
+                                                      DEFAULT_EMAIL_POSTFIX))
+      archiveName = self._getBoomOrDefault(config, 'ARCHIVE_NAME', 
+                                           defaultValue=PUBLIC_ARCHIVE_NAME)
+      priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
+                                        defaultValue=Priority.NORMAL)
       
-      dataSource = self._findConfigOrDefault(config, 'DATASOURCE', DATASOURCE)
+      dataSource = self._getBoomOrDefault(config, 'DATASOURCE')
       dataSource = dataSource.upper()
-      occIdFname = self._findConfigOrDefault(config, 'OCCURRENCE_ID_FILENAME', 
-                                             None)
-      gbifFname = self._findConfigOrDefault(config, 'GBIF_OCCURRENCE_FILENAME', 
-                                       GBIF_OCCURRENCE_FILENAME)
-      idigFname = self._findConfigOrDefault(config, 'IDIG_OCCURRENCE_DATA', 
-                                            IDIG_OCCURRENCE_DATA)
-      idigOccSep = self._findConfigOrDefault(config, 
-            'IDIG_OCCURRENCE_DATA_DELIMITER', IDIG_OCCURRENCE_DATA_DELIMITER)
-      bisonFname = self._findConfigOrDefault(config, 'BISON_TSN_FILENAME', 
-                                       BISON_TSN_FILENAME) 
-      userOccFname = self._findConfigOrDefault(config, 'USER_OCCURRENCE_DATA', 
-                                       USER_OCCURRENCE_DATA)
-      userOccSep = self._findConfigOrDefault(config, 
-               'USER_OCCURRENCE_DATA_DELIMITER', USER_OCCURRENCE_DATA_DELIMITER)
-      minpoints = self._findConfigOrDefault(config, 'POINT_COUNT_MIN', 
-                                            POINT_COUNT_MIN)
+      occIdFname = self._getBoomOrDefault(config, 'OCCURRENCE_ID_FILENAME')
+      gbifFname = self._getBoomOrDefault(config, 'GBIF_OCCURRENCE_FILENAME')
+      idigFname = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA')
+      idigOccSep = self._getBoomOrDefault(config, 'IDIG_OCCURRENCE_DATA_DELIMITER')
+      bisonFname = self._getBoomOrDefault(config, 'BISON_TSN_FILENAME') 
+      userOccFname = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA')
+      userOccSep = self._getBoomOrDefault(config, 'USER_OCCURRENCE_DATA_DELIMITER')
+      minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
       algs = self._getAlgorithms(config)
          
-      assemblePams = self._findConfigOrDefault(config, 'ASSEMBLE_PAMS', 
-                                               ASSEMBLE_PAMS)
-      gridbbox = self._findConfigOrDefault(config, 'GRID_BBOX', None, isList=True)
-      cellsides = self._findConfigOrDefault(config, 'GRID_NUM_SIDES', 
-                                            GRID_NUM_SIDES)
-      cellsize = self._findConfigOrDefault(config, 'GRID_CELLSIZE', 
-                                           GRID_CELLSIZE)
+      assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS')
+      gridbbox = self._getBoomOrDefault(config, 'GRID_BBOX', isList=True)
+      cellsides = self._getBoomOrDefault(config, 'GRID_NUM_SIDES')
+      cellsize = self._getBoomOrDefault(config, 'GRID_CELLSIZE')
       gridname = '{}-Grid-{}'.format(archiveName, cellsize)
       # TODO: allow filter
-      gridFilter = self._findConfigOrDefault(config, 'INTERSECT_FILTERSTRING', 
-                                        INTERSECT_FILTERSTRING)
-      gridIntVal = self._findConfigOrDefault(config, 'INTERSECT_VALNAME', 
-                                        INTERSECT_VALNAME)
-      gridMinPct = self._findConfigOrDefault(config, 'INTERSECT_MINPERCENT', 
-                                        INTERSECT_MINPERCENT)
-      gridMinPres = self._findConfigOrDefault(config, 'INTERSECT_MINPRESENCE', 
-                                         INTERSECT_MINPRESENCE)
-      gridMaxPres = self._findConfigOrDefault(config, 'INTERSECT_MAXPRESENCE', 
-                                         INTERSECT_MAXPRESENCE)
+      gridFilter = self._getBoomOrDefault(config, 'INTERSECT_FILTERSTRING')
+      gridIntVal = self._getBoomOrDefault(config, 'INTERSECT_VALNAME')
+      gridMinPct = self._getBoomOrDefault(config, 'INTERSECT_MINPERCENT')
+      gridMinPres = self._getBoomOrDefault(config, 'INTERSECT_MINPRESENCE')
+      gridMaxPres = self._getBoomOrDefault(config, 'INTERSECT_MAXPRESENCE')
       intersectParams = {MatrixColumn.INTERSECT_PARAM_FILTER_STRING: gridFilter,
                          MatrixColumn.INTERSECT_PARAM_VAL_NAME: gridIntVal,
                          MatrixColumn.INTERSECT_PARAM_MIN_PRESENCE: gridMinPres,
                          MatrixColumn.INTERSECT_PARAM_MAX_PRESENCE: gridMaxPres,
                          MatrixColumn.INTERSECT_PARAM_MIN_PERCENT: gridMinPct}
       # Find package name or code list, check for scenarios and epsg, mapunits
-      scenPackageName = self._findConfigOrDefault(config, 'SCENARIO_PACKAGE', 
-                                                 SCENARIO_PACKAGE)
+      scenPackageName = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE')
       if scenPackageName is not None:
-         modelScenCode = self._findConfigOrDefault(config, 
-                     'SCENARIO_PACKAGE_MODEL_SCENARIO', None, isList=False)
-         prjScenCodeList = self._findConfigOrDefault(config, 
-                     'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', None, isList=True)
+         modelScenCode = self._getBoomOrDefault(config, 'SCENARIO_PACKAGE_MODEL_SCENARIO')
+         prjScenCodeList = self._getBoomOrDefault(config, 
+                     'SCENARIO_PACKAGE_PROJECTION_SCENARIOS', isList=True)
       
       return (usr, usrEmail, archiveName, priority, scenPackageName, 
               modelScenCode, prjScenCodeList, dataSource, 
@@ -307,9 +285,7 @@ class BOOMFiller(LMObject):
               intersectParams)
       
    # ...............................................
-   def writeConfigFile2(self, fname=None, mdlMaskName=None, prjMaskName=None):
-      """
-      """
+   def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
       config = ConfigParser.SafeConfigParser()
       config.add_section(SERVER_BOOM_HEADING)
       
@@ -392,104 +368,104 @@ class BOOMFiller(LMObject):
       with open(self.outConfigFilename, 'wb') as configfile:
          config.write(configfile)
 
-   # ...............................................
-   def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
-      """
-      """
-      readyFilename(self.outConfigFilename, overwrite=True)
-      f = open(self.outConfigFilename, 'w')
-      f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
-      f.write('ARCHIVE_USER: {}\n'.format(self.usr))
-      f.write('ARCHIVE_NAME: {}\n'.format(self.archiveName))
-      if self.usrEmail is not None:
-         f.write('TROUBLESHOOTERS: {}\n'.format(self.usrEmail))
-      f.write('\n')   
-   
-      f.write('; ...................\n')
-      f.write('; SDM Params\n')
-      f.write('; ...................\n')
-      # Expiration date triggering re-query and computation
-      f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
-      f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
-      f.write('SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
-      f.write('\n')
-      # Minimun number of required species points   
-      f.write('POINT_COUNT_MIN: {}\n'.format(self.minpoints))
-
-      f.write('; ...................\n')
-      f.write('; Species data vals\n')
-      f.write('; ...................\n')
-      f.write('DATASOURCE: {}\n'.format(self.dataSource))
-      if self.occIdFname is not None:
-         f.write('OCCURRENCE_ID_FILENAME: {}\n'.format(self.occIdFname))
-      else:
-         # Species source type (for processing) and file
-         if self.dataSource == SpeciesDatasource.GBIF:
-            varname = 'GBIF_OCCURRENCE_FILENAME'
-            dataFname = self.gbifFname
-            # TODO: allow overwrite of these vars in initboom --> archive config file
-            f.write('GBIF_TAXONOMY_FILENAME: {}\n'.format(GBIF_TAXONOMY_FILENAME))
-            f.write('GBIF_PROVIDER_FILENAME: {}\n'.format(GBIF_PROVIDER_FILENAME))
-         elif self.dataSource == SpeciesDatasource.BISON:
-            varname = 'BISON_TSN_FILENAME'
-            dataFname = self.bisonFname
-         elif self.dataSource == SpeciesDatasource.IDIGBIO:
-            varname = 'IDIG_OCCURRENCE_DATA'
-            dataFname = self.idigFname
-            f.write('IDIG_OCCURRENCE_DATA_DELIMITER: {}\n'
-                    .format(self.idigOccSep))
-         else:
-            varname = 'USER_OCCURRENCE_DATA'
-            dataFname = self.userOccFname
-            f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
-                    .format(self.userOccSep))
-         f.write('{}: {}\n'.format(varname, dataFname))
-         f.write('\n')
-   
-      f.write('; ...................\n')
-      f.write('; Env Package Vals\n')
-      f.write('; ...................\n')
-      # Input environmental data, pulled from SCENARIO_PACKAGE metadata
-      f.write('SCENARIO_PACKAGE: {}\n'.format(self.scenPackageName))
-      f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(self.epsg))
-      f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(self.mapunits))
-      # Scenario codes, created from environmental metadata  
-      f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(self.modelScenCode))
-      pcodes = ','.join(self.prjScenCodeList)
-      f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
-      
-      if mdlMaskName is not None:
-         f.write('MODEL_MASK_NAME: {}\n'.format(mdlMaskName))
-      if prjMaskName is not None:
-         f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMaskName))
-      f.write('\n')
-      
-      f.write('; ...................\n')
-      f.write('; Global PAM vals\n')
-      f.write('; ...................\n')
-      # Intersection grid
-      f.write('GRID_NAME: {}\n'.format(self.gridname))
-      f.write('GRID_BBOX: {}\n'.format(','.join(str(v) for v in self.gridbbox)))
-      f.write('GRID_CELLSIZE: {}\n'.format(self.cellsize))
-      f.write('GRID_NUM_SIDES: {}\n'.format(self.cellsides))
-      f.write('\n')
-      for k, v in self.intersectParams.iteritems():
-         f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
-      f.write('ASSEMBLE_PAMS: {}\n'.format(str(self.assemblePams)))
-      f.write('\n')
-
-      # SDM Algorithms with all parameters   
-      counter = 0
-      for alg in self.algorithms:
-         counter += 1
-         f.write('; ...................\n')
-         f.write('[ALGORITHM - {}]\n'.format(counter))
-         f.write('; ...................\n')
-         for name, val in alg.parameters.iteritems():
-            f.write('{}: {}\n'.format(name, val))
-         f.write('\n')
-               
-      f.close()
+#    # ...............................................
+#    def writeConfigFile(self, fname=None, mdlMaskName=None, prjMaskName=None):
+#       """
+#       """
+#       readyFilename(self.outConfigFilename, overwrite=True)
+#       f = open(self.outConfigFilename, 'w')
+#       f.write('[{}]\n'.format(SERVER_BOOM_HEADING))
+#       f.write('ARCHIVE_USER: {}\n'.format(self.usr))
+#       f.write('ARCHIVE_NAME: {}\n'.format(self.archiveName))
+#       if self.usrEmail is not None:
+#          f.write('TROUBLESHOOTERS: {}\n'.format(self.usrEmail))
+#       f.write('\n')   
+#    
+#       f.write('; ...................\n')
+#       f.write('; SDM Params\n')
+#       f.write('; ...................\n')
+#       # Expiration date triggering re-query and computation
+#       f.write('SPECIES_EXP_YEAR: {}\n'.format(CURRDATE[0]))
+#       f.write('SPECIES_EXP_MONTH: {}\n'.format(CURRDATE[1]))
+#       f.write('SPECIES_EXP_DAY: {}\n'.format(CURRDATE[2]))
+#       f.write('\n')
+#       # Minimun number of required species points   
+#       f.write('POINT_COUNT_MIN: {}\n'.format(self.minpoints))
+# 
+#       f.write('; ...................\n')
+#       f.write('; Species data vals\n')
+#       f.write('; ...................\n')
+#       f.write('DATASOURCE: {}\n'.format(self.dataSource))
+#       if self.occIdFname is not None:
+#          f.write('OCCURRENCE_ID_FILENAME: {}\n'.format(self.occIdFname))
+#       else:
+#          # Species source type (for processing) and file
+#          if self.dataSource == SpeciesDatasource.GBIF:
+#             varname = 'GBIF_OCCURRENCE_FILENAME'
+#             dataFname = self.gbifFname
+#             # TODO: allow overwrite of these vars in initboom --> archive config file
+#             f.write('GBIF_TAXONOMY_FILENAME: {}\n'.format(GBIF_TAXONOMY_FILENAME))
+#             f.write('GBIF_PROVIDER_FILENAME: {}\n'.format(GBIF_PROVIDER_FILENAME))
+#          elif self.dataSource == SpeciesDatasource.BISON:
+#             varname = 'BISON_TSN_FILENAME'
+#             dataFname = self.bisonFname
+#          elif self.dataSource == SpeciesDatasource.IDIGBIO:
+#             varname = 'IDIG_OCCURRENCE_DATA'
+#             dataFname = self.idigFname
+#             f.write('IDIG_OCCURRENCE_DATA_DELIMITER: {}\n'
+#                     .format(self.idigOccSep))
+#          else:
+#             varname = 'USER_OCCURRENCE_DATA'
+#             dataFname = self.userOccFname
+#             f.write('USER_OCCURRENCE_DATA_DELIMITER: {}\n'
+#                     .format(self.userOccSep))
+#          f.write('{}: {}\n'.format(varname, dataFname))
+#          f.write('\n')
+#    
+#       f.write('; ...................\n')
+#       f.write('; Env Package Vals\n')
+#       f.write('; ...................\n')
+#       # Input environmental data, pulled from SCENARIO_PACKAGE metadata
+#       f.write('SCENARIO_PACKAGE: {}\n'.format(self.scenPackageName))
+#       f.write('SCENARIO_PACKAGE_EPSG: {}\n'.format(self.epsg))
+#       f.write('SCENARIO_PACKAGE_MAPUNITS: {}\n'.format(self.mapunits))
+#       # Scenario codes, created from environmental metadata  
+#       f.write('SCENARIO_PACKAGE_MODEL_SCENARIO: {}\n'.format(self.modelScenCode))
+#       pcodes = ','.join(self.prjScenCodeList)
+#       f.write('SCENARIO_PACKAGE_PROJECTION_SCENARIOS: {}\n'.format(pcodes))
+#       
+#       if mdlMaskName is not None:
+#          f.write('MODEL_MASK_NAME: {}\n'.format(mdlMaskName))
+#       if prjMaskName is not None:
+#          f.write('PROJECTION_MASK_NAME: {}\n'.format(prjMaskName))
+#       f.write('\n')
+#       
+#       f.write('; ...................\n')
+#       f.write('; Global PAM vals\n')
+#       f.write('; ...................\n')
+#       # Intersection grid
+#       f.write('GRID_NAME: {}\n'.format(self.gridname))
+#       f.write('GRID_BBOX: {}\n'.format(','.join(str(v) for v in self.gridbbox)))
+#       f.write('GRID_CELLSIZE: {}\n'.format(self.cellsize))
+#       f.write('GRID_NUM_SIDES: {}\n'.format(self.cellsides))
+#       f.write('\n')
+#       for k, v in self.intersectParams.iteritems():
+#          f.write('INTERSECT_{}:  {}\n'.format(k.upper(), v))
+#       f.write('ASSEMBLE_PAMS: {}\n'.format(str(self.assemblePams)))
+#       f.write('\n')
+# 
+#       # SDM Algorithms with all parameters   
+#       counter = 0
+#       for alg in self.algorithms:
+#          counter += 1
+#          f.write('; ...................\n')
+#          f.write('[ALGORITHM - {}]\n'.format(counter))
+#          f.write('; ...................\n')
+#          for name, val in alg.parameters.iteritems():
+#             f.write('{}: {}\n'.format(name, val))
+#          f.write('\n')
+#                
+#       f.close()
    
    # ...............................................
    def _getVarValue(self, var):
@@ -502,28 +478,58 @@ class BOOMFiller(LMObject):
             pass
       return var
       
+#    # ...............................................
+#    def _findConfigOrDefault(self, config, varname, defaultValue, isList=False):
+#       var = None
+#       try:
+#          var = config.get(SERVER_BOOM_HEADING, varname)
+#       except:
+#          pass
+#       if var is None:
+#          var = defaultValue
+#       else:
+#          if not isList:
+#             var = self._getVarValue(var)
+#          else:
+#             try:
+#                tmplist = [v.strip() for v in var.split(',')]
+#                var = []
+#             except:
+#                raise LMError('Failed to split variables on \',\'')
+#             for v in tmplist:
+#                v = self._getVarValue(v)
+#                var.append(v)
+#       return var
+   
    # ...............................................
-   def _findConfigOrDefault(self, config, varname, defaultValue, isList=False):
+   def _getBoomOrDefault(self, config, varname, defaultValue=None, 
+                         isList=False, isBool=False):
       var = None
-      try:
-         var = config.get(SERVER_BOOM_HEADING, varname)
-      except:
-         pass
-      if var is None:
-         var = defaultValue
+      # Get value from BOOM or default config file
+      if isBool:
+         try:
+            var = self.cfg.getboolean(SERVER_BOOM_HEADING, varname)
+         except:
+            var = self.cfg.getboolean(SERVER_PIPELINE_HEADING, varname)
       else:
-         if not isList:
-            var = self._getVarValue(var)
-         else:
-            try:
-               tmplist = [v.strip() for v in var.split(',')]
-               var = []
-            except:
-               raise LMError('Failed to split variables on \',\'')
-            for v in tmplist:
-               v = self._getVarValue(v)
-               var.append(v)
+         try:
+            var = self._findBoomOrDefault(varname)
+         except:
+            var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
+      # Interpret value
+      if not isList:
+         var = self._getVarValue(var)
+      else:
+         try:
+            tmplist = [v.strip() for v in var.split(',')]
+            var = []
+         except:
+            raise LMError('Failed to split variables on \',\'')
+         for v in tmplist:
+            v = self._getVarValue(v)
+            var.append(v)
       return var
+
 
    # ...............................................
    def addUsers(self, isInitial=True):
