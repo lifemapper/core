@@ -88,11 +88,8 @@ class Boomer(LMObject):
    # .............................
    def initializeMe(self):
       """
-      @summary: Creates objects (OccurrenceSets, SMDModels, SDMProjections, 
-                and MatrixColumns (intersections with the default grid)) 
-                and job requests for their calculation.
-      @note: The argument to this script contains variables to override 
-             installed defaults
+      @summary: Creates objects (ChristopherWalken for walking the species
+                and MFChain objects for workflow computation requests.
       """
       # Send Database connection
       try:
@@ -108,6 +105,7 @@ class Boomer(LMObject):
       try:
          self.christopher = ChristopherWalken(self.configFname,
                                               scribe=self._scribe)
+         self.christopher.initializeMe()
       except Exception, e:
          raise LMError(currargs='Failed to initialize Chris with config {} ({})'
                        .format(self.configFname, e))
@@ -370,6 +368,7 @@ logger = ScriptLogger(scriptname, level=logging.DEBUG)
 currtime = dt.gmt().mjd
 
 configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
+configFname = '/share/lm/data/archive/atest3/atest3.ini' 
 boomer = Boomer(configFname, log=logger)
 
 boomer.initializeMe()

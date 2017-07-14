@@ -296,6 +296,7 @@ class BOOMFiller(LMObject):
          counter += 1
          thisHeading = 'ALGORITHM {}'.format(counter)
          config.add_section(thisHeading)
+         config.set(thisHeading, 'CODE', alg.code)
          for name, val in alg.parameters.iteritems():
             config.set(thisHeading, name, str(val))
 
