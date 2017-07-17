@@ -34,7 +34,7 @@ import random
 from LmCommon.common.lmconstants import SERVER_BOOM_HEADING, LMFormat
 #from LmDbServer.boom.boominput import ArchiveFiller
 from LmDbServer.boom.initboom import initBoom
-from LmServer.common.lmconstants import TEMP_PATH
+from LmServer.common.lmconstants import TEMP_PATH, Priority
 
 # .............................................................................
 class BoomPoster(object):
@@ -52,6 +52,7 @@ class BoomPoster(object):
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', userId)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER_EMAIL', userEmail)
       self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', archiveName)
+      self.config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', Priority.REQUESTED)
       
       # TODO: Determine this from POST
       self.config.set(SERVER_BOOM_HEADING, 'ASSEMBLE_PAMS', False)
@@ -78,7 +79,7 @@ class BoomPoster(object):
       with open(filename, 'w') as configOutF:
          self.config.write(configOutF)
       
-      gridset = initBoom(filename)
+      gridset = initBoom(filename, isInitial=False)
       
       return gridset
          
@@ -138,6 +139,7 @@ class BoomPoster(object):
                outF.write('{}\n'.format(occId))
          self.config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
                          occFname)
+         self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'EXISTING')
    
    # ................................
    def _processModelScenario(self, scnJson):
