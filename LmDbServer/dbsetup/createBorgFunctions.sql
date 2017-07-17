@@ -2656,28 +2656,32 @@ RETURNS int AS
 $$
 DECLARE
    currCount int := -1;
+   total int;
 BEGIN
    -- MFProcesses
 	DELETE FROM lm_v3.MFProcess WHERE userid = usr;
-	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % MF processes for User %', currCount, user;
+	GET DIAGNOSTICS total = ROW_COUNT;
+   RAISE NOTICE 'Deleted % MF processes for User %', currCount, usr;
 
    -- Matrix Intersect Columns from SDM
 	DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 
 	   (SELECT layerid FROM lm_v3.lm_sdmproject WHERE userid = usr);
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % MatrixColumns using SDMProject layers for User %', currCount, user;
+   RAISE NOTICE 'Deleted % MatrixColumns using SDMProject layers for User %', currCount, usr;
+   total = total + currCount;
    
    -- Matrix SDMProject Layers
 	DELETE FROM lm_v3.Layer WHERE layerid IN 
 	   (SELECT layerid FROM lm_v3.lm_sdmproject WHERE userid = usr);
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Layers for SDMProjects for User %', currCount, user;
+   RAISE NOTICE 'Deleted % Layers for SDMProjects for User %', currCount, usr;
+   total = total + currCount;
 
    -- OccurrenceSet and SDMProjects
 	DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Occurrencesets for User %', currCount, user;
+   RAISE NOTICE 'Deleted % Occurrencesets for User %', currCount, usr;
+   total = total + currCount;
 
    RETURN currCount;
 END;
@@ -2689,38 +2693,38 @@ RETURNS int AS
 $$
 DECLARE
    currCount int := -1;
-   total int := 0;
+   total int;
 BEGIN
-   SELECT * INTO currCount FROM lm_v3.lm_clearComputedUserData(usr);
+   SELECT * INTO total FROM lm_v3.lm_clearComputedUserData(usr);
    
    -- Gridsets (Cascades to Matrix)
 	DELETE FROM lm_v3.Gridset WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Gridsets for User %', currCount, user;
+   RAISE NOTICE 'Deleted % Gridsets for User %', currCount, usr;
    total = total + currCount;
    
    -- Scenarios
 	DELETE FROM lm_v3.Scenario WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Scenarios for User %', currCount, user;
+   RAISE NOTICE 'Deleted % Scenarios for User %', currCount, usr;
    total = total + currCount;
    
    -- Layers (Cascades to EnvLayer, ShapeGrid)
 	DELETE FROM lm_v3.Layer WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Layers for User %', currCount, user;
+   RAISE NOTICE 'Deleted % Layers for User %', currCount, usr;
    total = total + currCount;
 
    -- EnvType
 	DELETE FROM lm_v3.EnvType WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % EnvTypes for User %', currCount, user;
+   RAISE NOTICE 'Deleted % EnvTypes for User %', currCount, usr;
    total = total + currCount;
    
    -- Tree
 	DELETE FROM lm_v3.Tree WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Trees for User %', currCount, user;
+   RAISE NOTICE 'Deleted % Trees for User %', currCount, usr;
    total = total + currCount;
    
    RETURN total;
