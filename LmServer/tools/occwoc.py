@@ -880,26 +880,26 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
    def _getOcc(self):
       occ = None
       line = self._getNextLine(self._idfile)
-      while line is not None and not self.complete():
+      while line is not None and not self.complete:
          try:
             tmp = line.strip()
          except Exception, e:
-            self.scribe.log.info('Error reading line {} ({}), skipping'
+            self._scribe.log.info('Error reading line {} ({}), skipping'
                             .format(self._linenum, str(e)))
          else:
             try:
                occid = int(tmp)
             except Exception, e:
-               self.scribe.log.info('Unable to get Id from data {} on line {}'
+               self._scribe.log.info('Unable to get Id from data {} on line {}'
                                .format(tmp, self._linenum))
             else:
-               occ = self.scribe.getOccurrenceSet(occId=occid)
+               occ = self._scribe.getOccurrenceSet(occId=occid)
                if occ is None:                     
-                  self.scribe.log.info('Unable to get Occset for Id {} on line {}'
+                  self._scribe.log.info('Unable to get Occset for Id {} on line {}'
                                        .format(tmp, self._linenum))
                else:
                   if occ.status != JobStatus.COMPLETE: 
-                     self.scribe.log.info('Incomplete or failed occSet for id {} on line {}'
+                     self._scribe.log.info('Incomplete or failed occSet for id {} on line {}'
                                           .format(occid, self._linenum))
          line = None
          if occ is None and not self.complete():
@@ -917,7 +917,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                           .format(occ.getId(), occ.queryCount, self.nextStart))
          elif occ.getUserId() == PUBLIC_USER:
             tmpOcc = occ.copy()
-            sciName = self.scribe.getTaxon(squid=occ.squid)
+            sciName = self._scribe.getTaxon(squid=occ.squid)
             if sciName is not None:
                tmpOcc.setScientificName(sciName)
             tmpOcc.readData(dlocation=occ.getDLocation(), 
@@ -927,7 +927,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                           .format(userOcc.getId(), userOcc.queryCount, 
                                   self.nextStart))
          else:
-            self.scribe.log.info('Unauthorized user {} for ID {}'
+            self._scribe.log.info('Unauthorized user {} for ID {}'
                                  .format(occ.getUserId(), occ.getId()))
       return userOcc
    

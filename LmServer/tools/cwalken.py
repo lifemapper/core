@@ -67,7 +67,6 @@ class ChristopherWalken(LMObject):
       basename = os.path.basename(baseAbsFilename)
       # Chris writes this file when completed walking through species data
       self.walkedArchiveFname = os.path.join(baseAbsFilename, LMFormat.LOG.ext)
-#       basename, ext = os.path.splitext(os.path.basename(configFname))
       self.name = '{}_{}'.format(self.__class__.__name__.lower(), basename)       
       # Config
       if configFname is not None and os.path.exists(configFname):
