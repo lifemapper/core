@@ -57,7 +57,7 @@ class Boomer(LMObject):
    appending new PAVs or re-assembling. 
    """
    # .............................
-   def __init__(self, configFname, assemblePams=True, priority=None, log=None):      
+   def __init__(self, configFname, assemblePams=True, log=None):      
       self.name = self.__class__.__name__.lower()
       # Logfile
       if log is None:
@@ -69,7 +69,6 @@ class Boomer(LMObject):
 
       self.configFname = configFname
       self.assemblePams = assemblePams
-      self.priority = priority
       # Send Database connection
       self._scribe = BorgScribe(self.log)
       # iterator tool for species
@@ -108,6 +107,7 @@ class Boomer(LMObject):
       except Exception, e:
          raise LMError(currargs='Failed to initialize Chris with config {} ({})'
                        .format(self.configFname, e))
+      self.priority = self.christopher.priority
       # Start where we left off 
       self.christopher.moveToStart()
       self.log.debug('Starting Chris at location {} ... '
@@ -377,25 +377,23 @@ mtx = chris.globalPAMs[prjscen.code]
 scribe = boomer._scribe
 borg = scribe._borg
 
-uo = woc.getOne()
-
-# spud, potatoInputs = chris.startWalken()
-# self.keepWalken = not chris.complete
-# if  spud:
-#    self._addRuleToMasterPotatoHead(spud, prefix='spud')
-#    # Gather species ARF dependency to delay start of multi-species MF
-#    spudArf = spud.getArfFilename(prefix='spud')
-#    self.spudArfFnames.append(spudArf)
-#    # Add PAV outputs to raw potato files for triage input
-#    squid = spud.mfMetadata[MFChain.META_SQUID]
-#    if potatoInputs:
-#       for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
-#          pavFname = potatoInputs[scencode]
-#          triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
-#       self.log.info('Wrote spud squid to {} arf files'
-#                     .format(len(potatoInputs)))
-#    if len(self.spudArfFnames) >= SPUD_LIMIT:
-#       self.rotatePotatoes()
+spud, potatoInputs = chris.startWalken()
+keepWalken = not chris.complete
+if  spud:
+   self._addRuleToMasterPotatoHead(spud, prefix='spud')
+   # Gather species ARF dependency to delay start of multi-species MF
+   spudArf = spud.getArfFilename(prefix='spud')
+   self.spudArfFnames.append(spudArf)
+   # Add PAV outputs to raw potato files for triage input
+   squid = spud.mfMetadata[MFChain.META_SQUID]
+   if potatoInputs:
+      for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
+         pavFname = potatoInputs[scencode]
+         triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
+      self.log.info('Wrote spud squid to {} arf files'
+                    .format(len(potatoInputs)))
+   if len(self.spudArfFnames) >= SPUD_LIMIT:
+      self.rotatePotatoes()
 
 ptype = ProcessType.INTERSECT_RASTER
 

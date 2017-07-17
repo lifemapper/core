@@ -396,7 +396,7 @@ class BOOMFiller(LMObject):
             try:
                var = config.getboolean(SERVER_PIPELINE_HEADING, varname)
             except:
-               pass
+               var = None
       else:
          try:
             var = config.get(SERVER_BOOM_HEADING, varname)
@@ -404,9 +404,13 @@ class BOOMFiller(LMObject):
             try:
                var = config.get(SERVER_PIPELINE_HEADING, varname)
             except:
-               pass
-      # Interpret value
-      if var is not None:
+               var = None
+      # Take default if present
+      if var is None:
+         if defaultValue is not None:
+            var = defaultValue
+      # or interpret value
+      else:
          if not isList:
             var = self._getVarValue(var)
          else:

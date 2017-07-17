@@ -34,7 +34,8 @@ from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
 from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 
 from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH)
+from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
+                                         Priority)
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
@@ -384,6 +385,8 @@ class ChristopherWalken(LMObject):
       userId = self._getBoomOrDefault('ARCHIVE_USER')
       archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
       archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY')
+      if archivePriority is None:
+         archivePriority = Priority.NORMAL
       # Get user-archive configuration file
       if userId is None or archiveName is None:
          raise LMError(currargs='Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
