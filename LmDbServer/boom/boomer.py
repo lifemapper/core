@@ -380,7 +380,6 @@ borg = scribe._borg
 spud, potatoInputs = chris.startWalken()
 keepWalken = not chris.complete
 if  spud:
-   self._addRuleToMasterPotatoHead(spud, prefix='spud')
    # Gather species ARF dependency to delay start of multi-species MF
    spudArf = spud.getArfFilename(prefix='spud')
    self.spudArfFnames.append(spudArf)

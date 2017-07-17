@@ -53,8 +53,7 @@ class DaBoom(Daemon):
       log = ScriptLogger(logname, level=logging.INFO)
 
       Daemon.__init__(self, pidfile, log=log)
-      self.boomer = Boomer(configFname, assemblePams=assemblePams, 
-                           priority=priority, log=log)
+      self.boomer = Boomer(configFname, assemblePams=assemblePams, log=log)
 
    # .............................
    def initialize(self):
