@@ -6,9 +6,9 @@ from osgeo import gdalconst
 # will default to constants in config.lmserver.ini
 # ...............................................
 
-# Default = SCENARIO_PACKAGE_EPSG
+# Default = DEFAULT_EPSG
 EPSG = 4326
-# Default = SCENARIO_PACKAGE_MAPUNITS IFF EPSG == SCENARIO_PACKAGE_EPSG
+# Default = DEFAULT_MAPUNITS IFF EPSG == DEFAULT_EPSG
 MAPUNITS = 'dd'
 # Key = resolution descriptor strings with value in mapunits
 RESOLUTIONS = {'10min': 0.16667, '5min': 0.083333, '30sec': 0.0083333}

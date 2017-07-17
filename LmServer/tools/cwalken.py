@@ -36,7 +36,7 @@ from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH,
                                          Priority)
-from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.localconstants import PUBLIC_USER, DEFAULT_EPSG
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borgscribe import BorgScribe
 from LmServer.legion.algorithm import Algorithm
@@ -162,7 +162,7 @@ class ChristopherWalken(LMObject):
       return var
 
    # ...............................................
-   def _getBoomOrDefault(self, varname, isList=False, isBool=False):
+   def _getBoomOrDefault(self, varname, defaultValue=None, isList=False, isBool=False):
       var = None
       # Get value from BOOM or default config file
       if isBool:
@@ -181,8 +181,12 @@ class ChristopherWalken(LMObject):
                var = self.cfg.get(SERVER_PIPELINE_HEADING, varname)
             except:
                pass
-      # Interpret value
-      if var is not None:
+      # Take default if present
+      if var is None:
+         if defaultValue is not None:
+            var = defaultValue
+      # or interpret value
+      else:
          if not isList:
             var = self._getVarValue(var)
          else:
@@ -393,7 +397,8 @@ class ChristopherWalken(LMObject):
                        .format(self.cfg.configFiles))
       earl = EarlJr()
       boompath = earl.createDataPath(userId, LMFileType.BOOM_CONFIG)
-      epsg = self._getBoomOrDefault('SCENARIO_PACKAGE_EPSG')
+      epsg = self._getBoomOrDefault('SCENARIO_PACKAGE_EPSG', 
+                                    defaultValue=DEFAULT_EPSG)
       # Species parser/puller
       weaponOfChoice = self._getOccWeaponOfChoice(userId, archiveName, epsg, 
                                                   boompath)
@@ -612,53 +617,3 @@ class ChristopherWalken(LMObject):
             self.log.error('Failed to write doneWalken file {} for config {}'
                            .format(self.walkedArchiveFname, self.configFname))
 
-"""
-userId='kubi'
-
-from LmBackend.common.occparse import OccDataParser
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
-                     SERVER_BOOM_HEADING) 
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
-from LmBackend.common.lmobj import LMError, LMObject
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (PUBLIC_ARCHIVE_NAME, LMFileType, 
-                                         SPECIES_DATA_PATH)
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lmmatrix import LMMatrix
-from LmServer.legion.mtxcolumn import MatrixColumn          
-from LmServer.legion.processchain import MFChain
-from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import BisonWoC, iDigBioWoC, GBIFWoC, UserWoC
-from LmServer.tools.cwalken import *
-
-logger = ScriptLogger('testchris')
-scribe = BorgScribe(logger)
-scribe.openConnections()
-configFile = '/share/lm/data/archive/kubi/BOOM_Archive.ini'
-configFile = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini'
-chris = ChristopherWalken(configFile, scribe=scribe)
-
-(chris.userId, chris.archiveName, chris.boompath, chris.weaponOfChoice, 
- chris.epsg, chris.algs, chris.mdlScen, chris.mdlMask, chris.prjScens, chris.prjMask, 
- chris.boomGridset, chris.intersectParams, 
- chris.assemblePams) = chris._getConfiguredObjects()
-
-# Global PAM Matrix for each scenario
-chris.globalPAMs = {}
-
-# One Global PAM for each scenario
-if chris.assemblePams:
-   for prjscen in chris.prjScens:
-      chris.globalPAMs[prjscen.code] = chris.boomGridset.getPAMForCodes(
-                     prjscen.gcmCode, prjscen.altpredCode, prjscen.dateCode)
-
-
-
-chris.moveToStart()
-chris.startWalken()
-
-"""

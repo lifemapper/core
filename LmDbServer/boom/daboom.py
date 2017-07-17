@@ -61,6 +61,7 @@ class DaBoom(Daemon):
       
    # .............................
    def run(self):
+      print('Running daBoom with configFname = {}'.format(self.boomer.configFname))
       try:
          while self.boomer.keepWalken:
             self.boomer.processSpud()

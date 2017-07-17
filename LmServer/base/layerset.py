@@ -39,7 +39,7 @@ from LmServer.common.lmconstants import (MAP_TEMPLATE, QUERY_TEMPLATE,
          CT_SPECIES_KEYWORD, PROJ_LIB, SCALE_PROJECTION_MINIMUM,
    SCALE_PROJECTION_MAXIMUM)
 from LmServer.common.localconstants import (PUBLIC_USER, POINT_COUNT_MAX,
-                                            SCENARIO_PACKAGE_EPSG)
+                                            DEFAULT_EPSG)
 from LmServer.common.lmconstants import CT_USER
 from LmServer.legion.occlayer import OccurrenceLayer
 from LmServer.legion.sdmproj import SDMProjection
@@ -494,7 +494,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       # changed this from self.name (which left 'scen_' prefix off scenarios)
       mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)      
                               
-      if self.epsgcode == SCENARIO_PACKAGE_EPSG:
+      if self.epsgcode == DEFAULT_EPSG:
          boundstr = '  -180  -90  180  90'
       else:
          mbbox = self.unionBounds
@@ -553,7 +553,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       maplayers = '\n'.join([topLyrStr, midLyrStr, baseLyrStr])
                   
       # Add bluemarble image to Data/Occurrence Map Services
-      if self.epsgcode == SCENARIO_PACKAGE_EPSG:
+      if self.epsgcode == DEFAULT_EPSG:
          backlyr = self._createBlueMarbleLayer()
          maplayers = '\n'.join([maplayers, backlyr])
          

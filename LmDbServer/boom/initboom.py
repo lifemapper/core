@@ -143,8 +143,7 @@ class BOOMFiller(LMObject):
       if self.modelScenCode is not None:
          self.scenPackageMetaFilename = None
          # Fill or reset epsgcode, mapunits, gridbbox
-         self.scenPkg, self.epsg, self.mapunits = self._checkScenarios(
-                                                      [PUBLIC_USER, self.usr])
+         self.scenPkg, self.epsg, self.mapunits = self._checkScenarios()
       else:
          # If new ScenPackage was provided (not SDM scenario codes), fill codes 
          (self.scenPkg, self.modelScenCode, self.epsg, self.mapunits, 
@@ -449,7 +448,7 @@ class BOOMFiller(LMObject):
             tmp = self.scribe.findOrInsertUser(user)
    
    # ...............................................
-   def _checkScenarios(self, legalUsers):
+   def _checkScenarios(self):
       epsg = mapunits = None
       if self.modelScenCode not in self.prjScenCodeList:
          self.prjScenCodeList.append(self.modelScenCode)

@@ -44,7 +44,7 @@ from LmServer.base.serviceobject2 import ServiceObject
 
 from LmServer.common.lmconstants import (UPLOAD_PATH, OccurrenceFieldNames, 
             GDALDataTypes, OGRDataTypes, LMFormat, LMServiceType)
-from LmServer.common.localconstants import APP_PATH, SCENARIO_PACKAGE_EPSG
+from LmServer.common.localconstants import APP_PATH, DEFAULT_EPSG
 
 # .............................................................................
 class _Layer(LMSpatialObject, ServiceObject):
@@ -1654,7 +1654,7 @@ class Vector(_Layer):
 # ...............................................
    @staticmethod
    def splitCSVPointsToShapefiles(outpath, dlocation, groupByField, comboLayerName,
-                                 srsEPSGOrWkt=SCENARIO_PACKAGE_EPSG,
+                                 srsEPSGOrWkt=DEFAULT_EPSG,
                                  delimiter=';', quotechar='\"',
                                  idCol='id', xCol='lon', yCol='lat',
                                  overwrite=False):
@@ -2368,11 +2368,11 @@ class Vector(_Layer):
          origBBox = self._bbox
       minX, minY, maxX, maxY = origBBox
          
-      if origEpsg != SCENARIO_PACKAGE_EPSG:
+      if origEpsg != DEFAULT_EPSG:
          srcSRS = osr.SpatialReference()
          srcSRS.ImportFromEPSG(origEpsg)
          dstSRS = osr.SpatialReference()
-         dstSRS.ImportFromEPSG(SCENARIO_PACKAGE_EPSG)
+         dstSRS.ImportFromEPSG(DEFAULT_EPSG)
          
          spTransform = osr.CoordinateTransformation(srcSRS, dstSRS)
          # Allow for return of either (x, y) or (x, y, z) 

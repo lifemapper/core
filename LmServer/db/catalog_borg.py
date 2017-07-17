@@ -31,7 +31,7 @@ from LmServer.base.taxon import ScientificName
 from LmServer.common.computeResource import LMComputeResource
 from LmServer.common.lmconstants import DB_STORE, LM_SCHEMA_BORG, LMServiceType
 from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import SCENARIO_PACKAGE_EPSG
+from LmServer.common.localconstants import DEFAULT_EPSG
 from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.envlayer import EnvType, EnvLayer
 from LmServer.legion.gridset import Gridset
@@ -561,7 +561,7 @@ class Borg(DbPostgresql):
       except:
          min = max = nodata = wkt = None
       meta = lyr.dumpLyrMetadata()
-      if lyr.epsgcode == SCENARIO_PACKAGE_EPSG:
+      if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertLayer', 
                            lyr.getId(),
@@ -655,7 +655,7 @@ class Borg(DbPostgresql):
               the calling Scribe method also adds and joins Scenarios present 
       """
       wkt = None
-      if scenPkg.epsgcode == SCENARIO_PACKAGE_EPSG:
+      if scenPkg.epsgcode == DEFAULT_EPSG:
          wkt = scenPkg.getWkt()
       meta = scenPkg.dumpScenpkgMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenPackage', 
@@ -805,7 +805,7 @@ class Borg(DbPostgresql):
       """
       scen.modTime = mx.DateTime.utc().mjd
       wkt = None
-      if scen.epsgcode == SCENARIO_PACKAGE_EPSG:
+      if scen.epsgcode == DEFAULT_EPSG:
          wkt = scen.getWkt()
       meta = scen.dumpScenMetadata()
       row, idxs = self.executeInsertAndSelectOneFunction('lm_findOrInsertScenario', 
@@ -922,7 +922,7 @@ class Borg(DbPostgresql):
       @return: new or existing ShapeGrid.
       """
       wkt = None
-      if shpgrd.epsgcode == SCENARIO_PACKAGE_EPSG:
+      if shpgrd.epsgcode == DEFAULT_EPSG:
          wkt = shpgrd.getWkt()
       meta = shpgrd.dumpParamMetadata()
       gdaltype = valunits = nodataval = minval = maxval = None
@@ -1155,7 +1155,7 @@ class Borg(DbPostgresql):
       """
       lyr.modTime = mx.DateTime.utc().mjd
       wkt = None
-      if lyr.epsgcode == SCENARIO_PACKAGE_EPSG:
+      if lyr.epsgcode == DEFAULT_EPSG:
          wkt = lyr.getWkt()
       envmeta = lyr.dumpParamMetadata()
       lyrmeta = lyr.dumpLyrMetadata()

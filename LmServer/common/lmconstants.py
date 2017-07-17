@@ -35,7 +35,7 @@ from LmCommon.common.lmconstants import (JobStatus, MatrixType, LMFormat,
                                          ProcessType)
 from LmServer.common.localconstants import (APP_PATH, DATA_PATH, MAX_WORKERS, 
                               MIN_WORKERS, PUBLIC_FQDN, SHARED_DATA_PATH, 
-                              SCRATCH_PATH, PID_PATH, SCENARIO_PACKAGE_EPSG, 
+                              SCRATCH_PATH, PID_PATH, DEFAULT_EPSG, 
                               WEBSERVICES_ROOT)
 
 WEB_SERVICE_VERSION = 'v2'
@@ -387,7 +387,7 @@ DEFAULT_LINE_COLOR = 'ffffff'
 DEFAULT_PROJECTION_PALETTE = 'red'
 DEFAULT_ENVIRONMENTAL_PALETTE = 'gray'
 
-DEFAULT_SRS = 'epsg:%s' % str(SCENARIO_PACKAGE_EPSG)
+DEFAULT_SRS = 'epsg:%s' % str(DEFAULT_EPSG)
 DEFAULT_WCS_FORMAT = 'image/tiff' 
 MAXENT_WCS_FORMAT = 'image/x-aaigrid'
 DEFAULT_WMS_FORMAT = 'image/png'
