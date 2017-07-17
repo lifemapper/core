@@ -375,8 +375,9 @@ alg = chris.algs[0]
 prjscen = chris.prjScens[0]
 mtx = chris.globalPAMs[prjscen.code]
 scribe = boomer._scribe
-ptype = ProcessType.INTERSECT_RASTER
 borg = scribe._borg
+
+uo = woc.getOne()
 
 # spud, potatoInputs = chris.startWalken()
 # self.keepWalken = not chris.complete
@@ -396,6 +397,7 @@ borg = scribe._borg
 #    if len(self.spudArfFnames) >= SPUD_LIMIT:
 #       self.rotatePotatoes()
 
+ptype = ProcessType.INTERSECT_RASTER
 
 # spud, potatoInputs = chris.startWalken()
 # boomer.keepWalken = not chris.complete

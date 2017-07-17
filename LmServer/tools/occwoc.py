@@ -916,7 +916,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             self.log.info('Found user occset {}, with {} points; next start {}'
                           .format(occ.getId(), occ.queryCount, self.nextStart))
          elif occ.getUserId() == PUBLIC_USER:
-            tmpOcc = occ.copy()
+            tmpOcc = occ.copyForUser(self.userId)
             sciName = self._scribe.getTaxon(squid=occ.squid)
             if sciName is not None:
                tmpOcc.setScientificName(sciName)
@@ -924,8 +924,8 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                              dataFormat=occ.dataFormat)
             userOcc = self._scribe.findOrInsertOccurrenceSet(tmpOcc)
             self.log.info('Copy/insert occset {} to {}, with {} points; next start {}'
-                          .format(userOcc.getId(), userOcc.queryCount, 
-                                  self.nextStart))
+                          .format(occ.getId(), userOcc.getId(), 
+                                  userOcc.queryCount, self.nextStart))
          else:
             self._scribe.log.info('Unauthorized user {} for ID {}'
                                  .format(occ.getUserId(), occ.getId()))

@@ -161,18 +161,8 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
 # Class and Static methods
 # .............................................................................
-# ...............................................
-   @classmethod
-   def copy(cls, occ):
-      newOcc = OccurrenceLayer(occ.displayName, occ.getUserId(), occ.epsgcode, 
-                  occ.queryCount, squid=occ.squid, verify=occ.verify, 
-                  valUnits=occ.valUnits, valAttribute=occ.getValAttribute(), 
-                  nodataVal=occ.nodataVal, minVal=occ.minVal, maxVal=occ.maxVal, 
-                  mapunits=occ.mapUnits, resolution=occ.resolution, 
-                  bbox=occ.bbox, occMetadata=occ.paramMetadata, 
-                  status=occ.status, statusModTime=occ.statusModTime)
-      return newOcc
 
+# ...............................................
    @staticmethod
    def getUserPointFeatureAttributes():
       featureAttributes = {
@@ -450,6 +440,18 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
 # Public methods
 # .............................................................................
+
+# ...............................................
+   def copyForUser(self, userId):
+      newOcc = OccurrenceLayer(self.displayName, userId, self.epsgcode, 
+                  self.queryCount, squid=self.squid, verify=self.verify, 
+                  valUnits=self.valUnits, valAttribute=self.getValAttribute(), 
+                  nodataVal=self.nodataVal, minVal=self.minVal, maxVal=self.maxVal, 
+                  mapunits=self.mapUnits, resolution=self.resolution, 
+                  bbox=self.bbox, occMetadata=self.paramMetadata, 
+                  sciName=self._scientificName, 
+                  status=self.status, statusModTime=self.statusModTime)
+      return newOcc
 
 # ...............................................
    def getWMSRequest(self, width, height, bbox, color=None, format=DEFAULT_WMS_FORMAT):
