@@ -31,7 +31,8 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.config import Config
 from LmCommon.common.lmconstants import (ProcessType, JobStatus, LMFormat,
           SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING, MatrixType) 
-from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE
+from LmDbServer.common.lmconstants import TAXONOMIC_SOURCE, SpeciesDatasource
+
 from LmServer.common.datalocator import EarlJr
 from LmServer.common.lmconstants import (LMFileType, SPECIES_DATA_PATH)
 from LmServer.common.localconstants import PUBLIC_USER
@@ -41,7 +42,7 @@ from LmServer.legion.algorithm import Algorithm
 from LmServer.legion.mtxcolumn import MatrixColumn          
 from LmServer.legion.processchain import MFChain
 from LmServer.legion.sdmproj import SDMProjection
-from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC
+from LmServer.tools.occwoc import BisonWoC, GBIFWoC, UserWoC, ExistingWoC
 
 # .............................................................................
 class ChristopherWalken(LMObject):
@@ -54,15 +55,13 @@ class ChristopherWalken(LMObject):
 # .............................................................................
 # Constructor
 # .............................................................................
-   def __init__(self, configFname, userId=None, archiveName=None, 
-                jsonFname=None, priority=None, scribe=None):
+   def __init__(self, configFname, jsonFname=None, scribe=None):
       """
       @summary Constructor for ChristopherWalken class which creates a Spud 
                (Single-species Makeflow chain) for a species.
       """
       super(ChristopherWalken, self).__init__()
       self.name = self.__class__.__name__.lower()
-      self.priority = priority
       self.configFname = configFname
       baseAbsFilename, ext = os.path.splitext(configFname)
       basename = os.path.basename(baseAbsFilename)
@@ -107,9 +106,20 @@ class ChristopherWalken(LMObject):
       """
       @summary: Sets objects and parameters for workflow on this object
       """
-      (self.userId, self.archiveName, self.boompath, self.weaponOfChoice, 
-       self.epsg, self.minPoints, self.algs, self.mdlScen, self.mdlMask, 
-       self.prjScens, self.prjMask, self.boomGridset, self.intersectParams, 
+      (self.userId, 
+       self.archiveName, 
+       self.priority, 
+       self.boompath, 
+       self.weaponOfChoice, 
+       self.epsg, 
+       self.minPoints, 
+       self.algs, 
+       self.mdlScen, 
+       self.mdlMask, 
+       self.prjScens, 
+       self.prjMask, 
+       self.boomGridset, 
+       self.intersectParams, 
        self.assemblePams) = self._getConfiguredObjects()
       # One Global PAM for each scenario
       if self.assemblePams:
@@ -202,7 +212,7 @@ class ChristopherWalken(LMObject):
                             self._getBoomOrDefault('SPECIES_EXP_DAY')).mjd
       # Get Weapon of Choice depending on type of Occurrence data to parse
       # GBIF data
-      if datasource == 'GBIF':
+      if datasource == SpeciesDatasource.GBIF:
 #          gbifTax = self._getBoomOrDefault('GBIF_TAXONOMY_FILENAME')
 #          gbifTaxFile = os.path.join(SPECIES_DATA_PATH, gbifTax)
          gbifOcc = self._getBoomOrDefault('GBIF_OCCURRENCE_FILENAME')
@@ -215,16 +225,24 @@ class ChristopherWalken(LMObject):
                                      taxonSourceName=taxonSourceName, 
                                      logger=self.log)
       # Bison data
-      elif datasource == 'BISON':
+      elif datasource == SpeciesDatasource.BISON:
          bisonTsn = self._getBoomOrDefault('BISON_TSN_FILENAME')
          bisonTsnFile = os.path.join(SPECIES_DATA_PATH, bisonTsn)
          weaponOfChoice = BisonWoC(self._scribe, userId, archiveName, 
                                    epsg, expDate, bisonTsnFile, 
                                    taxonSourceName=taxonSourceName, 
                                    logger=self.log)
+
+      # Copy public data to user space
+      # TODO: Handle taxonomy, useGBIFTaxonomy=??
+      elif datasource == SpeciesDatasource.EXISTING:
+         occIdFname = self._getBoomOrDefault('OCCURRENCE_ID_FILENAME')
+         weaponOfChoice = ExistingWoC(self._scribe, userId, archiveName, 
+                                      epsg, expDate, occIdFname, 
+                                      logger=self.log)
       else:
          # iDigBio data
-         if datasource == 'IDIGBIO':
+         if datasource == SpeciesDatasource.IDIGBIO:
             useGBIFTaxonIds = True
             occData = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA')
             occDelimiter = self._getBoomOrDefault('IDIG_OCCURRENCE_DATA_DELIMITER') 
@@ -366,6 +384,7 @@ class ChristopherWalken(LMObject):
       """
       userId = self._getBoomOrDefault('ARCHIVE_USER')
       archiveName = self._getBoomOrDefault('ARCHIVE_NAME')
+      archivePriority = self._getBoomOrDefault('ARCHIVE_PRIORITY')
       # Get user-archive configuration file
       if userId is None or archiveName is None:
          raise LMError(currargs='Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
@@ -385,8 +404,8 @@ class ChristopherWalken(LMObject):
                                                             archiveName, epsg)
       assemblePams = self._getBoomOrDefault('ASSEMBLE_PAMS', isBool=True)
 
-      return (userId, archiveName, boompath, weaponOfChoice, epsg, 
-              minPoints, algorithms, mdlScen, mdlMask, prjScens, prjMask, 
+      return (userId, archiveName, archivePriority, boompath, weaponOfChoice,  
+              epsg, minPoints, algorithms, mdlScen, mdlMask, prjScens, prjMask, 
               boomGridset, intersectParams, assemblePams)  
 
    # ...............................

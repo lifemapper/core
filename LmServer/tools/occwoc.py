@@ -38,6 +38,7 @@ from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY,
                                     ProcessType, JobStatus, ONE_HOUR) 
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
 from LmServer.legion.occlayer import OccurrenceLayer
 
@@ -819,7 +820,7 @@ class GBIFWoC(_SpeciesWeaponOfChoice):
       return currKey, currChunk
          
 # ..............................................................................
-class PublicWoC(_SpeciesWeaponOfChoice):
+class ExistingWoC(_SpeciesWeaponOfChoice):
    """
    @summary: Parses a GBIF download of Occurrences by GBIF Taxon ID, writes the 
              text chunk to a file, then creates an OccurrenceJob for it and 
@@ -827,12 +828,10 @@ class PublicWoC(_SpeciesWeaponOfChoice):
    """
    def __init__(self, scribe, user, archiveName, epsg, expDate, occIdFname, 
                 logger=None):
-      super(PublicWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
-                                    occIdFname, logger=logger)
+      super(ExistingWoC, self).__init__(scribe, user, archiveName, epsg, expDate, 
+                                      occIdFname, logger=logger)
       # Copy the occurrencesets 
       self.processType = None
-      self._dumpfile = None
-      csv.field_size_limit(sys.maxsize)
       try:
          self._idfile = open(occIdFname, 'r')
       except:
@@ -842,7 +841,7 @@ class PublicWoC(_SpeciesWeaponOfChoice):
 # ...............................................
    def close(self):
       try:
-         self._dumpfile.close()
+         self._idfile.close()
       except:
          self.log.error('Unable to close {}'.format(self._dumpfile))
          
@@ -850,7 +849,7 @@ class PublicWoC(_SpeciesWeaponOfChoice):
    @property
    def complete(self):
       try:
-         return self._dumpfile.closed
+         return self._idfile.closed
       except:
          return True
          
@@ -872,13 +871,63 @@ class PublicWoC(_SpeciesWeaponOfChoice):
             
 # ...............................................
    def moveToStart(self):
-      startline = self._findStart()         
-      if startline < 0:
-         self._currKeyFirstRecnum = startline
-         self._currRec = self._currSpeciesKey = None
-      else:
-         line, specieskey = self._getCSVRecord(parse=True)
-         # If not there yet, power through lines
-         while line is not None and self._linenum < startline-1:
-            line, specieskey = self._getCSVRecord(parse=False)
-      
+      startline = self._findStart()  
+      if startline > 1:
+         while self._linenum < startline-1:
+            line = self._getNextLine(self._idfile)
+
+# ...............................................
+   def _getOcc(self):
+      occ = None
+      line = self._getNextLine(self._idfile)
+      while line is not None and not self.complete():
+         try:
+            tmp = line.strip()
+         except Exception, e:
+            self.scribe.log.info('Error reading line {} ({}), skipping'
+                            .format(self._linenum, str(e)))
+         else:
+            try:
+               occid = int(tmp)
+            except Exception, e:
+               self.scribe.log.info('Unable to get Id from data {} on line {}'
+                               .format(tmp, self._linenum))
+            else:
+               occ = self.scribe.getOccurrenceSet(occId=occid)
+               if occ is None:                     
+                  self.scribe.log.info('Unable to get Occset for Id {} on line {}'
+                                       .format(tmp, self._linenum))
+               else:
+                  if occ.status != JobStatus.COMPLETE: 
+                     self.scribe.log.info('Incomplete or failed occSet for id {} on line {}'
+                                          .format(occid, self._linenum))
+         line = None
+         if occ is None and not self.complete():
+            line = self._getNextLine(self._idfile)
+      return occ
+
+# ...............................................
+   def getOne(self):
+      userOcc = None
+      occ = self._getOcc()
+      if occ is not None:
+         if occ.getUserId() == self.userId:
+            userOcc = occ
+            self.log.info('Found user occset {}, with {} points; next start {}'
+                          .format(occ.getId(), occ.queryCount, self.nextStart))
+         elif occ.getUserId() == PUBLIC_USER:
+            tmpOcc = occ.copy()
+            sciName = self.scribe.getTaxon(squid=occ.squid)
+            if sciName is not None:
+               tmpOcc.setScientificName(sciName)
+            tmpOcc.readData(dlocation=occ.getDLocation(), 
+                             dataFormat=occ.dataFormat)
+            userOcc = self._scribe.findOrInsertOccurrenceSet(tmpOcc)
+            self.log.info('Copy/insert occset {} to {}, with {} points; next start {}'
+                          .format(userOcc.getId(), userOcc.queryCount, 
+                                  self.nextStart))
+         else:
+            self.scribe.log.info('Unauthorized user {} for ID {}'
+                                 .format(occ.getUserId(), occ.getId()))
+      return userOcc
+   

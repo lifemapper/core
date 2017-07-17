@@ -334,28 +334,27 @@ class BOOMFiller(LMObject):
       config.set(SERVER_BOOM_HEADING, 'SCENARIO_PACKAGE', self.scenPackageName)
       
       # SDM input species source data and type (for processing)
-      if self.occIdFname is not None:
+      if self.dataSource == SpeciesDatasource.EXISTING:
          config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
                     self.occIdFname)
+      elif self.dataSource == SpeciesDatasource.GBIF:
+         config.set(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME', self.gbifFname)
+         # TODO: allow overwrite of these vars in initboom --> archive config file
+         config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
+                    GBIF_TAXONOMY_FILENAME)
+         config.set(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME', 
+                    GBIF_PROVIDER_FILENAME)
+      elif self.dataSource == SpeciesDatasource.BISON:
+         config.set(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME', self.bisonFname)
+      elif self.dataSource == SpeciesDatasource.IDIGBIO:
+         config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA', self.idigFname)
+         config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA_DELIMITER',
+                    self.idigOccSep)
       else:
-         if self.dataSource == SpeciesDatasource.GBIF:
-            config.set(SERVER_BOOM_HEADING, 'GBIF_OCCURRENCE_FILENAME', self.gbifFname)
-            # TODO: allow overwrite of these vars in initboom --> archive config file
-            config.set(SERVER_BOOM_HEADING, 'GBIF_TAXONOMY_FILENAME', 
-                       GBIF_TAXONOMY_FILENAME)
-            config.set(SERVER_BOOM_HEADING, 'GBIF_PROVIDER_FILENAME', 
-                       GBIF_PROVIDER_FILENAME)
-         elif self.dataSource == SpeciesDatasource.BISON:
-            config.set(SERVER_BOOM_HEADING, 'BISON_TSN_FILENAME', self.bisonFname)
-         elif self.dataSource == SpeciesDatasource.IDIGBIO:
-            config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA', self.idigFname)
-            config.set(SERVER_BOOM_HEADING, 'IDIG_OCCURRENCE_DATA_DELIMITER',
-                       self.idigOccSep)
-         else:
-            config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA', 
-                       self.userOccFname)
-            config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER',
-                       self.userOccSep)
+         config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA', 
+                    self.userOccFname)
+         config.set(SERVER_BOOM_HEADING, 'USER_OCCURRENCE_DATA_DELIMITER',
+                    self.userOccSep)
       config.set(SERVER_BOOM_HEADING, 'DATASOURCE', self.dataSource)
 
       config.set(SERVER_BOOM_HEADING, 'POINT_COUNT_MIN', str(self.minpoints))
@@ -365,6 +364,7 @@ class BOOMFiller(LMObject):
       config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_MONTH', str(CURRDATE[1]))
       config.set(SERVER_BOOM_HEADING, 'SPECIES_EXP_DAY', str(CURRDATE[2]))
 
+      config.set(SERVER_BOOM_HEADING, 'ARCHIVE_PRIORITY', self.priority)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_USER', self.usr)
       config.set(SERVER_BOOM_HEADING, 'ARCHIVE_NAME', self.archiveName)
       config.set(SERVER_BOOM_HEADING, 'TROUBLESHOOTERS', self.usrEmail)

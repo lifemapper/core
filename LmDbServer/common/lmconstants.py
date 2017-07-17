@@ -51,14 +51,17 @@ USER_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH,
 class SpeciesDatasource:
    """
    @summary: These are species data sources with defined data formats.
-             IDIGBIO and BISON are queryable APIs, GBIF is a CSV file,
-             sorted by TaxonId, User is a CSV file with metadata describing 
-             each field.
+             `IDIGBIO` and `BISON` are queryable APIs, `GBIF` is a CSV file,
+             sorted by TaxonId, `User` is a CSV file with metadata describing 
+             each field. `Existing` indicates that existing OccurrenceSet ids 
+             the provided input, and, with proper permissions, are used as-is 
+             or copied to the User's data space.
    """
-   IDIGBIO = "IDIGBIO"
-   BISON = "BISON"
-   GBIF = "GBIF"
-   USER = "USER"
+   IDIGBIO = 'IDIGBIO'
+   BISON = 'BISON'
+   GBIF = 'GBIF'
+   USER = 'USER'
+   EXISTING = 'EXISTING'
 # ...............................................
    @staticmethod
    def isUser(datasource):

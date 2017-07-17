@@ -1264,7 +1264,10 @@ class Vector(_Layer):
                              % (valAttribute, self._dlocation))
       else:
          self._valAttribute = valAttribute
-
+   
+   def getValAttribute(self):
+      return self._valAttribute
+   
 # ...............................................
    def getDataUrl(self, interface=SHAPEFILE_INTERFACE):
       """

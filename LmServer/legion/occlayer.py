@@ -161,6 +161,17 @@ class OccurrenceLayer(OccurrenceType, Vector):
 # .............................................................................
 # Class and Static methods
 # .............................................................................
+# ...............................................
+   @classmethod
+   def copy(cls, occ):
+      newOcc = OccurrenceLayer(occ.displayName, occ.getUserId(), occ.epsgcode, 
+                  occ.queryCount, squid=occ.squid, verify=occ.verify, 
+                  valUnits=occ.valUnits, valAttribute=occ.getValAttribute(), 
+                  nodataVal=occ.nodataVal, minVal=occ.minVal, maxVal=occ.maxVal, 
+                  mapunits=occ.mapUnits, resolution=occ.resolution, 
+                  bbox=occ.bbox, occMetadata=occ.paramMetadata, 
+                  status=occ.status, statusModTime=occ.statusModTime)
+      return newOcc
 
    @staticmethod
    def getUserPointFeatureAttributes():
