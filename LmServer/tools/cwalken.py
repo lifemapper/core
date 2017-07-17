@@ -601,9 +601,12 @@ class ChristopherWalken(LMObject):
    def _writeDoneWalkenFile(self):
          try:
             f = open(self.walkedArchiveFname, 'w')
-            f.write('# {} Completed walking species input {} in config file {}\n'
-                    .format(dt.now(), self.weaponOfChoice.inputFilename, 
-                            self.configFname))
+            f.write('# Completed walking species input {}\n'
+                    .format(self.weaponOfChoice.inputFilename))
+            f.write('# From config file {}\n'
+                    .format(self.configFname))
+            f.write('# Full logs in {}\n'
+                    .format(self.log.baseFilename))            
             f.close()
          except:
             self.log.error('Failed to write doneWalken file {} for config {}'
