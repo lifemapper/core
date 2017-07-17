@@ -139,7 +139,7 @@ class BoomPoster(object):
                outF.write('{}\n'.format(occId))
          self.config.set(SERVER_BOOM_HEADING, 'OCCURRENCE_ID_FILENAME', 
                          occFname)
-         self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'PUBLIC')
+         self.config.set(SERVER_BOOM_HEADING, 'DATASOURCE', 'EXISTING')
    
    # ................................
    def _processModelScenario(self, scnJson):
