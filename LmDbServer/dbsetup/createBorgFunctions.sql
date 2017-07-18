@@ -668,7 +668,7 @@ BEGIN
          SELECT INTO newid last_value FROM lm_v3.scenpackage_scenpackageid_seq;
          IF bboxwkt IS NOT NULL THEN 
             UPDATE lm_v3.ScenPackage SET geom = ST_GeomFromText(bboxwkt, epsg)
-               WHERE scenarioId = newid;
+               WHERE scenPackageid = newid;
          END IF;     
          SELECT * INTO rec FROM lm_v3.ScenPackage p WHERE p.scenPackageid = newid;
       END IF; -- end if inserted
