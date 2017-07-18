@@ -256,7 +256,7 @@ class BOOMFiller(LMObject):
       minpoints = self._getBoomOrDefault(config, 'POINT_COUNT_MIN')
       algs = self._getAlgorithms(config)
          
-      assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS')
+      assemblePams = self._getBoomOrDefault(config, 'ASSEMBLE_PAMS', isBool=True)
       gridbbox = self._getBoomOrDefault(config, 'GRID_BBOX', isList=True)
       cellsides = self._getBoomOrDefault(config, 'GRID_NUM_SIDES')
       cellsize = self._getBoomOrDefault(config, 'GRID_CELLSIZE')
@@ -954,9 +954,8 @@ class BOOMFiller(LMObject):
       updatedGrdset = self.scribe.findOrInsertGridset(grdset)
       # "Global" PAM, GRIM (one each per scenario)
       for code, scen in self.scenPkg.scenarios.iteritems():
-#          gPam, scenGrim = self._findOrAddDefaultMatrices(updatedGrdset, scen)
          gPam = self._findOrAddPAM(updatedGrdset, scen)
-         if not(self.usr == DEFAULT_POST_USER or self.assemblePams):
+         if not(self.usr == DEFAULT_POST_USER) or not(self.assemblePams):
             scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
             scenGrims[code] = (gPam, scenGrim)
       return scenGrims, updatedGrdset
