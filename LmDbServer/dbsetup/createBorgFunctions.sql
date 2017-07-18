@@ -660,8 +660,10 @@ BEGIN
    SELECT * INTO rec FROM lm_v3.ScenPackage p 
       WHERE p.name = epname and p.userid = usr;
    IF NOT FOUND THEN
-      INSERT INTO lm_v3.ScenPackage (userid, name, metadata, modTime)
-                            VALUES (usr, epname, meta, mtime);
+      INSERT INTO lm_v3.ScenPackage (userid, name, metadata, units, epsgcode, 
+                                     bbox, modTime)
+                             VALUES (usr, epname, meta, unts, epsg,
+                                     bndsstring, mtime);
       IF NOT FOUND THEN
          RAISE EXCEPTION 'Unable to find or insert ScenPackage';
       ELSE
