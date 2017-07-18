@@ -487,7 +487,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
          
 # ..............................................................................
    def getWkt(self):
-      wkt = ''
+      wkt = None
       if self._features and self._featureAttributes:
          pttxtlst = []
          self._setGeometryIndex()

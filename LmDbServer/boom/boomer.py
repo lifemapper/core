@@ -374,19 +374,26 @@ currtime = dt.gmt().mjd
 
 configFname = '/share/lm/data/archive/biotaphy/biotaphy_boom.ini' 
 configFname = '/share/lm/data/archive/atest3/atest3.ini' 
+configFname = '/state/partition1/lm/data/archive/biotaphy/biotaphy_lowres.ini'
+
 boomer = Boomer(configFname, log=logger)
 
 boomer.initializeMe()
-chris = boomer.christopher
-woc = chris.weaponOfChoice
-alg = chris.algs[0]
-prjscen = chris.prjScens[0]
-mtx = chris.globalPAMs[prjscen.code]
+christopher = boomer.christopher
+weaponOfChoice = christopher.weaponOfChoice
+alg = christopher.algs[0]
+prjscen = christopher.prjScens[0]
 scribe = boomer._scribe
 borg = scribe._borg
 
-spud, potatoInputs = chris.startWalken()
-keepWalken = not chris.complete
+spud, potatoInputs = christopher.startWalken()
+select * from lm_v3.lm_updateOccurrenceSet(66,NULL,
+'Bensoniella_oregona',
+'/share/lm/data/archive/biotaphy/000/000/000/066/pt_66.shp',
+'/share/lm/data/archive/biotaphy/000/000/000/066/pt_66.csv',
+1,NULL,4326,NULL,1,57952.7989486,NULL,NULL);
+
+keepWalken = not christopher.complete
 if  spud:
    # Gather species ARF dependency to delay start of multi-species MF
    spudArf = spud.getArfFilename(prefix='spud')
