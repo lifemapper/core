@@ -148,7 +148,7 @@ class Boomer(LMObject):
             if len(self.spudArfFnames) >= SPUD_LIMIT:
                self.rotatePotatoes()
       except Exception, e:
-         self.log.debug('Exception {} on spud'.format(str(e)))
+         self.log.debug('Exception {} on spud, closing ...'.format(str(e)))
          self.close()
          raise e
 
@@ -300,6 +300,13 @@ class Boomer(LMObject):
       rule = MfRule(cmd, [targetFname], dependencies=self.spudArfFnames)
       self.masterPotato.addCommands([rule])
 
+   # .............................
+   def processAll(self):
+      print('processAll with configFname = {}'.format(self.configFname))
+      while self.keepWalken:
+         self.processSpud()
+      if not self.keepWalken:
+         self.close()
 
 # .............................................................................
 if __name__ == "__main__":
@@ -333,7 +340,8 @@ if __name__ == "__main__":
    logger = ScriptLogger(logname, level=logging.INFO)
    boomer = Boomer(configFname, log=logger)
    boomer.initializeMe()
-
+   boomer.processAll()
+   
 """
 $PYTHON LmDbServer/boom/boom.py --help
 
