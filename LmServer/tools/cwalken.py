@@ -186,7 +186,7 @@ class ChristopherWalken(LMObject):
          if defaultValue is not None:
             var = defaultValue
       # or interpret value
-      else:
+      elif not isBool:
          if not isList:
             var = self._getVarValue(var)
          else:

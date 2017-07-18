@@ -957,7 +957,7 @@ class BOOMFiller(LMObject):
          gPam = self._findOrAddPAM(updatedGrdset, scen)
          if not(self.usr == DEFAULT_POST_USER) or not(self.assemblePams):
             scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
-            scenGrims[code] = (gPam, scenGrim)
+            scenGrims[code] = scenGrim
       return scenGrims, updatedGrdset
 # ...............................................
    def _initGRIMIntersect(self, lyr, mtx):
@@ -1232,7 +1232,7 @@ from LmDbServer.boom.initboom import BOOMFiller
 paramFname = '/state/partition1/tmpdata/biotaphyHeuchera.boom.ini'
 paramFname = '/state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini'
 paramFname = '/state/partition1/tmpdata/atest.boom.ini'
-paramFname = '/state/partition1/tmpdata/file_90310.ini'
+paramFname = '/state/partition1/tmpdata/file_18072.ini'
 paramFname='/state/partition1/tmpdata/atest_2.ini'
 paramFname='/state/partition1/tmpdata/atest3.ini'
 isInitial=False
@@ -1253,7 +1253,7 @@ if isInitial:
       
 # This user and default users
 # Add param user, PUBLIC_USER, DEFAULT_POST_USER users
-filler.addUsers(isInitial=isInitial)
+filler.addUsers()
 
 # ...............................................
 # Data for this Boom archive
@@ -1275,7 +1275,7 @@ scenGrims, gridset = filler.addShapeGridGPAMGridset()
 filler.addGRIMChains(scenGrims)
    
 # Write config file for this archive
-filler.writeConfigFile2()
+filler.writeConfigFile()
 
 # Create MFChain to run Boomer daemon on these inputs
 mfChain = filler.addBoomChain()

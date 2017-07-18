@@ -902,7 +902,7 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                      self._scribe.log.info('Incomplete or failed occSet for id {} on line {}'
                                           .format(occid, self._linenum))
          line = None
-         if occ is None and not self.complete():
+         if occ is None and not self.complete:
             line = self._getNextLine(self._idfile)
       return occ
 
