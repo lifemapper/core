@@ -1533,19 +1533,26 @@ class Borg(DbPostgresql):
       return occ
    
 # ...............................................
-   def updateOccurrenceSet(self, occ, polyWkt, pointsWkt):
+   def updateOccurrenceSet(self, occ):
       """
       @summary: Update OccurrenceLayer attributes: 
                 verify, displayName, dlocation, rawDlocation, queryCount, 
                 bbox, metadata, status, statusModTime, geometries if valid
       @note: Does not update the userid, squid, and epsgcode (unique constraint) 
       @param occ: OccurrenceLayer to be updated.  
-      @param polyWkt: geometry for the minimum polygon around these points
-      @param pointsWkt: multipoint geometry for these points
       @return: True/False for successful update.
       """
       success = False
+      polyWkt = pointsWkt = None
       metadata = occ.dumpLyrMetadata()
+      try
+         polyWkt = occ.getConvexHullWkt()
+      except:
+         pass
+      try:
+         pointsWkt = occ.getWkt()
+      except:
+         pass
       try:
          success = self.executeModifyFunction('lm_updateOccurrenceSet', 
                                               occ.getId(), 
@@ -2302,17 +2309,6 @@ class Borg(DbPostgresql):
          mfchainList.append(mfchain)
       return mfchainList
       
-# # ...............................................
-#    def updateMFChain(self, mfchain):
-#       """
-#       @summary: Updates MFChain status and statusModTime in the database
-#       @return: True/False for success of operation
-#       """
-#       success = self.executeModifyFunction('lm_updateMFChain', mfchain.objId,
-#                                            mfchain.getDLocation(), 
-#                                            mfchain.status, mfchain.statusModTime)
-#       return success
-
    # ...............................................
    def updateObject(self, obj):
       """
@@ -2320,8 +2316,7 @@ class Borg(DbPostgresql):
       @return: True/False for success of operation
       """
       if isinstance(obj, OccurrenceLayer):
-         polyWkt = pointsWkt = None
-         success = self.updateOccurrenceSet(obj, None, None)
+         success = self.updateOccurrenceSet(obj)
       elif isinstance(obj, SDMProjection):
          success = self.updateSDMProject(obj)
       elif isinstance(obj, ShapeGrid):
