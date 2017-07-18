@@ -1545,7 +1545,7 @@ class Borg(DbPostgresql):
       success = False
       polyWkt = pointsWkt = None
       metadata = occ.dumpLyrMetadata()
-      try
+      try:
          polyWkt = occ.getConvexHullWkt()
       except:
          pass

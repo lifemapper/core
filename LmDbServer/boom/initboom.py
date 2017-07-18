@@ -1094,9 +1094,8 @@ class BOOMFiller(LMObject):
       mfChain = self.scribe.insertMFChain(newMFC)
 
       cmdArgs = ['LOCAL', '$PYTHON',
-                 ProcessTool.get(ProcessType.BOOM_DAEMON),
-                 '--config_file={}'.format(self.outConfigFilename),
-                 'start']
+                 ProcessTool.get(ProcessType.BOOMER),
+                 '--config_file={}'.format(self.outConfigFilename)]
       boomCmd = ' '.join(cmdArgs)
 
       baseAbsFilename, ext = os.path.splitext(self.outConfigFilename)

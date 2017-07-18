@@ -845,7 +845,8 @@ class ProcessType:
    SOLR_POST = 660
    # BOOM
    BOOM_INIT = 710
-   BOOM_DAEMON = 720
+#    BOOM_DAEMON = 720
+   BOOMER = 720
    
    # .........................
    # TODO: deleteMe
