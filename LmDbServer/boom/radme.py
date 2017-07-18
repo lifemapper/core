@@ -122,7 +122,7 @@ class RADCaller(LMObject):
       desc = ('Makeflow for RAD computations on Gridset {}, {} for User {}'
               .format(self.gridsetId, self.gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
-              MFChain.META_DESC: desc }
+              MFChain.META_DESCRIPTION: desc }
       
       newMFC = MFChain(self.userId, metadata=meta, priority=self._priority,
                        status=JobStatus.GENERAL, statusModTime=CURR_MJD)

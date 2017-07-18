@@ -209,7 +209,7 @@ class Boomer(LMObject):
 # ...............................................
    def _createMasterMakeflow(self):
       meta = {MFChain.META_CREATED_BY: self.name,
-              MFChain.META_DESC: 'MasterPotatoHead for User {}, Archive {}'
+              MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
       .format(self.christopher.userId, self.christopher.archiveName)}
       newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
@@ -232,7 +232,7 @@ class Boomer(LMObject):
       for scencode in self.christopher.globalPAMs.keys():
          # Create MFChain for this GPAM
          meta = {MFChain.META_CREATED_BY: self.name,
-                 MFChain.META_DESC: 'Potato for User {}, Archive {}, Scencode {}'
+                 MFChain.META_DESCRIPTION: 'Potato for User {}, Archive {}, Scencode {}'
          .format(self.christopher.userId, self.christopher.archiveName, scencode)}
          newMFC = MFChain(self.christopher.userId, priority=self.priority, 
                           metadata=meta, status=JobStatus.GENERAL, 
@@ -428,7 +428,7 @@ spudObjs = [o for o in objs if o is not None]
 squid = occ.squid
 speciesName = occ.displayName
 meta = {MFChain.META_CREATED_BY: chris.name,
-        MFChain.META_DESC: 'Spud for User {}, Archive {}, Species {}'
+        MFChain.META_DESCRIPTION: 'Spud for User {}, Archive {}, Species {}'
         .format(chris.userId, chris.archiveName, speciesName),
         MFChain.META_SQUID: squid}
 newMFC = MFChain(chris.userId, priority=chris.priority, 

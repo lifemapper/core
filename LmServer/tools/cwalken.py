@@ -582,7 +582,7 @@ class ChristopherWalken(LMObject):
                   pass
                else:
                   meta = {MFChain.META_CREATED_BY: self.name,
-                          MFChain.META_DESC: 'Spud for User {}, Archive {}, Species {}'
+                          MFChain.META_DESCRIPTION: 'Spud for User {}, Archive {}, Species {}'
                           .format(self.userId, self.archiveName, speciesName),
                           MFChain.META_SQUID: squid}
                   newMFC = MFChain(self.userId, priority=self.priority, 

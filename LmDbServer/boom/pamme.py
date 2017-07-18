@@ -109,7 +109,7 @@ class Pammer(LMObject):
       desc = ('Makeflow for Matrix {}, Gridset {}, User {}'
               .format(mtx.getId(), self.gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: self.name,
-              MFChain.META_DESC: desc}
+              MFChain.META_DESCRIPTION: desc}
       newMFC = MFChain(self.userId, priority=self._priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=mx.DateTime.gmt().mjd)
@@ -230,7 +230,7 @@ class Pammer(LMObject):
       desc = ('Makeflow for PAM intersect for Gridset {}, {} for User {}'
               .format(self.gridsetId, self.gridsetName, self.userId))
       meta = {MFChain.META_CREATED_BY: os.path.basename(__file__),
-              MFChain.META_DESC: desc }
+              MFChain.META_DESCRIPTION: desc }
       
       newMFC = MFChain(self.userId, metadata=meta, priority=self._priority,
                        status=JobStatus.GENERAL, statusModTime=CURR_MJD)

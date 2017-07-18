@@ -25,6 +25,10 @@ ENVLYR_GDALFORMAT = 'GTiff'
 
 CLIMATE_KEYWORDS = ['bioclimatic variables', 'climate', 'elevation']
 
+PACKAGE_META = {
+      'keywords': ['global', 'bioclimatic variables', 'climate', 'elevation'],
+      'resolution': '10min'}
+
 OBSERVED_PREDICTED_META = {
    'observed': {
       # Name for climate scenario

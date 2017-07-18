@@ -476,14 +476,18 @@ class BOOMFiller(LMObject):
       epsg = elyrMeta['epsg']
       mapunits = elyrMeta['mapunits']
       self.scribe.log.info('  Read ScenPackage {} metadata ...'.format(self.scenPackageName))
-      scenPkg = ScenPackage(self.scenPackageName, self.usr, modTime=CURR_MJD)
+      scenPkg = ScenPackage(self.scenPackageName, self.usr, 
+                            epsgcode=epsg,
+                            bbox=pkgMeta['bbox'],
+                            mapunits=mapunits,
+                            modTime=CURR_MJD)
       # Current
       basescen, staticLayers = self._createBaselineScenario(pkgMeta, elyrMeta, 
                                                       META.LAYERTYPE_META,
                                                       META.OBSERVED_PREDICTED_META,
                                                       META.CLIMATE_KEYWORDS)
-      scenPkg.addScenario(basescen)
       self.scribe.log.info('     Assembled base scenario {}'.format(basescen.code))
+      scenPkg.addScenario(basescen)
       # Predicted Past and Future
       allScens = self._createPredictedScenarios(pkgMeta, elyrMeta, 
                                            META.LAYERTYPE_META, staticLayers,
@@ -681,8 +685,10 @@ class BOOMFiller(LMObject):
       scencode = self._getbioName(obsKey, pkgMeta['res'], suffix=pkgMeta['suffix'])
       lyrs, staticLayers = self._getBaselineLayers(pkgMeta, baseMeta, elyrMeta, 
                                               lyrtypeMeta)
-      scenmeta = {'title': baseMeta['title'], 'author': baseMeta['author'], 
-                  'description': baseMeta['description'], 'keywords': basekeywords}
+      scenmeta = {ServiceObject.META_TITLE: baseMeta['title'], 
+                  ServiceObject.META_AUTHOR: baseMeta['author'], 
+                  ServiceObject.META_DESCRIPTION: baseMeta['description'], 
+                  ServiceObject.META_KEYWORDS: basekeywords}
       scen = Scenario(scencode, self.usr, elyrMeta['epsg'], 
                       metadata=scenmeta, 
                       units=elyrMeta['mapunits'], 
@@ -736,8 +742,10 @@ class BOOMFiller(LMObject):
             obstitle = observedPredictedMeta[pkgMeta['baseline']]['title']
             scendesc =  ' '.join((obstitle, 
                      'and predicted climate calculated from {}'.format(scentitle)))
-            scenmeta = {'title': scentitle, 'author': mdlvals['author'], 
-                        'description': scendesc, 'keywords': scenkeywords}
+            scenmeta = {ServiceObject.META_TITLE: scentitle, 
+                        ServiceObject.META_AUTHOR: mdlvals['author'], 
+                        ServiceObject.META_DESCRIPTION: scendesc, 
+                        ServiceObject.META_KEYWORDS: scenkeywords}
             lyrs = self._getPredictedLayers(pkgMeta, elyrMeta, lyrtypeMeta, 
                                  staticLayers, observedPredictedMeta, predRpt, tm, 
                                  gcm=gcm, altpred=altpred)
@@ -1011,7 +1019,7 @@ class BOOMFiller(LMObject):
       desc = ('GRIM Makeflow for User {}, Archive {}, Scenario {}'
               .format(self.usr, self.archiveName, scencode))
       meta = {MFChain.META_CREATED_BY: self.name,
-              MFChain.META_DESC: desc}
+              MFChain.META_DESCRIPTION: desc}
       newMFC = MFChain(self.usr, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 
                        statusModTime=currtime)
@@ -1079,7 +1087,7 @@ class BOOMFiller(LMObject):
                 and configFile written by BOOMFiller.initBoom.
       """
       meta = {MFChain.META_CREATED_BY: self.name,
-              MFChain.META_DESC: 'Boom start for User {}, Archive {}'
+              MFChain.META_DESCRIPTION: 'Boom start for User {}, Archive {}'
       .format(self.usr, self.archiveName)}
       newMFC = MFChain(self.usr, priority=self.priority, 
                        metadata=meta, status=JobStatus.GENERAL, 

@@ -33,7 +33,7 @@ from LmServer.legion.cmd import MfRule
 class MFChain(ProcessObject):
 # .............................................................................
    META_CREATED_BY = 'createdBy'
-   META_DESC = 'description'
+   META_DESCRIPTION = 'description'
    META_SQUID = 'squid'
 # .............................................................................
    def __init__(self, userId, dlocation=None, priority=None, metadata=None,  
