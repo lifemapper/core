@@ -182,7 +182,7 @@ class ProcessTool:
          if ptype == ProcessType.BOOM_INIT:
             jr = 'boominput'
          else:
-            jr = 'daboom'
+            jr = 'boomer'
 
       elif ptype == ProcessType.CONCATENATE_MATRICES:
          relpath = COMMON_SCRIPTS_DIR

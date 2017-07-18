@@ -918,8 +918,7 @@ class ProcessType:
    
    @staticmethod
    def isBoom(ptype):
-      #if ptype in [ProcessType.BOOM_INIT, ProcessType.BOOM_DAEMON]:
-      if ptype == ProcessType.BOOM_INIT:
+      if ptype in [ProcessType.BOOM_INIT, ProcessType.BOOMER]:
          return True
       return False
    
