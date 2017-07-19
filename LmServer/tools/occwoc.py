@@ -923,6 +923,9 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             tmpOcc.readData(dlocation=occ.getDLocation(), 
                              dataFormat=occ.dataFormat)
             userOcc = self._scribe.findOrInsertOccurrenceSet(tmpOcc)
+            # Read the data from the original occurrence set
+            userOcc.readData(dlocation=occ.getDLocation(), 
+                             dataFormat=occ.dataFormat, doReadData=True)
             userOcc.writeLayer()
             self._scribe.updateObject(userOcc)
             self.log.info('Copy/insert occset {} to {}, with {} points; next start {}'
