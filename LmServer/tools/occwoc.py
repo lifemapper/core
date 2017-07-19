@@ -21,6 +21,7 @@
           Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
           02110-1301, USA.
 """
+import shutil
 try:
    import mx.DateTime as dt
 except:
@@ -35,7 +36,7 @@ from LmBackend.common.lmobj import LMError, LMObject
 from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.apiquery import BisonAPI, GbifAPI
 from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY, BISON, BISON_QUERY, 
-                                    ProcessType, JobStatus, ONE_HOUR) 
+                                    ProcessType, JobStatus, ONE_HOUR, LMFormat) 
 from LmServer.base.taxon import ScientificName
 from LmServer.common.lmconstants import LOG_PATH
 from LmServer.common.localconstants import PUBLIC_USER
@@ -927,6 +928,13 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
             userOcc.readData(dlocation=occ.getDLocation(), 
                              dataFormat=occ.dataFormat, doReadData=True)
             userOcc.writeLayer()
+            
+            # Copy metadata file
+            shutil.copyfile('{}{}'.format(os.path.splitext(occ.getDLocation())[0],
+                                          LMFormat.METADATA.ext),
+                            '{}{}'.format(os.path.splitext(userOcc.getDLocation())[0],
+                                          LMFormat.METADATA.ext))
+            
             self._scribe.updateObject(userOcc)
             self.log.info('Copy/insert occset {} to {}, with {} points; next start {}'
                           .format(occ.getId(), userOcc.getId(), 
