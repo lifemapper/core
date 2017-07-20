@@ -30,7 +30,6 @@ import json
 from mx.DateTime import gmt
 
 from LmServer.base.atom import Atom
-from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
@@ -77,28 +76,24 @@ class GridSetService(LmService):
    # ................................
    @lmFormatter
    def GET(self, pathGridSetId=None, afterTime=None, beforeTime=None, 
-           epsgCode=None, limit=100, metaString=None, offset=0, public=None, 
+           epsgCode=None, limit=100, metaString=None, offset=0, urlUser=None, 
            shapegridId=None):
       """
       @summary: Performs a GET request.  If a grid set id is provided,
                    attempt to return that item.  If not, return a list of 
                    grid sets that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-      
       if pathGridSetId is None:
-         return self._listGridSets(userId, afterTime=afterTime, 
-                                     beforeTime=beforeTime, epsgCode=epsgCode, 
-                                     limit=limit, metaString=metaString, 
-                                     offset=offset, shapegridId=shapegridId)
+         return self._listGridSets(self.getUserId(urlUser=urlUser), 
+                                   afterTime=afterTime, beforeTime=beforeTime, 
+                                   epsgCode=epsgCode, limit=limit, 
+                                   metaString=metaString, offset=offset, 
+                                   shapegridId=shapegridId)
       elif pathGridSetId.lower() == 'count':
-         return self._countGridSets(userId, afterTime=afterTime, 
-                                     beforeTime=beforeTime, epsgCode=epsgCode, 
-                                     metaString=metaString, 
-                                     shapegridId=shapegridId)
+         return self._countGridSets(self.getUserId(urlUser=urlUser), 
+                                   afterTime=afterTime, beforeTime=beforeTime, 
+                                   epsgCode=epsgCode, metaString=metaString, 
+                                   shapegridId=shapegridId)
       else:
          return self._getGridSet(pathGridSetId)
       

@@ -29,9 +29,10 @@
 
 import cherrypy
 
+from LmCommon.common.lmconstants import DEFAULT_POST_USER
+from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import LmPublicLogger
 from LmServer.db.borgscribe import BorgScribe
-from LmServer.common.localconstants import PUBLIC_USER
 
 # .............................................................................
 class LmService(object):
@@ -56,14 +57,23 @@ class LmService(object):
       self.log = log
    
    # ..........................
-   def getUserId(self):
+   def getUserId(self, urlUser=None):
       """
-      @summary: Attempts to get a user id from the session, falls back to the 
-                   PUBLIC_USER
+      @summary: Get the user id for the service call.  If urlUser is provided,
+                   try that first.  Then try the session and finally fall back
+                   to the PUBLIC_USER
       """
+      # Check to see if we should use url user
+      if urlUser is not None:
+         if urlUser.lower() == PUBLIC_USER.lower():
+            return PUBLIC_USER
+         elif urlUser.lower() == DEFAULT_POST_USER.lower():
+            return DEFAULT_POST_USER
+      # Try to get the user from the session
       try:
          return cherrypy.session.user
       except:
+         # Fall back to PUBLIC_USER
          return PUBLIC_USER
 
    # ..........................

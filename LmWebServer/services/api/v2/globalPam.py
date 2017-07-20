@@ -28,7 +28,6 @@
 import cherrypy
 
 from LmServer.base.atom import Atom
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.solr import queryArchiveIndex
 from LmServer.common.subset import subsetGlobalPAM
 
@@ -46,7 +45,7 @@ class GlobalPAMService(LmService):
    @lmFormatter
    def GET(self, algorithmCode=None, bbox=None, gridSetId=None, 
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
-                 public=None, prjScenCode=None, squid=None, 
+                 urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
                  taxonSpecies=None):
@@ -58,7 +57,7 @@ class GlobalPAMService(LmService):
                                  gridSetId=gridSetId, 
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
-                                 public=public, 
+                                 urlUser=urlUser, 
                                  projectionScenarioCode=prjScenCode, 
                                  squid=squid, taxKingdom=taxonKingdom, 
                                  taxPhylum=taxonPhylum, taxClass=taxonClass,
@@ -69,7 +68,7 @@ class GlobalPAMService(LmService):
    @lmFormatter
    def POST(self, archiveName, gridSetId, algorithmCode=None, bbox=None,  
                  modelScenarioCode=None, pointMax=None, pointMin=None, 
-                 public=None, prjScenCode=None, squid=None, 
+                 urlUser=None, prjScenCode=None, squid=None, 
                  taxonKingdom=None, taxonPhylum=None, taxonClass=None, 
                  taxonOrder=None, taxonFamily=None, taxonGenus=None, 
                  taxonSpecies=None):
@@ -80,7 +79,7 @@ class GlobalPAMService(LmService):
                                  gridSetId=gridSetId, 
                                  modelScenarioCode=modelScenarioCode, 
                                  pointMax=pointMax, pointMin=pointMin, 
-                                 public=public, 
+                                 urlUser=urlUser, 
                                  projectionScenarioCode=prjScenCode, 
                                  squid=squid, taxKingdom=taxonKingdom, 
                                  taxPhylum=taxonPhylum, taxClass=taxonClass,
@@ -95,24 +94,19 @@ class GlobalPAMService(LmService):
    # ................................
    def _makeSolrQuery(self, algorithmCode=None, bbox=None, gridSetId=None, 
                             modelScenarioCode=None, pointMax=None, 
-                            pointMin=None, public=None, 
+                            pointMin=None, urlUser=None, 
                             projectionScenarioCode=None, squid=None,
                             taxKingdom=None, taxPhylum=None, taxClass=None, 
                             taxOrder=None, taxFamily=None, taxGenus=None, 
                             taxSpecies=None):
       
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-
       return queryArchiveIndex(algorithmCode=algorithmCode, bbox=bbox, 
                   gridSetId=gridSetId, modelScenarioCode=modelScenarioCode, 
                   pointMax=pointMax, pointMin=pointMin,
                   projectionScenarioCode=projectionScenarioCode, squid=squid,
                   taxKingdom=taxKingdom, taxPhylum=taxPhylum, taxClass=taxClass, 
                   taxOrder=taxOrder, taxFamily=taxFamily, taxGenus=taxGenus, 
-                  taxSpecies=taxSpecies, userId=userId)
+                  taxSpecies=taxSpecies, userId=self.getUserId(urlUser=urlUser))
    
    # ................................
    def _subsetGlobalPAM(self, archiveName, matches):

@@ -30,7 +30,6 @@
 
 import cherrypy
 
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.envlayer import EnvLayer
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -75,7 +74,7 @@ class LayerService(LmService):
    def GET(self, pathLayerId=None, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
            envTypeId=None, gcmCode=None, layerType=None, limit=100, offset=0, 
-           public=None, scenarioId=None, squid=None):
+           urlUser=None, scenarioId=None, squid=None):
       """
       @summary: Performs a GET request.  If a layer id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -85,32 +84,30 @@ class LayerService(LmService):
       #   0 - Anything
       #   1 - Environmental layer
       #   2 - ? (Not implemented yet)
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-      
       if layerType is None or layerType == 0:
          if pathLayerId is None:
-            return self._listLayers(userId, afterTime=afterTime, 
-                                    beforeTime=beforeTime, epsgCode=epsgCode, 
-                                    limit=limit, offset=offset, squid=squid)
+            return self._listLayers(self.getUserId(urlUser=urlUser), 
+                                    afterTime=afterTime, beforeTime=beforeTime, 
+                                    epsgCode=epsgCode, limit=limit, 
+                                    offset=offset, squid=squid)
          elif pathLayerId.lower() == 'count':
-            return self._countLayers(userId, afterTime=afterTime, 
-                                    beforeTime=beforeTime, epsgCode=epsgCode, 
-                                    squid=squid)
+            return self._countLayers(self.getUserId(urlUser=urlUser), 
+                                    afterTime=afterTime, beforeTime=beforeTime, 
+                                    epsgCode=epsgCode, squid=squid)
          else:
             return self._getLayer(pathLayerId, envLayer=False)
       else:
          if pathLayerId is None:
-            return self._listEnvLayers(userId, afterTime=afterTime, 
+            return self._listEnvLayers(self.getUserId(urlUser=urlUser), 
+                               afterTime=afterTime, 
                                altPredCode=altPredCode, beforeTime=beforeTime, 
                                dateCode=dateCode, envCode=envCode, 
                                envTypeId=envTypeId, epsgCode=epsgCode, 
                                gcmCode=gcmCode, limit=limit, offset=offset, 
                                scenarioId=scenarioId)
          elif pathLayerId.lower() == 'count':
-            return self._countEnvLayers(userId, afterTime=afterTime, 
+            return self._countEnvLayers(self.getUserId(urlUser=urlUser), 
+                               afterTime=afterTime, 
                                altPredCode=altPredCode, beforeTime=beforeTime, 
                                dateCode=dateCode, envCode=envCode, 
                                envTypeId=envTypeId, epsgCode=epsgCode, 

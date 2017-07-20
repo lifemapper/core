@@ -30,7 +30,6 @@
 
 import cherrypy
 
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.envlayer import EnvLayer
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -74,31 +73,27 @@ class EnvLayerService(LmService):
    @lmFormatter
    def GET(self, pathLayerId=None, afterTime=None, altPredCode=None, 
            beforeTime=None, dateCode=None, epsgCode=None, envCode=None, 
-           envTypeId=None, gcmCode=None, limit=100, offset=0, public=None, 
+           envTypeId=None, gcmCode=None, limit=100, offset=0, urlUser=None, 
            scenarioId=None, squid=None):
       """
       @summary: Performs a GET request.  If a layer id is provided,
                    attempt to return that item.  If not, return a list of 
                    layers that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-      
       if pathLayerId is None:
-         return self._listEnvLayers(userId, afterTime=afterTime, 
-                            altPredCode=altPredCode, beforeTime=beforeTime, 
-                            dateCode=dateCode, envCode=envCode, 
-                            envTypeId=envTypeId, epsgCode=epsgCode, 
-                            gcmCode=gcmCode, limit=limit, offset=offset, 
-                            scenarioId=scenarioId)
+         return self._listEnvLayers(self.getUserId(urlUser=urlUser), 
+                            afterTime=afterTime, altPredCode=altPredCode, 
+                            beforeTime=beforeTime, dateCode=dateCode, 
+                            envCode=envCode, envTypeId=envTypeId, 
+                            epsgCode=epsgCode, gcmCode=gcmCode, limit=limit, 
+                            offset=offset, scenarioId=scenarioId)
       elif pathLayerId.lower() == 'count':
-         return self._countEnvLayers(userId, afterTime=afterTime, 
-                            altPredCode=altPredCode, beforeTime=beforeTime, 
-                            dateCode=dateCode, envCode=envCode, 
-                            envTypeId=envTypeId, epsgCode=epsgCode, 
-                            gcmCode=gcmCode, scenarioId=scenarioId)
+         return self._countEnvLayers(self.getUserId(urlUser=urlUser), 
+                           afterTime=afterTime, altPredCode=altPredCode, 
+                           beforeTime=beforeTime, dateCode=dateCode, 
+                           envCode=envCode, envTypeId=envTypeId, 
+                           epsgCode=epsgCode, gcmCode=gcmCode, 
+                           scenarioId=scenarioId)
       else:
          return self._getEnvLayer(pathLayerId)
       

@@ -27,7 +27,6 @@
 """
 import cherrypy
 
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.shapegrid import ShapeGrid
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -72,24 +71,21 @@ class ShapeGridService(LmService):
    @lmFormatter
    def GET(self, pathShapegridId=None, afterTime=None, beforeTime=None, 
            cellSides=None, cellSize=None, epsgCode=None, limit=100, offset=0, 
-           public=None):
+           urlUser=None):
       """
       @summary: Performs a GET request.  If a shapegrid id is provided,
                    attempt to return that item.  If not, return a list of 
                    shapegrids that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-      
       if pathShapegridId is None:
-         return self._listShapegrids(userId, afterTime=afterTime, 
+         return self._listShapegrids(self.getUserId(urlUser=urlUser), 
+                                     afterTime=afterTime, 
                                      beforeTime=beforeTime, cellSides=cellSides,
                                      cellSize=cellSize, epsgCode=epsgCode, 
                                      limit=limit, offset=offset)
       elif pathShapegridId.lower() == 'count':
-         return self._countShapegrids(userId, afterTime=afterTime, 
+         return self._countShapegrids(self.getUserId(urlUser=urlUser), 
+                                      afterTime=afterTime, 
                                      beforeTime=beforeTime, cellSides=cellSides,
                                      cellSize=cellSize, epsgCode=epsgCode)
       else:

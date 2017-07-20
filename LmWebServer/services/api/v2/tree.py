@@ -29,13 +29,12 @@ import cherrypy
 import mx.DateTime
 import json
 
-from LmServer.common.localconstants import PUBLIC_USER
+from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
 from LmWebServer.services.common.accessControl import checkUserPermission
 from LmWebServer.services.cpTools.lmFormat import lmFormatter
-from LmCommon.common.lmconstants import HTTPStatus
 
 # .............................................................................
 @cherrypy.expose
@@ -73,9 +72,9 @@ class TreeService(LmService):
 
    # ................................
    @lmFormatter
-   def GET(self, pathTreeId=None, limit=100, offset=0, public=None, name=None, 
+   def GET(self, pathTreeId=None, limit=100, offset=0, name=None, 
            isBinary=None, isUltrametric=None, hasBranchLengths=None, 
-           metaString=None, afterTime=None, beforeTime=None):
+           metaString=None, afterTime=None, beforeTime=None, urlUser=None):
       """
       @summary: Performs a GET request.  If a tree id is provided,
                    attempt to return that item.  If not, return a list of 
@@ -86,21 +85,16 @@ class TreeService(LmService):
                 - minimum number of tips?
                 - taxonomic or phylogenetic?
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-      
       if pathTreeId is None:
-         return self._listTrees(userId, afterTime=afterTime, 
-                     beforeTime=beforeTime, isBinary=isBinary, 
-                     isUltrametric=isUltrametric, 
+         return self._listTrees(self.getUserId(urlUser=urlUser), 
+                     afterTime=afterTime, beforeTime=beforeTime, 
+                     isBinary=isBinary, isUltrametric=isUltrametric, 
                      hasBranchLengths=hasBranchLengths, limit=limit, 
                      metaString=metaString, name=name, offset=offset)
       elif pathTreeId.lower() == 'count':
-         return self._countTrees(userId, afterTime=afterTime, 
-                     beforeTime=beforeTime, isBinary=isBinary, 
-                     isUltrametric=isUltrametric, 
+         return self._countTrees(self.getUserId(urlUser=urlUser), 
+                     afterTime=afterTime, beforeTime=beforeTime, 
+                     isBinary=isBinary, isUltrametric=isUltrametric, 
                      hasBranchLengths=hasBranchLengths, metaString=metaString, 
                      name=name)
       else:

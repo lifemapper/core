@@ -72,25 +72,22 @@ class MatrixColumnService(LmService):
    @lmFormatter
    def GET(self, pathGridSetId, pathMatrixId, pathMatrixColumnId=None, 
            afterTime=None, beforeTime=None, epsgCode=None, ident=None, 
-           layerId=None, limit=100, offset=0, public=None, squid=None, 
+           layerId=None, limit=100, offset=0, urlUser=None, squid=None, 
            status=None):
       """
       @summary: Performs a GET request.  If a matrix id is provided,
                    attempt to return that item.  If not, return a list of 
                    matrices that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-      
       if pathMatrixColumnId is None:
-         return self._listMatrixColumns(pathGridSetId, pathMatrixId, userId, 
-                     afterTime=afterTime, beforeTime=beforeTime, 
-                     epsgCode=epsgCode, ident=ident, layerId=layerId, 
-                     limit=limit, offset=offset, squid=squid, status=status)
+         return self._listMatrixColumns(pathGridSetId, pathMatrixId, 
+                     self.getUserId(urlUser=urlUser), afterTime=afterTime, 
+                     beforeTime=beforeTime, epsgCode=epsgCode, ident=ident, 
+                     layerId=layerId, limit=limit, offset=offset, squid=squid, 
+                     status=status)
       elif pathMatrixColumnId.lower() == 'count':
-         return self._countMatrixColumns(pathGridSetId, pathMatrixId, userId, 
+         return self._countMatrixColumns(pathGridSetId, pathMatrixId, 
+                     self.getUserId(urlUser=urlUser), 
                      afterTime=afterTime, beforeTime=beforeTime, 
                      epsgCode=epsgCode, ident=ident, layerId=layerId, 
                      squid=squid, status=status)

@@ -30,7 +30,6 @@
 
 import cherrypy
 
-from LmServer.common.localconstants import PUBLIC_USER
 #from LmServer.legion.scenario import Scenario
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -73,23 +72,19 @@ class ScenarioPackageService(LmService):
    # ................................
    @lmFormatter
    def GET(self, pathScenarioPackageId=None, afterTime=None, beforeTime=None,  
-                 limit=100, offset=0, public=None, scenarioId=None):
+                 limit=100, offset=0, urlUser=None, scenarioId=None):
       """
       @summary: Performs a GET request.  If a scenario package id is provided,
                    attempt to return that item.  If not, return a list of 
                    scenario packagess that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-
       if pathScenarioPackageId is None:
-         return self._listScenarioPackages(userId, afterTime=afterTime,
-                      scenarioId=scenarioId, limit=limit)
+         return self._listScenarioPackages(self.getUserId(urlUser=urlUser), 
+                       afterTime=afterTime, scenarioId=scenarioId, limit=limit)
       elif pathScenarioPackageId.lower() == 'count':
-         return self._countScenarioPackages(userId, afterTime=afterTime,
-                      beforeTime=beforeTime, scenarioId=scenarioId)
+         return self._countScenarioPackages(self.getUserId(urlUser=urlUser), 
+                                 afterTime=afterTime, beforeTime=beforeTime, 
+                                 scenarioId=scenarioId)
       else:
          return self._getScenarioPackage(pathScenarioPackageId)
    

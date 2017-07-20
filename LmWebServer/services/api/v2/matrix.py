@@ -28,7 +28,6 @@
 import cherrypy
 
 from LmCommon.common.lmconstants import JobStatus
-from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.legion.lmmatrix import LMMatrix
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
@@ -77,30 +76,25 @@ class MatrixService(LmService):
    def GET(self, pathGridSetId, pathMatrixId=None, afterTime=None, 
            altPredCode=None, beforeTime=None, dateCode=None, epsgCode=None, 
            gcmCode=None, keyword=None, limit=100, matrixType=None, offset=0, 
-           public=None, status=None):
+           urlUser=None, status=None):
       """
       @summary: Performs a GET request.  If a matrix id is provided,
                    attempt to return that item.  If not, return a list of 
                    matrices that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-      
       if pathMatrixId is None:
-         return self._listMatrices(userId, gridSetId=pathGridSetId, 
-                        afterTime=afterTime, altPredCode=altPredCode, 
-                        beforeTime=beforeTime, dateCode=dateCode, 
-                        epsgCode=epsgCode, gcmCode=gcmCode, keyword=keyword,
-                        limit=limit, matrixType=matrixType, offset=offset, 
-                        status=status)
+         return self._listMatrices(self.getUserId(urlUser=urlUser), 
+                        gridSetId=pathGridSetId, afterTime=afterTime, 
+                        altPredCode=altPredCode, beforeTime=beforeTime, 
+                        dateCode=dateCode, epsgCode=epsgCode, gcmCode=gcmCode, 
+                        keyword=keyword, limit=limit, matrixType=matrixType, 
+                        offset=offset, status=status)
       elif pathMatrixId.lower() == 'count':
-         return self._countMatrices(userId, gridSetId=pathGridSetId, 
-                        afterTime=afterTime, altPredCode=altPredCode, 
-                        beforeTime=beforeTime, dateCode=dateCode, 
-                        epsgCode=epsgCode, gcmCode=gcmCode, keyword=keyword,
-                        matrixType=matrixType, status=status)
+         return self._countMatrices(self.getUserId(urlUser=urlUser), 
+                        gridSetId=pathGridSetId, afterTime=afterTime, 
+                        altPredCode=altPredCode, beforeTime=beforeTime, 
+                        dateCode=dateCode, epsgCode=epsgCode, gcmCode=gcmCode, 
+                        keyword=keyword, matrixType=matrixType, status=status)
       else:
          return self._getMatrix(pathGridSetId, pathMatrixId)
       

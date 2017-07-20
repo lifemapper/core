@@ -77,25 +77,20 @@ class OccurrenceLayerService(LmService):
    @lmFormatter
    def GET(self, pathOccSetId=None, afterTime=None, beforeTime=None, 
            displayName=None, epsgCode=None, minimumNumberOfPoints=1, 
-           limit=100, offset=0, public=None, status=None, gridSetId=None):
+           limit=100, offset=0, urlUser=None, status=None, gridSetId=None):
       """
       @summary: Performs a GET request.  If an occurrence set id is provided,
                    attempt to return that item.  If not, return a list of 
                    occurrence sets that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-
       if pathOccSetId is None:
-         return self._listOccurrenceSets(userId, afterTime=afterTime, 
-                beforeTime=beforeTime, displayName=displayName, 
+         return self._listOccurrenceSets(self.getUserId(urlUser=urlUser), 
+                afterTime=afterTime, beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
                 limit=limit, offset=offset, gridSetId=gridSetId)
       elif pathOccSetId.lower() == 'count':
-         return self._countOccurrenceSets(userId, afterTime=afterTime, 
-                beforeTime=beforeTime, displayName=displayName, 
+         return self._countOccurrenceSets(self.getUserId(urlUser=urlUser), 
+               afterTime=afterTime, beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
                 gridSetId=gridSetId)
       else:

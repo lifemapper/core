@@ -230,10 +230,6 @@ QUERY_PARAMETERS = {
    'projectionscenariocode' : {
       'name' : 'projectionScenarioCode'
    },
-   'public' : {
-      'name' : 'public',
-      'processIn' : lambda x: bool(int(x)) # Zero is false, one is true
-   },
    'request' : {
       'name' : 'request'
    },
@@ -302,6 +298,10 @@ QUERY_PARAMETERS = {
    },
    'treename' : {
       'name' : 'name' # Map to 'name' for processing
+   },
+   'user' : {
+      'name' : 'urlUser',
+      'processIn' : lambda x: x.lower()
    },
    'version' : {
       'name' : 'version'

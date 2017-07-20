@@ -80,19 +80,15 @@ class SdmProjectService(LmService):
            algorithmCode=None, beforeStatus=None, beforeTime=None, 
            displayName=None, epsgCode=None, limit=100, modelScenarioCode=None, 
            occurrenceSetId=None, offset=0, projectionScenarioCode=None, 
-           public=None, scenarioId=None, status=None, gridSetId=None):
+           urlUser=None, scenarioId=None, status=None, gridSetId=None):
       """
       @summary: Performs a GET request.  If a projection id is provided,
                    attempt to return that item.  If not, return a list of 
                    projections that match the provided parameters
       """
-      if public:
-         userId = PUBLIC_USER
-      else:
-         userId = self.getUserId()
-
       if pathProjectionId is None:
-         return self._listProjections(userId, afterStatus=afterStatus, 
+         return self._listProjections(self.getUserId(urlUser=urlUser), 
+                                      afterStatus=afterStatus, 
                                  afterTime=afterTime, algCode=algorithmCode, 
                                  beforeStatus=beforeStatus, beforeTime=beforeTime, 
                                  displayName=displayName, epsgCode=epsgCode, 
@@ -101,7 +97,8 @@ class SdmProjectService(LmService):
                                  prjScnCode=projectionScenarioCode, 
                                  status=status, gridSetId=gridSetId)
       elif pathProjectionId.lower() == 'count':
-         return self._countProjections(userId, afterStatus=afterStatus,
+         return self._countProjections(self.getUserId(urlUser=urlUser), 
+                                       afterStatus=afterStatus,
                                  afterTime=afterTime, algCode=algorithmCode, 
                                  beforeStatus=beforeStatus, beforeTime=beforeTime, 
                                  displayName=displayName, epsgCode=epsgCode, 
