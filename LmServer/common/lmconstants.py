@@ -90,8 +90,8 @@ MAKEFLOW_OPTIONS = '-T wq -t 600 -u 600 -X {} -a -C {}:{}'.format(
    WORKER_PATH, PUBLIC_FQDN, CS_PORT) 
 
 # Remove old worker directories command
-RM_OLD_WORKER_DIRS_CMD = '{} run host compute "rm -rf {}/worker-*"'.format(
-   os.path.join(os.environ['ROCKS_ROOT'], 'bin', 'rocks'), WORKER_PATH)
+RM_OLD_WORKER_DIRS_CMD = 'rocks run host compute "rm -rf {}/worker-*"'.format(
+   WORKER_PATH)
 
 
 DEFAULT_CONFIG = 'config'
