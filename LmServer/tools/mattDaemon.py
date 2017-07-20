@@ -48,7 +48,7 @@ from LmServer.common.lmconstants import (CATALOG_SERVER_BIN, CS_OPTIONS,
                                       MAKEFLOW_BIN, MAKEFLOW_OPTIONS,
                                       MAKEFLOW_WORKSPACE, MATT_DAEMON_PID_FILE, 
                                       WORKER_FACTORY_BIN, WORKER_FACTORY_OPTIONS,
-   WORKER_PATH)
+   WORKER_PATH, RM_OLD_WORKER_DIRS_CMD)
 
 from LmServer.common.localconstants import MAX_MAKEFLOWS
 from LmServer.common.log import LmServerLogger
@@ -248,6 +248,7 @@ class MattDaemon(Daemon):
       """
       @summary: Start the local catalog server
       """
+      self.log.debug("Starting catalog server")
       cmd = "{csBin} {csOptions}".format(csBin=CATALOG_SERVER_BIN, 
                                          csOptions=CS_OPTIONS)
       self.csProc = Popen(cmd, shell=True, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -257,6 +258,7 @@ class MattDaemon(Daemon):
       """
       @summary: Stop the local catalog server
       """
+      self.log.debug("Stopping catalog server")
       os.killpg(os.getpgid(self.csProc.pid), signal.SIGTERM)
    
    # .............................
@@ -264,6 +266,13 @@ class MattDaemon(Daemon):
       """
       @summary: Start worker factory
       """
+      self.log.debug("Clean up old worker directories")
+      rmProc = Popen(RM_OLD_WORKER_DIRS_CMD, shell=True)
+      # Sleep until we remove all of the old work directories
+      while rmProc.poll() is None:
+         sleep(1)
+      
+      self.log.debug("Starting worker factory")
       cmd = "{wfBin} {wfOptions}".format(wfBin=WORKER_FACTORY_BIN, 
                                          wfOptions=WORKER_FACTORY_OPTIONS)
       self.wfProc = Popen(cmd, shell=True, preexec_fn=os.setsid)
@@ -273,6 +282,7 @@ class MattDaemon(Daemon):
       """
       @summary: Kill worker factory
       """
+      self.log.debug("Kill worker factory")
       os.killpg(os.getpgid(self.wfProc.pid), signal.SIGTERM)
    
    # .............................
