@@ -57,6 +57,9 @@ class EMT(LMObject):
       @param outfname: a filename containing filenames indicating **successful**
              completion of a Spud (single-species MF). 
       """
+      lmo = LMObject()
+      lmo.readyFilename(outfname)
+
       with open(infname, 'r') as inPotato:
          with open(outfname, 'w') as outMashed:
             for line in inPotato:

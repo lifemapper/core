@@ -256,7 +256,7 @@ class LMMatrix(Matrix, ServiceObject, ProcessObject):
                                      local=True)
       rules.append(tRule)
       # Assemble Matrix rule
-      cRule = self._createMatrixRule(ProcessType.TOUCH, 
+      cRule = self._createMatrixRule(ProcessType.CONCATENATE_MATRICES, 
                                      [triageOutFname], [matrixOutputFname], 
                                      cmdArgs=['--mashedPotato={}'.format(triageOutFname),
                                                matrixOutputFname,
