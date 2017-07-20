@@ -65,7 +65,7 @@ class LmService(object):
       """
       # Check to see if we should use url user
       if urlUser is not None:
-         if urlUser.lower() == PUBLIC_USER.lower():
+         if urlUser.lower() == 'public'.lower():
             return PUBLIC_USER
          elif urlUser.lower() == DEFAULT_POST_USER.lower():
             return DEFAULT_POST_USER
