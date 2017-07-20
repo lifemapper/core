@@ -955,7 +955,7 @@ class BOOMFiller(LMObject):
       # "Global" PAM, GRIM (one each per scenario)
       for code, scen in self.scenPkg.scenarios.iteritems():
          gPam = self._findOrAddPAM(updatedGrdset, scen)
-         if not(self.usr == DEFAULT_POST_USER) or not(self.assemblePams):
+         if not(self.usr == DEFAULT_POST_USER) and self.assemblePams:
             scenGrim = self._findOrAddGRIM(updatedGrdset, scen)
             scenGrims[code] = scenGrim
       return scenGrims, updatedGrdset
