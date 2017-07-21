@@ -82,6 +82,11 @@ run the cleanRoll scripts for each roll.
     # bash add-server.sh 2>&1 | tee add-server.out
     # bash add-compute.sh 2>&1 | tee add-compute.out
     
+Install bugfixes
+----------------
+#. Compute - run seedData with scen package name  
+
+
 Finish install
 --------------
 
