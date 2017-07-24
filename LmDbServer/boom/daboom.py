@@ -103,10 +103,12 @@ if __name__ == "__main__":
       print("Run this script as `lmwriter`")
       sys.exit(2)
    earl = EarlJr()
-   pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
-   defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
-                                                       LMFormat.CONFIG.ext))
-   # Use the argparse.ArgumentParser class to handle the command line arguments
+   defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
+                                           objCode=PUBLIC_ARCHIVE_NAME, 
+                                           usr=PUBLIC_USER)   
+#    pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
+#    defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
+#                                                        LMFormat.CONFIG.ext))
    parser = argparse.ArgumentParser(
             description=('Populate a Lifemapper archive with metadata ' +
                          'for single- or multi-species computations ' + 

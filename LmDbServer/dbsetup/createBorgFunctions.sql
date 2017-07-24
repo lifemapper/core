@@ -2661,9 +2661,9 @@ DECLARE
    total int;
 BEGIN
    -- MFProcesses
-	DELETE FROM lm_v3.MFProcess WHERE userid = usr;
+	DELETE FROM lm_v3.MFProcess WHERE userid = usr AND metadata not like '%GRIM%';
 	GET DIAGNOSTICS total = ROW_COUNT;
-   RAISE NOTICE 'Deleted % MF processes for User %', currCount, usr;
+   RAISE NOTICE 'Deleted % MF processes for User %', total, usr;
 
    -- Matrix Intersect Columns from SDM
 	DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 

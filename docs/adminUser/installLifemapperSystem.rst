@@ -82,11 +82,6 @@ run the cleanRoll scripts for each roll.
     # bash add-server.sh 2>&1 | tee add-server.out
     # bash add-compute.sh 2>&1 | tee add-compute.out
     
-Install bugfixes
-----------------
-#. Compute - run seedData with scen package name  
-
-
 Finish install
 --------------
 
@@ -106,6 +101,24 @@ Install nodes from Frontend
 
    # rocks set host boot compute action=install
    # rocks run host compute reboot 
+
+Install bugfixes
+----------------
+#. Compute 
+   * Run seedData with scen package name  
+   * Fix node group permissions on /state/partition1/lmscratch
+
+#. Server 
+   * Run fillDB with defaults  
+
+Configure for new data
+----------------------
+#. Run /opt/lifemapper/rocks/bin/fillDB with parameter file of your choice::
+
+   # /opt/lifemapper/rocks/bin/fillDB --config_file
+
+   * Run seedData with scen package name  
+   * Fix node group permissions on /state/partition1/lmscratch
 
    
 Look for Errors
@@ -157,19 +170,20 @@ Configure new BOOM
    fills the LmCompute sqlite3 database with file locations (so data does not
    need to be pulled for computations)::
     
-  # seedData <SCEN_PKG>
+  # /opt/lifemapper/rocks/bin/seedData <SCEN_PKG>
 
-#. Create a BOOM initialization file based on the template in 
-   /opt/lifemapper/config/boomInit.sample.ini, then run the BOOM script 
-   **as lmwriter** that fills all input values and creates a BOOM config file::
-    
-  [lmwriter]$  $PYTHON LmDbServer/boom/boominput.py --config_file=/tmp/biotaphyHeucheraLowres.boom.ini
+#. Create a BOOM parameter file based on the template in 
+   /opt/lifemapper/config/boomInit.sample.ini
+
+#. Then run the fillDB to fill input values and create a BOOM config file::    
+   #  /opt/lifemapper/rocks/bin/fillDB /tmpdata/biotaphyHeucheraLowres.boom.ini
   
 #. **TESTING ONLY** The boominput script will create a Makeflow for computation, 
    using the BOOM config file created in that step.  To shortcut that MF process, 
-   look at the command in that makeflow file and run it at the command prompt::
-    
-  [lmwriter]$  $PYTHON LmDbServer/boom/boomer.py --config_file=/share/lm/data/archive/biotaphy/biotaphy_boom.ini start
+   run the daboom daemon **as lmwriter** at the command prompt:: 
+   [lmwriter] $PYTHON LmDbServer/boom/daboom.py \
+              --config_file=/share/lm/data/archive/biotaphy/biotaphy_boom.ini \
+              start
 
 Populate archive
 ----------------
