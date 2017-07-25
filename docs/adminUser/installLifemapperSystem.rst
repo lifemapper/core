@@ -5,7 +5,7 @@ Install or Update a Lifemapper Server/Compute installation
 ==========================================================
 .. contents::  
 
-.. _Configure Archive Data : docs/adminUser/configureLifemapper.rst
+.. _Configure Archive Data : docs/adminUser/buildLifemapperData.rst
 
 Current versions
 ----------------
@@ -27,36 +27,39 @@ Download the current Lifemapper roll files and shasums:
 (If update) Stop processes
 --------------------------
 
-#. **Stop the archivist** as lmwriter ::    
+#. **Stop the daboom daemon** as lmwriter ::    
 
-     % $PYTHON /opt/lifemapper/LmDbServer/pipeline/archivist.py stop
+     lmwriter$ $PYTHON /opt/lifemapper/LmDbServer/boom/daboom.py stop
 
-#. **Stop the jobMediator** as lmwriter::
+#. **Stop the mattDaemon** as lmwriter::
 
-     lmwriter$ $PYTHON /opt/lifemapper/LmCompute/tools/jobMediator.py stop
+     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py stop
 
-#. **Caution** If want to **completely destroy** existing install, run::
+#. **Caution** If want to **completely destroy** existing install, including
+   deleting the database and clearing lm data from filesystem, run::
 
    # bash /opt/lifemapper/rocks/etc/clean-lm-server-roll.sh
    # bash /opt/lifemapper/rocks/etc/clean-lm-compute-roll.sh
 
-Install both rolls on Frontend
-------------------------------
-
 Update existing install
 ~~~~~~~~~~~~~~~~~~~~~~~
-
-#. You may remove source code rpms (lifemapper-lmserver and 
-   lifemapper-compute) to avoid error messages about file conflicts in 
-   shared code, but error messages about conflicting shared files from the 
-   first install of the source code rpm may be safely ignored. 
-#. In case the configuration rpm (rocks-lifemapper, rocks-lmcompute) versions 
-   have not changed, remove rpms to ensure that configuration scripts are run.  
-   If these rpms  are new, the larger version git tag will force the new 
-   rpm to be installed, **but if the rpm versions have not changed**, you 
-   must remove them to ensure that the installation scripts are run.::
+#. When updating an existing install, it should always be true that the 
+   configuration rpms (rocks-lifemapper, rocks-lmcompute) have new version 
+   numbers, matching the code rpms (lifemapper-lmserver or lifemapper-lmcompute).  
+   As long as this is true, rpms will be replaced correctly.  If it is false, 
+   the configuration rpms must be manually removed so that configuration scripts 
+   will be run on install::
       
    # rpm -el rocks-lifemapper rocks-lmcompute
+   
+#. If the above is true on a lifemapper-compute installation, do the same thing
+   for the nodes::
+
+   # rocks run host compute 'rpm -el rocks-lmcompute'
+   
+
+Install both rolls on Frontend
+------------------------------
 
 New install
 ~~~~~~~~~~~
@@ -92,33 +95,51 @@ Finish install
 Install nodes from Frontend
 ---------------------------
 
-#. **(Optional)** When updating an existing installation, remove unchanged 
-   compute-node configuration rpms manually to ensure that scripts are run.::  
-
-      # rocks run host compute 'rpm -el rocks-lmcompute'
-    
 #. **Rebuild the compute nodes** ::  
 
    # rocks set host boot compute action=install
-   # rocks run host compute reboot 
+   # rocks run host compute reboot     
 
 Install bugfixes
 ----------------
+#. Compute Nodes:
+   * Fix node group permissions on /state/partition1/lmscratch ::  
+     # rocks run host compute "chgrp -R lmwriter /state/partition1/lmscratch"
+     # rocks run host compute "chmod -R g+ws /state/partition1/lmscratch"
+   
 #. Compute 
-   * Run seedData with scen package name  
-   * Fix node group permissions on /state/partition1/lmscratch
-
+   * Run seedData with scen package name.  This builds files in alternate data 
+     formats and creates/fills the LmCompute sqlite3 database with file 
+     locations so data does not need to be pulled from the server for 
+     computations ::  
+     # /opt/lifemapper/rocks/bin/seedData
+        
 #. Server 
-   * Run fillDB with defaults  
+   * Copy test data into new user dataspace (created by fillDB) ::  
+     # cp /state/partition1/tmpdata/heuchera* /share/lm/data/archive/biotaphy/
+
+   * Run fillDB bash script (as root) with default data, then alternate 
+    (testing) data ::  
+     # /opt/lifemapper/rocks/bin/fillDB
+     # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini
+     
+   * FillDB results: 
+     * fillDB will create a BOOM config file and the filename is printed to
+       the screen and to the logfile as output of that process.
+   
+     * fillDB will create a makeflow to run the boom daemon.  
+     
+     * You may manually run the boom daemon on the test dataset at the command 
+       prompt for more direct testing.  The test data will boom quickly.  
+       If so, cleanup by deleting the makeflow record from the database and 
+       file from the filesystem.
+
+     * (optional) Run boom daemon (as lmwriter) with new test config file ::  
+       # $PYTHON /opt/lifemapper/LmServer/boom/daboom /share/lm/data/archive/biotaphy/biotaphy_lowres.ini start
 
 Configure for new data
 ----------------------
-#. Run /opt/lifemapper/rocks/bin/fillDB with parameter file of your choice::
-
-   # /opt/lifemapper/rocks/bin/fillDB --config_file
-
-   * Run seedData with scen package name  
-   * Fix node group permissions on /state/partition1/lmscratch
+#. Follow instructions in the above section.  
 
    
 Look for Errors
@@ -139,9 +160,10 @@ LmCompute
 #. Check LmCompute logfiles
 
    * /tmp/post-99-lifemapper-lmcompute.debug  (calls initLMcompute on reboot) 
-   * initLMcompute.log 
-   * installComputeCronJobs.log
-   * seedData.log (seedData must be run manually by user after reboot)
+   * files in /state/partition1/lmscratch/log
+     * initLMcompute.log 
+     * installComputeCronJobs.log
+     * seedData.log (seedData must be run manually by user after reboot)
 
 LmServer
 ~~~~~~~~
@@ -149,9 +171,10 @@ LmServer
 #. Check LmServer logfiles
 
    * /tmp/post-99-lifemapper-lmserver.debug (calls initLM on reboot) 
-   * initLM.log
-   * installServerCronJobs.log
-   * initDbserver.log (only if new db)
+   * files in /state/partition1/lmscratch/log
+     * initLM.log
+     * installServerCronJobs.log
+     * fillDB
      
 #. **Test database contents** ::  
 
@@ -163,28 +186,23 @@ LmServer
 
 Configure new BOOM
 ------------------
-#. Get new environmental data package (<SCEN_PKG>.tar.gz) containing a metadata 
-   file (<SCEN_PKG>.py) and a file containing layer file hash values and 
-   relative filenames ((<SCEN_PKG>.csv) and layer data files.  Then run the 
-   seedData command that builds files in alternate data formats and creates a 
-   fills the LmCompute sqlite3 database with file locations (so data does not
-   need to be pulled for computations)::
-    
-  # /opt/lifemapper/rocks/bin/seedData <SCEN_PKG>
+#. Make sure there is an environmental data package (<SCEN_PKG>.tar.gz) 
+   containing a metadata file (<SCEN_PKG>.py) and a CSV file containing 
+   layer file hash values and relative filenames ((<SCEN_PKG>.csv) and 
+   layer data files.  The tar.gz file should be uncompressed in the 
+   /share/lm/data/layers directory, or present on the download directory
+   of the Lifemapper website (lifemapper.org/dl).
 
 #. Create a BOOM parameter file based on the template in 
-   /opt/lifemapper/config/boomInit.sample.ini
+   /opt/lifemapper/config/boomInit.sample.ini as "alternate" data input to the 
+   fillDB script
 
-#. Then run the fillDB to fill input values and create a BOOM config file::    
-   #  /opt/lifemapper/rocks/bin/fillDB /tmpdata/biotaphyHeucheraLowres.boom.ini
+#. The follow **Compute** and **Server** instructions in **Install bugfixes** 
+   above.   
+
+#. Either allow the makeflow produced by fillDB to be run automatically, 
+   or run the boom daemon as described above. 
   
-#. **TESTING ONLY** The boominput script will create a Makeflow for computation, 
-   using the BOOM config file created in that step.  To shortcut that MF process, 
-   run the daboom daemon **as lmwriter** at the command prompt:: 
-   [lmwriter] $PYTHON LmDbServer/boom/daboom.py \
-              --config_file=/share/lm/data/archive/biotaphy/biotaphy_boom.ini \
-              start
-
 Populate archive
 ----------------
 #. Download new environmental data from Yeti.  Requirements for assembling 

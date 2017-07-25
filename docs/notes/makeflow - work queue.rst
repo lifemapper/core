@@ -1,6 +1,6 @@
-##########
+########
 Makeflow
-##########
+########
 
 A simple way to think of Makeflow (according to the Makeflow folks) is 
 Make + workflow.  The structure of a makeflow file looks like a Makefile.  
@@ -29,9 +29,9 @@ should be added to a MAKEFLOW_OUTPUTS variable so that they are not deleted.
 Intermediate files will be cleaned up.
 
 
-###########
+##########
 Work Queue
-###########
+##########
 “Work Queue is a framework for building large master-worker applications...” 
 We have been using it in conjunction with Makeflow.  Work queue workers sit on 
 a core and continue to pull work until there is nothing left to do, or they are 
@@ -72,7 +72,7 @@ is about 15 minutes per job.  I have attempted multiple times to scale up to
 4096 cores but have found that to cause other problems with the system.  This 
 will be an area to experiment with going forward.
 
-############# 
+#############
 Going forward
 #############
 
