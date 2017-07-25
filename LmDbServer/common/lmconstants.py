@@ -32,7 +32,7 @@ from LmDbServer.common.localconstants import (GBIF_TAXONOMY_FILENAME,
 
 # ............................................................................
 
-BOOM_PID_FILE = os.path.join(PID_PATH, 'lmboom.pid')
+BOOM_PID_FILE = os.path.join(PID_PATH, 'daboom.pid')
 GBIF_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_OCCURRENCE_FILENAME)
 GBIF_TAXONOMY_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_TAXONOMY_FILENAME)
 GBIF_PROVIDER_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_PROVIDER_FILENAME)
