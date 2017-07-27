@@ -284,7 +284,7 @@ class BorgScribe(LMObject):
       @copydoc LmServer.db.catalog_borg.Borg::getScenPackage()
       """
       foundScenPkg = self._borg.getScenPackage(scenPkg, scenPkgId, userId, 
-                                               scenPkgName)
+                                               scenPkgName, fillLayers)
       return foundScenPkg
 
 # ...............................................
