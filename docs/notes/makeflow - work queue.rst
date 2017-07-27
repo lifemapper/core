@@ -1,3 +1,14 @@
+###########
+Matt Daemon
+###########
+The mattDaemon is a Lifemapper daemon process that provides a management layer
+for computations.  Matt Daemon starts (and stops when finished) instances of
+a catalog server and work queue factory and mangages a pool of Makeflow 
+processes.  Each Makeflow process is responsible for an individual workflow and
+when it completes, the Matt Daemon replaces it with a new one.  The Makeflow
+processes advertise their work availability through the catalog server and the
+work queue factory submits worker processes through the job sceduler.
+
 ########
 Makeflow
 ########
@@ -46,105 +57,64 @@ This is described in their documentation and they have Python bindings for
 doing so.  When I spoke with the Notre Dame folks (Creators of CC Tools) they 
 suggested that we may want to go this route for our larger workflows.  
 
-######################
-Current Implementation
-######################
-After much experimentation with configurations, the current implementation, at
-Stampede, is a cluster job request is submitted asking for 1024 cores (64 
-machines).  When these resources are allocated, the first core (labeled as core
-zero, but somewhat arbitrary) is used to run Makeflow.  The provided workflow
-contains processes for 1023 species.  This results in more than 30,000 processes
-to run.  The rest of the cores are used to start work queue workers.  These 
-workers connect to the makeflow process and pull available work until 
-everything has completed.  We rely on a shared file system among all of the 
-nodes and therefore we can prevent the transfer of the intermediate job results.
-This greatly reduces the overhead associated with running makeflow.  Each 
-experiment is packaged in the workflow in a format that Charlie can consume and
-the result is a single zip archive for each species.  Charlie then pulls these
-outputs using rsync from the Harvard Lustre storage machine where he will then
-process them using Harvard resources.
-
-In my experiments, I have found that the number of concurrent jobs directly
-impacts system performance.  If we run on 160 cores at a time, each of the main
-jobs, models and projections, completes in approximately 8 minutes.  As we 
-scale up the number of cores, performance degrades.  At 1024 cores, the result
-is about 15 minutes per job.  I have attempted multiple times to scale up to 
-4096 cores but have found that to cause other problems with the system.  This 
-will be an area to experiment with going forward.
-
-#############
-Going forward
-#############
-
-Going forward, we will drop the job mediator and replace the job mule with a 
-new, long-running, daemon process.  This process will manage multiple makeflow
-subprocesses.  Each makeflow process will be responsible for a single workflow
-that will consist of one or more experiments.  As each of these makeflows 
-completes, it will be replaced by a new makeflow instance.  This will be done 
-because makeflow requires a static workflow and cannot be appended while it is 
-running.  The current method uses one, very large, workflow with makeflow.  This
-works for now because all of Charlie's jobs are known up front.  This does not
-work for the dynamic system that is created by incoming user jobs and the 
-addition of new computational content by the pipeline.  Running multiple
-makeflow instances instead of a single instance allows us to reduce the size of
-each workflow for greater flexibility and shorter overhead times.  This also
-allows for more jobs to be available at a time compared to the scenario where
-a single makeflow is used and only a small number of jobs remains.  In the time
-required for a makeflow to finish off a single task before starting a new set,
-workers remain idle or stop.  Having more work available than workers to do it 
-ensures that the stream does not run dry at any time.  This could all be set up
-faily easily, but there will be research that needs to take place in order to
-optimize the process.  Future versions should also allow for scaling up and 
-down for the quantity of workers and number of makeflow processes to handle 
-bursts in computational load and / or availability of computational resources.
-
-We will still need to install the LmCompute package, its dependancies, and 
-CC Tools on our computational machines but controlling computations will be 
-simplified.  By moving the makeflow, or master, process to an external machine,
-the computational machines only need to run workers.  There are existing scripts
-to submit workers to a number of compute schedulers (SLURM, SGE, Torque) that
-are provided in the CC Tools package.  The default scripts are a good place to
-start for initializing workers on these various compute environments but we may
-find that we want greater control or additional customization.  If we find that
-to be true, these scripts can be easily recreated using our own code.  I have 
-already written an alternate version for TACC's Stampede machine that uses MPI
-and CPU offsets to start workers on various cores.
-
-Using one of the provided scripts, or one of our own, we will start multiple
-work queue workers for the compute environment (which can be a single machine, 
-a hard cluster, a virtual cluster, or other resource).  These workers will 
-connect to a specified makeflow instance, or pool of instances, and pull the 
-work that is available.  They will continue to pull available work until they 
-are stopped (manually or by cluster kill signal) or if there is no additional 
-work available for some period of time.
+##############
+Catalog Server
+##############
+The catalog server process acts as a mediator between the Makeflow processes,
+the worker factory, and the workers.  Each Makeflow connects to it and 
+advertises the available work it has.  The worker factory monitors the total 
+amount of available work and scales up or down the number of workers in 
+response.  And the workers use it to connect to an appropriate makeflow process.
+Notre Dame provides a public instance of the catalog server that can be used by 
+default but we will run our own due to the volatility and number of makeflows
+we run.
 
 ##################
-Potential Pitfalls
+Work Queue Factory
 ##################
+The work queue factory process interfaces with the job scheduler.  In our case,
+we will use SGE but other options are available if we ever want to expand to 
+another environment.  This factory is configured with a minimum and maximum
+number of workers to keep alive to perform the work available, as determined
+from the catalog server.  It handles the interface between itself and the 
+selected job scheduler and runs work queue workers as needed.
 
-Catalog server
---------------
-Until now, I have relied on the work queue catalog server from Notre Dame to 
-register our Makeflow processes so that the workers can connect to them.  If we
-run several makeflow processes, we may have problems with their server.  We are
-also reliant on their server being operational.  As an alternative, we can 
-connect to the master processes directly.  This method may not provide the 
-necessary flexibility so that workers can connect to multiple makeflow 
-instances.  An option may be to run our own catalog server.  As of yet, I have 
-not found any documentation for doing so.  The Notre Dame group seems to be 
-very helpful though and I would guess that they would be enthusiastic about
-helping us set that up.
+###########
+Other notes
+###########
 
-Data Transfer
+Data movement
 -------------
-For this next implementation, we will rely on a shared file system between the
-workers and the Lifemapper controlling process.  This way we can prevent data
-transfer of intermediate results and reduce overhead.  As long as the shared
-file system can keep up with this method, this should be a viable approach for
-the immediate future.  In the future, we may want to use something like iRODS 
-to share data between the controller and (multiple) compute environments.  For 
-environments such as Stampede, we will still rely on the internal shared file 
-system, but we will need to transfer the results to the controlling process at 
-some point, or use iRODS to do so.  If the intermediate results can stay on a
-shared file system, we can avoid those data transfer steps.
+Data is moved to and from the workers using makeflow / work queue.  Makeflow
+documents define the inputs and outputs of each process and those are 
+automatically transfered to the workers when they are needed and the outputs
+are transfered back to the workspace.  The only data movement we do "manually"
+is the initial movement of input data into the workspace.  We do that with
+"LOCAL" commands.  Otherwise, everything that is created is managed by CCTools
+processes until those outputs are ultimately written to the Lifemapper shared
+file system (using the stockpile.py process).
 
+Local vs remote tasks
+---------------------
+In Makeflow, task commands that being with the "LOCAL" keyword are run on the
+server from Makeflow itself instead of being transfered to a work queue process.
+We use local processes when we need database access or files on the front end
+that may not be shared with the nodes / workers (file transfers into and out of
+the workspace).  We have also had issues with creating shapefiles on nodes in 
+the work directories / shared directories, so they are run as local processes 
+as well.
+
+How things are cleaned up
+-------------------------
+Within the Makeflow DAG documents, we have stockpile calls that test the 
+outputs of the tasks, move files, and update the database.  That is how we get
+the outputs out of the workspace.  Once we do that, we can clean up the 
+workspace to save disk space.  We currently do that by deleting the workspace
+directory for a work flow after it is completed (if it was successful).  
+Ideally, that is something we could set up with Makeflow itself, but that is 
+not their standard use case.  Another option would be to run Makeflow with the
+"-c" cleanup flag which would remove all of the files defined in the Makeflow
+DAG document.  We are not currently doing that because there are a few cases
+where we are not absolutely certain what files will be created (big shapefiles,
+all maxent outputs, etc.).  At some point, we should handle those cases so we
+can have a cleaner system.
