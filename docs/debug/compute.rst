@@ -87,6 +87,17 @@ fail when run remotely.  There may be certain situations when running locally
 is more appropriate, such as testing to see if a DAG is correctly formatted.
 But in general, I do not recommend it.
 
+How can I tell what is currently(ish) running?
+----------------------------------------------
+You can use the work queue status process to query the catalog server to see
+a, more or less, up to date listing of the running makeflows and workers.  
+There is some caching that takes place so it is not absolutely correct, but it
+can give you a general idea if things are working or not.  To run this:
+   `work_queue_stats -C {server FQDN}:9097`
+The results will show which makeflow instances have connected to the catalog 
+server and what their current status is (as far as number of tasks, number 
+completed, number waiting, etc).  It also shows the number of workers connected
+to each makeflow instance, but I do not think that number is very reliable.
 
 
 
