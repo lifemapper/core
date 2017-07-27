@@ -2153,15 +2153,17 @@ DECLARE
    rec lm_v3.MFProcess%ROWTYPE;
    cmd varchar;
    limitcls varchar;
+   ordercls varchar;
 BEGIN
    cmd = 'SELECT * FROM lm_v3.MFProcess WHERE status = ' || quote_literal(oldstat); 
    limitcls = ' LIMIT ' || quote_literal(total);
+   ordercls = ' ORDER BY priority DESC ';
 
    IF usr IS NOT NULL THEN
       cmd = cmd || ' AND userid = ' || quote_literal(usr);
    END IF;
    
-   cmd := cmd || limitcls;
+   cmd := cmd || ordercls || limitcls;
    RAISE NOTICE 'cmd = %', cmd;
 
    FOR rec in EXECUTE cmd

@@ -46,6 +46,8 @@ Other info:
 
 * Lawrence Geo:  N38.969  W95.245
 * Public Interface: assigned by Greg Smith for MAC address
+  Note that since we are not using DHCP, any MAC address assigned on creation
+  will be fine.
 * Private Interface:  (notyeti VMs: available internal 192.168.xxx.1, where
   xxx is the last quartet of the public IP address)
 * Gateway:  129.237.201.254
