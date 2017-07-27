@@ -1023,7 +1023,7 @@ BEGIN
    END IF;
    SELECT * INTO wherecls FROM lm_v3.lm_getFilterSDMProjects(usr, sqd, dispname, 
             aftertime, beforetime, epsg, afterstat, beforestat, occsetid, 
-            algcode, mdlscencode, prjscencode);
+            algcode, mdlscencode, prjscencode, grdid);
    cmd := cmd || wherecls;
    RAISE NOTICE 'cmd = %', cmd;
 
