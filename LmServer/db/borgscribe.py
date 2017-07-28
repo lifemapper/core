@@ -939,7 +939,8 @@ class BorgScribe(LMObject):
       except:
          occLyrOrId = occLyrOrId.getId()
       occ = self.getOccurrenceSet(occId=occLyrOrId)
-      lyrs = self.listSDMProjects(0,500, occsetId=occLyrOrId, atom=False)
+      lyrs = self.listSDMProjects(0, 500, userId=occ.getUserId(), 
+                                  occsetId=occLyrOrId, atom=False)
       lyrs.append(occ)
       mapname = EarlJr().createBasename(LMFileType.SDM_MAP, objCode=occ.getId(), 
                                         usr=occ.getUserId())
