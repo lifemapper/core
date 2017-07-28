@@ -87,12 +87,12 @@ class OccurrenceLayerService(LmService):
          return self._listOccurrenceSets(self.getUserId(urlUser=urlUser), 
                 afterTime=afterTime, beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints, 
-                limit=limit, offset=offset, gridSetId=gridSetId)
+                limit=limit, offset=offset, gridSetId=gridSetId, status=status)
       elif pathOccSetId.lower() == 'count':
          return self._countOccurrenceSets(self.getUserId(urlUser=urlUser), 
                afterTime=afterTime, beforeTime=beforeTime, displayName=displayName, 
                 epsgCode=epsgCode, minimumNumberOfPoints=minimumNumberOfPoints,
-                gridSetId=gridSetId)
+                gridSetId=gridSetId, status=status)
       else:
          return self._getOccurrenceSet(pathOccSetId)
    

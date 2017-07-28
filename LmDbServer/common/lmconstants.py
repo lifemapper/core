@@ -51,11 +51,35 @@ USER_OCCURRENCE_META = os.path.join(SPECIES_DATA_PATH,
 class SpeciesDatasource:
    """
    @summary: These are species data sources with defined data formats.
-             `IDIGBIO` and `BISON` are queryable APIs, `GBIF` is a CSV file,
-             sorted by TaxonId, `User` is a CSV file with metadata describing 
-             each field. `Existing` indicates that existing OccurrenceSet ids 
+             The default or boom config file must specify DATASOURCE as one of 
+             the specified strings., `Existing` indicates that existing OccurrenceSet ids 
              the provided input, and, with proper permissions, are used as-is 
              or copied to the User's data space.
+   @ivar IDIGBIO: The default or boom config file must specify the filename
+             IDIG_OCCURRENCE_DATA (without extension) pointing to a CSV file,
+             and IDIG_OCCURRENCE_DATA_DELIMITER. If the GBIF_TAXONOMY_FILENAME 
+             (with extension) is present, it will contain CSV data
+             for the GBIF backbone taxonomy of the species in the data file and
+             will be connected to the IDIGBIO data.
+   @ivar BISON: The default or boom config file must specify the filename 
+             BISON_TSN_FILENAME (with extension).  This file contains a 
+             list of BISON TSNs that may be used to query BISON APIs for  
+             species occurrence sets. 
+   @ivar GBIF: The default or boom config file must specify 
+             GBIF_OCCURRENCE_FILENAME, a CSV file (with extension)
+             grouped by TaxonId.  Two additional files may be provided:
+             1) GBIF_TAXONOMY_FILENAME (with extension) containing CSV data
+             for the GBIF backbone taxonomy of the species in the data file; and
+             2) GBIF_PROVIDER_FILENAME (with extension) containing CSV data
+             for the data providers referenced in the data file.
+   @ivar USER: The default or boom config file must specify USER_OCCURRENCE_DATA
+             (without extension) which points to the basename of 2 files: 
+             1) a .csv file of data and 2) a .meta file of metadata 
+             describing the csv data.  The config file must also specify 
+             USER_OCCURRENCE_DATA_DELIMITER.
+   @ivar EXISTING: The default or boom config file must specify an 
+             OCCURRENCE_ID_FILENAME containing OccurrenceSet database IDs 
+             for public or user data to serve as input to a BOOM process. 
    """
    IDIGBIO = 'IDIGBIO'
    BISON = 'BISON'
