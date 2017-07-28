@@ -1156,10 +1156,13 @@ def initBoom(paramFname, isInitial=True):
       
    # Write config file for this archive
    filler.writeConfigFile()
-   
-   # Create MFChain to run Boomer daemon on these inputs
-   mfChain = filler.addBoomChain()
    filler.scribe.log.info('Wrote {}'.format(filler.outConfigFilename))   
+   
+   # Create MFChain to run Boomer on these inputs IFF not the initial archive 
+   # If this is the initial archive, we will run the boomer as a daemon
+   if not isInitial:
+      mfChain = filler.addBoomChain()
+      
    filler.close()
    return boomGridset
    
