@@ -233,9 +233,7 @@ class BOOMFiller(LMObject):
    
       # Fill in missing or null variables for archive.config.ini
       usr = self._getBoomOrDefault(config, 'ARCHIVE_USER', defaultValue=PUBLIC_USER)
-      usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL', 
-                                 defaultValue='{}{}'.format(PUBLIC_USER, 
-                                                      DEFAULT_EMAIL_POSTFIX))
+      usrEmail = self._getBoomOrDefault(config, 'ARCHIVE_USER_EMAIL')
       archiveName = self._getBoomOrDefault(config, 'ARCHIVE_NAME', 
                                            defaultValue=PUBLIC_ARCHIVE_NAME)
       priority = self._getBoomOrDefault(config, 'ARCHIVE_PRIORITY', 
@@ -436,16 +434,22 @@ class BOOMFiller(LMObject):
          userList.append((DEFAULT_POST_USER,'{}{}'.format(DEFAULT_POST_USER, 
                                                           DEFAULT_EMAIL_POSTFIX)))
       if self.usr != PUBLIC_USER:
-         userList.append((self.usr, self.usrEmail))
+         email = self.usrEmail
+         if self.usrEmail is None:
+            email = '{}{}'.format(self.usr, DEFAULT_EMAIL_POSTFIX)
+         userList.append((self.usr, email))
    
       for uinfo in userList:
+         
          try:
             user = LMUser(uinfo[0], uinfo[1], uinfo[1], modTime=CURR_MJD)
          except:
             pass
          else:
             self.scribe.log.info('  Find or insert user {} ...'.format(uinfo[0]))
-            tmp = self.scribe.findOrInsertUser(user)
+            updatedUser = self.scribe.findOrInsertUser(user)
+            if updatedUser.userid == self.usr and self.usrEmail is None:
+               self.usrEmail = updatedUser.email
    
    # ...............................................
    def _checkScenarios(self):
