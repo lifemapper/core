@@ -50,14 +50,17 @@ def lmFormatter(f):
       
       acceptHeaders = cherrypy.request.headers.get('Accept')
       
-      rawHeaders = acceptHeaders.split(',')
-      valuedAccepts = []
-      for h in rawHeaders:
-         if len(h.split(';')) > 1:
-            mime, val = h.split(';')
-            valuedAccepts.append((mime.strip(), float(val.strip('q='))))
-         else:
-            valuedAccepts.append((h.strip(), 1.0))
+      try:
+         rawHeaders = acceptHeaders.split(',')
+         valuedAccepts = []
+         for h in rawHeaders:
+            if len(h.split(';')) > 1:
+               mime, val = h.split(';')
+               valuedAccepts.append((mime.strip(), float(val.strip('q='))))
+            else:
+               valuedAccepts.append((h.strip(), 1.0))
+      except:
+         valuedAccepts = [('*/*', 1.0)]
       
       sortedAccepts = sorted(valuedAccepts, key=lambda x: x[1], reverse=True)
       
