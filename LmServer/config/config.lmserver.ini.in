@@ -46,7 +46,6 @@ SPECIES_EXP_DAY: 3
 POINT_COUNT_MIN: 30
 POINT_COUNT_MAX: 500
 WORKER_JOB_LIMIT: 50
-ALGORITHMS: BIOCLIM,ATT_MAXENT
 
 ; ...................
 ; Species data vals
@@ -99,6 +98,12 @@ INTERSECT_VALNAME: pixel
 INTERSECT_MINPERCENT: 25
 INTERSECT_MINPRESENCE: 1
 INTERSECT_MAXPRESENCE: 255
+
+[ALGORITHM - 1]
+CODE: BIOCLIM
+
+[ALGORITHM - 2]
+CODE: ATT_MAXENT
 
 ; .............................................................................
 [LmServer - dbserver]

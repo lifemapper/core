@@ -28,8 +28,6 @@ from LmCommon.common.lmconstants import SERVER_PIPELINE_HEADING
 # Data Archive Pipeline
 WORKER_JOB_LIMIT = Config().getint(SERVER_PIPELINE_HEADING, 
                                    'WORKER_JOB_LIMIT')
-ALGORITHMS = Config().getlist(SERVER_PIPELINE_HEADING, 'ALGORITHMS')
-
 ASSEMBLE_PAMS = Config().getboolean(SERVER_PIPELINE_HEADING, 'ASSEMBLE_PAMS')
 GRID_NAME = Config().get(SERVER_PIPELINE_HEADING, 'GRID_NAME')
 GRID_CELLSIZE = Config().get(SERVER_PIPELINE_HEADING, 'GRID_CELLSIZE')
