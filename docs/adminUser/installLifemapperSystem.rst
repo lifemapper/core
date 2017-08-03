@@ -115,6 +115,9 @@ Install bugfixes
      # rocks run host compute "chgrp -R lmwriter /state/partition1/lmscratch"
      # rocks run host compute "chmod -R g+ws /state/partition1/lmscratch"
    
+
+Configure for new data
+----------------------
 #. Compute 
    * Run seedData with scen package name.  This builds files in alternate data 
      formats and creates/fills the LmCompute sqlite3 database with file 
@@ -123,31 +126,33 @@ Install bugfixes
      # /opt/lifemapper/rocks/bin/seedData
         
 #. Server 
-   * Copy test data into new user dataspace (created by fillDB) ::  
-     # cp /state/partition1/tmpdata/heuchera* /share/lm/data/archive/biotaphy/
-
-   * Run fillDB bash script (as root) with default data, then alternate 
-    (testing) data ::  
-     # /opt/lifemapper/rocks/bin/fillDB
-     # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphyHeucheraLowres.boom.ini
+   #. Run fillDB bash script (as root) with parameter ini file pointing to
+      alternate env and species data.  When running this way, the script will
+      not create a makeflow record and file ::  
+      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
      
-   * FillDB results: 
-     * fillDB will create a BOOM config file and the filename is printed to
-       the screen and to the logfile as output of that process.
-   
-     * fillDB will create a makeflow to run the boom daemon.  
+   #. fillDB Results: 
+      * (not in this case) insert a makeflow record and file to run the boomer script.  
+      * output a BOOM config file to be used as input to the boomer script. 
+      * print BOOM config filename to the screen and to the output logfile.
+
+   #. Copy species data into new user dataspace (created by fillDB) ::  
+      # cp /opt/lifemapper/LmTest/data/sdm/heuchera* /share/lm/data/archive/biotaphy/
      
-     * You may manually run the boom daemon on the test dataset at the command 
-       prompt for more direct testing.  The test data will boom quickly.  
-       If so, cleanup by deleting the makeflow record from the database and 
-       file from the filesystem.
+   #. You may manually run the boom script as a daemon on the test dataset at 
+      the command prompt for more direct testing.  The test data will boom quickly.  
+      If so, cleanup by deleting the makeflow record from the database and 
+      file from the filesystem.
+      borg=> SELECT * from mfprocess where metadata like '
+      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
+      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
+      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
+      # /opt/lifemapper/rocks/bin/fillDB /state/partition1/tmpdata/biotaphy_heuchera_CONUS.boom.ini
 
-     * (optional) Run boom daemon (as lmwriter) with new test config file ::  
-       # $PYTHON /opt/lifemapper/LmServer/boom/daboom /share/lm/data/archive/biotaphy/biotaphy_lowres.ini start
-
-Configure for new data
-----------------------
-#. Follow instructions in the above section.  
+   #. Run boom daemon (as lmwriter) with new test config file ::  
+      # $PYTHON /opt/lifemapper/LmServer/boom/daboom \
+         --config_file=/share/lm/data/archive/biotaphy/biotaphy_heuchera_CONUS.ini \
+         start
 
    
 Look for Errors
