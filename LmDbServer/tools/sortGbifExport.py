@@ -26,8 +26,133 @@ import argparse
 import csv
 import os
 import sys
+import time
 
-from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY) 
+ONE_MIN = 1.0/1440.0
+try:
+   from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
+except:
+   OFTInteger = 0 
+   OFTReal = 2 
+   OFTString = 4
+   OFTBinary = 8
+
+# from LmCommon.common.lmconstants import (GBIF, GBIF_QUERY) 
+class DWCNames:
+   OCCURRENCE_ID = {'FULL': 'occurrenceID', 'SHORT': 'occurid'}
+   INSTITUTION_CODE = {'FULL': 'institutionCode', 'SHORT': 'inst_code'}
+   INSTITUTION_ID = {'FULL': 'institutionID', 'SHORT': 'inst_id'}
+   COLLECTION_CODE = {'FULL': 'collectionCode', 'SHORT': 'coll_code'}
+   COLLECTION_ID = {'FULL': 'collectionID', 'SHORT': 'coll_id'}
+   CONTINENT = {'FULL': 'continent', 'SHORT': 'continent'}
+   CATALOG_NUMBER = {'FULL': 'catalogNumber', 'SHORT': 'catnum'}
+   BASIS_OF_RECORD = {'FULL': 'basisOfRecord', 'SHORT': 'basisofrec'}
+   DECIMAL_LATITUDE = {'FULL': 'decimalLatitude', 'SHORT': 'dec_lat'}
+   DECIMAL_LONGITUDE = {'FULL': 'decimalLongitude', 'SHORT': 'dec_long'}
+   SCIENTIFIC_NAME = {'FULL': 'scientificName', 'SHORT': 'sciname'}
+   DAY = {'FULL': 'day', 'SHORT': 'day'}
+   MONTH = {'FULL': 'month', 'SHORT': 'month'}
+   YEAR = {'FULL': 'year', 'SHORT': 'year'}
+   RECORDED_BY = {'FULL': 'recordedBy', 'SHORT': 'rec_by'}
+   COUNTRY_CODE = {'FULL': 'countryCode', 'SHORT': 'ctrycode'}
+   STATE_PROVINCE = {'FULL': 'stateprovince', 'SHORT': 'stprov'}
+
+class GBIF:
+   TAXON_KEY = 'specieskey'
+   TAXON_NAME = DWCNames.SCIENTIFIC_NAME['SHORT']
+   PROVIDER = 'puborgkey'
+   GBIFID = 'gbifid'
+   WAIT_TIME = 3 * ONE_MIN
+   LIMIT = 300
+   REST_URL = 'http://api.gbif.org/v1'
+   
+   SPECIES_SERVICE = 'species'
+   OCCURRENCE_SERVICE = 'occurrence'
+   DATASET_SERVICE = 'dataset'
+   ORGANIZATION_SERVICE = 'organization'
+   
+   TAXONKEY_FIELD = 'specieskey'
+   TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
+   PROVIDER_FIELD = 'puborgkey'
+   ID_FIELD = 'gbifid'
+
+   REQUEST_SIMPLE_QUERY_KEY = 'q'
+   REQUEST_NAME_QUERY_KEY = 'name'
+   REQUEST_TAXON_KEY = 'TAXON_KEY'
+   REQUEST_RANK_KEY = 'rank'
+   REQUEST_DATASET_KEY = 'dataset_key'                
+   
+   DATASET_BACKBONE_VALUE = 'GBIF Backbone Taxonomy'
+   
+   SEARCH_COMMAND = 'search'
+   COUNT_COMMAND = 'count'
+   MATCH_COMMAND = 'match'
+   DOWNLOAD_COMMAND = 'download'
+   DOWNLOAD_REQUEST_COMMAND = 'request'
+   RESPONSE_IDENTIFIER_KEY = 'key'
+   RESPONSE_RESULT_KEY = 'results'
+   RESPONSE_END_KEY = 'endOfRecords'
+   RESPONSE_COUNT_KEY = 'count'
+   RESPONSE_GENUS_ID_KEY = 'genusKey'
+   RESPONSE_GENUS_KEY = 'genus'
+   RESPONSE_SPECIES_ID_KEY = 'speciesKey'
+   RESPONSE_SPECIES_KEY = 'species'
+   RESPONSE_MATCH_KEY = 'matchType'
+   RESPONSE_NOMATCH_VALUE = 'NONE'
+   
+   # For writing files from GBIF DarwinCore download, 
+   # DWC translations in lmCompute/code/sdm/gbif/constants
+   # We are adding the 2 fields: LM_WKT_FIELD and LINK_FIELD
+   LINK_FIELD = 'gbifurl'
+   # Ends in / to allow appending unique id
+   LINK_PREFIX = 'http://www.gbif.org/occurrence/'
+
+class GBIF_QUERY:
+   TAXON_FIELDS = {0: ('taxonkey', OFTString), 
+                   1: ('kingdom', OFTString),
+                   2: ('phylum', OFTString),
+                   3: ('class', OFTString), 
+                   4: ('order', OFTString),
+                   5: ('family', OFTString),
+                   6: ('genus', OFTString),
+                   7: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                   8: ('genuskey', OFTInteger),
+                   9: (GBIF.TAXONKEY_FIELD, OFTInteger),
+                   10:('count', OFTInteger)}
+   EXPORT_FIELDS = {0: (GBIF.ID_FIELD, OFTInteger), 
+                    1: (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger), 
+                    2: ('taxonkey', OFTInteger),
+                    3: ('datasetkey', OFTString),
+                    4: (GBIF.PROVIDER_FIELD, OFTString),
+                    5: (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
+                    6: ('kingdomkey', OFTInteger),
+                    7: ('phylumkey', OFTInteger),
+                    8: ('classkey', OFTInteger),
+                    9: ('orderkey', OFTInteger),
+                    10: ('familykey', OFTInteger), 
+                    11: ('genuskey', OFTInteger),
+                    12: (GBIF.TAXONKEY_FIELD, OFTInteger),
+                    13: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                    14: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+                    15: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                    16: (DWCNames.DAY['SHORT'], OFTInteger),
+                    17: (DWCNames.MONTH['SHORT'], OFTInteger),
+                    18: (DWCNames.YEAR['SHORT'], OFTInteger),
+                    19: (DWCNames.RECORDED_BY['SHORT'], OFTString),
+                    20: (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
+                    21: (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
+                    22: (DWCNames.CATALOG_NUMBER['SHORT'], OFTString)}
+   PARAMS = {GBIF.SPECIES_SERVICE: {'status': 'ACCEPTED',
+                                    GBIF.REQUEST_RANK_KEY: None,
+                                    GBIF.REQUEST_DATASET_KEY: None,
+                                    GBIF.REQUEST_NAME_QUERY_KEY: None},
+             GBIF.OCCURRENCE_SERVICE: {"GEOREFERENCED": True,
+                                       "SPATIAL_ISSUES": False,
+#                                     "BASIS_OF_RECORD": ["PRESERVED_SPECIMEN"],
+                                       GBIF.REQUEST_TAXON_KEY: None},
+             GBIF.DOWNLOAD_COMMAND: {"creator": "aimee",
+                                     "notification_address": 
+                                       ["lifemapper@mailinator.com"]}}
 
 # .............................................................................
 class FileData(object):
@@ -53,7 +178,6 @@ class FileData(object):
       Fills in self.currLine, self.currRecnum
       """
       success = False
-      line = None
       while not success:
          try:
             self.currLine = self._csvreader.next()
@@ -62,16 +186,21 @@ class FileData(object):
          except OverflowError, e:
             self.currRecnum += 1
             logfile.write( 'Overflow on {} ({})\n'.format(self.currRecnum, str(e)))
-         except Exception, e:
-            logfile.write('Exception reading line {}, probably EOF ({})\n'.format(
-                                                      self.currRecnum, str(e)))
+         except StopIteration, e:
+            logfile.write('EOF reading line {}\n'.format(self.currRecnum))
             self.close()
             self.currRecnum = self.currLine = None
             success = True
+         except Exception, e:
+            logfile.write('Exception reading line {}, maybe EOF? ({})\n'.format(
+                                                      self.currRecnum, str(e)))
+            raise(e)
+#             self.close()
+#             self.currRecnum = self.currLine = None
+#             success = True
    
    # ...............................................
    def skipToRecord(self, targetnum):
-      complete = False
       while self.currLine is not None and self.currRecnum < targetnum:
          self._getLine()
 
@@ -113,7 +242,6 @@ class FileData(object):
       """
       complete = False
       currCount = 0
-      firstLineno = self.currRecnum
       currkey = self.key
       chunk = []
 
@@ -161,7 +289,7 @@ def _getSortedName(datapath, outprefix, run=None):
    return os.path.join(datapath, '%s.txt' % (outprefix))
 
 # ...............................................
-def _getSmallestKeyAndPosition(splitFiles):
+def _getSmallestKeyAndPosition(splitFiles, lastKey=None):
    """
    Get smallest data key and index of file containing that record
    """
@@ -172,6 +300,17 @@ def _getSmallestKeyAndPosition(splitFiles):
          if smallest is None or splitFiles[idx].key < smallest:
             smallest = splitFiles[idx].key
             idxOfSmallest = idx
+   # Log each search for smallest chunk
+   if lastKey is None:
+      logfile.write('New key = {} (file {})\n'.format(smallest, idx))
+   else:
+      if smallest > lastKey:
+         logfile.write('New key = {} (file {})\n'.format(smallest, idx))
+      elif smallest < lastKey:
+         logfile.write('Problem = {} (file {})\n'.format(smallest, idx))
+      else:
+         logfile.write('  smallest key = {} (file {})\n'.format(smallest, idx))
+         
    if smallest is None:
       return None, None
    else:
@@ -192,28 +331,28 @@ def splitIntoSortedFiles(datapath, dumpFilename, sortedSubsetPrefix, keyCol, log
    csvwriter = csv.writer(currSortedFile, delimiter='\t')
    dumpData = FileData(fulldumpfilename, keyCol)
    try:
-      prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
+      key, count = _popChunkAndWrite(csvwriter, dumpData)
       while dumpData.currLine is not None:
          # Start new file when encountering a key out of order
-         if dumpData.key < prevkey:
-            logfile.write('Wrote {} species to {}, next line = {}\n'.format(
+         if dumpData.key < key:
+            logfile.write('  Wrote {} species to {}, next line = {}\n'.format(
                            spCount, currSortedFile.name, dumpData.currRecnum))
             sortedRuns += 1
             spCount = 0
             currSortedFile, csvwriter = _switchFiles(currSortedFile, csvwriter, 
                         datapath, sortedSubsetPrefix, logfile, run=sortedRuns)
-            prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
+            key, count = _popChunkAndWrite(csvwriter, dumpData)
              
-         elif dumpData.key >= prevkey:
+         elif dumpData.key >= key:
             spCount += 1
-            prevkey, prevcount = _popChunkAndWrite(csvwriter, dumpData)
+            key, count = _popChunkAndWrite(csvwriter, dumpData)
              
    except Exception, e:
       logfile.write('ERROR: {}\n'.format(e))
    finally:
       csvwriter = None
-      logfile.write('Wrote final species to {}, next line = {}\n'
-                    .format(currfname, dumpData.currRecnum))
+      logfile.write('  Wrote final {} species to {}, next line = {}\n'
+                    .format(spCount, currfname, dumpData.currRecnum))
       dumpData.close()
       try:
          currSortedFile.close()
@@ -267,14 +406,14 @@ def mergeSortedFiles(datapath, inputPrefix, mergePrefix, keyCol, logfile,
          raise Exception('ERROR: Only {} files to merge (expecting \'{}\')'.format(
                            len(splitFiles), splitFname))
       # find file with record containing smallest key
-      smallKey, pos = _getSmallestKeyAndPosition(splitFiles)
+      smallKey, pos = _getSmallestKeyAndPosition(splitFiles, lastKey=None)
       smallKeyCount = 0
       while pos is not None and not complete:
          # Output records in this file with smallKey 
-         lastKey, lastCount = _popChunkAndWrite(csvwriter, splitFiles[pos])
-         smallKeyCount += lastCount
-#          lastKey = smallKey
-         
+         key, count = _popChunkAndWrite(csvwriter, splitFiles[pos])
+         smallKeyCount += count
+         logfile.write('   thisCount = {} (file ({}), totalCount = {}\n'
+                       .format(count, idx, smallKeyCount))         
          # If size limit is reached, switch to new file
          if (maxFileSize is not None and 
              os.fstat(mergeFile.fileno()).st_size >= maxFileSize):
@@ -283,10 +422,10 @@ def mergeSortedFiles(datapath, inputPrefix, mergePrefix, keyCol, logfile,
                                                 mergePrefix, logfile, run=outIdx)
             
          # Find smallest again
-         smallKey, pos = _getSmallestKeyAndPosition(splitFiles)
-         _logProgress(pos, smallKey, lastKey, lastCount, smallKeyCount, logfile)
-         if smallKey != lastKey:
-            smallKeyCount = 0
+         smallKey, pos = _getSmallestKeyAndPosition(splitFiles, lastKey=key)
+#          _logProgress(pos, smallKey, lastKey, lastCount, smallKeyCount, logfile)
+#          if smallKey != thisKey:
+#             smallKeyCount = 0
          
    except Exception, e:
       raise
@@ -303,23 +442,12 @@ def _switchFiles(openFile, csvwriter, datapath, prefix, logfile, run=None):
    # Open next output sorted file
    newFname = _getSortedName(datapath, prefix, run=run)
    newFile = open(newFname, 'wb')
-   logfile.write('Closed {}, opened {}'.format(openFile.name, newFile.name))
+   logfile.write('Closed {}\n'.format(openFile.name))
+   logfile.write('\n')
+   logfile.write('Opened {}\n'.format(newFile.name))
    csvwriter = csv.writer(newFile, delimiter='\t')
    return newFile, csvwriter
       
-# ...............................................
-def _popChunkAndWriteOld(csvwriter, filedata):
-   # write current chunk for current key to outfile
-   for rec in filedata.chunk:
-      csvwriter.writerow(rec)
-   prevkey = filedata.key
-   # update FileData with next key and chunk for that file
-   if not(filedata.eof()):
-      filedata.getNextChunk()
-   else:
-      filedata.close()
-   return prevkey
-          
 # ...............................................
 def _popChunkAndWrite(csvwriter, filedata):
    # first get chunk
@@ -338,15 +466,15 @@ def _popChunkAndWrite(csvwriter, filedata):
             
   
 # ...............................................
-def _logProgress(idx, smallKey, lastKey, lastCount, currentCount, logfile):
+def _logProgress(idx, smallKey, thisKey, thisCount, currentCount, logfile):
    if idx is None:
-      logfile.write('Completed, final key {}\n'.format(lastKey))
+      logfile.write('Completed, final key {}\n'.format(thisKey))
    else:
-      logfile.write('         count = {} (file {})\n'.format(lastCount, idx))
-      if smallKey > lastKey:
+      logfile.write('         count = {} (file {})\n'.format(thisCount, idx))
+      if smallKey > thisKey:
          logfile.write('         Total = {}\n'.format(currentCount))
          logfile.write('New key     = {} (file {})\n'.format(smallKey, idx))
-      elif smallKey < lastKey:
+      elif smallKey < thisKey:
          logfile.write('Problem = {} (file {})\n'.format(smallKey, idx))
 
       
@@ -387,26 +515,14 @@ def checkMergedFile(datapath, filePrefix, keyCol, logfile):
 # dumpFname = 'aimee_export.txt'
 # ...............................................
 if __name__ == '__main__':
+   secs = time.time()
+   timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+   logfname = '/tmp/sortGbifExport.{}.log'.format(timestamp)
+
    splitPrefix = 'gbif_split'
    mergedPrefix = 'gbif_merged'
    oneGb = 1000000000
-   maxFileSize = None
    
-   # Use the argparse.ArgumentParser class to handle the command line arguments
-   parser = argparse.ArgumentParser(
-            description=('Process a GBIF CSV database dump file containing ' +
-                         'multiple sections of sorted data (one per node)' +
-                         'into a single file sorted on the TaxonomyKey field'))
-   parser.add_argument('filename', metavar='filename', type=str,
-                       help='The absolute path of the top directory containing datafile')   
-   args = parser.parse_args()
-   
-   fullfilename = args.filename
-   if not os.path.exists(fullfilename):
-      print('Missing input file {}'.format(fullfilename))
-      exit(0)
-
-   datapath, dumpFname = os.path.split(fullfilename)   
    csv.field_size_limit(sys.maxsize)
    keyCol = None
    for idx, vals in GBIF_QUERY.EXPORT_FIELDS.iteritems():
@@ -414,24 +530,61 @@ if __name__ == '__main__':
          keyCol = idx
          break
    
-   thisname = os.path.basename(__file__)
-   sname, ext = os.path.split(thisname)
-   logfname = '/tmp/{}.log'.format(sname)
+   # Use the argparse.ArgumentParser class to handle the command line arguments
+   parser = argparse.ArgumentParser(
+            description=('Process a GBIF CSV database dump file containing ' +
+                         'multiple sections of sorted data ' +
+                         'into a single sorted file, or multiple sorted files ' +
+                         'of approximately max_output_size. File(s) will be ' + 
+                         'sorted on column {} (field {}). '
+                         .format(keyCol, GBIF.TAXONKEY_FIELD) +
+                         'Sorted chunks of data will stay together.'))
+   parser.add_argument('filename', metavar='filename', type=str,
+                       help='The absolute path of the datafile')
+   parser.add_argument('--split', action='store_true',
+            help=('Split large CSV file into separate sorted files'))
+   parser.add_argument('--merge', action='store_true',
+            help=('Merge separate sorted files into one large or multiple ' +
+                  'sorted file(s) (data aggregated by {}).'.format(GBIF.TAXONKEY_FIELD)))
+   parser.add_argument('--check', action='store_true',
+            help=('Test large file for proper sorting.'))
+   parser.add_argument('--max_output_size', default=None,
+            help=('Maximum size (approximate) in bytes for merged output files.'))
+   args = parser.parse_args()   
+   fullfilename = args.filename
+   doSplit = args.split
+   doMerge = args.merge
+   doCheck = args.check
+   maxFileSize = args.max_output_size
+
+   if not(doSplit or doMerge or doCheck):
+      parser.print_help()
+      parser.usage
+      exit(-1)
+
+   if not os.path.exists(fullfilename):
+      print('Missing input file {}'.format(fullfilename))
+      exit(0)
+
+   datapath, dumpFname = os.path.split(fullfilename)      
    try:
       logfile = open(logfname, 'w')
-      logfile.write('{} to be sorted on column {}, {}; logfile {}\n'
+      logfile.write('Process {} to be split, merged on column {}, {}; logfile {}\n'
                     .format(dumpFname, keyCol, GBIF.TAXONKEY_FIELD, logfname))
-      
-      # Split big, semi-sorted file, to multiple smaller sorted files
-      logfile.write('Splitting ...\n')
-      sortedRuns = splitIntoSortedFiles(datapath, dumpFname, splitPrefix, 
-                                        keyCol, logfile)
-      # Merge all data for production system into one or more files
-      logfile.write('Merging ...\n')
-      mergeSortedFiles(datapath, splitPrefix, mergedPrefix, keyCol, logfile,
-                       maxFileSize=maxFileSize)
-      # Check final output (only for a single sorted output file)
-      if maxFileSize is None:
+      if doSplit:         
+         # Split big, semi-sorted file, to multiple smaller sorted files
+         logfile.write('Splitting ...\n')
+         sortedRuns = splitIntoSortedFiles(datapath, dumpFname, splitPrefix, 
+                                           keyCol, logfile)
+         
+      if doMerge:
+         # Merge all data for production system into one or more files
+         logfile.write('Merging ...\n')
+         mergeSortedFiles(datapath, splitPrefix, mergedPrefix, keyCol, logfile,
+                          maxFileSize=maxFileSize)
+         
+      if doCheck and maxFileSize is None:
+         # Check final output (only for a single sorted output file)
          logfile.write('Checking ...\n')
          checkMergedFile(datapath, mergedPrefix, keyCol, logfile)
    finally:
