@@ -302,15 +302,12 @@ def _getSmallestKeyAndPosition(splitFiles, lastKey=None):
             idxOfSmallest = idx
    # Log each search for smallest chunk
    if lastKey is None:
-      logfile.write('New key = {} (file {})\n'.format(smallest, idx))
+      logfile.write('New key = {} (file {})\n'.format(smallest, idxOfSmallest))
    else:
       if smallest > lastKey:
-         logfile.write('New key = {} (file {})\n'.format(smallest, idx))
+         logfile.write('New key = {} (file {})\n'.format(smallest, idxOfSmallest))
       elif smallest < lastKey:
-         logfile.write('Problem = {} (file {})\n'.format(smallest, idx))
-      else:
-         logfile.write('  smallest key = {} (file {})\n'.format(smallest, idx))
-         
+         logfile.write('Problem = {} (file {})\n'.format(smallest, idxOfSmallest))
    if smallest is None:
       return None, None
    else:
@@ -413,7 +410,7 @@ def mergeSortedFiles(datapath, inputPrefix, mergePrefix, keyCol, logfile,
          key, count = _popChunkAndWrite(csvwriter, splitFiles[pos])
          smallKeyCount += count
          logfile.write('   thisCount = {} (file ({}), totalCount = {}\n'
-                       .format(count, idx, smallKeyCount))         
+                       .format(count, pos, smallKeyCount))         
          # If size limit is reached, switch to new file
          if (maxFileSize is not None and 
              os.fstat(mergeFile.fileno()).st_size >= maxFileSize):
