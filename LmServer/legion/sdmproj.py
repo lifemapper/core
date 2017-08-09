@@ -38,6 +38,7 @@ from LmServer.common.lmconstants import (LMFileType, Algorithms, BIN_PATH,
             DEFAULT_WMS_FORMAT, ID_PLACEHOLDER, LMServiceType, ProcessTool,
             SCALE_PROJECTION_MINIMUM, SCALE_PROJECTION_MAXIMUM)
 from LmServer.legion.cmd import MfRule
+from LmServer.common.snippet import SnippetOperations
 
 # .........................................................................
 class _ProjectionType(_LayerParameters, ProcessObject):
@@ -814,6 +815,24 @@ class SDMProjection(_ProjectionType, Raster):
                                     os.path.join(targetDir, prjName), 
                                     [outTiff, packageFname])
          rules.append(uRule)
+         
+         # Snippets
+         snippetPostFilename = os.path.join(targetDir, 
+                                 'snippets_usedId_{}.xml'.format(self.getId()))
+         snippetCmd = ' '.join([
+            'LOCAL',
+            '$PYTHON',
+            ProcessTool.get(ProcessType.SNIPPET_POST),
+            '-o2ident lm-prj-{}'.format(self.getId()),
+            '-url {}'.format(self.metadataUrl),
+            '-who Lifemapper',
+            '-agent LmCompute',
+            str(self._occurrenceSet.getId()),
+            SnippetOperations.USED_IN,
+            snippetPostFilename
+         ])
+         rules.append(MfRule(snippetCmd, [snippetPostFilename], dependencies=[
+            os.path.join(targetDir, '{}.success'.format(prjName))]))
          
       return rules
    

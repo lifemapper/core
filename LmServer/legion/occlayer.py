@@ -35,6 +35,7 @@ from LmServer.common.lmconstants import (DEFAULT_WMS_FORMAT,
                   LMServiceType, ProcessTool)
 from LmServer.common.localconstants import POINT_COUNT_MAX
 from LmServer.legion.cmd import MfRule
+from LmServer.common.snippet import SnippetOperations
 
 # .............................................................................
 # .............................................................................
@@ -696,5 +697,23 @@ class OccurrenceLayer(OccurrenceType, Vector):
                                    targetFiles)
       
          rules.append(uRule)
+         
+         # Snippets
+         snippetPostFilename = os.path.join(targetDir, 
+                                   'snippets_create_{}.xml'.format(self.getId))
+         snippetCmd = ' '.join([
+            'LOCAL',
+            '$PYTHON',
+            ProcessTool.get(ProcessType.SNIPPET_POST),
+            '-o2ident lm-occ-{}'.format(self.getId()),
+            '-url {}'.format(self.metadataUrl),
+            '-who Lifemapper',
+            '-agent LmCompute',
+            str(self.getId()),
+            SnippetOperations.ADDED_TO,
+            snippetPostFilename
+         ])
+         rules.append(MfRule(snippetCmd, [snippetPostFilename], 
+                             dependencies=targetFiles))
          
       return rules
