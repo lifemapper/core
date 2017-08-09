@@ -37,7 +37,7 @@ from LmBackend.common.occparse import OccDataParser
 from LmCommon.common.lmconstants import (ENCODING, BISON, BISON_QUERY,
                GBIF, GBIF_QUERY, IDIGBIO, IDIGBIO_QUERY, PROVIDER_FIELD_COMMON, 
                LM_ID_FIELD, LM_WKT_FIELD, ProcessType, JobStatus,
-               DWCNames, LMFormat)
+               DWCNames, LMFormat, DEFAULT_EPSG)
 from LmCommon.common.readyfile import readyFilename
 from LmCommon.common.unicode import fromUnicode, toUnicode
 from LmCompute.common.lmObj import LmException
@@ -514,7 +514,7 @@ class ShapeShifter(object):
    # ...............................................
    def _addUserFieldDef(self, newDataset):
       spRef = osr.SpatialReference()
-      spRef.ImportFromEPSG(4326)
+      spRef.ImportFromEPSG(DEFAULT_EPSG)
     
       newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
       if newLyr is None:
@@ -545,7 +545,7 @@ class ShapeShifter(object):
    # ...............................................
    def _addFieldDef(self, newDataset):
       spRef = osr.SpatialReference()
-      spRef.ImportFromEPSG(4326)
+      spRef.ImportFromEPSG(DEFAULT_EPSG)
     
       newLyr = newDataset.CreateLayer('points', geom_type=ogr.wkbPoint, srs=spRef)
       if newLyr is None:

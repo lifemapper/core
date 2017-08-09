@@ -29,7 +29,8 @@ import math
 import numpy as np
 from osgeo import ogr, osr
 
-from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.lmconstants import (LMFormat, DEFAULT_GLOBAL_EXTENT, 
+                           DEFAULT_EPSG, DEFAULT_CELLSIZE, DEFAULT_CELLSIDES)
 
 # Calculate this once and store as a constant instead of for every cell
 SQRT_3 = math.sqrt(3)
@@ -170,10 +171,10 @@ def buildShapegrid(sgFn, minX, minY, maxX, maxY, cellSize, epsgCode, cellSides,
 # ...............................................
 if __name__ == '__main__':
    dlocation = '/tmp/shpgrid_test.shp'
-   (minX, minY, maxX, maxY) = (-180.0, -60.0, 180.0, 90.0)
-   cellsize = 1.0
-   epsgcode = 4326
-   cellsides = 4
+   (minX, minY, maxX, maxY) = DEFAULT_GLOBAL_EXTENT
+   cellsize = DEFAULT_CELLSIZE
+   epsgcode = DEFAULT_EPSG
+   cellsides = DEFAULT_CELLSIDES
    (siteId, siteX, siteY) = ('siteid', 'centerX', 'centerY')
    cutout = None
     

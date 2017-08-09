@@ -25,7 +25,8 @@ from types import StringType, UnicodeType
 import os
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import LMFormat
+from LmCommon.common.lmconstants import LMFormat, DEFAULT_GLOBAL_EXTENT
+from LmServer.base.lmobj import LMSpatialObject
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
 from LmServer.common.lmconstants import (DEFAULT_SRS, WEB_DIR, 
    LMFileType, FileFix, GENERIC_LAYER_NAME_PREFIX,
@@ -355,11 +356,9 @@ class EarlJr(LMObject):
 # ...............................................
    def _getOWSParams(self, mapprefix, owsLayerKey, bbox):
       params = []
-      if bbox:
-         coordStrings = [str(b) for b in bbox]
-         bbstr = ','.join(coordStrings)
-      else:
-         bbstr = '-180,-90,180,90'
+      if not bbox:
+         bbox = DEFAULT_GLOBAL_EXTENT
+      bbstr = LMSpatialObject.getExtentAsString(bbox, separator=',')
       params.append(('bbox', bbstr))   
       mapname = lyrname = None
       svcurl_rest = mapprefix.split('?')
