@@ -26,6 +26,8 @@ import os
 from osgeo import gdal, gdalconst, ogr
 
 from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import (DEFAULT_GLOBAL_EXTENT, DEFAULT_EPSG,
+                                         DEFAULT_MAPUNITS)
 from LmServer.base.layer2 import _Layer, Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.serviceobject2 import ServiceObject
@@ -495,11 +497,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
       mapstr = mapstr.replace('##_MAPNAME_##', self.mapName)      
                               
       if self.epsgcode == DEFAULT_EPSG:
-         boundstr = '  -180  -90  180  90'
+         mbbox = DEFAULT_GLOBAL_EXTENT
       else:
          mbbox = self.unionBounds
-         boundstr = '  %.2f  %.2f  %.2f  %.2f' % (mbbox[0], mbbox[1],
-                                                           mbbox[2], mbbox[3])
+      boundstr = LMSpatialObject.getExtentAsString(mbbox, separator='  ')
+
       mapstr = mapstr.replace('##_EXTENT_##', boundstr)
       mapunits = self.mapUnits
       mapstr = mapstr.replace('##_UNITS_##',  mapunits)
@@ -642,6 +644,8 @@ class MapLayerSet(_LayerSet, ServiceObject):
 # ...............................................
    def _createBlueMarbleLayer(self):
       fname = os.path.join(IMAGE_PATH, BLUE_MARBLE_IMAGE)
+      boundstr = LMSpatialObject.getExtentAsString(DEFAULT_GLOBAL_EXTENT, 
+                                                   separator='  ')
       lyr = ''
       lyr = '\n'.join([lyr, '   LAYER'])
       lyr = '\n'.join([lyr, '      NAME  bmng'])
@@ -649,7 +653,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
       lyr = '\n'.join([lyr, '      DATA  \"%s\"' % fname])
       lyr = '\n'.join([lyr, '      STATUS  ON'])
 #       lyr = '\n'.join([lyr, '      DUMP  TRUE'])
-      lyr = '\n'.join([lyr, '      EXTENT  -180 -90 180 90']) 
+      lyr = '\n'.join([lyr, '      EXTENT  {}'.format(boundstr)]) 
       lyr = '\n'.join([lyr, '      METADATA'])
       lyr = '\n'.join([lyr, '         ows_name   \"NASA blue marble\"'])
       lyr = '\n'.join([lyr, '         ows_title  \"NASA Blue Marble Next Generation\"'])

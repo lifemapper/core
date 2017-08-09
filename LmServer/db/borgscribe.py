@@ -133,6 +133,14 @@ class BorgScribe(LMObject):
       return updatedLyr
 
 # ...............................................
+   def findOrInsertLayer(self, lyr):
+      """
+      @copydoc LmServer.db.catalog_borg.Borg::findOrInsertLayer()
+      """
+      updatedLyr = self._borg.findOrInsertLayer(lyr)
+      return updatedLyr
+
+# ...............................................
    def getEnvLayer(self, envlyrId=None, lyrId=None, lyrVerify=None, userId=None, 
                    lyrName=None, epsg=None):
       """
