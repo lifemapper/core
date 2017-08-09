@@ -843,6 +843,8 @@ class ProcessType:
    MF_TRIAGE = 640
    TOUCH = 650
    SOLR_POST = 660
+   SNIPPET_POST = 670
+   
    # BOOM
    BOOM_INIT = 710
 #    BOOM_DAEMON = 720

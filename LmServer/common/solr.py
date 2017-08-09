@@ -33,22 +33,29 @@ from LmServer.common.lmconstants import SOLR_POST_COMMAND, SOLR_SERVER,\
 from ast import literal_eval
 
 # .............................................................................
-def buildSolrDocument(fieldPairs):
+def buildSolrDocument(docPairs):
    """
    @summary: Builds a document for a Solr POST from the key, value pairs
-   @param fieldPairs: A list of [field name, value] pairs
+   @param docPairs: A list of lists of [field name, value] pairs -- 
+                       [[(field name, value)]]
    """
-   if not fieldPairs:
+   if not docPairs:
       raise Exception, "Must provide at least one pair for Solr POST"
    
+   # We want to allow multiple documents.  Make sure that field pairs is a list
+   #    of lists of tuples
+   elif not isinstance(docPairs[0][0], (list, tuple)):
+      docPairs = [docPairs]
+   
    docLines = ['<add>']
-   docLines.append('   <doc>')
-   for fName, fVal in fieldPairs:
-      # Only add the field if the value is not None
-      if fVal is not None: 
-         docLines.append('      <field name="{}">{}</field>'.format(fName, 
-                                                                    fVal))
-   docLines.append('   </doc>')
+   for fieldPairs in docPairs:
+      docLines.append('   <doc>')
+      for fName, fVal in fieldPairs:
+         # Only add the field if the value is not None
+         if fVal is not None: 
+            docLines.append('      <field name="{}">{}</field>'.format(fName, 
+                                                                       fVal))
+      docLines.append('   </doc>')
    docLines.append('</add>')
    return '\n'.join(docLines)
 

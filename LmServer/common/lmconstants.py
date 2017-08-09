@@ -206,6 +206,9 @@ class ProcessTool:
       elif ptype == ProcessType.SQUID_INC:
          relpath = SERVER_SCRIPTS_DIR
          jr = 'squid_inc'
+      elif ptype == ProcessType.SNIPPET_POST:
+         relpath = SERVER_SCRIPTS_DIR
+         jr = 'shootSnippets'
 
       return os.path.join(relpath, jr + LMFormat.PYTHON.ext) 
    
@@ -1889,6 +1892,7 @@ ALGORITHM_DATA  = {
 # =                              Solr Constants                              =
 # ============================================================================
 SOLR_ARCHIVE_COLLECTION = 'lmArchive'
+SOLR_SNIPPET_COLLECTION = 'snippets'
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_SERVER = 'http://localhost:8983/solr/'
 
